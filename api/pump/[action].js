@@ -89,7 +89,7 @@ import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/gr
 import { logger } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
-import { staleEnvelope } from '../_lib/rpc-degrade.js';
+import { isRpcOutageError, staleEnvelope } from '../_lib/rpc-degrade.js';
 
 const log = logger('pump.launch');
 import {
@@ -265,6 +265,10 @@ const wrapped = wrap(async (req, res) => {
 			return handleSearch(req, res);
 		case 'collect-creator-fee-prep':
 			return handleCollectCreatorFeePrep(req, res);
+		case 'launch-config':
+			return handleLaunchConfig(req, res);
+		case 'my-coins':
+			return handleMyCoins(req, res);
 		case 'distribute-creator-fees-prep':
 			return handleDistributeCreatorFeesPrep(req, res);
 		case 'create-fee-sharing-prep':
@@ -1081,13 +1085,34 @@ async function handleBuildMetadata(req, res) {
 	// ── Build metadata JSON via the canonical three.ws brand builder ─────────
 	// This stamps createdOn=https://three.ws plus the Platform/Launchpad
 	// attributes that explorers and launchpad aggregators read for attribution.
-	const agentHomeUrl = body.agent_id ? `${env.APP_ORIGIN}/agents/${body.agent_id}` : undefined;
+	// Link the coin to its 3D agent. An avatar that has no agent identity yet gets
+	// one here (launch-prep would create it moments later anyway), so the page
+	// the coin points at is the agent that launched it, not the three.ws homepage.
+	let linkedAgentId = body.agent_id || null;
+	let agentModelUrl;
+	if (body.avatar_id) {
+		if (!linkedAgentId) {
+			const resolved = await resolveLaunchAgentId({ userId: uid, avatarId: body.avatar_id }).catch(() => null);
+			linkedAgentId = resolved?.id || null;
+		}
+		const [avRow] = await sql`
+			select storage_key, visibility from avatars
+			where id=${body.avatar_id} and owner_id=${uid} and deleted_at is null limit 1
+		`;
+		// Token metadata is permanent and public: only a model its owner already
+		// shares (public or unlisted) is written into it.
+		if (avRow?.storage_key && (avRow.visibility === 'public' || avRow.visibility === 'unlisted')) {
+			agentModelUrl = r2PublicUrl(avRow.storage_key);
+		}
+	}
+	const agentHomeUrl = linkedAgentId ? `${env.APP_ORIGIN}/agents/${linkedAgentId}` : undefined;
 	const metadata = buildTokenMetadata({
 		name: body.name,
 		symbol: body.symbol,
 		description: body.description,
 		image: imageUrl || '',
 		...(agentHomeUrl ? { agentUrl: agentHomeUrl } : {}),
+		...(agentModelUrl ? { agentModelUrl } : {}),
 		...(body.twitter ? { twitter: body.twitter } : {}),
 		...(body.website ? { website: body.website } : {}),
 		...(body.telegram ? { telegram: body.telegram } : {}),
@@ -1109,6 +1134,9 @@ async function handleBuildMetadata(req, res) {
 	return json(res, 200, {
 		metadata_url: metadataUrl,
 		image_url: imageUrl,
+		agent_id: linkedAgentId,
+		agent_url: agentHomeUrl || null,
+		agent_model_url: agentModelUrl || null,
 		on_ipfs: Boolean(pinnedJson),
 		provider: pinnedJson?.provider ?? (ipfsPinningConfigured() ? 'r2-fallback' : 'r2'),
 	});
@@ -1978,7 +2006,6 @@ async function handleLaunchAgent(req, res) {
 		});
 		instructions.push(createIx);
 	}
-	if (launchFee) instructions.push(...launchFee.instructions);
 
 	// Spend-policy gate: this path signs server-side with the agent's custodial
 	// wallet, so a stolen session could otherwise drive an arbitrarily large SOL
@@ -2004,20 +2031,44 @@ async function handleLaunchAgent(req, res) {
 	if (!reservation.ok) return error(res, reservation.status, reservation.code, reservation.msg);
 
 	let signature;
-	try {
-		// Protected send: the agent custodial wallet pays + signs, the new mint
-		// co-signs. Priority fee + CU estimate, rebroadcast with blockhash refresh,
-		// hard throw on an on-chain revert.
-		({ signature } = await submitProtected({
+	// Set when the fee could not ride in the launch transaction and settles in its
+	// own transaction after the launch lands: 'separate' on success, 'failed' if
+	// that follow-up transfer did not land.
+	let feeSettlement = launchFee ? 'bundled' : null;
+	const lookupTables = await getPumpLookupTables({ network: body.network });
+	const sendLaunch = (ixs) =>
+		submitProtected({
 			network: body.network,
 			connection: conn,
 			payer: agentKeypair,
-			instructions,
-			opts: {
-				extraSigners: [mintKeypair],
-				addressLookupTables: await getPumpLookupTables({ network: body.network }),
-			},
-		}));
+			instructions: ixs,
+			opts: { extraSigners: [mintKeypair], addressLookupTables: lookupTables },
+		});
+	try {
+		// Protected send: the agent custodial wallet pays + signs, the new mint
+		// co-signs. Priority fee + CU estimate, rebroadcast with blockhash refresh,
+		// hard throw on an on-chain revert. The launch fee rides along when it
+		// fits; a USDC-quoted launch plus the engine's compute-budget instructions
+		// can exceed the v0 packet, and then the coin launches first and the fee
+		// follows in its own transaction.
+		try {
+			({ signature } = await sendLaunch(launchFee ? [...instructions, ...launchFee.instructions] : instructions));
+		} catch (err) {
+			if (!launchFee || !/too large|overruns|RangeError/i.test(`${err?.name} ${err?.message}`)) throw err;
+			({ signature } = await sendLaunch(instructions));
+			feeSettlement = 'separate';
+			try {
+				await submitProtected({
+					network: body.network,
+					connection: conn,
+					payer: agentKeypair,
+					instructions: launchFee.instructions,
+				});
+			} catch (feeErr) {
+				feeSettlement = 'failed';
+				console.error('[pump/launch-agent] separate launch-fee transfer failed', mint.toBase58(), feeErr?.message);
+			}
+		}
 	} catch (err) {
 		await releaseSpend(reservation.reservationId);
 		// A message too large for Solana's packet limit now surfaces here (compile
@@ -2062,7 +2113,7 @@ async function handleLaunchAgent(req, res) {
 		buyback_bps: effBuyback,
 		coin_type: body.coin_type,
 		holder_reward: body.holder_reward,
-		platform_fee: launchFee ? launchFee.disclosure : null,
+		platform_fee: launchFee ? { ...launchFee.disclosure, settlement: feeSettlement } : null,
 		source: 'studio_agent_wallet',
 	});
 
@@ -2095,7 +2146,7 @@ async function handleLaunchAgent(req, res) {
 		quote_mint: quote.quoteMint,
 		quote_currency: quote.label,
 		pump_agent_mint: row || null,
-		platform_fee: launchFee ? launchFee.disclosure : null,
+		platform_fee: launchFee ? { ...launchFee.disclosure, settlement: feeSettlement } : null,
 		buyback_available: buybackAvailable,
 		explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 		pumpfun_url: `https://pump.fun/coin/${mintAddr}`,
@@ -4153,6 +4204,167 @@ async function handleVanityKeygen(req, res) {
 	}
 }
 
+// ── launch-config ──────────────────────────────────────────────────────────
+// What a launch will cost and which transaction formats it can use, read live
+// so the /launch preview never quotes a fee the transaction will not take.
+
+async function handleLaunchConfig(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+	const [recipient, txV1, tradeFeeBps] = await Promise.all([
+		pumpFeeRecipient(),
+		transactionV1Status({ network }),
+		effectivePumpFeeBps(),
+	]);
+
+	res.setHeader('cache-control', 'public, max-age=60');
+	return json(res, 200, {
+		data: {
+			network,
+			launch_fee_bps: recipient ? pumpLaunchFeeBps() : 0,
+			launch_fee_basis: 'dev_buy',
+			fee_recipient: recipient ? recipient.toBase58() : null,
+			trade_fee_bps: tradeFeeBps,
+			create_cost_sol_estimate: 0.022,
+			max_sol_buy_in: 50,
+			buyback_available: pumpAgentBuybackAvailable(),
+			tx_v1: txV1,
+		},
+	});
+}
+
+// ── my-coins ───────────────────────────────────────────────────────────────
+// Every coin the signed-in user launched through three.ws, grouped by the
+// on-chain creator that earns its rewards, with the live unclaimed balance per
+// creator. pump.fun pools creator fees per creator wallet (not per coin), so a
+// claim is per wallet and sweeps every coin that wallet created.
+
+const PUMP_QUOTE_LABELS = {
+	So11111111111111111111111111111111111111112: { symbol: 'SOL', decimals: 9 },
+	EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: { symbol: 'USDC', decimals: 6 },
+	'4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': { symbol: 'USDC', decimals: 6 },
+};
+
+async function creatorRewardBalances(connection, creator) {
+	const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
+	const rows = await new OnlinePumpSdk(connection).getCreatorVaultQuoteBalances(new PublicKey(creator));
+	return rows
+		.map((r) => {
+			const mint = r.mint.toBase58();
+			const label = PUMP_QUOTE_LABELS[mint] || { symbol: `${mint.slice(0, 4)}…`, decimals: null };
+			const total = BigInt(r.total.toString());
+			return {
+				mint,
+				symbol: label.symbol,
+				amount: total.toString(),
+				amount_ui: label.decimals == null ? null : Number(total) / 10 ** label.decimals,
+			};
+		})
+		.filter((r) => r.amount !== '0');
+}
+
+async function handleMyCoins(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+
+	const [rows, linked] = await Promise.all([
+		sql`
+			select pam.mint, pam.name, pam.symbol, pam.created_at, pam.agent_authority,
+			       pam.sharing_config, pam.quote_mint,
+			       ai.id as agent_id, ai.name as agent_name, ai.avatar_id,
+			       ai.meta->>'solana_address' as agent_wallet,
+			       a.thumbnail_key
+			from pump_agent_mints pam
+			left join agent_identities ai on ai.id = pam.agent_id and ai.deleted_at is null
+			left join avatars a on a.id = ai.avatar_id and a.deleted_at is null
+			where pam.user_id = ${user.id} and pam.network = ${network}
+			order by pam.created_at desc
+			limit 200
+		`,
+		sql`select address from user_wallets where user_id = ${user.id} and chain_type = 'solana'`,
+	]);
+	const linkedSet = new Set(linked.map((w) => w.address));
+	const { holderRewardsPda } = await import('@pump-fun/pump-sdk');
+
+	const coins = [];
+	const creators = new Map(); // address -> wallet group
+	for (const r of rows) {
+		const creator = r.agent_authority;
+		let route;
+		const shared = r.sharing_config && Array.isArray(r.sharing_config.shareholders) && r.sharing_config.shareholders.length > 0;
+		if (shared) route = 'shared';
+		else if (!creator) route = 'unknown';
+		else if (holderRewardsPda(new PublicKey(r.mint)).toBase58() === creator) route = 'holders';
+		else if (r.agent_wallet && r.agent_wallet === creator) route = 'agent';
+		else if (linkedSet.has(creator)) route = 'wallet';
+		else route = 'external';
+
+		coins.push({
+			mint: r.mint,
+			name: r.name,
+			symbol: r.symbol,
+			created_at: r.created_at,
+			quote_mint: r.quote_mint,
+			creator,
+			reward_route: route,
+			agent: r.agent_id
+				? {
+						id: r.agent_id,
+						name: r.agent_name,
+						avatar_id: r.avatar_id,
+						thumbnail_url: thumbnailUrl(r.thumbnail_key),
+					}
+				: null,
+		});
+
+		if (route !== 'agent' && route !== 'wallet') continue;
+		if (!creators.has(creator)) {
+			creators.set(creator, {
+				address: creator,
+				kind: route,
+				agent: route === 'agent' ? { id: r.agent_id, name: r.agent_name } : null,
+				// The agent claim endpoint authorizes through one of the agent's coins.
+				claim_mint: r.mint,
+				coins: [],
+				rewards: [],
+				balance_error: null,
+			});
+		}
+		creators.get(creator).coins.push(r.mint);
+	}
+
+	const connection = getConnection({ network });
+	await Promise.all(
+		[...creators.values()].map(async (group) => {
+			try {
+				group.rewards = await creatorRewardBalances(connection, group.address);
+			} catch (e) {
+				group.balance_error = isRpcOutageError(e) ? 'rpc_unavailable' : 'balance_read_failed';
+				console.warn('[pump/my-coins] vault read failed', group.address, e?.message);
+			}
+		}),
+	);
+
+	return json(res, 200, {
+		data: { network, coins, wallets: [...creators.values()] },
+	});
+}
+
 // ── collect-creator-fee-prep ───────────────────────────────────────────────
 // Builds the tx for the coin creator to collect accrued creator fees from the
 // pump.fun fee vault into their own wallet.
@@ -4164,6 +4376,11 @@ const collectCreatorFeePrepSchema = z.object({
 	// The wallet that will sign (and receive fees). Must match creator_address.
 	wallet_address: z.string().min(32).max(44),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+	// Sweep every quote mint (SOL plus USDC and any other listed quote) instead
+	// of SOL alone, so a USDC-paired coin's rewards are claimable too.
+	all_quotes: z.boolean().default(false),
+	transaction_version: z.union([z.literal('auto'), z.literal(0), z.literal(1)]).default('auto'),
+	v1_capable: z.boolean().default(false),
 });
 
 async function handleCollectCreatorFeePrep(req, res) {
@@ -4185,16 +4402,21 @@ async function handleCollectCreatorFeePrep(req, res) {
 		const { sdk, connection } = await getPumpSdk({ network: body.network });
 		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
 		const onlineSdk = new OnlinePumpSdk(connection);
-		const ixs = await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, feePayer);
-		const tx_base64 = await buildUnsignedTxBase64({
+		const ixs = body.all_quotes
+			? await onlineSdk.collectCoinCreatorFeeAllQuotesInstructions(creatorPk, feePayer)
+			: await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, feePayer);
+		const built = await buildLaunchTransaction({
 			network: body.network,
 			payer: feePayer,
 			instructions: Array.isArray(ixs) ? ixs : [ixs],
+			transactionVersion: body.transaction_version,
+			v1Capable: body.v1_capable,
 		});
 		return json(res, 201, {
 			creator: body.creator_address,
 			network: body.network,
-			tx_base64,
+			tx_base64: built.tx_base64,
+			transaction_version: built.transaction_version,
 		});
 	} catch (e) {
 		return error(
@@ -4863,6 +5085,7 @@ const collectFeeAgentSchema = z
 		avatar_id: z.string().uuid().optional(),
 		mint: z.string().min(32).max(44),
 		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+		all_quotes: z.boolean().default(false),
 	})
 	.refine((b) => b.agent_id || b.avatar_id, { message: 'agent_id or avatar_id required' });
 
@@ -4886,7 +5109,9 @@ async function handleCollectCreatorFeeAgent(req, res) {
 		// lamports the claim delivered (net of tx fee): callers (the launcher
 		// claimer, the studio) need the real figure, not a boolean.
 		const balanceBefore = await connection.getBalance(creatorPk).catch(() => null);
-		const ixs = await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, creatorPk);
+		const ixs = body.all_quotes
+			? await onlineSdk.collectCoinCreatorFeeAllQuotesInstructions(creatorPk, creatorPk)
+			: await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, creatorPk);
 		const signature = await signSendWithAgent({
 			network: body.network,
 			agentKeypair: ctx.loaded.keypair,

@@ -1,35 +1,32 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title data-i18n="launch.meta_title">Launch a Coin — mint a token for your 3D agent · three.ws</title>
+		<title>Launch a Coin for Your 3D AI Agent · three.ws</title>
 		<meta
 			name="description"
-			content="Launch a coin for your 3D AI agent in one flow. Pick an agent, set the name, symbol, and image, then mint on pump.fun straight from your wallet — with an optional three.ws-branded vanity mint."
-		 data-i18n-attr="content:launch.meta_description"/>
-		<meta name="robots" content="index, follow" />
+			content="The pump.fun launchpad for 3D AI agents. Pick your agent, name the coin and launch it from your wallet or your agent's wallet, then claim creator rewards on three.ws."
+		/>
+		<meta name="robots" content="index, follow, max-image-preview:large" />
 		<link rel="canonical" href="https://three.ws/launch" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Launch a Coin — mint a token for your 3D agent"  data-i18n-attr="content:launch.meta_og_title"/>
-		<meta
-			property="og:description"
-			content="Pick an agent, set name + symbol + image, and mint a coin on pump.fun straight from your wallet."
-		 data-i18n-attr="content:launch.meta_og_description"/>
+		<meta property="og:title" content="Launch a coin for your 3D AI agent" />
+		<meta property="og:description" content="Pick an agent, name the coin, launch on pump.fun and claim creator rewards, all on three.ws." />
 		<meta property="og:url" content="https://three.ws/launch" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+Coin&amp;d=Mint+a+coin+for+your+3D+AI+agent+in+one+flow%3A+pick+an+agent%2C+set+the+name%2C+symbol%2C+and+image%2C+then+launch+on+pump.fun+straight+from+your+wallet+with+an&amp;p=%2Flaunch" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+Coin&amp;d=The+pump.fun+launchpad+for+3D+AI+agents.+Pick+your+agent%2C+launch+the+coin%2C+claim+creator+rewards+on+three.ws.&amp;p=%2Flaunch" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Launch a Coin on three.ws" />
+		<meta property="og:locale" content="en_US" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Launch a Coin — mint a token for your 3D agent"  data-i18n-attr="content:launch.meta_twitter_title"/>
-		<meta
-			name="twitter:description"
-			content="Pick an agent, set name + symbol + image, and mint a coin on pump.fun straight from your wallet."
-		 data-i18n-attr="content:launch.meta_twitter_description"/>
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+Coin&amp;d=Mint+a+coin+for+your+3D+AI+agent+in+one+flow%3A+pick+an+agent%2C+set+the+name%2C+symbol%2C+and+image%2C+then+launch+on+pump.fun+straight+from+your+wallet+with+an&amp;p=%2Flaunch" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Launch a coin for your 3D AI agent" />
+		<meta name="twitter:description" content="Pick an agent, name the coin, launch on pump.fun and claim creator rewards, all on three.ws." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+Coin&amp;d=The+pump.fun+launchpad+for+3D+AI+agents.+Pick+your+agent%2C+launch+the+coin%2C+claim+creator+rewards+on+three.ws.&amp;p=%2Flaunch" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -42,124 +39,31 @@
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/mobile.css" />
 
-		<style>
-			.lc-page {
-				min-height: 100vh;
-				display: flex;
-				flex-direction: column;
-			}
-			.lc-main {
-				flex: 1;
-				width: 100%;
-				max-width: 880px;
-				margin: 0 auto;
-				padding: 1.5rem 1rem 4rem;
-				box-sizing: border-box;
-			}
-			.lc-breadcrumb {
-				font-size: 0.78rem;
-				color: rgba(255, 255, 255, 0.4);
-				margin-bottom: 1.4rem;
-				display: flex;
-				gap: 0.45rem;
-				align-items: center;
-				flex-wrap: wrap;
-			}
-			.lc-breadcrumb a {
-				color: rgba(255, 255, 255, 0.55);
-				text-decoration: none;
-			}
-			.lc-breadcrumb a:hover {
-				color: #a4f0bc;
-			}
-			.lc-hero {
-				text-align: center;
-				margin-bottom: 1.8rem;
-			}
-			.lc-hero h1 {
-				font-size: clamp(1.7rem, 4.5vw, 2.5rem);
-				font-weight: 700;
-				letter-spacing: -0.02em;
-				margin: 0 0 0.6rem;
-				background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.62));
-				-webkit-background-clip: text;
-				background-clip: text;
-				-webkit-text-fill-color: transparent;
-			}
-			.lc-hero p {
-				font-size: clamp(0.92rem, 2vw, 1.05rem);
-				color: rgba(255, 255, 255, 0.55);
-				line-height: 1.6;
-				max-width: 38ch;
-				margin: 0 auto;
-			}
-			.lc-hero .lc-pill {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.4rem;
-				font-size: 0.72rem;
-				font-weight: 600;
-				letter-spacing: 0.04em;
-				color: #c8f0d8;
-				background: rgba(164, 240, 188, 0.08);
-				border: 1px solid rgba(164, 240, 188, 0.22);
-				border-radius: 999px;
-				padding: 0.3rem 0.7rem;
-				margin-bottom: 1rem;
-			}
-			.lc-pill-dot {
-				width: 6px;
-				height: 6px;
-				border-radius: 50%;
-				background: #a4f0bc;
-				box-shadow: 0 0 6px rgba(164, 240, 188, 0.6);
-			}
-		</style>
-	
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Launch a Coin","description":"Mint a coin for your 3D AI agent in one flow — pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.","url":"https://three.ws/launch","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
-
-	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Launch a Coin — three.ws">
-	<meta name="twitter:site" content="@trythreews">
-</head>
-	<body class="lc-page">
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Launch a Coin","description":"The pump.fun launchpad for 3D AI agents: pick your agent, launch the coin from your wallet or your agent's wallet, and claim creator rewards on three.ws.","url":"https://three.ws/launch","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
-		<main class="lc-main" id="main-content">
-			<nav class="lc-breadcrumb" aria-label="Breadcrumb">
-				<a href="/" data-i18n="launch.three_ws">three.ws</a>
-				<span aria-hidden="true">/</span>
-				<a href="/launches" data-i18n="launch.launches">Launches</a>
-				<span aria-hidden="true">/</span>
-				<span data-i18n="launch.launch_a_coin">Launch a Coin</span>
-			</nav>
-
-			<section class="lc-hero">
-				<span class="lc-pill" data-i18n-html="launch.powered_by_pump_fun"><span class="lc-pill-dot"></span> Powered by pump.fun</span>
-				<h1 data-i18n="launch.launch_a_coin_2">Launch a Coin</h1>
-				<p data-i18n="launch.pick_your_agent_set_the_name_symbol">Pick your agent, set the name, symbol, and image — then mint on-chain straight from your wallet.</p>
-			</section>
-
-			<div id="launch-root"></div>
+		<main class="lx" id="main-content">
+			<div class="lx-head">
+				<div>
+					<p class="lx-eyebrow"><span class="lx-dot" aria-hidden="true"></span>pump.fun launchpad for 3D agents</p>
+					<h1>Launch a coin for your agent</h1>
+					<p class="lx-sub">Pick one of your 3D AI agents, name the coin and launch it on pump.fun. Creator rewards stay claimable right here.</p>
+				</div>
+				<div class="lx-tabs" id="lx-tabs" role="tablist" aria-label="Launchpad">
+					<button type="button" class="lx-tab" role="tab" id="tab-create" data-tab="create" aria-controls="panel-create" aria-selected="true">Create</button>
+					<button type="button" class="lx-tab" role="tab" id="tab-coins" data-tab="coins" aria-controls="panel-coins" aria-selected="false" tabindex="-1">My coins <span class="lx-tab-badge" id="coins-badge" hidden></span></button>
+				</div>
+			</div>
+			<div id="launch-app"></div>
 		</main>
 
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-
-		<script type="module">
-			// launch.js and its dependency chain (/studio/launch-panel.js,
-			// /studio/fees-panel.js) live in public/ and are loaded by URL at
-			// runtime. The specifier is kept in a var so Vite's import-analysis
-			// leaves it as a browser-resolved runtime import instead of trying
-			// to resolve a public-dir asset (which it refuses, aborting the dev
-			// server / build:app).
-			const spec = '/launch/launch.js';
-			const { mountLaunchCoin } = await import(/* @vite-ignore */ spec);
-			mountLaunchCoin(document.getElementById('launch-root'));
-		</script>
+		<script type="module" src="/src/launch/launch-page.js"></script>
 		<script src="/brand.js" defer></script>
-		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
-	<script type="module" src="/i18n.js"></script>
-</body>
+		<script type="module" src="/i18n.js"></script>
+	</body>
 </html>

@@ -1,7 +1,17 @@
-const URL_RE = /(?:https?:\/\/|\b(?:www\.)?three\.ws\/)[^\s]+/gi;
+// Copy lint for @trythreews posts. The account should read like the people who
+// build three.ws wrote it, so the checks reject the tells that make a feed look
+// machine-generated: launch-deck openers, hype vocabulary, hashtags, emoji,
+// shouting, and a post that repeats an earlier one.
 
+const URL_PATTERN = String.raw`(?:https?:\/\/|\b(?:www\.)?three\.ws\/)[^\s]+`;
+const urlRe = (flags = '') => new RegExp(URL_PATTERN, flags);
+
+export const hasUrl = (value) => urlRe('i').test(String(value || ''));
+
+// X counts every URL as 23 characters (t.co wrapping) and each astral code
+// point (emoji, some CJK) as 2.
 export const weightedLength = (value) =>
-	[...String(value || '').replace(URL_RE, 'x'.repeat(23))].reduce(
+	[...String(value || '').replace(urlRe('gi'), 'x'.repeat(23))].reduce(
 		(total, char) => total + (char.codePointAt(0) > 0xffff ? 2 : 1),
 		0,
 	);
@@ -9,7 +19,7 @@ export const weightedLength = (value) =>
 export function normalizeCopy(value) {
 	return String(value || '')
 		.toLowerCase()
-		.replace(URL_RE, ' url ')
+		.replace(urlRe('gi'), ' url ')
 		.replace(/\$([a-z0-9]+)/g, '$1')
 		.replace(/[^a-z0-9@]+/g, ' ')
 		.trim();
@@ -46,6 +56,8 @@ export const BANNED_OPENINGS = [
 	/^ever wondered\b/i,
 	/^what if you could\b/i,
 	/^imagine a world\b/i,
+	/^a thread\b/i,
+	/^thread\b/i,
 ];
 
 export const BANNED_PHRASES = [
@@ -59,22 +71,34 @@ export const BANNED_PHRASES = [
 	/\blet that sink in\b/i,
 	/\bhere'?s the kicker\b/i,
 	/\bsupercharge\b/i,
+	/\bdelve\b/i,
+	/\bin today'?s fast[- ]paced\b/i,
+	/\bbuckle up\b/i,
+	/\bstay tuned\b/i,
 ];
 
-export function copyProblems(text, { minimum = 100, maximum = 280 } = {}) {
+// Acronyms and tickers that are legitimately written in capitals.
+const ALLCAPS_TERMS = new Set(['THREE', 'HTTP', 'HTTPS', 'JSON', 'GLTF', 'USDC', 'HTML', 'WEBP', 'NVIDIA', 'OAUTH', 'MCP', 'GPU', 'GPUS']);
+
+// `minimum` applies to the head of a post; replies may be short. `requireUrl`
+// is false for parts whose item carries its link somewhere else (a reply, or a
+// quoted Article).
+export function copyProblems(text, { minimum = 100, maximum = 280, requireUrl = true } = {}) {
 	const problems = [];
 	const copy = String(text || '').trim();
 	const weight = weightedLength(copy);
 	if (!copy) problems.push('copy is empty');
 	if (weight < minimum) problems.push(`copy is ${weight} weighted characters; minimum is ${minimum}`);
 	if (weight > maximum) problems.push(`copy is ${weight} weighted characters; maximum is ${maximum}`);
-	if (/#\w/.test(copy)) problems.push('hashtags are outside the @trythreews voice');
+	if (/(^|\s)#\w/.test(copy)) problems.push('hashtags are outside the @trythreews voice');
 	if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(copy)) problems.push('emoji are outside the @trythreews voice');
-	if (/[\u2013\u2014]/.test(copy)) problems.push('en-dashes and em-dashes are banned');
-	if (!URL_RE.test(copy)) problems.push('copy must link to its evidence or product surface');
-	URL_RE.lastIndex = 0;
+	if (/[–—]/.test(copy)) problems.push('en-dashes and em-dashes are banned');
+	if (/!{2,}|(?:!.*){3,}/s.test(copy)) problems.push('stacked exclamation marks read as automated hype');
+	if ((copy.match(/\b[A-Z]{4,}\b/g) || []).filter((word) => !ALLCAPS_TERMS.has(word)).length > 1) {
+		problems.push('more than one all-caps word reads as shouting');
+	}
+	if (requireUrl && !hasUrl(copy)) problems.push('copy must link to its evidence or product surface');
 	for (const pattern of BANNED_OPENINGS) if (pattern.test(copy)) problems.push(`banned opening: ${pattern.source}`);
 	for (const pattern of BANNED_PHRASES) if (pattern.test(copy)) problems.push(`banned phrase: ${pattern.source}`);
 	return problems;
 }
-

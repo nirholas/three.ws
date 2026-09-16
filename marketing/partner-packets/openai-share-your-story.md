@@ -40,7 +40,7 @@ The City and State fields assume a US location; the founder's location is not re
 
 **Is this story about:** You
 
-**Tell us about yourself or the person this is about** (about 610 characters)
+**Tell us about yourself or the person this is about** (528 characters)
 
 > I build three.ws, an open-source platform that gives AI a body. You type a sentence and get a
 > textured, rigged 3D character you can animate, place in your room in AR, or embed on any web page
@@ -49,7 +49,7 @@ The City and State fields assume a US location; the founder's location is not re
 > move it, and share it. The platform is free to try with no account or API key, and the viewer,
 > runtime, and web component are open source.
 
-**How do you/they use OpenAI products?** (about 820 characters)
+**How do you/they use OpenAI products?** (676 characters)
 
 > Two ways. First, as a distribution surface: we built a free 3D Studio connector for ChatGPT on the
 > Apps SDK and MCP. It gives ChatGPT eleven keyless tools that generate a 3D model from a prompt,
@@ -59,7 +59,7 @@ The City and State fields assume a US location; the founder's location is not re
 > Second, inside the product: OpenAI models are lanes in our model router for agent chat and
 > embeddings, and OpenAI voices are one of the text-to-speech options an avatar can speak with.
 
-**How has using OpenAI products helped you/them?** (about 700 characters)
+**How has using OpenAI products helped you/them?** (668 characters)
 
 > It changed who can reach 3D. Before the connector, making a model meant finding our site and
 > learning an interface. Inside ChatGPT, someone describes an object in the conversation they are
@@ -69,7 +69,7 @@ The City and State fields assume a US location; the founder's location is not re
 > made the product better everywhere: we wrote honest loading, error, and timeout states, removed
 > anything that needed a key or a wallet from the free path, and documented every tool.
 
-**What makes your/their story special?** (about 640 characters)
+**What makes your/their story special?** (569 characters)
 
 > 3D is usually the last thing people expect a chat assistant to do, and the hardest to do well:
 > meshes, textures, skeletons, and animation all have to work, not just look right in a thumbnail. We

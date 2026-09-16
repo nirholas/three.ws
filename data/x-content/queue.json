@@ -1,0 +1,111 @@
+{
+	"version": 2,
+	"account": "trythreews",
+	"cadence": {
+		"windowMinutes": 90,
+		"minimumMinutesApart": 240,
+		"dailyCap": 3,
+		"quietHoursUtc": [
+			"05:00",
+			"12:00"
+		]
+	},
+	"quality": {
+		"archiveSimilarityLimit": 0.42,
+		"queueSimilarityLimit": 0.34,
+		"maximumSameLaneInARow": 2,
+		"maximumSamePatternInARow": 1
+	},
+	"items": [
+		{
+			"id": "genesis",
+			"status": "review",
+			"kind": "post",
+			"lane": "community",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-17T14:07:00Z",
+			"source": {
+				"path": "docs/announcements/genesis.md"
+			},
+			"posts": [
+				{
+					"text": "A sentence or a selfie becomes a rigged 3D agent holding its own custodial @solana wallet, a persona, and a voice. It walks and emotes on arrival: three.ws/genesis",
+					"media": [
+						{
+							"path": "public/announce/img/genesis-hero.webp",
+							"alt": "The three.ws Genesis page signed in: describe an agent, upload a selfie, or remix a public avatar, and it becomes a rigged 3D agent with its own wallet and on-chain identity"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "rig-doctor",
+			"status": "review",
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "correction",
+			"notBefore": "2026-09-17T19:13:00Z",
+			"source": {
+				"path": "docs/announcements/open-source-friday.md"
+			},
+			"posts": [
+				{
+					"text": "Approved for GitHub's Open Source Friday. Rig Doctor knows 11 rig conventions. Teaching it the 12th is an open first issue, and we merge it live on stream: three.ws/rig-doctor",
+					"media": [
+						{
+							"path": "public/announce/img/rig-doctor-hero.webp",
+							"alt": "three.ws Rig Doctor: drop in any humanoid GLB and it names the skeleton convention, then lists joint by joint which bones will animate and which will not move"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "aws-authorization-spine",
+			"status": "review",
+			"kind": "post",
+			"lane": "article",
+			"pattern": "number",
+			"notBefore": "2026-09-18T00:19:00Z",
+			"source": {
+				"path": "docs/announcements/aws-builder-center-authorization-spine.md"
+			},
+			"posts": [
+				{
+					"text": "How we authorize autonomous spend, and the $THREE layer, on @awscloud: https://builder.aws.com/content/3JAVvvItd3ZSVjYCDb4qjj5VBb9/budgets-entitlements-and-the-dollarthree-token-layer-how-we-authorize-autonomous-agent-spending-or-threews-an-aws-partner",
+					"media": [
+						{
+							"path": "public/announce/img/aws-builder-center-authorization-spine.webp",
+							"alt": "The article live on the AWS Builder Center under the three.ws byline, headlined Budgets, entitlements, and the $THREE token layer: how we authorize autonomous agent spending, published 11 September 2026"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "web-component-article",
+			"status": "draft",
+			"kind": "article",
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-09-17T17:00:00.000Z",
+			"source": {
+				"url": "https://three.ws/blog/agent-3d-web-component",
+				"importedAt": "2026-09-16T16:33:45.221Z"
+			},
+			"article": {
+				"title": "We Just Shipped the 3D Layer for the Internet: <agent-3d>",
+				"body": "data/x-content/articles/web-component-article.md",
+				"cover": {
+					"path": "public/x-media/web-component-article/00-cover.png"
+				}
+			},
+			"posts": [
+				{
+					"text": "One web component. An AI with a body, memory, emotions, and DOM awareness. Covers its eyes when you type a password. Lives on-chain."
+				}
+			]
+		}
+	]
+}

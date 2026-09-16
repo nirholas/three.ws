@@ -394,6 +394,13 @@ export function buildTokenMetadata(t) {
 		{ trait_type: 'Platform', value: THREE_WS.name },
 		{ trait_type: 'Launchpad', value: 'pump.fun' },
 		{ trait_type: '$THREE', value: tok.mint },
+		...(t.agentUrl ? [{ trait_type: '3D Agent', value: t.agentUrl }] : []),
+	];
+	// The coin's 3D agent travels with it: the agent page, plus the avatar GLB as
+	// the standard `animation_url` (wallets and explorers that render 3D read it).
+	const files = [
+		...(t.image ? [{ uri: t.image, type: 'image/png' }] : []),
+		...(t.agentModelUrl ? [{ uri: t.agentModelUrl, type: 'model/gltf-binary' }] : []),
 	];
 
 	const json = {
@@ -408,12 +415,14 @@ export function buildTokenMetadata(t) {
 		telegram,
 		// Standard + brand extras (explorers/wallets read these; pump ignores them)
 		external_url: website,
+		...(t.agentModelUrl ? { animation_url: t.agentModelUrl } : {}),
 		attributes,
 		properties: {
 			category: 'image',
-			...(t.image ? { files: [{ uri: t.image, type: 'image/png' }] } : {}),
+			...(files.length ? { files } : {}),
 			creators: creators(t.creatorAddress),
 		},
+		...(t.agentUrl ? { agent: { url: t.agentUrl, ...(t.agentModelUrl ? { model: t.agentModelUrl } : {}) } } : {}),
 		platform: {
 			name: THREE_WS.name,
 			url: THREE_WS.website,

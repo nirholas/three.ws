@@ -42,11 +42,12 @@ export const PUMP_LOOKUP_TABLES = Object.freeze({
 	devnet: '7y3623xaVQzsLxHRyp1wQD4Pmer5JjgbaagGFAEqCjua',
 });
 
-// A simulated createV2 + dev buy + fee transfer consumed ~205k CU and loaded
-// 14.4 MB of account data on mainnet. v1 carries these as hard caps (an unset
-// cap is zero, not a default), so leave real headroom on both.
+// Simulated on mainnet: a SOL createV2 + dev buy + fee transfer consumed ~189k CU,
+// a USDC-quoted one ~346k, and a launch loaded ~14.4 MB of account data. v1
+// carries these as hard caps (an unset cap is zero, not a default) and the
+// priority fee is a flat total, so generous caps cost nothing extra.
 export const LAUNCH_V1_CONFIG = Object.freeze({
-	computeUnitLimit: 400_000,
+	computeUnitLimit: 800_000,
 	loadedAccountsDataSizeLimit: 32 * 1024 * 1024,
 	priorityFeeLamports: 10_000n,
 });
