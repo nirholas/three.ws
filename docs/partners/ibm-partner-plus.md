@@ -112,7 +112,7 @@ The September 2026 Partner Plus mailer, item by item:
 |---|---|---|
 | 6% extra on Power, Flash, Fusion, Scale deals | **Ignore** | Resale margin on IBM hardware for competitive takeouts. We are a Build partner, not a reseller. Nothing here is reachable. |
 | IBM Bob marketing assets in My Digital Marketing | **Pursue** | This is the co-marketing platform benefit. See below. |
-| G2 review for a $25 gift card | **Do, and it is honest** | We genuinely run Granite on watsonx.ai in production, so we can write a truthful review. Cheap, and partner reviews are visible to the IBM ecosystem team we already have a relationship with. |
+| G2 review for a $25 gift card | **Do, and it is honest** | Only honest once Granite is actually serving again: checked 2026-09-16, production has no `WATSONX_*` credentials and `/api/ibm/galaxy` answers `watsonx_not_configured`. Draft in [ibm-g2-review.md](../../marketing/partner-packets/ibm-g2-review.md). Cheap, and partner reviews are visible to the IBM ecosystem team we already have a relationship with. |
 | Partner Day AI experience | **Relationship value only** | Sales enablement, not technical. Worth attending only if the marketing contacts from the June meetings will be there. |
 | IBM Software Quoting session | **Ignore** | A quoting tool for resellers. |
 | Partner Growth Day with Confluent | **Ignore** | Kafka data streaming, framed for partner sales. We are on GCP credits; Pub/Sub and the existing Cloud Scheduler crons cover our volume, and Confluent Cloud would be a new paid third-party API requiring owner approval. |
