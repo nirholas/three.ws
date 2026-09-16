@@ -30,6 +30,7 @@
 			"posts": [
 				{
 					"text": "A sentence or a selfie becomes a rigged 3D agent holding its own custodial @solana wallet, a persona, and a voice. It walks and emotes on arrival: three.ws/genesis",
+					"textFrom": "docs/announcements/genesis.post.txt",
 					"media": [
 						{
 							"path": "public/announce/img/genesis-hero.webp",
@@ -52,6 +53,7 @@
 			"posts": [
 				{
 					"text": "Approved for GitHub's Open Source Friday. Rig Doctor knows 11 rig conventions. Teaching it the 12th is an open first issue, and we merge it live on stream: three.ws/rig-doctor",
+					"textFrom": "docs/announcements/open-source-friday.post.txt",
 					"media": [
 						{
 							"path": "public/announce/img/rig-doctor-hero.webp",
@@ -74,36 +76,13 @@
 			"posts": [
 				{
 					"text": "How we authorize autonomous spend, and the $THREE layer, on @awscloud: https://builder.aws.com/content/3JAVvvItd3ZSVjYCDb4qjj5VBb9/budgets-entitlements-and-the-dollarthree-token-layer-how-we-authorize-autonomous-agent-spending-or-threews-an-aws-partner",
+					"textFrom": "docs/announcements/aws-builder-center-authorization-spine.post.txt",
 					"media": [
 						{
 							"path": "public/announce/img/aws-builder-center-authorization-spine.webp",
 							"alt": "The article live on the AWS Builder Center under the three.ws byline, headlined Budgets, entitlements, and the $THREE token layer: how we authorize autonomous agent spending, published 11 September 2026"
 						}
 					]
-				}
-			]
-		},
-		{
-			"id": "web-component-article",
-			"status": "draft",
-			"kind": "article",
-			"lane": "article",
-			"pattern": "longform",
-			"notBefore": "2026-09-17T17:00:00.000Z",
-			"source": {
-				"url": "https://three.ws/blog/agent-3d-web-component",
-				"importedAt": "2026-09-16T16:33:45.221Z"
-			},
-			"article": {
-				"title": "We Just Shipped the 3D Layer for the Internet: <agent-3d>",
-				"body": "data/x-content/articles/web-component-article.md",
-				"cover": {
-					"path": "public/x-media/web-component-article/00-cover.png"
-				}
-			},
-			"posts": [
-				{
-					"text": "One web component. An AI with a body, memory, emotions, and DOM awareness. Covers its eyes when you type a password. Lives on-chain."
 				}
 			]
 		}

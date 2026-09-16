@@ -44,6 +44,17 @@ export function loadArticle(root, article) {
 	return markdownToContentState(markdown, { articlePath: article.body });
 }
 
+// A post may name the announcement-pack file its copy was reviewed in
+// (docs/announcements/<slug>.post.txt). In a checkout the inline text must match
+// that file byte for byte, so a pack edit cannot drift from what ships. The
+// production image carries no docs/, so the check is skipped there.
+function textFromProblems(post, root) {
+	if (!post.textFrom) return [];
+	const path = resolve(root, post.textFrom);
+	if (!existsSync(path)) return root === process.cwd() && existsSync(resolve(root, 'docs')) ? [`textFrom ${post.textFrom} is missing`] : [];
+	return readFileSync(path, 'utf8').trim() === String(post.text || '').trim() ? [] : [`text differs from ${post.textFrom}; copy the reviewed pack text into the queue`];
+}
+
 function postProblems(item, root, { headMinimum, headNeedsUrl }) {
 	const problems = [];
 	const posts = item.posts || [];
@@ -52,6 +63,7 @@ function postProblems(item, root, { headMinimum, headNeedsUrl }) {
 
 	posts.forEach((post, index) => {
 		const label = index === 0 ? 'head' : `reply ${index}`;
+		problems.push(...textFromProblems(post, root).map((problem) => `${label}: ${problem}`));
 		for (const problem of copyProblems(post.text, { minimum: index === 0 ? headMinimum : 1, requireUrl: false })) {
 			problems.push(`${label}: ${problem}`);
 		}
@@ -68,7 +80,7 @@ function articleProblems(item, root) {
 	const title = String(article.title || '').trim();
 	if (!title) problems.push('article title is empty');
 	if (title.length > MAX_ARTICLE_TITLE) problems.push(`article title is ${title.length} characters; keep it under ${MAX_ARTICLE_TITLE}`);
-	if (/[–—]/.test(title)) problems.push('article title: en-dashes and em-dashes are banned');
+	if (/[\u2013\u2014]/.test(title)) problems.push('article title: en-dashes and em-dashes are banned');
 
 	if (!article.cover?.path) problems.push('article needs a cover image; X shows it on the card in every feed');
 	else {
@@ -86,7 +98,7 @@ function articleProblems(item, root) {
 	const converted = loadArticle(root, article);
 	const { blocks } = converted.content_state;
 	if (blocks.length < 3) problems.push(`article body has ${blocks.length} blocks; that is a post, not an Article`);
-	if (/[–—]/.test(blocks.map((block) => block.text).join('\n'))) problems.push('article body: en-dashes and em-dashes are banned');
+	if (/[\u2013\u2014]/.test(blocks.map((block) => block.text).join('\n'))) problems.push('article body: en-dashes and em-dashes are banned');
 	if (converted.markdownWeight > MARKDOWN_ENTITY_BUDGET) {
 		problems.push(`code blocks and tables total ${converted.markdownWeight} characters; X allows ${MARKDOWN_ENTITY_BUDGET} per Article`);
 	}

@@ -367,6 +367,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
 	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
 	['x402-solana-july-roundup-response', 'internal: ready-to-paste X reply draft; posting is owner-gated'],
+	['x-content-pipeline', 'internal: owner-gated @trythreews publishing queue runbook'],
 	['x-archive', 'internal: marketing analytics over our own X timeline, not a reader-facing product doc'],
 	['x-accounts', 'internal: which X handle is live and what the unposted drafts do about it; account operations, not a reader-facing product doc'],
 	['x-account-appeal', 'internal: the founder account suspension appeal packet; account operations, not a reader-facing product doc'],

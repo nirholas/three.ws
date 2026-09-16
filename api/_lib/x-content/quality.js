@@ -78,7 +78,7 @@ export const BANNED_PHRASES = [
 ];
 
 // Acronyms and tickers that are legitimately written in capitals.
-const ALLCAPS_TERMS = new Set(['THREE', 'HTTP', 'HTTPS', 'JSON', 'GLTF', 'USDC', 'HTML', 'WEBP', 'NVIDIA', 'OAUTH', 'MCP', 'GPU', 'GPUS']);
+const ALLCAPS_TERMS = new Set(['THREE', 'HTTP', 'HTTPS', 'JSON', 'GLTF', 'HTML', 'WEBP', 'NVIDIA', 'OAUTH', 'MCP', 'GPU', 'GPUS']);
 
 // `minimum` applies to the head of a post; replies may be short. `requireUrl`
 // is false for parts whose item carries its link somewhere else (a reply, or a
@@ -92,7 +92,7 @@ export function copyProblems(text, { minimum = 100, maximum = 280, requireUrl = 
 	if (weight > maximum) problems.push(`copy is ${weight} weighted characters; maximum is ${maximum}`);
 	if (/(^|\s)#\w/.test(copy)) problems.push('hashtags are outside the @trythreews voice');
 	if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(copy)) problems.push('emoji are outside the @trythreews voice');
-	if (/[–—]/.test(copy)) problems.push('en-dashes and em-dashes are banned');
+	if (/[\u2013\u2014]/.test(copy)) problems.push('en-dashes and em-dashes are banned');
 	if (/!{2,}|(?:!.*){3,}/s.test(copy)) problems.push('stacked exclamation marks read as automated hype');
 	if ((copy.match(/\b[A-Z]{4,}\b/g) || []).filter((word) => !ALLCAPS_TERMS.has(word)).length > 1) {
 		problems.push('more than one all-caps word reads as shouting');

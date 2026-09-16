@@ -6540,6 +6540,10 @@
 			"schedule": "*/20 * * * *"
 		},
 		{
+			"path": "/api/cron/x-content",
+			"schedule": "*/15 * * * *"
+		},
+		{
 			"path": "/api/cron/commit-feed-push",
 			"schedule": "*/5 * * * *"
 		},

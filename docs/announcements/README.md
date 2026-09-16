@@ -54,11 +54,16 @@ affected files are kept out of the tree by `.gitignore` until approval is record
 ## Posting
 
 Nothing here posts. Publishing to an external channel is owner-gated every time. A finished pack
-means the owner runs one command:
+becomes an item in the [X content queue](../x-content-pipeline.md): its post names the pack file in
+`textFrom`, so `npm run x:content:check` fails if the queued text drifts from the reviewed bytes,
+and its media points at the captured frame. Preview exactly what would be sent:
 
 ```bash
-node scripts/post-tweet.mjs --file docs/announcements/<slug>.post.txt --dry-run
+npm run x:content -- run --dry-run --id <slug>
 ```
+
+The queue publishes an item only after the owner sets it to `approved`. For a one-off post outside
+the queue, `node scripts/post-tweet.mjs --file docs/announcements/<slug>.post.txt --dry-run` still works.
 
 ## Packs
 
