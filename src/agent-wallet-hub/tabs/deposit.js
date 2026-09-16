@@ -19,7 +19,7 @@
  *
  * Every state is designed: loading skeleton, waiting-for-first-deposit (calm empty
  * state), received (success), no-wallet (being prepared), and an RPC-unreachable
- * state that keeps the address + QR fully usable while live confirmation retries.
+ * state that keeps the address visible while all funding controls fail closed.
  *
  * Balance is read from GET /api/agents/:id/solana (the same live-RPC path with
  * failover + 60s server cache used across the hub). No hardcoded balances, no

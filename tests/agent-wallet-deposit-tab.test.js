@@ -6,7 +6,7 @@
 // "funds received" confirmation that fires ONLY on a real on-chain balance
 // increase (never simulated).
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const fetchAgentSolanaWallet = vi.fn();
 const fetchAgentSolanaActivity = vi.fn();
@@ -133,7 +133,9 @@ describe('Deposit tab — public funding surface', () => {
 	it('fires the "received" confirmation only on a real balance increase', async () => {
 		vi.useFakeTimers();
 		try {
-			fetchAgentSolanaWallet.mockResolvedValueOnce({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
+			// The first pending-timer flush also runs the initial poll interval. Keep
+			// returning the baseline until the test explicitly simulates a deposit.
+			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 			const ctx = makeCtx();
 			const { panel, inst } = mountTab(ctx);
 			inst.onShow();
