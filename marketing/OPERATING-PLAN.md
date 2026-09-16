@@ -100,9 +100,8 @@ article. Prioritize capabilities that are visible in under ten seconds:
 4. Wardrobe, Fits, worlds, and community identity;
 5. developer tooling: the MCP fleet, SDKs, packages, and embeddable agents.
 
-The full inventory and strongest candidates are in
-[Announcement coverage](../docs/announcement-coverage.md); the checked execution queue is in
-[Announcement checklist](../docs/announcement-checklist.md). Do not announce a route merely because
+The full inventory, strongest candidates, and per-surface "announced on X" state are in
+[Announcement coverage](../docs/announcement-coverage.md). Do not announce a route merely because
 it is unannounced. It must support one of the four programs and a measurable action.
 
 ### 4. Community participation, 15% of output
@@ -268,8 +267,7 @@ figures, or automate a prize transfer.
   partner-specific routes and prepared assets.
 - [Publishing program](../docs/publishing-program-2026-09.md): eleven long-form drafts, short-form
   venue kit, order, and per-venue rules.
-- [Announcement coverage](../docs/announcement-coverage.md) and
-  [checklist](../docs/announcement-checklist.md): every shipped surface versus its public coverage.
+- [Announcement coverage](../docs/announcement-coverage.md): every shipped surface versus its public coverage.
 - [Announcement voice](../docs/announce-voice.md): measured format rules and content QA.
 - [Open Source Friday plan](../docs/open-source-friday-plan.md): application, run of show, and campaign.
 - [Second IBM event](../docs/ibm-next-event.md): Forge-Off Open proposal and engineering scope.

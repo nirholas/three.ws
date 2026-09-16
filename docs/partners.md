@@ -63,8 +63,10 @@ Live product surfaces: `three.ws/ibm/hello` (the partnership page) and `three.ws
 
 - The `/partners` card says "Marketplace availability".
 - The `/aws` page badge says "AWS Partner, Software Path" and its hero says "Marketplace listing coming soon".
-- [`docs/listings.md`](./listings.md) records AWS Marketplace as Live and three.ws as an AWS Partner.
+- [`docs/listings.md`](./listings.md) records three.ws as an AWS Partner and the Marketplace listing as not yet created. On 2026-09-16 AWS Marketplace search returned no three.ws product and production `POST /api/aws-marketplace/subscription` answered `503 not_configured`.
 - [`docs/aws-marketplace-listing-kit.md`](./aws-marketplace-listing-kit.md) says the backend integration is built and deployed but the listing itself has not yet been created in the AWS Marketplace Management Portal.
+
+The `/aws` hero once told buyers they could subscribe with AWS credits, bill usage to their AWS invoice, and count it toward EDP commitments. None of that is true of a free subscription with usage paid over x402; the stale sentence was removed from the page and every locale on 2026-09-16. Do not reintroduce it.
 
 Do not resolve that spread by picking the strongest claim. If you need one sentence, the safe one is the one the product page uses: three.ws is an AWS Partner, and the Marketplace listing is coming. Longer-form pieces written for AWS channels are [partner spotlight](./aws-partner-spotlight.md), [MCP agents](./aws-builder-center-mcp-agents.md), and [Marketplace metering in front of x402](./aws-builder-center-marketplace-x402.md).
 
