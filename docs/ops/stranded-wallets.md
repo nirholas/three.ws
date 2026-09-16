@@ -1,12 +1,12 @@
 # Stranded custodial wallets: the standing owner decision
 
-Some custodial Solana wallets on three.ws are sealed under an encryption key the
-platform no longer holds. Their SOL is visible on chain, keeps rendering in the
-product, and can never be signed for again. Two of those wallets belong to
-customers who cannot withdraw.
+Some custodial Solana wallets on three.ws are sealed under an encryption key
+production does not hold. Their balance is visible on chain and keeps rendering in
+the product, but cannot be signed for until the sealing key is found. Two of those
+wallets belong to customers who cannot withdraw; one also holds 99.94637 USDC.
 
-This is the decision brief. It carries the measurement, why recovery is
-impossible, what each option costs, and the exact commands for whichever option
+This is the decision brief. It carries the measurement, the recovery path, what each
+option costs if recovery fails, and the exact commands for whichever option
 the owner picks. It does not move money: crediting, contacting, or writing off a
 customer balance is the owner's call.
 
@@ -16,26 +16,76 @@ decision that incident left open.
 
 ## What happened
 
-The 2026-07 Vercel to Cloud Run migration rotated `WALLET_ENCRYPTION_KEY`. Every
-custodial secret written under the retired value became permanently unopenable
-the moment the new key went live, because nothing kept a copy of the old one.
+**Corrected 2026-09-16.** This brief used to say the 2026-07 Vercel to Cloud Run
+migration rotated `WALLET_ENCRYPTION_KEY` and lost the old value. The measurement
+says otherwise:
 
-`api/_lib/secret-box.js` has since gained a retired-key read path
-(`WALLET_ENCRYPTION_KEY_PREVIOUS`, comma separated, tried newest first, and a
-legacy `JWT_SECRET` candidate for v1 records). That path works. It has nothing to
-put in it:
+- Every wallet the production API wrote in June 2026, including a "My First Agent"
+  created the same day as the stranded customer wallet, opens with **today's**
+  production key. Production's key never changed.
+- The stranded customer wallet failed its first withdrawal on 2026-06-30, a week
+  **before** the migration, while production held that same key.
+- Wallets kept being sealed after the migration: 13 QA agents on 2026-08-16 (headless
+  Chrome) and one on 2026-09-03 (a session whose user agent was `home15-preview`).
+- Every `three-ws-api` Cloud Run revision since 2026-07-07, `agent-sniper`, and the
+  `wallet-encryption-key` / `agent-orders-*` secrets carry one key value, the current
+  one. None of them opens a sealed wallet.
 
-- Secret Manager holds exactly ONE version of `WALLET_ENCRYPTION_KEY`, created on
-  migration day. There is no prior version to roll back to.
-- The migration-era `JWT_SECRET` and the current one were both tried against the
-  sealed ciphertext during the 2026-07 investigation. Neither decrypted.
-- AES-GCM authenticates, so there is no "try harder" path: a wrong key throws
-  rather than returning plausible-but-wrong material. There is no brute force
-  worth attempting against a >=32-character master secret.
+The real cause: **a deployment that shared the production database but carried its
+own key** wrote those wallets. `secret-box.js` only requires the dedicated key when
+`VERCEL_ENV` or `NODE_ENV` is `production`, so a preview or dev server pointed at
+production silently encrypted under whatever `WALLET_ENCRYPTION_KEY` or `JWT_SECRET`
+it had. In June that was a Vercel-era deployment other than production (a preview
+environment or a second Vercel project on the same database); in August and
+September, dev and preview servers.
 
-Recovery is therefore not slow or expensive. It is impossible. The only open
-questions are what we owe the affected customers and what we do with the
-platform's own sealed dust.
+That changes the recovery question. The keys were never in Google Cloud, so
+searching it again finds nothing. They may still exist where those deployments
+kept their env: **the Vercel dashboard** (every project and every environment that
+had this `DATABASE_URL`, Settings > Environment Variables; non-sensitive values are
+viewable there) and any local `.env` a developer ran against production. A database
+backup does not help on its own: it holds the same ciphertext, never the key.
+
+### It cannot happen again
+
+`encryptSecret` now binds a database to the key that writes into it
+(`verifyWriteKey` in `api/_lib/secret-box.js`). The first write records an HMAC
+fingerprint of the key in `app_settings` under `secret_box_write_key`; any later
+process holding a different key is refused with `secret_box_key_mismatch` before it
+can seal anything. A runbook rotation (outgoing key kept in
+`WALLET_ENCRYPTION_KEY_PREVIOUS`) moves the binding forward instead of refusing.
+Production was bound on 2026-09-16 with
+`node scripts/recover-sealed-wallets.mjs --bind`.
+
+## Recovering a sealed wallet (no funds move)
+
+`scripts/recover-sealed-wallets.mjs` opens a sealed secret with a candidate key,
+proves it signs for the stored address, and re-encrypts it under the production key
+with a compare-and-swap on the old ciphertext. The address never changes, so the
+owner's balance simply becomes withdrawable. Candidate keys go in on stdin, one per
+line, and are never printed.
+
+```bash
+export DATABASE_URL="$(node scripts/read-service-env.mjs '^DATABASE_URL$' --raw)"
+export WALLET_ENCRYPTION_KEY="$(node scripts/read-service-env.mjs '^WALLET_ENCRYPTION_KEY$' --raw)"
+node scripts/recover-sealed-wallets.mjs --list                  # the sealed set
+node scripts/recover-sealed-wallets.mjs < candidate-keys.txt    # dry run: which key opens which wallet
+node scripts/recover-sealed-wallets.mjs --apply < candidate-keys.txt
+```
+
+Try the `WALLET_ENCRYPTION_KEY` and `JWT_SECRET` of every Vercel project and
+environment that pointed at this database. Delete the candidate file afterwards.
+
+### The funded customer wallet is a real customer
+
+Checked on chain 2026-09-16 for `GemVS5fT958FKRe5fpgizohUYUKE8cUDueEdmB1bmXnm`
+(agent `5e05f68f-eead-4ef9-b6b4-fc85ea73bbe9`): 10 + 89.94527 USDC and 0.25 SOL
+arrived on 2026-06-27 from `58uQ7w8qPvDcD4WsUqtZqCkiMyJrz1fEeMZmuRPaPbZv`. Minutes
+later a look-alike address (`58uQT1Y1…PbZv`) and `5811kC…5bZv` sent dust: that is
+address poisoning aimed at the customer. The account was created from Phantom's iOS
+in-app browser, and every withdrawal asked for either the genuine funding wallet or
+the owner's own login wallet `7jWU2UBX7nKEFSXndbjR3NoSmgeqhL6Fh9fA1Vd7GaRe`, never
+the poisoned address. Nothing indicates abuse.
 
 ## Measured state
 

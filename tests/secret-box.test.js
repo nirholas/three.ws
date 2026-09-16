@@ -105,3 +105,61 @@ describe('secret-box encrypt/decrypt', () => {
 		process.env.JWT_SECRET = JWT; // restore for other tests
 	});
 });
+
+// In-memory app_settings standing in for the database, interpreting exactly the
+// three statements verifyWriteKey issues.
+function fakeSettingsDb() {
+	const rows = new Map();
+	const sql = async (strings, ...values) => {
+		const text = strings.join('?');
+		if (text.startsWith('INSERT')) {
+			if (!rows.has(values[0])) rows.set(values[0], JSON.parse(values[1]));
+			return [];
+		}
+		if (text.startsWith('SELECT')) return rows.has(values[0]) ? [{ value: rows.get(values[0]) }] : [];
+		if (text.startsWith('UPDATE')) {
+			if (rows.get(values[1])?.fingerprint === values[2]) rows.set(values[1], JSON.parse(values[0]));
+			return [];
+		}
+		throw new Error(`unexpected statement: ${text}`);
+	};
+	return { sql, rows };
+}
+
+describe('secret-box write-key guard', () => {
+	const PROD = 'production-wallet-key-000000000000000000000';
+	const ROGUE = 'preview-server-own-key-11111111111111111111';
+
+	it('binds a database to the first key that writes into it', async () => {
+		const { verifyWriteKey, secretBoxKeyFingerprint, WRITE_KEY_SETTING } = await load();
+		const db = fakeSettingsDb();
+		await expect(verifyWriteKey(db.sql, PROD)).resolves.toEqual({ fingerprint: await secretBoxKeyFingerprint(PROD), rotated: false });
+		expect(db.rows.get(WRITE_KEY_SETTING).fingerprint).toBe(await secretBoxKeyFingerprint(PROD));
+		await expect(verifyWriteKey(db.sql, PROD)).resolves.toMatchObject({ rotated: false });
+	});
+
+	it('refuses a process holding a different key than the bound one', async () => {
+		const { verifyWriteKey, SecretBoxKeyMismatchError } = await load();
+		const db = fakeSettingsDb();
+		await verifyWriteKey(db.sql, PROD);
+		await expect(verifyWriteKey(db.sql, ROGUE)).rejects.toBeInstanceOf(SecretBoxKeyMismatchError);
+		await expect(verifyWriteKey(db.sql, ROGUE, ['some-other-retired-key-2222222222222'])).rejects.toMatchObject({ code: 'secret_box_key_mismatch' });
+	});
+
+	it('moves the binding forward on a runbook rotation (outgoing key kept as retired)', async () => {
+		const { verifyWriteKey, secretBoxKeyFingerprint, WRITE_KEY_SETTING } = await load();
+		const db = fakeSettingsDb();
+		await verifyWriteKey(db.sql, PROD);
+		const NEXT = 'rotated-production-key-33333333333333333333';
+		await expect(verifyWriteKey(db.sql, NEXT, [PROD])).resolves.toMatchObject({ rotated: true });
+		expect(db.rows.get(WRITE_KEY_SETTING).fingerprint).toBe(await secretBoxKeyFingerprint(NEXT));
+		await expect(verifyWriteKey(db.sql, PROD)).rejects.toMatchObject({ code: 'secret_box_key_mismatch' });
+	});
+
+	it('never stores anything that reveals the key', async () => {
+		const { verifyWriteKey, WRITE_KEY_SETTING } = await load();
+		const db = fakeSettingsDb();
+		await verifyWriteKey(db.sql, PROD);
+		expect(JSON.stringify(db.rows.get(WRITE_KEY_SETTING))).not.toContain(PROD);
+	});
+});

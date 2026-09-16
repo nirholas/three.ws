@@ -128,11 +128,83 @@ async function deriveKey(secret, salt) {
 	);
 }
 
+// ── Write-key guard ─────────────────────────────────────────────────────────
+//
+// Why this exists: 24 custodial wallets in the production database are sealed
+// under a key production never held. They were not lost in a rotation. A
+// deployment that shared the database but carried its own key (a Vercel-era
+// preview in 2026-06, dev and preview servers in 2026-08 and 2026-09) wrote them,
+// and non-production code is allowed to encrypt under whatever key it has. The
+// first time anyone noticed was a customer who could not withdraw 99.95 USDC.
+//
+// The guard binds a database to the key that writes into it. The first write
+// records an HMAC fingerprint of the key in app_settings; every later write
+// compares against it and refuses on a mismatch, so a process holding the wrong
+// key fails loudly at provisioning instead of silently minting an unopenable
+// wallet. A rotation done by the runbook (outgoing key kept in
+// WALLET_ENCRYPTION_KEY_PREVIOUS) moves the fingerprint forward instead of
+// refusing. The fingerprint is a one-way HMAC, so storing it reveals nothing.
+export const WRITE_KEY_SETTING = 'secret_box_write_key';
+const FINGERPRINT_LABEL = new TextEncoder().encode('three.ws/secret-box/write-key-fingerprint/v1');
+
+export async function secretBoxKeyFingerprint(secret) {
+	const key = await subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+	return Buffer.from(await subtle.sign('HMAC', key, FINGERPRINT_LABEL)).toString('hex');
+}
+
+export class SecretBoxKeyMismatchError extends Error {
+	constructor() {
+		super(
+			'[secret-box] refusing to encrypt: this process holds a different encryption key than ' +
+				'the one bound to this database, so anything it sealed could never be opened by ' +
+				'production. Point it at its own database, or give it the production key.',
+		);
+		this.name = 'SecretBoxKeyMismatchError';
+		this.code = 'secret_box_key_mismatch';
+	}
+}
+
+/**
+ * Bind `sql`'s database to `secret`, or throw SecretBoxKeyMismatchError.
+ * Exported for tests and for operator tooling that seeds the binding.
+ */
+export async function verifyWriteKey(sql, secret, retired = []) {
+	const fingerprint = await secretBoxKeyFingerprint(secret);
+	const value = JSON.stringify({ fingerprint, bound_at: new Date().toISOString() });
+	await sql`INSERT INTO app_settings (key, value) VALUES (${WRITE_KEY_SETTING}, ${value}::jsonb) ON CONFLICT (key) DO NOTHING`;
+	const [row] = await sql`SELECT value FROM app_settings WHERE key = ${WRITE_KEY_SETTING}`;
+	const bound = row?.value?.fingerprint;
+	if (bound === fingerprint) return { fingerprint, rotated: false };
+	const retiredPrints = await Promise.all(retired.map(secretBoxKeyFingerprint));
+	if (bound && retiredPrints.includes(bound)) {
+		await sql`UPDATE app_settings SET value = ${value}::jsonb WHERE key = ${WRITE_KEY_SETTING} AND value->>'fingerprint' = ${bound}`;
+		return { fingerprint, rotated: true };
+	}
+	throw new SecretBoxKeyMismatchError();
+}
+
+let _verifiedWriteKey = null;
+
+// Unit tests encrypt against mocked or absent databases, and a process with no
+// database has nowhere to strand a wallet, so both skip the guard. A failed
+// check is not cached: a transient database error retries on the next write.
+async function guardWriteKey(secret) {
+	if (process.env.VITEST || _verifiedWriteKey === secret) return;
+	let hasDb = false;
+	try { hasDb = Boolean(env.DATABASE_URL); } catch { hasDb = false; }
+	if (!hasDb) return;
+	const { sql } = await import('./db.js');
+	await verifyWriteKey(sql, secret, retiredSecrets());
+	_verifiedWriteKey = secret;
+}
+
 // v2 layout: "v2:" + base64( salt[16] || iv[12] || ciphertext+tag ).
 export async function encryptSecret(plaintext) {
 	const salt = randomBytes(16);
 	const iv = randomBytes(12);
-	const key = await deriveKey(walletMasterSecret(), salt);
+	const secret = walletMasterSecret();
+	await guardWriteKey(secret);
+	const key = await deriveKey(secret, salt);
 	const data = new TextEncoder().encode(plaintext);
 	const ct = await subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
 	const buf = new Uint8Array(salt.length + iv.length + ct.byteLength);
