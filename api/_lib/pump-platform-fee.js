@@ -42,6 +42,21 @@ export function pumpPlatformFeeBps() {
 }
 
 /**
+ * The launch-fee rate in basis points: charged on the dev buy of a coin
+ * launched through three.ws, on top of pump.fun's own fees. Defaults to 100
+ * (1%), the rate the owner set for the launchpad; PUMP_LAUNCH_FEE_BPS=0 turns
+ * it off. Clamped to [0, MAX_FEE_BPS]. Like the trade fee it only bills when a
+ * recipient wallet resolves, and a launch with no dev buy pays nothing.
+ * @returns {number}
+ */
+export function pumpLaunchFeeBps() {
+	const raw = process.env.PUMP_LAUNCH_FEE_BPS;
+	const n = raw == null || String(raw).trim() === '' ? 100 : parseInt(raw, 10);
+	if (!Number.isFinite(n) || n < 0) return 0;
+	return Math.min(n, MAX_FEE_BPS);
+}
+
+/**
  * The fee rate that will ACTUALLY be charged right now: the configured bps when
  * a recipient wallet is set, otherwise 0. Quote/UI surfaces use this so the
  * displayed "Platform fee X%" never claims a fee the transaction won't take.
@@ -114,6 +129,7 @@ export function pumpFeeAtomics(grossAtomics, bps = pumpPlatformFeeBps()) {
  * @param {PublicKey|string} [o.quoteMintPk]      the quote mint (USDC trades)
  * @param {PublicKey} [o.quoteTokenProgram]       the quote mint's token program
  * @param {bigint|number|string} o.grossAtomics   quote spend (buy) / proceeds (sell)
+ * @param {number} [o.bps]              rate override (the launch fee); defaults to the trade fee
  * @returns {Promise<{ instructions: import('@solana/web3.js').TransactionInstruction[],
  *   disclosure: { bps:number, asset:'SOL'|'USDC', amount:string, amount_ui:number,
  *                 recipient:string, basis:string } } | null>}
@@ -126,8 +142,8 @@ export async function buildPlatformFeeInstructions({
 	quoteTokenProgram,
 	grossAtomics,
 	basis = 'trade',
+	bps = pumpPlatformFeeBps(),
 }) {
-	const bps = pumpPlatformFeeBps();
 	const fee = pumpFeeAtomics(grossAtomics, bps);
 	if (fee <= 0n) return null;
 
@@ -180,6 +196,36 @@ export async function buildPlatformFeeInstructions({
 			basis,
 		},
 	};
+}
+
+/**
+ * Did a confirmed, parsed transaction deliver a disclosed platform fee? Reads
+ * the recipient's balance delta from the transaction's own meta (lamports for
+ * SOL, the quote mint's token balance for SPL), so a transaction assembled
+ * outside three.ws without the fee transfer is caught at confirm time.
+ *
+ * @param {object} tx          getParsedTransaction result
+ * @param {{ asset:'SOL'|'USDC', amount:string, recipient:string }} fee
+ * @param {string} [quoteMint] the SPL quote mint for USDC fees
+ * @returns {boolean}
+ */
+export function txPaidPlatformFee(tx, fee, quoteMint) {
+	if (!fee) return true;
+	const want = BigInt(fee.amount || '0');
+	if (want <= 0n) return true;
+	const meta = tx?.meta;
+	if (!meta) return false;
+	if (fee.asset === 'SOL') {
+		const keys = tx.transaction.message.accountKeys.map((k) => String(k.pubkey || k));
+		const i = keys.indexOf(fee.recipient);
+		if (i < 0) return false;
+		return BigInt(meta.postBalances[i] ?? 0) - BigInt(meta.preBalances[i] ?? 0) >= want;
+	}
+	const sum = (rows) =>
+		(rows || [])
+			.filter((b) => b.owner === fee.recipient && (!quoteMint || b.mint === quoteMint))
+			.reduce((acc, b) => acc + BigInt(b.uiTokenAmount?.amount || '0'), 0n);
+	return sum(meta.postTokenBalances) - sum(meta.preTokenBalances) >= want;
 }
 
 export { WSOL_MINT, MAX_FEE_BPS };
