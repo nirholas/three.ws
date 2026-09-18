@@ -58,7 +58,7 @@
 		"@bonfida/spl-name-service": "0.1.67",
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.32.1",
-		"@ethereum-attestation-service/eas-sdk": "0.29.1",
+		"@ethereum-attestation-service/eas-sdk": "2.10.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@solana/web3.js": "^1.98.4",
 		"@tetsuo-ai/protocol": "^0.2.0",
