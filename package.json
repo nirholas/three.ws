@@ -620,7 +620,7 @@
 		"nipplejs": "^1.0.4",
 		"node-html-parser": "^7.1.0",
 		"node-ical": "^0.27.2",
-		"onnxruntime-web": "^1.22.0",
+		"onnxruntime-web": "^1.30.0",
 		"p-limit": "^7.3.2",
 		"postprocessing": "^6.39.5",
 		"puppeteer-core": "^25.1.0",
