@@ -109,11 +109,21 @@ export function parseDraft(raw) {
 
 // The queue item a draft becomes. Written here so the checks below judge exactly
 // what would be published, not an approximation of it.
+// The slot tier a factory post competes for (see x-content/schedule.js): a
+// partner surface is flagship news, a page someone can open is a feature, and a
+// package, worker or service is a build note for the proof-of-work slot. An
+// owner can still move any item by editing its tier in the queue.
+export function tierFor(brief) {
+	if (brief.partner) return 1;
+	return brief.surface?.kind === 'page' ? 2 : 3;
+}
+
 export function itemFor(brief, draft, { mediaPath, probe = null, status = 'draft' }) {
 	const media = [{ path: mediaPath, alt: String(draft.alt || '').trim(), ...(probe ? { probe } : {}) }];
 	return {
 		id: brief.id,
 		status,
+		tier: tierFor(brief),
 		kind: 'post',
 		lane: brief.lane,
 		pattern: brief.pattern,

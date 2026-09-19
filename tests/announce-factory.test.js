@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { buildPlan, laneFor, patternsFor, sequence, slotTimes, slugFor } from '../api/_lib/announce/plan.js';
 import { harvestFacts, quotableLines } from '../api/_lib/announce/brief.js';
-import { draftFindings, itemFor, parseDraft } from '../api/_lib/announce/draft.js';
+import { draftFindings, itemFor, parseDraft, tierFor } from '../api/_lib/announce/draft.js';
 import { cardFacts, cardHtml, commandFrom, namesFrom } from '../api/_lib/announce/card.js';
 import { renderPack } from '../api/_lib/announce/kit.js';
 
@@ -170,6 +170,12 @@ describe('draft', () => {
 		expect(item.posts[0].textFrom).toBe('docs/announcements/forge-max.post.txt');
 		expect(item.posts[0].media[0].alt).toBe(GOOD.alt);
 		expect(item.notBefore).toBe(BRIEF.notBefore);
+	});
+
+	it('gives every factory item the slot tier the queue requires', () => {
+		expect(itemFor(BRIEF, GOOD, { mediaPath: 'x.webp' }).tier).toBe(2);
+		expect(tierFor({ ...BRIEF, surface: { ...BRIEF.surface, kind: 'package' } })).toBe(3);
+		expect(tierFor({ ...BRIEF, partner: { handle: 'awscloud', why: null } })).toBe(1);
 	});
 });
 

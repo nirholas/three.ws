@@ -61,15 +61,14 @@ export async function linkChecks(texts) {
 }
 
 export function createPageReader() {
-	let browser = null;
+	// One launch shared by every caller, so parallel reads never start two browsers.
+	let launching = null;
 	const cache = new Map();
 	return {
 		async text(url) {
 			if (cache.has(url)) return cache.get(url);
-			if (!browser) {
-				const { chromium } = await import('playwright');
-				browser = await chromium.launch();
-			}
+			launching ||= import('playwright').then(({ chromium }) => chromium.launch());
+			const browser = await launching;
 			const page = await browser.newPage({ userAgent: UA });
 			try {
 				const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 }).catch(() => null);
@@ -100,7 +99,7 @@ export function createPageReader() {
 			}
 		},
 		async close() {
-			if (browser) await browser.close();
+			if (launching) await (await launching).close();
 		},
 	};
 }

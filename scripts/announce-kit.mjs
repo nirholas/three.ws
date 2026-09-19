@@ -31,6 +31,7 @@
 //   npm run announce:kit -- --capture            # also shoot the frames
 //   npm run announce:kit -- --include-gated      # include owner-gated media
 //   npm run announce:kit -- --dry-run            # write nothing, print the plan
+//   npm run announce:kit -- --all --concurrency 4  # every ungated planned slot, 4 drafts at a time
 //
 // A draft the model cannot be trusted to write (or that you want to write
 // yourself) can be dropped at data/announce-plan/drafts/<id>.json in the same
@@ -129,7 +130,7 @@ const wanted = (() => {
 	const batch = option('batch');
 	const pool = batch ? plan.slots.filter((row) => row.batch === Number(batch)) : plan.slots;
 	const eligible = includeGated ? pool : pool.filter((row) => !row.mediaGate);
-	return batch ? eligible : eligible.slice(0, Number(option('count', 3)));
+	return batch || flag('all') ? eligible : eligible.slice(0, Number(option('count', 3)));
 })();
 
 if (!wanted.length) {
@@ -211,83 +212,99 @@ function capture(shotId) {
 const pages = live ? createPageReader() : null;
 const results = [];
 
-try {
-	for (const slot of wanted) {
-		const entry = ledgerEntryFor(ledger, slot.key);
-		const rank = (ledger.entries || []).filter((row) => row.coverage === 'no').findIndex((row) => row.key === slot.key) + 1;
-		process.stderr.write(`\n${slot.id}: brief`);
-		const brief = await buildBrief(slot, { root, ledgerEntry: entry, pages });
-		if (!dryRun) {
-			mkdirSync(dirname(join(root, briefPath(slot.id))), { recursive: true });
-			writeFileSync(join(root, briefPath(slot.id)), `${JSON.stringify(brief, null, '\t')}\n`);
-		}
-		process.stderr.write(` (${brief.live.facts.length} live facts, ${brief.evidenceCandidates.length} evidence candidates, ${brief.changelog.length} changelog entries)`);
-
-		if (briefOnly) {
-			results.push({ id: slot.id, state: 'brief', detail: `${brief.evidenceCandidates.length} evidence candidates` });
-			continue;
-		}
-
-		const handWritten = join(DRAFT_DIR, `${slot.id}.json`);
-		let draft = null;
-		let model = 'hand-written draft';
-		let findings = [];
-		if (!redraft && existsSync(handWritten)) {
-			draft = JSON.parse(readFileSync(handWritten, 'utf8'));
-			findings = draftFindings(brief, draft, { root, otherHeads: headsExcept(slot.id) });
-			process.stderr.write(`\n${slot.id}: using ${handWritten.replace(`${root}/`, '')}`);
-		} else {
-			process.stderr.write(`\n${slot.id}: drafting`);
-			try {
-				const attempt = await draftPost(brief, { root, voice, otherHeads: headsExcept(slot.id) });
-				draft = attempt.draft;
-				model = attempt.model;
-				findings = attempt.ok ? [] : attempt.findings;
-				process.stderr.write(` (${attempt.attempts.length} attempt(s) on ${attempt.model})`);
-			} catch (error) {
-				results.push({ id: slot.id, state: 'no model', detail: error.message.split('\n')[0] });
-				process.stderr.write(` failed: ${error.message.split('\n')[0]}`);
-				continue;
-			}
-		}
-
-		if (findings.length) {
-			results.push({ id: slot.id, state: 'draft rejected', detail: findings[0] });
-			if (!dryRun) {
-				mkdirSync(DRAFT_DIR, { recursive: true });
-				writeFileSync(join(DRAFT_DIR, `${slot.id}.rejected.json`), `${JSON.stringify({ draft, findings }, null, '\t')}\n`);
-			}
-			continue;
-		}
-
-		upsertShot(slot, String(draft.alt || '').trim(), entry);
-		if (flag('capture') && !dryRun) {
-			process.stderr.write(`\n${slot.id}: capturing ${slot.shot}`);
-			if (!capture(slot.shot)) process.stderr.write(' (capture failed)');
-		}
-
-		const mediaPath = `public/announce/img/${slot.shot}.webp`;
-		// `review` means finished and waiting for the editorial bar; `draft`
-		// means something is still missing (almost always the frame, which is
-		// captured separately). The queue validator decides which, not this
-		// script's optimism.
-		const candidate = itemFor(brief, draft, { mediaPath });
-		const problems = validateItem(candidate, root);
-		const item = { ...candidate, status: problems.length ? 'draft' : 'review' };
-		const pack = renderPack({ brief, draft, slot, ledgerEntry: entry, rank: rank || null, total: (ledger.totals?.never ?? null), model });
-		if (!dryRun) {
-			mkdirSync(PACK_DIR, { recursive: true });
-			writeFileSync(join(PACK_DIR, `${slot.id}.md`), pack);
-			writeFileSync(join(PACK_DIR, `${slot.id}.post.txt`), renderPostFile(draft));
-			upsertItem(item);
-		}
-		queuedHeads.set(slot.id, item.posts[0].text);
-		results.push({
-			id: slot.id,
-			state: problems.length ? 'packed, item incomplete' : 'packed, awaiting review',
-			detail: problems.length ? problems[0] : `${slot.notBefore.slice(0, 16).replace('T', ' ')} UTC, ${brief.lane}/${brief.pattern}`,
-		});
+// Drafting is the slow part (one model call can take minutes), so surfaces are
+// packed in parallel. Every file write below is synchronous and this is one
+// process, so two surfaces can never interleave a write to the queue or the
+// media spec.
+async function packSlot(slot) {
+	const entry = ledgerEntryFor(ledger, slot.key);
+	const rank = (ledger.entries || []).filter((row) => row.coverage === 'no').findIndex((row) => row.key === slot.key) + 1;
+	process.stderr.write(`\n${slot.id}: brief`);
+	const brief = await buildBrief(slot, { root, ledgerEntry: entry, pages });
+	if (!dryRun) {
+		mkdirSync(dirname(join(root, briefPath(slot.id))), { recursive: true });
+		writeFileSync(join(root, briefPath(slot.id)), `${JSON.stringify(brief, null, '\t')}\n`);
 	}
+	process.stderr.write(` (${brief.live.facts.length} live facts, ${brief.evidenceCandidates.length} evidence candidates, ${brief.changelog.length} changelog entries)`);
+
+	if (briefOnly) {
+		results.push({ id: slot.id, state: 'brief', detail: `${brief.evidenceCandidates.length} evidence candidates` });
+		return;
+	}
+
+	const handWritten = join(DRAFT_DIR, `${slot.id}.json`);
+	let draft = null;
+	let model = 'hand-written draft';
+	let findings = [];
+	if (!redraft && existsSync(handWritten)) {
+		draft = JSON.parse(readFileSync(handWritten, 'utf8'));
+		findings = draftFindings(brief, draft, { root, otherHeads: headsExcept(slot.id) });
+		process.stderr.write(`\n${slot.id}: using ${handWritten.replace(`${root}/`, '')}`);
+	} else {
+		process.stderr.write(`\n${slot.id}: drafting`);
+		try {
+			const attempt = await draftPost(brief, { root, voice, otherHeads: headsExcept(slot.id) });
+			draft = attempt.draft;
+			model = attempt.model;
+			findings = attempt.ok ? [] : attempt.findings;
+			process.stderr.write(` (${attempt.attempts.length} attempt(s) on ${attempt.model})`);
+		} catch (error) {
+			results.push({ id: slot.id, state: 'no model', detail: error.message.split('\n')[0] });
+			process.stderr.write(` failed: ${error.message.split('\n')[0]}`);
+			return;
+		}
+	}
+
+	if (findings.length) {
+		results.push({ id: slot.id, state: 'draft rejected', detail: findings[0] });
+		if (!dryRun) {
+			mkdirSync(DRAFT_DIR, { recursive: true });
+			writeFileSync(join(DRAFT_DIR, `${slot.id}.rejected.json`), `${JSON.stringify({ draft, findings }, null, '\t')}\n`);
+		}
+		return;
+	}
+
+	upsertShot(slot, String(draft.alt || '').trim(), entry);
+	if (flag('capture') && !dryRun) {
+		process.stderr.write(`\n${slot.id}: capturing ${slot.shot}`);
+		if (!capture(slot.shot)) process.stderr.write(' (capture failed)');
+	}
+
+	const mediaPath = `public/announce/img/${slot.shot}.webp`;
+	// `review` means finished and waiting for the editorial bar; `draft`
+	// means something is still missing (almost always the frame, which is
+	// captured separately). The queue validator decides which, not this
+	// script's optimism.
+	const candidate = itemFor(brief, draft, { mediaPath });
+	const problems = validateItem(candidate, root);
+	const item = { ...candidate, status: problems.length ? 'draft' : 'review' };
+	const pack = renderPack({ brief, draft, slot, ledgerEntry: entry, rank: rank || null, total: (ledger.totals?.never ?? null), model });
+	if (!dryRun) {
+		mkdirSync(PACK_DIR, { recursive: true });
+		writeFileSync(join(PACK_DIR, `${slot.id}.md`), pack);
+		writeFileSync(join(PACK_DIR, `${slot.id}.post.txt`), renderPostFile(draft));
+		upsertItem(item);
+	}
+	queuedHeads.set(slot.id, item.posts[0].text);
+	results.push({
+		id: slot.id,
+		state: problems.length ? 'packed, item incomplete' : 'packed, awaiting review',
+		detail: problems.length ? problems[0] : `${slot.notBefore.slice(0, 16).replace('T', ' ')} UTC, ${brief.lane}/${brief.pattern}`,
+	});
+}
+
+const concurrency = Math.max(1, Number(option('concurrency', 1)));
+try {
+	const pending = [...wanted];
+	await Promise.all(Array.from({ length: Math.min(concurrency, pending.length) }, async () => {
+		while (pending.length) {
+			const slot = pending.shift();
+			// One surface whose page or README cannot be read must not cost the rest of the run.
+			await packSlot(slot).catch((error) => results.push({ id: slot.id, state: 'failed', detail: error.message.split('\n')[0] }));
+		}
+	}));
+	const order = new Map(wanted.map((slot, index) => [slot.id, index]));
+	results.sort((left, right) => order.get(left.id) - order.get(right.id));
 } finally {
 	if (pages) await pages.close();
 }
