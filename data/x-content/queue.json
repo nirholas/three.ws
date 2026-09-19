@@ -455,7 +455,7 @@
 		},
 		{
 			"id": "materialize",
-			"status": "approved",
+			"status": "paused",
 			"kind": "post",
 			"lane": "creation",
 			"pattern": "proof",
