@@ -28,7 +28,7 @@
 //   npm run announce:kit -- --batch 1            # a whole week's batch
 //   npm run announce:kit -- --id labor-market    # one surface by id
 //   npm run announce:kit -- --brief-only         # briefs and recipes, no model
-//   npm run announce:kit -- --capture            # also shoot the frames
+//   npm run announce:kit -- --capture            # also shoot the frames and record each page's clip
 //   npm run announce:kit -- --include-gated      # include owner-gated media
 //   npm run announce:kit -- --dry-run            # write nothing, print the plan
 //   npm run announce:kit -- --all --concurrency 4  # every ungated planned slot, 4 drafts at a time
@@ -40,7 +40,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { briefPath, buildBrief } from '../api/_lib/announce/brief.js';
@@ -50,6 +50,7 @@ import { MissingLedgerError, ledgerEntryFor, loadLedger, loadOrBuildPlan } from 
 import { slugFor } from '../api/_lib/announce/plan.js';
 import { createPageReader } from '../api/_lib/x-content/verify.js';
 import { validateItem } from '../api/_lib/x-content/queue.js';
+import { parseFfmpegProbe } from '../api/_lib/x-content/media.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -209,6 +210,28 @@ function capture(shotId) {
 	return result.status === 0;
 }
 
+// The recording spec a surface starts from: the plain tour of its live page.
+// A spec that already exists is never overwritten, so a hand-scripted demo
+// (type a prompt, click, orbit the result) survives a re-run.
+const CLIP_DIR = join(root, 'data/x-content/clips');
+function recordClip(slot) {
+	const specPath = join(CLIP_DIR, `${slot.id}.json`);
+	const out = `public/x-media/${slot.id}/clip.mp4`;
+	if (!dryRun && !existsSync(specPath)) {
+		mkdirSync(CLIP_DIR, { recursive: true });
+		writeFileSync(specPath, `${JSON.stringify({ out, url: slot.url, viewport: 'desktop' }, null, '\t')}\n`);
+	}
+	if (flag('capture') && !dryRun) {
+		process.stderr.write(`\n${slot.id}: recording ${slot.url}`);
+		const run = spawnSync(process.execPath, ['scripts/record-x-clip.mjs', '--spec', relative(root, specPath)], { cwd: root, encoding: 'utf8' });
+		if (run.status !== 0) process.stderr.write(` (recording failed: ${(run.stderr || '').trim().split('\n')[0]})`);
+	}
+	if (!existsSync(join(root, out))) return { path: out, probe: null };
+	const ffmpeg = existsSync(join(root, 'node_modules/ffmpeg-static/ffmpeg')) ? join(root, 'node_modules/ffmpeg-static/ffmpeg') : 'ffmpeg';
+	const probe = parseFfmpegProbe(spawnSync(ffmpeg, ['-hide_banner', '-i', join(root, out)], { encoding: 'utf8' }).stderr);
+	return { path: out, probe };
+}
+
 const pages = live ? createPageReader() : null;
 const results = [];
 
@@ -270,12 +293,17 @@ async function packSlot(slot) {
 		if (!capture(slot.shot)) process.stderr.write(' (capture failed)');
 	}
 
-	const mediaPath = `public/announce/img/${slot.shot}.webp`;
+	// A surface with a route leads with a screen recording of it, the product
+	// itself moving, not a still: the still above stays as the pack's
+	// illustration. A package, worker or service has no page to record, so it
+	// keeps its typeset frame.
+	const clip = slot.url ? recordClip(slot) : null;
+	const mediaPath = clip?.path || `public/announce/img/${slot.shot}.webp`;
 	// `review` means finished and waiting for the editorial bar; `draft`
-	// means something is still missing (almost always the frame, which is
-	// captured separately). The queue validator decides which, not this
-	// script's optimism.
-	const candidate = itemFor(brief, draft, { mediaPath });
+	// means something is still missing (almost always the frame or the clip,
+	// which are captured separately). The queue validator decides which, not
+	// this script's optimism.
+	const candidate = itemFor(brief, draft, { mediaPath, probe: clip?.probe || null });
 	const problems = validateItem(candidate, root);
 	const item = { ...candidate, status: problems.length ? 'draft' : 'review' };
 	const pack = renderPack({ brief, draft, slot, ledgerEntry: entry, rank: rank || null, total: (ledger.totals?.never ?? null), model });

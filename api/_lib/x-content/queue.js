@@ -167,6 +167,45 @@ export function validateItem(item, root) {
 	return problems;
 }
 
+// ── Real media ──────────────────────────────────────────────────────────────
+// The first posts the auto-poster sent (2026-09-18 and 19) all led with the
+// same templated card: logo, headline, and the page shrunk into a small browser
+// frame. Five posts, one look, and the product too small to read. A post leads
+// with the product itself now: a screen recording of the live site
+// (scripts/record-x-clip.mjs) or a screenshot of it. A card may still ride in a
+// reply. The cards are known by their specs in CARD_DIR.
+export const CARD_DIR = 'data/x-content/cards';
+
+export function templatedCardPaths(root) {
+	const dir = resolve(root, CARD_DIR);
+	if (!existsSync(dir)) return new Set();
+	return new Set(
+		readdirSync(dir)
+			.filter((name) => name.endsWith('.json'))
+			.map((name) => JSON.parse(readFileSync(resolve(dir, name), 'utf8')).out)
+			.filter(Boolean),
+	);
+}
+
+const headMedia = (item) => (item.kind === 'article' ? [item.article?.cover].filter(Boolean) : item.posts?.[0]?.media || []);
+
+// Problems with what a post leads with, judged across the whole queue: it must
+// be the product, and it must be its own. `owners` maps a media path to the
+// first item that used it, published items included.
+function leadMediaProblems(item, { cards, owners }) {
+	const media = headMedia(item);
+	if (!media.length) return [];
+	const problems = [];
+	if (media.every((entry) => cards.has(entry.path))) {
+		problems.push('head media is a templated card; lead with the product itself: a screen recording (node scripts/record-x-clip.mjs) or a screenshot of the live page');
+	}
+	for (const entry of media) {
+		const owner = owners.get(entry.path);
+		if (owner && owner !== item.id) problems.push(`head media ${entry.path} already leads ${owner}; every post needs its own capture`);
+	}
+	return problems;
+}
+
 export function headText(item) {
 	return item.kind === 'article' ? `${item.article?.title || ''}\n${item.posts?.[0]?.text || ''}` : item.posts?.[0]?.text || '';
 }
@@ -193,6 +232,16 @@ export function validateQueue(queue, root, { state = null } = {}) {
 
 	const history = loadHistory(root, state);
 	const publishedIds = new Set((state?.published || []).map((row) => row.id));
+
+	// Media is claimed in queue order, sent posts first, so a new item that
+	// reuses a sent post's picture is the one flagged.
+	const sent = (item) => item.status === 'posted' || publishedIds.has(item.id);
+	const owners = new Map();
+	for (const item of [...(queue.items || []).filter(sent), ...(queue.items || []).filter((row) => !sent(row))]) {
+		for (const entry of headMedia(item)) if (entry.path && !owners.has(entry.path)) owners.set(entry.path, item.id);
+	}
+	const cards = templatedCardPaths(root);
+	for (const item of (queue.items || []).filter((row) => !sent(row))) problems[item.id].push(...leadMediaProblems(item, { cards, owners }));
 	const archiveLimit = Number(queue.quality?.archiveSimilarityLimit ?? 0.42);
 	for (const item of live.filter((row) => !publishedIds.has(row.id))) {
 		const head = headText(item);

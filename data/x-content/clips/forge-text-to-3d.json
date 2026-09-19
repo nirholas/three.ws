@@ -1,0 +1,23 @@
+{
+	"out": "public/x-media/forge-text-to-3d/clip.mp4",
+	"url": "https://three.ws/forge",
+	"viewport": "desktop",
+	"steps": [
+		{ "wait": 2500 },
+		{ "caption": "Type what you want." },
+		{ "type": "a weathered brass diving helmet", "into": "#prompt", "delay": 70 },
+		{ "wait": 700 },
+		{ "click": "#generate" },
+		{ "caption": null },
+		{ "wait": 3000 },
+		{ "cut": { "waitFor": "#state-result:not(.is-hidden)", "timeout": 300000, "settle": 7000 }, "caption": "{seconds} seconds later" },
+		{ "wait": 1800 },
+		{ "caption": "A real 3D model. Free, no account." },
+		{ "drag": { "on": "#viewer", "by": [360, 0] }, "ms": 2800 },
+		{ "poster": true },
+		{ "drag": { "on": "#viewer", "by": [-300, 40] }, "ms": 2400 },
+		{ "wait": 1600 },
+		{ "caption": null },
+		{ "wait": 700 }
+	]
+}

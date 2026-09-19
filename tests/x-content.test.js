@@ -397,6 +397,28 @@ describe('queue', () => {
 		for (const item of queue.items.filter((row) => row.status === 'approved')) expect(problems[item.id]).toEqual([]);
 	});
 
+	it('refuses a templated card as the lead and media another post already led with', () => {
+		const dir = sandbox();
+		mkdirSync(join(dir, 'data/x-content/cards'), { recursive: true });
+		writeFileSync(join(dir, 'data/x-content/cards/a.json'), JSON.stringify({ out: 'public/x-media/t/a.png' }));
+		const base = { status: 'review', kind: 'post', tier: 2, lane: 'l', pattern: 'p', notBefore: '2026-09-17T14:00:00Z' };
+		const lead = (path) => [{ text: HEAD, media: [{ path, alt: 'The live page.' }] }];
+		const queue = {
+			items: [
+				{ ...base, id: 'carded', posts: lead('public/x-media/t/a.png') },
+				{ ...base, id: 'sent', status: 'posted', posts: lead('public/x-media/t/b.png') },
+				{ ...base, id: 'reused', posts: lead('public/x-media/t/b.png') },
+				{ ...base, id: 'recorded', posts: lead('public/x-media/t/clip.png') },
+			],
+		};
+		writeFileSync(join(dir, 'public/x-media/t/clip.png'), Buffer.alloc(64));
+		const { problems } = validateQueue(queue, dir);
+		expect(problems.carded.join('\n')).toMatch(/templated card/);
+		expect(problems.reused.join('\n')).toMatch(/already leads sent/);
+		expect(problems.sent.join('\n')).not.toMatch(/already leads/);
+		expect(problems.recorded.join('\n')).not.toMatch(/templated card|already leads/);
+	});
+
 	it('requires media on the head post unless text-only is explicit', () => {
 		const dir = sandbox();
 		const base = { id: 'demo', status: 'review', kind: 'post', tier: 2, lane: 'l', pattern: 'p', notBefore: '2026-09-17T14:00:00Z' };

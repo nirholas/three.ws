@@ -21,6 +21,7 @@ pipeline, enforced before anything is sent:
 | Tell | What the pipeline does |
 |---|---|
 | Link cards and text-only posts | The head post must carry a native image, GIF, or video (`"textOnly": true` opts out on purpose). Media is uploaded to X, not linked. |
+| The same picture on every post | A post leads with the product itself: a screen recording of the live site or a screenshot of it. A head whose only media is a templated card (anything a spec in `data/x-content/cards/` renders) is refused, and so is a head image or clip that another post already led with. Cards can still ride in replies. |
 | Missing alt text | Every image and GIF needs alt text, sent to X as media metadata. |
 | Silent autoplay | `prepare-video` burns captions into the clip, because most of the feed watches muted. |
 | Hype copy | [api/_lib/x-content/quality.js](../api/_lib/x-content/quality.js) rejects launch openers ("Introducing", "We're excited"), hype vocabulary, hashtags, emoji, stacked exclamation marks, all-caps shouting, and en or em dashes. |
@@ -136,7 +137,9 @@ npm run x:content -- import agent-3d-web-component --as post --id web-component-
 npm run x:content -- import https://three.ws/blog/agent-3d-web-component --as article --id web-component-article
 npm run x:content -- import https://example.com/our-guest-post --as article --id guest-post
 
-# 2. Video: transcode to X's spec, burn in captions, and record the probe on the item
+# 2. Video: record the live feature in a real browser (see "Recording the product" below)
+node scripts/record-x-clip.mjs --spec data/x-content/clips/web-component-share.json --item web-component-share
+#    or bring your own screen recording: transcode to X's spec, burn in captions, record the probe
 npm run x:content -- prepare-video ~/Desktop/rig-doctor.mov --out public/x-media/rig-doctor-clip/clip.mp4 --captions ~/Desktop/rig-doctor.srt --item rig-doctor-clip
 
 # 3. Rewrite the imported copy in your own voice, declare its claims, then validate
@@ -157,6 +160,42 @@ npm run x:content:plan
 `import` accepts a blog slug from `blog/`, a three.ws URL (read from this checkout, so it works before a deploy), or any public URL. SVG and AVIF images are rasterized, and oversized images are recompressed to fit X's 5 MB limit. Imports always land as `draft`: the importer cannot know your voice, and the lint cannot either, so a human rewrites the copy before it moves to `review`.
 
 Images for other channels come from [the announcement capture tool](./announcements/README.md) (`npm run announce:media`), which records frames from the live product; point queue media at those files.
+
+## Recording the product
+
+[scripts/record-x-clip.mjs](../scripts/record-x-clip.mjs) opens a live three.ws page in Chromium, drives it through a short list of steps, and records what the page really paints (a CDP screencast, frame times preserved) into an H.264 MP4 that `prepare-video` then probes. It also saves a full-resolution `poster.png` from the same run, for posts where a still fits better. Nothing in a clip is staged: the captions and the cursor dot are drawn over the live page, and a `cut` skips waiting time but its caption states the seconds that really passed.
+
+A spec lives at `data/x-content/clips/<id>.json`. With no `steps`, the clip is a plain tour (the hero, down the page, back up). A flagship post deserves a scripted demo, like the Forge one:
+
+```json
+{
+	"out": "public/x-media/forge-text-to-3d/clip.mp4",
+	"url": "https://three.ws/forge",
+	"steps": [
+		{ "caption": "Type what you want." },
+		{ "type": "a weathered brass diving helmet", "into": "#prompt", "delay": 70 },
+		{ "click": "#generate" },
+		{ "cut": { "waitFor": "#state-result:not(.is-hidden)", "timeout": 300000 }, "caption": "{seconds} seconds later" },
+		{ "drag": { "on": "#viewer", "by": [360, 0] }, "ms": 2800 },
+		{ "poster": true }
+	]
+}
+```
+
+| Step | Does |
+|---|---|
+| `wait`, `waitFor` | Hold for milliseconds, or until a selector is visible |
+| `scroll`, `scrollTo` | Smooth scroll by pixels, or to an element |
+| `move`, `hover`, `click` | Glide a visible cursor to an element or `[x, y]`, then click |
+| `type` (with `into`), `press` | Type at a human pace, press a key |
+| `drag` | Drag between points, or from an element's center `by` an offset (orbit a 3D model) |
+| `caption` | Show a caption over the page in the site's own type; `null` clears it |
+| `cut` | Stop recording until a selector appears, then resume; `{seconds}` in its caption is the real wait |
+| `poster` | Save this moment as `poster.png` |
+
+A step that fails saves `failed-step-<n>.png` next to the clip, so you can see the page at that moment. `--item <id>` attaches the clip to that item's head post. `--backfill` records every unsent draft or review item that has a three.ws page and still leads with a still. The announcement factory (`npm run announce:kit`) writes a tour spec for every page surface it packs and, with `--capture`, records it in the same pass.
+
+Desktop clips are 720p (the screencast paints at CSS-pixel size); posters are 1080p. Recording runs a software-rendered GPU, so a WebGL-heavy page takes about a minute per clip.
 
 ## The editorial bar
 
@@ -211,8 +250,10 @@ Each item declares its trial in `data/x-content/trials/<id>.json`:
 			"type": "job",
 			"name": "a free text-to-3D generation finishes with a GLB",
 			"submit": { "url": "https://three.ws/api/mcp-studio", "body": { "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "forge_free", "arguments": { "prompt": "a small green ceramic frog", "tier": "draft" } } } },
+			"inline": { "path": "result.structuredContent.glbUrl" },
 			"pollUrl": "result.structuredContent.pollUrl",
 			"until": { "path": "status", "equals": "done" },
+			"fail": { "path": "status", "in": ["failed", "error"] },
 			"expect": { "path": "glb_url" },
 			"timeoutMs": 600000
 		}
@@ -223,7 +264,7 @@ Each item declares its trial in `data/x-content/trials/<id>.json`:
 
 `npm run x:content -- trial <id>` runs every step against production, then the model chain lists every promise the post makes to a reader (what they can do, what they get, how fast, what it costs, who does what for them) and names the step or attestation that proves each one. A promise nothing proves, or one "proven" by a step that failed, blocks the post. The run is written to `data/x-content/trial-runs/<id>.json`, bound to the post and the trial spec, and it expires after 3 days. `approve` refuses an item without a fresh passing run, the production cron holds one whose run went stale, and the trial's `api` steps run again seconds before sending.
 
-Steps use the probe types below, plus `job`, which submits a long-running action (a generation, a rig, a render) and polls it until it finishes. "The job was accepted" is exactly the check that passes while the worker behind it is down, so anything a user waits on is trialed as a `job`.
+Steps use the probe types below, plus `job`, which submits a long-running action (a generation, a rig, a render) and polls it until it finishes. "The job was accepted" is exactly the check that passes while the worker behind it is down, so anything a user waits on is trialed as a `job`. Some endpoints finish fast work inside the submit call and only hand back a poll handle when the job outlives it (`/api/mcp-studio` does): give such a step `"inline": { "path": "result.structuredContent.glbUrl" }` and a submit answer that already carries that value counts as finished. When a submit answers with neither a result nor a poll handle, the step fails and quotes the answer, so "the generator is busy" reads as exactly that.
 
 `attestations` cover promises no machine can check, such as a human fulfilling an order. Each names who confirmed it (`by`) and when (`at`), and expires after 30 days. They are the owner's word, never an agent's: an agent leaves such a promise unproven, and the gate sends it to the owner.
 
