@@ -1,0 +1,1 @@
+Paste any Solana mint or EVM contract address, get back a payable x402 market-intel endpoint with copy-paste snippets, live in the bazaar: https://three.ws/ca2x402

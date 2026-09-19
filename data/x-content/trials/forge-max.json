@@ -1,0 +1,42 @@
+{
+	"journey": "A reader opens three.ws/forge-max, finds the High tier already selected, types what they want, and gets back a 200k-poly model with 4K PBR textures from the engine that suits the subject. High is a $THREE holder perk, so the generation itself needs a holder session.",
+	"steps": [
+		{
+			"type": "browser",
+			"name": "three.ws/forge-max opens the Forge with the High tier pinned (the Generate button reads the High gate before the reader touches anything)",
+			"steps": [
+				{ "goto": "https://three.ws/forge-max" },
+				{ "expect": "Forge Max" },
+				{ "expect": "200k-poly geometry, 4K PBR textures, subject-aware engine routing" },
+				{ "expect": "Hold $THREE for High" }
+			]
+		},
+		{
+			"type": "api",
+			"name": "the live Forge catalog defines the High tier as a 200,000-poly PBR tier",
+			"url": "https://three.ws/api/forge?catalog",
+			"expect": { "json": { "path": "tiers.2.polycount", "equals": 200000 } }
+		},
+		{
+			"type": "api",
+			"name": "the live Forge catalog marks the High tier as PBR textured",
+			"url": "https://three.ws/api/forge?catalog",
+			"expect": { "json": { "path": "tiers.2.pbr", "equals": true } }
+		},
+		{
+			"type": "command",
+			"name": "the router's tests prove High-tier engine choice follows the subject (hard-surface to TRELLIS, organic to Hunyuan3D)",
+			"argv": ["npx", "vitest", "run", "tests/api/forge-realism-routing.test.js"],
+			"timeoutMs": 180000
+		},
+		{
+			"type": "api",
+			"name": "a High generation without a $THREE holder session is refused with the hold-or-pay gate, so this trial cannot run the High generation itself",
+			"method": "POST",
+			"url": "https://three.ws/api/forge",
+			"body": { "prompt": "a vintage brass pocket watch", "tier": "high", "path": "image" },
+			"expect": { "status": 402, "contains": "three_hold_required" }
+		}
+	],
+	"attestations": []
+}

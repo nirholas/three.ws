@@ -1,0 +1,1 @@
+Track a single KOL wallet from any AI agent over MCP: live portfolio P&L, win rate, and that wallet's trades on a mint. Read-only, no key. @AnthropicAI https://www.npmjs.com/package/@three-ws/kol-mcp

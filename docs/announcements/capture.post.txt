@@ -1,0 +1,1 @@
+Paste a phone video URL and a single feed-forward pass fuses the frames into a coloured .ply point cloud you can orbit in the browser, no camera poses: https://three.ws/capture

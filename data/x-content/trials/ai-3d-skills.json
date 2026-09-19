@@ -1,0 +1,57 @@
+{
+	"journey": "A reader installs the three.ws 3D skills into Claude from three.ws/docs/agent-skills (the Claude Code plugin, or the downloadable zip), asks for a chair, and Claude searches the free asset catalog first; when nothing in the catalog fits, it generates a new textured GLB from the words on the free lane. No account and no API key at any hop.",
+	"steps": [
+		{
+			"type": "api",
+			"name": "the install guide the post links is live",
+			"url": "https://three.ws/docs/agent-skills",
+			"expect": { "status": 200 }
+		},
+		{
+			"type": "api",
+			"name": "the Claude Code plugin marketplace the guide installs from is public (no account needed to add it)",
+			"url": "https://raw.githubusercontent.com/nirholas/three.ws/main/.claude-plugin/marketplace.json",
+			"expect": { "contains": "three-ws-core" }
+		},
+		{
+			"type": "api",
+			"name": "the installed plugin carries find-3d-assets, whose trigger tells Claude to check the catalog before generating",
+			"url": "https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/find-3d-assets/SKILL.md",
+			"expect": { "contains": "Check here BEFORE generating a model from scratch" }
+		},
+		{
+			"type": "api",
+			"name": "the downloadable 3D skills zip is served with no sign-in",
+			"url": "https://three.ws/skills/3d-studio/three-ws-3d-skills.zip",
+			"expect": { "status": 200 }
+		},
+		{
+			"type": "api",
+			"name": "the free catalog the skill searches holds at least 3,500 assets, read with no key",
+			"url": "https://three.ws/api/catalog?limit=1",
+			"expect": { "json": { "path": "total", "min": 3500 } }
+		},
+		{
+			"type": "api",
+			"name": "asking the catalog for a chair, exactly as the skill does, returns a free CC0 chair with a downloadable GLB",
+			"url": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=5",
+			"expect": { "json": { "path": "items.0.url", "exists": true }, "contains": "\"license\":\"CC0\"" }
+		},
+		{
+			"type": "job",
+			"name": "when nothing fits, the skill's free forge_free call turns words into a finished GLB, with no account or key",
+			"submit": {
+				"url": "https://three.ws/api/mcp-studio",
+				"body": { "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "forge_free", "arguments": { "prompt": "a small glossy green ceramic frog figurine", "tier": "draft" } } }
+			},
+			"inline": { "path": "result.structuredContent.glbUrl" },
+			"pollUrl": "result.structuredContent.pollUrl",
+			"until": { "path": "status", "equals": "done" },
+			"fail": { "path": "status", "in": ["failed", "error"] },
+			"expect": { "path": "glb_url" },
+			"intervalMs": 15000,
+			"timeoutMs": 900000
+		}
+	],
+	"attestations": []
+}

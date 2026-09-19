@@ -1,0 +1,1 @@
+A Node service watches the Pump program on @solana for the complete event, decodes each bonding-curve graduation, and pushes it into Redis: https://github.com/trythreews/three.ws/tree/main/services/pump-graduations

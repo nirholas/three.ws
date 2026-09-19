@@ -1,0 +1,60 @@
+{
+	"journey": "A reader adds the published @three-ws/three-token-mcp server to their AI client, the client lists three_burn marked irreversible, a call without confirm: true is refused, and a confirmed call takes the real burn path against live $THREE config and pricing on Solana. The trial runs the published npm package over stdio exactly as a client would. It never burns: the confirmed call uses a fresh, empty throwaway wallet, so it stops at the balance check before any transaction is built or signed.",
+	"steps": [
+		{
+			"type": "command",
+			"name": "the published server lists three_burn as irreversible, refuses without confirm: true, and a confirmed burn runs the live $THREE path up to the wallet balance check",
+			"argv": [
+				"node",
+				"--input-type=module",
+				"-e",
+				"import { Client } from '@modelcontextprotocol/sdk/client/index.js';\nimport { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';\nimport { Keypair } from '@solana/web3.js';\nimport bs58 from 'bs58';\nimport assert from 'node:assert/strict';\nconst env = { ...process.env }; delete env.SOLANA_SECRET_KEY; delete env.REQUIRE_CONFIRM; delete env.THREE_WS_BASE;\nconst c = new Client({ name: 'x-content-trial', version: '1' });\nawait c.connect(new StdioClientTransport({ command: 'npx', args: ['-y', '@three-ws/three-token-mcp@latest'], env }));\nconst read = (r) => JSON.parse(r.content[0].text);\ntry {\n  const burn = (await c.listTools()).tools.find((t) => t.name === 'three_burn');\n  assert.ok(burn, 'three_burn is not listed');\n  assert.equal(burn.annotations?.destructiveHint, true, 'three_burn is not flagged destructive');\n  assert.equal(burn.annotations?.readOnlyHint, false);\n  const gated = read(await c.callTool({ name: 'three_burn', arguments: { usd: 0.01 } }));\n  assert.equal(gated.error, 'confirmation_required', 'three_burn ran without confirm: true');\n  const price = read(await c.callTool({ name: 'three_price', arguments: { usd: 1 } }));\n  assert.equal(price.mint, 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', 'three_price did not resolve canonical $THREE');\n  assert.ok(price.price_usd > 0, 'three_price returned no live price');\n  const empty = bs58.encode(Keypair.generate().secretKey);\n  const dry = read(await c.callTool({ name: 'three_burn', arguments: { usd: 0.01, confirm: true, secret: empty } }));\n  assert.equal(dry.error, 'insufficient_balance', 'the live burn path did not reach the balance check: ' + JSON.stringify(dry));\n  console.log(`published @three-ws/three-token-mcp over stdio: three_burn is annotated destructiveHint=true readOnlyHint=false; without confirm it answered ${gated.error}; three_price priced $THREE at ${price.price_usd} USD via ${price.source}; with confirm:true and an empty throwaway wallet the live burn path passed the canonical $THREE mint and incinerator checks and stopped at ${dry.error} before building or signing any transaction`);\n} finally { await c.close(); }"
+			],
+			"timeoutMs": 180000
+		},
+		{
+			"type": "command",
+			"name": "three_burn refuses to sign without confirm: true, and the confirm gate runs before the burn cap (repo tests)",
+			"argv": [
+				"node",
+				"--test",
+				"packages/three-token-mcp/test/burn-policy.test.mjs"
+			]
+		},
+		{
+			"type": "command",
+			"name": "three_burn carries destructiveHint and the two reads are read-only (repo tests)",
+			"argv": [
+				"node",
+				"--test",
+				"packages/three-token-mcp/test/annotations.test.mjs"
+			]
+		},
+		{
+			"type": "api",
+			"name": "the package is published on npm",
+			"url": "https://registry.npmjs.org/@three-ws%2fthree-token-mcp",
+			"expect": {
+				"json": {
+					"path": "dist-tags.latest",
+					"exists": true
+				}
+			}
+		},
+		{
+			"type": "browser",
+			"name": "the linked MCP Tool Catalog page shows three_burn as Irreversible",
+			"steps": [
+				{
+					"goto": "https://three.ws/mcp-tools?server=three-token-mcp"
+				},
+				{
+					"expect": "three_burn"
+				},
+				{
+					"expect": "Irreversible"
+				}
+			]
+		}
+	]
+}

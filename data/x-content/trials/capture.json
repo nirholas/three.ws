@@ -1,0 +1,72 @@
+{
+	"journey": "A reader opens three.ws/capture, pastes the URL of a handheld walkthrough video (no camera poses, nothing else), waits for the reconstruction, and orbits the coloured .ply point cloud it returns in the browser. The trial submits a real 42-second handheld walkthrough (Wikimedia Commons, CC) to the production endpoint the page calls, polls it to the end, confirms the result is a real .ply with colour, and loads that exact result into the live /capture viewer.",
+	"steps": [
+		{
+			"type": "browser",
+			"name": "the live /capture page offers a video URL box",
+			"steps": [
+				{
+					"goto": "https://three.ws/capture"
+				},
+				{
+					"expect": "Paste a video URL"
+				}
+			]
+		},
+		{
+			"type": "job",
+			"name": "a pasted walkthrough video URL, with no camera poses, reconstructs into a coloured .ply that loads in the /capture viewer",
+			"submit": {
+				"url": "https://three.ws/api/scene-capture",
+				"body": {
+					"video_url": "https://upload.wikimedia.org/wikipedia/commons/9/90/Vertigo_Antwerpen_-_walkthrough.webm",
+					"mode": "streaming",
+					"fps": 4,
+					"keyframe_interval": 4,
+					"mask_sky": true
+				}
+			},
+			"pollTemplate": "https://three.ws/api/scene-capture?job={job_id|url}",
+			"until": {
+				"path": "status",
+				"equals": "done"
+			},
+			"fail": {
+				"path": "status",
+				"in": [
+					"failed",
+					"error"
+				]
+			},
+			"expect": {
+				"path": "result_url"
+			},
+			"intervalMs": 15000,
+			"timeoutMs": 1500000,
+			"then": [
+				{
+					"type": "api",
+					"name": "the result is a .ply point cloud with per-vertex colour",
+					"url": "{result_url}",
+					"expect": {
+						"contains": "property uchar red"
+					},
+					"timeoutMs": 120000
+				},
+				{
+					"type": "browser",
+					"name": "the result renders in the live /capture viewer",
+					"steps": [
+						{
+							"goto": "https://three.ws/capture?src={result_url|url}&name=Trial%20capture"
+						},
+						{
+							"expect": "Trial capture ·",
+							"timeoutMs": 120000
+						}
+					]
+				}
+			]
+		}
+	]
+}

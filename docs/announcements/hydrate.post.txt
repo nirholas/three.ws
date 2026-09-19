@@ -1,0 +1,1 @@
+Hydrate finds the agents you already own on Solana or ERC-8004 from your connected wallet and attaches a 3D body, voice, and skills @solana https://three.ws/hydrate

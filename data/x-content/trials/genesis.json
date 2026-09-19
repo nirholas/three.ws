@@ -1,0 +1,48 @@
+{
+	"journey": "A signed-in reader opens three.ws/genesis, types one sentence (or uploads a selfie), names the agent, gives it a persona and picks a voice, presses Begin, and gets back a rigged 3D agent that holds its own custodial Solana wallet, carries that persona and voice, and is animating when it arrives. The optional on-chain identity is not part of the post and is never exercised.",
+	"steps": [
+		{
+			"type": "api",
+			"name": "the voice list Genesis offers is live",
+			"url": "https://three.ws/api/tts/voices",
+			"expect": { "json": { "path": "voices", "min": 1 } }
+		},
+		{
+			"type": "command",
+			"name": "a sentence typed into /genesis (real browser, signed-in QA account) becomes a rigged GLB whose skeleton maps to every humanoid bone the walk/idle/emote clips drive",
+			"argv": ["node", "scripts/x-content-genesis-trial.mjs", "--mode", "text", "--facet", "body"],
+			"timeoutMs": 900000
+		},
+		{
+			"type": "command",
+			"name": "a selfie uploaded to /genesis (real browser, signed-in QA account, a generated portrait) becomes a rigged GLB whose skeleton maps to every humanoid bone the walk/idle/emote clips drive",
+			"argv": ["node", "scripts/x-content-genesis-trial.mjs", "--mode", "selfie", "--facet", "body"],
+			"timeoutMs": 900000
+		},
+		{
+			"type": "command",
+			"name": "the agent Genesis just made holds its own custodial Solana wallet (address from the wallet provision call, shown on the reveal and stored on the agent)",
+			"argv": ["node", "scripts/x-content-genesis-trial.mjs", "--mode", "any", "--facet", "wallet"],
+			"timeoutMs": 900000
+		},
+		{
+			"type": "command",
+			"name": "the persona typed into Genesis is saved as the new agent's system prompt",
+			"argv": ["node", "scripts/x-content-genesis-trial.mjs", "--mode", "any", "--facet", "persona"],
+			"timeoutMs": 900000
+		},
+		{
+			"type": "command",
+			"name": "the voice picked in Genesis is saved on the new agent and speaks through /api/tts/speak",
+			"argv": ["node", "scripts/x-content-genesis-trial.mjs", "--mode", "any", "--facet", "voice"],
+			"timeoutMs": 900000
+		},
+		{
+			"type": "command",
+			"name": "on arrival (the Genesis reveal) the agent's model is playing an animation clip rather than standing in its bind pose",
+			"argv": ["node", "scripts/x-content-genesis-trial.mjs", "--mode", "any", "--facet", "animates"],
+			"timeoutMs": 900000
+		}
+	],
+	"attestations": []
+}

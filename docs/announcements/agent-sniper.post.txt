@@ -1,0 +1,1 @@
+Agent Sniper runs a real simulated buy-then-sell on-chain before broadcasting a trade. Library, CLI, MCP server, or x402 paid API: https://www.npmjs.com/package/@three-ws/agent-sniper

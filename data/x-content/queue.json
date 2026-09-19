@@ -302,285 +302,6 @@
 			"note": "Announced by hand on 2026-09-10 (see data/x-content/external.json). Never post again."
 		},
 		{
-			"id": "three-token-mcp",
-			"status": "paused",
-			"kind": "post",
-			"lane": "token",
-			"pattern": "mechanism",
-			"notBefore": "2026-09-18T16:00:00Z",
-			"source": {
-				"path": "docs/announcements/three-token-mcp.md"
-			},
-			"posts": [
-				{
-					"text": "An MCP server that lets an AI burn $THREE on @solana. three_burn is flagged irreversible and by default won't sign without confirm: true. three.ws/mcp-tools?server=three-token-mcp",
-					"textFrom": "docs/announcements/three-token-mcp.post.txt",
-					"media": [
-						{
-							"path": "public/announce/img/three-token-mcp-hero.webp",
-							"alt": "The three.ws MCP Tool Catalog filtered to the @three-ws/three-token-mcp server: 3 of 321 tools, with three_balance and three_price labelled read-only and three_burn labelled irreversible, all free"
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "burn $THREE on @solana",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "Burn $THREE on-chain"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "signs and broadcasts on Solana mainnet"
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/lib/token.js",
-							"contains": "export function assertCanonicalThree(config)"
-						}
-					]
-				},
-				{
-					"says": "flagged irreversible",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "Irreversible. Cannot be undone once it runs."
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/tools/three-burn.js",
-							"contains": "destructiveHint: true"
-						}
-					]
-				},
-				{
-					"says": "by default won't sign without confirm: true",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "IRREVERSIBLE: pass confirm:true"
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/tools/three-burn.js",
-							"contains": "if (REQUIRE_CONFIRM && confirm !== true)"
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/config.js",
-							"contains": "if (raw === undefined) return true;"
-						}
-					]
-				}
-			],
-			"mentions": {
-				"@solana": "three_burn signs and broadcasts one Solana mainnet transaction (packages/three-token-mcp/src/lib/token.js); $THREE is an SPL token and Solana is the platform's home chain."
-			},
-			"tier": 1,
-			"probes": [
-				{
-					"type": "command",
-					"name": "three_burn refuses to sign without confirm: true",
-					"argv": [
-						"node",
-						"--test",
-						"packages/three-token-mcp/test/burn-policy.test.mjs"
-					]
-				},
-				{
-					"type": "api",
-					"name": "the package is published on npm",
-					"url": "https://registry.npmjs.org/@three-ws%2fthree-token-mcp",
-					"expect": {
-						"json": {
-							"path": "dist-tags.latest",
-							"exists": true
-						}
-					}
-				},
-				{
-					"type": "api",
-					"name": "the live tool catalog lists three_burn",
-					"url": "https://three.ws/mcp-catalog.json",
-					"expect": {
-						"contains": "\"three_burn\""
-					}
-				}
-			]
-		},
-		{
-			"id": "forge-max",
-			"status": "review",
-			"kind": "post",
-			"lane": "developer",
-			"pattern": "number",
-			"notBefore": "2026-09-18T23:00:00Z",
-			"source": {
-				"path": "docs/announcements/forge-max.md",
-				"url": "https://three.ws/forge-max"
-			},
-			"posts": [
-				{
-					"text": "three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for.",
-					"textFrom": "docs/announcements/forge-max.post.txt",
-					"media": [
-						{
-							"path": "public/announce/img/forge-max-hero.webp",
-							"alt": "The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "200k-poly geometry, 4K PBR textures",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/forge-max",
-							"contains": "The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk."
-						}
-					]
-				}
-			],
-			"mentions": {},
-			"tier": 2
-		},
-		{
-			"id": "materialize",
-			"status": "paused",
-			"kind": "post",
-			"lane": "creation",
-			"pattern": "proof",
-			"notBefore": "2026-09-19T15:00:00Z",
-			"source": {
-				"path": "docs/announcements/materialize.md",
-				"url": "https://three.ws/materialize"
-			},
-			"posts": [
-				{
-					"text": "You can now turn any 3D model into a real object.\n\nDrop in a .glb, or pick one you made in our Forge.\n\nIt checks the model will print, and gives you an exact price.\n\nPay in USDC on Solana. We print it and ship it to you.\n\nthree.ws/materialize",
-					"textFrom": "docs/announcements/materialize.post.txt",
-					"media": [
-						{
-							"path": "public/x-media/materialize/card.png",
-							"alt": "A three.ws card reading \"Any 3D model. A real object.\" beside the Materialize page with a blue and white ceramic vase loaded: printability score 100, ready to print, full-colour sandstone selected among six materials, and a size slider at 200 mm."
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "It checks the model will print",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/materialize",
-							"contains": "measures whether it can actually be printed"
-						}
-					]
-				},
-				{
-					"says": "pick one you made in our Forge",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/materialize.js",
-							"contains": "label: 'Your creations'"
-						},
-						{
-							"type": "file",
-							"path": "src/materialize.js",
-							"contains": "/api/forge-gallery"
-						}
-					]
-				},
-				{
-					"says": "an exact price",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/materialize",
-							"contains": "Nothing is estimated from a bounding box."
-						}
-					]
-				},
-				{
-					"says": "Pay in USDC on Solana",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/materialize",
-							"contains": "You pay the exact quoted amount in USDC on Solana"
-						}
-					]
-				},
-				{
-					"says": "We print it and ship it to you",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/ops/materialize-fulfillment.md",
-							"contains": "Every paid Materialize order has to become an object in a box."
-						}
-					]
-				}
-			],
-			"mentions": {},
-			"tier": 2,
-			"probes": [
-				{
-					"type": "api",
-					"name": "a real model is analyzed as print-ready",
-					"url": "https://three.ws/api/print/quote",
-					"method": "POST",
-					"body": {
-						"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb"
-					},
-					"expect": {
-						"json": {
-							"path": "report.score",
-							"equals": 100
-						}
-					}
-				},
-				{
-					"type": "api",
-					"name": "a real model gets a priced, signed quote in USDC on Solana",
-					"url": "https://three.ws/api/print/quote",
-					"method": "POST",
-					"body": {
-						"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb",
-						"materialId": "resin-standard",
-						"targetHeightMm": 120,
-						"country": "US"
-					},
-					"expect": {
-						"json": {
-							"path": "quote.chain",
-							"equals": "solana"
-						}
-					},
-					"timeoutMs": 10000
-				},
-				{
-					"type": "api",
-					"name": "the Materialize page is live",
-					"url": "https://three.ws/materialize",
-					"expect": {
-						"status": 200
-					}
-				}
-			]
-		},
-		{
 			"id": "embed-30-seconds",
 			"status": "posted",
 			"kind": "post",
@@ -920,6 +641,120 @@
 			]
 		},
 		{
+			"id": "three-token-mcp",
+			"status": "paused",
+			"kind": "post",
+			"lane": "token",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-18T16:00:00Z",
+			"source": {
+				"path": "docs/announcements/three-token-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "An MCP server that lets an AI burn $THREE on @solana. three_burn is flagged irreversible and by default won't sign without confirm: true. three.ws/mcp-tools?server=three-token-mcp",
+					"textFrom": "docs/announcements/three-token-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/three-token-mcp-hero.webp",
+							"alt": "The three.ws MCP Tool Catalog filtered to the @three-ws/three-token-mcp server: 3 of 321 tools, with three_balance and three_price labelled read-only and three_burn labelled irreversible, all free"
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "burn $THREE on @solana",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "Burn $THREE on-chain"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "signs and broadcasts on Solana mainnet"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/lib/token.js",
+							"contains": "export function assertCanonicalThree(config)"
+						}
+					]
+				},
+				{
+					"says": "flagged irreversible",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "Irreversible. Cannot be undone once it runs."
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/tools/three-burn.js",
+							"contains": "destructiveHint: true"
+						}
+					]
+				},
+				{
+					"says": "by default won't sign without confirm: true",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "IRREVERSIBLE: pass confirm:true"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/tools/three-burn.js",
+							"contains": "if (REQUIRE_CONFIRM && confirm !== true)"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/config.js",
+							"contains": "if (raw === undefined) return true;"
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@solana": "three_burn signs and broadcasts one Solana mainnet transaction (packages/three-token-mcp/src/lib/token.js); $THREE is an SPL token and Solana is the platform's home chain."
+			},
+			"tier": 1,
+			"probes": [
+				{
+					"type": "command",
+					"name": "three_burn refuses to sign without confirm: true",
+					"argv": [
+						"node",
+						"--test",
+						"packages/three-token-mcp/test/burn-policy.test.mjs"
+					]
+				},
+				{
+					"type": "api",
+					"name": "the package is published on npm",
+					"url": "https://registry.npmjs.org/@three-ws%2fthree-token-mcp",
+					"expect": {
+						"json": {
+							"path": "dist-tags.latest",
+							"exists": true
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the live tool catalog lists three_burn",
+					"url": "https://three.ws/mcp-catalog.json",
+					"expect": {
+						"contains": "\"three_burn\""
+					}
+				}
+			]
+		},
+		{
 			"id": "ai-3d-skills",
 			"status": "paused",
 			"kind": "post",
@@ -1030,6 +865,1053 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "forge-max",
+			"status": "review",
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "number",
+			"notBefore": "2026-09-18T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/forge-max.md",
+				"url": "https://three.ws/forge-max"
+			},
+			"posts": [
+				{
+					"text": "three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for.",
+					"textFrom": "docs/announcements/forge-max.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/forge-max-hero.webp",
+							"alt": "The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "200k-poly geometry, 4K PBR textures",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge-max",
+							"contains": "The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk."
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"tier": 2
+		},
+		{
+			"id": "materialize",
+			"status": "paused",
+			"kind": "post",
+			"lane": "creation",
+			"pattern": "proof",
+			"notBefore": "2026-09-19T15:00:00Z",
+			"source": {
+				"path": "docs/announcements/materialize.md",
+				"url": "https://three.ws/materialize"
+			},
+			"posts": [
+				{
+					"text": "You can now turn any 3D model into a real object.\n\nDrop in a .glb, or pick one you made in our Forge.\n\nIt checks the model will print, and gives you an exact price.\n\nPay in USDC on Solana. We print it and ship it to you.\n\nthree.ws/materialize",
+					"textFrom": "docs/announcements/materialize.post.txt",
+					"media": [
+						{
+							"path": "public/x-media/materialize/card.png",
+							"alt": "A three.ws card reading \"Any 3D model. A real object.\" beside the Materialize page with a blue and white ceramic vase loaded: printability score 100, ready to print, full-colour sandstone selected among six materials, and a size slider at 200 mm."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "It checks the model will print",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/materialize",
+							"contains": "measures whether it can actually be printed"
+						}
+					]
+				},
+				{
+					"says": "pick one you made in our Forge",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/materialize.js",
+							"contains": "label: 'Your creations'"
+						},
+						{
+							"type": "file",
+							"path": "src/materialize.js",
+							"contains": "/api/forge-gallery"
+						}
+					]
+				},
+				{
+					"says": "an exact price",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/materialize",
+							"contains": "Nothing is estimated from a bounding box."
+						}
+					]
+				},
+				{
+					"says": "Pay in USDC on Solana",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/materialize",
+							"contains": "You pay the exact quoted amount in USDC on Solana"
+						}
+					]
+				},
+				{
+					"says": "We print it and ship it to you",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/materialize-fulfillment.md",
+							"contains": "Every paid Materialize order has to become an object in a box."
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"tier": 2,
+			"probes": [
+				{
+					"type": "api",
+					"name": "a real model is analyzed as print-ready",
+					"url": "https://three.ws/api/print/quote",
+					"method": "POST",
+					"body": {
+						"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb"
+					},
+					"expect": {
+						"json": {
+							"path": "report.score",
+							"equals": 100
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "a real model gets a priced, signed quote in USDC on Solana",
+					"url": "https://three.ws/api/print/quote",
+					"method": "POST",
+					"body": {
+						"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb",
+						"materialId": "resin-standard",
+						"targetHeightMm": 120,
+						"country": "US"
+					},
+					"expect": {
+						"json": {
+							"path": "quote.chain",
+							"equals": "solana"
+						}
+					},
+					"timeoutMs": 10000
+				},
+				{
+					"type": "api",
+					"name": "the Materialize page is live",
+					"url": "https://three.ws/materialize",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
+		},
+		{
+			"id": "agent-sniper",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-21T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/agent-sniper.md"
+			},
+			"posts": [
+				{
+					"text": "Agent Sniper runs a real simulated buy-then-sell on-chain before broadcasting a trade. Library, CLI, MCP server, or x402 paid API: https://www.npmjs.com/package/@three-ws/agent-sniper",
+					"textFrom": "docs/announcements/agent-sniper.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/agent-sniper-hero.webp",
+							"alt": "Terminal and browser view of the three.ws Agent Sniper package running, showing a strategy panel, a pump.fun launch feed, and a simulated buy-then-sell check logged before a pending trade."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "runs a real simulated buy-then-sell on-chain before broadcasting a trade",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/agent-sniper.md",
+							"contains": "Before broadcasting, the executor runs a real simulated buy-then-sell on-chain."
+						}
+					]
+				},
+				{
+					"says": "MCP server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/agent-sniper/README.md",
+							"contains": "`agent-sniper mcp` exposes the engine as an MCP stdio server."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "agora-mcp",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-22T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/agora-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "Any MCP assistant reads Agora's job board and pulse for free, then with your own Solana signer claims work, proves it, and earns $THREE on-chain. https://www.npmjs.com/package/@three-ws/agora-mcp",
+					"textFrom": "docs/announcements/agora-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/agora-mcp-hero.webp",
+							"alt": "Terminal window showing the npm package page for @three-ws/agora-mcp with its description of the Agora MCP server, tool list, and install command"
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "with your own Solana signer claims work, proves it, and earns $THREE",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/agora-mcp/README.md",
+							"contains": "Then, with **your own Solana signer**, actually join the workforce: register as a citizen, claim a job, do the real work, and complete it with a re-derivable proof to release the escrow and earn."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "alerts-mcp",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-23T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/alerts-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "alerts-mcp is an MCP server that hands an AI agent your pumpfun alert rules. Account-scoped to your session, fired server-side by the cron. https://three.ws",
+					"textFrom": "docs/announcements/alerts-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/alerts-mcp-hero.webp",
+							"alt": "Terminal session showing an AI agent connected to the alerts-mcp server, managing pumpfun alert rules and reading a history of fired alerts with per-channel delivery status."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "an MCP server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/alerts-mcp/README.md",
+							"contains": "A [Model Context Protocol](https://modelcontextprotocol.io) server that turns the three.ws pump.fun **alerts** surface into an agent-drivable control plane over stdio."
+						}
+					]
+				},
+				{
+					"says": "Account-scoped to your session",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/alerts-mcp/README.md",
+							"contains": "Rules are **account-scoped**: every call carries your three.ws session, so the server reads and writes only *your* rules and *your* alert history."
+						}
+					]
+				},
+				{
+					"says": "fired server-side by the cron",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/alerts-mcp/README.md",
+							"contains": "The pumpfun-monitor cron does the watching server-side, so your rules fire across devices with no dashboard open."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "intel",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-26T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/intel.md"
+			},
+			"posts": [
+				{
+					"text": "One import, four reads on a token: sentiment pulse, aixbt narrative intel, momentum-ranked scans, and a live Solana snapshot, each a normalized aggregate: https://www.npmjs.com/package/@three-ws/intel",
+					"textFrom": "docs/announcements/intel.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/intel-hero.webp",
+							"alt": "Documentation page for the three.ws intel package on npm, showing the install command, a JavaScript import example, and function calls for sentiment and token snapshot reads."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "four reads on a token: sentiment pulse, aixbt narrative intel, momentum-ranked scans, and a live Solana snapshot, each a normalized aggregate",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/intel/README.md",
+							"contains": "Four independent reads, each fronting a normalized aggregate."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "kol-mcp",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-28T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/kol-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "Track a single KOL wallet from any AI agent over MCP: live portfolio P&L, win rate, and that wallet's trades on a mint. Read-only, no key. @AnthropicAI https://www.npmjs.com/package/@three-ws/kol-mcp",
+					"textFrom": "docs/announcements/kol-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/kol-mcp-hero.webp",
+							"alt": "Screenshot from the @three-ws/kol-mcp package page showing a tracked KOL wallet portfolio card with profit and loss figures alongside a list of that wallet's recent trades on a token mint."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "track a single KOL wallet",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/kol-mcp/README.md",
+							"contains": "A [Model Context Protocol](https://modelcontextprotocol.io) server for the **per-wallet KOL deep dive**."
+						}
+					]
+				},
+				{
+					"says": "trades on a mint",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/kol-mcp/README.md",
+							"contains": "The three.ws trade feed is mint-keyed (it scans every tracked KOL wallet for activity on one mint), so a per-wallet view is that feed narrowed to your wallet."
+						}
+					]
+				},
+				{
+					"says": "Read-only, no key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/kol-mcp/README.md",
+							"contains": "All live, read-only: no API key, signer, or payment on the client."
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@AnthropicAI": "The package is a Model Context Protocol server, the MCP standard Anthropic publishes, so the surface genuinely runs on their protocol."
+			}
+		},
+		{
+			"id": "assistant",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-09-29T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/assistant.md",
+				"url": "https://three.ws/assistant"
+			},
+			"posts": [
+				{
+					"text": "A script tag puts an animated 3D avatar on your site: chatbot on free models or your own Groq or OpenRouter key, or speak mode reads what you type. three.ws/assistant",
+					"textFrom": "docs/announcements/assistant.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/assistant-hero.webp",
+							"alt": "Screen recording of the three.ws assistant builder: a floating launcher opens an animated 3D avatar in the corner of the page with a chat panel and speech bubble, while the live preview re-mounts as options change."
+						}
+					]
+				},
+				{
+					"text": "Also installable as the three-ws/assistant npm package and a free MCP server, so an agent can generate the paste-ready embed itself."
+				},
+				{
+					"text": "The builder page runs a live preview in the corner that re-mounts as you edit, so the loop here is the real widget, not a mockup."
+				}
+			],
+			"claims": [
+				{
+					"says": "chatbot on free models or your own Groq or OpenRouter key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assistant",
+							"contains": "What should the chatbot know about your site?"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "autopilot",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "token",
+			"pattern": "clip",
+			"notBefore": "2026-09-30T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/autopilot.md",
+				"url": "https://three.ws/autopilot"
+			},
+			"posts": [
+				{
+					"text": "Coin Autopilot runs a launched coin for you: set the buyback and burn floors and the holder payouts, and your agent narrates every on-chain move live. https://three.ws/autopilot",
+					"textFrom": "docs/announcements/autopilot.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/autopilot-hero.webp",
+							"alt": "Animated loop of the Coin Autopilot page on three.ws, showing coin cards with buyback and holder payout rule switches, floor fields, and a live feed of agent narrated on-chain moves."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "your agent narrates every on-chain move live",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/autopilot",
+							"contains": "Your agent runs the whole coin lifecycle on its own: it buys back & burns from creator fees and distributes payments to holders, on the rules you set. Every on-chain move is narrated live by your agent's avatar."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "agenc-room",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "token",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-02T18:00:00Z",
+			"source": {
+				"path": "docs/announcements/agenc-room.md",
+				"url": "https://three.ws/agenc/room"
+			},
+			"posts": [
+				{
+					"text": "Paste a creator wallet and the AgenC task room renders each task it posted as a 3D agent animated by its live on-chain state: https://three.ws/agenc/room",
+					"textFrom": "docs/announcements/agenc-room.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/agenc-room-hero.webp",
+							"alt": "The AgenC task room page on three.ws, showing a grid of task cards, each holding an embodied 3D agent avatar whose pose reflects live on-chain task state from a creator wallet."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "Paste a creator wallet and the AgenC task room renders each task it posted as a 3D agent animated by its live on-chain state",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/agenc/room",
+							"contains": "Paste a creator wallet to render every task it has posted on AgenC as an embodied avatar, each one animated by its live on-chain state."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "wardrobe",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-10-02T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/wardrobe.md",
+				"url": "https://three.ws/wardrobe"
+			},
+			"posts": [
+				{
+					"text": "The Wardrobe turns a text prompt into a wearable: photo, 3D mesh, placement, auto-rigging, publish. Finished pieces are public and wearable by anyone: https://three.ws/wardrobe",
+					"textFrom": "docs/announcements/wardrobe.post.txt",
+					"media": [
+						{
+							"path": "public/x-media/wardrobe/clip.mp4",
+							"probe": {
+								"durationSec": 14.47,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							}
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "The Wardrobe turns a text prompt into a wearable: photo, 3D mesh, placement, auto-rigging, publish.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "A text prompt becomes a wearable: reference photo, 3D mesh, placement on the canonical body, auto-rigging, validation, publish. Watch every real stage below. Finished pieces are public and instantly wearable by anyone."
+						}
+					]
+				},
+				{
+					"says": "Finished pieces are public and wearable by anyone",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "A text prompt becomes a wearable: reference photo, 3D mesh, placement on the canonical body, auto-rigging, validation, publish. Watch every real stage below. Finished pieces are public and instantly wearable by anyone."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "concierge",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "community",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-03T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/concierge.md",
+				"url": "https://three.ws/concierge"
+			},
+			"posts": [
+				{
+					"text": "Add the tag and your site gets a concierge: a rigged 3D avatar that reads the live page and lipsyncs answers. Edit your pricing and the next reply knows. https://three.ws/concierge",
+					"textFrom": "docs/announcements/concierge.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/concierge-hero.webp",
+							"alt": "The three.ws Concierge page rendered on a laptop, with a chat panel open in the corner showing a rigged 3D avatar mid-reply next to the install snippet for the one-tag embed."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "a rigged 3D avatar that reads the live page and lipsyncs answers",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/concierge.md",
+							"contains": "Concierge is the three.ws support-chat widget: a floating launcher that opens a chat panel where a rigged 3D avatar blinks, idles, and lipsyncs while it answers visitors."
+						},
+						{
+							"type": "file",
+							"path": "docs/concierge.md",
+							"contains": "Answers stream in live, are grounded in the page the widget sits on, and speak aloud with the browser's own speech engine."
+						}
+					]
+				},
+				{
+					"says": "Edit your pricing and the next reply knows.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/concierge.md",
+							"contains": "Because the page itself is the knowledge source, the concierge is never stale: edit your pricing page and the very next answer reflects it."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "agora",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-10-09T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/agora.md",
+				"url": "https://three.ws/agora"
+			},
+			"posts": [
+				{
+					"text": "Agora is a watchable 3D square where AI citizens claim paid on-chain work and walk to the job. Sol claimed a Scribe job for 0.001 SOL on devnet. three.ws/agora",
+					"textFrom": "docs/announcements/agora.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/agora-hero.webp",
+							"alt": "Animated loop of the Agora commons: a 3D town square populated by AI citizen avatars walking between buildings, with a job board and live economy ticker showing population, tasks, and $THREE balances."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "Sol claimed a Scribe job for 0.001 SOL on devnet",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/agora",
+							"contains": "Sol claimed a Scribe job (0.001 SOL · devnet)."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "capture",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-10T13:00:00Z",
+			"source": {
+				"path": "docs/announcements/capture.md",
+				"url": "https://three.ws/capture"
+			},
+			"posts": [
+				{
+					"text": "Paste a phone video URL and a single feed-forward pass fuses the frames into a coloured .ply point cloud you can orbit in the browser, no camera poses: https://three.ws/capture",
+					"textFrom": "docs/announcements/capture.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/capture-hero.webp",
+							"alt": "The Scene Capture page on three.ws, showing a prompt to paste a video URL to reconstruct it, drop a .ply file, or try the sample point cloud, beside a 3D viewer stage."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "a single feed-forward pass fuses the frames into a coloured .ply point cloud you can orbit in the browser, no camera poses",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/capture.md",
+							"contains": "Scene Capture collapses that into a single feed-forward pass: no per-scene optimization, no manual camera poses, just frames in and dense world-space geometry out."
+						}
+					]
+				},
+				{
+					"says": "Paste a phone video URL",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/capture",
+							"contains": "Paste a video URL on the right to reconstruct, drop a .ply here, or try the sample cloud."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "seeker",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-11T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/seeker.md",
+				"url": "https://three.ws/seeker"
+			},
+			"posts": [
+				{
+					"text": "Sign in with Seed Vault: one tap, no seed phrase, no transaction. A selfie from the Seeker camera comes back as a rigged 3D avatar. https://three.ws/seeker",
+					"textFrom": "docs/announcements/seeker.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/seeker-hero.webp",
+							"alt": "The three.ws home screen on a Solana Seeker phone, showing Seed Vault sign-in, a rigged 3D avatar made from a camera selfie, and agent cards carrying a Seeker verified pill."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "one tap, no seed phrase, no transaction",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/seeker",
+							"contains": "One tap. No seed phrase, no browser extension, no transaction."
+						}
+					]
+				},
+				{
+					"says": "A selfie from the Seeker camera comes back as a rigged 3D avatar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/seeker",
+							"contains": "One photo with the Seeker camera. A rigged 3D avatar in about a minute."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "ca2x402",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-10-13T13:00:00Z",
+			"source": {
+				"path": "docs/announcements/ca2x402.md",
+				"url": "https://three.ws/ca2x402"
+			},
+			"posts": [
+				{
+					"text": "Paste any Solana mint or EVM contract address, get back a payable x402 market-intel endpoint with copy-paste snippets, live in the bazaar: https://three.ws/ca2x402",
+					"textFrom": "docs/announcements/ca2x402.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/ca2x402-hero.webp",
+							"alt": "Screen recording of the three.ws CA to x402 page: a token contract address is pasted into the input, resolved, and a payable x402 market-intel endpoint is generated alongside copy-paste code snippets."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "any Solana mint or EVM contract address",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/ca2x402",
+							"contains": "Any Solana mint or EVM contract address."
+						}
+					]
+				},
+				{
+					"says": "a payable x402 market-intel endpoint with copy-paste snippets, live in the bazaar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/ca2x402",
+							"contains": "You get a payable x402 endpoint + copy-paste snippets, live in the bazaar."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "daily-match",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "labs",
+			"pattern": "number",
+			"notBefore": "2026-10-13T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/daily-match.md",
+				"url": "https://three.ws/daily-match"
+			},
+			"posts": [
+				{
+					"text": "Daily Match scores agents on what they ship in a UTC day: actions ×1, trades ×5, skill sales ×15, launches ×25. Winning is standing, not payouts: https://three.ws/daily-match",
+					"textFrom": "docs/announcements/daily-match.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/daily-match-hero.webp",
+							"alt": "A standings table titled Daily Match listing agents ranked by output score, with columns for actions, trades, skill sales, coin launches, realized P&L, and score, plus a countdown to the daily UTC reset and a live output feed beside the board."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "actions ×1, trades ×5, skill sales ×15, launches ×25",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/daily-match",
+							"contains": "Output score = actions ×1 + trades ×5 + skill sales ×15 + launches ×25. Every column is counted from real platform activity today (UTC). Realized P&L is shown for context and never scored."
+						}
+					]
+				},
+				{
+					"says": "Winning is standing, not payouts",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/daily-match",
+							"contains": "Live standings from real agent output: on-chain actions, trades, paid skill sales, and coin launches since 00:00 UTC. Reputation-first: winning is standing, not payouts."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "hydrate",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-10-14T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/hydrate.md",
+				"url": "https://three.ws/hydrate"
+			},
+			"posts": [
+				{
+					"text": "Hydrate finds the agents you already own on Solana or ERC-8004 from your connected wallet and attaches a 3D body, voice, and skills @solana https://three.ws/hydrate",
+					"textFrom": "docs/announcements/hydrate.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/hydrate-hero.webp",
+							"alt": "Screen recording of the three.ws hydrate page: a connected wallet view listing on-chain agents found in the registry, each row offering an import action that attaches a 3D body, voice, and skills."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "agents you already own on Solana or ERC-8004 from your connected wallet",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/hydrate",
+							"contains": "To import your on-chain agents, you need to connect a wallet first."
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@solana": "Hydrate imports agents registered in the Solana registry, so the surface genuinely reads from and runs against Solana."
+			}
+		},
+		{
+			"id": "service-pump-graduations",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-15T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/service-pump-graduations.md"
+			},
+			"posts": [
+				{
+					"text": "A Node service watches the Pump program on @solana for the complete event, decodes each bonding-curve graduation, and pushes it into Redis: https://github.com/trythreews/three.ws/tree/main/services/pump-graduations",
+					"textFrom": "docs/announcements/service-pump-graduations.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/service-pump-graduations-hero.webp",
+							"alt": "Terminal window showing the pump-graduations Node service running, streaming Pump program log events decoded into graduation records written to a Redis list."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "watches the Pump program on @solana for the complete event",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "services/pump-graduations/README.md",
+							"contains": "The Pump program emits a `complete` Anchor event when a token graduates."
+						}
+					]
+				},
+				{
+					"says": "decodes each bonding-curve graduation, and pushes it into Redis",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "services/pump-graduations/README.md",
+							"contains": "Wires a source to Redis; exports `buildGraduationRecord`, `pushGraduation` and `createGraduationHandler` so the core path can be exercised without opening a subscription."
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@solana": "The service holds a long-lived Solana WebSocket and subscribes to the Pump program on Solana, so the surface genuinely runs on this chain."
+			}
+		},
+		{
+			"id": "avatar-cli",
+			"status": "draft",
+			"tier": 2,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "clip",
+			"notBefore": "2026-10-16T13:00:00Z",
+			"source": {
+				"path": "docs/announcements/avatar-cli.md",
+				"url": "https://three.ws/avatar-cli"
+			},
+			"posts": [
+				{
+					"text": "Four commands take a GLB and a wallet to a hash-anchored avatar manifest and an embed snippet that renders. Offline, no API key, safe in a release script: https://three.ws/avatar-cli",
+					"textFrom": "docs/announcements/avatar-cli.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/avatar-cli-hero.webp",
+							"alt": "Screen recording of a terminal replaying the four avatar CLI commands: init scaffolds a manifest from a wallet and GLB, validate checks it, hash prints the SHA-256, and preview prints an agent-3d embed snippet."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "Four commands take a GLB and a wallet to a hash-anchored avatar manifest and an embed snippet that renders",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-cli.md",
+							"contains": "Four commands take you from a `.glb` file to a snippet you can paste into a page."
+						}
+					]
+				},
+				{
+					"says": "Offline, no API key, safe in a release script",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-cli.md",
+							"contains": "Everything it does is offline and deterministic: no account, no API key, no network call."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "voice",
+			"status": "draft",
+			"tier": 1,
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-17T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/voice.md",
+				"url": "https://three.ws/voice"
+			},
+			"posts": [
+				{
+					"text": "Pick your agent's voice from hundreds across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, or clone your own from 20-30 seconds of clear speech: https://three.ws/voice",
+					"textFrom": "docs/announcements/voice.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/voice-hero.webp",
+							"alt": "The Voice Lab page on three.ws, showing a searchable grid of voice options with provider filters and a recording control for cloning a voice from a short sample."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "hundreds across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/voice",
+							"contains": "Pick a voice from hundreds across Microsoft Edge, Google Gemini, NVIDIA, OpenAI and ElevenLabs, or record 20-30 seconds of clear speech and clone your own. Either way it works across your avatars and agents."
+						}
+					]
+				},
+				{
+					"says": "clone your own from 20-30 seconds of clear speech",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/voice",
+							"contains": "Pick a voice from hundreds across Microsoft Edge, Google Gemini, NVIDIA, OpenAI and ElevenLabs, or record 20-30 seconds of clear speech and clone your own. Either way it works across your avatars and agents."
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@nvidia": "NVIDIA is one of the voice providers listed on the Voice Lab page, so the surface genuinely serves NVIDIA voices."
+			}
 		}
 	]
 }

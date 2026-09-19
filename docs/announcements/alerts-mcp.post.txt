@@ -1,0 +1,1 @@
+alerts-mcp is an MCP server that hands an AI agent your pumpfun alert rules. Account-scoped to your session, fired server-side by the cron. https://three.ws

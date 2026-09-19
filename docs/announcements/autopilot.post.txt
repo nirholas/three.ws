@@ -1,0 +1,1 @@
+Coin Autopilot runs a launched coin for you: set the buyback and burn floors and the holder payouts, and your agent narrates every on-chain move live. https://three.ws/autopilot

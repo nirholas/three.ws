@@ -267,7 +267,12 @@ async function commandProbe(probe, root) {
 	const [command, ...args] = probe.argv || [];
 	if (!command) return { ok: false, detail: 'command probe has no argv' };
 	const run = spawnSync(command, args, { cwd: root, encoding: 'utf8', timeout: probe.timeoutMs || 180_000 });
-	if (run.status === 0) return { ok: true, detail: 'exit 0' };
+	// The last stdout line is the command's own account of what it proved; the
+	// trial's promise audit reads it, so a bare "exit 0" would prove nothing.
+	if (run.status === 0) {
+		const said = String(run.stdout || '').trim().split('\n').pop();
+		return { ok: true, detail: said ? `exit 0: ${said.slice(0, 400)}` : 'exit 0' };
+	}
 	const tail = `${run.stdout || ''}${run.stderr || ''}`.trim().split('\n').slice(-3).join(' | ');
 	return { ok: false, detail: `exit ${run.status ?? run.signal}: ${tail}` };
 }
@@ -279,8 +284,50 @@ async function commandProbe(probe, root) {
 //
 //   { type: 'job', submit: { url, method, body }, pollUrl: 'json.path.to.url',
 //     until: { path, equals }, fail: { path, in: [...] }, expect: { path, exists },
+//     inline: { path }, pollTemplate: 'https://...{job_id}', then: [probe, ...],
 //     intervalMs, timeoutMs }
-async function jobProbe(probe) {
+//
+// `inline` is for endpoints that finish fast work inside the submit call and
+// only hand back a poll handle when the job outlives it (the hosted MCP studio
+// does this): when the submit answer already carries `inline.path`, that value
+// is the finished result.
+//
+// `pollTemplate` is for endpoints that answer a submit with a bare job id and
+// expect the caller to build the poll URL itself (/api/scene-capture,
+// /api/garment-forge): `https://three.ws/api/garment-forge?job={job_id}` fills
+// each `{json.path}` from the submit answer (`{json.path|url}` URL-encodes it,
+// for a value that lands inside a query string).
+//
+// `then` lists probes that run once the job finishes, with every `{json.path}`
+// in their strings filled from the finished job. That is how a trial proves
+// what happens to the result (the new garment is in the public catalog, the
+// .ply it returned parses), not only that a result came back.
+const excerpt = (value) => JSON.stringify(value).slice(0, 240);
+
+const fillTemplate = (value, source) => {
+	if (typeof value === 'string') return value.replace(/\{([\w.]+)(\|url)?\}/g, (match, path, encode) => {
+		const filled = jsonPath(source, path);
+		if (filled === undefined || filled === null) return match;
+		return encode ? encodeURIComponent(String(filled)) : String(filled);
+	});
+	if (Array.isArray(value)) return value.map((entry) => fillTemplate(entry, source));
+	if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, fillTemplate(entry, source)]));
+	return value;
+};
+
+async function followUps(probe, body, root) {
+	const details = [];
+	for (const [index, next] of (probe.then || []).entries()) {
+		const filled = fillTemplate(next, body);
+		const label = filled.name || `then ${index + 1}`;
+		const result = await runProbe(filled, root).catch((err) => ({ ok: false, detail: err.message }));
+		if (!result.ok) return { ok: false, detail: `${label} failed: ${result.detail}` };
+		details.push(`${label}: ${result.detail}`);
+	}
+	return { ok: true, details };
+}
+
+async function jobProbe(probe, root) {
 	const started = Date.now();
 	const deadline = started + (probe.timeoutMs || 600_000);
 	const submit = probe.submit || {};
@@ -289,14 +336,23 @@ async function jobProbe(probe) {
 		headers: submit.body ? { 'content-type': 'application/json' } : {},
 		body: submit.body ? JSON.stringify(submit.body) : undefined,
 	}, Math.max(1_000, deadline - Date.now()));
-	if (!first.ok) return { ok: false, detail: `submit answered HTTP ${first.status}` };
+	if (!first.ok) return { ok: false, detail: `submit answered HTTP ${first.status}: ${(await first.text().catch(() => '')).slice(0, 240)}` };
 	let body = await first.json();
-	const pollUrl = probe.pollUrl ? jsonPath(body, probe.pollUrl) : null;
+	const inlineResult = probe.inline?.path ? jsonPath(body, probe.inline.path) : undefined;
+	if (inlineResult !== undefined && inlineResult !== null && inlineResult !== '') {
+		const seconds = Math.round((Date.now() - started) / 1000);
+		const result = `finished inline in ${seconds}s ${probe.inline.path}=${String(inlineResult).slice(0, 160)}`;
+		const after = await followUps(probe, body, root);
+		if (!after.ok) return { ok: false, detail: `${result}, then ${after.detail}`, seconds };
+		return { ok: true, detail: `${result}${after.details.length ? `; ${after.details.join('; ')}` : ''}`, seconds };
+	}
+	const templated = probe.pollTemplate ? fillTemplate(probe.pollTemplate, body) : null;
+	const pollUrl = templated && !/\{[\w.|]+\}/.test(templated) ? templated : probe.pollUrl ? jsonPath(body, probe.pollUrl) : null;
 	const done = (value) => JSON.stringify(jsonPath(value, probe.until.path)) === JSON.stringify(probe.until.equals);
 	const failed = (value) => probe.fail && probe.fail.in.includes(jsonPath(value, probe.fail.path));
 	while (!done(body)) {
-		if (failed(body)) return { ok: false, detail: `job ended ${probe.fail.path}=${JSON.stringify(jsonPath(body, probe.fail.path))}` };
-		if (!pollUrl) return { ok: false, detail: `job is not done and ${probe.pollUrl} gave no URL to poll` };
+		if (failed(body)) return { ok: false, detail: `job ended ${probe.fail.path}=${JSON.stringify(jsonPath(body, probe.fail.path))}: ${excerpt(body)}` };
+		if (!pollUrl) return { ok: false, detail: `job is not done and ${probe.pollTemplate || probe.pollUrl} gave no URL to poll; submit answered ${excerpt(body)}` };
 		if (Date.now() + (probe.intervalMs || 10_000) > deadline) {
 			return { ok: false, detail: `job not done after ${Math.round((Date.now() - started) / 1000)}s (last ${probe.until.path}=${JSON.stringify(jsonPath(body, probe.until.path))})` };
 		}
@@ -305,17 +361,19 @@ async function jobProbe(probe) {
 		if (!next.ok) return { ok: false, detail: `poll answered HTTP ${next.status}` };
 		body = await next.json();
 	}
-	if (probe.expect?.path && jsonPath(body, probe.expect.path) === undefined) return { ok: false, detail: `finished without ${probe.expect.path}` };
+	if (probe.expect?.path && jsonPath(body, probe.expect.path) == null) return { ok: false, detail: `finished without ${probe.expect.path}: ${excerpt(body)}` };
 	const seconds = Math.round((Date.now() - started) / 1000);
 	const result = probe.expect?.path ? ` ${probe.expect.path}=${String(jsonPath(body, probe.expect.path)).slice(0, 160)}` : '';
-	return { ok: true, detail: `finished in ${seconds}s${result}`, seconds };
+	const after = await followUps(probe, body, root);
+	if (!after.ok) return { ok: false, detail: `finished in ${seconds}s${result}, then ${after.detail}`, seconds };
+	return { ok: true, detail: `finished in ${seconds}s${result}${after.details.length ? `; ${after.details.join('; ')}` : ''}`, seconds };
 }
 
 export async function runProbe(probe, root) {
 	if (probe.type === 'api') return apiProbe(probe);
 	if (probe.type === 'browser') return browserProbe(probe);
 	if (probe.type === 'command') return commandProbe(probe, root);
-	if (probe.type === 'job') return jobProbe(probe);
+	if (probe.type === 'job') return jobProbe(probe, root);
 	return { ok: false, detail: `unknown probe type ${probe.type}` };
 }
 
