@@ -1,0 +1,1 @@
+Four commands take a GLB and a wallet to a hash-anchored avatar manifest and an embed snippet that renders. Offline, no API key, safe in a release script: https://three.ws/avatar-cli

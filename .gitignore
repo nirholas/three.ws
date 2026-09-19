@@ -620,6 +620,7 @@ public/_payload-check/
 # Atomic-write scratch files from scripts/i18n-translate.mjs
 public/locales/*.tmp-*
 scripts/.selfie-verify/
+scripts/.genesis-trial/
 
 # Image exports dropped at the root for drag-and-drop. The source of truth for
 # any of these lives in the repo it belongs to; the root copy is never committed.

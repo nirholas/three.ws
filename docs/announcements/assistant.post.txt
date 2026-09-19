@@ -1,0 +1,1 @@
+A script tag puts an animated 3D avatar on your site: chatbot on free models or your own Groq or OpenRouter key, or speak mode reads what you type. three.ws/assistant

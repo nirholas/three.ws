@@ -148,6 +148,204 @@
 			"url": "/materialize",
 			"alt": "The three.ws Materialize page: a drop area for any .glb beside models fresh from the Forge, over three columns explaining that the price is measured from the repaired mesh, that checkout is USDC on Solana, and that agents can order over x402.",
 			"caption": "Captured from the live /materialize route for the materialize announcement."
+		},
+		{
+			"id": "agora-mcp-hero",
+			"surface": "@three-ws/agora-mcp",
+			"viewport": "wide",
+			"alt": "Terminal window showing the npm package page for @three-ws/agora-mcp with its description of the Agora MCP server, tool list, and install command",
+			"caption": "Title card for @three-ws/agora-mcp, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/agora-mcp",
+				"title": "@three-ws/agora-mcp",
+				"description": "Agora, the living agent + human economy, over MCP. Browse the job board (open AgenC tasks + x402 services), watch the economy pulse, read a citizen's passport, and (with your own Solana signer) register, claim, complete real work for a proof, and post bounties. Reads are free over the public three.ws Agora API; writes are signed by YOUR key, it never leaves your machine. Earn $THREE by working."
+			}
+		},
+		{
+			"id": "agent-sniper-hero",
+			"surface": "@three-ws/agent-sniper",
+			"viewport": "wide",
+			"alt": "Terminal and browser view of the three.ws Agent Sniper package running, showing a strategy panel, a pump.fun launch feed, and a simulated buy-then-sell check logged before a pending trade.",
+			"caption": "Title card for @three-ws/agent-sniper, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/agent-sniper",
+				"title": "@three-ws/agent-sniper",
+				"description": "Lightweight, embeddable pump.fun sniper engine for 3D AI agents, multi-agent, multi-user, with pluggable wallet/store/RPC adapters. Library + CLI + MCP server + x402 paid API."
+			}
+		},
+		{
+			"id": "alerts-mcp-hero",
+			"surface": "@three-ws/alerts-mcp",
+			"viewport": "wide",
+			"alt": "Terminal session showing an AI agent connected to the alerts-mcp server, managing pumpfun alert rules and reading a history of fired alerts with per-channel delivery status.",
+			"caption": "Title card for @three-ws/alerts-mcp, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/alerts-mcp",
+				"title": "@three-ws/alerts-mcp",
+				"description": "Manage your three.ws pump.fun alert rules from any AI agent, create, update, and delete monitoring rules with in-app, webhook, and Telegram delivery, and read the fired-alert history. Account-scoped over the live API."
+			}
+		},
+		{
+			"id": "intel-hero",
+			"surface": "@three-ws/intel",
+			"viewport": "wide",
+			"alt": "Documentation page for the three.ws intel package on npm, showing the install command, a JavaScript import example, and function calls for sentiment and token snapshot reads.",
+			"caption": "Title card for @three-ws/intel, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/intel",
+				"title": "@three-ws/intel",
+				"description": "Token sentiment + market intelligence in one import. Sentiment pulse, aixbt narrative intel, momentum-ranked project scans, and live Solana token snapshots, the three.ws intelligence SDK."
+			}
+		},
+		{
+			"id": "kol-mcp-hero",
+			"surface": "@three-ws/kol-mcp",
+			"viewport": "wide",
+			"alt": "Screenshot from the @three-ws/kol-mcp package page showing a tracked KOL wallet portfolio card with profit and loss figures alongside a list of that wallet's recent trades on a token mint.",
+			"caption": "Title card for @three-ws/kol-mcp, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/kol-mcp",
+				"title": "@three-ws/kol-mcp",
+				"description": "Track one smart trader from any AI agent, a tracked KOL wallet's portfolio P&L (realized/unrealized, win rate, top holding) and its trades on a given mint. Read-only over the live public three.ws KOL API. No key, no signer, no payment."
+			}
+		},
+		{
+			"id": "autopilot-hero",
+			"surface": "/autopilot",
+			"url": "/autopilot",
+			"alt": "Animated loop of the Coin Autopilot page on three.ws, showing coin cards with buyback and holder payout rule switches, floor fields, and a live feed of agent narrated on-chain moves.",
+			"caption": "Captured from the live /autopilot route for the autopilot announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "assistant-hero",
+			"surface": "/assistant",
+			"url": "/assistant",
+			"alt": "Screen recording of the three.ws assistant builder: a floating launcher opens an animated 3D avatar in the corner of the page with a chat panel and speech bubble, while the live preview re-mounts as options change.",
+			"caption": "Captured from the live /assistant route for the assistant announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "agenc-room-hero",
+			"surface": "/agenc/room",
+			"url": "/agenc/room",
+			"alt": "The AgenC task room page on three.ws, showing a grid of task cards, each holding an embodied 3D agent avatar whose pose reflects live on-chain task state from a creator wallet.",
+			"caption": "Captured from the live /agenc/room route for the agenc-room announcement."
+		},
+		{
+			"id": "wardrobe-hero",
+			"surface": "/wardrobe",
+			"url": "/wardrobe",
+			"alt": "Animated loop of the Wardrobe page: a text prompt is typed, a garment builds through visible stages, and the finished piece appears worn by a 3D avatar.",
+			"caption": "Captured from the live /wardrobe route for the wardrobe announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "concierge-hero",
+			"surface": "/concierge",
+			"url": "/concierge",
+			"alt": "The three.ws Concierge page rendered on a laptop, with a chat panel open in the corner showing a rigged 3D avatar mid-reply next to the install snippet for the one-tag embed.",
+			"caption": "Captured from the live /concierge route for the concierge announcement."
+		},
+		{
+			"id": "capture-hero",
+			"surface": "/capture",
+			"url": "/capture",
+			"alt": "The Scene Capture page on three.ws, showing a prompt to paste a video URL to reconstruct it, drop a .ply file, or try the sample point cloud, beside a 3D viewer stage.",
+			"caption": "Captured from the live /capture route for the capture announcement."
+		},
+		{
+			"id": "agora-hero",
+			"surface": "/agora",
+			"url": "/agora",
+			"alt": "Animated loop of the Agora commons: a 3D town square populated by AI citizen avatars walking between buildings, with a job board and live economy ticker showing population, tasks, and $THREE balances.",
+			"caption": "Captured from the live /agora route for the agora announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "ca2x402-hero",
+			"surface": "/ca2x402",
+			"url": "/ca2x402",
+			"alt": "Screen recording of the three.ws CA to x402 page: a token contract address is pasted into the input, resolved, and a payable x402 market-intel endpoint is generated alongside copy-paste code snippets.",
+			"caption": "Captured from the live /ca2x402 route for the ca2x402 announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "hydrate-hero",
+			"surface": "/hydrate",
+			"url": "/hydrate",
+			"alt": "Screen recording of the three.ws hydrate page: a connected wallet view listing on-chain agents found in the registry, each row offering an import action that attaches a 3D body, voice, and skills.",
+			"caption": "Captured from the live /hydrate route for the hydrate announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "daily-match-hero",
+			"surface": "/daily-match",
+			"url": "/daily-match",
+			"alt": "A standings table titled Daily Match listing agents ranked by output score, with columns for actions, trades, skill sales, coin launches, realized P&L, and score, plus a countdown to the daily UTC reset and a live output feed beside the board.",
+			"caption": "Captured from the live /daily-match route for the daily-match announcement."
+		},
+		{
+			"id": "seeker-hero",
+			"surface": "/seeker",
+			"url": "/seeker",
+			"alt": "The three.ws home screen on a Solana Seeker phone, showing Seed Vault sign-in, a rigged 3D avatar made from a camera selfie, and agent cards carrying a Seeker verified pill.",
+			"caption": "Captured from the live /seeker route for the seeker announcement."
+		},
+		{
+			"id": "voice-hero",
+			"surface": "/voice",
+			"url": "/voice",
+			"alt": "The Voice Lab page on three.ws, showing a searchable grid of voice options with provider filters and a recording control for cloning a voice from a short sample.",
+			"caption": "Captured from the live /voice route for the voice announcement."
+		},
+		{
+			"id": "service-pump-graduations-hero",
+			"surface": "services/pump-graduations",
+			"viewport": "wide",
+			"alt": "Terminal window showing the pump-graduations Node service running, streaming Pump program log events decoded into graduation records written to a Redis list.",
+			"caption": "Title card for services/pump-graduations, typeset from its README and package.json.",
+			"card": {
+				"dir": "services/pump-graduations",
+				"title": "pump-graduations",
+				"description": "Standalone Node service that watches the Pump program on Solana for token"
+			}
+		},
+		{
+			"id": "avatar-cli-hero",
+			"surface": "/avatar-cli",
+			"url": "/avatar-cli",
+			"alt": "Screen recording of a terminal replaying the four avatar CLI commands: init scaffolds a manifest from a wallet and GLB, validate checks it, hash prints the SHA-256, and preview prints an agent-3d embed snippet.",
+			"caption": "Captured from the live /avatar-cli route for the avatar-cli announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
 		}
 	]
 }

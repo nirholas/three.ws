@@ -1,0 +1,74 @@
+{
+	"journey": "A reader opens three.ws/materialize, drops in a .glb (or picks a model from the Forge), sees whether it will print, and gets an exact itemized price in USDC on Solana. The trial runs that path against production: a real .glb is uploaded and priced, a real Forge creation is priced, and a model that cannot print is refused with the reason. It does NOT place or pay for an order, and nothing here can show that anyone prints or ships an object: three.ws does not print or ship physical orders.",
+	"steps": [
+		{
+			"type": "command",
+			"name": "a dropped .glb is uploaded, checked as printable, and gets a signed, itemized USDC-on-Solana price",
+			"argv": [
+				"node",
+				"--input-type=module",
+				"-e",
+				"const src = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb';\nconst bytes = new Uint8Array(await (await fetch(src)).arrayBuffer());\nconst slotRes = await fetch('https://three.ws/api/print/upload', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forge-client': 'x-content-trial-materialize' }, body: JSON.stringify({ content_type: 'model/gltf-binary', size_bytes: bytes.length }) });\nconst slot = await slotRes.json();\nif (!slotRes.ok) throw new Error(`upload slot HTTP ${slotRes.status}: ${JSON.stringify(slot)}`);\nconst put = await fetch(slot.upload_url, { method: 'PUT', headers: slot.headers || { 'content-type': 'model/gltf-binary' }, body: bytes });\nif (!put.ok) throw new Error(`PUT to storage HTTP ${put.status}`);\nconst quoteRes = await fetch('https://three.ws/api/print/quote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ glbUrl: slot.public_url, materialId: 'resin-standard', targetHeightMm: 120, country: 'US' }) });\nconst q = await quoteRes.json();\nif (!quoteRes.ok) throw new Error(`quote HTTP ${quoteRes.status}: ${JSON.stringify(q).slice(0, 300)}`);\nif (q.report?.manifold !== true || q.report?.watertight !== true) throw new Error(`the uploaded mesh was not checked as printable: ${JSON.stringify(q.report).slice(0, 300)}`);\nif (!(q.quote?.total > 0) || q.quote.currency !== 'USDC' || q.quote.chain !== 'solana' || !q.token) throw new Error(`no signed USDC-on-Solana price: ${JSON.stringify(q.quote).slice(0, 300)}`);\nconsole.log(`uploaded ${bytes.length} bytes to ${slot.public_url}; manifold, watertight, score ${q.report.score}; ${q.quote.lines.map((l) => `${l.id} ${l.amount}`).join(', ')}; total ${q.quote.total} ${q.quote.currency} on ${q.quote.chain}, signed token valid ${q.expiresInSeconds}s`);"
+			],
+			"timeoutMs": 120000
+		},
+		{
+			"type": "api",
+			"name": "a model made in the Forge is picked by its creation id and gets an exact price",
+			"url": "https://three.ws/api/print/quote",
+			"method": "POST",
+			"body": {
+				"creationId": "653391a0-195c-44d7-bc35-3c4c95e6c0d7",
+				"materialId": "resin-standard",
+				"targetHeightMm": 100,
+				"country": "US"
+			},
+			"expect": {
+				"contains": "\"id\":\"653391a0-195c-44d7-bc35-3c4c95e6c0d7\"",
+				"json": {
+					"path": "quote.total",
+					"min": 1
+				}
+			},
+			"timeoutMs": 60000
+		},
+		{
+			"type": "api",
+			"name": "a Forge model whose walls are too thin to print is refused, with the measured reason",
+			"url": "https://three.ws/api/print/quote",
+			"method": "POST",
+			"body": {
+				"creationId": "1673524e-8a13-4672-b12e-75e82509b7d2",
+				"materialId": "nylon-sls",
+				"targetHeightMm": 100,
+				"country": "US"
+			},
+			"expect": {
+				"json": {
+					"path": "rejection.code",
+					"equals": "walls_too_thin"
+				}
+			},
+			"timeoutMs": 60000
+		},
+		{
+			"type": "browser",
+			"name": "the live /materialize page checks a Forge creation and shows its USDC price",
+			"steps": [
+				{
+					"goto": "https://three.ws/materialize?creation=653391a0-195c-44d7-bc35-3c4c95e6c0d7"
+				},
+				{
+					"expect": "PRINTABILITY"
+				},
+				{
+					"expect": "Quoted in USDC on solana",
+					"timeoutMs": 60000
+				},
+				{
+					"expect": "Order it for"
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,1 @@
+One import, four reads on a token: sentiment pulse, aixbt narrative intel, momentum-ranked scans, and a live Solana snapshot, each a normalized aggregate: https://www.npmjs.com/package/@three-ws/intel
