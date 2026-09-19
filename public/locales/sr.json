@@ -11226,7 +11226,12 @@
 		"why": "Zašto",
 		"you_can_see_export_and_delete_everything": "Možete da vidite, izvezete i obrišete sve što ova funkcija čuva u bilo kom trenutku, i da postavite sopstveni prozor zadržavanja za žurnal akcija. Pogledajte <a href=\"/docs/home-privacy\">Home privacy and retention</a> za kompletan inventar i API.",
 		"you_have_the_right_to_lodge_a": "Imate pravo da podnesete žalbu svom lokalnom nadzornom organu. Takođe nas možete prvo kontaktirati na <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a>; rado bismo rešili vašu brigu direktno.",
-		"you_have_the_rights_to_know_access": "Imate prava da znate, pristupite, ispravite, obrišete i prenesete svoje lične podatke, kao i da ne budete diskriminisani zbog njihovog ostvarivanja. Ostvarite ih putem <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Odeljak 6). Zahteve proveravamo koristeći vašu prijavljenu sesiju, e-mail naloga ili poruku potpisanu vašim novčanikom. Ovlašćeni agent može delovati u vaše ime uz pismenu dozvolu."
+		"you_have_the_rights_to_know_access": "Imate prava da znate, pristupite, ispravite, obrišete i prenesete svoje lične podatke, kao i da ne budete diskriminisani zbog njihovog ostvarivanja. Ostvarite ih putem <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Odeljak 6). Zahteve proveravamo koristeći vašu prijavljenu sesiju, e-mail naloga ili poruku potpisanu vašim novčanikom. Ovlašćeni agent može delovati u vaše ime uz pismenu dozvolu.",
+		"photos_you_capture_or_upload": "Slike koje snimite ili otpremite",
+		"one_frontal_photo_and_up_to_two_optional_sid": "Jedna frontalna slika i do dve opcione bočne perspektive, ako koristite selfie tok",
+		"building_your_3d_avatar_and_reproducing_re_r": "Izrada vašeg 3D avatara, kao i reprodukcija, re-rigovanje ili ponovni scoring tog rezultata",
+		"1a_photos_you_capture_or_upload": "1a. Slike koje snimite ili otpremite",
+		"if_you_use_the_selfie_flow_the_photos_you": "Ako koristite selfie tok, slike koje snimite (jedna frontalna i do dve opcione bočne perspektive) se otpremaju našem servisu za rekonstrukciju i koriste za izradu vašeg 3D avatara. One se čuvaju uz zapis generacije kako bi se rezultat mogao reproducirati, re-rigovati i ponovo oceniti za kvalitet, i vidljive su samo vašem nalogu. Brišu se kada obrišete generaciju ili nalog, uz zadržavanje definisano u Sekciji 5. <strong>Ne</strong> koristimo ih za trening modela, <strong>ne</strong> delimo ih sa oglašivačima, i <strong>ne</strong> izvodimo niti čuvamo biometrijski identifikator ili šablon lica na njihovoj bazi. Korišćenje selfie toka je opciono: možete otpremiti sliku iz galerije ili opisati lik rečima i nikada ne dostavljati sliku."
 	},
 	"legal_risk": {
 		"10_contact": "10. Kontakt",

@@ -11226,7 +11226,12 @@
 		"why": "Ìdí",
 		"you_can_see_export_and_delete_everything": "O lè rí, kó jáde, kí o sì pa gbogbo ohun tí ìyẹ̀wù yìí ní rẹ́ nígbàkúgbà, kí o sì ṣètò fèrèsé ìdádúró tirẹ fún àkọsílẹ̀ ìṣe. Wo <a href=\"/docs/home-privacy\">Ìpamọ́ àti ìdádúró ilé</a> fún àkójọ pípé àti API náà.",
 		"you_have_the_right_to_lodge_a": "O ní ẹ̀tọ́ láti fi ẹjọ́ kò sí àjọ tí ó ń bójú tó ọ̀rọ̀ ní àdúgbò rẹ. O tún lè kàn sí wa ní àkọ́kọ́ ní <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a>; a óò fi ayọ̀ gbà á láti yanjú ọ̀rọ̀ rẹ tààrà.",
-		"you_have_the_rights_to_know_access": "O ní ẹ̀tọ́ láti mọ̀, wọlé sí, tún ṣe, pa rẹ́, àti gbé ìsọfúnni ara ẹni rẹ lọ, àti láti má ṣe fi ìyàtọ̀ hàn sí ọ fún lílo wọn. Lo wọn nípasẹ̀ <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Apá 6). A máa ń fìdí àwọn ìbéèrè múlẹ̀ nípa lílo ìgbà tí o wọlé, imeeli àkọọ́lẹ̀ rẹ, tàbí ìránṣẹ́ tí àpò owó rẹ fọwọ́ sí. Aṣojú tí a fún láṣẹ lè ṣiṣẹ́ fún ọ pẹ̀lú ìwé àṣẹ."
+		"you_have_the_rights_to_know_access": "O ní ẹ̀tọ́ láti mọ̀, wọlé sí, tún ṣe, pa rẹ́, àti gbé ìsọfúnni ara ẹni rẹ lọ, àti láti má ṣe fi ìyàtọ̀ hàn sí ọ fún lílo wọn. Lo wọn nípasẹ̀ <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Apá 6). A máa ń fìdí àwọn ìbéèrè múlẹ̀ nípa lílo ìgbà tí o wọlé, imeeli àkọọ́lẹ̀ rẹ, tàbí ìránṣẹ́ tí àpò owó rẹ fọwọ́ sí. Aṣojú tí a fún láṣẹ lè ṣiṣẹ́ fún ọ pẹ̀lú ìwé àṣẹ.",
+		"photos_you_capture_or_upload": "Àwọn àwòrán tí o ti ṣàlàyé tàbí fi sílẹ̀",
+		"one_frontal_photo_and_up_to_two_optional_sid": "Àwòrán kan lórí ẹ́yìn àti àwòrán mẹ́jì tó lẹ́wa ní àfikun, bí o bá ṣe ìpinnu selfie",
+		"building_your_3d_avatar_and_reproducing_re_r": "Kó 3D avatar rẹ, àti ìdájú, ìtúnṣe tàbí ìtúnṣe ọ́fíìsì náà",
+		"1a_photos_you_capture_or_upload": "1a. Àwọn Àwòrán Tí O Ti Ṣàlàyé Tàbí Fi Sílẹ̀",
+		"if_you_use_the_selfie_flow_the_photos_you": "Bí o bá ṣe ìpinnu selfie, àwọn àwòrán tí o ti ṣàlàyé (àwòrán kan lórí ẹ́yìn àti àwòrán mẹ́jì tó lẹ́wa ní àfikun) wá ṣe fífi wá sí ìṣẹ́lẹ̀ àdájú wa àti wá ṣe fífi wá kó 3D avatar rẹ. Wọ́n wà ní àkọ́lé àdájú nípa bẹ́ẹ̀ kó lè dájú, tó ṣe tó kó sílẹ̀ àti tó ṣe ọ́fíìsì fún ìbáṣe, àti wọ́n wá lè wá níwọn tí ó jẹ́ àkọ́lé rẹ nikan. A yóò fi wọ́n sísọ̀ró nípa bẹ́ẹ̀ tí o bá fi àdájú tàbí àkọ́lé rẹ sísọ̀ró, nípa àwọn àkọ́kọ́ àìlerí ní Apá 5. A kò <strong>ṣe</strong> fífi wọ́n kó mọ́dèl, a kò <strong>ṣe</strong> fífi wọ́n han fún àwọn olùfẹ́yìn, àti a kò <strong>ṣe</strong> dá tàbí fi àfikun ẹ́yìn tàbí àkànṣe àfikun míì míì nípa wọ́n sílẹ̀. Ìṣe selfie kò síi: o lè fi àwòrán láti àkọ́lé àwòrán rẹ sílẹ̀, tàbí ṣàpéjúwe ẹ̀dá kan ní ọ̀rọ̀ kí o kò fi àwòrán kan ráyì."
 	},
 	"legal_risk": {
 		"10_contact": "10. Ìbáṣepọ̀",

@@ -11226,7 +11226,12 @@
 		"why": "이유",
 		"you_can_see_export_and_delete_everything": "이 기능이 보유한 모든 데이터를 언제든지 확인, 내보내기 및 삭제할 수 있으며, 액션 로그의 보관 기간을 직접 설정할 수 있습니다. 전체 목록 및 API는 <a href=\"/docs/home-privacy\">홈 개인정보 및 보관</a>을 참조하세요.",
 		"you_have_the_right_to_lodge_a": "귀하는 지역 감독 당국에 불만을 제기할 권리가 있습니다. 또한 <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a>으로 먼저 당사에 연락할 수 있습니다. 귀하의 우려 사항을 직접 해결할 기회를 환영합니다.",
-		"you_have_the_rights_to_know_access": "귀하는 자신의 개인 정보를 알 권리, 접근할 권리, 수정할 권리, 삭제할 권리, 이전할 권리가 있으며, 이러한 권리 행사를 이유로 차별받지 않을 권리가 있습니다. <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (섹션 6)을 통해 권리를 행사하십시오. 당사는 귀하의 로그인 세션, 계정 이메일 또는 지갑으로 서명된 메시지를 사용하여 요청을 확인합니다. 공인 대리인은 서면 허가를 받아 귀하를 대리할 수 있습니다."
+		"you_have_the_rights_to_know_access": "귀하는 자신의 개인 정보를 알 권리, 접근할 권리, 수정할 권리, 삭제할 권리, 이전할 권리가 있으며, 이러한 권리 행사를 이유로 차별받지 않을 권리가 있습니다. <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (섹션 6)을 통해 권리를 행사하십시오. 당사는 귀하의 로그인 세션, 계정 이메일 또는 지갑으로 서명된 메시지를 사용하여 요청을 확인합니다. 공인 대리인은 서면 허가를 받아 귀하를 대리할 수 있습니다.",
+		"photos_you_capture_or_upload": "직접 촬영하거나 업로드한 사진",
+		"one_frontal_photo_and_up_to_two_optional_sid": "정면 사진 1장과 선택 사항인 측면 사진 최대 2장(셀피 플로우 이용 시)",
+		"building_your_3d_avatar_and_reproducing_re_r": "3D 아바타 생성 및 해당 결과물의 재생성, 리깅, 재평가",
+		"1a_photos_you_capture_or_upload": "1a. 직접 촬영하거나 업로드한 사진",
+		"if_you_use_the_selfie_flow_the_photos_you": "셀피 플로우를 이용하면 촬영한 사진(정면 1장, 선택 사항인 측면 최대 2장)이 재구성 서비스로 업로드되어 3D 아바타 생성에 사용됩니다. 이 사진들은 생성 기록과 함께 저장되어 결과물을 재생성하거나 리깅, 품질 재평가가 가능하도록 하며, 본인 계정에서만 확인할 수 있습니다. 생성 기록이나 계정을 삭제하면 제5조의 보관 기간에 따라 사진도 삭제됩니다. 당사는 이 사진들을 <strong>모델 학습</strong>에 사용하지 않으며, <strong>광고주와 공유</strong>하지 않고, <strong>얼굴 템플릿이나 기타 생체 식별 정보를 추출하거나 저장</strong>하지 않습니다. 셀피 플로우 사용은 선택 사항입니다. 갤러리에서 사진을 업로드하거나, 텍스트로 캐릭터를 묘사하여 사진을 전혀 제공하지 않고도 이용할 수 있습니다."
 	},
 	"legal_risk": {
 		"10_contact": "10. 문의",

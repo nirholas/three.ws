@@ -11226,7 +11226,12 @@
 		"why": "為何",
 		"you_can_see_export_and_delete_everything": "您隨時可以查看、匯出及刪除此功能所保存的所有資料，並可自行設定操作日誌的保留窗口。請參閱 <a href=\"/docs/home-privacy\">住宅隱私與保留</a> 以取得完整清單與 API。",
 		"you_have_the_right_to_lodge_a": "您有權向當地監管機構提出投訴。您也可以先透過 <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> 聯絡我們；我們很樂意直接解決您的疑慮。",
-		"you_have_the_rights_to_know_access": "您有權知悉、存取、更正、刪除和轉移您的個人資訊，並且不會因行使這些權利而受到歧視。請透過 <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> 行使這些權利（第 6 節）。我們將使用您的登入工作階段、您的帳戶電子郵件或您的錢包簽署的訊息來驗證請求。經授權的代理人可憑書面許可代表您行事。"
+		"you_have_the_rights_to_know_access": "您有權知悉、存取、更正、刪除和轉移您的個人資訊，並且不會因行使這些權利而受到歧視。請透過 <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> 行使這些權利（第 6 節）。我們將使用您的登入工作階段、您的帳戶電子郵件或您的錢包簽署的訊息來驗證請求。經授權的代理人可憑書面許可代表您行事。",
+		"photos_you_capture_or_upload": "你拍攝或上傳的照片",
+		"one_frontal_photo_and_up_to_two_optional_sid": "一張正面照，以及最多兩張可選的側面照（若使用自拍流程）",
+		"building_your_3d_avatar_and_reproducing_re_r": "建構你的 3D 頭像，並重現、重新綁定骨架或重新評分該結果",
+		"1a_photos_you_capture_or_upload": "1a. 你拍攝或上傳的照片",
+		"if_you_use_the_selfie_flow_the_photos_you": "若你使用自拍流程，所拍攝的照片（一張正面照與最多兩張可選的側面照）會上傳至我們的重建服務，用以建構你的 3D 頭像。這些照片會連同生成紀錄一併儲存，以便結果得以重現、重新綁定骨架與重新評分，且僅你的帳號可見。當你刪除生成紀錄或帳號時，照片即會被刪除，惟受第 5 條保留期限約束。我們<strong>不</strong>會用它們訓練模型，<strong>不</strong>會與廣告商分享，也不會<strong>從中衍生或儲存臉部模板或任何其他生物特徵識別碼。使用自拍流程屬自願：你也可從相簿上傳照片，或純文字描述角色，完全不提供照片。"
 	},
 	"legal_risk": {
 		"10_contact": "10. 聯絡方式",

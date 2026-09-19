@@ -11226,7 +11226,12 @@
 		"why": "Gịnị mere",
 		"you_can_see_export_and_delete_everything": "You can see, export and delete everything this feature holds at any time, and set your own retention window for the action log. See <a href=\"/docs/home-privacy\">Home privacy and retention</a> for the complete inventory and the API.",
 		"you_have_the_right_to_lodge_a": "Ị nwere ikike ịgba akwụkwọ mkpesa n'aka ndị nlekọta mpaghara gị. Ị nwekwara ike ịkpọtụrụ anyị mbụ na <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a>; anyị ga-anabata ohere idozi nsogbu gị ozugbo.",
-		"you_have_the_rights_to_know_access": "Ị nwere ikike ịmara, ịnweta, idozi, ihichapụ, na ibugharị ozi nkeonwe gị, na ịghara ịkpa ókè megide gị maka iji ha. Jiri ha site na <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Nkeji 6). Anyị na-enyocha arịrịọ site na iji nnọkọ ị banyere, email akaụntụ gị, ma ọ bụ ozi obere akpa gị bịanyere aka. Onye nnọchi anya ikike nwere ike ime ihe maka gị site na ikike edere ede."
+		"you_have_the_rights_to_know_access": "Ị nwere ikike ịmara, ịnweta, idozi, ihichapụ, na ibugharị ozi nkeonwe gị, na ịghara ịkpa ókè megide gị maka iji ha. Jiri ha site na <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Nkeji 6). Anyị na-enyocha arịrịọ site na iji nnọkọ ị banyere, email akaụntụ gị, ma ọ bụ ozi obere akpa gị bịanyere aka. Onye nnọchi anya ikike nwere ike ime ihe maka gị site na ikike edere ede.",
+		"photos_you_capture_or_upload": "Foto gị na-akpọ ọrụ ma ọ bụ na-akpụlụ",
+		"one_frontal_photo_and_up_to_two_optional_sid": "Foto frontal nke nke abụọ ma ọ bụ nke atọ n'ọnụdụ, ma ọ bụ na ị na-eji usoro selfie",
+		"building_your_3d_avatar_and_reproducing_re_r": "Ịzụta 3D avatar gị, ma ọ bụ ịzụta ọzọ, ịmepụta ọzọ ma ọ bụ ịnye nkọwa ọzọ ihe mere eme",
+		"1a_photos_you_capture_or_upload": "1a. Foto Gị Na-akpọ Ọrụ Ma ọ Bụ Na-akpụlụ",
+		"if_you_use_the_selfie_flow_the_photos_you": "Ma ọ bụ na ị na-eji usoro selfie, foto gị na-akpọ (foto frontal nke nke abụọ ma ọ bụ nke atọ n'ọnụdụ) dị na-akpụlụ n'ọrụ ụzọ nke anyị na-eji zụta 3D avatar gị. Ha dị na-chezọ n'akwụkwọ ụzọ emepụta ma ọ bụ ka ihe mere eme ga-eme ka ịzụta ọzọ, ịmepụta ọzọ ma ọ bụ ịnye nkọwa ọzọ nke ụzọ, ha dị na-ahụ maka gị n'aka. Ha ga-ewupụta mgbe ị ewupụta ụzọ emepụta ma ọ bụ akaụntọ gị, nke dị mkpa n'ọnụdụ ichekwa n'Section 5. Anyị <strong>aghị</strong> na-eji ha ịzụta model, anyị <strong>aghị</strong> na-enye ha ndị na-akwado, ma anyị <strong>aghị</strong> na-eme ka ha ga-eme ihe ọnụdụ ma ọ bụ ichekwa nke biometrik nke onye ọ bụla. Iji usoro selfie bụ nke ọnụdụ: ị ga-enwe ike ịkpụlụ foto n'galeri gị, ma ọ bụ ịkọwa ihe ọ bụla n'okwu ma ị ga-achọghị ịnye foto nke ọ bụla."
 	},
 	"legal_risk": {
 		"10_contact": "10. Kpọtụrụ",

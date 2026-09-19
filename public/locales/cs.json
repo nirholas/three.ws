@@ -11226,7 +11226,12 @@
 		"why": "Proč",
 		"you_can_see_export_and_delete_everything": "Můžete vidět, exportovat a smazat vše, co tato funkce obsahuje, kdykoli, a nastavit si vlastní okno uchování protokolu akcí. Kompletní seznam a API najdete v <a href=\"/docs/home-privacy\">Home privacy and retention</a>.",
 		"you_have_the_right_to_lodge_a": "Máte právo podat stížnost u vašeho místního dozorového úřadu. Můžete nás také nejprve kontaktovat na adrese <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a>; uvítáme příležitost vyřešit váš problém přímo.",
-		"you_have_the_rights_to_know_access": "Máte právo znát, přistupovat k, opravovat, mazat a přenášet své osobní údaje a nebýt diskriminováni za jejich uplatnění. Uplatněte je prostřednictvím <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Sekce 6). Žádosti ověřujeme pomocí vaší přihlášené relace, e-mailu vašeho účtu nebo zprávy podepsané vaší peněženkou. Oprávněný zástupce může jednat vaším jménem s písemným povolením."
+		"you_have_the_rights_to_know_access": "Máte právo znát, přistupovat k, opravovat, mazat a přenášet své osobní údaje a nebýt diskriminováni za jejich uplatnění. Uplatněte je prostřednictvím <a href=\"mailto:privacy@three.ws\">privacy@three.ws</a> (Sekce 6). Žádosti ověřujeme pomocí vaší přihlášené relace, e-mailu vašeho účtu nebo zprávy podepsané vaší peněženkou. Oprávněný zástupce může jednat vaším jménem s písemným povolením.",
+		"photos_you_capture_or_upload": "Fotografie, které zachytíte nebo nahrajete",
+		"one_frontal_photo_and_up_to_two_optional_sid": "Jedna frontální fotografie a až dva volitelné boční úhly, pokud používáte selfie tok",
+		"building_your_3d_avatar_and_reproducing_re_r": "Vytváření vašeho 3D avataru a reprodukce, re-rigging nebo re-scoring tohoto výsledku",
+		"1a_photos_you_capture_or_upload": "1a. Fotografie, které zachytíte nebo nahrajete",
+		"if_you_use_the_selfie_flow_the_photos_you": "Pokud používáte selfie tok, fotografie, které zachytíte (jeden frontální snímek a až dva volitelné boční úhly), se nahrají do naší rekonstrukční služby a slouží k vytvoření vašeho 3D avataru. Jsou uloženy spolu s záznamem generování, aby byl výsledek možno reprodukovat, znovu rigovat a znovu skórovat pro kvalitu, a jsou viditelné pouze vašemu účtu. Smažou se, když smažete generování nebo účet, v souladu s doby uchovávání v sekci 5. <strong>Nepoužíváme</strong> je k trénování modelů, <strong>nesdílíme</strong> je s inzerenty a <strong>nevytváříme ani neukládáme</strong> z nich face template ani jiný biometrický identifikátor. Použití selfie toku je volitelné: můžete nahrát fotografii z galerie nebo popsat postavu slovy a nikdy žádnou fotografii neposkytnout."
 	},
 	"legal_risk": {
 		"10_contact": "10. Kontakt",
