@@ -455,51 +455,130 @@
 		},
 		{
 			"id": "materialize",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
-			"lane": "developer",
-			"pattern": "mechanism",
-			"notBefore": "2026-09-19T23:00:00Z",
+			"lane": "creation",
+			"pattern": "proof",
+			"notBefore": "2026-09-19T15:00:00Z",
 			"source": {
 				"path": "docs/announcements/materialize.md",
 				"url": "https://three.ws/materialize"
 			},
 			"posts": [
 				{
-					"text": "Materialize prices a 3D print from the repaired mesh: it measures the true solid volume and charges that volume in your material, paid in USDC on Solana: three.ws/materialize",
+					"text": "You can now turn any 3D model into a real object.\n\nDrop in a .glb, or pick one you made in our Forge.\n\nIt checks the model will print, and gives you an exact price.\n\nPay in USDC on Solana. We print it and ship it to you.\n\nthree.ws/materialize",
 					"textFrom": "docs/announcements/materialize.post.txt",
 					"media": [
 						{
-							"path": "public/announce/img/materialize-hero.webp",
-							"alt": "The three.ws Materialize page: a drop area for any .glb beside models fresh from the Forge, over three columns explaining that the price is measured from the repaired mesh, that checkout is USDC on Solana, and that agents can order over x402."
+							"path": "public/x-media/materialize/card.png",
+							"alt": "A three.ws card reading \"Any 3D model. A real object.\" beside the Materialize page with a blue and white ceramic vase loaded: printability score 100, ready to print, full-colour sandstone selected among six materials, and a size slider at 200 mm."
 						}
 					]
 				}
 			],
 			"claims": [
 				{
-					"says": "measures the true solid volume and charges that volume in your material",
+					"says": "It checks the model will print",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/materialize",
-							"contains": "Every quote comes from the mesh itself: the analyzer computes the true solid volume of the repaired model, and the price is that volume in the material you picked. Nothing is estimated from a bounding box."
+							"contains": "measures whether it can actually be printed"
 						}
 					]
 				},
 				{
-					"says": "paid in USDC on Solana",
+					"says": "pick one you made in our Forge",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/materialize.js",
+							"contains": "label: 'Your creations'"
+						},
+						{
+							"type": "file",
+							"path": "src/materialize.js",
+							"contains": "/api/forge-gallery"
+						}
+					]
+				},
+				{
+					"says": "an exact price",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/materialize",
-							"contains": "There is no card processor. You pay the exact quoted amount in USDC on Solana, the order is opened against a signed quote, and the price can never move between the quote and the charge."
+							"contains": "Nothing is estimated from a bounding box."
+						}
+					]
+				},
+				{
+					"says": "Pay in USDC on Solana",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/materialize",
+							"contains": "You pay the exact quoted amount in USDC on Solana"
+						}
+					]
+				},
+				{
+					"says": "We print it and ship it to you",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/materialize-fulfillment.md",
+							"contains": "Every paid Materialize order has to become an object in a box."
 						}
 					]
 				}
 			],
 			"mentions": {},
-			"tier": 2
+			"tier": 2,
+			"probes": [
+				{
+					"type": "api",
+					"name": "a real model is analyzed as print-ready",
+					"url": "https://three.ws/api/print/quote",
+					"method": "POST",
+					"body": {
+						"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb"
+					},
+					"expect": {
+						"json": {
+							"path": "report.score",
+							"equals": 100
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "a real model gets a priced, signed quote in USDC on Solana",
+					"url": "https://three.ws/api/print/quote",
+					"method": "POST",
+					"body": {
+						"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/antique_ceramic_vase_01.glb",
+						"materialId": "resin-standard",
+						"targetHeightMm": 120,
+						"country": "US"
+					},
+					"expect": {
+						"json": {
+							"path": "quote.chain",
+							"equals": "solana"
+						}
+					},
+					"timeoutMs": 10000
+				},
+				{
+					"type": "api",
+					"name": "the Materialize page is live",
+					"url": "https://three.ws/materialize",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
 		},
 		{
 			"id": "embed-30-seconds",

@@ -1,1 +1,9 @@
-Materialize prices a 3D print from the repaired mesh: it measures the true solid volume and charges that volume in your material, paid in USDC on Solana: three.ws/materialize
+You can now turn any 3D model into a real object.
+
+Drop in a .glb, or pick one you made in our Forge.
+
+It checks the model will print, and gives you an exact price.
+
+Pay in USDC on Solana. We print it and ship it to you.
+
+three.ws/materialize

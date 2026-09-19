@@ -1,0 +1,11 @@
+{
+	"out": "public/x-media/materialize/card.png",
+	"headline": "Any 3D model.\nA real object.",
+	"body": "Drop in a model and get an exact print price in seconds. Pay in USDC on Solana.",
+	"foot": "Full-colour prints come straight from the model's own texture",
+	"frame": "browser",
+	"shot": "https://three.ws/materialize?glb=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fantique_ceramic_vase_01.glb",
+	"label": "three.ws/materialize",
+	"settleMs": 28000,
+	"scrollBy": 220
+}

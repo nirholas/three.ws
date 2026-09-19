@@ -1,29 +1,75 @@
 {
 	"id": "materialize",
-	"contentHash": "24c8167087536ce0a572c1cd7c22ee9ac3e0cdcbdf2ddae65bf0e85e4af5e340",
-	"reviewedAt": "2026-09-18T00:28:58.508Z",
+	"contentHash": "1a414c32bb98f4de94bdc48022d1e70c49637a7c12b3b309274b3c46545c8d02",
+	"reviewedAt": "2026-09-19T15:55:51.312Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"Materialize prices a 3D print from the repaired mesh: it measures the true solid volume and charges that volume in your material, paid in USDC on Solana: three.ws/materialize"
+		"You can now turn any 3D model into a real object.\n\nDrop in a .glb, or pick one you made in our Forge.\n\nIt checks the model will print, and gives you an exact price.\n\nPay in USDC on Solana. We print it and ship it to you.\n\nthree.ws/materialize"
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
 			{
-				"claim": "measures the true solid volume and charges that volume in your material",
+				"claim": "It checks the model will print",
 				"kind": "evidence:page",
 				"target": "https://three.ws/materialize",
 				"ok": true,
-				"detail": "live page shows \"Every quote comes from the mesh itself: the analyzer computes the true solid volume of the repaired model, and the price is that volume in the material you picked. Nothing is estimated from a bounding box.\""
+				"detail": "live page shows \"measures whether it can actually be printed\""
 			},
 			{
-				"claim": "paid in USDC on Solana",
+				"claim": "pick one you made in our Forge",
+				"kind": "evidence:file",
+				"target": "src/materialize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "pick one you made in our Forge",
+				"kind": "evidence:file",
+				"target": "src/materialize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "an exact price",
 				"kind": "evidence:page",
 				"target": "https://three.ws/materialize",
 				"ok": true,
-				"detail": "live page shows \"There is no card processor. You pay the exact quoted amount in USDC on Solana, the order is opened against a signed quote, and the price can never move between the quote and the charge.\""
+				"detail": "live page shows \"Nothing is estimated from a bounding box.\""
+			},
+			{
+				"claim": "Pay in USDC on Solana",
+				"kind": "evidence:page",
+				"target": "https://three.ws/materialize",
+				"ok": true,
+				"detail": "live page shows \"You pay the exact quoted amount in USDC on Solana\""
+			},
+			{
+				"claim": "We print it and ship it to you",
+				"kind": "evidence:file",
+				"target": "docs/ops/materialize-fulfillment.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "a real model is analyzed as print-ready",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "a real model gets a priced, signed quote in USDC on Solana",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Materialize page is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "link",
@@ -39,28 +85,20 @@
 			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
-			"voice": 4,
+			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "voice",
-				"quote": "Solana: three.ws/materialize",
-				"problem": "The post uses a colon twice, and the second colon before the link reads slightly mechanical. A period is more natural here.",
-				"fix": "End with '...paid in USDC on Solana. three.ws/materialize' or leave as is; both are within the house style."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Materialize prices a 3D print from the repaired mesh: it measures the true solid volume and charges that volume in your material, paid in USDC on Solana: three.ws/materialize"
+				"You can now turn any 3D model into a real object.\n\nDrop in a .glb, or pick one you made in our Forge.\n\nIt checks the model will print, and gives you an exact price.\n\nPay in USDC on Solana. We print it and ship it to you.\n\nthree.ws/materialize"
 			],
 			"altText": [
-				"The three.ws Materialize page: a drop area for any .glb beside models fresh from the Forge, over three columns explaining that the price is measured from the repaired mesh, that checkout is USDC on Solana, and that agents can order over x402."
+				"A three.ws card reading \"Any 3D model. A real object.\" beside the Materialize page with a blue and white ceramic vase loaded: printability score 100, ready to print, full-colour sandstone selected among six materials, and a size slider at 200 mm."
 			]
 		},
-		"summary": "Both claims are verified word-for-word against the live /materialize page and the screenshot matches the live product exactly, with no numbers in conflict. The voice is a textbook mechanism lead within the target length band; only a minor punctuation preference keeps voice from a 5. Ship it.",
+		"summary": "Every claim in the post is verified word for word against the live Materialize page and passing API probes, and the image supports the copy with no contradictions. The post is within the character ceiling, follows the house voice exactly, and is ready to ship as written.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
