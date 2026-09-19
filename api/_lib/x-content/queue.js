@@ -12,6 +12,7 @@ import { attachmentProblems, mediaProblems, mediaType } from './media.js';
 import { MARKDOWN_ENTITY_BUDGET, markdownToContentState } from './articles.js';
 import { claimProblems, languageProblems } from './editorial.js';
 import { approvalProblems } from './review.js';
+import { trialProblems } from './trial.js';
 
 export const QUEUE_PATH = 'data/x-content/queue.json';
 export const STATUSES = ['draft', 'review', 'approved', 'paused', 'posted'];
@@ -157,7 +158,12 @@ export function validateItem(item, root) {
 	for (const finding of claimProblems(item)) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
 
 	// Approval is only real while a passing review covers these exact bytes.
-	if (item.status === 'approved') problems.push(...approvalProblems(item, root).map((problem) => `review: ${problem}`));
+	// So is a feature trial: the product was run end to end, recently enough to
+	// still be true, and every promise in the copy is proven.
+	if (item.status === 'approved') {
+		problems.push(...approvalProblems(item, root).map((problem) => `review: ${problem}`));
+		problems.push(...trialProblems(item, root).map((problem) => `trial: ${problem}`));
+	}
 	return problems;
 }
 

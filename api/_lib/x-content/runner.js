@@ -15,6 +15,7 @@ import { loadLifts } from './priority.js';
 import { loadReview, contentHash } from './review.js';
 import { previewClient, publishItem, xClientFromEnv } from './publisher.js';
 import { itemTexts, linkChecks, probeChecks } from './verify.js';
+import { loadTrialSpec } from './trial.js';
 
 const HOUR = 60 * 60_000;
 // Tries per tick before giving up the slot: enough to skip a few broken posts,
@@ -60,8 +61,15 @@ const untouched = (state, item) => {
 	return !progress || (!progress.postIds?.length && !progress.articleDraftId && !progress.articlePostId);
 };
 
+// The trial's api steps run again seconds before sending: a trial proves the
+// feature worked when it ran, this proves it still answers now.
 async function preflight(item, root) {
-	const checks = [...(await linkChecks(itemTexts(item))), ...(await probeChecks(item, { root, where: 'publish' }))];
+	const trialSteps = (loadTrialSpec(root, item.id)?.steps || []).filter((step) => step.type === 'api');
+	const checks = [
+		...(await linkChecks(itemTexts(item))),
+		...(await probeChecks(item, { root, where: 'publish' })),
+		...(await probeChecks({ probes: trialSteps }, { root, where: 'publish' })),
+	];
 	return checks.filter((check) => !check.ok);
 }
 

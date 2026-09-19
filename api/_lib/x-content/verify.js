@@ -272,21 +272,64 @@ async function commandProbe(probe, root) {
 	return { ok: false, detail: `exit ${run.status ?? run.signal}: ${tail}` };
 }
 
+// A long-running action, run for real: submit it, then poll until it finishes.
+// This is the probe for anything a user waits on (a generation, a render, a
+// rig), because "the job was accepted" is exactly the check that passes while
+// the worker behind it is down.
+//
+//   { type: 'job', submit: { url, method, body }, pollUrl: 'json.path.to.url',
+//     until: { path, equals }, fail: { path, in: [...] }, expect: { path, exists },
+//     intervalMs, timeoutMs }
+async function jobProbe(probe) {
+	const started = Date.now();
+	const deadline = started + (probe.timeoutMs || 600_000);
+	const submit = probe.submit || {};
+	const first = await fetchWithTimeout(submit.url, {
+		method: submit.method || 'POST',
+		headers: submit.body ? { 'content-type': 'application/json' } : {},
+		body: submit.body ? JSON.stringify(submit.body) : undefined,
+	}, Math.max(1_000, deadline - Date.now()));
+	if (!first.ok) return { ok: false, detail: `submit answered HTTP ${first.status}` };
+	let body = await first.json();
+	const pollUrl = probe.pollUrl ? jsonPath(body, probe.pollUrl) : null;
+	const done = (value) => JSON.stringify(jsonPath(value, probe.until.path)) === JSON.stringify(probe.until.equals);
+	const failed = (value) => probe.fail && probe.fail.in.includes(jsonPath(value, probe.fail.path));
+	while (!done(body)) {
+		if (failed(body)) return { ok: false, detail: `job ended ${probe.fail.path}=${JSON.stringify(jsonPath(body, probe.fail.path))}` };
+		if (!pollUrl) return { ok: false, detail: `job is not done and ${probe.pollUrl} gave no URL to poll` };
+		if (Date.now() + (probe.intervalMs || 10_000) > deadline) {
+			return { ok: false, detail: `job not done after ${Math.round((Date.now() - started) / 1000)}s (last ${probe.until.path}=${JSON.stringify(jsonPath(body, probe.until.path))})` };
+		}
+		await new Promise((resolveWait) => setTimeout(resolveWait, probe.intervalMs || 10_000));
+		const next = await fetchWithTimeout(pollUrl, {}, 30_000);
+		if (!next.ok) return { ok: false, detail: `poll answered HTTP ${next.status}` };
+		body = await next.json();
+	}
+	if (probe.expect?.path && jsonPath(body, probe.expect.path) === undefined) return { ok: false, detail: `finished without ${probe.expect.path}` };
+	const seconds = Math.round((Date.now() - started) / 1000);
+	const result = probe.expect?.path ? ` ${probe.expect.path}=${String(jsonPath(body, probe.expect.path)).slice(0, 160)}` : '';
+	return { ok: true, detail: `finished in ${seconds}s${result}`, seconds };
+}
+
+export async function runProbe(probe, root) {
+	if (probe.type === 'api') return apiProbe(probe);
+	if (probe.type === 'browser') return browserProbe(probe);
+	if (probe.type === 'command') return commandProbe(probe, root);
+	if (probe.type === 'job') return jobProbe(probe);
+	return { ok: false, detail: `unknown probe type ${probe.type}` };
+}
+
+export const probeLabel = (probe) => probe.name || probe.url || probe.submit?.url || (probe.argv || []).join(' ');
+
 // `where` is 'review' (every probe) or 'publish' (api probes only).
 export async function probeChecks(item, { root, where = 'review' }) {
 	const checks = [];
 	for (const probe of item.probes || []) {
 		if (where === 'publish' && probe.type !== 'api') continue;
-		const label = probe.name || probe.url || (probe.argv || []).join(' ');
 		try {
-			let result;
-			if (probe.type === 'api') result = await apiProbe(probe);
-			else if (probe.type === 'browser') result = await browserProbe(probe);
-			else if (probe.type === 'command') result = await commandProbe(probe, root);
-			else result = { ok: false, detail: `unknown probe type ${probe.type}` };
-			checks.push({ kind: `probe:${probe.type}`, target: label, ...result });
+			checks.push({ kind: `probe:${probe.type}`, target: probeLabel(probe), ...(await runProbe(probe, root)) });
 		} catch (err) {
-			checks.push({ kind: `probe:${probe.type}`, target: label, ok: false, detail: err.message });
+			checks.push({ kind: `probe:${probe.type}`, target: probeLabel(probe), ok: false, detail: err.message });
 		}
 	}
 	return checks;

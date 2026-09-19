@@ -146,7 +146,10 @@ npm run x:content:check
 npm run x:content -- review web-component-article
 npm run x:content -- review --status review
 
-# 5. See exactly what would be sent, and when the queue will send it
+# 5. Run the feature itself end to end, and prove every promise the copy makes
+npm run x:content -- trial web-component-article
+
+# 6. See exactly what would be sent, and when the queue will send it
 npm run x:content -- run --dry-run --id web-component-article
 npm run x:content:plan
 ```
@@ -186,12 +189,43 @@ Feature probes, in `probes`, run as part of every review, and the `api` ones run
 | `api` | A URL answers 2xx (or `expect.status`), and optionally contains `expect.contains` or has a JSON value at `expect.json.path` (`equals`, `exists`, `min`) | review and pre-flight |
 | `browser` | Driving the live page in a real browser (`goto`, `click`, `expect` steps) reaches the expected result | review |
 | `command` | A repo test that exercises the exact behavior the post claims exits 0 (`argv`) | review |
+| `job` | A long-running action submitted to `submit.url` finishes (`until`), polled at the URL found at `pollUrl`, and carries `expect.path`; `fail` ends it early on a failed status | review and trial |
 
 The live product is the source of truth. When a screenshot disagrees with the live page, the screenshot is stale: recapture it and use the live number. The editor is instructed the same way, and its verdict cannot pass an item it raised a blocking issue on or scored below 4 anywhere. Where a human disagrees with a `revise` verdict that has no blocking issue, `"editorOverride": { "reason": "..." }` on the item records the decision; nothing overrides a failed fact check or blocking lint.
 
 The editor tries Claude on Vertex AI first, then Claude through OpenRouter, then OpenAI, then Kimi K3 on NVIDIA NIM, falling through on any provider or billing error; each record names the model that reviewed it. The CLI reads missing credentials from the Cloud Run service and uses the signed-in `gh` session for GitHub checks.
 
 This bar caught real errors in the first three queued posts. The Rig Doctor post said the tool knew 11 rig conventions while the live page and code said 15, called a merged fix "an open first issue" when no such issue was open, and shipped a screenshot from before the change. The AWS post was 94 characters and stated no mechanism, and an AI rewrite of it upgraded "an AWS Partner" to "a verified AWS Partner", which no evidence supports.
+
+## The feature trial
+
+Review proves the copy matches the page. A page can say anything, so that is not enough. On 2026-09-19 a Materialize post passed review with "We print it and ship it to you" because the page said so, and three.ws does not print or ship anything. The trial gate exists so that cannot happen again: **nothing is approved, and nothing is sent, unless the feature it promotes was run end to end in the last 3 days and every promise in the copy is proven.**
+
+Each item declares its trial in `data/x-content/trials/<id>.json`:
+
+```json
+{
+	"journey": "A reader types a prompt into the free Forge and gets a textured 3D model back.",
+	"steps": [
+		{
+			"type": "job",
+			"name": "a free text-to-3D generation finishes with a GLB",
+			"submit": { "url": "https://three.ws/api/mcp-studio", "body": { "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "forge_free", "arguments": { "prompt": "a small green ceramic frog", "tier": "draft" } } } },
+			"pollUrl": "result.structuredContent.pollUrl",
+			"until": { "path": "status", "equals": "done" },
+			"expect": { "path": "glb_url" },
+			"timeoutMs": 600000
+		}
+	],
+	"attestations": []
+}
+```
+
+`npm run x:content -- trial <id>` runs every step against production, then the model chain lists every promise the post makes to a reader (what they can do, what they get, how fast, what it costs, who does what for them) and names the step or attestation that proves each one. A promise nothing proves, or one "proven" by a step that failed, blocks the post. The run is written to `data/x-content/trial-runs/<id>.json`, bound to the post and the trial spec, and it expires after 3 days. `approve` refuses an item without a fresh passing run, the production cron holds one whose run went stale, and the trial's `api` steps run again seconds before sending.
+
+Steps use the probe types below, plus `job`, which submits a long-running action (a generation, a rig, a render) and polls it until it finishes. "The job was accepted" is exactly the check that passes while the worker behind it is down, so anything a user waits on is trialed as a `job`.
+
+`attestations` cover promises no machine can check, such as a human fulfilling an order. Each names who confirmed it (`by`) and when (`at`), and expires after 30 days. They are the owner's word, never an agent's: an agent leaves such a promise unproven, and the gate sends it to the owner.
 
 ## Going live
 

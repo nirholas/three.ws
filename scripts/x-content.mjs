@@ -10,7 +10,8 @@
 //   npm run x:content -- prepare-video <input> --out public/x-media/<id>/clip.mp4 [--captions file.srt] [--item slug]
 //   npm run x:content -- review <slug> [--no-editor]      the editorial bar: lint, live fact checks, AI editor
 //   npm run x:content -- review --status review            review every item awaiting review
-//   npm run x:content -- approve <slug>                    owner gate: release a reviewed item
+//   npm run x:content -- trial <slug>                      run the feature end to end and prove every promise in the copy
+//   npm run x:content -- approve <slug>                    owner gate: release a reviewed, trialed item
 //   npm run x:content -- approve --status review           release every item whose review passed
 //
 // Env: reads .env.local then .env. DATABASE_URL gives plan/run the shared
@@ -31,6 +32,7 @@ import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
 import { VIDEO_LIMITS, mediaType, parseFfmpegProbe } from '../api/_lib/x-content/media.js';
 import { weightedLength } from '../api/_lib/x-content/quality.js';
 import { approvalProblems, loadReview, reviewItem } from '../api/_lib/x-content/review.js';
+import { trialItem, trialProblems, trialRunPath } from '../api/_lib/x-content/trial.js';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DAY = 24 * 60 * 60_000;
@@ -456,7 +458,7 @@ async function approve() {
 
 	let blocked = 0;
 	for (const item of items) {
-		const problems = approvalProblems({ ...item, status: 'approved' }, root);
+		const problems = [...approvalProblems({ ...item, status: 'approved' }, root), ...trialProblems(item, root).map((problem) => `trial: ${problem}`)];
 		if (problems.length) {
 			blocked++;
 			console.log(`hold  ${item.id}: ${problems.join('; ')}`);
@@ -469,6 +471,33 @@ async function approve() {
 	if (blocked) process.exit(1);
 }
 
-const commands = { check, plan, run, review, approve, import: importSource, 'prepare-video': prepareVideo };
+// Run the feature a post promotes, end to end against production, and audit
+// every promise in the copy against what actually happened.
+async function trial() {
+	const queue = loadQueue(root);
+	const status = option('status');
+	const id = positional[1];
+	const items = queue.items.filter((item) => (id ? item.id === id : status ? item.status === status : false));
+	if (!items.length) fail('Usage: trial <slug> | trial --status review');
+	hydrateReviewEnv();
+	let failed = 0;
+	for (const item of items) {
+		const record = await trialItem(item, { root });
+		console.log(`\n=== ${record.id}: ${record.passed ? 'FEATURE WORKS' : 'NOT READY'} ===`);
+		console.log(`  journey: ${record.journey || '(none)'}`);
+		for (const step of record.steps) console.log(`  ${step.ok ? 'pass' : 'FAIL'}  ${step.kind} ${step.target}: ${step.detail}`);
+		if (record.promises.length) console.log(`\nPromises (${record.auditor})`);
+		for (const row of record.promises) console.log(`  ${row.provenBy ? `${row.provenBy.padEnd(14)}` : 'UNPROVEN      '} "${row.promise}" ${row.why}`);
+		if (record.blockers.length) {
+			console.log('\nBlocking');
+			for (const blocker of record.blockers) console.log(`  - ${blocker}`);
+		}
+		console.log(`\nRecorded in ${trialRunPath(record.id)}`);
+		if (!record.passed) failed++;
+	}
+	if (failed) process.exit(1);
+}
+
+const commands = { check, plan, run, review, approve, trial, import: importSource, 'prepare-video': prepareVideo };
 if (!commands[command]) fail(`Unknown command ${command}. Commands: ${Object.keys(commands).join(', ')}`);
 await commands[command]();

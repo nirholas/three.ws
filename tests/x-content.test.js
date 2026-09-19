@@ -332,6 +332,7 @@ describe('holds and fall-through', () => {
 
 	it('never ends a tick on a failed post: it holds it and publishes the next best', async () => {
 		const { contentHash, reviewPath } = await import('../api/_lib/x-content/review.js');
+		const { trialHash, trialRunPath, trialSpecPath } = await import('../api/_lib/x-content/trial.js');
 		const dir = sandbox();
 		mkdirSync(join(dir, 'data/x-content/reviews'), { recursive: true });
 		const texts = {
@@ -346,6 +347,11 @@ describe('holds and fall-through', () => {
 		}));
 		for (const item of items) {
 			writeFileSync(join(dir, reviewPath(item.id)), JSON.stringify({ id: item.id, contentHash: contentHash(item, dir), reviewedAt: '2026-09-17T00:00:00Z', passed: true, blockers: [] }));
+			const spec = { journey: `A reader opens three.ws/${item.id}.`, steps: [{ type: 'api', url: `https://three.ws/api/${item.id}` }] };
+			mkdirSync(join(dir, 'data/x-content/trials'), { recursive: true });
+			mkdirSync(join(dir, 'data/x-content/trial-runs'), { recursive: true });
+			writeFileSync(join(dir, trialSpecPath(item.id)), JSON.stringify(spec));
+			writeFileSync(join(dir, trialRunPath(item.id)), JSON.stringify({ id: item.id, trialHash: trialHash(item, spec, dir), ranAt: '2026-09-17T00:00:00Z', passed: true, blockers: [] }));
 		}
 		const cadence = { windowMinutes: 45, minimumMinutesApart: 240, dailyCap: 3, slots: [{ tier: 3, at: '08:00' }, { tier: 1, at: '16:00' }, { tier: 2, at: '22:00' }] };
 		writeFileSync(join(dir, 'data/x-content/queue.json'), JSON.stringify({ account: 'trythreews', cadence, items }));
@@ -591,3 +597,68 @@ describe('review', () => {
 });
 
 
+
+describe('trial', () => {
+	const item = { id: 'demo', kind: 'post', posts: [{ text: HEAD, media: [{ path: 'public/x-media/t/a.png', alt: 'alt' }] }] };
+	const spec = {
+		journey: 'A reader drops a GLB into /rig-doctor and gets its skeleton convention back.',
+		steps: [{ type: 'command', name: 'the analyzer names a Mixamo rig', argv: ['node', '-e', 'process.exit(0)'] }],
+	};
+	const writeSpec = (dir, body) => {
+		mkdirSync(join(dir, 'data/x-content/trials'), { recursive: true });
+		writeFileSync(join(dir, 'data/x-content/trials/demo.json'), JSON.stringify(body));
+	};
+	const answer = (promises) => async (request, { parse }) => ({ value: parse(JSON.stringify({ promises })), model: 'test' });
+
+	it('blocks approval until the feature is trialed, and voids the run when the copy or trial changes', async () => {
+		const { trialItem, trialProblems } = await import('../api/_lib/x-content/trial.js');
+		const dir = sandbox();
+		expect(trialProblems(item, dir).join('\n')).toMatch(/no trial declared/);
+		writeSpec(dir, spec);
+		expect(trialProblems(item, dir).join('\n')).toMatch(/has not been trialed/);
+
+		const now = Date.parse('2026-09-19T12:00:00Z');
+		const run = await trialItem(item, { root: dir, now, coverage: answer([{ promise: 'names the skeleton convention', provenBy: 'step:1', why: 'the analyzer ran' }]) });
+		expect(run.passed).toBe(true);
+		expect(trialProblems(item, dir, now)).toEqual([]);
+		expect(trialProblems(item, dir, now + 4 * 86_400_000).join('\n')).toMatch(/last trialed 4 days ago/);
+		expect(trialProblems({ ...item, posts: [{ ...item.posts[0], text: HEAD.replace('Rig', 'The rig') }] }, dir, now).join('\n')).toMatch(/changed after the last trial/);
+		writeSpec(dir, { ...spec, journey: `${spec.journey} Fast.` });
+		expect(trialProblems(item, dir, now).join('\n')).toMatch(/changed after the last trial/);
+	});
+
+	it('fails a promise nothing proves, one proven by a failed step, and a failed step', async () => {
+		const { trialItem } = await import('../api/_lib/x-content/trial.js');
+		const dir = sandbox();
+		writeSpec(dir, { ...spec, steps: [...spec.steps, { type: 'command', name: 'the worker answers', argv: ['node', '-e', 'process.exit(3)'] }] });
+		const run = await trialItem(item, {
+			root: dir,
+			coverage: answer([
+				{ promise: 'We print it and ship it to you', provenBy: null, why: 'no step shows an order being fulfilled' },
+				{ promise: 'lists which bones animate', provenBy: 'step:2', why: 'the worker step' },
+				{ promise: 'names the convention', provenBy: 'attestation:1', why: 'there are no attestations' },
+			]),
+		});
+		expect(run.passed).toBe(false);
+		const text = run.blockers.join('\n');
+		expect(text).toMatch(/step:command the worker answers: exit 3/);
+		expect(text).toMatch(/unproven promise "We print it and ship it to you"/);
+		expect(text).toMatch(/unproven promise "lists which bones animate"/);
+		expect(text).toMatch(/unproven promise "names the convention"/);
+	});
+
+	it('accepts a named attestation for a promise no machine can check, and expires it', async () => {
+		const { specProblems } = await import('../api/_lib/x-content/trial.js');
+		const now = Date.parse('2026-09-19T12:00:00Z');
+		expect(specProblems({ ...spec, attestations: [{ promise: 'We ship it', by: 'owner', at: '2026-09-18' }] }, now)).toEqual([]);
+		expect(specProblems({ ...spec, attestations: [{ promise: 'We ship it', at: '2026-09-18' }] }, now).join('\n')).toMatch(/needs promise, by, and at/);
+		expect(specProblems({ ...spec, attestations: [{ promise: 'We ship it', by: 'owner', at: '2026-07-01' }] }, now).join('\n')).toMatch(/80 days old/);
+		expect(specProblems({ journey: '', steps: [] }, now)).toHaveLength(2);
+	});
+
+	it('blocks an approved item in the queue validator until it is trialed', () => {
+		const dir = sandbox();
+		const approved = { ...item, status: 'approved', tier: 2, lane: 'l', pattern: 'p', notBefore: '2026-09-17T14:00:00Z' };
+		expect(validateItem(approved, dir).join('\n')).toMatch(/trial: no trial declared/);
+	});
+});

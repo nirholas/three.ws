@@ -127,7 +127,7 @@
 		},
 		{
 			"id": "rig-doctor",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"lane": "developer",
 			"pattern": "correction",
@@ -582,7 +582,7 @@
 		},
 		{
 			"id": "embed-30-seconds",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "tutorial",
@@ -694,7 +694,7 @@
 		},
 		{
 			"id": "text-to-3d",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "creation",
@@ -758,7 +758,7 @@
 		},
 		{
 			"id": "free-characters",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "library",
@@ -812,7 +812,7 @@
 		},
 		{
 			"id": "free-animations",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "animation",
