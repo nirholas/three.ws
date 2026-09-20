@@ -5,7 +5,8 @@
 // joystick) and look around (drag). We never auto-walk you. You spawn OUTSIDE
 // in the alley and walk up to the neon door; step into range and a prompt
 // appears — press E, tap, or click — and the cover-charge card (src/club-gate.js)
-// asks you to pay. Pay the cover and you keep walking, under your own control,
+// asks you to pay. The bouncer (src/club-bouncer.js) stands beside that door,
+// watches you walk up, and acts out each beat of the cover flow. Pay the cover and you keep walking, under your own control,
 // through each place in turn — a gallery hall, then the Space Smugglers club
 // house interior — until you reach the strip club itself (the pole stage, in
 // src/club.js), where you tip dancers to perform.
@@ -55,6 +56,8 @@ import {
 import { gltfLoader, disposeGltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
 import { ClubCrowd } from './club-crowd.js';
+import { ClubDoorLine } from './club-queue.js';
+import { ClubBouncer, BOUNCER_AVATAR_URL } from './club-bouncer.js';
 import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
 import { getPowerSaver } from './shared/frame-governor.js';
 import { log } from './shared/log.js';
@@ -71,6 +74,11 @@ const PASS_KEY = 'club:pass:v1';
 // Hard cap on background crowd bodies per room. Each member is a full skinned
 // GLB rig (not an instanced mesh), so we keep the floor light for load + perf.
 const MAX_CROWD_PER_SCENE = 5;
+// The alley is the exception: outside the door there is a line (src/club-queue.js),
+// and a line of five reads as nobody waiting. Every body past the sixth unique rig
+// is a clone, so the extra cost is skinning, not downloads; still tiered so a weak
+// GPU gets a short line rather than a slow one.
+const DOOR_LINE_BODIES = { high: 11, medium: 8, low: 5 };
 const MOVE_CLIPS = new Set(['idle', 'walk']);
 // Canonical URLs for the player's locomotion clips, kept independent of the
 // manifest so they survive a failed/empty manifest fetch. These back the
@@ -288,9 +296,12 @@ async function start(canvasEl) {
 	// ready the moment you walk into it. The loader bar tracks real bytes.
 	// Clip JSON is fetched in the same parallel batch so idle is guaranteed
 	// ready before the first render frame — no T-pose on entry.
-	const [firstGltf, avatarGltf, manifest, idleClipJson, walkClipJson] = await Promise.all([
+	// The bouncer rides the same batch so he is at his post on the first frame
+	// instead of popping in beside the door; a failed load just means no bouncer.
+	const [firstGltf, avatarGltf, bouncerGltf, manifest, idleClipJson, walkClipJson] = await Promise.all([
 		loader.loadAsync(SEQUENCE[0].url, (e) => setLoaderProgress('alley', e)),
 		loader.loadAsync(AVATAR_URL, (e) => setLoaderProgress('avatar', e)),
+		loader.loadAsync(BOUNCER_AVATAR_URL).catch((err) => { log.warn('[club-entrance] bouncer load failed', err); return null; }),
 		fetch(MANIFEST_URL, { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
 		fetch('/animations/clips/idle.json', { cache: 'force-cache' }).then((r) => r.ok ? r.json() : null).catch(() => null),
 		fetch('/animations/clips/walk.json', { cache: 'force-cache' }).then((r) => r.ok ? r.json() : null).catch(() => null),
@@ -309,12 +320,14 @@ async function start(canvasEl) {
 	let paid = false;
 	let currentCover = false;
 	let env = null, doorAnchor = null, path = null, occluder = null;
+	let bouncer = null; // works the cover door only; stands down once you are past it
 	mountVenue(0);
 
 	function mountVenue(i) {
 		const v = SEQUENCE[i];
 		if (occluder) { scene.remove(occluder); disposeObject(occluder); occluder = null; }
 		if (env) { disposeObject(env.root); scene.remove(env.root); }
+		if (!v.cover) bouncer?.unmount();
 		env = mountEnvironment(scene, loaded[i].scene);
 		// Anchor to the modelled door so the prompt + neon frame land on the real
 		// doorway; interiors skip this and exit down their longest dimension.
@@ -373,9 +386,38 @@ async function start(canvasEl) {
 		bundled: BUNDLED_AGENTS,
 	});
 	crowd.load(); // background fetch of roster + clip data; mount() awaits it
+	// The line outside the door: only the cover venue (the alley) has one.
+	let doorLine = null;
 	const refreshCrowd = () => {
 		if (!env) return;
-		crowd.mount({ envRoot: env.root, bounds: env.bounds, path, roomIndex: venueIndex });
+		doorLine?.dispose();
+		doorLine = null;
+		if (SEQUENCE[venueIndex].cover) {
+			try {
+				doorLine = new ClubDoorLine({
+					scene,
+					crowd,
+					envRoot: env.root,
+					path,
+					doorAnchor,
+					count: DOOR_LINE_BODIES[profile.tier] ?? DOOR_LINE_BODIES.medium,
+					bubblesEl: document.getElementById('club-bubbles'),
+					reducedMotion: prefersReducedMotion,
+				});
+			} catch (err) {
+				log.warn('[club-entrance] door line failed', err);
+			}
+		}
+		crowd.mount({
+			lineup: doorLine?.lineup,
+			max: doorLine ? doorLine.count : undefined,
+			envRoot: env.root,
+			bounds: env.bounds,
+			path,
+			roomIndex: venueIndex,
+			// Nobody in the crowd stands on the bouncer's spot.
+			avoid: bouncer?.mounted ? [bouncer.position] : [],
+		});
 	};
 
 	// ── Door marker — a neon frame at the end of the alley you walk up to ────
@@ -401,6 +443,24 @@ async function start(canvasEl) {
 	const camRay = new Raycaster();
 
 	placeSpawn();
+
+	// ── Bouncer: the doorman beside the cover door ──────────────────────────
+	if (bouncerGltf && currentCover) {
+		bouncer = new ClubBouncer({
+			scene,
+			model: bouncerGltf.scene,
+			manifest,
+			idleClipJson,
+			bubbleEl: document.getElementById('club-bouncer-bubble'),
+			reducedMotion: prefersReducedMotion,
+		});
+		const posted = await bouncer.mount({ envRoot: env.root, path, doorAnchor }).catch((err) => {
+			log.warn('[club-entrance] bouncer mount failed', err);
+			return false;
+		});
+		if (!posted) { bouncer.dispose(); bouncer = null; }
+	}
+
 	refreshCrowd(); // populate the opening room (alley)
 
 	// Cast straight down from waist height to find the walkable floor.
@@ -533,12 +593,14 @@ async function start(canvasEl) {
 	canvasEl.addEventListener('pointerup', endPointer);
 	canvasEl.addEventListener('pointercancel', endPointer);
 
-	// Click the neon door directly to enter.
+	// Click the neon door directly to enter, or the bouncer to hear how the
+	// club works.
 	const raycaster = new Raycaster();
 	const onClick = (e) => {
 		if (!inputEnabled || look.moved) return;
 		const ndc = new Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
 		raycaster.setFromCamera(ndc, camera);
+		if (bouncer?.hitTest(raycaster)) { bouncer.explain(); return; }
 		if (raycaster.intersectObject(doorMarker.group, true).length) tryEnter();
 	};
 	canvasEl.addEventListener('click', onClick);
@@ -789,6 +851,7 @@ async function start(canvasEl) {
 	// place fades out and the next one fades in for you to keep walking.
 	function advance() {
 		nearDoor = false;
+		bouncer?.hush();
 		if (isFinalVenue()) {
 			setJourneyStep(SEQUENCE.length); // light the Stage step
 			pushClarity(1); // stepping onto the floor — fully open the bed
@@ -866,6 +929,8 @@ async function start(canvasEl) {
 		anim.update(dt);
 		crowd.update(dt);
 		updateCamera(dt);
+		bouncer?.update(dt, rig.position, camera, { nearDoor, interactive: inputEnabled && phase === 'walk' });
+		doorLine?.update(dt, rig.position, camera, { nearDoor, paid });
 		if (phase === 'walk') minimap.update(rig.position, rig.rotation.y, nearDoor, now / 1000, prefersReducedMotion);
 
 		// Key + fill follow the avatar so the patch of alley you're walking is lit.
@@ -893,6 +958,7 @@ async function start(canvasEl) {
 				// Fade the current place out, mount the next, then fade it in.
 				const k = Math.min(1, elapsed / 0.6);
 				canvasEl.style.opacity = String(1 - k);
+				doorLine?.setOpacity(1 - k);
 				if (k >= 1) {
 					const next = loaded[venueIndex + 1];
 					if (next && next !== 'error') {
@@ -975,6 +1041,8 @@ async function start(canvasEl) {
 		const speed = MOVE_SPEED * Math.min(1, len);
 		rig.position.x = clamp(rig.position.x + wx * speed * dt, env.bounds.minX, env.bounds.maxX);
 		rig.position.z = clamp(rig.position.z + wz * speed * dt, env.bounds.minZ, env.bounds.maxZ);
+		// The bouncer holds his ground: you walk around him, not through him.
+		bouncer?.resolveCollision(rig.position, performance.now());
 		// Face travel direction (shortest-arc yaw lerp).
 		const targetYaw = Math.atan2(wx, wz);
 		rig.rotation.y = lerpAngle(rig.rotation.y, targetYaw, 1 - Math.exp(-12 * dt));
@@ -1041,6 +1109,7 @@ async function start(canvasEl) {
 		// Cover's paid and the rope drops — crack the door open so the bed clears
 		// its first step the moment the walk-in dance starts.
 		pushClarity(clarityForVenue(venueIndex));
+		doorLine?.admitted(); // the people still waiting watch you get waved through
 		await celebrateAdmission();
 		advance();
 	}
@@ -1109,7 +1178,9 @@ async function start(canvasEl) {
 		agentBrowseBtn?.removeEventListener('click', onBrowseAgents);
 		onAdmit = null;
 		try { anim.dispose?.(); } catch {}
+		try { doorLine?.dispose(); } catch {}
 		try { crowd.dispose(); } catch {}
+		try { bouncer?.dispose(); } catch {}
 		disposeObject(scene);
 		composer.dispose();
 		renderer.dispose();

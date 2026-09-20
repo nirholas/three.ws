@@ -1003,6 +1003,82 @@
 				.club-minimap-tag { display: none; }
 			}
 
+			/* Speech bubbles over the line outside the door (src/club-queue.js pins
+			   each one over a head every frame). Above the scene canvas, below the
+			   walk-in controls. The outer element is positioned by transform, so it
+			   only ever transitions opacity; the pop lives on the body inside it. */
+			.club-bubbles {
+				position: fixed;
+				inset: 0;
+				z-index: 9410;
+				overflow: hidden;
+				pointer-events: none;
+			}
+			.club-bubble {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: max-content;
+				max-width: min(230px, calc(100vw - 32px));
+				padding-bottom: 9px; /* room for the tail */
+				opacity: 0;
+				will-change: transform, opacity;
+				transition: opacity var(--duration-base) var(--ease-standard);
+			}
+			.club-bubble.is-visible { opacity: 1; }
+			.club-bubble.is-offscreen { opacity: 0; transition: none; }
+			.club-bubble-body {
+				position: relative;
+				display: block;
+				padding: 8px 12px 9px;
+				border-radius: 14px;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(8, 6, 16, 0.86);
+				box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.85);
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				color: #fff;
+				font-size: 13px;
+				line-height: 1.35;
+				text-wrap: pretty;
+				transform: translateY(6px) scale(0.9);
+				transform-origin: 50% 100%;
+				transition: transform var(--duration-base) var(--ease-standard);
+			}
+			.club-bubble.is-visible .club-bubble-body { transform: none; }
+			.club-bubble-body::after {
+				content: '';
+				position: absolute;
+				left: 50%;
+				bottom: -6px;
+				width: 10px;
+				height: 10px;
+				margin-left: -5px;
+				border-right: 1px solid rgba(255, 255, 255, 0.16);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(8, 6, 16, 0.92);
+				transform: rotate(45deg);
+			}
+			/* The ones who started early: warmer border, slurred italics, a wobble. */
+			.club-bubble.is-drunk .club-bubble-body {
+				border-color: rgba(255, 138, 59, 0.5);
+				font-style: italic;
+			}
+			.club-bubble.is-drunk .club-bubble-body::after { border-color: rgba(255, 138, 59, 0.5); }
+			.club-bubble.is-drunk.is-visible .club-bubble-body { animation: club-bubble-wobble 2.6s ease-in-out infinite; }
+			@keyframes club-bubble-wobble {
+				0%, 100% { transform: rotate(-2.2deg); }
+				50%      { transform: rotate(2.2deg) translateY(-1px); }
+			}
+			@media (max-width: 480px) {
+				.club-bubble { max-width: min(190px, calc(100vw - 32px)); }
+				.club-bubble-body { font-size: 12px; padding: 7px 10px 8px; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.club-bubble, .club-bubble-body { transition: none; }
+				.club-bubble.is-drunk.is-visible .club-bubble-body { animation: none; }
+			}
+
 			.club-controls-hint {
 				position: fixed;
 				left: 50%;
@@ -1070,6 +1146,50 @@
 			@keyframes clubPromptBob {
 				0%, 100% { transform: translate(-50%, -50%) scale(1); }
 				50%      { transform: translate(-50%, calc(-50% - 5px)) scale(1); }
+			}
+
+			/* Bouncer speech bubble: positioned by transform every frame, so only
+			   opacity transitions here (a transform transition would fight the pin). */
+			.club-bouncer-bubble {
+				position: fixed;
+				left: 0;
+				top: 0;
+				z-index: 9510; /* above the cover card: his lines narrate the check */
+				width: max-content;
+				max-width: min(300px, calc(100vw - 24px));
+				padding: 10px 14px 11px;
+				border-radius: 14px 14px 14px 4px;
+				border: 1px solid rgba(74, 214, 255, 0.45);
+				background: rgba(8, 6, 16, 0.88);
+				box-shadow: 0 0 30px -8px rgba(74, 214, 255, 0.65), 0 8px 24px -12px rgba(0, 0, 0, 0.8);
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				color: #fff;
+				font-size: 14px;
+				line-height: 1.4;
+				pointer-events: none;
+				opacity: 0;
+				visibility: hidden;
+				will-change: transform, opacity;
+				transition: opacity var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base);
+			}
+			.club-bouncer-bubble.is-visible { opacity: 1; visibility: visible; transition-delay: 0s; }
+			.club-bouncer-bubble.is-offscreen { opacity: 0; }
+			.club-bouncer-name {
+				display: block;
+				margin-bottom: 3px;
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.14em;
+				text-transform: uppercase;
+				color: #4ad6ff;
+			}
+			.club-bouncer-line { display: block; text-wrap: pretty; }
+			@media (max-width: 480px) {
+				.club-bouncer-bubble { font-size: 13px; padding: 9px 12px 10px; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.club-bouncer-bubble { transition: none; }
 			}
 
 			/* Touch joystick — repositions to first touch on the left of screen. */
@@ -2006,6 +2126,9 @@
 		     avatar in the alley, then the walk through the club house after you
 		     pay. Sits behind the cover card, above the pole stage. -->
 		<canvas id="club-door-canvas" class="club-door-canvas" aria-hidden="true"></canvas>
+		<!-- What the line outside the door is saying (src/club-queue.js). Ambient
+		     scenery like the canvas under it, so it stays out of the a11y tree. -->
+		<div id="club-bubbles" class="club-bubbles" aria-hidden="true"></div>
 
 		<!-- Cinematic intro + real load progress while the alley streams in. -->
 		<div id="club-loader" class="club-loader" role="status" aria-live="polite">
@@ -2048,6 +2171,12 @@
 		<button id="club-door-prompt" type="button" class="club-door-prompt" aria-label="Enter the club" data-i18n-html="club.enter_the_club_e" data-i18n-attr="aria-label:club.enter_the_club_arialabel">
 			Enter the club <kbd>E</kbd>
 		</button>
+		<!-- The bouncer's speech bubble (src/club-bouncer.js pins it over his head
+		     in the alley). A live region, so his lines are announced too. -->
+		<div id="club-bouncer-bubble" class="club-bouncer-bubble" role="status" aria-live="polite">
+			<span class="club-bouncer-name">Bouncer</span>
+			<span class="club-bouncer-line"></span>
+		</div>
 		<div id="club-joystick" class="club-joystick" aria-hidden="true">
 			<div id="club-joystick-knob" class="club-joystick-knob"></div>
 		</div>

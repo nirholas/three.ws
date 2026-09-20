@@ -7,6 +7,7 @@
 // room is already warm the moment you're admitted.
 //
 // Flow:  queue → [Pay cover] → x402 modal → checking → admitted | denied
+// Each step is mirrored to the doorman in the alley via `club:door-state`.
 //
 // A paid wallet's pass is cached locally for its lifetime, so a reload within
 // the night re-enters without paying again (the cover endpoint mirrors this
@@ -126,16 +127,17 @@ async function payCover(root, { payBtn, msgEl, tierEl }) {
 		await wait(900);
 
 		if (pass.admitted === false || pass.banned) {
-			setState(root, 'denied');
+			const reason = pass.reason || 'Not on the list tonight.';
+			setState(root, 'denied', { reason });
 			const reasonEl = root.querySelector('#club-door-reason');
-			if (reasonEl) reasonEl.textContent = pass.reason || 'Not on the list tonight.';
+			if (reasonEl) reasonEl.textContent = reason;
 			return;
 		}
 
 		// In. Cache the pass and announce the tier, then drop the rope.
 		writePass(pass);
 		if (tierEl) tierEl.textContent = welcomeFor(pass);
-		setState(root, 'admitted');
+		setState(root, 'admitted', { tier: pass.tier, visits: pass.visits });
 		await wait(1100);
 		openDoor(root);
 	} catch (err) {
@@ -183,8 +185,11 @@ function openDoor(root, { silent = false } = {}) {
 	}
 }
 
-function setState(root, state) {
+// Every state change is also announced on `club:door-state`, so the 3D bouncer
+// in the alley (src/club-bouncer.js) acts out the same beat the card shows.
+function setState(root, state, detail = {}) {
 	root.dataset.state = state;
+	window.dispatchEvent(new CustomEvent('club:door-state', { detail: { ...detail, state } }));
 }
 
 function setMsg(el, text, kind) {

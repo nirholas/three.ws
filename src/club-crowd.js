@@ -18,11 +18,16 @@
 //   • clone once per instance (SkeletonUtils), leave frustum culling on, cast no
 //     shadows, and stagger instantiation so a swap never stalls the walk.
 //
+// A room can also hand mount() a `lineup`: directed slots (the door line outside
+// the club, src/club-queue.js) that are filled first, in order, at exact spots
+// with their own clip pool, heading and height. Whatever budget is left after
+// the lineup scatters as usual.
+//
 // Any failure degrades silently to a smaller (or empty) crowd — the walk-in and
 // the pole stage always work without it. A rig the canonical clip library can't
 // drive is skipped rather than left standing in a bind/T-pose.
 
-import { AnimationMixer, Box3, Group, Raycaster, Vector3 } from 'three';
+import { AnimationMixer, Box3, Group, LoopOnce, Raycaster, Vector3 } from 'three';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { gltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
@@ -33,7 +38,11 @@ import { log } from './shared/log.js';
 // dropped — the crowd falls back to whatever else retargeted on that rig.
 const IDLE_CLIPS = ['idle', 'av-idle-breath', 'av-waiting', 'av-chilling', 'av-leaning-wall', 'av-listening-music', 'av-smoking'];
 const DANCE_CLIPS = ['twerk', 'dance', 'rumba', 'av-dance-shuffle', 'av-rap-dance', 'av-headbang', 'av-banging-tunes', 'av-cheering', 'av-boxer-dance', 'av-offabean-dance', 'michelle-samba-dance'];
-const ALL_CROWD_CLIPS = [...new Set([...IDLE_CLIPS, ...DANCE_CLIPS])];
+// Extra clips only directed lineup members use: the drunks (a slowed walk for
+// the stagger, a head-down slump) and the short one-shot gestures a member
+// plays while they talk. All small files.
+const LINEUP_CLIPS = ['walk', 'lookdown', 'shrug', 'nod', 'point'];
+const ALL_CROWD_CLIPS = [...new Set([...IDLE_CLIPS, ...DANCE_CLIPS, ...LINEUP_CLIPS])];
 
 // Public 3D avatars to pull for the crowd. Larger page than the entrance's agent
 // switcher (limit=24) so a populated room shows real variety; deduped by GLB URL
@@ -54,6 +63,8 @@ const DANCE_RATIO = [0.18, 0.32, 0.6];
 // Don't leave a room feeling dead when the gallery is unreachable — cycle the
 // bundled rigs up to this floor (still capped by the device budget).
 const LIVELY_FLOOR = 9;
+// Unique rigs a directed lineup may download; longer lines reuse them as clones.
+const LINEUP_DISTINCT = 6;
 
 const DOWN = new Vector3(0, -1, 0);
 const _box = new Box3();
@@ -225,34 +236,52 @@ export class ClubCrowd {
 	 * @param {{minX:number,maxX:number,minZ:number,maxZ:number}} ctx.bounds  walkable bounds
 	 * @param {{spawn:import('three').Vector3, door:import('three').Vector3}} ctx.path
 	 * @param {number} ctx.roomIndex
+	 * @param {Array<{x:number,z:number}>} [ctx.avoid]  occupied floor points (the door's bouncer)
+	 * @param {{slots:Array<object>, onMember?:(inst:object, slot:object)=>void}} [ctx.lineup]
+	 *   directed members placed before any scatter. Each slot carries
+	 *   `{x, y, z, yaw, clips, height?, timeScale?}`; `onMember` fires as each one
+	 *   lands so the caller can direct it (speech, sway, gestures).
+	 * @param {number} [ctx.max]  head-count for this room only, overriding the
+	 *   constructor cap (the door line is longer than an interior's scatter)
 	 */
-	mount({ envRoot, bounds, path, roomIndex = 0 }) {
+	mount({ envRoot, bounds, path, roomIndex = 0, avoid = [], lineup = null, max = null }) {
 		if (this._disposed || this.max <= 0) return;
 		this.clear();
+		// Seed the spacing check so nobody spawns on a spot that is already taken.
+		this._placed = avoid.map((p) => ({ x: p.x, z: p.z }));
 		const gen = ++this._gen;
 		const root = new Group();
 		root.name = 'club-crowd';
 		this.scene.add(root);
 		this._root = root;
-		this._populate({ gen, root, envRoot, bounds, path, roomIndex })
+		const cap = Number.isFinite(max) ? Math.max(0, Math.floor(max)) : this.max;
+		this._populate({ gen, root, envRoot, bounds, path, roomIndex, lineup, cap })
 			.catch((err) => log.warn('[club-crowd] populate failed', err));
 	}
 
-	async _populate({ gen, root, envRoot, bounds, path, roomIndex }) {
+	async _populate({ gen, root, envRoot, bounds, path, roomIndex, lineup, cap }) {
 		await this.load();
 		if (gen !== this._gen) return; // room swapped while we were fetching
+
+		const slots = (lineup?.slots || []).slice(0, cap);
+		if (slots.length) {
+			await this._populateLineup({ gen, root, path, slots, onMember: lineup.onMember });
+			if (gen !== this._gen) return;
+		}
+		const budget = cap - slots.length;
+		if (budget <= 0) return;
 
 		// Build the target roster: as many distinct avatars as the budget allows,
 		// shuffled so each room differs. If the live roster is thin (gallery down),
 		// cycle the bundled rigs up to a lively floor so the room never feels dead.
 		const distinct = shuffle(this._roster);
-		const targets = distinct.slice(0, this.max);
-		const floor = Math.min(this.max, LIVELY_FLOOR);
+		const targets = distinct.slice(0, budget);
+		const floor = Math.min(budget, LIVELY_FLOOR);
 		for (let i = 0; targets.length < floor && distinct.length; i++) {
 			targets.push(distinct[i % distinct.length]);
 		}
-		if (this._roster.length > this.max) {
-			log.info(`[club-crowd] roster ${this._roster.length} exceeds budget ${this.max} — showing ${this.max} this room`);
+		if (this._roster.length > budget) {
+			log.info(`[club-crowd] roster ${this._roster.length} exceeds budget ${budget} — showing ${budget} this room`);
 		}
 
 		const danceRatio = DANCE_RATIO[Math.min(roomIndex, DANCE_RATIO.length - 1)] ?? 0.3;
@@ -272,6 +301,29 @@ export class ClubCrowd {
 			// Yield between members so a large room fills progressively instead of
 			// stalling the walk on one heavy frame.
 			if ((i & 3) === 3) await new Promise((r) => setTimeout(r, 0));
+		}
+	}
+
+	// Fill the directed slots in order. Downloads stay bounded no matter how long
+	// the line is: at most LINEUP_DISTINCT unique rigs are fetched and the rest of
+	// the line reuses them as clones at different heights. An undrivable rig is
+	// swapped for the next one in the pool so a slot never stays empty while a
+	// working rig exists.
+	async _populateLineup({ gen, root, path, slots, onMember }) {
+		const pool = shuffle(this._roster).slice(0, LINEUP_DISTINCT);
+		let cursor = 0;
+		for (const slot of slots) {
+			let tpl = null;
+			for (let tries = 0; tries < pool.length && !tpl; tries++) {
+				const cand = await this._template(pool[cursor++ % pool.length].url);
+				if (gen !== this._gen) return;
+				if (cand?.scene && cand.drivable) tpl = cand;
+			}
+			if (!tpl) return; // no drivable rig at all: an empty line beats a T-posed one
+			const inst = this._spawn(root, tpl, slot, path, false, slot);
+			this._placed.push({ x: slot.x, z: slot.z });
+			try { onMember?.(inst, slot); } catch (err) { log.warn('[club-crowd] lineup onMember failed', err); }
+			await new Promise((r) => setTimeout(r, 0));
 		}
 	}
 
@@ -306,11 +358,12 @@ export class ClubCrowd {
 		return hit ? Math.max(0, hit.point.y) : 0;
 	}
 
-	_spawn(root, tpl, spot, path, wantDance) {
-		const clip = this._pickClip(tpl, wantDance);
+	_spawn(root, tpl, spot, path, wantDance, slot = null) {
+		const clip = this._pickClip(tpl, wantDance, slot?.clips);
 		const model = cloneSkinnedScene(tpl.scene);
 		model.traverse((n) => { if (n.isMesh) n.castShadow = false; });
-		scaleToHeight(model, MIN_HEIGHT + Math.random() * (MAX_HEIGHT - MIN_HEIGHT));
+		const height = slot?.height || MIN_HEIGHT + Math.random() * (MAX_HEIGHT - MIN_HEIGHT);
+		scaleToHeight(model, height);
 		groundFeet(model);
 
 		const group = new Group();
@@ -321,23 +374,53 @@ export class ClubCrowd {
 		const cx = (path.spawn.x + path.door.x) / 2;
 		const cz = (path.spawn.z + path.door.z) / 2;
 		const faceYaw = Math.atan2(cx - spot.x, cz - spot.z);
-		group.rotation.y = wantDance
+		if (Number.isFinite(slot?.yaw)) group.rotation.y = slot.yaw;
+		else group.rotation.y = wantDance
 			? Math.random() * Math.PI * 2
 			: faceYaw + (Math.random() - 0.5) * 1.1;
 		root.add(group);
 
 		let mixer = null;
+		let base = null;
 		if (clip) {
 			mixer = new AnimationMixer(model);
-			const action = mixer.clipAction(clip);
-			action.time = Math.random() * (clip.duration || 1); // desync the loop
-			action.play();
+			base = mixer.clipAction(clip);
+			base.time = Math.random() * (clip.duration || 1); // desync the loop
+			if (slot?.timeScale) base.timeScale = slot.timeScale;
+			base.play();
 		}
-		this._instances.push({ group, mixer, model });
+		const inst = { group, mixer, model, base, height, clips: tpl.clips, gesturing: false };
+		this._instances.push(inst);
+		return inst;
 	}
 
-	_pickClip(tpl, wantDance) {
-		const pool = wantDance ? DANCE_CLIPS : IDLE_CLIPS;
+	/**
+	 * Play a short one-shot gesture (a shrug, a nod, a point) over a member's
+	 * loop, then settle back into the loop. The first name this rig can play
+	 * wins; a rig with none of them just keeps looping. No-op mid-gesture.
+	 */
+	gesture(inst, names) {
+		if (!inst?.mixer || !inst.base || inst.gesturing) return;
+		const name = names.find((n) => inst.clips.has(n));
+		if (!name) return;
+		const { mixer, base } = inst;
+		const act = mixer.clipAction(inst.clips.get(name));
+		act.reset();
+		act.setLoop(LoopOnce, 1);
+		act.clampWhenFinished = true;
+		act.crossFadeFrom(base, 0.3, false).play();
+		inst.gesturing = true;
+		const onFinished = (e) => {
+			if (e.action !== act) return;
+			mixer.removeEventListener('finished', onFinished);
+			base.reset().crossFadeFrom(act, 0.35, false).play();
+			inst.gesturing = false;
+		};
+		mixer.addEventListener('finished', onFinished);
+	}
+
+	_pickClip(tpl, wantDance, preferred = null) {
+		const pool = preferred?.length ? preferred : wantDance ? DANCE_CLIPS : IDLE_CLIPS;
 		const avail = pool.filter((n) => tpl.clips.has(n));
 		const pick = avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
 		// Always fall back to a held clip so the member is never a static T-pose.
