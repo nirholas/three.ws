@@ -1064,6 +1064,107 @@
 					]
 				}
 			]
+		},
+		{
+			"id": "mcp-catalog",
+			"status": "review",
+			"kind": "post",
+			"tier": 2,
+			"lane": "mcp",
+			"pattern": "proof",
+			"notBefore": "2026-09-20T05:00:00Z",
+			"quotes": "2101524482313920723",
+			"claims": [
+				{
+					"says": "checked against the code on every build",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools",
+							"contains": "checked against the code on every build"
+						}
+					]
+				},
+				{
+					"says": "three_burn signs on Solana mainnet",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "signs and broadcasts on Solana mainnet"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/tools/three-burn.js",
+							"contains": "confirm"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the catalog serves 321 tools",
+					"url": "https://three.ws/mcp-catalog.json",
+					"expect": {
+						"json": {
+							"path": "counts.tools",
+							"equals": 321
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "across 42 servers",
+					"url": "https://three.ws/mcp-catalog.json",
+					"expect": {
+						"json": {
+							"path": "counts.servers",
+							"equals": 42
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "215 of them are verified reads",
+					"url": "https://three.ws/mcp-catalog.json",
+					"expect": {
+						"json": {
+							"path": "counts.read",
+							"equals": 215
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the pasteable profile is served live",
+					"url": "https://three.ws/api/mcp-policy?profile=balanced&format=claude",
+					"expect": {
+						"status": 200,
+						"contains": "mcp__three-token-mcp__three_balance"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "321 MCP tools across 42 servers, 293 free.\n\nEvery read-only label is checked against the code on every build, so one pasted profile runs 215 of them without asking you.\n\nthree.ws/mcp-tools",
+					"media": [
+						{
+							"path": "public/x-media/mcp-catalog-detail/card.png",
+							"alt": "A three.ws card reading '321 MCP tools. Every label checked.' beside a browser window showing the three.ws MCP Tool Catalog: counters reading 321 tools, 42 servers, 215 read-only, 81 writes, 25 irreversible, 293 free and 28 paid, above three permission profiles named Strict, Balanced and Open"
+						}
+					]
+				},
+				{
+					"text": "This server is three of those tools.\n\nthree_balance and three_price read. three_burn signs on Solana mainnet, so it is labelled irreversible and will not run without confirm: true.",
+					"media": [
+						{
+							"path": "public/x-media/mcp-catalog-tools/card.png",
+							"alt": "A three.ws card reading 'Three tools. One of them burns.' beside a browser window showing the catalog filtered to the three-token-mcp server: three_balance and three_price each badged Read-only and Free, and three_burn badged Irreversible and Free, each with its full description"
+						}
+					]
+				}
+			]
 		}
 	]
 }

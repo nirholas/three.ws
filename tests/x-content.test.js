@@ -396,6 +396,23 @@ describe('queue', () => {
 		for (const item of queue.items.filter((row) => row.status === 'approved')) expect(problems[item.id]).toEqual([]);
 	});
 
+	it('takes a post id for a quote tweet and refuses a pasted URL', async () => {
+		const { publishItem, previewClient } = await import('../api/_lib/x-content/publisher.js');
+		const dir = sandbox();
+		const base = { id: 'quote-post', status: 'draft', kind: 'post', tier: 2, lane: 'l', pattern: 'p', notBefore: '2026-09-20T00:00:00Z', textOnly: true, posts: [{ text: HEAD }, { text: 'A reply that carries the rest of it.' }] };
+		expect(validateItem({ ...base, quotes: '2101524482313920723' }, dir)).toEqual([]);
+		expect(validateItem({ ...base, quotes: 'https://x.com/trythreews/status/2101524482313920723' }, dir)).toContain('quotes must be a post id (digits only), not a URL');
+
+		// Only the head quotes; the reply still threads under it.
+		const client = previewClient();
+		const state = { inflight: {} };
+		await publishItem({ item: { ...base, quotes: '2101524482313920723' }, client, root: dir, state, store: { save: async () => {} } });
+		const tweets = client.calls.filter((call) => call.call === 'tweets.create');
+		expect(tweets[0].quote_tweet_id).toBe('2101524482313920723');
+		expect(tweets[1].quote_tweet_id).toBeUndefined();
+		expect(tweets[1].reply.in_reply_to_tweet_id).toBe(tweets[0] && 'preview-post-1');
+	});
+
 	it('requires media on the head post unless text-only is explicit', () => {
 		const dir = sandbox();
 		const base = { id: 'demo', status: 'review', kind: 'post', tier: 2, lane: 'l', pattern: 'p', notBefore: '2026-09-17T14:00:00Z' };

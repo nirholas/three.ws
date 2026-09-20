@@ -126,6 +126,12 @@ export function validateItem(item, root) {
 	if (!Number.isFinite(Date.parse(item.notBefore))) problems.push('notBefore must be an ISO-8601 timestamp');
 	if (![1, 2, 3].includes(Number(item.tier))) problems.push('tier must be 1 (flagship), 2 (feature), or 3 (proof of work)');
 	if (item.expiresAt !== undefined && !Number.isFinite(Date.parse(item.expiresAt))) problems.push('expiresAt must be an ISO-8601 timestamp');
+	// `quotes` is the numeric id of the post this one quotes. X takes the id, not
+	// the URL, so a pasted status link is rejected here rather than at publish.
+	if (item.quotes !== undefined) {
+		if (item.kind !== 'post') problems.push('quotes is only for post items; an article already quotes itself');
+		if (!/^[0-9]{5,25}$/.test(String(item.quotes))) problems.push('quotes must be a post id (digits only), not a URL');
+	}
 	if (item.priority !== undefined && !(Number(item.priority) >= -50 && Number(item.priority) <= 50)) problems.push('priority is an owner boost from -50 to 50');
 	for (const probe of item.probes || []) {
 		if (!['api', 'browser', 'command'].includes(probe.type)) problems.push(`probe type ${probe.type} must be api, browser, or command`);

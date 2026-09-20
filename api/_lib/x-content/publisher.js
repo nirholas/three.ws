@@ -118,7 +118,9 @@ export async function publishItem({ item, client, root, state, store, account = 
 	const persist = () => store.save(state);
 
 	if (item.kind === 'article') await publishArticle({ client, root, item, progress, persist });
-	else await publishPosts({ client, root, posts: item.posts, progress, persist });
+	// `quotes` makes the head post a quote tweet of an existing post, which is how
+	// a follow-up adds the detail its original left out without repeating it.
+	else await publishPosts({ client, root, posts: item.posts, progress, persist, quoteId: item.quotes || null });
 
 	const leadId = progress.articlePostId || progress.postIds[0];
 	const row = {

@@ -1,0 +1,10 @@
+{
+	"out": "public/x-media/mcp-catalog-detail/card.png",
+	"headline": "321 MCP tools.\nEvery label checked.",
+	"body": "42 servers, 293 of them free. The read-only label on each tool is verified against its source on every build, so your assistant can act on it.",
+	"frame": "browser",
+	"shot": "https://three.ws/mcp-tools?server=three-token-mcp",
+	"label": "three.ws/mcp-tools",
+	"settleMs": 20000,
+	"headlineSize": 68
+}

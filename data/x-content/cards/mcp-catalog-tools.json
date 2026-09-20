@@ -1,0 +1,11 @@
+{
+	"out": "public/x-media/mcp-catalog-tools/card.png",
+	"headline": "Three tools.\nOne of them burns.",
+	"headlineSize": 68,
+	"body": "three_balance and three_price read. three_burn signs on Solana mainnet, so the catalog marks it irreversible and it refuses to run without confirm: true.",
+	"frame": "browser",
+	"shot": "https://three.ws/mcp-tools?server=three-token-mcp",
+	"label": "three.ws/mcp-tools?server=three-token-mcp",
+	"scrollBy": 1500,
+	"settleMs": 20000
+}
