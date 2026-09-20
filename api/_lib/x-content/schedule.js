@@ -60,14 +60,15 @@ export function inQuietHours(now, quiet) {
 //   T1 flagship         partner news, $THREE utility, major launches
 //   T2 features         shipped features with proof
 //   T3 proof of work    short demos, stats, build notes
-// Slot times come from the volume study: an original post between 12:00 and
-// 20:00 UTC (8 AM to 4 PM New York) is followed by a volume response on the
-// $THREE pool about 1.7 times as often as one outside it, and that is also when
-// the pool trades most, so all three slots sit inside that window with the
-// flagship slot at noon New York. Each slot opens at a jittered minute only the
-// seed can reproduce. A slot stays open for
-// three hours, so a missed tick (deploy, outage) still posts, but a day never
-// gets more than one post per slot and nothing spills into the small hours.
+// Slot times are the owner's cadence of 2026-09-20: three a day, eight hours
+// apart, every day of the week. It replaced a window drawn from the volume
+// study (an original post between 12:00 and 20:00 UTC is followed by a volume
+// response on the $THREE pool about 1.7 times as often as one outside it),
+// which could not hold three evenly spaced slots. Two of the three still land
+// inside that window; the third takes the off-peak turn. Each slot opens at a
+// jittered minute only the seed can reproduce, and stays open for three hours,
+// so a missed tick (deploy, outage) still posts while a day never gets more
+// than one post per slot.
 //
 // Filling a slot: the slot's own tier first, then lower tiers (T1 slot empty ->
 // best T2), so the best available post always gets the best time. A higher tier
@@ -78,9 +79,9 @@ export function inQuietHours(now, quiet) {
 export const TIERS = [1, 2, 3];
 
 export const DEFAULT_SLOTS = [
-	{ tier: 3, at: '12:30' },
-	{ tier: 1, at: '16:00' },
-	{ tier: 2, at: '19:30' },
+	{ tier: 3, at: '04:00' },
+	{ tier: 2, at: '12:00' },
+	{ tier: 1, at: '20:00' },
 ];
 
 const dayKey = (timestamp) => new Date(timestamp).toISOString().slice(0, 10);
@@ -89,12 +90,13 @@ const atMinutes = (at) => {
 	return h * 60 + (m || 0);
 };
 
-// Saturday and Sunday, by the UTC day a slot belongs to. The $THREE pool trades
-// about two thirds of its weekday volume on a weekend, and the hour after a post
-// moves less than half the dollars, though a post is just as likely to get a
-// reaction. A flagship post is worth the most on a weekday, so with
-// `flagshipWeekdaysOnly` the T1 slot does not open on a weekend and T1 posts are
-// not spent in the lower slots either: they wait for Monday.
+// Saturday and Sunday, by the UTC day a slot belongs to. `flagshipWeekdaysOnly`
+// withholds the T1 slot on a weekend and keeps T1 posts out of the lower slots
+// too, because the $THREE pool trades about two thirds of its weekday volume
+// then and the hour after a post moves less than half the dollars. The queue no
+// longer sets it: the owner's cadence of 2026-09-20 posts three a day every day,
+// weekends included. The option stays because it is the only lever that reverses
+// that, and `isWeekend` still answers the question it asks.
 export const isWeekend = (timestamp) => [0, 6].includes(new Date(timestamp).getUTCDay());
 
 // Every slot opening from yesterday through tomorrow, in time order, so the

@@ -1,0 +1,10 @@
+{
+	"out": "public/x-media/free-objects/card.png",
+	"headline": "511 free 3D objects.\nStand one in your room.",
+	"body": "Every one CC0. Preview it in the browser, download the GLB, or open it on a phone and place it in AR.",
+	"frame": "browser",
+	"shot": "https://three.ws/objects",
+	"label": "three.ws/objects",
+	"scrollBy": 380,
+	"settleMs": 18000
+}

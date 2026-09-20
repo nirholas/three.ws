@@ -1,7 +1,7 @@
 {
 	"id": "three-token-mcp",
 	"contentHash": "111e25308a115a7ccba1e68bc0ad1fe93010472f09bc8047041efbafe327cbc1",
-	"reviewedAt": "2026-09-18T01:47:41.686Z",
+	"reviewedAt": "2026-09-20T04:10:03.331Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -118,7 +118,7 @@
 				"The three.ws MCP Tool Catalog filtered to the @three-ws/three-token-mcp server: 3 of 321 tools, with three_balance and three_price labelled read-only and three_burn labelled irreversible, all free"
 			]
 		},
-		"summary": "Every claim (burn on Solana mainnet, irreversible flag, confirm:true gate) is verified against the live page, source files, and a live probe that confirmed the server refuses to sign without confirmation. The screenshot matches the live catalog exactly, the alt text accurately describes it, and the post sits in the 100-179 band with no hashtags, emoji, or hype.",
+		"summary": "Every claim is verified against the live tool page, source files, and a passing probe, and the screenshot matches the live catalog exactly including the 3 of 321 count and badge labels. The post sits inside the 100 to 179 band, carries one tag that the mechanism justifies, and follows the voice contract with nothing to fix.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",

@@ -28441,6 +28441,15 @@
 				"fix"
 			],
 			"link": "/animations"
+		},
+		{
+			"date": "2026-09-20",
+			"title": "The @trythreews account now posts three times a day, every day",
+			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/changelog"
 		}
 	]
 }

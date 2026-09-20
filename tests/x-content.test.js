@@ -240,15 +240,18 @@ describe('priority', () => {
 		expect(scored.volumeChance).toBeNull();
 	});
 
-	it('keeps every daily slot inside the hours the volume study favours, far enough apart to all post', () => {
+	it('spaces the three daily slots eight hours apart, far enough that all three can post', () => {
+		// Owner cadence (2026-09-20): three posts a day, eight hours apart, every
+		// day. That replaced the volume-study window (12:00 to 20:00 UTC), which
+		// could not hold three slots without crowding them.
 		const queue = loadQueue(root);
 		const slots = queue.cadence.slots;
-		expect(slots).toEqual(DEFAULT_SLOTS);
+		expect(slots).toHaveLength(3);
 		const minutes = slots.map((slot) => Number(slot.at.slice(0, 2)) * 60 + Number(slot.at.slice(3))).sort((a, b) => a - b);
-		for (const at of minutes) {
-			expect(at).toBeGreaterThanOrEqual(12 * 60);
-			expect(at + queue.cadence.windowMinutes).toBeLessThanOrEqual(20 * 60);
-		}
+		for (let index = 1; index < minutes.length; index++) expect(minutes[index] - minutes[index - 1]).toBe(8 * 60);
+		// Wrapping past midnight, the last slot to the first is also eight hours.
+		expect(minutes[0] + 24 * 60 - minutes[minutes.length - 1]).toBe(8 * 60);
+
 		// The latest a slot can open, to the earliest the next one can: never closer
 		// than the minimum gap, or the later slot would be blocked by the earlier post.
 		for (let index = 1; index < minutes.length; index++) {
@@ -256,25 +259,27 @@ describe('priority', () => {
 		}
 	});
 
-	it('keeps flagship posts off the weekend, when the pool trades a third less', () => {
-		const cadence = { ...loadQueue(root).cadence, quietHoursUtc: null };
-		expect(cadence.flagshipWeekdaysOnly).toBe(true);
+	it('opens all three slots every day, weekends included, and still lets a flagship take the flagship slot', () => {
+		// Owner directive (2026-09-20): three a day, Sundays too. The queue no
+		// longer sets flagshipWeekdaysOnly, so no slot is withheld on a weekend.
+		const cadence = loadQueue(root).cadence;
+		expect(cadence.flagshipWeekdaysOnly).toBeUndefined();
 		const saturday = Date.parse('2026-09-19T16:20:00Z');
+		const sunday = Date.parse('2026-09-20T16:20:00Z');
 		const monday = Date.parse('2026-09-21T16:45:00Z');
 		const tiersOn = (day) => slotOpenings(day, cadence, 'seed').filter((slot) => slot.key.startsWith(new Date(day).toISOString().slice(0, 10))).map((slot) => slot.tier);
-		expect(tiersOn(saturday)).toEqual([3, 2]);
-		expect(tiersOn(monday)).toEqual([3, 1, 2]);
+		const everyDay = cadence.slots.map((slot) => Number(slot.tier));
+		for (const day of [saturday, sunday, monday]) expect(tiersOn(day)).toEqual(everyDay);
 
-		// Two flagship posts ready: a surplus that would normally fill a lower slot.
+		// A weekend flagship slot goes to a flagship post, not down to a feature.
 		const flagship = (id) => ({ id, status: 'approved', kind: 'post', tier: 1, lane: id, pattern: id, notBefore: '2026-09-01T00:00:00Z', posts: [{ text: `${id} is now live: three.ws/x`, media: [] }] });
 		const feature = { id: 'feature', status: 'approved', kind: 'post', tier: 2, lane: 'f', pattern: 'f', notBefore: '2026-09-01T00:00:00Z', posts: [{ text: 'A feature: three.ws/x', media: [] }] };
 		const items = [flagship('one'), flagship('two'), feature];
 		const pick = (now) => pickDue({ items, state: { published: [] }, now, cadence, quality: {}, seed: 'seed', lifts: null, reviews: new Map(), exclude: new Set() });
-		const weekendSlot = slotOpenings(saturday, cadence, 'seed').find((slot) => slot.key.startsWith('2026-09-19') && slot.tier === 2);
-		const weekendPick = pick(weekendSlot.opensAt + 60_000);
-		expect(weekendPick.item.id).toBe('feature');
-		const mondaySlot = slotOpenings(monday, cadence, 'seed').find((slot) => slot.key.startsWith('2026-09-21') && slot.tier === 1);
-		expect(tierOfPick(pick(mondaySlot.opensAt + 60_000))).toBe(1);
+		const sundayFlagship = slotOpenings(sunday, cadence, 'seed').find((slot) => slot.key.startsWith('2026-09-20') && slot.tier === 1);
+		expect(tierOfPick(pick(sundayFlagship.opensAt + 60_000))).toBe(1);
+		const sundayFeature = slotOpenings(sunday, cadence, 'seed').find((slot) => slot.key.startsWith('2026-09-20') && slot.tier === 2);
+		expect(pick(sundayFeature.opensAt + 60_000).item.id).toBe('feature');
 	});
 
 	it('adds owner boost, timeliness, waiting, and review; penalizes repetition; drops expired posts', () => {

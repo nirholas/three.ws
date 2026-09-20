@@ -3,7 +3,7 @@
 	"account": "trythreews",
 	"cadence": {
 		"windowMinutes": 30,
-		"minimumMinutesApart": 180,
+		"minimumMinutesApart": 240,
 		"dailyCap": 3,
 		"quietHoursUtc": null,
 		"slots": [
@@ -299,7 +299,7 @@
 		},
 		{
 			"id": "three-token-mcp",
-			"status": "paused",
+			"status": "approved",
 			"kind": "post",
 			"lane": "token",
 			"pattern": "mechanism",
@@ -413,7 +413,7 @@
 		},
 		{
 			"id": "forge-max",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"lane": "developer",
 			"pattern": "number",
@@ -447,7 +447,46 @@
 				}
 			],
 			"mentions": {},
-			"tier": 2
+			"tier": 2,
+			"probes": [
+				{
+					"type": "api",
+					"name": "the High tier is a real gated lane at 200k poly + PBR",
+					"url": "https://three.ws/api/forge",
+					"method": "POST",
+					"body": {
+						"prompt": "a plain wooden stool",
+						"tier": "high"
+					},
+					"expect": {
+						"status": 402,
+						"contains": "200k poly + PBR"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "/forge-max opens the Forge with the High tier pinned",
+					"steps": [
+						{
+							"goto": "https://three.ws/forge-max"
+						},
+						{
+							"expect": "Forge Max"
+						},
+						{
+							"expect": "200k-poly geometry, 4K PBR textures"
+						}
+					]
+				},
+				{
+					"type": "api",
+					"name": "the Forge Max page is served",
+					"url": "https://three.ws/forge-max",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
 		},
 		{
 			"id": "materialize",
@@ -945,6 +984,84 @@
 					"expect": {
 						"status": 200
 					}
+				}
+			]
+		},
+		{
+			"id": "free-objects",
+			"status": "approved",
+			"kind": "post",
+			"tier": 2,
+			"lane": "ar",
+			"pattern": "list",
+			"notBefore": "2026-09-20T05:00:00Z",
+			"claims": [
+				{
+					"says": "511 free 3D objects. Every one CC0.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/objects",
+							"contains": "511 CC0 props, free to use"
+						}
+					]
+				},
+				{
+					"says": "stand it in your room in AR",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/objects",
+							"contains": "AR"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the catalog serves 511 CC0 objects",
+					"url": "https://three.ws/api/catalog?kind=object&limit=1",
+					"expect": {
+						"json": {
+							"path": "facets.kinds.object",
+							"min": 511
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "AR opens a real catalog object",
+					"url": "https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fadjustable_wrench.glb&title=Adjustable%20Wrench",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the library lists CC0 objects with a Preview, AR and Download on each",
+					"steps": [
+						{
+							"goto": "https://three.ws/objects"
+						},
+						{
+							"expect": "511 CC0 props, free to use"
+						},
+						{
+							"expect": "Download"
+						}
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "511 free 3D objects. Every one CC0.\n\nPreview one in the browser, download the GLB, or open it on your phone and stand it in your room in AR.\n\nthree.ws/objects",
+					"media": [
+						{
+							"path": "public/x-media/free-objects/card.png",
+							"alt": "A three.ws card reading '511 free 3D objects. Stand one in your room.' beside a browser window showing the three.ws object library: a grid of CC0 props including an adjustable wrench, an alarm clock, a bottle of cleaner, an American football and an ammo box, each tagged CC0 and carrying Preview, AR and Download buttons"
+						}
+					]
 				}
 			]
 		}

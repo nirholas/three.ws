@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T04:28:31.249Z",
+	"generated_at": "2026-09-20T04:32:12.785Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3714,
+	"total": 3715,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -29,6 +29,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "The @trythreews account now posts three times a day, every day",
+			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
+			"link": "/changelog",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1608,17 +1618,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "update",
-			"title": "Every button on Drive Your Avatar is reachable again, by mouse and by keyboard",
-			"summary": "Two things were quietly breaking the controls on Drive Your Avatar. The gesture tray grew up the right-hand edge until it sat on top of the HUD column beside it, so Photo, Record, Map and the help button silently stopped taking clicks; the tray now keeps to the lower band and wraps into a second column instead of climbing into the buttons. Separately, pressing Enter anywhere on the page jumped straight to the chat box, which meant a keyboard user could tab to any control and never activate it. Enter now belongs to whatever you have focused, and only opens chat when you are looking at the scene. Along the way: the radar moved off the crowded bottom edge on phones, the chat box no longer pushes its send button off a narrow screen, the avatar list tells you when it could not load instead of always saying you are signed out, and the coin-world picker closes on Escape.",
-			"link": "/temporary",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

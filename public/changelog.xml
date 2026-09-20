@@ -23,6 +23,14 @@
 			<description>Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible.</description>
 		</item>
 		<item>
+			<title>The @trythreews account now posts three times a day, every day</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-20:The @trythreews account now posts three times a day, every day</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.</description>
+		</item>
+		<item>
 			<title>Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation</guid>
