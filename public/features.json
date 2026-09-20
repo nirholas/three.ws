@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T05:24:40.639Z",
+	"generated_at": "2026-09-20T06:01:19.858Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -652,6 +652,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/prompts",
+					"title": "Prompt Library",
+					"description": "Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.",
+					"added": "2026-09-20",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				},
 				{
 					"path": "/start",
@@ -4783,6 +4793,16 @@
 					"title": "Docs · three.ws in VS Code",
 					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
 					"added": "2026-09-05",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/prompts",
+					"title": "Docs · The prompt library",
+					"description": "How the three.ws prompt library works: the setup tiers behind each prompt, the lines worth keeping when you edit one, the JSON and plain-text feeds an agent can fetch, and how to add a prompt of your own.",
+					"added": "2026-09-20",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

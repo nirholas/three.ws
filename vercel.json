@@ -1363,6 +1363,10 @@
 			"dest": "/hacks.html"
 		},
 		{
+			"src": "/derivative/([a-z0-9_-]{1,60})/([A-Za-z0-9._:~-]{1,48})/?",
+			"dest": "/derivative.html"
+		},
+		{
 			"src": "/exchange/([a-z0-9_-]{1,60})/?",
 			"dest": "/exchange.html"
 		},
@@ -5748,6 +5752,10 @@
 		{
 			"src": "/awesome",
 			"dest": "/awesome.html"
+		},
+		{
+			"src": "/prompts",
+			"dest": "/prompts.html"
 		},
 		{
 			"src": "/awesome/",

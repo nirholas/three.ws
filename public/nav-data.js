@@ -751,6 +751,11 @@ export const NAV_GROUPS = [
 					{ title: 'Examples', href: '/examples', desc: 'Runnable copy-paste code' },
 					{ title: 'Cookbook', href: '/cookbook', desc: 'Recipes you download and run' },
 					{
+						title: 'Prompt Library',
+						href: '/prompts',
+						desc: 'Prompts you paste into Claude to build with three.ws',
+					},
+					{
 						title: 'Awesome 3D Agents',
 						href: '/awesome',
 						desc: 'The curated list of tools for giving an AI a body',

@@ -402,6 +402,12 @@ URL: https://three.ws/agora
 
 A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.
 
+### Prompt Library
+
+URL: https://three.ws/prompts
+
+Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.
+
 ### Get Started
 
 URL: https://three.ws/start
@@ -2919,6 +2925,12 @@ Decode validated image data embedded in Solana Memo transactions and return safe
 URL: https://three.ws/docs/vscode
 
 The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.
+
+### Docs · The prompt library
+
+URL: https://three.ws/docs/prompts
+
+How the three.ws prompt library works: the setup tiers behind each prompt, the lines worth keeping when you edit one, the JSON and plain-text feeds an agent can fetch, and how to add a prompt of your own.
 
 ### Docs · 3D Studio MCP (free)
 

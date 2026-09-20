@@ -670,6 +670,7 @@ const appConfig = {
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
 				awesome: resolve(__dirname, 'pages/awesome.html'),
+				prompts: resolve(__dirname, 'pages/prompts.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
 				holo: resolve(__dirname, 'pages/holo.html'),
 				bundles: resolve(__dirname, 'pages/bundles.html'),
@@ -882,6 +883,7 @@ const appConfig = {
 				categories: resolve(__dirname, 'pages/categories.html'),
 				exchanges: resolve(__dirname, 'pages/exchanges.html'),
 				derivatives: resolve(__dirname, 'pages/derivatives.html'),
+				derivative: resolve(__dirname, 'pages/derivative.html'),
 				converter: resolve(__dirname, 'pages/converter.html'),
 				defi: resolve(__dirname, 'pages/defi.html'),
 				chains: resolve(__dirname, 'pages/chains.html'),
@@ -1443,6 +1445,8 @@ const appConfig = {
 					'/agent-identities/': resolve(root, 'pages/agent-identities.html'),
 					'/awesome': resolve(root, 'pages/awesome.html'),
 					'/awesome/': resolve(root, 'pages/awesome.html'),
+					'/prompts': resolve(root, 'pages/prompts.html'),
+					'/prompts/': resolve(root, 'pages/prompts.html'),
 					// Production routes /app to the Next viewer and leaves app.html
 					// reachable only at /app-classic (vercel.json). Dev has to mirror
 					// that, or every /app change gets exercised against the wrong page.
@@ -2379,6 +2383,14 @@ const appConfig = {
 					// matching api/vanity/drops.js's id format)
 					else if (!filePath && /^\/drop\/[0-9a-f]{24}\/?$/.test(path))
 						filePath = resolve(root, 'pages/drop.html');
+					// /derivative/:venue/:symbol  → one perpetual contract. The symbol
+					// segment carries the venue's own symbol with any '/' folded to
+					// '~' (see src/shared/derivative-slug.js). Mirrors vercel.json.
+					else if (
+						!filePath &&
+						/^\/derivative\/[a-z0-9_-]{1,60}\/[A-Za-z0-9._:~-]{1,48}\/?$/i.test(path)
+					)
+						filePath = resolve(root, 'pages/derivative.html');
 					// /exchange/:id  → exchange detail page (CoinGecko exchange slug)
 					else if (!filePath && /^\/exchange\/[a-z0-9_-]{1,60}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/exchange.html');

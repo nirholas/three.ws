@@ -27,6 +27,7 @@ Three categories:
 | Category | Skills | Notes |
 | --- | --- | --- |
 | **3d/creative** | `find-3d-assets`, `generate-3d-model`, `create-3d-avatar`, `rig-a-model` | Text→GLB on the free lane, one-call rigged avatars, auto-rigging. **Cross-platform-safe**: zero coin/wallet/payment content, so this subset is reusable on non-Claude tracks (OpenAI, etc.). |
+| **platform/agents** | `create-a-three-ws-agent`, `build-an-agent-skill`, `sell-an-agent-skill`, `hire-an-agent`, `connect-three-ws-mcp` | Building ON three.ws: create an agent with a body, wallet and persona; author an in-app skill bundle; publish and price it in $THREE; hire another agent; wire a client to the MCP servers. Written against the public REST + MCP surfaces, so they work from any Claude surface. |
 | **wallet/payments** | `authenticate-wallet`, `fund`, `send-usdc`, `trade`, `search-for-service`, `pay-for-service`, `monetize-service`, `query-onchain-data`, `x402`, `metamask-agent-*`, okx wallet/identity set | The x402 agent-economy set. Never bundle these on non-crypto tracks. |
 | **intel/trading** | okx dex/defi market-data and execution set | Vendored partner skills (byte-identical to the vendor drop; categorized only in the pack manifest). |
 
@@ -86,7 +87,9 @@ option / skills directory the SDK exposes.
 - **Self-contained**: a skill folder must work when copied out of this repo — no
   relative imports into app internals.
 - After adding or editing a skill, regenerate the manifest:
-  `node scripts/build-skills-pack.mjs` (CI-style check: `--check`).
+  `npm run build:skills-pack` (CI-style check: `npm run check:skills-pack`, wired into
+  `npm run gate`). Category prose lives in one `CATEGORY_DESCRIPTIONS` map in that
+  script, so a new category cannot be counted while its description is missing.
 
 ### d) Downloaded from three.ws, no clone
 
@@ -128,6 +131,36 @@ bundle with no edit to the builder.
 Published Markdown follows the repo's dash rule; the canonical files under
 `.agents/skills/` are never rewritten.
 
+## The platform skills
+
+The set that turns a Claude session into a three.ws build surface. Each one is written
+against the public API (bearer key from
+[/dashboard/api](https://three.ws/dashboard/api)) and names the exact endpoint, body
+schema, and failure envelope, so the model does not have to guess.
+
+- **`create-a-three-ws-agent`**: forge a body, save it with
+  `POST /api/avatars/from-forge`, create the identity with `POST /api/agents` (the
+  custodial Solana wallet is minted in that request), then set the persona with
+  `PUT /api/agents/:id`. Returns the live `/agents/:id` page. Includes the
+  `409 identity_conflict` path, which is the integrity gate refusing a look-alike
+  identity rather than a bug to retry.
+- **`build-an-agent-skill`**: author the four-file in-app bundle
+  (`manifest.json` + `SKILL.md` + `tools.json` + `handlers.js`), the `ctx.*` handler
+  context, the Web Worker sandbox limits, the trust policy, and how to install and test
+  the bundle. Its worked example calls a real public API end to end.
+- **`sell-an-agent-skill`**: publish to the catalog (`POST /api/skills`), price per call,
+  price an agent's skill in $THREE (`PUT /api/monetization/prices`), metered trials and
+  pay-what-you-want (`PUT /api/agents/:id/skills-pricing`), the 250 bps author split, and
+  where the money lands.
+- **`hire-an-agent`**: the demand side. Browse `/api/agents/economy?view=offers`, take a
+  metered trial, buy over Solana Pay, or let one agent hire another with
+  `POST /api/agents/a2a-hire` under per-call and daily spend caps. Carries the mandatory
+  spend-confirmation card.
+- **`connect-three-ws-mcp`**: wire Claude Code, Claude Desktop, the Agent SDK, or any
+  JSON-RPC client to the hosted MCP servers, starting from the free one that needs no
+  account. Reads the live server directory at `/.well-known/mcp.json` rather than
+  trusting a hardcoded list.
+
 ## The 3D-creation skills
 
 The platform's signature set, safe to reuse anywhere:
@@ -150,6 +183,43 @@ The platform's signature set, safe to reuse anywhere:
 The three generation skills run free against the hosted studio endpoint
 `https://three.ws/api/mcp-studio` (JSON-RPC `tools/call`), documented with runnable
 `curl` examples inside each skill.
+
+## Standalone repos (install without cloning this one)
+
+Cloning a 60-directory monorepo to get a skill folder is a bad first experience, so the
+packs are also published as small standalone repos, each a complete Claude Code plugin
+marketplace of one plugin:
+
+| Repo | Contents | Who it is for |
+| --- | --- | --- |
+| `nirholas/three-ws-skills` | Every three.ws-origin skill (3D, platform, wallet/x402) | Anyone who wants the whole platform in one install |
+| `nirholas/three-ws-3d-skills` | The `3d/creative` cross-platform-safe subset | 3D users who want no wallet or payment content at all |
+| `nirholas/three-ws-agent-economy-skills` | `wallet/payments` + `platform/agents` | Builders monetizing agents and paying for services |
+
+```
+/plugin marketplace add nirholas/three-ws-3d-skills
+/plugin install three-ws-3d@three-ws-3d
+```
+
+**They are generated, never hand-maintained.** `npm run build:skill-repos` assembles each
+one into `.data/standalone-repos/<repo>/` (gitignored) straight from `.agents/skills/`,
+using the same `collectSkills()` the pack manifest uses, and writes the
+`.claude-plugin/marketplace.json`, `.claude-plugin/plugin.json`, `skills/`, a generated
+`README.md` with every trigger, the Apache-2.0 `LICENSE`, and a `.gitignore`. Because the
+copies are built on demand and never committed here, they cannot drift from the canonical
+folders.
+
+`npm run check:skill-repos` validates the repo specs against the pack without writing
+anything (it fails if a selector stops matching any skill, or a selected skill has no
+`SKILL.md`) and is wired into `npm run gate`, alongside `npm run check:skills-pack` which
+fails when `SKILLS.md` / `skills-pack.json` are stale.
+
+Vendored partner skills are deliberately excluded from every standalone repo: they belong
+to their publishers, and the `ops/production` skill is for maintainers of this repo rather
+than platform users.
+
+Publishing is owner-gated. The build prints the exact `git init` plus `gh repo create`
+command per repo when it finishes; nothing is pushed automatically.
 
 ## Related
 

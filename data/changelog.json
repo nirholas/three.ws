@@ -28468,6 +28468,36 @@
 				"improvement"
 			],
 			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-09-20",
+			"title": "The flagship post slot now gets flagship material",
+			"summary": "The @trythreews account publishes into three slots a day, one owned by each tier: proof of work at 04:00 UTC, a shipped feature at 12:00, a flagship at 20:00. The machine that drafts announcements from the backlog was not filling them that way. It never recorded a tier on anything it wrote, so every draft it produced was treated as a mid-tier feature and the 20:00 slot was left to whatever happened to be ready. It also dated the surfaces that need owner sign-off on their imagery into the best slot of every day, which pushed everything it could publish on its own weeks into the future. Announcements are now planned into the slot their own tier owns, the ones awaiting sign-off are listed separately instead of blocking the calendar, and six new announcements are queued for review.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/changelog"
+		},
+		{
+			"date": "2026-09-20",
+			"title": "A library of prompts you can paste straight into Claude",
+			"summary": "Knowing that three.ws has a free text-to-3D API is not the same as getting a rigged avatar out of it, and the paragraph that closes that gap is one nobody should have to write themselves. /prompts is 23 ready-made prompts for Claude and any other assistant: generate a model or a rigged avatar, search the CC0 catalog before generating anything, rig a GLB you already have, put a live avatar on your site, diagnose an embed that went dark, validate a model before it ships, find a paid API in the agent economy or sell your own. Each one names the real endpoint or tool, says what to do when a job comes back pending, and says what to hand back; the ones that can spend money are written to stop and show you the amount first. Most need no account, no key and no setup. Copy a prompt, open it directly in Claude with the text already in the box, or fetch the whole library as JSON or plain text.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/prompts"
+		},
+		{
+			"date": "2026-09-20",
+			"title": "Five new skills teach any Claude to build on three.ws, and three standalone repos to install them from",
+			"summary": "Until now the skills we hand out taught Claude the 3D lanes and the wallet, and stopped at the platform itself: nothing explained how to create an agent, give it a capability, put a price on it, or hire someone else's. Five new skills cover exactly that, each written against the real endpoints with the real request bodies and the real failure responses: create an agent (body, custodial Solana wallet, persona, live page), author a four-file in-app skill bundle and test it, publish and price a skill per call in $THREE with metered free trials, hire another agent under per-call and daily spend caps, and connect Claude Code, Claude Desktop or any MCP client to the hosted servers starting with the free one. The pack is also published as three small standalone repos, so installing it no longer means cloning a 60-directory monorepo: everything, the crypto-free 3D subset, or the agent-economy set. The repos are generated from the same folders the platform ships, so a copy can never drift from the original.",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
+			],
+			"link": "/docs/agent-skills"
 		}
 	]
 }

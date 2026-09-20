@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T05:24:40.658Z",
+	"generated_at": "2026-09-20T06:01:19.896Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -18,12 +18,43 @@
 		},
 		{
 			"date": "2026-09-20",
+			"type": "launch",
+			"title": "Docs · The prompt library",
+			"summary": "How the three.ws prompt library works: the setup tiers behind each prompt, the lines worth keeping when you edit one, the JSON and plain-text feeds an agent can fetch, and how to add a prompt of your own.",
+			"link": "/docs/prompts",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "launch",
+			"title": "Prompt Library",
+			"summary": "Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.",
+			"link": "/prompts",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
 			"type": "update",
 			"title": "A launchpad where every coin is bought with $THREE",
 			"summary": "The three.ws bonding-curve launchpad is now priced in $THREE instead of SOL. A coin launched there for a 3D agent can only be bought with $THREE, its creator earns half of every trading fee in $THREE, and when it graduates, the roughly 12.3 million $THREE it raised is locked in its pool permanently. The new launchpad page shows the live curves with buy and sell straight from your wallet. The curve has been verified against Solana mainnet and opens for launches as soon as its settings are published on-chain.",
 			"link": "/three-launchpad",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "A library of prompts you can paste straight into Claude",
+			"summary": "Knowing that three.ws has a free text-to-3D API is not the same as getting a rigged avatar out of it, and the paragraph that closes that gap is one nobody should have to write themselves. /prompts is 23 ready-made prompts for Claude and any other assistant: generate a model or a rigged avatar, search the CC0 catalog before generating anything, rig a GLB you already have, put a live avatar on your site, diagnose an embed that went dark, validate a model before it ships, find a paid API in the agent economy or sell your own. Each one names the real endpoint or tool, says what to do when a job comes back pending, and says what to hand back; the ones that can spend money are written to stop and show you the amount first. Most need no account, no key and no setup. Copy a prompt, open it directly in Claude with the text already in the box, or fetch the whole library as JSON or plain text.",
+			"link": "/prompts",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -63,6 +94,16 @@
 			"type": "update",
 			"title": "The @trythreews account now posts three times a day, every day",
 			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
+			"link": "/changelog",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "The flagship post slot now gets flagship material",
+			"summary": "The @trythreews account publishes into three slots a day, one owned by each tier: proof of work at 04:00 UTC, a shipped feature at 12:00, a flagship at 20:00. The machine that drafts announcements from the backlog was not filling them that way. It never recorded a tier on anything it wrote, so every draft it produced was treated as a mid-tier feature and the 20:00 slot was left to whatever happened to be ready. It also dated the surfaces that need owner sign-off on their imagery into the best slot of every day, which pushed everything it could publish on its own weeks into the future. Announcements are now planned into the slot their own tier owns, the ones awaiting sign-off are listed separately instead of blocking the calendar, and six new announcements are queued for review.",
 			"link": "/changelog",
 			"tags": [
 				"improvement"

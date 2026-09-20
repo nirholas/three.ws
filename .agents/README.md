@@ -1,6 +1,8 @@
 # three.ws Core
 
-Core wallet and x402 payment skills for Claude Code. Authenticate a wallet, fund it, send tokens, trade, search the x402 bazaar, pay for services, monetize your own APIs, and query onchain data — all from natural language.
+The three.ws skill pack for Claude Code. Generate and rig 3D models and avatars, create an
+agent with a body, wallet and persona, publish and price its skills, hire other agents, run
+a wallet, and pay or get paid over x402, all from natural language.
 
 Part of the [three.ws plugin marketplace](https://github.com/nirholas/three.ws).
 
@@ -15,30 +17,43 @@ Then run `/reload-plugins` (or restart Claude Code) and start a request like *"s
 
 ## Skills
 
-| Skill | What it does |
-| :---- | :----------- |
-| `authenticate-wallet` | Sign in to the wallet. Prerequisite for sending, trading, and funding. |
-| `fund` | Add money to the wallet — deposit, top up, buy USDC, onramp. |
-| `send-usdc` | Send USDC, ETH, POL, or SOL to an address or ENS name on Base, Polygon, or Solana. |
-| `trade` | Swap tokens on Base or Polygon (USDC ↔ ETH ↔ POL). |
-| `search-for-service` | Search and browse the x402 bazaar for paid API services. |
-| `pay-for-service` | Make a paid API request to an x402 endpoint with automatic USDC payment. |
-| `monetize-service` | Build and deploy a paid API that other agents can pay to use via x402. |
-| `query-onchain-data` | Query onchain data on Base using the CDP SQL API via x402. |
-| `x402` | General x402 entry point — discover payment requirements and call paid endpoints. |
+The full, always-current index with every trigger is
+[`skills/SKILLS.md`](skills/SKILLS.md), generated from the skill files themselves
+(`npm run build:skills-pack`). The machine-readable form is
+[`skills/skills-pack.json`](skills/skills-pack.json).
 
-Skills are model-invoked: Claude selects the right one from the task. You can also call any of them explicitly, e.g. `/three-ws-core:send-usdc`.
+| Group | Skills |
+| :---- | :----- |
+| Wallet and x402 economy | `authenticate-wallet`, `fund`, `send-usdc`, `trade`, `search-for-service`, `pay-for-service`, `monetize-service`, `query-onchain-data`, `x402` |
+| Build on three.ws | `create-a-three-ws-agent`, `build-an-agent-skill`, `sell-an-agent-skill`, `hire-an-agent`, `connect-three-ws-mcp` |
+| 3D creation | `generate-3d-model`, `create-3d-avatar`, `rig-a-model`, `find-3d-assets`, `embed-three-ws-avatar` |
+| Production ops (maintainers) | `gcp-triage` |
+| Vendored partner packs | wallet, identity, and market-data skills kept byte-identical to their publishers' drops |
+
+Skills are model-invoked: Claude selects the right one from the task. You can also call
+any of them explicitly, e.g. `/three-ws-core:send-usdc`.
+
+Prefer a smaller install? The same folders ship as standalone repos, one plugin each:
+`nirholas/three-ws-3d-skills` (no crypto content) and
+`nirholas/three-ws-agent-economy-skills`. See
+[docs/agent-skills.md](../docs/agent-skills.md).
 
 ## Configuration
 
-These skills talk to the three.ws wallet API. Set the following in your environment before use:
+Nothing is required to start: the 3D skills run against the free hosted lane
+(`https://three.ws/api/mcp-studio`), which needs no account, no key, and no payment.
 
-| Variable | Purpose |
-| :------- | :------ |
-| `THREE_WS_API` | Base URL of the three.ws wallet API. |
-| `THREE_WS_TOKEN` | Bearer token for the authenticated wallet. The `authenticate-wallet` skill obtains this for you. |
+| What you are doing | What it needs |
+| :----------------- | :------------ |
+| Generating or rigging 3D models, browsing the asset catalog | Nothing |
+| Anything tied to an account (agents, avatar library, pricing, earnings) | A three.ws API key from [/dashboard/api](https://three.ws/dashboard/api), exported as `THREE_WS_KEY` and sent as `Authorization: Bearer` |
+| Wallet operations (fund, send, trade) | The `awal` CLI's own email sign-in, handled by the `authenticate-wallet` skill |
+| Paid MCP tools or x402 endpoints | A funded wallet; the `pay-for-service` and `x402` skills drive the 402 handshake |
 
-No secrets are written to disk by these skills. Transfers are confirmed with you before they execute, and they are irreversible.
+API-key secrets are shown exactly once at creation, and their scopes are fixed then, so
+mint a key with only the scopes the task needs. No skill writes a secret to disk, and
+every money-moving skill renders a confirmation card and stops for an explicit yes before
+it spends: transfers are irreversible.
 
 ## License
 
