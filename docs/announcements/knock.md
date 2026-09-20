@@ -2,7 +2,7 @@
 
 **Surface:** [`/knock`](https://three.ws/knock) · **Stage:** drafted · **Slot:** 2026-09-21 · **Announced externally:** never
 
-Ranked 31 of 329 never-announced surfaces by `npm run announce:rank` (score 70). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/knock.json`](../../data/announce-plan/briefs/knock.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 31 of 330 never-announced surfaces by `npm run announce:rank` (score 70). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/knock.json`](../../data/announce-plan/briefs/knock.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 

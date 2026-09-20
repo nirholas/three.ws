@@ -2,7 +2,7 @@
 
 **Surface:** [`@three-ws/activity-mcp`](https://three.ws) · **Stage:** drafted · **Slot:** 2026-09-21 · **Announced externally:** never
 
-Ranked 33 of 329 never-announced surfaces by `npm run announce:rank` (score 67). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/activity-mcp.json`](../../data/announce-plan/briefs/activity-mcp.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 33 of 330 never-announced surfaces by `npm run announce:rank` (score 67). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/activity-mcp.json`](../../data/announce-plan/briefs/activity-mcp.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 

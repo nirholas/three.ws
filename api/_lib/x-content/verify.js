@@ -44,15 +44,26 @@ async function fetchWithTimeout(url, init = {}, ms = 20_000) {
 	}
 }
 
+// npm answers 403 to every non-browser user agent on a package page, so a post
+// linking a package we publish could never pass the link check. The registry is
+// the authoritative record of whether that package page exists, and it answers
+// any client, so an npm package link is resolved there instead.
+export function linkProbeUrl(url) {
+	const match = /^https?:\/\/(?:www\.)?npmjs\.com\/package\/((?:@[^/]+\/)?[^/?#]+)/i.exec(url);
+	return match ? `https://registry.npmjs.org/${match[1].replace('/', '%2F')}` : url;
+}
+
 // Links must answer 2xx after redirects. Runs in production too, right before
 // a post is sent, because a page can break between review and publish.
 export async function linkChecks(texts) {
 	const checks = [];
 	for (const url of linksIn(texts)) {
 		try {
-			const response = await fetchWithTimeout(url);
+			const probe = linkProbeUrl(url);
+			const response = await fetchWithTimeout(probe);
 			const ok = response.status >= 200 && response.status < 300;
-			checks.push({ kind: 'link', target: url, ok, detail: ok ? `HTTP ${response.status}${response.url !== url ? ` via ${response.url}` : ''}` : `HTTP ${response.status}` });
+			const via = probe !== url ? ` via the npm registry` : response.url !== url ? ` via ${response.url}` : '';
+			checks.push({ kind: 'link', target: url, ok, detail: ok ? `HTTP ${response.status}${via}` : `HTTP ${response.status}${via}` });
 		} catch (err) {
 			checks.push({ kind: 'link', target: url, ok: false, detail: `unreachable: ${err.message}` });
 		}

@@ -60,10 +60,12 @@ Hard rules, each enforced by a machine after you answer:
 - @mentions only for an account the surface genuinely runs on, at most two, each with the reason recorded. The brief's partner field is a suggestion, not a licence: drop it if the brief does not show the surface really runs on them.
 - Alt text describes what is in the image for someone who cannot see it, at least 60 characters, and does not repeat the post or open with "image of".
 
+Declare at least one feature probe in \`probes\`, and prove the feature works rather than that its page loads. An \`api\` probe is the cheap one and the only kind re-run seconds before publishing: {"type":"api","name":"what it proves","url":"https://three.ws/api/...","expect":{"json":{"path":"a.b","min":1}}}, drawn from the brief's \`endpoints\` list. A \`browser\` probe drives the live route: {"type":"browser","name":"what it proves","steps":[{"goto":"the brief's url"},{"click":"visible button text"},{"expect":"text that only appears once it worked"}]}. Use only routes and endpoints the brief names.
+
 The same announcement also goes to the community Telegram channel, which has no character limit and a slightly longer register. Write that version too: two to four sentences, the same facts, no hashtags, no emoji, no dashes, and the same link.
 
 Respond with a single JSON object and nothing else:
-{"post":"...","thread":["optional reply","optional reply"],"telegram":"...","alt":"...","claims":[{"says":"exact words from your post","evidence":[{...one of the brief's evidenceCandidates, copied exactly...}]}],"mentions":{"@handle":"why the tag is true"},"why":"two sentences for the approver: what the post leads on and why that is the strongest true thing about this surface","headline":"a five to nine word title for the announcement pack"}`;
+{"post":"...","thread":["optional reply","optional reply"],"telegram":"...","alt":"...","probes":[{"type":"api","name":"...","url":"..."}],"claims":[{"says":"exact words from your post","evidence":[{...one of the brief's evidenceCandidates, copied exactly...}]}],"mentions":{"@handle":"why the tag is true"},"why":"two sentences for the approver: what the post leads on and why that is the strongest true thing about this surface","headline":"a five to nine word title for the announcement pack"}`;
 
 export function buildDraftRequest(brief, { voice = null, findings = [], previous = null } = {}) {
 	const guidance = [
@@ -104,6 +106,7 @@ export function parseDraft(raw) {
 	draft.thread = Array.isArray(draft.thread) ? draft.thread.filter((row) => String(row || '').trim()) : [];
 	draft.telegram = String(draft.telegram || '').trim();
 	draft.claims = Array.isArray(draft.claims) ? draft.claims : [];
+	draft.probes = Array.isArray(draft.probes) ? draft.probes.filter((probe) => probe && probe.type) : [];
 	draft.mentions = draft.mentions && typeof draft.mentions === 'object' ? draft.mentions : {};
 	return draft;
 }
@@ -130,6 +133,10 @@ export function itemFor(brief, draft, { mediaPath, probe = null, status = 'draft
 		],
 		claims: draft.claims,
 		mentions: draft.mentions,
+		// The review bar refuses an item with no feature probe, so the drafter
+		// declares one and it travels into the item. Without this every pack the
+		// factory produced failed review for the same missing field.
+		probes: Array.isArray(draft.probes) ? draft.probes : [],
 	};
 }
 

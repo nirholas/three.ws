@@ -40,6 +40,8 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { hasUrl } from '../api/_lib/x-content/quality.js';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK_DIR = join(root, 'docs/announcements');
 const MEDIA_SPEC = join(root, 'data/announce-media.json');
@@ -162,7 +164,9 @@ for (const file of packs) {
 	if (BANNED_DASHES.test(post) || BANNED_DASHES.test(body)) {
 		fail(name, 'contains an em-dash or en-dash, which the house style bans');
 	}
-	if (!/https?:\/\/|three\.ws\//.test(post)) fail(name, 'post links nothing; a reader cannot reach the feature');
+	// The same notion of a link the publisher uses, so a package page on npm
+	// counts exactly as a three.ws route does. X wraps both in t.co.
+	if (!hasUrl(post)) fail(name, 'post links nothing; a reader cannot reach the feature');
 
 	for (const re of BANNED_OPENINGS) {
 		if (re.test(post)) fail(name, `post opens with a banned construction: ${re.source}`);

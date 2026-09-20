@@ -2,7 +2,7 @@
 
 **Surface:** [`/assistant`](https://three.ws/assistant) · **Stage:** drafted · **Slot:** 2026-09-22 · **Announced externally:** never
 
-Ranked 46 of 324 never-announced surfaces by `npm run announce:rank` (score 66). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/assistant.json`](../../data/announce-plan/briefs/assistant.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 48 of 330 never-announced surfaces by `npm run announce:rank` (score 66). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/assistant.json`](../../data/announce-plan/briefs/assistant.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 
@@ -58,7 +58,7 @@ Captured from the live route by `npm run announce:media`, which drives the real 
 
 **Alt text, required on the post:**
 
-> The assistant configurator with the option columns on the left and the floating launcher open in the corner showing a 3D avatar over the live page preview.
+> The assistant builder page: a Configure column with avatar, background, mode, name and greeting fields on the left, the one-line script snippet on the right, and the widget's round launcher button in the bottom corner.
 
 ## The post
 

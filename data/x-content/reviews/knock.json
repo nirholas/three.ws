@@ -1,0 +1,95 @@
+{
+	"id": "knock",
+	"contentHash": "bc34177fe6dd1740bca69bfc788c3c9b05fc4b741c591fc912764187343ded60",
+	"reviewedAt": "2026-09-20T06:50:08.567Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Put a price on reaching you. A stranger pays it, your 3D companion walks on and says who is at the door and what they paid, and the USDC is already yours. three.ws/knock",
+		"A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop.",
+		"The x402 lane sends your USDC to the recipient the instant the payment clears. Your price, your wallet, and everything that comes through it stays private to your account."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "says who is at the door and what they paid",
+				"kind": "evidence:page",
+				"target": "https://three.ws/knock",
+				"ok": true,
+				"detail": "live page shows \"Your companion walks on wherever you are on the site and says who is at the door and what they paid.\""
+			},
+			{
+				"claim": "A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/knock",
+				"ok": true,
+				"detail": "live page shows \"A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop.\""
+			},
+			{
+				"claim": "The x402 lane sends your USDC to the recipient the instant the payment clears.",
+				"kind": "evidence:file",
+				"target": "docs/knock.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Your price, your wallet, and everything that comes through it stays private to your account.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/knock",
+				"ok": true,
+				"detail": "live page shows \"Your price, your wallet, and everything that comes through it stays private to your account.\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the open-door directory answers with real doors, cheapest first",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:browser",
+				"target": "a visitor reaches a real door and its price from the page",
+				"ok": true,
+				"detail": "2 steps passed"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/knock",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Put a price on reaching you. A stranger pays it, your 3D companion walks on and says who is at the door and what they paid, and the USDC is already yours. three.ws/knock",
+				"A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop.",
+				"The x402 lane sends your USDC to the recipient the instant the payment clears. Your price, your wallet, and everything that comes through it stays private to your account."
+			],
+			"altText": [
+				"The Knock page on three.ws: the headline and its description, three numbered cards reading Set your price, They pay it and You hear it in person, and the signed-out door panel below them."
+			]
+		},
+		"summary": "Every claim in the thread is verified verbatim against the live /knock page or docs/knock.md, and the screenshot matches the live page exactly, including the same card copy the quotes come from. Voice, length, link, and alt text all conform to the house contract with no blocking or major issues.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

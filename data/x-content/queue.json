@@ -27,6 +27,8 @@
 		"maximumSameLaneInARow": 2,
 		"maximumSamePatternInARow": 1,
 		"glossary": [
+			"Hunyuan",
+			"Tripo",
 			"GLB",
 			"glTF",
 			"three.ws",
@@ -1257,7 +1259,42 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the trending ranking the server reads is live and populated",
+					"url": "https://three.ws/api/trending",
+					"expect": {
+						"json": {
+							"path": "agents",
+							"min": 1
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the $THREE holder leaderboard the server reads is live and populated",
+					"url": "https://three.ws/api/leaderboard",
+					"expect": {
+						"json": {
+							"path": "holders",
+							"min": 1
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the activity feed the server reads is live and populated",
+					"url": "https://three.ws/api/feed",
+					"expect": {
+						"json": {
+							"path": "events",
+							"min": 1
+						}
+					}
+				}
+			]
 		},
 		{
 			"id": "avatar-mcp",
@@ -1320,61 +1357,118 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the public avatar list the server resolves against is live",
+					"url": "https://three.ws/api/avatars/public",
+					"expect": {
+						"json": {
+							"path": "avatars",
+							"min": 1
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the preview image the tool falls back to really renders",
+					"url": "https://three.ws/api/avatar/render?avatar=63444cc6-fbfc-44f3-9c61-e7bc0b19f2c0",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
 		},
 		{
-			"id": "mocap-studio",
-			"status": "draft",
+			"id": "awesome",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
-			"pattern": "clip",
+			"pattern": "mechanism",
 			"notBefore": "2026-09-21T12:00:00Z",
 			"source": {
-				"path": "docs/announcements/mocap-studio.md",
-				"url": "https://three.ws/mocap-studio"
+				"path": "docs/announcements/awesome.md",
+				"url": "https://three.ws/awesome"
 			},
 			"posts": [
 				{
-					"text": "Your webcam drives an avatar's face in the browser: 52 ARKit blendshapes and 478 landmarks per frame, recorded as a clip you can replay and save. three.ws/mocap-studio",
-					"textFrom": "docs/announcements/mocap-studio.post.txt",
+					"text": "Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
+					"textFrom": "docs/announcements/awesome.post.txt",
 					"media": [
 						{
-							"path": "public/announce/img/mocap-studio-hero.webp",
-							"alt": "The Mocap Studio page with a 3D avatar mirroring a face from the webcam preview beside it, the record controls under the viewer and the saved-clips row empty below."
+							"path": "public/announce/img/awesome-hero.webp",
+							"alt": "The Awesome 3D Agents page on three.ws: a heading reading Everything you need to give an AI agent a body, counters for 152 entries, 15 sections, 121 free to use and 97 tags, a row of tag filters, and a grid of cards for projects such as TRELLIS, Hunyuan3D 2 and TripoSR, each with a one sentence description."
 						}
 					]
 				},
 				{
-					"text": "Calibrate to your neutral face, record a clip, replay it, and save it. Saved clips can be private, unlisted, or public."
-				},
-				{
-					"text": "The engine is FaceMocap, built on Google's MediaPipe Face Landmarker, a newer model than the FaceMesh that older browser-rigging libraries use."
+					"text": "Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The same list is published in the standard awesome list format on GitHub, so it can be forked and added to."
 				}
 			],
 			"claims": [
 				{
-					"says": "52 ARKit blendshapes and 478 landmarks per frame",
+					"says": "152 entries across 15 sections",
 					"evidence": [
 						{
-							"type": "file",
-							"path": "docs/mocap-studio.md",
-							"contains": "Per frame it outputs 52 ARKit blendshape scores, 478 3-D face landmarks (including iris), and a 4x4 facial transformation matrix for head pose in camera space."
+							"type": "page",
+							"url": "https://three.ws/awesome",
+							"contains": "152 entries across 15 sections"
 						}
 					]
 				},
 				{
-					"says": "Calibrate to your neutral face, record a clip, replay it, and save it.",
+					"says": "121 of them free to use",
 					"evidence": [
 						{
-							"type": "file",
-							"path": "docs/mocap-studio.md",
-							"contains": "Calibrate to your neutral face, record a clip, replay it, and save it."
+							"type": "page",
+							"url": "https://three.ws/awesome",
+							"contains": "FREE TO USE 121"
 						}
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the published list serves 152 entries across 15 sections",
+					"url": "https://three.ws/awesome.json",
+					"expect": {
+						"json": {
+							"path": "counts.items",
+							"min": 152
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "every entry ships the sentence that says why it is on the list",
+					"url": "https://three.ws/awesome.json",
+					"expect": {
+						"contains": "Structured latent generation that emits meshes"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the page renders the counters, the tag filters and the Markdown copy",
+					"steps": [
+						{
+							"goto": "https://three.ws/awesome"
+						},
+						{
+							"expect": "152 entries across 15 sections"
+						},
+						{
+							"expect": "Copy as Markdown"
+						},
+						{
+							"expect": "TRELLIS"
+						}
+					]
+				}
+			]
 		},
 		{
 			"id": "knock",
@@ -1448,11 +1542,36 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the open-door directory answers with real doors, cheapest first",
+					"url": "https://three.ws/api/knock/directory",
+					"expect": {
+						"json": {
+							"path": "doors",
+							"min": 1
+						}
+					}
+				},
+				{
+					"type": "browser",
+					"name": "a visitor reaches a real door and its price from the page",
+					"steps": [
+						{
+							"goto": "https://three.ws/knock"
+						},
+						{
+							"expect": "Everyone reachable right now, cheapest first."
+						}
+					]
+				}
+			]
 		},
 		{
 			"id": "assistant",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -1469,7 +1588,7 @@
 					"media": [
 						{
 							"path": "public/announce/img/assistant-hero.webp",
-							"alt": "The assistant configurator with the option columns on the left and the floating launcher open in the corner showing a 3D avatar over the live page preview."
+							"alt": "The assistant builder page: a Configure column with avatar, background, mode, name and greeting fields on the left, the one-line script snippet on the right, and the widget's round launcher button in the bottom corner."
 						}
 					]
 				},
@@ -1502,7 +1621,128 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the one script tag the post promises is live and serves the widget",
+					"url": "https://three.ws/assistant/v1.js",
+					"expect": {
+						"contains": "three-assistant"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the configurator page really mounts its live preview",
+					"steps": [
+						{
+							"goto": "https://three.ws/assistant"
+						},
+						{
+							"expect": "Live preview running in the corner."
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "galaxy",
+			"status": "review",
+			"kind": "post",
+			"tier": 1,
+			"lane": "labs",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-22T20:00:00Z",
+			"source": {
+				"path": "docs/announcements/galaxy.md",
+				"url": "https://three.ws/galaxy"
+			},
+			"posts": [
+				{
+					"text": "Agent Galaxy is a 3D star-map of every published agent, placed by meaning. Type what you want in plain language and the map flies to the closest ones. three.ws/galaxy",
+					"textFrom": "docs/announcements/galaxy.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/galaxy-hero.webp",
+							"alt": "The Agent Galaxy page with hundreds of labelled agent stars clustered in 3D space and the natural-language search box over them."
+						}
+					]
+				},
+				{
+					"text": "Proximity is similarity: agents that do similar things sit near each other, so browsing the map is browsing by meaning rather than by keyword."
+				},
+				{
+					"text": "Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones."
+				}
+			],
+			"claims": [
+				{
+					"says": "a 3D star-map of every published agent, placed by meaning",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/galaxy.md",
+							"contains": "Agent Galaxy is an explorable 3D star-map of every published agent on three.ws, positioned in space by what each agent *means*."
+						}
+					]
+				},
+				{
+					"says": "Type what you want in plain language and the map flies to the closest ones.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/galaxy.md",
+							"contains": "Type a natural-language query and the galaxy flies to the agents closest to your intent."
+						}
+					]
+				},
+				{
+					"says": "Proximity is similarity: agents that do similar things sit near each other",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/galaxy.md",
+							"contains": "Agent Galaxy turns the whole population into a spatial map where proximity is similarity: agents that do similar things sit near each other, and browsing the map is browsing by meaning."
+						}
+					]
+				},
+				{
+					"says": "Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/galaxy.md",
+							"contains": "Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones."
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "semantic search really ranks the live corpus and returns matches",
+					"url": "https://three.ws/api/galaxy",
+					"method": "POST",
+					"body": {
+						"query": "a 3D artist agent"
+					},
+					"expect": {
+						"json": {
+							"path": "results",
+							"min": 1
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the map itself is built from live published agents",
+					"url": "https://three.ws/api/galaxy?limit=600",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
 		}
 	]
 }

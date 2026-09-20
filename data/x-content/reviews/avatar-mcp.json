@@ -1,0 +1,96 @@
+{
+	"id": "avatar-mcp",
+	"contentHash": "7be5020d79e928a289a42a932cd1fa8e27a6aa4fedd4cde5bbde1416a9513f41",
+	"reviewedAt": "2026-09-20T07:10:30.368Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Ask your assistant for an avatar and it renders in the chat: live, rotatable, idling, with a paste-anywhere embed beside it. npmjs.com/package/@three-ws/avatar-mcp",
+		"The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat. All three tools are free and read-only.",
+		"Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "All three tools are free and read-only",
+				"kind": "evidence:file",
+				"target": "packages/threews-avatar-mcp/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat.",
+				"kind": "evidence:file",
+				"target": "packages/threews-avatar-mcp/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere.",
+				"kind": "evidence:file",
+				"target": "packages/threews-avatar-mcp/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the public avatar list the server resolves against is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the preview image the tool falls back to really renders",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://npmjs.com/package/@three-ws/avatar-mcp",
+				"ok": true,
+				"detail": "HTTP 200 via the npm registry"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "avatar-mcp-hero.webp",
+				"problem": "The frame shows the package title card, install command, and tool chips, which supports the claim, but it does not show the avatar rendered inside a chat, which is the central visual promise of the post.",
+				"fix": "Optional: capture a frame showing render_avatar's interactive MCP App output inside a chat window for a stronger demonstration. The current shot is accurate and from the live route, so this is not required."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Ask your assistant for an avatar and it renders in the chat: live, rotatable, idling, with a paste-anywhere embed beside it. npmjs.com/package/@three-ws/avatar-mcp",
+				"The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat. All three tools are free and read-only.",
+				"Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+			],
+			"altText": [
+				"A dark title card headed at three-ws slash avatar-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming render_avatar, avatar_embed_code and get_avatar."
+			]
+		},
+		"summary": "All three claims are verified word-for-word against the package README, the live probes pass, and the npm link resolves; the frame matches the copy and the alt text accurately describes it. Voice is clean with no banned openings, dashes, hashtags, or emoji; ship with the package unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

@@ -1,0 +1,102 @@
+{
+	"id": "assistant",
+	"contentHash": "3d6fd934ff3071e38098c874ccedd594ec596211ef309ecfbd91f8254fc80934",
+	"reviewedAt": "2026-09-20T07:28:26.183Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"One script tag puts a 3D avatar assistant in the corner of any site. Pick a body, a background, and what it knows about your page. three.ws/assistant",
+		"The live preview runs in the corner of the page while you configure it, and every change above re-mounts it.",
+		"Use a built-in body, any three.ws avatar id, a GLB URL, or an agent's body. It answers in chat, or speaks what you type in a speech bubble."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "The live preview runs in the corner of the page while you configure it, and every change above re-mounts it.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assistant",
+				"ok": true,
+				"detail": "live page shows \"Live preview running in the corner. Every change above re-mounts it.\""
+			},
+			{
+				"claim": "Use a built-in body, any three.ws avatar id, a GLB URL, or an agent's body.",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assistant",
+				"ok": true,
+				"detail": "live page shows \"Use a built-in body, any three.ws avatar id (make one in Forge), a GLB URL, or an agent's body via data-agent.\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the one script tag the post promises is live and serves the widget",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:browser",
+				"target": "the configurator page really mounts its live preview",
+				"ok": true,
+				"detail": "2 steps passed"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/assistant",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "It answers in chat, or speaks what you type in a speech bubble.",
+				"problem": "The 'answers in chat' half is vague about where answers come from; the live page names a free model chain (Groq, OpenRouter, NVIDIA), which is a stronger, checkable mechanism.",
+				"fix": "Optional: 'It answers in chat from a free model chain, or speaks what you type out loud in a speech bubble.' Do not sacrifice length or clarity to force it."
+			},
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "posts 2 and 3 (thread continuation)",
+				"problem": "The house contract says every post ships an image; only post 1 carries the frame. For a thread the single hero image on the lead is standard practice, but the rule is stated absolutely.",
+				"fix": "Accept as is for a thread, or explicitly annotate the pack that media attaches to post 1 only."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"One script tag puts a 3D avatar assistant in the corner of any site. Pick a body, a background, and what it knows about your page. three.ws/assistant",
+				"The live preview runs in the corner of the page while you configure it, and every change above re-mounts it.",
+				"Use a built-in body, any three.ws avatar id, a GLB URL, or an agent's body. It answers in chat, or speaks what you type in a speech bubble."
+			],
+			"altText": [
+				"The assistant builder page: a Configure column with avatar, background, mode, name and greeting fields on the left, the one-line script snippet on the right, and the widget's round launcher button in the bottom corner."
+			]
+		},
+		"summary": "Ship it. Every claim matches the live page verbatim, the script tag and preview behave as promised, the screenshot matches the copy exactly, and the voice is clean; the only notes are optional polish on specificity of the model chain and a judgment call on thread media.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

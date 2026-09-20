@@ -7,6 +7,7 @@ import { copyProblems, weightedLength } from '../api/_lib/x-content/quality.js';
 import { attachmentProblems, mediaProblems, parseFfmpegProbe } from '../api/_lib/x-content/media.js';
 import { markdownToContentState, attachArticleMedia } from '../api/_lib/x-content/articles.js';
 import { DEFAULT_SLOTS, currentSlot, inQuietHours, jitterMinutes, pickDue, slotOpenings, tierOrder } from '../api/_lib/x-content/schedule.js';
+import { linkProbeUrl } from '../api/_lib/x-content/verify.js';
 import { engagementSignals, loadLifts, loadVolumeModel, rankItems, scoreItem, volumeScore } from '../api/_lib/x-content/priority.js';
 import { activeHolds, inventory, isPostSpecific, placeHold, runTick } from '../api/_lib/x-content/runner.js';
 import { memoryStore } from '../api/_lib/x-content/state.js';
@@ -613,3 +614,11 @@ describe('review', () => {
 });
 
 
+
+describe('npm package links', () => {
+	it('checks an npm package page against the registry, which answers a non-browser client', () => {
+		expect(linkProbeUrl('https://npmjs.com/package/@three-ws/activity-mcp')).toBe('https://registry.npmjs.org/@three-ws%2Factivity-mcp');
+		expect(linkProbeUrl('https://www.npmjs.com/package/three')).toBe('https://registry.npmjs.org/three');
+		expect(linkProbeUrl('https://three.ws/knock')).toBe('https://three.ws/knock');
+	});
+});

@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-20T06:09:35.981Z",
+	"generatedAt": "2026-09-20T07:23:11.414Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -55,6 +55,24 @@
 			"width": 1800,
 			"height": 1013
 		},
+		"assistant-hero": {
+			"id": "assistant-hero",
+			"src": "/announce/img/assistant-hero.webp",
+			"alt": "The assistant builder page: a Configure column with avatar, background, mode, name and greeting fields on the left, the one-line script snippet on the right, and the widget's round launcher button in the bottom corner.",
+			"caption": "Captured from the live /assistant route for the assistant announcement.",
+			"route": "/assistant",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-20T07:22:41.106Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "41632745c",
+			"sha256": "42090a7235f6e34dba68a8cda1b4464ce84a2a7681c5021d1594d3f065342f60",
+			"bytes": 83520,
+			"width": 1800,
+			"height": 1013,
+			"still": "the route did not change between two frames a second apart"
+		},
 		"avatar-mcp-hero": {
 			"id": "avatar-mcp-hero",
 			"src": "/announce/img/avatar-mcp-hero.webp",
@@ -71,6 +89,24 @@
 			"bytes": 63016,
 			"width": 1800,
 			"height": 1013
+		},
+		"awesome-hero": {
+			"id": "awesome-hero",
+			"src": "/announce/img/awesome-hero.webp",
+			"alt": "The Awesome 3D Agents page on three.ws: a heading reading Everything you need to give an AI agent a body, counters for 152 entries, 15 sections, 121 free to use and 97 tags, a row of tag filters, and a grid of cards for projects such as TRELLIS, Hunyuan3D 2 and TripoSR, each with a one sentence description.",
+			"caption": "Captured from the live /awesome route for the awesome announcement.",
+			"route": "/awesome",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-20T06:51:08.404Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "41632745c",
+			"sha256": "247f534ca9ed4302de490958bb6530c629c0d24d2664cf765b546f1de7e93b4d",
+			"bytes": 78116,
+			"width": 1800,
+			"height": 1013,
+			"still": "the route did not change between two frames a second apart"
 		},
 		"aws-builder-center-authorization-spine": {
 			"id": "aws-builder-center-authorization-spine",
@@ -125,6 +161,23 @@
 			"commit": "7d5f9b760",
 			"sha256": "aea66cea6ca704e493b43064ecf5f3be40655af5a9362a5301db39c7ef5d0238",
 			"bytes": 95166,
+			"width": 1800,
+			"height": 1013
+		},
+		"galaxy-hero": {
+			"id": "galaxy-hero",
+			"src": "/announce/img/galaxy-hero.webp",
+			"alt": "The Agent Galaxy page with hundreds of labelled agent stars clustered in 3D space and the natural-language search box over them.",
+			"caption": "Captured from the live /galaxy route for the galaxy announcement.",
+			"route": "/galaxy",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-20T06:22:48.316Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "41632745c",
+			"sha256": "86cc6f01586b093e7dda16407d9d063467c515286dd0dec83fa69e826c154d54",
+			"bytes": 52624,
 			"width": 1800,
 			"height": 1013
 		},

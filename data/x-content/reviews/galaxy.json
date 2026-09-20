@@ -1,0 +1,95 @@
+{
+	"id": "galaxy",
+	"contentHash": "baa1b95fe120e328eee1b2f2312d14182c0eafd8e3c31da69e14f72daa68e896",
+	"reviewedAt": "2026-09-20T07:15:37.315Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Agent Galaxy is a 3D star-map of every published agent, placed by meaning. Type what you want in plain language and the map flies to the closest ones. three.ws/galaxy",
+		"Proximity is similarity: agents that do similar things sit near each other, so browsing the map is browsing by meaning rather than by keyword.",
+		"Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "a 3D star-map of every published agent, placed by meaning",
+				"kind": "evidence:file",
+				"target": "docs/galaxy.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Type what you want in plain language and the map flies to the closest ones.",
+				"kind": "evidence:file",
+				"target": "docs/galaxy.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Proximity is similarity: agents that do similar things sit near each other",
+				"kind": "evidence:file",
+				"target": "docs/galaxy.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones.",
+				"kind": "evidence:file",
+				"target": "docs/galaxy.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "semantic search really ranks the live corpus and returns matches",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the map itself is built from live published agents",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/galaxy",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Agent Galaxy is a 3D star-map of every published agent, placed by meaning. Type what you want in plain language and the map flies to the closest ones. three.ws/galaxy",
+				"Proximity is similarity: agents that do similar things sit near each other, so browsing the map is browsing by meaning rather than by keyword.",
+				"Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones."
+			],
+			"altText": [
+				"The Agent Galaxy page with hundreds of labelled agent stars clustered in 3D space and the natural-language search box over them."
+			]
+		},
+		"summary": "All four claims are verified word-for-word against docs/galaxy.md, both API probes pass, the link returns 200, and the screenshot matches the copy (600 agents, no contradicted numbers). Voice, length, alt text, and visual all comply with the house contract; ship as is.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}
