@@ -103,6 +103,9 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Hard rules, diff scoped | `npm run check:rules` | The CLAUDE.md hard rules on the lines you changed. |
 | The guard registry | `npm run audit:guards` | Every guard is registered and every stage claim is true. |
 | Skills seed drift | `npm run check:skills-seed` | `data/skills/seed.json` still matches the SKILL.md files it is generated from, so a skill cannot read one way on disk and another in the marketplace. |
+| Agent Skills pack manifest | `npm run check:skills-pack` | `.agents/skills/SKILLS.md` and `skills-pack.json` still describe the skill folders on disk, and every category they count has a description. |
+| Standalone skill repos | `npm run check:skill-repos` | Every published standalone skill repo still selects at least one skill, and every skill it would ship has a `SKILL.md`. |
+| Published 3D skill bundle | `npm run check:openai-skills` | `public/skills/3d-studio/` is byte-identical to the `.agents/skills` folders it is generated from, so the bundle strangers download is the one this repo ships. |
 | Motion signature index | `npm run audit:motion` | `public/animations/signatures.json` describes the clips that are actually baked, so a rebake cannot leave `/gestures` and the walk-layer tables describing motion that no longer exists. |
 | One `<model-viewer>` build | `npm run check:model-viewer` | Every `<model-viewer>` reference in tracked source names one version, no version is served under two integrity hashes, and the vendored copy matches. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
@@ -129,6 +132,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Site link integrity | `npm run audit:links` | Every navigable target resolves to a real route or file. |
 | On-page SEO | `npm run audit:seo` | Across the pages we ask Google to index: no duplicate title or description, every canonical self-referential, no sitemap entry answering noindex or a non-200, and structured data that parses. Reads a live origin, so `--base` points it at a preview. |
 | Awesome list freshness | `npm run check:awesome` | `awesome/README.md` and `public/awesome.json` still match `data/awesome.json`, the source both are generated from. |
+| Prompt library freshness | `npm run check:prompt-library` | `public/prompts.json` and `public/prompts.txt` still match `data/prompt-library.json`, and every prompt in that source is well formed: unique id, known category and setup tier, balanced `<placeholder>` brackets, and links that resolve to real routes. |
 | Awesome list link health | `npm run awesome:links` | Every url in the Awesome 3D Agents list still answers, and none is listed twice. Manual on purpose: it calls a hundred-odd third-party hosts, and it tells a bot-filter 403 apart from a dead link. |
 
 ### Docs and contracts

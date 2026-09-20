@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-09",
+	"updated": "2026-09-20",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -127,27 +127,6 @@
 					}
 				},
 				"expect": "guard-proof-link.md"
-			}
-		},
-		{
-			"id": "check-api-imports",
-			"script": "scripts/check-api-imports.mjs",
-			"npm": "check:api-imports",
-			"title": "Every API module loads",
-			"protects": "Every handler and shared module under api/ importing without throwing.",
-			"why": "The server imports a handler the first time its route is hit, so a module that throws while loading is not a build error or a boot error. It is a 500 on every request to that route. On 2026-09-18 two merged dependency bumps did exactly that to the paid x402 surface while the build and a stale local test tree both stayed green.",
-			"stages": [
-				"deploy:submit"
-			],
-			"needs": "none",
-			"proof": {
-				"summary": "A shared API module that throws at load time, the way a dependency with a changed constructor does.",
-				"violation": {
-					"write": {
-						"api/_lib/guard-proof-throws-on-load.js": "throw new Error('guard proof: this module throws while loading');\n"
-					}
-				},
-				"expect": "guard-proof-throws-on-load.js"
 			}
 		},
 		{
@@ -789,6 +768,52 @@
 			}
 		},
 		{
+			"id": "build-openai-skills-bundle",
+			"script": "scripts/build-openai-skills-bundle.mjs",
+			"npm": "check:openai-skills",
+			"title": "Published 3D skill bundle drift",
+			"protects": "public/skills/3d-studio/ is byte-identical to the .agents/skills folders it is generated from, so the bundle anyone downloads is the one this repo ships.",
+			"why": "That directory is a published artifact: it is served at /skills/3d-studio/, fetched by people who never clone the repo, and uploaded verbatim on the Skills tab of an OpenAI Plugin Directory submission. It is also generated, so an edit to a SKILL.md that is not regenerated leaves strangers running an older copy of our instructions against the live endpoints, with no signal that the two disagree. The check regenerates into a temp directory and names every file that differs, is missing, or is published but no longer generated.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A published bundle file edited by hand, so it no longer matches the skill it was generated from.",
+				"violation": {
+					"append": {
+						"public/skills/3d-studio/generate-3d-model/SKILL.md": "\nHand-edited inside the guard sandbox, so the published copy no longer matches .agents/skills.\n"
+					}
+				},
+				"expect": "content differs"
+			}
+		},
+		{
+			"id": "build-skills-pack",
+			"script": "scripts/build-skills-pack.mjs",
+			"npm": "check:skills-pack",
+			"title": "Agent Skills pack manifest drift",
+			"protects": ".agents/skills/SKILLS.md and .agents/skills/skills-pack.json still describe the skill folders on disk, including every category they count.",
+			"why": "The manifest is what a registry, a bundling script, and every external reader see instead of opening 48 folders, and it is generated. A skill added, renamed, or recategorized without regenerating leaves the index advertising a set that does not exist, which is the one thing an index must never do. The same run also fails when a category is counted but has no description, because the counts and the prose are rendered from one map.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A generated manifest edited by hand, so it no longer matches the skill folders.",
+				"violation": {
+					"json": [
+						{
+							"file": ".agents/skills/skills-pack.json",
+							"pointer": "version",
+							"set": "0.0.0-hand-edited"
+						}
+					]
+				},
+				"expect": "skills-pack manifest is stale"
+			}
+		},
+		{
 			"id": "build-skills-seed",
 			"script": "scripts/build-skills-seed.mjs",
 			"npm": "check:skills-seed",
@@ -814,6 +839,27 @@
 			}
 		},
 		{
+			"id": "build-standalone-skill-repos",
+			"script": "scripts/build-standalone-skill-repos.mjs",
+			"npm": "check:skill-repos",
+			"title": "Standalone skill repos still resolve",
+			"protects": "Every standalone skill repo we publish selects at least one skill, and every skill it would ship has a SKILL.md to ship.",
+			"why": "The repos at nirholas/three-ws-skills and its two subsets are generated from .agents/skills/ rather than maintained by hand, which is what keeps a published copy from drifting. The failure that buys is silent: a recategorized skill quietly drops out of a selector, and the next publish ships a repo missing the skill people installed it for, or an empty one. This resolves every selector against the real pack and refuses a build that would publish nothing or a folder with no SKILL.md.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A skill folder that lost its SKILL.md while a repo spec still selects it.",
+				"violation": {
+					"delete": [
+						".agents/skills/generate-3d-model/SKILL.md"
+					]
+				},
+				"expect": "missing SKILL.md"
+			}
+		},
+		{
 			"id": "check-announce",
 			"script": "scripts/check-announce.mjs",
 			"npm": "check:announce",
@@ -836,6 +882,27 @@
 			}
 		},
 		{
+			"id": "check-api-imports",
+			"script": "scripts/check-api-imports.mjs",
+			"npm": "check:api-imports",
+			"title": "Every API module loads",
+			"protects": "Every handler and shared module under api/ importing without throwing.",
+			"why": "The server imports a handler the first time its route is hit, so a module that throws while loading is not a build error or a boot error. It is a 500 on every request to that route. On 2026-09-18 two merged dependency bumps did exactly that to the paid x402 surface while the build and a stale local test tree both stayed green.",
+			"stages": [
+				"deploy:submit"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A shared API module that throws at load time, the way a dependency with a changed constructor does.",
+				"violation": {
+					"write": {
+						"api/_lib/guard-proof-throws-on-load.js": "throw new Error('guard proof: this module throws while loading');\n"
+					}
+				},
+				"expect": "guard-proof-throws-on-load.js"
+			}
+		},
+		{
 			"id": "check-apple-widget",
 			"script": "scripts/check-apple-widget.mjs",
 			"npm": "check:apple-widget",
@@ -854,83 +921,6 @@
 					}
 				},
 				"expect": "no longer reads"
-			}
-		},
-		{
-			"id": "check-windows-widget",
-			"script": "scripts/check-windows-widget.mjs",
-			"npm": "check:windows-widget",
-			"npmAliases": [
-				"check:windows-widget:live"
-			],
-			"title": "The Windows 11 glance widget still satisfies the board's contract",
-			"protects": "The widgets member in vite.config.js, the glance service worker, the two glance endpoints and the Adaptive Card all agree with each other: every field the board requires is present, the declared icons and screenshots exist at the sizes claimed, the worker handles all six board lifecycle events, fetches the card rather than handing the host its URL, registers the refresh interval the manifest advertises, and the card expands in the board's own templating engine for every state with no unbound expressions and no dead button targets. The `:live` alias asks the same questions of a deployed origin instead of this disk: that the served manifest declares the widget this tree does, that the served worker is byte-identical to public/glance-sw.js, that the picker assets are really served as images, and that the Adaptive Card the board would fetch expands in that engine when bound with the deployed worker's own payload builder.",
-			"why": "The widgets board is the one surface nothing in this repository can open: it needs Windows 11, Edge, and the PWA installed. A broken slot renders as nothing at all rather than as an error, so every defect here is silent twice over, invisible locally and invisible to the user. Four have already reached that state while every other check stayed green: the worker passing the host a template URL where the card belonged, no periodic sync ever registered, a slot pinned before the worker activated staying empty, and a card written with JavaScript array paths that the board's expression engine refuses to parse. That last one is why this runs the real engine instead of reading the template with our own idea of a path: `${stats.0.label}` resolves in JavaScript and is a syntax error in Adaptive Expression Language, and the engine throws away the whole card rather than skipping the one binding, so a single dotted index empties the widget. A fifth class stands behind those four, and it is what the `:live` alias exists for: a fix that is green in this tree and absent from the deploy. On 2026-09-09 every check on this disk passed while production served the unparseable card, so the widget stayed broken for exactly as long as nobody thought to ask the deployed origin. Offline agreement is not evidence that a pinned slot draws; only the served bytes are.",
-			"stages": [
-				"gate"
-			],
-			"needs": "none",
-			"proof": {
-				"kind": "mutation",
-				"summary": "A screenshot the manifest advertises to the widget picker is gone from the tree.",
-				"violation": {
-					"delete": [
-						"public/screenshots/glance-widget.png"
-					]
-				},
-				"expect": "is declared but"
-			}
-		},
-		{
-			"id": "check-home-matrix",
-			"script": "scripts/home-version-matrix.mjs",
-			"npm": "check:home-matrix",
-			"title": "The published Home Assistant support table is the one that was measured",
-			"protects": "The version table in docs/smart-home.md is exactly what the last real matrix run wrote into docs/ops/home-version-matrix.json: the same releases, the same roles and install shares, and the same per-capability result for connect, registries, stream and call.",
-			"why": "The home lane's correctness depends on a third party's monthly release, and the table is the only place we tell anyone which Home Assistant versions we support. The measurement is expensive (four containers, thirteen gigabytes, pulled and destroyed one at a time), so it is deliberately not run on every gate; what the gate can afford is proving that the cheap, published half still agrees with the expensive, measured half. Without that, the table decays into a claim: a run whose JSON landed but whose doc edit did not, or a doc edited by hand to say what someone hoped, both read as a supported version to every reader and to us.",
-			"stages": [
-				"gate"
-			],
-			"needs": "none",
-			"proof": {
-				"kind": "mutation",
-				"summary": "The measured matrix says one thing and the published table another.",
-				"violation": {
-					"json": [
-						{
-							"file": "docs/ops/home-version-matrix.json",
-							"pointer": "results.0.tag",
-							"set": "1999.1"
-						}
-					]
-				},
-				"expect": "is stale"
-			}
-		},
-		{
-			"id": "i18n-home",
-			"script": "scripts/i18n-home-keys.mjs",
-			"npm": "i18n:home",
-			"title": "Every string the connected home speaks has a catalog key",
-			"protects": "Each `t()` and `plural()` call site under the home lane resolves to a key in public/locales/en.json whose English source value is byte-identical to the fallback written in the code, and no source value smuggles a template expression into a translatable string.",
-			"why": "The HTML extractor reads `data-i18n` annotations, which covers the lane's page shells and misses the house itself: the rooms, the devices, the refusals, the confirmation and every spoken announcement are assembled in JS from live data and carry no markup to annotate. A new string added there is simply English forever in all 84 locales, and nothing complains, because the fallback argument renders perfectly. Drift is the quieter half: edit the English in the code and the catalog keeps serving the old sentence to every translated locale, so the product says two different things depending on the reader's language. The template-expression refusal guards a worse outcome, a user's own room or device name baked into a source string and machine-translated on the next run.",
-			"stages": [
-				"gate"
-			],
-			"needs": "none",
-			"proof": {
-				"kind": "mutation",
-				"summary": "The catalog's English keeps a sentence the code no longer says.",
-				"violation": {
-					"json": [
-						{
-							"file": "public/locales/en.json",
-							"pointer": "home_scene.act_close",
-							"set": "Shut"
-						}
-					]
-				},
-				"expect": "drift:"
 			}
 		},
 		{
@@ -1188,6 +1178,32 @@
 			}
 		},
 		{
+			"id": "check-home-matrix",
+			"script": "scripts/home-version-matrix.mjs",
+			"npm": "check:home-matrix",
+			"title": "The published Home Assistant support table is the one that was measured",
+			"protects": "The version table in docs/smart-home.md is exactly what the last real matrix run wrote into docs/ops/home-version-matrix.json: the same releases, the same roles and install shares, and the same per-capability result for connect, registries, stream and call.",
+			"why": "The home lane's correctness depends on a third party's monthly release, and the table is the only place we tell anyone which Home Assistant versions we support. The measurement is expensive (four containers, thirteen gigabytes, pulled and destroyed one at a time), so it is deliberately not run on every gate; what the gate can afford is proving that the cheap, published half still agrees with the expensive, measured half. Without that, the table decays into a claim: a run whose JSON landed but whose doc edit did not, or a doc edited by hand to say what someone hoped, both read as a supported version to every reader and to us.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "mutation",
+				"summary": "The measured matrix says one thing and the published table another.",
+				"violation": {
+					"json": [
+						{
+							"file": "docs/ops/home-version-matrix.json",
+							"pointer": "results.0.tag",
+							"set": "1999.1"
+						}
+					]
+				},
+				"expect": "is stale"
+			}
+		},
+		{
 			"id": "check-home-voice",
 			"script": "scripts/check-home-voice.mjs",
 			"npm": "check:home-voice",
@@ -1315,6 +1331,27 @@
 			}
 		},
 		{
+			"id": "check-prompt-library",
+			"script": "scripts/build-prompt-library.mjs",
+			"npm": "check:prompt-library",
+			"title": "Prompt library freshness",
+			"protects": "public/prompts.json and public/prompts.txt match data/prompt-library.json, and every prompt in that source is well formed.",
+			"why": "The library is copy people paste into their own assistant, published in three places that are read separately: the /prompts page, the JSON feed an agent fetches, and the plain-text file. Editing a generated copy by hand, or adding a prompt to the source without rebuilding, ships versions that disagree about what the library contains. The same run validates the source itself, so a duplicate id, an unknown category, an unbalanced <placeholder> bracket or a link to a route that does not exist fails the build instead of rendering a broken card.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A generated copy edited by hand, so it no longer matches data/prompt-library.json.",
+				"violation": {
+					"append": {
+						"public/prompts.txt": "\nHand-edited inside the guard sandbox, so this no longer matches data/prompt-library.json.\n"
+					}
+				},
+				"expect": "stale"
+			}
+		},
+		{
 			"id": "check-relayer-balances",
 			"script": "scripts/check-relayer-balances.mjs",
 			"npm": "check:relayer-balances",
@@ -1431,6 +1468,57 @@
 					}
 				},
 				"expect": "worker_security.py"
+			}
+		},
+		{
+			"id": "check-windows-widget",
+			"script": "scripts/check-windows-widget.mjs",
+			"npm": "check:windows-widget",
+			"npmAliases": [
+				"check:windows-widget:live"
+			],
+			"title": "The Windows 11 glance widget still satisfies the board's contract",
+			"protects": "The widgets member in vite.config.js, the glance service worker, the two glance endpoints and the Adaptive Card all agree with each other: every field the board requires is present, the declared icons and screenshots exist at the sizes claimed, the worker handles all six board lifecycle events, fetches the card rather than handing the host its URL, registers the refresh interval the manifest advertises, and the card expands in the board's own templating engine for every state with no unbound expressions and no dead button targets. The `:live` alias asks the same questions of a deployed origin instead of this disk: that the served manifest declares the widget this tree does, that the served worker is byte-identical to public/glance-sw.js, that the picker assets are really served as images, and that the Adaptive Card the board would fetch expands in that engine when bound with the deployed worker's own payload builder.",
+			"why": "The widgets board is the one surface nothing in this repository can open: it needs Windows 11, Edge, and the PWA installed. A broken slot renders as nothing at all rather than as an error, so every defect here is silent twice over, invisible locally and invisible to the user. Four have already reached that state while every other check stayed green: the worker passing the host a template URL where the card belonged, no periodic sync ever registered, a slot pinned before the worker activated staying empty, and a card written with JavaScript array paths that the board's expression engine refuses to parse. That last one is why this runs the real engine instead of reading the template with our own idea of a path: `${stats.0.label}` resolves in JavaScript and is a syntax error in Adaptive Expression Language, and the engine throws away the whole card rather than skipping the one binding, so a single dotted index empties the widget. A fifth class stands behind those four, and it is what the `:live` alias exists for: a fix that is green in this tree and absent from the deploy. On 2026-09-09 every check on this disk passed while production served the unparseable card, so the widget stayed broken for exactly as long as nobody thought to ask the deployed origin. Offline agreement is not evidence that a pinned slot draws; only the served bytes are.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "mutation",
+				"summary": "A screenshot the manifest advertises to the widget picker is gone from the tree.",
+				"violation": {
+					"delete": [
+						"public/screenshots/glance-widget.png"
+					]
+				},
+				"expect": "is declared but"
+			}
+		},
+		{
+			"id": "i18n-home",
+			"script": "scripts/i18n-home-keys.mjs",
+			"npm": "i18n:home",
+			"title": "Every string the connected home speaks has a catalog key",
+			"protects": "Each `t()` and `plural()` call site under the home lane resolves to a key in public/locales/en.json whose English source value is byte-identical to the fallback written in the code, and no source value smuggles a template expression into a translatable string.",
+			"why": "The HTML extractor reads `data-i18n` annotations, which covers the lane's page shells and misses the house itself: the rooms, the devices, the refusals, the confirmation and every spoken announcement are assembled in JS from live data and carry no markup to annotate. A new string added there is simply English forever in all 84 locales, and nothing complains, because the fallback argument renders perfectly. Drift is the quieter half: edit the English in the code and the catalog keeps serving the old sentence to every translated locale, so the product says two different things depending on the reader's language. The template-expression refusal guards a worse outcome, a user's own room or device name baked into a source string and machine-translated on the next run.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "mutation",
+				"summary": "The catalog's English keeps a sentence the code no longer says.",
+				"violation": {
+					"json": [
+						{
+							"file": "public/locales/en.json",
+							"pointer": "home_scene.act_close",
+							"set": "Shut"
+						}
+					]
+				},
+				"expect": "drift:"
 			}
 		},
 		{
