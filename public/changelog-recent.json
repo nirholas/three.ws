@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T21:13:00.660Z",
+	"generated_at": "2026-09-20T21:24:24.206Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3736,
+	"total": 3737,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -238,6 +238,17 @@
 			"link": "/three",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "The alley outside the Club looks like a night out now",
+			"summary": "Walking up to the Club used to mean crossing a quiet alley. Now there is a line along the wall beside the door, two abreast behind brass posts and a velvet rope, under a neon Pole Club sign. The people in it are real platform avatars, and they talk: neighbours trade short exchanges in speech bubbles about the one cent cover, the tips and the wait, and they notice you. Walk straight past them to the door and the head of the line objects. Stand too close and someone asks for space. Get let in and they grumble about it. A few of them started early: one sways in the line and slurs, one weaves around the alley and steps up the kerb the hard way, and one by the wall keeps trying to stand up and sliding back down. The line fits itself to the alley, bends around the corner when the wall runs out, and gets shorter on slower devices so the walk-in stays smooth. With reduced motion turned on the bubbles still appear, without the swaying and staggering.",
+			"link": "/club",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},
@@ -1606,17 +1617,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The spend policy dry run stops contradicting its own counters",
-			"summary": "The simulator at /pay/simulator reports what an agent budget actually buys, and its headline sentence disagreed with the numbers directly beneath it. An endpoint that answers without asking for payment is free: it costs nothing and is never checked against your policy. The counters knew that, and the sentence did not, so the very first run on the page announced that all seven calls settle while the tile beside it said six. Calls that could not be priced at all vanished the same way, counted nowhere the reader could see. Both now have their own tile, and the verdict sentence is built from the counts it is describing, so settled, free, unpriced and refused always add up to the total in front of you. A run that fails now says why: an unusable line used to produce a bare \"Simulation failed (HTTP 400)\", and now quotes the endpoint the simulator could not read along with what a working line looks like. A budget left blank was quietly costed against one dollar, giving you a verdict for a budget you never proposed; the answer now says when that substitution happened. On a phone the little question marks beside each field were fifteen pixels wide and their explanations opened off the side of the screen, so the help was unreadable exactly where it was needed most: the tap targets are now large enough to hit and the explanations stay on the page at every width.",
-			"link": "/pay/simulator",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

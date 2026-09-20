@@ -156,13 +156,13 @@ modules. Routes resolved via `vercel.json` rewrites.
 ---
 
 ### Club — 3D Pole-Stage Venue (x402) — `/club`
-- **Source:** `/workspaces/three.ws/pages/club.html` → scripts: `/x402.js` (wallet/payment modal), `/workspaces/three.ws/src/club-entrance.js` (walk-in alley scene), `/workspaces/three.ws/src/club-gate.js` (cover-charge bouncer), `/workspaces/three.ws/src/club.js` (main pole stage). Supporting modules in `src/`: `club-venue.js`, `club-audio.js`, `club-camera.js`, `club-crowd.js`, `club-perf.js`, `club-sequence.js`, `animation-manager.js`.
+- **Source:** `/workspaces/three.ws/pages/club.html` → scripts: `/x402.js` (wallet/payment modal), `/workspaces/three.ws/src/club-entrance.js` (walk-in alley scene), `/workspaces/three.ws/src/club-gate.js` (cover-charge bouncer), `/workspaces/three.ws/src/club.js` (main pole stage). Supporting modules in `src/`: `club-venue.js`, `club-audio.js`, `club-camera.js`, `club-crowd.js`, `club-queue.js`, `club-bouncer.js`, `club-perf.js`, `club-sequence.js`, `animation-manager.js`.
 - **Entry point:** `/club` → `club.html`; entrance scene + door gate + pole stage boot in parallel behind a loading screen.
 - **Prerequisites / gates:** **x402 wallet payment**: a cover charge settled on-chain via `/api/x402/club-cover`; wallet (Phantom / EVM) connected through `x402.js`. The one door's 402 quotes both USDC and $THREE on Solana (while `X402_ACCEPT_THREE_SOLANA` is on, the default), so the checkout shows a token chooser with each token's real price and either token issues the same pass. Paying in $THREE is optional, not a gate. WebGL required.
 - **Steps (7):**
   1. Open `/club`; loading screen with real GLB byte-count progress; avatar picker populates (bundled + gallery avatars via `/api/avatars/` and `/api/explore`).
   2. (optional) Select an avatar.
-  3. Spawn in the entrance scene; move with WASD / touch joystick, look via drag.
+  3. Spawn in the entrance scene; move with WASD / touch joystick, look via drag. The alley is dressed as the outside of a club: a line of platform avatars waits along the wall behind a velvet rope, neighbours trade scripted exchanges in speech bubbles, and a few drunks sway, stagger and slide down the wall (`src/club-queue.js`; bodies come from `src/club-crowd.js`). The line reacts to you: walk past it to the door, crowd it, or get let in, and someone has something to say.
   4. Walk to the neon door → "Enter the club" prompt; activate it.
   5. Door reveals the x402 cover screen; connect wallet, pick USDC or $THREE in the token chooser, and pay the cover → a paid `GET /api/x402/club-cover` (x402, `club-gate.js`) settles on-chain and checks the gate.
   6. On approval the rope drops; walk through to the pole stage — entrance fades, main `club.js` stage becomes active (dancers at poles, leaderboard, live tip feed).

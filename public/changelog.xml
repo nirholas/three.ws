@@ -183,6 +183,14 @@
 			<description>Each tier on the holder page carries two kinds of line: things the hold turns on today, and things that are registered but not built yet. Further down the same card the unbuilt ones were already flagged Planned, but higher up they also appeared as plain bullets with no flag, so Silver read as though private worlds and priority routing were included and Gold as though branded environments were. They are not. The two lists are now kept apart at the source, the planned lines carry the Planned flag wherever they appear, and the pricing API publishes them as a separate field so anything reading it automatically cannot mistake a roadmap line for a benefit. Nothing about what you actually get has changed. A test now fails the build if an unbuilt feature finds its way back into the delivered list.</description>
 		</item>
 		<item>
+			<title>The alley outside the Club looks like a night out now</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-09-20:The alley outside the Club looks like a night out now</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Walking up to the Club used to mean crossing a quiet alley. Now there is a line along the wall beside the door, two abreast behind brass posts and a velvet rope, under a neon Pole Club sign. The people in it are real platform avatars, and they talk: neighbours trade short exchanges in speech bubbles about the one cent cover, the tips and the wait, and they notice you. Walk straight past them to the door and the head of the line objects. Stand too close and someone asks for space. Get let in and they grumble about it. A few of them started early: one sways in the line and slurs, one weaves around the alley and steps up the kerb the hard way, and one by the wall keeps trying to stand up and sliding back down. The line fits itself to the alley, bends around the corner when the wall runs out, and gets shorter on slower devices so the walk-in stays smooth. With reduced motion turned on the bubbles still appear, without the swaying and staggering.</description>
+		</item>
+		<item>
 			<title>The flagship post slot now gets flagship material</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:The flagship post slot now gets flagship material</guid>
