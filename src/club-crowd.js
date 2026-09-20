@@ -285,7 +285,7 @@ export class ClubCrowd {
 			targets.push(distinct[i % distinct.length]);
 		}
 		if (this._roster.length > budget) {
-			log.info(`[club-crowd] roster ${this._roster.length} exceeds budget ${budget} — showing ${budget} this room`);
+			log.info(`[club-crowd] roster ${this._roster.length} exceeds budget ${budget}, showing ${budget} this room`);
 		}
 
 		const danceRatio = DANCE_RATIO[Math.min(roomIndex, DANCE_RATIO.length - 1)] ?? 0.3;
