@@ -1,7 +1,7 @@
 {
 	"id": "activity-mcp",
 	"contentHash": "e33edcf62bb1351adf922f530bd1d6becf842454f110072adfc233c8259603b3",
-	"reviewedAt": "2026-09-20T07:06:48.422Z",
+	"reviewedAt": "2026-09-20T18:12:21.878Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -63,13 +63,21 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "trending agents, the $THREE holder board with tiers, the site activity ticker",
+				"problem": "The image and changelog describe the surface as 'trending agents and coins'; the post omits trending coins. Not false, but the copy and the screenshot are slightly out of sync on what the discovery surface includes.",
+				"fix": "Either accept the omission (safe) or recapture-free fix: 'trending agents and coins, the $THREE holder board, the activity ticker' if length allows."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"Any MCP client can read the live discovery surface: trending agents, the $THREE holder board with tiers, the site activity ticker. Five tools, free: npmjs.com/package/@three-ws/activity-mcp",
@@ -80,7 +88,7 @@
 				"A dark title card headed at three-ws slash activity-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming get_trending_agents, get_trending_coins, get_holder_leaderboard, get_tier_info and get_feed_events."
 			]
 		},
-		"summary": "Both factual claims are verified against the README, the three API probes confirm the live surfaces the post names, and the screenshot shows the exact five tools the copy claims. Voice, length, link, alt text, and image all meet contract; ship as written.",
+		"summary": "Both factual claims pass verification, the three live API probes are green, the image shows the real package page and matches the copy, and the voice contract is respected with no tags, hashtags, or hype. Only a trivial mismatch worth noting: the screenshot also advertises trending coins, which the post omits; safe to ship as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",

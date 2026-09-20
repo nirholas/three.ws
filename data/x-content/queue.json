@@ -1210,7 +1210,7 @@
 		},
 		{
 			"id": "activity-mcp",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
