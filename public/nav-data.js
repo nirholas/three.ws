@@ -753,6 +753,10 @@ export const NAV_GROUPS = [
 					{
 						title: 'Prompt Library',
 						href: '/prompts',
+						// The lite menu is capped at 30 destinations (tests/onboarding-tier.test.js)
+						// and was already full; this rides in the full menu rather than
+						// pushing a first-run surface out to make room.
+						tier: 'advanced',
 						desc: 'Prompts you paste into Claude to build with three.ws',
 					},
 					{

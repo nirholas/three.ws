@@ -227,3 +227,4 @@ command per repo when it finishes; nothing is pushed automatically.
 - [In-app skills system](/docs/skills) - the avatar/agent skills system inside three.ws
 - [MCP overview](/docs/mcp) - the three.ws MCP server the 3D skills call
 - [3D Studio MCP endpoint](/docs/mcp-studio) - the free hosted endpoint the 3D skills run against
+- [Prompt library](/docs/prompts) - the same capabilities as prompts you paste, for people who have not installed the skills

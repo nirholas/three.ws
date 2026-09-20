@@ -399,3 +399,4 @@ Quick Look rather than a camera overlay (`api/_lib/ar-launch.js`).
 - [AR in ChatGPT](/docs/chatgpt-ar) - how `arUrl` and the AR launcher work on ChatGPT surfaces
 - [3D API](/docs/3d-api) - the free REST lane the studio tools run on
 - [API Reference](/docs/api-reference) - the `/api/3d/studio` custom GPT Actions contract
+- [Prompt library](/docs/prompts) - ready-made prompts that drive these tools, at [three.ws/prompts](https://three.ws/prompts)
