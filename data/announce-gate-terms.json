@@ -1,0 +1,4 @@
+{
+	"$comment": "Names that put an announcement pack under the operating rules' commit gate on content referencing a crypto project other than $THREE. The gate in scripts/check-announce.mjs already catches a $TICKER; a project written by name is what it cannot infer, so the owner keeps that list here. Each term is matched case-insensitively against the post and the whole pack, including the changelog titles the pack quotes, and a match fails check:announce until the owner clears it. api/_lib/announce/kit.js reads the same list and leaves a matching changelog title out of a pack it renders, so the factory stops producing packs that need clearing. Empty by default: adding a term is the owner's call, because the term itself is the name being gated.",
+	"terms": []
+}

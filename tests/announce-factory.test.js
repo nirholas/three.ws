@@ -7,7 +7,7 @@ import { languageProblems } from '../api/_lib/x-content/editorial.js';
 import { harvestFacts, harvestStats, quotableLines } from '../api/_lib/announce/brief.js';
 import { draftFindings, itemFor, parseDraft } from '../api/_lib/announce/draft.js';
 import { cardFacts, cardHtml, commandFrom, namesFrom } from '../api/_lib/announce/card.js';
-import { renderPack } from '../api/_lib/announce/kit.js';
+import { gated, renderPack } from '../api/_lib/announce/kit.js';
 
 const CADENCE = { windowMinutes: 90, minimumMinutesApart: 240, dailyCap: 3, quietHoursUtc: ['05:00', '12:00'] };
 const QUALITY = { maximumSameLaneInARow: 2, maximumSamePatternInARow: 1 };
@@ -416,5 +416,16 @@ describe('the committed packs this factory produced', () => {
 				expect(readFileSync(post.textFrom, 'utf8').trim()).toBe(post.text.trim());
 			}
 		}
+	});
+});
+
+describe('the commit gate on named projects', () => {
+	it('leaves a changelog title naming a gated project out of the pack it quotes', () => {
+		expect(gated('A plugin marketplace for wallet, 3D and someproject tools', ['someproject'])).toBe(true);
+		expect(gated('A plugin marketplace for wallet and 3D tools', ['someproject'])).toBe(false);
+		// The term is matched whole, so a surface whose own name contains it is
+		// not gated by coincidence.
+		expect(gated('someprojection of the map', ['someproject'])).toBe(false);
+		expect(gated('anything at all', [])).toBe(false);
 	});
 });

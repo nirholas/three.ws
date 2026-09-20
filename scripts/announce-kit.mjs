@@ -292,7 +292,7 @@ try {
 		// captured separately). The queue validator decides which, not this
 		// script's optimism.
 		const candidate = itemFor(brief, draft, { mediaPath });
-		const pack = renderPack({ brief, draft, slot, ledgerEntry: entry, rank: rank || null, total: (ledger.totals?.never ?? null), model });
+		const pack = renderPack({ brief, draft, slot, ledgerEntry: entry, rank: rank || null, total: (ledger.totals?.never ?? null), model, root });
 		// The pack is written before the item is judged, because the item points
 		// at the pack's `.post.txt` and the validator checks that file exists.
 		// Judging first failed every brand-new pack on a file this same run was

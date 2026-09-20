@@ -56,6 +56,14 @@ slots the factory cannot fill on its own, and because the gated surfaces score h
 the flagship slot every day, which is how the packable backlog ended up weeks behind slots it
 could have had. Clearing a frame puts that surface back in the next plan.
 
+**The gate on named projects.** [`data/announce-gate-terms.json`](../data/announce-gate-terms.json)
+holds the project names the owner has put under the operating rules' commit gate. `check:announce`
+already catches a `$TICKER` from its shape; a project written by name is what it cannot infer, so
+that list is maintained rather than derived. A pack naming one fails the check until the owner
+clears it, and the pack renderer leaves a matching changelog title out of the context it quotes, so
+the factory stops producing packs that need clearing. It ships empty, because adding a term is
+itself the decision being recorded.
+
 **Deferrals.** The ledger is rebuilt from the repository on every run, so it cannot remember a
 judgement someone made by looking at a captured frame. `data/announce-deferred.json` is where that
 judgement lives, with the reason, and it is committed for exactly that reason.

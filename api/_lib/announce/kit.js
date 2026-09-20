@@ -11,7 +11,29 @@
 // Everything in a rendered pack is either a fact from the brief, a decision
 // from the plan, or the drafter's own reasoning. Nothing is invented here.
 
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { weightedLength } from '../x-content/quality.js';
+
+// Project names the owner has put under the commit gate (see
+// data/announce-gate-terms.json). A changelog title is repository text the pack
+// quotes verbatim, so a title naming one of them would pull a gated name into
+// a pack that is otherwise clear, and scripts/check-announce.mjs would then
+// refuse the pack for a sentence nobody wrote. The quote is context, not a
+// claim, so it is left out instead.
+function gateTerms(root) {
+	const path = resolve(root || process.cwd(), 'data/announce-gate-terms.json');
+	if (!existsSync(path)) return [];
+	try {
+		return (JSON.parse(readFileSync(path, 'utf8')).terms || []).map(String).filter(Boolean);
+	} catch {
+		return [];
+	}
+}
+
+export const gated = (text, terms) =>
+	terms.some((term) => new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(String(text || '')));
 
 const SITE = 'https://three.ws';
 
@@ -53,7 +75,7 @@ export function renderPostFile(draft) {
 	return `${String(draft.post || '').trim()}\n`;
 }
 
-export function renderPack({ brief, draft, slot, ledgerEntry = {}, rank = null, total = null, model = null, verification = null }) {
+export function renderPack({ brief, draft, slot, ledgerEntry = {}, rank = null, total = null, model = null, verification = null, root = process.cwd() }) {
 	const id = brief.id;
 	const url = brief.url || SITE;
 	const campaign = `announce-${id}`;
@@ -103,9 +125,11 @@ export function renderPack({ brief, draft, slot, ledgerEntry = {}, rank = null, 
 	}
 	if (ledgerEntry.curatedWhy) push(`The coverage audit's note on it: ${ledgerEntry.curatedWhy}`, '');
 	if (brief.surface.shipped) push(`It shipped on ${brief.surface.shipped} and has never been posted about.`, '');
-	if (brief.changelog?.length) {
+	const terms = gateTerms(root);
+	const quotable = (brief.changelog || []).filter((entry) => !gated(entry.title, terms));
+	if (quotable.length) {
 		push(
-			`The changelog has ${brief.changelog.length} entr${brief.changelog.length === 1 ? 'y' : 'ies'} about it, the most recent from ${brief.changelog[0].date}: "${brief.changelog[0].title}".`,
+			`The changelog has ${quotable.length} entr${quotable.length === 1 ? 'y' : 'ies'} about it, the most recent from ${quotable[0].date}: "${quotable[0].title}".`,
 			'',
 		);
 	}

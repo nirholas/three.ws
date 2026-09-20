@@ -123,6 +123,21 @@ try {
 	notes.push('data/pages.json unreadable: the coin gate could not classify surfaces');
 }
 
+// Project names the owner has put under the commit gate. A ticker is
+// detectable from its shape; a name is not, so the list is maintained rather
+// than inferred, and it ships empty because writing a name into it is itself
+// the decision being recorded.
+const gateTerms = (() => {
+	const path = join(root, 'data/announce-gate-terms.json');
+	if (!existsSync(path)) return [];
+	try {
+		return (JSON.parse(readFileSync(path, 'utf8')).terms || []).map(String).filter(Boolean);
+	} catch {
+		notes.push('data/announce-gate-terms.json is unreadable: named projects were not checked');
+		return [];
+	}
+})();
+
 const packs = readdirSync(PACK_DIR)
 	.filter((f) => f.endsWith('.md'))
 	// README.md documents the directory; it is not a pack.
@@ -197,6 +212,13 @@ for (const file of packs) {
 	if (!/alt text/i.test(body)) fail(name, 'pack does not state the alt text the post must carry');
 
 	// The coin gate. Copy first, then the surfaces the media came from.
+	const named = gateTerms.filter((term) => new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(`${post}\n${body}`));
+	if (named.length) {
+		fail(
+			name,
+			`pack names a crypto project other than $THREE (${named.join(', ')}); owner approval is required before committing or posting`,
+		);
+	}
 	const tickers = [...`${post}\n${body}`.matchAll(/\$([A-Z][A-Z0-9]{1,9})\b/g)]
 		.map((m) => m[1])
 		.filter((t) => t !== 'THREE');
