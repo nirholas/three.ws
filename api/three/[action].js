@@ -70,6 +70,7 @@ function tierPayload({ tier, usd, amount, priceUsd, next, wallet = null, source 
 			label: tier.label,
 			discount_bps: tier.discountBps,
 			perks: tier.perks,
+			planned: tier.planned ?? [],
 		},
 		held_usd: usd,
 		held_amount: amount,
@@ -88,6 +89,7 @@ function tierPayload({ tier, usd, amount, priceUsd, next, wallet = null, source 
 			discount_bps: t.discountBps,
 			rate_multiplier: t.rateMultiplier,
 			perks: t.perks,
+			planned: t.planned ?? [],
 		})),
 	};
 }

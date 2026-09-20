@@ -28557,6 +28557,16 @@
 				"improvement"
 			],
 			"link": "/three"
+		},
+		{
+			"date": "2026-09-20",
+			"title": "The $THREE tier cards no longer list unbuilt perks next to real ones",
+			"summary": "Each tier on the holder page carries two kinds of line: things the hold turns on today, and things that are registered but not built yet. Further down the same card the unbuilt ones were already flagged Planned, but higher up they also appeared as plain bullets with no flag, so Silver read as though private worlds and priority routing were included and Gold as though branded environments were. They are not. The two lists are now kept apart at the source, the planned lines carry the Planned flag wherever they appear, and the pricing API publishes them as a separate field so anything reading it automatically cannot mistake a roadmap line for a benefit. Nothing about what you actually get has changed. A test now fails the build if an unbuilt feature finds its way back into the delivered list.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/three"
 		}
 	]
 }

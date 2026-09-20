@@ -30,7 +30,10 @@ function tierLadder() {
 		discount_bps: t.discountBps,
 		discount_percent: (t.discountBps / 100).toFixed(t.discountBps % 100 === 0 ? 0 : 1),
 		rate_multiplier: t.rateMultiplier,
+		// Delivered today vs registered-but-unenforced. Kept apart so a machine
+		// reading this endpoint cannot mistake a roadmap line for a benefit.
 		perks: t.perks,
+		planned: t.planned ?? [],
 	}));
 }
 
@@ -82,7 +85,14 @@ export default wrap(async (req, res) => {
 		const { tier, usd, next } = await resolveUserTier(user);
 		const nt = next ?? nextTier(tier);
 		holder = {
-			tier: { level: tier.level, id: tier.id, label: tier.label, discount_bps: tier.discountBps, perks: tier.perks },
+			tier: {
+				level: tier.level,
+				id: tier.id,
+				label: tier.label,
+				discount_bps: tier.discountBps,
+				perks: tier.perks,
+				planned: tier.planned ?? [],
+			},
 			usd_held: Math.round((Number(usd) || 0) * 100) / 100,
 			discount_bps: tier.discountBps,
 			discount_percent: (tier.discountBps / 100).toFixed(tier.discountBps % 100 === 0 ? 0 : 1),

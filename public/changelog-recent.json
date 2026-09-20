@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T19:41:27.892Z",
+	"generated_at": "2026-09-20T19:56:28.901Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3732,
+	"total": 3733,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -206,6 +206,17 @@
 			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
 			"link": "/changelog",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "The $THREE tier cards no longer list unbuilt perks next to real ones",
+			"summary": "Each tier on the holder page carries two kinds of line: things the hold turns on today, and things that are registered but not built yet. Further down the same card the unbuilt ones were already flagged Planned, but higher up they also appeared as plain bullets with no flag, so Silver read as though private worlds and priority routing were included and Gold as though branded environments were. They are not. The two lists are now kept apart at the source, the planned lines carry the Planned flag wherever they appear, and the pricing API publishes them as a separate field so anything reading it automatically cannot mistake a roadmap line for a benefit. Nothing about what you actually get has changed. A test now fails the build if an unbuilt feature finds its way back into the delivered list.",
+			"link": "/three",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
@@ -1607,17 +1618,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Three fades now stop when you ask the site to stop moving",
-			"summary": "Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.",
-			"link": "/objects",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

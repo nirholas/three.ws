@@ -21,8 +21,17 @@ import { TOKEN_MINT } from './token/config.js';
 // ── Tier ladder ─────────────────────────────────────────────────────────────────
 // Ordered low→high. `minUsd` is the USD value of $THREE held to reach the tier.
 // `discountBps` is the fee discount on fixed-price compute. `rateMultiplier`
-// scales free quotas. Thresholds/curve are tunable knobs (see plan) — starting
-// points chosen so the entry tier is reachable and the top tier is aspirational.
+// scales free quotas.
+//
+// `perks` lists ONLY what a holder gets today. Anything registered but not yet
+// enforced belongs in `planned`, never in `perks`: a tier that lists an unbuilt
+// feature as a flat benefit is a roadmap wearing a price tag, and every surface
+// that renders the ladder (/three, GET /api/pricing, GET /api/three/tier) would
+// repeat that promise unqualified. When a gate ships, flip its `enforced` in
+// three-access.js and move its line from `planned` to `perks` in the same change.
+//
+// Thresholds/curve are tunable knobs (see plan): starting points chosen so the
+// entry tier is reachable and the top tier is aspirational.
 export const TIERS = Object.freeze([
 	Object.freeze({
 		level: 0,
@@ -32,6 +41,7 @@ export const TIERS = Object.freeze([
 		discountBps: 0,
 		rateMultiplier: 1,
 		perks: Object.freeze(['Everything free-forever: create, discover, embed, social, basic worlds']),
+		planned: Object.freeze([]),
 	}),
 	Object.freeze({
 		level: 1,
@@ -41,6 +51,7 @@ export const TIERS = Object.freeze([
 		discountBps: 500, // 5% off compute
 		rateMultiplier: 2,
 		perks: Object.freeze(['5% off all $THREE compute', '2× free generation quota', 'Bronze profile badge']),
+		planned: Object.freeze([]),
 	}),
 	Object.freeze({
 		level: 2,
@@ -49,12 +60,8 @@ export const TIERS = Object.freeze([
 		minUsd: 100,
 		discountBps: 1000, // 10%
 		rateMultiplier: 3,
-		perks: Object.freeze([
-			'10% off all $THREE compute',
-			'3× free generation quota',
-			'Private worlds',
-			'Priority MCP routing',
-		]),
+		perks: Object.freeze(['10% off all $THREE compute', '3× free generation quota']),
+		planned: Object.freeze(['Private worlds', 'Priority MCP routing']),
 	}),
 	Object.freeze({
 		level: 3,
@@ -63,12 +70,8 @@ export const TIERS = Object.freeze([
 		minUsd: 500,
 		discountBps: 2000, // 20%
 		rateMultiplier: 5,
-		perks: Object.freeze([
-			'20% off all $THREE compute',
-			'5× free generation quota',
-			'Branded worlds + custom environments',
-			'Early access to drops',
-		]),
+		perks: Object.freeze(['20% off all $THREE compute', '5× free generation quota']),
+		planned: Object.freeze(['Branded worlds + custom environments', 'Early access to drops']),
 	}),
 	Object.freeze({
 		level: 4,
@@ -77,12 +80,8 @@ export const TIERS = Object.freeze([
 		minUsd: 2500,
 		discountBps: 3000, // 30%
 		rateMultiplier: 10,
-		perks: Object.freeze([
-			'30% off all $THREE compute',
-			'10× free generation quota',
-			'First dibs on rare names + collectibles',
-			'Genesis-only cosmetics',
-		]),
+		perks: Object.freeze(['30% off all $THREE compute', '10× free generation quota']),
+		planned: Object.freeze(['First dibs on rare names + collectibles', 'Genesis-only cosmetics']),
 	}),
 ]);
 

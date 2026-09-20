@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T19:41:27.867Z",
+	"generated_at": "2026-09-20T19:56:28.610Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -203,6 +203,17 @@
 			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
 			"link": "/changelog",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "The $THREE tier cards no longer list unbuilt perks next to real ones",
+			"summary": "Each tier on the holder page carries two kinds of line: things the hold turns on today, and things that are registered but not built yet. Further down the same card the unbuilt ones were already flagged Planned, but higher up they also appeared as plain bullets with no flag, so Silver read as though private worlds and priority routing were included and Gold as though branded environments were. They are not. The two lists are now kept apart at the source, the planned lines carry the Planned flag wherever they appear, and the pricing API publishes them as a separate field so anything reading it automatically cannot mistake a roadmap line for a benefit. Nothing about what you actually get has changed. A test now fails the build if an unbuilt feature finds its way back into the delivered list.",
+			"link": "/three",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},

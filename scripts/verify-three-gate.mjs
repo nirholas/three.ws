@@ -189,6 +189,27 @@ async function checkHonesty() {
 	}
 	const planned = features.filter((f) => !f.enforced).map((f) => f.feature);
 	check('planned features are flagged, not sold as live', planned.length === features.length - LIVE_GATES.length, planned.join(', ') || 'none');
+
+	// The tier cards render `perks` flat, with no flag, so an unbuilt line sitting
+	// in `perks` instead of `planned` reads as a delivered benefit on /three and to
+	// anything parsing /api/pricing. Check the published ladder keeps them apart.
+	const { body: pricing } = await getJson(`${BASE}/api/pricing`);
+	const ladder = pricing?.three_tiers ?? pricing?.tiers ?? [];
+	check('pricing ladder served', ladder.length > 0, `${ladder.length} tiers`);
+	const plannedLabels = new Set(
+		features.filter((f) => !f.enforced).map((f) => f.label.toLowerCase()),
+	);
+	for (const t of ladder) {
+		const perks = t.perks ?? [];
+		// The key must be PRESENT, not merely defaultable: a ladder served without
+		// it is one where perks and roadmap are still the same list.
+		check(`${t.id} exposes a planned list`, Object.prototype.hasOwnProperty.call(t, 'planned'));
+		const leaked = perks.filter((p) => {
+			const needle = String(p).toLowerCase();
+			return [...plannedLabels].some((l) => l.includes(needle) || needle.includes(l));
+		});
+		check(`${t.id} perks promise nothing unbuilt`, leaked.length === 0, leaked.join(', ') || `${perks.length} delivered perks`);
+	}
 }
 
 async function main() {

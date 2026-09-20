@@ -159,6 +159,14 @@
 			<description>The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.</description>
 		</item>
 		<item>
+			<title>The $THREE tier cards no longer list unbuilt perks next to real ones</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-09-20:The $THREE tier cards no longer list unbuilt perks next to real ones</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Each tier on the holder page carries two kinds of line: things the hold turns on today, and things that are registered but not built yet. Further down the same card the unbuilt ones were already flagged Planned, but higher up they also appeared as plain bullets with no flag, so Silver read as though private worlds and priority routing were included and Gold as though branded environments were. They are not. The two lists are now kept apart at the source, the planned lines carry the Planned flag wherever they appear, and the pricing API publishes them as a separate field so anything reading it automatically cannot mistake a roadmap line for a benefit. Nothing about what you actually get has changed. A test now fails the build if an unbuilt feature finds its way back into the delivered list.</description>
+		</item>
+		<item>
 			<title>The flagship post slot now gets flagship material</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:The flagship post slot now gets flagship material</guid>

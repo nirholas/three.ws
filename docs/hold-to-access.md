@@ -149,6 +149,17 @@ in the product** — a request for it is actually checked. `false` means the per
 registered/planned but not enforced anywhere. The `/three` page reads this flag to mark a
 feature **Live** vs **Planned**, so the platform never promises an unwired perk.
 
+The same honesty applies to the prose perk lines on each tier card. `TIERS` carries two
+lists: **`perks`** is what the hold buys today, and **`planned`** is what is registered
+but not enforced yet. Every surface that renders the ladder (`/three`,
+`GET /api/pricing`, `GET /api/three/tier`) serves both, and `/three` draws the `planned`
+lines with the same Planned flag as the gated-feature rows. Keeping them in one list is
+how an unbuilt feature ends up reading as a benefit, so when a gate ships, flip its
+`enforced` here and move its line from `planned` to `perks` in the same change.
+`tests/three-tier-honesty.test.js` fails if an unenforced feature's label reappears in a
+`perks` list, and `npm run verify:three-gate` checks the same thing against the live
+`/api/pricing` payload.
+
 | Feature | Min tier | Status | Pay-per-use | Backend |
 |---------|----------|--------|-------------|---------|
 | `forge.high` — High-quality generation (200k poly + PBR) | Bronze | **Live** | yes | [`api/forge.js`](../api/forge.js) |

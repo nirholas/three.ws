@@ -224,9 +224,24 @@ function renderTier(t, { currentLevel, heldUsd, featuresByLevel }) {
 				? ''
 				: `<span class="tt-status tt-status--togo">${fmtUsd(toGo, toGo < 1 ? 2 : 0)} to go</span>`;
 
-	const perks = (t.perks || [])
-		.map((p) => `<li class="tt-perk"><span class="tt-perk-tick" aria-hidden="true">✦</span><span class="tt-perk-text">${esc(p)}</span></li>`)
-		.join('');
+	// Delivered perks render plain; anything the ladder still lists as `planned`
+	// renders with the same Planned flag the gated-feature rows use, so a tier card
+	// never presents an unbuilt benefit as something the hold buys today.
+	const perks =
+		(t.perks || [])
+			.map(
+				(p) =>
+					`<li class="tt-perk"><span class="tt-perk-tick" aria-hidden="true">✦</span><span class="tt-perk-text">${esc(p)}</span></li>`,
+			)
+			.join('') +
+		(t.planned || [])
+			.map(
+				(p) =>
+					`<li class="tt-perk tt-perk--soon"><span class="tt-perk-tick" aria-hidden="true">✦</span>` +
+					`<span class="tt-perk-text">${esc(p)}</span>` +
+					`<span class="tt-flag tt-flag--soon">Planned</span></li>`,
+			)
+			.join('');
 
 	// Concrete gated features that unlock at this tier, with Live/Planned honesty
 	// and a check when the current holder already clears them.
@@ -505,6 +520,9 @@ function injectStyles() {
 	.tt-perk{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:#c7c7d0;}
 	.tt-perk-text{flex:1;min-width:0;}
 	.tt-perk-tick{flex-shrink:0;color:#6ee7a8;font-size:11px;line-height:1.5;}
+	.tt-perk--soon{align-items:center;color:#8a8a93;}
+	.tt-perk--soon .tt-perk-tick{color:#4a4a55;}
+	.tt-perk--soon .tt-flag{margin-left:2px;}
 	.tt-gold .tt-perk-tick{color:#f5c451;}
 	.tt-silver .tt-perk-tick{color:#cfd6e4;}
 	.tt-bronze .tt-perk-tick{color:#e0a878;}
