@@ -82,6 +82,15 @@ function shapeSocials(d) {
 	};
 }
 
+// Both tables are capped at 50 rows and the page tells the reader they are the
+// top 50 "by volume". Upstream does not order them that way (a derivatives
+// venue comes back roughly alphabetically, so the cap kept 0G_PERP and dropped
+// BTC_PERP), so the ranking is done here and the claim is true.
+function byVolumeDesc(tickers, volumeOf) {
+	return [...tickers].sort((a, b) => (volumeOf(b) ?? 0) - (volumeOf(a) ?? 0));
+}
+const usdVolume = (t) => num(t?.converted_volume?.usd);
+
 // CoinGecko's `/exchanges/{id}` detail payload omits the normalized 24h volume
 // (only the ranked list carries it), so it is enriched best-effort from the
 // same `/exchanges` list the /exchanges page uses — shared geckoFetch cache,
@@ -104,7 +113,7 @@ function shapeSpotDetail(id, d, normalized) {
 		trade_volume_24h_btc_normalized: normalized,
 		socials: shapeSocials(d),
 		tickers_count: tickers.length,
-		tickers: tickers.slice(0, 50).map(shapeSpotTicker),
+		tickers: byVolumeDesc(tickers, usdVolume).slice(0, 50).map(shapeSpotTicker),
 	};
 }
 
@@ -129,8 +138,20 @@ function shapeDerivativesDetail(id, d) {
 		number_of_futures_pairs: num(d.number_of_futures_pairs),
 		socials: shapeSocials(d),
 		tickers_count: tickers.length,
-		tickers: tickers.slice(0, 50).map(shapeDerivativeTicker),
+		tickers: byVolumeDesc(tickers, usdVolume).slice(0, 50).map(shapeDerivativeTicker),
 	};
+}
+
+// CoinGecko keeps a stub record in the SPOT namespace for some derivatives
+// venues: `/exchanges/whitebit_futures` answers 200 with zero tickers, zero
+// volume and a zero trust score while `/derivatives/exchanges/whitebit_futures`
+// carries the real venue and its 398 contracts. The 404-driven fallback below
+// therefore never fired for those ids, and the page rendered an empty profile
+// for a venue that is anything but. A spot record holding nothing at all is a
+// miss, not an answer.
+function isHollowSpotDetail(d) {
+	const tickers = Array.isArray(d?.tickers) ? d.tickers : [];
+	return tickers.length === 0 && !num(d?.trade_volume_24h_btc);
 }
 
 // Upstream volume points arrive as [ts_ms, "13421.896…"] — strings.
@@ -189,7 +210,8 @@ export default wrap(async (req, res) => {
 	]);
 	const btcUsd = priceRes.status === 'fulfilled' ? priceRes.value : null;
 
-	if (detailRes.status === 'fulfilled') {
+	const spotOk = detailRes.status === 'fulfilled';
+	const serveSpot = () => {
 		const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : [];
 		const normalized = num(list.find((e) => e?.id === id)?.trade_volume_24h_btc_normalized);
 		return json(res, 200, {
@@ -198,13 +220,16 @@ export default wrap(async (req, res) => {
 			btc_usd: btcUsd,
 			updated_at: Date.now(),
 		}, headers);
-	}
+	};
 
-	if (detailRes.reason?.status !== 404) {
+	if (spotOk && !isHollowSpotDetail(detailRes.value)) return serveSpot();
+
+	if (!spotOk && detailRes.reason?.status !== 404) {
 		return error(res, 502, 'upstream_error', 'exchange data is unavailable right now — retry shortly');
 	}
 
-	// Spot lookup 404'd — derivatives venues live on a separate CG namespace.
+	// Either the spot lookup 404'd or it answered with an empty shell.
+	// Derivatives venues live on a separate CoinGecko namespace.
 	try {
 		const raw = await geckoFetch(`/derivatives/exchanges/${id}?include_tickers=unexpired`, {
 			ttlMs: DETAIL_TTL_MS,
@@ -216,6 +241,10 @@ export default wrap(async (req, res) => {
 			updated_at: Date.now(),
 		}, headers);
 	} catch (err) {
+		// A venue that is empty in the spot namespace and absent from the
+		// derivatives one is still a real venue. Serve the thin record rather
+		// than turning a page that used to load into a 404.
+		if (spotOk) return serveSpot();
 		if (err?.status === 404) {
 			return error(res, 404, 'not_found', `no exchange found for "${id}"`);
 		}
