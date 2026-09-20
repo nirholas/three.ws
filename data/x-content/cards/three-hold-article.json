@@ -1,0 +1,11 @@
+{
+	"out": "public/x-media/three-hold-article/cover.png",
+	"headline": "Hold, don't spend.",
+	"headlineSize": 76,
+	"body": "Why the expensive lanes on three.ws are gated on holding $THREE, why draft and standard stay free forever, and what the 402 actually checks.",
+	"frame": "browser",
+	"shot": "https://three.ws/three",
+	"label": "three.ws/three",
+	"scrollBy": 300,
+	"settleMs": 18000
+}

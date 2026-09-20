@@ -1,0 +1,90 @@
+{
+	"id": "portal",
+	"contentHash": "13722a2bb3f81de835057f677503492137578bcd3ff20d174fe366f22d956e9b",
+	"reviewedAt": "2026-09-20T19:48:56.901Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Paste a web address and walk through it.\n\nPortal reads the real page: each section becomes a building sized by what it says, each link becomes a door you step through.\n\nthree.ws/portal",
+		"This is the Three.js Wikipedia article, rebuilt as a place. The minimap is the site structure.\n\nWalk into a door and you travel to that page, rebuilt as its own world.",
+		"Download the world as a GLB, or embed it on your own site. It is a real scene, not a screenshot."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "each section becomes a building sized by what it says, each link becomes a door you step through",
+				"kind": "evidence:page",
+				"target": "https://three.ws/portal",
+				"ok": true,
+				"detail": "live page shows \"every section becomes a building sized by what it says\""
+			},
+			{
+				"claim": "each section becomes a building sized by what it says, each link becomes a door you step through",
+				"kind": "evidence:page",
+				"target": "https://three.ws/portal",
+				"ok": true,
+				"detail": "live page shows \"every link becomes a door you can step through\""
+			},
+			{
+				"claim": "Download the world as a GLB, or embed it on your own site",
+				"kind": "evidence:page",
+				"target": "https://three.ws/portal",
+				"ok": true,
+				"detail": "live page shows \"download it as a 3D file, or put it on your own site\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Portal page is served",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "Portal really builds a world from a URL",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/portal",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Paste a web address and walk through it.\n\nPortal reads the real page: each section becomes a building sized by what it says, each link becomes a door you step through.\n\nthree.ws/portal",
+				"This is the Three.js Wikipedia article, rebuilt as a place. The minimap is the site structure.\n\nWalk into a door and you travel to that page, rebuilt as its own world.",
+				"Download the world as a GLB, or embed it on your own site. It is a real scene, not a screenshot."
+			],
+			"altText": [
+				"A 3D character walking across a plaza in a world built from the Three.js Wikipedia article, with tall blue buildings and yellow doorways around it",
+				"A 3D character walking across a plaza in a world built from the Three.js Wikipedia article, with tall blue buildings and yellow doorways around it",
+				"The Portal toolbar reading Copy link, Embed and Download GLB above a world built from the Three.js Wikipedia article, with a character standing among blue buildings and yellow doorways"
+			]
+		},
+		"summary": "Every claim traces to passing live-page verification, the screenshots (59 doors, Download GLB toolbar, minimap) support the copy, and the voice follows the contract exactly: mechanism lead, no hype, no banned openings, one link. Ship all three posts unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

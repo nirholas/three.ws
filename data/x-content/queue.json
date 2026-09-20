@@ -1910,6 +1910,187 @@
 				}
 			],
 			"quotes": "2101728882206642536"
+		},
+		{
+			"id": "three-hold-article",
+			"status": "approved",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-09-20T19:00:00Z",
+			"article": {
+				"title": "Hold, do not spend: how $THREE gates the expensive lanes",
+				"body": "data/x-content/articles/three-hold-to-access.md",
+				"cover": {
+					"path": "public/x-media/three-hold-article/cover.png",
+					"alt": "A three.ws card reading 'Hold, don't spend.' beside a browser window showing the $THREE hold-to-access ladder, with the Bronze rung at $25 listing high-quality 200k poly generation and game-ready Unity and Unreal export, each badged LIVE"
+				}
+			},
+			"claims": [
+				{
+					"says": "$25 held turns on 200k-poly generation and game-ready export",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Bronze $25+ in $THREE"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "High-quality generation (200k poly + PBR)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Game-Ready export (Unity/Unreal retopo + PBR)"
+						}
+					]
+				},
+				{
+					"says": "Draft and standard generation stay free",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Draft & Standard generation stay free, forever"
+						}
+					]
+				},
+				{
+					"says": "a 402 you can watch work",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "three_hold_required"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the ladder page is served",
+					"url": "https://three.ws/three",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the high lane answers 402 three_hold_required",
+					"url": "https://three.ws/api/forge",
+					"method": "POST",
+					"body": {
+						"prompt": "a plain wooden stool",
+						"tier": "high"
+					},
+					"expect": {
+						"status": 402,
+						"contains": "three_hold_required"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "$25 held turns on 200k-poly generation and game-ready export. Draft and standard generation stay free either way. The write-up covers why the gate is a 402 you can watch work: three.ws/three"
+				}
+			]
+		},
+		{
+			"id": "portal",
+			"status": "approved",
+			"kind": "post",
+			"tier": 2,
+			"lane": "world",
+			"pattern": "proof",
+			"notBefore": "2026-09-20T19:30:00Z",
+			"claims": [
+				{
+					"says": "each section becomes a building sized by what it says, each link becomes a door you step through",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/portal",
+							"contains": "every section becomes a building sized by what it says"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/portal",
+							"contains": "every link becomes a door you can step through"
+						}
+					]
+				},
+				{
+					"says": "Download the world as a GLB, or embed it on your own site",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/portal",
+							"contains": "download it as a 3D file, or put it on your own site"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Portal page is served",
+					"url": "https://three.ws/portal",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "Portal really builds a world from a URL",
+					"url": "https://three.ws/api/portal?url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FThree.js",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Paste a web address and walk through it.\n\nPortal reads the real page: each section becomes a building sized by what it says, each link becomes a door you step through.\n\nthree.ws/portal",
+					"media": [
+						{
+							"path": "public/x-media/portal/clip.mp4",
+							"probe": {
+								"durationSec": 40.4,
+								"width": 1280,
+								"height": 720,
+								"fps": 25,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							}
+						}
+					]
+				},
+				{
+					"text": "This is the Three.js Wikipedia article, rebuilt as a place. The minimap is the site structure.\n\nWalk into a door and you travel to that page, rebuilt as its own world.",
+					"media": [
+						{
+							"path": "public/x-media/portal/walk.gif",
+							"alt": "A 3D character walking across a plaza in a world built from the Three.js Wikipedia article, with tall blue buildings and yellow doorways around it"
+						}
+					]
+				},
+				{
+					"text": "Download the world as a GLB, or embed it on your own site. It is a real scene, not a screenshot.",
+					"media": [
+						{
+							"path": "public/x-media/portal/toolbar.png",
+							"alt": "The Portal toolbar reading Copy link, Embed and Download GLB above a world built from the Three.js Wikipedia article, with a character standing among blue buildings and yellow doorways"
+						}
+					]
+				}
+			],
+			"editorOverride": {
+				"reason": "Owner directive of 2026-09-20: ship video and GIF on the account. The editor is right that the volume model measured an uploaded video at 0.71x lift against a still, and that finding stands, but proving the video and GIF lanes work end to end is the point of this post. Its second issue, a bare third post, is fixed rather than overridden."
+			}
 		}
 	]
 }

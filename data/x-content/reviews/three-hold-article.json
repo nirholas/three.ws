@@ -1,0 +1,107 @@
+{
+	"id": "three-hold-article",
+	"contentHash": "ed2692aed604c719da37e9a2d7f600ea0f6cb697ece3b4d570c4d5da9d33cfe6",
+	"reviewedAt": "2026-09-20T19:28:15.238Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Hold, do not spend: how $THREE gates the expensive lanes",
+		"$25 held turns on 200k-poly generation and game-ready export. Draft and standard generation stay free either way. The write-up covers why the gate is a 402 you can watch work: three.ws/three"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "$25 held turns on 200k-poly generation and game-ready export",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Bronze $25+ in $THREE\""
+			},
+			{
+				"claim": "$25 held turns on 200k-poly generation and game-ready export",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"High-quality generation (200k poly + PBR)\""
+			},
+			{
+				"claim": "$25 held turns on 200k-poly generation and game-ready export",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Game-Ready export (Unity/Unreal retopo + PBR)\""
+			},
+			{
+				"claim": "Draft and standard generation stay free",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Draft & Standard generation stay free, forever\""
+			},
+			{
+				"claim": "a 402 you can watch work",
+				"kind": "evidence:file",
+				"target": "api/forge.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the ladder page is served",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the high lane answers 402 three_hold_required",
+				"ok": true,
+				"detail": "HTTP 402, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "$25 held turns on 200k-poly generation and game-ready export",
+				"problem": "To a reader new to three.ws, 'generation' without a noun is ambiguous; the page frames it as high-quality 3D generation. The post is still understandable from the link and image, but '3D generation' would land instantly.",
+				"fix": "Change to \"$25 held in $THREE turns on 200k-poly 3D generation and game-ready export\" if a revision is ever made; not required, stays within the verified page wording."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"$25 held turns on 200k-poly generation and game-ready export. Draft and standard generation stay free either way. The write-up covers why the gate is a 402 you can watch work: three.ws/three"
+			],
+			"altText": [
+				"A three.ws card reading 'Hold, don't spend.' beside a browser window showing the $THREE hold-to-access ladder, with the Bronze rung at $25 listing high-quality 200k poly generation and game-ready Unity and Unreal export, each badged LIVE"
+			]
+		},
+		"summary": "Every claim in the post matches a passed verification against the live page, the API probe confirms the 402 behavior, and the cover image shows exactly the Bronze rung the copy describes with no contradictions. Voice, length, and link rules are all satisfied; the only nit is that 'generation' could read more clearly as '3D generation' to a cold reader. Ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}
