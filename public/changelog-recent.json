@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T20:22:32.748Z",
+	"generated_at": "2026-09-20T21:13:00.660Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3735,
+	"total": 3736,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -249,6 +249,16 @@
 			"link": "/changelog",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "There's a bouncer at the Club door now",
+			"summary": "The Club's cover charge has always said a bouncer checks your wallet, and until now nobody was standing there. Walk up the alley and you will find him posted beside the door, a head taller than you, in black with shades. He watches you come down the alley, tells you the cover (one cent, in USDC or $THREE), looks down at his list while your wallet is checked on-chain, then nods you through or shakes his head. Regulars and VIPs get a different welcome. Tap him and he explains how the club works, one line at a time, and if you try to walk through him he does not move. There is a line of people waiting behind the rope beside him too, and they have opinions about you cutting past.",
+			"link": "/club",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1604,17 +1614,6 @@
 			"title": "The spend policy dry run stops contradicting its own counters",
 			"summary": "The simulator at /pay/simulator reports what an agent budget actually buys, and its headline sentence disagreed with the numbers directly beneath it. An endpoint that answers without asking for payment is free: it costs nothing and is never checked against your policy. The counters knew that, and the sentence did not, so the very first run on the page announced that all seven calls settle while the tile beside it said six. Calls that could not be priced at all vanished the same way, counted nowhere the reader could see. Both now have their own tile, and the verdict sentence is built from the counts it is describing, so settled, free, unpriced and refused always add up to the total in front of you. A run that fails now says why: an unusable line used to produce a bare \"Simulation failed (HTTP 400)\", and now quotes the endpoint the simulator could not read along with what a working line looks like. A budget left blank was quietly costed against one dollar, giving you a verdict for a budget you never proposed; the answer now says when that substitution happened. On a phone the little question marks beside each field were fifteen pixels wide and their explanations opened off the side of the screen, so the help was unreadable exactly where it was needed most: the tap targets are now large enough to hit and the explanations stay on the page at every width.",
 			"link": "/pay/simulator",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Splat Viewer keeps its recenter and download controls, and its errors say what went wrong",
-			"summary": "Loading a scene on /splat used to erase the viewer's own controls: writing the scene label into the HUD replaced the recenter and download buttons with plain text, so from the first render onward neither existed. Both now live beside the label and survive every scene swap, and the download always offers the scene you are actually looking at rather than a previous one. The error state was worse than useless: it showed a heading over an empty space because the explanation was being written into an element that was not on the page. Now a failed load tells you what happened and what to do, including the advice to download and upload a file whose host blocks cross-origin requests. Clicking a sample or picking a file also shows the loading state immediately instead of sitting on an idle stage while the splat engine downloads in silence, and an engine that fails to load says so rather than leaving the page frozen.",
-			"link": "/splat",
 			"tags": [
 				"fix",
 				"improvement"

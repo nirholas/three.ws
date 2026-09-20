@@ -191,6 +191,14 @@
 			<description>The @trythreews account publishes into three slots a day, one owned by each tier: proof of work at 04:00 UTC, a shipped feature at 12:00, a flagship at 20:00. The machine that drafts announcements from the backlog was not filling them that way. It never recorded a tier on anything it wrote, so every draft it produced was treated as a mid-tier feature and the 20:00 slot was left to whatever happened to be ready. It also dated the surfaces that need owner sign-off on their imagery into the best slot of every day, which pushed everything it could publish on its own weeks into the future. Announcements are now planned into the slot their own tier owns, the ones awaiting sign-off are listed separately instead of blocking the calendar, and six new announcements are queued for review.</description>
 		</item>
 		<item>
+			<title>There's a bouncer at the Club door now</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-09-20:There's a bouncer at the Club door now</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Club's cover charge has always said a bouncer checks your wallet, and until now nobody was standing there. Walk up the alley and you will find him posted beside the door, a head taller than you, in black with shades. He watches you come down the alley, tells you the cover (one cent, in USDC or $THREE), looks down at his list while your wallet is checked on-chain, then nods you through or shakes his head. Regulars and VIPs get a different welcome. Tap him and he explains how the club works, one line at a time, and if you try to walk through him he does not move. There is a line of people waiting behind the rope beside him too, and they have opinions about you cutting past.</description>
+		</item>
+		<item>
 			<title>Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation</guid>

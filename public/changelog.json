@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T20:22:32.697Z",
+	"generated_at": "2026-09-20T21:13:00.635Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -246,6 +246,16 @@
 			"link": "/changelog",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "There's a bouncer at the Club door now",
+			"summary": "The Club's cover charge has always said a bouncer checks your wallet, and until now nobody was standing there. Walk up the alley and you will find him posted beside the door, a head taller than you, in black with shades. He watches you come down the alley, tells you the cover (one cent, in USDC or $THREE), looks down at his list while your wallet is checked on-chain, then nods you through or shakes his head. Regulars and VIPs get a different welcome. Tap him and he explains how the club works, one line at a time, and if you try to walk through him he does not move. There is a line of people waiting behind the rope beside him too, and they have opinions about you cutting past.",
+			"link": "/club",
+			"tags": [
+				"feature"
 			]
 		},
 		{

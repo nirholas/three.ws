@@ -28585,6 +28585,15 @@
 				"fix"
 			],
 			"link": "/club"
+		},
+		{
+			"date": "2026-09-20",
+			"title": "There's a bouncer at the Club door now",
+			"summary": "The Club's cover charge has always said a bouncer checks your wallet, and until now nobody was standing there. Walk up the alley and you will find him posted beside the door, a head taller than you, in black with shades. He watches you come down the alley, tells you the cover (one cent, in USDC or $THREE), looks down at his list while your wallet is checked on-chain, then nods you through or shakes his head. Regulars and VIPs get a different welcome. Tap him and he explains how the club works, one line at a time, and if you try to walk through him he does not move. There is a line of people waiting behind the rope beside him too, and they have opinions about you cutting past.",
+			"tags": [
+				"feature"
+			],
+			"link": "/club"
 		}
 	]
 }
