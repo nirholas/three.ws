@@ -367,7 +367,8 @@ key-free data" rule:
 - **`/derivatives`** — perpetual-futures markets: price, funding rate, open
   interest, volume, filterable by index, plus a **Derivatives Exchanges** table
   (open interest, perp/futures counts) whose rows open the exchange detail page.
-  `/api/coin/derivatives` (`?view=exchanges` for the venues).
+  `/api/coin/derivatives` (`?view=exchanges` for the venues). Every perp row
+  opens a [contract detail page](#derivativevenuesymbol-perpetual-contract-detail).
 - **`/converter`** — convert any crypto ⇄ any major fiat at live rates
   (USD-anchored math covers all four directions). New `/api/coin/rates`
   (CoinGecko `/exchange_rates`) + `/api/coin/markets`/`detail`.
@@ -399,7 +400,7 @@ key-free data" rule:
 
 ## Detail pages
 
-Beyond `/coin/:id`, two list surfaces now have their own rich detail pages,
+Beyond `/coin/:id`, several list surfaces have their own rich detail pages,
 reached by clicking a row.
 
 ### `/exchange/:id` — exchange detail
@@ -413,7 +414,55 @@ table of the venue's pairs (each pair deep-linking to `/coin/:id` and to the
 live trade page), with price, spread, 24h volume, and trust. Derivatives venues
 show open interest and perp/futures pair counts with a contract table instead.
 New `/api/coin/exchange` (CoinGecko `/exchanges/{id}` + `/volume_chart`, falling
-back to `/derivatives/exchanges/{id}`).
+back to `/derivatives/exchanges/{id}`). The fallback fires on an empty spot
+record as well as on a 404: CoinGecko keeps a stub in the spot namespace for
+some derivatives venues (`/exchanges/whitebit_futures` answers 200 with zero
+tickers and zero volume), and honouring that 200 rendered an empty profile for
+a venue listing several hundred contracts. Both ticker tables are ranked by
+24h volume before the 50-row cap, so "top 50 by volume" is what they are.
+
+### `/derivative/:venue/:symbol`: perpetual contract detail
+
+One perpetual futures contract in full, reached from any row of `/derivatives`
+and from the contracts table on a derivatives venue's `/exchange/:id` profile.
+`/derivative/whitebit_futures/ETH_PERP` is a worked example.
+
+The table row states what a contract is worth. The page answers what that
+means:
+
+- **Hero**: venue logo and name (linking to the venue profile), contract
+  symbol, mark price, 24h move, and whether the contract is trading above or
+  below its own index, with a link out to the venue's trade screen.
+- **Stat cards**: mark vs index, basis, funding rate and its annualized
+  equivalent, open interest and 24h volume (each with the contract's rank among
+  every venue listing that underlying), bid/ask spread, and 24h volume
+  denominated in the underlying.
+- **What funding costs**: the funding rate turned into money. Type a position
+  size and the page shows what that position pays (or is paid) per interval,
+  per day and per year at the rate quoted right now, and says which side pays.
+- **Underlying price chart**: the spot price of the index the contract tracks
+  (1D to 1Y, crosshair readout), via `/api/coin/ohlc`.
+- **Cross-venue comparison**: every venue listing a perpetual on the same
+  underlying, ranked by volume, with the current contract pinned and marked.
+  Above it, four callouts: the cheapest venue to hold a long, the best paid
+  venue to hold a short, the funding spread across venues, and price
+  dispersion. Those four only count venues clearing $1M in 24h volume, because
+  a dormant book prints the widest funding and the widest price every time.
+- **How big this contract is**: share meters for the contract's slice of the
+  venue's open interest and volume, and of all open interest in that
+  underlying, plus the venue's other contracts (each linking to its own page).
+- **The underlying**: the spot asset's market cap, volume, 24h range and ATH,
+  linking through to `/coin/:id`.
+
+New `/api/coin/derivative` (CoinGecko `/derivatives/exchanges/{venue}` for the
+contract, `/derivatives` for the cross-venue set, `/coins/markets` for spot).
+Only the venue read is load-bearing; the rest degrade to empty sections.
+
+Contract symbols are not path-safe (`ETH/USDT`), so the slash is folded to `~`
+in the URL by [`src/shared/derivative-slug.js`](../src/shared/derivative-slug.js),
+which is vendored byte-identically to `api/_lib/derivative-slug.js` because the
+server build context excludes `src/`. `tests/api/derivative-contract.test.js`
+fails if the copies drift.
 
 ### `/category/:id` — category detail
 
@@ -560,6 +609,7 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/coin/exchanges`   | CoinGecko `/exchanges` + `/simple/price` (BTC)             | 300 s        |
 | `/api/coin/exchange`    | CoinGecko `/exchanges/{id}` (+ `/volume_chart`) or `/derivatives/exchanges/{id}` fallback | 120 s |
 | `/api/coin/derivatives` | CoinGecko `/derivatives` (`?view=exchanges` → `/derivatives/exchanges`) | 60 s / 300 s |
+| `/api/coin/derivative`  | CoinGecko `/derivatives/exchanges/{venue}` + `/derivatives` + `/coins/markets` (one perpetual contract) | 60 s |
 | `/api/defi/yields`      | DeFiLlama `yields.llama.fi/pools` (+ `/chart/{pool}`)      | 300 s / 600 s |
 | `/api/coin/trending`    | CoinGecko `/search/trending` (coins + categories + NFTs)   | 120 s        |
 | `/api/defi/protocol`    | DeFiLlama `/protocol/{slug}` (+ `/summary/fees` + `/summary/dexs`) | 300 s |
@@ -617,6 +667,7 @@ text before they reach the client.
 | Category detail             | [`pages/category.html`](../pages/category.html) + `src/category-page.js` + `src/category-page.css`, API [`api/coin/category.js`](../api/coin/category.js) |
 | Exchanges / Derivatives     | `pages/exchanges.html`, `pages/derivatives.html` (+ `src/*.js`, `src/*.css`)                                                             |
 | Exchange detail             | [`pages/exchange.html`](../pages/exchange.html) + `src/exchange-page.js` + `src/exchange-page.css`, API [`api/coin/exchange.js`](../api/coin/exchange.js) |
+| Perpetual contract detail   | [`pages/derivative.html`](../pages/derivative.html) + `src/derivative-page.js` + `src/derivative-page.css`, API [`api/coin/derivative.js`](../api/coin/derivative.js), slug helper [`src/shared/derivative-slug.js`](../src/shared/derivative-slug.js) (vendored to [`api/_lib/derivative-slug.js`](../api/_lib/derivative-slug.js)), venue directory [`api/_lib/derivative-venues.js`](../api/_lib/derivative-venues.js) |
 | Converter                   | `pages/converter.html` + `src/converter.js` + `src/converter.css`                                                                        |
 | DeFi / Chains / Stablecoins | `pages/{defi,chains,stablecoins}.html` (+ `src/*.js`, `src/*.css`), APIs in [`api/defi/`](../api/defi)                                   |
 | DeFi Yields                 | [`pages/yields.html`](../pages/yields.html) + `src/yields.js` + `src/yields.css` + [`src/filter-controls.css`](../src/filter-controls.css), API [`api/defi/yields.js`](../api/defi/yields.js) |
@@ -634,9 +685,9 @@ text before they reach the client.
 | News engine + sources       | [`api/_lib/news.js`](../api/_lib/news.js) + [`api/_lib/news-sources.js`](../api/_lib/news-sources.js), endpoints in [`api/news/`](../api/news) |
 | Shared news renderers       | [`src/shared/news-render.js`](../src/shared/news-render.js); table primitives in [`src/shared/market-table.js`](../src/shared/market-table.js) |
 | Shared chart embeds         | [`src/shared/chart-embeds.js`](../src/shared/chart-embeds.js): the third-party embed URLs every chart surface builds from; [`src/shared/chart-switcher.js`](../src/shared/chart-switcher.js): the compact source switcher `/trades` and Mission Control mount |
-| Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Inter, Space Grotesk, JetBrains Mono self-hosted in `public/fonts/`)                      |
+| Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Inter, Space Grotesk, JetBrains Mono self-hosted in `public/fonts/`). Colour pairs that clear WCAG AA live here as tokens: `--cv-green` / `--cv-red` are the chart and fill hues, `--cv-green-text` / `--cv-red-text` the darker shades for body copy on the page surface, and `--cv-green-on-tint` / `--cv-red-on-tint` the darker-still shades for text drawn ON a tinted badge fill, where the tint lifts the background. Dark maps every pair to one value; only light needs the split. Use the text or on-tint token whenever the colour is carrying words. |
 | Shared formatters           | [`src/shared/coin-format.js`](../src/shared/coin-format.js) — unit-tested in [`tests/coin-format.test.js`](../tests/coin-format.test.js) |
-| API proxies                 | [`api/coin/`](../api/coin): one file per `/api/coin/*` endpoint in the table above (`detail.js`, `ohlc.js`, `pool.js`, `markets.js`, `tickers.js`, `categories.js`, `category.js`, `exchanges.js`, `exchange.js`, `derivatives.js`, `rates.js`, `trending.js`, `global.js`, `fear-greed.js`, `gas.js`, `news.js`, `liquidations.js`) |
+| API proxies                 | [`api/coin/`](../api/coin): one file per `/api/coin/*` endpoint in the table above (`detail.js`, `ohlc.js`, `pool.js`, `markets.js`, `tickers.js`, `categories.js`, `category.js`, `exchanges.js`, `exchange.js`, `derivatives.js`, `derivative.js`, `rates.js`, `trending.js`, `global.js`, `fear-greed.js`, `gas.js`, `news.js`, `liquidations.js`) |
 | Liquidations collector      | [`services/liquidation-collector/`](../services/liquidation-collector) — standalone always-on Node service (not a Vercel function)      |
 
 Routing: `vercel.json` rewrites `/coins`, `/coin/<id>`, `/heatmap`,

@@ -5076,6 +5076,46 @@ Cached 60s in-process + 5min at the CDN.
 
 ---
 
+### Pair resolution (pool address to token)
+
+```
+GET /api/coin/pair?address=<pool-address>&network=<gecko-network>
+```
+
+The inverse of `/api/coin/pool`. Every DEX terminal names a market by its pair
+(pool) address, so a link, a widget parameter or an embed arriving from one
+carries a pool and no mint, while three.ws keys everything by mint. Hand this
+route the pair and it answers with the token that pair trades:
+
+```json
+{
+  "network": "solana",
+  "pair": "CnK82s8exdsK9nwqQ55kd9wcxoA22NwTchZJCBdu8LDa",
+  "token": { "address": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "name": "three.ws", "symbol": "three" },
+  "quote": { "address": "So11111111111111111111111111111111111111112", "name": "Wrapped SOL", "symbol": "SOL" },
+  "dex": "meteora",
+  "pairName": "three / SOL"
+}
+```
+
+```bash
+curl -s 'https://three.ws/api/coin/pair?address=CnK82s8exdsK9nwqQ55kd9wcxoA22NwTchZJCBdu8LDa'
+```
+
+`network` takes the same GeckoTerminal ids as `/api/coin/pool` and defaults to
+`solana`; `address` is validated per-network at the boundary. GeckoTerminal
+answers first, DexScreener covers a pair it has not indexed yet (which is every
+pair in its first minutes, so the fallback is the normal path for a new coin),
+and a value served live once rides out an outage from the shared cache. A pool
+no source knows is `404` (`no_pair`), a throttle is `429`, an outage is `502`:
+nothing is ever invented. Keyless, CORS-open and cached 60s in-process + 5min at
+the CDN, because partner pages call it from the browser.
+
+This is what lets `/coin3d` be addressed by pair as well as by mint. See
+[Token in 3D, as an embed](./coin3d-embed.md).
+
+---
+
 ### Markets table / coin search
 
 ```
@@ -5240,7 +5280,7 @@ Read-only, key-free proxies powering the `/categories`, `/exchanges`,
 | --------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /api/coin/categories`  | CoinGecko `/coins/categories`            | `{ categories: [{ id, name, market_cap, market_cap_change_24h, volume_24h, top_3_coins }] }`                                                                                      |
 | `GET /api/coin/exchanges`   | CoinGecko `/exchanges` + `/simple/price` | `{ exchanges: [{ id, name, image, trust_score, trust_score_rank, volume_24h_btc, volume_24h_usd, year_established, country, url }], btc_usd, updated_at }`                        |
-| `GET /api/coin/derivatives` | CoinGecko `/derivatives`                 | `{ tickers: [{ market, symbol, index_id, price, change_24h, funding_rate, open_interest, volume_24h }], updated_at }` (perpetuals only, top 100 by volume)                        |
+| `GET /api/coin/derivatives` | CoinGecko `/derivatives`                 | `{ tickers: [{ market, symbol, index_id, venue_id, slug, price, change_24h, funding_rate, open_interest, volume_24h }], updated_at }` (perpetuals only, top 100 by volume; `venue_id` + `slug` address the row's detail page and are null when it could not be resolved) |
 | `GET /api/coin/rates`       | CoinGecko `/exchange_rates`              | `{ fiats: [{ code, name, unit, per_btc }], updated_at }` (USD first; `per_btc` = units per 1 BTC)                                                                                 |
 | `GET /api/defi/protocols`   | DeFiLlama `/protocols`                   | `{ total_tvl, protocol_count, protocols: [{ name, logo, symbol, category, chains, chain_count, tvl, change_1d, change_7d, mcap }], updated_at }` (CEX category excluded; top 100) |
 | `GET /api/defi/chains`      | DeFiLlama `/v2/chains`                   | `{ total_tvl, chain_count, chains: [{ name, tvl, token_symbol, share_pct }], updated_at }` (top 100)                                                                              |
@@ -5249,6 +5289,79 @@ Read-only, key-free proxies powering the `/categories`, `/exchanges`,
 All are GET-only, CORS-open, rate-limited per IP, and return `502 upstream_error`
 when their source is briefly unavailable. Cache windows: 300 s (categories,
 rates, DeFi), 120 s (exchanges), 60 s (derivatives). No API key required.
+
+---
+
+### One perpetual futures contract
+
+`GET /api/coin/derivative?venue=<exchange-id>&symbol=<venue-symbol>`
+
+Everything about a single perpetual contract, powering the
+`/derivative/:venue/:symbol` page that every row of `/derivatives` links into.
+`venue` is a CoinGecko derivatives-exchange id (`whitebit_futures`,
+`binance_futures`); `symbol` is the venue's own contract symbol, matched
+case-insensitively.
+
+```bash
+curl -s 'https://three.ws/api/coin/derivative?venue=whitebit_futures&symbol=ETH_PERP'
+```
+
+```jsonc
+{
+  "venue": { "id": "whitebit_futures", "name": "WhiteBIT Futures", "image": "…",
+             "url": "…", "description": "…", "country": "Lithuania",
+             "year_established": 2022, "open_interest_btc": 64373.64,
+             "trade_volume_24h_btc": 665505.06, "perpetual_pairs": 398,
+             "futures_pairs": 0, "contracts_listed": 398 },
+  "contract": { "symbol": "ETH_PERP", "slug": "ETH_PERP", "base": "ETH",
+                "target": "USDT", "coin_id": "ethereum", "price": 2580.19,
+                "index": 2579.16, "basis_pct": 0.0399, "change_24h": -2.05,
+                "funding_rate": 0.01, "funding_apr": 10.95,
+                "open_interest_usd": 1155939517.3, "volume_24h_usd": 28360849777.5,
+                "volume_24h_base": 10738205.4, "spread_pct": 0.0139,
+                "last_traded_at": 1789883477, "trade_url": "…",
+                "venue_oi_share_pct": 22.3, "venue_vol_share_pct": 52.95 },
+  "index": { "coin_id": "ethereum", "name": "Ethereum", "price_usd": 2577.12, "…": "…" },
+  "peers": [ { "venue_id": "binance_futures", "venue_name": "Binance (Futures)",
+               "symbol": "ETHUSDT", "slug": "ETHUSDT", "price": 2576.54,
+               "funding_rate": 0.0047, "funding_apr": 5.17,
+               "open_interest_usd": 6058585141.87, "volume_24h_usd": 6923448365.3,
+               "current": false } ],
+  "peer_stats": { "venues": 142, "liquid_venues": 113, "liquid_floor_usd": 1000000,
+                  "funding_min": -0.3333, "funding_max": 1.0, "funding_median": 0.005,
+                  "funding_spread": 1.3333, "cheapest_long": { "…": "…" },
+                  "richest_short": { "…": "…" }, "price_dispersion_pct": 2.15,
+                  "total_open_interest_usd": 45830000000, "oi_share_pct": 2.52,
+                  "oi_rank": 14, "vol_rank": 1 },
+  "venue_contracts": [ { "symbol": "BTC_PERP", "slug": "BTC_PERP", "…": "…" } ],
+  "funding_periods_per_year": 1095,
+  "updated_at": 1789883500000
+}
+```
+
+Field notes:
+
+- **`basis_pct` is the contract's premium over its own index** (`(price - index)
+  / index`), which is the direction traders read basis in. CoinGecko publishes
+  the opposite sign (`index_basis_percentage`), so it is flipped here.
+- **`funding_apr` assumes 8h funding intervals** (`funding_rate * 3 * 365`).
+  Venues publish their schedules, the upstream feed does not, so the annualized
+  figure is an estimate and every surface that renders it says so.
+- **`peer_stats.cheapest_long`, `richest_short`, `price_min/max` and
+  `price_dispersion_pct` only count venues clearing `liquid_floor_usd` in 24h
+  volume.** A dormant book prints the widest funding and the widest price every
+  time, and nominating it as somewhere to act would be wrong. Totals, shares and
+  ranks still count every venue.
+- **`slug` is the path-safe symbol**: venue symbols include `ETH/USDT`, and the
+  slash is folded to `~` because a percent-encoded slash is decoded before
+  routing and splits the path. See `api/_lib/derivative-slug.js`.
+
+Only the venue read is load-bearing. If the cross-venue feed, the venue
+directory or the spot lookup is unavailable, `peers` comes back empty,
+`peer_stats` and `index` come back `null`, and the contract itself still
+serves. `404 not_found` means the venue does not list that symbol (delisted,
+renamed, or expired); `400 bad_request` means the venue id or symbol is
+malformed. Cached 30 s client / 60 s CDN.
 
 ---
 
