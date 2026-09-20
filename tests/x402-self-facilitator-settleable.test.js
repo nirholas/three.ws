@@ -13,12 +13,17 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
 	Keypair,
+	PublicKey,
 	TransactionMessage,
 	VersionedTransaction,
 	ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
+	TOKEN_PROGRAM_ID,
+	TOKEN_2022_PROGRAM_ID,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
+	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferCheckedInstruction,
 } from '@solana/spl-token';
 
@@ -26,6 +31,10 @@ const { verifyRingPayment, validateRingTransaction } = await import('../api/_lib
 
 const DECIMALS = 6;
 const AMOUNT_ATOMIC = 1000n; // 0.001 USDC
+
+// The facilitator reads the mint account's owner to learn which token program
+// the payment must call. These synthetic mints are modeled as classic SPL Token.
+const classicMintOwner = async () => ({ owner: TOKEN_PROGRAM_ID });
 
 // Build a real, buyer-signed SELF-PAY ring transaction: fee payer == the USDC
 // authority, so no sponsor key is needed and validateRingTransaction accepts it as
@@ -94,6 +103,7 @@ describe('verifyRingPayment settleability gate', () => {
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		// Simulation of a transfer from an unfunded ATA returns an InstructionError.
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => ({ value: { err: { InstructionError: [1, { Custom: 1 }] } } }),
 			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
 		};
@@ -110,6 +120,7 @@ describe('verifyRingPayment settleability gate', () => {
 		const p = buildSelfPayPayment();
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => ({ value: { err: null, logs: [] } }),
 			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
 		};
@@ -127,6 +138,7 @@ describe('verifyRingPayment settleability gate', () => {
 		const p = buildSelfPayPayment();
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => { throw new Error('rpc down'); },
 			getTokenAccountBalance: async () => ({ value: { amount: '0' } }),
 		};
@@ -143,6 +155,7 @@ describe('verifyRingPayment settleability gate', () => {
 		const p = buildSelfPayPayment();
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => { throw new Error('rpc down'); },
 			getTokenAccountBalance: async () => ({ value: { amount: String(AMOUNT_ATOMIC) } }),
 		};
@@ -158,6 +171,7 @@ describe('verifyRingPayment settleability gate', () => {
 		const p = buildSelfPayPayment();
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => { throw new Error('rpc down'); },
 			getTokenAccountBalance: async () => { throw new Error('rpc down'); },
 		};
@@ -175,6 +189,7 @@ describe('verifyRingPayment settleability gate', () => {
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		let simulated = false;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => { simulated = true; return { value: { err: null } }; },
 			getTokenAccountBalance: async () => ({ value: { amount: '0' } }),
 		};
@@ -200,6 +215,7 @@ describe('mint pin (2026-07-23 audit: junk-mint sponsor drain)', () => {
 		delete process.env.THREE_TOKEN_MINT;
 		let simulated = false;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => { simulated = true; return { value: { err: null } }; },
 			getTokenAccountBalance: async () => ({ value: { amount: '999999999' } }),
 		};
@@ -251,6 +267,7 @@ describe('fee-payer rent failures are their own reason class', () => {
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		process.env.X402_FEE_PAYER_SOLANA = p.feePayer;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => ({ value: { err: RENT_ERR } }),
 			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
 		};
@@ -270,6 +287,7 @@ describe('fee-payer rent failures are their own reason class', () => {
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		process.env.X402_FEE_PAYER_SOLANA = Keypair.generate().publicKey.toBase58();
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			simulateTransaction: async () => ({ value: { err: RENT_ERR } }),
 			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
 		};
@@ -288,6 +306,7 @@ describe('fee-payer rent failures are their own reason class', () => {
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
 		process.env.X402_FEE_PAYER_SOLANA = p.feePayer;
 		const conn = {
+			getAccountInfo: classicMintOwner,
 			// A rent failure on a NON-fee-payer account is a different condition and
 			// must not be reclassified: only index 0 is the fee payer.
 			simulateTransaction: async () => ({
@@ -302,5 +321,121 @@ describe('fee-payer rent failures are their own reason class', () => {
 		});
 		expect(res.isValid).toBe(false);
 		expect(res.invalidReason.split(':')[0]).toBe('simulation_failed');
+	});
+});
+
+// $THREE is a Token-2022 mint. The facilitator used to pin the classic SPL Token
+// program for the allowed program id and for every ATA derivation, so a $THREE
+// payment could never verify: a classic-built transfer named a source ATA that
+// does not exist, and a correctly built Token-2022 transfer was refused outright
+// as `program_not_allowed`. Live on three.ws/club on 2026-09-20, where the cover
+// charge quoted $THREE and every attempt to pay it failed at verify.
+describe('Token-2022 mints settle on the same rail as classic ones', () => {
+	const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+	function buildThreePayment({ program, createRecipientAta = false }) {
+		const buyer = Keypair.generate();
+		const recipientOwner = Keypair.generate();
+		const mint = new PublicKey(THREE_MINT);
+		const sourceAta = getAssociatedTokenAddressSync(
+			mint, buyer.publicKey, false, program, ASSOCIATED_TOKEN_PROGRAM_ID,
+		);
+		const destAta = getAssociatedTokenAddressSync(
+			mint, recipientOwner.publicKey, false, program, ASSOCIATED_TOKEN_PROGRAM_ID,
+		);
+		const transferIx = createTransferCheckedInstruction(
+			sourceAta, mint, destAta, buyer.publicKey, 10_000_000n, DECIMALS, [], program,
+		);
+		const message = new TransactionMessage({
+			payerKey: buyer.publicKey,
+			recentBlockhash: '11111111111111111111111111111111',
+			instructions: [
+				ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
+				...(createRecipientAta
+					? [createAssociatedTokenAccountIdempotentInstruction(
+						buyer.publicKey, destAta, recipientOwner.publicKey, mint, program, ASSOCIATED_TOKEN_PROGRAM_ID,
+					)]
+					: []),
+				transferIx,
+			],
+		}).compileToV0Message();
+		const tx = new VersionedTransaction(message);
+		tx.sign([buyer]);
+		process.env.THREE_TOKEN_MINT = THREE_MINT;
+		process.env.X402_PAY_TO_SOLANA = recipientOwner.publicKey.toBase58();
+		return {
+			requirement: {
+				network: 'solana',
+				asset: THREE_MINT,
+				amount: '10000000',
+				payTo: recipientOwner.publicKey.toBase58(),
+			},
+			paymentPayload: { transaction: Buffer.from(tx.serialize()).toString('base64') },
+		};
+	}
+
+	it('verifies a $THREE payment built against the Token-2022 program', async () => {
+		const p = buildThreePayment({ program: TOKEN_2022_PROGRAM_ID });
+		const conn = {
+			// The mint is seeded, so the hot path must not spend an RPC read on it.
+			getAccountInfo: async () => { throw new Error('should not be called'); },
+			simulateTransaction: async () => ({ value: { err: null, logs: [] } }),
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.invalidReason).toBeUndefined();
+		expect(res.isValid).toBe(true);
+		expect(res.asset).toBe(THREE_MINT);
+	});
+
+	it('names the wrong program when a $THREE transfer is built against classic SPL Token', async () => {
+		const p = buildThreePayment({ program: TOKEN_PROGRAM_ID });
+		let simulated = false;
+		const conn = {
+			simulateTransaction: async () => { simulated = true; return { value: { err: null } }; },
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.isValid).toBe(false);
+		expect(res.invalidReason).toBe(`wrong_token_program:${TOKEN_PROGRAM_ID.toBase58()}`);
+		expect(simulated).toBe(false);
+	});
+
+	it('budgets the larger Token-2022 ATA rent when the recipient account is new', () => {
+		const p = buildThreePayment({ program: TOKEN_2022_PROGRAM_ID, createRecipientAta: true });
+		const out = validateRingTransaction({
+			txBase64: p.paymentPayload.transaction,
+			requirement: p.requirement,
+			feePayerPubkey: null,
+			allowlist: new Set([p.requirement.payTo]),
+		});
+		expect(out.ok).toBe(true);
+		expect(out.decoded.tokenProgram).toBe(TOKEN_2022_PROGRAM_ID.toBase58());
+		expect(out.decoded.ataCreatePresent).toBe(true);
+		// One signature (5000) plus the rent ceiling for a 170-byte Token-2022 ATA,
+		// which must sit above the classic 165-byte figure (2,039,280).
+		expect(out.decoded.estFeeLamports).toBe(5000 + 2_074_080);
+	});
+
+	it('fails closed when a configured mint cannot be resolved to a token program', async () => {
+		const p = buildSelfPayPayment();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const conn = {
+			getAccountInfo: async () => { throw new Error('rpc down'); },
+			simulateTransaction: async () => { throw new Error('should not be called'); },
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.isValid).toBe(false);
+		expect(res.invalidReason).toMatch(/^token_program_unresolved:/);
 	});
 });

@@ -27,11 +27,17 @@ import { PublicKey, Keypair, VersionedTransaction } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddressSync,
 	TOKEN_PROGRAM_ID,
+	TOKEN_2022_PROGRAM_ID,
 	ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
 import { env } from '../env.js';
 import { solanaConnection } from '../solana/connection.js';
+import {
+	isSupportedTokenProgram,
+	knownTokenProgramForMint,
+	tokenProgramForMint,
+} from '../solana-token-program.js';
 // Pure DB/crypto helpers: no cycle back into this module.
 import {
 	SETTLEMENT_PENDING_REASON,
@@ -76,7 +82,18 @@ const MAX_PRIORITY_LAMPORTS = Number(
 );
 // Rent an idempotent ATA-create locks on the sponsor for a NEW recipient token
 // account (~0.00204 SOL). Reclaimable by closing the ATA. Bounded, one-time.
+// A Token-2022 ATA carries the ImmutableOwner extension, so it is 170 bytes
+// rather than 165 and its rent-exempt minimum is higher. Under-estimating it
+// lets a settle clear the fee-floor gate and then die on chain for rent.
+// Both figures are ceilings, priced at the 6960 lamports/byte-year rate. Mainnet
+// charged less than that when last read (2026-09-20: 1,488,440 and 1,513,840),
+// and an over-estimate only makes the floor gate stricter, never unsafe.
 const ATA_RENT_LAMPORTS = 2_039_280;
+const ATA_RENT_LAMPORTS_TOKEN_2022 = 2_074_080;
+const ataRentLamports = (tokenProgram) =>
+	String(tokenProgram) === TOKEN_2022_PROGRAM_ID.toBase58()
+		? ATA_RENT_LAMPORTS_TOKEN_2022
+		: ATA_RENT_LAMPORTS;
 
 export const SELF_FACILITATOR_ENABLED =
 	String(process.env.X402_SELF_FACILITATOR_ENABLED || '').toLowerCase() === 'true';
@@ -161,7 +178,7 @@ function readU64LE(data, offset) {
 // { ok:true, decoded } when it is a clean single-USDC-transfer to an allowlisted
 // recipient with a bounded sponsor fee, or { ok:false, reason } otherwise. Never
 // throws on adversarial input — a bad tx is a clean refusal, not a 5xx.
-export function validateRingTransaction({ txBase64, requirement, feePayerPubkey, allowlist }) {
+export function validateRingTransaction({ txBase64, requirement, feePayerPubkey, allowlist, tokenProgramId }) {
 	let tx;
 	try {
 		tx = VersionedTransaction.deserialize(Buffer.from(txBase64, 'base64'));
@@ -209,8 +226,17 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 		return { ok: false, reason: `mint_not_settleable:${mint.toBase58()}` };
 	}
 
+	// The program that owns the mint decides every ATA address below and is the
+	// only token program this transaction may call. USDC is classic SPL Token and
+	// $THREE is Token-2022. It is pinned from the mint, never read off the buyer's
+	// instruction: a buyer who picks the program picks the ATA derivation too, and
+	// could steer the sponsor into funding an account the mint's real program
+	// will never credit.
+	const tokenProgram =
+		tokenProgramId || knownTokenProgramForMint(mint) || TOKEN_PROGRAM_ID;
+
 	const expectedReceiverAta = getAssociatedTokenAddressSync(
-		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+		mint, payTo, false, tokenProgram, ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
 
 	let transferCount = 0;
@@ -267,13 +293,24 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 			if (!owner.equals(payTo)) return { ok: false, reason: 'ata_create_wrong_owner' };
 			if (!ixMint.equals(mint)) return { ok: false, reason: 'ata_create_wrong_mint' };
 			if (!funder.equals(feePayer)) return { ok: false, reason: 'ata_create_wrong_funder' };
+			// Accounts 4 and 5 are the System and token programs. The ATA address
+			// already commits to the token program, so a mismatch here can only
+			// fail on chain, after the sponsor paid the fee. Refuse it up front.
+			if (accts.length >= 6 && idxInRange(accts[5]) && !keys[accts[5]].equals(tokenProgram)) {
+				return { ok: false, reason: 'ata_create_wrong_token_program' };
+			}
 			ataCreatePresent = true;
 			continue;
 		}
 
-		if (programId.equals(TOKEN_PROGRAM_ID)) {
+		if (isSupportedTokenProgram(programId)) {
+			// A real token program, but not the one that owns this mint: the
+			// transfer would revert on chain. Name it instead of settling it.
+			if (!programId.equals(tokenProgram)) {
+				return { ok: false, reason: `wrong_token_program:${programId.toBase58()}` };
+			}
 			// The ONLY value-moving instruction we permit: one TransferChecked of
-			// the required USDC from the buyer to OUR recipient ATA.
+			// the required amount from the buyer to OUR recipient ATA.
 			// Accounts: [source, mint, destination, authority].
 			if (data[0] !== SPL_TRANSFER_CHECKED) {
 				return { ok: false, reason: `token_ix_not_transfer_checked:${data[0]}` };
@@ -296,7 +333,7 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 			}
 			// The buyer (authority) must own the source ATA and must be a signer.
 			const expectedSource = getAssociatedTokenAddressSync(
-				mint, authority, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+				mint, authority, false, tokenProgram, ASSOCIATED_TOKEN_PROGRAM_ID,
 			);
 			if (!source.equals(expectedSource)) {
 				return { ok: false, reason: 'transfer_source_not_authority_ata' };
@@ -354,7 +391,8 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 	}
 
 	const baseFee = 5000 * msg.header.numRequiredSignatures;
-	const estFeeLamports = baseFee + priorityLamports + (ataCreatePresent ? ATA_RENT_LAMPORTS : 0);
+	const estFeeLamports =
+		baseFee + priorityLamports + (ataCreatePresent ? ataRentLamports(tokenProgram.toBase58()) : 0);
 
 	return {
 		ok: true,
@@ -363,6 +401,7 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 			payer,
 			payTo: payTo.toBase58(),
 			mint: mint.toBase58(),
+			tokenProgram: tokenProgram.toBase58(),
 			amountAtomic: Number(transferAmount),
 			feePayer: feePayer.toBase58(),
 			selfPay,
@@ -681,11 +720,14 @@ export async function settleRingPayment({
 	// The sponsor pubkey only authorizes SPONSOR-mode payments; a self-pay tx
 	// carries its own fee payer and needs no sponsor key at all.
 	const sponsorPubkey = feePayer?.publicKey?.toBase58() || env.X402_FEE_PAYER_SOLANA || null;
+	const program = await resolveRingTokenProgram(connection, requirement);
+	if (!program.ok) return { success: false, reason: program.reason };
 	const validation = validateRingTransaction({
 		txBase64,
 		requirement,
 		feePayerPubkey: sponsorPubkey,
 		allowlist: payToAllowlist(),
+		tokenProgramId: program.tokenProgramId,
 	});
 	if (!validation.ok) return { success: false, reason: validation.reason };
 	const decoded = validation.decoded;
@@ -1006,7 +1048,8 @@ export async function settleRingPayment({
 			commitment: 'confirmed',
 		});
 		if (parsed?.meta?.fee != null) {
-			feeLamports = parsed.meta.fee + (decoded.ataCreatePresent ? ATA_RENT_LAMPORTS : 0);
+			feeLamports =
+				parsed.meta.fee + (decoded.ataCreatePresent ? ataRentLamports(decoded.tokenProgram) : 0);
 		}
 	} catch { /* estimate stands */ }
 
@@ -1084,7 +1127,7 @@ async function assertSettleable({ tx, connection, requirement, decoded }) {
 			const mint = new PublicKey(decoded.mint);
 			const authority = new PublicKey(decoded.payer);
 			const sourceAta = getAssociatedTokenAddressSync(
-				mint, authority, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+				mint, authority, false, new PublicKey(decoded.tokenProgram), ASSOCIATED_TOKEN_PROGRAM_ID,
 			);
 			const bal = await connection.getTokenAccountBalance(sourceAta, 'confirmed');
 			const have = BigInt(bal?.value?.amount ?? '0');
@@ -1104,21 +1147,46 @@ async function assertSettleable({ tx, connection, requirement, decoded }) {
 	}
 }
 
+// Resolve the token program for the requirement's mint before static validation.
+// The two mints the platform settles are seeded, so this is a map read on the hot
+// path. A deployment that points THREE_TOKEN_MINT or X402_ASSET_MINT_SOLANA at a
+// different mint costs one cached account read. Mints outside that set are left
+// unresolved on purpose: the requirement is caller-supplied, and validation
+// refuses them as `mint_not_settleable` without spending an RPC call on junk.
+async function resolveRingTokenProgram(connection, requirement) {
+	const mint = String(requirement?.asset || '');
+	const known = knownTokenProgramForMint(mint);
+	if (known) return { ok: true, tokenProgramId: known };
+	const settleable = [env.X402_ASSET_MINT_SOLANA, env.THREE_TOKEN_MINT].filter(Boolean);
+	if (!settleable.includes(mint)) return { ok: true, tokenProgramId: null };
+	try {
+		return { ok: true, tokenProgramId: await tokenProgramForMint(connection, mint) };
+	} catch (err) {
+		return {
+			ok: false,
+			reason: `token_program_unresolved:${String(err?.code || err?.message || err).slice(0, 100)}`,
+		};
+	}
+}
+
 // Verify shape for /verify — validate statically, then prove settleability on-chain
 // WITHOUT broadcasting. Async: the settleability proof is one RPC round-trip.
 export async function verifyRingPayment({ paymentPayload, requirement, feePayerPubkey, conn }) {
 	const txBase64 = txBase64FromPayload(paymentPayload);
 	if (!txBase64) return { isValid: false, invalidReason: 'missing_transaction' };
+	const connection =
+		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+	const program = await resolveRingTokenProgram(connection, requirement);
+	if (!program.ok) return { isValid: false, invalidReason: program.reason };
 	const validation = validateRingTransaction({
 		txBase64,
 		requirement,
 		feePayerPubkey: feePayerPubkey || (env.X402_FEE_PAYER_SOLANA || null),
 		allowlist: payToAllowlist(),
+		tokenProgramId: program.tokenProgramId,
 	});
 	if (!validation.ok) return { isValid: false, invalidReason: validation.reason };
 
-	const connection =
-		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
 	const settleable = await assertSettleable({
 		tx: validation.decoded.tx,
 		connection,

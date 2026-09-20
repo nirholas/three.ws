@@ -312,6 +312,16 @@ then kept in a verified, watched, auto-fundable state:
     allowlisted payTo}`. No System instructions (no SOL transfer out), capped
     priority fee, recipient must be allowlisted. This blocks the "anyone drains
     the sponsor" attack **and** enforces "only our wallets settle here".
+  - **Both token programs.** USDC is a classic SPL Token mint and `$THREE` is a
+    Token-2022 mint, and the two derive different associated token accounts for
+    the same wallet. The facilitator pins the program from the mint
+    ([api/_lib/solana-token-program.js](../api/_lib/solana-token-program.js)),
+    never from the buyer's instruction, and derives every ATA under it. A transfer
+    addressed to the other program is refused as `wrong_token_program:<id>` before
+    any simulation. The transaction builder in
+    [api/x402-checkout.js](../api/x402-checkout.js) resolves the program the same
+    way, so what it builds is what the facilitator accepts. The ATA rent estimate
+    is per program too: a Token-2022 ATA is 170 bytes, not 165.
   - **SOL floor.** Below `X402_SPONSOR_SOL_FLOOR_LAMPORTS` (default 0.02 SOL) the
     sponsor cannot settle, pausing the loop before it can drain your SOL. The floor
     is a **reserve that must survive the settle**, not a line the balance merely has

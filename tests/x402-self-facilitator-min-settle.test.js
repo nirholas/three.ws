@@ -16,9 +16,11 @@ import {
 	ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
+	TOKEN_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction,
 } from '@solana/spl-token';
+import { seedTokenProgramForMint } from '../api/_lib/solana-token-program.js';
 
 const { settleRingPayment } = await import('../api/_lib/x402/self-facilitator.js');
 
@@ -34,6 +36,9 @@ function buildPayment({ amount, sponsor } = {}) {
 	// The facilitator only settles mints the platform issues 402s for (env-pinned
 	// after the 2026-07-23 audit); model this synthetic mint as configured.
 	process.env.X402_ASSET_MINT_SOLANA = mint.toBase58();
+	// The facilitator pins the token program from the mint, and this synthetic
+	// mint has no account to read it from. Model it as classic SPL Token.
+	seedTokenProgramForMint(mint, TOKEN_PROGRAM_ID);
 	const feePayerKey = sponsor ? sponsor.publicKey : buyer.publicKey;
 
 	const sourceAta = getAssociatedTokenAddressSync(mint, buyer.publicKey);

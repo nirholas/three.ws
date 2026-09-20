@@ -27,9 +27,11 @@ import {
 	ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
+	TOKEN_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction,
 } from '@solana/spl-token';
+import { seedTokenProgramForMint } from '../api/_lib/solana-token-program.js';
 import bs58 from 'bs58';
 
 const { settleRingPayment, probeSettlementSignature } = await import(
@@ -52,6 +54,9 @@ function buildSelfPay(amount = 10_000) {
 	const recipientOwner = Keypair.generate();
 	const mint = Keypair.generate().publicKey;
 	process.env.X402_ASSET_MINT_SOLANA = mint.toBase58();
+	// The facilitator pins the token program from the mint, and this synthetic
+	// mint has no account to read it from. Model it as classic SPL Token.
+	seedTokenProgramForMint(mint, TOKEN_PROGRAM_ID);
 	const sourceAta = getAssociatedTokenAddressSync(mint, buyer.publicKey);
 	const destAta = getAssociatedTokenAddressSync(mint, recipientOwner.publicKey);
 	const transferIx = createTransferCheckedInstruction(

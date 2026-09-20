@@ -29,7 +29,6 @@ import {
 	ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
-	TOKEN_PROGRAM_ID,
 	ASSOCIATED_TOKEN_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
 	createAssociatedTokenAccountIdempotentInstruction,
@@ -42,6 +41,7 @@ import { NETWORK_SOLANA_MAINNET, NETWORK_SOLANA_DEVNET } from './_lib/x402-spec.
 import { confirmSolanaPayment } from './_lib/x402-solana-confirm.js';
 import { ataExists, getRecentBlockhash, mintDecimals, respondRpcUnavailable } from './_lib/solana/read-guards.js';
 import { env } from './_lib/env.js';
+import { tokenProgramForMint } from './_lib/solana-token-program.js';
 
 // Routed through env.* so the `api-mainnet.helius-rpc.com` misconfig is repaired
 // (env.normalizeRpcUrl) — a bad host 404'd getAccountInfo on the USDC mint here.
@@ -244,21 +244,27 @@ async function handlePrepare(req, res) {
 	const feePayer = selfPay ? buyerPubkey : toPubkey(accept.extra.feePayer, 'feePayer');
 	const amount = BigInt(accept.amount);
 
+	// The owning program decides every ATA address and the transfer's program id.
+	// USDC is classic SPL Token and $THREE is Token-2022, so resolve it per mint
+	// instead of assuming classic: a classic-built $THREE transfer names a source
+	// ATA that does not exist and can never settle.
+	const tokenProgram = await tokenProgramForMint(conn, mint);
+
 	const senderAta = getAssociatedTokenAddressSync(
 		mint,
 		buyerPubkey,
 		false,
-		TOKEN_PROGRAM_ID,
+		tokenProgram,
 		ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
 	const receiverAta = getAssociatedTokenAddressSync(
 		mint,
 		payTo,
 		false,
-		TOKEN_PROGRAM_ID,
+		tokenProgram,
 		ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
-	const decimals = await mintDecimals(conn, mint);
+	const decimals = await mintDecimals(conn, mint, { programId: tokenProgram });
 
 	// Base payment needs ~60k CU; each donation adds a transfer (+ possibly an ATA
 	// create), so budget headroom per tip. Unused CU isn't charged — this only
@@ -275,7 +281,7 @@ async function handlePrepare(req, res) {
 				receiverAta,
 				payTo,
 				mint,
-				TOKEN_PROGRAM_ID,
+				tokenProgram,
 				ASSOCIATED_TOKEN_PROGRAM_ID,
 			),
 		);
@@ -289,7 +295,7 @@ async function handlePrepare(req, res) {
 			amount,
 			decimals,
 			[],
-			TOKEN_PROGRAM_ID,
+			tokenProgram,
 		),
 	);
 
@@ -302,14 +308,14 @@ async function handlePrepare(req, res) {
 			const v = validateTip(tip, { payTo, paymentAmount: amount });
 			if (v.skip) continue; // zero/negative amount, nothing to send
 			if (!v.ok) return error(res, 400, v.code, v.message);
-			const tipAta = getAssociatedTokenAddressSync(mint, v.to, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+			const tipAta = getAssociatedTokenAddressSync(mint, v.to, false, tokenProgram, ASSOCIATED_TOKEN_PROGRAM_ID);
 			if (!(await ataExists(conn, tipAta))) {
 				ixs.push(
-					createAssociatedTokenAccountIdempotentInstruction(feePayer, tipAta, v.to, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID),
+					createAssociatedTokenAccountIdempotentInstruction(feePayer, tipAta, v.to, mint, tokenProgram, ASSOCIATED_TOKEN_PROGRAM_ID),
 				);
 			}
 			ixs.push(
-				createTransferCheckedInstruction(senderAta, mint, tipAta, buyerPubkey, v.amount, decimals, [], TOKEN_PROGRAM_ID),
+				createTransferCheckedInstruction(senderAta, mint, tipAta, buyerPubkey, v.amount, decimals, [], tokenProgram),
 			);
 		}
 	}
