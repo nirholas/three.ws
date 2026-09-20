@@ -55,6 +55,14 @@
 			<description>Reputation panels, the passport widget and the trust scores behind agent-to-agent gating were asking the shared ERC-8004 reputation registry a question it does not answer, so agents with dozens of on-chain reviews showed none. They now read the registry the way it actually works: an agent with 41 reviews from 22 reviewers on Base shows 4.1 out of 5 and its recent reviews, and the panel loads in a few seconds on free public RPCs. Staked vouches are only offered on chains whose registry supports them.</description>
 		</item>
 		<item>
+			<title>Five new skills teach any Claude to build on three.ws, and three standalone repos to install them from</title>
+			<link>https://three.ws/docs/agent-skills</link>
+			<guid isPermaLink="false">2026-09-20:Five new skills teach any Claude to build on three.ws, and three standalone repos to install them from</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until now the skills we hand out taught Claude the 3D lanes and the wallet, and stopped at the platform itself: nothing explained how to create an agent, give it a capability, put a price on it, or hire someone else's. Five new skills cover exactly that, each written against the real endpoints with the real request bodies and the real failure responses: create an agent (body, custodial Solana wallet, persona, live page), author a four-file in-app skill bundle and test it, publish and price a skill per call in $THREE with metered free trials, hire another agent under per-call and daily spend caps, and connect Claude Code, Claude Desktop or any MCP client to the hosted servers starting with the free one. The pack is also published as three small standalone repos, so installing it no longer means cloning a 60-directory monorepo: everything, the crypto-free 3D subset, or the agent-economy set. The repos are generated from the same folders the platform ships, so a copy can never drift from the original.</description>
+		</item>
+		<item>
 			<title>Paid $THREE purchases say what is wrong instead of failing silently</title>
 			<link>https://three.ws/status</link>
 			<guid isPermaLink="false">2026-09-20:Paid $THREE purchases say what is wrong instead of failing silently</guid>

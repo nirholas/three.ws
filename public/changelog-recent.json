@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T06:01:19.979Z",
+	"generated_at": "2026-09-20T06:09:06.235Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3722,
+	"total": 3723,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -69,6 +69,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Five new skills teach any Claude to build on three.ws, and three standalone repos to install them from",
+			"summary": "Until now the skills we hand out taught Claude the 3D lanes and the wallet, and stopped at the platform itself: nothing explained how to create an agent, give it a capability, put a price on it, or hire someone else's. Five new skills cover exactly that, each written against the real endpoints with the real request bodies and the real failure responses: create an agent (body, custodial Solana wallet, persona, live page), author a four-file in-app skill bundle and test it, publish and price a skill per call in $THREE with metered free trials, hire another agent under per-call and daily spend caps, and connect Claude Code, Claude Desktop or any MCP client to the hosted servers starting with the free one. The pack is also published as three small standalone repos, so installing it no longer means cloning a 60-directory monorepo: everything, the crypto-free 3D subset, or the agent-economy set. The repos are generated from the same folders the platform ships, so a copy can never drift from the original.",
+			"link": "/docs/agent-skills",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
 			]
 		},
 		{
@@ -1603,16 +1615,6 @@
 			"link": "/globe",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "update",
-			"title": "3D pages send a phone a phone-sized world",
-			"summary": "The lighting environment behind our 3D scenes is a high dynamic range image, and every device was fetching the same 1.4 MB copy of it. On /play that was more than a quarter of everything the page downloaded, and on a slow connection it is seven seconds before the world is properly lit. Phones now get a 512-pixel copy at about 360 KB, which carries the same light energy to within half a percent, and desktops keep the full-resolution original where the sharper reflections are actually visible. The coin artwork in the flagship /play world was being fetched at its full 581 KB to texture something a few hundred pixels tall, and now arrives at the size it is drawn; the same was true of the coin art in the community lobby. Marketplace card thumbnails now come through the image resizer at the size the card paints them instead of at full resolution.",
-			"link": "/play",
-			"tags": [
-				"improvement"
 			]
 		}
 	]
