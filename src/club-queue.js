@@ -523,6 +523,12 @@ export class ClubDoorLine {
 			},
 		});
 
+		// Reduced motion parks the stagger where it starts; a walk cycle on the
+		// spot would be the one thing moving, so it stands and waits like the rest.
+		if (reducedMotion) {
+			for (const slot of this.plan.slots) if (slot.drunk === 'stagger') slot.clips = SWAY_CLIPS;
+		}
+
 		this.chatter = new QueueChatter({ say: (m, text, dur) => this._say(m, text, dur) });
 
 		this.props = new Group();
@@ -642,13 +648,18 @@ export class ClubDoorLine {
 			body.className = 'club-bubble-body';
 			el.appendChild(body);
 			this.bubblesEl.appendChild(el);
-			b = { el, body, until: 0, lift: 0 };
+			b = { el, body, until: 0, w: 160, h: 40 };
 			this.bubbles.set(member, b);
 		}
 		b.body.textContent = text;
 		b.until = this.time + seconds;
-		// Next frame, so the entry transition runs from the hidden state.
-		requestAnimationFrame(() => b.el.classList.add('is-visible'));
+		// Next frame, so the entry transition runs from the hidden state. Measure
+		// once here too: the per-frame pin must never force a layout.
+		requestAnimationFrame(() => {
+			b.w = b.el.offsetWidth || b.w;
+			b.h = b.el.offsetHeight || b.h;
+			b.el.classList.add('is-visible');
+		});
 		if (!member.drunk && !this.reducedMotion) this.crowd.gesture(member.inst, TALK_GESTURES);
 	}
 
@@ -776,7 +787,7 @@ export class ClubDoorLine {
 			b.el.classList.toggle('is-offscreen', hidden);
 			if (hidden) continue;
 
-			const bw = b.el.offsetWidth || 160;
+			const bw = b.w;
 			let x = (_head.x * 0.5 + 0.5) * w;
 			let y = (-_head.y * 0.5 + 0.5) * h;
 			// Keep the whole bubble on screen, and lift it over a neighbour's so
@@ -785,9 +796,9 @@ export class ClubDoorLine {
 			for (const p of placed) {
 				if (Math.abs(p.x - x) < (p.w + bw) / 2 && Math.abs(p.y - y) < p.h + 6) y = p.y - p.h - 8;
 			}
-			y = Math.max((b.el.offsetHeight || 40) + 10, y);
-			placed.push({ x, y, w: bw, h: b.el.offsetHeight || 40 });
-			const scale = Math.min(1, Math.max(0.74, 5.2 / dist));
+			y = Math.max(b.h + 10, y);
+			placed.push({ x, y, w: bw, h: b.h });
+			const scale = Math.min(1, Math.max(0.85, 5.2 / dist));
 			b.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%) scale(${scale.toFixed(3)})`;
 		}
 	}
