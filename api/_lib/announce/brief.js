@@ -151,6 +151,40 @@ export function harvestFacts(pageText, limit = 24) {
 	return unique.sort((left, right) => weight(right) - weight(left)).slice(0, limit);
 }
 
+// The counters a page leads with, which harvestFacts cannot offer. It takes
+// whole sentences only, because a clipped card caption fails the very check it
+// was picked for, and that rule also throws away the single strongest fact on
+// any page built around numbers: /awesome renders "ENTRIES 152" as a tile and
+// "152 entries across 15 sections" as a summary line, and neither ends in a
+// full stop. The `number` pattern exists to lead on exactly those, so they are
+// harvested separately here. Both forms survive as literal substrings of the
+// rendered page once whitespace is collapsed, which is what verify.js matches.
+const STAT_LABEL = /^[A-Za-z][A-Za-z0-9 .&'/]{1,26}$/;
+const STAT_VALUE = /^\$?\d[\d,.]*\s?(?:%|k|m|b|x|\+)?$/i;
+const COUNTED_LINE = /^\$?\d[\d,.]*\s+[a-z][A-Za-z0-9 %+,./']{6,96}$/;
+const STAT_JUNK = /^(?:home|docs|menu|search|sign in|sign up|console|chat|walk|build|discover|show everything|skip to|cookie|page|step|version|v\d)/i;
+
+export function harvestStats(pageText, limit = 8) {
+	const lines = String(pageText || '')
+		.split('\n')
+		.map((line) => line.replace(/\s+/g, ' ').trim());
+	const out = [];
+	const add = (candidate) => {
+		if (!DASHED.test(candidate) && !out.includes(candidate)) out.push(candidate);
+	};
+	for (let index = 0; index < lines.length; index++) {
+		const line = lines[index];
+		if (!line || STAT_JUNK.test(line)) continue;
+		// "152 entries across 15 sections": a countable statement the page
+		// writes as a line of its own rather than as a sentence.
+		if (COUNTED_LINE.test(line) && !/[.!?]$/.test(line)) add(line);
+		// A tile: its label, then its value on the next line.
+		const value = lines[index + 1];
+		if (value && STAT_LABEL.test(line) && STAT_VALUE.test(value)) add(`${line} ${value}`);
+	}
+	return out.slice(0, limit);
+}
+
 export function closestPriorPosts(root, text, limit = 3) {
 	return loadHistory(root)
 		.map((prior) => ({ text: prior.replace(/\s+/g, ' ').trim(), similarity: copySimilarity(text, prior) }))
@@ -165,11 +199,16 @@ export async function buildBrief(slot, { root, ledgerEntry = {}, pages = null, s
 	const readme = dir && existsSync(join(dir, 'README.md')) ? read(join(dir, 'README.md')) : '';
 
 	let liveFacts = [];
+	let liveStats = [];
 	let liveStatus = null;
 	if (url && pages) {
-		const { status, text, raw } = await pages.text(url);
+		const { status, text, raw, main } = await pages.text(url);
 		liveStatus = status;
-		liveFacts = harvestFacts(raw || text);
+		// The surface's own text when the reader could isolate it, so a fact
+		// never comes out of the header menu or the footer of every other page.
+		const body = main || raw || text;
+		liveFacts = harvestFacts(body);
+		liveStats = harvestStats(body);
 	}
 
 	const readmePath = ledgerEntry.dir ? `${ledgerEntry.dir}/README.md` : null;
@@ -178,7 +217,10 @@ export async function buildBrief(slot, { root, ledgerEntry = {}, pages = null, s
 		...(readme && readmePath ? [{ path: readmePath, lines: quotableLines(readme) }] : []),
 	].filter((row) => row.lines.length);
 
+	// Counters first: a post that can cite the page's own number is the one the
+	// engagement report measured as the strongest shape we publish.
 	const evidence = [
+		...liveStats.map((fact) => ({ type: 'page', url, contains: fact })),
 		...liveFacts.slice(0, 12).map((fact) => ({ type: 'page', url, contains: fact })),
 		...fileFacts.flatMap((row) => row.lines.map((line) => ({ type: 'file', path: row.path, contains: line }))),
 	].filter((row) => row.contains && !DASHED.test(row.contains));
@@ -206,7 +248,7 @@ export async function buildBrief(slot, { root, ledgerEntry = {}, pages = null, s
 		readme: readme ? { path: readmePath, paragraphs: paragraphs(readme), endpoints: endpointsIn(readme) } : null,
 		changelog: changelogFor(root, { url: slot.url, title: ledgerEntry.title }),
 		endpoints: [...new Set([...docs.flatMap((doc) => doc.endpoints), ...(readme ? endpointsIn(readme) : [])])].slice(0, 8),
-		live: { status: liveStatus, facts: liveFacts },
+		live: { status: liveStatus, stats: liveStats, facts: liveFacts },
 		fileFacts,
 		evidenceCandidates: evidence,
 		avoid: closestPriorPosts(root, `${ledgerEntry.title || ''} ${ledgerEntry.description || ''}`),

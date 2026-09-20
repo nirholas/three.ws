@@ -2,6 +2,14 @@
 	"$comment": "Surfaces held out of the announcement calendar, with the reason. The ledger (data/announcements.json) is regenerated from the repository on every run and cannot re-derive a judgement made by looking at a captured frame, so the judgement lives here instead. Remove an entry when the surface is worth posting again; `npm run announce:plan` picks it up on the next run.",
 	"deferred": {
 		"/genome": "Captured 2026-09-04 for the first pack batch and deferred: the page sells a stud market with nothing listed in it, so the frame advertises an empty room. Revisit once genome listings are live.",
-		"/portfolio": "Captured 2026-09-04 for the first pack batch and deferred: the page is an address input with no state until a wallet is pasted, so there is no frame that shows the product working. Revisit once a demo address or a signed-in default lands."
+		"/portfolio": "Captured 2026-09-04 for the first pack batch and deferred: the page is an address input with no state until a wallet is pasted, so there is no frame that shows the product working. Revisit once a demo address or a signed-in default lands.",
+		"/alpha-copilot": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the page's whole subject is reading live third-party launches, and any honest frame of it is a wall of other projects' names and tickers. Owner approval on the frame and the copy releases it.",
+		"/autopilot": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the cockpit is pointed at a third-party coin, so the frame and the copy both name one. Owner approval releases it.",
+		"/agenc/room": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the room is the AgenC protocol (a third-party on-chain marketplace) shown live. Owner approval on naming AgenC releases it, along with the rest of the AgenC surfaces.",
+		"/agenc/embodied": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the same AgenC protocol, embodied. Release it with /agenc/room.",
+		"@three-ws/agenc-mcp": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the package exists to speak to AgenC, so no pack can avoid naming it. Release it with /agenc/room.",
+		"@three-ws/agora-mcp": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: Agora's job board is AgenC tasks plus x402 services, so the pack names AgenC. Release it with /agenc/room.",
+		"@three-ws/agent-sniper": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the package is a pump.fun sniper engine, named in its own title. Owner approval on naming pump.fun releases it, along with the other pump.fun packages.",
+		"@three-ws/alerts-mcp": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the package manages pump.fun alert rules, named in its own title. Release it with @three-ws/agent-sniper."
 	}
 }

@@ -59,12 +59,19 @@ export const SLANG_TERMS = [
 	/\bbased\b/i, /\bwe'?re so back\b/i, /\bcooking\b/i, /\bfam\b/i, /\bIYKYK\b/i, /\blowkey\b/i, /\bngl\b/i, /\btbh\b/i,
 ];
 
+// "awesome" is filler when it is an adjective and a proper noun when it is not:
+// an awesome list is a named format on GitHub, and Awesome 3D Agents is the
+// name of a surface this account has to be able to announce. Banning the word
+// outright would have made the one post about that page unwritable, so the
+// adjective is what is banned.
+const AWESOME_AS_FILLER = /\bawesome\b(?![\s-]+(?:lists?\b|3D Agents\b))/i;
+
 export const FILLER_TERMS = [
 	/\bvery\b/i, /\breally\b/i, /\bsimply\b/i, /\bliterally\b/i, /\bactually\b/i, /\bbasically\b/i, /\btruly\b/i,
 	/\bincredibly\b/i, /\bsuper (?!app)\w+/i, /\bpowerful\b/i, /\bcutting[- ]edge\b/i, /\bstate[- ]of[- ]the[- ]art\b/i,
 	/\brobust\b/i, /\binnovative\b/i, /\bworld[- ]class\b/i, /\bbest[- ]in[- ]class\b/i, /\bleverag(?:e|es|ing)\b/i,
 	/\bempower(?:s|ing)?\b/i, /\bunleash(?:es|ing)?\b/i, /\belevat(?:e|es|ing)\b/i, /\bharness(?:es|ing)?\b/i,
-	/\bjourney\b/i, /\bsynerg(?:y|ies)\b/i, /\bparadigm\b/i, /\bgroundbreaking\b/i, /\bawesome\b/i, /\bamazing\b/i,
+	/\bjourney\b/i, /\bsynerg(?:y|ies)\b/i, /\bparadigm\b/i, /\bgroundbreaking\b/i, AWESOME_AS_FILLER, /\bamazing\b/i,
 ];
 
 export const PUSHY_CTAS = [

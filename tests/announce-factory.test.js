@@ -85,6 +85,34 @@ describe('plan', () => {
 		expect(plan.slots.map((slot) => [slot.tier, slot.slotTier])).toEqual([[1, 3], [1, 1]]);
 	});
 
+	it('holds an owner-gated surface out of the calendar instead of dating a slot nobody can fill', () => {
+		const args = {
+			cadence: { ...CADENCE, slots: [{ tier: 3, at: '04:00' }, { tier: 2, at: '12:00' }, { tier: 1, at: '20:00' }] },
+			quality: QUALITY,
+			start: '2026-10-01',
+			cryptoPaths: new Set(['/vaults']),
+		};
+		const entries = [
+			entry('/vaults', { section: 'crypto' }),
+			entry('/alpha-copilot', { partner: '@pumpfun' }),
+			entry('/mocap-studio', { section: 'labs' }),
+			entry('@three-ws/alerts-mcp', { kind: 'package', section: 'package' }),
+		];
+		const dated = buildPlan(entries, args);
+		expect(dated.slots.find((slot) => slot.key === '/vaults').notBefore).toBe('2026-10-01T20:00:00Z');
+		expect(dated.held).toEqual([]);
+		expect(dated.holdGated).toBe(false);
+
+		const held = buildPlan(entries, { ...args, holdGated: true });
+		expect(held.slots.map((slot) => slot.key)).not.toContain('/vaults');
+		expect(held.held.map((row) => row.key)).toEqual(['/vaults']);
+		expect(held.totals.held).toBe(1);
+		expect(held.holdGated).toBe(true);
+		// The flagship slot the gated surface was occupying now goes to the
+		// flagship the factory can actually pack.
+		expect(held.slots.find((slot) => slot.slotTier === 1).key).toBe('/alpha-copilot');
+	});
+
 	it('drops a slot whose jitter window would run into quiet hours', () => {
 		expect(slotTimes({ ...CADENCE, quietHoursUtc: ['00:00', '12:00'], dailyCap: 3, minimumMinutesApart: 600 })).toEqual(['13:00']);
 	});

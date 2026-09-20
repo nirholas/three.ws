@@ -90,9 +90,15 @@ export function createPageReader() {
 					)
 					.catch(() => {});
 				const text = await page.evaluate(() => document.body.innerText);
+				// The page without its shell. A claim check matches against the
+				// whole body, correctly, because that is what a reader sees; but
+				// a fact harvested for an announcement must come from the surface
+				// itself, and the site's mega-menu puts three hundred lines of
+				// other products' copy above every page's own first word.
+				const main = await page.evaluate(() => document.querySelector('main')?.innerText || '');
 				// `text` is normalized for substring checks; `raw` keeps the line
 				// breaks and casing the announcement brief harvests facts from.
-				const result = { status, text: normalize(text), raw: text };
+				const result = { status, text: normalize(text), raw: text, main };
 				cache.set(url, result);
 				return result;
 			} finally {

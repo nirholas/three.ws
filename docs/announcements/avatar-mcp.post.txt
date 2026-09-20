@@ -1,0 +1,1 @@
+Ask your assistant for an avatar and it renders in the chat: live, rotatable, idling, with a paste-anywhere embed beside it. npmjs.com/package/@three-ws/avatar-mcp

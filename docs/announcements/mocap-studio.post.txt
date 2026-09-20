@@ -1,0 +1,1 @@
+Your webcam drives an avatar's face in the browser: 52 ARKit blendshapes and 478 landmarks per frame, recorded as a clip you can replay and save. three.ws/mocap-studio

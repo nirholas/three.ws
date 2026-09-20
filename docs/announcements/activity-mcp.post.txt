@@ -1,0 +1,1 @@
+Any MCP client can read the live discovery surface: trending agents, the $THREE holder board with tiers, the site activity ticker. Five tools, free: npmjs.com/package/@three-ws/activity-mcp

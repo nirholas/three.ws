@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-17T19:36:30.512Z",
+	"generatedAt": "2026-09-20T05:56:28.175Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -37,6 +37,40 @@
 			"height": 1012,
 			"frames": 60,
 			"fps": 12
+		},
+		"activity-mcp-hero": {
+			"id": "activity-mcp-hero",
+			"src": "/announce/img/activity-mcp-hero.webp",
+			"alt": "A dark title card reading at three ws slash activity dash mcp, with the package description underneath and the install command in a monospace row at the bottom.",
+			"caption": "Title card for @three-ws/activity-mcp, typeset from its README and package.json.",
+			"route": "card:packages/activity-mcp",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-20T05:37:08.173Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "9b0113316",
+			"sha256": "3a1f060d02f858d24dea90d34c4cf3246706c2aab61a133c33ea164ff97e808f",
+			"bytes": 73908,
+			"width": 1800,
+			"height": 1013
+		},
+		"avatar-mcp-hero": {
+			"id": "avatar-mcp-hero",
+			"src": "/announce/img/avatar-mcp-hero.webp",
+			"alt": "A dark title card naming the three ws avatar MCP package, its one-line description underneath, and the npx install command in a monospace row at the bottom.",
+			"caption": "Title card for @three-ws/avatar-mcp, typeset from its README and package.json.",
+			"route": "card:packages/threews-avatar-mcp",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-20T05:56:28.058Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "9b0113316",
+			"sha256": "c35a98629fa3ac9ea231db1fa4da12aaac796e2f3e7734741a52327f807148c1",
+			"bytes": 63016,
+			"width": 1800,
+			"height": 1013
 		},
 		"aws-builder-center-authorization-spine": {
 			"id": "aws-builder-center-authorization-spine",
@@ -111,6 +145,23 @@
 			"commit": "4a80c8498",
 			"sha256": "6fd46eb6f9176edd492b30ce822a11b7bc9b92e86bf25d1890457bc166bf24b5",
 			"bytes": 55852,
+			"width": 1800,
+			"height": 1013
+		},
+		"knock-hero": {
+			"id": "knock-hero",
+			"src": "/announce/img/knock-hero.webp",
+			"alt": "The Knock page showing a door with its price and greeting, the message box under it, and the open-doors directory listing handles and prices beside it.",
+			"caption": "Captured from the live /knock route for the knock announcement.",
+			"route": "/knock",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-20T05:56:19.492Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "9b0113316",
+			"sha256": "adaa69bb3ab287c69a57132de362479b1274d6e2f679755a69c6806575c25e3a",
+			"bytes": 62098,
 			"width": 1800,
 			"height": 1013
 		},

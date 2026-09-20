@@ -298,245 +298,6 @@
 			"note": "Announced by hand on 2026-09-10 (see data/x-content/external.json). Never post again."
 		},
 		{
-			"id": "three-token-mcp",
-			"status": "approved",
-			"kind": "post",
-			"lane": "token",
-			"pattern": "mechanism",
-			"notBefore": "2026-09-18T16:00:00Z",
-			"source": {
-				"path": "docs/announcements/three-token-mcp.md"
-			},
-			"posts": [
-				{
-					"text": "An MCP server that lets an AI burn $THREE on @solana. three_burn is flagged irreversible and by default won't sign without confirm: true. three.ws/mcp-tools?server=three-token-mcp",
-					"textFrom": "docs/announcements/three-token-mcp.post.txt",
-					"media": [
-						{
-							"path": "public/announce/img/three-token-mcp-hero.webp",
-							"alt": "The three.ws MCP Tool Catalog filtered to the @three-ws/three-token-mcp server: 3 of 321 tools, with three_balance and three_price labelled read-only and three_burn labelled irreversible, all free"
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "burn $THREE on @solana",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "Burn $THREE on-chain"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "signs and broadcasts on Solana mainnet"
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/lib/token.js",
-							"contains": "export function assertCanonicalThree(config)"
-						}
-					]
-				},
-				{
-					"says": "flagged irreversible",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "Irreversible. Cannot be undone once it runs."
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/tools/three-burn.js",
-							"contains": "destructiveHint: true"
-						}
-					]
-				},
-				{
-					"says": "by default won't sign without confirm: true",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
-							"contains": "IRREVERSIBLE: pass confirm:true"
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/tools/three-burn.js",
-							"contains": "if (REQUIRE_CONFIRM && confirm !== true)"
-						},
-						{
-							"type": "file",
-							"path": "packages/three-token-mcp/src/config.js",
-							"contains": "if (raw === undefined) return true;"
-						}
-					]
-				}
-			],
-			"mentions": {
-				"@solana": "three_burn signs and broadcasts one Solana mainnet transaction (packages/three-token-mcp/src/lib/token.js); $THREE is an SPL token and Solana is the platform's home chain."
-			},
-			"tier": 1,
-			"probes": [
-				{
-					"type": "command",
-					"name": "three_burn refuses to sign without confirm: true",
-					"argv": [
-						"node",
-						"--test",
-						"packages/three-token-mcp/test/burn-policy.test.mjs"
-					]
-				},
-				{
-					"type": "api",
-					"name": "the package is published on npm",
-					"url": "https://registry.npmjs.org/@three-ws%2fthree-token-mcp",
-					"expect": {
-						"json": {
-							"path": "dist-tags.latest",
-							"exists": true
-						}
-					}
-				},
-				{
-					"type": "api",
-					"name": "the live tool catalog lists three_burn",
-					"url": "https://three.ws/mcp-catalog.json",
-					"expect": {
-						"contains": "\"three_burn\""
-					}
-				}
-			]
-		},
-		{
-			"id": "forge-max",
-			"status": "approved",
-			"kind": "post",
-			"lane": "developer",
-			"pattern": "number",
-			"notBefore": "2026-09-18T23:00:00Z",
-			"source": {
-				"path": "docs/announcements/forge-max.md",
-				"url": "https://three.ws/forge-max"
-			},
-			"posts": [
-				{
-					"text": "three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for.",
-					"textFrom": "docs/announcements/forge-max.post.txt",
-					"media": [
-						{
-							"path": "public/announce/img/forge-max-hero.webp",
-							"alt": "The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "200k-poly geometry, 4K PBR textures",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/forge-max",
-							"contains": "The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk."
-						}
-					]
-				}
-			],
-			"mentions": {},
-			"tier": 2,
-			"probes": [
-				{
-					"type": "api",
-					"name": "the High tier is a real gated lane at 200k poly + PBR",
-					"url": "https://three.ws/api/forge",
-					"method": "POST",
-					"body": {
-						"prompt": "a plain wooden stool",
-						"tier": "high"
-					},
-					"expect": {
-						"status": 402,
-						"contains": "200k poly + PBR"
-					}
-				},
-				{
-					"type": "browser",
-					"name": "/forge-max opens the Forge with the High tier pinned",
-					"steps": [
-						{
-							"goto": "https://three.ws/forge-max"
-						},
-						{
-							"expect": "Forge Max"
-						},
-						{
-							"expect": "200k-poly geometry, 4K PBR textures"
-						}
-					]
-				},
-				{
-					"type": "api",
-					"name": "the Forge Max page is served",
-					"url": "https://three.ws/forge-max",
-					"expect": {
-						"status": 200
-					}
-				}
-			]
-		},
-		{
-			"id": "materialize",
-			"status": "review",
-			"kind": "post",
-			"lane": "developer",
-			"pattern": "mechanism",
-			"notBefore": "2026-09-19T23:00:00Z",
-			"source": {
-				"path": "docs/announcements/materialize.md",
-				"url": "https://three.ws/materialize"
-			},
-			"posts": [
-				{
-					"text": "Materialize prices a 3D print from the repaired mesh: it measures the true solid volume and charges that volume in your material, paid in USDC on Solana: three.ws/materialize",
-					"textFrom": "docs/announcements/materialize.post.txt",
-					"media": [
-						{
-							"path": "public/announce/img/materialize-hero.webp",
-							"alt": "The three.ws Materialize page: a drop area for any .glb beside models fresh from the Forge, over three columns explaining that the price is measured from the repaired mesh, that checkout is USDC on Solana, and that agents can order over x402."
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "measures the true solid volume and charges that volume in your material",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/materialize",
-							"contains": "Every quote comes from the mesh itself: the analyzer computes the true solid volume of the repaired model, and the price is that volume in the material you picked. Nothing is estimated from a bounding box."
-						}
-					]
-				},
-				{
-					"says": "paid in USDC on Solana",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/materialize",
-							"contains": "There is no card processor. You pay the exact quoted amount in USDC on Solana, the order is opened against a signed quote, and the price can never move between the quote and the charge."
-						}
-					]
-				}
-			],
-			"mentions": {},
-			"tier": 2
-		},
-		{
 			"id": "embed-30-seconds",
 			"status": "approved",
 			"kind": "post",
@@ -876,6 +637,120 @@
 			]
 		},
 		{
+			"id": "three-token-mcp",
+			"status": "approved",
+			"kind": "post",
+			"lane": "token",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-18T16:00:00Z",
+			"source": {
+				"path": "docs/announcements/three-token-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "An MCP server that lets an AI burn $THREE on @solana. three_burn is flagged irreversible and by default won't sign without confirm: true. three.ws/mcp-tools?server=three-token-mcp",
+					"textFrom": "docs/announcements/three-token-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/three-token-mcp-hero.webp",
+							"alt": "The three.ws MCP Tool Catalog filtered to the @three-ws/three-token-mcp server: 3 of 321 tools, with three_balance and three_price labelled read-only and three_burn labelled irreversible, all free"
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "burn $THREE on @solana",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "Burn $THREE on-chain"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "signs and broadcasts on Solana mainnet"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/lib/token.js",
+							"contains": "export function assertCanonicalThree(config)"
+						}
+					]
+				},
+				{
+					"says": "flagged irreversible",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "Irreversible. Cannot be undone once it runs."
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/tools/three-burn.js",
+							"contains": "destructiveHint: true"
+						}
+					]
+				},
+				{
+					"says": "by default won't sign without confirm: true",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+							"contains": "IRREVERSIBLE: pass confirm:true"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/tools/three-burn.js",
+							"contains": "if (REQUIRE_CONFIRM && confirm !== true)"
+						},
+						{
+							"type": "file",
+							"path": "packages/three-token-mcp/src/config.js",
+							"contains": "if (raw === undefined) return true;"
+						}
+					]
+				}
+			],
+			"mentions": {
+				"@solana": "three_burn signs and broadcasts one Solana mainnet transaction (packages/three-token-mcp/src/lib/token.js); $THREE is an SPL token and Solana is the platform's home chain."
+			},
+			"tier": 1,
+			"probes": [
+				{
+					"type": "command",
+					"name": "three_burn refuses to sign without confirm: true",
+					"argv": [
+						"node",
+						"--test",
+						"packages/three-token-mcp/test/burn-policy.test.mjs"
+					]
+				},
+				{
+					"type": "api",
+					"name": "the package is published on npm",
+					"url": "https://registry.npmjs.org/@three-ws%2fthree-token-mcp",
+					"expect": {
+						"json": {
+							"path": "dist-tags.latest",
+							"exists": true
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the live tool catalog lists three_burn",
+					"url": "https://three.ws/mcp-catalog.json",
+					"expect": {
+						"contains": "\"three_burn\""
+					}
+				}
+			]
+		},
+		{
 			"id": "ai-3d-skills",
 			"status": "paused",
 			"kind": "post",
@@ -986,6 +861,131 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "forge-max",
+			"status": "approved",
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "number",
+			"notBefore": "2026-09-18T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/forge-max.md",
+				"url": "https://three.ws/forge-max"
+			},
+			"posts": [
+				{
+					"text": "three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for.",
+					"textFrom": "docs/announcements/forge-max.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/forge-max-hero.webp",
+							"alt": "The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "200k-poly geometry, 4K PBR textures",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge-max",
+							"contains": "The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk."
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"tier": 2,
+			"probes": [
+				{
+					"type": "api",
+					"name": "the High tier is a real gated lane at 200k poly + PBR",
+					"url": "https://three.ws/api/forge",
+					"method": "POST",
+					"body": {
+						"prompt": "a plain wooden stool",
+						"tier": "high"
+					},
+					"expect": {
+						"status": 402,
+						"contains": "200k poly + PBR"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "/forge-max opens the Forge with the High tier pinned",
+					"steps": [
+						{
+							"goto": "https://three.ws/forge-max"
+						},
+						{
+							"expect": "Forge Max"
+						},
+						{
+							"expect": "200k-poly geometry, 4K PBR textures"
+						}
+					]
+				},
+				{
+					"type": "api",
+					"name": "the Forge Max page is served",
+					"url": "https://three.ws/forge-max",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
+		},
+		{
+			"id": "materialize",
+			"status": "review",
+			"kind": "post",
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-19T23:00:00Z",
+			"source": {
+				"path": "docs/announcements/materialize.md",
+				"url": "https://three.ws/materialize"
+			},
+			"posts": [
+				{
+					"text": "Materialize prices a 3D print from the repaired mesh: it measures the true solid volume and charges that volume in your material, paid in USDC on Solana: three.ws/materialize",
+					"textFrom": "docs/announcements/materialize.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/materialize-hero.webp",
+							"alt": "The three.ws Materialize page: a drop area for any .glb beside models fresh from the Forge, over three columns explaining that the price is measured from the repaired mesh, that checkout is USDC on Solana, and that agents can order over x402."
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "measures the true solid volume and charges that volume in your material",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/materialize",
+							"contains": "Every quote comes from the mesh itself: the analyzer computes the true solid volume of the repaired model, and the price is that volume in the material you picked. Nothing is estimated from a bounding box."
+						}
+					]
+				},
+				{
+					"says": "paid in USDC on Solana",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/materialize",
+							"contains": "There is no card processor. You pay the exact quoted amount in USDC on Solana, the order is opened against a signed quote, and the price can never move between the quote and the charge."
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"tier": 2
 		},
 		{
 			"id": "free-objects",
@@ -1205,6 +1205,250 @@
 					]
 				}
 			]
+		},
+		{
+			"id": "activity-mcp",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-21T04:00:00Z",
+			"source": {
+				"path": "docs/announcements/activity-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "Any MCP client can read the live discovery surface: trending agents, the $THREE holder board with tiers, the site activity ticker. Five tools, free: npmjs.com/package/@three-ws/activity-mcp",
+					"textFrom": "docs/announcements/activity-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/activity-mcp-hero.webp",
+							"alt": "A dark title card reading at three ws slash activity dash mcp, with the package description underneath and the install command in a monospace row at the bottom."
+						}
+					]
+				},
+				{
+					"text": "Every ranking, tier, and event comes straight from the public three.ws API, so the model reads the same numbers the site is showing at that moment."
+				},
+				{
+					"text": "No key, no signer, no payment. Install it, point it at the public API, and ask."
+				}
+			],
+			"claims": [
+				{
+					"says": "Five tools",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/activity-mcp/README.md",
+							"contains": "All five tools read live data: rankings, the holder board, and the feed all move between calls, so none are idempotent."
+						}
+					]
+				},
+				{
+					"says": "Every ranking, tier, and event comes straight from the public three.ws API",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/activity-mcp/README.md",
+							"contains": "Every ranking, tier, and event comes straight from the public three.ws API."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "mocap-studio",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-09-21T12:00:00Z",
+			"source": {
+				"path": "docs/announcements/mocap-studio.md",
+				"url": "https://three.ws/mocap-studio"
+			},
+			"posts": [
+				{
+					"text": "Your webcam drives an avatar's face in the browser: 52 ARKit blendshapes and 478 landmarks per frame, recorded as a clip you can replay and save. three.ws/mocap-studio",
+					"textFrom": "docs/announcements/mocap-studio.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/mocap-studio-hero.webp",
+							"alt": "The Mocap Studio page with a 3D avatar mirroring a face from the webcam preview beside it, the record controls under the viewer and the saved-clips row empty below."
+						}
+					]
+				},
+				{
+					"text": "Calibrate to your neutral face, record a clip, replay it, and save it. Saved clips can be private, unlisted, or public."
+				},
+				{
+					"text": "The engine is FaceMocap, built on Google's MediaPipe Face Landmarker, a newer model than the FaceMesh that older browser-rigging libraries use."
+				}
+			],
+			"claims": [
+				{
+					"says": "52 ARKit blendshapes and 478 landmarks per frame",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mocap-studio.md",
+							"contains": "Per frame it outputs 52 ARKit blendshape scores, 478 3-D face landmarks (including iris), and a 4x4 facial transformation matrix for head pose in camera space."
+						}
+					]
+				},
+				{
+					"says": "Calibrate to your neutral face, record a clip, replay it, and save it.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mocap-studio.md",
+							"contains": "Calibrate to your neutral face, record a clip, replay it, and save it."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "knock",
+			"status": "draft",
+			"kind": "post",
+			"tier": 1,
+			"lane": "token",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-21T20:00:00Z",
+			"source": {
+				"path": "docs/announcements/knock.md",
+				"url": "https://three.ws/knock"
+			},
+			"posts": [
+				{
+					"text": "Put a price on reaching you. A stranger pays it, your 3D companion walks on and says who is at the door and what they paid, and the USDC is already yours. three.ws/knock",
+					"textFrom": "docs/announcements/knock.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/knock-hero.webp",
+							"alt": "The Knock page showing a door with its price and greeting, the message box under it, and the open-doors directory listing handles and prices beside it."
+						}
+					]
+				},
+				{
+					"text": "A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop."
+				},
+				{
+					"text": "The x402 lane sends your USDC to the recipient the instant the payment clears. Your price, your wallet, and everything that comes through it stays private to your account."
+				}
+			],
+			"claims": [
+				{
+					"says": "says who is at the door and what they paid",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/knock",
+							"contains": "Your companion walks on wherever you are on the site and says who is at the door and what they paid."
+						}
+					]
+				},
+				{
+					"says": "A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/knock",
+							"contains": "A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop."
+						}
+					]
+				},
+				{
+					"says": "The x402 lane sends your USDC to the recipient the instant the payment clears.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/knock.md",
+							"contains": "The x402 lane sends your USDC to the recipient the instant the payment clears."
+						}
+					]
+				},
+				{
+					"says": "Your price, your wallet, and everything that comes through it stays private to your account.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/knock",
+							"contains": "Your price, your wallet, and everything that comes through it stays private to your account."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "avatar-mcp",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-22T04:00:00Z",
+			"source": {
+				"path": "docs/announcements/avatar-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "Ask your assistant for an avatar and it renders in the chat: live, rotatable, idling, with a paste-anywhere embed beside it. npmjs.com/package/@three-ws/avatar-mcp",
+					"textFrom": "docs/announcements/avatar-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/avatar-mcp-hero.webp",
+							"alt": "A dark title card naming the three ws avatar MCP package, its one-line description underneath, and the npx install command in a monospace row at the bottom."
+						}
+					]
+				},
+				{
+					"text": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat. All three tools are free and read-only."
+				},
+				{
+					"text": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+				}
+			],
+			"claims": [
+				{
+					"says": "All three tools are free and read-only",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/threews-avatar-mcp/README.md",
+							"contains": "All three tools are free, read-only, and annotated (`readOnlyHint`, `idempotentHint`, `openWorldHint`) so hosts can run them without confirmation prompts."
+						}
+					]
+				},
+				{
+					"says": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/threews-avatar-mcp/README.md",
+							"contains": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat."
+						}
+					]
+				},
+				{
+					"says": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/threews-avatar-mcp/README.md",
+							"contains": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+						}
+					]
+				}
+			],
+			"mentions": {}
 		}
 	]
 }

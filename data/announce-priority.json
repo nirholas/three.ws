@@ -1,0 +1,6 @@
+{
+	"$comment": "Surfaces the owner asked for next, with the reason. The mirror image of data/announce-deferred.json: the ledger is rebuilt from the repository on every run and scores a surface only on what it can measure from a description, a route and a directory, so it cannot know that somebody looked at a surface and decided it should go out ahead of its score. A key listed here is sequenced before the rest of the backlog, still inside the slot its own tier owns, so a pin changes the order and never the cadence. `npm run announce:plan` picks it up on the next run. Remove the entry once the surface is packed, since a packed surface leaves the plan anyway.",
+	"priority": {
+		"/awesome": "Owner asked for it on 2026-09-20. Awesome 3D Agents is the only map of the whole give-an-agent-a-body pipeline: 152 link-checked projects across 15 sections, published both as a filterable page and in the standard awesome-list format on GitHub, so it is shareable by construction and earns links from people who build in the field rather than impressions from people scrolling past."
+	}
+}

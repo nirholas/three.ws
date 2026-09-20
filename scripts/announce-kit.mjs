@@ -91,7 +91,11 @@ try {
 	throw error;
 }
 
-const plan = loadOrBuildPlan(root, { start: option('start'), refresh: flag('refresh') });
+// Without --include-gated the factory can only pack ungated surfaces, so it
+// plans against that same reality: gated surfaces are held out of the calendar
+// rather than dated into slots nobody can fill, which is what kept the packable
+// backlog weeks behind the slots it could have had.
+const plan = loadOrBuildPlan(root, { start: option('start'), refresh: flag('refresh'), holdGated: !includeGated });
 const wanted = (() => {
 	const id = option('id');
 	if (id) {

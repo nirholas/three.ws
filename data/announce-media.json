@@ -148,6 +148,73 @@
 			"url": "/materialize",
 			"alt": "The three.ws Materialize page: a drop area for any .glb beside models fresh from the Forge, over three columns explaining that the price is measured from the repaired mesh, that checkout is USDC on Solana, and that agents can order over x402.",
 			"caption": "Captured from the live /materialize route for the materialize announcement."
+		},
+		{
+			"id": "activity-mcp-hero",
+			"surface": "@three-ws/activity-mcp",
+			"viewport": "wide",
+			"alt": "A dark title card reading at three ws slash activity dash mcp, with the package description underneath and the install command in a monospace row at the bottom.",
+			"caption": "Title card for @three-ws/activity-mcp, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/activity-mcp",
+				"title": "@three-ws/activity-mcp",
+				"description": "three.ws live discovery surface from any AI agent, trending agents and coins, the $THREE holder leaderboard with tiers, and the site-wide activity ticker. Read-only over the live public API. No key, no signer, no payment."
+			}
+		},
+		{
+			"id": "mocap-studio-hero",
+			"surface": "/mocap-studio",
+			"url": "/mocap-studio",
+			"alt": "The Mocap Studio page with a 3D avatar mirroring a face from the webcam preview beside it, the record controls under the viewer and the saved-clips row empty below.",
+			"caption": "Captured from the live /mocap-studio route for the mocap-studio announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "knock-hero",
+			"surface": "/knock",
+			"url": "/knock",
+			"alt": "The Knock page showing a door with its price and greeting, the message box under it, and the open-doors directory listing handles and prices beside it.",
+			"caption": "Captured from the live /knock route for the knock announcement."
+		},
+		{
+			"id": "avatar-mcp-hero",
+			"surface": "@three-ws/avatar-mcp",
+			"viewport": "wide",
+			"alt": "A dark title card naming the three ws avatar MCP package, its one-line description underneath, and the npx install command in a monospace row at the bottom.",
+			"caption": "Title card for @three-ws/avatar-mcp, typeset from its README and package.json.",
+			"card": {
+				"dir": "packages/threews-avatar-mcp",
+				"title": "@three-ws/avatar-mcp",
+				"description": "MCP server for three.ws 3D avatars by three.ws, render a live, rotatable on-chain avatar inline (interactive MCP App), get a paste-anywhere embed iframe, or fetch avatar metadata. Free, no API key."
+			}
+		},
+		{
+			"id": "assistant-hero",
+			"surface": "/assistant",
+			"url": "/assistant",
+			"alt": "The assistant configurator with the option columns on the left and the floating launcher open in the corner showing a 3D avatar over the live page preview.",
+			"caption": "Captured from the live /assistant route for the assistant announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
+		},
+		{
+			"id": "awesome-hero",
+			"surface": "/awesome",
+			"url": "/awesome",
+			"alt": "The Awesome 3D Agents page on three.ws: a heading reading Everything you need to give an AI agent a body, counters for 152 entries, 15 sections, 121 free to use and 97 tags, a row of tag filters, and a grid of cards for projects such as TRELLIS, Hunyuan3D 2 and three.ws Text to 3D, each with a one sentence description.",
+			"caption": "Captured from the live /awesome route for the awesome announcement.",
+			"settle": 9000,
+			"motion": {
+				"seconds": 5,
+				"fps": 12
+			}
 		}
 	]
 }

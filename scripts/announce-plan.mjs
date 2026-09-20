@@ -13,12 +13,15 @@
 // the order comes from the ledger's scores. Re-running with the same start date
 // produces the same plan, so a batch that is already drafted keeps its dates.
 // Surfaces already queued, already packed, or listed in
-// data/announce-deferred.json are dropped: the plan covers what is left.
+// data/announce-deferred.json are dropped: the plan covers what is left, and a
+// surface listed in data/announce-priority.json takes the earliest slot its own
+// tier owns rather than waiting for its score to come round.
 //
 //   node scripts/announce-plan.mjs                      # the next 30 slots
 //   node scripts/announce-plan.mjs --batch 1            # one week's batch in full
 //   node scripts/announce-plan.mjs --write              # plan.json + CALENDAR.md
 //   node scripts/announce-plan.mjs --start 2026-10-01   # anchor the calendar
+//   node scripts/announce-plan.mjs --hold-gated          # date only what the factory can pack alone
 //   node scripts/announce-plan.mjs --json               # machine-readable
 //
 // Wired as `npm run announce:plan`. It never drafts, never writes into the
@@ -41,7 +44,7 @@ const start = option('--start', new Date(Date.now() + 86_400_000).toISOString().
 
 let plan;
 try {
-	plan = planFor(root, { start });
+	plan = planFor(root, { start, holdGated: flag('--hold-gated') });
 } catch (error) {
 	if (error instanceof MissingLedgerError) {
 		console.error(error.message);
@@ -72,6 +75,31 @@ function calendarMarkdown() {
 		'```',
 		'',
 	];
+	const pins = plan.slots.filter((slot) => slot.pinned);
+	if (pins.length) {
+		lines.push(
+			`## Asked for next (${pins.length})`,
+			'',
+			'Listed in `data/announce-priority.json`, so each one enters the sequencer ahead of the backlog and takes the earliest slot its own tier owns. The pin buys position only: tier, lane rotation and shape rotation are unchanged, and nothing here skips review or approval.',
+			'',
+			'| Surface | Slot (UTC) | Why |',
+			'|---|---|---|',
+		);
+		for (const slot of pins) lines.push(`| \`${slot.key}\` | ${slot.notBefore.slice(0, 16).replace('T', ' ')} | ${slot.pinned} |`);
+		lines.push('');
+	}
+	if (plan.held?.length) {
+		lines.push(
+			`## Held for owner approval (${plan.held.length})`,
+			'',
+			'Each of these captures its frame from a surface that renders live third-party market data, so committing that frame is the operating rules\' coin gate rather than a normal capture. They are out of the dated calendar on purpose: dating them would promise slots the factory cannot fill on its own and push everything it can produce weeks later. Clearing a frame moves that surface back into the next plan.',
+			'',
+			'| Surface | Tier | Lane | Score |',
+			'|---|---|---|---|',
+		);
+		for (const row of plan.held) lines.push(`| \`${row.key}\` | T${row.tier} | ${row.lane} | ${row.score} |`);
+		lines.push('');
+	}
 	if (plan.deferred?.length) {
 		lines.push('## Deferred', '', '| Surface | Why |', '|---|---|');
 		for (const row of plan.deferred) lines.push(`| \`${row.key}\` | ${row.why} |`);
@@ -87,7 +115,7 @@ function calendarMarkdown() {
 			lines.push('|---|---|---|---|---|---|---|');
 		}
 		lines.push(
-			`| ${slot.notBefore.slice(0, 16).replace('T', ' ')} | T${slot.tier}${slot.tier === slot.slotTier ? '' : ` (in the T${slot.slotTier} slot)`} | \`${slot.key}\` | ${slot.lane} | ${slot.pattern} | \`${slot.shot}\`${slot.motion ? ' (motion)' : ''} | ${slot.mediaGate || ''} |`,
+			`| ${slot.notBefore.slice(0, 16).replace('T', ' ')} | T${slot.tier}${slot.tier === slot.slotTier ? '' : ` (in the T${slot.slotTier} slot)`} | \`${slot.key}\`${slot.pinned ? ' (pinned)' : ''} | ${slot.lane} | ${slot.pattern} | \`${slot.shot}\`${slot.motion ? ' (motion)' : ''} | ${slot.mediaGate || ''} |`,
 		);
 	}
 	return `${lines.join('\n')}\n`;
@@ -110,12 +138,12 @@ console.log(
 	`${plan.totals.slots} unannounced surfaces, ${plan.perDay}/day at ${plan.times.join(', ')} UTC from ${plan.start}: ${plan.days} days, ${Math.ceil(plan.days / 7)} batches.`,
 );
 console.log(
-	`tiers ${Object.entries(plan.totals.byTier).map(([tier, count]) => `T${tier}:${count}`).join(' ')}  lanes ${Object.entries(plan.totals.byLane).map(([lane, count]) => `${lane}:${count}`).join(' ')}  patterns ${Object.entries(plan.totals.byPattern).map(([pattern, count]) => `${pattern}:${count}`).join(' ')}  owner-gated media ${plan.totals.gated}  deferred ${plan.deferred?.length || 0}\n`,
+	`tiers ${Object.entries(plan.totals.byTier).map(([tier, count]) => `T${tier}:${count}`).join(' ')}  lanes ${Object.entries(plan.totals.byLane).map(([lane, count]) => `${lane}:${count}`).join(' ')}  patterns ${Object.entries(plan.totals.byPattern).map(([pattern, count]) => `${pattern}:${count}`).join(' ')}  owner-gated media ${plan.totals.gated}${plan.totals.held ? ` (${plan.totals.held} held out of the calendar)` : ''}  pinned ${plan.totals.pinned || 0}  deferred ${plan.deferred?.length || 0}\n`,
 );
 console.log(`${'when'.padEnd(17)} ${'tier'.padEnd(5)} ${'surface'.padEnd(32)} ${'lane'.padEnd(10)} ${'pattern'.padEnd(11)} gate`);
 for (const slot of rows) {
 	console.log(
-		`${slot.notBefore.slice(0, 16).replace('T', ' ').padEnd(17)} ${`T${slot.tier}`.padEnd(5)} ${slot.key.padEnd(32)} ${slot.lane.padEnd(10)} ${slot.pattern.padEnd(11)} ${slot.mediaGate || ''}`,
+		`${slot.notBefore.slice(0, 16).replace('T', ' ').padEnd(17)} ${`T${slot.tier}`.padEnd(5)} ${slot.key.padEnd(32)} ${slot.lane.padEnd(10)} ${slot.pattern.padEnd(11)} ${slot.mediaGate || (slot.pinned ? 'pinned' : '')}`,
 	);
 }
 if (!only) console.log(`\n... ${Math.max(0, plan.totals.slots - rows.length)} more. Full calendar: npm run announce:plan -- --write`);

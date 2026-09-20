@@ -22,6 +22,10 @@
 //                scheduler in api/_lib/x-content/schedule.js enforces this at
 //                publish time by *skipping* an item, so a calendar that ignores
 //                it would stall itself.
+//   pins         data/announce-priority.json: surfaces somebody asked for
+//                next. They enter the sequencer first and take the earliest
+//                slot their own tier owns; the pin buys position, never a
+//                different cadence, lane rule or shape rule.
 //   the coin gate  a frame captured from a surface under the `crypto` section of
 //                data/pages.json bakes live third-party tickers into a
 //                committed file, which the operating rules gate on owner
@@ -215,23 +219,42 @@ export function sequence(entries, { maximumSameLaneInARow = 2, maximumSamePatter
 	return placed;
 }
 
-export function buildPlan(entries, { cadence = {}, quality = {}, start, cryptoPaths = new Set(), perDay = null } = {}) {
+export function buildPlan(entries, { cadence = {}, quality = {}, start, cryptoPaths = new Set(), perDay = null, holdGated = false, pinned = new Map() } = {}) {
 	const table = slotTable(cadence).slice(0, perDay || Infinity);
 	const times = table.map((slot) => slot.at);
 	const day0 = Date.parse(`${start}T00:00:00Z`);
 	if (!Number.isFinite(day0)) throw new Error(`start must be a YYYY-MM-DD date, got ${start}`);
 
+	// A gated surface is one nobody can pack without the owner clearing its
+	// frame, so dating it into a near slot promises a post the factory cannot
+	// produce and pushes every surface it could have produced weeks out.
+	// `holdGated` lifts them out of the calendar and reports them instead.
+	const gatedOf = (entry) => Boolean(entry.url && cryptoPaths.has(entry.url));
+	const held = holdGated ? entries.filter(gatedOf) : [];
+	const plannable = holdGated ? entries.filter((entry) => !gatedOf(entry)) : entries;
+
+	// A pinned surface is one somebody judged worth posting ahead of its score,
+	// so it enters the sequencer first and takes the earliest slot its own tier
+	// owns. Everything else keeps the ledger's order behind it. The pin buys
+	// position only: tier, lane rotation and shape rotation all still apply,
+	// because those are what keep the account readable.
+	const pinRank = (entry) => {
+		const index = [...pinned.keys()].indexOf(entry.key);
+		return index < 0 ? Infinity : index;
+	};
+	const pinnable = [...plannable].sort((left, right) => pinRank(left) - pinRank(right));
+
 	// Each position is sequenced against the tier of the slot it will land in,
 	// so a flagship takes the flagship slot instead of whichever minute came
 	// next in the list, while lane and shape still rotate inside that tier.
-	const ordered = sequence(entries, quality, { tierAt: (position) => table[position % table.length].tier });
+	const ordered = sequence(pinnable, quality, { tierAt: (position) => table[position % table.length].tier });
 
 	const slots = ordered.map((row, index) => {
 		const day = Math.floor(index / table.length);
 		const { at: time, tier: slotTier } = table[index % table.length];
 		const notBefore = new Date(day0 + day * 1440 * MINUTE + minutesOf(time) * MINUTE).toISOString().replace('.000Z', 'Z');
 		const slug = slugFor(row.entry.key);
-		const gated = Boolean(row.entry.url && cryptoPaths.has(row.entry.url));
+		const gated = gatedOf(row.entry);
 		return {
 			position: index + 1,
 			id: slug,
@@ -251,6 +274,7 @@ export function buildPlan(entries, { cadence = {}, quality = {}, start, cryptoPa
 			shot: `${slug}-hero`,
 			motion: row.pattern === 'clip',
 			mediaGate: gated ? 'owner-approval' : null,
+			pinned: pinned.get(row.entry.key) || null,
 			pack: `docs/announcements/${slug}.md`,
 		};
 	});
@@ -259,11 +283,23 @@ export function buildPlan(entries, { cadence = {}, quality = {}, start, cryptoPa
 		generatedAt: new Date().toISOString(),
 		start,
 		times,
+		holdGated: Boolean(holdGated),
+		held: held.map((entry) => ({
+			key: entry.key,
+			id: slugFor(entry.key),
+			url: entry.url || null,
+			lane: laneFor(entry),
+			tier: tierFor(entry),
+			score: entry.score,
+			why: 'the frame is captured from a surface rendering live third-party market data, which needs owner approval before it can be committed',
+		})).sort((left, right) => right.score - left.score),
 		perDay: times.length,
 		days: Math.ceil(slots.length / times.length),
 		totals: {
 			slots: slots.length,
-			gated: slots.filter((slot) => slot.mediaGate).length,
+			pinned: slots.filter((slot) => slot.pinned).length,
+			gated: slots.filter((slot) => slot.mediaGate).length + held.length,
+			held: held.length,
 			byTier: Object.fromEntries(TIERS.map((tier) => [tier, slots.filter((slot) => slot.tier === tier).length])),
 			byLane: Object.fromEntries(LANES.map((lane) => [lane, slots.filter((slot) => slot.lane === lane).length])),
 			byPattern: Object.fromEntries(PATTERNS.map((pattern) => [pattern, slots.filter((slot) => slot.pattern === pattern).length])),

@@ -30,6 +30,7 @@ npm run announce:rank -- --probe --write   # rebuild the ledger and probe every 
 npm run announce:plan                      # print the next 30 slots
 npm run announce:plan -- --write           # data/announce-plan/plan.json + CALENDAR.md
 npm run announce:plan -- --batch 3         # one week's batch in full
+npm run announce:plan -- --hold-gated      # date only what the factory can pack on its own
 ```
 
 [`scripts/announce-plan.mjs`](../scripts/announce-plan.mjs) turns the ranked backlog into dated
@@ -38,13 +39,21 @@ publishing rather than chosen here:
 
 | Decision | Where it comes from |
 |---|---|
-| How many posts a day, and at what times | The `cadence` block of [`data/x-content/queue.json`](../data/x-content/queue.json): daily cap, minimum gap, quiet hours. A slot whose jitter window could land inside quiet hours is dropped rather than promised. |
+| How many posts a day, at what times, and which tier owns each one | The `cadence.slots` table of [`data/x-content/queue.json`](../data/x-content/queue.json), which is the same table the publisher fills from: T3 at 04:00 UTC, T2 at 12:00, T1 at 20:00. With no table declared, the times are derived from the daily cap, minimum gap and quiet hours instead, and a slot whose jitter window could land inside quiet hours is dropped rather than promised. |
 | What order, and which shape | The ledger's scores, then rotation: no more than `maximumSameLaneInARow` of one audience, no more than `maximumSamePatternInARow` of one post shape, from the same queue file. |
+| Which tier a surface is | What it is: a flagship (T1) is a `token`-lane surface or one that legitimately names a partner, proof of work (T3) is a package, worker or service, whose frame is a typeset card rather than a route, and everything with a page behind it is a feature (T2). The tier travels into the queue item, because the publisher gives each tier a slot of its own and an item with no tier is treated as a T2 feature. |
 | Which ones need owner approval first | Any surface in the `crypto` section of [`data/pages.json`](../data/pages.json) renders live third-party market data, so a frame of it falls under the operating rules' coin gate. Those slots carry `mediaGate: "owner-approval"` and the factory skips them unless asked. |
 
 The plan is a pure function of the ledger and the start date, so it is regenerated rather than
 maintained. A surface already queued, already carrying a pack, or listed in
 [`data/announce-deferred.json`](../data/announce-deferred.json) is dropped from it.
+
+**Gated surfaces are held out of the dated calendar.** `--hold-gated` (which `announce:kit` passes
+for you unless you ask for `--include-gated`) lifts every owner-gated surface out of the schedule
+and lists it in a "Held for owner approval" table in `CALENDAR.md` instead. Dating them promises
+slots the factory cannot fill on its own, and because the gated surfaces score highest they take
+the flagship slot every day, which is how the packable backlog ended up weeks behind slots it
+could have had. Clearing a frame puts that surface back in the next plan.
 
 **Deferrals.** The ledger is rebuilt from the repository on every run, so it cannot remember a
 judgement someone made by looking at a captured frame. `data/announce-deferred.json` is where that

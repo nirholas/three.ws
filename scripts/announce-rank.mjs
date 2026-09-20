@@ -78,13 +78,23 @@ const clean = (text) => String(text || '').replace(DASHES, ', ').trim();
 // would drown the real features. 'legal' is boilerplate.
 const PRODUCT_SECTIONS = new Set(['main', 'build', 'labs', 'crypto', 'agent-tools', 'account', 'machine']);
 
+// A product surface does not always live in a product section. Five pages
+// filed under 'learn' carry `showcase: true`, and every one of them is a
+// product rather than a document: /awesome, /3d, /crypto, /crypto-api and
+// /docs/world. Skipping their section wholesale is what kept them out of this
+// ledger, and therefore out of the calendar, the factory and the queue, since
+// the ledger was first built. `showcase` is already the flag pages.json uses
+// for "put this in front of someone", so it is the admission rule here: a
+// content page carrying it is inventory, a content page without it is content.
+const inInventory = (section, page) => PRODUCT_SECTIONS.has(section.id) || page.showcase === true;
+
 function pageInventory() {
 	const { sections } = JSON.parse(readFileSync(join(root, 'data/pages.json'), 'utf8'));
 	const out = [];
 	for (const section of sections) {
-		if (!PRODUCT_SECTIONS.has(section.id)) continue;
 		for (const page of section.pages) {
 			if (page.indexable === false) continue;
+			if (!inInventory(section, page)) continue;
 			out.push({
 				key: page.path,
 				kind: 'page',
