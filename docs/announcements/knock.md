@@ -2,7 +2,7 @@
 
 **Surface:** [`/knock`](https://three.ws/knock) · **Stage:** drafted · **Slot:** 2026-09-21 · **Announced externally:** never
 
-Ranked 29 of 324 never-announced surfaces by `npm run announce:rank` (score 70). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/knock.json`](../../data/announce-plan/briefs/knock.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 31 of 329 never-announced surfaces by `npm run announce:rank` (score 70). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/knock.json`](../../data/announce-plan/briefs/knock.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 
@@ -58,7 +58,7 @@ Captured from the live route by `npm run announce:media`, which drives the real 
 
 **Alt text, required on the post:**
 
-> The Knock page showing a door with its price and greeting, the message box under it, and the open-doors directory listing handles and prices beside it.
+> The Knock page on three.ws: the headline and its description, three numbered cards reading Set your price, They pay it and You hear it in person, and the signed-out door panel below them.
 
 ## The post
 

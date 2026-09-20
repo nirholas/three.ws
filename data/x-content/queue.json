@@ -1208,7 +1208,7 @@
 		},
 		{
 			"id": "activity-mcp",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
@@ -1224,7 +1224,7 @@
 					"media": [
 						{
 							"path": "public/announce/img/activity-mcp-hero.webp",
-							"alt": "A dark title card reading at three ws slash activity dash mcp, with the package description underneath and the install command in a monospace row at the bottom."
+							"alt": "A dark title card headed at three-ws slash activity-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming get_trending_agents, get_trending_coins, get_holder_leaderboard, get_tier_info and get_feed_events."
 						}
 					]
 				},
@@ -1253,6 +1253,69 @@
 							"type": "file",
 							"path": "packages/activity-mcp/README.md",
 							"contains": "Every ranking, tier, and event comes straight from the public three.ws API."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "avatar-mcp",
+			"status": "review",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-21T04:00:00Z",
+			"source": {
+				"path": "docs/announcements/avatar-mcp.md"
+			},
+			"posts": [
+				{
+					"text": "Ask your assistant for an avatar and it renders in the chat: live, rotatable, idling, with a paste-anywhere embed beside it. npmjs.com/package/@three-ws/avatar-mcp",
+					"textFrom": "docs/announcements/avatar-mcp.post.txt",
+					"media": [
+						{
+							"path": "public/announce/img/avatar-mcp-hero.webp",
+							"alt": "A dark title card headed at three-ws slash avatar-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming render_avatar, avatar_embed_code and get_avatar."
+						}
+					]
+				},
+				{
+					"text": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat. All three tools are free and read-only."
+				},
+				{
+					"text": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+				}
+			],
+			"claims": [
+				{
+					"says": "All three tools are free and read-only",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/threews-avatar-mcp/README.md",
+							"contains": "All three tools are free, read-only, and annotated (`readOnlyHint`, `idempotentHint`, `openWorldHint`) so hosts can run them without confirmation prompts."
+						}
+					]
+				},
+				{
+					"says": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/threews-avatar-mcp/README.md",
+							"contains": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat."
+						}
+					]
+				},
+				{
+					"says": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/threews-avatar-mcp/README.md",
+							"contains": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
 						}
 					]
 				}
@@ -1315,7 +1378,7 @@
 		},
 		{
 			"id": "knock",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 1,
 			"lane": "token",
@@ -1332,7 +1395,7 @@
 					"media": [
 						{
 							"path": "public/announce/img/knock-hero.webp",
-							"alt": "The Knock page showing a door with its price and greeting, the message box under it, and the open-doors directory listing handles and prices beside it."
+							"alt": "The Knock page on three.ws: the headline and its description, three numbered cards reading Set your price, They pay it and You hear it in person, and the signed-out door panel below them."
 						}
 					]
 				},
@@ -1388,62 +1451,53 @@
 			"mentions": {}
 		},
 		{
-			"id": "avatar-mcp",
+			"id": "assistant",
 			"status": "draft",
 			"kind": "post",
-			"tier": 3,
+			"tier": 2,
 			"lane": "developer",
-			"pattern": "mechanism",
-			"notBefore": "2026-09-22T04:00:00Z",
+			"pattern": "clip",
+			"notBefore": "2026-09-22T12:00:00Z",
 			"source": {
-				"path": "docs/announcements/avatar-mcp.md"
+				"path": "docs/announcements/assistant.md",
+				"url": "https://three.ws/assistant"
 			},
 			"posts": [
 				{
-					"text": "Ask your assistant for an avatar and it renders in the chat: live, rotatable, idling, with a paste-anywhere embed beside it. npmjs.com/package/@three-ws/avatar-mcp",
-					"textFrom": "docs/announcements/avatar-mcp.post.txt",
+					"text": "One script tag puts a 3D avatar assistant in the corner of any site. Pick a body, a background, and what it knows about your page. three.ws/assistant",
+					"textFrom": "docs/announcements/assistant.post.txt",
 					"media": [
 						{
-							"path": "public/announce/img/avatar-mcp-hero.webp",
-							"alt": "A dark title card naming the three ws avatar MCP package, its one-line description underneath, and the npx install command in a monospace row at the bottom."
+							"path": "public/announce/img/assistant-hero.webp",
+							"alt": "The assistant configurator with the option columns on the left and the floating launcher open in the corner showing a 3D avatar over the live page preview."
 						}
 					]
 				},
 				{
-					"text": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat. All three tools are free and read-only."
+					"text": "The live preview runs in the corner of the page while you configure it, and every change above re-mounts it."
 				},
 				{
-					"text": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+					"text": "Use a built-in body, any three.ws avatar id, a GLB URL, or an agent's body. It answers in chat, or speaks what you type in a speech bubble."
 				}
 			],
 			"claims": [
 				{
-					"says": "All three tools are free and read-only",
+					"says": "The live preview runs in the corner of the page while you configure it, and every change above re-mounts it.",
 					"evidence": [
 						{
-							"type": "file",
-							"path": "packages/threews-avatar-mcp/README.md",
-							"contains": "All three tools are free, read-only, and annotated (`readOnlyHint`, `idempotentHint`, `openWorldHint`) so hosts can run them without confirmation prompts."
+							"type": "page",
+							"url": "https://three.ws/assistant",
+							"contains": "Live preview running in the corner. Every change above re-mounts it."
 						}
 					]
 				},
 				{
-					"says": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat.",
+					"says": "Use a built-in body, any three.ws avatar id, a GLB URL, or an agent's body.",
 					"evidence": [
 						{
-							"type": "file",
-							"path": "packages/threews-avatar-mcp/README.md",
-							"contains": "The avatar is live in the conversation: rotate it, zoom it, watch it idle, without leaving the chat."
-						}
-					]
-				},
-				{
-					"says": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere.",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "packages/threews-avatar-mcp/README.md",
-							"contains": "Hosts without MCP Apps support still get a rendered preview image and a one-tap live embed, so the tool degrades gracefully everywhere."
+							"type": "page",
+							"url": "https://three.ws/assistant",
+							"contains": "Use a built-in body, any three.ws avatar id (make one in Forge), a GLB URL, or an agent's body via data-agent."
 						}
 					]
 				}

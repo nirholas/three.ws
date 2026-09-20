@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-20T05:56:28.175Z",
+	"generatedAt": "2026-09-20T06:09:35.981Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -41,7 +41,7 @@
 		"activity-mcp-hero": {
 			"id": "activity-mcp-hero",
 			"src": "/announce/img/activity-mcp-hero.webp",
-			"alt": "A dark title card reading at three ws slash activity dash mcp, with the package description underneath and the install command in a monospace row at the bottom.",
+			"alt": "A dark title card headed at three-ws slash activity-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming get_trending_agents, get_trending_coins, get_holder_leaderboard, get_tier_info and get_feed_events.",
 			"caption": "Title card for @three-ws/activity-mcp, typeset from its README and package.json.",
 			"route": "card:packages/activity-mcp",
 			"viewport": "wide",
@@ -58,7 +58,7 @@
 		"avatar-mcp-hero": {
 			"id": "avatar-mcp-hero",
 			"src": "/announce/img/avatar-mcp-hero.webp",
-			"alt": "A dark title card naming the three ws avatar MCP package, its one-line description underneath, and the npx install command in a monospace row at the bottom.",
+			"alt": "A dark title card headed at three-ws slash avatar-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming render_avatar, avatar_embed_code and get_avatar.",
 			"caption": "Title card for @three-ws/avatar-mcp, typeset from its README and package.json.",
 			"route": "card:packages/threews-avatar-mcp",
 			"viewport": "wide",
@@ -151,7 +151,7 @@
 		"knock-hero": {
 			"id": "knock-hero",
 			"src": "/announce/img/knock-hero.webp",
-			"alt": "The Knock page showing a door with its price and greeting, the message box under it, and the open-doors directory listing handles and prices beside it.",
+			"alt": "The Knock page on three.ws: the headline and its description, three numbered cards reading Set your price, They pay it and You hear it in person, and the signed-out door panel below them.",
 			"caption": "Captured from the live /knock route for the knock announcement.",
 			"route": "/knock",
 			"viewport": "wide",

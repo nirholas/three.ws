@@ -2,7 +2,7 @@
 
 **Surface:** [`@three-ws/activity-mcp`](https://three.ws) · **Stage:** drafted · **Slot:** 2026-09-21 · **Announced externally:** never
 
-Ranked 31 of 324 never-announced surfaces by `npm run announce:rank` (score 67). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/activity-mcp.json`](../../data/announce-plan/briefs/activity-mcp.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 33 of 329 never-announced surfaces by `npm run announce:rank` (score 67). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/activity-mcp.json`](../../data/announce-plan/briefs/activity-mcp.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 
@@ -55,7 +55,7 @@ Captured from the live route by `npm run announce:media`, which drives the real 
 
 **Alt text, required on the post:**
 
-> A dark title card reading at three ws slash activity dash mcp, with the package description underneath and the install command in a monospace row at the bottom.
+> A dark title card headed at three-ws slash activity-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming get_trending_agents, get_trending_coins, get_holder_leaderboard, get_tier_info and get_feed_events.
 
 ## The post
 

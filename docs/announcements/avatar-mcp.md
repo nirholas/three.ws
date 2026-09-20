@@ -1,8 +1,8 @@
 # Announcement pack: A live 3D avatar rendered inside the chat
 
-**Surface:** [`@three-ws/avatar-mcp`](https://three.ws) · **Stage:** drafted · **Slot:** 2026-09-22 · **Announced externally:** never
+**Surface:** [`@three-ws/avatar-mcp`](https://three.ws) · **Stage:** drafted · **Slot:** 2026-09-21 · **Announced externally:** never
 
-Ranked 36 of 324 never-announced surfaces by `npm run announce:rank` (score 67). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/avatar-mcp.json`](../../data/announce-plan/briefs/avatar-mcp.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 38 of 329 never-announced surfaces by `npm run announce:rank` (score 67). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/avatar-mcp.json`](../../data/announce-plan/briefs/avatar-mcp.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 
@@ -11,7 +11,7 @@ Ranked 36 of 324 never-announced surfaces by `npm run announce:rank` (score 67).
 | Field | Value |
 |---|---|
 | Pack id | `avatar-mcp` |
-| Publish slot | 2026-09-22. The minute is decided at send time from the production schedule seed, so it is not knowable from this repository |
+| Publish slot | 2026-09-21. The minute is decided at send time from the production schedule seed, so it is not knowable from this repository |
 | Lane and pattern | developer / mechanism |
 | Audience | Engineers who will read the code |
 | Primary channel | X, @trythreews, through the reviewed content queue |
@@ -56,7 +56,7 @@ Captured from the live route by `npm run announce:media`, which drives the real 
 
 **Alt text, required on the post:**
 
-> A dark title card naming the three ws avatar MCP package, its one-line description underneath, and the npx install command in a monospace row at the bottom.
+> A dark title card headed at three-ws slash avatar-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming render_avatar, avatar_embed_code and get_avatar.
 
 ## The post
 
