@@ -1913,7 +1913,7 @@
 		},
 		{
 			"id": "three-hold-article",
-			"status": "approved",
+			"status": "posted",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
