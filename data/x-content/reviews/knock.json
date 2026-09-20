@@ -1,7 +1,7 @@
 {
 	"id": "knock",
 	"contentHash": "bc34177fe6dd1740bca69bfc788c3c9b05fc4b741c591fc912764187343ded60",
-	"reviewedAt": "2026-09-20T06:50:08.567Z",
+	"reviewedAt": "2026-09-20T18:49:47.266Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -65,7 +65,7 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
@@ -82,7 +82,7 @@
 				"The Knock page on three.ws: the headline and its description, three numbered cards reading Set your price, They pay it and You hear it in person, and the signed-out door panel below them."
 			]
 		},
-		"summary": "Every claim in the thread is verified verbatim against the live /knock page or docs/knock.md, and the screenshot matches the live page exactly, including the same card copy the quotes come from. Voice, length, link, and alt text all conform to the house contract with no blocking or major issues.",
+		"summary": "Every factual statement traces to a passing check against the live page or docs, and the screenshot matches the copy and shows the real product. The thread follows the voice contract exactly: no hype, no dashes, mechanism-first lead, one link, all within length.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
