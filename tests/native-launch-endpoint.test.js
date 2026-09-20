@@ -84,7 +84,17 @@ vi.mock('../api/_lib/native-launch/dbc.js', () => ({
 		configKey: 'ConfigKey111111111111111111111111111111111',
 	})),
 	getPoolState: vi.fn(async () => ({ pool: 'PoolAddress11111111111111111111111111111111' })),
-	quoteBuy: vi.fn(async () => ({ pool: 'p', sol_in: 1, tokens_out: 100 })),
+	quoteBuy: vi.fn(async () => ({ pool: 'p', side: 'buy', three_in: 1000, tokens_out: 100 })),
+	quoteSell: vi.fn(async () => ({ pool: 'p', side: 'sell', tokens_in: 100, three_out: 990 })),
+	buildSwapTx: vi.fn(async ({ side, amountIn, slippageBps }) => ({
+		txBase64: 'AQID',
+		pool: 'PoolAddress11111111111111111111111111111111',
+		side,
+		amount_in: amountIn,
+		expected_out: 100,
+		min_out: 99,
+		slippage_bps: slippageBps,
+	})),
 }));
 
 import handler from '../api/native-launch/[action].js';
@@ -150,14 +160,48 @@ describe('config', () => {
 
 describe('quote', () => {
 	it('rejects a malformed mint', async () => {
-		const r = await call('quote', { query: { mint: 'not-a-mint', sol_in: '1' } });
+		const r = await call('quote', { query: { mint: 'not-a-mint', three_in: '1000' } });
 		expect(r.status).toBe(400);
 		expect(r.body.error).toBe('validation_error');
 	});
 
-	it('rejects a non-positive or oversized sol_in', async () => {
-		for (const sol_in of ['0', '-1', '100000']) {
-			const r = await call('quote', { query: { mint: MINT, sol_in } });
+	it('rejects a non-positive or oversized three_in', async () => {
+		for (const three_in of ['0', '-1', '1000000001']) {
+			const r = await call('quote', { query: { mint: MINT, three_in } });
+			expect(r.status).toBe(400);
+		}
+	});
+
+	it('quotes a buy in $THREE by default and a sell when tokens_in is given', async () => {
+		const buy = await call('quote', { query: { mint: MINT, three_in: '1000' } });
+		expect(buy.status).toBe(200);
+		expect(buy.body).toMatchObject({ side: 'buy', three_in: 1000 });
+
+		const sell = await call('quote', { query: { mint: MINT, tokens_in: '100' } });
+		expect(sell.status).toBe(200);
+		expect(sell.body).toMatchObject({ side: 'sell', three_out: 990 });
+	});
+});
+
+describe('swap-prep', () => {
+	const body = { mint: MINT, wallet_address: WALLET, side: 'buy', amount: 5000, network: 'devnet' };
+
+	it('returns an unsigned buy sized in $THREE, with no session required', async () => {
+		sessionUser = null;
+		const r = await call('swap-prep', { method: 'POST', body });
+		expect(r.status).toBe(200);
+		expect(r.body).toMatchObject({ tx_base64: 'AQID', side: 'buy', amount_in: 5000, min_out: 99, slippage_bps: 100 });
+	});
+
+	it('passes the side and slippage through for a sell', async () => {
+		const r = await call('swap-prep', { method: 'POST', body: { ...body, side: 'sell', slippage_bps: 250 } });
+		expect(r.status).toBe(200);
+		expect(r.body).toMatchObject({ side: 'sell', slippage_bps: 250 });
+	});
+
+	it('rejects a bad side, a non-positive amount and a malformed wallet', async () => {
+		for (const bad of [{ side: 'hold' }, { amount: 0 }, { amount: -5 }, { wallet_address: 'not-a-wallet-address-not-a-wallet-addr' }]) {
+			const r = await call('swap-prep', { method: 'POST', body: { ...body, ...bad } });
 			expect(r.status).toBe(400);
 		}
 	});

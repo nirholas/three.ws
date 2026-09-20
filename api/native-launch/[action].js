@@ -10,7 +10,8 @@
 //
 // Action map:
 //   config          -> handleConfig        (public: lane economics + config key)
-//   quote           -> handleQuote         (public: buy quote on a live curve)
+//   quote           -> handleQuote         (public: buy or sell quote on a live curve)
+//   swap-prep       -> handleSwapPrep      (public: unsigned buy/sell tx for the trader's wallet)
 //   pool            -> handlePool          (public: pool state / curve progress)
 //   launch-prep     -> handleLaunchPrep    (authed: unsigned create-pool tx)
 //   launch-confirm  -> handleLaunchConfirm (authed: verify + record launch)
@@ -32,12 +33,14 @@ import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.js';
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { verifySignature, solanaPubkey } from '../_lib/pump.js';
-import { laneInfo, configKeyFor } from '../_lib/native-launch/config.js';
+import { laneInfo, configKeyFor, quoteMintFor } from '../_lib/native-launch/config.js';
 import {
 	buildCreatePoolTx,
 	txInvokesDbcProgram,
 	getPoolState,
 	quoteBuy,
+	quoteSell,
+	buildSwapTx,
 } from '../_lib/native-launch/dbc.js';
 import { logger } from '../_lib/usage.js';
 
@@ -64,6 +67,9 @@ async function handleConfig(req, res) {
 
 // ── quote / pool (public reads) ────────────────────────────────────────────
 
+// Both a coin's supply and $THREE's are 1B, so no single swap can exceed this.
+const MAX_SWAP_AMOUNT = 1_000_000_000;
+
 async function handleQuote(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -72,14 +78,67 @@ async function handleQuote(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const mint = url.searchParams.get('mint');
-	const solIn = Number(url.searchParams.get('sol_in') || '0.1');
 	if (!mint || !solanaPubkey(mint)) return error(res, 400, 'validation_error', 'valid mint required');
-	if (!(solIn > 0) || solIn > 1000) return error(res, 400, 'validation_error', 'sol_in must be in (0, 1000]');
+	// A buy is sized in $THREE (three_in), a sell in the coin's own tokens (tokens_in).
+	const selling = url.searchParams.has('tokens_in');
+	const amount = Number(url.searchParams.get(selling ? 'tokens_in' : 'three_in') || (selling ? '0' : '1000'));
+	if (!(amount > 0) || amount > MAX_SWAP_AMOUNT) {
+		return error(res, 400, 'validation_error', `${selling ? 'tokens_in' : 'three_in'} must be in (0, ${MAX_SWAP_AMOUNT}]`);
+	}
 	try {
-		const quote = await quoteBuy({ network, mint, solIn });
+		const quote = selling
+			? await quoteSell({ network, mint, tokensIn: amount })
+			: await quoteBuy({ network, mint, threeIn: amount });
 		return json(res, 200, { network, mint, ...quote });
 	} catch (e) {
 		return error(res, e.status || 500, e.code || 'quote_failed', e.message);
+	}
+}
+
+// ── swap-prep ──────────────────────────────────────────────────────────────
+
+const swapPrepSchema = z.object({
+	mint: z.string().min(32).max(44),
+	wallet_address: z.string().min(32).max(44),
+	side: z.enum(['buy', 'sell']),
+	amount: z.number().positive().max(MAX_SWAP_AMOUNT),
+	slippage_bps: z.number().int().min(1).max(5000).default(100),
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+// Builds the unsigned swap and nothing else: the trader's wallet signs and sends it,
+// so this needs no session. A buy spends `amount` $THREE, a sell spends `amount` tokens.
+async function handleSwapPrep(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['POST'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	try {
+		const body = parse(swapPrepSchema, await readJson(req));
+		if (!solanaPubkey(body.mint) || !solanaPubkey(body.wallet_address)) {
+			return error(res, 400, 'validation_error', 'valid mint and wallet_address required');
+		}
+		const built = await buildSwapTx({
+			network: body.network,
+			mint: body.mint,
+			trader: body.wallet_address,
+			side: body.side,
+			amountIn: body.amount,
+			slippageBps: body.slippage_bps,
+		});
+		return json(res, 200, {
+			network: body.network,
+			mint: body.mint,
+			tx_base64: built.txBase64,
+			pool: built.pool,
+			side: built.side,
+			amount_in: built.amount_in,
+			expected_out: built.expected_out,
+			min_out: built.min_out,
+			slippage_bps: built.slippage_bps,
+		});
+	} catch (e) {
+		return error(res, e.status || 500, e.code || 'swap_prep_failed', e.message);
 	}
 }
 
@@ -112,7 +171,8 @@ const launchPrepSchema = z
 		symbol: z.string().trim().min(1).max(10),
 		uri: z.string().url().max(200),
 		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
-		sol_buy_in: z.number().min(0).max(50).default(0),
+		// The creator's optional first buy, in $THREE.
+		three_buy_in: z.number().min(0).max(10_000_000).default(0),
 		mint_address: z.string().min(32).max(44).optional(),
 	})
 	.refine((b) => b.agent_id || b.avatar_id, { message: 'agent_id or avatar_id required' });
@@ -213,7 +273,7 @@ async function handleLaunchPrep(req, res) {
 			name: body.name,
 			symbol: body.symbol,
 			uri: body.uri,
-			solBuyIn: body.sol_buy_in,
+			threeBuyIn: body.three_buy_in,
 		});
 	} catch (e) {
 		log.warn('create_pool_build_failed', { message: e.message });
@@ -314,10 +374,10 @@ async function handleLaunchConfirm(req, res) {
 
 	const [row] = await sql`
 		insert into native_launches
-			(agent_id, user_id, network, mint, pool, config_key, name, symbol, metadata_uri, creator_address)
+			(agent_id, user_id, network, mint, pool, config_key, name, symbol, metadata_uri, creator_address, quote_mint)
 		values
 			(${p.agent_id}, ${user.id}, ${p.network}, ${p.mint}, ${p.pool}, ${p.config_key},
-			 ${p.name}, ${p.symbol}, ${pending.metadata_uri || null}, ${p.creator_address})
+			 ${p.name}, ${p.symbol}, ${pending.metadata_uri || null}, ${p.creator_address}, ${quoteMintFor(p.network)})
 		returning id, mint, pool, network, created_at
 	`;
 
@@ -423,6 +483,7 @@ async function dispatch(req, res) {
 	switch (action) {
 		case 'config': return handleConfig(req, res);
 		case 'quote': return handleQuote(req, res);
+		case 'swap-prep': return handleSwapPrep(req, res);
 		case 'pool': return handlePool(req, res);
 		case 'launch-prep': return handleLaunchPrep(req, res);
 		case 'launch-confirm': return handleLaunchConfirm(req, res);

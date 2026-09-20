@@ -4,80 +4,81 @@
 import 'dotenv/config';
 import bs58 from 'bs58';
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
-import BN from 'bn.js';
-import {
-	buildCreatePoolTx,
-	getPoolState,
-	quoteBuy,
-	getDbcClient,
-} from '../api/_lib/native-launch/dbc.js';
+import { buildCreatePoolTx, buildSwapTx, getPoolState, quoteBuy } from '../api/_lib/native-launch/dbc.js';
 
-const conn = new Connection(process.env.SOLANA_RPC_URL_DEVNET, 'confirmed');
-const wallet = Keypair.fromSecretKey(bs58.decode(process.env.X402_TREASURY_SECRET_BASE58));
+const conn = new Connection(process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com', 'confirmed');
+const secret = process.env.NATIVE_LAUNCH_PARTNER_SECRET_BASE58 || process.env.X402_TREASURY_SECRET_BASE58;
+if (!secret || !process.env.NATIVE_LAUNCH_CONFIG_KEY_DEVNET || !process.env.NATIVE_LAUNCH_QUOTE_MINT_DEVNET) {
+	console.error(
+		'needs a devnet signer plus NATIVE_LAUNCH_CONFIG_KEY_DEVNET and NATIVE_LAUNCH_QUOTE_MINT_DEVNET:\n' +
+			'  node scripts/native-launchpad-create-config.mjs --network devnet --create-quote-mint --airdrop',
+	);
+	process.exit(1);
+}
+// The signer that ran --create-quote-mint holds the whole stand-in $THREE supply.
+const wallet = Keypair.fromSecretKey(bs58.decode(secret));
 const mintKp = Keypair.generate();
+const mint = mintKp.publicKey.toBase58();
 
-async function sendAndPoll(raw) {
-	const sig = await conn.sendRawTransaction(raw, { skipPreflight: false });
+async function signAndLand(txBase64, signers) {
+	const tx = VersionedTransaction.deserialize(Buffer.from(txBase64, 'base64'));
+	tx.sign(signers);
+	const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
 	for (let i = 0; i < 40; i++) {
 		await new Promise((r) => setTimeout(r, 1500));
-		const st = await conn.getSignatureStatuses([sig]);
-		const s = st.value?.[0];
+		const s = (await conn.getSignatureStatuses([sig])).value?.[0];
 		if (s?.err) throw new Error(`tx failed: ${JSON.stringify(s.err)} (${sig})`);
 		if (s?.confirmationStatus === 'confirmed' || s?.confirmationStatus === 'finalized') return sig;
 	}
 	throw new Error(`confirm timeout: ${sig}`);
 }
 
-console.log('wallet:', wallet.publicKey.toBase58());
-console.log('mint:  ', mintKp.publicKey.toBase58());
+function assert(cond, message) {
+	if (!cond) throw new Error(`assertion failed: ${message}`);
+}
 
-// 1 — build the unsigned create-pool tx exactly like /api/native-launch/launch-prep
+console.log('wallet:', wallet.publicKey.toBase58());
+console.log('mint:  ', mint);
+
 const built = await buildCreatePoolTx({
 	network: 'devnet',
 	payer: wallet.publicKey.toBase58(),
 	creator: wallet.publicKey.toBase58(),
-	baseMint: mintKp.publicKey.toBase58(),
+	baseMint: mint,
 	name: 'Native Lane Test',
 	symbol: 'NLT',
 	uri: 'https://three.ws/launchpad',
-	solBuyIn: 0.05,
+	threeBuyIn: 50_000,
 });
 console.log('pool:  ', built.pool);
+const createSig = await signAndLand(built.txBase64, [wallet, mintKp]);
+console.log('create + first buy landed:', createSig);
 
-// 2 — sign like the frontend does (user wallet + mint keypair) and send
-const tx = VersionedTransaction.deserialize(Buffer.from(built.txBase64, 'base64'));
-tx.sign([wallet, mintKp]);
-const createSig = await sendAndPoll(tx.serialize());
-console.log('create landed:', createSig);
+const afterCreate = await getPoolState({ network: 'devnet', mint });
+console.log('state after create + first buy:', JSON.stringify(afterCreate, null, 1));
+assert(afterCreate.quote_reserve_three > 0, 'the first buy put $THREE into the curve');
 
-// 3 — pool state via the same module the /pool endpoint uses
-const state = await getPoolState({ network: 'devnet', mint: mintKp.publicKey.toBase58() });
-console.log('state after create+first buy:', JSON.stringify(state, null, 1));
+const quote = await quoteBuy({ network: 'devnet', mint, threeIn: 250_000 });
+console.log(`quote 250,000 $THREE -> ${quote.tokens_out} tokens, fee ${quote.trading_fee_three} $THREE`);
 
-// 4 — quote a 0.5 SOL buy via the /quote path
-const q = await quoteBuy({ network: 'devnet', mint: mintKp.publicKey.toBase58(), solIn: 0.5 });
-console.log('quote 0.5 SOL ->', q.tokens_out, 'tokens, fee', q.trading_fee_sol, 'SOL');
+const buy = await buildSwapTx({ network: 'devnet', mint, trader: wallet.publicKey.toBase58(), side: 'buy', amountIn: 250_000 });
+console.log('buy landed: ', await signAndLand(buy.txBase64, [wallet]));
+const afterBuy = await getPoolState({ network: 'devnet', mint });
+assert(afterBuy.curve_progress > afterCreate.curve_progress, 'a buy moves the curve forward');
 
-// 5 — execute a real 0.5 SOL buy on the curve
-const client = await getDbcClient({ network: 'devnet' });
-const swapTx = await client.pool.swap({
-	owner: wallet.publicKey,
-	pool: built.pool,
-	amountIn: new BN(0.5e9),
-	minimumAmountOut: new BN(1),
-	swapBaseForQuote: false,
-	referralTokenAccount: null,
+const sell = await buildSwapTx({
+	network: 'devnet',
+	mint,
+	trader: wallet.publicKey.toBase58(),
+	side: 'sell',
+	amountIn: Math.floor(buy.expected_out / 2),
 });
-swapTx.feePayer = wallet.publicKey;
-swapTx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
-swapTx.sign(wallet);
-const buySig = await sendAndPoll(swapTx.serialize());
-console.log('buy landed:', buySig);
+console.log('sell landed:', await signAndLand(sell.txBase64, [wallet]));
+const afterSell = await getPoolState({ network: 'devnet', mint });
+assert(afterSell.quote_reserve_three < afterBuy.quote_reserve_three, 'a sell pays $THREE back out of the curve');
 
-// 6 — state after the buy: progress must have moved
-const after = await getPoolState({ network: 'devnet', mint: mintKp.publicKey.toBase58() });
-console.log('progress:', state.curve_progress, '->', after.curve_progress);
-console.log('quote reserve SOL:', state.quote_reserve_sol, '->', after.quote_reserve_sol);
+console.log('progress:        ', afterCreate.curve_progress, '->', afterBuy.curve_progress, '->', afterSell.curve_progress);
+console.log('$THREE in curve: ', afterCreate.quote_reserve_three, '->', afterBuy.quote_reserve_three, '->', afterSell.quote_reserve_three);
 console.log('');
 console.log('E2E OK');
 console.log(`explorer: https://solscan.io/tx/${createSig}?cluster=devnet`);

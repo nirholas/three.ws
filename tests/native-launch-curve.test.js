@@ -25,8 +25,9 @@ import { NATIVE_LANE, curveBuildParams, configKeyFor, laneInfo } from '../api/_l
 const params = () => curveBuildParams();
 
 describe('native lane economics', () => {
-	it('quotes in SOL with a fixed 1B supply at 6 decimals', () => {
-		expect(NATIVE_LANE.quote).toBe('SOL');
+	it('quotes in $THREE with a fixed 1B supply at 6 decimals', () => {
+		expect(NATIVE_LANE.quote).toBe('$THREE');
+		expect(NATIVE_LANE.quoteDecimals).toBe(6);
 		expect(NATIVE_LANE.totalSupply).toBe(1_000_000_000);
 		expect(NATIVE_LANE.decimals).toBe(6);
 	});
@@ -51,7 +52,7 @@ describe('native lane economics', () => {
 	});
 
 	it('graduates above its starting market cap', () => {
-		expect(NATIVE_LANE.migrationMarketCapSol).toBeGreaterThan(NATIVE_LANE.initialMarketCapSol);
+		expect(NATIVE_LANE.migrationMarketCapThree).toBeGreaterThan(NATIVE_LANE.initialMarketCapThree);
 	});
 });
 
@@ -60,7 +61,7 @@ describe('curveBuildParams', () => {
 		const p = params();
 		expect(p.token.tokenType).toBe(TokenType.SPLToken);
 		expect(p.token.tokenBaseDecimal).toBe(TokenDecimal.SIX);
-		expect(p.token.tokenQuoteDecimal).toBe(TokenDecimal.NINE);
+		expect(p.token.tokenQuoteDecimal).toBe(TokenDecimal.SIX);
 		// Immutable metadata: no one, including us, can rewrite a launched coin.
 		expect(p.token.tokenAuthorityOption).toBe(TokenAuthorityOption.Immutable);
 		expect(p.fee.baseFeeParams.baseFeeMode).toBe(BaseFeeMode.FeeSchedulerLinear);
@@ -104,11 +105,11 @@ describe('curve built through the SDK', () => {
 		).not.toThrow();
 	});
 
-	it('graduates near the advertised SOL raise', () => {
-		const sol = Number(built().migrationQuoteThreshold.toString()) / 1e9;
-		// laneInfo advertises graduation_sol_approx to users; it must stay within
-		// a SOL of what the curve actually enforces or the UI is lying.
-		expect(Math.abs(sol - NATIVE_LANE.graduationSolApprox)).toBeLessThan(1);
+	it('graduates near the advertised $THREE raise', () => {
+		const three = Number(built().migrationQuoteThreshold.toString()) / 10 ** NATIVE_LANE.quoteDecimals;
+		// laneInfo advertises graduation_three_approx to users; it must stay within
+		// 0.1% of what the curve actually enforces or the UI is lying.
+		expect(Math.abs(three - NATIVE_LANE.graduationThreeApprox) / three).toBeLessThan(0.001);
 	});
 
 	it('carries the creator fee share and migration fee onto the config', () => {

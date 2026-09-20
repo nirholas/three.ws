@@ -1349,6 +1349,11 @@ export const env = {
 	get NATIVE_LAUNCH_CONFIG_KEY_DEVNET() {
 		return addr(opt('NATIVE_LAUNCH_CONFIG_KEY_DEVNET'));
 	},
+	// Devnet stand-in for $THREE (which exists on mainnet only): the quote mint the
+	// devnet native-launch config was created against.
+	get NATIVE_LAUNCH_QUOTE_MINT_DEVNET() {
+		return addr(opt('NATIVE_LAUNCH_QUOTE_MINT_DEVNET'));
+	},
 	// Platform trading-fee claimer + leftover receiver for native launches.
 	// Defaults (in the create-config script) to the treasury wallet.
 	get NATIVE_LAUNCH_FEE_WALLET() {
