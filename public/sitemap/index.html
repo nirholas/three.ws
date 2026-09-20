@@ -96,7 +96,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 945 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 948 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -108,7 +108,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 945 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 948 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd id="sm-filter-kbd" aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" role="status" aria-live="polite"><span id="sm-filter-count"></span><span id="sm-filter-hint" aria-hidden="true"></span></p>
@@ -130,6 +130,14 @@
 						<span class="sm-title">$THREE Launchpad</span>
 						<span class="sm-path">/three-launchpad</span>
 						<span class="sm-desc">A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/coin3d-embed">
+						<span class="sm-new-date">Sep 20, 2026</span>
+						<span class="sm-title">Docs · Token in 3D, as an embed</span>
+						<span class="sm-path">/docs/coin3d-embed</span>
+						<span class="sm-desc">Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.</span>
 					</a>
 				</li>
 				<li>
@@ -178,14 +186,6 @@
 						<span class="sm-title">Real-Funds Agreements</span>
 						<span class="sm-path">/legal/agreements</span>
 						<span class="sm-desc">Sign, and review your signatures on, the Terms of Service, Risk Disclosure, and Agent Wallet Agreement required before any real-funds action.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/launchpad">
-						<span class="sm-new-date">Sep 16, 2026</span>
-						<span class="sm-title">Docs · The /launch launchpad</span>
-						<span class="sm-path">/docs/launchpad</span>
-						<span class="sm-desc">How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.</span>
 					</a>
 				</li>
 			</ul>
@@ -2235,7 +2235,7 @@
 					<a href="/coin3d">
 						<span class="sm-title">Token in 3D</span>
 						<span class="sm-path">/coin3d</span>
-						<span class="sm-desc">Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.</span>
+						<span class="sm-desc">Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress. Address it by mint or by the pair address a chart terminal uses, and embed it on any site with one iframe.</span>
 					</a>
 				</li>
 				<li>
@@ -2597,7 +2597,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>437</span></h2>
+				<h2>Learn<span class="sm-count" data-count>438</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -2851,6 +2851,13 @@
 						<span class="sm-title">Docs · Trading swarms</span>
 						<span class="sm-path">/docs/swarms</span>
 						<span class="sm-desc">How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/coin3d-embed">
+						<span class="sm-title">Docs · Token in 3D, as an embed</span>
+						<span class="sm-path">/docs/coin3d-embed</span>
+						<span class="sm-desc">Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.</span>
 					</a>
 				</li>
 				<li>
@@ -6019,7 +6026,7 @@
 
 		<section class="sm-section" id="machine">
 			<header>
-				<h2>Machine-readable<span class="sm-count" data-count>14</span></h2>
+				<h2>Machine-readable<span class="sm-count" data-count>16</span></h2>
 				<p class="sm-section-desc">Indexes and well-known files for crawlers and AI agents.</p>
 			</header>
 			<ul class="sm-list">
@@ -6035,6 +6042,20 @@
 						<span class="sm-title">MCP trust policy<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/api/mcp-policy</span>
 						<span class="sm-desc">A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/prompts.json">
+						<span class="sm-title">prompts.json<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/prompts.json</span>
+						<span class="sm-desc">The prompt library as structured data: categories, setup tiers, tags, and every prompt with what it returns.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/prompts.txt">
+						<span class="sm-title">prompts.txt<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/prompts.txt</span>
+						<span class="sm-desc">The prompt library as plain text, for piping straight into an assistant.</span>
 					</a>
 				</li>
 				<li>

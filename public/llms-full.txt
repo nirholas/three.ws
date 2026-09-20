@@ -1764,7 +1764,7 @@ Two AI agents in a virtual world paying each other for live Solana market data. 
 
 URL: https://three.ws/coin3d
 
-Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.
+Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress. Address it by mint or by the pair address a chart terminal uses, and embed it on any site with one iframe.
 
 ### Hero Stage
 
@@ -2301,6 +2301,12 @@ The Trench Car is the default car in every coin world: ambient traffic drives it
 URL: https://three.ws/docs/swarms
 
 How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.
+
+### Docs · Token in 3D, as an embed
+
+URL: https://three.ws/docs/coin3d-embed
+
+Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.
 
 ### Docs · Coin Wars
 
@@ -5019,6 +5025,20 @@ URL: https://three.ws/api/mcp-policy
 Indexable: no (excluded from sitemap)
 
 A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.
+
+### prompts.json
+
+URL: https://three.ws/prompts.json
+Indexable: no (excluded from sitemap)
+
+The prompt library as structured data: categories, setup tiers, tags, and every prompt with what it returns.
+
+### prompts.txt
+
+URL: https://three.ws/prompts.txt
+Indexable: no (excluded from sitemap)
+
+The prompt library as plain text, for piping straight into an assistant.
 
 ### llms.txt
 

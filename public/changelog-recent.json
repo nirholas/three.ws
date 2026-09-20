@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T06:09:06.235Z",
+	"generated_at": "2026-09-20T17:43:40.560Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3723,
+	"total": 3731,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -32,9 +32,39 @@
 		{
 			"date": "2026-09-20",
 			"type": "launch",
+			"title": "Docs · Token in 3D, as an embed",
+			"summary": "Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.",
+			"link": "/docs/coin3d-embed",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "launch",
 			"title": "Prompt Library",
 			"summary": "Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.",
 			"link": "/prompts",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "launch",
+			"title": "prompts.json",
+			"summary": "The prompt library as structured data: categories, setup tiers, tags, and every prompt with what it returns.",
+			"link": "/prompts.json",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "launch",
+			"title": "prompts.txt",
+			"summary": "The prompt library as plain text, for piping straight into an assistant.",
+			"link": "/prompts.txt",
 			"tags": [
 				"launch"
 			]
@@ -74,6 +104,38 @@
 		{
 			"date": "2026-09-20",
 			"type": "update",
+			"title": "Awesome 3D Agents joins the announcement queue, and the machine stops skipping pages like it",
+			"summary": "The machinery that writes announcements from the backlog rebuilds its inventory from the site map on every run, and it was reading only the product sections. Five pages filed under Learn are products rather than documents, so it had never seen them: the curated Awesome 3D Agents list among them, live since the 7th of September and never posted about. They are in the backlog now. Three smaller things landed with it. A page can be asked for next, by name and with the reason recorded, instead of waiting for its score to come round. A post can quote the counters a page puts on screen, such as the 152 entries and 15 sections on the list itself, which the fact harvester used to throw away because they are not sentences. And a frame that was meant to be a five second loop is now shipped as a single picture when the capture finds the page does not actually move.",
+			"link": "/awesome",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Derivatives venue profiles show their contracts again",
+			"summary": "Opening a futures venue from the exchange rankings could land on a profile that said it had no markets at all, even for venues listing hundreds of contracts and clearing billions a day. The market-data source keeps an empty placeholder record for some of those venues alongside the real one, and the page was reading the placeholder. It now recognises an empty record for what it is and serves the real venue: open interest, perpetual and futures pair counts, and the contract table. Those tables are also ranked by 24h volume before they are cut to fifty rows, so the biggest contracts lead instead of whatever happened to come first alphabetically, and every contract links to its own detail page.",
+			"link": "/exchanges",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Every perpetual on /derivatives now opens a full contract page",
+			"summary": "The perps table told you a contract's price, funding rate and open interest, and then dead-ended: rows went nowhere. Each one now opens its own page. It puts the mark price next to the index the contract settles against and states the basis between them, turns the funding rate into money by letting you type a position size and reading back what it pays per interval, per day and per year, and ranks the contract's open interest and volume against every other venue listing the same underlying. Below that sits the spot chart for the underlying, a cross-venue funding table with the contract you came from pinned in place, and four callouts that answer the question the table never could: the cheapest venue to hold a long, the best paid venue to hold a short, how far funding spreads across venues, and how far their prices disagree. Those four ignore venues trading under a million dollars a day, because a dormant book sets the widest number every time and is nowhere anyone should act. The same page is reachable from the contracts table on any derivatives venue's exchange profile.",
+			"link": "/derivatives",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
 			"title": "Five new skills teach any Claude to build on three.ws, and three standalone repos to install them from",
 			"summary": "Until now the skills we hand out taught Claude the 3D lanes and the wallet, and stopped at the platform itself: nothing explained how to create an agent, give it a capability, put a price on it, or hire someone else's. Five new skills cover exactly that, each written against the real endpoints with the real request bodies and the real failure responses: create an agent (body, custodial Solana wallet, persona, live page), author a four-file in-app skill bundle and test it, publish and price a skill per call in $THREE with metered free trials, hire another agent under per-call and daily spend caps, and connect Claude Code, Claude Desktop or any MCP client to the hosted servers starting with the free one. The pack is also published as three small standalone repos, so installing it no longer means cloning a 60-directory monorepo: everything, the crypto-free 3D subset, or the agent-economy set. The repos are generated from the same folders the platform ships, so a copy can never drift from the original.",
 			"link": "/docs/agent-skills",
@@ -86,12 +148,34 @@
 		{
 			"date": "2026-09-20",
 			"type": "update",
+			"title": "Light mode on the market pages now clears the contrast floor",
+			"summary": "Every green number in a market table, and the coloured score badges on the exchange pages, were being drawn in the same hue used for chart fills. On white that reads at around 3:1, under the 4.5:1 the platform holds itself to, so gains in a table and the figures inside a trust badge were harder to read than they should have been for anyone with low vision or a bright screen. They now use the darker text shade of the same colours, which the design system already carried for exactly this. Dark mode is unchanged. Checked with the same automated WCAG rule sets the site gates on: the perpetual markets table, the new contract page, the exchange rankings and an exchange profile all report zero violations in both themes.",
+			"link": "/derivatives",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
 			"title": "Paid $THREE purchases say what is wrong instead of failing silently",
 			"summary": "Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible.",
 			"link": "/status",
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Put any token's 3D scene on your own site, keyed by the pair address you already have",
+			"summary": "Token in 3D is now embeddable anywhere with a single iframe, and it accepts two identifiers instead of one. Chart terminals, launchpads and wallets name a market by its pair (pool) address, while three.ws keys tokens by mint, so /coin3d now takes ?pair= as well as ?mint= and resolves the rest itself through a new public endpoint, /api/coin/pair. Add ?embed=1 and the scene drops the chrome your own page owns, keeps one attribution link, and sends its links to a new tab instead of navigating your frame. Free, keyless, and no account: paste the iframe and it renders the live medallion, holder galaxy, graduation ring and real trade tape for that market.",
+			"link": "/docs/coin3d-embed",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1533,88 +1617,6 @@
 			"link": null,
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself",
-			"summary": "Two fixes for the Home Assistant voice satellite. The command that prints a viewing token for a screen on your own network was documented to be run on the machine already running the satellite, but doing exactly that failed: it tried to start a second copy of the service and died because the ports were already taken. It now reads the identity it needs and prints the token, with nothing else running. Separately, a satellite that has not been paired yet answers its health check again and says why it is unpaired, and turns a browser away with that same reason instead of a blank refusal. That is the state you are in on a fresh install, which is exactly when you need something to read.",
-			"link": "/smart-home/satellite",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "When the payment wallets look empty, the self-heal now says whether they are empty or just fenced",
-			"summary": "The x402 payment rail keeps a set of platform wallets topped up from one funding root, and a recovery run reports why it could not draw on each source. Every source that held less than its configured floor reported the same thing: \"at or below floor\". That single phrase covered two opposite situations. A wallet holding nothing needs money added from outside. A wallet holding real funds behind a floor somebody set does not: the platform already owns that money, and a floor decision releases it. Because the two printed identically, three separate investigations of the same stalled rail concluded the platform was out of funds while one of its own wallets held roughly forty-five times what the stalled wallet was short. A skipped source now reports how much it is holding and the line it had to stay above, and every run totals the funds it left behind, so an operator can tell at a glance whether the recovery needs a deposit or a decision. The health page and the operations runbook now point at that total instead of asserting that money is required.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "www.three.ws now takes you to three.ws, and 3D loads there",
-			"summary": "Typing www before the address landed on a copy of the site that looked right and then quietly refused to show any 3D. Avatars and models are served from a media host that only recognises three.ws, so on the www address every model was blocked by the browser and pages that should have shown a character showed an empty box instead. The www address now sends you straight to three.ws, keeping the page you asked for and anything after the question mark, so bookmarks and shared links keep working and everything on them renders.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Your monthly agent turns now count, and locking up never does",
-			"summary": "Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs several weeks of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.",
-			"link": "/smart-home/plan",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Your own agent now stands in your live house",
-			"summary": "The 3D home at /smart-home/<id> always drew a generic figure standing in your rooms, even when you had given your agent a face months ago. It now shows your agent: the same avatar the walk world, /play and the voice satellite use, read from the one record the whole platform treats as \"my agent\". Switch agents in another tab and the body in the house follows, with no reload. It is fetched after the house has already drawn, so nothing waits on it, and the platform's default body stands in when you have no agent yet, no avatar yet, or an avatar you keep private, which by design publishes no model for any page to read.",
-			"link": "/docs/home-scene",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Your private avatars load on the dashboard again, and say so when they cannot",
-			"summary": "Avatars you have not made public were failing to load on your dashboard, with nothing on the page to say why. The dashboard was being handed a temporary direct link into our storage provider rather than a link back through three.ws. When storage stopped accepting our credential, that direct link was refused in a way browsers deliberately hide, so the page could not tell the difference between a refusal and a dead connection: it just showed nothing. Private avatars now load through three.ws itself, which checks that the avatar is yours exactly as before, and which already knows how to fall back to a second copy when storage is having a bad day. As a side effect these links no longer expire, so a dashboard tab left open for an hour still shows your avatars when you come back to it.",
-			"link": "/dashboard/avatars",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "launch",
-			"title": "Docs · Global Intel Globe",
-			"summary": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
-			"link": "/docs/globe",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "launch",
-			"title": "Global Intel Globe",
-			"summary": "A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.",
-			"link": "/globe",
-			"tags": [
-				"launch"
 			]
 		}
 	]
