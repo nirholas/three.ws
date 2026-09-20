@@ -124,6 +124,8 @@ Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC), `win
 | `review` | The AI editor's average score above or below 4. |
 | `variety` | -25 when the post would repeat the last lane or pattern too many times in a row. |
 
+**Quoting an earlier post:** a post item may carry `quotes`, the numeric id of an existing post (the id, not the URL, which the validator enforces). The head becomes a quote tweet of it and any further posts thread under the head as usual. That is how a follow-up adds the detail its original left out, such as the numbers behind a page, without repeating the original's copy.
+
 **When a post fails:** it is held, not dropped. Link or probe failures and X rejecting the content (a 4xx such as a duplicate) hold the post for 2 hours, then 6, then 24, and the slot goes to the next post in the same run. Editing the post releases the hold at once. X being down, rate limiting, or rejecting our credentials is not the post's fault, so the run stops and the next run retries the same post. A thread cut off mid-way always resumes before anything else.
 
 **Stock:** every run counts approved, ready posts per tier (one per day). When any tier has fewer than 3 days left, it raises one alert a day through the platform's ops alerts: always recorded in `ops_alerts`, and pushed to Telegram when `TELEGRAM_ALERTS_CHAT_ID` is set on the service. Running low never makes the queue post something unreviewed; it only posts less.
@@ -216,4 +218,4 @@ Queue edits reach production with the next deploy, because the cron reads the qu
 
 ## Tests
 
-[tests/x-content.test.js](../tests/x-content.test.js) covers the tiered slots, fill-down, priority scoring, holds and the fall-through that publishes the next post when one fails, stock counting, the voice and editorial lint, the claims ledger, media quality, review records binding approval to exact content, the editor verdict rules, the media rules, the Markdown to Article offsets, the scheduler's spacing, cap, embargo, and resume rules, and the publisher's thread chaining, crash resume, and Article draft, publish, and quote sequence.
+[tests/x-content.test.js](../tests/x-content.test.js) covers the tiered slots, fill-down, priority scoring, holds and the fall-through that publishes the next post when one fails, stock counting, quote-tweet ids and their publish wiring, the voice and editorial lint, the claims ledger, media quality, review records binding approval to exact content, the editor verdict rules, the media rules, the Markdown to Article offsets, the scheduler's spacing, cap, embargo, and resume rules, and the publisher's thread chaining, crash resume, and Article draft, publish, and quote sequence.

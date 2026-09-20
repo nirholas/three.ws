@@ -1067,7 +1067,7 @@
 		},
 		{
 			"id": "mcp-catalog",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "mcp",
@@ -1075,6 +1075,46 @@
 			"notBefore": "2026-09-20T05:00:00Z",
 			"quotes": "2101524482313920723",
 			"claims": [
+				{
+					"says": "321 MCP tools",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools",
+							"contains": "Tools 321"
+						}
+					]
+				},
+				{
+					"says": "42 servers",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools",
+							"contains": "Servers 42"
+						}
+					]
+				},
+				{
+					"says": "293 free",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools",
+							"contains": "Free 293"
+						}
+					]
+				},
+				{
+					"says": "215 of them",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/mcp-tools",
+							"contains": "Read-only 215"
+						}
+					]
+				},
 				{
 					"says": "checked against the code on every build",
 					"evidence": [
@@ -1147,7 +1187,7 @@
 			],
 			"posts": [
 				{
-					"text": "321 MCP tools across 42 servers, 293 free.\n\nEvery read-only label is checked against the code on every build, so one pasted profile runs 215 of them without asking you.\n\nthree.ws/mcp-tools",
+					"text": "321 MCP tools across 42 servers, 293 free.\n\nEvery safety label is checked against the code on every build, so one pasted profile runs 215 of them unattended.\n\nthree.ws/mcp-tools",
 					"media": [
 						{
 							"path": "public/x-media/mcp-catalog-detail/card.png",

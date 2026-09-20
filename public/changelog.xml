@@ -39,6 +39,14 @@
 			<description>Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible.</description>
 		</item>
 		<item>
+			<title>Queued posts can quote an earlier post</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-09-20:Queued posts can quote an earlier post</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A post in the @trythreews content queue can now name an earlier post to quote, so a follow-up can add the detail the original left out instead of repeating it. The first use quotes the $THREE token MCP announcement with the numbers behind the MCP Tool Catalog: 321 tools across 42 servers, 293 of them free, and 215 whose read-only label is checked against the source on every build.</description>
+		</item>
+		<item>
 			<title>The @trythreews account now posts three times a day, every day</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:The @trythreews account now posts three times a day, every day</guid>

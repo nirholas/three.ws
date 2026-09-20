@@ -1,0 +1,127 @@
+{
+	"id": "mcp-catalog",
+	"contentHash": "55069539a37da453e1bf5a5971ce4103da3fdfa1c842e8baa5dee0823b314b5a",
+	"reviewedAt": "2026-09-20T05:23:31.365Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"321 MCP tools across 42 servers, 293 free.\n\nEvery safety label is checked against the code on every build, so one pasted profile runs 215 of them unattended.\n\nthree.ws/mcp-tools",
+		"This server is three of those tools.\n\nthree_balance and three_price read. three_burn signs on Solana mainnet, so it is labelled irreversible and will not run without confirm: true."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "321 MCP tools",
+				"kind": "evidence:page",
+				"target": "https://three.ws/mcp-tools",
+				"ok": true,
+				"detail": "live page shows \"Tools 321\""
+			},
+			{
+				"claim": "42 servers",
+				"kind": "evidence:page",
+				"target": "https://three.ws/mcp-tools",
+				"ok": true,
+				"detail": "live page shows \"Servers 42\""
+			},
+			{
+				"claim": "293 free",
+				"kind": "evidence:page",
+				"target": "https://three.ws/mcp-tools",
+				"ok": true,
+				"detail": "live page shows \"Free 293\""
+			},
+			{
+				"claim": "215 of them",
+				"kind": "evidence:page",
+				"target": "https://three.ws/mcp-tools",
+				"ok": true,
+				"detail": "live page shows \"Read-only 215\""
+			},
+			{
+				"claim": "checked against the code on every build",
+				"kind": "evidence:page",
+				"target": "https://three.ws/mcp-tools",
+				"ok": true,
+				"detail": "live page shows \"checked against the code on every build\""
+			},
+			{
+				"claim": "three_burn signs on Solana mainnet",
+				"kind": "evidence:page",
+				"target": "https://three.ws/mcp-tools?server=three-token-mcp&tool=three_burn",
+				"ok": true,
+				"detail": "live page shows \"signs and broadcasts on Solana mainnet\""
+			},
+			{
+				"claim": "three_burn signs on Solana mainnet",
+				"kind": "evidence:file",
+				"target": "packages/three-token-mcp/src/tools/three-burn.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the catalog serves 321 tools",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "across 42 servers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "215 of them are verified reads",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the pasteable profile is served live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/mcp-tools",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"321 MCP tools across 42 servers, 293 free.\n\nEvery safety label is checked against the code on every build, so one pasted profile runs 215 of them unattended.\n\nthree.ws/mcp-tools",
+				"This server is three of those tools.\n\nthree_balance and three_price read. three_burn signs on Solana mainnet, so it is labelled irreversible and will not run without confirm: true."
+			],
+			"altText": [
+				"A three.ws card reading '321 MCP tools. Every label checked.' beside a browser window showing the three.ws MCP Tool Catalog: counters reading 321 tools, 42 servers, 215 read-only, 81 writes, 25 irreversible, 293 free and 28 paid, above three permission profiles named Strict, Balanced and Open",
+				"A three.ws card reading 'Three tools. One of them burns.' beside a browser window showing the catalog filtered to the three-token-mcp server: three_balance and three_price each badged Read-only and Free, and three_burn badged Irreversible and Free, each with its full description"
+			]
+		},
+		"summary": "Every number in post 1 (321 tools, 42 servers, 293 free, 215 read-only) is verified against the live page and matches the attached frame, and post 2's three_burn claims are confirmed by both the page and source file. Voice is clean throughout: no hype, no dashes, mechanism in the first line, link present, and both images are sharp real-product captures with accurate alt text. Ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}
