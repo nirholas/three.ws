@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-20",
+			"title": "Repeat visits stop downloading the app's code twice",
+			"summary": "Every page tells your browser which code it is about to need so it can start fetching early. On a return visit that head start was being thrown away: our offline helper answered those same requests a second time, Chrome refused to match the two, and each file was requested twice while the developer console filled with a warning per file, well over a hundred on a heavy page like the Club. The offline helper now leaves that code to the browser's own cache, which already keeps it for a year, and clears out the duplicate copy it had stored on your device. Return visits load with one request per file and a quiet console.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
 			"title": "Put any token's 3D scene on your own site, keyed by the pair address you already have",
 			"summary": "Token in 3D is now embeddable anywhere with a single iframe, and it accepts two identifiers instead of one. Chart terminals, launchpads and wallets name a market by its pair (pool) address, while three.ws keys tokens by mint, so /coin3d now takes ?pair= as well as ?mint= and resolves the rest itself through a new public endpoint, /api/coin/pair. Add ?embed=1 and the scene drops the chrome your own page owns, keeps one attribution link, and sends its links to a new tab instead of navigating your frame. Free, keyless, and no account: paste the iframe and it renders the live medallion, holder galaxy, graduation ring and real trade tape for that market.",
 			"tags": [

@@ -159,6 +159,14 @@
 			<description>A post in the @trythreews content queue can now name an earlier post to quote, so a follow-up can add the detail the original left out instead of repeating it. The first use quotes the $THREE token MCP announcement with the numbers behind the MCP Tool Catalog: 321 tools across 42 servers, 293 of them free, and 215 whose read-only label is checked against the source on every build.</description>
 		</item>
 		<item>
+			<title>Repeat visits stop downloading the app's code twice</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-20:Repeat visits stop downloading the app's code twice</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every page tells your browser which code it is about to need so it can start fetching early. On a return visit that head start was being thrown away: our offline helper answered those same requests a second time, Chrome refused to match the two, and each file was requested twice while the developer console filled with a warning per file, well over a hundred on a heavy page like the Club. The offline helper now leaves that code to the browser's own cache, which already keeps it for a year, and clears out the duplicate copy it had stored on your device. Return visits load with one request per file and a quiet console.</description>
+		</item>
+		<item>
 			<title>The @trythreews account now posts three times a day, every day</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:The @trythreews account now posts three times a day, every day</guid>

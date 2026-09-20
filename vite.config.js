@@ -3691,7 +3691,7 @@ const appConfig = {
 				// Pull in the Web Push handlers (push + notificationclick). Kept in
 				// public/push-sw.js as a classic script so the generated Workbox SW
 				// importScripts it without switching to an injectManifest build.
-				importScripts: ['/push-sw.js', '/share-target-sw.js', '/glance-sw.js'],
+				importScripts: ['/push-sw.js', '/share-target-sw.js', '/glance-sw.js', '/cache-cleanup-sw.js'],
 				// MPA: every route is a separate HTML file served by the server.
 				// No navigation fallback — uncached navigations go to the network.
 				// HTML is intentionally excluded from globPatterns so it is never
@@ -3747,29 +3747,22 @@ const appConfig = {
 						urlPattern: /^https?:\/\/[^/]+\/api\/widgets\//i,
 						handler: 'NetworkOnly',
 					},
-					// Content-hashed build chunks under /assets/ (e.g.
-					// assets/marketplace-Cn45GLvE.js, assets/index-<hash>.css).
-					// These are immutable: the filename changes whenever the bytes
-					// change, so the cached copy can NEVER be stale for a URL that
-					// still resolves. StaleWhileRevalidate is correct and fast here —
-					// serve instantly, refresh in the background; a 404 during a
-					// deploy rollover is a non-fatal background miss the page's own
-					// dynamic import handles, never a broken SW install.
-					{
-						urlPattern: ({ url, request, sameOrigin }) =>
-							sameOrigin &&
-							url.pathname.startsWith('/assets/') &&
-							(request.destination === 'script' || request.destination === 'style'),
-						handler: 'StaleWhileRevalidate',
-						options: {
-							cacheName: 'app-assets',
-							expiration: {
-								maxEntries: 200,
-								maxAgeSeconds: 60 * 60 * 24 * 30,
-							},
-							cacheableResponse: { statuses: [200] },
-						},
-					},
+					// Content-hashed build chunks under /assets/ are deliberately NOT
+					// routed: no rule here may match them, so the SW never calls
+					// respondWith and the browser fetches them as if no SW existed.
+					// They used to sit behind a StaleWhileRevalidate 'app-assets'
+					// cache, which bought nothing and cost a lot. Nothing, because
+					// the server already sends them `immutable, max-age=1y` (the HTTP
+					// cache serves a repeat visit instantly) and navigations are
+					// NetworkOnly, so cached chunks can never boot a page offline.
+					// A lot, because Chrome refuses to reuse a <link rel=modulepreload>
+					// for a script whose fetch the SW answers ("found, but is not used
+					// because it is a cross-world service worker resource mismatch").
+					// Every preloaded chunk was therefore requested twice on every
+					// repeat visit, and the console filled with one warning per chunk,
+					// well over a hundred on a heavy page like /club. Measured against
+					// production on /pricing: 0, 4, then 10 warnings across three
+					// visits with the route, 0, 0, 0 without it.
 					// Stable-named same-origin scripts & styles served verbatim from
 					// public/ (/style.css, /marketplace.css, /nav.css, /mobile.css,
 					// /nav.js, /footer.js, ...). Unlike the hashed chunks above these
@@ -3782,11 +3775,12 @@ const appConfig = {
 					// FOUC users hit "again" after every deploy). NetworkFirst pins
 					// the live deploy's CSS/JS to its HTML — always fetch fresh, fall
 					// back to cache only when offline. A short network timeout keeps
-					// repeat visits fast. Placed after the /assets/ rule so hashed
-					// chunks keep their immutable SWR fast path.
+					// repeat visits fast. /assets/ is excluded so hashed chunks stay
+					// unrouted (see above).
 					{
-						urlPattern: ({ request, sameOrigin }) =>
+						urlPattern: ({ url, request, sameOrigin }) =>
 							sameOrigin &&
+							!url.pathname.startsWith('/assets/') &&
 							(request.destination === 'script' || request.destination === 'style'),
 						handler: 'NetworkFirst',
 						options: {

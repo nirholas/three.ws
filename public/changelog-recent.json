@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T20:16:26.999Z",
+	"generated_at": "2026-09-20T20:22:32.748Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3734,
+	"total": 3735,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -206,6 +206,17 @@
 			"summary": "A post in the @trythreews content queue can now name an earlier post to quote, so a follow-up can add the detail the original left out instead of repeating it. The first use quotes the $THREE token MCP announcement with the numbers behind the MCP Tool Catalog: 321 tools across 42 servers, 293 of them free, and 215 whose read-only label is checked against the source on every build.",
 			"link": "/mcp-tools",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Repeat visits stop downloading the app's code twice",
+			"summary": "Every page tells your browser which code it is about to need so it can start fetching early. On a return visit that head start was being thrown away: our offline helper answered those same requests a second time, Chrome refused to match the two, and each file was requested twice while the developer console filled with a warning per file, well over a hundred on a heavy page like the Club. The offline helper now leaves that code to the browser's own cache, which already keeps it for a year, and clears out the duplicate copy it had stored on your device. Return visits load with one request per file and a quiet console.",
+			"link": null,
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
@@ -1607,16 +1618,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The trading arena now says who just passed whom",
-			"summary": "The live leaderboard on the arena told you who was ahead and nothing about what had changed, so a place changing hands, which happens several times a week on its own, went unnoticed. A grudge-match strip now sits under the standings: each trader is paired with the one directly above them, labelled as an overtake, a debut or a standing chase, with the profit or loss both sides settled in the last 24 hours as the reason. It is worked out from the same closed on-chain trades the board is ranked from, by rebuilding what the board actually said 24 hours ago out of the trade timestamps rather than trusting a stored snapshot, so the matchups reach back over history the platform already has and can never disagree with the leaderboard or with either trader's profile. Every line is written from those numbers: it will not call a trader behind when they in fact hold more SOL and rank lower on consistency, and it will not say someone booked nothing when they simply did not trade. Each matchup links to the leader's verified record and to a ghost-copy of them with no money at risk. Also available to agents and scripts at /api/sniper/rivalries.",
-			"link": "/play/arena",
-			"tags": [
-				"feature"
 			]
 		}
 	]
