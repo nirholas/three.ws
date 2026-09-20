@@ -2382,7 +2382,7 @@
 				{
 					"path": "/coin3d",
 					"title": "Token in 3D",
-					"description": "Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress.",
+					"description": "Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress. Address it by mint or by the pair address a chart terminal uses, and embed it on any site with one iframe.",
 					"priority": 0.5,
 					"changefreq": "weekly",
 					"added": "2026-06-02"
@@ -3085,6 +3085,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/coin3d-embed",
+					"title": "Docs · Token in 3D, as an embed",
+					"description": "Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-20"
 				},
 				{
 					"path": "/docs/coin-wars",
@@ -6483,6 +6491,20 @@
 					"changefreq": "weekly",
 					"added": "2026-07-31",
 					"indexable": false
+				},
+				{
+					"path": "/prompts.json",
+					"title": "prompts.json",
+					"description": "The prompt library as structured data: categories, setup tiers, tags, and every prompt with what it returns.",
+					"indexable": false,
+					"added": "2026-09-20"
+				},
+				{
+					"path": "/prompts.txt",
+					"title": "prompts.txt",
+					"description": "The prompt library as plain text, for piping straight into an assistant.",
+					"indexable": false,
+					"added": "2026-09-20"
 				},
 				{
 					"path": "/llms.txt",

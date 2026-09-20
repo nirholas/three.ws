@@ -71,12 +71,54 @@ const hud = document.getElementById('hud');
 const statusEl = document.getElementById('status');
 
 // ── URL params ──────────────────────────────────────────────────────────────
+// `mint` is not const: a scene can also be addressed by `pair`, the pool account
+// a DEX terminal names its markets by, and that is resolved to a mint on boot.
 const params = new URLSearchParams(location.search);
-const mint = (params.get('mint') || '').trim();
+let mint = (params.get('mint') || '').trim();
+const pair = (params.get('pair') || '').trim();
 const network = params.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+
+// Embed mode: this page is inside someone else's frame. It drops the orbit hint
+// for the host's own chrome, keeps an attribution link back to three.ws, and
+// sends every outbound link to a new tab instead of navigating the frame.
+const embedded = params.get('embed') === '1';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const isPlausibleMint = (s) => BASE58_RE.test(String(s || '').trim());
+
+// The canonical full-page URL for whatever this scene is showing, used by the
+// attribution link and by every "open on three.ws" action in embed mode.
+function fullPageUrl() {
+	return mint ? `/coin3d?mint=${encodeURIComponent(mint)}` : '/coin3d';
+}
+
+/**
+ * Resolve a pool/pair address to the mint it trades, through /api/coin/pair.
+ *
+ * DEX terminals key a market by its pool account, so an embed dropped onto a
+ * pair page has the pair and no mint. Errors are tagged so the caller can tell
+ * "this pair is not indexed anywhere" apart from "we could not ask".
+ *
+ * @param {string} pool
+ * @returns {Promise<string>} the base token mint
+ */
+async function mintForPair(pool) {
+	let res;
+	try {
+		res = await fetch(`/api/coin/pair?address=${encodeURIComponent(pool)}&network=solana`, {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(12_000),
+		});
+	} catch {
+		throw Object.assign(new Error('Could not reach the market index.'), { transport: true });
+	}
+	if (res.status === 404) throw new Error('No indexed market for this pair address.');
+	if (!res.ok) throw Object.assign(new Error(`Market index returned ${res.status}.`), { transport: true });
+	const data = await res.json();
+	const address = data?.token?.address;
+	if (!isPlausibleMint(address)) throw new Error('That pair does not trade a Solana token.');
+	return address;
+}
 
 // ── MCP client (JSON-RPC over the public read-only endpoint) ─────────────────
 let rpcId = 0;
@@ -1257,8 +1299,118 @@ function setPageTitle(text) {
 	document.title = text;
 }
 
+// The embed's own empty state. The marketing landing (a search box and a
+// launches grid) is the wrong thing to put inside a partner's panel, so a frame
+// that arrives without a token says what it needs instead.
+function renderEmbedEmpty() {
+	setStatus(
+		'empty',
+		'No token selected',
+		'Add ?mint= or ?pair= to this embed URL to render a token in 3D.',
+		{ href: '/coin3d', label: 'Open three.ws' },
+	);
+}
+
+// Persistent attribution inside someone else's page: who rendered this, and a
+// way out to the full scene. Only in embed mode; the standalone page has nav.
+//
+// Called on entering embed mode and again once a token resolves, so the link
+// exists in EVERY state (loading, empty, error, populated) rather than only on
+// the path where a scene came up, and points at that token once there is one.
+function mountAttribution() {
+	const a = document.querySelector('.c3d-attrib') || document.createElement('a');
+	a.className = 'c3d-attrib';
+	a.href = fullPageUrl();
+	a.target = '_blank';
+	a.rel = 'noopener';
+	a.title = mint ? 'Open this token in 3D on three.ws' : 'Open three.ws';
+	a.innerHTML = '<span>3D by</span><b>three.ws</b>';
+	if (!a.isConnected) document.body.appendChild(a);
+}
+
+// Every link this page renders (HUD links, the oracle pill, status actions)
+// must leave the host's frame rather than navigate it to a full three.ws page.
+//
+// The anchors are written by several innerHTML renders that run at different
+// times, and some land long after first paint (the oracle pill, the trade tape),
+// so stamping the render sites would leave whichever one is added next behind.
+// `<base target="_blank">` looks like the one-line answer and is not: Chromium
+// does not apply it to these links, and a frame clicked straight through to
+// /launches with it in place. So the rule is enforced on the DOM itself.
+function keepLinksOutOfFrame() {
+	const stamp = (el) => {
+		if (!el.matches?.('a[href]:not([target])')) return;
+		el.target = '_blank';
+		el.rel = el.rel ? `${el.rel} noopener` : 'noopener';
+	};
+	const stampTree = (root) => {
+		if (root.nodeType !== 1) return;
+		stamp(root);
+		for (const a of root.querySelectorAll('a[href]:not([target])')) stamp(a);
+	};
+	stampTree(document.documentElement);
+	new MutationObserver((records) => {
+		for (const r of records) for (const node of r.addedNodes) stampTree(node);
+	}).observe(document.body, { childList: true, subtree: true });
+}
+
+// Tell the host page the scene is up. Same-origin hosts can read `__coin3d`
+// directly; a cross-origin one (the normal case for a partner embed) cannot
+// touch the frame at all, so the payload it is allowed to act on is posted out.
+// Only the public snapshot fields travel, and the host is free to ignore it.
+function announceReady(snapshot, sceneOk) {
+	const detail = { snapshot, sceneOk };
+	dispatchEvent(new CustomEvent('coin3d:ready', { detail }));
+	if (!embedded || parent === window) return;
+	parent.postMessage(
+		{
+			source: 'three.ws/coin3d',
+			type: 'coin3d:ready',
+			sceneOk,
+			token: {
+				mint,
+				name: snapshot.name || null,
+				symbol: snapshot.symbol || null,
+			},
+		},
+		'*',
+	);
+}
+
 async function main() {
+	if (embedded) {
+		document.documentElement.setAttribute('data-embed', '1');
+		keepLinksOutOfFrame();
+		mountAttribution();
+	}
+
+	// A pair address is the identifier a DEX terminal has; resolve it to the
+	// mint everything downstream is keyed by before any of it runs.
+	if (!mint && pair) {
+		if (!isPlausibleMint(pair)) {
+			setStatus('error', 'Invalid pair address', `"${pair}" is not a valid Solana pool address.`, {
+				href: '/coin3d',
+				label: 'Try another token',
+			});
+			return;
+		}
+		setStatus('loading', 'Resolving market…', 'Looking up the token this pair trades.');
+		try {
+			mint = await mintForPair(pair);
+		} catch (err) {
+			setStatus('error', "Couldn't resolve this pair", err.message, {
+				href: '/coin3d',
+				label: 'Open three.ws',
+			});
+			return;
+		}
+	}
+
 	if (!mint) {
+		if (embedded) {
+			renderEmbedEmpty();
+			return;
+		}
 		renderLanding();
 		return;
 	}
@@ -1328,10 +1480,14 @@ async function main() {
 	// Refresh market figures periodically so price/volume stay live.
 	marketTimer = setInterval(() => fetchMarket(mint).then(applyMarket), 60_000);
 
+	// Re-point the attribution now the token is known (it was mounted at boot so
+	// the loading and error states carry it too).
+	if (embedded) mountAttribution();
+
 	// Expose the live scene for embedders and host pages (e.g. to react to the
 	// loaded snapshot or drive the camera from the outside).
 	window.__coin3d = { renderer, scene, camera, controls, snapshot, sceneOk };
-	dispatchEvent(new CustomEvent('coin3d:ready', { detail: { snapshot, sceneOk } }));
+	announceReady(snapshot, sceneOk);
 }
 
 // When WebGL can't render, hide the dead canvas and explain it — but the HUD,

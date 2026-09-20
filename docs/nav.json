@@ -454,6 +454,10 @@
 					"path": "coin-pages"
 				},
 				{
+					"label": "Token in 3D, as an embed",
+					"path": "coin3d-embed"
+				},
+				{
 					"label": "Agent Sniper",
 					"path": "agent-sniper"
 				},

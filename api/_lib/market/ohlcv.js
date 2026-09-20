@@ -23,6 +23,7 @@ import { cexCandleProviders } from '../cex-public.js';
 const BASE = 'https://api.geckoterminal.com/api/v2';
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
 const DEXSCREENER_TOKENS = 'https://api.dexscreener.com/latest/dex/tokens';
+const DEXSCREENER_PAIRS = 'https://api.dexscreener.com/latest/dex/pairs';
 const UA = 'three.ws-granite-oracle/1.0';
 
 // Small in-memory cache: GeckoTerminal's free tier is ~30 req/min and candle
@@ -43,9 +44,20 @@ const TRENDING_FRESH_S = 60;
 // NOT retried.
 const MAX_ATTEMPTS = 3;
 
-// DexScreener chain slug for a GeckoTerminal network id. The two agree for the
-// networks this oracle serves; anything else maps to itself.
-const DEX_CHAIN_BY_NETWORK = { solana: 'solana', eth: 'ethereum', base: 'base', bsc: 'bsc' };
+// DexScreener chain slug for a GeckoTerminal network id. The two disagree on
+// four of the eight networks served here, and an identity fallback quietly
+// asked DexScreener for chain "polygon_pos" (which it has never heard of), so
+// every rung-2 lookup on those chains missed rather than failing loudly.
+const DEX_CHAIN_BY_NETWORK = {
+	solana: 'solana',
+	eth: 'ethereum',
+	base: 'base',
+	bsc: 'bsc',
+	polygon_pos: 'polygon',
+	arbitrum: 'arbitrum',
+	optimism: 'optimism',
+	avax: 'avalanche',
+};
 
 const num = (v) => {
 	const n = Number(v);
@@ -195,6 +207,96 @@ export async function topPoolForToken(mint, network = 'solana') {
 		`ohlcv:toppool:v1:${network}:${mint}`,
 		POOL_FRESH_S,
 		() => topPoolLive(mint, network),
+		{ staleTtlSeconds: LKG_STALE_S },
+	);
+}
+
+// ── The inverse lookup: pool address -> the token that pool trades ───────────
+//
+// Every rung above answers "where does this token trade". This one answers the
+// question a partner surface asks instead: a chart terminal names a market by
+// its PAIR address, not by a mint, so a link or an embed arriving from one
+// carries the pool and nothing else. Resolving it here means an embed can be
+// keyed by whatever identifier the host page already has.
+
+const tokenRef = (address, meta = {}) =>
+	address ? { address, name: meta.name || null, symbol: meta.symbol || null } : null;
+
+// Rung 2: DexScreener's own record for the pair. It carries base and quote
+// token metadata inline, so it answers the whole shape in one call.
+function dexscreenerPairProvider(pool, network) {
+	const chain = DEX_CHAIN_BY_NETWORK[network];
+	if (!chain) return null;
+	return {
+		name: 'dexscreener-pair',
+		url: `${DEXSCREENER_PAIRS}/${chain}/${encodeURIComponent(pool)}`,
+		parse: async (r) => {
+			const data = await r.json();
+			const pair = (Array.isArray(data?.pairs) ? data.pairs : [])[0] || data?.pair || null;
+			if (!pair?.baseToken?.address) return null;
+			return {
+				pool: pair.pairAddress || pool,
+				token: tokenRef(pair.baseToken.address, pair.baseToken),
+				quote: tokenRef(pair.quoteToken?.address, pair.quoteToken || {}),
+				dex: pair.dexId || null,
+				pairName:
+					pair.baseToken.symbol && pair.quoteToken?.symbol
+						? `${pair.baseToken.symbol} / ${pair.quoteToken.symbol}`
+						: null,
+			};
+		},
+	};
+}
+
+async function tokenForPoolLive(pool, network) {
+	let geckoErr = null;
+	try {
+		// include= is what carries the token names and symbols; without it the
+		// relationships hold ids only and the caller would have to re-fetch both.
+		const json = await gecko(`/networks/${network}/pools/${pool}?include=base_token,quote_token`);
+		const d = json?.data;
+		const baseId = d?.relationships?.base_token?.data?.id;
+		const address = bareId(baseId);
+		if (address) {
+			const included = new Map((json.included || []).map((i) => [i.id, i.attributes || {}]));
+			const quoteId = d.relationships?.quote_token?.data?.id;
+			return {
+				pool: d.attributes?.address || bareId(d.id),
+				token: tokenRef(address, included.get(baseId) || {}),
+				quote: tokenRef(bareId(quoteId), included.get(quoteId) || {}),
+				// The dex id is NOT network-prefixed ("raydium", "pumpswap"), so it
+				// must not go through bareId(): that would cut "pump_fun" to "fun".
+				dex: d.relationships?.dex?.data?.id || null,
+				pairName: d.attributes?.name || null,
+			};
+		}
+		geckoErr = tagged(`no base token for pool ${pool}`, 404);
+	} catch (e) {
+		geckoErr = e;
+	}
+	// GeckoTerminal has not indexed the pool, or is down. A young pump.fun pair
+	// is exactly this case, and it is the case a partner embed hits most.
+	const provider = dexscreenerPairProvider(pool, network);
+	const hit = provider
+		? await fetchFirstOrNull([provider], { timeoutMs: 6000, label: `pool-token:${pool}` })
+		: null;
+	if (hit) return hit;
+	throw geckoErr;
+}
+
+/**
+ * The token a pool trades, from its pool (pair) address.
+ *
+ * @param {string} pool     On-chain pool/pair account address.
+ * @param {string} network  GeckoTerminal network id.
+ * @returns {Promise<{ pool: string, token: {address,name,symbol}, quote: object|null, dex: string|null, pairName: string|null }>}
+ * @throws {Error & { status: number }} 404 when no source knows the pool.
+ */
+export async function tokenForPool(pool, network = 'solana') {
+	return cacheWrapLastGood(
+		`ohlcv:pooltoken:v1:${network}:${pool}`,
+		POOL_FRESH_S,
+		() => tokenForPoolLive(pool, network),
 		{ staleTtlSeconds: LKG_STALE_S },
 	);
 }
