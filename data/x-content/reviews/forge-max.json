@@ -1,22 +1,33 @@
 {
 	"id": "forge-max",
-	"contentHash": "ad8c690fdf0b4d41e994302600fa89883fdb7d5de883db22f42b21ffdab817cf",
-	"reviewedAt": "2026-09-18T00:27:29.265Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "6638b3535ae260ccf7c0da85d80c742eef58c701c40b307f789c43dc777f5f10",
+	"reviewedAt": "2026-09-20T02:55:01.351Z",
+	"passed": false,
+	"blockers": [
+		"evidence:page https://three.ws/forge-max: browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+		"probe forge-max: no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads",
+		"editor (accuracy): The lone evidence check for the post's core claim failed: the Playwright browser was not installed, so the live page was never read and the numbers are unverified by a passing check. The attached screenshot does display the subtitle 'The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk.' and the pricing line 'up to 200,000 polygons', which corroborates the copy, but the automated evidence check must pass before publish.",
+		"editor verdict is revise"
+	],
 	"texts": [
 		"three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for."
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "200k-poly geometry, 4K PBR textures",
 				"kind": "evidence:page",
 				"target": "https://three.ws/forge-max",
-				"ok": true,
-				"detail": "live page shows \"The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk.\""
+				"ok": false,
+				"detail": "browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+			},
+			{
+				"kind": "probe",
+				"target": "forge-max",
+				"ok": false,
+				"detail": "no feature probe declared; add one to `probes` that proves the feature works, not just that its page loads"
 			},
 			{
 				"kind": "link",
@@ -27,16 +38,38 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
+			"accuracy": 3,
+			"clarity": 4,
+			"specificity": 4,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "200k-poly geometry, 4K PBR textures",
+				"problem": "The lone evidence check for the post's core claim failed: the Playwright browser was not installed, so the live page was never read and the numbers are unverified by a passing check. The attached screenshot does display the subtitle 'The highest-quality lane: 200k-poly geometry, 4K PBR textures, subject-aware engine routing. A $THREE holder perk.' and the pricing line 'up to 200,000 polygons', which corroborates the copy, but the automated evidence check must pass before publish.",
+				"fix": "Run npx playwright install, then re-run the review so the evidence:page check against https://three.ws/forge-max passes and confirms the quoted subtitle. If the live page text has changed, recapture forge-max-hero and update the copy to the live wording."
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "no feature probe declared",
+				"problem": "The probe check failed with 'no feature probe declared', so nothing proves the High tier actually generates at the pinned quality rather than just rendering a settings row.",
+				"fix": "Add a probe in the feature's probes config that exercises a Forge Max generation (or the tier gate) and returns a passing result before publish."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "the engine picked by what you asked for",
+				"problem": "'what you asked for' is a soft paraphrase of the page's 'subject-aware engine routing'; readers must infer it means the prompt's subject picks the engine.",
+				"fix": "If room allows, mirror the page wording: 'subject-aware engine routing' is 27 characters versus 35 and is the exact live phrase."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for."
@@ -45,7 +78,7 @@
 				"The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
 			]
 		},
-		"summary": "Every claim is verified against the live page, and the screenshot matches both the copy and the alt text exactly, including the pinned High tier with the $THREE badge. The post leads with checkable numbers, follows the 100-179 character band, includes one link, and violates no voice rules; ship it unchanged.",
+		"summary": "The copy matches what the attached live capture shows and the voice, length, and media all comply, but the automated page-verification check failed for an infrastructure reason (Playwright not installed) and no feature probe exists. Re-run the check with browsers installed and add the probe before publishing; the text itself can ship unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
