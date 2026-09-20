@@ -64,19 +64,16 @@ export const IDENTITY_REGISTRY_ABI = [
 	'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
 ];
 
-// Mirrors contracts/src/ReputationRegistry.sol exactly. That source is deployed
-// NOWHERE: an eth_call sweep on 2026-08-15 showed the canonical
-// REGISTRY_DEPLOYMENTS[*].reputationRegistry addresses (Base 8453, Base Sepolia
-// 84532) running the ERC-8004 reference implementation, whose interface is
-// readFeedback/getClients and which reverts on every selector below. Use this ABI
-// against your own deploy of contracts/src, not against the canonical addresses.
-// Shape notes:
-//   submitFeedback(uint256, int8 score, string uri)        — score is signed, [-100,100]
-//   getReputation(uint256) → (int256 avgX100, uint256 count) — pre-averaged ×100; divide for display
-//   FeedbackSubmitted(agentId, from, int8 score, string uri) — `from`, not `submitter`
-// The earlier `submitReputation` / `(uint256 totalScore, uint256 count)` shape
-// did NOT match the contract: ethers mis-decoded a signed average as a raw total
-// and the write selector reverted. Kept byte-identical with sdk/src/erc8004/abi.js.
+// LEGACY dialect. Mirrors contracts/src/ReputationRegistry.sol exactly. That source
+// is deployed NOWHERE by us: the canonical REGISTRY_DEPLOYMENTS[*].reputationRegistry
+// addresses run the ERC-8004 reference implementation (REPUTATION_REFERENCE_ABI
+// below), which reverts on every selector here. This ABI only answers on an instance
+// someone deployed from contracts/src themselves. Never read reputation with it
+// directly: go through src/erc8004/reputation-read.js, which speaks both dialects.
+// Shape notes: submitFeedback takes a signed int8 score in [-100, 100]; getReputation
+// returns the average already multiplied by 100 alongside the count, so divide once
+// for display and never by count; the FeedbackSubmitted event names the reviewer
+// `from`, not `submitter`.
 export const REPUTATION_REGISTRY_ABI = [
 	'function submitFeedback(uint256 agentId, int8 score, string uri) external',
 	'function getReputation(uint256 agentId) external view returns (int256 avgX100, uint256 count)',
@@ -91,6 +88,25 @@ export const REPUTATION_REGISTRY_ABI = [
 	'event FeedbackSubmitted(uint256 indexed agentId, address indexed from, int8 score, string uri)',
 	'event ReputationStaked(uint256 indexed agentId, address indexed staker, uint8 score, uint256 value)',
 	'event StakeWithdrawn(uint256 indexed agentId, address indexed staker, uint256 value)',
+];
+
+// REFERENCE dialect: the ERC-8004 `ReputationRegistryUpgradeable` that actually runs at
+// the canonical addresses. Verified 2026-09-20 against the Basescan-verified
+// implementation behind 0x8004BAa1... on Base and by eth_call. Two things differ from
+// the legacy shape and both matter:
+//   - getSummary REVERTS with "clientAddresses required" on an empty list. The caller
+//     must say whose feedback it counts; pass getClients(agentId) to count everyone.
+//   - giveFeedback reverts with "Self-feedback not allowed" for the agent's owner and
+//     operators, and there is no staking at all.
+export const REPUTATION_REFERENCE_ABI = [
+	'function giveFeedback(uint256 agentId, int128 value, uint8 valueDecimals, string tag1, string tag2, string endpoint, string feedbackURI, bytes32 feedbackHash) external',
+	'function revokeFeedback(uint256 agentId, uint64 feedbackIndex) external',
+	'function getSummary(uint256 agentId, address[] clientAddresses, string tag1, string tag2) external view returns (uint64 count, int128 summaryValue, uint8 summaryValueDecimals)',
+	'function getClients(uint256 agentId) external view returns (address[])',
+	'function getLastIndex(uint256 agentId, address clientAddress) external view returns (uint64)',
+	'function readFeedback(uint256 agentId, address clientAddress, uint64 feedbackIndex) external view returns (int128 value, uint8 valueDecimals, string tag1, string tag2, bool isRevoked)',
+	'function getIdentityRegistry() external view returns (address)',
+	'event NewFeedback(uint256 indexed agentId, address indexed clientAddress, uint64 feedbackIndex, int128 value, uint8 valueDecimals, string indexed indexedTag1, string tag1, string tag2, string endpoint, string feedbackURI, bytes32 feedbackHash)',
 ];
 
 /**

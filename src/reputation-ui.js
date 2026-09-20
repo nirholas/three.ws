@@ -113,7 +113,12 @@ export class ReputationDashboard {
 		]);
 
 		this.reputation = reputation;
-		this.reviews = reviews.sort((a, b) => b.blockNumber - a.blockNumber);
+		// Reviews arrive oldest-first. The reference registry has no block numbers to
+		// sort by, so newest-first there is just the reverse.
+		this.reviews =
+			reviews[0]?.blockNumber == null
+				? reviews.slice().reverse()
+				: reviews.sort((a, b) => b.blockNumber - a.blockNumber);
 		this.totalStakeWei = totalStakeWei;
 
 		// Fetch staker events for leaderboard (last 1000 blocks to avoid timeout).
@@ -309,6 +314,7 @@ export class ReputationDashboard {
 	_getLastReviewTime() {
 		if (this.reviews.length === 0) return '—';
 		const blockNum = this.reviews[0].blockNumber;
+		if (blockNum == null) return 'Recently';
 		if (blockNum < 0) return 'Just now';
 		// Approximate: 12s per block
 		const secondsAgo = Math.round(Date.now() / 1000) - Math.round(blockNum * 12);
@@ -359,10 +365,10 @@ export class ReputationDashboard {
 		div.className = `rep-review-item ${review.pending ? 'pending' : ''}`;
 
 		const starHtml = this._renderStars(review.score);
-		const explorerUrl = getExplorerUrl(this.chainId, review.txHash);
-		const txLink = explorerUrl
-			? `<a href="${explorerUrl}" target="_blank" rel="noopener">View tx</a>`
-			: `<span class="rep-tx-hash">${review.txHash.slice(0, 10)}…</span>`;
+		const explorerUrl = review.txHash ? getExplorerUrl(this.chainId, review.txHash) : null;
+		let txLink = '';
+		if (explorerUrl) txLink = `<a href="${explorerUrl}" target="_blank" rel="noopener">View tx</a>`;
+		else if (review.txHash) txLink = `<span class="rep-tx-hash">${review.txHash.slice(0, 10)}…</span>`;
 
 		div.innerHTML = `
 			<div class="rep-review-header">

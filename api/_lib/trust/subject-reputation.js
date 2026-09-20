@@ -361,7 +361,8 @@ async function scoreThreewsAgent(det, ts) {
 // ── ERC-8004 agent ───────────────────────────────────────────────────────────
 
 async function readErc8004(chainId, agentId) {
-	const { REGISTRY_DEPLOYMENTS, REPUTATION_REGISTRY_ABI, IDENTITY_REGISTRY_ABI } = await import('../../../src/erc8004/abi.js');
+	const { REGISTRY_DEPLOYMENTS, IDENTITY_REGISTRY_ABI } = await import('../../../src/erc8004/abi.js');
+	const { readAgentReputation } = await import('../../../src/erc8004/reputation-read.js');
 	const deployment = REGISTRY_DEPLOYMENTS[chainId];
 	if (!deployment) throw Object.assign(new Error(`ERC-8004 not deployed on chain ${chainId}`), { code: 'no_deployment' });
 	const { Contract } = await import('ethers');
@@ -370,11 +371,10 @@ async function readErc8004(chainId, agentId) {
 
 	const out = { average: null, count: 0, wallet: null };
 	if (deployment.reputationRegistry) {
-		const rep = new Contract(deployment.reputationRegistry, REPUTATION_REGISTRY_ABI, provider);
-		const [avgX100, count] = await rep.getReputation(BigInt(agentId));
-		const n = Number(count);
-		out.count = n;
-		out.average = n === 0 ? null : Number(avgX100) / 100;
+		const rep = await readAgentReputation({ address: deployment.reputationRegistry, runner: provider, agentId });
+		out.count = rep.count;
+		out.average = rep.count === 0 ? null : rep.average;
+		out.dialect = rep.dialect;
 	}
 	if (deployment.identityRegistry) {
 		try {

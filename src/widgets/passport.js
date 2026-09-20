@@ -6,19 +6,16 @@
  *   IdentityRegistry.ownerOf(agentId)      → wallet
  *   IdentityRegistry.tokenURI(agentId)     → registration JSON URL
  *   IdentityRegistry.name()/symbol()       → collection label
- *   ReputationRegistry.getReputation(id)   → (total, count) → average
- *   ReputationRegistry event log           → recent feedback (if enabled)
+ *   erc8004/reputation.js getReputation    → star average + count, on either registry dialect
+ *   erc8004/reputation.js getRecentReviews → recent feedback (if enabled)
  *   ValidationRegistry.getLatestValidation → optional proof row
  *
  * No wallet connection, no writes, no feedback submission. That's a v2 task.
  */
 
 import { Contract, JsonRpcProvider } from 'ethers';
-import {
-	IDENTITY_REGISTRY_ABI,
-	REPUTATION_REGISTRY_ABI,
-	REGISTRY_DEPLOYMENTS,
-} from '../erc8004/index.js';
+import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from '../erc8004/index.js';
+import { getReputation, getRecentReviews } from '../erc8004/reputation.js';
 import {
 	CHAIN_SLUGS,
 	PUBLIC_RPCS,
@@ -151,9 +148,7 @@ async function _refresh(state, panel) {
 	try {
 		const provider = new JsonRpcProvider(rpcURL, chainId, { staticNetwork: true });
 		const identity = new Contract(deployment.identityRegistry, IDENTITY_REGISTRY_ABI, provider);
-		const reputation = deployment.reputationRegistry
-			? new Contract(deployment.reputationRegistry, REPUTATION_REGISTRY_ABI, provider)
-			: null;
+		const hasReputation = Boolean(deployment.reputationRegistry);
 
 		const agentId = BigInt(config.agentId);
 
@@ -163,8 +158,8 @@ async function _refresh(state, panel) {
 			identity.tokenURI(agentId),
 			identity.name(),
 			identity.symbol(),
-			reputation && config.showReputation
-				? reputation.getReputation(agentId)
+			hasReputation && config.showReputation
+				? getReputation({ agentId, runner: provider, chainId })
 				: Promise.resolve(null),
 		]);
 
@@ -179,16 +174,12 @@ async function _refresh(state, panel) {
 		const symbol = symbolRes.status === 'fulfilled' ? symbolRes.value : '';
 		let reputationData = null;
 		if (repRes.status === 'fulfilled' && repRes.value) {
-			// getReputation returns (avgX100, count) — already averaged ×100 on-chain.
-			// Divide for display; never re-divide by count.
-			const [avgX100, count] = repRes.value;
-			const n = Number(count);
-			reputationData = { count: n, average: n === 0 ? 0 : Number(avgX100) / 100 };
+			reputationData = { count: repRes.value.count, average: repRes.value.average };
 		}
 
 		let feedback = [];
-		if (reputation && config.showRecentFeedback) {
-			feedback = await _fetchRecentFeedback(reputation, agentId, provider).catch(() => []);
+		if (hasReputation && config.showRecentFeedback) {
+			feedback = await _fetchRecentFeedback(agentId, provider, chainId).catch(() => []);
 		}
 
 		let manifest = null;
@@ -220,20 +211,16 @@ async function _refresh(state, panel) {
  * Query the last N ReputationSubmitted events for this agent.
  * Scoped to the recent history to avoid full-log scans.
  */
-async function _fetchRecentFeedback(contract, agentId, provider) {
-	const latest = await provider.getBlockNumber();
-	const LOOKBACK = 200_000;
-	const fromBlock = Math.max(0, latest - LOOKBACK);
-	const filter = contract.filters.ReputationSubmitted(agentId);
-	const events = await contract.queryFilter(filter, fromBlock, latest);
-	return events
+async function _fetchRecentFeedback(agentId, provider, chainId) {
+	const reviews = await getRecentReviews({ agentId, runner: provider, chainId });
+	return reviews
 		.slice(-5)
 		.reverse()
-		.map((ev) => ({
-			from: ev.args.submitter,
-			score: Number(ev.args.score),
-			comment: _sanitizeText(ev.args.comment || ''),
-			txHash: ev.transactionHash,
+		.map((r) => ({
+			from: r.from,
+			score: r.score,
+			comment: _sanitizeText(r.comment || ''),
+			txHash: r.txHash,
 		}));
 }
 

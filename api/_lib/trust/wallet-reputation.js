@@ -340,8 +340,8 @@ export async function scoreAgentsLite(agentIds = [], { concurrency = 8 } = {}) {
 
 async function readErc8004Registry(agent) {
 	if (!agent.erc8004_agent_id || !agent.chain_id) return { average: 0, count: 0 };
-	const { Contract } = await import('ethers');
-	const { REGISTRY_DEPLOYMENTS, REPUTATION_REGISTRY_ABI } = await import('../../../src/erc8004/abi.js');
+	const { REGISTRY_DEPLOYMENTS } = await import('../../../src/erc8004/abi.js');
+	const { readAgentReputation } = await import('../../../src/erc8004/reputation-read.js');
 	const deployment = REGISTRY_DEPLOYMENTS[agent.chain_id];
 	if (!deployment?.reputationRegistry) return { average: 0, count: 0 };
 	// Shared EVM failover provider (override → Alchemy → curated public lanes) instead
@@ -349,10 +349,12 @@ async function readErc8004Registry(agent) {
 	// bot-wall that 403s server-side reads, so the registry read always failed.
 	const { evmFallbackProvider } = await import('../evm/rpc.js');
 	const provider = await evmFallbackProvider(agent.chain_id);
-	const contract = new Contract(deployment.reputationRegistry, REPUTATION_REGISTRY_ABI, provider);
-	const [avgX100, count] = await contract.getReputation(BigInt(agent.erc8004_agent_id));
-	const n = Number(count);
-	return { average: n === 0 ? 0 : Number(avgX100) / 100, count: n };
+	const rep = await readAgentReputation({
+		address: deployment.reputationRegistry,
+		runner: provider,
+		agentId: agent.erc8004_agent_id,
+	});
+	return { average: rep.average, count: rep.count, dialect: rep.dialect };
 }
 
 function buildEvidence(agent, { solRep, registry, holdsThree }) {

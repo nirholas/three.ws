@@ -18,7 +18,14 @@
 import { BrowserProvider } from 'ethers';
 import { CHAIN_META, switchChain, txExplorerUrl, readProvider } from './chain-meta.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
-import { submitReputation, stakeReputation, getTotalStake, getReputation, getRecentReviews } from './reputation.js';
+import {
+	submitReputation,
+	stakeReputation,
+	getTotalStake,
+	getReputation,
+	getRecentReviews,
+	supportsStaking,
+} from './reputation.js';
 import { log } from '../shared/log.js';
 import { getEthPriceUsd } from '../shared/usd-price.js';
 
@@ -58,6 +65,7 @@ export class ReputationPanel {
 		this._root = null;
 		this._stats = null;
 		this._totalStakeWei = 0n;
+		this._canStake = false;
 		this._reviews = [];
 	}
 
@@ -89,7 +97,7 @@ export class ReputationPanel {
 		const provider = readProvider(this._agent.chainId);
 
 		try {
-			[this._stats, this._totalStakeWei] = await Promise.all([
+			[this._stats, this._totalStakeWei, this._canStake] = await Promise.all([
 				getReputation({
 					agentId: this._agent.erc8004AgentId,
 					runner: provider,
@@ -100,6 +108,7 @@ export class ReputationPanel {
 					runner: provider,
 					chainId: this._agent.chainId,
 				}).catch(() => 0n),
+				supportsStaking({ chainId: this._agent.chainId, runner: provider }).catch(() => false),
 			]);
 		} catch (err) {
 			log.warn('[reputation-panel] getReputation failed:', err?.message);
@@ -162,10 +171,14 @@ export class ReputationPanel {
 					<span class="agent-reputation__row-score">${_score(r.score)}</span>
 					<span class="agent-reputation__row-from" title="${_esc(r.from)}">${_shortAddr(r.from)}</span>
 					${r.comment ? `<span class="agent-reputation__row-comment">${_esc(r.comment)}</span>` : ''}
-					<a class="agent-reputation__row-tx"
+					${
+						r.txHash
+							? `<a class="agent-reputation__row-tx"
 					   href="${_esc(txExplorerUrl(this._agent.chainId, r.txHash))}"
 					   target="_blank" rel="noopener noreferrer"
-					   aria-label="Open transaction in block explorer">↗</a>
+					   aria-label="Open transaction in block explorer">↗</a>`
+							: ''
+					}
 				</li>`,
 					)
 					.join('')}</ul>`
@@ -244,7 +257,7 @@ export class ReputationPanel {
 					<span>Comment (optional, public, on-chain)</span>
 					<input type="text" maxlength="280" placeholder="e.g. Great agent for X" />
 				</label>
-				<label class="agent-vouch-modal__stake-toggle" style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer">
+				${this._canStake ? `<label class="agent-vouch-modal__stake-toggle" style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer">
 					<input type="checkbox" class="agent-vouch-modal__stake-check" />
 					Stake ETH (optional, makes reputation economically meaningful)
 				</label>
@@ -256,7 +269,7 @@ export class ReputationPanel {
 							style="display:block;width:120px;margin-top:4px" />
 					</label>
 					<div class="agent-vouch-modal__stake-usd" style="font-size:12px;color:#888;margin-top:4px"></div>
-				</div>
+				</div>` : ''}
 				<div class="agent-vouch-modal__actions">
 					<button type="button" class="agent-vouch-modal__cancel">Cancel</button>
 					<button type="button" class="agent-vouch-modal__submit">Sign &amp; submit</button>
@@ -280,21 +293,22 @@ export class ReputationPanel {
 		const stakeAmountEl = dialog.querySelector('.agent-vouch-modal__stake-amount');
 		const stakeUsdEl = dialog.querySelector('.agent-vouch-modal__stake-usd');
 
-		stakeCheck.addEventListener('change', () => {
-			stakeInputs.style.display = stakeCheck.checked ? 'block' : 'none';
-		});
-
-		const updateUsdEstimate = async () => {
-			const eth = parseFloat(stakeAmountEl.value) || 0;
-			const price = await fetchEthPriceUsd();
-			stakeUsdEl.textContent = price ? `≈ $${(eth * price).toFixed(2)} USD` : '';
-		};
-		stakeAmountEl.addEventListener('input', updateUsdEstimate);
+		// The stake controls are only rendered where the registry supports staking.
+		if (stakeCheck) {
+			stakeCheck.addEventListener('change', () => {
+				stakeInputs.style.display = stakeCheck.checked ? 'block' : 'none';
+			});
+			stakeAmountEl.addEventListener('input', async () => {
+				const eth = parseFloat(stakeAmountEl.value) || 0;
+				const price = await fetchEthPriceUsd();
+				stakeUsdEl.textContent = price ? `≈ $${(eth * price).toFixed(2)} USD` : '';
+			});
+		}
 
 		submitBtn.addEventListener('click', async () => {
 			const score = Number(dialog.querySelector('input[name="score"]:checked')?.value || 0);
 			const comment = dialog.querySelector('.agent-vouch-modal__comment input').value.trim();
-			const useStake = stakeCheck.checked;
+			const useStake = Boolean(stakeCheck?.checked);
 			const stakeEth = useStake ? parseFloat(stakeAmountEl.value) || 0 : 0;
 
 			if (useStake && stakeEth < MIN_STAKE_ETH) {
