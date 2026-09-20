@@ -15,8 +15,13 @@ import {
 	escapeHtml as esc,
 } from './shared/coin-format.js';
 import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
+import { derivativePath } from './shared/derivative-slug.js';
 
 const $ = (id) => document.getElementById(id);
+
+// The exchange id for the profile currently on screen. Contract rows need it
+// to address their own /derivative/:venue/:symbol page.
+let pageId = null;
 
 // Matches the /exchange/:id route; falls back to the ?id= query for direct
 // links and dev proxies that don't rewrite the path.
@@ -426,18 +431,29 @@ function spotRow(t) {
 		</tr>`;
 }
 
+// A contract symbol leads to its own three.ws detail page (funding cost, basis,
+// cross-venue comparison); the venue's own trade screen stays reachable from
+// the icon beside it, so the row offers both without either shadowing the
+// other.
 function derivRow(t) {
 	const sym = esc(t.symbol || '—');
-	const symCell = t.trade_url
-		? `<a class="ex-pair-link" href="${esc(t.trade_url)}" target="_blank" rel="noopener noreferrer">${sym} <span class="ex-trade-inline" aria-hidden="true">↗</span></a>`
-		: `<span>${sym}</span>`;
+	const detail = pageId && t.symbol ? derivativePath(pageId, t.symbol) : null;
+	const symCell = detail
+		? `<a class="ex-pair-link" href="${esc(detail)}">${sym}</a>`
+		: t.trade_url
+			? `<a class="ex-pair-link" href="${esc(t.trade_url)}" target="_blank" rel="noopener noreferrer">${sym} <span class="ex-trade-inline" aria-hidden="true">↗</span></a>`
+			: `<span>${sym}</span>`;
+	const trade =
+		detail && t.trade_url
+			? `<a class="ex-trade" href="${esc(t.trade_url)}" target="_blank" rel="noopener noreferrer" aria-label="Trade ${sym} on this venue (opens in a new tab)">${TRADE_ICON}</a>`
+			: '';
 	const funding =
 		t.funding_rate != null
 			? `<span class="${t.funding_rate >= 0 ? 'cv-up' : 'cv-down'}">${t.funding_rate >= 0 ? '+' : ''}${t.funding_rate.toFixed(4)}%</span>`
 			: '—';
 	return `
 		<tr>
-			<td class="left"><span class="ex-pair">${symCell}</span></td>
+			<td class="left"><span class="ex-pair">${symCell}${trade}</span></td>
 			<td class="cv-mono">${esc(formatPrice(t.price))}</td>
 			<td class="cv-mono">${esc(formatPrice(t.index))}</td>
 			<td class="cv-mono">${funding}</td>
@@ -562,6 +578,7 @@ async function main() {
 		location.replace('/exchanges');
 		return;
 	}
+	pageId = id;
 	renderSkeletons();
 
 	let payload;

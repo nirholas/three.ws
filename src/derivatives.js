@@ -5,6 +5,7 @@
 // the /coins market-table pattern (src/coins-index.js).
 
 import { formatUsd, formatPrice, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
+import { derivativePath } from './shared/derivative-slug.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -164,6 +165,47 @@ function sortedTickers() {
 	return out;
 }
 
+// A row links to /derivative/:venue/:symbol when the feed resolved both halves
+// of that address. When it did not (an unmapped venue, or a symbol outside the
+// slug charset), the row renders as plain text rather than as a link that would
+// land on a 404.
+function contractHref(t) {
+	return t.venue_id && t.symbol ? derivativePath(t.venue_id, t.symbol) : null;
+}
+
+function marketRow(t) {
+	const href = contractHref(t);
+	const label = esc(t.market);
+	const nameCell = href
+		? `<a class="dv-link" href="${esc(href)}">${label}</a>`
+		: `<span class="nm">${label}</span>`;
+	const symbol = esc(t.symbol || '—');
+	const symbolCell = href ? `<a class="dv-link" href="${esc(href)}">${symbol}</a>` : symbol;
+	return `
+		<tr${href ? ` data-href="${esc(href)}"` : ''}>
+			<td class="left name-cell">${nameCell}</td>
+			<td class="left dim hide-sm cv-mono">${symbolCell}</td>
+			<td class="left">${t.index_id ? `<span class="dv-index">${esc(t.index_id)}</span>` : '<span class="dim">—</span>'}</td>
+			<td class="price">${esc(formatPrice(t.price))}</td>
+			${pctCell(t.change_24h)}
+			${fundingCell(t.funding_rate)}
+			<td class="dim hide-md">${esc(formatUsd(t.open_interest))}</td>
+			<td class="dim">${esc(formatUsd(t.volume_24h))}</td>
+		</tr>`;
+}
+
+// The name and symbol cells are real links, so keyboard and middle-click work
+// without help. This only adds the convenience of clicking anywhere else in
+// the row, and never hijacks a click that landed on the link itself.
+function wireRowLinks(scope) {
+	scope.querySelectorAll('tr[data-href]').forEach((tr) => {
+		tr.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			window.location.assign(tr.dataset.href);
+		});
+	});
+}
+
 function renderTable() {
 	const el = $('dv-market');
 	if (!state.tickers.length) {
@@ -189,21 +231,7 @@ function renderTable() {
 		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
-	const body = rows
-		.map(
-			(t) => `
-			<tr>
-				<td class="left name-cell"><span class="nm">${esc(t.market)}</span></td>
-				<td class="left dim hide-sm cv-mono">${esc(t.symbol || '—')}</td>
-				<td class="left">${t.index_id ? `<span class="dv-index">${esc(t.index_id)}</span>` : '<span class="dim">—</span>'}</td>
-				<td class="price">${esc(formatPrice(t.price))}</td>
-				${pctCell(t.change_24h)}
-				${fundingCell(t.funding_rate)}
-				<td class="dim hide-md">${esc(formatUsd(t.open_interest))}</td>
-				<td class="dim">${esc(formatUsd(t.volume_24h))}</td>
-			</tr>`,
-		)
-		.join('');
+	const body = rows.map(marketRow).join('');
 
 	el.innerHTML = `
 		<div class="cv-table-wrap">
@@ -212,6 +240,8 @@ function renderTable() {
 				<tbody>${body}</tbody>
 			</table>
 		</div>`;
+
+	wireRowLinks(el);
 
 	el.querySelectorAll('th[data-key]').forEach((th) => {
 		const activate = () => {

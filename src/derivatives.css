@@ -31,14 +31,45 @@
 	display: none;
 }
 
-/* Derivatives rows are informational, not links — no pointer cursor. */
+/* Every perp row that resolved to a contract page opens it; rows the feed
+   could not address stay inert, so the cursor has to follow the data. */
 .dv-table tbody tr {
 	cursor: default;
 }
-.dv-table .name-cell .nm {
+.dv-table tbody tr[data-href] {
+	cursor: pointer;
+	transition: background var(--duration-fast, 120ms);
+}
+.dv-table tbody tr[data-href]:hover,
+.dv-table tbody tr[data-href]:focus-within {
+	background: var(--cv-surface-2);
+}
+.dv-table .name-cell .nm,
+.dv-table .name-cell .dv-link {
 	max-width: 200px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	display: inline-block;
 	vertical-align: middle;
+}
+
+/* The cell links carry the row's affordance: readable at rest, obviously
+   interactive on hover, and focusable on their own for keyboard users. */
+.dv-link {
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px solid transparent;
+	transition:
+		color var(--duration-fast, 120ms),
+		border-color var(--duration-fast, 120ms);
+}
+.dv-link:hover,
+.dv-link:focus-visible {
+	color: var(--cv-accent);
+	border-bottom-color: currentColor;
+}
+.dv-link:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: 2px;
 }

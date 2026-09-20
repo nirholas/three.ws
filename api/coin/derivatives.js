@@ -23,6 +23,8 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch } from '../_lib/coingecko.js';
 import { fetchHyperliquidPerps } from '../_lib/hyperliquid.js';
 import { fetchDeribitSummary } from '../_lib/deribit.js';
+import { fetchDerivativeVenues, venueNameKey } from '../_lib/derivative-venues.js';
+import { contractSlug } from '../_lib/derivative-slug.js';
 
 let _cache = null; // { value, expiresAt }
 let _exCache = null; // { value, expiresAt }
@@ -34,6 +36,25 @@ const num = (v) => {
 	const n = typeof v === 'number' ? v : Number(v);
 	return Number.isFinite(n) ? n : null;
 };
+
+// Each row's `market` is a display name; the /derivative/:venue/:symbol detail
+// page is addressed by venue id plus a path-safe symbol slug. Resolving both
+// here is what makes a perp row clickable: the client links the row only when
+// the pair came back, so an unresolved venue costs a link, never a row. The
+// backup Hyperliquid path deliberately skips this, since its symbols are its
+// own and are not guaranteed to match the ones CoinGecko lists for that venue.
+async function attachVenueLinks(tickers) {
+	let byName = new Map();
+	try {
+		({ byName } = await fetchDerivativeVenues());
+	} catch {
+		return; // rows render unlinked rather than not at all
+	}
+	for (const t of tickers) {
+		t.venue_id = byName.get(venueNameKey(t.market))?.id ?? null;
+		t.slug = t.symbol ? contractSlug(t.symbol) : null;
+	}
+}
 
 // Exported for the paid Market Data API (api/_lib/market-data/) — the x402
 // market-derivatives endpoint sells the same perp table this page renders.
@@ -70,6 +91,7 @@ export async function buildDerivativeTickers() {
 			}))
 			.sort((a, b) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0))
 			.slice(0, 100);
+		await attachVenueLinks(tickers);
 	} catch {
 		// fall through to the Hyperliquid backup below
 	}
