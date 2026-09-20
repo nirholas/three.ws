@@ -5,23 +5,19 @@
 		"windowMinutes": 30,
 		"minimumMinutesApart": 180,
 		"dailyCap": 3,
-		"flagshipWeekdaysOnly": true,
-		"quietHoursUtc": [
-			"02:00",
-			"07:00"
-		],
+		"quietHoursUtc": null,
 		"slots": [
 			{
 				"tier": 3,
-				"at": "12:30"
-			},
-			{
-				"tier": 1,
-				"at": "16:00"
+				"at": "04:00"
 			},
 			{
 				"tier": 2,
-				"at": "19:30"
+				"at": "12:00"
+			},
+			{
+				"tier": 1,
+				"at": "20:00"
 			}
 		]
 	},
