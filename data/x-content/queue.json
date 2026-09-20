@@ -1743,6 +1743,115 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "three-hold-to-access",
+			"status": "approved",
+			"kind": "post",
+			"tier": 1,
+			"lane": "token",
+			"pattern": "number",
+			"notBefore": "2026-09-20T18:00:00Z",
+			"claims": [
+				{
+					"says": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Bronze $25+ in $THREE"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "High-quality generation (200k poly + PBR)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Game-Ready export (Unity/Unreal retopo + PBR)"
+						}
+					]
+				},
+				{
+					"says": "$500 held takes 20% off all compute",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Gold $500+ in $THREE"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "20% off all $THREE compute"
+						}
+					]
+				},
+				{
+					"says": "Draft and standard generation stay free",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Draft & Standard generation stay free, forever"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the hold-to-access page is served",
+					"url": "https://three.ws/three",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the high tier really is gated on holding $THREE",
+					"url": "https://three.ws/api/forge",
+					"method": "POST",
+					"body": {
+						"prompt": "a plain wooden stool",
+						"tier": "high"
+					},
+					"expect": {
+						"status": 402,
+						"contains": "three_hold_required"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the ladder shows the Bronze perks as live",
+					"steps": [
+						{
+							"goto": "https://three.ws/three"
+						},
+						{
+							"expect": "Hold $THREE"
+						},
+						{
+							"expect": "Game-Ready export"
+						}
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal.\n\nHolding, not spending, is the mechanism.\n\nthree.ws/three",
+					"media": [
+						{
+							"path": "public/x-media/three-hold/card.png",
+							"alt": "A three.ws card reading 'Hold $THREE. Unlock the fast lanes.' beside a browser window showing the hold-to-access ladder: Bronze at $25 with high-quality 200k poly generation and game-ready export both badged LIVE, Silver at $100, Gold at $500 with 20% off compute, and Genesis at $2,500"
+						}
+					]
+				},
+				{
+					"text": "$500 held takes 20% off all compute.\n\nDraft and standard generation stay free whether you hold any or not. The hold is for the expensive lanes, not the front door."
+				}
+			]
 		}
 	]
 }

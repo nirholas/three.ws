@@ -1,0 +1,128 @@
+{
+	"id": "three-hold-to-access",
+	"contentHash": "b7c315ca0970ec94af38eab47b93f4dde94b5e601437cca93d2f93635c9f6dfe",
+	"reviewedAt": "2026-09-20T18:03:06.569Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal.\n\nHolding, not spending, is the mechanism.\n\nthree.ws/three",
+		"$500 held takes 20% off all compute.\n\nDraft and standard generation stay free whether you hold any or not. The hold is for the expensive lanes, not the front door."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Bronze $25+ in $THREE\""
+			},
+			{
+				"claim": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"High-quality generation (200k poly + PBR)\""
+			},
+			{
+				"claim": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Game-Ready export (Unity/Unreal retopo + PBR)\""
+			},
+			{
+				"claim": "$500 held takes 20% off all compute",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Gold $500+ in $THREE\""
+			},
+			{
+				"claim": "$500 held takes 20% off all compute",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"20% off all $THREE compute\""
+			},
+			{
+				"claim": "Draft and standard generation stay free",
+				"kind": "evidence:page",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "live page shows \"Draft & Standard generation stay free, forever\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the hold-to-access page is served",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the high tier really is gated on holding $THREE",
+				"ok": true,
+				"detail": "HTTP 402, expectations met"
+			},
+			{
+				"kind": "probe:browser",
+				"target": "the ladder shows the Bronze perks as live",
+				"ok": true,
+				"detail": "3 steps passed"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/three",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "$500 held takes 20% off all compute",
+				"problem": "The live page and the image both say \"20% off all $THREE compute\"; dropping \"$THREE\" broadens the discount to compute paid by any means. Literally defensible but slightly wider than the verified text.",
+				"fix": "Optionally tighten to \"$500 held takes 20% off all $THREE compute.\" The post stays under 280 either way."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "$25 in held $THREE turns on 200k-poly generation",
+				"problem": "A first-time reader may not know what generation is being gated, though the link and image resolve it. Acceptable for the token lane audience.",
+				"fix": "No change required; if tightening anyway, \"$25 in held $THREE turns on 200k-poly model generation with PBR\" keeps the count under the band."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal.\n\nHolding, not spending, is the mechanism.\n\nthree.ws/three",
+				"$500 held takes 20% off all compute.\n\nDraft and standard generation stay free whether you hold any or not. The hold is for the expensive lanes, not the front door."
+			],
+			"altText": [
+				"A three.ws card reading 'Hold $THREE. Unlock the fast lanes.' beside a browser window showing the hold-to-access ladder: Bronze at $25 with high-quality 200k poly generation and game-ready export both badged LIVE, Silver at $100, Gold at $500 with 20% off compute, and Genesis at $2,500"
+			]
+		},
+		"summary": "Every claim ($25 Bronze gating 200k-poly/PBR and Unity/Unreal export, $500 Gold 20% compute discount, free draft/standard lanes) is verified against the live page, and the screenshot matches it including the LIVE badges. Voice, length, and media all conform; only optional tightening of \"all compute\" to \"all $THREE compute\" is suggested, so it ships as is.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

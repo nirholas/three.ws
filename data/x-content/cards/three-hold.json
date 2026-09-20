@@ -1,0 +1,11 @@
+{
+	"out": "public/x-media/three-hold/card.png",
+	"headline": "Hold $THREE.\nUnlock the fast lanes.",
+	"headlineSize": 68,
+	"body": "Holding, not spending. $25 held turns on 200k-poly generation with PBR and game-ready export. Draft and standard stay free either way.",
+	"frame": "browser",
+	"shot": "https://three.ws/three",
+	"label": "three.ws/three",
+	"scrollBy": 520,
+	"settleMs": 18000
+}
