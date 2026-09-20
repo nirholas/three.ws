@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>$THREE Launchpad</title>
+			<link>https://three.ws/three-launchpad</link>
+			<guid isPermaLink="false">2026-09-20:$THREE Launchpad</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.</description>
+		</item>
+		<item>
+			<title>A launchpad where every coin is bought with $THREE</title>
+			<link>https://three.ws/three-launchpad</link>
+			<guid isPermaLink="false">2026-09-20:A launchpad where every coin is bought with $THREE</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws bonding-curve launchpad is now priced in $THREE instead of SOL. A coin launched there for a 3D agent can only be bought with $THREE, its creator earns half of every trading fee in $THREE, and when it graduates, the roughly 12.3 million $THREE it raised is locked in its pool permanently. The new launchpad page shows the live curves with buy and sell straight from your wallet. The curve has been verified against Solana mainnet and opens for launches as soon as its settings are published on-chain.</description>
+		</item>
+		<item>
 			<title>Agent reputation on Base and other EVM chains now shows real on-chain reviews</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-20:Agent reputation on Base and other EVM chains now shows real on-chain reviews</guid>

@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-09-20T04:32:12.785Z",
+	"generated_at": "2026-09-20T04:55:28.651Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3715,
+	"total": 3717,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-20",
+			"type": "launch",
+			"title": "$THREE Launchpad",
+			"summary": "A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.",
+			"link": "/three-launchpad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "A launchpad where every coin is bought with $THREE",
+			"summary": "The three.ws bonding-curve launchpad is now priced in $THREE instead of SOL. A coin launched there for a 3D agent can only be bought with $THREE, its creator earns half of every trading fee in $THREE, and when it graduates, the roughly 12.3 million $THREE it raised is locked in its pool permanently. The new launchpad page shows the live curves with buy and sell straight from your wallet. The curve has been verified against Solana mainnet and opens for launches as soon as its settings are published on-chain.",
+			"link": "/three-launchpad",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-09-20",
 			"type": "update",
@@ -1596,28 +1616,6 @@
 			"tags": [
 				"improvement",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "update",
-			"title": "Avatars of people now come off the stronger lane, and stop standing on a slab of their own backdrop",
-			"summary": "Two things were quietly holding avatars back. The first: our own docs said that asking for a 3D person always ran on the strongest engine we host, the one that is best at faces and bodies. The code was still sending those requests to the faster, weaker engine, so every avatar came back off the wrong lane. Side by side on the same six descriptions, the weaker lane returned smeared, faceless figures with mitten hands and once no figure at all, while the stronger one returned people you can recognise. Avatars now go where the docs always said they did. The second: when you describe a person in words, we paint a reference picture first and sculpt the model from it. That picture has a plain background, and we had assumed plain was harmless. It is not. The sculptor was treating the backdrop as part of the scene and building it in, so four of six test figures came out standing on a full-size slab of their own background and two were swallowed by it entirely. Written descriptions now get the same background cutout that uploaded photos already got.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "update",
-			"title": "Buttons that looked dead now respond, and the whole site paints from one palette",
-			"summary": "A consistency pass across the platform. Fifty controls set the clickable cursor but had no hover styling at all, so the pointer changed shape and the button did not, which made working controls read as broken; the marketplace, Widget Studio, the brain workspace, the pump dashboard, agent detail and the on-chain deploy panel now all answer under the pointer, on the same timing. The retry buttons on an agent page were the worst case, because they only appear after something already failed. Separately, 73 colours were still typed in by hand across 24 stylesheets instead of coming from the shared palette, which is why a handful of panels stayed dark when you switched to the light theme and why some captions drifted a shade off everywhere else; they now all read from one source. Eight standalone pages that had quietly grown their own private palette (the demos, Widget Studio, the dashboard sub-pages, the print insert, agent detail) were folded back onto the shared one, so they also pick up the site-wide keyboard focus ring and the reduced-motion setting for the first time. Two new checks keep both from creeping back.",
-			"link": "/marketplace",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

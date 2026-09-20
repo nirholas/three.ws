@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-20",
+			"title": "A launchpad where every coin is bought with $THREE",
+			"summary": "The three.ws bonding-curve launchpad is now priced in $THREE instead of SOL. A coin launched there for a 3D agent can only be bought with $THREE, its creator earns half of every trading fee in $THREE, and when it graduates, the roughly 12.3 million $THREE it raised is locked in its pool permanently. The new launchpad page shows the live curves with buy and sell straight from your wallet. The curve has been verified against Solana mainnet and opens for launches as soon as its settings are published on-chain.",
+			"tags": [
+				"feature"
+			],
+			"link": "/three-launchpad"
+		},
+		{
+			"date": "2026-09-20",
 			"title": "Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation",
 			"summary": "New open-source contracts. SkinHook turns a wearable 3D item into a fixed-supply coin with its own pool: wearing it locks one token, so every wearer shrinks the tradable supply, and the creator's royalty is taken inside the swap where it cannot be skipped, with a share for the site that referred the sale. AgentTierHook gives ERC-8004 agents a lower trading fee as their on-chain reputation grows, with liquidity providers keeping every fee. Both are tested against the real Uniswap v4 contracts and are not deployed yet.",
 			"tags": [

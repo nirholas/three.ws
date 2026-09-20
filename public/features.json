@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T04:32:12.748Z",
+	"generated_at": "2026-09-20T04:55:28.609Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1782,6 +1782,16 @@
 					"title": "Launch Studio: 50 ways to mint a coin",
 					"description": "A catalog of 50 coin-launch use cases: reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
 					"added": "2026-06-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/three-launchpad",
+					"title": "$THREE Launchpad",
+					"description": "A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.",
+					"added": "2026-09-20",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

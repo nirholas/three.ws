@@ -1094,6 +1094,12 @@ URL: https://three.ws/launch-studio
 
 A catalog of 50 coin-launch use cases: reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.
 
+### $THREE Launchpad
+
+URL: https://three.ws/three-launchpad
+
+A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.
+
 ### Agent Launches
 
 URL: https://three.ws/launches

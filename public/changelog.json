@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-09-20T04:32:12.761Z",
+	"generated_at": "2026-09-20T04:55:28.627Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-20",
+			"type": "launch",
+			"title": "$THREE Launchpad",
+			"summary": "A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.",
+			"link": "/three-launchpad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "A launchpad where every coin is bought with $THREE",
+			"summary": "The three.ws bonding-curve launchpad is now priced in $THREE instead of SOL. A coin launched there for a 3D agent can only be bought with $THREE, its creator earns half of every trading fee in $THREE, and when it graduates, the roughly 12.3 million $THREE it raised is locked in its pool permanently. The new launchpad page shows the live curves with buy and sell straight from your wallet. The curve has been verified against Solana mainnet and opens for launches as soon as its settings are published on-chain.",
+			"link": "/three-launchpad",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-09-20",
 			"type": "update",
