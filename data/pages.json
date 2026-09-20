@@ -2807,7 +2807,7 @@
 				},
 				{
 					"path": "/docs/globe",
-					"title": "Docs \u00b7 Global Intel Globe",
+					"title": "Docs · Global Intel Globe",
 					"description": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4943,7 +4943,7 @@
 				},
 				{
 					"path": "/docs/doc-freshness",
-					"title": "Docs \u00b7 Doc freshness, keeping docs true to the code",
+					"title": "Docs · Doc freshness, keeping docs true to the code",
 					"description": "Every doc is bound to the code it names, and git decides whether that code moved after the page was last written or last reviewed. How the measurement works, what each status means, how to record that you checked a page, and where the check runs.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -6151,7 +6151,7 @@
 					"description": "three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback. The DEXTools wallet now holds 2.47M $three.",
 					"priority": 0.6,
 					"changefreq": "monthly",
-					"lastmod": "2026-09-18",
+					"lastmod": "2026-06-08",
 					"added": "2026-06-09"
 				},
 				{
