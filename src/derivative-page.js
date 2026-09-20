@@ -336,7 +336,10 @@ function renderFunding(p) {
 							value="${state.positionUsd}" aria-label="Position size in US dollars" />
 					</div>
 				</div>
-				<div class="dc-calc-out" id="dc-calc-out">${fundingOutput(cost, longsPay)}</div>
+				<div>
+					<p class="dc-calc-cap">Paid by the ${esc(longsPay ? 'long' : 'short')} at the current rate</p>
+					<div class="dc-calc-out" id="dc-calc-out">${fundingOutput(cost)}</div>
+				</div>
 			</div>
 		</section>`;
 
@@ -344,20 +347,19 @@ function renderFunding(p) {
 	input.addEventListener('input', () => {
 		const raw = Number(input.value);
 		state.positionUsd = Number.isFinite(raw) && raw >= 0 ? raw : 0;
-		$('dc-calc-out').innerHTML = fundingOutput(
-			fundingCost(c.funding_rate, state.positionUsd),
-			longsPay,
-		);
+		$('dc-calc-out').innerHTML = fundingOutput(fundingCost(c.funding_rate, state.positionUsd));
 	});
 }
 
-function fundingOutput(cost, longsPay) {
+// All three figures are the same outflow over three horizons, so all three
+// carry the same treatment. Colouring only two of them read as if the per
+// interval number were a different kind of thing.
+function fundingOutput(cost) {
 	if (!cost) return '';
-	const side = longsPay ? 'long' : 'short';
 	const cell = (k, v) =>
 		`<div><p class="k">${esc(k)}</p><p class="v cv-down">${esc(formatUsdExact(v))}</p></div>`;
 	return [
-		`<div><p class="k">Paid by the ${esc(side)}</p><p class="v">${esc(formatUsdExact(cost.perInterval))}</p></div>`,
+		cell('Per interval', cost.perInterval),
 		cell('Per day', cost.perDay),
 		cell('Per year', cost.perYear),
 	].join('');
