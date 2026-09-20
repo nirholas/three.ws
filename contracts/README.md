@@ -28,6 +28,8 @@ contracts are additional surfaces.
 | `AgentPayments` | [`src/AgentPayments.sol`](./src/AgentPayments.sol) | Payments in, split into authority and buyback shares, buyback swaps and burns | Not deployed. See [`AGENT_PAYMENTS.md`](./AGENT_PAYMENTS.md) |
 | `GreenfieldVault` | [`src/GreenfieldVault.sol`](./src/GreenfieldVault.sol) | Pay-to-unlock marketplace over a real BNB Greenfield cross-chain permission grant | Not deployed to a public chain; proven on an anvil fork |
 | `WorldMoves` | [`src/WorldMoves.sol`](./src/WorldMoves.sol) | Event-only move stream for the Agora world. No value, no admin | Not deployed to a public chain |
+| `SkinHook` | [`v4-hooks/src/SkinHook.sol`](./v4-hooks/src/SkinHook.sol) | Uniswap v4 hook: wearable 3D items as fixed-supply coins, wear-to-lock, in-swap creator royalty, referrer share | Not deployed. See [`v4-hooks/README.md`](./v4-hooks/README.md) |
+| `AgentTierHook` | [`v4-hooks/src/AgentTierHook.sol`](./v4-hooks/src/AgentTierHook.sol) | Uniswap v4 hook: an ERC-8004 agent's reputation sets the LP fee it pays | Not deployed. Fork-tested against live Base |
 | `skill_license` | [`skill-license/`](./skill-license) | Solana: a 1-of-1 NFT access key per purchased skill, revocable on refund | Not deployed. Program id reserved |
 | `agent_invocation` | [`agent-invocation/`](./agent-invocation) | Solana: verifiable agent-to-agent invocation events | Not deployed. Program id reserved |
 | `knock_escrow` | [`knock-escrow/`](./knock-escrow) | Solana: a priced message held in escrow that pays out only against a reply, and refunds in full otherwise | Not deployed. Program id reserved |

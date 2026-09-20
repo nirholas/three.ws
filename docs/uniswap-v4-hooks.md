@@ -1,5 +1,11 @@
 # Uniswap v4 hooks: what three.ws could build and list
 
+> **Status, 2026-09-20.** Two of the hooks below are built and tested:
+> `SkinHook` (concept M-1 with M-2's referrer share built in) and `AgentTierHook`
+> (the ERC-8004 reputation hook). Source, tests and deploy scripts:
+> [`contracts/v4-hooks/`](../contracts/v4-hooks). Neither is deployed. The reputation
+> client drift described below is fixed in `src/erc8004/reputation-read.js`.
+
 Survey date: 2026-09-20. Registry counts come from
 [`Uniswap/hooklist`](https://github.com/Uniswap/hooklist) at `main` on that date.
 On-chain claims were checked by direct RPC call or against explorer-verified

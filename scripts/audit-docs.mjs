@@ -288,6 +288,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['announcement-coverage', 'internal: X announcement coverage matrix for marketing planning'],
 	['announcement-coverage-telegram', 'internal: paste-ready holders-channel post drafted from the coverage matrix'],
 	['avatar-cli', 'internal: in-flight, register when the CLI ships'],
+	['uniswap-v4-hooks', 'internal: registry survey, prior-art review and concept ranking; the reader-facing doc is contracts/v4-hooks/README.md'],
 	['fee-bridge', 'held by the owner until launch is approved (2026-09-17); register in data/pages.json when /fee-bridge ships'],
 	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],

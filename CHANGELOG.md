@@ -6,7 +6,9 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-09-20
 
+- **Agent reputation on Base and other EVM chains now shows real on-chain reviews**: Reputation panels, the passport widget and the trust scores behind agent-to-agent gating were asking the shared ERC-8004 reputation registry a question it does not answer, so agents with dozens of on-chain reviews showed none. They now read the registry the way it actually works: an agent with 41 reviews from 22 reviewers on Base shows 4.1 out of 5 and its recent reviews, and the panel loads in a few seconds on free public RPCs. Staked vouches are only offered on chains whose registry supports them. `[fix, improvement]`
 - **Paid $THREE purchases say what is wrong instead of failing silently**: Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible. (`/status`) `[fix, infra]`
+- **Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation**: New open-source contracts. SkinHook turns a wearable 3D item into a fixed-supply coin with its own pool: wearing it locks one token, so every wearer shrinks the tradable supply, and the creator's royalty is taken inside the swap where it cannot be skipped, with a share for the site that referred the sale. AgentTierHook gives ERC-8004 agents a lower trading fee as their on-chain reputation grows, with liquidity providers keeping every fee. Both are tested against the real Uniswap v4 contracts and are not deployed yet. `[feature, sdk]`
 
 ## 2026-09-18
 

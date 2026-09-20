@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-09-20T03:37:31.294Z",
+	"generated_at": "2026-09-20T04:28:31.249Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3712,
+	"total": 3714,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Agent reputation on Base and other EVM chains now shows real on-chain reviews",
+			"summary": "Reputation panels, the passport widget and the trust scores behind agent-to-agent gating were asking the shared ERC-8004 reputation registry a question it does not answer, so agents with dozens of on-chain reviews showed none. They now read the registry the way it actually works: an agent with 41 reviews from 22 reviewers on Base shows 4.1 out of 5 and its recent reviews, and the panel loads in a few seconds on free public RPCs. Staked vouches are only offered on chains whose registry supports them.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-20",
 			"type": "update",
@@ -18,6 +29,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation",
+			"summary": "New open-source contracts. SkinHook turns a wearable 3D item into a fixed-supply coin with its own pool: wearing it locks one token, so every wearer shrinks the tradable supply, and the creator's royalty is taken inside the swap where it cannot be skipped, with a share for the site that referred the sale. AgentTierHook gives ERC-8004 agents a lower trading fee as their on-chain reputation grows, with liquidity providers keeping every fee. Both are tested against the real Uniswap v4 contracts and are not deployed yet.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1594,28 +1616,6 @@
 			"title": "Every button on Drive Your Avatar is reachable again, by mouse and by keyboard",
 			"summary": "Two things were quietly breaking the controls on Drive Your Avatar. The gesture tray grew up the right-hand edge until it sat on top of the HUD column beside it, so Photo, Record, Map and the help button silently stopped taking clicks; the tray now keeps to the lower band and wraps into a second column instead of climbing into the buttons. Separately, pressing Enter anywhere on the page jumped straight to the chat box, which meant a keyboard user could tab to any control and never activate it. Enter now belongs to whatever you have focused, and only opens chat when you are looking at the scene. Along the way: the radar moved off the crowded bottom edge on phones, the chat box no longer pushes its send button off a narrow screen, the avatar list tells you when it could not load instead of always saying you are signed out, and the coin-world picker closes on Escape.",
 			"link": "/temporary",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "update",
-			"title": "Every tutorial now shows you the page it is teaching",
-			"summary": "Twenty screenshots of the real product had been captured for the tutorials and then never put on the page: the tutorials described the Forge, Avatar Studio, Voice Lab, Scene Studio, Widget Studio and the rest entirely in words, while the pictures sat unused. All twenty are now embedded where they belong, each with a caption and a link straight to the live page, so you can see what you are about to open before you open it. The sign-language reference gained its two figures as well, and the missing Scene Studio capture was taken.",
-			"link": "/tutorials/text-to-3d",
-			"tags": [
-				"docs",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-08",
-			"type": "update",
-			"title": "Exit Lab is usable with a thumb, and it no longer goes quiet when the trade corpus is missing",
-			"summary": "A full audit of the Exit Lab console found 49 controls below the 44px touch floor on a phone: the 18px help dots, the 16px-tall policy sliders and the agent link on every row of the trade table were all but untappable. All of them are now full-size targets on touch devices, and the desktop layout keeps its density. Two dead ends went with them. The Run the search button used to sit there live and answer a click with nothing when no trades had loaded; it is now disabled and says which of the two reasons applies. And when the corpus fails to load, the attribution, trade-by-trade and search sections say so instead of leaving three headings over blank space, with the trade table stuck announcing itself as still loading forever.",
-			"link": "/exit-lab",
 			"tags": [
 				"fix",
 				"improvement"
