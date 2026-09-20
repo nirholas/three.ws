@@ -18,13 +18,16 @@
 	font-variant-numeric: tabular-nums;
 	border: 1px solid transparent;
 }
+/* Size and weight carry the "/10" suffix on their own. The opacity: 0.7 this
+   used to add blended the pill colour into its own background and left 10px
+   text at 4.11:1 across every row, under the 4.5:1 AA floor. Smaller text
+   needs more contrast, not less. */
 .ex-trust .of {
 	font-size: 0.625rem;
 	font-weight: 500;
-	opacity: 0.7;
 }
 .ex-trust-hi {
-	color: var(--cv-green);
+	color: var(--cv-green-on-tint);
 	background: var(--cv-green-soft);
 	border-color: color-mix(in srgb, var(--cv-green) 30%, transparent);
 }
@@ -34,7 +37,7 @@
 	border-color: var(--cv-border);
 }
 .ex-trust-lo {
-	color: var(--cv-red);
+	color: var(--cv-red-on-tint);
 	background: var(--cv-red-soft);
 	border-color: color-mix(in srgb, var(--cv-red) 30%, transparent);
 }

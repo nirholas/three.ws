@@ -63,6 +63,11 @@ html[data-theme='light'] {
 	   tinted winner cell. Red already clears AA and is kept as it is. */
 	--cv-green-text: #15803d;
 	--cv-red-text: #dc2626;
+	/* Text sitting ON a tinted badge fill rather than on the page. The tint
+	   lifts the background, so --cv-red reads 4.22:1 and --cv-green 3.02:1
+	   against their own fills, both under AA. Dark needs no such adjustment. */
+	--cv-red-on-tint: #b91c1c;
+	--cv-green-on-tint: #166534;
 	--cv-surface: #fff;
 	--cv-surface-2: #f8fafc;
 	--cv-surface-3: #f1f5f9;
@@ -106,6 +111,8 @@ html:not([data-theme='light']) {
 	--cv-green: var(--success);
 	--cv-green-soft: rgba(34, 197, 94, 0.12);
 	--cv-red: var(--danger);
+	--cv-red-on-tint: var(--danger);
+	--cv-green-on-tint: var(--success);
 	--cv-red-soft: rgba(239, 68, 68, 0.12);
 	--cv-chart-green: #22c55e;
 	--cv-chart-red: #ef4444;
@@ -270,8 +277,12 @@ html.cv-page,
 	display: block;
 }
 
+/* --cv-green (3.3:1 on white) is the chart and fill green; --cv-green-text is
+   the same hue darkened for body copy, and that is what a signed number in a
+   table is. Dark maps both to the same value, so this only moves light out of
+   a 3.29:1 reading it was failing AA on across every market table. */
 .cv-up {
-	color: var(--cv-green);
+	color: var(--cv-green-text);
 }
 .cv-down {
 	color: var(--cv-red);

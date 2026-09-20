@@ -56,13 +56,16 @@
 	border: 1px solid transparent;
 	cursor: help;
 }
+/* The "/10" suffix is differentiated by size and weight alone. It used to also
+   carry opacity: 0.7, which blended the badge colour into its own tinted
+   background and dropped the 11px text to 3.84:1, under the 4.5:1 AA floor
+   the repo gates on. Smaller text needs MORE contrast, not less. */
 .ex-score .of {
 	font-size: 0.6875rem;
 	font-weight: 500;
-	opacity: 0.7;
 }
 .ex-score-hi {
-	color: var(--cv-green);
+	color: var(--cv-green-on-tint);
 	background: var(--cv-green-soft);
 	border-color: color-mix(in srgb, var(--cv-green) 30%, transparent);
 }
@@ -75,7 +78,7 @@
 	color: var(--warn);
 }
 .ex-score-lo {
-	color: var(--cv-red);
+	color: var(--cv-red-on-tint);
 	background: var(--cv-red-soft);
 	border-color: color-mix(in srgb, var(--cv-red) 30%, transparent);
 }

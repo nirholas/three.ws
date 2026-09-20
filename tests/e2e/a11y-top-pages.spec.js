@@ -33,6 +33,16 @@ const EXTRA_HIGH_TRAFFIC = [
 	'/nvidia',
 	'/pricing',
 	'/irl',
+	// The Markets tables. Their priority scores sit below the top 30, so the
+	// whole cv-page design system rode into production ungated: every signed
+	// number in a market table was drawn in the chart-fill green (3.29:1 on
+	// white) and the trust badges in a hue on their own tint (3.02:1), all of
+	// it under AA in light mode and none of it visible to this gate. These two
+	// pages between them exercise the shared table, the stat cards, the score
+	// badges and the filter chips, so a regression in any of those is caught
+	// here rather than on a page nobody audits.
+	'/derivatives',
+	'/exchanges',
 	// The Home Assistant lane, every public route of it. A voice-controlled
 	// house is assistive technology for the people most likely to need it, so
 	// these carry the same hard WCAG floor as the marketing surfaces above and
