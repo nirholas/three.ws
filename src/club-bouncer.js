@@ -34,7 +34,7 @@ const SUIT_MESH = /outfit|footwear/i;
 const SIDE_CLEARANCE = 0.75;
 const WALL_STANDOFF = 0.6;
 const MAX_STANDOFF = 4.2;     // how far out he will look for level ground (past any steps)
-const LEVEL_TOLERANCE = 0.12; // floor must match the player's walking level this closely
+const LEVEL_TOLERANCE = 0.3;  // a kerb up from the walking level is fine; a stair flight is not
 const BODY_CLEARANCE = 0.42;
 const CLEARANCE_RAYS = 16;     // fine enough that a stair corner can't slip between two rays
 // The player can't walk through him.
@@ -56,7 +56,7 @@ const REACTION_CLIPS = [CLIP_CHECKING, ...CLIPS_ADMIT, ...CLIPS_DENY];
 
 const LINES = {
 	notice: "Cover's a penny tonight. Step up to the door.",
-	atDoor: 'One cent, USDC. Wallet out when you are ready.',
+	atDoor: 'One cent, in USDC or $THREE. Wallet out when you are ready.',
 	queue: 'One cent gets you in for the whole night.',
 	leftLine: 'Door stays here. Come back when you are ready.',
 	checking: 'Hold still. Reading your wallet on-chain.',
@@ -68,7 +68,7 @@ const LINES = {
 };
 // Tap-to-talk: how the club works, in the order a newcomer needs it.
 const EXPLAINERS = [
-	'Cover is one cent of USDC, paid over x402 on Solana. It settles before the rope drops.',
+	'Cover is one cent, in USDC or $THREE, paid over x402 on Solana. It settles before the rope drops.',
 	'One cover lasts the night on this device. Reload and you walk straight in.',
 	'Inside there are three poles. A tenth of a cent tips a dancer, and the tip is what starts the routine.',
 	'I read the paying wallet on-chain: the ban list, and how many nights you have been here.',
