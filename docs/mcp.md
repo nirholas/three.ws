@@ -179,11 +179,11 @@ On a `401`, the `WWW-Authenticate` header points clients at the protected-resour
 
 ### API key (server-to-server)
 
-For scripts, CI, and server agents, generate a key at **Dashboard → API Keys** and pass it as a bearer token:
+For scripts, CI, and server agents, generate a key at **[/dashboard/api](https://three.ws/dashboard/api)** and pass it as a bearer token:
 
 ```bash
 curl -X POST https://three.ws/api/mcp \
-  -H "Authorization: Bearer 3da_live_xxxxx" \
+  -H "Authorization: Bearer sk_live_xxxxx" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
@@ -202,7 +202,7 @@ Claude Code auto-discovers `.mcp.json` at the project root. Add your key to that
     "3d-agent": {
       "url": "https://three.ws/api/mcp",
       "headers": {
-        "Authorization": "Bearer 3da_live_xxxxx"
+        "Authorization": "Bearer sk_live_xxxxx"
       }
     }
   }
@@ -1024,7 +1024,7 @@ To point Claude Code at your local server, update `.mcp.json`:
     "3d-agent": {
       "url": "http://localhost:3000/api/mcp",
       "headers": {
-        "Authorization": "Bearer 3da_live_xxxxx"
+        "Authorization": "Bearer sk_live_xxxxx"
       }
     }
   }
