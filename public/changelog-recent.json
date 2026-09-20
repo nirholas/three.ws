@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-20T17:43:40.560Z",
+	"generated_at": "2026-09-20T19:41:27.892Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3731,
+	"total": 3732,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -98,6 +98,17 @@
 			"link": null,
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Anyone can now check that the $THREE hold gate does what we say it does",
+			"summary": "We publish specific numbers about holding $THREE: $25 unlocks high quality generation and game ready export, draft and standard stay free for everyone, and the perks further up the ladder are labelled planned because they are not built yet. Those are claims, and a claim nobody can check is worth very little. There is now a single command that checks all of them against the live site, and none of it requires owning a token. It compares the published thresholds and discounts to the ones the server actually uses, confirms an anonymous request for the paid lanes is refused with the tier and the price it needs, reads the balances of real wallets that already hold $THREE to confirm they are let through, confirms the free lanes still run with no account at all, and confirms nothing unbuilt is being advertised as live. The unlock side is proved by reading public balances, which moves no money and buys nothing. How to run it is written up in the hold to access guide.",
+			"link": "/three",
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},
@@ -1606,16 +1617,6 @@
 			"link": "/objects",
 			"tags": [
 				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Trading finally counts toward your daily streak",
-			"summary": "The cross-surface streak on three.ws counted signing in, forging a model, saving a world and a walk session, but not a trade, which on a trading platform is the one thing it most obviously should count. A confirmed on-chain buy or sell now keeps your streak alive like any other activity, and still counts once per day however many times you trade, so the streak measures showing up rather than trading volume.",
-			"link": null,
-			"tags": [
 				"improvement"
 			]
 		}

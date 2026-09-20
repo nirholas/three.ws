@@ -286,6 +286,48 @@ worlds unaffected.
 
 ---
 
+## Verifying the claims without buying anything
+
+Every public statement about this system is checkable from outside, and none of the
+checks require holding a token. Run them after any deploy that touches the gate:
+
+```bash
+npm run verify:three-gate                 # against https://three.ws
+npm run verify:three-gate -- --no-forge   # skip the two free-lane generations
+```
+
+[`scripts/verify-three-gate.mjs`](../scripts/verify-three-gate.mjs) asserts five things
+against the live site:
+
+1. **The ladder matches what we publish.** The thresholds, discounts, and quota
+   multipliers in `TIERS` are compared to the numbers used in public copy. A silent
+   threshold change fails here before a holder discovers it.
+2. **The deny path.** An anonymous `POST /api/forge {"tier":"high"}` and an anonymous
+   Game-Ready export must return `402 three_hold_required` carrying the required tier,
+   the `min_usd`, the acquire block, and the pay-per-use alternative.
+3. **The allow path, read-only.** The script reads the mint's largest token accounts,
+   resolves their owner wallets, and asks `GET /api/three/access?wallet=...` what each
+   one is entitled to. Real wallets holding real $THREE must come back eligible. A
+   balance read moves nothing and costs nothing, so the unlock side is provable
+   without a purchase.
+4. **The free floor.** Draft and standard generation must still be accepted with no
+   account, no wallet, and no hold.
+5. **Planned stays planned.** Every feature that is not wired must report
+   `enforced: false`, which is exactly what draws the "Planned" flag on `/three`.
+   A perk promoted to "Live" without a gate behind it fails this check.
+
+What the script deliberately does not cover is a holder completing a High generation
+end to end, because that needs an authenticated session. Use a
+[comped account](../api/_lib/comp-access.js), which clears every gate with no hold, to
+exercise that path; the gate treats a comp and a holder through the same
+`requireFeatureAccess` branch.
+
+Unit coverage for the same behavior lives in `tests/forge-high-gate.test.js`,
+`tests/forge-gameready-gate.test.js`, `tests/three-require.test.js`, and
+`tests/comp-access.test.js`.
+
+---
+
 ## Configuration
 
 | Env var | Required | Purpose |

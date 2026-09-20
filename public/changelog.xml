@@ -79,6 +79,14 @@
 			<description>Reputation panels, the passport widget and the trust scores behind agent-to-agent gating were asking the shared ERC-8004 reputation registry a question it does not answer, so agents with dozens of on-chain reviews showed none. They now read the registry the way it actually works: an agent with 41 reviews from 22 reviewers on Base shows 4.1 out of 5 and its recent reviews, and the panel loads in a few seconds on free public RPCs. Staked vouches are only offered on chains whose registry supports them.</description>
 		</item>
 		<item>
+			<title>Anyone can now check that the $THREE hold gate does what we say it does</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-09-20:Anyone can now check that the $THREE hold gate does what we say it does</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>We publish specific numbers about holding $THREE: $25 unlocks high quality generation and game ready export, draft and standard stay free for everyone, and the perks further up the ladder are labelled planned because they are not built yet. Those are claims, and a claim nobody can check is worth very little. There is now a single command that checks all of them against the live site, and none of it requires owning a token. It compares the published thresholds and discounts to the ones the server actually uses, confirms an anonymous request for the paid lanes is refused with the tier and the price it needs, reads the balances of real wallets that already hold $THREE to confirm they are let through, confirms the free lanes still run with no account at all, and confirms nothing unbuilt is being advertised as live. The unlock side is proved by reading public balances, which moves no money and buys nothing. How to run it is written up in the hold to access guide.</description>
+		</item>
+		<item>
 			<title>Awesome 3D Agents joins the announcement queue, and the machine stops skipping pages like it</title>
 			<link>https://three.ws/awesome</link>
 			<guid isPermaLink="false">2026-09-20:Awesome 3D Agents joins the announcement queue, and the machine stops skipping pages like it</guid>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T17:43:40.527Z",
+	"generated_at": "2026-09-20T19:41:27.867Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -95,6 +95,17 @@
 			"link": null,
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Anyone can now check that the $THREE hold gate does what we say it does",
+			"summary": "We publish specific numbers about holding $THREE: $25 unlocks high quality generation and game ready export, draft and standard stay free for everyone, and the perks further up the ladder are labelled planned because they are not built yet. Those are claims, and a claim nobody can check is worth very little. There is now a single command that checks all of them against the live site, and none of it requires owning a token. It compares the published thresholds and discounts to the ones the server actually uses, confirms an anonymous request for the paid lanes is refused with the tier and the price it needs, reads the balances of real wallets that already hold $THREE to confirm they are let through, confirms the free lanes still run with no account at all, and confirms nothing unbuilt is being advertised as live. The unlock side is proved by reading public balances, which moves no money and buys nothing. How to run it is written up in the hold to access guide.",
+			"link": "/three",
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},

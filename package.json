@@ -502,7 +502,8 @@
 		"build:awesome": "node scripts/build-awesome.mjs",
 		"check:awesome": "node scripts/build-awesome.mjs --check",
 		"awesome:links": "node scripts/check-awesome-links.mjs",
-		"awesome:standalone": "node scripts/build-awesome.mjs --standalone"
+		"awesome:standalone": "node scripts/build-awesome.mjs --standalone",
+		"verify:three-gate": "node scripts/verify-three-gate.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.6.0",
