@@ -1,18 +1,21 @@
 {
 	"name": "three-ws-skills",
 	"version": "1.0.0",
-	"description": "The three.ws Agent Skills pack — wallet/x402-economy, 3D-creation, and partner (OKX, MetaMask) skills for any Claude surface: Claude Code, the Claude apps, and the Agent SDK.",
+	"description": "The three.ws Agent Skills pack: 3D creation, building and monetizing on the three.ws platform, the wallet/x402 agent economy, and vendored partner skills, for any Claude surface (Claude Code, the Claude apps, the Agent SDK).",
 	"spec": "https://agentskills.io/specification",
 	"homepage": "https://three.ws",
 	"categories": {
-		"3d/creative": "3D generation & rigging. Cross-platform-safe: no coin, wallet, or payment-protocol content — reusable on non-Claude tracks.",
+		"3d/creative": "3D generation & rigging. Cross-platform-safe: no coin, wallet, or payment-protocol content - reusable on non-Claude tracks.",
+		"platform/agents": "Build on three.ws itself: create agents, author and sell agent skills, hire other agents, and connect a client to the MCP servers.",
 		"wallet/payments": "Wallet auth, funding, transfers, and the x402 paid-API economy.",
-		"intel/trading": "Market data, trading signals, DEX/DeFi execution."
+		"intel/trading": "Market data, trading signals, DEX/DeFi execution.",
+		"ops/production": "Operating the three.ws production fleet. For maintainers, not for end users of the platform."
 	},
 	"counts": {
 		"3d/creative": 5,
 		"intel/trading": 13,
 		"ops/production": 1,
+		"platform/agents": 5,
 		"wallet/payments": 24
 	},
 	"skills": [
@@ -173,6 +176,51 @@
 			"origin": "three.ws",
 			"crossPlatformSafe": false,
 			"path": ".agents/skills/gcp-triage"
+		},
+		{
+			"name": "build-an-agent-skill",
+			"description": "Write a real three.ws agent skill bundle (manifest.json + SKILL.md + tools.json + handlers.js) that gives a 3D agent a new capability, then install it on an agent and test it. Use when you or the user want to build, write, author, or code a custom skill, capability, tool, or ability for a three.ws agent or an <agent-3d> embed (\"give my agent a new skill\", \"make my agent able to check the weather\", \"write a custom tool for my avatar\", \"add a gesture skill\"). Covers the four-file bundle layout, the handler context API, the sandbox limits, trust policy, and how to install the bundle.",
+			"whenToUse": "The user wants an agent to be able to DO something new. To then charge for it, use sell-an-agent-skill. To create the agent itself first, use create-a-three-ws-agent. This is not about Claude skills: it is the three.ws in-app skill format that runs inside the agent runtime.",
+			"category": "platform/agents",
+			"origin": "three.ws",
+			"crossPlatformSafe": false,
+			"path": ".agents/skills/build-an-agent-skill"
+		},
+		{
+			"name": "connect-three-ws-mcp",
+			"description": "Connect any MCP client (Claude Code, Claude Desktop, the Agent SDK, or a custom one) to the three.ws MCP servers, so the model can generate 3D models and avatars, read and write agent data, and pay for services. Use when you or the user want to connect, add, install, configure, wire up, or debug three.ws MCP, an MCP server for 3D or avatars or agent wallets, a .mcp.json entry, or \"give Claude access to three.ws\". Also use to pick which of the hosted servers to add, and to test a connection that is not working.",
+			"whenToUse": "The user wants the tools available inside their client rather than shelling out to curl. Start with the free server when no account exists yet. For one-off calls over plain HTTP instead, the 3D skills already show the JSON-RPC form.",
+			"category": "platform/agents",
+			"origin": "three.ws",
+			"crossPlatformSafe": false,
+			"path": ".agents/skills/connect-three-ws-mcp"
+		},
+		{
+			"name": "create-a-three-ws-agent",
+			"description": "Create a real three.ws AI agent (identity, 3D body, custodial Solana wallet, persona) from the command line and get its live public page. Use when you or the user want to create, build, deploy, launch, or set up an AI agent, a 3D agent, an on-chain agent, or \"my own agent\" on three.ws, attach a 3D body to an existing agent, edit an agent's persona or brain, or list the agents an account already owns. Returns the agent id, its Solana wallet address, and the public URL anyone can visit and chat with.",
+			"whenToUse": "The user wants an agent that exists on three.ws (a record with a page, a wallet, and a brain), not just a 3D file. For a GLB model only, use generate-3d-model or create-3d-avatar. To put an existing agent on a website, use embed-three-ws-avatar. To sell what the agent can do, use sell-an-agent-skill.",
+			"category": "platform/agents",
+			"origin": "three.ws",
+			"crossPlatformSafe": false,
+			"path": ".agents/skills/create-a-three-ws-agent"
+		},
+		{
+			"name": "hire-an-agent",
+			"description": "Find a three.ws agent that already does the job, then buy its skill or have one of your own agents hire and pay it autonomously over x402. Use when you or the user want to hire, rent, buy, delegate to, or pay another AI agent or one of its skills (\"find an agent that can do X\", \"hire an agent to write this\", \"buy that skill\", \"let my agent pay another agent\", \"how much does that skill cost\", \"what did my agent spend\"). Covers browsing the offer catalog, free trials, Solana Pay checkout, agent-to-agent hiring with spend caps, and the receipts.",
+			"whenToUse": "The demand side of the three.ws marketplace. To sell instead of buy, use sell-an-agent-skill. For a paid HTTP endpoint on the open x402 network rather than a three.ws agent, use search-for-service and pay-for-service.",
+			"category": "platform/agents",
+			"origin": "three.ws",
+			"crossPlatformSafe": false,
+			"path": ".agents/skills/hire-an-agent"
+		},
+		{
+			"name": "sell-an-agent-skill",
+			"description": "Publish an agent skill to the three.ws marketplace, price it per call in $THREE or USDC, offer a metered free trial, and collect the earnings. Use when you or the user want to sell, monetize, price, list, or make money from an agent skill or capability (\"sell my skill\", \"charge per call\", \"price this skill in $THREE\", \"put my agent's skill on the marketplace\", \"where are my skill earnings\", \"set up a free trial\"). Covers publishing to the catalog, the per-call x402 rail, the author/platform split, trials, payout wallet, and withdrawals.",
+			"whenToUse": "The user has a capability and wants income from it. To author the skill first, use build-an-agent-skill. To sell a whole HTTP API instead of an agent skill, use monetize-service. To buy someone else's skill, use hire-an-agent.",
+			"category": "platform/agents",
+			"origin": "three.ws",
+			"crossPlatformSafe": false,
+			"path": ".agents/skills/sell-an-agent-skill"
 		},
 		{
 			"name": "metamask-agent-wallet",

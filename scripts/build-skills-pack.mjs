@@ -17,6 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const SKILLS_DIR = path.join(ROOT, '.agents', 'skills');
@@ -25,9 +26,36 @@ const PACK = {
 	name: 'three-ws-skills',
 	version: '1.0.0',
 	description:
-		'The three.ws Agent Skills pack — wallet/x402-economy, 3D-creation, and partner (OKX, MetaMask) skills for any Claude surface: Claude Code, the Claude apps, and the Agent SDK.',
+		'The three.ws Agent Skills pack: 3D creation, building and monetizing on the three.ws platform, the wallet/x402 agent economy, and vendored partner skills, for any Claude surface (Claude Code, the Claude apps, the Agent SDK).',
 	spec: 'https://agentskills.io/specification',
 	homepage: 'https://three.ws',
+};
+
+// One source of truth for what each category means. Both outputs render from this
+// map, so a new category cannot land in the counts while the prose still omits it
+// (which is exactly how ops/production ended up counted but undescribed). The
+// `bundle` line is the one-liner the human index prints.
+const CATEGORY_DESCRIPTIONS = {
+	'3d/creative': {
+		json: '3D generation & rigging. Cross-platform-safe: no coin, wallet, or payment-protocol content - reusable on non-Claude tracks.',
+		md: '3D generation & rigging. The cross-platform-safe subset: zero coin/wallet/payment strings, reusable outside Claude.',
+	},
+	'platform/agents': {
+		json: 'Build on three.ws itself: create agents, author and sell agent skills, hire other agents, and connect a client to the MCP servers.',
+		md: 'Build on three.ws itself: create agents, author and sell agent skills, hire other agents, connect MCP clients.',
+	},
+	'wallet/payments': {
+		json: 'Wallet auth, funding, transfers, and the x402 paid-API economy.',
+		md: 'wallet auth, funding, transfers, and the x402 paid-API economy. Never bundle on the OpenAI track.',
+	},
+	'intel/trading': {
+		json: 'Market data, trading signals, DEX/DeFi execution.',
+		md: 'market data, signals, DEX/DeFi execution. Never bundle on the OpenAI track.',
+	},
+	'ops/production': {
+		json: 'Operating the three.ws production fleet. For maintainers, not for end users of the platform.',
+		md: 'operating the three.ws production fleet. For maintainers, not platform users.',
+	},
 };
 
 // Category + origin for skills whose SKILL.md we do not edit (vendor drops).
@@ -121,7 +149,7 @@ function stripQuotes(v) {
 	return v;
 }
 
-function collectSkills() {
+export function collectSkills() {
 	const skills = [];
 	for (const entry of fs.readdirSync(SKILLS_DIR, { withFileTypes: true })) {
 		if (!entry.isDirectory()) continue;
@@ -168,12 +196,11 @@ function renderJson(skills) {
 	return `${JSON.stringify(
 		{
 			...PACK,
-			categories: {
-				'3d/creative':
-					'3D generation & rigging. Cross-platform-safe: no coin, wallet, or payment-protocol content — reusable on non-Claude tracks.',
-				'wallet/payments': 'Wallet auth, funding, transfers, and the x402 paid-API economy.',
-				'intel/trading': 'Market data, trading signals, DEX/DeFi execution.',
-			},
+			categories: Object.fromEntries(
+				Object.entries(CATEGORY_DESCRIPTIONS)
+					.filter(([name]) => byCategory[name])
+					.map(([name, copy]) => [name, copy.json]),
+			),
 			counts: byCategory,
 			skills,
 		},
@@ -196,9 +223,9 @@ function renderMarkdown(skills) {
 		'',
 		'Categories:',
 		'',
-		'- **3d/creative** — 3D generation & rigging. The cross-platform-safe subset: zero coin/wallet/payment strings, reusable outside Claude.',
-		'- **wallet/payments** — wallet auth, funding, transfers, and the x402 paid-API economy. Never bundle on the OpenAI track.',
-		'- **intel/trading** — market data, signals, DEX/DeFi execution. Never bundle on the OpenAI track.',
+		...[...new Set(skills.map((s) => s.category))]
+			.sort()
+			.map((name) => `- **${name}**: ${CATEGORY_DESCRIPTIONS[name]?.md || 'uncategorized.'}`),
 		'',
 	];
 	let current = '';
@@ -215,6 +242,17 @@ function renderMarkdown(skills) {
 	return `${lines.join('\n').trimEnd()}\n`;
 }
 
+// Only run the generator when this file is the entry point: other scripts import
+// collectSkills() so a second copy of the frontmatter parser never has to exist.
+const invokedDirectly =
+	process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+if (!invokedDirectly) {
+	// Imported as a library: nothing to write.
+} else {
+	main();
+}
+
+function main() {
 const skills = collectSkills();
 const jsonOut = renderJson(skills);
 const mdOut = renderMarkdown(skills);
@@ -238,3 +276,4 @@ if (process.argv.includes('--check')) {
 fs.writeFileSync(jsonPath, jsonOut);
 fs.writeFileSync(mdPath, mdOut);
 console.log(`Wrote ${path.relative(ROOT, jsonPath)} and ${path.relative(ROOT, mdPath)} (${skills.length} skills).`);
+}
