@@ -14,6 +14,7 @@
 //   node scripts/build-standalone-skill-repos.mjs --check     # validate, write nothing
 //   node scripts/build-standalone-skill-repos.mjs --only three-ws-3d-skills
 //   node scripts/build-standalone-skill-repos.mjs --out <dir> # override output root
+//   node scripts/build-standalone-skill-repos.mjs --owner <gh login>
 //
 // Publishing is owner-gated and deliberately NOT automated here: the script
 // prints the exact `gh repo create` command per repo when it finishes.
@@ -26,13 +27,16 @@ import { fileURLToPath } from 'node:url';
 import { collectSkills } from './build-skills-pack.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OWNER = 'nirholas';
+// The GitHub account the repos live under, and the one every generated install
+// line and repository URL points at. Override with --owner when publishing from
+// a different account than the canonical one.
+const DEFAULT_OWNER = 'nirholas';
 const SKILL_FILES_SKIP = new Set(['.DS_Store']);
 
 // Every repo selects skills from the canonical pack by predicate. Only
 // three.ws-origin skills ship: vendored partner drops belong to their publishers,
 // and the ops/production skill is for maintainers of this repo, not its users.
-const REPOS = [
+export const REPO_SPECS = [
 	{
 		repo: 'three-ws-skills',
 		plugin: 'three-ws',
@@ -72,86 +76,95 @@ const REPOS = [
 	},
 ];
 
-const argv = process.argv.slice(2);
-const CHECK = argv.includes('--check');
-const only = valueOf('--only');
-const outRoot = path.resolve(ROOT, valueOf('--out') || path.join('.data', 'standalone-repos'));
+// Importable as a library (the tests read REPO_SPECS): only build when this file
+// is the entry point.
+const invokedDirectly =
+	process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+if (invokedDirectly) main();
 
-function valueOf(flag) {
-	const i = argv.indexOf(flag);
-	return i >= 0 ? argv[i + 1] : null;
-}
+function main() {
+	const argv = process.argv.slice(2);
+	const CHECK = argv.includes('--check');
+	const OWNER = valueOf('--owner') || DEFAULT_OWNER;
+	const only = valueOf('--only');
+	const outRoot = path.resolve(ROOT, valueOf('--out') || path.join('.data', 'standalone-repos'));
 
-const allSkills = collectSkills();
-const specs = only ? REPOS.filter((r) => r.repo === only) : REPOS;
-if (!specs.length) {
-	console.error(`no repo spec named "${only}". Known: ${REPOS.map((r) => r.repo).join(', ')}`);
-	process.exit(1);
-}
-
-const built = [];
-let failed = false;
-
-for (const spec of specs) {
-	const skills = allSkills.filter(spec.select).sort((a, b) => a.name.localeCompare(b.name));
-	if (!skills.length) {
-		console.error(`${spec.repo}: selects no skills: the predicate no longer matches the pack`);
-		failed = true;
-		continue;
+	function valueOf(flag) {
+		const i = argv.indexOf(flag);
+		return i >= 0 ? argv[i + 1] : null;
 	}
-	for (const skill of skills) {
-		const src = path.join(ROOT, skill.path);
-		if (!fs.existsSync(path.join(src, 'SKILL.md'))) {
-			console.error(`${spec.repo}: ${skill.name} has no SKILL.md at ${skill.path}`);
+
+	const allSkills = collectSkills();
+	const specs = only ? REPO_SPECS.filter((r) => r.repo === only) : REPO_SPECS;
+	if (!specs.length) {
+		console.error(`no repo spec named "${only}". Known: ${REPO_SPECS.map((r) => r.repo).join(', ')}`);
+		process.exit(1);
+	}
+
+	const built = [];
+	let failed = false;
+
+	for (const spec of specs) {
+		const skills = allSkills.filter(spec.select).sort((a, b) => a.name.localeCompare(b.name));
+		if (!skills.length) {
+			console.error(`${spec.repo}: selects no skills: the predicate no longer matches the pack`);
 			failed = true;
+			continue;
 		}
-	}
-	if (failed) continue;
-
-	const dest = path.join(outRoot, spec.repo);
-	if (!CHECK) {
-		fs.rmSync(dest, { recursive: true, force: true });
-		fs.mkdirSync(path.join(dest, '.claude-plugin'), { recursive: true });
 		for (const skill of skills) {
-			copyTree(path.join(ROOT, skill.path), path.join(dest, 'skills', skill.name));
+			const src = path.join(ROOT, skill.path);
+			if (!fs.existsSync(path.join(src, 'SKILL.md'))) {
+				console.error(`${spec.repo}: ${skill.name} has no SKILL.md at ${skill.path}`);
+				failed = true;
+			}
 		}
-		write(path.join(dest, '.claude-plugin', 'marketplace.json'), marketplaceJson(spec));
-		write(path.join(dest, '.claude-plugin', 'plugin.json'), pluginJson(spec));
-		write(path.join(dest, 'README.md'), readme(spec, skills));
-		fs.copyFileSync(path.join(ROOT, 'LICENSE'), path.join(dest, 'LICENSE'));
-		write(path.join(dest, '.gitignore'), 'node_modules/\n.DS_Store\n');
+		if (failed) continue;
+
+		const dest = path.join(outRoot, spec.repo);
+		if (!CHECK) {
+			fs.rmSync(dest, { recursive: true, force: true });
+			fs.mkdirSync(path.join(dest, '.claude-plugin'), { recursive: true });
+			for (const skill of skills) {
+				copyTree(path.join(ROOT, skill.path), path.join(dest, 'skills', skill.name));
+			}
+			write(path.join(dest, '.claude-plugin', 'marketplace.json'), marketplaceJson(spec, OWNER));
+			write(path.join(dest, '.claude-plugin', 'plugin.json'), pluginJson(spec, OWNER));
+			write(path.join(dest, 'README.md'), readme(spec, skills, OWNER));
+			fs.copyFileSync(path.join(ROOT, 'LICENSE'), path.join(dest, 'LICENSE'));
+			write(path.join(dest, '.gitignore'), 'node_modules/\n.DS_Store\n');
+		}
+		built.push({ spec, skills, dest });
 	}
-	built.push({ spec, skills, dest });
-}
 
-if (failed) process.exit(1);
+	if (failed) process.exit(1);
 
-for (const { spec, skills, dest } of built) {
-	console.log(
-		`${CHECK ? 'ok' : 'built'}  ${spec.repo}  ${skills.length} skills  ${
-			CHECK ? '' : path.relative(ROOT, dest)
-		}`.trimEnd(),
-	);
-	console.log(`        ${skills.map((s) => s.name).join(', ')}`);
-}
+	for (const { spec, skills, dest } of built) {
+		console.log(
+			`${CHECK ? 'ok' : 'built'}  ${spec.repo}  ${skills.length} skills  ${
+				CHECK ? '' : path.relative(ROOT, dest)
+			}`.trimEnd(),
+		);
+		console.log(`        ${skills.map((s) => s.name).join(', ')}`);
+	}
 
-if (CHECK) {
-	console.log(`\n${built.length} repo spec(s) resolve against ${allSkills.length} packed skills.`);
-	process.exit(0);
-}
+	if (CHECK) {
+		console.log(`\n${built.length} repo spec(s) resolve against ${allSkills.length} packed skills.`);
+		process.exit(0);
+	}
 
-console.log('\nPublish one (owner-gated, run from the generated directory):\n');
-for (const { spec, dest } of built) {
-	console.log(`  cd ${path.relative(ROOT, dest)} && git init -b main && git add -A \\`);
-	console.log(`    && git commit -m 'feat: ${spec.displayName} for Claude' \\`);
-	// Single-quote the description: a double-quoted shell string would expand
-	// "$THREE" in any repo blurb that names the coin.
-	console.log(
-		`    && gh repo create ${OWNER}/${spec.repo} --public --source=. --push --description ${shellQuote(spec.description)}`,
-	);
-	console.log('');
+	console.log('\nPublish one (owner-gated, run from the generated directory):\n');
+	for (const { spec, dest } of built) {
+		console.log(`  cd ${path.relative(ROOT, dest)} && git init -b main && git add -A \\`);
+		console.log(`    && git commit -m 'feat: ${spec.displayName} for Claude' \\`);
+		// Single-quote the description: a double-quoted shell string would expand
+		// "$THREE" in any repo blurb that names the coin.
+		console.log(
+			`    && gh repo create ${OWNER}/${spec.repo} --public --source=. --push --description ${shellQuote(spec.description)}`,
+		);
+		console.log('');
+	}
+	console.log(`Users then install with:\n  /plugin marketplace add ${OWNER}/${built[0].spec.repo}`);
 }
-console.log(`Users then install with:\n  /plugin marketplace add ${OWNER}/${built[0].spec.repo}`);
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -175,7 +188,7 @@ function copyTree(src, dest) {
 	}
 }
 
-function pluginBody(spec) {
+function pluginBody(spec, OWNER) {
 	return {
 		name: spec.plugin,
 		description: spec.description,
@@ -188,11 +201,11 @@ function pluginBody(spec) {
 	};
 }
 
-function pluginJson(spec) {
-	return `${JSON.stringify({ ...pluginBody(spec), skills: './skills' }, null, '\t')}\n`;
+function pluginJson(spec, OWNER) {
+	return `${JSON.stringify({ ...pluginBody(spec, OWNER), skills: './skills' }, null, '\t')}\n`;
 }
 
-function marketplaceJson(spec) {
+function marketplaceJson(spec, OWNER) {
 	return `${JSON.stringify(
 		{
 			name: spec.plugin,
@@ -201,7 +214,7 @@ function marketplaceJson(spec) {
 			version: '1.0.0',
 			plugins: [
 				{
-					...pluginBody(spec),
+					...pluginBody(spec, OWNER),
 					source: './',
 					displayName: spec.displayName,
 					category: spec.category,
@@ -214,7 +227,7 @@ function marketplaceJson(spec) {
 	)}\n`;
 }
 
-function readme(spec, skills) {
+function readme(spec, skills, OWNER) {
 	const rows = skills
 		.map((s) => `| \`${s.name}\` | ${s.description.replace(/\|/g, '\\|').replace(/\s+/g, ' ')} |`)
 		.join('\n');
