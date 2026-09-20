@@ -13,14 +13,22 @@
  * is 20 points, so 5 stars is written as 100 and an on-chain average of 82 reads 4.1.
  */
 
-import { Contract, ZeroHash } from 'ethers';
+import { Contract, Interface, ZeroHash } from 'ethers';
 import { REGISTRY_DEPLOYMENTS, REPUTATION_REGISTRY_ABI, REPUTATION_REFERENCE_ABI } from './abi.js';
 import { detectReputationDialect, readAgentReputation } from './reputation-read.js';
 
 const POINTS_PER_STAR = 20;
-// Recent reviews on the reference dialect are read reviewer by reviewer (no log
-// scan, so it works on any RPC). Newest reviewers are last in getClients.
+// Recent reviews on the reference dialect are read from registry state, reviewer by
+// reviewer (no log scan, so it works on any RPC). Newest reviewers are last in
+// getClients. Two reads per reviewer sent one by one take the better part of a minute
+// on keyless public RPCs, which answer a burst with 429s, so both rounds go through
+// Multicall3 (same address on every chain it is deployed to): three eth_calls total.
 const RECENT_REVIEWERS = 20;
+const MULTICALL3 = '0xcA11bde05977b3631167028862bE2a173976CA11';
+const MULTICALL3_ABI = [
+	'function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) view returns (tuple(bool success, bytes returnData)[])',
+];
+const referenceInterface = new Interface(REPUTATION_REFERENCE_ABI);
 
 function registryAddress(chainId) {
 	const deployment = REGISTRY_DEPLOYMENTS[chainId];
@@ -144,26 +152,45 @@ export async function getTotalStake({ agentId, runner, chainId }) {
 	return await contract.getTotalStake(agentId);
 }
 
+async function multiRead(runner, address, fn, argsList) {
+	const multicall = new Contract(MULTICALL3, MULTICALL3_ABI, runner);
+	const results = await multicall.aggregate3(
+		argsList.map((args) => ({
+			target: address,
+			allowFailure: true,
+			callData: referenceInterface.encodeFunctionData(fn, args),
+		})),
+	);
+	// One unreadable entry must not cost the whole list.
+	return results.map((r) => (r.success ? referenceInterface.decodeFunctionResult(fn, r.returnData) : null));
+}
+
 async function recentReferenceReviews(address, runner, agentId) {
 	const registry = new Contract(address, REPUTATION_REFERENCE_ABI, runner);
 	const clients = Array.from(await registry.getClients(agentId)).slice(-RECENT_REVIEWERS);
-	const reviews = await Promise.all(
-		clients.map(async (from) => {
-			const index = await registry.getLastIndex(agentId, from);
-			if (index === 0n) return null;
-			const [value, decimals, tag1, , isRevoked] = await registry.readFeedback(agentId, from, index);
-			if (isRevoked) return null;
-			return {
+	if (clients.length === 0) return [];
+
+	const indexes = await multiRead(runner, address, 'getLastIndex', clients.map((from) => [agentId, from]));
+	const latest = clients
+		.map((from, i) => ({ from, index: indexes[i]?.[0] ?? 0n }))
+		.filter((entry) => entry.index !== 0n);
+	const feedback = await multiRead(runner, address, 'readFeedback', latest.map((e) => [agentId, e.from, e.index]));
+
+	return latest.flatMap(({ from }, i) => {
+		if (!feedback[i]) return [];
+		const [value, decimals, tag1, , isRevoked] = feedback[i];
+		if (isRevoked) return [];
+		return [
+			{
 				agentId: Number(agentId),
 				from,
 				score: toStars(Number(value) / 10 ** Number(decimals)),
 				comment: tag1,
 				blockNumber: null,
 				txHash: null,
-			};
-		}),
-	);
-	return reviews.filter(Boolean);
+			},
+		];
+	});
 }
 
 /**
