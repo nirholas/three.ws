@@ -6,6 +6,7 @@ the home chain, and each product built on a hook here has or will have a Solana 
 | Hook | Source | Flags | Status |
 | --- | --- | --- | --- |
 | `SkinHook` | [`src/SkinHook.sol`](./src/SkinHook.sol) | `0x20CC` | Not deployed |
+| `AgentTierHook` | [`src/AgentTierHook.sol`](./src/AgentTierHook.sol) | `0x2080` | Not deployed |
 
 Background, prior art, and why these hooks: [`docs/uniswap-v4-hooks.md`](../../docs/uniswap-v4-hooks.md).
 
@@ -65,6 +66,53 @@ hook.unequip(token);                 // token returned
 hook.claim(payoutAddress);           // creator, referrer or treasury withdraws ETH
 ```
 
+## AgentTierHook: an agent's reputation sets the fee it pays
+
+A dynamic-fee pool where standing in the canonical
+[ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) registries is worth money. An unknown
+trader pays the base LP fee, a trader who controls a registered agent pays less, and an
+agent whose reputation clears the pool's bar pays the least. LPs keep every fee. The hook
+takes nothing and holds nothing.
+
+- **Nothing to register with us.** The trader passes `abi.encode(uint256 agentId)` as
+  `hookData`. The hook checks `ownerOf(agentId)` and `getAgentWallet(agentId)` on the
+  identity registry against the account the router reports through `msgSender()`.
+- **A named reviewer set.** The live reputation registry reverts with
+  `"clientAddresses required"` when asked to summarise feedback from nobody in particular.
+  Each pool therefore lists up to 16 reviewers whose feedback it trusts, plus optional
+  tag filters, a minimum count and a minimum average score.
+- **O(1) swaps.** Summarising reputation loops over reviewers and their feedback, so it
+  runs in the permissionless `refreshTier(poolId, agentId)`, which caches the verdict
+  until `ttl` passes. `beforeSwap` only reads the cache. An agent with no fresh entry
+  still gets the registered-agent fee.
+- **Every failure is the base fee.** Registry calls inside a swap are gas-capped and
+  wrapped in try/catch. An untrusted router, a router with no `msgSender()`, malformed
+  `hookData`, an agent the trader does not control, or a registry that reverts all
+  produce an ordinary base-fee swap. The registries are upgradeable proxies, so this is
+  the case that matters, and `test_brokenRegistry_costsTheDiscount_neverTheSwap` covers it.
+- **Routers are trusted per pool.** A router that lies about `msgSender()` could hand
+  anyone an agent's discount, so the pool admin opts routers in.
+
+```solidity
+PoolKey memory key = hook.createPool(
+    currency0, currency1, 60, sqrtPriceX96,
+    AgentTierHook.TierConfig({
+        baseFee: 10_000,      // 1.00% for anyone
+        agentFee: 5_000,      // 0.50% for a registered agent
+        trustedFee: 1_000,    // 0.10% once reputation clears the bar
+        minCount: 5,
+        minScore: 80e18,      // average score, 18-decimal fixed point
+        ttl: 1 days,
+        tag1: "", tag2: ""
+    }),
+    reviewers,                // whose feedback counts, 1 to 16 addresses
+    routers                   // routers whose msgSender() this pool believes
+);
+
+hook.refreshTier(key.toId(), agentId);             // anyone; caches the verdict
+uint24 fee = hook.quoteFee(key.toId(), trader, agentId);
+```
+
 ## Build and test
 
 Foundry is required (`curl -L https://foundry.paradigm.xyz | bash && foundryup`).
@@ -75,14 +123,20 @@ forge build
 forge test
 ```
 
-The suite runs against the real v4-core `PoolManager` and its reference swap router, not
-stand-ins. `test/HookMiner.t.sol` proves the production deploy path: a mined CREATE2 salt
+The `SkinHook` suite runs against the real v4-core `PoolManager` and its reference swap
+router, not stand-ins. The `AgentTierHook` suite is a fork test against the live Base
+`PoolManager` and the live ERC-8004 registries, and is skipped unless an RPC is set:
+
+```bash
+BASE_RPC_URL=https://base-rpc.publicnode.com forge test --match-contract AgentTierHookForkTest
+```
+ `test/HookMiner.t.sol` proves the production deploy path: a mined CREATE2 salt
 lands the hook at an address that passes the hook's own permission check.
 
 ## Deploy
 
 A v4 hook's permissions are the low 14 bits of its address, so it must be deployed with a
-mined CREATE2 salt. `script/DeploySkinHook.s.sol` mines it and deploys through the
+mined CREATE2 salt. `script/DeploySkinHook.s.sol` (and `script/DeployAgentTierHook.s.sol`) mines it and deploys through the
 canonical CREATE2 deployer. Without `--broadcast` it is a dry run that prints the address.
 
 ```bash
