@@ -22,6 +22,10 @@
 				{
 					"label": "Do I need crypto?",
 					"path": "do-i-need-crypto"
+				},
+				{
+					"label": "Prompt library",
+					"path": "prompts"
 				}
 			]
 		},

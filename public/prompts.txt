@@ -1,0 +1,445 @@
+three.ws Prompt Library
+=======================
+
+Copy a prompt. Paste it into your Claude. Get a real result.
+
+Every prompt here is written to be pasted straight into Claude (Claude Code, the Claude apps, or any agent that can make an HTTP call) and to produce something real: a 3D model you can download, an embed running on your page, a paid endpoint other agents can call. Placeholders in angle brackets are the parts you replace.
+
+24 prompts. Browse them at https://three.ws/prompts, or fetch this file again any time.
+
+
+## Connect it to your Claude
+Two prompts that leave your Claude able to build 3D for you in every session after this one.
+
+### Connect the free 3D studio to Claude
+One prompt that installs the free MCP server and proves it works by generating a model.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Connect the free three.ws 3D Studio to this session so you can make 3D models for me.
+
+It is a remote MCP server with no account, no API key and no payment:
+
+  claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+
+If this environment has no Claude Code CLI, tell me where to paste the URL instead: the Claude apps take it as a custom connector with authentication set to None.
+
+Once it is connected, list the tools it exposes with one line each, then prove the path end to end by generating "a small brass desk lamp" and handing me the GLB URL and the viewer link.
+--- end prompt ---
+
+You get: A connected MCP server, its tool list, and one real GLB you can open in the browser.
+More: 3D Studio docs https://three.ws/docs/mcp-studio | All MCP servers https://three.ws/docs/mcp
+
+### Install the three.ws skills in your project
+Teach your Claude the platform once, so later prompts can be one sentence long.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Set up the three.ws Agent Skills in this project so you know how to drive the platform without me explaining it every time.
+
+Read https://three.ws/docs/agent-skills first, then take whichever install path fits this environment:
+- Claude Code with plugins: add the marketplace nirholas/three.ws and install three-ws-core@three-ws.
+- Anything else: copy the skill folders out of github.com/nirholas/three.ws/tree/main/.agents/skills into .claude/skills/.
+
+I want the 3D set at minimum: find-3d-assets, generate-3d-model, create-3d-avatar, rig-a-model.
+
+Tell me which path you took, which skills landed, and give me one sentence per skill on what it triggers on. Do not install the wallet or trading skills unless I ask for them.
+--- end prompt ---
+
+You get: The skills installed in the right place for your setup, plus a table of what each one does.
+More: Agent Skills docs https://three.ws/docs/agent-skills
+
+
+## Make 3D things
+Models, rigged avatars, refinements, and the checks that keep you from shipping a broken mesh.
+
+### Turn a sentence into a 3D model
+The free, keyless text to GLB lane, with the polling your agent usually gets wrong.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Make me a 3D model of <a weathered brass diving helmet>. Use the free three.ws API: no key, no account.
+
+  POST https://three.ws/api/3d/generate   {"prompt": "<one subject, specific about material and style>"}
+
+If the response comes back pending it hands you a job id: poll GET https://three.ws/api/3d/generate?job=<id> until it is done. Generation takes a minute or two, so keep polling instead of declaring failure on the first pending response.
+
+Give me the glbUrl exactly as returned (do not rebuild the URL yourself), the viewer link, the AR link and the file size. One subject per generation: if what I asked for is really a scene, split it into separate models and tell me you did.
+--- end prompt ---
+
+You get: A downloadable GLB, a viewer link, and an AR link that opens on a phone.
+More: 3D API reference https://three.ws/docs/3d-api | Forge in the browser https://three.ws/forge
+
+### Generate a rigged avatar from a description
+Mesh plus humanoid skeleton in one call, then looked at before it is handed to you.
+Setup: Free MCP server. Connect the free three.ws 3D Studio once. No account, no API key, no payment.
+  Claude Code: claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+  Claude apps: add https://three.ws/api/mcp-studio as a custom connector with authentication set to None.
+
+--- prompt ---
+Generate a rigged, animation-ready 3D avatar from this description: <a tall elf ranger in a weathered green cloak>.
+
+Use the three.ws 3D Studio MCP server. forge_avatar does the mesh and the humanoid skeleton in one step, so use that rather than generating and rigging separately. If it returns a pending job, collect it with check_job.
+
+Before you tell me it is done, call look_at_model on the result and actually look at the frames. If the silhouette or the proportions are wrong, fix it with refine_model and a one-line instruction rather than starting over, and show me both versions.
+
+Hand me the rigged GLB URL, the renders, and the link that opens it in the pose studio.
+--- end prompt ---
+
+You get: A rigged GLB you can animate, plus rendered frames so you can judge it without downloading anything.
+More: Animation Studio https://three.ws/pose | Avatar Studio https://three.ws/avatar-studio
+
+### Turn a photo into a 3D avatar
+A reference image becomes a rigged humanoid, with an honest verdict on the likeness.
+Setup: Free MCP server. Connect the free three.ws 3D Studio once. No account, no API key, no payment.
+  Claude Code: claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+  Claude apps: add https://three.ws/api/mcp-studio as a custom connector with authentication set to None.
+
+--- prompt ---
+Turn this reference image into a 3D avatar: <https://example.com/photo.jpg>
+
+Use forge_avatar on the three.ws 3D Studio MCP server with image_url set to that image, so I get a rigged humanoid rather than a static bust. Collect it with check_job if it comes back pending.
+
+Then look_at_model it from the front and the three-quarter view and tell me honestly whether it reads as the reference. If it does not, say what in the image is fighting it (lighting, crop, occlusion, hair) and what I should re-shoot.
+--- end prompt ---
+
+You get: A rigged avatar from your photo, and a straight answer about the likeness.
+More: Selfie to avatar https://three.ws/create/selfie | Image to 3D https://three.ws/image-to-3d
+
+### Rig a GLB you already have
+Add a humanoid skeleton and skin weights to a static model, and hear whether it was worth it.
+Setup: Free MCP server. Connect the free three.ws 3D Studio once. No account, no API key, no payment.
+  Claude Code: claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+  Claude apps: add https://three.ws/api/mcp-studio as a custom connector with authentication set to None.
+
+--- prompt ---
+Rig this GLB so it can be animated: <https://example.com/character.glb>
+
+Use rig_mesh on the three.ws 3D Studio MCP server. It adds a humanoid skeleton and skin weights and returns a new GLB.
+
+Tell me whether the source mesh was actually humanoid enough to rig well, what came back, and give me the pose-studio link so I can check that the joints bend where they should. If the model is clearly not humanoid, say so before spending the call.
+--- end prompt ---
+
+You get: A rigged GLB plus a pose-studio link to check the joints.
+More: Rig Doctor https://three.ws/rig-doctor
+
+### Search the catalog before generating anything
+Thousands of ready-made CC0 objects, characters and motion clips. A real asset usually beats a fresh generation.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+I need <an industrial desk lamp> for a scene. Check the three.ws catalog before generating anything: it holds thousands of ready-made CC0 objects, rigged characters and motion clips.
+
+  curl -s 'https://three.ws/api/catalog?q=<query>&kind=object&limit=8'
+
+Show me the top matches with title, license, file size and thumbnail. If one of them fits, hand me its GLB URL and stop there. Only if nothing fits, generate one with POST https://three.ws/api/3d/generate, and say in one line why the catalog missed.
+--- end prompt ---
+
+You get: A ready-to-use CC0 asset, or a generated one plus the reason the catalog could not cover it.
+More: Object Library https://three.ws/objects | Animation Gallery https://three.ws/animations
+
+### Generate a whole asset kit with a manifest
+Six props, one subject per call, retried on failure, and written down so you can find them tomorrow.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Build me an asset kit for <a small medieval market scene>: six props, generated one subject at a time.
+
+Plan the list first and show it to me before you spend a single call. Then generate each one through the free three.ws lane (POST https://three.ws/api/3d/generate), poll each job to completion, and keep going if one fails: retry that prop once with a tightened prompt, and report it if it still does not land.
+
+Finish with a markdown table of prop, the prompt you used, the GLB URL and the viewer link, and write it to assets/kit.md so I have the manifest.
+--- end prompt ---
+
+You get: A folder's worth of props and a manifest file that survives the session.
+More: Scene Composer https://three.ws/compose
+
+### Run a whole asset job with the skills installed
+Search first, generate only if needed, rig if it is a character, validate before handing it over.
+Setup: Skills pack. Install the three.ws Agent Skills so Claude already knows the platform's endpoints and rules.
+  Claude Code plugins: add the marketplace nirholas/three.ws, then install three-ws-core@three-ws.
+  Anything else: copy a folder from .agents/skills/ into your project's .claude/skills/.
+
+--- prompt ---
+I need <a hero prop for the landing page: a chunky retro synthesizer>. Use the three.ws skills you already have and run the whole job, not just the first step.
+
+Order matters. Search the catalog first with find-3d-assets, because a ready-made CC0 asset beats a generation on both quality and time. If nothing fits, generate it with generate-3d-model. If what I described is a character rather than a prop, use create-3d-avatar instead so it comes back rigged.
+
+Validate the result before you hand it over: file weight, triangle count, texture sizes, and a plain answer on whether it belongs in a hero section on a phone.
+
+Tell me which skill did the work and why you picked it, and give me the GLB URL, the viewer link, and the embed snippet if it is something I can put on the page.
+--- end prompt ---
+
+You get: One finished, validated asset and a clear account of which lane produced it.
+More: Agent Skills docs https://three.ws/docs/agent-skills | Object Library https://three.ws/objects
+
+### Change a model without starting over
+Describe the change in words. Keep the lineage. Compare the versions side by side.
+Setup: Free MCP server. Connect the free three.ws 3D Studio once. No account, no API key, no payment.
+  Claude Code: claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+  Claude apps: add https://three.ws/api/mcp-studio as a custom connector with authentication set to None.
+
+--- prompt ---
+Here is a model I already generated: <GLB URL>. I want <the helmet bigger and the metal darker>.
+
+Use refine_model on the three.ws 3D Studio MCP server with that instruction rather than generating something new: it keeps the version lineage so I can compare.
+
+Show me before and after with look_at_model and keep both URLs. If two refinements in a row miss, say so and propose a fresh prompt instead of burning more calls.
+--- end prompt ---
+
+You get: A revised model, both versions side by side, and a stop rule so you are not iterating forever.
+More: Restyle Studio https://three.ws/restyle
+
+### Ask whether a model can actually be printed
+A free printability report: closed solid, thin walls, volume, and a score with named deductions.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Can this model actually be 3D printed? <GLB URL>
+
+  POST https://three.ws/api/print/quote   {"glbUrl": "<url>"}
+
+It is free and keyless, and asking orders nothing. Give me the printability score with its named deductions, whether the mesh is a closed solid, how many separate bodies it contains, the thinnest wall and the enclosed volume.
+
+Then tell me in plain language what to fix before printing, ordered by how much it matters.
+--- end prompt ---
+
+You get: A manufacturing verdict on your mesh, and a fix list in priority order.
+More: Materialize https://three.ws/materialize
+
+### Give a model a name and a voice
+Turn a GLB into a persistent character your Claude can bring back in a later session.
+Setup: Free MCP server. Connect the free three.ws 3D Studio once. No account, no API key, no payment.
+  Claude Code: claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+  Claude apps: add https://three.ws/api/mcp-studio as a custom connector with authentication set to None.
+
+--- prompt ---
+Give this model a name and a voice so it can speak in our conversations: <GLB URL, or generate one first>.
+
+Use the three.ws 3D Studio MCP server: create_agent_persona turns the GLB into a named persistent body, and persona_say makes it perform a line with lip-sync and a matching expression.
+
+Name it <Ada>, describe its personality in one line, then have it introduce itself. Give me the persona_id so I can bring the same body back in a new session with get_agent_persona.
+--- end prompt ---
+
+You get: A named, reusable 3D character that speaks, plus the id that brings it back.
+More: Lipsync lab https://three.ws/lipsync
+
+
+## Put it on your site
+The embed, the framework wrapper, the concierge, and what to do when an embed goes dark.
+
+### Put a live avatar on your page
+The web component, the pinned production snippet with SRI, and the states most embeds forget.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Put a live 3D avatar on <index.html> using the three.ws <agent-3d> web component.
+
+Read https://three.ws/docs/embedding first so you use the real attributes instead of inventing them.
+
+Prototype against the latest channel, then give me the production snippet: a pinned version plus the SRI hash from https://three.ws/agent-3d/<version>/integrity.json. Use <my GLB URL> as the body.
+
+It has to look deliberate: sized by the layout rather than a fixed pixel box, readable down to 320px, an idle animation, a poster or skeleton while the GLB loads, and no motion when prefers-reduced-motion is set. Show it running locally before you call it done.
+--- end prompt ---
+
+You get: A working embed on your page and the exact snippet to ship.
+More: Embed docs https://three.ws/docs/embedding | Widget Studio https://three.ws/studio
+
+### Wrap the avatar as a React component
+Custom elements in React and Next.js, done the way that does not break hydration.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Add a three.ws 3D avatar to this <Next.js> app as a reusable component.
+
+<agent-3d> is a web component, so wrap it properly: load the script once, render it client-side only (never server-render a custom element), type the props, and expose a small API so a page can set the animation and the mood.
+
+Give me the component file, one usage example on the home page, and a short gotcha list for React and custom elements: attributes versus properties, event listeners, hydration.
+--- end prompt ---
+
+You get: A typed component in your codebase, used once, with the framework traps written down.
+More: Embed tutorial https://three.ws/tutorials/embed-on-website | Avatar SDK https://three.ws/avatar-sdk
+
+### Build a 3D concierge for your site
+An avatar in the corner that answers from your real content and never blocks first paint.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Build a 3D concierge for <my site>: an avatar in the corner that answers questions about the product and points people at the right page.
+
+Use the three.ws concierge widget rather than rolling your own chat UI, and read https://three.ws/docs/concierge before writing code.
+
+Requirements: it loads lazily so it never blocks first paint, it is keyboard reachable and labelled for screen readers, it collapses to a button on mobile, and every answer is grounded in real content from my site rather than invented.
+
+Show it working locally, then tell me exactly what I still have to supply: content source, brand colors, the avatar.
+--- end prompt ---
+
+You get: A working concierge on localhost and a short list of what only you can fill in.
+More: Concierge https://three.ws/concierge | Concierge docs https://three.ws/docs/concierge
+
+### Diagnose a broken embed
+The four things it actually is, checked in order, instead of shotgun edits.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+My three.ws avatar embed is broken on <URL or file>. It <shows nothing / shows a T-pose / never finishes loading>.
+
+Diagnose it before changing anything. Check, in order: that the script actually loaded, that the GLB URL is reachable and CORS-clean from the browser origin (three.ws/cdn/... is the browser-safe host, the object store is not), that the element has a real height, and that every attribute I used exists on the component. Point the Embed Doctor at it: https://three.ws/embed-doctor
+
+Then fix it and tell me in one line which of those it actually was. No guessing, no shotgun edits.
+--- end prompt ---
+
+You get: A working embed and a one-line root cause you can learn from.
+More: Embed Doctor https://three.ws/embed-doctor
+
+### Validate a model before it hits production
+Validator errors, triangle and texture budgets, and a straight yes or no on mobile.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Validate this model before I ship it to a web page: <GLB URL>
+
+  POST https://three.ws/api/3d/inspect   {"url": "<glb url>"}
+
+Free and keyless. Give me the glTF validator result in plain language, the triangle count, the texture count and sizes, the animation clips and the total download weight.
+
+Then answer one question directly: is this safe to put in a hero section on a phone? If not, say exactly what to cut and by how much (Draco or meshopt compression, texture resizing, LODs). Numbers, not adjectives.
+--- end prompt ---
+
+You get: A performance verdict with numbers, and a specific cut list if it fails.
+More: glTF Validator https://three.ws/validation | Model Inspector https://three.ws/inspect
+
+
+## The agent economy
+Find a paid API, sell your own, pay for a call. Anything that moves money stops for your confirmation.
+
+### Find a paid API your agent can call
+Search the x402 bazaar, price the best match, pay for nothing without your say-so.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Find me a paid API for <turning a wallet address into a company profile> in the x402 agent economy: per-call USDC, no signup.
+
+Searching is keyless:
+
+  npx awal@2.10.0 x402 bazaar search "<what I need>" --json
+
+For the top matches show me what each one does, the price per call, the chain and the exact endpoint. Then inspect the best one with `npx awal@2.10.0 x402 details <url>` and tell me what a single call would really cost me.
+
+Do not pay for anything. I will decide.
+--- end prompt ---
+
+You get: A shortlist of real paid endpoints with prices, and nothing spent.
+More: x402 docs https://three.ws/docs/x402 | Marketplace https://three.ws/marketplace
+
+### Charge other agents for your API
+A real 402, a real settle, and a verified paid call before anyone calls it done.
+Setup: Agent wallet. Needs a funded agent wallet. These prompts can move real money, so they are written to stop for your yes first.
+  Sign in and fund the wallet before you paste one of these: https://three.ws/start
+
+--- prompt ---
+Turn <this endpoint> into a paid API other agents can call per request, using x402.
+
+Read https://three.ws/tutorials/paid-x402-endpoint first, then wire it for real: the 402 response with correct payment requirements, the settle path, and a price that honestly covers what the call costs me to serve.
+
+Verify it end to end before you tell me it works: curl it and show me the 402, then pay it once on a test network and show me the 200.
+
+Use a test network for that paid call. If anything you propose would spend real funds, stop and wait for my yes with the amount and the recipient in front of me.
+
+Finish with the one-paragraph listing I can publish so agents discover it.
+--- end prompt ---
+
+You get: An endpoint that charges per call, proven with a real 402 and a real 200.
+More: Paid endpoint tutorial https://three.ws/tutorials/paid-x402-endpoint | Monetize an MCP server https://three.ws/tutorials/monetize-mcp-server
+
+### Pay for one call, with a hard stop first
+Price it, show you recipient and amount, and wait for your yes before any money moves.
+Setup: Agent wallet. Needs a funded agent wallet. These prompts can move real money, so they are written to stop for your yes first.
+  Sign in and fund the wallet before you paste one of these: https://three.ws/start
+Caution: This prompt spends real money. It is written so your Claude must stop and show you the amount and the recipient before it pays. Keep that line in it.
+
+--- prompt ---
+I want to use this paid endpoint: <URL>. Walk it through properly.
+
+First inspect it without paying: `npx awal@2.10.0 x402 details <url>`. Show me the price, the chain, the asset and who gets paid, as a table.
+
+Then stop and wait. Do not send a payment, sign anything or run the pay command until I have confirmed that exact amount and that exact recipient.
+
+After I confirm, pay once, show me the response, and tell me what the call actually cost.
+--- end prompt ---
+
+You get: A priced, confirmed, single payment and the response you paid for.
+More: x402 docs https://three.ws/docs/x402
+
+### Check the agent wallet before you rely on it
+One verdict line: can this wallet pay for a call right now, yes or no.
+Setup: Agent wallet. Needs a funded agent wallet. These prompts can move real money, so they are written to stop for your yes first.
+  Sign in and fund the wallet before you paste one of these: https://three.ws/start
+
+--- prompt ---
+Give me a straight status report on my agent wallet before I rely on it.
+
+Check which addresses it holds (Solana first, then any EVM legs), the balance of each, whether it can actually sign right now, and anything that would make a payment fail: empty gas, an unfunded chain, an expired session.
+
+Present it as a table with a verdict line at the top: can this wallet pay for a call right now, yes or no. If the answer is no, give me the single action that fixes it.
+
+Do not move any funds.
+--- end prompt ---
+
+You get: A one-glance verdict on whether your wallet can transact, and the one fix if it cannot.
+More: Get started https://three.ws/start
+
+
+## Build on the platform
+Wire three.ws into your own agent, your own toolchain, your own dashboards.
+
+### Brief me on $THREE from the source
+Live token stats from the platform's own endpoint, with no predictions attached.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Give me the live state of $THREE, the three.ws token, from the platform's own endpoint rather than a third-party aggregator:
+
+  curl -s https://three.ws/api/three-token/stats
+
+Report price, 24 hour change, market cap, 24 hour volume, holders and liquidity, with the mint address, and say how fresh the data is.
+
+Then three sentences on what changed since yesterday. Numbers only: no price predictions, no advice.
+--- end prompt ---
+
+You get: A factual $THREE briefing straight from the platform, ready to paste into a report.
+More: $THREE Launchpad https://three.ws/three-launchpad | Marketplace https://three.ws/marketplace
+
+### Wire the 3D API into your own agent
+Generate clients from the real OpenAPI 3.1 spec, and test against a real generation.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+Wire the free three.ws 3D API into <my agent> from its OpenAPI spec instead of hand-writing clients:
+
+  https://three.ws/api/3d/openapi.json
+
+It is a real OpenAPI 3.1 document and it is keyless. Generate typed callers for the endpoints I need, and wrap the queued endpoints so a pending response polls to completion inside my client instead of leaking a job id into my application code.
+
+Write one integration test that generates a real model and asserts a GLB comes back. A real call, not a mock.
+--- end prompt ---
+
+You get: Typed clients, correct polling, and a test that proves the integration against production.
+More: 3D API reference https://three.ws/docs/3d-api | OpenAPI spec https://three.ws/api/3d/openapi.json
+
+### Give an agent you already built a body
+Take an existing bot or app and put a reactive 3D face on it, driven by real state.
+Setup: No setup. Nothing to install. Works in any Claude that can make an HTTP request or run a command.
+
+--- prompt ---
+I have <an agent / a bot / a dashboard> at <path or URL>. Give it a body: a 3D avatar that reacts to what it is actually doing.
+
+Read https://three.ws/docs/embedding, then wire the avatar to real state, not to a timer: thinking while a request is in flight, talking while it streams a reply, idle when it is waiting, and a visible error posture when a call fails.
+
+Map every state my app can be in to an animation, list the ones I have no mapping for, and show me the whole thing running against real traffic rather than a demo loop.
+--- end prompt ---
+
+You get: Your existing agent with a 3D presence wired to its real lifecycle, plus the gaps named.
+More: Agent gestures https://three.ws/gestures | Assistant widget https://three.ws/assistant
+
+
+Every prompt above is copy-paste ready. Replace anything in <angle brackets>.

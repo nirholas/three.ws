@@ -1,0 +1,741 @@
+{
+	"version": "1.0.0",
+	"title": "three.ws Prompt Library",
+	"tagline": "Copy a prompt. Paste it into your Claude. Get a real result.",
+	"intro": "Every prompt here is written to be pasted straight into Claude (Claude Code, the Claude apps, or any agent that can make an HTTP call) and to produce something real: a 3D model you can download, an embed running on your page, a paid endpoint other agents can call. Placeholders in angle brackets are the parts you replace.",
+	"count": 24,
+	"categories": [
+		{
+			"id": "setup",
+			"label": "Connect it to your Claude",
+			"blurb": "Two prompts that leave your Claude able to build 3D for you in every session after this one.",
+			"count": 2
+		},
+		{
+			"id": "create",
+			"label": "Make 3D things",
+			"blurb": "Models, rigged avatars, refinements, and the checks that keep you from shipping a broken mesh.",
+			"count": 10
+		},
+		{
+			"id": "web",
+			"label": "Put it on your site",
+			"blurb": "The embed, the framework wrapper, the concierge, and what to do when an embed goes dark.",
+			"count": 5
+		},
+		{
+			"id": "economy",
+			"label": "The agent economy",
+			"blurb": "Find a paid API, sell your own, pay for a call. Anything that moves money stops for your confirmation.",
+			"count": 4
+		},
+		{
+			"id": "build",
+			"label": "Build on the platform",
+			"blurb": "Wire three.ws into your own agent, your own toolchain, your own dashboards.",
+			"count": 3
+		}
+	],
+	"setups": [
+		{
+			"id": "none",
+			"label": "No setup",
+			"blurb": "Nothing to install. Works in any Claude that can make an HTTP request or run a command.",
+			"how": [],
+			"count": 15
+		},
+		{
+			"id": "mcp-studio",
+			"label": "Free MCP server",
+			"blurb": "Connect the free three.ws 3D Studio once. No account, no API key, no payment.",
+			"how": [
+				"Claude Code: claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio",
+				"Claude apps: add https://three.ws/api/mcp-studio as a custom connector with authentication set to None."
+			],
+			"count": 5
+		},
+		{
+			"id": "skills",
+			"label": "Skills pack",
+			"blurb": "Install the three.ws Agent Skills so Claude already knows the platform's endpoints and rules.",
+			"how": [
+				"Claude Code plugins: add the marketplace nirholas/three.ws, then install three-ws-core@three-ws.",
+				"Anything else: copy a folder from .agents/skills/ into your project's .claude/skills/."
+			],
+			"count": 1
+		},
+		{
+			"id": "wallet",
+			"label": "Agent wallet",
+			"blurb": "Needs a funded agent wallet. These prompts can move real money, so they are written to stop for your yes first.",
+			"how": [
+				"Sign in and fund the wallet before you paste one of these: https://three.ws/start"
+			],
+			"count": 3
+		}
+	],
+	"byCategory": {
+		"setup": 2,
+		"create": 10,
+		"web": 5,
+		"economy": 4,
+		"build": 3
+	},
+	"bySetup": {
+		"none": 15,
+		"mcp-studio": 5,
+		"skills": 1,
+		"wallet": 3
+	},
+	"tags": {
+		"free": 6,
+		"mcp": 6,
+		"embed": 4,
+		"x402": 3,
+		"assets": 2,
+		"avatar": 2,
+		"glb": 2,
+		"integration": 2,
+		"rigging": 2,
+		"setup": 2,
+		"skills": 2,
+		"solana": 2,
+		"validation": 2,
+		"$THREE": 1,
+		"agent": 1,
+		"api": 1,
+		"batch": 1,
+		"bazaar": 1,
+		"catalog": 1,
+		"cc0": 1,
+		"chat": 1,
+		"claude-code": 1,
+		"concierge": 1,
+		"cors": 1,
+		"data": 1,
+		"debug": 1,
+		"discovery": 1,
+		"forge": 1,
+		"game": 1,
+		"gltf": 1,
+		"html": 1,
+		"image-to-3d": 1,
+		"iteration": 1,
+		"lipsync": 1,
+		"manifest": 1,
+		"monetize": 1,
+		"nextjs": 1,
+		"openapi": 1,
+		"payment": 1,
+		"performance": 1,
+		"persona": 1,
+		"pipeline": 1,
+		"printing": 1,
+		"react": 1,
+		"refine": 1,
+		"revenue": 1,
+		"scene": 1,
+		"sdk": 1,
+		"status": 1,
+		"usdc": 1,
+		"wallet": 1,
+		"web-component": 1,
+		"widget": 1
+	},
+	"prompts": [
+		{
+			"id": "connect-free-3d-studio",
+			"title": "Connect the free 3D studio to Claude",
+			"summary": "One prompt that installs the free MCP server and proves it works by generating a model.",
+			"category": "setup",
+			"setup": "none",
+			"tags": [
+				"mcp",
+				"setup",
+				"free"
+			],
+			"prompt": "Connect the free three.ws 3D Studio to this session so you can make 3D models for me.\n\nIt is a remote MCP server with no account, no API key and no payment:\n\n  claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio\n\nIf this environment has no Claude Code CLI, tell me where to paste the URL instead: the Claude apps take it as a custom connector with authentication set to None.\n\nOnce it is connected, list the tools it exposes with one line each, then prove the path end to end by generating \"a small brass desk lamp\" and handing me the GLB URL and the viewer link.",
+			"returns": "A connected MCP server, its tool list, and one real GLB you can open in the browser.",
+			"links": [
+				{
+					"label": "3D Studio docs",
+					"href": "/docs/mcp-studio"
+				},
+				{
+					"label": "All MCP servers",
+					"href": "/docs/mcp"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 9
+		},
+		{
+			"id": "install-skills-pack",
+			"title": "Install the three.ws skills in your project",
+			"summary": "Teach your Claude the platform once, so later prompts can be one sentence long.",
+			"category": "setup",
+			"setup": "none",
+			"tags": [
+				"skills",
+				"setup",
+				"claude-code"
+			],
+			"prompt": "Set up the three.ws Agent Skills in this project so you know how to drive the platform without me explaining it every time.\n\nRead https://three.ws/docs/agent-skills first, then take whichever install path fits this environment:\n- Claude Code with plugins: add the marketplace nirholas/three.ws and install three-ws-core@three-ws.\n- Anything else: copy the skill folders out of github.com/nirholas/three.ws/tree/main/.agents/skills into .claude/skills/.\n\nI want the 3D set at minimum: find-3d-assets, generate-3d-model, create-3d-avatar, rig-a-model.\n\nTell me which path you took, which skills landed, and give me one sentence per skill on what it triggers on. Do not install the wallet or trading skills unless I ask for them.",
+			"returns": "The skills installed in the right place for your setup, plus a table of what each one does.",
+			"links": [
+				{
+					"label": "Agent Skills docs",
+					"href": "/docs/agent-skills"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 9
+		},
+		{
+			"id": "text-to-3d-free",
+			"title": "Turn a sentence into a 3D model",
+			"summary": "The free, keyless text to GLB lane, with the polling your agent usually gets wrong.",
+			"category": "create",
+			"setup": "none",
+			"tags": [
+				"forge",
+				"glb",
+				"free",
+				"api"
+			],
+			"prompt": "Make me a 3D model of <a weathered brass diving helmet>. Use the free three.ws API: no key, no account.\n\n  POST https://three.ws/api/3d/generate   {\"prompt\": \"<one subject, specific about material and style>\"}\n\nIf the response comes back pending it hands you a job id: poll GET https://three.ws/api/3d/generate?job=<id> until it is done. Generation takes a minute or two, so keep polling instead of declaring failure on the first pending response.\n\nGive me the glbUrl exactly as returned (do not rebuild the URL yourself), the viewer link, the AR link and the file size. One subject per generation: if what I asked for is really a scene, split it into separate models and tell me you did.",
+			"returns": "A downloadable GLB, a viewer link, and an AR link that opens on a phone.",
+			"links": [
+				{
+					"label": "3D API reference",
+					"href": "/docs/3d-api"
+				},
+				{
+					"label": "Forge in the browser",
+					"href": "/forge"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "rigged-avatar-one-step",
+			"title": "Generate a rigged avatar from a description",
+			"summary": "Mesh plus humanoid skeleton in one call, then looked at before it is handed to you.",
+			"category": "create",
+			"setup": "mcp-studio",
+			"tags": [
+				"avatar",
+				"rigging",
+				"mcp"
+			],
+			"prompt": "Generate a rigged, animation-ready 3D avatar from this description: <a tall elf ranger in a weathered green cloak>.\n\nUse the three.ws 3D Studio MCP server. forge_avatar does the mesh and the humanoid skeleton in one step, so use that rather than generating and rigging separately. If it returns a pending job, collect it with check_job.\n\nBefore you tell me it is done, call look_at_model on the result and actually look at the frames. If the silhouette or the proportions are wrong, fix it with refine_model and a one-line instruction rather than starting over, and show me both versions.\n\nHand me the rigged GLB URL, the renders, and the link that opens it in the pose studio.",
+			"returns": "A rigged GLB you can animate, plus rendered frames so you can judge it without downloading anything.",
+			"links": [
+				{
+					"label": "Animation Studio",
+					"href": "/pose"
+				},
+				{
+					"label": "Avatar Studio",
+					"href": "/avatar-studio"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "photo-to-avatar",
+			"title": "Turn a photo into a 3D avatar",
+			"summary": "A reference image becomes a rigged humanoid, with an honest verdict on the likeness.",
+			"category": "create",
+			"setup": "mcp-studio",
+			"tags": [
+				"avatar",
+				"image-to-3d",
+				"mcp"
+			],
+			"prompt": "Turn this reference image into a 3D avatar: <https://example.com/photo.jpg>\n\nUse forge_avatar on the three.ws 3D Studio MCP server with image_url set to that image, so I get a rigged humanoid rather than a static bust. Collect it with check_job if it comes back pending.\n\nThen look_at_model it from the front and the three-quarter view and tell me honestly whether it reads as the reference. If it does not, say what in the image is fighting it (lighting, crop, occlusion, hair) and what I should re-shoot.",
+			"returns": "A rigged avatar from your photo, and a straight answer about the likeness.",
+			"links": [
+				{
+					"label": "Selfie to avatar",
+					"href": "/create/selfie"
+				},
+				{
+					"label": "Image to 3D",
+					"href": "/image-to-3d"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "rig-my-glb",
+			"title": "Rig a GLB you already have",
+			"summary": "Add a humanoid skeleton and skin weights to a static model, and hear whether it was worth it.",
+			"category": "create",
+			"setup": "mcp-studio",
+			"tags": [
+				"rigging",
+				"glb",
+				"mcp"
+			],
+			"prompt": "Rig this GLB so it can be animated: <https://example.com/character.glb>\n\nUse rig_mesh on the three.ws 3D Studio MCP server. It adds a humanoid skeleton and skin weights and returns a new GLB.\n\nTell me whether the source mesh was actually humanoid enough to rig well, what came back, and give me the pose-studio link so I can check that the joints bend where they should. If the model is clearly not humanoid, say so before spending the call.",
+			"returns": "A rigged GLB plus a pose-studio link to check the joints.",
+			"links": [
+				{
+					"label": "Rig Doctor",
+					"href": "/rig-doctor"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "search-before-you-generate",
+			"title": "Search the catalog before generating anything",
+			"summary": "Thousands of ready-made CC0 objects, characters and motion clips. A real asset usually beats a fresh generation.",
+			"category": "create",
+			"setup": "none",
+			"tags": [
+				"catalog",
+				"cc0",
+				"assets",
+				"free"
+			],
+			"prompt": "I need <an industrial desk lamp> for a scene. Check the three.ws catalog before generating anything: it holds thousands of ready-made CC0 objects, rigged characters and motion clips.\n\n  curl -s 'https://three.ws/api/catalog?q=<query>&kind=object&limit=8'\n\nShow me the top matches with title, license, file size and thumbnail. If one of them fits, hand me its GLB URL and stop there. Only if nothing fits, generate one with POST https://three.ws/api/3d/generate, and say in one line why the catalog missed.",
+			"returns": "A ready-to-use CC0 asset, or a generated one plus the reason the catalog could not cover it.",
+			"links": [
+				{
+					"label": "Object Library",
+					"href": "/objects"
+				},
+				{
+					"label": "Animation Gallery",
+					"href": "/animations"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "scene-asset-kit",
+			"title": "Generate a whole asset kit with a manifest",
+			"summary": "Six props, one subject per call, retried on failure, and written down so you can find them tomorrow.",
+			"category": "create",
+			"setup": "none",
+			"tags": [
+				"batch",
+				"scene",
+				"game",
+				"manifest"
+			],
+			"prompt": "Build me an asset kit for <a small medieval market scene>: six props, generated one subject at a time.\n\nPlan the list first and show it to me before you spend a single call. Then generate each one through the free three.ws lane (POST https://three.ws/api/3d/generate), poll each job to completion, and keep going if one fails: retry that prop once with a tightened prompt, and report it if it still does not land.\n\nFinish with a markdown table of prop, the prompt you used, the GLB URL and the viewer link, and write it to assets/kit.md so I have the manifest.",
+			"returns": "A folder's worth of props and a manifest file that survives the session.",
+			"links": [
+				{
+					"label": "Scene Composer",
+					"href": "/compose"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "run-the-whole-asset-job",
+			"title": "Run a whole asset job with the skills installed",
+			"summary": "Search first, generate only if needed, rig if it is a character, validate before handing it over.",
+			"category": "create",
+			"setup": "skills",
+			"tags": [
+				"skills",
+				"pipeline",
+				"assets"
+			],
+			"prompt": "I need <a hero prop for the landing page: a chunky retro synthesizer>. Use the three.ws skills you already have and run the whole job, not just the first step.\n\nOrder matters. Search the catalog first with find-3d-assets, because a ready-made CC0 asset beats a generation on both quality and time. If nothing fits, generate it with generate-3d-model. If what I described is a character rather than a prop, use create-3d-avatar instead so it comes back rigged.\n\nValidate the result before you hand it over: file weight, triangle count, texture sizes, and a plain answer on whether it belongs in a hero section on a phone.\n\nTell me which skill did the work and why you picked it, and give me the GLB URL, the viewer link, and the embed snippet if it is something I can put on the page.",
+			"returns": "One finished, validated asset and a clear account of which lane produced it.",
+			"links": [
+				{
+					"label": "Agent Skills docs",
+					"href": "/docs/agent-skills"
+				},
+				{
+					"label": "Object Library",
+					"href": "/objects"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "refine-dont-restart",
+			"title": "Change a model without starting over",
+			"summary": "Describe the change in words. Keep the lineage. Compare the versions side by side.",
+			"category": "create",
+			"setup": "mcp-studio",
+			"tags": [
+				"refine",
+				"iteration",
+				"mcp"
+			],
+			"prompt": "Here is a model I already generated: <GLB URL>. I want <the helmet bigger and the metal darker>.\n\nUse refine_model on the three.ws 3D Studio MCP server with that instruction rather than generating something new: it keeps the version lineage so I can compare.\n\nShow me before and after with look_at_model and keep both URLs. If two refinements in a row miss, say so and propose a fresh prompt instead of burning more calls.",
+			"returns": "A revised model, both versions side by side, and a stop rule so you are not iterating forever.",
+			"links": [
+				{
+					"label": "Restyle Studio",
+					"href": "/restyle"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "can-this-be-printed",
+			"title": "Ask whether a model can actually be printed",
+			"summary": "A free printability report: closed solid, thin walls, volume, and a score with named deductions.",
+			"category": "create",
+			"setup": "none",
+			"tags": [
+				"printing",
+				"validation",
+				"free"
+			],
+			"prompt": "Can this model actually be 3D printed? <GLB URL>\n\n  POST https://three.ws/api/print/quote   {\"glbUrl\": \"<url>\"}\n\nIt is free and keyless, and asking orders nothing. Give me the printability score with its named deductions, whether the mesh is a closed solid, how many separate bodies it contains, the thinnest wall and the enclosed volume.\n\nThen tell me in plain language what to fix before printing, ordered by how much it matters.",
+			"returns": "A manufacturing verdict on your mesh, and a fix list in priority order.",
+			"links": [
+				{
+					"label": "Materialize",
+					"href": "/materialize"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "talking-persona",
+			"title": "Give a model a name and a voice",
+			"summary": "Turn a GLB into a persistent character your Claude can bring back in a later session.",
+			"category": "create",
+			"setup": "mcp-studio",
+			"tags": [
+				"persona",
+				"lipsync",
+				"mcp"
+			],
+			"prompt": "Give this model a name and a voice so it can speak in our conversations: <GLB URL, or generate one first>.\n\nUse the three.ws 3D Studio MCP server: create_agent_persona turns the GLB into a named persistent body, and persona_say makes it perform a line with lip-sync and a matching expression.\n\nName it <Ada>, describe its personality in one line, then have it introduce itself. Give me the persona_id so I can bring the same body back in a new session with get_agent_persona.",
+			"returns": "A named, reusable 3D character that speaks, plus the id that brings it back.",
+			"links": [
+				{
+					"label": "Lipsync lab",
+					"href": "/lipsync"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "embed-on-my-site",
+			"title": "Put a live avatar on your page",
+			"summary": "The web component, the pinned production snippet with SRI, and the states most embeds forget.",
+			"category": "web",
+			"setup": "none",
+			"tags": [
+				"embed",
+				"web-component",
+				"html"
+			],
+			"prompt": "Put a live 3D avatar on <index.html> using the three.ws <agent-3d> web component.\n\nRead https://three.ws/docs/embedding first so you use the real attributes instead of inventing them.\n\nPrototype against the latest channel, then give me the production snippet: a pinned version plus the SRI hash from https://three.ws/agent-3d/<version>/integrity.json. Use <my GLB URL> as the body.\n\nIt has to look deliberate: sized by the layout rather than a fixed pixel box, readable down to 320px, an idle animation, a poster or skeleton while the GLB loads, and no motion when prefers-reduced-motion is set. Show it running locally before you call it done.",
+			"returns": "A working embed on your page and the exact snippet to ship.",
+			"links": [
+				{
+					"label": "Embed docs",
+					"href": "/docs/embedding"
+				},
+				{
+					"label": "Widget Studio",
+					"href": "/studio"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "avatar-in-react",
+			"title": "Wrap the avatar as a React component",
+			"summary": "Custom elements in React and Next.js, done the way that does not break hydration.",
+			"category": "web",
+			"setup": "none",
+			"tags": [
+				"react",
+				"nextjs",
+				"embed"
+			],
+			"prompt": "Add a three.ws 3D avatar to this <Next.js> app as a reusable component.\n\n<agent-3d> is a web component, so wrap it properly: load the script once, render it client-side only (never server-render a custom element), type the props, and expose a small API so a page can set the animation and the mood.\n\nGive me the component file, one usage example on the home page, and a short gotcha list for React and custom elements: attributes versus properties, event listeners, hydration.",
+			"returns": "A typed component in your codebase, used once, with the framework traps written down.",
+			"links": [
+				{
+					"label": "Embed tutorial",
+					"href": "/tutorials/embed-on-website"
+				},
+				{
+					"label": "Avatar SDK",
+					"href": "/avatar-sdk"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "site-concierge",
+			"title": "Build a 3D concierge for your site",
+			"summary": "An avatar in the corner that answers from your real content and never blocks first paint.",
+			"category": "web",
+			"setup": "none",
+			"tags": [
+				"concierge",
+				"chat",
+				"widget"
+			],
+			"prompt": "Build a 3D concierge for <my site>: an avatar in the corner that answers questions about the product and points people at the right page.\n\nUse the three.ws concierge widget rather than rolling your own chat UI, and read https://three.ws/docs/concierge before writing code.\n\nRequirements: it loads lazily so it never blocks first paint, it is keyboard reachable and labelled for screen readers, it collapses to a button on mobile, and every answer is grounded in real content from my site rather than invented.\n\nShow it working locally, then tell me exactly what I still have to supply: content source, brand colors, the avatar.",
+			"returns": "A working concierge on localhost and a short list of what only you can fill in.",
+			"links": [
+				{
+					"label": "Concierge",
+					"href": "/concierge"
+				},
+				{
+					"label": "Concierge docs",
+					"href": "/docs/concierge"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "fix-my-embed",
+			"title": "Diagnose a broken embed",
+			"summary": "The four things it actually is, checked in order, instead of shotgun edits.",
+			"category": "web",
+			"setup": "none",
+			"tags": [
+				"debug",
+				"embed",
+				"cors"
+			],
+			"prompt": "My three.ws avatar embed is broken on <URL or file>. It <shows nothing / shows a T-pose / never finishes loading>.\n\nDiagnose it before changing anything. Check, in order: that the script actually loaded, that the GLB URL is reachable and CORS-clean from the browser origin (three.ws/cdn/... is the browser-safe host, the object store is not), that the element has a real height, and that every attribute I used exists on the component. Point the Embed Doctor at it: https://three.ws/embed-doctor\n\nThen fix it and tell me in one line which of those it actually was. No guessing, no shotgun edits.",
+			"returns": "A working embed and a one-line root cause you can learn from.",
+			"links": [
+				{
+					"label": "Embed Doctor",
+					"href": "/embed-doctor"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		},
+		{
+			"id": "validate-before-ship",
+			"title": "Validate a model before it hits production",
+			"summary": "Validator errors, triangle and texture budgets, and a straight yes or no on mobile.",
+			"category": "web",
+			"setup": "none",
+			"tags": [
+				"validation",
+				"performance",
+				"gltf",
+				"free"
+			],
+			"prompt": "Validate this model before I ship it to a web page: <GLB URL>\n\n  POST https://three.ws/api/3d/inspect   {\"url\": \"<glb url>\"}\n\nFree and keyless. Give me the glTF validator result in plain language, the triangle count, the texture count and sizes, the animation clips and the total download weight.\n\nThen answer one question directly: is this safe to put in a hero section on a phone? If not, say exactly what to cut and by how much (Draco or meshopt compression, texture resizing, LODs). Numbers, not adjectives.",
+			"returns": "A performance verdict with numbers, and a specific cut list if it fails.",
+			"links": [
+				{
+					"label": "glTF Validator",
+					"href": "/validation"
+				},
+				{
+					"label": "Model Inspector",
+					"href": "/inspect"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "find-a-paid-api",
+			"title": "Find a paid API your agent can call",
+			"summary": "Search the x402 bazaar, price the best match, pay for nothing without your say-so.",
+			"category": "economy",
+			"setup": "none",
+			"tags": [
+				"x402",
+				"discovery",
+				"bazaar"
+			],
+			"prompt": "Find me a paid API for <turning a wallet address into a company profile> in the x402 agent economy: per-call USDC, no signup.\n\nSearching is keyless:\n\n  npx awal@2.10.0 x402 bazaar search \"<what I need>\" --json\n\nFor the top matches show me what each one does, the price per call, the chain and the exact endpoint. Then inspect the best one with `npx awal@2.10.0 x402 details <url>` and tell me what a single call would really cost me.\n\nDo not pay for anything. I will decide.",
+			"returns": "A shortlist of real paid endpoints with prices, and nothing spent.",
+			"links": [
+				{
+					"label": "x402 docs",
+					"href": "/docs/x402"
+				},
+				{
+					"label": "Marketplace",
+					"href": "/marketplace"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 9
+		},
+		{
+			"id": "monetize-my-api",
+			"title": "Charge other agents for your API",
+			"summary": "A real 402, a real settle, and a verified paid call before anyone calls it done.",
+			"category": "economy",
+			"setup": "wallet",
+			"tags": [
+				"x402",
+				"monetize",
+				"revenue"
+			],
+			"prompt": "Turn <this endpoint> into a paid API other agents can call per request, using x402.\n\nRead https://three.ws/tutorials/paid-x402-endpoint first, then wire it for real: the 402 response with correct payment requirements, the settle path, and a price that honestly covers what the call costs me to serve.\n\nVerify it end to end before you tell me it works: curl it and show me the 402, then pay it once on a test network and show me the 200.\n\nUse a test network for that paid call. If anything you propose would spend real funds, stop and wait for my yes with the amount and the recipient in front of me.\n\nFinish with the one-paragraph listing I can publish so agents discover it.",
+			"returns": "An endpoint that charges per call, proven with a real 402 and a real 200.",
+			"links": [
+				{
+					"label": "Paid endpoint tutorial",
+					"href": "/tutorials/paid-x402-endpoint"
+				},
+				{
+					"label": "Monetize an MCP server",
+					"href": "/tutorials/monetize-mcp-server"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 9
+		},
+		{
+			"id": "pay-for-a-call",
+			"title": "Pay for one call, with a hard stop first",
+			"summary": "Price it, show you recipient and amount, and wait for your yes before any money moves.",
+			"category": "economy",
+			"setup": "wallet",
+			"caution": "This prompt spends real money. It is written so your Claude must stop and show you the amount and the recipient before it pays. Keep that line in it.",
+			"tags": [
+				"x402",
+				"payment",
+				"usdc"
+			],
+			"prompt": "I want to use this paid endpoint: <URL>. Walk it through properly.\n\nFirst inspect it without paying: `npx awal@2.10.0 x402 details <url>`. Show me the price, the chain, the asset and who gets paid, as a table.\n\nThen stop and wait. Do not send a payment, sign anything or run the pay command until I have confirmed that exact amount and that exact recipient.\n\nAfter I confirm, pay once, show me the response, and tell me what the call actually cost.",
+			"returns": "A priced, confirmed, single payment and the response you paid for.",
+			"links": [
+				{
+					"label": "x402 docs",
+					"href": "/docs/x402"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "wallet-checkup",
+			"title": "Check the agent wallet before you rely on it",
+			"summary": "One verdict line: can this wallet pay for a call right now, yes or no.",
+			"category": "economy",
+			"setup": "wallet",
+			"tags": [
+				"wallet",
+				"solana",
+				"status"
+			],
+			"prompt": "Give me a straight status report on my agent wallet before I rely on it.\n\nCheck which addresses it holds (Solana first, then any EVM legs), the balance of each, whether it can actually sign right now, and anything that would make a payment fail: empty gas, an unfunded chain, an expired session.\n\nPresent it as a table with a verdict line at the top: can this wallet pay for a call right now, yes or no. If the answer is no, give me the single action that fixes it.\n\nDo not move any funds.",
+			"returns": "A one-glance verdict on whether your wallet can transact, and the one fix if it cannot.",
+			"links": [
+				{
+					"label": "Get started",
+					"href": "/start"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "three-token-brief",
+			"title": "Brief me on $THREE from the source",
+			"summary": "Live token stats from the platform's own endpoint, with no predictions attached.",
+			"category": "build",
+			"setup": "none",
+			"tags": [
+				"$THREE",
+				"solana",
+				"data"
+			],
+			"prompt": "Give me the live state of $THREE, the three.ws token, from the platform's own endpoint rather than a third-party aggregator:\n\n  curl -s https://three.ws/api/three-token/stats\n\nReport price, 24 hour change, market cap, 24 hour volume, holders and liquidity, with the mint address, and say how fresh the data is.\n\nThen three sentences on what changed since yesterday. Numbers only: no price predictions, no advice.",
+			"returns": "A factual $THREE briefing straight from the platform, ready to paste into a report.",
+			"links": [
+				{
+					"label": "$THREE Launchpad",
+					"href": "/three-launchpad"
+				},
+				{
+					"label": "Marketplace",
+					"href": "/marketplace"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "openapi-toolchain",
+			"title": "Wire the 3D API into your own agent",
+			"summary": "Generate clients from the real OpenAPI 3.1 spec, and test against a real generation.",
+			"category": "build",
+			"setup": "none",
+			"tags": [
+				"openapi",
+				"sdk",
+				"integration",
+				"free"
+			],
+			"prompt": "Wire the free three.ws 3D API into <my agent> from its OpenAPI spec instead of hand-writing clients:\n\n  https://three.ws/api/3d/openapi.json\n\nIt is a real OpenAPI 3.1 document and it is keyless. Generate typed callers for the endpoints I need, and wrap the queued endpoints so a pending response polls to completion inside my client instead of leaking a job id into my application code.\n\nWrite one integration test that generates a real model and asserts a GLB comes back. A real call, not a mock.",
+			"returns": "Typed clients, correct polling, and a test that proves the integration against production.",
+			"links": [
+				{
+					"label": "3D API reference",
+					"href": "/docs/3d-api"
+				},
+				{
+					"label": "OpenAPI spec",
+					"href": "/api/3d/openapi.json"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 7
+		},
+		{
+			"id": "agent-with-a-body",
+			"title": "Give an agent you already built a body",
+			"summary": "Take an existing bot or app and put a reactive 3D face on it, driven by real state.",
+			"category": "build",
+			"setup": "none",
+			"tags": [
+				"integration",
+				"embed",
+				"agent"
+			],
+			"prompt": "I have <an agent / a bot / a dashboard> at <path or URL>. Give it a body: a 3D avatar that reacts to what it is actually doing.\n\nRead https://three.ws/docs/embedding, then wire the avatar to real state, not to a timer: thinking while a request is in flight, talking while it streams a reply, idle when it is waiting, and a visible error posture when a call fails.\n\nMap every state my app can be in to an animation, list the ones I have no mapping for, and show me the whole thing running against real traffic rather than a demo loop.",
+			"returns": "Your existing agent with a 3D presence wired to its real lifecycle, plus the gaps named.",
+			"links": [
+				{
+					"label": "Agent gestures",
+					"href": "/gestures"
+				},
+				{
+					"label": "Assistant widget",
+					"href": "/assistant"
+				}
+			],
+			"added": "2026-09-20",
+			"lines": 5
+		}
+	]
+}

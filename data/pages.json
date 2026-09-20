@@ -550,6 +550,15 @@
 					"added": "2026-06-24"
 				},
 				{
+					"path": "/prompts",
+					"title": "Prompt Library",
+					"description": "Copy-paste prompts for Claude and any AI agent: generate a 3D model or a rigged avatar, embed one on a site, validate a GLB, find or sell a paid API in the agent economy. Most of them need no account, no key and no setup.",
+					"priority": 0.9,
+					"changefreq": "weekly",
+					"added": "2026-09-20",
+					"showcase": true
+				},
+				{
 					"path": "/start",
 					"title": "Get Started",
 					"description": "5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization: all in under 5 minutes.",
@@ -3844,6 +3853,12 @@
 					"title": "Docs · three.ws in VS Code",
 					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
 					"added": "2026-09-05"
+				},
+				{
+					"path": "/docs/prompts",
+					"title": "Docs · The prompt library",
+					"description": "How the three.ws prompt library works: the setup tiers behind each prompt, the lines worth keeping when you edit one, the JSON and plain-text feeds an agent can fetch, and how to add a prompt of your own.",
+					"added": "2026-09-20"
 				},
 				{
 					"path": "/docs/mcp-studio",
