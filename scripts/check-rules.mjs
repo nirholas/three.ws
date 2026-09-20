@@ -93,6 +93,11 @@ const SKIP = [
 	// scripts/check-secrets.mjs: a third party's leaked key is still a leaked key
 	// in our history. Provenance and licences: third_party/README.md.
 	/^third_party\//,
+	// Foundry dependencies vendored beside a contracts project (forge-std,
+	// OpenZeppelin, Uniswap v4-core). Same reasoning as third_party/: the source
+	// is upstream's, pinned to a commit, and never edited here. Our own contracts,
+	// tests and scripts next to them are still scanned.
+	/^contracts\/(.+\/)?lib\//,
 	/\.min\.(js|css)$/,
 	/package-lock\.json$/,
 	/\.(png|jpg|jpeg|gif|webp|glb|gltf|bin|woff2?|ttf|mp4|wasm|ico|svg)$/i,

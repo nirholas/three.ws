@@ -1,0 +1,40 @@
+# Uniswap v4 hooks owned by three.ws. Its own profile, like `../hood-portfolios`:
+# v4-core needs solc 0.8.26, cancun and via_ir, and the parent project's pinned
+# 0.8.24 profile (which its deployed contracts' bytecode depends on) must not move.
+# forge-std and OpenZeppelin are reused from `../lib`. v4-core and solmate are vendored
+# under `lib/` (pinned commits in README.md): forge resolves a library outside the
+# project root under two different paths, which breaks v4-core's import graph.
+[profile.default]
+src = 'src'
+test = 'test'
+script = 'script'
+out = 'out'
+libs = ['lib', '../lib']
+solc = '0.8.26'
+evm_version = 'cancun'
+optimizer = true
+optimizer_runs = 44444444
+via_ir = true
+bytecode_hash = 'none'
+remappings = [
+    '@uniswap/v4-core/=lib/v4-core/',
+    'solmate/=lib/solmate/',
+    '@openzeppelin/contracts/=../lib/openzeppelin-contracts/contracts/',
+    'forge-std/=../lib/forge-std/src/',
+]
+
+[profile.default.fuzz]
+runs = 512
+seed = '0x736b696e'
+
+[profile.ci.fuzz]
+runs = 5000
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = 'long'
+
+[rpc_endpoints]
+base = "${BASE_RPC_URL}"
