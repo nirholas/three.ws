@@ -95,7 +95,7 @@ let failed = false;
 for (const spec of specs) {
 	const skills = allSkills.filter(spec.select).sort((a, b) => a.name.localeCompare(b.name));
 	if (!skills.length) {
-		console.error(`${spec.repo}: selects no skills — the predicate no longer matches the pack`);
+		console.error(`${spec.repo}: selects no skills: the predicate no longer matches the pack`);
 		failed = true;
 		continue;
 	}

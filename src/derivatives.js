@@ -8,6 +8,10 @@ import { formatUsd, formatPrice, formatPercent, escapeHtml as esc } from './shar
 import { derivativePath } from './shared/derivative-slug.js';
 
 const $ = (id) => document.getElementById(id);
+// The shared formatters render a missing value as an em dash. Cells this
+// file formats itself reuse that same glyph rather than hardcoding one, so
+// no two cells in a row can disagree about what "no data" looks like.
+const DASH = formatPercent(null);
 
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
@@ -179,13 +183,13 @@ function marketRow(t) {
 	const nameCell = href
 		? `<a class="dv-link" href="${esc(href)}">${label}</a>`
 		: `<span class="nm">${label}</span>`;
-	const symbol = esc(t.symbol || '—');
+	const symbol = esc(t.symbol || DASH);
 	const symbolCell = href ? `<a class="dv-link" href="${esc(href)}">${symbol}</a>` : symbol;
 	return `
 		<tr${href ? ` data-href="${esc(href)}"` : ''}>
 			<td class="left name-cell">${nameCell}</td>
 			<td class="left dim hide-sm cv-mono">${symbolCell}</td>
-			<td class="left">${t.index_id ? `<span class="dv-index">${esc(t.index_id)}</span>` : '<span class="dim">—</span>'}</td>
+			<td class="left">${t.index_id ? `<span class="dv-index">${esc(t.index_id)}</span>` : `<span class="dim">${DASH}</span>`}</td>
 			<td class="price">${esc(formatPrice(t.price))}</td>
 			${pctCell(t.change_24h)}
 			${fundingCell(t.funding_rate)}

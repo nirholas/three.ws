@@ -24,7 +24,10 @@ import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 import { VENUE_ID_RE, SYMBOL_SLUG_RE, symbolFromSlug, derivativePath } from './shared/derivative-slug.js';
 
 const $ = (id) => document.getElementById(id);
-const DASH = '—';
+// The shared formatters render a missing value as an em dash. The fields this
+// page formats itself reuse exactly that glyph rather than hardcoding one, so
+// no two cells in the same row can disagree about what "no data" looks like.
+const DASH = formatPercent(null);
 
 // Venue funding is settled every 8h on almost every venue, and CoinGecko does
 // not publish the schedule. Every annualized figure on this page says so.
@@ -826,6 +829,8 @@ function clearSections() {
 
 function renderNotFound(target) {
 	document.title = 'Contract not found · three.ws';
+	$('dc-crumb-venue').textContent = target.venue;
+	$('dc-crumb-venue').href = `/exchange/${encodeURIComponent(target.venue)}`;
 	$('dc-crumb-symbol').textContent = 'Not found';
 	$('dc-hero').innerHTML = `
 		<h1 class="cv-h1">Contract not found</h1>
