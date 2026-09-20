@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { copyProblems, weightedLength } from '../api/_lib/x-content/quality.js';
-import { attachmentProblems, mediaProblems, parseFfmpegProbe } from '../api/_lib/x-content/media.js';
+import { SPEED_OUTPUT_FPS, attachmentProblems, mediaProblems, parseFfmpegProbe, videoFilterChain } from '../api/_lib/x-content/media.js';
 import { markdownToContentState, attachArticleMedia } from '../api/_lib/x-content/articles.js';
 import { DEFAULT_SLOTS, currentSlot, inQuietHours, jitterMinutes, pickDue, slotOpenings, tierOrder } from '../api/_lib/x-content/schedule.js';
 import { linkProbeUrl } from '../api/_lib/x-content/verify.js';
@@ -395,6 +395,26 @@ describe('queue', () => {
 		const queue = loadQueue(root);
 		const { problems } = validateQueue(queue, root);
 		for (const item of queue.items.filter((row) => row.status === 'approved')) expect(problems[item.id]).toEqual([]);
+	});
+
+	it('speeds a recording up without desyncing its captions, and pins a constant rate', () => {
+		// A headless WebGL capture renders about 3 frames a second and the encoder
+		// pads it to 25, so 87%% of the shipped frames were repeats. Speeding up
+		// drops the padding rather than the content.
+		const plain = videoFilterChain();
+		expect(plain.some((f) => f.startsWith('setpts'))).toBe(false);
+		expect(plain.some((f) => f.startsWith('fps='))).toBe(false);
+
+		const fast = videoFilterChain({ speed: 3 });
+		expect(fast.slice(-2)).toEqual(['setpts=PTS/3', `fps=${SPEED_OUTPUT_FPS}`]);
+
+		// Captions burn in against the original timeline and are sped up with the
+		// picture; putting setpts first would render them at a third of their cue.
+		const captioned = videoFilterChain({ speed: 2, subtitlesPath: '/tmp/cues.srt' });
+		const subtitleAt = captioned.findIndex((f) => f.startsWith('subtitles='));
+		const setptsAt = captioned.findIndex((f) => f.startsWith('setpts'));
+		expect(subtitleAt).toBeGreaterThan(-1);
+		expect(setptsAt).toBeGreaterThan(subtitleAt);
 	});
 
 	it('refuses a second cashtag, which X rejects at publish', () => {

@@ -2001,7 +2001,7 @@
 		},
 		{
 			"id": "portal",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "world",
@@ -2059,10 +2059,10 @@
 						{
 							"path": "public/x-media/portal/clip.mp4",
 							"probe": {
-								"durationSec": 40.4,
+								"durationSec": 13.47,
 								"width": 1280,
 								"height": 720,
-								"fps": 25,
+								"fps": 30,
 								"videoCodec": "h264",
 								"pixFmt": "yuv420p"
 							}
