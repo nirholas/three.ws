@@ -25,8 +25,14 @@ import { PublicKey, VersionedTransaction } from '@solana/web3.js';
 import {
 	ASSOCIATED_TOKEN_PROGRAM_ID,
 	TOKEN_PROGRAM_ID,
+	TOKEN_2022_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
+
+// Both token programs share the Transfer / TransferChecked layout. USDC is
+// classic SPL Token and $THREE is Token-2022, so a decoder that only reads the
+// classic program sees no transfer at all in a $THREE payment.
+const TOKEN_PROGRAMS = [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID];
 
 // SPL-Token instruction discriminators (first byte of instruction data).
 const IX_TRANSFER = 3;
@@ -84,29 +90,30 @@ function decodeSolanaTransfer({ transactionBase64, asset, payTo }) {
 	if (!instructions) return { inconclusive: true, reason: 'unreadable_message' };
 
 	let mint;
-	let receiverAta;
+	// The receiver ATA address commits to the token program, so there is one
+	// candidate per program. A transfer is only credited when its destination is
+	// the ATA derived under the program that instruction actually calls.
+	const receiverAtaByProgram = new Map();
 	try {
 		mint = new PublicKey(asset);
-		// allowOwnerOffCurve=true so a PDA payTo never throws here; for a normal
-		// wallet this yields the same ATA the buyer-side builder derived.
-		receiverAta = getAssociatedTokenAddressSync(
-			mint,
-			new PublicKey(payTo),
-			true,
-			TOKEN_PROGRAM_ID,
-			ASSOCIATED_TOKEN_PROGRAM_ID,
-		);
+		const owner = new PublicKey(payTo);
+		for (const program of TOKEN_PROGRAMS) {
+			// allowOwnerOffCurve=true so a PDA payTo never throws here; for a normal
+			// wallet this yields the same ATA the buyer-side builder derived.
+			const ata = getAssociatedTokenAddressSync(mint, owner, true, program, ASSOCIATED_TOKEN_PROGRAM_ID);
+			receiverAtaByProgram.set(program.toBase58(), ata.toBase58());
+		}
 	} catch {
 		return { inconclusive: true, reason: 'bad_asset_or_payto' };
 	}
-	const receiverAtaStr = receiverAta.toBase58();
 	const mintStr = mint.toBase58();
 
 	let paidToPayTo = 0n;
 	let sawTokenTransfer = false;
 
 	for (const ix of instructions) {
-		if (!ix.programId.equals(TOKEN_PROGRAM_ID) || !ix.data || ix.data.length < 1) continue;
+		const receiverAtaStr = receiverAtaByProgram.get(ix.programId.toBase58());
+		if (!receiverAtaStr || !ix.data || ix.data.length < 1) continue;
 		const kind = ix.data[0];
 
 		if (kind === IX_TRANSFER_CHECKED) {
@@ -133,6 +140,31 @@ function decodeSolanaTransfer({ transactionBase64, asset, payTo }) {
 	}
 
 	return { ok: true, paidToPayTo, sawTokenTransfer };
+}
+
+// The mints the buyer's signed transaction moves, read off its TransferChecked
+// instructions (the only transfer form that names its mint). verifyPayment uses
+// this to tell which accepts[] entry a Solana payment answers when a resource
+// quotes several tokens on one network and the payload does not echo the chosen
+// entry. Returns [] when the payload carries no decodable transaction.
+export function signedSolanaMints(paymentPayload) {
+	const transactionBase64 = paymentPayload?.payload?.transaction;
+	if (typeof transactionBase64 !== 'string' || !transactionBase64) return [];
+	let instructions;
+	try {
+		const tx = VersionedTransaction.deserialize(Buffer.from(transactionBase64, 'base64'));
+		instructions = readInstructions(tx.message);
+	} catch {
+		return [];
+	}
+	if (!instructions) return [];
+	const mints = new Set();
+	for (const ix of instructions) {
+		if (!TOKEN_PROGRAMS.some((program) => program.equals(ix.programId))) continue;
+		if (!ix.data || ix.data[0] !== IX_TRANSFER_CHECKED || ix.accountKeys.length < 2) continue;
+		mints.add(ix.accountKeys[1].toBase58());
+	}
+	return [...mints];
 }
 
 // Public entry point used by verifyPayment. Returns:

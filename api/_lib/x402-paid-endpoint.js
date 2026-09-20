@@ -1005,6 +1005,11 @@ export function paidEndpoint(spec) {
 				metadata: {
 					reason: err.code || (err.status === 402 ? 'verify_rejected' : 'verify_failed'),
 					kind: err.status === 402 ? 'rejected_proof' : 'upstream_fault',
+					// The facilitator's own words (ata_create_wrong_account,
+					// transfer_wrong_mint, ...). The code above is the same
+					// invalid_payment for every rejected proof, which names the
+					// class and hides the cause.
+					detail: String(err.message || '').slice(0, 300) || null,
 				},
 			});
 			recordPaymentMetric({

@@ -51,7 +51,7 @@ import {
 
 import { env } from './env.js';
 import { X402Error } from './x402-errors.js';
-import { confirmSolanaPayment } from './x402-solana-confirm.js';
+import { confirmSolanaPayment, signedSolanaMints } from './x402-solana-confirm.js';
 import {
 	NETWORK_SOLANA_MAINNET,
 	NETWORK_SOLANA_DEVNET,
@@ -814,13 +814,28 @@ function isAuthHintAccept(requirement) {
 	return String(requirement.amount) === '0';
 }
 
+// Assets are compared exactly on Solana (base58 is case-sensitive) and
+// case-insensitively on EVM, where clients send checksummed or lowercased hex.
+function sameAsset(a, b) {
+	if (!a || !b) return false;
+	const x = String(a);
+	const y = String(b);
+	return x.startsWith('0x') && y.startsWith('0x') ? x.toLowerCase() === y.toLowerCase() : x === y;
+}
+
 // Match the decoded payload to one of the offered requirements. The match is
-// by (network, assetTransferMethod) when we can detect the method from the
-// payload shape, needed because we now publish two accept entries per EVM
-// network (EIP-3009 first, Permit2 sibling second), and the facilitator's
-// /verify call has to receive the same `extra` block the client signed
-// against. Falls back to first-match-by-network for non-EVM payloads (Solana
-// SPL, BSC direct).
+// by (network, assetTransferMethod, asset). The method matters because we
+// publish two accept entries per EVM network (EIP-3009 first, Permit2 sibling
+// second) and the facilitator's /verify call has to receive the same `extra`
+// block the client signed against. The asset matters because a resource can
+// quote several tokens on one network (USDC and $THREE on Solana): matching by
+// network alone judged every $THREE payment against the USDC entry, so the
+// facilitator looked for a USDC recipient account in a $THREE transaction and
+// refused it, and no buyer could ever pay in the second token.
+//
+// The asset comes from the payload's echoed `accepted` entry (x402 v2) when it
+// is there. A Solana payload without one is read from the signed transaction
+// itself. Only when neither names an asset does the first network match win.
 function selectRequirement(paymentPayload, allRequirements) {
 	// OKX-dialect payloads (PAYMENT-SIGNATURE header) carry the chosen entry as
 	// `accepted` instead of top-level scheme/network, see x402-xlayer-okx.js.
@@ -835,14 +850,30 @@ function selectRequirement(paymentPayload, allRequirements) {
 		return reqMethod === method;
 	};
 	if (network) {
-		const found = allRequirements.find((r) => r.network === network && matchesMethod(r));
-		if (!found)
+		const candidates = allRequirements.filter((r) => r.network === network && matchesMethod(r));
+		if (!candidates.length)
 			throw new X402Error(
 				'unsupported_network',
 				`payment network "${network}" (assetTransferMethod="${method || 'unknown'}") is not offered`,
 				402,
 			);
-		return found;
+		const echoedAsset = paymentPayload?.accepted?.asset || paymentPayload?.paymentRequirements?.asset;
+		if (echoedAsset) {
+			const found = candidates.find((r) => sameAsset(r.asset, echoedAsset));
+			if (!found)
+				throw new X402Error(
+					'unsupported_asset',
+					`payment asset "${echoedAsset}" is not offered on ${network}; offered: ${candidates.map((r) => r.asset).join(', ')}`,
+					402,
+				);
+			return found;
+		}
+		if (candidates.length > 1 && isSolanaNetwork(network)) {
+			const signedMints = signedSolanaMints(paymentPayload);
+			const found = candidates.find((r) => signedMints.includes(r.asset));
+			if (found) return found;
+		}
+		return candidates[0];
 	}
 	if (method) {
 		const found = allRequirements.find(matchesMethod);
