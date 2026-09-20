@@ -7,7 +7,7 @@
 //   npm run x:content -- run --dry-run [--id slug]  print the exact X API calls for the next due item
 //   npm run x:content -- run --id slug              publish one item now (owner-approved posts only)
 //   npm run x:content -- import <blog-slug|url> --as post|article --id slug [--lane l] [--pattern p]
-//   npm run x:content -- prepare-video <input> --out public/x-media/<id>/clip.mp4 [--captions file.srt] [--item slug]
+//   npm run x:content -- prepare-video <input> --out public/x-media/<id>/clip.mp4 [--captions file.srt] [--speed 3] [--item slug]
 //   npm run x:content -- review <slug> [--no-editor]      the editorial bar: lint, live fact checks, AI editor
 //   npm run x:content -- review --status review            review every item awaiting review
 //   npm run x:content -- approve <slug>                    owner gate: release a reviewed item
@@ -28,7 +28,7 @@ import { loadLifts, rankItems } from '../api/_lib/x-content/priority.js';
 import { activeHolds, inventory } from '../api/_lib/x-content/runner.js';
 import { runTick } from '../api/_lib/x-content/runner.js';
 import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
-import { VIDEO_LIMITS, mediaType, parseFfmpegProbe } from '../api/_lib/x-content/media.js';
+import { MAX_SPEED, VIDEO_LIMITS, mediaType, parseFfmpegProbe, videoFilterChain } from '../api/_lib/x-content/media.js';
 import { weightedLength } from '../api/_lib/x-content/quality.js';
 import { approvalProblems, loadReview, reviewItem } from '../api/_lib/x-content/review.js';
 
@@ -46,7 +46,7 @@ loadEnvFile(resolve(root, '.env.local'));
 loadEnvFile(resolve(root, '.env'));
 
 const args = process.argv.slice(2);
-const VALUE_FLAGS = new Set(['--id', '--as', '--lane', '--pattern', '--out', '--captions', '--item', '--now', '--status']);
+const VALUE_FLAGS = new Set(['--id', '--as', '--lane', '--pattern', '--out', '--captions', '--item', '--now', '--status', '--speed']);
 const positional = args.filter((arg, index) => !arg.startsWith('--') && !VALUE_FLAGS.has(args[index - 1]));
 const has = (flag) => args.includes(`--${flag}`);
 const option = (name, fallback = null) => {
@@ -329,27 +329,26 @@ function ffmpegPath() {
 function prepareVideo() {
 	const input = positional[1];
 	const out = option('out');
-	if (!input || !existsSync(input)) fail('Usage: prepare-video <input> --out public/x-media/<id>/clip.mp4 [--captions file.srt] [--item slug]');
+	if (!input || !existsSync(input)) fail('Usage: prepare-video <input> --out public/x-media/<id>/clip.mp4 [--captions file.srt] [--speed 3] [--item slug]');
 	if (!out || !out.startsWith('public/x-media/') || mediaType(out)?.kind !== 'video' || extname(out) !== '.mp4') fail('--out must be an .mp4 under public/x-media/');
 	const captions = option('captions');
 	if (captions && !existsSync(captions)) fail(`captions file ${captions} is missing`);
 
 	const L = VIDEO_LIMITS;
-	const filters = [
-		`scale='min(${L.maxWidth},iw)':'min(${L.maxHeight},ih)':force_original_aspect_ratio=decrease`,
-		'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-	];
-	// Most of the feed autoplays muted: burned-in captions carry the story.
-	if (captions) {
-		const escaped = resolve(captions).replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
-		filters.push(`subtitles='${escaped}':force_style='FontName=Inter,FontSize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H90000000,BorderStyle=3,Outline=6,Shadow=0,MarginV=36'`);
-	}
+	// Most of the feed autoplays muted, so burned-in captions carry the story;
+	// --speed compensates for a browser recording that could only render a few
+	// frames a second. See videoFilterChain for why speeding up beats padding.
+	const speed = Number(option('speed', '1'));
+	if (!(speed > 0 && speed <= MAX_SPEED)) fail(`--speed must be greater than 0 and at most ${MAX_SPEED}`);
+	const filters = videoFilterChain({ speed, subtitlesPath: captions ? resolve(captions) : null, limits: L });
 	mkdirSync(resolve(root, dirname(out)), { recursive: true });
 	const ffmpeg = ffmpegPath();
 	const encode = spawnSync(ffmpeg, [
 		'-y', '-hide_banner', '-i', input,
 		'-t', String(L.maxDurationSec),
 		'-vf', filters.join(','),
+		// Audio rides the same speed change, or it drifts out of the picture.
+		...(speed === 1 ? [] : ['-af', `atempo=${speed}`]),
 		'-fpsmax', String(L.maxFps),
 		'-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p',
 		'-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2',

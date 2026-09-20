@@ -102,6 +102,41 @@ export function attachmentProblems(mediaList) {
 	return problems;
 }
 
+// ── Speed ───────────────────────────────────────────────────────────────────
+// A browser recording of a WebGL page is captured at whatever rate the page can
+// actually render. Headless software GL manages about 3 frames a second on a
+// scene of any weight, and the encoder then pads that to 25 fps by repeating
+// each frame eight times, which is what reads as choppy: 1010 frames carrying
+// 128 distinct images. Speeding the clip up throws away the padding instead of
+// the content, so the same 128 images play over a third of the time and the
+// motion reads as continuous. Measured on the Portal capture: 3.2 unique frames
+// per second at 1x against 9.5 at 3x.
+//
+// Motion interpolation was tried and is not worth it here. At 3 fps the camera
+// has moved too far between frames for block matching, so mci mode synthesized
+// 20 usable frames out of 400 and cost minutes of CPU.
+//
+// `setpts` goes last so burned-in captions are rendered against the original
+// timeline and then sped up with the picture, which keeps them in sync.
+export function videoFilterChain({ speed = 1, subtitlesPath = null, limits = VIDEO_LIMITS } = {}) {
+	const filters = [
+		`scale='min(${limits.maxWidth},iw)':'min(${limits.maxHeight},ih)':force_original_aspect_ratio=decrease`,
+		'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+	];
+	if (subtitlesPath) {
+		const escaped = subtitlesPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+		filters.push(`subtitles='${escaped}':force_style='FontName=Inter,FontSize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H90000000,BorderStyle=3,Outline=6,Shadow=0,MarginV=36'`);
+	}
+	// Retiming leaves variable-rate timestamps that the encoder happily pads back
+	// out to 60 fps, which restores the duplicate frames the speed-up removed and
+	// doubles the file for nothing. Pin a constant rate instead.
+	if (speed !== 1) filters.push(`setpts=PTS/${speed}`, `fps=${SPEED_OUTPUT_FPS}`);
+	return filters;
+}
+
+export const MAX_SPEED = 8;
+export const SPEED_OUTPUT_FPS = 30;
+
 export function readMedia(media, root) {
 	const type = mediaType(media.path);
 	return { buffer: readFileSync(resolve(root, media.path)), mime: type.mime, kind: type.kind, category: CATEGORY[type.kind] };
