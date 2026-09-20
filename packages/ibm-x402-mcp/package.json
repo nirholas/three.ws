@@ -58,7 +58,7 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@x402/core": "^2.13.0",
+		"@x402/core": "^2.25.0",
 		"@x402/extensions": "^2.25.0",
 		"@x402/mcp": "^2.13.0",
 		"@x402/svm": "^2.13.0",
