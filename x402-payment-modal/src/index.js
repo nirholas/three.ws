@@ -1883,7 +1883,17 @@ function retryAfterSeconds(res, result, fallback = 6) {
 function friendlyError(err) {
 	const msg = err?.shortMessage || err?.message || String(err);
 	// Trim ethers/viem long stacks, Phantom's RPC-error verbosity.
-	if (/user rejected|user denied|reject/i.test(msg)) return 'cancelled in wallet';
+	// Only a wallet's own refusal counts as a cancel: EIP-1193 code 4001, ethers'
+	// ACTION_REJECTED, or the phrasing wallets use for it. A bare /reject/ also
+	// matched the merchant's "payment rejected: <reason>", so a server-side verify
+	// failure was shown as the buyer cancelling a transaction they had just signed.
+	if (
+		err?.code === 4001 ||
+		err?.code === 'ACTION_REJECTED' ||
+		/user (rejected|denied|cancell?ed|declined)|(rejected|denied|cancell?ed) by (the )?user|^(transaction|request|signature) (was )?(rejected|declined|cancell?ed)/i.test(msg)
+	) {
+		return 'cancelled in wallet';
+	}
 	// Upstream throttles (e.g. a generator's create-prediction rate limit) often
 	// arrive as raw provider text that names the merchant's internal billing or
 	// credit state. Never relay that to the buyer: the payment isn't settled until

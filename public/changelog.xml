@@ -135,6 +135,14 @@
 			<description>Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible.</description>
 		</item>
 		<item>
+			<title>Paying the Club cover charge in $THREE works now</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-09-20:Paying the Club cover charge in $THREE works now</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Club door quotes its cover in USDC or in $THREE, but every attempt to pay in $THREE failed at the last step, and the payment window wrongly said you had cancelled in your wallet when you had just approved. The cause was on our side: $THREE is issued under Solana's newer token standard (Token-2022) and our payment rail only knew how to build and check transfers for the older one, so a $THREE payment could never be verified. The rail now reads which standard a token uses and handles both, in the step that builds your transaction and in the step that verifies it. Nothing was ever charged on a failed attempt. The payment window also now shows the real reason when a payment is refused instead of blaming a cancel.</description>
+		</item>
+		<item>
 			<title>Put any token's 3D scene on your own site, keyed by the pair address you already have</title>
 			<link>https://three.ws/docs/coin3d-embed</link>
 			<guid isPermaLink="false">2026-09-20:Put any token's 3D scene on your own site, keyed by the pair address you already have</guid>

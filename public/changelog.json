@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-20T19:56:28.610Z",
+	"generated_at": "2026-09-20T20:16:26.856Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -173,6 +173,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Paying the Club cover charge in $THREE works now",
+			"summary": "The Club door quotes its cover in USDC or in $THREE, but every attempt to pay in $THREE failed at the last step, and the payment window wrongly said you had cancelled in your wallet when you had just approved. The cause was on our side: $THREE is issued under Solana's newer token standard (Token-2022) and our payment rail only knew how to build and check transfers for the older one, so a $THREE payment could never be verified. The rail now reads which standard a token uses and handles both, in the step that builds your transaction and in the step that verifies it. Nothing was ever charged on a failed attempt. The payment window also now shows the real reason when a payment is refused instead of blaming a cancel.",
+			"link": "/club",
+			"tags": [
+				"fix"
 			]
 		},
 		{
