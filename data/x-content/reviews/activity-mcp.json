@@ -1,7 +1,7 @@
 {
 	"id": "activity-mcp",
-	"contentHash": "e33edcf62bb1351adf922f530bd1d6becf842454f110072adfc233c8259603b3",
-	"reviewedAt": "2026-09-20T18:12:21.878Z",
+	"contentHash": "04e60e8972b96e88749a69fabd7a5d8b414b3314fe3a81e466eb60d566f4aa87",
+	"reviewedAt": "2026-09-20T18:21:58.533Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -63,21 +63,13 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "accuracy",
-				"quote": "trending agents, the $THREE holder board with tiers, the site activity ticker",
-				"problem": "The image and changelog describe the surface as 'trending agents and coins'; the post omits trending coins. Not false, but the copy and the screenshot are slightly out of sync on what the discovery surface includes.",
-				"fix": "Either accept the omission (safe) or recapture-free fix: 'trending agents and coins, the $THREE holder board, the activity ticker' if length allows."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"Any MCP client can read the live discovery surface: trending agents, the $THREE holder board with tiers, the site activity ticker. Five tools, free: npmjs.com/package/@three-ws/activity-mcp",
@@ -85,10 +77,10 @@
 				"No key, no signer, no payment. Install it, point it at the public API, and ask."
 			],
 			"altText": [
-				"A dark title card headed at three-ws slash activity-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming get_trending_agents, get_trending_coins, get_holder_leaderboard, get_tier_info and get_feed_events."
+				"A three.ws card reading 'Five tools. The live site, readable.' beside a browser window showing the MCP Tool Catalog filtered to the activity-mcp server: get_feed_events, get_holder_leaderboard, get_tier_info, get_trending_agents and get_trending_coins, each badged Read-only and Free with its full description"
 			]
 		},
-		"summary": "Both factual claims pass verification, the three live API probes are green, the image shows the real package page and matches the copy, and the voice contract is respected with no tags, hashtags, or hype. Only a trivial mismatch worth noting: the screenshot also advertises trending coins, which the post omits; safe to ship as is.",
+		"summary": "Every factual claim passes verification: five tools per the README, the public API sourcing per the README, and all three live API probes return 200. The image shows the real catalog with the exact five tools and Read-only and Free badges, the alt text accurately describes it, voice rules are fully respected, and the link resolves.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",

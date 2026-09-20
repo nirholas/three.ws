@@ -1,0 +1,11 @@
+{
+	"out": "public/x-media/activity-mcp/card.png",
+	"headline": "Five tools.\nThe live site, readable.",
+	"headlineSize": 68,
+	"body": "Trending agents, the $THREE holder board with its tiers, and the site activity ticker, read straight from the public API. No key, no signer, no payment.",
+	"frame": "browser",
+	"shot": "https://three.ws/mcp-tools?server=activity-mcp",
+	"label": "three.ws/mcp-tools?server=activity-mcp",
+	"scrollBy": 1500,
+	"settleMs": 20000
+}

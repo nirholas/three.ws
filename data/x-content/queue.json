@@ -1225,8 +1225,8 @@
 					"textFrom": "docs/announcements/activity-mcp.post.txt",
 					"media": [
 						{
-							"path": "public/announce/img/activity-mcp-hero.webp",
-							"alt": "A dark title card headed at three-ws slash activity-mcp, with the package description under it, the claude mcp add install command in a monospace row, and chips naming get_trending_agents, get_trending_coins, get_holder_leaderboard, get_tier_info and get_feed_events."
+							"path": "public/x-media/activity-mcp/card.png",
+							"alt": "A three.ws card reading 'Five tools. The live site, readable.' beside a browser window showing the MCP Tool Catalog filtered to the activity-mcp server: get_feed_events, get_holder_leaderboard, get_tier_info, get_trending_agents and get_trending_coins, each badged Read-only and Free with its full description"
 						}
 					]
 				},
