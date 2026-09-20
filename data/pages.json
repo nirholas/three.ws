@@ -1480,6 +1480,14 @@
 					"added": "2026-06-30"
 				},
 				{
+					"path": "/three-launchpad",
+					"title": "$THREE Launchpad",
+					"description": "A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.",
+					"priority": 0.9,
+					"changefreq": "daily",
+					"added": "2026-09-20"
+				},
+				{
 					"path": "/launches",
 					"title": "Agent Launches",
 					"description": "Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.",

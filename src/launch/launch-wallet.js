@@ -142,6 +142,37 @@ export async function restoreLaunchWallet() {
 	}
 }
 
+/**
+ * Connect without linking the wallet to an account. Trading on a curve needs only a
+ * signature, so a visitor with no three.ws session can still buy and sell.
+ * @param {{ silent?: boolean }} [o] silent: reconnect only if the site is already trusted
+ * @returns {Promise<{ address: string, name: string } | null>}
+ */
+export async function connectTradingWallet({ silent = false } = {}) {
+	const provider = injectedProvider();
+	if (!provider?.connect) {
+		if (silent) return null;
+		throw Object.assign(new Error('No Solana wallet found.'), { code: 'NO_PROVIDER' });
+	}
+	try {
+		const resp = await provider.connect(silent ? { onlyIfTrusted: true } : undefined);
+		const address = (resp?.publicKey || provider.publicKey)?.toString();
+		if (!address) return null;
+		const name = provider.isPhantom ? 'Phantom' : provider.isBackpack ? 'Backpack' : provider.isSolflare ? 'Solflare' : 'Wallet';
+		return { address, name };
+	} catch (e) {
+		if (silent) return null;
+		throw rejected(e);
+	}
+}
+
+/** Whole-unit balance of `mint` held by `address`, across every token account and either token program. */
+export async function tokenBalance(address, mint) {
+	const { PublicKey } = await import('@solana/web3.js');
+	const { value } = await rpc().getParsedTokenAccountsByOwner(new PublicKey(address), { mint: new PublicKey(mint) }, 'confirmed');
+	return value.reduce((sum, a) => sum + (a.account.data.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
+}
+
 export async function solBalance(address) {
 	const { PublicKey } = await import('@solana/web3.js');
 	return (await rpc().getBalance(new PublicKey(address), 'confirmed')) / 1e9;

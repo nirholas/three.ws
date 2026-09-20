@@ -567,7 +567,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		// native lane has no curve config deployed on this network the toggle is
 		// hidden entirely and every launch stays on pump.
 		lane: 'pump',
-		laneInfo: null,        // { trade_fee_bps, fee_split, graduation_sol_approx, … } | null
+		laneInfo: null,        // { trade_fee_bps, fee_split, graduation_three_approx, … } | null
 		laneAvailable: false,
 
 		// wallet source: 'connected' (Phantom/Backpack) or 'agent' (custodial agent wallet)
@@ -1327,8 +1327,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const isNative = s.lane === 'native';
 		const isUsdc = !isNative && s.coinType === 'usdc';
 		const buyIn  = Math.max(0, parseFloat(s.initialBuy) || 0);
-		// The native lane runs three.ws's own bonding curve: SOL-quoted, no coin
-		// variants, no on-chain buyback binding — so it takes the base fields only.
+		// The native lane runs three.ws's own bonding curve: quoted in $THREE, no coin
+		// variants, no on-chain buyback binding, so it takes the base fields only and
+		// its first buy is an amount of $THREE.
 		const prepUrl = isNative ? '/api/native-launch/launch-prep' : '/api/pump/launch-prep';
 		const prepBody = isNative
 			? {
@@ -1336,7 +1337,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				wallet_address: payer,
 				name: nameTrim, symbol: symTrim, uri: s._metaUrl,
 				mint_address: ground.publicKey,
-				sol_buy_in: buyIn,
+				three_buy_in: buyIn,
 				network: 'mainnet',
 			}
 			: {
@@ -1470,7 +1471,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	// rent/fee applies — the buy itself is debited from the wallet's USDC ATA.
 	const estimatedCost = () => {
 		const buy = Math.max(0, parseFloat(s.initialBuy) || 0);
-		return PUMP_BASE_COST + (s.coinType === 'usdc' ? 0 : buy);
+		// Only a SOL-quoted buy adds to the SOL cost: USDC and $THREE buys are debited
+		// from the wallet's token accounts.
+		return PUMP_BASE_COST + (s.coinType === 'usdc' || s.lane === 'native' ? 0 : buy);
 	};
 	// Symbol accepts any raw value (whitespace, emoji, special chars) — only name & description require real text.
 	const formValid     = () => s.name.trim() && s.symbol.length > 0 && s.description.trim();
@@ -1867,9 +1870,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const laneNoteHtml = isNative && s.laneInfo
 			? `<div class="lp-lane-note">Launches on three.ws's own bonding curve. ${
 				(s.laneInfo.trade_fee_bps / 100).toFixed(s.laneInfo.trade_fee_bps % 100 ? 2 : 0)
-			}% trading fee, ${s.laneInfo.fee_split.creator_percent}% of it to you. Graduates at ~${
-				s.laneInfo.graduation_sol_approx
-			} SOL raised into a locked liquidity pool you keep earning fees from.</div>`
+			}% trading fee, ${s.laneInfo.fee_split.creator_percent}% of it to you, paid in $THREE. Every buy of your coin is made with $THREE. Graduates at about ${
+				Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(s.laneInfo.graduation_three_approx)
+			} $THREE raised into a locked $THREE pool you keep earning fees from. <a href="/three-launchpad">See the launchpad</a>.</div>`
 			: '';
 
 		// The native lane has no server-signed path, so its signer is always the
@@ -1991,11 +1994,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			${coinNoteHtml}
 			${(() => {
 				const isUsdcCoin = ct === 'usdc';
-				const unit       = isUsdcCoin ? 'USDC' : 'SOL';
-				// pump.fun launch caps: 50 SOL or 1,000,000 USDC (matches server schema).
-				const maxBuy     = isUsdcCoin ? 1_000_000 : 50;
-				const stepBuy    = isUsdcCoin ? 1 : 0.001;
-				const buyTitle   = isUsdcCoin
+				const unit       = isNative ? '$THREE' : isUsdcCoin ? 'USDC' : 'SOL';
+				// Launch caps match the server schemas: 10,000,000 $THREE on the native
+				// lane, and pump.fun's 50 SOL or 1,000,000 USDC.
+				const maxBuy     = isNative ? 10_000_000 : isUsdcCoin ? 1_000_000 : 50;
+				const stepBuy    = isNative || isUsdcCoin ? 1 : 0.001;
+				const buyTitle   = isNative
+					? 'Optional $THREE spent on your own curve at launch. The signing wallet must hold it. Leave at 0 for a launch-only mint.'
+					: isUsdcCoin
 					? 'Optional USDC spent on the bonding curve at launch. Requires a USDC ATA on the signing wallet.'
 					: 'Optional SOL spent on the bonding curve at launch. You receive the resulting coins. Leave at 0 for a launch-only mint.';
 				const buybackUnit = isUsdcCoin ? 'USDC' : 'SOL';

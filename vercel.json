@@ -1011,6 +1011,10 @@
 			"dest": "/launches.html"
 		},
 		{
+			"src": "/three-launchpad/?",
+			"dest": "/three-launchpad.html"
+		},
+		{
 			"src": "/drops/?$",
 			"dest": "/drops.html"
 		},
