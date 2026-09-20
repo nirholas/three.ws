@@ -6,7 +6,7 @@
 // a velvet rope on brass stanchions, talking to each other in speech bubbles,
 // with a neon sign over the doorway and a couple of people who started the
 // night early: one swaying in the line, one staggering around the alley, one
-// slumped against the wall.
+// who keeps sliding down onto the pavement by the wall.
 //
 // Three parts, split so the logic is testable without a GPU:
 //
@@ -64,10 +64,13 @@ const POST_SPACING = 1.5;
 const POST_HEIGHT = 0.98;
 
 // What people in a line do with their bodies while they wait.
-const WAIT_CLIPS = ['av-waiting', 'av-idle-breath', 'av-chilling', 'av-listening-music', 'av-smoking', 'idle'];
-const LEAN_CLIPS = ['av-leaning-wall', 'av-chilling', 'idle'];
+const WAIT_CLIPS = ['av-waiting', 'av-idle-breath', 'av-listening-music', 'av-smoking', 'idle'];
+const LEAN_CLIPS = ['av-leaning-wall', 'av-idle-breath', 'idle'];
 const SWAY_CLIPS = ['av-listening-music', 'av-idle-breath', 'idle'];
-const SLUMP_CLIPS = ['lookdown', 'av-idle-breath', 'idle'];
+// `av-chilling` is a lie-down: the hips sink to the pavement and come back up
+// over a ten second loop. On its own it is somebody relaxing; outside a club at
+// closing time it is somebody who keeps trying to stand and not managing it.
+const SLUMP_CLIPS = ['av-chilling', 'lookdown'];
 const STAGGER_CLIPS = ['walk'];
 const TALK_GESTURES = ['shrug', 'nod', 'point'];
 
@@ -227,7 +230,7 @@ export function planDoorLine({ door, dir, count, floorAt, wallDistance, clearBet
 			slots.push({
 				role: 'slump', x: p.x, y, z: p.z,
 				yaw: outFromWall + (rng() - 0.5) * 0.5,
-				clips: SLUMP_CLIPS, timeScale: 0.5, drunk: 'slump',
+				clips: SLUMP_CLIPS, timeScale: 0.7, drunk: 'slump',
 			});
 		}
 	}
@@ -303,7 +306,7 @@ export const SOLO = {
 		'*hic* ...which way is the door?',
 		'I am not lost. The alley is lost.',
 	],
-	slump: ['Just resting my eyes.', 'Tell the bouncer I am shober.', 'Five more minutes.', 'Zzz...'],
+	slump: ['Just resting my eyes.', 'Tell the bouncer I am shober.', 'Five more minutes.', 'The pavement is sho comfy.', 'I can shtand. Watch. ...never mind.'],
 };
 
 export const REACTIONS = {
@@ -677,11 +680,10 @@ export class ClubDoorLine {
 		if (!m.drunk) return;
 		const t = this.time + m.phase;
 		const g = m.inst.group;
-		if (m.drunk === 'sway' || m.drunk === 'slump') {
-			const amp = m.drunk === 'sway' ? 1 : 0.55;
-			g.rotation.z = (Math.sin(t * 0.83) * 0.07 + Math.sin(t * 0.31) * 0.035) * amp;
-			g.rotation.x = (Math.sin(t * 0.57 + 1.3) * 0.045 + 0.02) * amp;
-			g.rotation.y = m.baseYaw + Math.sin(t * 0.23) * 0.12 * amp;
+		if (m.drunk === 'sway') {
+			g.rotation.z = Math.sin(t * 0.83) * 0.07 + Math.sin(t * 0.31) * 0.035;
+			g.rotation.x = Math.sin(t * 0.57 + 1.3) * 0.045 + 0.02;
+			g.rotation.y = m.baseYaw + Math.sin(t * 0.23) * 0.12;
 			return;
 		}
 		const beat = this.plan.beat;
@@ -765,7 +767,8 @@ export class ClubDoorLine {
 				}
 			}
 			const g = member.inst.group;
-			const headUp = member.inst.height * (member.drunk === 'slump' ? 0.98 : 1.06) + 0.12;
+			// The one on the pavement talks from down there.
+			const headUp = member.drunk === 'slump' ? member.inst.height * 0.6 : member.inst.height * 1.06 + 0.12;
 			_head.set(g.position.x, g.position.y + headUp, g.position.z);
 			const dist = _head.distanceTo(camera.position);
 			_head.project(camera);

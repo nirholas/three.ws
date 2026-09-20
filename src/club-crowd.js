@@ -213,8 +213,12 @@ export class ClubCrowd {
 			if (mgr.supportsCanonicalClips()) {
 				for (const [name, json] of this._clipJson) {
 					mgr.injectClip(name, json, { loop: true });
-					const clip = mgr.actions.get(name)?.getClip?.();
-					if (clip) clips.set(name, clip);
+					const action = mgr.actions.get(name);
+					// The clones below play these clips on a bare mixer, outside the
+					// manager's own play path, so run its fallen-pose guard here: a
+					// clip that retargets this rig onto its back is dropped, not looped.
+					if (!action || !mgr._guardAgainstFallenPose(name, action)) continue;
+					clips.set(name, action.getClip());
 				}
 			}
 			mgr.detach();
