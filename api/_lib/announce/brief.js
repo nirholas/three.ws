@@ -190,6 +190,7 @@ export async function buildBrief(slot, { root, ledgerEntry = {}, pages = null, s
 		route: slot.url,
 		lane: slot.lane,
 		pattern: slot.pattern,
+		tier: slot.tier,
 		notBefore: slot.notBefore,
 		surface: {
 			kind: slot.kind,

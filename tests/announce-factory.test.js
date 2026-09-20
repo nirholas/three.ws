@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-import { buildPlan, laneFor, patternsFor, sequence, slotTimes, slugFor } from '../api/_lib/announce/plan.js';
+import { buildPlan, laneFor, patternsFor, sequence, slotTable, slotTimes, slugFor, tierFor } from '../api/_lib/announce/plan.js';
 import { harvestFacts, quotableLines } from '../api/_lib/announce/brief.js';
 import { draftFindings, itemFor, parseDraft } from '../api/_lib/announce/draft.js';
 import { cardFacts, cardHtml, commandFrom, namesFrom } from '../api/_lib/announce/card.js';
@@ -30,6 +30,59 @@ describe('plan', () => {
 			const minutes = Number(time.slice(0, 2)) * 60;
 			expect(minutes).toBeGreaterThanOrEqual(12 * 60);
 		}
+	});
+
+	it('takes the slot table the publisher obeys, in time order, when the cadence declares one', () => {
+		expect(slotTable({ ...CADENCE, slots: [{ tier: 1, at: '20:00' }, { tier: 3, at: '04:00' }, { tier: 2, at: '12:00' }] })).toEqual([
+			{ at: '04:00', tier: 3 },
+			{ at: '12:00', tier: 2 },
+			{ at: '20:00', tier: 1 },
+		]);
+		// No table: the derived times, each one a feature slot, which is what
+		// the publisher defaults an untier'd item to.
+		expect(slotTable(CADENCE)).toEqual([
+			{ at: '13:00', tier: 2 },
+			{ at: '18:00', tier: 2 },
+			{ at: '23:00', tier: 2 },
+		]);
+	});
+
+	it('tiers a surface by what it is: flagship, feature, or proof of work', () => {
+		expect(tierFor(entry('/vaults', { section: 'crypto' }))).toBe(1);
+		expect(tierFor(entry('/agi', { partner: '@ibm' }))).toBe(1);
+		expect(tierFor(entry('/mocap-studio', { section: 'labs' }))).toBe(2);
+		expect(tierFor(entry('@three-ws/alerts-mcp', { kind: 'package', section: 'package' }))).toBe(3);
+	});
+
+	it('plans each surface into the slot its own tier owns', () => {
+		const plan = buildPlan(
+			[
+				entry('/vaults', { section: 'crypto' }),
+				entry('@three-ws/alerts-mcp', { kind: 'package', section: 'package' }),
+				entry('/mocap-studio', { section: 'labs' }),
+			],
+			{
+				cadence: { ...CADENCE, slots: [{ tier: 3, at: '04:00' }, { tier: 2, at: '12:00' }, { tier: 1, at: '20:00' }] },
+				quality: QUALITY,
+				start: '2026-10-01',
+			},
+		);
+		expect(plan.times).toEqual(['04:00', '12:00', '20:00']);
+		expect(plan.slots.map((slot) => [slot.key, slot.tier, slot.notBefore])).toEqual([
+			['@three-ws/alerts-mcp', 3, '2026-10-01T04:00:00Z'],
+			['/mocap-studio', 2, '2026-10-01T12:00:00Z'],
+			['/vaults', 1, '2026-10-01T20:00:00Z'],
+		]);
+		expect(plan.totals.byTier).toEqual({ 1: 1, 2: 1, 3: 1 });
+	});
+
+	it('gives a slot to the next tier down when its own tier is out of stock', () => {
+		const plan = buildPlan([entry('/vaults', { section: 'crypto' }), entry('/genome', { section: 'crypto' })], {
+			cadence: { ...CADENCE, slots: [{ tier: 3, at: '04:00' }, { tier: 1, at: '20:00' }] },
+			quality: QUALITY,
+			start: '2026-10-01',
+		});
+		expect(plan.slots.map((slot) => [slot.tier, slot.slotTier])).toEqual([[1, 3], [1, 1]]);
 	});
 
 	it('drops a slot whose jitter window would run into quiet hours', () => {
@@ -118,6 +171,7 @@ const BRIEF = {
 	route: '/forge-max',
 	lane: 'developer',
 	pattern: 'number',
+	tier: 2,
 	notBefore: '2026-10-01T13:00:00Z',
 	surface: { kind: 'page', section: 'build', title: 'Forge Max', description: 'The maximum-quality lane.' },
 	evidenceCandidates: [{ type: 'page', url: 'https://three.ws/forge-max', contains: 'The highest-quality lane: 200k-poly geometry, 4K PBR textures.' }],
@@ -170,6 +224,11 @@ describe('draft', () => {
 		expect(item.posts[0].textFrom).toBe('docs/announcements/forge-max.post.txt');
 		expect(item.posts[0].media[0].alt).toBe(GOOD.alt);
 		expect(item.notBefore).toBe(BRIEF.notBefore);
+		// The queue validator refuses an item with no tier, so the plan's tier
+		// has to survive the trip through the brief.
+		expect(item.tier).toBe(2);
+		expect(itemFor({ ...BRIEF, tier: undefined }, GOOD, { mediaPath: 'x.webp' }).tier).toBe(2);
+		expect(itemFor({ ...BRIEF, tier: 1 }, GOOD, { mediaPath: 'x.webp' }).tier).toBe(1);
 	});
 });
 

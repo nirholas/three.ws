@@ -24,6 +24,7 @@ import { callModelChain } from '../x-content/llm.js';
 import { copyProblems, copySimilarity, weightedLength } from '../x-content/quality.js';
 import { claimProblems, languageProblems } from '../x-content/editorial.js';
 import { loadHistory } from '../x-content/queue.js';
+import { TIERS } from './plan.js';
 
 export const TARGET_BAND = [100, 179];
 
@@ -115,6 +116,10 @@ export function itemFor(brief, draft, { mediaPath, probe = null, status = 'draft
 		id: brief.id,
 		status,
 		kind: 'post',
+		// The queue refuses an item without a tier, and the publisher gives each
+		// tier a slot of its own, so the plan's tier travels with the item
+		// rather than being re-guessed here.
+		tier: TIERS.includes(Number(brief.tier)) ? Number(brief.tier) : 2,
 		lane: brief.lane,
 		pattern: brief.pattern,
 		notBefore: brief.notBefore,

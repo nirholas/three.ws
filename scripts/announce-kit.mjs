@@ -115,6 +115,7 @@ const wanted = (() => {
 			url: entry.url || null,
 			lane: queued.lane,
 			pattern: queued.pattern,
+			tier: queued.tier,
 			notBefore: queued.notBefore,
 			windowMinutes: queued.windowMinutes || plan.slots[0]?.windowMinutes || 90,
 			batch: 0,
@@ -285,7 +286,7 @@ try {
 		results.push({
 			id: slot.id,
 			state: problems.length ? 'packed, item incomplete' : 'packed, awaiting review',
-			detail: problems.length ? problems[0] : `${slot.notBefore.slice(0, 16).replace('T', ' ')} UTC, ${brief.lane}/${brief.pattern}`,
+			detail: problems.length ? problems[0] : `${slot.notBefore.slice(0, 16).replace('T', ' ')} UTC, T${item.tier} ${brief.lane}/${brief.pattern}`,
 		});
 	}
 } finally {

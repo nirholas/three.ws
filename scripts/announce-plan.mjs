@@ -59,6 +59,7 @@ function calendarMarkdown() {
 		'',
 		`**${plan.totals.slots} surfaces that have never been announced**, ${plan.perDay} a day at ${plan.times.join(', ')} UTC, starting ${plan.start}: ${plan.days} days of posting, ${batches} weekly batches. ${plan.totals.gated} of them capture media from a surface that renders live third-party market data, so those frames need owner approval before they can be committed.`,
 		'',
+		`Tier mix: ${Object.entries(plan.totals.byTier).map(([tier, count]) => `T${tier} ${count}`).join(', ')}. Each slot is owned by one tier, and a surface is planned into the slot its own tier owns, so the flagship slot gets flagship material and a package announcement takes the proof-of-work slot.`,
 		`Lane mix: ${Object.entries(plan.totals.byLane).map(([lane, count]) => `${lane} ${count}`).join(', ')}.`,
 		`Pattern mix: ${Object.entries(plan.totals.byPattern).map(([pattern, count]) => `${pattern} ${count}`).join(', ')}.`,
 		'',
@@ -82,11 +83,11 @@ function calendarMarkdown() {
 			batch = slot.batch;
 			const rows = plan.slots.filter((row) => row.batch === batch);
 			lines.push('', `## Batch ${batch}: ${rows[0].notBefore.slice(0, 10)} to ${rows[rows.length - 1].notBefore.slice(0, 10)}`, '');
-			lines.push('| Slot (UTC) | Surface | Lane | Pattern | Shot | Gate |');
-			lines.push('|---|---|---|---|---|---|');
+			lines.push('| Slot (UTC) | Tier | Surface | Lane | Pattern | Shot | Gate |');
+			lines.push('|---|---|---|---|---|---|---|');
 		}
 		lines.push(
-			`| ${slot.notBefore.slice(0, 16).replace('T', ' ')} | \`${slot.key}\` | ${slot.lane} | ${slot.pattern} | \`${slot.shot}\`${slot.motion ? ' (motion)' : ''} | ${slot.mediaGate || ''} |`,
+			`| ${slot.notBefore.slice(0, 16).replace('T', ' ')} | T${slot.tier}${slot.tier === slot.slotTier ? '' : ` (in the T${slot.slotTier} slot)`} | \`${slot.key}\` | ${slot.lane} | ${slot.pattern} | \`${slot.shot}\`${slot.motion ? ' (motion)' : ''} | ${slot.mediaGate || ''} |`,
 		);
 	}
 	return `${lines.join('\n')}\n`;
@@ -109,12 +110,12 @@ console.log(
 	`${plan.totals.slots} unannounced surfaces, ${plan.perDay}/day at ${plan.times.join(', ')} UTC from ${plan.start}: ${plan.days} days, ${Math.ceil(plan.days / 7)} batches.`,
 );
 console.log(
-	`lanes ${Object.entries(plan.totals.byLane).map(([lane, count]) => `${lane}:${count}`).join(' ')}  patterns ${Object.entries(plan.totals.byPattern).map(([pattern, count]) => `${pattern}:${count}`).join(' ')}  owner-gated media ${plan.totals.gated}  deferred ${plan.deferred?.length || 0}\n`,
+	`tiers ${Object.entries(plan.totals.byTier).map(([tier, count]) => `T${tier}:${count}`).join(' ')}  lanes ${Object.entries(plan.totals.byLane).map(([lane, count]) => `${lane}:${count}`).join(' ')}  patterns ${Object.entries(plan.totals.byPattern).map(([pattern, count]) => `${pattern}:${count}`).join(' ')}  owner-gated media ${plan.totals.gated}  deferred ${plan.deferred?.length || 0}\n`,
 );
-console.log(`${'when'.padEnd(17)} ${'surface'.padEnd(32)} ${'lane'.padEnd(10)} ${'pattern'.padEnd(11)} gate`);
+console.log(`${'when'.padEnd(17)} ${'tier'.padEnd(5)} ${'surface'.padEnd(32)} ${'lane'.padEnd(10)} ${'pattern'.padEnd(11)} gate`);
 for (const slot of rows) {
 	console.log(
-		`${slot.notBefore.slice(0, 16).replace('T', ' ').padEnd(17)} ${slot.key.padEnd(32)} ${slot.lane.padEnd(10)} ${slot.pattern.padEnd(11)} ${slot.mediaGate || ''}`,
+		`${slot.notBefore.slice(0, 16).replace('T', ' ').padEnd(17)} ${`T${slot.tier}`.padEnd(5)} ${slot.key.padEnd(32)} ${slot.lane.padEnd(10)} ${slot.pattern.padEnd(11)} ${slot.mediaGate || ''}`,
 	);
 }
 if (!only) console.log(`\n... ${Math.max(0, plan.totals.slots - rows.length)} more. Full calendar: npm run announce:plan -- --write`);
