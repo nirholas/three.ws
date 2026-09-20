@@ -41,6 +41,7 @@ import { gatherObjectStorageHealth } from './object-storage-health.js';
 import { gatherIndexLagHealth } from './index-lag.js';
 import { gatherHomeHealth } from './home-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
+import { treasuryWalletOrNull, rewardsWalletOrNull } from '../token/config.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
 const DB_SLOW_MS = 1_000;
@@ -549,6 +550,46 @@ function checkX402Config() {
 	}
 }
 
+// The $THREE fund-routing config: the two receivers every split pays and the key
+// that signs a quote. All three are required in production and, by design, fail
+// CLOSED at FIRST USE rather than at boot (api/_lib/token/config.js,
+// api/_lib/token/quote.js), so a wrong address can never quietly take real money.
+// The cost of that design is that an unset one has no boot signature at all:
+// every page answers 200, /api/token/quote answers "briefly unavailable" forever,
+// the buyback cron records `treasury_unavailable` skips, and the reflections cron
+// reports "no pool to distribute". Production ran exactly that way, invisibly,
+// until 2026-09-20. This check gives the condition the signature it never had.
+function checkThreeTokenRail() {
+	const base = { name: 'three_token_rail', label: '$THREE payment rail config' };
+	try {
+		const missing = [];
+		if (!treasuryWalletOrNull()) missing.push('THREE_TREASURY_WALLET');
+		if (!rewardsWalletOrNull()) missing.push('THREE_REWARDS_WALLET');
+		if (!process.env.THREE_QUOTE_SECRET) missing.push('THREE_QUOTE_SECRET');
+		if (process.env.NODE_ENV !== 'production') {
+			return {
+				...base,
+				status: 'unknown',
+				detail: missing.length
+					? `${missing.length} var(s) unset; dev fallbacks apply outside production`
+					: 'configured',
+			};
+		}
+		if (missing.length) {
+			return {
+				...base,
+				status: 'down',
+				detail: `${missing.join(', ')} unset, every $THREE-priced purchase fails closed`,
+				missing,
+				hint: 'Set them on the Cloud Run service (wallets as literals, the quote key as a Secret Manager reference). Until then /api/token/quote answers 503 and the buyback + reflections crons are inert.',
+			};
+		}
+		return { ...base, status: 'ok', detail: 'receivers + quote signing key configured' };
+	} catch (err) {
+		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
+	}
+}
+
 /**
  * Gather every subsystem's health and roll it into one verdict.
  * @param {{ probeDb?: boolean }} [opts] set probeDb:false to skip the live DB
@@ -589,6 +630,10 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		probeDb ? gatherHomeHealth() : Promise.resolve({ name: 'home', label: 'Home Assistant bridge', status: 'unknown', detail: 'home read skipped' }),
 		checkWorld(),
 		Promise.resolve(checkX402Config()),
+		// Same shape as checkX402Config: a pure config read, no probe. It sits here
+		// because an unset $THREE receiver takes down every paid $THREE surface at
+		// once while leaving every reachability probe green.
+		Promise.resolve(checkThreeTokenRail()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),
 		// The marketplace chat bot goes offline SILENTLY (expired wallet session =
 		// no XMTP delivery), and until it was hosted it had no health surface at

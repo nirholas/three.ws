@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-20T02:54:06.463Z",
+	"generated_at": "2026-09-20T03:27:38.651Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-20",
+			"type": "update",
+			"title": "Paid $THREE purchases say what is wrong instead of failing silently",
+			"summary": "Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible.",
+			"link": "/status",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-18",
 			"type": "update",

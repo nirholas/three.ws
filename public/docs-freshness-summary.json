@@ -1,13 +1,13 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-09-20T02:53:30.140Z",
-	"commit": "3e1ab0b4b",
+	"generatedAt": "2026-09-20T03:11:54.326Z",
+	"commit": "cf9bcdec0",
 	"totals": {
-		"docs": 737,
+		"docs": 738,
 		"stale": 8,
-		"watch": 415,
-		"fresh": 186,
+		"watch": 419,
+		"fresh": 183,
 		"unverifiable": 122,
 		"snapshot": 6,
 		"reviewed": 111,
@@ -16,9 +16,9 @@
 	"docs": {
 		"STRUCTURE.md": {
 			"s": "stale",
-			"g": 5.668,
+			"g": 9.668,
 			"d": "2026-09-18",
-			"f": 19,
+			"f": 25,
 			"n": 1694
 		},
 		"docs/x402-endpoints.md": {
@@ -191,6 +191,13 @@
 			"d": "2026-09-09",
 			"f": 3,
 			"n": 18
+		},
+		"docs/galaxy.md": {
+			"s": "watch",
+			"g": 0.833,
+			"d": "2026-09-16",
+			"f": 2,
+			"n": 9
 		},
 		"docs/ops/avatar-asset-orphans.md": {
 			"s": "watch",
@@ -652,6 +659,14 @@
 			"n": 60,
 			"v": "2026-09-17"
 		},
+		"docs/ux-flows/08-coin-launch-wallets.md": {
+			"s": "watch",
+			"g": 0.514,
+			"d": "2026-09-17",
+			"f": 2,
+			"n": 62,
+			"v": "2026-09-17"
+		},
 		"docs/tutorials/self-host-agent-backend.md": {
 			"s": "watch",
 			"g": 0.502,
@@ -823,6 +838,14 @@
 			"d": "2026-09-08",
 			"f": 1,
 			"n": 2
+		},
+		"docs/risk-acknowledgment.md": {
+			"s": "watch",
+			"g": 0.5,
+			"d": "2026-09-17",
+			"f": 1,
+			"n": 27,
+			"v": "2026-09-17"
 		},
 		"docs/seeker-submission-day.md": {
 			"s": "watch",
@@ -1233,13 +1256,6 @@
 			"d": "2026-09-09",
 			"f": 1,
 			"n": 5
-		},
-		"docs/galaxy.md": {
-			"s": "watch",
-			"g": 0.333,
-			"d": "2026-09-16",
-			"f": 1,
-			"n": 9
 		},
 		"docs/knock.md": {
 			"s": "watch",
@@ -1937,6 +1953,13 @@
 			"f": 2,
 			"n": 2
 		},
+		"docs/build.md": {
+			"s": "watch",
+			"g": 0.143,
+			"d": "2026-09-18",
+			"f": 1,
+			"n": 17
+		},
 		"docs/mcp-agent.md": {
 			"s": "watch",
 			"g": 0.143,
@@ -1964,6 +1987,13 @@
 			"d": "2026-08-12",
 			"f": 1,
 			"n": 2
+		},
+		"docs/ops/gcp-credits.md": {
+			"s": "watch",
+			"g": 0.143,
+			"d": "2026-09-18",
+			"f": 1,
+			"n": 70
 		},
 		"docs/the-first-19-weeks.md": {
 			"s": "watch",
@@ -2726,6 +2756,13 @@
 			"f": 1,
 			"n": 2
 		},
+		"README.md": {
+			"s": "watch",
+			"g": 0.023,
+			"d": "2026-09-18",
+			"f": 1,
+			"n": 240
+		},
 		"docs/agent-shell.md": {
 			"s": "watch",
 			"g": 0.022,
@@ -2927,14 +2964,6 @@
 			"d": "2026-09-17",
 			"f": 1,
 			"n": 58,
-			"v": "2026-09-17"
-		},
-		"docs/ux-flows/08-coin-launch-wallets.md": {
-			"s": "watch",
-			"g": 0.014,
-			"d": "2026-09-17",
-			"f": 1,
-			"n": 62,
 			"v": "2026-09-17"
 		},
 		"docs/ux-flows/11-account-dashboard.md": {
@@ -3389,13 +3418,6 @@
 			"f": 0,
 			"n": 6,
 			"v": "2026-09-17"
-		},
-		"docs/build.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-09-18",
-			"f": 0,
-			"n": 17
 		},
 		"docs/capture.md": {
 			"s": "fresh",
@@ -4118,13 +4140,6 @@
 			"f": 0,
 			"n": 2
 		},
-		"docs/ops/gcp-credits.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-09-18",
-			"f": 0,
-			"n": 70
-		},
 		"docs/ops/home-operations.md": {
 			"s": "fresh",
 			"g": 0,
@@ -4446,14 +4461,6 @@
 			"d": "2026-09-09",
 			"f": 0,
 			"n": 10
-		},
-		"docs/risk-acknowledgment.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-09-17",
-			"f": 0,
-			"n": 27,
-			"v": "2026-09-17"
 		},
 		"docs/robinhood-portfolios.md": {
 			"s": "fresh",
@@ -4942,6 +4949,13 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/uniswap-v4-hooks.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 1
+		},
 		"docs/upstream/home-assistant-js-websocket-resubscribe-rejection.md": {
 			"s": "snapshot",
 			"g": 0,
@@ -5276,13 +5290,6 @@
 			"d": "2026-06-10",
 			"f": 0,
 			"n": 0
-		},
-		"README.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-09-18",
-			"f": 0,
-			"n": 240
 		}
 	}
 }

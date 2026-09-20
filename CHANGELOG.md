@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-20
+
+- **Paid $THREE purchases say what is wrong instead of failing silently**: Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible. (`/status`) `[fix, infra]`
+
 ## 2026-09-18
 
 - **469 generated animations in the library, and for sale as rigged GLBs**: The animation library now carries 469 clips generated on our own motion model, covering 175 prompts across walks, idles, gestures, dance, combat, sport, reactions and more. Every one passed the quality gate that checks for sliding feet, sudden jumps and broken loops, and fewer than three in ten takes were thrown away. While checking them on a real avatar we found that every generated clip, including the ones already live, played with the head thrown back and the arms raised, because the model describes its skeleton with the arms hanging and the head in front of the neck. That is fixed, walks now travel instead of skating in place, and a foot flicker is smoothed out. The same fix applies when you generate a motion from a prompt in the Animation Studio. Each clip is also listed in the marketplace as a GLB on the three.ws rig that opens in Blender, Unity or Unreal, for 0.01 USDC through the x402 download, and a rotating set of twelve is free each week. (`/animations`) `[feature, fix]`

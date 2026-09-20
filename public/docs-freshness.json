@@ -1,13 +1,13 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-09-20T02:53:30.140Z",
-	"commit": "3e1ab0b4b",
+	"generatedAt": "2026-09-20T03:11:54.326Z",
+	"commit": "cf9bcdec0",
 	"totals": {
-		"docs": 737,
+		"docs": 738,
 		"stale": 8,
-		"watch": 415,
-		"fresh": 186,
+		"watch": 419,
+		"fresh": 183,
 		"unverifiable": 122,
 		"snapshot": 6,
 		"reviewed": 111,
@@ -1722,10 +1722,10 @@
 				"workers/stylize/oin.py",
 				"workers/stylize/test_stylize.py"
 			],
-			"driftFiles": 19,
-			"driftCommits": 47,
-			"signal": 5.668,
-			"score": 5.668,
+			"driftFiles": 25,
+			"driftCommits": 56,
+			"signal": 9.668,
+			"score": 9.668,
 			"drift": [
 				{
 					"file": "workers/okx-chat-bot/cloudbuild.yaml",
@@ -1749,6 +1749,32 @@
 							"sha": "a71cc4425",
 							"date": "2026-09-18",
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "public/legal/risk.html",
+					"sharedWith": 0,
+					"weight": 1,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "public/legal/agent-wallet.html",
+					"sharedWith": 0,
+					"weight": 1,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
 						}
 					],
 					"total": 1
@@ -1795,6 +1821,19 @@
 					"total": 2
 				},
 				{
+					"file": "pages/galaxy.html",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				},
+				{
 					"file": "scripts/generate-accessory-glbs.mjs",
 					"sharedWith": 1,
 					"weight": 0.5,
@@ -1803,6 +1842,45 @@
 							"sha": "0e184e441",
 							"date": "2026-09-18",
 							"subject": "feat(play): schedule Community Meetup #2 with Meetup Star Shades as its souvenir"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "pages/launch.html",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "public/legal/agreements.html",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "public/atlas-index.json",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
 						}
 					],
 					"total": 1
@@ -1986,6 +2064,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -1996,22 +2079,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 18
+					"total": 20
 				},
 				{
 					"file": "data/pages.json",
@@ -2019,12 +2097,17 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
 						}
 					],
-					"total": 1
+					"total": 2
 				},
 				{
 					"file": "api/forge.js",
@@ -2625,7 +2708,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 4,
-			"driftCommits": 5,
+			"driftCommits": 6,
 			"signal": 2.037,
 			"score": 2.037,
 			"drift": [
@@ -2661,6 +2744,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -2671,7 +2759,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -2731,7 +2819,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 6,
-			"driftCommits": 25,
+			"driftCommits": 28,
 			"signal": 1.577,
 			"score": 1.577,
 			"drift": [
@@ -2785,6 +2873,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -2795,28 +2888,28 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 19
+					"total": 21
 				},
 				{
 					"file": "data/pages.json",
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -2828,7 +2921,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -3180,7 +3273,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 3,
-			"driftCommits": 10,
+			"driftCommits": 11,
 			"signal": 1.036,
 			"score": 1.036,
 			"drift": [
@@ -3189,6 +3282,11 @@
 					"sharedWith": 0,
 					"weight": 1,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "8758f4f44",
 							"date": "2026-09-18",
@@ -3213,14 +3311,9 @@
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
-						},
-						{
-							"sha": "6d123d953",
-							"date": "2026-09-18",
-							"subject": "fix(x402): send a self-valid v2 Bazaar block on every paid route's 402, and add a probe that runs the marketplace checklist"
 						}
 					],
-					"total": 8
+					"total": 9
 				},
 				{
 					"file": "api/forge.js",
@@ -4665,7 +4758,7 @@
 				"src/launchpad/landing.js"
 			],
 			"driftFiles": 5,
-			"driftCommits": 85,
+			"driftCommits": 86,
 			"signal": 0.889,
 			"score": 0.889,
 			"drift": [
@@ -4797,6 +4890,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -4820,14 +4918,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 58
+					"total": 59
 				}
 			]
 		},
@@ -5021,7 +5114,7 @@
 				"tests/announce-factory.test.js"
 			],
 			"driftFiles": 4,
-			"driftCommits": 20,
+			"driftCommits": 21,
 			"signal": 0.866,
 			"score": 0.866,
 			"drift": [
@@ -5105,6 +5198,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -5115,7 +5213,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -5382,7 +5480,7 @@
 				"src/atlas-page.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 101,
+			"driftCommits": 103,
 			"signal": 0.856,
 			"score": 0.856,
 			"drift": [
@@ -5391,6 +5489,11 @@
 					"sharedWith": 1,
 					"weight": 0.5,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "c44cb51a9",
 							"date": "2026-09-15",
@@ -5415,14 +5518,9 @@
 							"sha": "8f6fd6b1d",
 							"date": "2026-09-09",
 							"subject": "docs(changelog): publish the entries the committed feeds had fallen behind"
-						},
-						{
-							"sha": "c92f8b113",
-							"date": "2026-09-09",
-							"subject": "docs(changelog): publish the relay room-tracking, connect-state and API memory entries"
 						}
 					],
-					"total": 18
+					"total": 19
 				},
 				{
 					"file": "public/atlas.js",
@@ -5448,6 +5546,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -5471,14 +5574,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 81
+					"total": 82
 				}
 			]
 		},
@@ -5515,7 +5613,7 @@
 				"tests/x402-sponsor-runway.test.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 20,
+			"driftCommits": 21,
 			"signal": 0.856,
 			"score": 0.856,
 			"drift": [
@@ -5556,6 +5654,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -5579,14 +5682,65 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 17
+					"total": 18
+				}
+			]
+		},
+		{
+			"path": "docs/galaxy.md",
+			"title": "Agent Galaxy: every agent, mapped by meaning",
+			"route": "/docs/#galaxy",
+			"lastTouched": {
+				"sha": "53f420c74",
+				"date": "2026-09-16",
+				"ageDays": 3
+			},
+			"review": null,
+			"status": "watch",
+			"deps": 9,
+			"depFiles": [
+				"api/_lib/embedding-math.js",
+				"api/_lib/embeddings.js",
+				"api/_lib/lexical-rank.js",
+				"api/_lib/watsonx.js",
+				"api/agents/networth.js",
+				"api/galaxy.js",
+				"api/galaxy/flows.js",
+				"pages/galaxy.html",
+				"src/galaxy.js"
+			],
+			"driftFiles": 2,
+			"driftCommits": 2,
+			"signal": 0.833,
+			"score": 0.833,
+			"drift": [
+				{
+					"file": "pages/galaxy.html",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "src/galaxy.js",
+					"sharedWith": 2,
+					"weight": 0.333,
+					"commits": [
+						{
+							"sha": "6812eccfb",
+							"date": "2026-09-16",
+							"subject": "fix(galaxy): remove banned dashes from the galaxy viewer header comment"
+						}
+					],
+					"total": 1
 				}
 			]
 		},
@@ -5855,7 +6009,7 @@
 			"lastTouched": {
 				"sha": "101df5049",
 				"date": "2026-09-01",
-				"ageDays": 18
+				"ageDays": 19
 			},
 			"review": null,
 			"status": "watch",
@@ -6336,7 +6490,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 5,
-			"driftCommits": 30,
+			"driftCommits": 37,
 			"signal": 0.789,
 			"score": 0.789,
 			"drift": [
@@ -6372,6 +6526,16 @@
 					"weight": 0.143,
 					"commits": [
 						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						},
+						{
+							"sha": "19da71865",
+							"date": "2026-09-18",
+							"subject": "build(deps-dev): bump globals from 17.6.0 to 17.12.0"
+						},
+						{
 							"sha": "d95f20df4",
 							"date": "2026-09-18",
 							"subject": "fix(deps): align react with react-dom at 19.3.0 and refresh the vendored meshopt decoder after the dependency bumps"
@@ -6382,27 +6546,17 @@
 							"subject": "fix(multiplayer): pin Colyseus back to 0.16 so the server speaks the browser client's protocol"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
-						},
-						{
-							"sha": "161ad1404",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
-						},
-						{
-							"sha": "38f239d69",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
 						}
 					],
-					"total": 15
+					"total": 19
 				},
 				{
 					"file": "package.json",
@@ -6415,6 +6569,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -6425,22 +6584,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 12
+					"total": 14
 				},
 				{
 					"file": "data/pages.json",
@@ -6448,12 +6602,17 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
 						}
 					],
-					"total": 1
+					"total": 2
 				}
 			]
 		},
@@ -7450,7 +7609,7 @@
 				"scripts/play-mobile-repro.mjs"
 			],
 			"driftFiles": 7,
-			"driftCommits": 234,
+			"driftCommits": 240,
 			"signal": 0.737,
 			"score": 0.737,
 			"drift": [
@@ -7473,6 +7632,16 @@
 					"weight": 0.143,
 					"commits": [
 						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						},
+						{
+							"sha": "19da71865",
+							"date": "2026-09-18",
+							"subject": "build(deps-dev): bump globals from 17.6.0 to 17.12.0"
+						},
+						{
 							"sha": "d95f20df4",
 							"date": "2026-09-18",
 							"subject": "fix(deps): align react with react-dom at 19.3.0 and refresh the vendored meshopt decoder after the dependency bumps"
@@ -7483,27 +7652,17 @@
 							"subject": "fix(multiplayer): pin Colyseus back to 0.16 so the server speaks the browser client's protocol"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
-						},
-						{
-							"sha": "161ad1404",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
-						},
-						{
-							"sha": "38f239d69",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
 						}
 					],
-					"total": 80
+					"total": 84
 				},
 				{
 					"file": "scripts/gcp-triage.mjs",
@@ -7595,6 +7754,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -7605,22 +7769,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 138
+					"total": 140
 				},
 				{
 					"file": "api/healthz.js",
@@ -7869,7 +8028,7 @@
 				"src/voice/a2f-player.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 14,
+			"driftCommits": 15,
 			"signal": 0.723,
 			"score": 0.723,
 			"drift": [
@@ -7910,6 +8069,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -7933,14 +8097,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 11
+					"total": 12
 				}
 			]
 		},
@@ -8743,7 +8902,7 @@
 				"tests/src/manifest.test.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 88,
+			"driftCommits": 90,
 			"signal": 0.683,
 			"score": 0.683,
 			"drift": [
@@ -8789,6 +8948,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -8799,22 +8963,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 85
+					"total": 87
 				}
 			]
 		},
@@ -10029,7 +10188,7 @@
 				"server/seo-head.mjs"
 			],
 			"driftFiles": 3,
-			"driftCommits": 20,
+			"driftCommits": 21,
 			"signal": 0.623,
 			"score": 0.623,
 			"drift": [
@@ -10065,6 +10224,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -10088,14 +10252,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 18
+					"total": 19
 				}
 			]
 		},
@@ -11180,7 +11339,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 6,
-			"driftCommits": 41,
+			"driftCommits": 44,
 			"signal": 0.549,
 			"score": 0.549,
 			"drift": [
@@ -11221,6 +11380,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -11231,28 +11395,28 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 26
+					"total": 28
 				},
 				{
 					"file": "data/pages.json",
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -11277,14 +11441,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 7
+					"total": 8
 				},
 				{
 					"file": "api/forge.js",
@@ -11367,7 +11526,7 @@
 				"tests/check-fetch-timeouts.test.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 21,
+			"driftCommits": 23,
 			"signal": 0.54,
 			"score": 0.54,
 			"drift": [
@@ -11408,6 +11567,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -11418,22 +11582,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 19
+					"total": 21
 				}
 			]
 		},
@@ -12093,6 +12252,122 @@
 			]
 		},
 		{
+			"path": "docs/ux-flows/08-coin-launch-wallets.md",
+			"title": "Coin Launch & Wallets",
+			"route": "/docs/#ux-flows/08-coin-launch-wallets",
+			"lastTouched": {
+				"sha": "bba254d34",
+				"date": "2026-09-17",
+				"ageDays": 2
+			},
+			"review": {
+				"sha": "53f2a200f",
+				"date": "2026-09-17",
+				"kind": "verified",
+				"by": "agent",
+				"note": "full sweep: read against the drifted commits and corrected where wrong",
+				"ageDays": 2
+			},
+			"status": "watch",
+			"deps": 62,
+			"depFiles": [
+				"api/agent-wallet-bridge.js",
+				"api/agent/send-sol.js",
+				"api/agent/wallet.js",
+				"api/agents.js",
+				"api/avatars/index.js",
+				"api/csrf-token.js",
+				"api/oracle/coin.js",
+				"api/pump-fun-mcp.js",
+				"api/pump/coin-intel.js",
+				"api/pump/dex-trades.js",
+				"api/pump/price-history.js",
+				"api/solana-rpc.js",
+				"api/threews/me.js",
+				"api/threews/subdomain.js",
+				"api/traders/preview.js",
+				"api/vanity/drops.js",
+				"api/x402/crypto-intel.js",
+				"pages/avatar-wallet-chat.html",
+				"pages/claim-wallet.html",
+				"pages/coin3d.html",
+				"pages/launch.html",
+				"pages/launches.html",
+				"pages/play/agent-wallet.html",
+				"pages/profile.html",
+				"pages/three-live.html",
+				"pages/three.html",
+				"pages/threews-claim.html",
+				"public/eth-vanity.html",
+				"public/evm-wallet.html",
+				"public/studio/launch-panel.js",
+				"public/vanity-wallet.html",
+				"scripts/agent-wallet-x402-bridge.mjs",
+				"src/agent-eth-vanity-card.js",
+				"src/agent-vanity-grinder.js",
+				"src/claim-wallet.js",
+				"src/coin3d/main.js",
+				"src/eth/vanity/eoa-grinder.js",
+				"src/eth/vanity/grinder.js",
+				"src/eth/vanity/validation.js",
+				"src/eth/vanity/wordlist.js",
+				"src/game/avatar-rig.js",
+				"src/game/play-handoff.js",
+				"src/ipfs.js",
+				"src/launch/launch-model.js",
+				"src/launch/launch-page.css",
+				"src/launch/launch-page.js",
+				"src/launch/launch-wallet.js",
+				"src/launches.js",
+				"src/pages/sealed-drops.js",
+				"src/play-agent-wallet.js",
+				"src/pump/coin-status-card.js",
+				"src/pump/three-token-data.js",
+				"src/shared/agent-wallet-chip.js",
+				"src/shared/state-kit.js",
+				"src/sns/pay-by-name.js",
+				"src/solana/vanity/grinder.js",
+				"src/solana/vanity/sealed-envelope.js",
+				"src/solana/vanity/validation.js",
+				"src/swap-jupiter.js",
+				"src/three-tier-page.js",
+				"src/wallet.js",
+				"vercel.json"
+			],
+			"driftFiles": 2,
+			"driftCommits": 2,
+			"signal": 0.514,
+			"score": 0.514,
+			"drift": [
+				{
+					"file": "pages/launch.html",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				},
+				{
+					"file": "vercel.json",
+					"sharedWith": 69,
+					"weight": 0.014,
+					"commits": [
+						{
+							"sha": "3e8dd089b",
+							"date": "2026-09-18",
+							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
+						}
+					],
+					"total": 1
+				}
+			]
+		},
+		{
 			"path": "docs/tutorials/self-host-agent-backend.md",
 			"title": "Self-Host the Agent Backend",
 			"route": "/tutorials/self-host-agent-backend",
@@ -12142,7 +12417,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 5,
-			"driftCommits": 30,
+			"driftCommits": 34,
 			"signal": 0.502,
 			"score": 0.502,
 			"drift": [
@@ -12151,6 +12426,16 @@
 					"sharedWith": 6,
 					"weight": 0.143,
 					"commits": [
+						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						},
+						{
+							"sha": "19da71865",
+							"date": "2026-09-18",
+							"subject": "build(deps-dev): bump globals from 17.6.0 to 17.12.0"
+						},
 						{
 							"sha": "d95f20df4",
 							"date": "2026-09-18",
@@ -12162,27 +12447,17 @@
 							"subject": "fix(multiplayer): pin Colyseus back to 0.16 so the server speaks the browser client's protocol"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
-						},
-						{
-							"sha": "161ad1404",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
-						},
-						{
-							"sha": "38f239d69",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
 						}
 					],
-					"total": 24
+					"total": 28
 				},
 				{
 					"file": "api/llm/anthropic.js",
@@ -13330,6 +13605,74 @@
 			]
 		},
 		{
+			"path": "docs/risk-acknowledgment.md",
+			"title": "The real-funds agreements",
+			"route": "/docs/#risk-acknowledgment",
+			"lastTouched": {
+				"sha": "bba254d34",
+				"date": "2026-09-17",
+				"ageDays": 2
+			},
+			"review": {
+				"sha": "53f2a200f",
+				"date": "2026-09-17",
+				"kind": "verified",
+				"by": "agent",
+				"note": "full sweep: read against the drifted commits and corrected where wrong",
+				"ageDays": 2
+			},
+			"status": "watch",
+			"deps": 27,
+			"depFiles": [
+				"api/_lib/legal.js",
+				"api/legal/risk-ack.js",
+				"public/legal/agreements.html",
+				"public/legal/agreements.js",
+				"public/risk-ack.js",
+				"public/x402.js",
+				"src/agent-home-pumpfun.js",
+				"src/agent-wallet-hub/tabs/autopilot.js",
+				"src/agent-wallet-hub/tabs/deposit.js",
+				"src/agent-wallet-hub/tabs/give.js",
+				"src/agent-wallet-hub/tabs/pay.js",
+				"src/agent-wallet-hub/tabs/snipe.js",
+				"src/agent-wallet-hub/tabs/trade.js",
+				"src/agent-wallet-hub/tabs/withdraw.js",
+				"src/arm.js",
+				"src/forge-pay.js",
+				"src/launch/launch-page.js",
+				"src/master-wallet.js",
+				"src/payment-modal.js",
+				"src/pump/launch-token-modal.js",
+				"src/pump/pump-modals.js",
+				"src/shared/add-funds.js",
+				"src/shared/agent-tip-modal.js",
+				"src/shared/risk-ack.js",
+				"src/swap-jupiter.js",
+				"src/token-pay.js",
+				"tests/real-funds-agreement-coverage.test.js"
+			],
+			"driftFiles": 1,
+			"driftCommits": 1,
+			"signal": 0.5,
+			"score": 0.5,
+			"drift": [
+				{
+					"file": "public/legal/agreements.html",
+					"sharedWith": 1,
+					"weight": 0.5,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
+				}
+			]
+		},
+		{
 			"path": "docs/seeker-submission-day.md",
 			"title": "Submission day: getting three.ws onto the Seeker dApp Store",
 			"route": "/docs/#seeker-submission-day",
@@ -13856,7 +14199,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 5,
-			"driftCommits": 16,
+			"driftCommits": 19,
 			"signal": 0.481,
 			"score": 0.481,
 			"drift": [
@@ -13910,6 +14253,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -13920,22 +14268,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 12
+					"total": 14
 				},
 				{
 					"file": "data/pages.json",
@@ -13943,12 +14286,17 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
 						}
 					],
-					"total": 1
+					"total": 2
 				}
 			]
 		},
@@ -15918,7 +16266,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 6,
-			"driftCommits": 205,
+			"driftCommits": 207,
 			"signal": 0.418,
 			"score": 0.418,
 			"drift": [
@@ -15969,6 +16317,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -15979,22 +16332,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 119
+					"total": 121
 				},
 				{
 					"file": "server/index.mjs",
@@ -16512,7 +16860,7 @@
 				"src/forged-gallery.js"
 			],
 			"driftFiles": 5,
-			"driftCommits": 12,
+			"driftCommits": 13,
 			"signal": 0.411,
 			"score": 0.411,
 			"drift": [
@@ -16584,6 +16932,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -16607,14 +16960,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 6
+					"total": 7
 				}
 			]
 		},
@@ -16901,7 +17249,7 @@
 				"workers/model-text2motion/mdm_sampler.py"
 			],
 			"driftFiles": 4,
-			"driftCommits": 134,
+			"driftCommits": 140,
 			"signal": 0.388,
 			"score": 0.388,
 			"drift": [
@@ -16924,6 +17272,16 @@
 					"weight": 0.143,
 					"commits": [
 						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						},
+						{
+							"sha": "19da71865",
+							"date": "2026-09-18",
+							"subject": "build(deps-dev): bump globals from 17.6.0 to 17.12.0"
+						},
+						{
 							"sha": "d95f20df4",
 							"date": "2026-09-18",
 							"subject": "fix(deps): align react with react-dom at 19.3.0 and refresh the vendored meshopt decoder after the dependency bumps"
@@ -16934,27 +17292,17 @@
 							"subject": "fix(multiplayer): pin Colyseus back to 0.16 so the server speaks the browser client's protocol"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
-						},
-						{
-							"sha": "161ad1404",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
-						},
-						{
-							"sha": "38f239d69",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
 						}
 					],
-					"total": 59
+					"total": 63
 				},
 				{
 					"file": "package.json",
@@ -16967,6 +17315,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -16977,22 +17330,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 72
+					"total": 74
 				},
 				{
 					"file": "server/index.mjs",
@@ -17272,7 +17620,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 5,
-			"driftCommits": 17,
+			"driftCommits": 18,
 			"signal": 0.362,
 			"score": 0.362,
 			"drift": [
@@ -17336,6 +17684,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -17359,14 +17712,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 6
+					"total": 7
 				},
 				{
 					"file": "vercel.json",
@@ -17745,7 +18093,7 @@
 				"scripts/page-audit.mjs"
 			],
 			"driftFiles": 3,
-			"driftCommits": 35,
+			"driftCommits": 36,
 			"signal": 0.356,
 			"score": 0.356,
 			"drift": [
@@ -17786,6 +18134,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -17809,14 +18162,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 32
+					"total": 33
 				}
 			]
 		},
@@ -19107,49 +19455,6 @@
 			]
 		},
 		{
-			"path": "docs/galaxy.md",
-			"title": "Agent Galaxy: every agent, mapped by meaning",
-			"route": "/docs/#galaxy",
-			"lastTouched": {
-				"sha": "53f420c74",
-				"date": "2026-09-16",
-				"ageDays": 3
-			},
-			"review": null,
-			"status": "watch",
-			"deps": 9,
-			"depFiles": [
-				"api/_lib/embedding-math.js",
-				"api/_lib/embeddings.js",
-				"api/_lib/lexical-rank.js",
-				"api/_lib/watsonx.js",
-				"api/agents/networth.js",
-				"api/galaxy.js",
-				"api/galaxy/flows.js",
-				"pages/galaxy.html",
-				"src/galaxy.js"
-			],
-			"driftFiles": 1,
-			"driftCommits": 1,
-			"signal": 0.333,
-			"score": 0.333,
-			"drift": [
-				{
-					"file": "src/galaxy.js",
-					"sharedWith": 2,
-					"weight": 0.333,
-					"commits": [
-						{
-							"sha": "6812eccfb",
-							"date": "2026-09-16",
-							"subject": "fix(galaxy): remove banned dashes from the galaxy viewer header comment"
-						}
-					],
-					"total": 1
-				}
-			]
-		},
-		{
 			"path": "docs/knock.md",
 			"title": "Knock",
 			"route": "/docs/#knock",
@@ -20370,7 +20675,7 @@
 				"scripts/gcp-triage.mjs"
 			],
 			"driftFiles": 3,
-			"driftCommits": 10,
+			"driftCommits": 11,
 			"signal": 0.301,
 			"score": 0.301,
 			"drift": [
@@ -20406,6 +20711,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -20429,14 +20739,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 8
+					"total": 9
 				}
 			]
 		},
@@ -20610,7 +20915,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 4,
-			"driftCommits": 29,
+			"driftCommits": 36,
 			"signal": 0.296,
 			"score": 0.296,
 			"drift": [
@@ -20619,6 +20924,16 @@
 					"sharedWith": 6,
 					"weight": 0.143,
 					"commits": [
+						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						},
+						{
+							"sha": "19da71865",
+							"date": "2026-09-18",
+							"subject": "build(deps-dev): bump globals from 17.6.0 to 17.12.0"
+						},
 						{
 							"sha": "d95f20df4",
 							"date": "2026-09-18",
@@ -20630,27 +20945,17 @@
 							"subject": "fix(multiplayer): pin Colyseus back to 0.16 so the server speaks the browser client's protocol"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
-						},
-						{
-							"sha": "161ad1404",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
-						},
-						{
-							"sha": "38f239d69",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
 						}
 					],
-					"total": 15
+					"total": 19
 				},
 				{
 					"file": "scripts/audit-docs.mjs",
@@ -20676,6 +20981,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -20686,22 +20996,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 12
+					"total": 14
 				},
 				{
 					"file": "data/pages.json",
@@ -20709,12 +21014,17 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
 						}
 					],
-					"total": 1
+					"total": 2
 				}
 			]
 		},
@@ -20779,7 +21089,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 4,
-			"driftCommits": 5,
+			"driftCommits": 6,
 			"signal": 0.295,
 			"score": 0.295,
 			"drift": [
@@ -20815,6 +21125,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -20825,7 +21140,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -21970,7 +22285,7 @@
 				"workers/agora-citizens/roster.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 5,
+			"driftCommits": 6,
 			"signal": 0.256,
 			"score": 0.256,
 			"drift": [
@@ -22011,6 +22326,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -22021,7 +22341,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -23588,7 +23908,7 @@
 				"scripts/post-tweet.mjs"
 			],
 			"driftFiles": 3,
-			"driftCommits": 33,
+			"driftCommits": 34,
 			"signal": 0.205,
 			"score": 0.205,
 			"drift": [
@@ -23639,6 +23959,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -23662,14 +23987,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 28
+					"total": 29
 				}
 			]
 		},
@@ -23713,7 +24033,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 3,
-			"driftCommits": 4,
+			"driftCommits": 5,
 			"signal": 0.204,
 			"score": 0.204,
 			"drift": [
@@ -23736,6 +24056,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -23746,7 +24071,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -24665,7 +24990,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 4,
-			"driftCommits": 106,
+			"driftCommits": 109,
 			"signal": 0.195,
 			"score": 0.195,
 			"drift": [
@@ -24718,6 +25043,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -24728,22 +25058,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 68
+					"total": 70
 				},
 				{
 					"file": "vite.config.js",
@@ -24789,6 +25114,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -24812,14 +25142,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 20
+					"total": 21
 				}
 			]
 		},
@@ -25303,7 +25628,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 4,
-			"driftCommits": 101,
+			"driftCommits": 104,
 			"signal": 0.177,
 			"score": 0.177,
 			"drift": [
@@ -25341,6 +25666,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -25351,28 +25681,28 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 63
+					"total": 65
 				},
 				{
 					"file": "data/pages.json",
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -25397,14 +25727,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 20
+					"total": 21
 				},
 				{
 					"file": "vercel.json",
@@ -25498,7 +25823,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 4,
-			"driftCommits": 23,
+			"driftCommits": 26,
 			"signal": 0.168,
 			"score": 0.168,
 			"drift": [
@@ -25526,6 +25851,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -25536,28 +25866,28 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 19
+					"total": 21
 				},
 				{
 					"file": "data/pages.json",
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -25569,7 +25899,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -25858,7 +26188,7 @@
 			"lastTouched": {
 				"sha": "5ed659ddb",
 				"date": "2026-07-30",
-				"ageDays": 51
+				"ageDays": 52
 			},
 			"review": null,
 			"status": "watch",
@@ -26189,7 +26519,7 @@
 				"scripts/x-content.mjs"
 			],
 			"driftFiles": 2,
-			"driftCommits": 6,
+			"driftCommits": 7,
 			"signal": 0.166,
 			"score": 0.166,
 			"drift": [
@@ -26222,6 +26552,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -26237,7 +26572,7 @@
 							"subject": "docs(glasses): document how agents reach a lens, with a Meta Ray-Ban Display build plan"
 						}
 					],
-					"total": 3
+					"total": 4
 				}
 			]
 		},
@@ -26513,7 +26848,7 @@
 				"tests/agora-read-model.test.js"
 			],
 			"driftFiles": 2,
-			"driftCommits": 97,
+			"driftCommits": 99,
 			"signal": 0.151,
 			"score": 0.151,
 			"drift": [
@@ -26541,6 +26876,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -26551,22 +26891,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 96
+					"total": 98
 				}
 			]
 		},
@@ -26829,6 +27164,62 @@
 			]
 		},
 		{
+			"path": "docs/build.md",
+			"title": "Build & deploy artifact integrity",
+			"route": "/docs/#build",
+			"lastTouched": {
+				"sha": "45ae06010",
+				"date": "2026-09-18",
+				"ageDays": 1
+			},
+			"review": null,
+			"status": "watch",
+			"deps": 17,
+			"depFiles": [
+				"package-lock.json",
+				"package.json",
+				"scripts/audit-deploy-artifacts.mjs",
+				"scripts/build-vercel.mjs",
+				"scripts/bundle-api.mjs",
+				"scripts/check-dist.mjs",
+				"scripts/check-pages.mjs",
+				"scripts/create-gcp-scheduler.mjs",
+				"scripts/guard-esbuild-bundles.mjs",
+				"scripts/inject-atlas.mjs",
+				"scripts/inject-inline-behaviors.mjs",
+				"scripts/inject-tour-boot.mjs",
+				"scripts/strip-sw-from-embeds.mjs",
+				"server/cloudbuild.yaml",
+				"server/index.mjs",
+				"tests/guard-esbuild-bundles.test.js",
+				"vercel.json"
+			],
+			"driftFiles": 1,
+			"driftCommits": 2,
+			"signal": 0.143,
+			"score": 0.143,
+			"drift": [
+				{
+					"file": "package-lock.json",
+					"sharedWith": 6,
+					"weight": 0.143,
+					"commits": [
+						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						},
+						{
+							"sha": "19da71865",
+							"date": "2026-09-18",
+							"subject": "build(deps-dev): bump globals from 17.6.0 to 17.12.0"
+						}
+					],
+					"total": 2
+				}
+			]
+		},
+		{
 			"path": "docs/mcp-agent.md",
 			"title": "three.ws Agent: MCP server (\"add a wallet to Claude\")",
 			"route": "/docs/#mcp-agent",
@@ -26982,6 +27373,110 @@
 						}
 					],
 					"total": 2
+				}
+			]
+		},
+		{
+			"path": "docs/ops/gcp-credits.md",
+			"title": "GCP Credits & Vertex AI Runbook",
+			"route": null,
+			"lastTouched": {
+				"sha": "8758f4f44",
+				"date": "2026-09-18",
+				"ageDays": 1
+			},
+			"review": null,
+			"status": "watch",
+			"deps": 70,
+			"depFiles": [
+				"api/_lib/forge-tiers.js",
+				"api/_lib/gcp-auth.js",
+				"api/_lib/gcp-billing.js",
+				"api/_lib/http.js",
+				"api/_lib/llm.js",
+				"api/_lib/motion-seed.js",
+				"api/_lib/rate-limit.js",
+				"api/_lib/regen-provider.js",
+				"api/_lib/seed-quality.js",
+				"api/_lib/vanity-inventory-store.js",
+				"api/_lib/vanity-vault.js",
+				"api/_lib/vertex-claude.js",
+				"api/_mcp3d/text-to-image.js",
+				"api/_mcp3d/vertex-imagen.js",
+				"api/_providers/gcp.js",
+				"api/animations/library.js",
+				"api/brain/chat.js",
+				"api/chat.js",
+				"api/cron/forge-seed-cron.js",
+				"api/cron/gcp-burn-report.js",
+				"api/forge-enhance.js",
+				"api/forge-motion.js",
+				"api/forge.js",
+				"api/llm/anthropic.js",
+				"api/v1/ai/image.js",
+				"api/webhooks/gcp-budget-alert.js",
+				"api/webhooks/replicate.js",
+				"api/x402/vanity-premium.js",
+				"api/x402/vanity.js",
+				"package-lock.json",
+				"scripts/apply-migrations.mjs",
+				"scripts/gcp/burn-report.mjs",
+				"scripts/gcp/claude-code-vertex.sh",
+				"scripts/gcp/create-budgets.mjs",
+				"scripts/gcp/emergency-stop.sh",
+				"scripts/gcp/label-resources.sh",
+				"scripts/gcp/revert-to-free.sh",
+				"scripts/gcp/seed-avatars.mjs",
+				"scripts/gcp/seed-motion.mjs",
+				"scripts/gcp/teardown.sh",
+				"scripts/gcp/vanity-grind-deploy.sh",
+				"scripts/gcp/vanity-kms-setup.sh",
+				"scripts/gcp/vertex-llm-smoke.mjs",
+				"scripts/gcp/vertex-smoke.mjs",
+				"scripts/inject-atlas.mjs",
+				"scripts/inject-inline-behaviors.mjs",
+				"scripts/inject-tour-boot.mjs",
+				"scripts/publish-lib.mjs",
+				"scripts/strip-sw-from-embeds.mjs",
+				"scripts/vanity-inventory-load.mjs",
+				"server/index.mjs",
+				"src/glb-canonicalize.js",
+				"src/shared/log.js",
+				"src/solana/vanity/base58-distribution.js",
+				"tests/api-validate.test.js",
+				"tests/api/gcp-budget-alert.test.js",
+				"tests/api/gcp-revert.test.js",
+				"tests/api/text-to-image.test.js",
+				"tests/api/vertex-imagen.test.js",
+				"tests/avatars-list-scale.test.js",
+				"tests/cron-seed-gate-record.test.js",
+				"tests/gcp-billing.test.js",
+				"tests/vanity-grinder-batch.test.js",
+				"tests/vanity-wasm-grinder.test.js",
+				"tests/vertex-claude.test.js",
+				"vercel.json",
+				"workers/deploy/deploy-editing.sh",
+				"workers/deploy/stage-weights.sh",
+				"workers/model-triposr/main.py",
+				"workers/vanity-grinder/gce-shard.mjs"
+			],
+			"driftFiles": 1,
+			"driftCommits": 1,
+			"signal": 0.143,
+			"score": 0.143,
+			"drift": [
+				{
+					"file": "package-lock.json",
+					"sharedWith": 6,
+					"weight": 0.143,
+					"commits": [
+						{
+							"sha": "2fc07915e",
+							"date": "2026-09-20",
+							"subject": "chore(character-studio): move i18next and its browser language detector to current majors"
+						}
+					],
+					"total": 1
 				}
 			]
 		},
@@ -27546,7 +28041,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 3,
-			"driftCommits": 4,
+			"driftCommits": 5,
 			"signal": 0.128,
 			"score": 0.128,
 			"drift": [
@@ -27569,6 +28064,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -27579,7 +28079,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -27656,7 +28156,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 3,
-			"driftCommits": 4,
+			"driftCommits": 5,
 			"signal": 0.128,
 			"score": 0.128,
 			"drift": [
@@ -27679,6 +28179,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -27689,7 +28194,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				},
 				{
 					"file": "vercel.json",
@@ -28173,7 +28678,7 @@
 				"tests/agora-read-model.test.js"
 			],
 			"driftFiles": 2,
-			"driftCommits": 68,
+			"driftCommits": 69,
 			"signal": 0.123,
 			"score": 0.123,
 			"drift": [
@@ -28221,6 +28726,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -28244,14 +28754,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 60
+					"total": 61
 				}
 			]
 		},
@@ -28414,7 +28919,7 @@
 				"scripts/verify-routes.mjs"
 			],
 			"driftFiles": 2,
-			"driftCommits": 3,
+			"driftCommits": 4,
 			"signal": 0.114,
 			"score": 0.114,
 			"drift": [
@@ -28437,6 +28942,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -28447,7 +28957,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -28469,7 +28979,7 @@
 				"scripts/changelog-x.mjs"
 			],
 			"driftFiles": 2,
-			"driftCommits": 84,
+			"driftCommits": 85,
 			"signal": 0.114,
 			"score": 0.114,
 			"drift": [
@@ -28517,6 +29027,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -28540,14 +29055,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 61
+					"total": 62
 				}
 			]
 		},
@@ -29866,7 +30376,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 3,
-			"driftCommits": 62,
+			"driftCommits": 63,
 			"signal": 0.07,
 			"score": 0.07,
 			"drift": [
@@ -29899,6 +30409,11 @@
 					"weight": 0.023,
 					"commits": [
 						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
+						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
 							"subject": "feat(three-token): credit DEXTools on the $THREE page with its live chart and every Social Boost buyback win"
@@ -29922,14 +30437,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 33
+					"total": 34
 				},
 				{
 					"file": "vercel.json",
@@ -30106,7 +30616,7 @@
 				"src/dashboard-next/pages/developers.js"
 			],
 			"driftFiles": 2,
-			"driftCommits": 86,
+			"driftCommits": 88,
 			"signal": 0.062,
 			"score": 0.062,
 			"drift": [
@@ -30121,6 +30631,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -30131,22 +30646,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 81
+					"total": 83
 				},
 				{
 					"file": "api/forge.js",
@@ -30826,7 +31336,7 @@
 				"server.json"
 			],
 			"driftFiles": 1,
-			"driftCommits": 213,
+			"driftCommits": 215,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -30841,6 +31351,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -30851,22 +31366,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 213
+					"total": 215
 				}
 			]
 		},
@@ -30886,7 +31396,7 @@
 				"package.json"
 			],
 			"driftFiles": 1,
-			"driftCommits": 119,
+			"driftCommits": 121,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -30901,6 +31411,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -30911,22 +31426,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 119
+					"total": 121
 				}
 			]
 		},
@@ -30947,7 +31457,7 @@
 				"tests/glb-canonicalize.test.js"
 			],
 			"driftFiles": 1,
-			"driftCommits": 26,
+			"driftCommits": 28,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -30962,6 +31472,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -30972,22 +31487,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 26
+					"total": 28
 				}
 			]
 		},
@@ -31009,7 +31519,7 @@
 				"scripts/publish-extracted.sh"
 			],
 			"driftFiles": 1,
-			"driftCommits": 119,
+			"driftCommits": 121,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -31024,6 +31534,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -31034,22 +31549,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 119
+					"total": 121
 				}
 			]
 		},
@@ -31088,7 +31598,7 @@
 				"workers/agent-sniper/amm-exit.js"
 			],
 			"driftFiles": 1,
-			"driftCommits": 19,
+			"driftCommits": 21,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -31103,6 +31613,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -31113,22 +31628,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 19
+					"total": 21
 				}
 			]
 		},
@@ -31157,7 +31667,7 @@
 				"vite.config.artifact.js"
 			],
 			"driftFiles": 1,
-			"driftCommits": 87,
+			"driftCommits": 89,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -31172,6 +31682,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -31182,22 +31697,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 87
+					"total": 89
 				}
 			]
 		},
@@ -31217,7 +31727,7 @@
 				"package.json"
 			],
 			"driftFiles": 1,
-			"driftCommits": 165,
+			"driftCommits": 167,
 			"signal": 0.04,
 			"score": 0.04,
 			"drift": [
@@ -31232,6 +31742,11 @@
 							"subject": "feat(okx-bot): hold a single-writer lease across rollouts and ship the worker with one command"
 						},
 						{
+							"sha": "4a35ca98a",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump @x402/core from 2.14.0 to 2.25.0"
+						},
+						{
 							"sha": "bb9b29aa6",
 							"date": "2026-09-18",
 							"subject": "build(deps-dev): bump jsdom from 27.3.0 to 30.0.1"
@@ -31242,22 +31757,17 @@
 							"subject": "build(deps): bump @solana-program/compute-budget from 0.15.0 to 0.18.1"
 						},
 						{
+							"sha": "f5ba5da26",
+							"date": "2026-09-18",
+							"subject": "build(deps): bump onnxruntime-web from 1.22.0 to 1.30.0"
+						},
+						{
 							"sha": "38f239d69",
 							"date": "2026-09-18",
 							"subject": "build(deps): bump @coin-communities/sdk from 1.2.1 to 2.0.0"
-						},
-						{
-							"sha": "c2837bbbd",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @0xsplits/splits-sdk from 6.5.0 to 6.6.0"
-						},
-						{
-							"sha": "ecbc7d760",
-							"date": "2026-09-18",
-							"subject": "build(deps): bump @x402/axios from 2.14.0 to 2.25.0"
 						}
 					],
-					"total": 165
+					"total": 167
 				}
 			]
 		},
@@ -31586,7 +32096,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 2,
-			"driftCommits": 6,
+			"driftCommits": 7,
 			"signal": 0.037,
 			"score": 0.037,
 			"drift": [
@@ -31595,6 +32105,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -31616,7 +32131,7 @@
 							"subject": "feat(legal): require a signed ToS, Risk Disclosure, and Agent Wallet Agreement before any real-funds action"
 						}
 					],
-					"total": 4
+					"total": 5
 				},
 				{
 					"file": "vercel.json",
@@ -31665,7 +32180,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 2,
-			"driftCommits": 14,
+			"driftCommits": 15,
 			"signal": 0.037,
 			"score": 0.037,
 			"drift": [
@@ -31674,6 +32189,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -31698,14 +32218,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 8
+					"total": 9
 				},
 				{
 					"file": "vercel.json",
@@ -31926,7 +32441,7 @@
 				"vercel.json"
 			],
 			"driftFiles": 2,
-			"driftCommits": 11,
+			"driftCommits": 12,
 			"signal": 0.037,
 			"score": 0.037,
 			"drift": [
@@ -31935,6 +32450,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -31959,14 +32479,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 6
+					"total": 7
 				},
 				{
 					"file": "vercel.json",
@@ -32919,7 +33434,7 @@
 				"vite.config.js"
 			],
 			"driftFiles": 1,
-			"driftCommits": 2,
+			"driftCommits": 3,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -32928,6 +33443,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -32939,7 +33459,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -32963,7 +33483,7 @@
 				"scripts/announce-rank.mjs"
 			],
 			"driftFiles": 1,
-			"driftCommits": 8,
+			"driftCommits": 9,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -32972,6 +33492,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -32996,14 +33521,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 8
+					"total": 9
 				}
 			]
 		},
@@ -33023,7 +33543,7 @@
 				"data/pages.json"
 			],
 			"driftFiles": 1,
-			"driftCommits": 33,
+			"driftCommits": 34,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33032,6 +33552,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33056,14 +33581,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 33
+					"total": 34
 				}
 			]
 		},
@@ -33083,7 +33603,7 @@
 				"data/pages.json"
 			],
 			"driftFiles": 1,
-			"driftCommits": 25,
+			"driftCommits": 26,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33092,6 +33612,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33116,14 +33641,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 25
+					"total": 26
 				}
 			]
 		},
@@ -33152,7 +33672,7 @@
 				"src/shared/news-render.js"
 			],
 			"driftFiles": 1,
-			"driftCommits": 16,
+			"driftCommits": 17,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33161,6 +33681,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33185,14 +33710,9 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 16
+					"total": 17
 				}
 			]
 		},
@@ -33229,7 +33749,7 @@
 				"data/pages.json"
 			],
 			"driftFiles": 1,
-			"driftCommits": 2,
+			"driftCommits": 3,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33238,6 +33758,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33249,7 +33774,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -33278,7 +33803,7 @@
 				"scripts/render-wordmark.mjs"
 			],
 			"driftFiles": 1,
-			"driftCommits": 2,
+			"driftCommits": 3,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33287,6 +33812,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33298,7 +33828,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -33351,7 +33881,7 @@
 				"tests/api/users-follow.test.js"
 			],
 			"driftFiles": 1,
-			"driftCommits": 2,
+			"driftCommits": 3,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33360,6 +33890,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33371,7 +33906,7 @@
 							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
 						}
 					],
-					"total": 2
+					"total": 3
 				}
 			]
 		},
@@ -33392,7 +33927,7 @@
 				"scripts/render-github-stars-banner.mjs"
 			],
 			"driftFiles": 1,
-			"driftCommits": 81,
+			"driftCommits": 82,
 			"signal": 0.023,
 			"score": 0.023,
 			"drift": [
@@ -33401,6 +33936,11 @@
 					"sharedWith": 43,
 					"weight": 0.023,
 					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						},
 						{
 							"sha": "5a2174ff0",
 							"date": "2026-09-18",
@@ -33425,14 +33965,283 @@
 							"sha": "de29bd3aa",
 							"date": "2026-09-17",
 							"subject": "chore(fee-bridge): hold the Fee Bridge back from launch until the owner approves it"
-						},
-						{
-							"sha": "3d97f5d8f",
-							"date": "2026-09-17",
-							"subject": "feat(fee-bridge): pay a coin's creator fees to any X handle in USDC, with a 10-minute crank, claim page, and a wallet sweepback never touches"
 						}
 					],
-					"total": 81
+					"total": 82
+				}
+			]
+		},
+		{
+			"path": "README.md",
+			"title": "three.ws",
+			"route": null,
+			"lastTouched": {
+				"sha": "45ae06010",
+				"date": "2026-09-18",
+				"ageDays": 1
+			},
+			"review": null,
+			"status": "watch",
+			"deps": 240,
+			"depFiles": [
+				"./scripts/claude.sh",
+				".mcp.json",
+				"api/_lib/coin-communities.js",
+				"api/_lib/draft-mint.js",
+				"api/_lib/migrations/2026-06-01-friends.sql",
+				"api/_lib/pumpfun-mcp.js",
+				"api/_lib/reconstruct-finalize.js",
+				"api/_lib/schema.sql",
+				"api/_lib/x402-buyer-fetch.js",
+				"api/_lib/x402-paid-endpoint.js",
+				"api/_mcp/tools/avatars.js",
+				"api/_mcp/tools/models.js",
+				"api/_mcp/tools/pumpfun.js",
+				"api/_mcp/tools/solana.js",
+				"api/agent-actions.js",
+				"api/agent-memory.js",
+				"api/agents.js",
+				"api/agents/pumpfun.js",
+				"api/api-keys.js",
+				"api/avatar-og.js",
+				"api/avatars/index.js",
+				"api/brain/chat.js",
+				"api/cdn-object.js",
+				"api/chat.js",
+				"api/club/leaderboard.js",
+				"api/club/tips-stream.js",
+				"api/club/tips.js",
+				"api/cron/reconstruct-sweep.js",
+				"api/crypto/index.js",
+				"api/forge.js",
+				"api/friends/index.js",
+				"api/friends/messages.js",
+				"api/friends/presence-ticket.js",
+				"api/friends/search.js",
+				"api/glance/card.js",
+				"api/glance/mine.js",
+				"api/glance/template.js",
+				"api/ibm-mcp.js",
+				"api/llm/anthropic.js",
+				"api/mcp-3d.js",
+				"api/mcp.js",
+				"api/mocap/clips.js",
+				"api/persona/extract.js",
+				"api/persona/preview.js",
+				"api/play/economy.js",
+				"api/pump-fun-mcp.js",
+				"api/pump/curve.js",
+				"api/pump/dashboard.js",
+				"api/pump/helius-stats.js",
+				"api/pump/quote-sdk.js",
+				"api/pump/trades-stream.js",
+				"api/render/avatar-clip.js",
+				"api/version.js",
+				"api/wars.js",
+				"api/watsonx/embed.js",
+				"api/widgets/index.js",
+				"api/widgets/oembed.js",
+				"api/x402-checkout.js",
+				"api/x402-skus.js",
+				"api/x402-status.js",
+				"api/x402/agent-reputation.js",
+				"api/x402/asset-download.js",
+				"api/x402/cosmetic-purchase.js",
+				"api/x402/dance-tip.js",
+				"api/x402/did.js",
+				"api/x402/forge.js",
+				"api/x402/inference-verify.js",
+				"api/x402/llm-proxy.js",
+				"api/x402/mint-to-mesh-batch.js",
+				"api/x402/mint-to-mesh.js",
+				"api/x402/model-check.js",
+				"api/x402/my-receipts.js",
+				"api/x402/onchain-identity-verify.js",
+				"api/x402/pay-by-name.js",
+				"api/x402/pump-agent-audit.js",
+				"api/x402/skill-marketplace.js",
+				"api/x402/symbol-availability.js",
+				"data/pages.json",
+				"data/rss/items.json",
+				"package.json",
+				"pages/pump-live.html",
+				"playwright.config.js",
+				"public/artifact.js",
+				"public/glance-sw.js",
+				"public/glance/element.js",
+				"public/glance/index.html",
+				"public/pumpfun.html",
+				"public/skills-index.json",
+				"public/studio/studio.js",
+				"public/vanity-wallet.html",
+				"scripts/apply-migrations.mjs",
+				"scripts/build-animations.mjs",
+				"scripts/build-motion-signatures.mjs",
+				"scripts/build-original-animations.mjs",
+				"scripts/check-apple-widget.mjs",
+				"scripts/claude.sh",
+				"scripts/copy-three-decoders.mjs",
+				"scripts/create-gcp-scheduler.mjs",
+				"scripts/dev-walk-all.mjs",
+				"scripts/download-animations.mjs",
+				"scripts/fbx-to-glb.mjs",
+				"scripts/generate-persona-key.mjs",
+				"scripts/generate-pwa-icons.mjs",
+				"scripts/inject-atlas.mjs",
+				"scripts/inject-inline-behaviors.mjs",
+				"scripts/inject-tour-boot.mjs",
+				"scripts/optimize-glb.mjs",
+				"scripts/publish-lib.mjs",
+				"scripts/pump-launch-usdc.mjs",
+				"scripts/pumpfun-lifecycle-smoke.js",
+				"scripts/seed-skills.js",
+				"scripts/strip-sw-from-embeds.mjs",
+				"scripts/sync-animation-registry.mjs",
+				"scripts/validate-agent-cards.mjs",
+				"sdk/example/solana-attest.html",
+				"server/cloudbuild.yaml",
+				"server/index.mjs",
+				"src/agent-accessories.js",
+				"src/agent-avatar.js",
+				"src/agent-memory.js",
+				"src/agent-protocol.js",
+				"src/agent-skills-agent-payments.js",
+				"src/agent-skills-blinks.js",
+				"src/agent-skills-jupiter.js",
+				"src/agent-skills-nfts.js",
+				"src/agent-skills-pumpfun-autonomous.js",
+				"src/agent-skills-pumpfun-compose.js",
+				"src/agent-skills-pumpfun-hooks.js",
+				"src/agent-skills-pumpfun-watch.js",
+				"src/agent-skills-pumpfun.js",
+				"src/agent-skills-scene.js",
+				"src/agent-skills-sentiment.js",
+				"src/animation-manager.js",
+				"src/animation-state-machine.js",
+				"src/city/city-world.js",
+				"src/communities.js",
+				"src/element.js",
+				"src/friends.js",
+				"src/game/avatar-rig.js",
+				"src/game/coincommunities.js",
+				"src/game/community-net.js",
+				"src/game/event-countdown.js",
+				"src/game/friends-panel.js",
+				"src/game/meetup-event.js",
+				"src/game/voice-chat.js",
+				"src/game/war-portal.js",
+				"src/idle-animation.js",
+				"src/memory/index.js",
+				"src/mocap-studio.js",
+				"src/pose-presets.js",
+				"src/pose-rig.js",
+				"src/pose-studio.js",
+				"src/runtime/index.js",
+				"src/runtime/providers.js",
+				"src/runtime/tools.js",
+				"src/selfie-capture.js",
+				"src/selfie-gates.js",
+				"src/selfie-pipeline.js",
+				"src/voice-lab.js",
+				"src/voice/arkit-blendshapes.js",
+				"src/voice/avatar-morph-target.js",
+				"src/voice/avatar-snapshot.js",
+				"src/voice/lipsync-driver.js",
+				"src/voice/talk-controller.js",
+				"src/voice/voice-clone-modal.js",
+				"src/widgets/pumpfun-feed.js",
+				"tests/agent-avatar-lipsync.test.js",
+				"tests/agent-monetization.test.js",
+				"tests/agent-protocol.test.js",
+				"tests/animation-state-machine.test.js",
+				"tests/animations.test.js",
+				"tests/api-validate.test.js",
+				"tests/api/agent-memory.test.js",
+				"tests/api/agents.test.js",
+				"tests/api/api-keys.test.js",
+				"tests/api/auth-email.test.js",
+				"tests/api/auth-helpers.test.js",
+				"tests/api/avatar-og.test.js",
+				"tests/api/chat-proxy-ratelimit.test.js",
+				"tests/api/club-payouts-cron.test.js",
+				"tests/api/club-tips-stream.test.js",
+				"tests/api/club-tips.test.js",
+				"tests/api/crypto.test.js",
+				"tests/api/dance-tip.test.js",
+				"tests/api/embed-policy.test.js",
+				"tests/api/llm-anthropic.test.js",
+				"tests/api/mcp.test.js",
+				"tests/api/oauth-authorize.test.js",
+				"tests/api/oauth-introspect.test.js",
+				"tests/api/oauth-token.test.js",
+				"tests/api/persona.test.js",
+				"tests/api/pump-curve.test.js",
+				"tests/api/pump-fun-mcp.test.js",
+				"tests/api/siwe.test.js",
+				"tests/api/widgets.test.js",
+				"tests/api/x402-gas-sponsoring.test.js",
+				"tests/api/x402-paid-endpoint-siwx.test.js",
+				"tests/api/x402-payment-identifier.test.js",
+				"tests/api/x402-spec.test.js",
+				"tests/api/x402.test.js",
+				"tests/arkit-blendshapes.test.js",
+				"tests/arkit52.test.js",
+				"tests/avatar-bake.test.js",
+				"tests/avatar-snapshot.test.js",
+				"tests/billing.test.js",
+				"tests/bonding-curve.test.js",
+				"tests/branding.test.js",
+				"tests/build-asset-paths.test.js",
+				"tests/camera-presets.test.js",
+				"tests/carbon-graduations.test.js",
+				"tests/club-audio.test.js",
+				"tests/club-camera.test.js",
+				"tests/club-perf.test.js",
+				"tests/club-sequence.test.js",
+				"tests/club-venue-load.test.js",
+				"tests/e2e/club.spec.js",
+				"tests/embed-bridge-origin.test.js",
+				"tests/embed-bridge-roundtrip.test.js",
+				"tests/glb-canonicalize.test.js",
+				"tests/lipsync-driver.test.js",
+				"tests/pump-live-stream.test.js",
+				"tests/pump-mcp-tools.test.js",
+				"tests/pump-swap-ix.test.js",
+				"tests/pumpfun-ported-skills.test.js",
+				"tests/pumpfun-signals.test.js",
+				"tests/pumpfun-ws-feed.test.js",
+				"tests/src/agent-memory.test.js",
+				"tests/src/agent-protocol.test.js",
+				"tests/src/animation-slots.test.js",
+				"tests/src/eth-vanity-derivation.test.js",
+				"tests/src/eth-vanity-server-verify.test.js",
+				"tests/src/gltf-extras.test.js",
+				"tests/src/lip-sync-analyser.test.js",
+				"tests/src/pump-fun-skill.test.js",
+				"tests/src/validator.test.js",
+				"tests/src/vanity-validation.test.js",
+				"tests/src/widget-types.test.js",
+				"tests/vanity-wasm-grinder.test.js",
+				"vercel.json",
+				"vite.config.artifact.js"
+			],
+			"driftFiles": 1,
+			"driftCommits": 1,
+			"signal": 0.023,
+			"score": 0.023,
+			"drift": [
+				{
+					"file": "data/pages.json",
+					"sharedWith": 43,
+					"weight": 0.023,
+					"commits": [
+						{
+							"sha": "9fe62cf5e",
+							"date": "2026-09-20",
+							"subject": "fix(seo): regenerate social card copy from each page's real description"
+						}
+					],
+					"total": 1
 				}
 			]
 		},
@@ -35019,109 +35828,6 @@
 			]
 		},
 		{
-			"path": "docs/ux-flows/08-coin-launch-wallets.md",
-			"title": "Coin Launch & Wallets",
-			"route": "/docs/#ux-flows/08-coin-launch-wallets",
-			"lastTouched": {
-				"sha": "bba254d34",
-				"date": "2026-09-17",
-				"ageDays": 2
-			},
-			"review": {
-				"sha": "53f2a200f",
-				"date": "2026-09-17",
-				"kind": "verified",
-				"by": "agent",
-				"note": "full sweep: read against the drifted commits and corrected where wrong",
-				"ageDays": 2
-			},
-			"status": "watch",
-			"deps": 62,
-			"depFiles": [
-				"api/agent-wallet-bridge.js",
-				"api/agent/send-sol.js",
-				"api/agent/wallet.js",
-				"api/agents.js",
-				"api/avatars/index.js",
-				"api/csrf-token.js",
-				"api/oracle/coin.js",
-				"api/pump-fun-mcp.js",
-				"api/pump/coin-intel.js",
-				"api/pump/dex-trades.js",
-				"api/pump/price-history.js",
-				"api/solana-rpc.js",
-				"api/threews/me.js",
-				"api/threews/subdomain.js",
-				"api/traders/preview.js",
-				"api/vanity/drops.js",
-				"api/x402/crypto-intel.js",
-				"pages/avatar-wallet-chat.html",
-				"pages/claim-wallet.html",
-				"pages/coin3d.html",
-				"pages/launch.html",
-				"pages/launches.html",
-				"pages/play/agent-wallet.html",
-				"pages/profile.html",
-				"pages/three-live.html",
-				"pages/three.html",
-				"pages/threews-claim.html",
-				"public/eth-vanity.html",
-				"public/evm-wallet.html",
-				"public/studio/launch-panel.js",
-				"public/vanity-wallet.html",
-				"scripts/agent-wallet-x402-bridge.mjs",
-				"src/agent-eth-vanity-card.js",
-				"src/agent-vanity-grinder.js",
-				"src/claim-wallet.js",
-				"src/coin3d/main.js",
-				"src/eth/vanity/eoa-grinder.js",
-				"src/eth/vanity/grinder.js",
-				"src/eth/vanity/validation.js",
-				"src/eth/vanity/wordlist.js",
-				"src/game/avatar-rig.js",
-				"src/game/play-handoff.js",
-				"src/ipfs.js",
-				"src/launch/launch-model.js",
-				"src/launch/launch-page.css",
-				"src/launch/launch-page.js",
-				"src/launch/launch-wallet.js",
-				"src/launches.js",
-				"src/pages/sealed-drops.js",
-				"src/play-agent-wallet.js",
-				"src/pump/coin-status-card.js",
-				"src/pump/three-token-data.js",
-				"src/shared/agent-wallet-chip.js",
-				"src/shared/state-kit.js",
-				"src/sns/pay-by-name.js",
-				"src/solana/vanity/grinder.js",
-				"src/solana/vanity/sealed-envelope.js",
-				"src/solana/vanity/validation.js",
-				"src/swap-jupiter.js",
-				"src/three-tier-page.js",
-				"src/wallet.js",
-				"vercel.json"
-			],
-			"driftFiles": 1,
-			"driftCommits": 1,
-			"signal": 0.014,
-			"score": 0.014,
-			"drift": [
-				{
-					"file": "vercel.json",
-					"sharedWith": 69,
-					"weight": 0.014,
-					"commits": [
-						{
-							"sha": "3e8dd089b",
-							"date": "2026-09-18",
-							"subject": "feat(x402): report an unconfirmed Solana settle as settlement_pending and reconcile it on a cron instead of failing it"
-						}
-					],
-					"total": 1
-				}
-			]
-		},
-		{
 			"path": "docs/ux-flows/11-account-dashboard.md",
 			"title": "Account & Dashboard",
 			"route": "/docs/#ux-flows/11-account-dashboard",
@@ -35492,7 +36198,7 @@
 			"lastTouched": {
 				"sha": "182b1f478",
 				"date": "2026-08-11",
-				"ageDays": 39
+				"ageDays": 40
 			},
 			"review": null,
 			"status": "watch",
@@ -37239,43 +37945,6 @@
 				"public/nav.js",
 				"public/style.css",
 				"public/tokens.css"
-			],
-			"driftFiles": 0,
-			"driftCommits": 0,
-			"signal": 0,
-			"score": 0,
-			"drift": []
-		},
-		{
-			"path": "docs/build.md",
-			"title": "Build & deploy artifact integrity",
-			"route": "/docs/#build",
-			"lastTouched": {
-				"sha": "45ae06010",
-				"date": "2026-09-18",
-				"ageDays": 1
-			},
-			"review": null,
-			"status": "fresh",
-			"deps": 17,
-			"depFiles": [
-				"package-lock.json",
-				"package.json",
-				"scripts/audit-deploy-artifacts.mjs",
-				"scripts/build-vercel.mjs",
-				"scripts/bundle-api.mjs",
-				"scripts/check-dist.mjs",
-				"scripts/check-pages.mjs",
-				"scripts/create-gcp-scheduler.mjs",
-				"scripts/guard-esbuild-bundles.mjs",
-				"scripts/inject-atlas.mjs",
-				"scripts/inject-inline-behaviors.mjs",
-				"scripts/inject-tour-boot.mjs",
-				"scripts/strip-sw-from-embeds.mjs",
-				"server/cloudbuild.yaml",
-				"server/index.mjs",
-				"tests/guard-esbuild-bundles.test.js",
-				"vercel.json"
 			],
 			"driftFiles": 0,
 			"driftCommits": 0,
@@ -39343,7 +40012,7 @@
 			"lastTouched": {
 				"sha": "6f06f51bb",
 				"date": "2026-09-01",
-				"ageDays": 18
+				"ageDays": 19
 			},
 			"review": null,
 			"status": "fresh",
@@ -39971,96 +40640,6 @@
 			"depFiles": [
 				"scripts/render-github-stars-banner.mjs",
 				"scripts/x402-register-directories.mjs"
-			],
-			"driftFiles": 0,
-			"driftCommits": 0,
-			"signal": 0,
-			"score": 0,
-			"drift": []
-		},
-		{
-			"path": "docs/ops/gcp-credits.md",
-			"title": "GCP Credits & Vertex AI Runbook",
-			"route": null,
-			"lastTouched": {
-				"sha": "8758f4f44",
-				"date": "2026-09-18",
-				"ageDays": 1
-			},
-			"review": null,
-			"status": "fresh",
-			"deps": 70,
-			"depFiles": [
-				"api/_lib/forge-tiers.js",
-				"api/_lib/gcp-auth.js",
-				"api/_lib/gcp-billing.js",
-				"api/_lib/http.js",
-				"api/_lib/llm.js",
-				"api/_lib/motion-seed.js",
-				"api/_lib/rate-limit.js",
-				"api/_lib/regen-provider.js",
-				"api/_lib/seed-quality.js",
-				"api/_lib/vanity-inventory-store.js",
-				"api/_lib/vanity-vault.js",
-				"api/_lib/vertex-claude.js",
-				"api/_mcp3d/text-to-image.js",
-				"api/_mcp3d/vertex-imagen.js",
-				"api/_providers/gcp.js",
-				"api/animations/library.js",
-				"api/brain/chat.js",
-				"api/chat.js",
-				"api/cron/forge-seed-cron.js",
-				"api/cron/gcp-burn-report.js",
-				"api/forge-enhance.js",
-				"api/forge-motion.js",
-				"api/forge.js",
-				"api/llm/anthropic.js",
-				"api/v1/ai/image.js",
-				"api/webhooks/gcp-budget-alert.js",
-				"api/webhooks/replicate.js",
-				"api/x402/vanity-premium.js",
-				"api/x402/vanity.js",
-				"package-lock.json",
-				"scripts/apply-migrations.mjs",
-				"scripts/gcp/burn-report.mjs",
-				"scripts/gcp/claude-code-vertex.sh",
-				"scripts/gcp/create-budgets.mjs",
-				"scripts/gcp/emergency-stop.sh",
-				"scripts/gcp/label-resources.sh",
-				"scripts/gcp/revert-to-free.sh",
-				"scripts/gcp/seed-avatars.mjs",
-				"scripts/gcp/seed-motion.mjs",
-				"scripts/gcp/teardown.sh",
-				"scripts/gcp/vanity-grind-deploy.sh",
-				"scripts/gcp/vanity-kms-setup.sh",
-				"scripts/gcp/vertex-llm-smoke.mjs",
-				"scripts/gcp/vertex-smoke.mjs",
-				"scripts/inject-atlas.mjs",
-				"scripts/inject-inline-behaviors.mjs",
-				"scripts/inject-tour-boot.mjs",
-				"scripts/publish-lib.mjs",
-				"scripts/strip-sw-from-embeds.mjs",
-				"scripts/vanity-inventory-load.mjs",
-				"server/index.mjs",
-				"src/glb-canonicalize.js",
-				"src/shared/log.js",
-				"src/solana/vanity/base58-distribution.js",
-				"tests/api-validate.test.js",
-				"tests/api/gcp-budget-alert.test.js",
-				"tests/api/gcp-revert.test.js",
-				"tests/api/text-to-image.test.js",
-				"tests/api/vertex-imagen.test.js",
-				"tests/avatars-list-scale.test.js",
-				"tests/cron-seed-gate-record.test.js",
-				"tests/gcp-billing.test.js",
-				"tests/vanity-grinder-batch.test.js",
-				"tests/vanity-wasm-grinder.test.js",
-				"tests/vertex-claude.test.js",
-				"vercel.json",
-				"workers/deploy/deploy-editing.sh",
-				"workers/deploy/stage-weights.sh",
-				"workers/model-triposr/main.py",
-				"workers/vanity-grinder/gce-shard.mjs"
 			],
 			"driftFiles": 0,
 			"driftCommits": 0,
@@ -41158,60 +41737,6 @@
 				"src/reputation-ui.js",
 				"src/shared/usd-price.js",
 				"src/widgets/passport.js"
-			],
-			"driftFiles": 0,
-			"driftCommits": 0,
-			"signal": 0,
-			"score": 0,
-			"drift": []
-		},
-		{
-			"path": "docs/risk-acknowledgment.md",
-			"title": "The real-funds agreements",
-			"route": "/docs/#risk-acknowledgment",
-			"lastTouched": {
-				"sha": "bba254d34",
-				"date": "2026-09-17",
-				"ageDays": 2
-			},
-			"review": {
-				"sha": "53f2a200f",
-				"date": "2026-09-17",
-				"kind": "verified",
-				"by": "agent",
-				"note": "full sweep: read against the drifted commits and corrected where wrong",
-				"ageDays": 2
-			},
-			"status": "fresh",
-			"deps": 27,
-			"depFiles": [
-				"api/_lib/legal.js",
-				"api/legal/risk-ack.js",
-				"public/legal/agreements.html",
-				"public/legal/agreements.js",
-				"public/risk-ack.js",
-				"public/x402.js",
-				"src/agent-home-pumpfun.js",
-				"src/agent-wallet-hub/tabs/autopilot.js",
-				"src/agent-wallet-hub/tabs/deposit.js",
-				"src/agent-wallet-hub/tabs/give.js",
-				"src/agent-wallet-hub/tabs/pay.js",
-				"src/agent-wallet-hub/tabs/snipe.js",
-				"src/agent-wallet-hub/tabs/trade.js",
-				"src/agent-wallet-hub/tabs/withdraw.js",
-				"src/arm.js",
-				"src/forge-pay.js",
-				"src/launch/launch-page.js",
-				"src/master-wallet.js",
-				"src/payment-modal.js",
-				"src/pump/launch-token-modal.js",
-				"src/pump/pump-modals.js",
-				"src/shared/add-funds.js",
-				"src/shared/agent-tip-modal.js",
-				"src/shared/risk-ack.js",
-				"src/swap-jupiter.js",
-				"src/token-pay.js",
-				"tests/real-funds-agreement-coverage.test.js"
 			],
 			"driftFiles": 0,
 			"driftCommits": 0,
@@ -42734,7 +43259,7 @@
 			"lastTouched": {
 				"sha": "afa16b4c6",
 				"date": "2026-07-07",
-				"ageDays": 74
+				"ageDays": 75
 			},
 			"review": null,
 			"status": "unverifiable",
@@ -42886,6 +43411,23 @@
 			"drift": []
 		},
 		{
+			"path": "docs/uniswap-v4-hooks.md",
+			"title": "Uniswap v4 hooks: what three.ws could build and list",
+			"route": "/docs/#uniswap-v4-hooks",
+			"lastTouched": null,
+			"review": null,
+			"status": "fresh",
+			"deps": 1,
+			"depFiles": [
+				"src/erc8004/abi.js"
+			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
 			"path": "docs/upstream/home-assistant-js-websocket-resubscribe-rejection.md",
 			"title": "Upstream report: a flapping connection crashes the process",
 			"route": "/docs/#upstream/home-assistant-js-websocket-resubscribe-rejection",
@@ -42996,7 +43538,7 @@
 			"lastTouched": {
 				"sha": "cb1ec2680",
 				"date": "2026-09-05",
-				"ageDays": 14
+				"ageDays": 15
 			},
 			"review": null,
 			"status": "fresh",
@@ -43970,266 +44512,6 @@
 			"status": "unverifiable",
 			"deps": 0,
 			"depFiles": [],
-			"driftFiles": 0,
-			"driftCommits": 0,
-			"signal": 0,
-			"score": 0,
-			"drift": []
-		},
-		{
-			"path": "README.md",
-			"title": "three.ws",
-			"route": null,
-			"lastTouched": {
-				"sha": "45ae06010",
-				"date": "2026-09-18",
-				"ageDays": 1
-			},
-			"review": null,
-			"status": "fresh",
-			"deps": 240,
-			"depFiles": [
-				"./scripts/claude.sh",
-				".mcp.json",
-				"api/_lib/coin-communities.js",
-				"api/_lib/draft-mint.js",
-				"api/_lib/migrations/2026-06-01-friends.sql",
-				"api/_lib/pumpfun-mcp.js",
-				"api/_lib/reconstruct-finalize.js",
-				"api/_lib/schema.sql",
-				"api/_lib/x402-buyer-fetch.js",
-				"api/_lib/x402-paid-endpoint.js",
-				"api/_mcp/tools/avatars.js",
-				"api/_mcp/tools/models.js",
-				"api/_mcp/tools/pumpfun.js",
-				"api/_mcp/tools/solana.js",
-				"api/agent-actions.js",
-				"api/agent-memory.js",
-				"api/agents.js",
-				"api/agents/pumpfun.js",
-				"api/api-keys.js",
-				"api/avatar-og.js",
-				"api/avatars/index.js",
-				"api/brain/chat.js",
-				"api/cdn-object.js",
-				"api/chat.js",
-				"api/club/leaderboard.js",
-				"api/club/tips-stream.js",
-				"api/club/tips.js",
-				"api/cron/reconstruct-sweep.js",
-				"api/crypto/index.js",
-				"api/forge.js",
-				"api/friends/index.js",
-				"api/friends/messages.js",
-				"api/friends/presence-ticket.js",
-				"api/friends/search.js",
-				"api/glance/card.js",
-				"api/glance/mine.js",
-				"api/glance/template.js",
-				"api/ibm-mcp.js",
-				"api/llm/anthropic.js",
-				"api/mcp-3d.js",
-				"api/mcp.js",
-				"api/mocap/clips.js",
-				"api/persona/extract.js",
-				"api/persona/preview.js",
-				"api/play/economy.js",
-				"api/pump-fun-mcp.js",
-				"api/pump/curve.js",
-				"api/pump/dashboard.js",
-				"api/pump/helius-stats.js",
-				"api/pump/quote-sdk.js",
-				"api/pump/trades-stream.js",
-				"api/render/avatar-clip.js",
-				"api/version.js",
-				"api/wars.js",
-				"api/watsonx/embed.js",
-				"api/widgets/index.js",
-				"api/widgets/oembed.js",
-				"api/x402-checkout.js",
-				"api/x402-skus.js",
-				"api/x402-status.js",
-				"api/x402/agent-reputation.js",
-				"api/x402/asset-download.js",
-				"api/x402/cosmetic-purchase.js",
-				"api/x402/dance-tip.js",
-				"api/x402/did.js",
-				"api/x402/forge.js",
-				"api/x402/inference-verify.js",
-				"api/x402/llm-proxy.js",
-				"api/x402/mint-to-mesh-batch.js",
-				"api/x402/mint-to-mesh.js",
-				"api/x402/model-check.js",
-				"api/x402/my-receipts.js",
-				"api/x402/onchain-identity-verify.js",
-				"api/x402/pay-by-name.js",
-				"api/x402/pump-agent-audit.js",
-				"api/x402/skill-marketplace.js",
-				"api/x402/symbol-availability.js",
-				"data/pages.json",
-				"data/rss/items.json",
-				"package.json",
-				"pages/pump-live.html",
-				"playwright.config.js",
-				"public/artifact.js",
-				"public/glance-sw.js",
-				"public/glance/element.js",
-				"public/glance/index.html",
-				"public/pumpfun.html",
-				"public/skills-index.json",
-				"public/studio/studio.js",
-				"public/vanity-wallet.html",
-				"scripts/apply-migrations.mjs",
-				"scripts/build-animations.mjs",
-				"scripts/build-motion-signatures.mjs",
-				"scripts/build-original-animations.mjs",
-				"scripts/check-apple-widget.mjs",
-				"scripts/claude.sh",
-				"scripts/copy-three-decoders.mjs",
-				"scripts/create-gcp-scheduler.mjs",
-				"scripts/dev-walk-all.mjs",
-				"scripts/download-animations.mjs",
-				"scripts/fbx-to-glb.mjs",
-				"scripts/generate-persona-key.mjs",
-				"scripts/generate-pwa-icons.mjs",
-				"scripts/inject-atlas.mjs",
-				"scripts/inject-inline-behaviors.mjs",
-				"scripts/inject-tour-boot.mjs",
-				"scripts/optimize-glb.mjs",
-				"scripts/publish-lib.mjs",
-				"scripts/pump-launch-usdc.mjs",
-				"scripts/pumpfun-lifecycle-smoke.js",
-				"scripts/seed-skills.js",
-				"scripts/strip-sw-from-embeds.mjs",
-				"scripts/sync-animation-registry.mjs",
-				"scripts/validate-agent-cards.mjs",
-				"sdk/example/solana-attest.html",
-				"server/cloudbuild.yaml",
-				"server/index.mjs",
-				"src/agent-accessories.js",
-				"src/agent-avatar.js",
-				"src/agent-memory.js",
-				"src/agent-protocol.js",
-				"src/agent-skills-agent-payments.js",
-				"src/agent-skills-blinks.js",
-				"src/agent-skills-jupiter.js",
-				"src/agent-skills-nfts.js",
-				"src/agent-skills-pumpfun-autonomous.js",
-				"src/agent-skills-pumpfun-compose.js",
-				"src/agent-skills-pumpfun-hooks.js",
-				"src/agent-skills-pumpfun-watch.js",
-				"src/agent-skills-pumpfun.js",
-				"src/agent-skills-scene.js",
-				"src/agent-skills-sentiment.js",
-				"src/animation-manager.js",
-				"src/animation-state-machine.js",
-				"src/city/city-world.js",
-				"src/communities.js",
-				"src/element.js",
-				"src/friends.js",
-				"src/game/avatar-rig.js",
-				"src/game/coincommunities.js",
-				"src/game/community-net.js",
-				"src/game/event-countdown.js",
-				"src/game/friends-panel.js",
-				"src/game/meetup-event.js",
-				"src/game/voice-chat.js",
-				"src/game/war-portal.js",
-				"src/idle-animation.js",
-				"src/memory/index.js",
-				"src/mocap-studio.js",
-				"src/pose-presets.js",
-				"src/pose-rig.js",
-				"src/pose-studio.js",
-				"src/runtime/index.js",
-				"src/runtime/providers.js",
-				"src/runtime/tools.js",
-				"src/selfie-capture.js",
-				"src/selfie-gates.js",
-				"src/selfie-pipeline.js",
-				"src/voice-lab.js",
-				"src/voice/arkit-blendshapes.js",
-				"src/voice/avatar-morph-target.js",
-				"src/voice/avatar-snapshot.js",
-				"src/voice/lipsync-driver.js",
-				"src/voice/talk-controller.js",
-				"src/voice/voice-clone-modal.js",
-				"src/widgets/pumpfun-feed.js",
-				"tests/agent-avatar-lipsync.test.js",
-				"tests/agent-monetization.test.js",
-				"tests/agent-protocol.test.js",
-				"tests/animation-state-machine.test.js",
-				"tests/animations.test.js",
-				"tests/api-validate.test.js",
-				"tests/api/agent-memory.test.js",
-				"tests/api/agents.test.js",
-				"tests/api/api-keys.test.js",
-				"tests/api/auth-email.test.js",
-				"tests/api/auth-helpers.test.js",
-				"tests/api/avatar-og.test.js",
-				"tests/api/chat-proxy-ratelimit.test.js",
-				"tests/api/club-payouts-cron.test.js",
-				"tests/api/club-tips-stream.test.js",
-				"tests/api/club-tips.test.js",
-				"tests/api/crypto.test.js",
-				"tests/api/dance-tip.test.js",
-				"tests/api/embed-policy.test.js",
-				"tests/api/llm-anthropic.test.js",
-				"tests/api/mcp.test.js",
-				"tests/api/oauth-authorize.test.js",
-				"tests/api/oauth-introspect.test.js",
-				"tests/api/oauth-token.test.js",
-				"tests/api/persona.test.js",
-				"tests/api/pump-curve.test.js",
-				"tests/api/pump-fun-mcp.test.js",
-				"tests/api/siwe.test.js",
-				"tests/api/widgets.test.js",
-				"tests/api/x402-gas-sponsoring.test.js",
-				"tests/api/x402-paid-endpoint-siwx.test.js",
-				"tests/api/x402-payment-identifier.test.js",
-				"tests/api/x402-spec.test.js",
-				"tests/api/x402.test.js",
-				"tests/arkit-blendshapes.test.js",
-				"tests/arkit52.test.js",
-				"tests/avatar-bake.test.js",
-				"tests/avatar-snapshot.test.js",
-				"tests/billing.test.js",
-				"tests/bonding-curve.test.js",
-				"tests/branding.test.js",
-				"tests/build-asset-paths.test.js",
-				"tests/camera-presets.test.js",
-				"tests/carbon-graduations.test.js",
-				"tests/club-audio.test.js",
-				"tests/club-camera.test.js",
-				"tests/club-perf.test.js",
-				"tests/club-sequence.test.js",
-				"tests/club-venue-load.test.js",
-				"tests/e2e/club.spec.js",
-				"tests/embed-bridge-origin.test.js",
-				"tests/embed-bridge-roundtrip.test.js",
-				"tests/glb-canonicalize.test.js",
-				"tests/lipsync-driver.test.js",
-				"tests/pump-live-stream.test.js",
-				"tests/pump-mcp-tools.test.js",
-				"tests/pump-swap-ix.test.js",
-				"tests/pumpfun-ported-skills.test.js",
-				"tests/pumpfun-signals.test.js",
-				"tests/pumpfun-ws-feed.test.js",
-				"tests/src/agent-memory.test.js",
-				"tests/src/agent-protocol.test.js",
-				"tests/src/animation-slots.test.js",
-				"tests/src/eth-vanity-derivation.test.js",
-				"tests/src/eth-vanity-server-verify.test.js",
-				"tests/src/gltf-extras.test.js",
-				"tests/src/lip-sync-analyser.test.js",
-				"tests/src/pump-fun-skill.test.js",
-				"tests/src/validator.test.js",
-				"tests/src/vanity-validation.test.js",
-				"tests/src/widget-types.test.js",
-				"tests/vanity-wasm-grinder.test.js",
-				"vercel.json",
-				"vite.config.artifact.js"
-			],
 			"driftFiles": 0,
 			"driftCommits": 0,
 			"signal": 0,

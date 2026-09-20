@@ -26,6 +26,30 @@ address (the `X402_PAY_TO_*` getters in [env.js](../api/_lib/env.js)).
 | `X402_PAY_TO_BSC` | x402 receiver on BSC | (config) |
 | `X402_ASSET_MINT_SOLANA` | USDC mint accepted | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (default constant) |
 
+### $THREE split receivers (inbound $THREE)
+Every $THREE-priced purchase (Forge paid tiers, paid spins, token-priced
+marketplace sales, scarcity mints, copy-trading performance fees) is split by a
+named policy in [token/config.js](../api/_lib/token/config.js) and paid straight
+to these two wallets by the buyer's own transaction. Both are **required in
+production and fail closed**: unset, `/api/token/quote` answers `503
+treasury_unavailable` and no purchase can be priced at all.
+
+| Env var | Role | Value |
+| ------- | ---- | ----- |
+| `THREE_TREASURY_WALLET` | Platform cut of every split; the pot the buyback lane buys into | `wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU` (the x402 receiver, `holdsTokens`) |
+| `THREE_REWARDS_WALLET` | Holder reflections pool, distributed pro-rata by the `rewards-distribute` cron | `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` (the economy master, which `REWARDS_DISTRIBUTOR_SECRET` signs as) |
+| `THREE_QUOTE_SECRET` | HMAC key that seals a quote's amount, split and destinations | Secret Manager (`three-quote-secret`) |
+
+The rewards pool **must** be the wallet `REWARDS_DISTRIBUTOR_SECRET` resolves to,
+or the pool accrues into an address the distribution cron cannot sign for. The
+two receivers must also stay **distinct**: `rewards-distribute` reads the rewards
+wallet's whole $THREE balance as the distributable pool, so pointing it at the
+treasury would plan to hand out the treasury itself. Readiness is reported live
+by the `three_token_rail` subsystem in `/api/healthz`.
+
+No platform split routes to the burn sink. Supply is never destroyed; the
+treasury funds buybacks instead ([token/config.js](../api/_lib/token/config.js)).
+
 ### Payout treasuries (outbound — pay third parties out-of-band)
 | Env var (secret) | Pays | Network |
 | ---------------- | ---- | ------- |
@@ -75,6 +99,8 @@ encodings, minimum balances, guards, funding tool — in the
 | coin launch dev buy (`/launch`) | the bonding curve | **1%** of the dev buy | fee transfer inside the launch tx; no dev buy, no fee |
 | `pump-launch` | `X402_PAY_TO_SOLANA/BASE` | 100% of $5 | pump.fun creator rewards accrue on-chain to nominated wallet |
 | `ring-settle` (internal) | `X402_PAY_TO_SOLANA` | 100% | recirculates (dogfood volume) |
+| $THREE purchase (Forge High, spin, scarcity mint) | `THREE_TREASURY_WALLET` + `THREE_REWARDS_WALLET` | 70-80% treasury | remainder reflects to holders; no seller leg |
+| $THREE marketplace sale | seller + the two receivers above | 5% treasury | seller keeps 90%, 5% reflects to holders |
 | vanity bounty | worker | escrow-based | from `VANITY_BOUNTY_PAYOUT_KEY` (→ club treasury fallback) |
 
 Two mechanisms above are easy to confuse — see the [split explainer](x402-endpoints.md#where-payments-land):

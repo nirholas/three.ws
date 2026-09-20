@@ -558,6 +558,33 @@ describe('issueQuote + verifyQuote', () => {
 		expect(q1.nonce).not.toBe(q2.nonce);
 		cacheGet.mockResolvedValue(null);
 	});
+
+	it('quote signing throws a typed 503 in production when THREE_QUOTE_SECRET is unset', async () => {
+		// Regression (2026-09-20): production had NONE of the three $THREE
+		// fund-routing vars set, so /api/token/quote answered 503 forever and the
+		// next var in line would have answered a sanitized "internal error" 500
+		// instead. All three now fail the same honest, coded way.
+		const prior = {
+			node: process.env.NODE_ENV,
+			secret: process.env.THREE_QUOTE_SECRET,
+			treasury: process.env.THREE_TREASURY_WALLET,
+			rewards: process.env.THREE_REWARDS_WALLET,
+		};
+		process.env.NODE_ENV = 'production';
+		delete process.env.THREE_QUOTE_SECRET;
+		process.env.THREE_TREASURY_WALLET = 'THREEsynthetic1111111111111111111111Treasury';
+		process.env.THREE_REWARDS_WALLET = 'THREEsynthetic11111111111111111111111Rewards';
+		fetchResponses.push({ body: { [TOKEN_MINT]: { usdPrice: 0.001 } } });
+		await expect(
+			issueQuote({ purpose: 'spin', usd: 0.5, splitPolicy: 'spin' }),
+		).rejects.toMatchObject({ status: 503, code: 'quote_signing_unavailable' });
+		process.env.NODE_ENV = prior.node;
+		if (prior.secret !== undefined) process.env.THREE_QUOTE_SECRET = prior.secret;
+		if (prior.treasury !== undefined) process.env.THREE_TREASURY_WALLET = prior.treasury;
+		else delete process.env.THREE_TREASURY_WALLET;
+		if (prior.rewards !== undefined) process.env.THREE_REWARDS_WALLET = prior.rewards;
+		else delete process.env.THREE_REWARDS_WALLET;
+	});
 });
 
 // ── On-chain verification ─────────────────────────────────────────────────────

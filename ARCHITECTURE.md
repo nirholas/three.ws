@@ -3040,7 +3040,7 @@ The codebase references **~260 distinct `process.env.*` keys** across `api/`; `a
 | No GitHub Actions CI/CD | The project doesn't use `.github/workflows` for CI/deploy. Deploys run via Cloud Build (`npm run deploy:gcp`), schedules via Cloud Scheduler; the local `gate`/`audit`/`smoke` scripts are the push-time quality bar. Renovate handles dependency updates |
 | `master_wallets` table bootstrapped at runtime | `CREATE TABLE IF NOT EXISTS` inline rather than via migration — schema drift risk |
 | Two x402 payment protocols using HTTP 402 | CDP x402 v2 (`x402-spec.js`) and pump.fun agent-payments 402 (`x402.js`) coexist with no unified protocol guide |
-| `THREE_TREASURY_WALLET` / `THREE_REWARDS_WALLET` / `THREE_QUOTE_SECRET` | Required in production but only fail at first use, not at startup |
+| `THREE_TREASURY_WALLET` / `THREE_REWARDS_WALLET` / `THREE_QUOTE_SECRET` | Required in production and still fail at first use, not at startup (deliberate: a wrong address must never silently take real money). Since 2026-09-20 the condition is no longer invisible: the `three_token_rail` subsystem in `/api/healthz` reports `down` and names the unset vars, and each one now fails with a typed, coded 503 instead of a sanitized 500 |
 | Upstash free-tier quota risk | June 2026 outage documented; quota guard requires optional env vars not guaranteed to be set |
 | Multiple OG image endpoints | `@sparticuz/chromium-min` one-time `/tmp` download per cold start, no persistent cache |
 | `MARKETPLACE_PLATFORM_FEE_BPS` defaults to 0 | Fee is inert unless explicitly set |

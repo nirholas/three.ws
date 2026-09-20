@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Paid $THREE purchases say what is wrong instead of failing silently</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-09-20:Paid $THREE purchases say what is wrong instead of failing silently</guid>
+			<pubDate>Sun, 20 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every $THREE-priced purchase is sealed into one signed quote before you pay. If the platform side of that rail is not fully configured, the quote now comes back with a clear, retryable message and a named reason rather than an opaque internal error, and the platform status page reports the condition itself. Nobody has to be mid-checkout for the problem to be visible.</description>
+		</item>
+		<item>
 			<title>469 generated animations in the library, and for sale as rigged GLBs</title>
 			<link>https://three.ws/animations</link>
 			<guid isPermaLink="false">2026-09-18:469 generated animations in the library, and for sale as rigged GLBs</guid>

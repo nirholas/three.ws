@@ -57,6 +57,7 @@ const QUOTE_UNAVAILABLE_DETAIL = {
 	price_unavailable: 'Live $THREE price is briefly unavailable. Try again in a moment.',
 	treasury_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
 	rewards_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
+	quote_signing_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
 	rpc_unavailable: 'Solana RPC is briefly unavailable, so a live quote cannot be priced. Try again shortly.',
 };
 

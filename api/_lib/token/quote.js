@@ -31,9 +31,20 @@ function secret() {
 	const s = env.THREE_QUOTE_SECRET;
 	if (s) return s;
 	if (process.env.NODE_ENV === 'production') {
-		throw new Error(
-			'[token] THREE_QUOTE_SECRET is required in production — refusing to sign payment quotes with the dev secret.',
+		// Typed like the treasury/rewards guards in ./config.js rather than a bare
+		// throw. All three are the same condition (a fund-routing var unset at
+		// deploy time) and a user meets them the same way, at the moment they try
+		// to pay. A bare Error reached wrap()'s sanitizer and rendered as
+		// "internal error, quote ref ...", which reads like a platform bug and
+		// tells an operator nothing; the typed 503 keeps the actionable code and
+		// the honest retry state. /api/healthz reports the same condition up front
+		// (three_token_rail) so it no longer takes a paying user to discover it.
+		const e = new Error(
+			'[token] THREE_QUOTE_SECRET is required in production: refusing to sign payment quotes with the dev secret.',
 		);
+		e.status = 503;
+		e.code = 'quote_signing_unavailable';
+		throw e;
 	}
 	if (!_warned) {
 		_warned = true;

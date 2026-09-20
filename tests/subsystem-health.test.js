@@ -27,6 +27,10 @@ const ENV_KEYS = [
 	'X402_PAY_TO',
 	'X402_PAY_TO_BASE',
 	'X402_FEE_PAYER_SOLANA',
+	'THREE_TREASURY_WALLET',
+	'THREE_REWARDS_WALLET',
+	'THREE_QUOTE_SECRET',
+	'NODE_ENV',
 	'UPSTASH_CACHE_REST_URL',
 	'UPSTASH_CACHE_REST_TOKEN',
 	'UPSTASH_REDIS_REST_URL',
@@ -104,6 +108,49 @@ describe('gatherSubsystemHealth', () => {
 		const cfg = sub(health, 'x402_config');
 		expect(cfg.status).toBe('degraded');
 		expect(cfg.detail).toMatch(/fee.?payer/i);
+	});
+
+	it('flags the $THREE rail as DOWN in production when its receivers are unset', async () => {
+		// The exact production state on 2026-09-20: none of the three vars set, so
+		// every $THREE-priced purchase answered 503 while every reachability probe
+		// stayed green. This check is the signature that condition never had.
+		process.env.NODE_ENV = 'production';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const rail = sub(health, 'three_token_rail');
+		expect(rail.status).toBe('down');
+		expect(rail.missing).toEqual([
+			'THREE_TREASURY_WALLET',
+			'THREE_REWARDS_WALLET',
+			'THREE_QUOTE_SECRET',
+		]);
+		expect(health.degraded).toContain('three_token_rail');
+	});
+
+	it('names only the $THREE vars that are actually missing', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.THREE_TREASURY_WALLET = 'THREEsynthetic1111111111111111111111Treasury';
+		process.env.THREE_QUOTE_SECRET = 'test-quote-signing-key';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const rail = sub(health, 'three_token_rail');
+		expect(rail.status).toBe('down');
+		expect(rail.missing).toEqual(['THREE_REWARDS_WALLET']);
+	});
+
+	it('reports the $THREE rail as OK once all three are configured', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.THREE_TREASURY_WALLET = 'THREEsynthetic1111111111111111111111Treasury';
+		process.env.THREE_REWARDS_WALLET = 'THREEsynthetic11111111111111111111111Rewards';
+		process.env.THREE_QUOTE_SECRET = 'test-quote-signing-key';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		expect(sub(health, 'three_token_rail').status).toBe('ok');
+	});
+
+	it('stays neutral outside production, where the $THREE dev fallbacks apply', async () => {
+		process.env.NODE_ENV = 'test';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const rail = sub(health, 'three_token_rail');
+		expect(rail.status).toBe('unknown');
+		expect(health.degraded).not.toContain('three_token_rail');
 	});
 
 	it('reports world as UNKNOWN when no world-health report has been parked', async () => {
