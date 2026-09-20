@@ -103,6 +103,14 @@ export function copyProblems(text, { minimum = 100, maximum = 280, requireUrl = 
 	if ((copy.match(/\b[A-Z]{4,}\b/g) || []).filter((word) => !ALLCAPS_TERMS.has(word)).length > 1) {
 		problems.push('more than one all-caps word reads as shouting');
 	}
+	// X rejects a post carrying more than one cashtag outright (403, "Posts are
+	// limited to a maximum of one cashtag"), which the publisher cannot retry
+	// around, so a second $SYMBOL has to fail review instead of a publish.
+	const cashtags = [...new Set(copy.match(/\$[A-Za-z][A-Za-z0-9]{0,15}\b/g) || [])];
+	const cashtagCount = (copy.match(/\$[A-Za-z][A-Za-z0-9]{0,15}\b/g) || []).length;
+	if (cashtagCount > 1) {
+		problems.push(`${cashtagCount} cashtags (${cashtags.join(', ')}); X allows one per post, so keep the first and write the rest in plain words`);
+	}
 	if (requireUrl && !hasUrl(copy)) problems.push('copy must link to its evidence or product surface');
 	for (const pattern of BANNED_OPENINGS) if (pattern.test(copy)) problems.push(`banned opening: ${pattern.source}`);
 	for (const pattern of BANNED_PHRASES) if (pattern.test(copy)) problems.push(`banned phrase: ${pattern.source}`);

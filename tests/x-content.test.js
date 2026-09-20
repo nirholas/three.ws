@@ -397,6 +397,17 @@ describe('queue', () => {
 		for (const item of queue.items.filter((row) => row.status === 'approved')) expect(problems[item.id]).toEqual([]);
 	});
 
+	it('refuses a second cashtag, which X rejects at publish', () => {
+		// X answers 403 "Posts are limited to a maximum of one cashtag" and the
+		// publisher cannot retry around it, so review has to catch it first.
+		const one = 'Forge Max is a $THREE holder perk. You hold $25 in it, you do not spend it, and the 200k-poly lane turns on: three.ws/three';
+		expect(copyProblems(one)).toEqual([]);
+		const two = 'Forge Max is a $THREE holder perk. You hold $25 in $THREE, you do not spend it, and the 200k lane turns on: three.ws/three';
+		expect(copyProblems(two)).toEqual(['2 cashtags ($THREE); X allows one per post, so keep the first and write the rest in plain words']);
+		// A bare dollar amount is not a cashtag.
+		expect(copyProblems('Bronze at $25 takes 5% off compute and $500 takes 20%, which is the whole ladder: three.ws/three')).toEqual([]);
+	});
+
 	it('takes a post id for a quote tweet and refuses a pasted URL', async () => {
 		const { publishItem, previewClient } = await import('../api/_lib/x-content/publisher.js');
 		const dir = sandbox();

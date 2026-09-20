@@ -55,7 +55,8 @@
 			"retarget",
 			"retargets",
 			"reprojection",
-			"GPU"
+			"GPU",
+			"retopo"
 		]
 	},
 	"items": [
@@ -1750,11 +1751,36 @@
 			"kind": "post",
 			"tier": 1,
 			"lane": "token",
-			"pattern": "number",
+			"pattern": "mechanism",
 			"notBefore": "2026-09-20T18:00:00Z",
 			"claims": [
 				{
-					"says": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal",
+					"says": "Forge Max is a $THREE holder perk",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge-max",
+							"contains": "Forge Max"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/forge-max",
+							"contains": "A $THREE holder perk."
+						}
+					]
+				},
+				{
+					"says": "You hold $25 in it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Bronze $25+ in $THREE"
+						}
+					]
+				},
+				{
+					"says": "Bronze at $25: 5% off all $THREE compute and double the free generation quota",
 					"evidence": [
 						{
 							"type": "page",
@@ -1764,17 +1790,17 @@
 						{
 							"type": "page",
 							"url": "https://three.ws/three",
-							"contains": "High-quality generation (200k poly + PBR)"
+							"contains": "5% off all $THREE compute"
 						},
 						{
 							"type": "page",
 							"url": "https://three.ws/three",
-							"contains": "Game-Ready export (Unity/Unreal retopo + PBR)"
+							"contains": "2× free generation quota"
 						}
 					]
 				},
 				{
-					"says": "$500 held takes 20% off all compute",
+					"says": "Gold at $500: 20% off and five times the quota",
 					"evidence": [
 						{
 							"type": "page",
@@ -1785,16 +1811,36 @@
 							"type": "page",
 							"url": "https://three.ws/three",
 							"contains": "20% off all $THREE compute"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "5× free generation quota"
 						}
 					]
 				},
 				{
-					"says": "Draft and standard generation stay free",
+					"says": "Draft and standard generation stay free, forever",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/three",
 							"contains": "Draft & Standard generation stay free, forever"
+						}
+					]
+				},
+				{
+					"says": "The hold is for the expensive lanes: 200k-poly with PBR, game-ready retopo for Unity and Unreal",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "High-quality generation (200k poly + PBR)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/three",
+							"contains": "Game-Ready export (Unity/Unreal retopo + PBR)"
 						}
 					]
 				}
@@ -1836,11 +1882,19 @@
 							"expect": "Game-Ready export"
 						}
 					]
+				},
+				{
+					"type": "api",
+					"name": "the Forge Max page is served",
+					"url": "https://three.ws/forge-max",
+					"expect": {
+						"status": 200
+					}
 				}
 			],
 			"posts": [
 				{
-					"text": "$25 in held $THREE turns on 200k-poly generation with PBR, and game-ready export for Unity and Unreal.\n\nHolding, not spending, is the mechanism.\n\nthree.ws/three",
+					"text": "Forge Max is a $THREE holder perk. That is the half worth saying out loud.\n\nYou hold $25 in it. You do not spend it. The 200k-poly lane turns on while you hold.\n\nthree.ws/three",
 					"media": [
 						{
 							"path": "public/x-media/three-hold/card.png",
@@ -1849,9 +1903,13 @@
 					]
 				},
 				{
-					"text": "$500 held takes 20% off all compute.\n\nDraft and standard generation stay free whether you hold any or not. The hold is for the expensive lanes, not the front door."
+					"text": "The ladder is the utility.\n\nBronze at $25: 5% off all $THREE compute and double the free generation quota.\n\nGold at $500: 20% off and five times the quota.\n\nSame tokens the whole time. Holding, not burning."
+				},
+				{
+					"text": "Draft and standard generation stay free, forever, held tokens or not.\n\nThe hold is for the expensive lanes: 200k-poly with PBR, game-ready retopo for Unity and Unreal. That is what $THREE is for here."
 				}
-			]
+			],
+			"quotes": "2101728882206642536"
 		}
 	]
 }
