@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 import { buildPlan, laneFor, patternsFor, sequence, slotTable, slotTimes, slugFor, tierFor } from '../api/_lib/announce/plan.js';
-import { harvestFacts, quotableLines } from '../api/_lib/announce/brief.js';
+import { cryptoPaths } from '../api/_lib/announce/ledger.js';
+import { languageProblems } from '../api/_lib/x-content/editorial.js';
+import { harvestFacts, harvestStats, quotableLines } from '../api/_lib/announce/brief.js';
 import { draftFindings, itemFor, parseDraft } from '../api/_lib/announce/draft.js';
 import { cardFacts, cardHtml, commandFrom, namesFrom } from '../api/_lib/announce/card.js';
 import { renderPack } from '../api/_lib/announce/kit.js';
@@ -85,6 +87,51 @@ describe('plan', () => {
 		expect(plan.slots.map((slot) => [slot.tier, slot.slotTier])).toEqual([[1, 3], [1, 1]]);
 	});
 
+	it('gives a pinned surface the earliest slot of its tier instead of waiting for its score', () => {
+		const args = {
+			cadence: { ...CADENCE, slots: [{ tier: 2, at: '12:00' }] },
+			quality: QUALITY,
+			start: '2026-10-01',
+		};
+		const entries = [
+			entry('/mocap-studio', { score: 90 }),
+			entry('/capture', { score: 80 }),
+			entry('/awesome', { section: 'learn', score: 40 }),
+		];
+		const unpinned = buildPlan(entries, args);
+		expect(unpinned.slots.map((slot) => slot.key)).toEqual(['/mocap-studio', '/capture', '/awesome']);
+		expect(unpinned.totals.pinned).toBe(0);
+
+		const pinned = buildPlan(entries, { ...args, pinned: new Map([['/awesome', 'the owner asked for it']]) });
+		expect(pinned.slots.map((slot) => slot.key)).toEqual(['/awesome', '/mocap-studio', '/capture']);
+		expect(pinned.slots[0].notBefore).toBe('2026-10-01T12:00:00Z');
+		expect(pinned.slots[0].pinned).toBe('the owner asked for it');
+		expect(pinned.totals.pinned).toBe(1);
+		// A pin reorders the backlog; it never adds a slot or moves a time.
+		expect(pinned.slots.map((slot) => slot.notBefore)).toEqual(unpinned.slots.map((slot) => slot.notBefore));
+	});
+
+	it('keeps a pinned surface inside the slot its own tier owns', () => {
+		const plan = buildPlan(
+			[
+				entry('@three-ws/alerts-mcp', { kind: 'package', section: 'package', score: 90 }),
+				entry('/mocap-studio', { score: 85 }),
+				entry('/awesome', { section: 'learn', score: 40 }),
+			],
+			{
+				cadence: { ...CADENCE, slots: [{ tier: 3, at: '04:00' }, { tier: 2, at: '12:00' }] },
+				quality: QUALITY,
+				start: '2026-10-01',
+				pinned: new Map([['/awesome', 'the owner asked for it']]),
+			},
+		);
+		const slot = plan.slots.find((row) => row.key === '/awesome');
+		// Not the 04:00 slot, which belongs to proof of work, even though the
+		// pin puts /awesome first in the queue of things to place.
+		expect([slot.notBefore, slot.tier, slot.slotTier]).toEqual(['2026-10-01T12:00:00Z', 2, 2]);
+		expect(plan.slots[0].key).toBe('@three-ws/alerts-mcp');
+	});
+
 	it('holds an owner-gated surface out of the calendar instead of dating a slot nobody can fill', () => {
 		const args = {
 			cadence: { ...CADENCE, slots: [{ tier: 3, at: '04:00' }, { tier: 2, at: '12:00' }, { tier: 1, at: '20:00' }] },
@@ -132,6 +179,9 @@ describe('plan', () => {
 	it('only offers a motion pattern to a surface with a route', () => {
 		expect(patternsFor(entry('/flow', { signals: { visual: 25 } }))).toContain('clip');
 		expect(patternsFor(entry('@three-ws/flow', { url: null, signals: { visual: 25 } }))).not.toContain('clip');
+		// The capture photographed this one twice and nothing changed, so the
+		// ledger carries moves:false and no pattern may promise a loop of it.
+		expect(patternsFor(entry('/awesome', { signals: { visual: 25 }, moves: false }))).not.toContain('clip');
 	});
 
 	it('never repeats a pattern back to back, and holds the lane run limit', () => {
@@ -190,6 +240,30 @@ describe('brief', () => {
 		expect(quotableLines(dashed)).toEqual([]);
 		expect(harvestFacts(dashed)).toEqual([]);
 	});
+
+	it('harvests the counters a stats page leads with, which are not sentences', () => {
+		const page = [
+			'Sign in',
+			'ENTRIES',
+			'152',
+			'SECTIONS',
+			'15',
+			'FREE TO USE',
+			'121',
+			'152 entries across 15 sections',
+			'Each entry says in one sentence what the thing does.',
+		].join('\n');
+		const stats = harvestStats(page);
+		expect(stats).toContain('ENTRIES 152');
+		expect(stats).toContain('FREE TO USE 121');
+		expect(stats).toContain('152 entries across 15 sections');
+		// Navigation furniture is not a fact about the surface.
+		expect(stats.some((line) => /sign in/i.test(line))).toBe(false);
+		// Every candidate is still a literal substring of the page once
+		// whitespace is collapsed, which is the check verify.js runs.
+		const flat = page.replace(/\s+/g, ' ');
+		for (const line of stats) expect(flat.includes(line)).toBe(true);
+	});
 });
 
 const BRIEF = {
@@ -214,6 +288,24 @@ const GOOD = {
 	mentions: {},
 	telegram: '',
 };
+
+describe('the inventory these rules are applied to', () => {
+	it('gates the crypto namespace wherever a page is filed, not just the crypto section', () => {
+		const gated = cryptoPaths(process.cwd());
+		// Filed under `learn`, renders live third-party market data.
+		expect(gated.has('/crypto-api')).toBe(true);
+		expect(gated.has('/crypto')).toBe(true);
+		// Filed under `learn`, renders a hand-curated list of open-source projects.
+		expect(gated.has('/awesome')).toBe(false);
+	});
+
+	it('bans awesome as an adjective and allows it as the name of a list', () => {
+		const flagged = (text) => languageProblems(text).some((problem) => /awesome/i.test(problem.message));
+		expect(flagged('This release is awesome.')).toBe(true);
+		expect(flagged('Awesome 3D Agents maps the whole pipeline.')).toBe(false);
+		expect(flagged('Published in the standard awesome list format on GitHub.')).toBe(false);
+	});
+});
 
 describe('draft', () => {
 	it('passes a draft that cites the brief and stays in the band', () => {

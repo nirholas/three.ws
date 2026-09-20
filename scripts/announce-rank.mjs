@@ -48,6 +48,8 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { slugFor } from '../api/_lib/announce/plan.js';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LEDGER = join(root, 'data/announcements.json');
 const COVERAGE = join(root, 'docs/announcement-coverage.md');
@@ -147,6 +149,20 @@ function dirInventory(base, kind, keyPrefix) {
 		});
 	}
 	return out;
+}
+
+// Whether a surface actually moves, read back from the only thing that knows:
+// the capture, which shoots two frames a second apart and records `animated`
+// in the media manifest. No description can answer it, because a curated list
+// of animation tools is described entirely in words about motion and sits
+// perfectly still. A surface nobody has photographed yet is left free to try a
+// loop; one that was photographed and held still stops being offered one.
+function motionVerdicts() {
+	const path = join(root, 'public/announce/media-manifest.json');
+	if (!existsSync(path)) return new Map();
+	const manifest = JSON.parse(readFileSync(path, 'utf8'));
+	const shots = Array.isArray(manifest.shots) ? manifest.shots : Object.values(manifest.shots || {});
+	return new Map(shots.filter((shot) => shot && shot.id).map((shot) => [shot.id, shot.animated !== false]));
 }
 
 // --- announced status, read out of the coverage audit ------------------------
@@ -271,6 +287,7 @@ const priorByKey = new Map((previous.entries || []).map((e) => [e.key, e]));
 
 const status = coverageStatus();
 const curated = curatedShortlist();
+const verdicts = motionVerdicts();
 const inventory = [
 	...pageInventory(),
 	...dirInventory('packages', 'package', '@three-ws/'),
@@ -290,6 +307,8 @@ for (const rec of inventory) {
 	if (prior && prior.media) rec.media = prior.media;
 	if (prior && prior.pack) rec.pack = prior.pack;
 	rec.live = prior && prior.live ? prior.live : null;
+	const shot = `${slugFor(rec.key)}-hero`;
+	if (verdicts.has(shot)) rec.moves = verdicts.get(shot);
 	scoreSurface(rec, curated);
 }
 

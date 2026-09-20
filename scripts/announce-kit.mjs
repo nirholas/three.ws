@@ -46,7 +46,7 @@ import { briefPath, buildBrief } from '../api/_lib/announce/brief.js';
 import { draftFindings, draftPost, itemFor } from '../api/_lib/announce/draft.js';
 import { renderPack, renderPostFile } from '../api/_lib/announce/kit.js';
 import { MissingLedgerError, ledgerEntryFor, loadLedger, loadOrBuildPlan } from '../api/_lib/announce/ledger.js';
-import { slugFor } from '../api/_lib/announce/plan.js';
+import { patternsFor, slugFor } from '../api/_lib/announce/plan.js';
 import { createPageReader } from '../api/_lib/x-content/verify.js';
 import { validateItem } from '../api/_lib/x-content/queue.js';
 
@@ -110,6 +110,7 @@ const wanted = (() => {
 			console.error(`no planned slot or queue item with id ${id}. See: npm run announce:plan`);
 			process.exit(1);
 		}
+		const offered = patternsFor(entry);
 		return [{
 			position: 0,
 			id,
@@ -118,7 +119,11 @@ const wanted = (() => {
 			section: entry.section,
 			url: entry.url || null,
 			lane: queued.lane,
-			pattern: queued.pattern,
+			// The shape it was packed in, unless the surface can no longer
+			// carry it: a route the capture photographed twice without
+			// anything changing stops being offered a clip, and re-running the
+			// factory over that pack must not promise a loop again.
+			pattern: offered.includes(queued.pattern) ? queued.pattern : offered[0],
 			tier: queued.tier,
 			notBefore: queued.notBefore,
 			windowMinutes: queued.windowMinutes || plan.slots[0]?.windowMinutes || 90,
@@ -175,7 +180,17 @@ function upsertShot(slot, alt, entry) {
 			card: { dir: entry.dir || null, title: entry.title || slot.key, description: entry.description || '' },
 		};
 	const index = (spec.shots || []).findIndex((row) => row.id === slot.shot);
-	if (index >= 0) spec.shots[index] = { ...spec.shots[index], ...shot };
+	// Merge, so a hand-tuned viewport or settle survives a re-run, except for
+	// the motion recipe: a surface whose pattern is no longer a clip must stop
+	// being filmed, and a spread alone would keep filming it forever.
+	if (index >= 0) {
+		const previous = { ...spec.shots[index] };
+		if (!slot.motion) {
+			delete previous.motion;
+			delete previous.settle;
+		}
+		spec.shots[index] = { ...previous, ...shot };
+	}
 	else spec.shots.push(shot);
 	if (!dryRun) writeFileSync(MEDIA_SPEC, `${JSON.stringify(spec, null, '\t')}\n`);
 
@@ -277,15 +292,20 @@ try {
 		// captured separately). The queue validator decides which, not this
 		// script's optimism.
 		const candidate = itemFor(brief, draft, { mediaPath });
-		const problems = validateItem(candidate, root);
-		const item = { ...candidate, status: problems.length ? 'draft' : 'review' };
 		const pack = renderPack({ brief, draft, slot, ledgerEntry: entry, rank: rank || null, total: (ledger.totals?.never ?? null), model });
+		// The pack is written before the item is judged, because the item points
+		// at the pack's `.post.txt` and the validator checks that file exists.
+		// Judging first failed every brand-new pack on a file this same run was
+		// about to write, which left the whole batch at `draft` until someone
+		// re-ran it.
 		if (!dryRun) {
 			mkdirSync(PACK_DIR, { recursive: true });
 			writeFileSync(join(PACK_DIR, `${slot.id}.md`), pack);
 			writeFileSync(join(PACK_DIR, `${slot.id}.post.txt`), renderPostFile(draft));
-			upsertItem(item);
 		}
+		const problems = validateItem(candidate, root);
+		const item = { ...candidate, status: problems.length ? 'draft' : 'review' };
+		if (!dryRun) upsertItem(item);
 		queuedHeads.set(slot.id, item.posts[0].text);
 		results.push({
 			id: slot.id,

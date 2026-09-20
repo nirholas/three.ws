@@ -66,13 +66,18 @@ export function patternsFor(entry) {
 	const ranked = [];
 	// A loop has to be a loop of something running, so only a surface with a
 	// route can carry one. A package's frame is a typeset card, which is a
-	// still by construction.
+	// still by construction, and a route the capture already photographed
+	// twice without anything changing carries `moves: false` in the ledger. No
+	// description can answer that question, because a curated list of
+	// animation tools is described entirely in words about motion and does not
+	// move at all; a route nobody has photographed yet is free to try.
 	const filmable = Boolean(entry.url);
-	if (filmable && (entry.signals?.visual ?? 0) >= 25) ranked.push('clip');
+	const moves = filmable && entry.moves !== false;
+	if (moves && (entry.signals?.visual ?? 0) >= 25) ranked.push('clip');
 	if (/\b\d[\d,.]*\s*(?:%|x\b|ms\b|seconds?|minutes?|hours?|k\b|m\b)|\b\d{2,}\b/.test(text)) ranked.push('number');
 	if (/instead of|without|no longer|used to|rather than|misconception|assume/i.test(text)) ranked.push('correction');
 	if (/\bhow to\b|guide|tutorial|step|studio|builder|editor/i.test(text)) ranked.push('walkthrough');
-	if (filmable && (entry.signals?.visual ?? 0) > 0 && !ranked.includes('clip')) ranked.push('clip');
+	if (moves && (entry.signals?.visual ?? 0) > 0 && !ranked.includes('clip')) ranked.push('clip');
 	// Any surface a visitor can act on can be written as a walkthrough, which is
 	// what keeps a long run of pages from being 40 mechanism posts in a row.
 	if (filmable && !ranked.includes('walkthrough')) ranked.push('walkthrough');

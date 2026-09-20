@@ -1,0 +1,59 @@
+{
+	"id": "awesome",
+	"contentHash": "aa2d1ecaa43622b2fedc10e1eb17f965fcf1346095929e9e0bacb5abe2ed36c0",
+	"reviewedAt": "2026-09-20T07:50:59.086Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable:"
+	],
+	"texts": [
+		"Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
+		"Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The same list is published in the standard awesome list format on GitHub, so it can be forked and added to."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "152 entries across 15 sections",
+				"kind": "evidence:page",
+				"target": "https://three.ws/awesome",
+				"ok": true,
+				"detail": "live page shows \"152 entries across 15 sections\""
+			},
+			{
+				"claim": "121 of them free to use",
+				"kind": "evidence:page",
+				"target": "https://three.ws/awesome",
+				"ok": true,
+				"detail": "live page shows \"FREE TO USE 121\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the published list serves 152 entries across 15 sections",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "every entry ships the sentence that says why it is on the list",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:browser",
+				"target": "the page renders the counters, the tag filters and the Markdown copy",
+				"ok": true,
+				"detail": "4 steps passed"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/awesome",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": null,
+	"editorError": "no model was reachable:\n  No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run."
+}

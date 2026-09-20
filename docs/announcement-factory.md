@@ -42,6 +42,7 @@ publishing rather than chosen here:
 | How many posts a day, at what times, and which tier owns each one | The `cadence.slots` table of [`data/x-content/queue.json`](../data/x-content/queue.json), which is the same table the publisher fills from: T3 at 04:00 UTC, T2 at 12:00, T1 at 20:00. With no table declared, the times are derived from the daily cap, minimum gap and quiet hours instead, and a slot whose jitter window could land inside quiet hours is dropped rather than promised. |
 | What order, and which shape | The ledger's scores, then rotation: no more than `maximumSameLaneInARow` of one audience, no more than `maximumSamePatternInARow` of one post shape, from the same queue file. |
 | Which tier a surface is | What it is: a flagship (T1) is a `token`-lane surface or one that legitimately names a partner, proof of work (T3) is a package, worker or service, whose frame is a typeset card rather than a route, and everything with a page behind it is a feature (T2). The tier travels into the queue item, because the publisher gives each tier a slot of its own and an item with no tier is treated as a T2 feature. |
+| Which one jumps the queue | [`data/announce-priority.json`](../data/announce-priority.json), the mirror image of the deferrals. A surface listed there enters the sequencer ahead of the backlog and takes the earliest slot its own tier owns, with the reason recorded beside it. The pin buys position only: the cadence, the tier discipline and the lane and shape rotation are unchanged, and the pack still goes through review and approval like any other. |
 | Which ones need owner approval first | Any surface in the `crypto` section of [`data/pages.json`](../data/pages.json) renders live third-party market data, so a frame of it falls under the operating rules' coin gate. Those slots carry `mediaGate: "owner-approval"` and the factory skips them unless asked. |
 
 The plan is a pure function of the ledger and the start date, so it is regenerated rather than
@@ -58,6 +59,21 @@ could have had. Clearing a frame puts that surface back in the next plan.
 **Deferrals.** The ledger is rebuilt from the repository on every run, so it cannot remember a
 judgement someone made by looking at a captured frame. `data/announce-deferred.json` is where that
 judgement lives, with the reason, and it is committed for exactly that reason.
+
+**Pins.** The same problem in the other direction: the ledger scores a surface on what it can
+measure from a description, a route and a directory, so a surface can be worth posting this week
+and still sit ninety slots down the calendar. `data/announce-priority.json` records that
+judgement, and `CALENDAR.md` prints the pinned surfaces and their reasons in an "Asked for next"
+table. Remove the entry once the surface is packed, since a packed surface leaves the plan anyway.
+
+**What counts as a surface.** The inventory is re-derived from `data/pages.json`, `packages/*`,
+`workers/*` and `services/*` on every run. Most of `data/pages.json` is content: the `learn`
+section alone holds 436 documentation and tutorial pages, and announcing each one would drown the
+features. The five pages in there that carry `showcase: true` are products rather than documents
+(`/awesome`, `/3d`, `/crypto`, `/crypto-api`, `/docs/world`), so `showcase` is the admission rule:
+a content page carrying it is inventory, a content page without it is content. Two of those five
+render live third-party market data, which is why the coin gate matches the `/crypto` path
+namespace and not only the `crypto` section.
 
 ## Lanes and patterns
 
@@ -99,11 +115,20 @@ mention it, its docs, and its README. It emits `evidenceCandidates`, each one a 
 can already run (`page` contains this sentence, `file` contains this line). Two rules make those
 candidates trustworthy rather than decorative: a page fact must be a whole sentence of the rendered
 page, and a file fact must be a literal substring of the file on disk, because that is what
-[`verify.js`](../api/_lib/x-content/verify.js) matches against. Sentences carrying a banned dash
+[`verify.js`](../api/_lib/x-content/verify.js) matches against. Facts are harvested from the
+page's `main` element rather than the whole body, so a claim never comes out of the header menu
+that sits above every page's own first word. The counters a page leads with are collected
+separately, because a tile (`ENTRIES 152`) and a summary line (`152 entries across 15 sections`)
+are not sentences and the whole-sentence rule would drop exactly the fact the `number` pattern
+exists to lead on. Sentences carrying a banned dash
 glyph are dropped rather than rewritten, since the quote has to match character for character.
 
 **2. The media recipe** goes into [`data/announce-media.json`](../data/announce-media.json), and
 `npm run announce:media` shoots it from the live route with provenance written beside the pixels.
+A recipe can ask for a five second loop, but the capture has the last word: it takes two frames a
+second apart, and when they are identical it writes the still and records `animated: false` in the
+manifest. Nothing upstream can make that call, because the description of a page about motion
+generation reads exactly like the description of a page that moves.
 A surface with no route (115 of the 316 planned announcements are a package, a worker, or a
 service) gets a title card instead: [`api/_lib/announce/card.js`](../api/_lib/announce/card.js)
 typesets its real name, its real description, the command a developer really runs, and the tools it
@@ -129,7 +154,8 @@ it is written that way, and the longer Telegram register.
 
 **5. The queue item** goes into [`data/x-content/queue.json`](../data/x-content/queue.json), with
 `textFrom` pointing at the pack's `.post.txt`, so the bytes that were reviewed are the bytes that
-ship. It lands at `review` when the queue validator finds nothing wrong with it and at `draft` when
+ship. It carries the slot's tier, because the publisher gives each tier a slot of its own, and the
+draft's feature probes, because the review bar refuses an item that cannot prove its feature works. It lands at `review` when the queue validator finds nothing wrong with it and at `draft` when
 something is still missing, which is almost always the frame: capture it, re-run the same command,
 and it moves up. The status is the validator's verdict, not the factory's opinion.
 
@@ -140,6 +166,7 @@ and it moves up. The status is the validator's verdict, not the factory's opinio
 | Invent a fact | The drafter sees only the brief, and every claim must cite one of its `evidenceCandidates`, copied exactly |
 | Invent evidence | `draftFindings` rejects any evidence object that is not one of the candidates |
 | State a number with nothing behind it | `claimProblems`: every number, ordinal and absolute must sit inside a declared claim |
+| Ship a post with nothing proving the feature works | Every item declares at least one probe in `probes`, drawn from the routes and endpoints in the brief, and review runs them live |
 | Tag an account the feature does not run on | Every `@mention` needs a recorded reason, and the reviewer confirms the account is real and public |
 | Write hype, a hashtag, an emoji, a dash, a teaser, or a rhetorical opener | `copyProblems` and `languageProblems` |
 | Repeat something @trythreews already posted | Similarity against the scraped archive and the rest of the queue |
@@ -236,5 +263,6 @@ the section above.
 | [api/_lib/x-content/llm.js](../api/_lib/x-content/llm.js) | The model chain, shared with the editor |
 | `data/announce-plan/` | Generated: the plan, the calendar, briefs, hand-written drafts |
 | [data/announce-deferred.json](../data/announce-deferred.json) | Surfaces held back, with the reason |
+| [data/announce-priority.json](../data/announce-priority.json) | Surfaces asked for next, with the reason |
 | [docs/announcements/](./announcements/) | The packs themselves |
 | [tests/announce-factory.test.js](../tests/announce-factory.test.js) | The rules above, as tests |

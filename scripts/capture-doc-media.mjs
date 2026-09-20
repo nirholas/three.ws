@@ -337,6 +337,25 @@ async function writeStill(buffer, outPath) {
 }
 
 /**
+ * Two frames of the same page, compared the way an eye would rather than byte
+ * for byte: downscaled to a thumbnail, greyscaled, and averaged. A compositor
+ * re-renders text antialiasing and gradients slightly differently between two
+ * captures of a page that never changed, so byte equality answers "did the
+ * encoder agree", not "did anything move".
+ */
+async function looksIdentical(left, right) {
+	const thumbnail = (buffer) => sharp(buffer).resize(96, null, { fit: 'inside' }).greyscale().raw().toBuffer();
+	const [a, b] = await Promise.all([thumbnail(left), thumbnail(right)]);
+	if (a.length !== b.length) return false;
+	let total = 0;
+	for (let index = 0; index < a.length; index++) total += Math.abs(a[index] - b[index]);
+	// Mean difference per pixel, on a 0-255 scale. Below 1.5 is resampling
+	// noise; anything actually moving on screen clears it by an order of
+	// magnitude.
+	return total / a.length < 1.5;
+}
+
+/**
  * Animated capture. Chromium has no video encoder we can trust for a short
  * looping clip, so we sample real frames on a fixed cadence and let ffmpeg
  * assemble them. The result is a genuine recording of the running product,
@@ -346,6 +365,21 @@ async function writeMotion(page, shot, subject, outPath) {
 	const fps = Math.min(24, Math.max(4, shot.motion.fps || 12));
 	const seconds = Math.min(10, Math.max(1, shot.motion.seconds || 3));
 	const frameCount = Math.round(fps * seconds);
+
+	// Does this route actually move? Nothing upstream can answer that: the
+	// planner reads a description, and the description of a curated list of
+	// animation tools is full of the word motion while the page itself sits
+	// perfectly still. So the capture answers it, by looking. Two frames a
+	// second apart that are byte-identical mean the loop would be sixty copies
+	// of one picture, which costs a reader bandwidth and tells them nothing, so
+	// the still is shipped instead and the manifest records that it is a still.
+	const first = await shoot(page, subject, { timeout: 25000 });
+	await page.waitForTimeout(1000);
+	const second = await shoot(page, subject, { timeout: 25000 });
+	if (await looksIdentical(first, second)) {
+		return { ...(await writeStill(second, outPath)), animated: false, still: 'the route did not change between two frames a second apart' };
+	}
+
 	const frameDir = mkdtempSync(path.join(tmpdir(), 'docmedia-'));
 	try {
 		const interval = 1000 / fps;
@@ -384,6 +418,7 @@ async function writeMotion(page, shot, subject, outPath) {
 		const out = readFileSync(outPath);
 		const meta = await sharp(out, { animated: true }).metadata();
 		return {
+			animated: true,
 			bytes: out.length,
 			width: meta.width,
 			// sharp reports an animated WebP's height as pages*height; the frame
@@ -495,7 +530,9 @@ async function captureShot(browser, shot, commit) {
 			caption: shot.caption || null,
 			route: shot.url || `card:${shot.card?.dir || shot.id}`,
 			viewport: shot.viewport || 'desktop',
-			animated: Boolean(shot.motion),
+			// The capture's verdict, not the recipe's intent: a shot asked for
+			// as a loop is recorded as a still when the route held still.
+			animated: Boolean(shot.motion) && written.animated !== false,
 			authenticated: Boolean(shot.auth),
 			hidden: shot.hide && shot.hide.length ? shot.hide : undefined,
 			capturedAt: new Date().toISOString(),
