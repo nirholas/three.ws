@@ -91,6 +91,7 @@ import {
 	hashClient,
 	hashIp,
 	createCreation,
+	runWithCreationContext,
 	materializeCreation,
 	markFailed,
 	markSupersededBy,
@@ -1061,9 +1062,20 @@ async function runHfImageLane({
 	return true;
 }
 
+// Parse the request once, then run the whole submit inside a creation context so
+// every row this request writes (primary submit, each failover hop, the sync and
+// cache-hit branches) carries the caller's `destination` without each branch
+// having to remember to pass it.
 async function startJob(req, res) {
-	const ip = clientIp(req);
 	const body = await readJson(req, 8_000).catch(() => null);
+	return runWithCreationContext(
+		{ destination: body?.destination, internal: isInternalSeedRequest(req) },
+		() => startJobWithBody(req, res, body),
+	);
+}
+
+async function startJobWithBody(req, res, body) {
+	const ip = clientIp(req);
 
 	// Two reconstruction modes share this path:
 	//   • image→3D: a caller supplies one or more reference views (image_url or
@@ -3125,6 +3137,10 @@ async function pollJob(req, res, jobId) {
 						backend: nextLane,
 						tier: meta.tier,
 						path: meta.path,
+						// A poll carries no request body, so the successor inherits what
+						// the original submit said it was for.
+						destination: meta.destination,
+						internal: meta.internal === true,
 					});
 					// Report "running" ONLY once the successor is durably chaseable -
 					// otherwise the client would poll a dead handle forever.

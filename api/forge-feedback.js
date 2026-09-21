@@ -1,12 +1,17 @@
 /**
  * Forge feedback — capture the human verdict on a generated 3D model.
  *
- *   POST /api/forge-feedback   { creation_id, outcome?, downloaded?, rating?, note? }
+ *   POST /api/forge-feedback   { creation_id, outcome?, downloaded?, rating?, note?, destination? }
  *
  * This is the labeled half of the text→3D data flywheel. /forge stores every
  * (prompt → reference image → mesh) triple; this endpoint attaches whether a
  * human kept it, threw it away, downloaded it, or rated it — the signal a future
  * in-house reconstruction model trains and evaluates against.
+ *
+ * `destination` is what the model is for (game, web, avatar, simulation, print,
+ * ar, play; see src/shared/forge-destinations.js). It is normally sent with the
+ * generation request itself; accepting it here lets a maker answer after the
+ * fact, on a model they already have. An unrecognised value is ignored.
  *
  * Auth-free like the rest of /forge: writes are scoped to the anonymous client
  * key (x-forge-client header) so a verdict can only be recorded against a row
@@ -48,6 +53,7 @@ export default wrap(async (req, res) => {
 		downloaded: body?.downloaded === true,
 		rating: Number.isInteger(body?.rating) ? body.rating : undefined,
 		note: typeof body?.note === 'string' ? body.note : undefined,
+		destination: body?.destination,
 	});
 
 	// `stored: false` means no row matched this client+id (or nothing to write) —

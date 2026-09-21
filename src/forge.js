@@ -25,6 +25,7 @@ import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
 import { createCompare } from './forge-compare.js';
+import { initForgeDestinationPicker, storedForgeDestination } from './shared/forge-destination-picker.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -129,6 +130,8 @@ const els = {
 	openInComposer: document.getElementById('open-in-composer'),
 	irlBtn: document.getElementById('forge-irl-btn'),
 	categoryPicker: document.getElementById('forge-category-picker'),
+	destinationPicker: document.getElementById('forge-destination-picker'),
+	destinationStatus: document.getElementById('forge-destination-status'),
 	savedChip: document.getElementById('result-saved'),
 	creations: document.getElementById('creations'),
 	creationsGrid: document.getElementById('creations-grid'),
@@ -1645,6 +1648,10 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 			// only — the director rewrites a prompt, and an image submission has
 			// none to rewrite.
 			: { prompt, aspect_ratio: aspectRatio, director: true, ...base };
+	// What this maker said they are building for, remembered from an earlier
+	// model. Absent until they answer once; the server ignores an unknown value.
+	const destination = storedForgeDestination();
+	if (destination) body.destination = destination;
 	// Reproducibility: see mintSeed(). Absent on a job replayed from the gallery,
 	// where the original seed was never recorded, so that path stays as it was.
 	if (Number.isInteger(seed)) body.seed = seed;
@@ -1953,6 +1960,14 @@ function resetVerdict() {
 	}
 }
 
+// "Making this for" chips (src/shared/forge-destination-picker.js). The answer is
+// written onto the model on screen and remembered for later generations.
+const destinationPicker = initForgeDestinationPicker({
+	picker: els.destinationPicker,
+	status: els.destinationStatus,
+	onChoose: (id) => sendFeedback({ destination: id }),
+});
+
 function resetCategoryPicker() {
 	if (!els.categoryPicker) return;
 	els.categoryPicker.querySelectorAll('.forge-cat-btn').forEach((b) => b.classList.remove('active'));
@@ -2175,6 +2190,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	resetVerdict();
 	resetCategoryPicker();
 	if (els.categoryPicker) els.categoryPicker.hidden = false;
+	destinationPicker.show();
 	els.viewerShell?.classList.remove('has-load-error');
 	// Show the load skeleton over the dark viewport until the GLB paints. The
 	// persistent 'load'/'error' listeners below clear it.
@@ -3342,6 +3358,7 @@ els.cancel.addEventListener('click', () => {
 	timeline.fail();
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
+	destinationPicker.hide();
 	showState('empty');
 	// Return focus to the composer so the keyboard flow continues where it began.
 	if (mode === 'text') els.prompt.focus();
@@ -3352,6 +3369,7 @@ els.cancel.addEventListener('click', () => {
 els.again.addEventListener('click', () => {
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
+	destinationPicker.hide();
 	showState('empty');
 	if (mode === 'text') {
 		els.prompt.focus();
@@ -3367,6 +3385,7 @@ els.retry.addEventListener('click', () => {
 	if (els.retry.disabled) return; // mid-countdown; Retry re-enables at reset
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
+	destinationPicker.hide();
 	if (lastJob && (lastJob.prompt || (lastJob.imageUrls && lastJob.imageUrls.length))) {
 		run(lastJob);
 	} else {

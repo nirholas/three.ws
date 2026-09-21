@@ -18,6 +18,7 @@ import { mountPromptDictation } from '../voice/prompt-dictation.js';
 import { showToast } from '../ui-helpers.js';
 import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 import { coldStartLabel } from '../shared/forge-frames.js';
+import { initForgeDestinationPicker, storedForgeDestination } from '../shared/forge-destination-picker.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -109,6 +110,8 @@ const els = {
 	segmentBtn: document.getElementById('forge-segment-btn'),
 	openInComposer: document.getElementById('open-in-composer'),
 	categoryPicker: document.getElementById('forge-category-picker'),
+	destinationPicker: document.getElementById('forge-destination-picker'),
+	destinationStatus: document.getElementById('forge-destination-status'),
 	savedChip: document.getElementById('result-saved'),
 	creations: document.getElementById('creations'),
 	creationsGrid: document.getElementById('creations-grid'),
@@ -1347,6 +1350,10 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		Array.isArray(imageUrls) && imageUrls.length
 			? { image_urls: imageUrls, prompt: prompt || undefined, ...base }
 			: { prompt, aspect_ratio: aspectRatio, ...base };
+	// What this maker said they are building for, remembered from an earlier
+	// model. Absent until they answer once; the server ignores an unknown value.
+	const destination = storedForgeDestination();
+	if (destination) body.destination = destination;
 	// Caller already saw the vision warning and chose to proceed (Consumer 1).
 	if (skipValidation) body.skip_validation = true;
 	// Pay-per-use proof: a non-holder who paid $THREE for this High generation
@@ -1554,6 +1561,14 @@ function resetVerdict() {
 	}
 }
 
+// "Making this for" chips (src/shared/forge-destination-picker.js). The answer is
+// written onto the model on screen and remembered for later generations.
+const destinationPicker = initForgeDestinationPicker({
+	picker: els.destinationPicker,
+	status: els.destinationStatus,
+	onChoose: (id) => sendFeedback({ destination: id }),
+});
+
 function resetCategoryPicker() {
 	if (!els.categoryPicker) return;
 	els.categoryPicker.querySelectorAll('.forge-cat-btn').forEach((b) => b.classList.remove('active'));
@@ -1714,6 +1729,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	resetVerdict();
 	resetCategoryPicker();
 	if (els.categoryPicker) els.categoryPicker.hidden = false;
+	destinationPicker.show();
 	els.viewerShell?.classList.remove('has-load-error');
 	// Show the load skeleton over the dark viewport until the GLB paints. The
 	// persistent 'load'/'error' listeners below clear it.
@@ -2603,12 +2619,14 @@ els.cancel.addEventListener('click', () => {
 	stopElapsed();
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
+	destinationPicker.hide();
 	showState('empty');
 });
 
 els.again.addEventListener('click', () => {
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
+	destinationPicker.hide();
 	showState('empty');
 	if (mode === 'text') {
 		els.prompt.focus();
@@ -2624,6 +2642,7 @@ els.retry.addEventListener('click', () => {
 	if (els.retry.disabled) return; // mid-countdown; Retry re-enables at reset
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
+	destinationPicker.hide();
 	if (lastJob && (lastJob.prompt || (lastJob.imageUrls && lastJob.imageUrls.length))) {
 		run(lastJob);
 	} else {

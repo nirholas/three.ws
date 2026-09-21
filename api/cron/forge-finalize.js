@@ -206,6 +206,8 @@ async function tryCronRedispatch(row, ageMinutes) {
 			backend: nextLane,
 			tier: row.tier,
 			path: row.path,
+			destination: row.destination,
+			internal: row.internal === true,
 		});
 		await writeCronHop(submitted.extJobId, { hop: hop + 1, attempted });
 		// A late attended poller still holds the original f1 handle. Job tokens
@@ -238,7 +240,7 @@ export default wrapCron(async (req, res) => {
 
 	const rows = await sql`
 		select id, replicate_job_id, client_key, user_id, prompt, preview_image_url,
-			backend, tier, path, created_at
+			backend, tier, path, created_at, destination, internal
 		from forge_creations
 		where status = 'generating'
 			and replicate_job_id is not null

@@ -1917,6 +1917,29 @@
 				border-color: var(--stroke-strong);
 				color: var(--ink);
 			}
+			/* Destination row: shares the category picker's chip styling. */
+			.dest-picker-status {
+				font-size: var(--text-xs);
+				font-family: var(--font-mono);
+				color: var(--ink-dim);
+				margin-left: auto;
+				opacity: 0;
+				transition: opacity var(--duration-fast);
+			}
+			.dest-picker-status.is-visible {
+				opacity: 1;
+			}
+			.forge-cat-btn:active {
+				transform: translateY(1px);
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.forge-cat-btn:active {
+					transform: none;
+				}
+				.dest-picker-status {
+					transition: none;
+				}
+			}
 			/* Two-class grouping inside the picker: "Agents" (can get a brain) vs
 			   "Items" (objects). Subtle labels + a divider keep it scannable. */
 			.cat-group-label {
@@ -3830,6 +3853,25 @@
 							<a class="btn btn-ghost" id="download" download data-i18n="forge_studio.download_glb">Download GLB</a>
 							<button class="btn" type="button" id="again" data-i18n="forge_studio.make_another">Make another</button>
 						</div>
+					</div>
+
+					<!-- Destination: what the model is for. One tap, remembered in this
+					     browser and sent with every later generation, so the funnel report
+					     can say which use case Forge actually serves. The chip ids mirror
+					     src/shared/forge-destinations.js, the list the server validates
+					     against (tests/forge-funnel.test.js holds the two in step). Static
+					     markup so the i18n pass localizes it like every other control here.
+					     Optional and never blocks anything. -->
+					<div class="cat-picker dest-picker" id="forge-destination-picker" role="group" aria-labelledby="forge-destination-label" hidden>
+						<span class="cat-picker-label" id="forge-destination-label" data-i18n="forge.making_this_for">Making this for:</span>
+						<button class="forge-cat-btn" type="button" data-dest="game" aria-pressed="false" title="Unity, Unreal, Godot, a web game" data-i18n="forge.dest_game" data-i18n-attr="title:forge.dest_game_hint">Game</button>
+						<button class="forge-cat-btn" type="button" data-dest="web" aria-pressed="false" title="A site, a product page, a 3D embed" data-i18n="forge.dest_web" data-i18n-attr="title:forge.dest_web_hint">Web</button>
+						<button class="forge-cat-btn" type="button" data-dest="avatar" aria-pressed="false" title="A character to rig and animate" data-i18n="forge.dest_avatar" data-i18n-attr="title:forge.dest_avatar_hint">Avatar</button>
+						<button class="forge-cat-btn" type="button" data-dest="simulation" aria-pressed="false" title="Robotics, physics, synthetic data" data-i18n="forge.dest_simulation" data-i18n-attr="title:forge.dest_simulation_hint">Simulation</button>
+						<button class="forge-cat-btn" type="button" data-dest="print" aria-pressed="false" title="A physical 3D print" data-i18n="forge.dest_print" data-i18n-attr="title:forge.dest_print_hint">Print</button>
+						<button class="forge-cat-btn" type="button" data-dest="ar" aria-pressed="false" title="Placing it in a real room" data-i18n="forge.dest_ar" data-i18n-attr="title:forge.dest_ar_hint">AR</button>
+						<button class="forge-cat-btn" type="button" data-dest="play" aria-pressed="false" title="Exploring what it can do" data-i18n="forge.dest_play" data-i18n-attr="title:forge.dest_play_hint">Just playing</button>
+						<span class="dest-picker-status" id="forge-destination-status" role="status" aria-live="polite" data-saved="Saved. We will remember this for your next models." data-i18n-attr="data-saved:forge.destination_saved"></span>
 					</div>
 
 					<!-- Category picker — label your model so the gallery and explore feed

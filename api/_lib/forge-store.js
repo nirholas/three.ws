@@ -14,6 +14,7 @@
 // back to returning the raw provider URL. Persistence is a bonus, never a gate.
 
 import { createHash } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
@@ -29,6 +30,7 @@ import { fetchUpstream } from './upstream-fetch.js';
 import { gradeSimReadiness } from './sim-readiness.js';
 import { putGrade } from './sim-readiness-store.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
+import { validForgeDestination } from '../../src/shared/forge-destinations.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -123,6 +125,31 @@ export async function attachX402Provenance({ replicateJobId, clientKey, payer, t
 	}
 }
 
+// Request-scoped facts every row written during one request should carry.
+//
+// A single /api/forge request can insert a row from any of a dozen branches
+// (primary submit, each failover hop, the cache-hit path, the sync lanes), and
+// threading a new field through every one of them is how a field ends up set on
+// nine branches and silently null on the tenth. The handler states the fact
+// once, here, and createCreation reads it, so no branch can forget it.
+const creationContext = new AsyncLocalStorage();
+
+/**
+ * Run `fn` with request-scoped creation facts. `destination` is validated here,
+ * so callers pass the raw request value. `internal` marks platform-generated
+ * rows (catalog seeder, quality benchmark) so the funnel report can leave them out.
+ * @template T
+ * @param {{ destination?: unknown, internal?: boolean }} facts
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function runWithCreationContext({ destination, internal = false } = {}, fn) {
+	return creationContext.run(
+		{ destination: validForgeDestination(destination), internal: internal === true },
+		fn,
+	);
+}
+
 export async function createCreation({
 	clientKey,
 	ipHash,
@@ -146,9 +173,18 @@ export async function createCreation({
 	// reference view on every non-multiview lane, so callers that pass nothing
 	// still get their upload tracked.
 	sourceImageUrls = null,
+	// What the maker is building for (src/shared/forge-destinations.js). An
+	// explicit value wins; otherwise the request-scoped one the handler set.
+	destination,
+	// Platform-generated row (seeder, benchmark). Only failover successors pass
+	// it, to inherit the original's flag; a fresh submit takes it from the context.
+	internal,
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
+	const ctx = creationContext.getStore();
+	const nextDestination = validForgeDestination(destination) ?? ctx?.destination ?? null;
+	const isInternal = typeof internal === 'boolean' ? internal : ctx?.internal === true;
 	// An explicit category (from the studio picker) always wins; otherwise infer
 	// it from the prompt so the model gets a real category at birth instead of
 	// defaulting to 'other' and leaving the category dimension dead.
@@ -162,14 +198,14 @@ export async function createCreation({
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
 				 multiview, backend, tier, path, status, outcome, model_category, user_id,
-				 source_image_keys)
+				 source_image_keys, destination, internal)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
 				 ${textToImageModel ?? null}, ${viewsRequested ?? null}, ${viewsUsed ?? null},
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
 				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null},
-				 ${sourceKeys ? JSON.stringify(sourceKeys) : null})
+				 ${sourceKeys ? JSON.stringify(sourceKeys) : null}, ${nextDestination}, ${isInternal})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
@@ -248,7 +284,7 @@ export async function findByJob({ replicateJobId, clientKey }) {
 		const rows = await sql`
 			select id, status, glb_url, glb_key, prompt, preview_image_url,
 				views_requested, views_used, multiview, backend, tier, path, model_category,
-				user_id, created_at
+				user_id, created_at, destination, internal
 			from forge_creations
 			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey}
 			limit 1
@@ -591,6 +627,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 				preview_key = ${preview.key},
 				preview_image_url = ${preview.url},
 				size_bytes = ${glb.bytes},
+				completed_at = coalesce(completed_at, now()),
 				updated_at = now()
 			where id = ${existing.id} and client_key = ${clientKey}
 		`;
@@ -703,7 +740,8 @@ export async function markFailed({ replicateJobId, clientKey, error }) {
 	try {
 		const rows = await sql`
 			update forge_creations
-			set status = 'failed', error = ${String(error || 'generation failed').slice(0, 500)}, updated_at = now()
+			set status = 'failed', error = ${String(error || 'generation failed').slice(0, 500)},
+				completed_at = coalesce(completed_at, now()), updated_at = now()
 			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey} and status != 'done'
 			returning backend, tier, path
 		`;
@@ -815,15 +853,18 @@ const VALID_OUTCOMES = new Set(['accepted', 'rejected', 'generated']);
 
 // Capture the human verdict on a creation. Scoped to the owning client so a
 // verdict can't be forged for someone else's row. Returns true on a real write.
-export async function recordFeedback({ id, clientKey, outcome, downloaded, rating, note }) {
+export async function recordFeedback({ id, clientKey, outcome, downloaded, rating, note, destination }) {
 	if (!forgeStoreEnabled() || !id) return false;
+	const nextDestination = validForgeDestination(destination);
 	const nextOutcome = VALID_OUTCOMES.has(outcome) ? outcome : null;
 	const nextRating =
 		Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : null;
 	const nextNote = typeof note === 'string' && note.trim() ? note.trim().slice(0, 500) : null;
 	const markDownloaded = downloaded === true;
 	// Nothing meaningful to record → don't touch the row.
-	if (!nextOutcome && nextRating === null && nextNote === null && !markDownloaded) return false;
+	if (!nextOutcome && nextRating === null && nextNote === null && !markDownloaded && !nextDestination) {
+		return false;
+	}
 	try {
 		const rows = await sql`
 			update forge_creations
@@ -831,6 +872,7 @@ export async function recordFeedback({ id, clientKey, outcome, downloaded, ratin
 				rating       = coalesce(${nextRating}, rating),
 				note         = coalesce(${nextNote}, note),
 				downloaded   = (downloaded or ${markDownloaded}),
+				destination  = coalesce(${nextDestination}, destination),
 				feedback_at  = now(),
 				updated_at   = now()
 			where id = ${id} and client_key = ${clientKey}
