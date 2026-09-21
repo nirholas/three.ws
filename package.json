@@ -581,7 +581,7 @@
 		"@vercel/og": "^0.11.1",
 		"@wallet-standard/app": "^1.1.1",
 		"@walletconnect/ethereum-provider": "^2.24.0",
-		"@x402/axios": "^2.25.0",
+		"@x402/axios": "^2.26.0",
 		"@x402/core": "^2.25.0",
 		"@x402/evm": "^2.14.0",
 		"@x402/extensions": "^2.25.0",
