@@ -126,7 +126,7 @@
 		},
 		{
 			"id": "rig-doctor",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"lane": "developer",
 			"pattern": "correction",
@@ -302,7 +302,7 @@
 		},
 		{
 			"id": "embed-30-seconds",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "tutorial",
@@ -414,7 +414,7 @@
 		},
 		{
 			"id": "text-to-3d",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "creation",
@@ -478,7 +478,7 @@
 		},
 		{
 			"id": "free-characters",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "library",
@@ -532,7 +532,7 @@
 		},
 		{
 			"id": "free-animations",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "animation",
@@ -641,7 +641,7 @@
 		},
 		{
 			"id": "three-token-mcp",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"lane": "token",
 			"pattern": "mechanism",
@@ -867,7 +867,7 @@
 		},
 		{
 			"id": "forge-max",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"lane": "developer",
 			"pattern": "number",
@@ -944,7 +944,7 @@
 		},
 		{
 			"id": "materialize",
-			"status": "review",
+			"status": "posted",
 			"kind": "post",
 			"lane": "developer",
 			"pattern": "mechanism",
@@ -1070,7 +1070,7 @@
 		},
 		{
 			"id": "mcp-catalog",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "mcp",
@@ -1211,7 +1211,7 @@
 		},
 		{
 			"id": "activity-mcp",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
@@ -1747,7 +1747,7 @@
 		},
 		{
 			"id": "three-hold-to-access",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 1,
 			"lane": "token",
