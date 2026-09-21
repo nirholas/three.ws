@@ -82,7 +82,17 @@ ENV NODE_ENV=production \
 # Normalize to world-readable + traversable before dropping privileges so the
 # image boots regardless of the source umask. `a+rX` adds read to everything and
 # the execute/traverse bit only to directories (and already-executable files).
-RUN chmod -R a+rX /app
+#
+# Only paths that actually lack those bits are touched. A blanket `chmod -R`
+# changed the metadata of every file under /app, and overlayfs answers a chmod by
+# copying the whole file up into the new layer: that one step took 527s of the
+# docker build and shipped a 1.2 GB layer holding a second copy of the app,
+# which also slowed every push and every Cloud Run image pull. The find below
+# selects exactly the paths `chmod -R a+rX` would change (directories missing
+# r-x for anyone, files missing read for anyone, files executable for some but
+# not all), so the resulting modes are identical, and a normal context yields an
+# empty layer.
+RUN find /app \( \( -type d ! -perm -555 \) -o \( -type f \( ! -perm -444 -o \( -perm /111 ! -perm -111 \) \) \) \) -exec chmod a+rX {} +
 USER node
 
 EXPOSE 8080
