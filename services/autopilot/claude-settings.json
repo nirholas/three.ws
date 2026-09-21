@@ -1,0 +1,26 @@
+{
+	"permissions": {
+		"deny": [
+			"Bash(git push)",
+			"Bash(git push *)",
+			"Bash(npm run deploy*)",
+			"Bash(npm run db:migrate*)",
+			"Bash(npm run db:restamp*)",
+			"Bash(npm run changelog:push*)",
+			"Bash(gcloud builds submit *)",
+			"Bash(gcloud * delete *)",
+			"Bash(gcloud run services replace *)",
+			"Bash(gcloud run services update * --set-env-vars*)",
+			"Bash(gcloud run services update * --clear-env-vars*)",
+			"Bash(gcloud secrets create *)",
+			"Bash(gcloud secrets versions add *)",
+			"Bash(gcloud secrets versions destroy *)",
+			"Bash(gcloud projects *)",
+			"Bash(gcloud iam *)"
+		]
+	},
+	"env": {
+		"DISABLE_AUTOUPDATER": "1",
+		"DISABLE_TELEMETRY": "1"
+	}
+}
