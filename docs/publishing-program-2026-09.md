@@ -32,6 +32,7 @@ Two rules that apply to every entry, because both have burned publishing program
 | 9 | dev.to (canonical back to three.ws) | [devto-mcp-fleet-post.md](./devto-mcp-fleet-post.md) | 72 MCP servers, four traps, four rules, and the one change that mattered more than the fleet | ~1,290 words | Owner approval |
 | 10 | Google Cloud Community | [google-cloud-community-post.md](./google-cloud-community-post.md) | One container, 115 scheduled jobs, a GPU fleet that sleeps, and three deploy gates each written the day after an outage | ~1,530 words | Owner approval |
 | 11 | NVIDIA Developer Forums (already drafted, earlier) | [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) | Audio2Face-3D streamed onto a rig the visitor generated ninety seconds ago | existing draft | Owner approval |
+| 12 | NVIDIA Developer Forums (post this one first) | [nvidia-forum-model-retirement-post.md](./nvidia-forum-model-retirement-post.md) | Both models our live posts featured were retired within weeks: why a 410 is invisible to a fallback chain, vector tags that survive an embedder retirement, three lifecycle asks of NVIDIA | ~2,300 words | Owner approval |
 
 ## Short-form entries
 

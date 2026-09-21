@@ -311,6 +311,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['home-assistant-community-post', 'internal: forum post drafted for the Home Assistant community'],
 	['threejs-forum-post', 'internal: forum post drafted for the three.js forum'],
 	['nvidia-forum-gpu-fleet-post', 'internal: forum post drafted for the NVIDIA developer forums'],
+	['nvidia-forum-model-retirement-post', 'internal: forum post drafted for the NVIDIA developer forums'],
 	['huggingface-agent-feedback-loop', 'internal: article drafted for the Hugging Face community blog'],
 	['devto-mcp-fleet-post', 'internal: article drafted for dev.to'],
 	['google-cloud-community-post', 'internal: article drafted for the Google Cloud community'],

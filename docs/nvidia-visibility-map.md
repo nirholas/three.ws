@@ -229,6 +229,37 @@ This is the only NVIDIA channel where we have a track record, it is self-serve,
 and it feeds everything else: forum posts are what a Technical Blog pitch and a
 GTC abstract are built on.
 
+### What the approved posts have in common (read before drafting the next one)
+
+Three topics from the `nichxbt` account cleared moderation as of 2026-09-21: the
+two above and a CloudXR 6.2 support question, which drew an NVIDIA employee
+reply the same day. We cannot see the forum's moderation settings, so this is
+the pattern in what passed, plus the stock Discourse new-user defaults (two
+links and one image per post, and an automatic hold once a new account keeps
+linking to the same external host).
+
+1. **Filed under a product category with the forum's own tags.** Both articles
+   sit in AI & Data Science > NVIDIA NIM > Models, tagged from the existing
+   vocabulary (`nim`, `llama`, `nemotron`). The "suggested tags" we wrote at the
+   bottom of the i18n post (`localization`, `i18n`) do not exist there and were
+   never applied. There is no "community showcase" category to aim at.
+2. **An NVIDIA product in the title**, and exact model ids in the body.
+3. **Almost no hyperlinks.** The Nemotron post carries one link and the i18n
+   post none. `three.ws` and repo paths such as `docs/nvidia-models.md` appear
+   as plain text. The two unposted drafts carry five and ten links, mostly to
+   our own domain and our own GitHub, which is the shape a spam hold looks for.
+   Cut them to two or fewer before posting, and prefer links back into the
+   forum itself.
+4. **No launch voice and no commerce vocabulary.** Each opens on a technical
+   situation in the first person. Nothing about tokens, pricing, or
+   monetization beyond a config line.
+5. **Real artifacts.** A prompt quoted from the source file, a measured token
+   count, a median latency with its tail. At most one image.
+6. **Something for NVIDIA to answer.** The Nemotron post closes with three
+   concrete product asks, the CloudXR post with a direct question. A post a
+   staff member can usefully reply to is a post a moderator wants live.
+7. **Length of a four to five minute read**, roughly 1,500 to 2,300 words.
+
 Post 3 should be the browser digital human, because it is the piece nobody else
 has written: streaming Audio2Face-3D blendshape tracks over gRPC into a WebGL
 avatar, mapping ARKit-52 onto whatever morph convention the visitor's model
@@ -254,6 +285,7 @@ when approved.
 |---|---|
 | [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md) | The production GPU fleet: cold weight loads on L4s, min-instances as a quota decision rather than a performance one, the keep-warm cron, and why a failover chain must never have an empty rung |
 | [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) | Audio2Face-3D streamed onto a rig the visitor generated ninety seconds earlier |
+| [nvidia-forum-model-retirement-post.md](./nvidia-forum-model-retirement-post.md) | Both models our two live posts featured were retired from the hosted NIM catalog within weeks: why a `410 Gone` is invisible to a fallback chain, the `model@dimension` vector tags that made the embedding retirement survivable, and three lifecycle signals we ask NVIDIA for. Written to the approval pattern below; post this one first |
 
 ## Member benefits and current disposition
 
