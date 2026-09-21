@@ -627,12 +627,6 @@
 	// mint, shared by the chart-marker overlay and the "Agent transactions" list.
 	let AGENT_TRADES = [];
 
-	function dexEmbedUrl(mint) {
-		const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-		const p = new URLSearchParams({ embed: '1', loadChartSettings: '0', theme, chartTheme: theme, chartType: 'usd', interval: '15', info: '0' });
-		return `https://dexscreener.com/solana/${encodeURIComponent(mint)}?${p}`;
-	}
-
 	// Every three.ws agent transaction in one coin, newest first. Normalised for
 	// both the marker overlay (needs tSec + side) and the list (needs labels). Never
 	// throws: a failure just yields an empty overlay and an empty list.
@@ -763,55 +757,60 @@
 		canvas.innerHTML = `<div class="oc-chart-readout"><span class="oc-chart-price">${fmtPrice(last)}</span><span class="mkt-${chg.cls}">${chg.txt} · ${label}</span></div>${areaChartSvg(pts, markers)}${legend}`;
 	}
 
-	function mountChart(container, mint) {
-		let stored = null; try { stored = localStorage.getItem(CHART_KEY); } catch {}
+	// The chart view ids the page used before the shared switcher took over, mapped
+	// onto its ids, so a returning viewer's last choice here still opens.
+	const LEGACY_VIEW = { candles: 'dexscreener', line: 'line', trades: 'trades' };
+
+	async function mountChart(container, mint) {
 		const hasTrades = AGENT_TRADES.length > 0;
 		const preCurve = BOOT.pump && !BOOT.pump.complete; // no DEX pair yet → native by default
 		// When agents have traded this coin, lead with the annotated view so their
-		// moves are on the chart the instant the page opens; otherwise honour the last
-		// choice, then default to candles (or native pre-DEX).
-		let view = stored || (hasTrades ? 'trades' : preCurve ? 'line' : 'candles');
-		if (view === 'trades' && !hasTrades) view = preCurve ? 'line' : 'candles';
-		const tradesBtn = hasTrades ? `<button type="button" class="oc-seg-btn${view === 'trades' ? ' on' : ''}" data-view="trades">Agent trades</button>` : '';
+		// moves are on the chart the instant the page opens; otherwise the viewer's
+		// last choice on this page, then a candle terminal (or native pre-DEX).
+		let legacy = null; try { legacy = LEGACY_VIEW[localStorage.getItem(CHART_KEY)] || null; } catch {}
+		if (legacy === 'trades' && !hasTrades) legacy = null;
+		const defaultView = hasTrades ? 'trades' : legacy || (preCurve ? 'line' : 'dexscreener');
+
 		container.innerHTML = `<div class="oc-chart-controls">
 				<span class="oc-chart-title">Price chart <span class="oc-h2-note">live</span></span>
-				<div class="oc-seg" role="group" aria-label="Chart view">
-					<button type="button" class="oc-seg-btn${view === 'candles' ? ' on' : ''}" data-view="candles">Candles</button>
-					<button type="button" class="oc-seg-btn${view === 'line' ? ' on' : ''}" data-view="line">Line</button>
-					${tradesBtn}
-				</div>
-				<a class="dr-act" href="https://dexscreener.com/solana/${encodeURIComponent(mint)}" target="_blank" rel="noopener">DexScreener ↗</a>
 			</div>
-			<div class="oc-chart-canvas" id="ocChartCanvas"></div>
-			<p class="oc-chart-credit"><a href="https://dexscreener.com/solana/${encodeURIComponent(mint)}" target="_blank" rel="noopener nofollow noreferrer">Candles chart by DexScreener · TradingView ↗</a></p>`;
+			<div class="oc-chart-host" id="ocChartCanvas"></div>`;
 		const canvas = container.querySelector('#ocChartCanvas');
-		let watchdog = 0;
-		function renderCandles() {
-			canvas.classList.remove('ready');
-			canvas.innerHTML = '<div class="oc-chart-skel"></div>';
-			const frame = document.createElement('iframe');
-			frame.className = 'oc-chart-frame';
-			frame.title = 'DexScreener live chart';
-			frame.loading = 'lazy';
-			frame.src = dexEmbedUrl(mint);
-			frame.addEventListener('load', () => { clearTimeout(watchdog); canvas.classList.add('ready'); });
-			canvas.replaceChildren(frame);
-			// Embed blocked / offline → fall back to the native line chart.
-			watchdog = setTimeout(() => { if (!canvas.classList.contains('ready')) loadNativeChart(canvas, mint); }, 9000);
+
+		// The page's own views. Each gets a fresh slot from the switcher, and the
+		// native chart paints its own skeleton, empty and error states into it.
+		const native = (id, label, opts) => ({
+			id,
+			label,
+			mount: ({ host }) => {
+				host.className = 'oc-chart-canvas oc-chart-native';
+				loadNativeChart(host, mint, opts);
+			},
+		});
+		const nativeViews = [
+			native('line', 'Line'),
+			...(hasTrades ? [native('trades', 'Agent trades', { markers: AGENT_TRADES })] : []),
+		];
+
+		// Every chart terminal the rest of three.ws offers (DexScreener, Birdeye,
+		// GMGN, DEXTools, GeckoTerminal) from the one shared provider list. This
+		// page is buildless, so the switcher comes from its stable URL, which
+		// publishes on window (a stable-named build entry re-exports nothing).
+		try {
+			await import('/chart-switcher.js');
+			window.threeChartSwitcher.mountSwitchableChart({
+				host: canvas,
+				mint,
+				nativeViews,
+				defaultView,
+				classes: { tabs: 'oc-seg', tab: 'oc-seg-btn', active: 'on' },
+			});
+		} catch {
+			// The switcher bundle did not load (offline, blocked). The native chart
+			// needs nothing but our own API, so the page still has a chart.
+			canvas.className = 'oc-chart-canvas';
+			loadNativeChart(canvas, mint, hasTrades ? { markers: AGENT_TRADES } : {});
 		}
-		function render(v) {
-			clearTimeout(watchdog);
-			if (v === 'candles') renderCandles();
-			else if (v === 'trades') loadNativeChart(canvas, mint, { markers: AGENT_TRADES });
-			else loadNativeChart(canvas, mint);
-		}
-		function apply(v) {
-			try { localStorage.setItem(CHART_KEY, v); } catch {}
-			container.querySelectorAll('.oc-seg-btn').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
-			render(v);
-		}
-		container.querySelectorAll('.oc-seg-btn').forEach((b) => b.addEventListener('click', () => apply(b.dataset.view)));
-		render(view);
 	}
 
 	// ── agent transactions list ─────────────────────────────────────────────────

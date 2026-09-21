@@ -21,6 +21,16 @@
 			"link": "/club"
 		},
 		{
+			"date": "2026-09-21",
+			"title": "Pick DEXTools as your chart on every coin chart",
+			"summary": "The chart-source switcher now covers every coin chart on three.ws. The Oracle coin page and the Pump Dashboard market chart join the coin pages, launch pages, the trade deep-dive and Mission Control, so wherever a coin is charted you can switch between the three.ws chart, DexScreener, Birdeye, GMGN, DEXTools and GeckoTerminal. Your pick is remembered and follows you from one coin surface to the next. The Oracle page keeps its Line and Agent trades views, and the dashboard keeps its own candle chart; the terminals simply line up beside them.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/coin-pages"
+		},
+		{
 			"date": "2026-09-20",
 			"title": "Repeat visits stop downloading the app's code twice",
 			"summary": "Every page tells your browser which code it is about to need so it can start fetching early. On a return visit that head start was being thrown away: our offline helper answered those same requests a second time, Chrome refused to match the two, and each file was requested twice while the developer console filled with a warning per file, well over a hundred on a heavy page like the Club. The offline helper now leaves that code to the browser's own cache, which already keeps it for a year, and clears out the duplicate copy it had stored on your device. Return visits load with one request per file and a quiet console.",

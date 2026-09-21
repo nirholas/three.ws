@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Paying at the Club door no longer fails when our own traffic has been busy</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-09-21:Paying at the Club door no longer fails when our own traffic has been busy</guid>
+			<pubDate>Mon, 21 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some visitors paying the Club cover approved the payment in their wallet and then saw it fail at the last step with an internal error. The cause was on our side. We cover the small Solana network fee on your payment, and a safety limit that spreads our own automated payments across the day was also being applied to customers, so once our background traffic had used the morning's share, a real payment was turned away. Customers are now exempt from that limit: if you are paying, the payment goes through, and our own traffic waits instead. Nothing was charged on a failed attempt. Separately, when a wallet refuses to open its approval window, the payment window now says plainly that nothing was signed or charged and what to try next, instead of repeating the wallet's own wording.</description>
+		</item>
+		<item>
 			<title>Phantom users no longer have to switch off transaction protection to pay</title>
 			<link>https://three.ws/club</link>
 			<guid isPermaLink="false">2026-09-21:Phantom users no longer have to switch off transaction protection to pay</guid>
 			<pubDate>Mon, 21 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee.</description>
+		</item>
+		<item>
+			<title>Pick DEXTools as your chart on every coin chart</title>
+			<link>https://three.ws/docs/coin-pages</link>
+			<guid isPermaLink="false">2026-09-21:Pick DEXTools as your chart on every coin chart</guid>
+			<pubDate>Mon, 21 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The chart-source switcher now covers every coin chart on three.ws. The Oracle coin page and the Pump Dashboard market chart join the coin pages, launch pages, the trade deep-dive and Mission Control, so wherever a coin is charted you can switch between the three.ws chart, DexScreener, Birdeye, GMGN, DEXTools and GeckoTerminal. Your pick is remembered and follows you from one coin surface to the next. The Oracle page keeps its Line and Agent trades views, and the dashboard keeps its own candle chart; the terminals simply line up beside them.</description>
 		</item>
 		<item>
 			<title>Three SDKs now report the version you actually installed</title>

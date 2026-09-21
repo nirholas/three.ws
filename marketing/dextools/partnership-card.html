@@ -1,0 +1,88 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>three.ws x DEXTools charts card</title>
+<!--
+  Source for the "DEXTools charts, now live on three.ws" graphics.
+
+  Renders two sizes from one layout: 1600x900 by default, 1600x1600 with the
+  "#square" hash. Every asset is a repo file referenced relatively, so a fresh
+  clone re-renders the exact PNGs in marketing/dextools/ with:
+
+    npm run render:dextools-card
+
+  See README.md in this directory for the palette and the copy rules.
+-->
+<style>
+@font-face { font-family: Inter; src: url('../../public/fonts/inter-latin.woff2') format('woff2'); font-weight: 100 900; font-display: block; }
+@font-face { font-family: 'Space Grotesk'; src: url('../../public/fonts/space-grotesk-latin.woff2') format('woff2'); font-weight: 300 700; font-display: block; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../../public/fonts/jetbrains-mono-latin.woff2') format('woff2'); font-weight: 100 800; font-display: block; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1600px; height: 900px; background: #0a0a0a; }
+body.square, body.square html { height: 1600px; }
+body.square .card { height: 1600px; }
+
+.card { position: relative; width: 1600px; height: 900px; background: #0a0a0a;
+	display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.frame { position: absolute; inset: 26px; border: 1px solid #1c1c1c; border-radius: 4px; }
+
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 500;
+	letter-spacing: .42em; color: #22c3e6; margin-bottom: 96px; }
+.eyebrow span { color: #12667a; margin-right: 12px; }
+
+.lockup { display: flex; align-items: center; gap: 56px; }
+.brand { display: flex; align-items: center; gap: 28px; }
+.threews img { height: 92px; display: block; }
+.dext img { height: 112px; display: block; }
+/* Set in Space Grotesk 700 to match the weight of the three.ws lockup, the same
+   call the pump.fun card makes, not an imitation of DEXTools' own lettering. */
+.dext .word { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 62px; font-weight: 700;
+	color: #fff; letter-spacing: -.02em; }
+.rule { width: 1px; height: 118px;
+	background: linear-gradient(180deg, transparent, #2a2a2a 22%, #2a2a2a 78%, transparent); }
+
+/* The one-line claim, in a terminal-style pill: three status dots and a caret. */
+.pill { margin-top: 92px; display: flex; align-items: center; gap: 18px;
+	padding: 15px 28px 15px 24px; border: 1px solid #1f2a2e; border-radius: 10px;
+	background: #0d1113; font-family: 'JetBrains Mono', monospace; font-size: 20px;
+	font-weight: 500; letter-spacing: .02em; color: #d7dde0; }
+.dots { display: flex; gap: 7px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: #1d3a42; display: block; }
+.dots i:first-child { background: #22c3e6; }
+.caret { width: 2px; height: 22px; background: #22c3e6; margin-left: 2px; }
+
+.foot { position: absolute; left: 78px; right: 78px; bottom: 58px; display: flex;
+	justify-content: space-between; align-items: flex-end;
+	font-family: 'JetBrains Mono', monospace; font-size: 18px; letter-spacing: .06em; color: #5a5a5a;
+	line-height: 1.55; }
+.foot .l b { display: block; font-weight: 500; color: #9a9a9a; }
+.foot em { font-style: normal; color: #22c3e6; }
+</style>
+<div class="card">
+	<div class="frame"></div>
+
+	<div class="eyebrow"><span>//</span>DEXTOOLS CHARTS &middot; NOW LIVE</div>
+
+	<div class="lockup">
+		<div class="brand threews"><img src="../../public/brand/three-ws-lockup-on-dark.png" alt="three.ws"></div>
+		<div class="rule"></div>
+		<div class="brand dext">
+			<img src="../../public/marks/dextools-alpha.png" alt="DEXTools">
+			<div class="word">DEXTools</div>
+		</div>
+	</div>
+
+	<div class="pill">
+		<div class="dots"><i></i><i></i><i></i></div>
+		<div>Every coin on three.ws. Real-time charts.</div>
+		<div class="caret"></div>
+	</div>
+
+	<div class="foot">
+		<div class="l"><b>DEXTools Charts</b>Now live on <em>three.ws</em></div>
+		<div>Powered by <em>@DEXToolsApp</em></div>
+	</div>
+</div>
+<script>
+	if (location.hash === '#square') document.body.classList.add('square');
+</script>

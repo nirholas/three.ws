@@ -10,16 +10,34 @@
 //
 // The tab bar reuses the `.mc-chart-ivs` / `.mc-chart-iv` segmented-control
 // classes both host pages already style for the interval switcher, so it matches
-// each page's design system without a second set of theme rules.
+// each page's design system without a second set of theme rules. A host with a
+// segmented control of its own passes its class names through `classes`.
+//
+// A host that already draws a chart keeps it: `nativeViews` replaces the built-in
+// candle view with the host's own, and the providers line up beside them. That is
+// how /oracle/coin/<mint> keeps its agent-trade overlay and /pump-dashboard its
+// canvas chart while gaining every provider. Buildless pages get it through
+// chart-switcher-global.js, published at the stable /chart-switcher.js URL.
 
-import { mountPriceChart } from '../mission-control/chart.js';
 import { chartEmbedsFor, chartEmbedUrls, resolveChartPool } from './chart-embeds.js';
 import { watchEmbed, embedFallbackNode, DEFAULT_EMBED_TIMEOUT_MS } from './embed-guard.js';
 
 // Shared with /launches/<mint>, which uses the same view ids: the chart a trader
 // picks is a viewing preference, so it follows them across coin surfaces.
 const VIEW_KEY = 'ld_chart_view';
-const CANDLES = { id: 'tradingview', label: 'TradingView', kind: 'candles' };
+
+// The built-in native view: the platform's live candle chart. Imported on first
+// use so a host that brings its own native views never downloads the engine.
+const CANDLES = {
+	id: 'tradingview',
+	label: 'TradingView',
+	mount: async ({ host, mint }) => {
+		const { mountPriceChart } = await import('../mission-control/chart.js');
+		return mountPriceChart({ host, mint });
+	},
+};
+
+const DEFAULT_CLASSES = { tabs: 'mc-chart-ivs', tab: 'mc-chart-iv', active: '' };
 
 const STYLE_ID = 'chart-switcher-style';
 const CSS = `
@@ -37,7 +55,7 @@ const CSS = `
 .cs-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; text-align: center; font-size: .8125rem; opacity: .85; }
 .cs-state p { margin: 0; max-width: 46ch; }
 .cs-state a { color: inherit; font-weight: 600; }
-.cs-state .mc-chart-iv { border: 1px solid color-mix(in srgb, currentColor 22%, transparent); padding: 5px 12px; }
+.cs-state button { border: 1px solid color-mix(in srgb, currentColor 22%, transparent); padding: 5px 12px; }
 .cs-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 @keyframes cs-shimmer { to { background-position: -200% 0, 0 0; } }
 @media (prefers-reduced-motion: reduce) { .cs-skel { animation: none; } .cs-frame { transition: none; } }
@@ -62,14 +80,14 @@ function node(tag, props = {}, children = []) {
 	return n;
 }
 
-function readView(views) {
+function readView(views, fallback) {
 	try {
 		const v = localStorage.getItem(VIEW_KEY);
 		if (views.some((view) => view.id === v)) return v;
 	} catch {
 		// Storage blocked: fall through to the default.
 	}
-	return CANDLES.id;
+	return views.some((view) => view.id === fallback) ? fallback : views[0].id;
 }
 
 function currentTheme() {
@@ -83,25 +101,45 @@ function currentTheme() {
  * @param {string} [opts.chain]          A CHART_CHAINS id. Solana is the home chain.
  * @param {'mainnet'|'devnet'} [opts.network]  The providers index mainnet only,
  *   so on devnet the candle chart stands alone and no source bar is drawn.
- * @returns {{ destroy(): void }}
+ * @param {Array<{ id: string, label: string, mount: (ctx: { host: HTMLElement, mint: string }) => ({ destroy?(): void } | void | Promise<{ destroy?(): void } | void>) }>} [opts.nativeViews]
+ *   The host's own chart views, shown ahead of the providers. Defaults to the
+ *   platform candle chart.
+ * @param {string} [opts.defaultView]  View to open on when the viewer has no
+ *   stored preference that applies here. Defaults to the first view.
+ * @param {{ tabs?: string, tab?: string, active?: string }} [opts.classes]
+ *   The host's segmented-control class names. `active` is toggled on the selected
+ *   tab for hosts whose styles key off a class instead of `aria-selected`.
+ * @returns {{ destroy(): void, select(id: string): void }}
  */
-export function mountSwitchableChart({ host, mint, chain = 'solana', network = 'mainnet' }) {
+export function mountSwitchableChart({
+	host,
+	mint,
+	chain = 'solana',
+	network = 'mainnet',
+	nativeViews = [CANDLES],
+	defaultView,
+	classes,
+}) {
 	ensureStyle();
+	const cls = { ...DEFAULT_CLASSES, ...classes };
 	const providers = network === 'mainnet' ? chartEmbedsFor(chain) : [];
-	const views = [CANDLES, ...providers.map((p) => ({ id: p.id, label: p.label, kind: 'embed', provider: p }))];
+	const views = [
+		...nativeViews.map((v) => ({ ...v, kind: 'native' })),
+		...providers.map((p) => ({ id: p.id, label: p.label, kind: 'embed', provider: p })),
+	];
 	const pools = {}; // provider id → { pool, indexed }
-	let active = readView(views);
+	let active = readView(views, defaultView);
 	let teardown = null;
 	let seq = 0;
 	let destroyed = false;
 
-	const tabs = node('div', { class: 'mc-chart-ivs cs-tabs', role: 'tablist', 'aria-label': 'Chart source' });
+	const tabs = node('div', { class: `${cls.tabs} cs-tabs`, role: 'tablist', 'aria-label': 'Chart source' });
 	const openSlot = node('span', { class: 'cs-open-slot' });
 	const viewHost = node('div', { class: 'cs-view' });
 	const buttons = views.map((view) =>
 		node('button', {
 			type: 'button',
-			class: 'mc-chart-iv',
+			class: cls.tab,
 			role: 'tab',
 			'data-view': view.id,
 			text: view.label,
@@ -154,15 +192,30 @@ export function mountSwitchableChart({ host, mint, chain = 'solana', network = '
 		for (const b of buttons) {
 			const on = b.dataset.view === active;
 			b.setAttribute('aria-selected', String(on));
+			if (cls.active) b.classList.toggle(cls.active, on);
 			b.tabIndex = on ? 0 : -1;
 		}
-		const view = views.find((v) => v.id === active) || CANDLES;
-		if (view.kind === 'candles') {
-			const chart = mountPriceChart({ host: viewHost, mint });
-			teardown = () => chart.destroy();
+		const view = views.find((v) => v.id === active) || views[0];
+		if (view.kind === 'native') {
+			renderNative(view, seq);
 			return;
 		}
 		renderEmbed(view.provider, seq);
+	}
+
+	async function renderNative(view, mySeq) {
+		const slot = node('div', { class: 'cs-native' });
+		viewHost.replaceChildren(slot);
+		// Set before the await: a switch away mid-mount must still find something
+		// to tear down, and the late-arriving chart is destroyed on arrival.
+		let mounted = null;
+		let gone = false;
+		teardown = () => {
+			gone = true;
+			mounted?.destroy?.();
+		};
+		mounted = (await view.mount({ host: slot, mint })) || null;
+		if (gone || mySeq !== seq) mounted?.destroy?.();
 	}
 
 	function statePanel(wrap, lines, actions) {
@@ -174,7 +227,7 @@ export function mountSwitchableChart({ host, mint, chain = 'solana', network = '
 		);
 	}
 
-	const actionBtn = (text, onclick) => node('button', { type: 'button', class: 'mc-chart-iv', text, onclick });
+	const actionBtn = (text, onclick) => node('button', { type: 'button', class: cls.tab, text, onclick });
 
 	async function renderEmbed(provider, mySeq) {
 		// Taller than the candle chart's box on purpose: a provider's embed carries
@@ -228,7 +281,7 @@ export function mountSwitchableChart({ host, mint, chain = 'solana', network = '
 					label: `Open in ${provider.label}`,
 					onRetry: render,
 					className: 'cs-state',
-					buttonClassName: 'mc-chart-iv',
+					buttonClassName: cls.tab,
 				}),
 			);
 		};
@@ -252,13 +305,14 @@ export function mountSwitchableChart({ host, mint, chain = 'solana', network = '
 	// The iframe providers bake the theme in at load, so a live theme switch
 	// reloads whichever embed is showing. The candle view is left to chart.js.
 	const themeObserver = new MutationObserver(() => {
-		if (active !== CANDLES.id) render();
+		if (views.find((v) => v.id === active)?.kind === 'embed') render();
 	});
 	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
 	render();
 
 	return {
+		select: (id) => views.some((v) => v.id === id) && select(id, { persist: true }),
 		destroy() {
 			destroyed = true;
 			themeObserver.disconnect();

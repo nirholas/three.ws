@@ -13,6 +13,10 @@ const required = [
 	// copy-timeline-data hook). It was missing from every production build
 	// until 2026-09-01, which left the page on its error state.
 	'dist/data/timeline.json',
+	// The chart-source switcher at its stable URL. /oracle/coin/<mint> is
+	// buildless and imports it by this exact name; without it the page falls
+	// back to its native line chart and quietly loses every chart terminal.
+	'dist/chart-switcher.js',
 ];
 
 

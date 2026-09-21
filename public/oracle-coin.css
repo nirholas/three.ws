@@ -65,6 +65,8 @@ html:not([data-theme='light']) {
 	direction: rtl; /* keep the distinctive base58 tail (…pump) visible when clipped */
 }
 @media (min-width: 900px) { .oc-mint-addr { max-width: 28rem; direction: ltr; } }
+/* At 320px the address, its Copy button and the chip padding outgrow the gutter by a few px. */
+@media (max-width: 360px) { .oc-mint-addr { max-width: 12rem; } }
 .oc-actions { margin-top: 1rem; }
 .cv-pills button.cv-pill { appearance: none; background: transparent; cursor: pointer; font: inherit; }
 .cv-pills button.cv-pill[aria-pressed='true'] { color: var(--cv-accent); border-color: var(--cv-accent); }
@@ -74,6 +76,8 @@ html:not([data-theme='light']) {
 	background: var(--cv-surface); border: 1px solid var(--cv-border);
 	border-radius: var(--cv-radius-lg); box-shadow: var(--cv-shadow-card);
 	padding: 1.25rem; width: 15.5rem; max-width: 100%; flex-shrink: 0;
+	/* Without this, width: 100% plus the padding overflows the viewport on phones. */
+	box-sizing: border-box;
 }
 @media (max-width: 899px) { .oc-conv-card { width: 100%; } }
 
@@ -377,9 +381,17 @@ html:not([data-theme='light']) {
 	border: 1px solid var(--cv-border); border-radius: var(--cv-radius-md);
 	overflow: hidden; background: var(--cv-surface-2); min-height: 300px; position: relative;
 }
-.oc-chart-frame { width: 100%; height: 440px; border: 0; display: block; opacity: 0; transition: opacity var(--duration-base); }
-@media (min-width: 768px) { .oc-chart-frame { height: 520px; } }
-.oc-chart-canvas.ready .oc-chart-frame { opacity: 1; }
+/* The shared chart-source switcher (/chart-switcher.js) mounts inside .oc-chart-host:
+   its tab bar takes the .oc-seg control above, the page's own Line and Agent trades
+   views render into an .oc-chart-canvas slot, and a provider terminal gets this frame. */
+.oc-chart-host { min-width: 0; color: var(--cv-text-2); }
+.oc-chart-host .cs-frame-wrap {
+	border: 1px solid var(--cv-border); border-radius: var(--cv-radius-md);
+	background: var(--cv-surface-2); min-height: 440px;
+}
+@media (min-width: 768px) { .oc-chart-host .cs-frame-wrap { min-height: 520px; } }
+.oc-chart-host .cs-open { color: var(--cv-text-3); }
+.oc-chart-host .cs-open:hover, .oc-chart-host .cs-open:focus-visible { color: var(--cv-text); }
 .oc-chart-skel {
 	position: absolute; inset: 0;
 	background: linear-gradient(100deg, var(--cv-surface-2) 30%, var(--cv-surface-3) 50%, var(--cv-surface-2) 70%);
@@ -404,9 +416,6 @@ html:not([data-theme='light']) {
 .oc-chart-legend .oc-lg.buy { background: var(--cv-green); margin-left: 4px; }
 .oc-chart-legend .oc-lg.sell { background: var(--cv-red); margin-left: 12px; }
 .oc-chart-legend .oc-lg-ct { margin-left: auto; color: var(--cv-text-2); text-transform: none; letter-spacing: 0; }
-.oc-chart-credit { margin: 0.625rem 0 0; font-size: 0.6875rem; }
-.oc-chart-credit a { color: var(--cv-text-3); text-decoration: none; }
-.oc-chart-credit a:hover, .oc-chart-credit a:focus-visible { color: var(--cv-text-2); text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .oc-chart-skel { animation: none; } .oc-chart-svg .oc-mk circle { transition: none; } }
 
 /* ── Agent transactions ──────────────────────────────────────────────────── */

@@ -65,11 +65,19 @@ Grotesk display face).
   `tws_coin_chart_source`), and the embeds follow the site's light/dark theme.
   Every embed URL shape lives once in
   [`src/shared/chart-embeds.js`](../src/shared/chart-embeds.js), so this page,
-  the launch coin page `/launches/<mint>`, the `/trades` deep-dive and Mission
-  Control (the last two through the compact switcher in
+  the launch coin page `/launches/<mint>`, the `/trades` deep-dive, Mission
+  Control, the Oracle coin page `/oracle/coin/<mint>` and the `/pump-dashboard`
+  market chart (the last four through the compact switcher in
   [`src/shared/chart-switcher.js`](../src/shared/chart-switcher.js)) build
   identical embeds and a provider changing its format is a one-file fix. Adding
-  a provider there adds its tab on all four surfaces. Providers that refuse cross-origin
+  a provider there adds its tab on all six surfaces. A surface that already
+  draws a chart of its own keeps it: it hands the switcher its views through
+  `nativeViews` (the Oracle page's Line and Agent trades views, the dashboard's
+  canvas chart) and the providers line up behind them, styled with the host's
+  own segmented-control classes. The Oracle page is buildless, so it loads the
+  switcher from the stable `/chart-switcher.js` URL the build publishes. The
+  `$THREE` page at `/three` is the one surface with no switcher, because its
+  chart is already the DEXTools widget. Providers that refuse cross-origin
   framing or need a key are left out rather than offered as a tab that can only
   fail.
 

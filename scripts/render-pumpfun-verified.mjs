@@ -16,6 +16,7 @@
  *
  * Usage:
  *   node scripts/render-pumpfun-verified.mjs
+ *   node scripts/render-pumpfun-verified.mjs --set=dextools
  *   node scripts/render-pumpfun-verified.mjs --scale=3 --out=/tmp/cards
  */
 import { createServer } from 'node:http';
@@ -34,12 +35,25 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
 	return m ? [m[1], m[2] ?? true] : [a, true];
 }));
 const SCALE = Number(args.scale) || 2;
-const OUT_DIR = args.out ? resolve(String(args.out)) : join(ROOT, 'marketing', 'pumpfun-verified');
-const CARD_PAGE = '/marketing/pumpfun-verified/partnership-card.html';
+
+// Every house partner card is one partnership-card.html in its own marketing/
+// directory, rendered at the same two crops. `--set=<name>` picks which; the
+// default stays the card this script was written for.
+const SETS = {
+	'pumpfun-verified': { dir: 'pumpfun-verified', stem: 'three-ws-pumpfun-verified' },
+	dextools: { dir: 'dextools', stem: 'three-ws-dextools-charts' },
+};
+const SET = SETS[args.set || 'pumpfun-verified'];
+if (!SET) {
+	console.error(`Unknown --set=${args.set}. Known sets: ${Object.keys(SETS).join(', ')}`);
+	process.exit(1);
+}
+const OUT_DIR = args.out ? resolve(String(args.out)) : join(ROOT, 'marketing', SET.dir);
+const CARD_PAGE = `/marketing/${SET.dir}/partnership-card.html`;
 
 const CARDS = [
-	{ hash: '', width: 1600, height: 900, file: 'three-ws-pumpfun-verified-16x9.png' },
-	{ hash: '#square', width: 1600, height: 1600, file: 'three-ws-pumpfun-verified-1x1.png' },
+	{ hash: '', width: 1600, height: 900, file: `${SET.stem}-16x9.png` },
+	{ hash: '#square', width: 1600, height: 1600, file: `${SET.stem}-1x1.png` },
 ];
 
 const MIME = {

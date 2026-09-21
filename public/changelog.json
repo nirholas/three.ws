@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-21T02:53:24.058Z",
+	"generated_at": "2026-09-21T05:41:11.310Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,11 +9,32 @@
 		{
 			"date": "2026-09-21",
 			"type": "update",
+			"title": "Paying at the Club door no longer fails when our own traffic has been busy",
+			"summary": "Some visitors paying the Club cover approved the payment in their wallet and then saw it fail at the last step with an internal error. The cause was on our side. We cover the small Solana network fee on your payment, and a safety limit that spreads our own automated payments across the day was also being applied to customers, so once our background traffic had used the morning's share, a real payment was turned away. Customers are now exempt from that limit: if you are paying, the payment goes through, and our own traffic waits instead. Nothing was charged on a failed attempt. Separately, when a wallet refuses to open its approval window, the payment window now says plainly that nothing was signed or charged and what to try next, instead of repeating the wallet's own wording.",
+			"link": "/club",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
 			"title": "Phantom users no longer have to switch off transaction protection to pay",
 			"summary": "Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee.",
 			"link": "/club",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Pick DEXTools as your chart on every coin chart",
+			"summary": "The chart-source switcher now covers every coin chart on three.ws. The Oracle coin page and the Pump Dashboard market chart join the coin pages, launch pages, the trade deep-dive and Mission Control, so wherever a coin is charted you can switch between the three.ws chart, DexScreener, Birdeye, GMGN, DEXTools and GeckoTerminal. Your pick is remembered and follows you from one coin surface to the next. The Oracle page keeps its Line and Agent trades views, and the dashboard keeps its own candle chart; the terminals simply line up beside them.",
+			"link": "/docs/coin-pages",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

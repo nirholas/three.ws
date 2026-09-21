@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-09-21T02:53:24.112Z",
+	"generated_at": "2026-09-21T05:41:11.543Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3739,
+	"total": 3741,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Paying at the Club door no longer fails when our own traffic has been busy",
+			"summary": "Some visitors paying the Club cover approved the payment in their wallet and then saw it fail at the last step with an internal error. The cause was on our side. We cover the small Solana network fee on your payment, and a safety limit that spreads our own automated payments across the day was also being applied to customers, so once our background traffic had used the morning's share, a real payment was turned away. Customers are now exempt from that limit: if you are paying, the payment goes through, and our own traffic waits instead. Nothing was charged on a failed attempt. Separately, when a wallet refuses to open its approval window, the payment window now says plainly that nothing was signed or charged and what to try next, instead of repeating the wallet's own wording.",
+			"link": "/club",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-09-21",
 			"type": "update",
@@ -17,6 +27,17 @@
 			"link": "/club",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Pick DEXTools as your chart on every coin chart",
+			"summary": "The chart-source switcher now covers every coin chart on three.ws. The Oracle coin page and the Pump Dashboard market chart join the coin pages, launch pages, the trade deep-dive and Mission Control, so wherever a coin is charted you can switch between the three.ws chart, DexScreener, Birdeye, GMGN, DEXTools and GeckoTerminal. Your pick is remembered and follows you from one coin surface to the next. The Oracle page keeps its Line and Agent trades views, and the dashboard keeps its own candle chart; the terminals simply line up beside them.",
+			"link": "/docs/coin-pages",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1594,28 +1615,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The retired Flappin UFO page is readable in light mode, and its two bottom-corner controls stopped sitting on top of each other",
-			"summary": "A full audit of /play/ufo, the page that stands where the retired Flappin UFO arcade demo used to be. In light mode its headline was painted in a violet-to-cyan gradient that all but vanished against the white card, the Retired badge and the Still live label were too pale to read, and the keyboard focus ring was that same near-invisible cyan, so tabbing through the page showed you nothing. All four now clear the contrast bar in both themes. The three links to the experiences that are still live were 37 pixels tall and the three.ws logo link was 21, both under the 44 pixels a thumb needs; every link on the page now clears it. The language picker and the Ctrl+K search hint were both pinned to the bottom right corner and overlapped each other, because this page carries its own compact header instead of the site nav that normally arranges that corner; they now stack. Two fixes from this audit land site-wide: the search hint was drawing dark text on its dark default pill on every light-themed page that does not define the site's surface colors, and neither floating control could be reached by screen reader landmark navigation. The page copy also lost the long dash the house style bans, in English and in all 84 translations.",
-			"link": "/play/ufo",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The sitemap filter matches words in any order, opens the first hit on Enter, and stops leaving an empty bar behind",
-			"summary": "A full audit of /sitemap, the human-readable index of all 924 pages on three.ws. Filtering used to test your whole query as one run of characters, so \"avatar studio\" found the Avatar Studio but \"studio avatar\" found nothing; every word is now matched independently and either order returns the same 23 pages. Typing a query that matched nothing left the section jump-list on screen as an empty bordered bar hovering above the no-results panel; it now steps aside with the sections it points at. Pressing Enter in the filter box did nothing at all, which is the one key anybody tries after typing a page name; it now opens the first match, and the hint at the right of the box switches from the / shortcut to a return arrow to say so. Under the surface: the address bar is updated once you stop typing rather than on every keystroke, which is what Safari's limit on that call actually allows, and each row's visibility is only rewritten when it changes rather than 924 times per key. A query of nothing but spaces is no longer treated as a search.",
-			"link": "/sitemap",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

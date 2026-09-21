@@ -620,6 +620,7 @@ const appConfig = {
 					chunk.name === 'herald' ||
 					chunk.name === 'nav-tier-badge' ||
 					chunk.name === 'agent-bus' ||
+					chunk.name === 'chart-switcher' ||
 					chunk.name === 'i18n'
 						? `${chunk.name}.js`
 						: 'assets/[name]-[hash].js',
@@ -628,6 +629,10 @@ const appConfig = {
 				'footer-bot': resolve(__dirname, 'src/footer-bot.js'),
 				'walk-companion': resolve(__dirname, 'src/walk-companion.js'),
 				'agent-bus': resolve(__dirname, 'src/agents/agent-bus.js'),
+				// The chart-source switcher at a stable URL, so buildless pages
+				// (/oracle/coin/<mint> is served from public/) offer the same
+				// providers as the bundled coin surfaces from the one provider list.
+				'chart-switcher': resolve(__dirname, 'src/shared/chart-switcher-global.js'),
 				'walk-playground': resolve(__dirname, 'src/walk-playground.js'),
 				'feature-tour': resolve(__dirname, 'src/feature-tour.js'),
 				notifications: resolve(__dirname, 'src/notifications.js'),
@@ -2570,6 +2575,12 @@ const appConfig = {
 					// nav.js can load it on any page for the ?agentbus=1 debug overlay.
 					if (path === '/agent-bus.js') {
 						req.url = '/src/agents/agent-bus.js';
+						return next();
+					}
+					// /chart-switcher.js: the chart-source switcher, served from src in
+					// dev at the stable, unhashed name it ships under in production.
+					if (path === '/chart-switcher.js') {
+						req.url = '/src/shared/chart-switcher-global.js';
 						return next();
 					}
 					// /walk-playground.js — stable URL so any page (not just the nav

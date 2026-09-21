@@ -751,6 +751,22 @@ html.pump-dashboard-page body {
 	font-size: 0.74rem;
 }
 
+/* Market chart source bar: the shared chart switcher, dressed in this desk's buttons. */
+.pd-chart-sources {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+.pd-chart-sources .pd-btn[aria-selected='true'] {
+	cursor: default;
+}
+#pd-chart-switch .cs-root {
+	margin-bottom: 0.6rem;
+}
+#pd-chart-switch .cs-native:empty {
+	display: none;
+}
+
 .pd-btn svg {
 	width: 12px;
 	height: 12px;

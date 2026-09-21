@@ -588,7 +588,8 @@
 										color: var(--ink-dim);
 									"
 								></div>
-								<div style="position: relative">
+								<div id="pd-chart-switch"></div>
+								<div id="pd-chart-native" style="position: relative">
 									<canvas
 										id="pd-market-chart"
 										style="width: 100%; height: 300px; display: block"
@@ -1669,6 +1670,7 @@
 				getConnectedWalletAddress,
 			} from '/src/wallet.js';
 			import { emptyStateHTML } from '/src/shared/state-kit.js';
+			import { mountSwitchableChart } from '/src/shared/chart-switcher.js';
 
 			// Some embedded webviews — notably the in-app browsers X/Twitter
 			// and a few Android wrappers ship — expose `window.localStorage`
@@ -4591,6 +4593,32 @@
 				}
 			}
 
+			// Chart source bar: this desk's own candle chart, or any terminal the rest
+			// of three.ws offers (DexScreener, Birdeye, GMGN, DEXTools, GeckoTerminal).
+			// The native canvas stays in the DOM and is only hidden while a provider
+			// is showing, because the fetch, overlay and hover code all address it by
+			// id; its ResizeObserver redraws it the moment it is shown again.
+			let chartSources = null;
+			function mountChartSources(mint) {
+				chartSources?.destroy();
+				const nativeBlock = $('pd-chart-native');
+				chartSources = mountSwitchableChart({
+					host: $('pd-chart-switch'),
+					mint,
+					nativeViews: [
+						{
+							id: 'threews',
+							label: 'three.ws',
+							mount: () => {
+								nativeBlock.hidden = false;
+								return { destroy: () => (nativeBlock.hidden = true) };
+							},
+						},
+					],
+					classes: { tabs: 'pd-chart-sources', tab: 'pd-btn pd-btn-sm', active: 'is-primary' },
+				});
+			}
+
 			async function fetchChartData(mint, symbol) {
 				chart.mint = mint;
 				chart.symbol = symbol;
@@ -5068,9 +5096,10 @@
 					if (chart.mint) fetchChartData(chart.mint, chart.symbol);
 					else loadTrendingTokens();
 				});
-				document.addEventListener('chart:tokenChange', (e) =>
-					fetchChartData(e.detail.mint, e.detail.symbol),
-				);
+				document.addEventListener('chart:tokenChange', (e) => {
+					fetchChartData(e.detail.mint, e.detail.symbol);
+					mountChartSources(e.detail.mint);
+				});
 				const marketCanvas = $('pd-market-chart');
 				marketCanvas.addEventListener('mousemove', onChartMove);
 				marketCanvas.addEventListener('mouseleave', () => {
