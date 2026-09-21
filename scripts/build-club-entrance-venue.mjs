@@ -5,6 +5,10 @@
  *
  *   alleyway.glb                          → public/club/venue/alleyway.glb
  *   space_smugglers_club_house_-_dark…glb → public/club/venue/space-smugglers-clubhouse.glb
+ *   environment_ally_with_barstrip_club.glb → public/club/venue/back-alley.glb
+ *     (the /stripclub entrance, src/club-variant.js; CC BY 4.0, credited in
+ *     public/club/venue/LICENSES.md and on screen. Download the GLB from the
+ *     Sketchfab page listed there and drop it in the repo root.)
  *
  * Both raw exports are ~17–21 MB — far too heavy to stream while a visitor
  * stands at the door — so we run each through the same GLB → Meshopt + WebP
@@ -25,7 +29,7 @@ import { dirname, resolve } from 'node:path';
 
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { weld, prune, dedup, quantize, textureCompress, meshopt } from '@gltf-transform/functions';
+import { weld, prune, dedup, quantize, textureCompress, meshopt, getBounds } from '@gltf-transform/functions';
 import { MeshoptEncoder } from 'meshoptimizer';
 import sharp from 'sharp';
 
@@ -42,6 +46,9 @@ const TARGETS = [
 	{ src: 'space_smugglers_club_house_-_dark_version.glb', out: 'space-smugglers-clubhouse.glb' },
 	// Gallery corridor you walk through before reaching the club door.
 	{ src: 'tour.glb', out: 'tour.glb' },
+	// The brick back alley behind /stripclub. Sketchfab names the download after
+	// the model's slug, and a browser may have saved it under the short name.
+	{ src: ['environment_ally_with_barstrip_club.glb', 'back-alley-source.glb'], out: 'back-alley.glb' },
 ];
 
 const mb = (n) => (n / 1024 / 1024).toFixed(2);
@@ -58,9 +65,30 @@ function stripJunkMeshes(doc) {
 	return removed;
 }
 
+// What the runtime derives from a venue: its bounding height (src/club-variant.js
+// `height` normalises against this) and the door it anchors the cover prompt to
+// (findDoorAnchor in src/club-entrance.js matches /door/i on a mesh node or its
+// parent). Printed per build so a new model is tuned from this output, not by
+// trial and error in the browser.
+function reportVenueShape(doc) {
+	const scene = doc.getRoot().getDefaultScene() || doc.getRoot().listScenes()[0];
+	if (!scene) return;
+	const { min, max } = getBounds(scene);
+	const size = max.map((v, i) => (v - min[i]).toFixed(2));
+	console.log(`  bounds (source units): ${size[0]} wide x ${size[1]} tall x ${size[2]} deep`);
+	const doors = doc.getRoot().listNodes().filter((n) => {
+		if (!n.getMesh()) return false;
+		const parent = n.getParentNode();
+		return /door/i.test(n.getName() || '') || /door/i.test(parent?.getName() || '');
+	});
+	if (doors.length) console.log(`  door-named meshes: ${doors.map((n) => n.getName() || '(unnamed)').join(', ')}`);
+	else console.log('  door-named meshes: none (the walk-in will exit down the longest axis)');
+}
+
 async function compress(io, srcPath, outPath) {
 	const before = statSync(srcPath).size;
 	const doc = await io.read(srcPath);
+	reportVenueShape(doc);
 
 	const stripped = stripJunkMeshes(doc);
 	if (stripped) console.log(`  stripped ${stripped} junk mesh(es)`);
@@ -95,9 +123,10 @@ async function main() {
 	mkdirSync(OUT_DIR, { recursive: true });
 
 	for (const { src, out } of TARGETS) {
-		const srcPath = resolve(ROOT, src);
-		if (!existsSync(srcPath)) {
-			console.warn(`skip — source not found: ${src}`);
+		const candidates = [].concat(src).map((name) => resolve(ROOT, name));
+		const srcPath = candidates.find((candidate) => existsSync(candidate));
+		if (!srcPath) {
+			console.warn(`skip: source not found: ${[].concat(src).join(' or ')}`);
 			continue;
 		}
 		await compress(io, srcPath, resolve(OUT_DIR, out));

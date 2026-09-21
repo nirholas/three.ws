@@ -950,6 +950,86 @@
 				.club-agent-browse { padding: 5px 11px; font-size: 11px; }
 			}
 
+			/* Entrance switcher: the ways into the club (/club, /stripclub), one
+			   link each, sitting under the agent pill and sharing its visibility.
+			   Links and data come from src/club-variant.js. */
+			.club-entrance-switch {
+				position: fixed;
+				top: 64px;
+				left: 18px;
+				z-index: 9445;
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				padding: 5px 6px 5px 13px;
+				border-radius: 999px;
+				background: rgba(8, 5, 12, 0.6);
+				border: 1px solid rgba(255, 59, 214, 0.18);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				box-shadow: 0 10px 34px -14px rgba(0, 0, 0, 0.85);
+				pointer-events: none;
+				opacity: 0;
+				transform: translateY(-10px);
+				visibility: hidden;
+				transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard), visibility 0s linear var(--duration-slow);
+			}
+			.club-entrance-switch.is-visible {
+				opacity: 1;
+				transform: translateY(0);
+				pointer-events: auto;
+				visibility: visible;
+				transition-delay: 0s;
+			}
+			.club-entrance-list { display: flex; gap: 4px; }
+			.club-entrance-link {
+				padding: 5px 11px;
+				border-radius: 999px;
+				border: 1px solid transparent;
+				color: var(--text-2, #c2a8d8);
+				font: 600 12px/1 'Inter', system-ui, sans-serif;
+				text-decoration: none;
+				white-space: nowrap;
+				transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+			}
+			.club-entrance-link:hover { color: #fff; background: rgba(255, 255, 255, 0.07); }
+			.club-entrance-link:active { background: rgba(255, 59, 214, 0.22); }
+			.club-entrance-link:focus-visible { outline: none; border-color: #ff3bd6; box-shadow: 0 0 0 3px rgba(255, 59, 214, 0.25); }
+			.club-entrance-link[aria-current='page'] {
+				color: #ff9ee8;
+				background: rgba(255, 59, 214, 0.12);
+				border-color: rgba(255, 59, 214, 0.35);
+			}
+			@media (max-width: 560px) {
+				.club-entrance-switch { top: 54px; left: 12px; padding: 4px 5px 4px 5px; }
+				.club-entrance-switch .club-agent-label { display: none; }
+				.club-entrance-link { padding: 5px 9px; font-size: 11px; }
+			}
+
+			/* Venue credit: attribution for a third-party environment whose
+			   licence requires it (CC BY), shown only while that model is on
+			   screen. Filled by setVenueCredit() in src/club-entrance.js. */
+			.club-venue-credit {
+				position: fixed;
+				left: 18px;
+				bottom: 14px;
+				z-index: 9440;
+				max-width: min(46vw, 420px);
+				color: var(--text-3, #7c5d92);
+				font: 500 11px/1.4 'Inter', system-ui, sans-serif;
+				text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+				opacity: 0;
+				visibility: hidden;
+				transition: opacity var(--duration-slow) var(--ease-standard), visibility 0s linear var(--duration-slow);
+			}
+			.club-venue-credit.is-visible { opacity: 1; visibility: visible; transition-delay: 0s; }
+			.club-venue-credit a { color: var(--text-2, #c2a8d8); text-decoration: underline; text-underline-offset: 2px; transition: color var(--duration-base) var(--ease-standard); }
+			.club-venue-credit a:hover { color: #fff; }
+			.club-venue-credit a:focus-visible { outline: 2px solid #ff3bd6; outline-offset: 2px; border-radius: 2px; }
+			@media (max-width: 560px) {
+				.club-venue-credit { left: 12px; right: 12px; bottom: 5px; max-width: none; font-size: 10px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			}
+
 			/* Minimap — top-down radar of the room you're in: your avatar, the
 			   way you're facing, and a pulsing line to the door you're headed
 			   for. Drawn each frame by src/club-entrance.js. */
@@ -2160,6 +2240,11 @@
 				Browse
 			</button>
 		</div>
+		<nav id="club-entrance-switch" class="club-entrance-switch" aria-label="Choose an entrance">
+			<span class="club-agent-label">Entrance</span>
+			<div class="club-entrance-list"></div>
+		</nav>
+		<p id="club-venue-credit" class="club-venue-credit"></p>
 		<div id="club-minimap" class="club-minimap" aria-hidden="true">
 			<div class="club-minimap-head">
 				<span id="club-minimap-label" class="club-minimap-label" data-i18n="club.alley_2">Alley</span>

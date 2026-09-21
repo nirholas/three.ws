@@ -1823,6 +1823,10 @@
 			"dest": "/club.html"
 		},
 		{
+			"src": "/stripclub/?",
+			"dest": "/club.html"
+		},
+		{
 			"src": "/theater/?",
 			"dest": "/theater.html"
 		},

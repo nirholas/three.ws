@@ -11,6 +11,8 @@
 // house interior — until you reach the strip club itself (the pole stage, in
 // src/club.js), where you tip dancers to perform.
 //
+// Which alley you land in depends on the door you came by: /club and /stripclub
+// serve this same page, and src/club-variant.js maps the path to a venue list.
 // The journey is the SEQUENCE list below: every venue is free-walk; you reach
 // its exit and the next one fades in. The alley's door takes the cover; the
 // last venue hands off to the pole stage. Everything renders into one
@@ -63,10 +65,8 @@ import { getPowerSaver } from './shared/frame-governor.js';
 import { log } from './shared/log.js';
 import { isExpressEntry } from './shared/club-express.js';
 import { loadEnvironment } from './shared/cinematic-render.js';
+import { resolveClubVariant, listClubEntrances } from './club-variant.js';
 
-const TOUR_URL = '/club/venue/tour.glb';
-const ALLEYWAY_URL = '/club/venue/alleyway.glb';
-const CLUBHOUSE_URL = '/club/venue/space-smugglers-clubhouse.glb';
 const AVATAR_URL = '/avatars/default.glb';
 const MANIFEST_URL = '/animations/manifest.json';
 const PASS_KEY = 'club:pass:v1';
@@ -94,7 +94,6 @@ const MOVE_CLIP_URLS = {
 // manifest on first admit (most visitors never pay a cover the same session as
 // a reload, so there's no point bundling it with idle/walk up front).
 const ADMIT_DANCE_CLIP = 'twerk';
-const VENUE_NAMES = ['Alley', 'Gallery', 'Clubhouse']; // index-aligned with SEQUENCE, for the minimap label
 
 // The agent switcher's catalog: bundled, known-good humanoid rigs that ship with
 // the app (so the dropdown always has options offline — Hard rule 9), plus public
@@ -286,11 +285,11 @@ async function start(canvasEl) {
 	// alley); the rest just lead you to the next place. `door` anchors the exit
 	// to a modelled doorway (+ seals it) where one exists; interiors exit down
 	// their longest dimension. The last venue hands off to the strip club stage.
-	const SEQUENCE = [
-		{ url: ALLEYWAY_URL, cover: true, door: true },   // outside — pay the cover here
-		{ url: TOUR_URL, cover: false, door: false },     // gallery hall
-		{ url: CLUBHOUSE_URL, cover: false, door: false }, // club interior → the poles
-	];
+	// Which places those are depends on the entrance you came in by: /club and
+	// /stripclub share the stage but not the alley (src/club-variant.js).
+	const variant = resolveClubVariant(window.location.pathname);
+	const SEQUENCE = variant.sequence.slice();
+	setupEntranceSwitch(variant);
 
 	// Land in the alley + the avatar first; prefetch the rest so each place is
 	// ready the moment you walk into it. The loader bar tracks real bytes.
@@ -299,13 +298,29 @@ async function start(canvasEl) {
 	// The bouncer rides the same batch so he is at his post on the first frame
 	// instead of popping in beside the door; a failed load just means no bouncer.
 	const [firstGltf, avatarGltf, bouncerGltf, manifest, idleClipJson, walkClipJson] = await Promise.all([
-		loader.loadAsync(SEQUENCE[0].url, (e) => setLoaderProgress('alley', e)),
+		loadFirstVenue(),
 		loader.loadAsync(AVATAR_URL, (e) => setLoaderProgress('avatar', e)),
 		loader.loadAsync(BOUNCER_AVATAR_URL).catch((err) => { log.warn('[club-entrance] bouncer load failed', err); return null; }),
 		fetch(MANIFEST_URL, { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
 		fetch('/animations/clips/idle.json', { cache: 'force-cache' }).then((r) => r.ok ? r.json() : null).catch(() => null),
 		fetch('/animations/clips/walk.json', { cache: 'force-cache' }).then((r) => r.ok ? r.json() : null).catch(() => null),
 	]);
+	// An entrance whose own alley can't be fetched opens on its fallback alley
+	// instead: the visitor still walks up to a door and pays the cover, rather
+	// than being dropped straight onto the cover card by the scene-failed path.
+	// SEQUENCE[0] is rewritten to the venue actually mounted so its scale, door
+	// anchoring and credit all describe what is on screen.
+	async function loadFirstVenue() {
+		const first = SEQUENCE[0];
+		try {
+			return await loader.loadAsync(first.url, (e) => setLoaderProgress('alley', e));
+		} catch (err) {
+			if (!first.fallback) throw err;
+			log.warn(`[club-entrance] ${first.url} failed, opening on ${first.fallback.url}`, err);
+			SEQUENCE[0] = first.fallback;
+			return loader.loadAsync(first.fallback.url, (e) => setLoaderProgress('alley', e));
+		}
+	}
 	const loaded = SEQUENCE.map(() => null); // index-aligned gltf cache
 	loaded[0] = firstGltf;
 	for (let i = 1; i < SEQUENCE.length; i++) {
@@ -328,7 +343,8 @@ async function start(canvasEl) {
 		if (occluder) { scene.remove(occluder); disposeObject(occluder); occluder = null; }
 		if (env) { disposeObject(env.root); scene.remove(env.root); }
 		if (!v.cover) bouncer?.unmount();
-		env = mountEnvironment(scene, loaded[i].scene);
+		env = mountEnvironment(scene, loaded[i].scene, v.height);
+		setVenueCredit(v.credit);
 		// Anchor to the modelled door so the prompt + neon frame land on the real
 		// doorway; interiors skip this and exit down their longest dimension.
 		doorAnchor = v.door ? findDoorAnchor(env.root) : null;
@@ -506,7 +522,7 @@ async function start(canvasEl) {
 		camYaw = Math.atan2(path.dir.x, path.dir.z);
 		updateCamera(1);
 		setJourneyStep(venueIndex);
-		minimap.setVenue(env.box, path.door, VENUE_NAMES[venueIndex] || 'Venue');
+		minimap.setVenue(env.box, path.door, SEQUENCE[venueIndex].name || 'Venue');
 	}
 
 	// ── Input ──────────────────────────────────────────────────────────────
@@ -1193,6 +1209,7 @@ async function start(canvasEl) {
 		try { disposeGltfLoader(renderer); } catch {}
 		try { canvasEl.remove(); } catch {}
 		showHint(false); showJoystick(false); showPrompt(false); showJourney(false); showMinimap(false); showAgentSwitch(false);
+		setVenueCredit(null);
 	}
 }
 
@@ -1202,7 +1219,55 @@ function showHint(v) { toggle('club-controls-hint', v); }
 function showJoystick(v) { toggle('club-joystick', v); }
 function showJourney(v) { toggle('club-journey', v); }
 function showMinimap(v) { toggle('club-minimap', v); }
-function showAgentSwitch(v) { toggle('club-agent-switch', v); }
+function showAgentSwitch(v) {
+	toggle('club-agent-switch', v);
+	// The entrance switcher is part of the same top-left cluster: it is only
+	// meaningful while you can still walk, so it rides the agent pill's state.
+	toggle('club-entrance-switch', v);
+}
+
+// Entrance switcher: one link per way in, the current one marked. Plain anchors
+// so each entrance is a real navigation (and a middle-clickable, shareable URL).
+function setupEntranceSwitch(variant) {
+	const el = document.getElementById('club-entrance-switch');
+	if (!el) return;
+	const list = el.querySelector('.club-entrance-list');
+	if (!list) return;
+	list.replaceChildren(...listClubEntrances().map((entrance) => {
+		const a = document.createElement('a');
+		a.className = 'club-entrance-link';
+		a.href = entrance.path;
+		a.textContent = entrance.label;
+		if (entrance.key === variant.key) a.setAttribute('aria-current', 'page');
+		return a;
+	}));
+}
+
+// Attribution for a venue whose licence requires it (CC BY): shown for as long
+// as that model is on screen, cleared the moment you walk into the next place.
+function setVenueCredit(credit) {
+	const el = document.getElementById('club-venue-credit');
+	if (!el) return;
+	el.replaceChildren();
+	if (!credit) { el.classList.remove('is-visible'); return; }
+	const link = (href, text) => {
+		const a = document.createElement('a');
+		a.href = href;
+		a.target = '_blank';
+		a.rel = 'noopener noreferrer';
+		a.textContent = text;
+		return a;
+	};
+	el.append(
+		'3D alley: ',
+		link(credit.sourceUrl, `"${credit.title}"`),
+		' by ',
+		link(credit.authorUrl, credit.author),
+		', ',
+		link(credit.licenseUrl, credit.license),
+	);
+	el.classList.add('is-visible');
+}
 function toggle(id, v) {
 	const el = document.getElementById(id);
 	if (el) el.classList.toggle('is-visible', !!v);
@@ -1221,10 +1286,11 @@ function setJourneyStep(i) {
 
 // ── Scene helpers ────────────────────────────────────────────────────────────
 
-// Normalise an environment to a human-scaled room (height = ROOM_HEIGHT),
-// recentre on the floor at the origin, add it, and return its box + the
-// movement bounds (a margin inside the footprint so you don't clip walls).
-function mountEnvironment(scene, root) {
+// Normalise an environment to human scale (its bounding height becomes `height`,
+// a single-storey ROOM_HEIGHT unless the venue declares its own), recentre on
+// the floor at the origin, add it, and return its box + the movement bounds (a
+// margin inside the footprint so you don't clip walls).
+function mountEnvironment(scene, root, height = ROOM_HEIGHT) {
 	// Render the walls solid from both faces. These venue GLBs export single-sided
 	// (FrontSide) walls, so the instant the chase camera grazes or dips behind a
 	// building face the front faces cull away and you see straight through the
@@ -1242,7 +1308,7 @@ function mountEnvironment(scene, root) {
 
 	const box = new Box3().setFromObject(root);
 	const size = box.getSize(new Vector3());
-	root.scale.setScalar(ROOM_HEIGHT / (size.y || 1));
+	root.scale.setScalar(height / (size.y || 1));
 	const b2 = new Box3().setFromObject(root);
 	const c = b2.getCenter(new Vector3());
 	root.position.x -= c.x;

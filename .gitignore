@@ -304,6 +304,8 @@ scripts/.corr-*
 /club.mp3
 /alleyway.glb
 /tour.glb
+/environment_ally_with_barstrip_club.glb
+/back-alley-source.glb
 
 # Root-level scratch/debug artifacts (one-off agent probe scripts + screenshots).
 # Anchored to root so legitimate underscore-prefixed files elsewhere are unaffected.

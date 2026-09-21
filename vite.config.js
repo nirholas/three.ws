@@ -1854,6 +1854,8 @@ const appConfig = {
 					'/pose-mini/': resolve(root, 'pages/pose-mini.html'),
 					'/club': resolve(root, 'pages/club.html'),
 					'/club/': resolve(root, 'pages/club.html'),
+					'/stripclub': resolve(root, 'pages/club.html'),
+					'/stripclub/': resolve(root, 'pages/club.html'),
 					'/theater': resolve(root, 'pages/theater.html'),
 					'/theater/': resolve(root, 'pages/theater.html'),
 					'/stage': resolve(root, 'pages/stage.html'),

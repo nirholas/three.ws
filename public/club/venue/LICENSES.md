@@ -65,3 +65,27 @@ redistribution beyond three.ws. Regenerate from the source export with:
 ```sh
 npm run build:club-entrance-venue   # → space-smugglers-clubhouse.glb
 ```
+
+## Third-party back alley (the `/stripclub` entrance)
+
+`back-alley.glb` is **not** authored by three.ws. It is the brick back alley the
+`/stripclub` entrance opens on (the first venue of the `stripclub` variant in
+[src/club-variant.js](../../../src/club-variant.js)).
+
+| File             | Source                                                                                                                                        | Author                                        | License                                                   | Modifications                                                                                                                                                                                  |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `back-alley.glb` | ["environment ally with bar/strip club"](https://sketchfab.com/3d-models/environment-ally-with-barstrip-club-a98c2e9748b24b7fb781d452814304ef) | [anthonydpc](https://sketchfab.com/tonydpc)   | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | weld + prune + dedup, textures resized to at most 2048 px and re-encoded as WebP q82, position/normal/UV quantization, Meshopt compression via [scripts/build-club-entrance-venue.mjs](../../../scripts/build-club-entrance-venue.mjs) |
+
+CC BY requires credit wherever the work is shown, so the same title, author,
+source and license are rendered on screen for as long as the model is visible
+(`setVenueCredit` in [src/club-entrance.js](../../../src/club-entrance.js), fed
+by the venue's `credit` block in `src/club-variant.js`). Keep the two in step:
+if this asset is replaced, update the `credit` block and this table together.
+
+Rebuild from the source export: download the GLB from the Sketchfab page above
+(a free Sketchfab login is required), save it in the repo root as
+`environment_ally_with_barstrip_club.glb`, then:
+
+```sh
+npm run build:club-entrance-venue   # → back-alley.glb, and prints its bounds + door meshes
+```
