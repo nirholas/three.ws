@@ -312,6 +312,18 @@ then kept in a verified, watched, auto-fundable state:
     allowlisted payTo}`. No System instructions (no SOL transfer out), capped
     priority fee, recipient must be allowlisted. This blocks the "anyone drains
     the sponsor" attack **and** enforces "only our wallets settle here".
+  - **Wallet guard instructions.** Phantom's transaction protection, on by
+    default, injects Lighthouse assertion instructions (program
+    `L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95`) before the buyer signs. They
+    move nothing and only revert the transaction if the buyer's balances end up
+    somewhere unexpected, so the facilitator accepts up to three of them, as the
+    reference `@x402/svm` facilitator does. In sponsor mode a guard instruction
+    that names the sponsor's fee-payer account is refused as
+    `guard_instruction_references_sponsor`, because Lighthouse can also charge a
+    payer for a memory account. The checkout modal
+    ([public/x402.js](../public/x402.js), `classifyWalletTxMutation`) applies the
+    same rule before it sends anything, so a buyer is never told to turn
+    protection off for a payment that would have settled.
   - **Both token programs.** USDC is a classic SPL Token mint and `$THREE` is a
     Token-2022 mint, and the two derive different associated token accounts for
     the same wallet. The facilitator pins the program from the mint

@@ -120,6 +120,58 @@ describe('classifyWalletTxMutation', () => {
 		);
 	});
 
+	// Phantom's transaction protection injects Lighthouse balance assertions by
+	// default. The facilitator settles them (as the reference x402 facilitator
+	// does), so bouncing them here locked every protected Phantom buyer out of
+	// the /club door with a "turn off transaction modification" message.
+	describe('Lighthouse guard instructions', () => {
+		const lighthouse = new PublicKey('L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95');
+		const guardIx = (accounts) =>
+			new TransactionInstruction({
+				programId: lighthouse,
+				keys: accounts.map((pubkey) => ({ pubkey, isSigner: false, isWritable: false })),
+				data: Buffer.from([9, 0, 1]),
+			});
+
+		it('accepts assertions on the buyer in a sponsored payment', () => {
+			const prepared = buildTx({ instructions: preparedIxs });
+			const signed = buildTx({ instructions: [...preparedIxs, guardIx([buyer]), guardIx([buyer])] });
+			expect(classifyWalletTxMutation(prepared, signed)).toBeNull();
+		});
+
+		it('accepts assertions on the fee payer when the buyer pays its own fee', () => {
+			const prepared = buildTx({ payerKey: buyer, instructions: preparedIxs });
+			const signed = buildTx({ payerKey: buyer, instructions: [...preparedIxs, guardIx([buyer])] });
+			expect(classifyWalletTxMutation(prepared, signed)).toBeNull();
+		});
+
+		it('blocks a guard instruction that names the sponsor fee payer', () => {
+			const prepared = buildTx({ instructions: preparedIxs });
+			const signed = buildTx({ instructions: [...preparedIxs, guardIx([feePayer])] });
+			expect(classifyWalletTxMutation(prepared, signed)).toBe(
+				'it added a guard instruction that touches the fee sponsor account',
+			);
+		});
+
+		it('blocks more guard instructions than a payment may carry', () => {
+			const prepared = buildTx({ instructions: preparedIxs });
+			const signed = buildTx({
+				instructions: [...preparedIxs, guardIx([buyer]), guardIx([buyer]), guardIx([buyer]), guardIx([buyer])],
+			});
+			expect(classifyWalletTxMutation(prepared, signed)).toBe(
+				'it added 4 guard instructions, more than a payment may carry',
+			);
+		});
+
+		it('still blocks a changed transfer hidden next to a guard instruction', () => {
+			const prepared = buildTx({ instructions: preparedIxs });
+			const signed = buildTx({
+				instructions: [preparedIxs[0], preparedIxs[1], transferIx({ amount: 255 }), guardIx([buyer])],
+			});
+			expect(classifyWalletTxMutation(prepared, signed)).toBe('it changed the payment instructions');
+		});
+	});
+
 	it('blocks a changed transfer amount', () => {
 		const prepared = buildTx({ instructions: preparedIxs });
 		const signed = buildTx({

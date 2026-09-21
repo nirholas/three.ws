@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Phantom users no longer have to switch off transaction protection to pay</title>
+			<link>https://three.ws/club</link>
+			<guid isPermaLink="false">2026-09-21:Phantom users no longer have to switch off transaction protection to pay</guid>
+			<pubDate>Mon, 21 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee.</description>
+		</item>
+		<item>
 			<title>$THREE Launchpad</title>
 			<link>https://three.ws/three-launchpad</link>
 			<guid isPermaLink="false">2026-09-20:$THREE Launchpad</guid>

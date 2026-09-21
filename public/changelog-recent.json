@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-09-20T21:24:24.206Z",
+	"generated_at": "2026-09-21T02:16:08.975Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3737,
+	"total": 3738,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Phantom users no longer have to switch off transaction protection to pay",
+			"summary": "Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee.",
+			"link": "/club",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-09-20",
 			"type": "launch",
@@ -1606,17 +1616,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The sniper scoreboard now links out to the pages that explain what it is showing you",
-			"summary": "A full audit of /sniper/experiments, the live board comparing rule-driven sniper agents against LLM-judged ones on the same market. The board is dense with terms it could only gloss in a hover tooltip: earned autonomy tiers, moon bags, the reasoning ledger behind every verdict, the exit ladder. A reader who wanted the real explanation had nowhere to go. The page now ends with a row of links to the seven surfaces that write each of those up, from the live Sniper Arena floor to the earned-autonomy docs and the page where you arm your own agent. Four smaller fixes came with it. The Best arm tile printed its profit in plain white even when that number was a loss, so a losing leader read as a win at a glance; it is now coloured like every other figure on the board. An arm or a judge with no model recorded against it used to crash the whole render; it now reads as unattributed and the rest of the board keeps working. Both tables label their column headers properly, so a screen reader can pair a figure with the column it belongs to across nine columns. And the time-window buttons are declared as buttons rather than defaulting to form submits.",
-			"link": "/sniper/experiments",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

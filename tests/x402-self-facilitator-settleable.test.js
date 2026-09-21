@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
 	Keypair,
 	PublicKey,
+	TransactionInstruction,
 	TransactionMessage,
 	VersionedTransaction,
 	ComputeBudgetProgram,
@@ -437,5 +438,79 @@ describe('Token-2022 mints settle on the same rail as classic ones', () => {
 		});
 		expect(res.isValid).toBe(false);
 		expect(res.invalidReason).toMatch(/^token_program_unresolved:/);
+	});
+});
+
+// Phantom's transaction protection (on by default) injects Lighthouse assertion
+// instructions before the user signs. The facilitator refused them as
+// `program_not_allowed`, and the checkout modal, mirroring that, told the buyer
+// to switch protection off. Live at the /club door on 2026-09-21 paying in USDC.
+// The reference x402 SVM facilitator accepts them; so does this one, with the
+// one guard a sponsored rail needs.
+describe('wallet-injected Lighthouse guard instructions', () => {
+	const LIGHTHOUSE = new PublicKey('L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95');
+
+	function buildGuardedPayment({ sponsored, guardAccounts, guardCount = 1 }) {
+		const buyer = Keypair.generate();
+		const sponsor = Keypair.generate();
+		const recipientOwner = Keypair.generate();
+		const mint = Keypair.generate().publicKey;
+		const sourceAta = getAssociatedTokenAddressSync(mint, buyer.publicKey);
+		const destAta = getAssociatedTokenAddressSync(mint, recipientOwner.publicKey);
+		const named = { buyer: buyer.publicKey, sponsor: sponsor.publicKey, source: sourceAta };
+		const guards = Array.from({ length: guardCount }, () => new TransactionInstruction({
+			programId: LIGHTHOUSE,
+			keys: guardAccounts.map((k) => ({ pubkey: named[k], isSigner: false, isWritable: false })),
+			data: Buffer.from([9, 0, 1]),
+		}));
+		process.env.X402_ASSET_MINT_SOLANA = mint.toBase58();
+		process.env.X402_PAY_TO_SOLANA = recipientOwner.publicKey.toBase58();
+		const message = new TransactionMessage({
+			payerKey: sponsored ? sponsor.publicKey : buyer.publicKey,
+			recentBlockhash: '11111111111111111111111111111111',
+			instructions: [
+				ComputeBudgetProgram.setComputeUnitLimit({ units: 120_000 }),
+				createTransferCheckedInstruction(
+					sourceAta, mint, destAta, buyer.publicKey, AMOUNT_ATOMIC, DECIMALS,
+				),
+				...guards,
+			],
+		}).compileToV0Message();
+		return validateRingTransaction({
+			txBase64: Buffer.from(new VersionedTransaction(message).serialize()).toString('base64'),
+			requirement: {
+				network: 'solana',
+				asset: mint.toBase58(),
+				amount: String(AMOUNT_ATOMIC),
+				payTo: recipientOwner.publicKey.toBase58(),
+			},
+			feePayerPubkey: sponsor.publicKey.toBase58(),
+			allowlist: new Set([recipientOwner.publicKey.toBase58()]),
+		});
+	}
+
+	it('settles a sponsored payment whose guards assert on the buyer', () => {
+		const out = buildGuardedPayment({ sponsored: true, guardAccounts: ['buyer', 'source'], guardCount: 2 });
+		expect(out.reason).toBeUndefined();
+		expect(out.ok).toBe(true);
+		expect(out.decoded.selfPay).toBe(false);
+	});
+
+	it('settles a self-pay payment whose guard names the buyer as fee payer', () => {
+		const out = buildGuardedPayment({ sponsored: false, guardAccounts: ['buyer'] });
+		expect(out.ok).toBe(true);
+		expect(out.decoded.selfPay).toBe(true);
+	});
+
+	it('refuses a guard instruction that names the sponsor account', () => {
+		const out = buildGuardedPayment({ sponsored: true, guardAccounts: ['buyer', 'sponsor'] });
+		expect(out.ok).toBe(false);
+		expect(out.reason).toBe('guard_instruction_references_sponsor');
+	});
+
+	it('refuses more guard instructions than the ceiling', () => {
+		const out = buildGuardedPayment({ sponsored: true, guardAccounts: ['buyer'], guardCount: 4 });
+		expect(out.ok).toBe(false);
+		expect(out.reason).toBe('too_many_guard_instructions:4');
 	});
 });

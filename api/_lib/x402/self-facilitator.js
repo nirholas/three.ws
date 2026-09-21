@@ -63,6 +63,21 @@ const MEMO_PROGRAM_IDS = [
 	new PublicKey('Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo'),
 ];
 
+// Lighthouse, the on-chain assertion program. Phantom's transaction protection
+// injects one or more Lighthouse instructions into a transaction before the
+// user signs it: they assert the buyer's balances end up where the wallet's
+// simulation said they would, and revert the transaction otherwise. They move
+// nothing, and the reference x402 SVM facilitator (@x402/svm) accepts them for
+// the same reason. Refusing them locked every Phantom buyer with protection on
+// out of the rail, which is Phantom's default. One constraint is ours alone:
+// Lighthouse also has a memory-write instruction that charges a payer account
+// for a PDA, so in sponsor mode a Lighthouse instruction may never name the
+// sponsor's fee-payer account. Enforced below, once the mode is known.
+const LIGHTHOUSE_PROGRAM_ID = new PublicKey('L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95');
+// Phantom injects one or two. The ceiling keeps a hostile client from padding
+// a sponsored transaction with compute it does not pay for.
+const MAX_LIGHTHOUSE_INSTRUCTIONS = 3;
+
 // SPL Token instruction tag for TransferChecked. Plain Transfer (3) is rejected —
 // TransferChecked commits the mint + decimals, so we can trust the decoded mint.
 const SPL_TRANSFER_CHECKED = 12;
@@ -245,6 +260,8 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 	let cuLimit = 200_000; // Solana default when unset
 	let cuPrice = 0n;
 	let ataCreatePresent = false;
+	let lighthouseCount = 0;
+	let lighthouseTouchesFeePayer = false;
 
 	const ixs = msg.compiledInstructions;
 	try {
@@ -274,6 +291,19 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 
 		if (MEMO_PROGRAM_IDS.some((id) => programId.equals(id))) {
 			// Carries no fund movement (see MEMO_PROGRAM_IDS). Skipped, not counted.
+			continue;
+		}
+
+		if (programId.equals(LIGHTHOUSE_PROGRAM_ID)) {
+			// Wallet-injected assertions (see LIGHTHOUSE_PROGRAM_ID). Carries no
+			// fund movement of its own; whether it may name the fee payer depends
+			// on the mode, decided after the loop.
+			if (!accts.every(idxInRange)) return { ok: false, reason: 'malformed_instruction' };
+			lighthouseCount += 1;
+			if (lighthouseCount > MAX_LIGHTHOUSE_INSTRUCTIONS) {
+				return { ok: false, reason: `too_many_guard_instructions:${lighthouseCount}` };
+			}
+			if (accts.includes(0)) lighthouseTouchesFeePayer = true;
 			continue;
 		}
 
@@ -377,6 +407,12 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 	if (!selfPay) {
 		if (!feePayerPubkey || feePayer.toBase58() !== feePayerPubkey) {
 			return { ok: false, reason: `fee_payer_not_sponsor:${feePayer.toBase58()}` };
+		}
+		// The sponsor signs the whole message, so an instruction that names its
+		// account could charge it. A buyer's wallet guards the buyer's accounts
+		// and has no reason to reference ours.
+		if (lighthouseTouchesFeePayer) {
+			return { ok: false, reason: 'guard_instruction_references_sponsor' };
 		}
 	}
 

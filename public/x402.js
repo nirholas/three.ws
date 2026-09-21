@@ -2324,10 +2324,14 @@ function bytesEqual(a, b) {
 // accepts any ComputeBudget instruction set within its fee caps and never pins
 // the blockhash to what /prepare issued, so a wallet that only injects or
 // retunes priority-fee instructions (Phantom and Solflare both do) still
-// produces a settleable payment. What it hard-rejects is any other change:
-// foreign programs (e.g. wallet-guard instructions), a modified transfer, or a
-// swapped fee payer. Mirror exactly that line here.
+// produces a settleable payment. It also accepts Lighthouse guard instructions,
+// the balance assertions Phantom's transaction protection injects by default,
+// up to a small ceiling and only while they leave a sponsoring fee payer alone.
+// What it hard-rejects is any other change: other foreign programs, a modified
+// transfer, or a swapped fee payer. Mirror exactly that line here.
 const COMPUTE_BUDGET_PROGRAM = 'ComputeBudget111111111111111111111111111111';
+const LIGHTHOUSE_PROGRAM = 'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95';
+const MAX_LIGHTHOUSE_INSTRUCTIONS = 3;
 
 // Resolve a v0 message's instructions to index-independent form so the
 // comparison survives the wallet reordering or appending account keys.
@@ -2340,6 +2344,21 @@ function resolveNonBudgetInstructions(message) {
 			data: ix.data,
 		}))
 		.filter((ix) => ix.program !== COMPUTE_BUDGET_PROGRAM);
+}
+
+// Why the facilitator would refuse the wallet's guard instructions, or null when
+// it accepts them. A second required signature means a sponsor pays the fee, and
+// a guard that names the sponsor's account could charge it.
+function guardInstructionVeto(message, guardIxs) {
+	if (guardIxs.length > MAX_LIGHTHOUSE_INSTRUCTIONS) {
+		return `it added ${guardIxs.length} guard instructions, more than a payment may carry`;
+	}
+	const sponsored = message.header.numRequiredSignatures > 1;
+	const feePayer = message.staticAccountKeys[0]?.toBase58();
+	if (sponsored && guardIxs.some((ix) => ix.accounts.includes(feePayer))) {
+		return 'it added a guard instruction that touches the fee sponsor account';
+	}
+	return null;
 }
 
 // Decide whether a wallet's pre-signing rewrite of the prepared transaction is
@@ -2357,7 +2376,13 @@ export function classifyWalletTxMutation(preparedTx, signedTx) {
 			return 'it changed the transaction fee payer';
 		}
 		const preparedIxs = resolveNonBudgetInstructions(prepared);
-		const signedIxs = resolveNonBudgetInstructions(signed);
+		const signedAll = resolveNonBudgetInstructions(signed);
+		const guardVeto = guardInstructionVeto(
+			signed,
+			signedAll.filter((ix) => ix.program === LIGHTHOUSE_PROGRAM),
+		);
+		if (guardVeto) return guardVeto;
+		const signedIxs = signedAll.filter((ix) => ix.program !== LIGHTHOUSE_PROGRAM);
 		if (signedIxs.length !== preparedIxs.length) {
 			const preparedPrograms = new Set(preparedIxs.map((ix) => ix.program));
 			const added = signedIxs.find((ix) => !preparedPrograms.has(ix.program));

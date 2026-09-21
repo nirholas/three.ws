@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-21
+
+- **Phantom users no longer have to switch off transaction protection to pay**: Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee. (`/club`) `[fix]`
+
 ## 2026-09-20
 
 - **$THREE Launchpad** (`/three-launchpad`): A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.
