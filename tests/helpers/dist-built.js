@@ -8,12 +8,19 @@
 // then fails against: a missing stylesheet, an empty 404 body, a server that
 // serves nothing. That reads like a product regression and is not one.
 //
-// dist/index.html is the marker, because it is written by the frontend
-// `vite build` step itself. Present means the pages are there and the
-// assertions are meaningful; absent means the tree was never frontend-built
-// and the suite should skip rather than invent a failure. A tree that IS built
-// and is missing a page still fails, which is the regression these suites
-// exist to catch.
+// dist/home.html is the marker: it is the "/" page, written by the frontend
+// `vite build` step itself. It is NOT dist/index.html. The route table in
+// vercel.json rewrites "/" to /home.html, so a complete build has no
+// dist/index.html at all, and keying on that file skipped these suites on every
+// tree, built or not. This mirrors the tripwire scripts/check-dist.mjs uses for
+// "was `npm run build` skipped entirely" (its resolvesToFile maps "/" to
+// home.html), so the two can never disagree about what built means.
+//
+// The marker is deliberately NOT one of the files the suites assert on
+// (style.css, 404.html). Gating on those would make each suite skip exactly
+// when the regression it exists to catch occurs. Present means the pages are
+// there and the assertions are meaningful; absent means the tree was never
+// frontend-built and the suite should skip rather than invent a failure.
 
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -25,8 +32,8 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 export const DIST_DIR = path.join(REPO_ROOT, 'dist');
 
 /** True when the frontend build has written its pages into dist/. */
-export const HAS_FRONTEND_BUILD = existsSync(path.join(DIST_DIR, 'index.html'));
+export const HAS_FRONTEND_BUILD = existsSync(path.join(DIST_DIR, 'home.html'));
 
 /** One line naming the command that makes a skipped suite run. */
 export const BUILD_HINT =
-	'dist/ has no frontend build (no dist/index.html). Run `npm run build:gcp` to build it.';
+	'dist/ has no frontend build (no dist/home.html). Run `npm run build:gcp` to build it.';
