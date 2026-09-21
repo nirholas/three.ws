@@ -173,7 +173,45 @@ function measure(tape, tsSeconds) {
 			lift: expected > 0 ? Math.round((volume / expected) * 100) / 100 : null,
 		};
 	}
+	// The pool traded many times more in June than in September, so raw dollars
+	// flatter old posts. `normalHours` restates the first-hour excess in hours of
+	// the pool's own trailing-week pace, which compares across months.
+	const weekStart = minuteStart - 7 * DAY;
+	if (out.h1 && weekStart >= tape.start) {
+		const hourlyPace = tape.volume(weekStart, minuteStart) / (7 * 24);
+		out.h1.normalHours = hourlyPace > 0 ? Math.round((out.h1.excess / hourlyPace) * 100) / 100 : null;
+	}
 	return out;
+}
+
+// Posts fired minutes apart ride one volume move, so crediting each with it
+// counts the same dollars many times (ten two-word community replies on
+// 2026-06-06 each "earned" the same $100k hour). A moment is a run of posts
+// with no gap over MOMENT_GAP_SECONDS, measured once from its first post and
+// described by its most substantive one.
+const MOMENT_GAP_SECONDS = 30 * MINUTE;
+function toMoments(rows) {
+	const moments = [];
+	for (const row of [...rows].sort((a, b) => a.postedAt.localeCompare(b.postedAt))) {
+		const last = moments[moments.length - 1];
+		const ts = Date.parse(row.postedAt) / 1000;
+		if (last && ts - last.lastTs <= MOMENT_GAP_SECONDS) {
+			last.posts.push(row);
+			last.lastTs = ts;
+		} else moments.push({ posts: [row], lastTs: ts });
+	}
+	return moments.map(({ posts }) => {
+		const lead = [...posts].sort((a, b) => (b.text || '').length - (a.text || '').length)[0];
+		const flags = ['image', 'video', 'namesThree', 'contractAddress', 'tier1Mention', 'anyMention', 'link'];
+		return {
+			...lead,
+			postedAt: posts[0].postedAt,
+			windows: posts[0].windows,
+			postCount: posts.length,
+			queueIds: posts.map((post) => post.queueId).filter(Boolean),
+			features: { ...lead.features, ...Object.fromEntries(flags.map((flag) => [flag, posts.some((post) => post.features[flag])])), reply: posts.every((post) => post.features.reply), usHours: posts[0].features.usHours, weekend: posts[0].features.weekend },
+		};
+	});
 }
 
 // A response: the window at least doubled its baseline AND moved real dollars.
@@ -217,7 +255,9 @@ async function ledgerPosts(knownIds) {
 		}));
 }
 
-const TIER1 = /@(ibm|openai|awscloud|aws_partners|nvidia|nvidiaai|googlecloud|anthropicai|claude|chatgpt|microsoft|github|solana|coinbase|okx|phantom|jupiterexchange|pumpdotfun)\b/i;
+// Household-name technology companies only: the question this flag answers is
+// whether borrowing a name the market already trusts moves the tape.
+const TIER1 = /@(ibm|ibmcloud|openai|awscloud|aws_partners|nvidia|nvidiaai|googlecloud|anthropicai|claude|chatgpt|microsoft|github|voguemagazine|solana)\b/i;
 
 function featuresOf(post) {
 	const text = post.text || '';
@@ -267,6 +307,11 @@ function placebo(tape, from, to) {
 	return rows;
 }
 
+const medianNormal = (subset) => {
+	const values = subset.map((row) => row.windows.h1?.normalHours).filter((v) => v !== null && v !== undefined);
+	return values.length ? Math.round(median(values) * 100) / 100 : null;
+};
+
 function featureTable(rows, base) {
 	const flags = ['reply', 'image', 'video', 'namesThree', 'contractAddress', 'tier1Mention', 'anyMention', 'link', 'usHours', 'weekend'];
 	const table = [];
@@ -275,20 +320,20 @@ function featureTable(rows, base) {
 			const subset = rows.filter((row) => row.features[flag] === value);
 			if (subset.length < 8) continue;
 			const s = summarize(subset, 'h1');
-			table.push({ feature: `${flag}=${value}`, n: s.n, responseRate: s.responseRate, vsBase: base ? s.responseRate / base : null, medianExcess: s.medianExcess, totalExcess: s.totalExcess });
+			table.push({ feature: `${flag}=${value}`, n: s.n, responseRate: s.responseRate, vsBase: base ? s.responseRate / base : null, medianExcess: s.medianExcess, medianNormalHours: medianNormal(subset) });
 		}
 	}
 	for (const bucket of new Set(rows.map((row) => row.features.length))) {
 		const subset = rows.filter((row) => row.features.length === bucket);
 		if (subset.length < 8) continue;
 		const s = summarize(subset, 'h1');
-		table.push({ feature: `length=${bucket}`, n: s.n, responseRate: s.responseRate, vsBase: base ? s.responseRate / base : null, medianExcess: s.medianExcess, totalExcess: s.totalExcess });
+		table.push({ feature: `length=${bucket}`, n: s.n, responseRate: s.responseRate, vsBase: base ? s.responseRate / base : null, medianExcess: s.medianExcess, medianNormalHours: medianNormal(subset) });
 	}
 	for (const topic of new Set(rows.flatMap((row) => row.features.topics))) {
 		const subset = rows.filter((row) => row.features.topics.includes(topic));
 		if (subset.length < 8) continue;
 		const s = summarize(subset, 'h1');
-		table.push({ feature: `topic=${topic}`, n: s.n, responseRate: s.responseRate, vsBase: base ? s.responseRate / base : null, medianExcess: s.medianExcess, totalExcess: s.totalExcess });
+		table.push({ feature: `topic=${topic}`, n: s.n, responseRate: s.responseRate, vsBase: base ? s.responseRate / base : null, medianExcess: s.medianExcess, medianNormalHours: medianNormal(subset) });
 	}
 	return table.sort((a, b) => (b.responseRate ?? 0) - (a.responseRate ?? 0));
 }
@@ -303,7 +348,7 @@ const oneLine = (text, n = 90) => String(text || '').replace(/\s+/g, ' ').trim()
 function report({ rows, originals, placeboRows, tape, features, generatedAt }) {
 	const lines = [];
 	lines.push(`# @${HANDLE}: what each post did to $THREE volume`, '');
-	lines.push(`Generated ${generatedAt}. ${rows.length} own posts measured (${originals.length} originals, ${rows.length - originals.length} replies) against 1-minute candles of the $THREE pool from ${new Date(tape.start * 1000).toISOString().slice(0, 10)} to ${new Date(tape.end * 1000).toISOString().slice(0, 10)}. Regenerate with \`npm run x:volume\`.`, '');
+	lines.push(`Generated ${generatedAt}. ${rows.length} own posts, grouped into ${originals.length} moments (posts within 30 minutes of each other ride one volume move, so they are measured once, from the first), against 1-minute candles of the $THREE pool from ${new Date(tape.start * 1000).toISOString().slice(0, 10)} to ${new Date(tape.end * 1000).toISOString().slice(0, 10)}. Regenerate with \`npm run x:volume\`.`, '');
 	lines.push('## How to read this', '');
 	lines.push('Each window starts at the first full minute after the post and is compared with the tape just before it. **Excess** is dollars traded above what that baseline predicted; **lift** is the ratio. A **response** means the window at least doubled its baseline and cleared a dollar floor, so a quiet pool twitching does not count. The **placebo** row is the same measurement at 4,000 random moments: it is what the chart does with no post at all, and a post number only means something against it.', '');
 	lines.push('The 24 hour and 7 day windows almost always contain other posts and market moves. Treat them as context, not attribution. The 1 minute to 1 hour windows are where a single post can be read.', '');
@@ -320,13 +365,20 @@ function report({ rows, originals, placeboRows, tape, features, generatedAt }) {
 	const ranked = (key) => originals.filter((row) => row.windows[key]).sort((a, b) => b.windows[key].excess - a.windows[key].excess);
 	for (const [key, title] of [['h1', 'Top 20 posts by excess volume in the first hour'], ['m5', 'Top 10 posts by excess volume in the first 5 minutes']]) {
 		lines.push(`## ${title}`, '');
-		lines.push('| Posted (UTC) | 1 min | 5 min | 1 hour | 1h lift | 24 hours | Post |', '|---|---|---|---|---|---|---|');
+		lines.push('| Posted (UTC) | 1 min | 5 min | 1 hour | 1h lift | Normal hours | 24 hours | Posts | Lead post |', '|---|---|---|---|---|---|---|---|---|');
 		for (const row of ranked(key).slice(0, key === 'h1' ? 20 : 10)) {
 			const w = row.windows;
-			lines.push(`| ${row.postedAt.slice(0, 16).replace('T', ' ')} | ${usd(w.m1?.excess)} | ${usd(w.m5?.excess)} | ${usd(w.h1?.excess)} | ${times(w.h1?.lift)} | ${usd(w.d1?.excess)} | [${oneLine(row.text, 80).replace(/\|/g, '/')}](${row.url}) |`);
+			lines.push(`| ${row.postedAt.slice(0, 16).replace('T', ' ')} | ${usd(w.m1?.excess)} | ${usd(w.m5?.excess)} | ${usd(w.h1?.excess)} | ${times(w.h1?.lift)} | ${w.h1?.normalHours ?? 'n/a'} | ${usd(w.d1?.excess)} | ${row.postCount} | [${oneLine(row.text, 80).replace(/\|/g, '/') || '(media only)'}](${row.url}) |`);
 		}
 		lines.push('');
 	}
+
+	lines.push('## Top 20 moments by normal hours', '', 'First-hour excess restated in hours of the pool\'s own trailing-week pace. This is the fair ranking across months: $5,000 on a quiet September tape can be a bigger move than $50,000 in June.', '');
+	lines.push('| Posted (UTC) | Normal hours | 1 hour | 1h lift | Posts | Lead post |', '|---|---|---|---|---|---|');
+	for (const row of originals.filter((r) => r.windows.h1?.normalHours !== null && r.windows.h1?.normalHours !== undefined).sort((a, b) => b.windows.h1.normalHours - a.windows.h1.normalHours).slice(0, 20)) {
+		lines.push(`| ${row.postedAt.slice(0, 16).replace('T', ' ')} | ${row.windows.h1.normalHours} | ${usd(row.windows.h1.excess)} | ${times(row.windows.h1.lift)} | ${row.postCount} | [${oneLine(row.text, 90).replace(/\|/g, '/') || '(media only)'}](${row.url}) |`);
+	}
+	lines.push('');
 
 	lines.push('## Bottom 10 by first-hour excess', '', 'Posts that went out into a falling tape. Usually the market, not the post, but a pattern here is worth knowing.', '');
 	lines.push('| Posted (UTC) | 1 hour | 1h lift | Post |', '|---|---|---|---|');
@@ -334,17 +386,17 @@ function report({ rows, originals, placeboRows, tape, features, generatedAt }) {
 	lines.push('');
 
 	lines.push('## What the responders have in common', '', 'First-hour response rate by post feature, originals only, features with at least 8 posts. "vs all" compares with every original post.', '');
-	lines.push('| Feature | Posts | Response rate | vs all | Median 1h excess | Total 1h excess |', '|---|---|---|---|---|---|');
-	for (const f of features) lines.push(`| ${f.feature} | ${f.n} | ${pct(f.responseRate)} | ${times(f.vsBase)} | ${usd(f.medianExcess)} | ${usd(f.totalExcess)} |`);
+	lines.push('| Feature | Moments | Response rate | vs all | Median 1h excess | Median normal hours |', '|---|---|---|---|---|---|');
+	for (const f of features) lines.push(`| ${f.feature} | ${f.n} | ${pct(f.responseRate)} | ${times(f.vsBase)} | ${usd(f.medianExcess)} | ${f.medianNormalHours ?? 'n/a'} |`);
 	lines.push('');
 
 	const pipeline = rows.filter((row) => row.source === 'ledger');
 	if (pipeline.length) {
 		lines.push('## The content pipeline\'s posts', '', 'Everything the queue has published, newest last. Windows that have not closed yet read n/a.', '');
-		lines.push('| Posted (UTC) | Queue id | 1 min | 5 min | 1 hour | 1h lift | 24 hours |', '|---|---|---|---|---|---|---|');
+		lines.push('| Posted (UTC) | Queue id | 1 min | 5 min | 1 hour | 1h lift | Normal hours | 24 hours |', '|---|---|---|---|---|---|---|---|');
 		for (const row of pipeline) {
 			const w = row.windows;
-			lines.push(`| ${row.postedAt.slice(0, 16).replace('T', ' ')} | [${row.queueId}](${row.url}) | ${usd(w.m1?.excess)} | ${usd(w.m5?.excess)} | ${usd(w.h1?.excess)} | ${times(w.h1?.lift)} | ${usd(w.d1?.excess)} |`);
+			lines.push(`| ${row.postedAt.slice(0, 16).replace('T', ' ')} | [${row.queueId}](${row.url}) | ${usd(w.m1?.excess)} | ${usd(w.m5?.excess)} | ${usd(w.h1?.excess)} | ${times(w.h1?.lift)} | ${w.h1?.normalHours ?? 'n/a'} | ${usd(w.d1?.excess)} |`);
 		}
 		lines.push('');
 	}
@@ -376,7 +428,7 @@ const rows = posts.map((post) => ({
 	features: featuresOf(post),
 	windows: measure(tape, Date.parse(post.postedAt) / 1000),
 }));
-const originals = rows.filter((row) => !row.features.reply);
+const originals = toMoments(rows).filter((moment) => !moment.features.reply);
 const placeboRows = placebo(tape, firstPost, tape.end - HOUR);
 const base = summarize(originals, 'h1').responseRate;
 const features = featureTable(originals, base);
