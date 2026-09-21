@@ -28623,6 +28623,15 @@
 				"fix"
 			],
 			"link": "/tour-builder"
+		},
+		{
+			"date": "2026-09-21",
+			"title": "Paying at the Club door no longer fails when our own traffic has been busy",
+			"summary": "Some visitors paying the Club cover approved the payment in their wallet and then saw it fail at the last step with an internal error. The cause was on our side. We cover the small Solana network fee on your payment, and a safety limit that spreads our own automated payments across the day was also being applied to customers, so once our background traffic had used the morning's share, a real payment was turned away. Customers are now exempt from that limit: if you are paying, the payment goes through, and our own traffic waits instead. Nothing was charged on a failed attempt. Separately, when a wallet refuses to open its approval window, the payment window now says plainly that nothing was signed or charged and what to try next, instead of repeating the wallet's own wording.",
+			"tags": [
+				"fix"
+			],
+			"link": "/club"
 		}
 	]
 }

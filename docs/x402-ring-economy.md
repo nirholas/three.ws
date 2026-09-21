@@ -98,6 +98,15 @@ decision logic in
   with `fee_runway_exhausted:<spent>+<next>><budget>` *before* co-sign or
   broadcast, whatever pipeline initiated it. Funding is the throttle for the
   whole wallet: top it up and every tenant speeds up together.
+- **Customers are never paced.** The budget exists to pace the platform's own
+  autonomous traffic. The settle path passes the buyer (`buyerB58`, the transfer
+  authority) to the meter, and a buyer outside the controlled-wallet set is
+  admitted even when the budget is spent; only the hard SOL floor can refuse
+  them. Their fee is still recorded against the day, so ring traffic yields to
+  customers and not the reverse. Before 2026-09-21 a sponsored customer payment
+  drew on the same paced slice as the ring, and a visitor paying the Club cover
+  in $THREE was refused `fee_runway_exhausted` mid-morning. A settle that does
+  not name its buyer stays governed.
 - **The refusal is a 503, not a 502.** `settlePayment()` maps it to
   `settlement_unavailable` (503), the same retryable answer the sponsor SOL
   floor gets, because both are the platform pausing on purpose rather than

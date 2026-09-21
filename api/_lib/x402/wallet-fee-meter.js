@@ -8,8 +8,15 @@
 // Scope: ONLY platform-controlled wallets (ringAllowedAddresses) are governed.
 // An external organic buyer self-paying through our facilitator spends its own
 // SOL — refusing its settle would be refusing revenue, so unknown wallets are
-// always admitted. Every failure mode in here fails OPEN: the settle path's
-// hard SOL floor remains the real protection; the meter is pacing.
+// always admitted. The same holds for an organic buyer in SPONSOR mode: the fee
+// wallet is ours and governed, but the payment is a customer's. The daily budget
+// exists to pace our own autonomous traffic, and on 2026-09-21 it refused a
+// visitor's $THREE cover charge at the Club door with `fee_runway_exhausted`
+// because the ring had already spent the morning's slice. A buyer who is not a
+// platform wallet is therefore admitted past the budget (their fee is still
+// recorded against it, so our own traffic yields to them, not the reverse).
+// Every failure mode in here fails OPEN: the settle path's hard SOL floor
+// remains the real protection; the meter is pacing.
 //
 // Spent-today reads sum `x402_self_facilitator_log.fee_lamports` per fee_payer
 // (migration 20260728120000) with a short in-process cache, and each settled
@@ -217,9 +224,13 @@ function effectiveBudgetLamports(solLamports, cfg, now = Date.now()) {
 export function facilitatorFeeMeter({ config } = {}) {
 	const cfg = config || walletFeeGovernorConfig();
 	if (!cfg.enabled) return null;
-	return async ({ feeWalletB58, solLamports, estFeeLamports }) => {
+	return async ({ feeWalletB58, solLamports, estFeeLamports, buyerB58 = null }) => {
 		const allowed = await governedWallets();
 		if (!allowed || !allowed.has(feeWalletB58)) return { ok: true, reason: null };
+		// A known buyer outside the platform's own wallets is a paying customer:
+		// never pace revenue. An unknown buyer stays governed, so a caller that
+		// does not say who is paying cannot use this to skip the budget.
+		if (buyerB58 && !allowed.has(buyerB58)) return { ok: true, reason: null, organic: true };
 
 		const spent = await spentTodayLamports(feeWalletB58, cfg.spentCacheMs);
 		const budget = effectiveBudgetLamports(solLamports, cfg);

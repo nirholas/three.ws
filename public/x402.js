@@ -2281,6 +2281,13 @@ function friendlyError(err) {
 	) {
 		return 'cancelled in wallet';
 	}
+	// Some wallets refuse to open their approval window at all and answer with
+	// their own wording ("The app's signature request cannot be shown due to
+	// invalid formatting"). Shown raw it reads as a fault in the buyer's payment.
+	// Nothing was signed, so nothing was charged: say that, and what to try.
+	if (/signature request cannot be shown|cannot be (shown|displayed) due to/i.test(msg)) {
+		return 'Your wallet could not display this payment request, so nothing was signed or charged. Unlock or update the wallet and retry, or pay with the other token.';
+	}
 	// Upstream throttles (e.g. a generator's create-prediction rate limit) often
 	// arrive as raw provider text that names the merchant's internal billing or
 	// credit state. Never relay that to the buyer: the payment isn't settled until

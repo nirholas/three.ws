@@ -269,6 +269,36 @@ describe('controlled-wallet scoping', () => {
 	});
 });
 
+describe('a paying customer on a sponsored settle', () => {
+	// The Club door, 2026-09-21: the governed fee wallet had spent its morning
+	// slice on ring traffic, and a visitor paying the cover in $THREE was refused
+	// with fee_runway_exhausted. The fee wallet is ours; the money is theirs.
+	it('admits a buyer who is not a platform wallet even when the budget is spent', async () => {
+		h.sql.mockResolvedValue([{ spent: '4440443' }]);
+		const v = await meter()({
+			feeWalletB58: GOV, buyerB58: ORGANIC, solLamports: SOL_FOR_1M_BUDGET, estFeeLamports: 2_084_080,
+		});
+		expect(v.ok).toBe(true);
+		expect(v.organic).toBe(true);
+		expect(h.sendOpsAlert).not.toHaveBeenCalled();
+	});
+
+	it('still paces the ring: a platform wallet buying from itself is refused over budget', async () => {
+		h.sql.mockResolvedValue([{ spent: '4440443' }]);
+		const v = await meter()({
+			feeWalletB58: GOV, buyerB58: GOV2, solLamports: SOL_FOR_1M_BUDGET, estFeeLamports: 5_000,
+		});
+		expect(v.ok).toBe(false);
+		expect(v.reason).toMatch(/^fee_runway_exhausted:/);
+	});
+
+	it('an unnamed buyer stays governed, so omitting the buyer cannot skip the budget', async () => {
+		h.sql.mockResolvedValue([{ spent: '4440443' }]);
+		const v = await call(meter());
+		expect(v.ok).toBe(false);
+	});
+});
+
 describe('recordSettledFee post-settle accounting', () => {
 	it('debits the cached spend so a burst inside one window counts, without a DB round-trip', async () => {
 		const fn = meter();

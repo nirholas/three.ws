@@ -872,6 +872,7 @@ export async function settleRingPayment({
 		try {
 			meterVerdict = await feeMeter({
 				feeWalletB58: decoded.feePayer,
+				buyerB58: decoded.payer,
 				solLamports,
 				estFeeLamports,
 				selfPay,
