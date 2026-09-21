@@ -924,6 +924,22 @@
 			}
 		},
 		{
+			"id": "check-asset-encoding",
+			"script": "scripts/check-asset-encoding.mjs",
+			"npm": "check:asset-encoding",
+			"title": "Served asset length matches the bytes delivered",
+			"protects": "The largest compressible files under public/ arrive in full when requested from the live site with the exact Accept-Encoding a current browser sends.",
+			"why": "On 2026-09-11 the CDN held a variant of the 11 MB MediaPipe WASM runtime whose content-length was the uncompressed size while the body was brotli-compressed with no content-encoding header. Every Chrome and Edge that advertises zstd waited forever for bytes that were never coming, and /create/selfie hung at \"Processing your face\". curl with a plain Accept-Encoding saw a healthy response, and every page check reads HTML rather than the largest binary on the site, so nothing else could see it.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "It requests assets from the live CDN and compares the promised length against the bytes that actually arrive, so the failure it catches exists only in a served response. A local file has no content-encoding negotiation to get wrong."
+			}
+		},
+		{
 			"id": "check-awesome",
 			"script": "scripts/build-awesome.mjs",
 			"npm": "check:awesome",
@@ -1096,6 +1112,22 @@
 					}
 				},
 				"expect": "guard-proof"
+			}
+		},
+		{
+			"id": "check-docs-freshness",
+			"script": "scripts/doc-freshness.mjs",
+			"npm": "check:docs-freshness",
+			"title": "Documentation drift budget",
+			"protects": "No more docs describe code that changed after they were written than data/docs-freshness-budget.json allows.",
+			"why": "A stale doc does not read as stale, it reads as an instruction, and agents here execute docs verbatim. The dependency graph behind /docs/freshness measures which docs sit downstream of code that moved since their last commit, and the budget is a ratchet: it only goes down, and raising it requires a recorded reason, which is what stops drift from becoming permanently normal.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "live",
+				"reason": "The input is git history, not a file: a doc is stale because of the commits that landed after it, which a sandbox cannot fabricate without rewriting history. The corpus is also over its budget of 5 at the time of registering, so the control half of a two-sided proof would fail against the real repo until the queue is refreshed."
 			}
 		},
 		{
@@ -1303,6 +1335,22 @@
 					}
 				},
 				"expect": "9.9.9"
+			}
+		},
+		{
+			"id": "check-openai-fields",
+			"script": "scripts/build-openai-portal-fields.mjs",
+			"npm": "check:openai-fields",
+			"title": "OpenAI directory form fields fit their silent limits",
+			"protects": "Every justification, test-case expectation and negative scenario pasted into the OpenAI Plugin Directory form fits under the length the portal truncates at, and each justification is one sentence describing behavior.",
+			"why": "Version 1.0.0 was rejected twice. The portal returned every justification cut at exactly 200 characters and every expected output at 300, mid-word, so the reviewer judged fragments such as \"and the compute\". The form shows no counter and no warning, so the only defense is to measure before pasting.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "live",
+				"reason": "The fields it measures are constants defined inside the script itself, so the only way to plant an over-long field is to replace the checker with a modified copy of itself, which would prove the copy rather than the guard. The proof sandbox mutates inputs, and this guard has none outside its own source."
 			}
 		},
 		{
