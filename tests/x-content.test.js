@@ -183,6 +183,23 @@ describe('schedule', () => {
 		expect(pickDue({ items: [item('a', { tier: 1 })], state: capped, now: primeTime, cadence }).reason).toMatch(/daily cap/);
 	});
 
+	it('lets hand-sent posts count toward spacing but not toward the daily cap', () => {
+		// Four owner-requested posts in one afternoon (no slot) used to fill the
+		// rolling window and hold every scheduled slot shut the next morning.
+		const manual = [8, 9, 10, 11].map((h, i) => ({ id: `m${i}`, publishedAt: new Date(primeTime - h * HOUR).toISOString() }));
+		const pick = pickDue({ items: [item('a', { tier: 1 })], state: { published: manual }, now: primeTime, cadence });
+		expect(pick.reason ?? '').not.toMatch(/daily cap/);
+		expect(pick.item?.id).toBe('a');
+
+		// The same posts sent minutes ago still block the slot on spacing.
+		const justNow = [{ id: 'm', publishedAt: new Date(primeTime - 10 * 60_000).toISOString() }];
+		expect(pickDue({ items: [item('a', { tier: 1 })], state: { published: justNow }, now: primeTime, cadence }).reason).toMatch(/spacing/);
+
+		// Scheduled posts still fill the cap exactly as before.
+		const scheduled = [5, 11, 17].map((h, i) => ({ id: `s${i}`, slot: `k${i}`, publishedAt: new Date(primeTime - h * HOUR).toISOString() }));
+		expect(pickDue({ items: [item('a', { tier: 1 })], state: { published: [...manual, ...scheduled] }, now: primeTime, cadence }).reason).toMatch(/daily cap/);
+	});
+
 	it('ranks within a tier and falls to the next post when one is held', () => {
 		const items = [item('low', { tier: 1, priority: -10 }), item('high', { tier: 1, priority: 30 }), item('mid', { tier: 1 })];
 		const first = pickDue({ items, state: {}, now: primeTime, cadence });

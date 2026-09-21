@@ -185,8 +185,16 @@ export function pickDue({
 	if (last && now < Date.parse(last.publishedAt) + cadence.minimumMinutesApart * MINUTE) {
 		return { item: null, reason: `spacing: the last post went out at ${last.publishedAt}` };
 	}
-	const lastDay = published.filter((row) => now - Date.parse(row.publishedAt) < DAY).length;
-	if (lastDay >= cadence.dailyCap) return { item: null, reason: `daily cap of ${cadence.dailyCap} reached` };
+	// The cap governs the schedule, so it counts scheduled posts only. A post an
+	// operator forces out by hand carries no slot, and counting those let one
+	// afternoon of owner-requested posts (four between 17:43 and 19:49 UTC on
+	// 2026-09-20) hold every scheduled slot shut for the next 24 hours, so the
+	// account went quiet the morning after its busiest day. Slots already limit
+	// the schedule to one post each, and the spacing check above still measures
+	// from the last post of any kind, so a hand-sent post can never be followed by
+	// a scheduled one minutes later.
+	const scheduledLastDay = published.filter((row) => row.slot && now - Date.parse(row.publishedAt) < DAY).length;
+	if (scheduledLastDay >= cadence.dailyCap) return { item: null, reason: `daily cap of ${cadence.dailyCap} scheduled posts reached` };
 
 	// On a weekend a flagship post waits for Monday instead of filling a lower slot.
 	const holdFlagship = Boolean(cadence.flagshipWeekdaysOnly) && isWeekend(slot.opensAt);
