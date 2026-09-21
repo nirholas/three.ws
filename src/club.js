@@ -2360,9 +2360,28 @@ const governor = createFrameGovernor();
 const focusState = trackWindowFocus();
 const clock = new Timer();
 let rafId = null;
+
+// The alley walk-through (src/club-entrance.js) runs its own full renderer on
+// an opaque canvas stacked over this one until it fades out on arrival. While
+// that canvas fully covers the stage, drawing the club too means two complete
+// post-processed scenes per frame for a picture nobody can see, which is what
+// made /club run the GPU hot through the whole walk-in and cover flow. The
+// stage keeps simulating (at the idle rate) so it is warm on reveal, but only
+// paints once the alley starts to fade (or is gone).
+const doorCanvas = document.getElementById('club-door-canvas');
+function stageCovered() {
+	if (!doorCanvas?.isConnected) return false;
+	const o = doorCanvas.style.opacity;
+	return o === '' || Number(o) >= 0.999;
+}
+// One real draw right after bootstrap, even while covered, so shader compile
+// and texture upload happen behind the alley instead of as a hitch mid-reveal.
+let stageWarmed = false;
+
 function animate(frameNow) {
 	rafId = requestAnimationFrame(animate);
-	const fpsCap = powerSaver ? FPS_SAVER : (focusState.focused ? FPS_ACTIVE : FPS_IDLE);
+	const covered = stageWarmed && stageCovered();
+	const fpsCap = powerSaver ? FPS_SAVER : (focusState.focused && !covered ? FPS_ACTIVE : FPS_IDLE);
 	if (!governor.shouldRun(frameNow ?? performance.now(), fpsCap)) return;
 	clock.update();
 	const dt = Math.min(clock.getDelta(), 0.066);
@@ -2427,7 +2446,9 @@ function animate(frameNow) {
 	// Audio-reactive bloom — pulse intensity with the beat (skip under reduced motion).
 	if (!prefersReducedMotion) bloomEffect.intensity = 1.0 + peak * 1.5;
 
+	if (covered) return;
 	composer.render(dt);
+	stageWarmed = true;
 }
 
 renderPoles();

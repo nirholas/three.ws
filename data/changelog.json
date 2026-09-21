@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-21",
+			"title": "The club no longer runs your computer hot on the way in",
+			"summary": "While you walked the alley and stood at the door, the club was secretly drawing the whole dance floor behind it at full quality, so your graphics card was rendering two complete 3D scenes at once. The hidden stage now pauses its drawing until the alley fades away, roughly halving the graphics work for the entire walk-in. For a cooler machine inside the club too, turn on Power saver in the club controls.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/club"
+		},
+		{
 			"date": "2026-09-20",
 			"title": "Repeat visits stop downloading the app's code twice",
 			"summary": "Every page tells your browser which code it is about to need so it can start fetching early. On a return visit that head start was being thrown away: our offline helper answered those same requests a second time, Chrome refused to match the two, and each file was requested twice while the developer console filled with a warning per file, well over a hundred on a heavy page like the Club. The offline helper now leaves that code to the browser's own cache, which already keeps it for a year, and clears out the duplicate copy it had stored on your device. Return visits load with one request per file and a quiet console.",
