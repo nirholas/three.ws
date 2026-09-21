@@ -12,6 +12,12 @@
 // spaces would return plausible-looking garbage to a caller storing the result.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { NIM_EMBED_TAG } from '../../api/_lib/embeddings.js';
+
+// The free NIM embedder has been re-pinned as NVIDIA retired catalog entries
+// (nv-embedqa-e5-v5 to nemotron-3-embed-1b, 1024 to 2048 dimensions). Derive the
+// expectations from the pin so the next re-pin moves this test with the code.
+const [NIM_MODEL, NIM_DIM] = [NIM_EMBED_TAG.split('@')[0], Number(NIM_EMBED_TAG.split('@')[1])];
 
 const sqlMock = vi.fn();
 vi.mock('../../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a), isDbUnavailableError: () => false, isDbCapacityError: () => false }));
@@ -114,10 +120,10 @@ describe('POST /api/agents/:id/embed: free-first embedder registry', () => {
 		expect(res.statusCode).toBe(200);
 		expect(json.embedding).toEqual(VECTOR);
 		expect(json.provider).toBe('nim');
-		expect(json.model).toBe('nvidia/nv-embedqa-e5-v5');
+		expect(json.model).toBe(NIM_MODEL);
 		// The tag is what callers persist beside a stored vector.
-		expect(json.embedder).toBe('nvidia/nv-embedqa-e5-v5@1024');
-		expect(json.dim).toBe(1024);
+		expect(json.embedder).toBe(NIM_EMBED_TAG);
+		expect(json.dim).toBe(NIM_DIM);
 		expect(json.inputType).toBe('query');
 		// The paid backstop was never touched while the free lane could serve.
 		expect(calls).toHaveLength(1);

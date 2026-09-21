@@ -110,7 +110,10 @@ const NVIDIA_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
 // backs it up if the NIM lane is down.
 // Re-pinned 2026-09-10: nemotron-3-nano-30b-a3b is no longer in the NIM
 // catalog and answered every call with a 410, so this opt-in lane was dead.
-const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3.5-lightning-30b-a3b';
+// Exported so tests assert against the pin itself: this id has been re-pinned
+// twice as NVIDIA retired catalog entries, and each time a test restating it by
+// hand went red for a reason that had nothing to do with the code.
+export const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3.5-lightning-30b-a3b';
 // nemotron-3 puts its reasoning in a separate field only when thinking is off;
 // with it on, the chain of thought leaks into `content` (verified 2026-08-27).
 const NVIDIA_NO_THINK = Object.freeze({ chat_template_kwargs: { enable_thinking: false } });

@@ -5,6 +5,7 @@
 // their own key, and a failing provider falls over to the next.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { NVIDIA_NEMOTRON_MODEL } from '../../api/_lib/llm.js';
 
 // env.js reads process.env lazily through getters, so setting/clearing keys
 // here is reflected on the next llmComplete() call without re-importing.
@@ -138,7 +139,7 @@ describe('llmComplete — free platform providers', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u', preferNvidia: true });
 		expect(out.provider).toBe('nvidia');
 		expect(out.text).toBe('from nemotron');
-		expect(out.model).toBe('nvidia/nemotron-3-nano-30b-a3b');
+		expect(out.model).toBe(NVIDIA_NEMOTRON_MODEL);
 		// NVIDIA was hit first; Groq never needed.
 		expect(calls[0].url).toContain(NVIDIA_HOST);
 		expect(calls.some((c) => c.url.includes(GROQ_HOST))).toBe(false);
