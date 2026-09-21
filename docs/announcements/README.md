@@ -42,7 +42,9 @@ output of any of them.
    `npm run announce:media`. It drives the real route in a real Chromium and writes to
    `public/announce/img/` with provenance (route, commit, time, sha256) beside the pixels. Shots
    marked `auth` sign in with the QA account so the frame shows the working product rather than
-   its sign-in gate.
+   its sign-in gate. A pack written by hand may instead ship a committed card, declared on its
+   queue item as `posts[].media[]` with alt text; the gate accepts either, and neither may go out
+   without alt text.
 3. **Write.** One `<slug>.md` pack and one `<slug>.post.txt` holding the post itself. The `.txt`
    exists so the bytes the gate checks are the bytes `post-tweet.mjs` sends; a post quoted only
    in prose drifts from the file that ships.

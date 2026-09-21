@@ -137,6 +137,11 @@ A recipe can ask for a five second loop, but the capture has the last word: it t
 second apart, and when they are identical it writes the still and records `animated: false` in the
 manifest. Nothing upstream can make that call, because the description of a page about motion
 generation reads exactly like the description of a page that moves.
+A hand-authored pack can ship a committed card instead of a captured shot, declared on its queue
+item as `posts[].media[]` with its own alt text. `npm run check:announce` accepts either source and
+still fails a pack whose image carries no alt text, because that is the artifact the publisher
+actually sends.
+
 A surface with no route (115 of the 316 planned announcements are a package, a worker, or a
 service) gets a title card instead: [`api/_lib/announce/card.js`](../api/_lib/announce/card.js)
 typesets its real name, its real description, the command a developer really runs, and the tools it
