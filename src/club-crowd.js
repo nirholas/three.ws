@@ -27,11 +27,12 @@
 // the pole stage always work without it. A rig the canonical clip library can't
 // drive is skipped rather than left standing in a bind/T-pose.
 
-import { AnimationMixer, Box3, Group, LoopOnce, Raycaster, Vector3 } from 'three';
+import { AnimationMixer, Group, LoopOnce, Raycaster, Vector3 } from 'three';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { gltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
 import { log } from './shared/log.js';
+import { scaleToHeight, groundFeet } from './shared/avatar-fit.js';
 
 // Clip pools, by mood. Names must exist in /animations/manifest.json; URLs are
 // resolved from the manifest passed to the constructor. A missing clip is just
@@ -67,18 +68,7 @@ const LIVELY_FLOOR = 9;
 const LINEUP_DISTINCT = 6;
 
 const DOWN = new Vector3(0, -1, 0);
-const _box = new Box3();
 const _origin = new Vector3();
-
-function scaleToHeight(obj, h) {
-	_box.setFromObject(obj, true);
-	const cur = _box.max.y - _box.min.y || 1;
-	obj.scale.multiplyScalar(h / cur);
-}
-function groundFeet(obj) {
-	_box.setFromObject(obj, true);
-	if (Number.isFinite(_box.min.y)) obj.position.y -= _box.min.y;
-}
 
 function shuffle(arr) {
 	const a = arr.slice();

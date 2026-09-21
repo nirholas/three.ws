@@ -56,6 +56,7 @@ import { gltfLoader, disposeGltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
 import { agentAvatarGlb, MANNEQUIN_GLB } from './shared/agent-3d.js';
 import { log } from './shared/log.js';
+import { scaleToHeight, groundFeet } from './shared/avatar-fit.js';
 import { loadEnvironment } from './shared/cinematic-render.js';
 
 // Reaction vocabulary mapped onto the real pre-baked clip library
@@ -129,16 +130,6 @@ const CLIP_DEFS = [
 const _box = new Box3();
 const _v = new Vector3();
 const _v2 = new Vector3();
-
-function scaleToHeight(obj, h) {
-	_box.setFromObject(obj, true);
-	const cur = _box.max.y - _box.min.y || 1;
-	obj.scale.multiplyScalar(h / cur);
-}
-function groundFeet(obj) {
-	_box.setFromObject(obj, true);
-	if (Number.isFinite(_box.min.y)) obj.position.y -= _box.min.y;
-}
 
 // Deterministic small hash so a given agent id always picks the same reaction
 // from a pool (stable performances across reconnects).

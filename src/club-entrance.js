@@ -63,6 +63,7 @@ import { ClubBouncer, BOUNCER_AVATAR_URL } from './club-bouncer.js';
 import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
 import { getPowerSaver } from './shared/frame-governor.js';
 import { log } from './shared/log.js';
+import { scaleToHeight, groundFeet } from './shared/avatar-fit.js';
 import { isExpressEntry } from './shared/club-express.js';
 import { loadEnvironment } from './shared/cinematic-render.js';
 import { resolveClubVariant, listClubEntrances } from './club-variant.js';
@@ -362,7 +363,7 @@ async function start(canvasEl) {
 	let avatar = avatarGltf.scene;
 	let currentAvatarUrl = AVATAR_URL;
 	scaleToHeight(avatar, AVATAR_HEIGHT);
-	placeOnFloor(avatar);
+	groundFeet(avatar);
 	const rig = new Group(); // yaw the rig; the model sits at the rig origin
 	rig.add(avatar);
 	scene.add(rig);
@@ -740,7 +741,7 @@ async function start(canvasEl) {
 			const gltf = await loader.loadAsync(url);
 			const next = gltf.scene;
 			scaleToHeight(next, AVATAR_HEIGHT);
-			placeOnFloor(next);
+			groundFeet(next);
 			// Verify the clip library can actually drive this rig BEFORE committing.
 			// The switcher lists public gallery rigs, not all of them humanoid — a
 			// non-canonical skeleton (Fox, CesiumMan, a robot…) can't be retargeted
@@ -1523,16 +1524,6 @@ function buildMinimap() {
 	}
 
 	return { setVenue, update, resize };
-}
-
-function scaleToHeight(obj, h) {
-	const b = new Box3().setFromObject(obj, true);
-	const cur = b.max.y - b.min.y || 1;
-	obj.scale.multiplyScalar(h / cur);
-}
-function placeOnFloor(obj) {
-	const b = new Box3().setFromObject(obj, true);
-	obj.position.y -= b.min.y;
 }
 
 function disposeObject(obj) {

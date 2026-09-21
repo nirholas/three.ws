@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-21",
+			"title": "The club alley no longer renders a giant avatar across the sky",
+			"summary": "Walking into /club, some visitors saw a huge metallic shape filling the sky above the alley, and their computer ran hot. It was a crowd member: one avatar model built at centimetre scale was measured wrong before it was sized, so it spawned about 400 times too big, roughly 700 metres tall, and the GPU spent the whole walk-in painting it. Crowd members, your own avatar in the agent switcher, the theater stage and the Agora now size every avatar from its real posed mesh, so that model stands at normal human height like everyone else.",
+			"tags": [
+				"fix"
+			],
+			"link": "/club"
+		},
+		{
+			"date": "2026-09-21",
 			"title": "The club no longer runs your computer hot on the way in",
 			"summary": "While you walked the alley and stood at the door, the club was secretly drawing the whole dance floor behind it at full quality, so your graphics card was rendering two complete 3D scenes at once. The hidden stage now pauses its drawing until the alley fades away, roughly halving the graphics work for the entire walk-in. For a cooler machine inside the club too, turn on Power saver in the club controls.",
 			"tags": [

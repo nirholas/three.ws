@@ -26,6 +26,7 @@ import { gltfLoader } from '../loaders/gltf.js';
 import { AnimationManager } from '../animation-manager.js';
 import { loadManifest, getLocomotionDefs, resolveAvatarUrl, AVATAR_DEFAULT, CLIP_IDLE, CLIP_WALK } from '../game/avatar-rig.js';
 import { log } from '../shared/log.js';
+import { scaleToHeight, groundFeet } from '../shared/avatar-fit.js';
 
 // Target on-screen height so wildly-scaled GLBs all read as people in the square.
 const AVATAR_HEIGHT = 1.74;
@@ -116,16 +117,6 @@ export function citizenProfessionLabel(citizen) {
 
 const _box = new Box3();
 const _v = new Vector3();
-
-function scaleToHeight(obj, h) {
-	_box.setFromObject(obj, true);
-	const cur = _box.max.y - _box.min.y || 1;
-	obj.scale.multiplyScalar(h / cur);
-}
-function groundFeet(obj) {
-	_box.setFromObject(obj, true);
-	if (Number.isFinite(_box.min.y)) obj.position.y -= _box.min.y;
-}
 
 // Build a crisp, high-DPI billboard label: bold name over a profession chip.
 // Returns a Sprite that always faces the camera (sizeAttenuation on, so distant
