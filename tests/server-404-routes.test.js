@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startTestServer } from './helpers/test-server.js';
+import { BUILD_HINT, HAS_FRONTEND_BUILD } from './helpers/dist-built.js';
 import { isMissingShellPage } from '../server/shell-pages.mjs';
 
 // An unknown URL must end in the designed 404 page with a real 404 status.
@@ -16,10 +17,16 @@ import { isMissingShellPage } from '../server/shell-pages.mjs';
 // Both are decided by server/shell-pages.mjs, which resolves the markdown
 // article a shell would fetch before the shell is served.
 
+// The server serves its pages out of dist/, so on a tree that was never
+// frontend-built every route answers with nothing and each assertion below
+// fails describing a 404 page that was simply never generated.
+if (!HAS_FRONTEND_BUILD) console.warn(`[server-404-routes] skipping: ${BUILD_HINT}`);
+
 let BASE;
 let server;
 
 beforeAll(async () => {
+	if (!HAS_FRONTEND_BUILD) return;
 	server = await startTestServer();
 	BASE = server.base;
 }, 30000);
@@ -30,7 +37,7 @@ afterAll(() => {
 
 const get = (path) => fetch(`${BASE}${path}`, { redirect: 'manual' });
 
-describe('unknown routes land on the designed 404', () => {
+describe.skipIf(!HAS_FRONTEND_BUILD)('unknown routes land on the designed 404', () => {
 	it('an unknown page returns 404 with the designed page, not a bare body', async () => {
 		const res = await get('/definitely-not-a-real-page-xyz');
 		expect(res.status).toBe(404);
@@ -59,7 +66,7 @@ describe('unknown routes land on the designed 404', () => {
 	});
 });
 
-describe('shared-shell surfaces do not soft-404', () => {
+describe.skipIf(!HAS_FRONTEND_BUILD)('shared-shell surfaces do not soft-404', () => {
 	it('an unknown /docs/ slug returns 404, not the docs shell at 200', async () => {
 		const res = await get('/docs/definitely-not-a-real-doc-xyz');
 		expect(res.status).toBe(404);

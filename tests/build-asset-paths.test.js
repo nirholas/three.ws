@@ -3,17 +3,22 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
+import { BUILD_HINT, DIST_DIR as dist, HAS_FRONTEND_BUILD } from './helpers/dist-built.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..');
-const dist = resolve(repoRoot, 'dist');
 
-const HAS_DIST = existsSync(dist);
+// The deploy chain writes sub-artifacts into dist/ before the frontend build
+// runs, so the directory existing proved nothing: on a tree built only that far
+// this suite failed on every page it looked for. HAS_FRONTEND_BUILD asks the
+// question that matters.
+if (!HAS_FRONTEND_BUILD) console.warn(`[build-asset-paths] skipping: ${BUILD_HINT}`);
 
 // Guards against the regression where /style.css 404'd in production
 // because public/* HTML rollup inputs collide with the public-dir copy.
 // If you see this fail, the deployed site is likely about to break the
 // same way studio did on 2026-04-27.
-describe.skipIf(!HAS_DIST)('build asset paths', () => {
+describe.skipIf(!HAS_FRONTEND_BUILD)('build asset paths', () => {
 
 	it('serves /style.css from dist root', () => {
 		expect(existsSync(resolve(dist, 'style.css'))).toBe(true);
