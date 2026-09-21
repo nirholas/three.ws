@@ -1473,7 +1473,7 @@
 		},
 		{
 			"id": "knock",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 1,
 			"lane": "token",
