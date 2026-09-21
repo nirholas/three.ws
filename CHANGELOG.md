@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-09-21
 
 - **Phantom users no longer have to switch off transaction protection to pay**: Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee. (`/club`) `[fix]`
+- **Three SDKs now report the version you actually installed**: The walk, tour and assistant SDKs each export a VERSION constant, and a release earlier this month bumped all three packages without updating it. Code that read the constant got the previous release's number: 0.3.0 from walk 0.3.1, 0.5.1 from tour 0.5.2, 1.0.0 from assistant 1.0.1. The constants now match the packages, and the tour builder's copy-paste embed snippet points at tour 0.5.2. Only the tour SDK had a test comparing the two, which is how this was found; the other two were caught by checking every package from that release for the same mistake. Copies already installed from npm keep the old number until the next release of each package. (`/tour-builder`) `[sdk, fix]`
 
 ## 2026-09-20
 

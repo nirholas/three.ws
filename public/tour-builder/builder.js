@@ -18,7 +18,7 @@
 
 import { SPERAX_TEMPLATE } from './presets/sperax.js';
 
-const VERSION_TOUR = '0.5.1';
+const VERSION_TOUR = '0.5.2';
 const VERSION_PAGE_AGENT = '0.2.0';
 const STORAGE_KEY = 'tws:tour-builder:v1';
 

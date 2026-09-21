@@ -31,7 +31,7 @@ import { createTourState, loadCurriculum } from './curriculum.js';
 
 // Kept in lockstep with package.json's version by test/index.test.mjs, the
 // CDN bundle reports this string, so a stale constant misidentifies the build.
-export const VERSION = '0.5.1';
+export const VERSION = '0.5.2';
 
 /**
  * Create a tour controller. Returns a small object the host drives:

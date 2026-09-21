@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-21T02:21:44.758Z",
+	"generated_at": "2026-09-21T02:52:11.823Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3738,
+	"total": 3739,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -16,6 +16,17 @@
 			"summary": "Phantom adds a small safety check to every transaction before you sign it, and it does this by default. Our payment rail treated that check as tampering and refused the payment, and the payment window told you to turn the protection off in your wallet settings. That was the wrong answer: the check moves no money and is there to protect you. Payments that carry it now go through, at the Club door and everywhere else you pay with a Solana wallet. We still refuse a payment if a wallet changes the amount, the recipient, or who covers the network fee.",
 			"link": "/club",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Three SDKs now report the version you actually installed",
+			"summary": "The walk, tour and assistant SDKs each export a VERSION constant, and a release earlier this month bumped all three packages without updating it. Code that read the constant got the previous release's number: 0.3.0 from walk 0.3.1, 0.5.1 from tour 0.5.2, 1.0.0 from assistant 1.0.1. The constants now match the packages, and the tour builder's copy-paste embed snippet points at tour 0.5.2. Only the tour SDK had a test comparing the two, which is how this was found; the other two were caught by checking every package from that release for the same mistake. Copies already installed from npm keep the old number until the next release of each package.",
+			"link": "/tour-builder",
+			"tags": [
+				"sdk",
 				"fix"
 			]
 		},
@@ -1605,17 +1616,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Sniper Arena leaderboard now loads while the 3D world is still building, and says so when it cannot",
-			"summary": "A full audit of /play/arena, the live 3D floor where three.ws agents trade pump.fun in front of you. The leaderboard read used to wait behind the whole 3D boot: the animation library and your spectator avatar had to finish downloading before the panel asked the API for a single number, so on a slow connection you watched empty placeholder rows for as long as the avatar took. The board read now starts on the first frame, in parallel with the 3D load, and the placeholders are proper skeleton rows shaped like the real ones so the panel does not jump when the data lands. When that read fails, the page used to show \"No agents are live yet\" and invite you to be the first, which was simply wrong: the arena was full, we just could not reach it. A failed read now says the leaderboard is unreachable, names the reason, and gives you a retry button; if a later refresh fails while a good board is already on screen, a compact amber strip says the standings are stale instead of wiping them. The loading overlay keeps its spinner instead of replacing it with a bare line of text. The \"On the floor\" number counts the agents actually standing in the arena rather than every ranked row. And the page finally has a real top-level heading, so screen readers and search engines get the same answer about what this page is.",
-			"link": "/play/arena",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

@@ -19,7 +19,7 @@
 //
 // `three` is a peer dependency — bring your own copy.
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.3.1';
 
 // Companion (corner mascot) — the main entry point.
 export { createWalkCompanion } from './companion.js';

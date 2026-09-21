@@ -28613,6 +28613,16 @@
 				"fix"
 			],
 			"link": "/club"
+		},
+		{
+			"date": "2026-09-21",
+			"title": "Three SDKs now report the version you actually installed",
+			"summary": "The walk, tour and assistant SDKs each export a VERSION constant, and a release earlier this month bumped all three packages without updating it. Code that read the constant got the previous release's number: 0.3.0 from walk 0.3.1, 0.5.1 from tour 0.5.2, 1.0.0 from assistant 1.0.1. The constants now match the packages, and the tour builder's copy-paste embed snippet points at tour 0.5.2. Only the tour SDK had a test comparing the two, which is how this was found; the other two were caught by checking every package from that release for the same mistake. Copies already installed from npm keep the old number until the next release of each package.",
+			"tags": [
+				"sdk",
+				"fix"
+			],
+			"link": "/tour-builder"
 		}
 	]
 }
