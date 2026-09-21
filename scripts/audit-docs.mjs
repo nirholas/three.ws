@@ -336,6 +336,10 @@ const UNPUBLISHED_DOCS = new Map([
 	['ibm-community-recap-nichxbt', 'internal: source draft of an IBM Community post'],
 	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
+	[
+		'ibm-community-governed-agents-thread',
+		'internal: discussion-thread draft for the IBM Community user group, held until POST /api/guardian/assess answers on production',
+	],
 	['ibm-next-event', 'internal: partner event proposal, prize budget and engineering plan'],
 	['ibm-event-offer-map', 'internal: partner event inventory naming readiness gaps and unsent asks'],
 	['ibm-visibility-map', 'internal: outreach map naming unsent asks and unclaimed Partner Plus benefits'],

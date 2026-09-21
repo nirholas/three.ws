@@ -8,6 +8,7 @@
 // "does not 500".
 
 import { describe, expect, it } from 'vitest';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -144,10 +145,25 @@ describe('diff_models MCP tool', () => {
 	});
 });
 
-// One end-to-end pass over real rigged assets in this repo. The endpoint above
-// is covered without network; this proves the engine the endpoint calls agrees
-// with what the page and the CLI would report for the same two files.
-describe('the engine behind the endpoint, on real avatars', () => {
+// One end-to-end pass over real rigged assets. The endpoint above is covered
+// without network; this proves the engine the endpoint calls agrees with what
+// the page and the CLI would report for the same two files.
+//
+// animation-sources/ is gitignored, so these GLBs exist only once
+// `npm run extract:animations` has staged them. Absent, the block skips rather
+// than failing a fresh clone on a missing optional asset.
+const REAL_ASSETS = ['xbot-idle.glb', 'xbot-walk.glb'];
+const haveRealAssets = REAL_ASSETS.every((name) =>
+	existsSync(path.join(REPO_ROOT, 'animation-sources', name)),
+);
+if (!haveRealAssets) {
+	console.warn(
+		'[model-diff] skipping the real-avatar block: animation-sources/ has no staged GLBs. ' +
+			'Run `npm run extract:animations` to fetch them.',
+	);
+}
+
+describe.skipIf(!haveRealAssets)('the engine behind the endpoint, on real avatars', () => {
 	it('finds only the clip difference between two exports of one rig', async () => {
 		const [a, b] = await Promise.all([
 			readFile(path.join(REPO_ROOT, 'animation-sources/xbot-idle.glb')),

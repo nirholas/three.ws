@@ -2,7 +2,7 @@
 
 **Surface:** [`/assistant`](https://three.ws/assistant) · **Stage:** drafted · **Slot:** 2026-09-22 · **Announced externally:** never
 
-Ranked 48 of 330 never-announced surfaces by `npm run announce:rank` (score 66). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/assistant.json`](../../data/announce-plan/briefs/assistant.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 48 of 330 never-announced surfaces by `npm run announce:rank` (score 66). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief `data/announce-plan/briefs/assistant.json` (a local build artifact: `data/announce-plan/` is gitignored, so regenerate it with `npm run announce:kit -- --id assistant --brief-only`), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 

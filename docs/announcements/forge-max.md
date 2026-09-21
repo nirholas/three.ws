@@ -2,7 +2,7 @@
 
 **Surface:** [`/forge-max`](https://three.ws/forge-max) · **Stage:** drafted · **Slot:** 2026-09-18 · **Announced externally:** never
 
-Ranked 19 of 322 never-announced surfaces by `npm run announce:rank` (score 75). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/forge-max.json`](../../data/announce-plan/briefs/forge-max.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 19 of 322 never-announced surfaces by `npm run announce:rank` (score 75). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief `data/announce-plan/briefs/forge-max.json` (a local build artifact: `data/announce-plan/` is gitignored, so regenerate it with `npm run announce:kit -- --id forge-max --brief-only`), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 

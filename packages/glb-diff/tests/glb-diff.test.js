@@ -3,11 +3,19 @@
 // Two layers, deliberately. Most cases build glTF Documents in memory so the
 // input is exact: a test that says "moving one vertex is a major change" moves
 // exactly one vertex. The last block runs the whole pipeline over real rigged
-// avatars shipped in this repo, because an engine that only ever sees synthetic
-// four-triangle meshes is an engine nobody has actually tested.
+// avatars, because an engine that only ever sees synthetic four-triangle meshes
+// is an engine nobody has actually tested.
+//
+// Those avatars are NOT committed. animation-sources/ is gitignored except for
+// its README: the GLBs there are split out of the three.js example models by
+// `npm run extract:animations`, which re-downloads them on demand. So the block
+// skips itself when they have not been staged, the way the animation build
+// already treats a missing source, instead of failing a fresh clone with an
+// ENOENT that reads like a broken engine.
 
 import { describe, expect, it } from 'vitest';
 import { Document } from '@gltf-transform/core';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -22,6 +30,16 @@ import { canonicalize, hashNumbers, hashString } from '../src/hash.js';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const asset = (name) => path.join(REPO_ROOT, 'animation-sources', name);
+
+// The exact files the real-avatar block reads. Staged by `npm run extract:animations`.
+const REAL_ASSETS = ['xbot-idle.glb', 'xbot-walk.glb', 'robot-walking.glb'];
+const haveRealAssets = REAL_ASSETS.every((name) => existsSync(asset(name)));
+if (!haveRealAssets) {
+	console.warn(
+		'[glb-diff] skipping the real-avatar block: animation-sources/ has no staged GLBs. ' +
+			'Run `npm run extract:animations` to fetch them.',
+	);
+}
 
 // A minimal but complete rigged model: one triangle skinned to two joints,
 // driven by one clip. Small enough to reason about, complete enough that every
@@ -253,7 +271,7 @@ describe('formatting', () => {
 	});
 });
 
-describe('real avatars', () => {
+describe.skipIf(!haveRealAssets)('real avatars', () => {
 	it('describes a rigged Mixamo avatar', async () => {
 		const bytes = new Uint8Array(await readFile(asset('xbot-idle.glb')));
 		const model = await describeModel(bytes, { name: 'xbot-idle.glb' });

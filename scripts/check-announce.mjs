@@ -46,6 +46,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK_DIR = join(root, 'docs/announcements');
 const MEDIA_SPEC = join(root, 'data/announce-media.json');
 const MANIFEST = join(root, 'public/announce/media-manifest.json');
+const QUEUE = join(root, 'data/x-content/queue.json');
 
 const argv = process.argv.slice(2);
 const only = (() => {
@@ -108,6 +109,20 @@ const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8'
 const manifestShots = new Map(
 	(Array.isArray(manifest.shots) ? manifest.shots : Object.values(manifest.shots || {})).map((s) => [s.id, s]),
 );
+
+// Media a queue item declares directly, keyed by the pack it ships with. Most
+// packs point at a captured shot id from data/announce-media.json, but a
+// hand-authored pack can ship a committed card instead, declared on the queue
+// item with its own alt text. That is the artifact the publisher actually
+// sends, so it satisfies the media rule exactly as a captured shot does.
+const queue = existsSync(QUEUE) ? JSON.parse(readFileSync(QUEUE, 'utf8')) : { items: [] };
+const queueMediaByPack = new Map();
+for (const item of queue.items || []) {
+	const src = item?.source?.path;
+	if (!src || !src.endsWith('.md')) continue;
+	const media = (item.posts || []).flatMap((post) => post.media || []);
+	if (media.length) queueMediaByPack.set(basename(src, '.md'), media);
+}
 
 // Surfaces whose frames carry live third-party market data. Derived from
 // data/pages.json rather than listed by hand, so a new crypto surface inherits
@@ -198,7 +213,15 @@ for (const file of packs) {
 
 	// Media, by shot id, present in the spec, on disk, and in the manifest.
 	const shotIds = [...body.matchAll(/^\| `([a-z0-9-]+)` \|/gm)].map((m) => m[1]);
-	if (!shotIds.length) fail(name, 'declares no media; a post with no image measured 0.875x');
+	const queueMedia = queueMediaByPack.get(name) || [];
+	if (!shotIds.length && !queueMedia.length) {
+		fail(name, 'declares no media; a post with no image measured 0.875x');
+	}
+	for (const item of queueMedia) {
+		if (!item.path) fail(name, 'queue media entry has no path');
+		else if (!existsSync(join(root, item.path))) fail(name, `queue media "${item.path}" is missing from the repo`);
+		if (!item.alt) fail(name, `queue media "${item.path || 'entry'}" has no alt text`);
+	}
 	for (const id of shotIds) {
 		if (!shotsById.has(id)) fail(name, `media shot "${id}" is not in data/announce-media.json`);
 		const written = manifestShots.get(id);
@@ -209,7 +232,12 @@ for (const file of packs) {
 		const shot = shotsById.get(id);
 		if (shot && !shot.alt) fail(name, `media shot "${id}" has no alt text`);
 	}
-	if (!/alt text/i.test(body)) fail(name, 'pack does not state the alt text the post must carry');
+	// Either the pack states the alt text, or the queue item carries it on the
+	// media it ships. One of the two must exist: a post that goes out without
+	// alt text is unreadable to anyone using a screen reader.
+	if (!/alt text/i.test(body) && !queueMedia.some((item) => item.alt)) {
+		fail(name, 'pack does not state the alt text the post must carry');
+	}
 
 	// The coin gate. Copy first, then the surfaces the media came from.
 	const named = gateTerms.filter((term) => new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(`${post}\n${body}`));

@@ -2,7 +2,7 @@
 
 **Surface:** [`/materialize`](https://three.ws/materialize) · **Stage:** drafted · **Slot:** 2026-09-19 · **Announced externally:** never
 
-Ranked 22 of 322 never-announced surfaces by `npm run announce:rank` (score 73). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/materialize.json`](../../data/announce-plan/briefs/materialize.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 22 of 322 never-announced surfaces by `npm run announce:rank` (score 73). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief `data/announce-plan/briefs/materialize.json` (a local build artifact: `data/announce-plan/` is gitignored, so regenerate it with `npm run announce:kit -- --id materialize --brief-only`), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 

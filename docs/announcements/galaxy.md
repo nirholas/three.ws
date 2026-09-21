@@ -2,7 +2,7 @@
 
 **Surface:** [`/galaxy`](https://three.ws/galaxy) · **Stage:** drafted · **Slot:** 2026-09-22 · **Announced externally:** never
 
-Ranked 143 of 330 never-announced surfaces by `npm run announce:rank` (score 51). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief in [`data/announce-plan/briefs/galaxy.json`](../../data/announce-plan/briefs/galaxy.json), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
+Ranked 143 of 330 never-announced surfaces by `npm run announce:rank` (score 51). Drafted by hand and packed by `npm run announce:kit`, from the evidence brief `data/announce-plan/briefs/galaxy.json` (a local build artifact: `data/announce-plan/` is gitignored, so regenerate it with `npm run announce:kit -- --id galaxy --brief-only`), against [the announcement voice](../announce-voice.md). Every fact below comes from that brief; nothing in this pack was written from memory.
 
 ---
 
