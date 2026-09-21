@@ -625,7 +625,7 @@
 		"manifold-3d": "^3.5.3",
 		"marked": "^18.0.7",
 		"meshoptimizer": "^1.2.0",
-		"mppx": "^0.6.31",
+		"mppx": "^0.10.1",
 		"multiformats": "^14.0.5",
 		"nanoid": "^3.3.11",
 		"nipplejs": "^1.0.4",
