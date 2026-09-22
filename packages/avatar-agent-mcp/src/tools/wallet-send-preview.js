@@ -1,4 +1,4 @@
-// `wallet_send_preview` — the spend-nothing preview that must run before
+// `wallet_send_preview`: the spend-nothing preview that must run before
 // wallet_send. Reads the sender's live balance and applies the same cap and
 // allowlist checks the send applies, without signing anything.
 

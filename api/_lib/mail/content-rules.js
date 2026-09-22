@@ -15,7 +15,7 @@ const NAME_SALUTATION_RE = /^[\p{L}][\p{L}\p{M}'. -]{0,58},$/u;
 const SIGNOFF_RE =
 	/^(best|best regards|best wishes|regards|kind regards|warm regards|warmly|thanks|thank you|many thanks|cheers|sincerely|yours|yours truly|all the best|talk soon|with thanks|respectfully|take care)\b[,.!]?/i;
 // A dash signature ("- Ava", or the same with an em dash) also counts.
-const DASH_SIGNATURE_RE = /^(-{1,2}|—|–)\s*\p{L}/u;
+const DASH_SIGNATURE_RE = /^(-{1,2}|\u2014|\u2013)\s*\p{L}/u;
 
 // Pressure tactics that turn a message into a phishing template. Matched on the
 // subject and the body; any hit rejects the draft.

@@ -1,4 +1,4 @@
-// `preview_transfer` — the preview that must run before send_transfer. Reads
+// `preview_transfer`: the preview that must run before send_transfer. Reads
 // the sender's live balances and applies the same cap and allowlist rules the
 // transfer applies, without signing.
 

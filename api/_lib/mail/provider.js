@@ -9,11 +9,11 @@
 //   name                       stable id stored on every message row
 //   configured()               true when sending and reading are possible
 //   webhookConfigured()        true when inbound webhooks can be verified
-//   send(msg)                  -> { id }                 (throws ProviderError)
+//   send(msg)                  returns { id }, throws ProviderError
 //     msg: { from, to[], cc[], replyTo?, subject, text, html?, headers?,
 //            attachments?: [{ filename, content: Buffer, contentType }],
 //            idempotencyKey }
-//   verifyWebhook({ rawBody, headers }) -> { type, data } (throws ProviderError 'bad_signature')
+//   verifyWebhook({ rawBody, headers }) returns { type, data }, throws ProviderError 'bad_signature'
 //   getInbound(id)             -> NormalizedInbound
 //     { id, from, to[], cc[], replyTo[], subject, text, html, headers,
 //       messageId, createdAt, attachments: [{ id, filename, size, contentType }] }

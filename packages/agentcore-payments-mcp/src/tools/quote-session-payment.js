@@ -1,4 +1,4 @@
-// `quote_session_payment` — the quote that must run before pay_with_session.
+// `quote_session_payment`: the quote that must run before pay_with_session.
 //
 // Probes the endpoint for its live x402 price through /api/pay/simulate (one
 // unpaid request, exactly what any x402 client does before deciding to pay) and,

@@ -1,4 +1,4 @@
-// `pump_collect_preview` — reads the creator-fee vault and shows exactly how
+// `pump_collect_preview`: reads the creator-fee vault and shows exactly how
 // much SOL pump_collect_fees would move to the destination.
 
 import { z } from 'zod';

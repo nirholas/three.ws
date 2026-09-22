@@ -1,4 +1,4 @@
-// `pump_launch_preview` — every SOL line a launch costs the funder, checked
+// `pump_launch_preview`: every SOL line a launch costs the funder, checked
 // against its live balance and the spend cap, before pump_launch runs.
 
 import { z } from 'zod';

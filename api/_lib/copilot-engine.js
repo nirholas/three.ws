@@ -183,7 +183,7 @@ export async function loadPortfolio(agentId, address, network) {
 	try {
 		const lamports = await conn.getBalance(ownerPk);
 		out.sol_balance = Number(lamports) / LAMPORTS_PER_SOL;
-	} catch { /* RPC hiccup — report null, copilot says balance unavailable */ }
+	} catch { /* RPC hiccup, report null, copilot says balance unavailable */ }
 	try {
 		const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 		const TOKEN22 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
@@ -202,7 +202,7 @@ export async function loadPortfolio(agentId, address, network) {
 			})
 			.filter(Boolean)
 			.slice(0, 30);
-	} catch { /* token read failed — holdings stay empty */ }
+	} catch { /* token read failed, holdings stay empty */ }
 	try {
 		const rows = await sql`
 			SELECT mint, symbol, status, entry_quote_lamports, last_value_lamports,
@@ -216,7 +216,7 @@ export async function loadPortfolio(agentId, address, network) {
 			current_sol: num(p.last_value_lamports) != null ? num(p.last_value_lamports) / LAMPORTS_PER_SOL : null,
 			unrealized_pnl_pct: num(p.realized_pnl_pct),
 		}));
-	} catch { /* positions table read failed — leave empty */ }
+	} catch { /* positions table read failed, leave empty */ }
 	return out;
 }
 
@@ -297,7 +297,7 @@ export async function runCopilotTurn({ agent, history, network, emit = () => {},
 	let finalText = '';
 	const active = () => isActive();
 
-	// Read-only tools are pure within a turn — the wallet/intel/quote a round sees
+	// Read-only tools are pure within a turn, the wallet/intel/quote a round sees
 	// won't change between the model's rounds. Memoize by (name, args) so when the
 	// model re-issues an identical read (a common small-model tic that otherwise
 	// burns a whole tool-loop round and paints a duplicate "Portfolio: …" line in
@@ -452,7 +452,7 @@ export async function runCopilotTurn({ agent, history, network, emit = () => {},
 			content: roundOut.content || null,
 			tool_calls: roundOut.toolCalls.map((tc) => ({ id: tc.id, type: 'function', function: { name: tc.name, arguments: tc.args || '{}' } })),
 		});
-		// A round is only "progress" if at least one call surfaced something new —
+		// A round is only "progress" if at least one call surfaced something new:
 		// a fresh read, or a proposal. If every call this round is a repeat of a
 		// read the model already ran this turn, it's spinning: feed the cached
 		// results back (OpenAI requires a tool result per tool_call) but break out
@@ -485,12 +485,12 @@ export async function runCopilotTurn({ agent, history, network, emit = () => {},
 				outcome = { result: { error: e?.message || 'tool_failed' }, summary: `Tool ${tc.name} failed: ${e?.message || 'error'}` };
 				progressed = true; // a genuine failure is new information, not a spin
 			}
-			// Surface read activity once per distinct read — never re-paint a cached repeat.
+			// Surface read activity once per distinct read, never re-paint a cached repeat.
 			if (!isPropose && !cached) send('tool', { name: tc.name, summary: outcome.summary, data: outcome.card || null });
 			if (!cached) toolCalls.push({ name: tc.name, summary: outcome.summary });
 			messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(outcome.result).slice(0, 6000) });
 		}
-		if (!progressed) break; // model looped on data it already has — go answer.
+		if (!progressed) break; // model looped on data it already has, go answer.
 	}
 
 	// If the loop hit its round cap mid-tool without a natural answer, ask for a

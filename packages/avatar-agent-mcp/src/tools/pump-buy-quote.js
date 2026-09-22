@@ -1,4 +1,4 @@
-// `pump_buy_quote` — the live Jupiter quote that must run before pump_buy.
+// `pump_buy_quote`: the live Jupiter quote that must run before pump_buy.
 // Same route, amount and slippage the buy will use; never signs.
 
 import { z } from 'zod';

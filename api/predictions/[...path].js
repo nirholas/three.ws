@@ -1,4 +1,4 @@
-// /api/predictions/* — public prediction-market reads for the /predictions page:
+// /api/predictions/*: public prediction-market reads for the /predictions page:
 // events, categories, event detail with price history, market detail with the
 // order book. Route table: api/_lib/predictions/routes.js. Guide: docs/predictions.md.
 
