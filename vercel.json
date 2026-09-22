@@ -3083,6 +3083,18 @@
 			"dest": "/api/agents/x402/[action]?action=manifest"
 		},
 		{
+			"src": "/api/me/usage/?",
+			"dest": "/api/inference/[action]?action=usage"
+		},
+		{
+			"src": "/api/me/inference/provision/preview/?",
+			"dest": "/api/inference/[action]?action=provision-preview"
+		},
+		{
+			"src": "/api/me/inference/provision/?",
+			"dest": "/api/inference/[action]?action=provision"
+		},
+		{
 			"src": "/api/x402-facilitator/?",
 			"dest": "/api/x402-facilitator/[action]?action=index"
 		},
@@ -3164,6 +3176,10 @@
 		},
 		{
 			"src": "/api/agents/([^/]+)/actions",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/credits(/.*)?",
 			"dest": "/api/agents/[id]"
 		},
 		{

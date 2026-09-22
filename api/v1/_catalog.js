@@ -34,6 +34,7 @@ export const API_META = {
 			'memory:write',
 			'agents:read',
 			'agents:write',
+			'inference',
 		],
 	},
 	rate_limit: {
@@ -49,6 +50,32 @@ export const API_META = {
 };
 
 export const CATALOG = [
+	{
+		id: 'v1.chat.completions',
+		method: 'POST',
+		path: '/api/v1/chat/completions',
+		auth: 'required',
+		scope: 'inference',
+		summary:
+			'OpenAI-compatible chat completions on the three.ws agent runtime (model three-ws/agent), ' +
+			'billed to account credits at the published per-token rate. Point any OpenAI client at ' +
+			'https://three.ws/api/v1 with a key carrying the inference scope.',
+		params: {
+			messages: 'array: OpenAI chat messages [{ role, content }] (required)',
+			model: 'string: three-ws/agent (default)',
+			stream: 'boolean: SSE chat.completion.chunk frames (default true)',
+			stream_options: 'object: { include_usage: true } adds a final usage + billing chunk',
+			agent_id: 'string: bill against this agent\'s inference budget (keys from /api/me/inference/provision are already bound)',
+		},
+	},
+	{
+		id: 'v1.models',
+		method: 'GET',
+		path: '/api/v1/models',
+		auth: 'public',
+		summary: 'OpenAI-compatible model list for /api/v1/chat/completions, with published per-token prices.',
+		params: {},
+	},
 	{
 		id: 'v1.ai.text_to_3d',
 		method: 'POST',

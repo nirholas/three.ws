@@ -6,6 +6,7 @@
  * POST /api/agents           — create a new agent identity
  * GET  /api/agents/:id       — get one agent (public fields if not owner)
  * PUT  /api/agents/:id       — update agent (owner only)
+ * PATCH /api/agents/:id      : partial update; also { inferenceBudget: { daily, monthly } | null }
  * DELETE /api/agents/:id     — soft-delete agent (owner only)
  * POST /api/agents/:id/wallet — link / update wallet
  * DELETE /api/agents/:id/wallet — unlink wallet
@@ -28,6 +29,11 @@ import { trackAgentOwnerVisit } from './_lib/retention.js';
 import { env } from './_lib/env.js';
 import { z } from 'zod';
 import { isUuid } from './_lib/validate.js';
+import {
+	normalizeInferenceBudget,
+	applyInferenceBudget,
+	resumeAfterBudgetChange,
+} from './_lib/inference-billing.js';
 
 const animationEntrySchema = z.object({
 	name: z.string().trim().min(1).max(60),
@@ -550,6 +556,26 @@ async function handleUpdate(req, res, id, auth) {
 					`meta.studio exceeds 256KB (${studioBytes} bytes)`);
 			}
 		}
+		// The inference budget (and its exhaustion stamp) is written only through
+		// the validated `inferenceBudget` field below, never by a raw meta merge.
+		delete mergedMeta.inference_budget;
+		if (existingMeta.inference_budget) mergedMeta.inference_budget = existingMeta.inference_budget;
+	}
+
+	// PATCH { inferenceBudget: { daily, monthly } | null }: cap the credits this
+	// agent's model calls may burn (api/_lib/inference-billing.js). Changing it
+	// clears a recorded exhaustion and restarts an agent the budget had stopped.
+	const budgetInput = body.inferenceBudget !== undefined ? body.inferenceBudget : body.inference_budget;
+	let budgetChanged = false;
+	if (budgetInput !== undefined) {
+		let budget;
+		try {
+			budget = normalizeInferenceBudget(budgetInput);
+		} catch (err) {
+			return error(res, err.status || 400, err.code || 'validation_error', err.message);
+		}
+		mergedMeta = applyInferenceBudget(mergedMeta || existing.meta || {}, budget);
+		budgetChanged = true;
 	}
 
 	// Brain Studio compiles its visual graph (meta.studio.brain) down to the real
@@ -574,6 +600,7 @@ async function handleUpdate(req, res, id, auth) {
 		WHERE id = ${id}
 		RETURNING *
 	`;
+	if (budgetChanged) await resumeAfterBudgetChange(id, existing.meta);
 	return json(res, 200, { agent: decorate(updated) });
 }
 

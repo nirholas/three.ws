@@ -53,6 +53,18 @@ export const TTS_ELEVEN_USD_PER_1K = 0.3;
 // every platform-key OpenAI synthesis is metered to the caller's credits.
 export const TTS_OPENAI_USD_PER_1K = 0.03;
 
+// Inference on the three.ws agent runtime (model id `three-ws/agent`, served
+// OpenAI-compatible at /api/v1/chat/completions): retail USD per 1,000,000
+// tokens, [input, output]. The runtime routes free lanes first and anchors on
+// Vertex Gemini, so one flat published rate is honest regardless of which lane
+// answered, and a budget in credits means the same thing on every call. A call
+// is never cheaper than INFERENCE_MIN_CALL_USD so a budget always converges.
+export const INFERENCE_USD_PER_MTOK = Object.freeze({ input: 0.5, output: 2 });
+export const INFERENCE_MIN_CALL_USD = 0.0001;
+// Wallet-funded top-ups convert USDC to credits at this published rate, no fee:
+// 1 USDC buys exactly $1.00 of credits (credits are USD-denominated).
+export const USDC_CREDIT_RATE = 1;
+
 // ── The catalog ─────────────────────────────────────────────────────────────────
 // id → { label, category, policy, usd }. `usd: null` ⇒ price set per-call.
 export const CATALOG = Object.freeze({
@@ -122,6 +134,12 @@ export const CATALOG = Object.freeze({
 		category: 'generation',
 		policy: POLICY.CONSUMPTION,
 		usd: null, // per-call: characters * TTS_OPENAI_USD_PER_1K / 1000
+	},
+	'inference.agent': {
+		label: 'Inference: three-ws/agent model calls (per 1M tokens)',
+		category: 'inference',
+		policy: POLICY.CONSUMPTION,
+		usd: null, // per-call: tokens priced at INFERENCE_USD_PER_MTOK
 	},
 	'selfie.reconstruct': {
 		label: 'Selfie → Avatar reconstruction',

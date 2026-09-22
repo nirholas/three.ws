@@ -10,8 +10,9 @@
 // row with meta.intent_id so the owner sees real receipts.
 //
 // Triggers : on_tip_received | on_income | on_balance_below | on_schedule
-//            | on_launch_matching | on_stream_started
+//            | on_launch_matching | on_stream_started | credits_below
 // Actions  : tip | transfer | buy | snipe | withdraw | split_income | freeze | notify
+//            | fund_inference (USDC -> account credits, api/_lib/inference-topup.js)
 //
 // $THREE is the only coin three.ws promotes. "$THREE"/"three" resolves to its
 // canonical mint; any other mint is the owner's own runtime input (a snipe
@@ -43,6 +44,8 @@ import { THREE_MINT } from './networth-model.js';
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { recentPumpLaunches, enrichCreatorStats } from './pump-launch-feed.js';
 import { logAudit } from './audit.js';
+import { getCreditAccount } from './credits.js';
+import { topupFromIntent, normalizeTopupAmount, TopupError } from './inference-topup.js';
 
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 const JUPITER_BASE = 'https://lite-api.jup.ag/swap/v1';
@@ -57,6 +60,11 @@ export const INTENT_TRIGGERS = Object.freeze([
 	'on_schedule',
 	'on_launch_matching',
 	'on_stream_started',
+	// Fired only by the v1 automation engine (api/_lib/agents-v1/automations.js),
+	// never by the sweep or an event hook: the automation owns the trigger and
+	// this intent owns the guarded execution.
+	'on_automation',
+	'credits_below',
 ]);
 
 export const INTENT_ACTIONS = Object.freeze([
@@ -68,6 +76,7 @@ export const INTENT_ACTIONS = Object.freeze([
 	'split_income',
 	'freeze',
 	'notify',
+	'fund_inference',
 ]);
 
 // Actions that move funds (need spend-policy enforcement + a signing keypair).
@@ -152,6 +161,10 @@ export function normalizeIntent(raw, { threeMint = THREE_MINT } = {}) {
 		if (!trigger.creator && trigger.max_mcap_usd == null) {
 			return { ok: false, error: 'needs_filter', message: 'a launch rule needs a creator address and/or a max market cap to match on' };
 		}
+	} else if (triggerType === 'credits_below') {
+		const t = posNum(tcfg.threshold_usd);
+		if (t == null) return { ok: false, error: 'needs_threshold', message: 'a credits threshold (USD) is required' };
+		trigger.threshold_usd = t;
 	}
 	// on_income / on_stream_started carry no required config.
 
@@ -159,6 +172,17 @@ export function normalizeIntent(raw, { threeMint = THREE_MINT } = {}) {
 	const action = { type: actionType };
 	if (actionType === 'freeze') {
 		// no params — the kill switch
+	} else if (actionType === 'fund_inference') {
+		// Top up the owner's account credits from this agent's USDC. The window is
+		// one UTC day: however often the trigger holds, a rule tops up once a day.
+		if (!['credits_below', 'on_schedule'].includes(triggerType)) {
+			return { ok: false, error: 'bad_pairing', message: 'fund_inference runs on a credits_below or on_schedule trigger' };
+		}
+		try {
+			action.amount_usdc = normalizeTopupAmount(acfg.amount_usdc);
+		} catch (e) {
+			return { ok: false, error: 'needs_amount', message: e.message };
+		}
 	} else if (actionType === 'notify') {
 		action.message = str(acfg.message, 280) || null;
 		action.channel = ['email', 'log'].includes(acfg.channel) ? acfg.channel : 'email';
@@ -173,7 +197,9 @@ export function normalizeIntent(raw, { threeMint = THREE_MINT } = {}) {
 		const slip = num(acfg.slippage_pct);
 		action.slippage_pct = slip != null ? clamp(slip, 0, 50) : 5;
 		// For a non-launch buy the mint must be known up front.
-		if (triggerType !== 'on_launch_matching' && !action.mint) {
+		// An automation on a launch trigger supplies the matched mint at fire time too.
+		action.mint_from_event = triggerType === 'on_automation' && acfg.mint_from_event === true;
+		if (triggerType !== 'on_launch_matching' && !action.mint && !action.mint_from_event) {
 			return { ok: false, error: 'needs_mint', message: 'name the token to buy ($THREE or a mint address)' };
 		}
 	} else {
@@ -210,6 +236,10 @@ export function normalizeIntent(raw, { threeMint = THREE_MINT } = {}) {
 		}
 	}
 
+	if (triggerType === 'credits_below' && !['fund_inference', 'notify'].includes(actionType)) {
+		return { ok: false, error: 'bad_pairing', message: 'a credits_below rule can top up credits (fund_inference) or notify you' };
+	}
+
 	// ── owner-set caps (clamped under the spend policy at execution time) ──
 	const lim = r.limits || {};
 	const limits = {
@@ -236,6 +266,7 @@ function defaultTitle(triggerType, actionType, action) {
 		on_schedule: 'On schedule',
 		on_launch_matching: 'On matching launch',
 		on_stream_started: 'On stream start',
+		credits_below: 'On low credits',
 	}[triggerType] || 'Intent';
 	const A = {
 		tip: 'tip back',
@@ -246,6 +277,7 @@ function defaultTitle(triggerType, actionType, action) {
 		split_income: 'split income',
 		freeze: 'freeze the wallet',
 		notify: 'notify me',
+		fund_inference: 'top up credits',
 	}[actionType] || actionType;
 	return `${T} → ${A}`;
 }
@@ -268,6 +300,8 @@ export function describeIntent(intent) {
 			return `${t.cadence === 'weekly' ? `Every ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][t.weekday ?? 5]}` : 'Daily'} at ${String(t.hour).padStart(2, '0')}:00 UTC, ${a.type} ${amt}${dest ? ` to ${dest}` : ''}.`;
 		case 'on_launch_matching':
 			return `When a launch matches${t.creator ? ` creator ${t.creator.slice(0, 4)}…` : ''}${t.max_mcap_usd ? ` under $${Math.round(t.max_mcap_usd / 1000)}k` : ''}, ${a.type} ${a.amount_sol} SOL.`;
+		case 'credits_below':
+			return `When credits fall below $${t.threshold_usd}, ${a.type === 'fund_inference' ? `top up ${a.amount_usdc} USDC from the wallet, at most once a day` : 'notify me'}.`;
 		case 'on_stream_started':
 			return `When a money stream starts, ${a.type} ${amt}${dest ? ` to ${dest}` : ''}.`;
 		default:
@@ -416,17 +450,18 @@ const COMPILE_TOOL = {
 				description:
 					'on_tip_received: someone tips the agent. on_income: any income arrives. on_balance_below: SOL balance drops under a floor. ' +
 					'on_schedule: a daily/weekly time. on_launch_matching: a new pump.fun launch matches a creator and/or market cap. ' +
-					'on_stream_started: a money stream to the agent begins.',
+					'on_stream_started: a money stream to the agent begins. credits_below: the owner\'s account credits (USD) drop under a floor.',
 			},
 			trigger_config: {
 				type: 'object',
 				description:
 					'Fields by trigger. on_tip_received: { min_sol }. on_balance_below: { threshold_sol }. on_schedule: ' +
 					'{ cadence: "daily"|"weekly", weekday: 0-6 (Sun=0..Sat=6, Fri=5), hour: 0-23 (UTC) }. on_launch_matching: ' +
-					'{ creator: base58|null, max_mcap_usd, min_mcap_usd }.',
+					'{ creator: base58|null, max_mcap_usd, min_mcap_usd }. credits_below: { threshold_usd }.',
 				properties: {
 					min_sol: { type: 'number' },
 					threshold_sol: { type: 'number' },
+					threshold_usd: { type: 'number' },
 					cadence: { type: 'string', enum: ['daily', 'weekly'] },
 					weekday: { type: 'number' },
 					hour: { type: 'number' },
@@ -441,7 +476,8 @@ const COMPILE_TOOL = {
 				description:
 					'tip/transfer: send SOL to a destination. buy/snipe: spend SOL to acquire a token. withdraw: send SOL to an ' +
 					'owner-controlled address. split_income: send a % of income to a destination. freeze: halt all spending ' +
-					'(kill switch). notify: just DM the owner.',
+					'(kill switch). notify: just DM the owner. fund_inference: move USDC from the agent wallet into account credits ' +
+					'that pay for model calls (only with credits_below or on_schedule).',
 			},
 			action_config: {
 				type: 'object',
@@ -449,7 +485,7 @@ const COMPILE_TOOL = {
 					'Fields by action. tip/transfer: { amount_sol } OR { pct, of: "tip"|"income"|"balance" }, destination. ' +
 					'buy/snipe: { mint ("$THREE" or base58, omit for on_launch_matching), amount_sol, slippage_pct }. ' +
 					'withdraw: { amount_sol } OR { above_sol } OR { pct }, destination. split_income: { pct, destination }. ' +
-					'notify: { message }. "half of what they sent" → pct 50, of "tip".',
+					'notify: { message }. fund_inference: { amount_usdc }. "half of what they sent" → pct 50, of "tip".',
 				properties: {
 					amount_sol: { type: 'number' },
 					above_sol: { type: 'number' },
@@ -459,6 +495,7 @@ const COMPILE_TOOL = {
 					mint: { type: 'string' },
 					slippage_pct: { type: 'number' },
 					message: { type: 'string' },
+					amount_usdc: { type: 'number' },
 				},
 			},
 			limits: {
@@ -494,6 +531,7 @@ function compileSystemPrompt({ agentName, network, balanceSol, holdings, limits,
 		'- NEVER invent an amount, destination, creator address, token, or schedule. If the rule is missing any of these, set needs_clarification=true with one short question.',
 		'- "tip back half of what they sent" → trigger on_tip_received, action tip, action_config { pct: 50, of: "tip" }, destination is the tipper (leave destination empty — the engine fills the tipper in at fire time).',
 		'- "when my balance is under X, freeze and DM me" → trigger on_balance_below { threshold_sol: X }, action freeze.',
+		'- "when credits fall below 100, top up 5 USDC from the wallet" → trigger credits_below { threshold_usd: 100 }, action fund_inference { amount_usdc: 5 }. Credits are USD; the engine tops up at most once a day.',
 		'- "split 10% of everything I earn to <addr/name>" → trigger on_income, action split_income { pct: 10, destination: <addr/.sol> }.',
 		'- "every Friday withdraw profit above 2 SOL to <addr>" → trigger on_schedule { cadence: "weekly", weekday: 5, hour: 13 }, action withdraw { above_sol: 2, destination: <addr> }.',
 		'- "snipe launches from <creator> under $40k, max 1 SOL each" → trigger on_launch_matching { creator, max_mcap_usd: 40000 }, action snipe { amount_sol: 1 } (omit mint — it is the matched launch).',
@@ -715,13 +753,10 @@ async function claimRejection({ agentId, intentId, idemKey, usd, network, dailyU
 	return { status: 'skipped', note: 'already fired for this event' };
 }
 
-async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports, rowMeta, doSpend }) {
-	const { agentId, ownerId, userId, network, dryRun, now } = ctx;
-
-	// 1) intent-level caps (per-action / daily / total): the owner's own ceilings.
-	// The per-action cap is exact here (one value against a constant); the daily and
-	// lifetime budgets are re-checked atomically inside the claim in step 3, so this
-	// pass exists to reject early with a precise message, not to be the gate.
+// Intent-level caps (per-action / daily / total): the owner's own ceilings for one
+// rule. Returns a skip/pause verdict, or null when the spend fits every cap.
+async function intentCapVerdict({ ctx, intent, usd }) {
+	const { agentId, now } = ctx;
 	const lim = intent.limits || {};
 	if (lim.per_action_usd != null && usd > lim.per_action_usd + 1e-9) {
 		return { status: 'skipped', note: `over this rule's per-action cap ($${lim.per_action_usd})`, usd };
@@ -739,6 +774,46 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 			return { status: 'paused', note: `would exceed this rule's lifetime cap ($${lim.total_usd})`, usd };
 		}
 	}
+	return null;
+}
+
+// Top up the owner's credits from the agent wallet (USDC through the
+// self-facilitator). The top-up path runs its own spend-policy reserve, so this
+// only applies the rule's caps and maps the outcome onto the intent vocabulary.
+async function fundInference({ ctx, intent, discriminator }) {
+	const usd = Number(intent.action.amount_usdc);
+	const capped = await intentCapVerdict({ ctx, intent, usd });
+	if (capped) return capped;
+	if (ctx.dryRun) return { status: 'would_run', note: `would top up ${usd} USDC of credits from the agent wallet`, usd };
+	try {
+		const r = await topupFromIntent({
+			agentId: ctx.agentId,
+			ownerId: ctx.ownerId,
+			amountUsdc: usd,
+			intentId: intent.id,
+			idempotencyKey: `intent:${intent.id}:${discriminator}`,
+		});
+		if (r.status === 'skipped') return { status: 'skipped', note: r.note };
+		if (r.status === 'settled') {
+			return { status: 'ok', signature: r.signature, explorer: explorerTxUrl(r.signature, 'mainnet'), usd, note: `topped up $${r.credits_usd} of credits` };
+		}
+		return { status: 'paused', note: r.note || 'top-up broadcast, waiting for confirmation', signature: r.signature, usd };
+	} catch (e) {
+		if (e instanceof TopupError && e.status < 500) return { status: 'paused', note: e.message, usd };
+		return { status: 'error', note: (e?.message || 'top-up failed').slice(0, 240), usd };
+	}
+}
+
+async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports, rowMeta, doSpend }) {
+	const { agentId, ownerId, userId, network, dryRun, now } = ctx;
+
+	// 1) intent-level caps (per-action / daily / total): the owner's own ceilings.
+	// The per-action cap is exact here (one value against a constant); the daily and
+	// lifetime budgets are re-checked atomically inside the claim in step 3, so this
+	// pass exists to reject early with a precise message, not to be the gate.
+	const capped = await intentCapVerdict({ ctx, intent, usd });
+	if (capped) return capped;
+	const lim = intent.limits || {};
 
 	// 2) the agent spend policy: the SAME hard ceiling every outbound path obeys.
 	// This runs every non-daily guard (freeze, allowlist, NL policy rules, per-tx
@@ -935,6 +1010,10 @@ async function executeAction(intent, ctx, event = {}) {
 			const n = await notifyOwner({ ctx, intent, discriminator: disc, subject: `${ctx.agentName || 'Your agent'}: wallet frozen`, body: note });
 			return { status: 'ok', note, frozen: true, notify: n.status };
 		}
+		case 'fund_inference': {
+			// One top-up per UTC day per rule, whatever fired it.
+			return fundInference({ ctx, intent, discriminator: ctx.discriminator || `credits:${now.toISOString().slice(0, 10)}` });
+		}
 		case 'notify': {
 			const disc = ctx.discriminator || `notify:${now.toISOString().slice(0, 13)}`;
 			const body = a.message || describeIntent(intent);
@@ -971,8 +1050,11 @@ async function executeAction(intent, ctx, event = {}) {
 // ── execution context (loads the agent, gates safety, recovers the key once) ─────
 
 async function buildExecContext({ agentId, userId, network, dryRun, needsKey }) {
-	const [row] = await sql`SELECT id, user_id, name, meta FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
+	const [row] = await sql`SELECT id, user_id, name, meta, status FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
 	if (!row) return { error: 'not_found' };
+	// A stopped agent pauses every intent without deleting it. An owner's dry run
+	// still reports what would happen.
+	if (row.status === 'stopped' && !dryRun) return { error: 'agent_stopped' };
 	const meta = row.meta || {};
 	const address = meta.solana_address;
 	const encryptedSecret = meta.encrypted_solana_secret;
@@ -1053,6 +1135,47 @@ export async function runIntentNow({ agentId, userId, intentId, network = 'mainn
 	return { ran: true, dryRun, results: [{ ...intentSummary(intent), ...res }] };
 }
 
+/**
+ * Execute one intent for a v1 automation whose trigger just fired. Same guarded
+ * path as the sweep: freeze, spend policy, the intent's own caps, and the
+ * idempotent custody claim keyed by `discriminator` (one execution per fire).
+ *
+ * @param {object} o
+ * @param {string} o.agentId
+ * @param {string} o.intentId
+ * @param {string} o.discriminator  unique per fire, e.g. `auto:<id>:<event>`
+ * @param {object} [o.event]        trigger event ({ amount_sol, from, signature, mint })
+ * @param {string} [o.network]
+ */
+export async function fireIntentForAutomation({ agentId, intentId, discriminator, event = {}, network = 'mainnet' }) {
+	const intent = await getIntent(agentId, intentId);
+	if (!intent) return { status: 'error', note: 'backing intent not found' };
+	if (!intent.enabled) return { status: 'skipped', note: 'backing intent disabled' };
+	const built = await buildExecContext({
+		agentId,
+		userId: null,
+		network,
+		dryRun: false,
+		needsKey: SPENDING_ACTIONS.has(intent.action.type),
+	});
+	if (built.error) {
+		const res = { status: 'paused', note: built.error };
+		await stampFire(intent, res).catch(() => {});
+		return res;
+	}
+	const ctx = built.ctx;
+	ctx.discriminator = discriminator;
+	if (intent.action.mint_from_event && event.mint) ctx.overrideMint = event.mint;
+	let res;
+	try {
+		res = await executeAction(intent, ctx, event);
+	} catch (e) {
+		res = { status: 'error', note: (e?.message || 'failed').slice(0, 240) };
+	}
+	await stampFire(intent, res, ctx.now).catch(() => {});
+	return res;
+}
+
 function intentSummary(intent) {
 	return { id: intent.id, title: intent.title, trigger: intent.trigger.type, action: intent.action.type };
 }
@@ -1064,6 +1187,7 @@ function synthEvent(intent, ctx) {
 		return { amount_sol: sampleSol, usd: sampleSol * ctx.price, from: null, signature: null, sample: true };
 	}
 	if (t.type === 'on_balance_below') return { balance_sol: ctx.balanceSol };
+	if (t.type === 'credits_below') return { credits_usd: null };
 	return {};
 }
 
@@ -1204,7 +1328,18 @@ export async function runIntentSweep({ network = 'mainnet', now = new Date(), la
 		tallySweep(summary, intent.trigger.type, r);
 	}
 
-	// 3) launch-matching intents — one shared pull of recent launches, matched per rule.
+	// 3) credits-floor intents: top the owner's account credits up from the agent
+	// wallet when they fall under the rule's threshold (fund_inference).
+	const credits = (await sql`
+		SELECT * FROM agent_wallet_intents WHERE enabled = true AND trigger_type = 'credits_below' AND network = ${network}
+	`).map(rowToIntent);
+	for (const intent of credits) {
+		summary.scanned++;
+		const r = await fireCreditsIntent(intent, network, now);
+		tallySweep(summary, intent.trigger.type, r);
+	}
+
+	// 4) launch-matching intents: one shared pull of recent launches, matched per rule.
 	const launch = (await sql`
 		SELECT * FROM agent_wallet_intents WHERE enabled = true AND trigger_type = 'on_launch_matching' AND network = ${network}
 	`).map(rowToIntent);
@@ -1267,6 +1402,22 @@ async function fireBalanceIntent(intent, network, now) {
 	return res;
 }
 
+async function fireCreditsIntent(intent, network, now) {
+	const built = await buildExecContext({ agentId: intent.agent_id, userId: null, network, dryRun: false, needsKey: false });
+	if (built.error) { const res = { status: 'paused', note: built.error }; await stampFire(intent, res, now).catch(() => {}); return res; }
+	const ctx = built.ctx; ctx.now = now;
+	const acct = await getCreditAccount(ctx.ownerId);
+	if (acct.balanceUsd >= intent.trigger.threshold_usd) {
+		return { status: 'skipped', note: `credits $${acct.balanceUsd.toFixed(2)} are above the $${intent.trigger.threshold_usd} floor` };
+	}
+	ctx.discriminator = `credits:${now.toISOString().slice(0, 10)}`;
+	let res;
+	try { res = await executeAction(intent, ctx, { credits_usd: acct.balanceUsd }); }
+	catch (e) { res = { status: 'error', note: (e?.message || 'failed').slice(0, 240) }; }
+	await stampFire(intent, res, now).catch(() => {});
+	return res;
+}
+
 async function fireLaunchIntent(intent, network, now, launches, solPrice) {
 	const t = intent.trigger;
 	// Match by creator and/or market cap. Creator-gated rules enrich on demand.
@@ -1316,5 +1467,6 @@ function traitLabel(trigger, action) {
 	if (action === 'split_income') return 'Shares its income';
 	if (trigger === 'on_launch_matching' && action === 'snipe') return 'Snipes fresh launches';
 	if (action === 'freeze') return 'Self-protects on low balance';
+	if (action === 'fund_inference') return 'Pays for its own thinking';
 	return null;
 }

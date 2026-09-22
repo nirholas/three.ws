@@ -75,9 +75,16 @@ function chunkFrame(id, delta, finishReason = null) {
 
 /**
  * Run one full agent completion over `body.messages` and answer in OpenAI
- * format (SSE when body.stream, JSON otherwise). Shared by POST /api/agent/run
- * and the chat proxy's `three-ws/agent` model branch; `opts.rateLimited` skips
- * the limiter when the caller already applied its own.
+ * format (SSE when body.stream, JSON otherwise). Shared by POST /api/agent/run,
+ * the chat proxy's `three-ws/agent` model branch and the metered
+ * /api/v1/chat/completions; `opts.rateLimited` skips the limiter when the
+ * caller already applied its own.
+ *
+ * Token usage is summed over every model round and reported the OpenAI way: a
+ * `usage` object on the JSON response, and a final usage chunk on a stream when
+ * the request asked for `stream_options.include_usage`. `opts.onUsage(usage,
+ * completionId)` receives the same totals once the answer is complete, which is
+ * where a metered caller books the charge.
  */
 export async function runAgentCompletion(req, res, body, opts = {}) {
 	if (!opts.rateLimited) {
@@ -115,6 +122,9 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	};
 
 	let streamedAny = false;
+	// Platform cost rides along (null when any round hit an unpriced lane) so a
+	// metered caller can record honest spend next to what it billed.
+	const usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, estimated: false, cost_micro_usd: 0, lanes: [] };
 	const loop = createAgentLoop({
 		chain,
 		toolSchemas: agentToolSchemas(),
@@ -125,6 +135,15 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 			if (stream) sse(chunkFrame(completionId, { content: delta }));
 		},
 		onEvent: (event) => {
+			if (event.kind === 'model_call' && event.usage) {
+				usage.prompt_tokens += event.usage.input || 0;
+				usage.completion_tokens += event.usage.output || 0;
+				usage.total_tokens = usage.prompt_tokens + usage.completion_tokens;
+				if (event.usage.estimated) usage.estimated = true;
+				usage.cost_micro_usd =
+					usage.cost_micro_usd == null || event.costMicroUsd == null ? null : usage.cost_micro_usd + event.costMicroUsd;
+				usage.lanes.push({ provider: event.provider, model: event.model });
+			}
 			if (stream && event.kind === 'tool_call') sse(`: tool ${event.tool}\n\n`);
 		},
 	});
@@ -161,11 +180,29 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		return error(res, 502, 'agent_loop_failed', detail);
 	}
 
+	const openAiUsage = {
+		prompt_tokens: usage.prompt_tokens,
+		completion_tokens: usage.completion_tokens,
+		total_tokens: usage.total_tokens,
+	};
+	const billed = opts.onUsage ? await opts.onUsage(usage, completionId) : null;
+
 	if (stream) {
 		// A run whose final round emitted no deltas (e.g. everything came from a
 		// non-streaming provider quirk) still owes the client the content.
 		if (!streamedAny && finalContent) sse(chunkFrame(completionId, { content: finalContent }));
 		sse(chunkFrame(completionId, {}, 'stop'));
+		if (body?.stream_options?.include_usage) {
+			sse(`data: ${JSON.stringify({
+				id: completionId,
+				object: 'chat.completion.chunk',
+				created: Math.floor(Date.now() / 1000),
+				model: AGENT_MODEL_ID,
+				choices: [],
+				usage: openAiUsage,
+				...(billed ? { billing: billed } : {}),
+			})}\n\n`);
+		}
 		sse('data: [DONE]\n\n');
 		return res.end();
 	}
@@ -178,6 +215,8 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		choices: [
 			{ index: 0, message: { role: 'assistant', content: finalContent }, finish_reason: 'stop' },
 		],
+		usage: openAiUsage,
+		...(billed ? { billing: billed } : {}),
 	});
 }
 

@@ -18,6 +18,7 @@
  * /api/agents/:id/registration    — public EIP-8004 registry document (Metaplex Agent Registry URI)
  * /api/agents/:id/sign            — owner-only: sign message with server wallet
  * /api/agents/:id/usage           — owner-only: LLM usage stats
+ * /api/agents/:id/credits         : owner-only: credits, inference budget, wallet-funded top-ups (credits/topup/preview, credits/topup, credits/auto-fund)
  * /api/agents/:id/achievements    — public: earned + locked achievements from real platform data
  * /api/agents/:id/reserves        : public proof-of-reserves (alias of /solana/reserves)
  *
@@ -171,6 +172,11 @@ export default wrap(async function handler(req, res) {
 	if (sub === 'sign') {
 		const mod = await import('./_id/_sub.js');
 		return mod.handleSign(req, res, id);
+	}
+
+	if (sub === 'credits') {
+		const mod = await import('./_id/credits.js');
+		return mod.handleCredits(req, res, id, action, parts[5]);
 	}
 
 	if (sub === 'usage') {
