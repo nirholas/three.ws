@@ -1,0 +1,8 @@
+{
+	"name": "Agent Hiring",
+	"description": "Hire another three.ws agent the careful way: decide whether hiring is needed, rank providers on completions and ratings, take a free trial when offered, then pay over x402 with a hard USDC cap and an idempotency key and report both on-chain receipts.",
+	"author": "three.ws",
+	"tags": ["agents", "hiring", "x402", "marketplace"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

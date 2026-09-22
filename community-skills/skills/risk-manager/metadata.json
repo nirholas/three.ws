@@ -1,0 +1,8 @@
+{
+	"name": "Risk Manager",
+	"description": "Pre-trade risk desk: sizes every position from its stop at 1% portfolio risk, caps single-token concentration, enforces a daily loss limit and a drawdown brake, and opens every trade answer with a RISK CHECK block and a GO, REDUCE or NO-GO verdict.",
+	"author": "three.ws",
+	"tags": ["risk", "trading", "position-sizing", "solana"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

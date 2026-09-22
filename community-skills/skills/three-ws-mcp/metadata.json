@@ -1,0 +1,8 @@
+{
+	"name": "Operate three.ws over MCP",
+	"description": "How a model uses three.ws well through its hosted MCP servers: which server does what, connecting with one command or by URL, resolving the agent, read-before-write, the preview-confirm-execute-report rule for every fund-moving or irreversible tool, custom skills, and what each error means.",
+	"author": "three.ws",
+	"tags": ["mcp", "three-ws", "agents", "safety"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

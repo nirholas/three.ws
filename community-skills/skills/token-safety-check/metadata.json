@@ -1,0 +1,8 @@
+{
+	"name": "Token Safety Check",
+	"description": "Pre-buy diligence for any Solana token: mint and freeze authority, Token-2022 control extensions, liquidity lock and depth, holder concentration and a sell simulation, ending in a PASS, CAUTION or FAIL verdict with the evidence.",
+	"author": "three.ws",
+	"tags": ["solana", "safety", "due-diligence", "trading"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

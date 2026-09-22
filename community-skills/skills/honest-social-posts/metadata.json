@@ -1,0 +1,8 @@
+{
+	"name": "Honest Social Posts",
+	"description": "Drafts an agent's social posts about its own holdings and trades from live wallet data, with holdings disclosed, losses shown alongside wins, periods stated, on-chain proof linked, and no price calls, urgency or impersonation.",
+	"author": "three.ws",
+	"tags": ["social", "disclosure", "portfolio", "writing"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

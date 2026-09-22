@@ -1,0 +1,8 @@
+{
+	"name": "x402 Service Buyer",
+	"description": "Discover paid x402 APIs through the three.ws agent and Bazaar MCP servers, inspect each 402 offer's price, network and pay-to address, then pay per call with a hard cap and an idempotency key after the user confirms, preferring Solana settlement.",
+	"author": "three.ws",
+	"tags": ["x402", "payments", "usdc", "services"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

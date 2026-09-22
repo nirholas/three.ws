@@ -1,0 +1,8 @@
+{
+	"name": "Pool and Candles",
+	"description": "Locate a Solana token's most liquid pool and read its OHLCV candles at any interval, reporting range, change, volatility and volume trend in plain language, with no price predictions.",
+	"author": "three.ws",
+	"tags": ["solana", "market-data", "ohlcv", "charts"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

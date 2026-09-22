@@ -128,6 +128,16 @@ const REQUIRED = [
 	},
 	{ path: 'data', kind: 'dir', why: 'handlers read data/*.json at runtime' },
 	{
+		path: 'community-skills/registry.json',
+		kind: 'file',
+		why: 'api/_lib/community-skills.js reads it for /api/skills/community and every custom-skill import',
+	},
+	{
+		path: 'community-skills/skills',
+		kind: 'dir',
+		why: 'imports copy each SKILL.md into the agent; without it every import 500s',
+	},
+	{
 		path: 'tests/fixtures/fact-check-benchmark.json',
 		kind: 'file',
 		why: 'api/fact-check-benchmark.js renders it; api/cron/fact-check-benchmark.js runs it',

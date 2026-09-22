@@ -1,0 +1,8 @@
+{
+	"name": "Alpha Scanner",
+	"description": "Scans Solana new launches, momentum leaders, volume spikes and smart-money overlap, hard-filters unsafe tokens with the reasons listed, and returns a short ranked watchlist where every entry is backed by a number and a timestamp.",
+	"author": "three.ws",
+	"tags": ["solana", "scanning", "new-launches", "market-data"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

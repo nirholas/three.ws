@@ -1,0 +1,8 @@
+{
+	"name": "Whale Watch",
+	"description": "Track large-wallet and smart-money flows on Solana tokens with net buy and sell totals, wallet identification, bundling detection and transaction links, reported as verifiable evidence rather than trade signals.",
+	"author": "three.ws",
+	"tags": ["solana", "whales", "smart-money", "market-data"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

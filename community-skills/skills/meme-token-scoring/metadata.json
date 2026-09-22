@@ -1,0 +1,8 @@
+{
+	"name": "Meme Token Scoring",
+	"description": "A transparent 0-100 quality score for Solana meme tokens across authorities, liquidity lock and depth, holder distribution, trading activity and pool age, with a hard-fail cap and every factor's points shown, plus side-by-side comparisons.",
+	"author": "three.ws",
+	"tags": ["solana", "memecoins", "scoring", "due-diligence"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

@@ -1,0 +1,8 @@
+{
+	"name": "DCA Planner",
+	"description": "Turns 'buy a little over time' into a concrete recurring-buy plan for a Solana token: slices, per-buy size, slippage and price-impact guards, fee and liquidity checks, and the exact order body for the agent orders API, previewed before it is placed.",
+	"author": "three.ws",
+	"tags": ["dca", "trading", "solana", "orders"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

@@ -1,0 +1,8 @@
+{
+	"name": "Launch a Token",
+	"description": "Guides a coin launch for a three.ws agent on the Solana bonding-curve launchpad: parameters and their limits, an optional devnet rehearsal, a mandatory confirmation of every irreversible detail, the launch page or API path, and the mint and signature reported afterwards.",
+	"author": "three.ws",
+	"tags": ["launch", "solana", "agents", "tokens"],
+	"version": "1.0.0",
+	"license": "MIT"
+}

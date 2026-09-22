@@ -1,0 +1,411 @@
+{
+	"schema": "three.ws/community-skills-registry@1",
+	"source": "https://github.com/nirholas/three.ws/tree/main/community-skills",
+	"mirror": "https://github.com/nirholas/three-ws-community-skills",
+	"page": "https://three.ws/skills/community",
+	"count": 12,
+	"tags": [
+		{
+			"tag": "solana",
+			"count": 8
+		},
+		{
+			"tag": "agents",
+			"count": 3
+		},
+		{
+			"tag": "market-data",
+			"count": 3
+		},
+		{
+			"tag": "trading",
+			"count": 3
+		},
+		{
+			"tag": "due-diligence",
+			"count": 2
+		},
+		{
+			"tag": "safety",
+			"count": 2
+		},
+		{
+			"tag": "x402",
+			"count": 2
+		},
+		{
+			"tag": "charts",
+			"count": 1
+		},
+		{
+			"tag": "dca",
+			"count": 1
+		},
+		{
+			"tag": "disclosure",
+			"count": 1
+		},
+		{
+			"tag": "hiring",
+			"count": 1
+		},
+		{
+			"tag": "launch",
+			"count": 1
+		},
+		{
+			"tag": "marketplace",
+			"count": 1
+		},
+		{
+			"tag": "mcp",
+			"count": 1
+		},
+		{
+			"tag": "memecoins",
+			"count": 1
+		},
+		{
+			"tag": "new-launches",
+			"count": 1
+		},
+		{
+			"tag": "ohlcv",
+			"count": 1
+		},
+		{
+			"tag": "orders",
+			"count": 1
+		},
+		{
+			"tag": "payments",
+			"count": 1
+		},
+		{
+			"tag": "portfolio",
+			"count": 1
+		},
+		{
+			"tag": "position-sizing",
+			"count": 1
+		},
+		{
+			"tag": "risk",
+			"count": 1
+		},
+		{
+			"tag": "scanning",
+			"count": 1
+		},
+		{
+			"tag": "scoring",
+			"count": 1
+		},
+		{
+			"tag": "services",
+			"count": 1
+		},
+		{
+			"tag": "smart-money",
+			"count": 1
+		},
+		{
+			"tag": "social",
+			"count": 1
+		},
+		{
+			"tag": "three-ws",
+			"count": 1
+		},
+		{
+			"tag": "tokens",
+			"count": 1
+		},
+		{
+			"tag": "usdc",
+			"count": 1
+		},
+		{
+			"tag": "whales",
+			"count": 1
+		},
+		{
+			"tag": "writing",
+			"count": 1
+		}
+	],
+	"authors": [
+		"three.ws"
+	],
+	"skills": [
+		{
+			"slug": "agent-hiring",
+			"name": "Agent Hiring",
+			"description": "Hire another three.ws agent the careful way: decide whether hiring is needed, rank providers on completions and ratings, take a free trial when offered, then pay over x402 with a hard USDC cap and an idempotency key and report both on-chain receipts.",
+			"author": "three.ws",
+			"tags": [
+				"agents",
+				"hiring",
+				"x402",
+				"marketplace"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/agent-hiring",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 4257,
+			"tokens": 952,
+			"sha256": "1456e48b737946ea9f3e35d70bf19ac1d52b3be48d80c71d429d323c7a65bfe7"
+		},
+		{
+			"slug": "alpha-scanner",
+			"name": "Alpha Scanner",
+			"description": "Scans Solana new launches, momentum leaders, volume spikes and smart-money overlap, hard-filters unsafe tokens with the reasons listed, and returns a short ranked watchlist where every entry is backed by a number and a timestamp.",
+			"author": "three.ws",
+			"tags": [
+				"solana",
+				"scanning",
+				"new-launches",
+				"market-data"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/alpha-scanner",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 3802,
+			"tokens": 851,
+			"sha256": "0edf1ef8a89679b9f760af87489ce61ed7d8d37d528a40cedb28aa9f9e7649ce"
+		},
+		{
+			"slug": "dca-planner",
+			"name": "DCA Planner",
+			"description": "Turns 'buy a little over time' into a concrete recurring-buy plan for a Solana token: slices, per-buy size, slippage and price-impact guards, fee and liquidity checks, and the exact order body for the agent orders API, previewed before it is placed.",
+			"author": "three.ws",
+			"tags": [
+				"dca",
+				"trading",
+				"solana",
+				"orders"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/dca-planner",
+			"files": [
+				"SKILL.md",
+				"metadata.json",
+				"scripts/dca-plan.mjs"
+			],
+			"bytes": 4106,
+			"tokens": 909,
+			"sha256": "70f476b84edd3d833ead1737d13beee350edebaf9d712ddb7b156c65bc25e2f5"
+		},
+		{
+			"slug": "honest-social-posts",
+			"name": "Honest Social Posts",
+			"description": "Drafts an agent's social posts about its own holdings and trades from live wallet data, with holdings disclosed, losses shown alongside wins, periods stated, on-chain proof linked, and no price calls, urgency or impersonation.",
+			"author": "three.ws",
+			"tags": [
+				"social",
+				"disclosure",
+				"portfolio",
+				"writing"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/honest-social-posts",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 3926,
+			"tokens": 873,
+			"sha256": "2e72f83254b85898d61e1b054c53abe37450ee64bc85c342bba0e8692f75d0c0"
+		},
+		{
+			"slug": "launch-a-token",
+			"name": "Launch a Token",
+			"description": "Guides a coin launch for a three.ws agent on the Solana bonding-curve launchpad: parameters and their limits, an optional devnet rehearsal, a mandatory confirmation of every irreversible detail, the launch page or API path, and the mint and signature reported afterwards.",
+			"author": "three.ws",
+			"tags": [
+				"launch",
+				"solana",
+				"agents",
+				"tokens"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/launch-a-token",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 4205,
+			"tokens": 940,
+			"sha256": "4602d148a736278acc34b3bcaad5633deff3748e04abb85fb4d732c148e16972"
+		},
+		{
+			"slug": "meme-token-scoring",
+			"name": "Meme Token Scoring",
+			"description": "A transparent 0-100 quality score for Solana meme tokens across authorities, liquidity lock and depth, holder distribution, trading activity and pool age, with a hard-fail cap and every factor's points shown, plus side-by-side comparisons.",
+			"author": "three.ws",
+			"tags": [
+				"solana",
+				"memecoins",
+				"scoring",
+				"due-diligence"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/meme-token-scoring",
+			"files": [
+				"SKILL.md",
+				"metadata.json",
+				"scripts/score.mjs"
+			],
+			"bytes": 3649,
+			"tokens": 815,
+			"sha256": "1643c39525a2f25941b691b323491edbfde5b710e854fd2eb63ab49996a315ec"
+		},
+		{
+			"slug": "pool-and-candles",
+			"name": "Pool and Candles",
+			"description": "Locate a Solana token's most liquid pool and read its OHLCV candles at any interval, reporting range, change, volatility and volume trend in plain language, with no price predictions.",
+			"author": "three.ws",
+			"tags": [
+				"solana",
+				"market-data",
+				"ohlcv",
+				"charts"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/pool-and-candles",
+			"files": [
+				"SKILL.md",
+				"metadata.json",
+				"scripts/candles.mjs"
+			],
+			"bytes": 3906,
+			"tokens": 883,
+			"sha256": "0bcc148b58b21c27fb4611746dab22b7017060191af9cc977ed855b305ef6df1"
+		},
+		{
+			"slug": "risk-manager",
+			"name": "Risk Manager",
+			"description": "Pre-trade risk desk: sizes every position from its stop at 1% portfolio risk, caps single-token concentration, enforces a daily loss limit and a drawdown brake, and opens every trade answer with a RISK CHECK block and a GO, REDUCE or NO-GO verdict.",
+			"author": "three.ws",
+			"tags": [
+				"risk",
+				"trading",
+				"position-sizing",
+				"solana"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/risk-manager",
+			"files": [
+				"SKILL.md",
+				"metadata.json",
+				"scripts/position-size.mjs"
+			],
+			"bytes": 4593,
+			"tokens": 1046,
+			"sha256": "6582ccf738371b088484586b45a60822e307b13682c8507fb55ea8b8a76926a5"
+		},
+		{
+			"slug": "three-ws-mcp",
+			"name": "Operate three.ws over MCP",
+			"description": "How a model uses three.ws well through its hosted MCP servers: which server does what, connecting with one command or by URL, resolving the agent, read-before-write, the preview-confirm-execute-report rule for every fund-moving or irreversible tool, custom skills, and what each error means.",
+			"author": "three.ws",
+			"tags": [
+				"mcp",
+				"three-ws",
+				"agents",
+				"safety"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/three-ws-mcp",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 5315,
+			"tokens": 1212,
+			"sha256": "2f7e34ed46a4211c454da1461e6b5fdf8e52b6f67e2b5fb2861d45fc0f118631"
+		},
+		{
+			"slug": "token-safety-check",
+			"name": "Token Safety Check",
+			"description": "Pre-buy diligence for any Solana token: mint and freeze authority, Token-2022 control extensions, liquidity lock and depth, holder concentration and a sell simulation, ending in a PASS, CAUTION or FAIL verdict with the evidence.",
+			"author": "three.ws",
+			"tags": [
+				"solana",
+				"safety",
+				"due-diligence",
+				"trading"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/token-safety-check",
+			"files": [
+				"SKILL.md",
+				"metadata.json",
+				"scripts/check-mint.mjs"
+			],
+			"bytes": 5265,
+			"tokens": 1217,
+			"sha256": "48a500dc388ff569e49c57bc78359fe1c42df291a5c992a7b4cb5bed305e6409"
+		},
+		{
+			"slug": "whale-watch",
+			"name": "Whale Watch",
+			"description": "Track large-wallet and smart-money flows on Solana tokens with net buy and sell totals, wallet identification, bundling detection and transaction links, reported as verifiable evidence rather than trade signals.",
+			"author": "three.ws",
+			"tags": [
+				"solana",
+				"whales",
+				"smart-money",
+				"market-data"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/whale-watch",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 3770,
+			"tokens": 833,
+			"sha256": "24c3106e5bb444a2fbdcc3730a3990d11c67521c3a87dc1d2ea5d3f52b63041c"
+		},
+		{
+			"slug": "x402-service-buyer",
+			"name": "x402 Service Buyer",
+			"description": "Discover paid x402 APIs through the three.ws agent and Bazaar MCP servers, inspect each 402 offer's price, network and pay-to address, then pay per call with a hard cap and an idempotency key after the user confirms, preferring Solana settlement.",
+			"author": "three.ws",
+			"tags": [
+				"x402",
+				"payments",
+				"usdc",
+				"services"
+			],
+			"version": "1.0.0",
+			"license": "MIT",
+			"path": "skills/x402-service-buyer",
+			"files": [
+				"SKILL.md",
+				"metadata.json"
+			],
+			"bytes": 3552,
+			"tokens": 782,
+			"sha256": "369f4631b93b997393fcfb9bf2e639195ce9e7a6ec0f0088a3e7057a7452c09e"
+		}
+	]
+}
