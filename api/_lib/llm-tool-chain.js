@@ -10,7 +10,7 @@
 // handles them all.
 
 import { env } from './env.js';
-import { DEFAULT_FREE_MODEL } from './chat-models.js';
+import { DEFAULT_FREE_MODEL, MODEL_CATALOG } from './chat-models.js';
 import {
 	vertexGeminiAvailable,
 	vertexGeminiModel,
@@ -98,14 +98,19 @@ export function providerChain() {
 // Stream one chat-completion round. Emits assistant content deltas via
 // onContent; accumulates streamed tool_calls. Resolves { content, toolCalls }.
 // Throws on transport / non-2xx so the caller can fail over to the next provider.
-export async function streamRound(provider, { messages, tools, onContent }) {
+export async function streamRound(provider, { messages, tools, onContent, temperature = 0.4 }) {
 	const body = {
 		model: provider.model,
 		max_tokens: 1024,
-		temperature: 0.4,
+		temperature,
 		stream: true,
 		messages,
 	};
+	// Ask for the usage chunk only where the lane is known to accept the
+	// option; an unknown field is a 400 on some OpenAI-compatible hosts, and a
+	// 400 here would fail the rung over for no reason. Other lanes still get
+	// their usage read when they volunteer it.
+	if (USAGE_OPTION_LANES.has(baseLane(provider.name))) body.stream_options = { include_usage: true };
 	if (Array.isArray(tools) && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
 	// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per request
 	// via getHeaders; a token-exchange failure throws here and fails over to the
@@ -128,6 +133,7 @@ export async function streamRound(provider, { messages, tools, onContent }) {
 	let buf = '';
 	let content = '';
 	const toolCalls = []; // index → { id, name, args }
+	let usage = null;
 	for (;;) {
 		const { value, done } = await reader.read();
 		if (done) break;
@@ -141,6 +147,8 @@ export async function streamRound(provider, { messages, tools, onContent }) {
 			if (payload === '[DONE]') { buf = ''; break; }
 			let evt;
 			try { evt = JSON.parse(payload); } catch { continue; }
+			const u = evt.usage || evt.x_groq?.usage;
+			if (u && typeof u === 'object') usage = readUsage(u);
 			const delta = evt.choices?.[0]?.delta;
 			if (!delta) continue;
 			if (delta.content) { content += delta.content; onContent?.(delta.content); }
@@ -155,6 +163,86 @@ export async function streamRound(provider, { messages, tools, onContent }) {
 			}
 		}
 	}
-	return { content, toolCalls: toolCalls.filter(Boolean) };
+	return { content, toolCalls: toolCalls.filter(Boolean), usage };
+}
+
+// Lanes documented to accept `stream_options.include_usage` on their
+// OpenAI-compatible endpoint.
+const USAGE_OPTION_LANES = new Set(['openai', 'groq', 'openrouter', 'cerebras', 'nvidia', 'gemini', 'grok']);
+
+function baseLane(name) {
+	return String(name || '').split('#')[0];
+}
+
+function readUsage(u) {
+	const input = Number(u.prompt_tokens ?? u.input_tokens);
+	const output = Number(u.completion_tokens ?? u.output_tokens);
+	const cost = Number(u.cost);
+	return {
+		input: Number.isFinite(input) ? input : 0,
+		output: Number.isFinite(output) ? output : 0,
+		reportedCostUsd: Number.isFinite(cost) ? cost : null,
+	};
+}
+
+// OpenAI-compatible chat-completions endpoint per catalog provider. Anthropic
+// ids are served through OpenRouter's mirror of the same model, because the
+// tool loop speaks one wire format and the platform key for OpenRouter is the
+// one that is funded.
+const LANE_ENDPOINTS = {
+	groq: { url: 'https://api.groq.com/openai/v1/chat/completions', key: () => env.GROQ_API_KEY },
+	openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', key: () => env.OPENROUTER_API_KEY },
+	nvidia: { url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: () => env.NVIDIA_API_KEY },
+	sambanova: { url: 'https://api.sambanova.ai/v1/chat/completions', key: () => env.SAMBANOVA_API_KEY },
+	mistral: { url: 'https://api.mistral.ai/v1/chat/completions', key: () => env.MISTRAL_API_KEY },
+	zai: { url: 'https://api.z.ai/api/paas/v4/chat/completions', key: () => env.ZAI_API_KEY },
+	openai: { url: 'https://api.openai.com/v1/chat/completions', key: () => env.OPENAI_API_KEY },
+	grok: { url: 'https://api.x.ai/v1/chat/completions', key: () => env.GROK_API_KEY },
+};
+
+/** The OpenRouter mirror id for a first-party Anthropic id: `claude-haiku-4-5-20251001` → `anthropic/claude-haiku-4.5`. */
+export function anthropicMirrorId(model) {
+	const bare = String(model).replace(/-\d{8}$/, '');
+	return `anthropic/${bare.replace(/-(\d+)-(\d+)$/, '-$1.$2')}`;
+}
+
+/**
+ * A single tool-loop rung that serves exactly `model`, or null when no
+ * configured key can reach it. Used to honor an explicit model choice while
+ * the free chain stays behind it as the failover.
+ * @param {string} model a MODEL_CATALOG id
+ */
+export function modelRung(model) {
+	const meta = MODEL_CATALOG[model];
+	if (!meta || !meta.tools) return null;
+	if (meta.provider === 'anthropic') {
+		if (!env.OPENROUTER_API_KEY) return null;
+		return {
+			name: 'openrouter',
+			url: LANE_ENDPOINTS.openrouter.url,
+			key: env.OPENROUTER_API_KEY,
+			model: anthropicMirrorId(model),
+			catalogModel: model,
+			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+		};
+	}
+	const lane = LANE_ENDPOINTS[meta.provider];
+	const key = lane?.key();
+	if (!lane || !key) return null;
+	const rung = { name: meta.provider, url: lane.url, key, model, catalogModel: model };
+	if (meta.provider === 'openrouter') rung.extraHeaders = { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' };
+	return rung;
+}
+
+/**
+ * The provider chain for a request that may name a model: the named model's
+ * rung first (when reachable), then the free-first platform chain.
+ * @param {string|null} [model]
+ */
+export function providerChainFor(model) {
+	const chain = providerChain();
+	if (!model) return chain;
+	const rung = modelRung(model);
+	return rung ? [rung, ...chain.filter((p) => !(p.name === rung.name && p.model === rung.model))] : chain;
 }
 

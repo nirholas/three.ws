@@ -7,7 +7,7 @@
 // makes the loop a drop-in "model" for the chat client's Built-in lane
 // (model id `three-ws/agent`), with zero client-side protocol work.
 //
-// Inside one request, @three-ws/agent-runtime's AgentRuntime drives the loop:
+// Inside one request, the shared loop in api/_lib/agent-loop.js drives it:
 // call the LLM over the shared tool-calling chain (api/_lib/llm-tool-chain.js,
 // free lanes first, Vertex credits anchor last), execute any requested tools
 // server-side from the READ-ONLY registry (api/_lib/agent-tools.js: web
@@ -25,23 +25,21 @@
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { providerChain, streamRound } from '../_lib/llm-tool-chain.js';
+import { providerChain } from '../_lib/llm-tool-chain.js';
 import { agentToolSchemas, agentToolHandlers } from '../_lib/agent-tools.js';
-import { AgentRuntime, GuardChain, TradeGuard } from '@three-ws/agent-runtime';
+import {
+	AGENT_SYSTEM_NOTE,
+	createAgentLoop,
+	finalAnswer,
+	initialLoopState,
+	loopFinished,
+} from '../_lib/agent-loop.js';
 
 export const AGENT_MODEL_ID = 'three-ws/agent';
 
 const MAX_TOOL_ROUNDS = 4;
 const MAX_MESSAGES = 40;
 const MAX_BODY_BYTES = 512_000;
-
-const guardChain = new GuardChain({ defiGuard: new TradeGuard() });
-
-const SYSTEM_NOTE = [
-	'You have server-side tools: live token prices and trends, web search, Solana balances, a rug/honeypot safety verdict, smart-money activity, and .sol name resolution.',
-	'Use them instead of guessing; never invent prices, balances, or safety verdicts. If a tool returns no data, say so plainly.',
-	'You cannot move funds: no tool here transfers, swaps, or signs anything.',
-].join(' ');
 
 function sanitizeMessages(raw) {
 	if (!Array.isArray(raw)) return null;
@@ -98,7 +96,7 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	// The server note rides as a second system message so a client-authored
 	// persona keeps the first slot.
 	const sysIdx = messages[0]?.role === 'system' ? 1 : 0;
-	messages.splice(sysIdx, 0, { role: 'system', content: SYSTEM_NOTE });
+	messages.splice(sysIdx, 0, { role: 'system', content: AGENT_SYSTEM_NOTE });
 
 	const stream = body?.stream !== false;
 	const completionId = `agentrun-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
@@ -116,134 +114,30 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		res.write(text);
 	};
 
-	const toolSchemas = agentToolSchemas();
-	const toolHandlers = agentToolHandlers();
 	let streamedAny = false;
-	let finalContent = '';
+	const loop = createAgentLoop({
+		chain,
+		toolSchemas: agentToolSchemas(),
+		toolHandlers: agentToolHandlers(),
+		maxToolRounds: MAX_TOOL_ROUNDS,
+		onContent: (delta) => {
+			streamedAny = true;
+			if (stream) sse(chunkFrame(completionId, { content: delta }));
+		},
+		onEvent: (event) => {
+			if (stream && event.kind === 'tool_call') sse(`: tool ${event.tool}\n\n`);
+		},
+	});
 
-	// The model runtime the loop's built-in call_llm executor consumes: one
-	// round over the provider chain, failing over BEFORE any byte streams and
-	// aborting (not retrying) after a mid-stream death so the client never sees
-	// the same sentence twice.
-	async function* modelRuntime(payload) {
-		let lastErr = null;
-		for (const provider of chain) {
-			let emittedHere = false;
-			try {
-				const out = await streamRound(provider, {
-					messages: payload.messages,
-					tools: toolSchemas,
-					onContent: (delta) => {
-						emittedHere = true;
-						streamedAny = true;
-						if (stream) sse(chunkFrame(completionId, { content: delta }));
-					},
-				});
-				yield {
-					content: out.content,
-					tool_calls: out.toolCalls.map((tc) => ({
-						id: tc.id,
-						type: 'function',
-						function: { name: tc.name, arguments: tc.args || '{}' },
-					})),
-				};
-				return;
-			} catch (err) {
-				lastErr = err;
-				if (emittedHere) throw err;
-			}
-		}
-		throw lastErr || new Error('No LLM provider available');
-	}
-
-	// The "brain": plan from the phase the runtime reports. Tool rounds are
-	// bounded; past the budget the model is asked to answer with what it has.
-	const runner = async (context, state) => {
-		switch (context.phase) {
-			case 'init':
-			case 'user_input':
-				return { type: 'call_llm', payload: { messages: state.messages } };
-
-			case 'llm_result': {
-				const { result, toolCalls } = context.payload || {};
-				const content = result?.content || '';
-				const roundsUsed = state.messages.filter((m) => m.role === 'assistant' && m.tool_calls).length;
-
-				if (Array.isArray(toolCalls) && toolCalls.length > 0 && roundsUsed < MAX_TOOL_ROUNDS) {
-					state.messages.push({ role: 'assistant', content: content || null, tool_calls: toolCalls });
-
-					const allowed = [];
-					for (const tc of toolCalls) {
-						const name = tc.function?.name || '';
-						let args = {};
-						try {
-							args = JSON.parse(tc.function?.arguments || '{}');
-						} catch {
-							args = {};
-						}
-						if (!toolHandlers[name]) {
-							state.messages.push({
-								role: 'tool',
-								tool_call_id: tc.id,
-								content: JSON.stringify({ error: `Unknown tool: ${name}` }),
-							});
-							continue;
-						}
-						const verdict = await guardChain.evaluate({
-							identifier: name,
-							apiName: name,
-							arguments: args,
-							approvalMode: 'headless',
-						});
-						if (verdict.decision === 'block') {
-							state.messages.push({
-								role: 'tool',
-								tool_call_id: tc.id,
-								content: JSON.stringify({ blocked: true, error: verdict.reason }),
-							});
-							continue;
-						}
-						if (stream) sse(`: tool ${name}\n\n`);
-						allowed.push(tc);
-					}
-
-					if (allowed.length > 0) return { type: 'call_tools_batch', payload: allowed };
-					// Everything was blocked or unknown: let the model read the errors.
-					return { type: 'call_llm', payload: { messages: state.messages } };
-				}
-
-				finalContent = content;
-				state.messages.push({ role: 'assistant', content });
-				return { type: 'finish', reason: 'completed' };
-			}
-
-			case 'tool_result':
-			case 'tools_batch_result':
-				return { type: 'call_llm', payload: { messages: state.messages } };
-
-			case 'error':
-				return { type: 'finish', reason: 'error_recovery' };
-
-			default:
-				return { type: 'finish', reason: 'agent_decision' };
-		}
-	};
-
-	const agent = { runner, modelRuntime, tools: toolHandlers };
-	const runtime = new AgentRuntime(agent);
-	let state = AgentRuntime.createInitialState({
+	let { state, context } = initialLoopState({
 		operationId: completionId,
+		messages,
 		maxSteps: MAX_TOOL_ROUNDS * 2 + 3,
 	});
-	state.messages = messages;
 
-	let context;
 	try {
-		while (state.status !== 'done' && state.status !== 'error') {
-			const step = await runtime.step(state, context);
-			state = step.newState;
-			context = step.nextContext;
-			if (!context && state.status !== 'done' && state.status !== 'error') break;
+		while (!loopFinished(state, context)) {
+			({ state, context } = await loop.step(state, context));
 		}
 	} catch (err) {
 		if (sseOpen) {
@@ -254,6 +148,7 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		}
 		return error(res, 502, 'agent_loop_failed', String(err?.message || err).slice(0, 300));
 	}
+	const finalContent = finalAnswer(state);
 
 	if (state.status === 'error') {
 		const detail = String(state.error?.message || state.error || 'agent loop error').slice(0, 300);
