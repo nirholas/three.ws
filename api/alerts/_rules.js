@@ -4,9 +4,9 @@
 
 import { z } from 'zod';
 import { isValidSolanaAddress, isUuid } from '../_lib/validate.js';
-import { MINT_TARGETED_KINDS, AGENT_TARGETED_KINDS, THRESHOLD_KINDS, deriveRuleLabel } from '../_lib/pump-alert-eval.js';
+import { MINT_TARGETED_KINDS, AGENT_TARGETED_KINDS, MARKET_TARGETED_KINDS, THRESHOLD_KINDS, deriveRuleLabel } from '../_lib/pump-alert-eval.js';
 
-export const RULE_KINDS = ['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint'];
+export const RULE_KINDS = ['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_price'];
 
 const telegramChat = z
 	.string()
@@ -43,6 +43,16 @@ const baseShape = {
 		.refine((v) => isUuid(v), 'target_agent must be a UUID')
 		.nullable()
 		.optional(),
+	// market_price: one outcome of one prediction market (api/_lib/predictions/).
+	target_market: z
+		.string()
+		.trim()
+		.max(128)
+		.regex(/^[A-Za-z0-9._:-]+$/, 'target_market is not a valid market id')
+		.nullable()
+		.optional(),
+	target_side: z.enum(['yes', 'no']).nullable().optional(),
+	direction: z.enum(['above', 'below']).nullable().optional(),
 	threshold: z.coerce.number().positive().max(1e15).nullable().optional(),
 	deliver_in_app: z.boolean().optional(),
 	webhook_url: nullableUrl.optional(),
@@ -56,6 +66,22 @@ const baseShape = {
 function refineRule(v, ctx) {
 	const mintTargeted = MINT_TARGETED_KINDS.includes(v.kind);
 	const agentTargeted = AGENT_TARGETED_KINDS.includes(v.kind);
+	const marketTargeted = MARKET_TARGETED_KINDS.includes(v.kind);
+
+	if (marketTargeted) {
+		if (!v.target_market) {
+			ctx.addIssue({ code: 'custom', path: ['target_market'], message: `${v.kind} requires a target_market` });
+		}
+		if (!v.target_side) {
+			ctx.addIssue({ code: 'custom', path: ['target_side'], message: `${v.kind} requires a target_side of yes or no` });
+		}
+		if (!v.direction) {
+			ctx.addIssue({ code: 'custom', path: ['direction'], message: `${v.kind} requires a direction of above or below` });
+		}
+		if (Number(v.threshold) >= 1) {
+			ctx.addIssue({ code: 'custom', path: ['threshold'], message: `${v.kind} threshold is a probability below 1 (0.65 means 65%)` });
+		}
+	}
 
 	if (mintTargeted) {
 		if (!v.target_mint) {
@@ -117,6 +143,9 @@ export function validateUpdate(current, patch) {
 		kind: patch.kind ?? current.kind,
 		target_mint: 'target_mint' in patch ? patch.target_mint : current.target_mint,
 		target_agent: 'target_agent' in patch ? patch.target_agent : current.target_agent,
+		target_market: 'target_market' in patch ? patch.target_market : current.target_market,
+		target_side: 'target_side' in patch ? patch.target_side : current.target_side,
+		direction: 'direction' in patch ? patch.direction : current.direction,
 		threshold: 'threshold' in patch ? patch.threshold : current.threshold,
 		deliver_in_app: 'deliver_in_app' in patch ? patch.deliver_in_app : current.deliver_in_app,
 		webhook_url: 'webhook_url' in patch ? patch.webhook_url : current.webhook_url,
@@ -154,6 +183,11 @@ export function normalizeForKind(v) {
 	if (!THRESHOLD_KINDS.includes(out.kind)) out.threshold = null;
 	if (!MINT_TARGETED_KINDS.includes(out.kind) && out.kind !== 'graduation') out.target_mint = null;
 	if (!AGENT_TARGETED_KINDS.includes(out.kind) && out.kind !== 'graduation') out.target_agent = null;
+	if (!MARKET_TARGETED_KINDS.includes(out.kind)) {
+		out.target_market = null;
+		out.target_side = null;
+		out.direction = null;
+	}
 	if (out.deliver_in_app === undefined) out.deliver_in_app = true;
 	if (out.cooldown_seconds === undefined) out.cooldown_seconds = 300;
 	if (out.enabled === undefined) out.enabled = true;
@@ -167,6 +201,9 @@ export function serializeRule(row) {
 		kind: row.kind,
 		target_mint: row.target_mint || null,
 		target_agent: row.target_agent || null,
+		target_market: row.target_market || null,
+		target_side: row.target_side || null,
+		direction: row.direction || null,
 		threshold: row.threshold != null ? Number(row.threshold) : null,
 		deliver_in_app: row.deliver_in_app,
 		webhook_url: row.webhook_url || null,

@@ -55,14 +55,17 @@ export default wrap(async (req, res) => {
 
 	const [row] = await sql`
 		INSERT INTO pump_alert_rules
-			(user_id, kind, target_mint, target_agent, threshold, deliver_in_app,
+			(user_id, kind, target_mint, target_agent, target_market, target_side, direction,
+			 threshold, deliver_in_app,
 			 webhook_url, webhook_secret, telegram_chat, cooldown_seconds, enabled, label)
 		VALUES
 			(${user.id}, ${body.kind}, ${body.target_mint || null}, ${body.target_agent || null},
+			 ${body.target_market || null}, ${body.target_side || null}, ${body.direction || null},
 			 ${body.threshold ?? null}, ${body.deliver_in_app}, ${body.webhook_url || null},
 			 ${webhookSecret}, ${body.telegram_chat || null}, ${body.cooldown_seconds},
 			 ${body.enabled}, ${body.label || null})
-		RETURNING id, kind, target_mint, target_agent, threshold, deliver_in_app,
+		RETURNING id, kind, target_mint, target_agent, target_market, target_side, direction,
+		          threshold, deliver_in_app,
 		          webhook_url, webhook_secret, telegram_chat, cooldown_seconds, enabled,
 		          label, created_at, updated_at
 	`;
@@ -95,7 +98,8 @@ async function healWebhookSecrets(rows) {
 
 async function listRules(userId) {
 	return sql`
-		SELECT r.id, r.kind, r.target_mint, r.target_agent, r.threshold,
+		SELECT r.id, r.kind, r.target_mint, r.target_agent, r.target_market, r.target_side,
+		       r.direction, r.threshold,
 		       r.deliver_in_app, r.webhook_url, r.webhook_secret, r.telegram_chat,
 		       r.cooldown_seconds, r.enabled, r.label, r.created_at, r.updated_at,
 		       f.last_fired_at,

@@ -173,6 +173,8 @@ export function notifLabel(n) {
 			// The store already wrote the line for this status, so the bell reads
 			// exactly what the order timeline says rather than a second wording of it.
 			return p.message || `Your print order was updated${p.status ? `: ${String(p.status).replace(/_/g, ' ')}` : ''}`;
+		case 'pump_alert':
+			return p.summary || 'An alert rule fired';
 		case 'royalty_paid':
 			return p.usd
 				? `${p.actor || 'A fork of your avatar'} paid you $${Number(p.usd).toFixed(3)} in royalties`

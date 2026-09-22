@@ -12,6 +12,7 @@
 //   new_mint    → pump_agent_mints (a tracked agent's new coins)
 //   price_*     → pump.fun coins API (authoritative USD market cap)
 //   whale_buy   → pump.fun trades API (recent buys on the target mint)
+//   market_price → the prediction venue's live market price (api/_lib/predictions/)
 
 import { sql } from './db.js';
 import {
@@ -20,6 +21,8 @@ import {
 	newMintMatchesRule,
 	isWhaleBuy,
 	evaluatePriceRule,
+	evaluateMarketPriceRule,
+	buildMarketPricePayload,
 	buildGraduationPayload,
 	buildNewMintPayload,
 	buildWhalePayload,
@@ -27,6 +30,7 @@ import {
 } from './pump-alert-eval.js';
 import { deliverAlert } from './alert-delivery.js';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
+import { getVenue, sideProbability } from './predictions/index.js';
 
 const GRAD_WINDOW = '15 minutes';
 const NEW_MINT_WINDOW = '60 minutes';
@@ -34,6 +38,7 @@ const GRADS_PER_RUN = 100;
 const DELIVER_CAP = 5; // max events delivered per rule per run (storm guard)
 const MAX_PRICE_MINTS = 60; // distinct mints priced per run
 const MAX_WHALE_MINTS = 60; // distinct mints polled for trades per run
+const MAX_MARKETS = 120; // distinct prediction markets priced per run
 const TRADES_LIMIT = 50;
 const FETCH_TIMEOUT_MS = 2_500;
 
@@ -51,7 +56,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 		fired: 0,
 		deliveries: { in_app: 0, webhook: 0, telegram: 0 },
 		failures: { in_app: 0, webhook: 0, telegram: 0 },
-		capped: { price_mints: false, whale_mints: false },
+		capped: { price_mints: false, whale_mints: false, markets: false },
 		errors: 0,
 	};
 
@@ -59,7 +64,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 	let rules;
 	try {
 		rules = await sql`
-			SELECT id, user_id, kind, target_mint, target_agent, threshold,
+			SELECT id, user_id, kind, target_mint, target_agent, target_market, target_side, direction, threshold,
 			       deliver_in_app, webhook_url, webhook_secret, telegram_chat,
 			       cooldown_seconds, enabled, label
 			FROM pump_alert_rules
@@ -84,12 +89,13 @@ export async function runPumpAlertRules(now = Date.now()) {
 	const fireState = new Map(fireRows.map((f) => [f.rule_id, f]));
 
 	// Partition rules by kind.
-	const byKind = { graduation: [], new_mint: [], price: [], whale_buy: [] };
+	const byKind = { graduation: [], new_mint: [], price: [], whale_buy: [], market_price: [] };
 	for (const r of rules) {
 		if (r.kind === 'graduation') byKind.graduation.push(r);
 		else if (r.kind === 'new_mint') byKind.new_mint.push(r);
 		else if (r.kind === 'price_above' || r.kind === 'price_below') byKind.price.push(r);
 		else if (r.kind === 'whale_buy') byKind.whale_buy.push(r);
+		else if (r.kind === 'market_price') byKind.market_price.push(r);
 	}
 
 	const ctx = { now, solPrice: 0 };
@@ -99,6 +105,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 		runNewMintRules(byKind.new_mint, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 		runPriceRules(byKind.price, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 		runWhaleRules(byKind.whale_buy, fireState, report, ctx).catch((e) => bumpErr(report, e)),
+		runMarketPriceRules(byKind.market_price, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 	]);
 
 	await pruneDeliveries();
@@ -237,6 +244,41 @@ async function runWhaleRules(rules, fireState, report, ctx) {
 	}
 }
 
+// ── prediction-market watches (implied probability crossing) ─────────────────
+
+async function runMarketPriceRules(rules, fireState, report, ctx) {
+	if (!rules.length) return;
+	let ids = [...new Set(rules.map((r) => r.target_market).filter(Boolean))];
+	if (ids.length > MAX_MARKETS) {
+		report.capped.markets = ids.length;
+		console.warn(`[pump-alerts] market rules: ${ids.length} markets exceeds cap ${MAX_MARKETS}; pricing first ${MAX_MARKETS}`);
+		ids = ids.slice(0, MAX_MARKETS);
+	}
+	const venue = getVenue();
+	const markets = new Map();
+	await Promise.all(ids.map(async (id) => {
+		markets.set(id, await venue.getMarket(id).catch(() => null));
+	}));
+
+	for (const rule of rules) {
+		report.evaluated++;
+		const market = markets.get(rule.target_market);
+		if (!market) continue;
+		const probability = sideProbability(market, rule.target_side || 'yes');
+		const fs = fireState.get(rule.id);
+		const { fire, nextState } = evaluateMarketPriceRule(rule, probability, fs?.last_state || {});
+		if (!fire || !cooldownElapsed(fs?.last_fired_at, rule.cooldown_seconds, ctx.now)) {
+			await upsertFire(rule.id, { last_state: nextState });
+			continue;
+		}
+		const outcome = market.outcomes.find((o) => o.side === (rule.target_side || 'yes'));
+		const payload = buildMarketPricePayload(rule, { id: market.id, title: market.title, event_id: market.event_id, side_label: outcome?.label || null, probability });
+		await deliverOne(rule, payload, report);
+		await upsertFire(rule.id, { last_fired_at: new Date(ctx.now), last_event_id: payload.event_id, last_state: nextState });
+		report.fired++;
+	}
+}
+
 // ── generic event delivery (graduation / new_mint / whale) ─────────────────────
 
 /**
@@ -355,7 +397,7 @@ async function fetchCoin(mint) {
  * Recent trades for a mint, newest-first, normalized to
  * { signature, is_buy, sol_amount (SOL), sol_value_usd, buyer, ts }.
  */
-async function fetchRecentTrades(mint, solPrice = 0) {
+export async function fetchRecentTrades(mint, solPrice = 0) {
 	const d = await fetchJsonWithTimeout(`${PUMPFUN_TRADES_API}/${encodeURIComponent(mint)}?limit=${TRADES_LIMIT}&offset=0`);
 	if (!Array.isArray(d)) return [];
 	return d.map((t) => {

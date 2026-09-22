@@ -46,7 +46,7 @@ async function deliverInApp(rule, payload) {
 	try {
 		await sql`
 			insert into user_notifications (user_id, type, payload)
-			values (${rule.user_id}, 'pump_alert', ${JSON.stringify(payload)}::jsonb)
+			values (${rule.user_id}, 'pump_alert', ${JSON.stringify({ ...payload, summary: formatAlertSummary(payload) })}::jsonb)
 		`;
 		return { attempted: true, ok: true, detail: null };
 	} catch (e) {

@@ -37,7 +37,8 @@ export default wrap(async (req, res) => {
 
 	// PATCH
 	const [current] = await sql`
-		SELECT id, kind, target_mint, target_agent, threshold, deliver_in_app,
+		SELECT id, kind, target_mint, target_agent, target_market, target_side, direction,
+		       threshold, deliver_in_app,
 		       webhook_url, webhook_secret, telegram_chat, cooldown_seconds, enabled, label
 		FROM pump_alert_rules
 		WHERE id = ${id} AND user_id = ${user.id}
@@ -67,6 +68,9 @@ export default wrap(async (req, res) => {
 			kind             = ${next.kind},
 			target_mint      = ${next.target_mint || null},
 			target_agent     = ${next.target_agent || null},
+			target_market    = ${next.target_market || null},
+			target_side      = ${next.target_side || null},
+			direction        = ${next.direction || null},
 			threshold        = ${next.threshold ?? null},
 			deliver_in_app   = ${next.deliver_in_app},
 			webhook_url      = ${next.webhook_url || null},
@@ -80,7 +84,8 @@ export default wrap(async (req, res) => {
 	`;
 
 	const [row] = await sql`
-		SELECT r.id, r.kind, r.target_mint, r.target_agent, r.threshold,
+		SELECT r.id, r.kind, r.target_mint, r.target_agent, r.target_market, r.target_side,
+		       r.direction, r.threshold,
 		       r.deliver_in_app, r.webhook_url, r.webhook_secret, r.telegram_chat,
 		       r.cooldown_seconds, r.enabled, r.label, r.created_at, r.updated_at,
 		       f.last_fired_at,
