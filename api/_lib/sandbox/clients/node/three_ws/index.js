@@ -5,10 +5,12 @@
 // tools the run may use, the policy tiers, and no fund-moving tool from inside
 // a script (those need a preview and the user's confirmation in the chat).
 //
-//   import { tool, fetch } from 'three_ws';
-//   const price = await tool('token_price', { id: 'solana' });
-//   const r = await fetch('https://api.coingecko.com/api/v3/ping');
-//   console.log(r.status, await r.json());
+/*
+ *   import { tool, fetch } from 'three_ws';
+ *   const price = await tool('token_price', { id: 'solana' });
+ *   const r = await fetch('https://api.coingecko.com/api/v3/ping');
+ *   console.log(r.status, await r.json());
+ */
 'use strict';
 
 const net = require('node:net');

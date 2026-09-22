@@ -1,4 +1,4 @@
-// /api/gateway/connections — the owner's side of the chat gateways, behind
+// /api/gateway/connections: the owner's side of the chat gateways, behind
 // /settings/connections.
 //
 //   GET    → { links, agents, bots }           paired chats, the account's agents,

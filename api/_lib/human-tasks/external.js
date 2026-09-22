@@ -5,8 +5,8 @@
 //
 //   name                   stable provider id stored on the task and claim
 //   configured()           true when its credentials are present
-//   mirror(task)           publish the task; returns { ref } (the network's id)
-//   withdraw(task)         take a mirrored task down (claimed here, cancelled, expired)
+//   mirror(task)           publish the task and return { ref }, the network's id
+//   withdraw(task)         take a mirrored task down once claimed here, cancelled or expired
 //   verifyCallback(req, raw)  authenticate an inbound status callback; returns the parsed event
 //
 // Onboarding any specific network is an owner decision, so the one adapter
@@ -19,7 +19,7 @@
 //
 // Outbound: JSON body, headers X-Three-Timestamp (unix seconds) and
 // X-Three-Signature: sha256=<hex HMAC of "<timestamp>.<body>">.
-// Inbound (POST /api/human-tasks/external/callback): same signature scheme;
+// Inbound, at POST /api/human-tasks/external/callback, uses the same signature scheme:
 // events are claim { task_id, worker_ref, payout_address }, submit { task_id,
 // worker_ref, notes, photo_urls[] } and release { task_id, worker_ref }.
 // Callbacks never move money: an external submission waits for the poster's

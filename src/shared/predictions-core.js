@@ -65,7 +65,7 @@ export function esc(s) {
 }
 
 export function fmtPct(p, dp = 0) {
-	if (p == null || !Number.isFinite(Number(p))) return '–';
+	if (p == null || !Number.isFinite(Number(p))) return '-';
 	const v = Number(p) * 100;
 	if (v > 0 && v < 1) return '<1%';
 	if (v < 100 && v > 99) return '>99%';
@@ -73,13 +73,13 @@ export function fmtPct(p, dp = 0) {
 }
 
 export function fmtCents(p) {
-	if (p == null || !Number.isFinite(Number(p))) return '–';
+	if (p == null || !Number.isFinite(Number(p))) return '-';
 	const c = Number(p) * 100;
 	return `${c % 1 === 0 ? c.toFixed(0) : c.toFixed(1)}¢`;
 }
 
 export function fmtUsd(n, { compact = false, sign = false } = {}) {
-	if (n == null || !Number.isFinite(Number(n))) return '–';
+	if (n == null || !Number.isFinite(Number(n))) return '-';
 	const v = Number(n);
 	const s = sign && v > 0 ? '+' : v < 0 ? '−' : '';
 	const a = Math.abs(v);
@@ -90,9 +90,9 @@ export function fmtUsd(n, { compact = false, sign = false } = {}) {
 }
 
 export function fmtDate(iso, { time = false } = {}) {
-	if (!iso) return '–';
+	if (!iso) return '-';
 	const d = new Date(iso);
-	if (!Number.isFinite(d.getTime())) return '–';
+	if (!Number.isFinite(d.getTime())) return '-';
 	return d.toLocaleString(undefined, time ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' } : { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
@@ -373,7 +373,7 @@ export function mountTicket(host, { market, agents, agentId = null, onPlaced = n
 			['Amount', `${fmtUsd(q.stake_usd)} USDC`],
 			['Chain', 'Solana'],
 			['Position', `${q.side_label} · ${q.market.title}`],
-			['Expected fill', `${q.expected_contracts != null ? Number(q.expected_contracts).toFixed(2) : '–'} contracts at ${fmtCents(q.expected_avg_price)} (limit ${fmtCents(q.max_price)})`],
+			['Expected fill', `${q.expected_contracts != null ? Number(q.expected_contracts).toFixed(2) : '-'} contracts at ${fmtCents(q.expected_avg_price)} (limit ${fmtCents(q.max_price)})`],
 			['Pays if right', `${fmtUsd(q.max_payout_usd)} (profit ${fmtUsd(q.max_profit_usd, { sign: true })})`],
 			['Fees', q.fees_usd != null ? fmtUsd(q.fees_usd) : 'Charged by the venue at fill'],
 			['Quote from', q.quote_source === 'venue' ? 'Venue quote' : 'Live order book'],

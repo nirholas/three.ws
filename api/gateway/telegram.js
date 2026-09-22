@@ -1,4 +1,4 @@
-// POST /api/gateway/telegram — the Telegram webhook for the agent chat gateway.
+// POST /api/gateway/telegram: the Telegram webhook for the agent chat gateway.
 //
 // Telegram proves each delivery with the X-Telegram-Bot-Api-Secret-Token header
 // it was given at setWebhook time (api/_lib/gateway/webhooks.js derives it). A

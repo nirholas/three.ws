@@ -1,10 +1,10 @@
-// /api/agents/:id/solana/trade — discretionary pump.fun trading from the agent's
+// /api/agents/:id/solana/trade; discretionary pump.fun trading from the agent's
 // OWN custodial wallet, server-signed. Dispatched from api/agents/[id].js via the
 // solana-wallet handler (action === 'trade' | 'trade-history').
 //
 // This is the discretionary sibling of the agent-sniper executor: same custodial
 // signing, same shared spend guardrails (api/_lib/agent-trade-guards.js), same
-// pump.fun SDK instruction builders, same idempotent custody ledger — but driven
+// pump.fun SDK instruction builders, same idempotent custody ledger; but driven
 // by the owner from the wallet hub instead of by an autonomous strategy.
 //
 //   POST /api/agents/:id/solana/trade          buy/sell (owner-only, server-signed)
@@ -15,7 +15,7 @@
 // only after auth + ownership, always audit-logged; guard rejections are
 // structured 4xx with an actionable reason (never a 500); a retried idempotency
 // key never double-spends; balances/positions reflect only confirmed on-chain
-// state. $THREE is the only coin three.ws promotes — this surface is coin-agnostic
+// state. $THREE is the only coin three.ws promotes; this surface is coin-agnostic
 // plumbing that trades whatever mint the owner supplies at runtime.
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
@@ -52,13 +52,13 @@ const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 // The SOL fee/rent headroom, the price-impact breaker, the per-trade cap, the
 // daily budget, and the kill switch all live in the shared guardrail module
-// (api/_lib/agent-trade-guards.js) — the SAME predicates the sniper executor and
+// (api/_lib/agent-trade-guards.js); the SAME predicates the sniper executor and
 // the flat /api/agents/:id/trade endpoint call, so the "is this trade allowed"
 // math has exactly one home and can't drift between paths. This handler resolves
 // the per-agent limits from meta.trade_limits and hands the live numbers to those
 // predicates; the breaker ceiling, per-trade cap, and daily budget are all
 // owner-configurable there.
-const DEFAULT_SLIPPAGE_BPS = 300; // 3% — discretionary default; owner can change
+const DEFAULT_SLIPPAGE_BPS = 300; // 3%; discretionary default; owner can change
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -119,11 +119,11 @@ export async function quoteTrade({ conn, side, mintPk, mintStr, network, solAmou
 		// Bonding curve first.
 		const curve = await getBuyQuote(conn, mintStr, lamportsIn.toString());
 		if (curve && curve.tokens) {
-			// Platform rule: agents never buy pump.fun mayhem-mode coins — only
+			// Platform rule: agents never buy pump.fun mayhem-mode coins; only
 			// regular coins. The mayhem flag is read straight off the bonding curve
 			// (ungameable), so a mayhem coin is refused before any spend. Sells are
 			// unaffected, so an agent already holding one can always exit.
-			if (curve.isMayhemMode) throw typed(422, 'mayhem_blocked', 'this is a pump.fun mayhem-mode coin — agents only buy regular coins');
+			if (curve.isMayhemMode) throw typed(422, 'mayhem_blocked', 'this is a pump.fun mayhem-mode coin; agents only buy regular coins');
 			const decimals = await resolveMintDecimals(conn, mintPk);
 			const tokensOut = BigInt(curve.tokens.toString());
 			if (tokensOut <= 0n) throw typed(400, 'amount_too_small', 'that SOL amount is too small to buy any tokens');
@@ -165,7 +165,7 @@ export async function quoteTrade({ conn, side, mintPk, mintStr, network, solAmou
 		};
 	}
 
-	// SELL — amount is token base units.
+	// SELL; amount is token base units.
 	const baseUnits = BigInt(tokenAmountRaw);
 	if (baseUnits <= 0n) throw typed(400, 'amount_too_small', 'enter a token amount greater than zero');
 	const decimals = await resolveMintDecimals(conn, mintPk);
@@ -211,7 +211,7 @@ async function loadAmm(network, mintPk) {
 	const amm = await getAmmPoolState({ network, mint: mintPk });
 	const resolvedQuote = amm.pool.quoteMint?.toString?.() ?? WSOL_MINT;
 	if (resolvedQuote !== WSOL_MINT) {
-		throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset — trade it from its coin page instead');
+		throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset; trade it from its coin page instead');
 	}
 	// `Pool.virtual_quote_reserves` is a SIGNED i128, so effective depth
 	// (vault + virtual) can land at or below zero: a pool that cannot absorb a
@@ -272,7 +272,7 @@ export async function handleTrade(req, res, id) {
 	const parsed = parseTradeRequest(body);
 	if (!parsed.ok) return error(res, parsed.status, parsed.code, parsed.message);
 
-	// CSRF on the state-changing path only — a live preview/quote moves no funds and
+	// CSRF on the state-changing path only: a live preview/quote moves no funds and
 	// would otherwise burn a single-use token on every keystroke. Bearer callers exempt.
 	if (!parsed.preview && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, network: parsed.network, context: 'trade' }))) return;
 	if (!parsed.preview && !(await requireCsrf(req, res, auth.userId))) return;
@@ -354,28 +354,28 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	const { side, mintStr, mintPk, network, preview, slippageBps, solAmount, tokenAmountRaw } = parsed;
 
 	if (!address) {
-		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared — try again in a moment');
+		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared; try again in a moment');
 	}
 	let ownerPk;
 	try {
 		ownerPk = new PublicKey(address);
 	} catch {
-		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared — try again in a moment');
+		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared; try again in a moment');
 	}
 
 	const readConn = solanaConnection(network);
 
-	// 1. Quote (always — preview and execute both need it).
+	// 1. Quote (always; preview and execute both need it).
 	let quote;
 	try {
 		quote = await quoteTrade({ conn: readConn, side, mintPk, mintStr, network, solAmount, tokenAmountRaw, slippageBps });
 	} catch (e) {
 		if (e?.code === 'pool_not_found') {
-			return fail(404, 'no_market', 'no bonding curve or AMM pool found for this mint on this network — it may not be a pump.fun coin');
+			return fail(404, 'no_market', 'no bonding curve or AMM pool found for this mint on this network; it may not be a pump.fun coin');
 		}
 		if (e?.status) return fail(e.status, e.code, e.message);
 		console.error('[trade] quote failed', e?.message);
-		return fail(502, 'quote_failed', 'could not price this trade right now — try again');
+		return fail(502, 'quote_failed', 'could not price this trade right now; try again');
 	}
 
 	// USD value of the SOL leg (buys spend SOL; sells receive it). Best-effort.
@@ -388,7 +388,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	const limitsCfg = getSpendLimits(meta);
 	const tradeLimits = getTradeLimits(meta);
 
-	// 2. Guards — the SAME shared predicates the sniper + flat /trade endpoint use,
+	// 2. Guards; the SAME shared predicates the sniper + flat /trade endpoint use,
 	//    fed the per-agent meta.trade_limits. Surfaced on preview (as a warning) and
 	//    on execute (as a hard rejection). The kill switch + price-impact breaker
 	//    apply both directions; the SOL caps gate only a BUY (a sell brings SOL in).
@@ -410,7 +410,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 			guardWarning = { status: 422, code: 'per_trade_cap', message: `This buy of ◎${lamportsToSol(lamportsIn).toFixed(4)} is over the per-trade cap of ◎${tradeLimits.per_trade_sol}. Lower it or raise the cap under Limits & Safety.`, detail: cap.detail };
 		}
 
-		// Rolling daily SOL budget (shared with the sniper — one wallet, one budget).
+		// Rolling daily SOL budget (shared with the sniper; one wallet, one budget).
 		if (!guardWarning && tradeLimits.daily_budget_sol != null) {
 			const budgetLamports = BigInt(Math.floor(tradeLimits.daily_budget_sol * LAMPORTS_PER_SOL));
 			const spent = await getDailySpendLamports(id, network);
@@ -424,7 +424,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		if (!guardWarning) {
 			try {
 				// ownerInitiated: the hub's discretionary Trade tab is the owner acting
-				// in person (session + CSRF), not a delegated skill — so least-privilege
+				// in person (session + CSRF), not a delegated skill; so least-privilege
 				// "require a capability" never blocks the owner's own trade (like withdraw).
 				// `meta` carries the natural-language policy (meta.policy_rules) so the
 				// owner's English rules govern this trade alongside the numeric caps.
@@ -436,7 +436,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		}
 	}
 
-	// Price-impact circuit breaker — both directions, owner-configurable ceiling.
+	// Price-impact circuit breaker; both directions, owner-configurable ceiling.
 	if (!guardWarning) {
 		const impact = checkPriceImpact(quote.priceImpactPct, tradeLimits.max_price_impact_pct);
 		if (impact) {
@@ -449,7 +449,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		}
 	}
 
-	// Rug/honeypot firewall — a REAL on-chain simulated buy→sell round-trip +
+	// Rug/honeypot firewall; a REAL on-chain simulated buy→sell round-trip +
 	// authority audit, gating BUYS only (a sell brings SOL inward, the safe
 	// direction). A 'block' verdict refuses the buy with a structured 422 the UI
 	// surfaces pre-trade. Never throws; degrades to 'warn' when a source is down.
@@ -526,7 +526,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		firewall: quoteFirewall,
 	};
 
-	// 3. PREVIEW — return the quote, never touch the key, never send.
+	// 3. PREVIEW; return the quote, never touch the key, never send.
 	if (preview) {
 		return { status: 200, data: { preview: true, ...quotePayload } };
 	}
@@ -540,7 +540,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		return fail(guardWarning.status || 403, guardWarning.code, guardWarning.message, guardWarning.detail);
 	}
 
-	// Idempotency key — required for execute so a retry can't double-spend.
+	// Idempotency key; required for execute so a retry can't double-spend.
 	const idem = parsed.idempotencyKey;
 	if (!idem) return fail(400, 'validation_error', 'idempotency_key is required to execute a trade');
 
@@ -554,9 +554,9 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 			return { status: 200, data: { replayed: true, signature: prior.signature, explorer: explorerTxUrl(prior.signature, network), ...quotePayload } };
 		}
 		if (prior.status === 'pending') {
-			return fail(409, 'trade_in_progress', 'a trade with this id is already in flight — check your history before retrying', { signature: prior.signature || null });
+			return fail(409, 'trade_in_progress', 'a trade with this id is already in flight; check your history before retrying', { signature: prior.signature || null });
 		}
-		return fail(409, 'trade_failed', 'this trade id already failed — retry with a fresh idempotency key');
+		return fail(409, 'trade_failed', 'this trade id already failed; retry with a fresh idempotency key');
 	}
 
 	// Claim the idempotency slot (also the spend-ledger row). For a buy this counts
@@ -579,7 +579,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		RETURNING id
 	`;
 	if (!claim.length) {
-		return fail(409, 'trade_in_progress', 'a trade with this id is already in flight — check your history before retrying');
+		return fail(409, 'trade_in_progress', 'a trade with this id is already in flight; check your history before retrying');
 	}
 	const claimId = claim[0].id;
 
@@ -593,7 +593,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	} catch (e) {
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'key_recover_failed' } }).catch(() => {});
 		console.error('[trade] key recovery failed', e?.message);
-		return fail(500, 'key_recover_failed', 'could not access the agent wallet key — no funds were moved');
+		return fail(500, 'key_recover_failed', 'could not access the agent wallet key; no funds were moved');
 	}
 
 	let instructions;
@@ -603,14 +603,14 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'build_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 		if (e?.status) return fail(e.status, e.code, e.message);
 		console.error('[trade] build failed', e?.message);
-		return fail(422, 'build_failed', 'could not build this trade — the market may have moved; try again');
+		return fail(422, 'build_failed', 'could not build this trade; the market may have moved; try again');
 	}
 
 	// Broadcast + confirm through the MEV-aware execution engine: dynamic compute
 	// budget (real simulate + real priority-fee estimate) + bounded adaptive retry,
 	// with the same ambiguous-confirm re-check the withdraw path uses (never mark a
 	// landed tx failed). The discretionary path has no per-strategy tip policy, so it
-	// uses the protected single-tx route (tipMode 'off' — no Jito tip).
+	// uses the protected single-tx route (tipMode 'off'; no Jito tip).
 	const signConn = solanaConnection(network);
 	let signature;
 	let confirmed = true;
@@ -624,20 +624,20 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		execTelemetry = { route: result.route, priority_fee_microlamports: result.priorityFeeMicroLamports, landed_ms: result.landedMs, attempts: result.attempts };
 	} catch (e) {
 		if (e?.code === 'TX_ERR') {
-			// Landed but reverted on-chain — record the failed signature, don't re-send.
+			// Landed but reverted on-chain; record the failed signature, don't re-send.
 			signature = e.signature || null;
 			confirmed = false;
 		} else {
 			await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'send_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 			logAudit({ userId: auth.userId, action: 'custody.trade_failed', resourceId: id, meta: { side, mint: mintStr, reason: 'send_failed' }, req });
-			return fail(502, 'send_failed', 'the trade could not be submitted and no funds were moved — try again');
+			return fail(502, 'send_failed', 'the trade could not be submitted and no funds were moved; try again');
 		}
 	}
 
 	if (!confirmed) {
 		await updateCustodyEvent(claimId, { signature, meta: { confirm: 'unconfirmed' } }).catch(() => {});
 		logAudit({ userId: auth.userId, action: 'custody.trade_unconfirmed', resourceId: id, meta: { side, mint: mintStr, signature }, req });
-		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed — check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network) });
+		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed; check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network) });
 	}
 
 	await updateCustodyEvent(claimId, { status: 'confirmed', signature, usd: side === 'buy' ? usdValue ?? null : null, meta: execTelemetry ? { exec: execTelemetry } : undefined }).catch(() => {});
@@ -707,7 +707,7 @@ async function buildSwapInstructions({ side, conn, network, mintPk, ownerPk, quo
 				online.fetchBuyState(mintPk, ownerPk, tokenProgram),
 			]);
 			const qa = resolveCustodialQuote(state.bondingCurve?.quoteMint, network);
-			if (!qa.isSol) throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset — trade it from its coin page instead');
+			if (!qa.isSol) throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset; trade it from its coin page instead');
 			const quoteAtomics = new BNmod(Math.floor(Number(solAmount) * LAMPORTS_PER_SOL));
 			const expected = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: state.bondingCurve.tokenTotalSupply, bondingCurve: state.bondingCurve, amount: quoteAtomics });
 			if (!expected.gt(new BNmod(0))) throw typed(400, 'amount_too_small', 'that SOL amount is too small to buy any tokens');
@@ -723,7 +723,7 @@ async function buildSwapInstructions({ side, conn, network, mintPk, ownerPk, quo
 			online.fetchSellState(mintPk, ownerPk, tokenProgram),
 		]);
 		const qa = resolveCustodialQuote(state.bondingCurve?.quoteMint, network);
-		if (!qa.isSol) throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset — trade it from its coin page instead');
+		if (!qa.isSol) throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset; trade it from its coin page instead');
 		const tokens = new BNmod(tokenAmountRaw);
 		const expectedQuote = getSellSolAmountFromTokenAmount({ global, feeConfig, mintSupply: state.bondingCurve.tokenTotalSupply, bondingCurve: state.bondingCurve, amount: tokens });
 		return sdk.sellV2Instructions({
@@ -813,7 +813,7 @@ export async function handleTradeHistory(req, res, id) {
 		};
 	});
 
-	// Sniper closed positions (best-effort — table may be absent on minimal DBs).
+	// Sniper closed positions (best-effort; table may be absent on minimal DBs).
 	let sniper = [];
 	try {
 		const rows = await sql`

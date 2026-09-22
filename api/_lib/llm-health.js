@@ -203,7 +203,7 @@ export async function probeLlmHealth() {
 // model is judged by its routes in order:
 //   ok           the first reachable route answered
 //   degraded     the first route failed but a later route of the SAME model
-//                answered (the model works, on a failover lane)
+//                answered, so the model works on a failover lane
 //   down         no route answered: messages on it fall through to the
 //                platform chain and are answered by another model
 //   unavailable  this deployment has no credential for any of its routes

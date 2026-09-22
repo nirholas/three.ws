@@ -2,9 +2,11 @@
 //
 // One call wires a package:
 //
-//   const server = new McpServer(...);
-//   applyPolicy(server, { serverId: 'x402-mcp', z });
-//   for (const tool of TOOLS) server.registerTool(...);   // unchanged
+/*
+ *   const server = new McpServer(...);
+ *   applyPolicy(server, { serverId: 'x402-mcp', z });
+ *   for (const tool of TOOLS) server.registerTool(...);   // unchanged
+ */
 //
 // applyPolicy wraps registerTool so a tool the session has not enabled is never
 // registered (tools/list omits it, and calling it anyway explains how to turn it

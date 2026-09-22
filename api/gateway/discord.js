@@ -1,4 +1,4 @@
-// POST /api/gateway/discord — the Discord interactions endpoint for the agent
+// POST /api/gateway/discord: the Discord interactions endpoint for the agent
 // chat gateway (slash commands and the Approve / Cancel buttons).
 //
 // Discord signs every interaction with Ed25519 over timestamp + raw body; an
