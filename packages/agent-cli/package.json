@@ -1,0 +1,67 @@
+{
+  "name": "@three-ws/agent",
+  "version": "0.1.0",
+  "description": "Run a three.ws agent on your own machine or VPS: a terminal UI with slash commands, streaming tool output, local file and shell tools in a resource-limited sandbox, the three.ws MCP tools and agent wallet, SQLite sessions with full-text search, parallel subagents, natural-language cron, and a Telegram gateway.",
+  "keywords": [
+    "three.ws",
+    "agent",
+    "ai-agent",
+    "tui",
+    "terminal",
+    "cli",
+    "mcp",
+    "model-context-protocol",
+    "cron",
+    "subagents",
+    "telegram",
+    "solana",
+    "openai-compatible"
+  ],
+  "author": "three.ws <support@three.ws> (https://three.ws)",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/docs/agent-cli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/agent-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "type": "module",
+  "bin": {
+    "three-ws-agent": "./bin/three-ws-agent.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./cli": "./src/cli.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "vitest run --root ../.. packages/agent-cli/tests"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "ink-testing-library": "^4.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "cron-parser": "^5.10.1",
+    "cronstrue": "^3.27.0",
+    "ink": "^7.1.1",
+    "react": "^19.3.0",
+    "turndown": "^7.2.4"
+  }
+}
