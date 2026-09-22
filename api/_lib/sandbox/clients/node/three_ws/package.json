@@ -1,0 +1,11 @@
+{
+	"name": "three_ws",
+	"version": "1.0.0",
+	"description": "Call three.ws tools from inside a sandboxed script, over the local bridge socket.",
+	"main": "index.js",
+	"exports": {
+		"import": "./index.mjs",
+		"require": "./index.js"
+	},
+	"license": "MIT"
+}

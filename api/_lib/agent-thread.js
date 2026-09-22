@@ -13,12 +13,32 @@ const MAX_CONTENT = 8000;
  * Append one message to the agent's thread.
  * @returns {Promise<{ id:number, created_at:string }>}
  */
-export async function appendThreadMessage({ agentId, userId, role, content, channel, toolCalls = [], signatures = [], model = null, provider = null }) {
+export async function appendThreadMessage({
+	agentId,
+	userId,
+	role,
+	content,
+	channel,
+	toolCalls = [],
+	signatures = [],
+	model = null,
+	provider = null,
+	// Billing, written by the v1 messages API (api/_lib/agents-v1/messages.js):
+	// free_tier rows are what the daily free allowance counts.
+	freeTier = false,
+	inputTokens = null,
+	outputTokens = null,
+	costMicroUsd = null,
+	chargedUsd = 0,
+}) {
 	const text = String(content || '').slice(0, MAX_CONTENT);
 	const [row] = await sql`
-		INSERT INTO agent_messages (agent_id, user_id, role, content, channel, tool_calls, signatures, model, provider)
+		INSERT INTO agent_messages
+			(agent_id, user_id, role, content, channel, tool_calls, signatures, model, provider,
+			 free_tier, input_tokens, output_tokens, cost_micro_usd, charged_usd)
 		VALUES (${agentId}, ${userId}, ${role}, ${text}, ${channel}, ${JSON.stringify(toolCalls || [])}::jsonb,
-		        ${signatures || []}, ${model}, ${provider})
+		        ${signatures || []}, ${model}, ${provider},
+		        ${freeTier}, ${inputTokens}, ${outputTokens}, ${costMicroUsd}, ${chargedUsd})
 		RETURNING id, created_at
 	`;
 	return row;
@@ -33,12 +53,12 @@ export async function listThread({ agentId, userId, limit = 30, before = null })
 	const cursor = before != null && /^\d+$/.test(String(before)) ? String(before) : null;
 	const rows = cursor
 		? await sql`
-			SELECT id, role, content, channel, tool_calls, signatures, created_at
+			SELECT id, role, content, channel, tool_calls, signatures, model, created_at
 			FROM agent_messages
 			WHERE agent_id = ${agentId} AND user_id = ${userId} AND id < ${cursor}
 			ORDER BY id DESC LIMIT ${n + 1}`
 		: await sql`
-			SELECT id, role, content, channel, tool_calls, signatures, created_at
+			SELECT id, role, content, channel, tool_calls, signatures, model, created_at
 			FROM agent_messages
 			WHERE agent_id = ${agentId} AND user_id = ${userId}
 			ORDER BY id DESC LIMIT ${n + 1}`;
@@ -50,6 +70,7 @@ export async function listThread({ agentId, userId, limit = 30, before = null })
 			role: r.role,
 			content: r.content,
 			channel: r.channel,
+			model: r.model || null,
 			toolCalls: r.tool_calls || [],
 			signatures: r.signatures || [],
 			createdAt: r.created_at,
