@@ -29,6 +29,7 @@ const TYPE_CATEGORY = {
 	withdrawal_completed: 'account', withdrawal_failed: 'account', payment_mismatch: 'account',
 	asset_payment_mismatch: 'account', skill_payment_mismatch: 'account', security_alert: 'account',
 	wallet_anomaly_frozen: 'account',
+	inference_topup: 'account', inference_budget_exhausted: 'account',
 };
 function categoryOf(type) { return TYPE_CATEGORY[type] || 'account'; }
 

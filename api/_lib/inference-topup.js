@@ -468,7 +468,7 @@ async function finalizeSettled(row, signature) {
 			credits_usd: Number(row.credits_usd),
 			signature,
 			source: row.source,
-			link: '/credits',
+			link: `/agents/${row.agent_id}/wallet#credits`,
 		});
 		logAudit({
 			userId: row.user_id,

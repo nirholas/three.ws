@@ -33,6 +33,7 @@ import './tabs/snipe.js';
 import './tabs/orders.js';
 import './tabs/earn.js';
 import './tabs/autopilot.js';
+import './tabs/credits.js';
 import './tabs/intents.js';
 import './tabs/signals.js';
 import './tabs/pay.js';

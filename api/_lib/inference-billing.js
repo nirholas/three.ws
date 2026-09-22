@@ -308,7 +308,7 @@ async function recordBudgetExhausted({ agent, userId, window, limit, spent }) {
 		budget_usd: limit,
 		spent_usd: spent,
 		automations_stopped: stopped,
-		link: `/agent/${agent.id}#credits`,
+		link: `/agents/${agent.id}/wallet#credits`,
 	});
 	logAudit({
 		userId,

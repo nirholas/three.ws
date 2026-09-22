@@ -186,6 +186,18 @@
 					parts: ['Withdrawal', w ? [' of ', bold(w)] : '', ' completed'].flat(),
 				};
 			}
+			case 'inference_topup':
+				return {
+					icon: '⚡',
+					href: p.link || '/credits',
+					parts: [bold((Number(p.amount_usdc) || 0) + ' USDC'), ' from your agent wallet added ', bold('$' + (Number(p.credits_usd) || 0).toFixed(2)), ' of credits'],
+				};
+			case 'inference_budget_exhausted':
+				return {
+					icon: '!',
+					href: p.link || agentHref,
+					parts: [bold(p.agent_name || 'Your agent'), ' used its ', p.window === 'monthly' ? 'monthly' : 'daily', ' inference budget. Raise it to resume'],
+				};
 			case 'withdrawal_failed':
 				return {
 					icon: '!',

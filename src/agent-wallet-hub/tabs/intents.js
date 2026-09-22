@@ -27,10 +27,13 @@ const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const TRIGGER_ICON = {
 	on_tip_received: '🫶', on_income: '💰', on_balance_below: '🛟',
 	on_schedule: '🗓️', on_launch_matching: '🎯', on_stream_started: '🌊',
+	credits_below: '🔋',
+	on_mail_received: '✉️',
 };
 const ACTION_ICON = {
 	tip: '🫶', transfer: '➡️', buy: '🛒', snipe: '🎯',
 	withdraw: '🏦', split_income: '🪢', freeze: '🧊', notify: '🔔',
+	fund_inference: '⚡',
 };
 const STATUS_TONE = {
 	ok: 'ok', notified: 'ok', would_run: 'ok', confirmed: 'ok',
@@ -42,6 +45,7 @@ const TEMPLATES = [
 	{ label: 'Self-protect on low balance', text: 'When my balance is under 0.05 SOL, freeze all spending and DM me.' },
 	{ label: 'Share my income', text: 'Split 10% of everything I earn to my main wallet.' },
 	{ label: 'Sweep profit on a schedule', text: 'Every Friday, withdraw anything above 2 SOL to my main wallet.' },
+	{ label: 'Keep it thinking', text: 'When my credits fall below $1, top up 5 USDC from the wallet, at most once a day.' },
 ];
 
 const STYLE = `
@@ -465,6 +469,7 @@ function labelTrigger(t) {
 	return {
 		on_tip_received: 'On a tip', on_income: 'On income', on_balance_below: 'On low balance',
 		on_schedule: 'On schedule', on_launch_matching: 'On matching launch', on_stream_started: 'On stream start',
+		on_mail_received: 'On new email',
 	}[t] || t;
 }
 function timeAgo(iso) {

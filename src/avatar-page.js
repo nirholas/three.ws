@@ -975,6 +975,18 @@ function mountWalletManager() {
 	} catch (err) {
 		log.error('[avatar] royalty setting', err);
 	}
+
+	// Self-funded inference: the credits this agent's model calls draw from, its
+	// runway and budget, and a link into the wallet's Credits tab to top up.
+	// Loaded on demand so visitor views never fetch it.
+	const credits = document.createElement('div');
+	credits.id = 'credits';
+	credits.className = 'av-credits';
+	credits.style.marginTop = 'var(--space-3, 12px)';
+	host.appendChild(credits);
+	import('./inference-credits.js')
+		.then(({ mountInferenceCredits }) => mountInferenceCredits(credits, { agentId: avatar.agent_id, compact: true }))
+		.catch((err) => log.error('[avatar] credits tile', err));
 }
 
 /**

@@ -367,7 +367,8 @@ async function onWalletChanged(ctx, { agentId }) {
 async function readUsage(ctx, { agentId }) {
 	const row = await ownedAgent(ctx, agentId);
 	const { getCreditAccount } = await import('../_lib/credits.js');
-	const [byModel, byTool, daily, credits] = await Promise.all([
+	const { inferenceUsage } = await import('../_lib/inference-billing.js');
+	const [byModel, byTool, daily, credits, inference] = await Promise.all([
 		sql`
 			SELECT coalesce(model, 'unknown') AS model, count(*)::int AS calls,
 			       coalesce(sum(coalesce(input_tokens, 0)), 0)::bigint AS input_tokens,
@@ -393,6 +394,7 @@ async function readUsage(ctx, { agentId }) {
 			 GROUP BY 1 ORDER BY 1
 		`,
 		getCreditAccount(ctx.auth.userId),
+		inferenceUsage({ userId: ctx.auth.userId, agent: row }),
 	]);
 	const models = byModel.map((m) => ({
 		model: m.model,
@@ -419,6 +421,21 @@ async function readUsage(ctx, { agentId }) {
 			balance_usd: credits?.balanceUsd ?? 0,
 			lifetime_spent_usd: credits?.lifetimeSpentUsd ?? 0,
 			note: 'Credits are held per account and shared by all of your agents.',
+		},
+		// Self-funded inference (api/_lib/inference-billing.js): burn rate, runway,
+		// this agent's budget and spend, the last top-ups with their Solana
+		// signatures, and the auto top-up rule. Same shape as GET /api/me/usage.
+		inference: {
+			burn_rate_usd_per_day: inference.burn_rate_usd_per_day,
+			days_remaining: inference.days_remaining,
+			month: inference.inference_month,
+			budget: inference.agent?.budget ?? null,
+			spend: inference.agent?.spend ?? null,
+			exhausted: inference.agent?.exhausted ?? null,
+			auto_fund: inference.auto_fund ?? null,
+			topups: inference.topups,
+			pricing: inference.pricing,
+			base_url: 'https://three.ws/api/v1',
 		},
 	};
 }
@@ -846,7 +863,7 @@ export const RESOURCES = [
 		uriTemplate: 'three://agents/{agentId}/usage',
 		name: 'agent-usage',
 		title: 'Agent usage',
-		description: 'This month\'s LLM calls, tokens and cost per model, MCP tool calls per tool, a 30-day daily series, and your account credit balance.',
+		description: 'This month\'s LLM calls, tokens and cost per model, MCP tool calls per tool, a 30-day daily series, your account credit balance, and self-funded inference: burn rate, days of credits left, this agent\'s inference budget, and the last wallet top-ups with their signatures.',
 		access: AGENT_SCOPES,
 		perAgent: true,
 		read: readUsage,

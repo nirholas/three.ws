@@ -92,6 +92,8 @@ export const TYPE_ICON = {
 	royalty_paid:             '💰',
 	companion_delivery:       '👋',
 	print_update:             '📦',
+	inference_topup:          '⚡',
+	inference_budget_exhausted: '⏸️',
 };
 
 export function notifLabel(n) {
@@ -175,6 +177,10 @@ export function notifLabel(n) {
 			return p.message || `Your print order was updated${p.status ? `: ${String(p.status).replace(/_/g, ' ')}` : ''}`;
 		case 'pump_alert':
 			return p.summary || 'An alert rule fired';
+		case 'inference_topup':
+			return `${p.source === 'intent' ? 'Auto top-up: ' : ''}${Number(p.amount_usdc) || 0} USDC from your agent's wallet added $${(Number(p.credits_usd) || 0).toFixed(2)} of credits`;
+		case 'inference_budget_exhausted':
+			return `${p.agent_name || 'Your agent'} used its ${p.window === 'monthly' ? 'monthly' : 'daily'} inference budget${p.automations_stopped ? ' and was stopped' : ''}. Raise it to resume`;
 		case 'royalty_paid':
 			return p.usd
 				? `${p.actor || 'A fork of your avatar'} paid you $${Number(p.usd).toFixed(3)} in royalties`
