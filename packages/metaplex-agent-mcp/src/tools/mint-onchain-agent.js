@@ -55,7 +55,31 @@ export const def = {
 		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Overrides SOLANA_SECRET_KEY.'),
 		confirm: z.boolean().optional().describe('Must be true to broadcast. Anything else returns a spend-nothing preview.'),
 	},
-	async handler(args) {
+	handler: (args) => runMint(args, { preview: REQUIRE_CONFIRM && args.confirm !== true }),
+};
+
+/**
+ * `preview_agent_mint`: the preview that must run before mint_onchain_agent.
+ * The same documents, paying wallet and cost lines the mint would use, plus the
+ * wallet's live balance, and nothing broadcast whatever REQUIRE_CONFIRM says.
+ */
+export const previewDef = {
+	name: 'preview_agent_mint',
+	title: 'Preview an on-chain agent mint (no funds move)',
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+	description:
+		'Preview mint_onchain_agent before it runs: both JSON documents, the paying wallet and its live SOL balance, ' +
+		'every cost line including the deploy fee and its recipient, and whether the balance covers it. Broadcasts ' +
+		'nothing. Show it to the user, get a clear yes, then call mint_onchain_agent with the same arguments, the ' +
+		'returned preview_id and confirm_spend: true.',
+	inputSchema: {
+		...mintShape,
+		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Only its public key is read.'),
+	},
+	handler: (args) => runMint(args, { preview: true }),
+};
+
+async function runMint(args, { preview }) {
 		const network = args.network || NETWORK;
 		const umi = buildUmi({ network, secret: args.secret, requireSigner: true });
 		const wallet = umi.identity.publicKey.toString();
@@ -68,10 +92,13 @@ export const def = {
 		);
 		const asset = mint.assetSigner.publicKey.toString();
 
-		if (REQUIRE_CONFIRM && args.confirm !== true) {
+		if (preview) {
+			const balance = await solBalance(umi, wallet);
 			return {
 				ok: true,
 				confirm_required: true,
+				wallet_balance_sol: balance,
+				balance_covers_cost: balance >= total,
 				message:
 					`Preview only. Re-issue with confirm:true to mint on ${network} for ~${total} SOL ` +
 					`(~${EST_NETWORK_SOL} rent + network fees${fee.sol > 0 ? `, ${fee.sol} SOL deploy fee to ${fee.wallet}` : ', no deploy fee'}).`,
@@ -113,5 +140,4 @@ export const def = {
 			links: agentLinks(asset, network),
 			note: 'The agent is live in the Metaplex Agent Registry. DAS indexers surface it within minutes; fund agent_wallet to let the asset act on-chain.',
 		};
-	},
-};
+}

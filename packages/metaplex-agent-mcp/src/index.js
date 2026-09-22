@@ -29,10 +29,10 @@ import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
-import { def as mintOnchainAgent } from './tools/mint-onchain-agent.js';
+import { def as mintOnchainAgent, previewDef as previewAgentMint } from './tools/mint-onchain-agent.js';
 import { def as prepareAgentMint } from './tools/prepare-agent-mint.js';
 import { def as sendSignedTransaction } from './tools/send-signed-transaction.js';
-import { def as registerAgentIdentity } from './tools/register-agent-identity.js';
+import { def as registerAgentIdentity, previewDef as previewAgentIdentity } from './tools/register-agent-identity.js';
 import { def as getOnchainAgent } from './tools/get-onchain-agent.js';
 import { def as agentWallet } from './tools/agent-wallet.js';
 import { def as buildRegistration } from './tools/build-registration.js';
@@ -43,9 +43,11 @@ const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../package.json');
 
 export const TOOLS = [
+	previewAgentMint,
 	mintOnchainAgent,
 	prepareAgentMint,
 	sendSignedTransaction,
+	previewAgentIdentity,
 	registerAgentIdentity,
 	getOnchainAgent,
 	agentWallet,

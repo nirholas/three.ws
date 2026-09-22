@@ -9,7 +9,7 @@
 
 import { z } from 'zod';
 
-import { registerCitizen, resolveSigner, pickCluster, explorerTx } from '../lib/agenc.js';
+import { registerCitizen, previewRegistration, signerBalances, resolveSigner, pickCluster, explorerTx } from '../lib/agenc.js';
 import { THREE_WS_BASE } from '../config.js';
 import { apiRequest } from '../lib/api.js';
 
@@ -76,7 +76,29 @@ export const def = {
 			.optional()
 			.describe('Base58 64-byte secret key of the signing wallet. Falls back to AGORA_SECRET_KEY. Never logged or transmitted.'),
 	},
-	async handler(args) {
+	handler: (args) => runRegister(args, { preview: false }),
+};
+
+/**
+ * `agora_quote_register`: the preview that must run before agora_register.
+ * Derives the agent id and PDA the registration would create, reports an
+ * identity that is already registered (which stakes nothing), and checks the
+ * stake against the signer's live SOL balance, without signing.
+ */
+export const quoteDef = {
+	name: 'agora_quote_register',
+	title: 'Quote an Agora registration (no funds move)',
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+	description:
+		'Quote agora_register before it runs: the derived AgenC agent id and PDA, whether that identity is already ' +
+		'registered (then nothing is staked), the stake in lamports the protocol would hold, the signing wallet and ' +
+		'its live SOL balance. Signs nothing. Show it to the user, get a clear yes, then call agora_register with the ' +
+		'same arguments, the returned quote_id and confirm_spend: true.',
+	inputSchema: def.inputSchema,
+	handler: (args) => runRegister(args, { preview: true }),
+};
+
+async function runRegister(args, { preview }) {
 		const handle = args?.handle ? String(args.handle).trim() : undefined;
 		const erc8004AgentId = args?.erc8004AgentId ?? undefined;
 		const mplCoreAsset = args?.mplCoreAsset ? String(args.mplCoreAsset).trim() : undefined;
@@ -106,6 +128,29 @@ export const def = {
 		const endpoint = args?.endpoint
 			? String(args.endpoint).trim()
 			: `${THREE_WS_BASE}/agents/${defaultAgentLabel(identityRef)}`;
+
+		if (preview) {
+			const [plan, balances] = await Promise.all([
+				previewRegistration({ cluster, identityRef, baseUrl: THREE_WS_BASE }),
+				signerBalances({ cluster, pubkey }),
+			]);
+			const staked = plan.existed ? 0 : stakeLamports;
+			return {
+				ok: true,
+				cluster,
+				wallet: pubkey,
+				professions: keys,
+				capabilityBits: String(capabilities),
+				endpoint,
+				agentId: plan.agentIdHex,
+				agentPda: plan.agentPda,
+				alreadyRegistered: plan.existed,
+				stakeLamports: staked,
+				stakeSol: staked / 1e9,
+				balanceSol: balances.sol,
+				balanceCoversStake: balances.lamports >= staked,
+			};
+		}
 
 		const result = await registerCitizen({
 			cluster,
@@ -144,8 +189,7 @@ export const def = {
 			onchain: result.agent,
 			citizen,
 		};
-	},
-};
+}
 
 // Stable label for the default endpoint when no handle was given (mpl/erc id).
 function defaultAgentLabel(ref) {

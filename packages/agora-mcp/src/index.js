@@ -41,10 +41,10 @@ import { def as agoraPulse } from './tools/pulse.js';
 import { def as agoraCitizens } from './tools/citizens.js';
 import { def as agoraPassport } from './tools/passport.js';
 import { def as agoraProfessions } from './tools/professions.js';
-import { def as agoraRegister } from './tools/register.js';
+import { def as agoraRegister, quoteDef as agoraQuoteRegister } from './tools/register.js';
 import { def as agoraClaimTask } from './tools/claim-task.js';
 import { def as agoraCompleteTask } from './tools/complete-task.js';
-import { def as agoraPostTask } from './tools/post-task.js';
+import { def as agoraPostTask, quoteDef as agoraQuoteTask } from './tools/post-task.js';
 
 // Single source of truth for the advertised server version — package.json.
 const require = createRequire(import.meta.url);
@@ -56,9 +56,11 @@ export const TOOLS = [
 	agoraCitizens,
 	agoraPassport,
 	agoraProfessions,
+	agoraQuoteRegister,
 	agoraRegister,
 	agoraClaimTask,
 	agoraCompleteTask,
+	agoraQuoteTask,
 	agoraPostTask,
 ];
 

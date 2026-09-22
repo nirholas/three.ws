@@ -29,6 +29,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { def as createSession } from './tools/create-session.js';
 import { def as payWithSession } from './tools/pay-with-session.js';
+import { def as quoteSessionPayment } from './tools/quote-session-payment.js';
 import { def as checkSession } from './tools/check-session.js';
 import { def as listSessions } from './tools/list-sessions.js';
 import { def as cancelSession } from './tools/cancel-session.js';
@@ -38,6 +39,7 @@ const { version: PKG_VERSION } = require('../package.json');
 
 export const TOOLS = [
 	createSession,
+	quoteSessionPayment,
 	payWithSession,
 	checkSession,
 	listSessions,

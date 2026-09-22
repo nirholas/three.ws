@@ -33,10 +33,14 @@ import { def as speak } from './tools/speak.js';
 import { def as walletCreate } from './tools/wallet-create.js';
 import { def as walletBalance } from './tools/wallet-balance.js';
 import { def as walletSend } from './tools/wallet-send.js';
+import { def as walletSendPreview } from './tools/wallet-send-preview.js';
 import { def as pumpSnapshot } from './tools/pump-snapshot.js';
 import { def as pumpBuy } from './tools/pump-buy.js';
+import { def as pumpBuyQuote } from './tools/pump-buy-quote.js';
 import { def as pumpLaunch } from './tools/pump-launch.js';
+import { def as pumpLaunchPreview } from './tools/pump-launch-preview.js';
 import { def as pumpCollect } from './tools/pump-collect.js';
+import { def as pumpCollectPreview } from './tools/pump-collect-preview.js';
 import { def as ensSnsResolve } from './tools/ens-sns-resolve.js';
 
 // Single source of truth for the advertised server identity — package.json.
@@ -62,11 +66,15 @@ export const TOOLS = [
 	// Wallet
 	walletCreate,
 	walletBalance,
+	walletSendPreview,
 	walletSend,
 	// pump.fun
 	pumpSnapshot,
+	pumpBuyQuote,
 	pumpBuy,
+	pumpLaunchPreview,
 	pumpLaunch,
+	pumpCollectPreview,
 	pumpCollect,
 	// Identity
 	ensSnsResolve,
@@ -96,10 +104,11 @@ export function buildServer() {
 				'Avatar flow: list_avatars → list_animations → spawn_avatar (preset "default"/"cz" or any GLB) → dress_avatar → ' +
 				'render_avatar (pose + camera orbit + ARKit-52 expression → real PNG) → speak. generate_avatar text/image-to-3D ' +
 				'via Replicate. wallet_create (optional vanity grinder) gives the avatar a Solana wallet; wallet_balance, ' +
-				'wallet_send for SOL ops. ' +
-				'pump.fun: pump_snapshot for live market data (target="three" for $three); pump_buy via Jupiter, optional Jito ' +
-				'bundle; pump_launch is an atomic Jito-bundled launch with separate funder + creator; pump_collect_fees drains ' +
-				'pump.fun creator-fee vaults atomically. ens_sns_resolve for .eth / .sol names.',
+				'wallet_send_preview then wallet_send for SOL ops. ' +
+				'pump.fun: pump_snapshot for live market data (target="three" for $three); pump_buy_quote then pump_buy via Jupiter, optional Jito ' +
+				'bundle; pump_launch_preview then pump_launch is an atomic Jito-bundled launch with separate funder + creator; ' +
+				'pump_collect_preview then pump_collect_fees drains pump.fun creator-fee vaults atomically. ' +
+				'Every value-moving tool is off until enabled (THREE_WS_TOOLS) and needs its preview id plus its confirm flag. ens_sns_resolve for .eth / .sol names.',
 		},
 	);
 

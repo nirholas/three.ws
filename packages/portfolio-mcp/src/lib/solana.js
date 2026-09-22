@@ -290,3 +290,103 @@ export async function sendTransfer({ secret, to, amount, mint, priorityMicroLamp
 		explorer: `https://solscan.io/tx/${sig}`,
 	};
 }
+
+// Rent for a new associated token account (165 bytes), paid by the sender when
+// the recipient has none yet. Read live when possible; this is the fallback.
+const ATA_RENT_LAMPORTS_FALLBACK = 2_039_280;
+const BASE_FEE_LAMPORTS = 5000;
+const TRANSFER_COMPUTE_UNITS = 200_000;
+
+/**
+ * Preview a send_transfer without signing: the sender address, what it holds of
+ * the asset, the exact base units that would move, whether the recipient needs
+ * a new token account (and the rent that costs), the network fee, and every
+ * rule that would refuse the transfer. Refusals are returned, never thrown.
+ */
+export async function previewTransfer({ secret, to, amount, mint, priorityMicroLamports = 100000 }, policy) {
+	const blockers = [];
+	if (!isValidPubkey(to)) blockers.push({ code: 'invalid_destination', message: `Not a valid Solana pubkey: ${to}` });
+	else if (policy.allowlist && !policy.allowlist.has(to)) {
+		blockers.push({ code: 'recipient_not_allowed', message: `${to} is not in RECIPIENT_ALLOWLIST.` });
+	}
+	const isNative = !mint || mint === 'native';
+	if (!isNative && !isValidPubkey(mint)) {
+		blockers.push({ code: 'invalid_mint', message: `mint must be a base58 SPL mint or "native" (got ${mint})` });
+		return { from: null, to, blockers, would_execute: false };
+	}
+
+	const signer = loadSigner(secret);
+	const from = signer.publicKey.toBase58();
+	const conn = getConnection();
+	const microLamports = clampPriorityMicroLamports(priorityMicroLamports);
+	const feeLamports = BASE_FEE_LAMPORTS + Math.ceil((microLamports * TRANSFER_COMPUTE_UNITS) / 1_000_000);
+	const solLamports = BigInt(await conn.getBalance(signer.publicKey, 'confirmed'));
+
+	if (isNative) {
+		const sol = Number(amount);
+		const lamports = BigInt(Math.round(sol * LAMPORTS_PER_SOL));
+		if (sol > policy.maxSolPerTx) {
+			blockers.push({ code: 'over_spend_cap', message: `${sol} SOL exceeds the per-tx cap of ${policy.maxSolPerTx} SOL.` });
+		}
+		if (solLamports < lamports + BigInt(feeLamports)) {
+			blockers.push({ code: 'insufficient_balance', message: `Sender holds ${Number(solLamports) / LAMPORTS_PER_SOL} SOL; this needs ${Number(lamports + BigInt(feeLamports)) / LAMPORTS_PER_SOL} SOL including the fee.` });
+		}
+		return {
+			action: 'send_transfer',
+			chain: 'solana-mainnet',
+			asset: 'SOL',
+			from,
+			to,
+			amount: String(amount),
+			base_units: String(lamports),
+			network_fee_sol: feeLamports / LAMPORTS_PER_SOL,
+			sender_sol: Number(solLamports) / LAMPORTS_PER_SOL,
+			sender_sol_after: Number(solLamports - lamports - BigInt(feeLamports)) / LAMPORTS_PER_SOL,
+			would_execute: blockers.length === 0,
+			blockers,
+		};
+	}
+
+	const { getMint, getAssociatedTokenAddress, getAccount } = await splToken();
+	const mintPk = new PublicKey(mint);
+	const programId = await resolveTokenProgram(conn, mintPk);
+	const mintInfo = await getMint(conn, mintPk, 'confirmed', programId);
+	const baseUnits = parseAmountToBaseUnits(amount, mintInfo.decimals);
+	const senderAta = await getAssociatedTokenAddress(mintPk, signer.publicKey, false, programId);
+	let held = 0n;
+	try {
+		held = (await getAccount(conn, senderAta, 'confirmed', programId)).amount;
+	} catch {
+		held = 0n;
+	}
+	if (held < baseUnits) {
+		blockers.push({ code: 'insufficient_balance', message: `Sender holds ${held} base units of ${mint}; this needs ${baseUnits}.` });
+	}
+	let ataRent = 0;
+	if (isValidPubkey(to)) {
+		const recipientAta = await getAssociatedTokenAddress(mintPk, new PublicKey(to), false, programId);
+		if (!(await conn.getAccountInfo(recipientAta))) {
+			ataRent = await conn.getMinimumBalanceForRentExemption(165).catch(() => ATA_RENT_LAMPORTS_FALLBACK);
+		}
+	}
+	if (solLamports < BigInt(feeLamports + ataRent)) {
+		blockers.push({ code: 'insufficient_sol_for_fees', message: `Sender needs ${(feeLamports + ataRent) / LAMPORTS_PER_SOL} SOL for fees and rent; holds ${Number(solLamports) / LAMPORTS_PER_SOL}.` });
+	}
+	return {
+		action: 'send_transfer',
+		chain: 'solana-mainnet',
+		asset: mint,
+		decimals: mintInfo.decimals,
+		from,
+		to,
+		amount: String(amount),
+		base_units: String(baseUnits),
+		sender_token_base_units: String(held),
+		creates_recipient_token_account: ataRent > 0,
+		recipient_account_rent_sol: ataRent / LAMPORTS_PER_SOL,
+		network_fee_sol: feeLamports / LAMPORTS_PER_SOL,
+		sender_sol: Number(solLamports) / LAMPORTS_PER_SOL,
+		would_execute: blockers.length === 0,
+		blockers,
+	};
+}

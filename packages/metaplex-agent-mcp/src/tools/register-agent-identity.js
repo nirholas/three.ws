@@ -58,7 +58,31 @@ export const def = {
 		secret: z.string().optional().describe('Per-call signing key. Overrides SOLANA_SECRET_KEY.'),
 		confirm: z.boolean().optional().describe('Must be true to broadcast. Anything else returns a preview.'),
 	},
-	async handler(args) {
+	handler: (args) => runRegister(args, { preview: REQUIRE_CONFIRM && args.confirm !== true }),
+};
+
+const { confirm: _confirm, ...previewShape } = def.inputSchema;
+
+/**
+ * `preview_agent_identity`: the preview that must run before
+ * register_agent_identity. Resolves the identity PDA, reports an asset that is
+ * already registered, and renders the exact registration document, without
+ * broadcasting whatever REQUIRE_CONFIRM says.
+ */
+export const previewDef = {
+	name: 'preview_agent_identity',
+	title: 'Preview an Agent Identity registration (no funds move)',
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+	description:
+		'Preview register_agent_identity before it runs: the identity PDA, whether the asset is already registered, ' +
+		'the paying wallet, the cost, and the exact registration document that would be written. Broadcasts nothing. ' +
+		'Show it to the user, get a clear yes, then call register_agent_identity with the same arguments, the ' +
+		'returned preview_id and confirm_spend: true.',
+	inputSchema: previewShape,
+	handler: (args) => runRegister(args, { preview: true }),
+};
+
+async function runRegister(args, { preview }) {
 		const network = args.network || NETWORK;
 		const umi = buildUmi({ network, secret: args.secret, requireSigner: true });
 		const assetPk = umiPublicKey(args.asset);
@@ -95,7 +119,7 @@ export const def = {
 				});
 		const agentRegistrationUri = args.registration_uri || jsonDataUri(registration);
 
-		if (REQUIRE_CONFIRM && args.confirm !== true) {
+		if (preview) {
 			return {
 				ok: true,
 				confirm_required: true,
@@ -104,6 +128,7 @@ export const def = {
 				asset: args.asset,
 				identity_pda: identityPda.toString(),
 				paying_wallet: umi.identity.publicKey.toString(),
+				estimated_cost_sol: EST_REGISTER_LAMPORTS / LAMPORTS_PER_SOL,
 				registration,
 			};
 		}
@@ -125,5 +150,4 @@ export const def = {
 			registration,
 			links: agentLinks(args.asset, network),
 		};
-	},
-};
+}

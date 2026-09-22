@@ -35,7 +35,7 @@ function settleStatus(wait) {
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
-async function fetchJupiterQuote({ inputMint = SOL_MINT, outputMint, amount, slippageBps = 500 }) {
+export async function fetchJupiterQuote({ inputMint = SOL_MINT, outputMint, amount, slippageBps = 500 }) {
 	const url = `https://lite-api.jup.ag/swap/v1/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount}&slippageBps=${slippageBps}`;
 	const r = await fetch(url);
 	if (!r.ok) {

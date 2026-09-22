@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 import {
 	postTask,
+	signerBalances,
 	resolveSigner,
 	pickCluster,
 	deriveIdentity,
@@ -126,7 +127,34 @@ export const def = {
 			.optional()
 			.describe('Base58 64-byte secret key of the signing wallet. Falls back to AGORA_SECRET_KEY. Never logged or transmitted.'),
 	},
-	async handler(args) {
+	handler: (args) => runPost(args, { preview: false }),
+};
+
+const { secret: _secretDesc, ...quoteShapeBase } = def.inputSchema;
+
+/**
+ * `agora_quote_task`: the preview that must run before agora_post_task. It
+ * resolves every input the post would use (reward, mint, deadline, required
+ * capabilities, creator id) and reads the signer's live balance, without
+ * signing or escrowing anything.
+ */
+export const quoteDef = {
+	name: 'agora_quote_task',
+	title: 'Quote an Agora bounty (no funds move)',
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+	description:
+		'Quote agora_post_task before it runs: the exact reward that would be locked in escrow and its asset, the ' +
+		'deadline, required capabilities, task type, the creator agent id, the signing wallet and its live balance, ' +
+		'and whether that balance covers the escrow. Signs nothing and escrows nothing. Show it to the user, get a ' +
+		'clear yes, then call agora_post_task with the same arguments, the returned quote_id and confirm_spend: true.',
+	inputSchema: {
+		...quoteShapeBase,
+		secret: z.string().optional().describe('Base58 secret of the signing wallet. Only its public key is read. Falls back to AGORA_SECRET_KEY.'),
+	},
+	handler: (args) => runPost(args, { preview: true }),
+};
+
+async function runPost(args, { preview }) {
 		const description = String(args?.description ?? '').trim();
 		if (!description) throw Object.assign(new Error('description is required'), { code: 'validation_error' });
 
@@ -170,6 +198,28 @@ export const def = {
 		// Derive the creator id last (this loads the write SDK).
 		const creatorAgentId = await resolveCreatorAgentId(args);
 
+		if (preview) {
+			const balances = await signerBalances({ cluster, pubkey, mint: rewardMint });
+			const held = rewardMint ? BigInt(balances.token?.amountAtomic ?? '0') : BigInt(balances.lamports);
+			return {
+				ok: true,
+				cluster,
+				wallet: pubkey,
+				creatorAgentId,
+				escrow: {
+					amountAtomic: String(rewardAmount),
+					mint: rewardMint,
+					symbol: cluster === 'mainnet' ? (rewardMint === THREE_MINT ? '$THREE' : null) : 'SOL',
+				},
+				requiredCapabilities: String(requiredCapabilities),
+				maxWorkers: args?.maxWorkers != null ? Number(args.maxWorkers) : 1,
+				taskType: args?.taskType || 'Exclusive',
+				deadline,
+				balance: { sol: balances.sol, token: balances.token },
+				balanceCoversEscrow: held >= rewardAmount,
+			};
+		}
+
 		const result = await postTask({
 			cluster,
 			secretKey,
@@ -204,8 +254,7 @@ export const def = {
 			explorerUrl: explorerTx(result.txSignature, cluster),
 			task: result.task,
 		};
-	},
-};
+}
 
 /** Resolve the creator's 32-byte AgenC agent id from an explicit id or an identity. */
 async function resolveCreatorAgentId(args) {

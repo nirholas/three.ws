@@ -38,12 +38,13 @@ import { def as listEntities } from './tools/list-entities.js';
 import { def as listMacros } from './tools/list-macros.js';
 import { def as callService } from './tools/call-service.js';
 import { def as runMacro } from './tools/run-macro.js';
+import { def as previewMacro } from './tools/preview-macro.js';
 import { closeHome, config } from './lib/home.js';
 
 const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../package.json');
 
-export const TOOLS = [homeOverview, listEntities, listMacros, callService, runMacro];
+export const TOOLS = [homeOverview, listEntities, listMacros, callService, previewMacro, runMacro];
 
 export const INSTRUCTIONS =
 	'three.ws Home MCP: safe control of a real Home Assistant house. Call home_overview first: it gives you ' +

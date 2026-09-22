@@ -30,6 +30,7 @@ import { def as getPortfolioHistory } from './tools/portfolio-history.js';
 import { def as getPortfolioAsset } from './tools/portfolio-asset.js';
 import { def as getTradesFeed } from './tools/trades-feed.js';
 import { def as getWalletBalances } from './tools/wallet-balances.js';
+import { def as previewTransfer } from './tools/preview-transfer.js';
 import { def as sendTransfer } from './tools/send-transfer.js';
 
 // Single source of truth for the advertised server version — package.json.
@@ -42,6 +43,7 @@ export const TOOLS = [
 	getPortfolioAsset,
 	getTradesFeed,
 	getWalletBalances,
+	previewTransfer,
 	sendTransfer,
 ];
 

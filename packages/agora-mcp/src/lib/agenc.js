@@ -308,3 +308,48 @@ export function resolveRewardMint(cluster, mint) {
 	const m = String(mint || '').trim();
 	return m || THREE_MINT;
 }
+
+const PUBLIC_RPC = {
+	mainnet: 'https://api.mainnet-beta.solana.com',
+	devnet: 'https://api.devnet.solana.com',
+};
+
+/**
+ * Read the signer's live balances for a preview: native SOL, and the reward
+ * mint's token balance when the escrow is an SPL token. Read-only.
+ * @param {{ cluster: 'mainnet'|'devnet', pubkey: string, mint?: string|null }} input
+ */
+export async function signerBalances({ cluster, pubkey, mint = null }) {
+	const { Connection } = await import('@solana/web3.js');
+	const conn = new Connection(RPC_URL || PUBLIC_RPC[cluster], 'confirmed');
+	const owner = new PublicKey(pubkey);
+	const lamports = await conn.getBalance(owner, 'confirmed');
+	let token = null;
+	if (mint) {
+		const res = await conn.getParsedTokenAccountsByOwner(owner, { mint: new PublicKey(mint) });
+		const atomic = res.value.reduce((sum, a) => sum + BigInt(a.account.data.parsed.info.tokenAmount.amount), 0n);
+		const decimals = res.value[0]?.account.data.parsed.info.tokenAmount.decimals ?? null;
+		token = { mint, amountAtomic: String(atomic), decimals };
+	}
+	return { lamports, sol: lamports / 1e9, token };
+}
+
+/**
+ * Resolve where a registration would land without signing: the derived agent
+ * id and PDA, and whether that agent already exists on-chain (in which case a
+ * register call spends nothing).
+ */
+export async function previewRegistration({ cluster, identityRef, baseUrl }) {
+	const s = await sdk();
+	const ident = await deriveIdentity(identityRef, baseUrl);
+	const client = await readClient(cluster);
+	const pda = s.deriveAgenCAgentPda(client, ident.agentIdHex);
+	const existing = await s.getAgenCAgent(client, pda);
+	return {
+		agentIdHex: ident.agentIdHex,
+		agentPda: pda.toBase58(),
+		existed: Boolean(existing),
+		metadataUri: ident.metadataUri,
+		source: ident.source,
+	};
+}
