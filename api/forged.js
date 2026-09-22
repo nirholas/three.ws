@@ -21,8 +21,9 @@
 // Response: { props: [...], stats: { total, done, queued, spent_usdc,
 //             categories: {...}, latest_ts } }
 // Each prop: { id, ts, prompt, category, tier, status, glb_url, novelty,
-//              cluster_id, price_usdc, payer, payer_short, tx_sig, explorer_url,
-//              viewer_url }
+//              cluster_id, price_usdc, payer, payer_short, payer_kind, tx_sig,
+//              explorer_url, viewer_url }. payer_kind is 'fresh' when a
+//              never-used wallet from the fresh-wallet workers lane bought it.
 
 import { sql, isDbUnavailableError } from './_lib/db.js';
 import { cors, json, method, serverError, rateLimited } from './_lib/http.js';
@@ -58,6 +59,7 @@ function toProp(row) {
 		price_usdc: priceUsdc,
 		payer: row.payer,
 		payer_short: shortAddr(row.payer),
+		payer_kind: row.payer_kind || 'agent',
 		tx_sig: row.tx_sig,
 		explorer_url: row.tx_sig ? explorerTxUrl(row.tx_sig) : null,
 		viewer_url: row.glb_url ? `/app?src=${encodeURIComponent(row.glb_url)}` : null,
@@ -93,12 +95,14 @@ export default async function handler(req, res) {
 
 	try {
 		const rows = await sql`
-			SELECT id, ts, prompt, category, tier, status, glb_url, novelty,
-			       cluster_id, tx_sig, payer, amount_atomic
-			FROM forge_autonomous_props
-			WHERE (${includeAll} OR (status = 'done' AND glb_url IS NOT NULL))
-			  AND (${category || null}::text IS NULL OR category = ${category || null})
-			ORDER BY ts DESC
+			SELECT p.id, p.ts, p.prompt, p.category, p.tier, p.status, p.glb_url, p.novelty,
+			       p.cluster_id, p.tx_sig, p.payer, p.amount_atomic,
+			       CASE WHEN f.pubkey IS NOT NULL THEN 'fresh' ELSE 'agent' END AS payer_kind
+			FROM forge_autonomous_props p
+			LEFT JOIN x402_fresh_wallets f ON f.pubkey = p.payer
+			WHERE (${includeAll} OR (p.status = 'done' AND p.glb_url IS NOT NULL))
+			  AND (${category || null}::text IS NULL OR p.category = ${category || null})
+			ORDER BY p.ts DESC
 			LIMIT ${limit}
 		`;
 		const [stats] = await sql`

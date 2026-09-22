@@ -793,6 +793,7 @@ const appConfig = {
 				mine: resolve(__dirname, 'pages/mine.html'),
 				pulse: resolve(__dirname, 'pages/pulse.html'),
 				'economy-lab': resolve(__dirname, 'pages/economy-lab.html'),
+				'data-desk': resolve(__dirname, 'pages/data-desk.html'),
 				flow: resolve(__dirname, 'pages/flow.html'),
 				symphony: resolve(__dirname, 'pages/symphony.html'),
 				diorama: resolve(__dirname, 'pages/diorama.html'),

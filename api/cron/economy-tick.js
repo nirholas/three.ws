@@ -50,6 +50,8 @@ const TARGETS = [
 	{ label: 'ring-tick', path: '/api/cron/x402-ring-tick', method: 'GET' },
 	{ label: 'x402-seed', path: '/api/cron/x402-seed-cron', method: 'GET' },
 	{ label: 'x402-autonomous', path: '/api/cron/x402-autonomous-loop', method: 'GET' },
+	// Fresh-wallet workers: brand-new payer wallets buying real work every minute.
+	{ label: 'fresh-workers', path: '/api/cron/x402-fresh-workers', method: 'GET' },
 	{ label: 'ring-leak-scan', path: '/api/cron/x402-ring-leak-scan', method: 'GET' },
 	{ label: 'wallets-leak-scan', path: '/api/cron/wallets-leak-scan', method: 'GET' },
 	{ label: 'distribute-payments', path: '/api/cron/run-distribute-payments', method: 'GET' },

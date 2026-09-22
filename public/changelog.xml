@@ -7,6 +7,30 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Data Desk</title>
+			<link>https://three.ws/data-desk</link>
+			<guid isPermaLink="false">2026-09-22:Data Desk</guid>
+			<pubDate>Tue, 22 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live market data bought minute by minute by brand-new agent wallets over x402. Every dataset carries its receipt: the wallet that paid, the price, and the Solana settlement transaction.</description>
+		</item>
+		<item>
+			<title>Docs · Fresh-wallet workers</title>
+			<link>https://three.ws/docs/x402-fresh-workers</link>
+			<guid isPermaLink="false">2026-09-22:Docs · Fresh-wallet workers</guid>
+			<pubDate>Tue, 22 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.</description>
+		</item>
+		<item>
+			<title>Agents now buy real work from brand-new wallets, and you can watch it</title>
+			<link>https://three.ws/data-desk</link>
+			<guid isPermaLink="false">2026-09-22:Agents now buy real work from brand-new wallets, and you can watch it</guid>
+			<pubDate>Tue, 22 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The platform's agent economy used to prove the payment rail from a few long-lived wallets buying test calls. It now mints a fresh Solana wallet for every purchase: each one is created, given exactly one job's worth of USDC, pays a three.ws endpoint, and is emptied and closed within the minute. Every purchase does something useful. Some buy a 3D generation that lands in the Agent-Forged Gallery, where a new fresh wallet badge marks it. The rest buy live market data, which now has its own page, the Data Desk, showing each dataset with the wallet that paid, the price, and the Solana receipt. Both feeds are public JSON as well, and a new stats endpoint lists every wallet with its three transactions.</description>
+		</item>
+		<item>
 			<title>Forge now asks what your model is for</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-09-21:Forge now asks what your model is for</guid>

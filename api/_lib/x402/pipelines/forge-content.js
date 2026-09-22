@@ -95,6 +95,21 @@ export function nextForgeProp(now = Date.now()) {
 	return { category, prompt: `${subject}, ${style}, ${finish}, 3D prop` };
 }
 
+// The same walk keyed by an arbitrary seed instead of the wall clock. The
+// fresh-wallet workers lane buys several props an hour, each from a different
+// brand-new wallet, and keys this on its tick counter so consecutive purchases
+// land on unrelated (category, subject, style) combinations rather than all
+// repeating the hour's prop.
+export function forgePropForSeed(seed) {
+	const n = Math.floor(Number(seed) || 0) >>> 0;
+	const category = CATEGORIES[mix(n, 11) % CATEGORIES.length];
+	const subjects = PROP_CATALOG[category];
+	const subject = subjects[mix(n, 12) % subjects.length];
+	const style = STYLES[mix(n, 13) % STYLES.length];
+	const finish = FINISHES[mix(n, 14) % FINISHES.length];
+	return { category, prompt: `${subject}, ${style}, ${finish}, 3D prop` };
+}
+
 // ── Embedding ──────────────────────────────────────────────────────────────────
 
 // Signed feature hashing (FNV-1a → bucket, top bit → sign). A real, deterministic
@@ -178,7 +193,7 @@ async function scoreDiversity(embedder, vector) {
 
 // ── Schema ──────────────────────────────────────────────────────────────────────
 
-async function ensureSchema() {
+export async function ensureSchema() {
 	// forge_autonomous_props: the public asset-library + diversity table for
 	// autonomously-forged props. glb_url is the renderable asset; novelty +
 	// cluster_id are the embedding-clustering diversity metric.
@@ -222,7 +237,7 @@ async function ensureSchema() {
 // public gallery converges on renderable assets without a dedicated cron.
 // Never throws: a poll hiccup just retries on the next run.
 const RESOLVE_BATCH = 5;
-async function resolveQueuedJobs(origin) {
+export async function resolveQueuedJobs(origin) {
 	let rows = [];
 	try {
 		rows = await sql`
@@ -280,7 +295,7 @@ async function recordCall(runId, { endpointUrl, amountAtomic, txSig, responseDat
 // Embed, score diversity, and insert the generated prop. Returns the compact
 // summary used as value_extracted. Never throws: a DB/embedding hiccup returns a
 // summary carrying the error so the call is still recorded.
-async function persistProp({ runId, prompt, category, response, txSig = null, payer = null, amountAtomic = null }) {
+export async function persistProp({ runId, prompt, category, response, txSig = null, payer = null, amountAtomic = null }) {
 	const r = response && typeof response === 'object' ? response : {};
 	const tier = r.tier || 'draft';
 	const mode = r.mode || 'text_to_3d';

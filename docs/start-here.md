@@ -198,6 +198,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Filming the product demo](./product-demo.md): the narrated walkthrough of every feature on the live site, how the route is generated from the Feature Tour curriculum so a new page films itself, and how to re-shoot a single chapter
 - [three.ws on iOS](./ios-app.md): the App Store app, what it adds on top of the website (native share sheet, universal links, wallet deep links, offline shell), and how the web half of it ships on every deploy
 - [Free LLM providers](./free-llm-providers.md): the failover chain of a dozen free AI providers behind every text completion, what each free tier gives, and how to add the next rung
+- [Fresh-wallet workers](./x402-fresh-workers.md): how the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), why nothing strands, and where to watch it
 - [Tokens API on three.ws](./tokens-xyz.md): the Solana Foundation asset layer that tells us which mints are the same asset, why it sits second in the market-data cascade, and the one env var that turns it on
 - [NVIDIA Inception membership](./nvidia-inception.md): what the platform already runs on NVIDIA silicon and what the program adds on top
 - [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface worth being on (Showcase, GTC, NGC, ACE, the forums, social), the verified intake route for each, and the member benefits nobody has claimed yet

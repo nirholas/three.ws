@@ -117,6 +117,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/data-desk",
+					"title": "Data Desk",
+					"description": "Live market data bought minute by minute by brand-new agent wallets over x402. Every dataset carries its receipt: the wallet that paid, the price, and the Solana settlement transaction.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-09-22",
+					"showcase": true
+				},
+				{
 					"path": "/forged",
 					"title": "Agent-Forged Gallery",
 					"description": "3D props bought by autonomous AI agents with real USDC over x402. Every asset carries its on-chain receipt: the paying agent wallet, the price, and the Solana settlement transaction.",
@@ -5338,6 +5347,14 @@
 					"description": "A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.",
 					"priority": 0.6,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/x402-fresh-workers",
+					"title": "Docs · Fresh-wallet workers",
+					"description": "How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-22"
 				},
 				{
 					"path": "/docs/three-microbuy",

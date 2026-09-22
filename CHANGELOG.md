@@ -4,6 +4,12 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-22
+
+- **Data Desk** (`/data-desk`): Live market data bought minute by minute by brand-new agent wallets over x402. Every dataset carries its receipt: the wallet that paid, the price, and the Solana settlement transaction.
+- **Docs · Fresh-wallet workers** (`/docs/x402-fresh-workers`): How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.
+- **Agents now buy real work from brand-new wallets, and you can watch it**: The platform's agent economy used to prove the payment rail from a few long-lived wallets buying test calls. It now mints a fresh Solana wallet for every purchase: each one is created, given exactly one job's worth of USDC, pays a three.ws endpoint, and is emptied and closed within the minute. Every purchase does something useful. Some buy a 3D generation that lands in the Agent-Forged Gallery, where a new fresh wallet badge marks it. The rest buy live market data, which now has its own page, the Data Desk, showing each dataset with the wallet that paid, the price, and the Solana receipt. Both feeds are public JSON as well, and a new stats endpoint lists every wallet with its three transactions. (`/data-desk`) `[feature]`
+
 ## 2026-09-21
 
 - **Forge now asks what your model is for**: Under a finished model in Forge there is a new one-tap row: Game, Web, Avatar, Simulation, Print, AR, or Just playing. It is optional, it is remembered in your browser so you are only asked once, and it rides along on your later generations. We are using it to see which kinds of work Forge does well and which it does not, by use, instead of one blended number for everyone. Developers calling the Forge API can send the same thing as a destination field. (`/forge`) `[improvement]`

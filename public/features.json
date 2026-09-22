@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-21T05:41:11.217Z",
+	"generated_at": "2026-09-22T04:19:11.057Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -131,6 +131,16 @@
 					"title": "Object Library",
 					"description": "Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.",
 					"added": "2026-07-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/data-desk",
+					"title": "Data Desk",
+					"description": "Live market data bought minute by minute by brand-new agent wallets over x402. Every dataset carries its receipt: the wallet that paid, the price, and the Solana settlement transaction.",
+					"added": "2026-09-22",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6873,6 +6883,16 @@
 					"title": "Docs · The closed-loop x402 ring economy",
 					"description": "A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/x402-fresh-workers",
+					"title": "Docs · Fresh-wallet workers",
+					"description": "How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.",
+					"added": "2026-09-22",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -96,6 +96,7 @@ function renderCard(p) {
 			<div class="fg-receipt" title="This asset was bought by an autonomous agent with real USDC on Solana">
 				<span class="fg-receipt-amount">${price ? `${escapeHtml(price)} USDC` : 'settling'}</span>
 				<span class="fg-receipt-payer">${escapeHtml(p.payer_short || 'agent wallet')}</span>
+				${p.payer_kind === 'fresh' ? '<span class="fg-receipt-fresh" title="Bought by a wallet minted for this one purchase and closed right after">fresh wallet</span>' : ''}
 				${p.explorer_url ? `<a class="fg-receipt-tx" href="${escapeAttr(p.explorer_url)}" target="_blank" rel="noopener noreferrer" title="View the settlement transaction on Solscan">receipt ↗</a>` : ''}
 			</div>
 			${previewUrl ? `

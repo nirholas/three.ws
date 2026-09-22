@@ -86,6 +86,12 @@ URL: https://three.ws/objects
 
 Hundreds of free CC0 3D objects and props: furniture, lighting, electronics, decor. Public domain, no attribution required. Preview live, place it in your room with AR, or download the GLB.
 
+### Data Desk
+
+URL: https://three.ws/data-desk
+
+Live market data bought minute by minute by brand-new agent wallets over x402. Every dataset carries its receipt: the wallet that paid, the price, and the Solana settlement transaction.
+
 ### Agent-Forged Gallery
 
 URL: https://three.ws/forged
@@ -4173,6 +4179,12 @@ Broadcasting a Solana payment and confirming it are separate events, so a settle
 URL: https://three.ws/docs/x402-ring-economy
 
 A self-contained agent-to-agent payment loop where platform-controlled wallets pay the platform's own paid endpoints in real stablecoin, settled by the platform's own facilitator. No user funds are involved.
+
+### Docs · Fresh-wallet workers
+
+URL: https://three.ws/docs/x402-fresh-workers
+
+How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.
 
 ### Docs · The $THREE micro-buy loop
 

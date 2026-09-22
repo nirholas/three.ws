@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 357,
+	"count": 358,
 	"paths": [
 		"/",
 		"/3d",
@@ -76,6 +76,7 @@
 		"/daily",
 		"/daily-match",
 		"/dashboard",
+		"/data-desk",
 		"/defi",
 		"/demos",
 		"/demos/agents",

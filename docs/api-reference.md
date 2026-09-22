@@ -2039,6 +2039,85 @@ Every row is a real settled generation — no synthetic entries.
 Written by the hourly autonomous forge-content pipeline
 (`api/_lib/x402/pipelines/forge-content.js`); the paid generation endpoint it
 buys from is documented under `POST /api/x402/forge` in the x402 section.
+Props also arrive from the fresh-wallet workers lane (below); those carry
+`"payer_kind": "fresh"`, meaning a wallet minted for that one purchase and
+closed right after paid for them. Every other prop reports `"agent"`.
+
+### Data desk feed: `GET /api/data-desk`
+
+```
+GET /api/data-desk                  → newest purchase of every dataset + recent ledger + lane stats
+GET /api/data-desk?slug=market-gas  → one dataset's purchase history, newest first (payload included)
+GET /api/data-desk?limit=50         → ledger page size (default 30, max 100)
+```
+
+The public feed behind [/data-desk](https://three.ws/data-desk): datasets the
+fresh-wallet workers bought from the paid market-data and intel endpoints
+(`/api/x402/market-*`, `news-pulse`, `defi-radar`, `crypto-intel`, `three-intel`),
+each with the receipt that paid for it. Free, cached ~15s, rate-limited per
+IP. No synthetic rows.
+
+**Response**
+
+```json
+{
+	"datasets": [
+		{
+			"id": 918,
+			"ts": "2026-09-22T09:14:03.000Z",
+			"slug": "market-global",
+			"title": "Global market snapshot",
+			"blurb": "Total market cap, 24h volume, largest-coin dominance and the Fear & Greed index.",
+			"endpoint_path": "/api/x402/market-global",
+			"price_usdc": 0.001,
+			"payer": "<fresh wallet address>",
+			"payer_short": "9xQeWv…3kLm",
+			"tx_sig": "<solana settlement signature>",
+			"explorer_url": "https://solscan.io/tx/<sig>",
+			"payload": { "market": { "total_market_cap": 3920000000000 }, "fear_greed": { "value": 72, "label": "Greed" } }
+		}
+	],
+	"recent": [ { "id": 918, "ts": "…", "slug": "market-global", "title": "…", "price_usdc": 0.001, "payer_short": "…", "explorer_url": "…" } ],
+	"catalog": [ { "slug": "market-global", "title": "Global market snapshot", "blurb": "…" } ],
+	"stats": {
+		"datasets_live": 18, "purchases_24h": 4102, "payers_24h": 4102, "spent_usdc_24h": 5.31,
+		"latest_ts": "2026-09-22T09:14:03.000Z",
+		"lane": { "last_24h": { "wallets_minted": 4320, "wallets_closed": 4311, "jobs_paid": 4290, "forge_jobs": 144, "data_jobs": 4146, "spent_usdc": 26.9, "sol_fees": 0.065, "rent_recycled_sol": 8.79 } }
+	}
+}
+```
+
+`payload` is the endpoint's response, with arrays trimmed to their first 40
+items so a row stays small; buy the endpoint directly for the full answer.
+
+### Fresh-wallet workers: `GET /api/fresh-workers`
+
+```
+GET /api/fresh-workers            → lane stats + the 20 newest wallets
+GET /api/fresh-workers?limit=100  → up to 100 wallets
+```
+
+Public statistics for the lane that mints a brand-new Solana wallet for every
+purchase (docs: [x402-fresh-workers.md](./x402-fresh-workers.md)): wallets
+minted, paid and closed over the last 24 hours and all time, what they bought,
+the USDC that recirculated, the SOL actually burned as network fees, the ATA
+rent that round-tripped, and each recent wallet's funding, payment and sweep
+transactions on Solscan. Free, cached ~15s, rate-limited per IP.
+
+```json
+{
+	"enabled": true,
+	"cadence": { "wallets_per_minute": 3, "forge_every_n_ticks": 10, "daily_cap_usdc": 40 },
+	"last_24h": { "wallets_minted": 4320, "wallets_closed": 4311, "jobs_paid": 4290, "forge_jobs": 144, "data_jobs": 4146, "in_flight": 6, "stranded": 0, "spent_usdc": 26.9, "sol_fees": 0.065, "rent_recycled_sol": 8.79, "last_closed_at": "…" },
+	"all_time": { "wallets_minted": 4320, "wallets_closed": 4311, "jobs_paid": 4290, "spent_usdc": 26.9 },
+	"wallets": [
+		{ "pubkey": "…", "state": "closed", "job_kind": "data", "job_slug": "market-gas", "job_title": "Gas oracle",
+		  "price_usdc": 0.001, "sol_fees": 0.000015, "rent_recycled_sol": 0.00203928,
+		  "fund_tx": "https://solscan.io/tx/…", "pay_tx": "https://solscan.io/tx/…", "sweep_tx": "https://solscan.io/tx/…",
+		  "error": null, "created_at": "…", "closed_at": "…" }
+	]
+}
+```
 
 ---
 

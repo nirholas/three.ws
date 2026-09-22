@@ -44,6 +44,7 @@ import { env } from '../env.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey, decodeSecretKey } from '../solana-signers.js';
 import { sendOpsAlert } from '../alerts.js';
 import { resolveSolanaFacilitator, selfFacilitatorEnabled } from './ring-config.js';
+import { freshWorkersConfig } from './fresh-workers/plan.js';
 
 // ── Controlled-wallet set ─────────────────────────────────────────────────────
 
@@ -111,10 +112,24 @@ export async function ringAllowedAddresses(deps = {}) {
 	for (const pk of Object.values(roles)) if (pk) owners.add(pk);
 
 	// x402_ring_wallets registry (task 03 provisioning writes it).
+	const knownAtas = new Set();
 	try {
 		const sql = deps.sql || (await import('../db.js')).sql;
 		const rows = await sql`SELECT pubkey FROM x402_ring_wallets WHERE enabled = true`;
 		for (const r of rows) if (r?.pubkey) owners.add(r.pubkey);
+		// Fresh worker wallets (fresh-workers/): each one is funded by the master,
+		// pays once, and is emptied within minutes, so it never joins the registry.
+		// It still has to be a member for the window in which the leak scanner can
+		// meet its funding leg, or the master's transfer to it reads as a LEAK. The
+		// row already carries the wallet's USDC ATA, so nothing is re-derived here.
+		const hours = freshWorkersConfig().membershipWindowHours;
+		const fresh = await sql`
+			SELECT pubkey, usdc_ata FROM x402_fresh_wallets
+			WHERE created_at > now() - make_interval(hours => ${hours})`;
+		for (const r of fresh) {
+			if (r?.pubkey) owners.add(r.pubkey);
+			if (r?.usdc_ata) knownAtas.add(r.usdc_ata);
+		}
 	} catch { /* no DB / table absent → env-derived set stands */ }
 
 	// Every platform fee-paying signer is a controlled wallet.
@@ -137,6 +152,7 @@ export async function ringAllowedAddresses(deps = {}) {
 		const ata = await usdcAtaOf(owner);
 		if (ata) out.add(ata);
 	}
+	for (const ata of knownAtas) out.add(ata);
 	return out;
 }
 

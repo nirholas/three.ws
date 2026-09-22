@@ -1,14 +1,44 @@
 {
-	"generated_at": "2026-09-21T22:46:08.594Z",
+	"generated_at": "2026-09-22T04:19:11.095Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3744,
+	"total": 3747,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-22",
+			"type": "launch",
+			"title": "Data Desk",
+			"summary": "Live market data bought minute by minute by brand-new agent wallets over x402. Every dataset carries its receipt: the wallet that paid, the price, and the Solana settlement transaction.",
+			"link": "/data-desk",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-22",
+			"type": "launch",
+			"title": "Docs · Fresh-wallet workers",
+			"summary": "How the platform mints a brand-new Solana wallet for every x402 purchase, what those wallets buy (3D props for the library, datasets for the data desk), how each wallet is emptied and closed so nothing strands, and where to watch it.",
+			"link": "/docs/x402-fresh-workers",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-22",
+			"type": "update",
+			"title": "Agents now buy real work from brand-new wallets, and you can watch it",
+			"summary": "The platform's agent economy used to prove the payment rail from a few long-lived wallets buying test calls. It now mints a fresh Solana wallet for every purchase: each one is created, given exactly one job's worth of USDC, pays a three.ws endpoint, and is emptied and closed within the minute. Every purchase does something useful. Some buy a 3D generation that lands in the Agent-Forged Gallery, where a new fresh wallet badge marks it. The rest buy live market data, which now has its own page, the Data Desk, showing each dataset with the wallet that paid, the price, and the Solana receipt. Both feeds are public JSON as well, and a new stats endpoint lists every wallet with its three transactions.",
+			"link": "/data-desk",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-09-21",
 			"type": "update",
@@ -1580,39 +1610,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
-			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
-			"link": "/pitch",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The press kit reads in the three.ws typeface, fits a phone, and quotes every mark at its true size",
-			"summary": "Every paragraph on the press kit was rendering in the browser default serif on a bare white-ish ground: the page styled its own cards and headings but never applied the site typeface, colour, or background to the document itself, so the one page a journalist opens looked nothing like the rest of three.ws. It now uses the platform design tokens throughout, in both light and dark mode. On a 320px phone the two OpenAI announcement cards were sliced off at the right edge, taking their Download PNG buttons with them, and because the page clips rather than scrolls sideways there was no way to reach what was cut; both card grids now fold to a single full-width column instead. The pixel dimensions printed under each mark were also all slightly wrong, off by a pixel or two from the artwork they labelled, which is the number a designer laying out a conference programme actually acts on. They are corrected, and the brand asset renderer now writes them back from the PNG headers on every build the way it already did for the archive size, so they cannot drift again. Last, the Copy buttons beside the boilerplate did nothing at all when the browser withheld clipboard access; they now select the passage in place and tell you which keys to press.",
-			"link": "/press",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Pump Visualizer's live counters stopped freezing a few seconds after the page opened",
-			"summary": "A full audit of /pump-visualizer, the 3D scene of live pump.fun mints. The status bar across the top counts the tokens in the scene, the mint rate per minute and the total market cap, and about fifteen seconds into every visit all three froze: the counter sat at 0 and the rate and total sat at a dash while the scene behind them kept filling with new coins. The cause was the page's own translation pass. Those three numbers were written inside blocks of translated copy, so the moment the language file arrived the browser rebuilt that copy and threw away the very elements the page was writing into. The numbers now live beside their labels instead of inside them, so the labels still translate into all 85 languages and the values keep counting for as long as the page is open. The per-minute and per-hour units now translate too, which they never did once the page switched between live mints and migrations. The page also gained a heading and a labelled search box for screen readers, and its browser tab now reads Pump.fun Visualizer, three.ws instead of a retired product name.",
-			"link": "/pump-visualizer",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

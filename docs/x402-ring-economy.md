@@ -1196,3 +1196,6 @@ activation runbook above is the fix.
   controlled-wallet set + spend invariants
 - [api/cron/x402-ring-leak-scan.js](../api/cron/x402-ring-leak-scan.js) — the
   on-chain leak scanner
+- [Fresh-wallet workers](./x402-fresh-workers.md): the lane that runs beside
+  the ring, paying from a brand-new wallet per job and buying real work (3D
+  props for /forged, datasets for /data-desk) instead of canaries

@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-22",
+			"title": "Agents now buy real work from brand-new wallets, and you can watch it",
+			"summary": "The platform's agent economy used to prove the payment rail from a few long-lived wallets buying test calls. It now mints a fresh Solana wallet for every purchase: each one is created, given exactly one job's worth of USDC, pays a three.ws endpoint, and is emptied and closed within the minute. Every purchase does something useful. Some buy a 3D generation that lands in the Agent-Forged Gallery, where a new fresh wallet badge marks it. The rest buy live market data, which now has its own page, the Data Desk, showing each dataset with the wallet that paid, the price, and the Solana receipt. Both feeds are public JSON as well, and a new stats endpoint lists every wallet with its three transactions.",
+			"tags": [
+				"feature"
+			],
+			"link": "/data-desk"
+		},
+		{
 			"date": "2026-09-21",
 			"title": "Forge now asks what your model is for",
 			"summary": "Under a finished model in Forge there is a new one-tap row: Game, Web, Avatar, Simulation, Print, AR, or Just playing. It is optional, it is remembered in your browser so you are only asked once, and it rides along on your later generations. We are using it to see which kinds of work Forge does well and which it does not, by use, instead of one blended number for everyone. Developers calling the Forge API can send the same thing as a destination field.",
