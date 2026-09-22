@@ -7,7 +7,8 @@ description: "Both models featured in our two earlier NVIDIA forum posts were re
 tags: [nim, nemotron, llama]
 links_in_body: 2, both to forums.developer.nvidia.com (our own earlier topics). No external hyperlinks; three.ws and repo paths are plain text on purpose.
 images: 0
-status: draft, owner approval required before posting (external-channel gate in CLAUDE.md)
+status: posted 2026-09-21
+live: https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950
 ---
 
 # NVIDIA NIM model retirements: what a 410 Gone does to a fallback chain, and how we survive it now

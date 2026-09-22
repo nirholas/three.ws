@@ -137,7 +137,7 @@ own domain, which is the channel with our best track record.
 |---|---|---|
 | [nvidia-forum-browser-digital-human.md](../nvidia-forum-browser-digital-human.md) | NVIDIA Developer Forums, post 3 | Owner posts |
 | [nvidia-forum-gpu-fleet-post.md](../nvidia-forum-gpu-fleet-post.md) | NVIDIA Developer Forums | Owner posts |
-| [nvidia-forum-model-retirement-post.md](../nvidia-forum-model-retirement-post.md) | NVIDIA Developer Forums, NIM > Models | Owner posts |
+| [nvidia-forum-model-retirement-post.md](../nvidia-forum-model-retirement-post.md) | NVIDIA Developer Forums, NIM > Models | [Posted 2026-09-21](https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950) |
 | [ibm-community-governed-agents-post.md](../ibm-community-governed-agents-post.md) | Our own IBM user group, against a one-per-week allowance | Owner posts |
 | [openai-community-3d-studio-post.md](../openai-community-3d-studio-post.md), [openai-community-physical-world-post.md](../openai-community-physical-world-post.md) | OpenAI Developer Community | Owner posts |
 

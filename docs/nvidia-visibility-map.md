@@ -220,10 +220,11 @@ separate chance for a reshare.
 
 ## Technical publishing (the proven channel)
 
-Two forum posts, both live, both landed:
+Three forum posts, all live, all landed:
 
 - [How Nemotron made three.ws text-to-3D pipeline usable](https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445)
 - [How three.ws translates a web app into 100 languages with NVIDIA NIM](https://forums.developer.nvidia.com/t/how-three-ws-translates-a-web-app-into-100-languages-with-nvidia-nim-an-llm-powered-i18n-pipeline/377379)
+- [NVIDIA NIM model retirements: what a 410 Gone does to a fallback chain](https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950) (posted 2026-09-21 from [nvidia-forum-model-retirement-post.md](./nvidia-forum-model-retirement-post.md), written to the pattern below)
 
 This is the only NVIDIA channel where we have a track record, it is self-serve,
 and it feeds everything else: forum posts are what a Technical Blog pitch and a
@@ -231,8 +232,8 @@ GTC abstract are built on.
 
 ### What the approved posts have in common (read before drafting the next one)
 
-Three topics from the `nichxbt` account cleared moderation as of 2026-09-21: the
-two above and a CloudXR 6.2 support question, which drew an NVIDIA employee
+Three topics from the `nichxbt` account had cleared moderation as of 2026-09-21: the
+first two above and a CloudXR 6.2 support question, which drew an NVIDIA employee
 reply the same day. We cannot see the forum's moderation settings, so this is
 the pattern in what passed, plus the stock Discourse new-user defaults (two
 links and one image per post, and an automatic hold once a new account keeps
@@ -285,7 +286,6 @@ when approved.
 |---|---|
 | [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md) | The production GPU fleet: cold weight loads on L4s, min-instances as a quota decision rather than a performance one, the keep-warm cron, and why a failover chain must never have an empty rung |
 | [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) | Audio2Face-3D streamed onto a rig the visitor generated ninety seconds earlier |
-| [nvidia-forum-model-retirement-post.md](./nvidia-forum-model-retirement-post.md) | Both models our two live posts featured were retired from the hosted NIM catalog within weeks: why a `410 Gone` is invisible to a fallback chain, the `model@dimension` vector tags that made the embedding retirement survivable, and three lifecycle signals we ask NVIDIA for. Written to the approval pattern below; post this one first |
 
 ## Member benefits and current disposition
 
@@ -367,7 +367,7 @@ record does not.
 | AI Podcast guest form | Fetched [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Embedded "Submit Guest Ideas" form, fields recorded above |
 | NGC publishing prerequisites | Searched the [NGC Software Partner page](https://www.nvidia.com/en-us/gpu-cloud/ngc-software-partners/) | Legal agreement, staging repo, security scan, QA, sign-off |
 | ISV program retired | `WebFetch` on `nvidia.com/en-us/programs/isv/` | HTTP 301 to `developer.nvidia.com` |
-| Both forum posts live | `curl -o /dev/null -w '%{http_code}'` | Both 200 |
+| All three forum posts live | `curl -o /dev/null -w '%{http_code}'` | All 200 |
 | `/nvidia` never announced on X | Read [announcement-coverage.md](./announcement-coverage.md) inventory | Column empty for `/nvidia`, populated for `/openai` |
 | Jensen Huang engagement has no source | `data/timeline.json`, event `2026-07-18-jensen-huang` | `source_url: null`, as are 4 other NVIDIA events |
 | GPU fleet shape | `gcloud run services list` across all regions, filtered to accelerator node selectors | 8 workers, 12 deployments, 11 L4 + 1 RTX PRO 6000 |
