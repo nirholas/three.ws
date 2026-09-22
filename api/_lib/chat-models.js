@@ -24,10 +24,17 @@
 //   - mistralai/mistral-7b-instruct:free → OpenRouter 404 "No endpoints found"
 //   - meta-llama/llama-3.2-3b-instruct:free → no tool-capable endpoint
 //
+// Open-model roster (Llama, DeepSeek, Kimi, Mistral, Qwen, Gemini) lives in
+// model-roster.js and is merged into MODEL_CATALOG below under provider
+// 'roster': those ids route through their own ordered transports
+// (model-routes.js), not through a single provider lane.
+//
 // Operational note (ops must act): the OpenAI account is over quota and the
 // prod Anthropic key 401s. Both are intentionally ranked at the very END of
 // the ladder — dead final tiers that only burn an attempt after every free
 // lane is exhausted. Fix the keys or remove them to drop them entirely.
+
+import { ROSTER } from './model-roster.js';
 
 /**
  * Capability metadata per chat model id — the routing brain. Only models
@@ -57,10 +64,12 @@ export const MODEL_CATALOG = {
 	'claude-haiku-4-5-20251001':  { provider: 'anthropic', tools: true },
 
 	// ── Groq free tier — fast (sub-second) and first-attempt-reliable ─────────
+	// Groq retired every Llama model (GET /openai/v1/models on 2026-09-22 lists
+	// only GPT-OSS and Qwen); the two Llama ids that sat here 404 and are mapped
+	// forward by RETIRED_MODEL_ALIASES below.
 	'qwen/qwen3.8-27b':           { provider: 'groq', tools: true },
 	'openai/gpt-oss-20b':         { provider: 'groq', tools: true },
-	'llama-3.3-70b-versatile':    { provider: 'groq', tools: true },
-	'llama-3.1-8b-instant':       { provider: 'groq', tools: true },
+	'openai/gpt-oss-120b':        { provider: 'groq', tools: true },
 
 	// ── OpenRouter free tier — rate-limited per model; tool support varies ────
 	//
@@ -142,7 +151,34 @@ export const MODEL_CATALOG = {
 	'gpt-5.3-codex':              { provider: 'openai', tools: true },
 	'o3':                         { provider: 'openai', tools: true },
 	'o3-pro':                     { provider: 'openai', tools: true },
+
+	// ── Open-model roster (model-roster.js). Free rows ride free lanes first and
+	// draw on the daily free-tier allowance (free-tier.js); every other row is a
+	// paid lane gated to signed-in callers and metered at its Vertex price.
+	...Object.fromEntries(
+		ROSTER.map((m) => [m.id, { provider: 'roster', tools: m.tools, ...(m.free ? { free: true } : { paid: true }) }]),
+	),
 };
+
+/**
+ * Model ids an upstream retired, mapped to the live model that replaces them.
+ * Agents and embeds store a model id in their config, so a retirement must not
+ * turn every stored reference into a 404: resolveModelId() maps them forward.
+ */
+export const RETIRED_MODEL_ALIASES = {
+	'llama-3.3-70b-versatile': 'llama-3.3-70b',
+	'llama-3.1-8b-instant': 'qwen3.8-27b',
+};
+
+/** The live id for a model: a retired id maps to its successor. */
+export function resolveModelId(modelId) {
+	return RETIRED_MODEL_ALIASES[modelId] || modelId;
+}
+
+/** Whether a model is covered by the daily free-tier allowance. */
+export function isFreeTierModel(modelId) {
+	return MODEL_CATALOG[resolveModelId(modelId)]?.free === true;
+}
 
 /**
  * Anthropic model ids that the Vertex Claude transport (api/_lib/vertex-claude.js)
@@ -258,7 +294,7 @@ export function promptCacheMinChars(modelId) {
 
 /** Whether a model exposes a tool/function-calling endpoint. Unknown → false. */
 export function modelSupportsTools(modelId) {
-	return MODEL_CATALOG[modelId]?.tools === true;
+	return MODEL_CATALOG[resolveModelId(modelId)]?.tools === true;
 }
 
 /** Whether a model's upstream is moderation-gated (excluded from auto chains). */
@@ -272,7 +308,7 @@ export function isModelModerationGated(modelId) {
  * traffic) and are metered in llm-pricing.js rather than priced to zero.
  */
 export function isPaidModel(modelId) {
-	return MODEL_CATALOG[modelId]?.paid === true;
+	return MODEL_CATALOG[resolveModelId(modelId)]?.paid === true;
 }
 
 /**

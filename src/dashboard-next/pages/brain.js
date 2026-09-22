@@ -31,7 +31,6 @@ const PROVIDERS = [
 	{ key: 'o3',                label: 'o3',                 short: 'o3',          network: 'OpenAI',     color: '#c0e4ff', ctx: '200K', tier: 'Reasoning' },
 	{ key: 'o3-pro',            label: 'o3-pro',             short: 'o3-pro',      network: 'OpenAI',     color: '#cce9ff', ctx: '200K', tier: 'Reasoning' },
 	{ key: 'o3-mini',           label: 'o3-mini',            short: 'o3-mini',     network: 'OpenAI',     color: '#5cb0f4', ctx: '128K', tier: 'Reasoning' },
-	{ key: 'groq-llama',        label: 'Llama 3.3 70B',      short: 'Llama 3.3',   network: 'Groq',       color: '#ff9a3c', ctx: '128K', tier: 'Fast' },
 	{ key: 'qwen-plus',         label: 'Qwen Plus',           short: 'Qwen+',       network: 'DashScope',  color: '#69db7c', ctx: '131K', tier: 'Balanced' },
 	{ key: 'modelscope-qwen',   label: 'Qwen3-Coder 480B',   short: 'Qwen3-Code',  network: 'ModelScope', color: '#40c057', ctx: '32K',  tier: 'Flagship' },
 	{ key: 'deepseek-r1',       label: 'DeepSeek R1',         short: 'DeepSeek',    network: 'DeepSeek',   color: '#888888', ctx: '64K',  tier: 'Reasoning' },
@@ -68,7 +67,7 @@ const S = {
 	personaEnabled: true,
 	playMode: 'compare',
 	focusKey: 'claude-sonnet-4-6',
-	active: new Set(['claude-sonnet-4-6', 'gpt-5.6-luna', 'groq-llama', 'deepseek-r1']),
+	active: new Set(['claude-sonnet-4-6', 'gpt-5.6-luna', 'llama-3.3-70b', 'deepseek-v4-flash']),
 	sessions: [],
 	currentId: null,
 	streaming: false,
@@ -683,6 +682,39 @@ async function saveToAgent() {
 
 // ── Provider availability ────────────────────────────────────────────────
 
+// Colors for networks the static registry above does not carry (the open-model
+// roster families and anything the server adds later).
+const SERVER_NETWORK_COLORS = {
+	Meta: '#0866ff', DeepSeek: '#4d6bfe', Moonshot: '#9b7bff', Mistral: '#ff7000',
+	Qwen: '#615ced', Google: '#34a853', 'Google · OpenRouter': '#34a853', 'NVIDIA NIM': '#76b900',
+};
+
+function formatCtx(tokens) {
+	if (!tokens) return '';
+	return tokens >= 1_000_000 ? `${Math.round(tokens / 1_048_576)}M` : `${Math.round(tokens / 1024)}K`;
+}
+
+// The server roster is the source of truth: any model it serves that the
+// static registry does not list (the open-model roster) joins the grid, so a
+// model added server-side is selectable here without a client release.
+function mergeServerProviders(list) {
+	for (const sp of list) {
+		if (PMAP.has(sp.key)) continue;
+		const tier = sp.tier ? sp.tier[0].toUpperCase() + sp.tier.slice(1) : 'Balanced';
+		const entry = {
+			key: sp.key,
+			label: sp.label,
+			short: sp.label,
+			network: sp.network,
+			color: SERVER_NETWORK_COLORS[sp.network] || '#8a8a8a',
+			ctx: formatCtx(sp.context),
+			tier,
+		};
+		PROVIDERS.push(entry);
+		PMAP.set(sp.key, entry);
+	}
+}
+
 async function fetchAvailability() {
 	try {
 		const r = await fetch('/api/brain/chat', { method: 'GET', credentials: 'include' });
@@ -690,6 +722,7 @@ async function fetchAvailability() {
 		const json = await r.json();
 		if (Array.isArray(json.providers)) {
 			S.avail = json.providers;
+			mergeServerProviders(json.providers);
 			for (const key of [...S.active]) {
 				const found = json.providers.find(p => p.key === key);
 				if (found && !found.available) S.active.delete(key);

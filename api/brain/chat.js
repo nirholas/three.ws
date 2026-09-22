@@ -20,6 +20,8 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { watsonxConfig, watsonxChatRequest } from '../_lib/watsonx.js';
 import { DEFAULT_FREE_MODEL, modelThinksByDefault } from '../_lib/chat-models.js';
+import { ROSTER, rosterModel } from '../_lib/model-roster.js';
+import { rosterTransports, transportHeaders } from '../_lib/model-routes.js';
 import { createReasoningStripper } from '../_lib/strip-reasoning.js';
 import {
 	vertexClaudeEnabled,
@@ -44,16 +46,24 @@ const WATSONX_HEADERS_TIMEOUT_MS = 45_000;
 // models. Every paid first-party model (Claude, GPT-5.x, o3, DashScope, DeepSeek)
 // requires sign-in so an unauthenticated script can't drain the server's billed
 // API keys. Mirrors the anon-provider gate in api/chat.js.
+// The free open-model roster rows (model-roster.js `free: true`) are open to a
+// signed-out caller too; their messages draw on the daily free-tier allowance
+// (api/_lib/free-tier.js) instead of on a paid key.
 export const ANON_BRAIN_PROVIDERS = new Set([
 	'gpt-oss-120b',
 	'nvidia-nemotron-120b',
 	'nvidia-nemotron-super-49b',
 	'nvidia-nemotron-nano',
-	'nvidia-deepseek-v4',
-	'nvidia-kimi-k2',
-	'nvidia-llama4-maverick',
-	'nvidia-minimax-m2',
+	...ROSTER.filter((m) => m.free).map((m) => m.id),
 ]);
+
+// Menu tier for a roster row: chat-only reasoners, premium flagships, and the
+// rest. Drives the same tier chip the hand-written specs carry.
+function rosterTier(m) {
+	if (m.reasoning && !m.tools) return 'reasoning';
+	if (m.price[0] >= 1) return 'flagship';
+	return m.free ? 'fast' : 'balanced';
+}
 
 export const maxDuration = 120;
 
@@ -63,15 +73,17 @@ export const maxDuration = 120;
 // OpenRouter; buildFallback() reuses the OpenRouter id to route *around* a native
 // provider outage (quota/billing/rate-limit) at request time.
 const PROVIDERS = {
+	// The key is historical (agents store it); the model behind it is whatever
+	// DEFAULT_FREE_MODEL names today. The label says what actually answers: it
+	// used to read "GPT-OSS 120B" long after that free endpoint was retired.
 	'gpt-oss-120b': {
-		label: 'GPT-OSS 120B',
-		network: 'OpenAI · OpenRouter',
+		label: 'Gemma 4 31B',
+		network: 'Google · OpenRouter',
 		tier: 'balanced',
 		maxOutput: 8192,
-		description: 'Open-weight 120B from OpenAI. Fast, capable, free tier. Platform default.',
-		// OpenRouter-only — no first-party key for the free tier. The 120B free
-		// endpoint was retired upstream; 20B is the surviving GPT-OSS free route.
-		openrouterModel: 'google/gemma-4-31b-it:free',
+		context: 262_144,
+		description: 'Platform default. Google open-weights, free, no sign-in needed.',
+		openrouterModel: DEFAULT_FREE_MODEL,
 	},
 	'claude-fable-5': {
 		label: 'Claude Fable 5',
@@ -280,18 +292,6 @@ const PROVIDERS = {
 		// OpenRouter dropped x-ai/grok-4.1-fast from its catalog (verified
 		// 2026-07-22), so this tier is native xAI only, with no mirror route.
 	},
-	'groq-llama': {
-		label: 'Llama 3.3 70B',
-		network: 'Groq',
-		tier: 'fast',
-		maxOutput: 8192,
-		description: 'Open-weight on Groq. Extremely fast inference.',
-		native: () =>
-			env.GROQ_API_KEY
-				? createOpenAI({ apiKey: env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' }).chat('llama-3.3-70b-versatile')
-				: null,
-		openrouterModel: 'meta-llama/llama-3.3-70b-instruct',
-	},
 	'qwen-plus': {
 		label: 'Qwen Plus',
 		network: 'DashScope',
@@ -409,40 +409,24 @@ const PROVIDERS = {
 		reasoningTrace: true,
 		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3.5-lightning-30b-a3b') : null),
 	},
-	'nvidia-deepseek-v4': {
-		label: 'DeepSeek V4 Pro',
-		network: 'NVIDIA NIM',
-		tier: 'reasoning',
-		maxOutput: 16384,
-		description: 'DeepSeek V4 Pro hosted on NVIDIA NIM. Deep reasoning, free tier.',
-		reasoningTrace: true,
-		native: () => (env.NVIDIA_API_KEY ? nvidia('deepseek-ai/deepseek-v4-pro') : null),
-	},
-	'nvidia-kimi-k2': {
-		label: 'Kimi K2.6',
-		network: 'NVIDIA NIM',
-		tier: 'flagship',
-		maxOutput: 16384,
-		description: 'Moonshot Kimi K2.6 on NIM. Long-context agentic model, free tier.',
-		native: () => (env.NVIDIA_API_KEY ? nvidia('moonshotai/kimi-k2.6') : null),
-	},
-	'nvidia-llama4-maverick': {
-		label: 'Llama 4 Maverick',
-		network: 'NVIDIA NIM',
-		tier: 'balanced',
-		maxOutput: 8192,
-		description: 'Meta Llama 4 Maverick (128-expert MoE) on NIM. Fast, multimodal-capable.',
-		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3-super-120b-a12b') : null),
-	},
-	'nvidia-minimax-m2': {
-		label: 'MiniMax M2.7',
-		network: 'NVIDIA NIM',
-		tier: 'balanced',
-		maxOutput: 8192,
-		description: 'MiniMax M2.7 on NIM. Strong general reasoning and chat, free tier.',
-		native: () => (env.NVIDIA_API_KEY ? nvidia('minimaxai/minimax-m2.7') : null),
-	},
 };
+
+// ── The open-model roster (api/_lib/model-roster.js) ─────────────────────────
+// Llama, DeepSeek, Kimi, Mistral, Qwen and Gemini. Each row streams through its
+// own ordered routes (free lanes, then Vertex AI Model Garden) before the free
+// safety net below it, so a pick is honored on every lane that serves it.
+for (const m of ROSTER) {
+	PROVIDERS[m.id] = {
+		label: m.label,
+		network: m.family,
+		tier: rosterTier(m),
+		maxOutput: m.maxOutput,
+		context: m.context,
+		description: m.description,
+		reasoningTrace: Boolean(m.reasoning),
+		roster: m.id,
+	};
+}
 
 // Every configured OpenRouter key, primary first. Fallback keys are typically
 // unfunded free-tier accounts (see env.OPENROUTER_FALLBACK_KEYS) — they can't
@@ -465,6 +449,10 @@ function buildPrimary(spec) {
 	// (not an AI SDK model object), so it reports availability here and streams
 	// via streamVertex() in streamBrain(). Requires the GCP project to be set.
 	if (spec.vertex) return vertexClaudeConfigured() ? { kind: 'vertex', model: spec.vertex } : null;
+	if (spec.roster) {
+		const transports = rosterTransports(spec.roster);
+		return transports.length ? { kind: 'roster', transports } : null;
+	}
 	const native = spec.native?.();
 	if (native) return { kind: 'model', model: native, via: 'native' };
 	if (spec.openrouterModel && openrouterKeys().length) {
@@ -506,11 +494,13 @@ function buildFallback(spec, primary) {
 // Exported for the anchor regression tests (tests/api/llm-vertex-anchor-surfaces).
 export function freeFallbackChain(providerKey, spec, primary) {
 	const chain = [];
-	if (env.GROQ_API_KEY && providerKey !== 'groq-llama') {
+	// Groq retired every Llama model (2026-09-22); Qwen 3.8 27B is the live,
+	// tool-capable model on the same free account.
+	if (env.GROQ_API_KEY) {
 		chain.push({
-			label: 'groq/llama-3.3-70b-versatile',
-			model: createOpenAI({ apiKey: env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' }).chat('llama-3.3-70b-versatile'),
-			meter: { provider: 'groq', model: 'llama-3.3-70b-versatile' },
+			label: 'groq/qwen/qwen3.8-27b',
+			model: createOpenAI({ apiKey: env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' }).chat('qwen/qwen3.8-27b'),
+			meter: { provider: 'groq', model: 'qwen/qwen3.8-27b' },
 		});
 	}
 	openrouterKeys().forEach((key, i) => {
@@ -587,6 +577,27 @@ function withVertexExtraBody(body, extraBody) {
 	}
 }
 
+// An AI SDK chat model for one roster transport. The transport owns its URL
+// and auth (a per-call GCP token for Vertex, nothing for the keyless OVH lane),
+// so the SDK's own URL and bearer are replaced in a fetch hook. Gemini on a
+// Vertex route gets the same reasoning cap as the anchor, or its hidden
+// reasoning tokens eat the visible budget.
+function rosterSdkModelFor(transport, maxTokens) {
+	const gemini = transport.name === 'vertex' && String(transport.model).startsWith('google/');
+	const budget = gemini ? vertexGeminiBudget(maxTokens) : { max_tokens: maxTokens, extra_body: null };
+	const model = createOpenAI({
+		apiKey: 'route-auth',
+		baseURL: 'https://route.invalid/v1',
+		fetch: async (_url, init = {}) => {
+			const headers = new Headers(init.headers || {});
+			headers.delete('authorization');
+			for (const [k, v] of Object.entries(await transportHeaders(transport))) headers.set(k, v);
+			return fetch(transport.url, { ...init, headers, body: withVertexExtraBody(init.body, budget.extra_body) });
+		},
+	}).chat(transport.model);
+	return { model, budget: budget.max_tokens };
+}
+
 // NVIDIA NIM (build.nvidia.com) is OpenAI-*compatible* (Chat Completions, not the
 // Responses API), so — like Groq, ModelScope and OpenRouter — we force the
 // `.chat()` surface. One free `nvapi-...` key unlocks every hosted model.
@@ -637,6 +648,11 @@ function openrouter(key = openrouterKeys()[0]) {
 // asserts it), because an unmapped lane would silently record no provider and
 // drop out of the metering audit.
 const NETWORK_METER_PROVIDER = {
+	// Roster families meter per route: every roster attempt carries its own
+	// { provider, model } from model-routes.js, so the family maps to 'roster'
+	// only to mark the network as accounted for.
+	...Object.fromEntries(ROSTER.map((m) => [m.family, 'roster'])),
+	'Google · OpenRouter': 'openrouter',
 	Anthropic: 'anthropic',
 	'Anthropic · Google Vertex': 'vertex-anthropic',
 	OpenAI: 'openai',
@@ -858,7 +874,9 @@ export function getAvailableProviders() {
 			network: spec.network,
 			tier: spec.tier,
 			maxOutput: spec.maxOutput,
+			context: spec.context || null,
 			description: spec.description,
+			roster: Boolean(spec.roster),
 			available,
 			// `available` means the deployment holds a route for the model;
 			// `requiresAuth` means the caller still needs a session to use it
@@ -877,10 +895,19 @@ export function getAvailableProviders() {
 // and the live Q&A concierge) reports the same errors identically.
 // Retired provider keys still stored in user prefs resolve to their successor
 // model instead of a 400 (gpt-4o family deprecated upstream July 2026).
+// Retired menu entries whose upstream model is gone (Groq dropped Llama; NIM
+// answers 410/404 for DeepSeek V4 Pro, MiniMax M2.7 and Kimi K2.6, and the
+// "Llama 4 Maverick" entry was never Llama) map to the roster row that serves
+// the same family today, so an agent that stored one keeps answering.
 const PROVIDER_ALIASES = {
 	'gpt-4o': 'gpt-5.6-sol',
 	'gpt-4o-mini': 'gpt-5.6-luna',
 	'o3-mini': 'o3',
+	'groq-llama': 'llama-3.3-70b',
+	'nvidia-llama4-maverick': 'llama-4-maverick',
+	'nvidia-deepseek-v4': 'deepseek-v4-flash',
+	'nvidia-kimi-k2': 'kimi-k2',
+	'nvidia-minimax-m2': 'gpt-oss-120b',
 };
 
 /**
@@ -908,6 +935,14 @@ export function resolveBrain(providerKey) {
 		};
 	}
 	const primary = buildPrimary(spec);
+	if (!primary && spec.roster) {
+		return {
+			ok: false,
+			status: 503,
+			code: 'model_unavailable',
+			message: `${spec.label} has no reachable route on this deployment right now. Pick another model or try again shortly.`,
+		};
+	}
 	if (!primary) {
 		return {
 			ok: false,
@@ -1060,7 +1095,13 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 				? [{ label: 'watsonx', watsonx: true }]
 				: primary.kind === 'vertex'
 					? [{ label: 'vertex', vertex: true, model: primary.model, meter: { provider: 'vertex-anthropic', model: primary.model } }]
-					: [{ label: 'primary', model: primary.model, meter: meterForPrimary(spec, primary) }];
+					: primary.kind === 'roster'
+						? primary.transports.map((t) => ({
+								label: `${t.name}/${t.model}`,
+								rosterTransport: t,
+								meter: { provider: t.name.split('#')[0], model: t.model },
+							}))
+						: [{ label: 'primary', model: primary.model, meter: meterForPrimary(spec, primary) }];
 		if (fallbackModel) {
 			attempts.push({
 				label: 'openrouter-mirror',
@@ -1068,7 +1109,13 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 				meter: { provider: 'openrouter', model: spec.openrouterModel },
 			});
 		}
-		for (const f of freeFallbackChain(providerKey, spec, primary)) attempts.push(f);
+		// A safety-net rung that repeats a roster route (same lane and model) would
+		// fail the same way twice, so it is skipped.
+		const tried = new Set(attempts.filter((a) => a.meter).map((a) => `${a.meter.provider}|${a.meter.model}`));
+		for (const f of freeFallbackChain(providerKey, spec, primary)) {
+			if (f.meter && tried.has(`${f.meter.provider.split('#')[0]}|${f.meter.model}`)) continue;
+			attempts.push(f);
+		}
 
 		let lastErr = null;
 		for (const [i, attempt] of attempts.entries()) {
@@ -1102,7 +1149,10 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 				if (attempt.watsonx) await streamWatsonx(res, { messages, system, maxTokens, t0 });
 				else if (attempt.vertex)
 					meterAttempt(await streamVertex(res, { messages, system, maxTokens, t0, model: attempt.model }));
-				else if (attempt.vertexGemini) {
+				else if (attempt.rosterTransport) {
+					const { model: rosterSdkModel, budget } = rosterSdkModelFor(attempt.rosterTransport, maxTokens);
+					meterAttempt(await streamOnce(budget, rosterSdkModel));
+				} else if (attempt.vertexGemini) {
 					// Credits anchor: OpenAI-compatible Vertex endpoint, bearer token
 					// minted per attempt (a token-exchange failure throws here and is
 					// handled like any other lane failure). Reuses streamOnce so the

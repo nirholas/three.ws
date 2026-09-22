@@ -196,3 +196,123 @@ export async function probeLlmHealth() {
 	report.overall = overall;
 	return report;
 }
+
+// ── Open-model roster health ─────────────────────────────────────────────────
+// Per-model health for the model picker: every reachable route of every roster
+// model (api/_lib/model-roster.js) gets the same max_tokens:1 ping, and the
+// model is judged by its routes in order:
+//   ok           the first reachable route answered
+//   degraded     the first route failed but a later route of the SAME model
+//                answered (the model works, on a failover lane)
+//   down         no route answered: messages on it fall through to the
+//                platform chain and are answered by another model
+//   unavailable  this deployment has no credential for any of its routes
+// `latencyMs` is the round-trip of the route that would serve the next call.
+// Results are cached (Redis when configured, memory otherwise) for five
+// minutes and a probe already in flight is shared, so a busy picker costs one
+// sweep per window, not one per page view.
+
+const ROSTER_HEALTH_KEY = 'llm:roster-health:v1';
+const ROSTER_HEALTH_TTL_S = 300;
+const ROSTER_PROBE_TIMEOUT_MS = 10_000;
+let rosterSweep = null;
+
+async function probeRosterTransport(transport) {
+	const { transportHeaders } = await import('./model-routes.js');
+	// The rawPredict surface answers a non-streaming ping; the streaming URL
+	// would hold the socket open for an SSE body the probe never reads.
+	const url = transport.name === 'vertex-mistral' ? transport.url.replace(':streamRawPredict', ':rawPredict') : transport.url;
+	let headers;
+	try {
+		headers = await transportHeaders(transport);
+	} catch (err) {
+		return { status: 'error', error: `auth failed: ${err?.message || 'unknown'}`, latencyMs: 0 };
+	}
+	const started = Date.now();
+	try {
+		const res = await fetch(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify({ model: transport.model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }),
+			signal: AbortSignal.timeout(ROSTER_PROBE_TIMEOUT_MS),
+		});
+		const latencyMs = Date.now() - started;
+		if (res.ok) return { status: 'ok', latencyMs };
+		const detail = (await res.text().catch(() => '')).slice(0, 160).replace(/\s+/g, ' ');
+		return { status: 'error', error: `${res.status}${detail ? ` ${detail}` : ''}`, latencyMs };
+	} catch (err) {
+		const latencyMs = Date.now() - started;
+		return { status: 'error', error: err?.name === 'TimeoutError' ? `timed out after ${ROSTER_PROBE_TIMEOUT_MS}ms` : 'unreachable', latencyMs };
+	}
+}
+
+/**
+ * Fold one model's per-route verdicts (in route order) into its health.
+ * Exported for tests.
+ * @param {Array<{ lane: string, status: string, latencyMs: number, error?: string }>} routes
+ */
+export function judgeRosterModel(routes) {
+	if (!routes.length) return { status: 'unavailable', latencyMs: null, lane: null, routes };
+	const firstOk = routes.findIndex((r) => r.status === 'ok');
+	if (firstOk === -1) return { status: 'down', latencyMs: null, lane: null, routes };
+	return {
+		status: firstOk === 0 ? 'ok' : 'degraded',
+		latencyMs: routes[firstOk].latencyMs,
+		lane: routes[firstOk].lane,
+		routes,
+	};
+}
+
+async function sweepRoster() {
+	const [{ ROSTER }, { rosterTransports }] = await Promise.all([import('./model-roster.js'), import('./model-routes.js')]);
+	const models = {};
+	await Promise.all(
+		ROSTER.map(async (m) => {
+			// One probe per distinct route: the OpenRouter fan-out shares a model
+			// id across keys, and the first key answers for the lane.
+			const seen = new Set();
+			const transports = rosterTransports(m.id).filter((t) => {
+				const lane = t.name.split('#')[0];
+				const k = `${lane}|${t.model}`;
+				if (seen.has(k)) return false;
+				seen.add(k);
+				return true;
+			});
+			const verdicts = await Promise.all(
+				transports.map(async (t) => ({ lane: t.name.split('#')[0], model: t.model, ...(await probeRosterTransport(t)) })),
+			);
+			models[m.id] = judgeRosterModel(verdicts);
+		}),
+	);
+	return { checkedAt: new Date().toISOString(), models };
+}
+
+/**
+ * Live health of every roster model, cached for five minutes.
+ * @param {{ fresh?: boolean }} [opts] `fresh` skips the cache (ops dashboards)
+ */
+export async function probeRosterHealth({ fresh = false } = {}) {
+	const { cacheGet, cacheSet } = await import('./cache.js');
+	if (!fresh) {
+		const cached = await cacheGet(ROSTER_HEALTH_KEY).catch(() => null);
+		if (cached?.models) return cached;
+	}
+	if (!rosterSweep) {
+		rosterSweep = sweepRoster()
+			.then(async (report) => {
+				await cacheSet(ROSTER_HEALTH_KEY, report, ROSTER_HEALTH_TTL_S).catch(() => {});
+				return report;
+			})
+			.finally(() => {
+				rosterSweep = null;
+			});
+	}
+	return rosterSweep;
+}
+
+/** The cached roster health without probing, or null when nothing is cached. */
+export async function cachedRosterHealth() {
+	const { cacheGet } = await import('./cache.js');
+	const cached = await cacheGet(ROSTER_HEALTH_KEY).catch(() => null);
+	return cached?.models ? cached : null;
+}

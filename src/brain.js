@@ -22,14 +22,20 @@ const NETWORK_COLORS = {
 	'DeepSeek': '#888888',
 	'IBM watsonx.ai': '#0f62fe',
 	'NVIDIA NIM': '#76b900',
+	'Google · OpenRouter': '#34a853',
+	'Meta': '#0866ff',
+	'Moonshot': '#9b7bff',
+	'Mistral': '#ff7000',
+	'Qwen': '#615ced',
+	'Google': '#34a853',
 };
 const UNKNOWN_NETWORK_COLOR = '#8a8a8a';
 
 // Preferred opening line-up, filtered against what the server reports as
 // usable for THIS visitor. Anything unusable falls through to the first live
 // model, so the page never boots with a column that can only answer 401.
-const DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'claude-sonnet-5', 'gpt-5.6-luna', 'groq-llama'];
-const ANON_DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'nvidia-kimi-k2', 'nvidia-nemotron-120b', 'nvidia-llama4-maverick'];
+const DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'claude-sonnet-5', 'llama-3.3-70b', 'deepseek-v4-flash'];
+const ANON_DEFAULT_MODEL_KEYS = ['gpt-oss-120b', 'llama-3.3-70b', 'qwen3.8-27b', 'mistral-small'];
 
 const PMAP = new Map();
 

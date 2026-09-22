@@ -10,13 +10,15 @@
 // handles them all.
 
 import { env } from './env.js';
-import { DEFAULT_FREE_MODEL, MODEL_CATALOG } from './chat-models.js';
+import { DEFAULT_FREE_MODEL, MODEL_CATALOG, resolveModelId } from './chat-models.js';
 import {
 	vertexGeminiAvailable,
 	vertexGeminiModel,
 	vertexGeminiChatUrl,
 	vertexGeminiHeaders,
+	vertexGeminiBudget,
 } from './vertex-gemini.js';
+import { rosterTransports } from './model-routes.js';
 
 // ── provider chain (free-first, OpenAI-compatible tool-calling + streaming) ────
 // Mirrors the platform policy in api/_lib/llm.js: free platform keys lead, the
@@ -111,6 +113,14 @@ export async function streamRound(provider, { messages, tools, onContent, temper
 	// 400 here would fail the rung over for no reason. Other lanes still get
 	// their usage read when they volunteer it.
 	if (USAGE_OPTION_LANES.has(baseLane(provider.name))) body.stream_options = { include_usage: true };
+	// Gemini on a roster Vertex route reasons by default and bills that
+	// reasoning against max_tokens without returning it; cap it and fund it on
+	// top so the visible budget stays what the loop asked for.
+	if (provider.name === 'vertex' && String(provider.model).startsWith('google/')) {
+		const budget = vertexGeminiBudget(body.max_tokens);
+		body.max_tokens = budget.max_tokens;
+		body.extra_body = budget.extra_body;
+	}
 	if (Array.isArray(tools) && tools.length) { body.tools = tools; body.tool_choice = 'auto'; }
 	// Keyless lanes (the Vertex Gemini credits anchor) mint their auth per request
 	// via getHeaders; a token-exchange failure throws here and fails over to the
@@ -209,11 +219,31 @@ export function anthropicMirrorId(model) {
 /**
  * A single tool-loop rung that serves exactly `model`, or null when no
  * configured key can reach it. Used to honor an explicit model choice while
- * the free chain stays behind it as the failover.
+ * the free chain stays behind it as the failover. Roster models have several
+ * rungs; this returns the first reachable one (modelRungs returns them all).
  * @param {string} model a MODEL_CATALOG id
  */
 export function modelRung(model) {
+	return modelRungs(model)[0] || null;
+}
+
+/**
+ * Every tool-loop rung that serves exactly `model`, in failover order. A roster
+ * model (model-roster.js) contributes one rung per reachable route; any other
+ * catalog model contributes its single lane. Models without tool calling have
+ * no rungs: the tool loop must never be pointed at them.
+ * @param {string} requested a MODEL_CATALOG id (a retired id maps forward)
+ */
+export function modelRungs(requested) {
+	const model = resolveModelId(requested);
 	const meta = MODEL_CATALOG[model];
+	if (!meta || !meta.tools) return [];
+	if (meta.provider === 'roster') return rosterTransports(model);
+	const rung = singleLaneRung(model, meta);
+	return rung ? [rung] : [];
+}
+
+function singleLaneRung(model, meta) {
 	if (!meta || !meta.tools) return null;
 	if (meta.provider === 'anthropic') {
 		if (!env.OPENROUTER_API_KEY) return null;
@@ -236,13 +266,16 @@ export function modelRung(model) {
 
 /**
  * The provider chain for a request that may name a model: the named model's
- * rung first (when reachable), then the free-first platform chain.
+ * rungs first (every route that serves it, in order), then the free-first
+ * platform chain behind them, minus any rung that would repeat one of them.
  * @param {string|null} [model]
  */
 export function providerChainFor(model) {
 	const chain = providerChain();
 	if (!model) return chain;
-	const rung = modelRung(model);
-	return rung ? [rung, ...chain.filter((p) => !(p.name === rung.name && p.model === rung.model))] : chain;
+	const rungs = modelRungs(model);
+	if (!rungs.length) return chain;
+	const seen = new Set(rungs.map((r) => `${r.name}|${r.model}`));
+	return [...rungs, ...chain.filter((p) => !seen.has(`${p.name}|${p.model}`))];
 }
 

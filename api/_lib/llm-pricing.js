@@ -27,6 +27,7 @@
 //     gap is visible instead of masquerading as free traffic.
 
 import { isPaidModel } from './chat-models.js';
+import { ROSTER, isVertexRoute } from './model-roster.js';
 
 // USD per 1,000,000 tokens, [input, output]. Keys are matched by prefix so a
 // dated alias (claude-haiku-4-5-20251001) resolves to its family price.
@@ -74,6 +75,15 @@ const PRICE_PER_MTOK = {
 	// OpenRouter IBM Granite (BYOK) — the funded key draws real spend, so it is
 	// metered here despite openrouter being a free provider (see isPaidModel).
 	'ibm-granite/granite-4.1-8b': [0.05, 0.1],
+	// Open-model roster: the roster id and each Vertex upstream id price at the
+	// row's Vertex list price, so a turn metered under either name (the catalog
+	// quotes the roster id, the ledger records the upstream id) costs the same.
+	...Object.fromEntries(
+		ROSTER.flatMap((m) => [
+			[m.id, m.price],
+			...m.routes.filter(isVertexRoute).map((r) => [r.model, m.price]),
+		]),
+	),
 };
 
 // Providers whose marginal cost to the platform is zero (platform-funded free
