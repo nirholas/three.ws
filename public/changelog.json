@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-09-21T05:41:11.310Z",
+	"generated_at": "2026-09-21T22:46:08.566Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Forge now asks what your model is for",
+			"summary": "Under a finished model in Forge there is a new one-tap row: Game, Web, Avatar, Simulation, Print, AR, or Just playing. It is optional, it is remembered in your browser so you are only asked once, and it rides along on your later generations. We are using it to see which kinds of work Forge does well and which it does not, by use, instead of one blended number for everyone. Developers calling the Forge API can send the same thing as a destination field.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-21",
 			"type": "update",
@@ -34,6 +44,27 @@
 			"link": "/docs/coin-pages",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "The club alley no longer renders a giant avatar across the sky",
+			"summary": "Walking into /club, some visitors saw a huge metallic shape filling the sky above the alley, and their computer ran hot. It was a crowd member: one avatar model built at centimetre scale was measured wrong before it was sized, so it spawned about 400 times too big, roughly 700 metres tall, and the GPU spent the whole walk-in painting it. Crowd members, your own avatar in the agent switcher, the theater stage and the Agora now size every avatar from its real posed mesh, so that model stands at normal human height like everyone else.",
+			"link": "/club",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "The club no longer runs your computer hot on the way in",
+			"summary": "While you walked the alley and stood at the door, the club was secretly drawing the whole dance floor behind it at full quality, so your graphics card was rendering two complete 3D scenes at once. The hidden stage now pauses its drawing until the alley fades away, roughly halving the graphics work for the entire walk-in. For a cooler machine inside the club too, turn on Power saver in the club controls.",
+			"link": "/club",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},

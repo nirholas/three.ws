@@ -1927,6 +1927,10 @@
 			"dest": "/payment-outcomes.html"
 		},
 		{
+			"src": "/forge-funnel/?",
+			"dest": "/forge-funnel.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},

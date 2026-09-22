@@ -992,7 +992,7 @@
 		},
 		{
 			"id": "free-objects",
-			"status": "approved",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "ar",
@@ -1572,7 +1572,7 @@
 		},
 		{
 			"id": "assistant",
-			"status": "review",
+			"status": "posted",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",

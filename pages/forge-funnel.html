@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Forge Funnel · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		/* style.css makes body a flex container, so this wrapper is a flex item whose
+		   default min-width:auto lets the engine table's min-content stretch it to the
+		   full 1200px on a phone, clipping every section. width + min-width:0 pins it
+		   to the viewport and hands the overflow to .ff-table-wrap, where it belongs. */
+		.ff-wrap { width: 100%; min-width: 0; box-sizing: border-box; max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.ff-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 0.5rem; }
+		.ff-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.75rem; max-width: 74ch; line-height: 1.65; }
+
+		.ff-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; align-items: center; }
+		.ff-controls label { font-size: 12px; color: rgba(255,255,255,0.45); }
+		.ff-controls select, .ff-controls button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.ff-controls select:hover, .ff-controls button:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.09); }
+		.ff-controls button:active { transform: translateY(1px); }
+		.ff-controls select:focus-visible, .ff-controls button:focus-visible, .ff-defs summary:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+		.ff-controls button[disabled] { opacity: 0.5; cursor: progress; }
+		.ff-stamp { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+		.ff-note { padding: 2.5rem 1.5rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); line-height: 1.75; }
+		.ff-note code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+		.ff-note.bad { background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.18); }
+		.ff-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
+		.ff-note a { color: var(--accent-violet-strong); }
+		.ff-note.inline { padding: 1.25rem 1.25rem; text-align: left; font-size: 13px; }
+
+		.ff-banner { padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
+
+		.ff-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+		.ff-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
+		.ff-section { margin-bottom: 2.5rem; }
+
+		.ff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
+		.ff-cell { padding: 1rem 1.15rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.ff-cell:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.045); }
+		.ff-cell.lead { border-color: rgba(124,92,255,0.35); background: rgba(124,92,255,0.06); }
+		.ff-cell-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; }
+		.ff-cell-value { font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.15; }
+		.ff-cell-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 0.4rem; line-height: 1.5; }
+		.muted { color: rgba(255,255,255,0.35); }
+
+		.ff-pill { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; color: #f0a93b; vertical-align: middle; margin-left: 0.35rem; }
+
+		.ff-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+		.ff-bar-row { display: grid; grid-template-columns: minmax(96px, 150px) 1fr minmax(120px, 170px); gap: 0.85rem; align-items: center; font-size: 12.5px; }
+		.ff-bar-label { color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.ff-bar-row.unanswered .ff-bar-label { color: rgba(255,255,255,0.35); }
+		.ff-bar-track { position: relative; height: 20px; border-radius: 6px; background: rgba(255,255,255,0.04); overflow: hidden; }
+		.ff-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 6px; background: rgba(124,92,255,0.28); transition: width var(--duration-slow) cubic-bezier(.4,0,.2,1); }
+		.ff-bar-fill.useful { background: linear-gradient(90deg, rgba(47,191,113,0.9), rgba(47,191,113,0.45)); }
+		.ff-bar-row.unanswered .ff-bar-fill { background: rgba(255,255,255,0.1); }
+		.ff-bar-row.unanswered .ff-bar-fill.useful { background: rgba(255,255,255,0.28); }
+		.ff-bar-count { text-align: right; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.7); white-space: nowrap; }
+		.ff-legend { display: flex; gap: 1.1rem; font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 0.85rem; flex-wrap: wrap; }
+		.ff-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; vertical-align: -1px; background: rgba(124,92,255,0.28); }
+		.ff-legend i.useful { background: rgba(47,191,113,0.8); }
+
+		.ff-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		.ff-table th, .ff-table td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+		.ff-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
+		.ff-table tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
+		.ff-table tbody tr:hover { background: rgba(255,255,255,0.035); }
+		.ff-table td.num, .ff-table th.num { font-variant-numeric: tabular-nums; text-align: right; }
+		.ff-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+		.ff-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+		.ff-class { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); }
+
+		.ff-detail { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.7; margin: 0.75rem 0 0; max-width: 84ch; }
+		.ff-detail b { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+		.ff-defs { border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); padding: 0.25rem 1.15rem; }
+		.ff-defs summary { cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); padding: 0.75rem 0; border-radius: 6px; transition: color var(--duration-fast) var(--ease-standard); }
+		.ff-defs summary:hover { color: #fff; }
+		.ff-defs dl { margin: 0 0 1rem; display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 0.6rem 1.25rem; font-size: 12.5px; line-height: 1.65; }
+		.ff-defs dt { color: rgba(255,255,255,0.8); font-weight: 600; }
+		.ff-defs dd { margin: 0; color: rgba(255,255,255,0.5); }
+
+		.ff-skeleton { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.035) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.035) 75%); background-size: 200% 100%; animation: ff-shimmer 1.4s ease-in-out infinite; }
+		.ff-skeleton.cell { height: 96px; }
+		.ff-skeleton.bar { height: 20px; margin-bottom: 0.5rem; }
+		@keyframes ff-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (max-width: 560px) {
+			.ff-bar-row { grid-template-columns: 1fr; gap: 0.3rem; }
+			.ff-bar-count { text-align: left; }
+			.ff-defs dl { grid-template-columns: 1fr; gap: 0.15rem 0; }
+			.ff-defs dd { margin-bottom: 0.6rem; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.ff-skeleton { animation: none; }
+			.ff-bar-fill { transition: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="ff-wrap">
+		<h1 class="ff-title">Forge Funnel</h1>
+		<p class="ff-sub">
+			The health board says whether meshes come back. This one says whether anyone keeps them:
+			how much of Forge's output a maker accepts or downloads, whether new makers return for a
+			second model, what each model was for, and which engine earns its attempts. Platform
+			generated rows (catalog seeder, quality benchmark) are left out. Internal tooling, not a
+			public surface.
+		</p>
+
+		<div class="ff-controls">
+			<label for="ff-window">Window</label>
+			<select id="ff-window">
+				<option value="7">Last 7 days</option>
+				<option value="30" selected>Last 30 days</option>
+				<option value="90">Last 90 days</option>
+				<option value="365">Last 365 days</option>
+			</select>
+			<button id="ff-refresh" type="button">Refresh</button>
+			<span class="ff-stamp" id="ff-stamp"></span>
+		</div>
+
+		<div id="ff-content" aria-live="polite" aria-busy="true"></div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module">
+		const el = document.getElementById('ff-content');
+		const windowSelect = document.getElementById('ff-window');
+		const refreshBtn = document.getElementById('ff-refresh');
+		const stamp = document.getElementById('ff-stamp');
+
+		const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+		const num = (n, d = 0) => (typeof n === 'number' && Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : 'n/a');
+
+		// A null rate means "nothing to divide by", which is not zero and must never
+		// render as one: an empty window and a funnel nobody converts through would
+		// otherwise look the same.
+		const pct = (m) => (typeof m?.value === 'number' ? `${(m.value * 100).toFixed(1)}%` : 'n/a');
+		const lowPill = (m) => (m && m.low_sample && m.of > 0 ? '<span class="ff-pill" title="Too few rows to trust this rate yet">low sample</span>' : '');
+
+		function cell(label, m, note, { lead = false } = {}) {
+			const base = m ? `${num(m.n)} of ${num(m.of)}` : '';
+			return `<div class="ff-cell${lead ? ' lead' : ''}">
+				<div class="ff-cell-label">${esc(label)}</div>
+				<div class="ff-cell-value${typeof m?.value === 'number' ? '' : ' muted'}">${pct(m)}${lowPill(m)}</div>
+				<div class="ff-cell-note">${esc(base)}${base && note ? '. ' : ''}${esc(note || '')}</div>
+			</div>`;
+		}
+
+		function plainCell(label, value, note) {
+			return `<div class="ff-cell">
+				<div class="ff-cell-label">${esc(label)}</div>
+				<div class="ff-cell-value">${esc(value)}</div>
+				<div class="ff-cell-note">${esc(note || '')}</div>
+			</div>`;
+		}
+
+		function headlineSection(d) {
+			const o = d.output, a = d.new_actors, r = d.retention;
+			return `<section class="ff-section">
+				<div class="ff-section-title">Does it convert <span>${num(o.requests)} requests, ${num(o.done)} finished, ${num(o.failed)} failed, ${num(o.in_flight)} in flight</span></div>
+				<div class="ff-grid">
+					${cell('Useful output', o.useful_output_rate, 'Finished models a maker accepted or downloaded', { lead: true })}
+					${cell('First asset success', a.first_asset_success_rate, `Of ${num(a.new_actors)} new makers, those who reached a model they kept`)}
+					${cell('Second asset', a.second_asset_rate, 'New makers with one finished model who made another', { lead: true })}
+					${cell('Back after day 7', r.d7, `Makers first seen in the last ${r.cohort_lookback_days} days`)}
+					${cell('Back after day 30', r.d30, `Makers first seen in the last ${r.cohort_lookback_days} days`)}
+					${cell('Generation success', o.generation_success_rate, 'Finished over finished plus failed')}
+				</div>
+			</section>`;
+		}
+
+		function signalSection(d) {
+			const o = d.output;
+			return `<section class="ff-section">
+				<div class="ff-section-title">How much signal there is <span>every rate above is bounded by this</span></div>
+				<div class="ff-grid">
+					${cell('Feedback coverage', o.feedback_coverage, 'Finished models carrying any verdict, rating or download')}
+					${plainCell('Accepted', num(o.accepted), 'Explicit keep')}
+					${plainCell('Rejected', num(o.rejected), 'Explicit discard')}
+					${plainCell('Downloaded', num(o.downloaded), 'Implicit keep')}
+					${plainCell('Rated', num(o.rated), o.avg_rating == null ? 'No ratings in this window' : `Average ${o.avg_rating} of 5`)}
+				</div>
+				<p class="ff-detail"><b>${num(o.unattributed_requests)}</b> requests arrived with no client key and no account.
+				They count in the totals above but are left out of every per-maker number, because they
+				all hash to one shared key and would read as a single very loyal maker.</p>
+			</section>`;
+		}
+
+		function destinationSection(d) {
+			const dest = d.destinations;
+			const answered = dest.rows.filter((x) => x.destination !== null).reduce((s, x) => s + x.done, 0);
+			const max = Math.max(1, ...dest.rows.map((x) => x.done));
+			const head = `<div class="ff-section-title">What it was for <span>answered on ${pct(dest.answer_rate)} of finished models</span></div>`;
+			if (answered === 0) {
+				return `<section class="ff-section">${head}
+					<div class="ff-note inline">
+						<b>No maker has answered in this window.</b> The question is a chip row under the
+						result in <a href="/forge">/forge</a> and <a href="/forge-studio">/forge-studio</a>, and an
+						optional <code>destination</code> field on <code>POST /api/forge</code>. Answers are
+						remembered per browser, so this fills in as makers return. Until then there is no
+						per-destination rate to read, and the honest display is none.
+					</div>
+				</section>`;
+			}
+			const rows = dest.rows.map((x) => {
+				const unanswered = x.destination === null;
+				return `<div class="ff-bar-row${unanswered ? ' unanswered' : ''}">
+					<div class="ff-bar-label" title="${esc(x.label)}">${esc(x.label)}</div>
+					<div class="ff-bar-track" role="img" aria-label="${esc(x.label)}: ${num(x.useful)} useful of ${num(x.done)} finished">
+						<div class="ff-bar-fill" style="width:${((x.done / max) * 100).toFixed(1)}%"></div>
+						<div class="ff-bar-fill useful" style="width:${((x.useful / max) * 100).toFixed(1)}%"></div>
+					</div>
+					<div class="ff-bar-count">${num(x.useful)} / ${num(x.done)} · ${pct(x.useful_output_rate)}${lowPill(x.useful_output_rate)}</div>
+				</div>`;
+			}).join('');
+			return `<section class="ff-section">${head}
+				<div class="ff-bars">${rows}</div>
+				<div class="ff-legend"><span><i></i>Finished</span><span><i class="useful"></i>Accepted or downloaded</span></div>
+			</section>`;
+		}
+
+		function laneSection(d) {
+			const head = `<div class="ff-section-title">Which engine earns its attempts <span>failed-over attempts included, since a lost attempt is what this measures</span></div>`;
+			if (!d.lanes.length) {
+				return `<section class="ff-section">${head}<div class="ff-note inline">No finished or failed attempts in this window. Widen the window above.</div></section>`;
+			}
+			const body = d.lanes.map((l) => `<tr>
+				<td class="ff-mono">${esc(l.backend)}</td>
+				<td class="ff-class">${esc(l.cost_class)}</td>
+				<td class="num">${num(l.attempts)}</td>
+				<td class="num">${pct(l.generation_success_rate)}</td>
+				<td class="num">${num(l.useful)}</td>
+				<td class="num">${pct(l.useful_output_rate)}${lowPill(l.useful_output_rate)}</td>
+				<td class="num">${l.attempts_per_useful == null ? 'n/a' : num(l.attempts_per_useful, 2)}</td>
+				<td class="num">${l.avg_generation_seconds == null ? 'n/a' : `${num(l.avg_generation_seconds)}s`}</td>
+				<td class="num">${l.generation_seconds_per_useful == null ? 'n/a' : `${num(l.generation_seconds_per_useful)}s`}</td>
+			</tr>`).join('');
+			const untimed = d.lanes.reduce((s, l) => s + (l.attempts - l.timed_attempts), 0);
+			return `<section class="ff-section">${head}
+				<div class="ff-table-wrap"><table class="ff-table">
+					<thead><tr>
+						<th scope="col">Engine</th><th scope="col">Cost</th><th scope="col" class="num">Attempts</th>
+						<th scope="col" class="num">Success</th><th scope="col" class="num">Useful</th>
+						<th scope="col" class="num">Useful rate</th><th scope="col" class="num">Attempts per useful</th>
+						<th scope="col" class="num">Avg time</th><th scope="col" class="num">Time per useful</th>
+					</tr></thead>
+					<tbody>${body}</tbody>
+				</table></div>
+				<p class="ff-detail"><b>Attempts per useful</b> is the cost driver: how many runs an engine spends
+				for each model someone keeps. <b>Time per useful</b> is total generation seconds over kept
+				models, the quantity GPU cost scales with on the self-hosted engines.${untimed > 0 ? ` <b>${num(untimed)}</b> attempts finished before completion time was recorded and are left out of both time columns.` : ''}</p>
+			</section>`;
+		}
+
+		function revenueSection(d) {
+			const v = d.revenue;
+			return `<section class="ff-section">
+				<div class="ff-section-title">Paying agents <span>x402 only, the one rail whose price is recorded on the row</span></div>
+				<div class="ff-grid">
+					${plainCell('USDC collected', num(v.usdc, 2), `${num(v.paid_generations)} paid generations`)}
+					${plainCell('Distinct payers', num(v.distinct_payers), 'Wallets that paid in this window')}
+					${plainCell('USDC per useful model', v.usdc_per_useful_asset == null ? 'n/a' : num(v.usdc_per_useful_asset, 4), 'x402 revenue over every kept model')}
+					${cell('Payers back next week', v.agent_weekly_retention, 'Paid last week and again this week')}
+				</div>
+			</section>`;
+		}
+
+		function definitions(d) {
+			return `<details class="ff-defs">
+				<summary>How these numbers are defined</summary>
+				<dl>
+					<dt>Useful</dt><dd>A finished model the maker accepted or downloaded. Either is a deliberate act on the result. A rating alone is not.</dd>
+					<dt>Maker</dt><dd>The signed-in account when there is one, otherwise the anonymous browser key.</dd>
+					<dt>New maker</dt><dd>A maker whose first-ever Forge creation falls inside the window.</dd>
+					<dt>Failed over</dt><dd>An attempt that moved to another engine is skipped in request-level numbers, because its successor carries the request to its real outcome. The engine table keeps it.</dd>
+					<dt>Low sample</dt><dd>A rate resting on fewer than ${num(d.min_sample)} rows. It is shown, but do not act on it.</dd>
+					<dt>Same numbers, no browser</dt><dd><code>npm run forge:funnel -- --days ${num(d.window_days)}</code>, or <code>GET /api/ops/forge-funnel?days=${num(d.window_days)}</code> with <code>x-ops-secret</code>.</dd>
+				</dl>
+			</details>`;
+		}
+
+		function render(d) {
+			const banner = d.degraded?.length
+				? `<div class="ff-banner" role="alert">Partial read: ${d.degraded.map((g) => `<b>${esc(g.panel)}</b> (${esc(g.error)})`).join(', ')}. The other panels are current. A panel that names a missing column means migration <code>20260921120000_forge_destination.sql</code> is not applied yet: <code>npm run db:status</code>.</div>`
+				: '';
+			if (!d.degraded?.length && d.output.requests === 0) {
+				el.innerHTML = `<div class="ff-note">
+					<h2>No Forge requests in the last ${num(d.window_days)} days</h2>
+					Nothing was generated in this window, so there is no funnel to read. Pick a longer
+					window above, or make a model in <a href="/forge">/forge</a> and refresh.
+				</div>`;
+			} else {
+				el.innerHTML = banner + headlineSection(d) + signalSection(d) + destinationSection(d) + laneSection(d) + revenueSection(d) + definitions(d);
+			}
+			stamp.textContent = d.generated_at ? `read ${new Date(d.generated_at).toLocaleTimeString()}` : '';
+		}
+
+		function skeleton() {
+			const cells = Array.from({ length: 6 }, () => '<div class="ff-skeleton cell"></div>').join('');
+			const rows = Array.from({ length: 7 }, () => '<div class="ff-skeleton bar"></div>').join('');
+			el.innerHTML = `
+				<section class="ff-section">
+					<div class="ff-section-title">Does it convert <span>reading the outcome ledger</span></div>
+					<div class="ff-grid">${cells}</div>
+				</section>
+				<section class="ff-section">
+					<div class="ff-section-title">What it was for <span>grouping finished models</span></div>
+					${rows}
+				</section>`;
+		}
+
+		function denied() {
+			el.innerHTML = `<div class="ff-note">
+				<h2>This board is internal</h2>
+				It carries per-engine performance and revenue, so it takes the same gate as
+				<code>/api/ops/health</code>. <a href="/login?next=/forge-funnel">Sign in</a> as a platform admin,
+				or call the API directly with <code>x-ops-secret: $OPS_SECRET</code>:<br /><br />
+				<code>curl -s -H "x-ops-secret: $OPS_SECRET" https://three.ws/api/ops/forge-funnel | jq</code>
+			</div>`;
+			stamp.textContent = '';
+		}
+
+		function failed(message) {
+			el.innerHTML = `<div class="ff-note bad">
+				<h2>Could not read the funnel</h2>
+				<code>${esc(message)}</code><br /><br />
+				The endpoint answers 207 with whatever panels it managed to read, so a total failure here
+				is the request itself. Check the service is up (<code>/api/healthz</code>) and press Refresh.
+			</div>`;
+			stamp.textContent = '';
+		}
+
+		let inFlight = null;
+
+		async function load() {
+			// A second click while a read is open would race two renders; the button
+			// reports the state instead of pretending the click did nothing.
+			if (inFlight) return;
+			refreshBtn.disabled = true;
+			refreshBtn.textContent = 'Reading…';
+			el.setAttribute('aria-busy', 'true');
+			skeleton();
+			inFlight = (async () => {
+				try {
+					const res = await fetch(`/api/ops/forge-funnel?days=${encodeURIComponent(windowSelect.value)}`, {
+						credentials: 'include',
+						headers: { accept: 'application/json' },
+					});
+					if (res.status === 401) return denied();
+					if (res.status === 429) {
+						return failed(`rate limited, retry in ${res.headers.get('retry-after') || 'a moment'}s`);
+					}
+					// 207 is the designed partial: the body is valid and names its blind panels.
+					if (!res.ok && res.status !== 207) throw new Error(`status ${res.status}`);
+					render(await res.json());
+				} catch (err) {
+					failed(err?.message || String(err));
+				} finally {
+					refreshBtn.disabled = false;
+					refreshBtn.textContent = 'Refresh';
+					el.setAttribute('aria-busy', 'false');
+					inFlight = null;
+				}
+			})();
+			await inFlight;
+		}
+
+		// Unlike the payment board, each window is its own set of aggregate queries,
+		// so changing it is a real read.
+		windowSelect.addEventListener('change', load);
+		refreshBtn.addEventListener('click', load);
+		load();
+	</script>
+</body>
+</html>

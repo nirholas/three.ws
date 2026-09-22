@@ -15,6 +15,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [gcp-logs.md](gcp-logs.md) | Production log reading and automated triage tools for the Cloud Run fleet. |
 | [production-log-triage.md](production-log-triage.md) | Known error/warning signature map: what each recurring log signature means and the fix. |
 | [forge-error-triage.md](forge-error-triage.md) | `npm run forge:errors`: which 3D generation failures actually recur, ranked by class and lane over a real window. |
+| [forge-funnel.md](forge-funnel.md) | The Forge funnel board (`GET /api/ops/forge-funnel`, `npm run forge:funnel`): useful-output rate, first and second asset rates, retention, what each model was for, attempts per kept model by engine, and x402 revenue per kept model. |
 | [cron-auth.md](cron-auth.md) | The two locks on `/api/cron/*`: the handler gate, the edge gate, and the header trap that makes attaching Cloud Scheduler OIDC take the whole fleet down if done naively. |
 | [materialize-fulfillment.md](materialize-fulfillment.md) | Running physical print fulfillment: the operator console, its authorization doors, the adapter contract for wiring a partner, webhook idempotency, and the stall sweep. |
 | [payment-outcomes.md](payment-outcomes.md) | The payment-outcome board (`GET /api/ops/payment-outcomes`): verify-reject, settle-fail, replay, and sponsor-runway signals and how to read them in an incident. |

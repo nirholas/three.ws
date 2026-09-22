@@ -93,6 +93,23 @@ empty list, which is indistinguishable from "not there yet" on purpose. Crumbs
 expire after five minutes, and they only ever hold what the response itself
 carries moments later, so a trace id grants no access to anything.
 
+### Saying what a model is for
+
+Under a finished model, a "Making this for" row offers Game, Web, Avatar,
+Simulation, Print, AR and Just playing. It is optional and one tap. The answer is
+remembered in your browser and attached to your later generations, so you are
+asked once, not every time. It tells us which kinds of work Forge serves well and
+which it does not, broken out by use instead of one blended number.
+
+API callers can send the same thing as `destination`. An unrecognised value is
+ignored, never an error:
+
+```bash
+curl -sS -X POST https://three.ws/api/forge \
+  -H 'content-type: application/json' \
+  -d '{"prompt":"a low-poly wooden barrel","destination":"game"}'
+```
+
 ### Comparing two engines on one prompt
 
 The engine grid is only useful if you can see what choosing an engine actually

@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-09-21T05:41:11.543Z",
+	"generated_at": "2026-09-21T22:46:08.594Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3741,
+	"total": 3744,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "Forge now asks what your model is for",
+			"summary": "Under a finished model in Forge there is a new one-tap row: Game, Web, Avatar, Simulation, Print, AR, or Just playing. It is optional, it is remembered in your browser so you are only asked once, and it rides along on your later generations. We are using it to see which kinds of work Forge does well and which it does not, by use, instead of one blended number for everyone. Developers calling the Forge API can send the same thing as a destination field.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-21",
 			"type": "update",
@@ -37,6 +47,27 @@
 			"link": "/docs/coin-pages",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "The club alley no longer renders a giant avatar across the sky",
+			"summary": "Walking into /club, some visitors saw a huge metallic shape filling the sky above the alley, and their computer ran hot. It was a crowd member: one avatar model built at centimetre scale was measured wrong before it was sized, so it spawned about 400 times too big, roughly 700 metres tall, and the GPU spent the whole walk-in painting it. Crowd members, your own avatar in the agent switcher, the theater stage and the Agora now size every avatar from its real posed mesh, so that model stands at normal human height like everyone else.",
+			"link": "/club",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-21",
+			"type": "update",
+			"title": "The club no longer runs your computer hot on the way in",
+			"summary": "While you walked the alley and stood at the door, the club was secretly drawing the whole dance floor behind it at full quality, so your graphics card was rendering two complete 3D scenes at once. The hidden stage now pauses its drawing until the alley fades away, roughly halving the graphics work for the entire walk-in. For a cooler machine inside the club too, turn on Power saver in the club controls.",
+			"link": "/club",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
@@ -1579,39 +1610,6 @@
 			"title": "The Pump Visualizer's live counters stopped freezing a few seconds after the page opened",
 			"summary": "A full audit of /pump-visualizer, the 3D scene of live pump.fun mints. The status bar across the top counts the tokens in the scene, the mint rate per minute and the total market cap, and about fifteen seconds into every visit all three froze: the counter sat at 0 and the rate and total sat at a dash while the scene behind them kept filling with new coins. The cause was the page's own translation pass. Those three numbers were written inside blocks of translated copy, so the moment the language file arrived the browser rebuilt that copy and threw away the very elements the page was writing into. The numbers now live beside their labels instead of inside them, so the labels still translate into all 85 languages and the values keep counting for as long as the page is open. The per-minute and per-hour units now translate too, which they never did once the page switched between live mints and migrations. The page also gained a heading and a labelled search box for screen readers, and its browser tab now reads Pump.fun Visualizer, three.ws instead of a retired product name.",
 			"link": "/pump-visualizer",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Pump.fun Stream tells you it is live, counts what it has seen, and has working Recent and Favorites tabs",
-			"summary": "A full audit of /pumpfun, the live pump.fun feed with a 3D agent narrating it. The connection badge in the header said \"connecting...\" forever, even with events pouring in, and the counter on the \"Powered by PumpPortal\" pill stayed on zero no matter how many launches arrived. Both were the same fault: the page's translated-copy pass rewrote those two headings wholesale every time it ran, throwing away the very elements the page updates. Seven controls were affected, including the Share button's \"Copied!\" flash and the avatar picker's name. Each one now hands the page ownership of its live value. The avatar picker's Recent and Favorites tabs were listed but had nothing behind them: opening either showed a blank panel. Both work now, kept in your own browser: every avatar you narrate with lands in Recent, and a star on any card adds it to Favorites. Filtering the feed down to nothing used to leave a blank column; it now says how many events are hidden and offers one click to clear the filters. If the stream drops, the feed says so and offers a Reconnect button instead of sitting on \"Waiting for events...\", and it notices about twice as fast as before. Also: the page title now matches the page (it said \"PumpFun migrations\" while the page streamed new tokens, graduations and claims too), a \"Launch a coin\" link sits next to the status badge, the first-time-fee-claims panel shows skeleton rows during its load and an actionable message with a retry if it fails, and clicking a tab in the agent-config dialog no longer reaches into the avatar picker and deselects its tabs.",
-			"link": "/pumpfun",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The quality check on a generated model keeps running when one AI provider goes down",
-			"summary": "Every generated model can be looked at by a vision model before you see it, which is what catches a flat slab or a melted blob before it reaches you. That check asks one provider first and a free provider second, but when the first one started refusing every request it was still asked first every single time, and half the checks ended up returning no verdict at all, so models shipped unchecked. The check now notices a provider that is refusing, sets it aside for a few minutes, and goes straight to the one that is answering. The set-aside expires by itself, so the moment the first provider is healthy again it is used again with nothing to switch back on.",
-			"link": null,
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Recording Pipeline board stops showing mainnet numbers when you ask it about devnet",
-			"summary": "A full audit of /pipeline, the one-glance health board for the loop that turns every pump.fun launch into a trade signal. The recorder worker writes a single liveness record for whichever network it is recording, and the board was reading that record no matter which network you selected: switching to devnet showed the recorder as LIVE and told you the loop was waiting on the next launch, when nothing had ever recorded there. Devnet now answers honestly, with the recorder marked off and the reason spelled out, and the whole board follows: idle, every stage at zero, and the deploy instruction on screen. Switching networks while a refresh was already running used to be dropped silently, so you got the previous network's numbers under the new label; the newer request now always wins. Five more fixes came with it. The board refreshes every eight seconds and used to rebuild all seven cards each time, which threw away keyboard focus mid-read and made screen readers re-announce the entire grid on every tick; it now updates the numbers in place and announces only the one-line health summary. A response missing a section no longer collapses the page into a false connection error. The refresh spinner turns for exactly as long as the request actually takes. The network switch and refresh controls have a visible focus ring. And the board now points at the public endpoint behind it, so an agent can read the same stages and the same recommended next action as JSON.",
-			"link": "/pipeline",
 			"tags": [
 				"fix",
 				"improvement"

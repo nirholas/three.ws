@@ -166,6 +166,7 @@ Every non-terminal poll also carries honest timing: `elapsed_seconds` (the age o
 - Routing outcome: `backend`, `tier`, `path`, `replicate_job_id` (poll correlation for any provider, despite the name), `model_category` (avatar, accessory, item, scene, creature, vehicle, other).
 - Result: `glb_key`, `glb_url`, `size_bytes`, `status` (`generating`, `done`, `failed`), `error`.
 - Feedback flywheel: `outcome` (`generated`, `accepted`, `rejected`), `rating`, `note`, `downloaded`, `feedback_at`. The outcome partial index feeds training-signal export.
+- Funnel instrumentation (migration `20260921120000_forge_destination.sql`): `destination` (what the maker is building for: `game`, `web`, `avatar`, `simulation`, `print`, `ar`, `play`; sent on the request or answered afterwards in the composer, null when never answered), `completed_at` (when the row reached `done` or `failed`; `updated_at` cannot stand in because later votes and feedback move it), and `internal` (true for rows the catalog seeder or the quality benchmark generated, so they stay out of conversion numbers). The handler states `destination` and `internal` once per request in a creation context that `createCreation` reads, so no insert branch can omit them, and both failover paths copy them to the successor row. Read by the [Forge funnel board](./ops/forge-funnel.md).
 - Lineage and remix (migration `20260625000000_forge_refine_lineage.sql`): `parent_creation_id`, `refine_instruction`, `lineage_index`, `remixable`, `remix_royalty_bps` (0 to 2000, default 1000), `creator_wallet_solana`, `remix_settlement_ref`.
 - Forge-Off (migration `20260625120000_forge_board.sql`): `vote_count`, plus the `forge_votes` and `forge_board_winners` tables.
 - Failover and cleanup: `superseded_by` (migration `20260814200000_forge_failover_supersede.sql`, the successor row's id when this attempt was re-dispatched; a plain uuid, not a foreign key, so retention pruning stays free) and `source_image_keys` (migration `20260813160000_forge_source_image_keys.sql`, the storage key of every uploaded reference photo, so a delete can erase them).
@@ -266,6 +267,8 @@ The env vars that shape a deployment (production values live on the Cloud Run se
 | `LIVEPEER_API_KEY`, `LIVEPEER_GATEWAY_URL`, `LIVEPEER_T2I_MODEL` | Studio gateway key (absent today), gateway base-URL override, and pipeline model override (`ByteDance/SDXL-Lightning` default) for the federated lane. |
 
 Fast diagnostics: `forge_creations` carries per-generation backend, status, error, and prompt, so it is the quickest ground truth for generation issues. `GET /api/forge?health=1` shows the live lane picture.
+
+Whether the output is any good to the people asking for it is a separate question with its own report: `npm run forge:funnel` (or the owner board at `/forge-funnel`) gives useful-output rate, repeat use, per-destination acceptance and attempts per kept model by engine. See [ops/forge-funnel.md](./ops/forge-funnel.md).
 
 ## 11. Extending the pipeline
 
