@@ -28,6 +28,7 @@ import { revokeAllSeedConsentsForUser } from '../../_lib/x-seed-consent.js';
 import { resolveScopeSet } from '../../_lib/x-scopes.js';
 
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
+import { isUuid } from '../../_lib/validate.js';
 // ── Signed-cookie PKCE state ─────────────────────────────────────────────────
 
 const STATE_COOKIE = '__Host-xoa';
@@ -40,7 +41,7 @@ function b64urlDecode(s) {
 	return Buffer.from(s, 'base64url').toString('utf8');
 }
 
-async function signState({ state, codeVerifier, userId, agentId, scopeSet, returnTo }) {
+async function signState({ state, codeVerifier, userId, agentId, scopeSet, returnTo, target }) {
 	const payload = {
 		s: state,
 		v: codeVerifier,
@@ -48,6 +49,7 @@ async function signState({ state, codeVerifier, userId, agentId, scopeSet, retur
 		a: agentId,
 		k: scopeSet,
 		r: returnTo || null,
+		t: target === 'agent' ? 'agent' : 'owner',
 		e: Math.floor(Date.now() / 1000) + STATE_TTL_SEC,
 	};
 	const body = b64urlEncode(JSON.stringify(payload));
@@ -77,6 +79,7 @@ async function verifyState(token, expectedState) {
 		agentId: payload.a,
 		scopeSet: resolveScopeSet(payload.k).name,
 		returnTo: resolveReturnTo(payload.r),
+		target: payload.t === 'agent' ? 'agent' : 'owner',
 	};
 }
 
@@ -133,13 +136,20 @@ export function decryptToken(ciphertext) {
 // Surfaces that start a connect for their own flow and want the browser back on
 // them. An allowlist, never a raw path, so the parameter cannot become an open
 // redirect.
-const RETURN_SURFACES = new Set(['/fee-bridge']);
+const RETURN_SURFACES = new Set(['/fee-bridge', '/settings/connections']);
 
 function resolveReturnTo(value) {
 	return typeof value === 'string' && RETURN_SURFACES.has(value) ? value : null;
 }
 
-function connectReturnUrl({ scopeSet, agentId, outcome, returnTo = null }) {
+function connectReturnUrl({ scopeSet, agentId, outcome, returnTo = null, target = 'owner' }) {
+	// An agent-owned account is managed on /settings/connections, so a connect
+	// made for one agent always lands back on that agent's card there.
+	if (target === 'agent' || returnTo === '/settings/connections') {
+		const q = new URLSearchParams({ x: outcome });
+		if (agentId) q.set('agent', agentId);
+		return `/settings/connections?${q.toString()}#x`;
+	}
 	if (returnTo) return `${returnTo}?x=${outcome}`;
 	if (scopeSet === 'read') {
 		const q = new URLSearchParams({ tab: 'connected-accounts', x: outcome });
@@ -161,6 +171,12 @@ async function handleConnect(req, res) {
 	const agentId = url.searchParams.get('agent_id') || null;
 	const scopeSet = resolveScopeSet(url.searchParams.get('scope'));
 	const returnTo = resolveReturnTo(url.searchParams.get('return_to'));
+	// target=agent connects an X account to this one agent (it then posts as
+	// itself); the default connects the owner's own account.
+	const target = url.searchParams.get('target') === 'agent' ? 'agent' : 'owner';
+	if (target === 'agent' && !isUuid(agentId)) {
+		return error(res, 400, 'validation_error', 'target=agent needs agent_id (a uuid)');
+	}
 
 	if (!env.X_OAUTH_CLIENT_ID || !env.X_OAUTH_CLIENT_SECRET) {
 		// Every Connect X button on the site is an anchor or a location assignment,
@@ -171,7 +187,7 @@ async function handleConnect(req, res) {
 		if (wantsHtmlNavigation(req)) {
 			return redirect(
 				res,
-				connectReturnUrl({ scopeSet: scopeSet.name, agentId, outcome: 'unconfigured', returnTo }),
+				connectReturnUrl({ scopeSet: scopeSet.name, agentId, outcome: 'unconfigured', returnTo, target }),
 			);
 		}
 		return error(res, 501, 'not_configured', 'X OAuth is not configured');
@@ -182,6 +198,13 @@ async function handleConnect(req, res) {
 
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	if (target === 'agent') {
+		const [owned] = await sql`
+			select 1 from agent_identities where id = ${agentId} and user_id = ${user.id} and deleted_at is null limit 1
+		`;
+		if (!owned) return error(res, 404, 'not_found', 'agent not found');
+	}
 
 	const codeVerifier = randomToken(32); // 43-char base64url
 	const codeChallenge = await sha256Base64Url(codeVerifier);
@@ -194,6 +217,7 @@ async function handleConnect(req, res) {
 		agentId,
 		scopeSet: scopeSet.name,
 		returnTo,
+		target,
 	});
 	res.setHeader('set-cookie', stateCookie(signed));
 
@@ -235,11 +259,11 @@ async function handleCallback(req, res) {
 	res.setHeader('set-cookie', stateCookie('', { clear: true }));
 	if (!stateData) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
 
-	const { codeVerifier, userId, agentId: stateAgentId, scopeSet, returnTo } = stateData;
+	const { codeVerifier, userId, agentId: stateAgentId, scopeSet, returnTo, target } = stateData;
 	// Return to the surface that started the connect, the same one a refusal at
 	// /connect lands on.
 	const backTo = (outcome) =>
-		connectReturnUrl({ scopeSet, agentId: stateAgentId, outcome, returnTo });
+		connectReturnUrl({ scopeSet, agentId: stateAgentId, outcome, returnTo, target });
 	const successRedirect = backTo('connected');
 	const errorRedirect = backTo('error');
 	const deniedRedirect = backTo('denied');
@@ -302,6 +326,33 @@ async function handleCallback(req, res) {
 
 	const encAccess = encryptToken(access_token);
 	const encRefresh = refresh_token ? encryptToken(refresh_token) : null;
+
+	if (target === 'agent') {
+		// Ownership was checked at /connect; re-check here because the agent can
+		// change hands (marketplace transfer) inside the ten-minute state window.
+		const [owned] = await sql`
+			select 1 from agent_identities where id = ${stateAgentId} and user_id = ${userId} and deleted_at is null limit 1
+		`;
+		if (!owned) return redirect(res, errorRedirect);
+		await sql`
+			INSERT INTO agent_x_connections
+				(agent_id, user_id, provider_uid, username, access_token, refresh_token, expires_at, raw_data, scopes)
+			VALUES
+				(${stateAgentId}, ${userId}, ${profile.id}, ${profile.username}, ${encAccess}, ${encRefresh}, ${expiresAt}, ${JSON.stringify(profile)}, ${grantedScopes})
+			ON CONFLICT (agent_id) DO UPDATE SET
+				user_id         = EXCLUDED.user_id,
+				provider_uid    = EXCLUDED.provider_uid,
+				username        = EXCLUDED.username,
+				access_token    = EXCLUDED.access_token,
+				refresh_token   = EXCLUDED.refresh_token,
+				expires_at      = EXCLUDED.expires_at,
+				raw_data        = EXCLUDED.raw_data,
+				scopes          = EXCLUDED.scopes,
+				disconnected_at = NULL,
+				updated_at      = now()
+		`;
+		return redirect(res, successRedirect);
+	}
 
 	// Reconnecting a DIFFERENT X account retires every memory-seeding grant made
 	// for the previous one and deletes the memories it produced. Consent was

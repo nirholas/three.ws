@@ -15,6 +15,7 @@ import { env } from '../_lib/env.js';
 import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
 import { filterRegisterableScope } from '../_lib/oauth-scopes.js';
+import { requireCsrf } from '../_lib/csrf.js';
 
 // ── authorize ─────────────────────────────────────────────────────────────────
 
@@ -441,6 +442,55 @@ async function handleIntrospect(req, res) {
 	}
 }
 
+// ── grants (connected apps) ───────────────────────────────────────────────────
+// The apps a person has authorized: the desktop console, the CLI, every editor
+// that signed in over MCP. GET lists one row per client holding a live refresh
+// token; DELETE ?client_id= revokes all of that client's refresh tokens.
+// Session only, on purpose: a bearer token must not be able to list or revoke
+// the other apps on the account, including itself.
+// Access tokens are stateless JWTs, so a revoked app keeps working until its
+// current access token expires (one hour at most) and then cannot renew.
+
+async function handleGrants(req, res) {
+	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'DELETE'])) return;
+	const user = await getSessionUser(req, res);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in to manage connected apps');
+	if (req.method === 'GET') {
+		const rows = await sql`
+			select c.client_id, c.name, c.client_uri, c.logo_uri, c.software_id, c.software_version,
+				min(t.created_at) as authorized_at, max(coalesce(t.last_used_at, t.created_at)) as last_used_at,
+				string_agg(distinct t.scope, ' ') as scopes
+			from oauth_refresh_tokens t
+			join oauth_clients c on c.client_id = t.client_id
+			where t.user_id = ${user.id} and t.revoked_at is null and t.expires_at > now()
+			group by c.client_id, c.name, c.client_uri, c.logo_uri, c.software_id, c.software_version
+			order by last_used_at desc
+		`;
+		return json(res, 200, {
+			grants: rows.map((r) => ({
+				client_id: r.client_id,
+				name: r.name,
+				client_uri: r.client_uri,
+				logo_uri: r.logo_uri,
+				software: r.software_id ? `${r.software_id}${r.software_version ? ` ${r.software_version}` : ''}` : null,
+				scopes: [...new Set(String(r.scopes || '').split(/\s+/).filter(Boolean))],
+				authorized_at: r.authorized_at,
+				last_used_at: r.last_used_at,
+			})),
+		});
+	}
+	if (!(await requireCsrf(req, res, user.id))) return;
+	const clientId = new URL(req.url, 'http://x').searchParams.get('client_id');
+	if (!clientId) return error(res, 400, 'invalid_request', 'client_id required');
+	const revoked = await sql`
+		update oauth_refresh_tokens set revoked_at = now()
+		where user_id = ${user.id} and client_id = ${clientId} and revoked_at is null
+		returning id
+	`;
+	return json(res, 200, { client_id: clientId, revoked: revoked.length });
+}
+
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
 const DISPATCH = {
@@ -450,6 +500,7 @@ const DISPATCH = {
 	register:   handleRegister,
 	revoke:     handleRevoke,
 	introspect: handleIntrospect,
+	grants:     handleGrants,
 };
 
 export default wrap(async (req, res) => {

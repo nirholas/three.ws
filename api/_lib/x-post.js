@@ -66,14 +66,21 @@ async function refreshIfNeeded(conn) {
 	if (!r.ok) throw new XPostError('reauth_required', `X token refresh failed: ${await r.text()}`, 401);
 	const tok = await r.json();
 	const newExpiresAt = new Date(Date.now() + (tok.expires_in ?? 7200) * 1000).toISOString();
-	await sql`
-		update social_connections
-		set access_token = ${encryptToken(tok.access_token)},
-		    refresh_token = ${tok.refresh_token ? encryptToken(tok.refresh_token) : conn.refresh_token},
-		    expires_at = ${newExpiresAt},
-		    updated_at = now()
-		where id = ${conn.id}
-	`;
+	const access = encryptToken(tok.access_token);
+	const refresh = tok.refresh_token ? encryptToken(tok.refresh_token) : conn.refresh_token;
+	if (conn.source === 'agent') {
+		await sql`
+			update agent_x_connections
+			set access_token = ${access}, refresh_token = ${refresh}, expires_at = ${newExpiresAt}, updated_at = now()
+			where agent_id = ${conn.agent_id}
+		`;
+	} else {
+		await sql`
+			update social_connections
+			set access_token = ${access}, refresh_token = ${refresh}, expires_at = ${newExpiresAt}, updated_at = now()
+			where id = ${conn.id}
+		`;
+	}
 	return tok.access_token;
 }
 
@@ -178,10 +185,69 @@ async function uploadMediaSteps({ accessToken, buffer, mimeType, signal }) {
 	return mediaId;
 }
 
+/**
+ * The X account a post goes out through. An agent with its own connected
+ * account (agent_x_connections) posts as itself; every other post uses the
+ * owner's account (social_connections). `source` tells the write paths which
+ * table the counters and refreshed tokens belong to.
+ */
+export async function resolveXConnection({ userId, agentId = null }) {
+	if (agentId) {
+		const [own] = await sql`
+			select agent_id, user_id, provider_uid, username, access_token, refresh_token, expires_at,
+			       scopes, posts_this_month, month_resets_at, last_posted_at, connected_at
+			from agent_x_connections
+			where agent_id = ${agentId} and user_id = ${userId} and disconnected_at is null
+			limit 1
+		`;
+		if (own) return { ...own, source: 'agent' };
+	}
+	const [owner] = await sql`
+		select * from social_connections
+		where user_id = ${userId} and provider = 'x' and disconnected_at is null
+		limit 1
+	`;
+	return owner ? { ...owner, source: 'owner' } : null;
+}
+
+async function resetMonthIfDue(conn) {
+	if (new Date(conn.month_resets_at) > new Date()) return;
+	if (conn.source === 'agent') {
+		await sql`
+			update agent_x_connections
+			set posts_this_month = 0, month_resets_at = date_trunc('month', now()) + interval '1 month'
+			where agent_id = ${conn.agent_id}
+		`;
+	} else {
+		await sql`
+			update social_connections
+			set posts_this_month = 0, month_resets_at = date_trunc('month', now()) + interval '1 month'
+			where id = ${conn.id}
+		`;
+	}
+	conn.posts_this_month = 0;
+}
+
+async function recordPostedCount(conn, count) {
+	if (conn.source === 'agent') {
+		await sql`
+			update agent_x_connections
+			set posts_this_month = posts_this_month + ${count}, last_posted_at = now(), updated_at = now()
+			where agent_id = ${conn.agent_id}
+		`;
+	} else {
+		await sql`
+			update social_connections
+			set posts_this_month = posts_this_month + ${count}, last_posted_at = now(), updated_at = now()
+			where id = ${conn.id}
+		`;
+	}
+}
+
 // Publish a single tweet (text) or a thread (threadParts).
 // Counts each tweet against the user's monthly quota.
 // Optionally appends a link to https://three.ws/avatars/<agentId> on the final tweet.
-export async function publishTweet({ userId, agentId = null, text, threadParts = null, replyTo = null, appendLink = false, mediaBuffer = null, mediaMimeType = null }) {
+export async function publishTweet({ userId, agentId = null, kind = null, text, threadParts = null, replyTo = null, appendLink = false, mediaBuffer = null, mediaMimeType = null }) {
 	if (!env.X_OAUTH_CLIENT_ID || !env.X_OAUTH_CLIENT_SECRET) {
 		throw new XPostError('not_configured', 'X OAuth is not configured', 501);
 	}
@@ -197,12 +263,7 @@ export async function publishTweet({ userId, agentId = null, text, threadParts =
 
 	const tier = await getUserTier(userId);
 
-	const rows = await sql`
-		select * from social_connections
-		where user_id = ${userId} and provider = 'x' and disconnected_at is null
-		limit 1
-	`;
-	const conn = rows[0];
+	const conn = await resolveXConnection({ userId, agentId });
 	if (!conn) throw new XPostError('not_connected', 'X account not connected', 400);
 
 	// A connection made for memory seeding only carries read scopes. Say so, and
@@ -214,20 +275,18 @@ export async function publishTweet({ userId, agentId = null, text, threadParts =
 			'insufficient_scope',
 			'this X connection is read-only; reconnect X with posting access to publish',
 			400,
-			{ missing_scopes: missingWrite, connect_url: '/api/auth/x/connect?scope=full' },
+			{
+				missing_scopes: missingWrite,
+				connect_url:
+					conn.source === 'agent'
+						? `/api/auth/x/connect?scope=full&target=agent&agent_id=${encodeURIComponent(agentId)}`
+						: '/api/auth/x/connect?scope=full',
+			},
 		);
 	}
 
 	// Reset monthly counter if month boundary crossed.
-	if (new Date(conn.month_resets_at) <= new Date()) {
-		await sql`
-			update social_connections
-			set posts_this_month = 0,
-			    month_resets_at = date_trunc('month', now()) + interval '1 month'
-			where id = ${conn.id}
-		`;
-		conn.posts_this_month = 0;
-	}
+	await resetMonthIfDue(conn);
 
 	if (conn.posts_this_month + parts.length > tier.quota) {
 		throw new XPostError('quota_exceeded', `${tier.tier} tier limit of ${tier.quota} posts/month reached`, 402, {
@@ -290,25 +349,20 @@ export async function publishTweet({ userId, agentId = null, text, threadParts =
 		const d = await postOne({ accessToken, text: part, replyTo: prevId, mediaIds: i === 0 ? mediaIds : null });
 		published.push(d);
 		await sql`
-			insert into x_posts (user_id, agent_id, tweet_id, text, reply_to_tweet_id)
-			values (${userId}, ${agentId}, ${d.id}, ${part}, ${prevId})
+			insert into x_posts (user_id, agent_id, tweet_id, text, reply_to_tweet_id, kind)
+			values (${userId}, ${agentId}, ${d.id}, ${part}, ${prevId}, ${kind})
 		`;
 		prevId = d.id;
 	}
 
-	await sql`
-		update social_connections
-		set posts_this_month = posts_this_month + ${published.length},
-		    last_posted_at = now(),
-		    updated_at = now()
-		where id = ${conn.id}
-	`;
+	await recordPostedCount(conn, published.length);
 
 	const head0 = published[0];
 	return {
 		tweet_id: head0.id,
 		url: `https://x.com/${conn.username}/status/${head0.id}`,
 		username: conn.username,
+		account: conn.source,
 		thread: published.length > 1 ? published.map((p) => p.id) : undefined,
 		posts_used: conn.posts_this_month + published.length,
 		quota: tier.quota,

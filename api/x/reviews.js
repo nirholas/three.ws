@@ -1,4 +1,4 @@
-// GET    /api/x/reviews:                list pending review drafts
+// GET    /api/x/reviews[?agent_id=]:    list pending review drafts (optionally for one agent)
 // PATCH  /api/x/reviews?id=<uuid>:      approve (publishes) or edit + approve
 //                                         body: { action: 'approve'|'reject', text?, thread_parts? }
 // DELETE /api/x/reviews?id=<uuid>:      reject without publishing
@@ -8,7 +8,7 @@ import { getSessionUser } from '../_lib/auth.js';
 import { cors, method, wrap, error, readJson, json } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { isUuid } from '../_lib/validate.js';
-import { publishTweet, XPostError } from '../_lib/x-post.js';
+import { publishTweet, XPostError, MAX_TWEET_LEN } from '../_lib/x-post.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
@@ -18,13 +18,23 @@ export default wrap(async (req, res) => {
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	if (req.method === 'GET') {
-		const rows = await sql`
-			select id, trigger_id, agent_id, text, thread_parts, status, created_at
-			from x_pending_reviews
-			where user_id = ${user.id} and status = 'pending'
-			order by created_at desc
-			limit 50
-		`;
+		const agentFilter = new URL(req.url, 'http://x').searchParams.get('agent_id');
+		if (agentFilter && !isUuid(agentFilter)) return error(res, 400, 'validation_error', 'agent_id must be a uuid');
+		const rows = agentFilter
+			? await sql`
+				select id, trigger_id, agent_id, text, thread_parts, kind, source, source_ref, scheduled_for, reply_to_tweet_id, status, created_at
+				from x_pending_reviews
+				where user_id = ${user.id} and agent_id = ${agentFilter} and status = 'pending'
+				order by created_at desc
+				limit 50
+			`
+			: await sql`
+				select id, trigger_id, agent_id, text, thread_parts, kind, source, source_ref, scheduled_for, reply_to_tweet_id, status, created_at
+				from x_pending_reviews
+				where user_id = ${user.id} and status = 'pending'
+				order by created_at desc
+				limit 50
+			`;
 		return json(res, 200, { reviews: rows });
 	}
 
@@ -75,30 +85,51 @@ export default wrap(async (req, res) => {
 	const [review] = await sql`
 		update x_pending_reviews set status = 'approved', resolved_at = now()
 		where id = ${id} and user_id = ${user.id} and status = 'pending'
-		returning id, agent_id, text, thread_parts
+		returning id, agent_id, text, thread_parts, kind, scheduled_for, reply_to_tweet_id
 	`;
 	if (!review) return error(res, 404, 'not_found', 'review not found or already resolved');
+	const release = () =>
+		sql`update x_pending_reviews set status = 'pending', resolved_at = null where id = ${id}`.catch((e) =>
+			console.error('[x-reviews] could not release review', id, e.message),
+		);
 
 	const text = typeof body?.text === 'string' ? body.text : review.text;
 	const threadParts = Array.isArray(body?.thread_parts)
 		? body.thread_parts
 		: (Array.isArray(review.thread_parts) ? review.thread_parts : null);
 
+	const parts = threadParts ? threadParts.map((p) => String(p).trim()).filter(Boolean) : [String(text).trim()];
+	if (!parts.length || parts.some((p) => !p || p.length > MAX_TWEET_LEN)) {
+		await release();
+		return error(res, 400, 'validation_error', `each part must be 1 to ${MAX_TWEET_LEN} characters`);
+	}
+
+	// A draft queued with a future time is scheduled on approval, not posted now.
+	if (review.scheduled_for && new Date(review.scheduled_for).getTime() > Date.now()) {
+		const [row] = await sql`
+			insert into x_scheduled_posts (user_id, agent_id, text, thread_parts, reply_to_tweet_id, scheduled_at, kind)
+			values (${user.id}, ${review.agent_id}, ${parts[0]}, ${parts.length > 1 ? JSON.stringify(parts) : null}::jsonb,
+			        ${review.reply_to_tweet_id}, ${review.scheduled_for}, ${review.kind})
+			returning id, scheduled_at
+		`;
+		return json(res, 200, { approved: id, status: 'scheduled', scheduled_post_id: row.id, scheduled_at: row.scheduled_at });
+	}
+
 	try {
 		const result = await publishTweet({
 			userId: user.id,
 			agentId: review.agent_id,
-			text: threadParts ? null : text,
-			threadParts,
+			kind: review.kind,
+			text: parts.length > 1 ? null : parts[0],
+			threadParts: parts.length > 1 ? parts : null,
+			replyTo: review.reply_to_tweet_id || null,
 			appendLink,
 		});
-		return json(res, 200, { approved: id, ...result });
+		return json(res, 200, { approved: id, status: 'published', ...result });
 	} catch (err) {
 		// Nothing was published, so hand the review back to the queue instead of
 		// leaving it marked approved with no tweet behind it.
-		await sql`
-			update x_pending_reviews set status = 'pending', resolved_at = null where id = ${id}
-		`.catch((e) => console.error('[x-reviews] could not release review', id, e.message));
+		await release();
 		if (err instanceof XPostError) return error(res, err.status, err.code, err.message, err.extra);
 		console.error('[x-reviews] publish failed', err);
 		return error(res, 500, 'internal_error', err.message || 'publish failed');
