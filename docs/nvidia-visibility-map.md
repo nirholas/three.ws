@@ -71,7 +71,7 @@ Everything here can be done today. Nothing waits on NVIDIA, a build, or a date.
 | 3 | **Portal product record correction** | `programs.nvidia.com/phoenix/application` | Gates the Showcase AND the Apps Catalog. Already specified in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) step 1. Nothing else in this doc lands well while the record says "CUDA consumer". |
 | 4 | **Inception Startup Showcase** | Existing `inceptionprogram@nvidia.com` thread | Requested 2026-09-04 and not directly answered. After #3, send only the focused routing question drafted in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md). |
 | 5 | **AI Podcast guest nomination** | Embedded form at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Free, one form, and a founder-shaped story. **Answers drafted below: [AI Podcast nomination](#ai-podcast-nomination-paste-ready).** Re-verified 2026-09-04: the form is live and self-nomination is explicitly invited. |
-| 6 | **NVIDIA Developer Forums, post 3** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 2 for 2 on posts that landed. This is the one channel with a proven track record, and it is self-serve. **Drafted 2026-09-02: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md).** Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
+| 6 | **NVIDIA Developer Forums, post 4** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 3 for 3 on posts that landed. This is the one channel with a proven track record, and it is self-serve. **Revised to the approval pattern 2026-09-22: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md)**, the positive follow-up to the retirement post. Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
 | 7 | **NVIDIA Developer Discord** | [discord.com/invite/nvidiadeveloper](https://discord.com/invite/nvidiadeveloper) | NVIDIA engineers and product staff are in there. The browser Audio2Face demo is a conversation starter with the actual ACE team, not a marketing ask. |
 | 8 | **Fix `docs/listings.md`** | Ours | The "Startup & Credit Programs" table lists Quicknode and Google Cloud and has **no NVIDIA row at all**, which is the one canonical place a reader looks for our program memberships. Fixed in this change. |
 | 9 | **"Maximize Your Membership" benefits webinar** | Region registration from the Inception member mailer (Americas / EMEA / APAC) | Announced to members 2026-09-02. NVIDIA's own walkthrough of requesting and managing benefits through the portal, which is the exact mechanism gating items 2, 3 and 4 on this list. The batched email went out 2026-09-04, so use the Q&A to chase asks 2 and 3 live rather than waiting on the inbox. |
@@ -276,9 +276,11 @@ resampling contract and why playback must use the original audio, the derived
 blendshape path that lets a VRM or Oculus-viseme rig lip-sync from an ARKit-52
 track, the double-stacking and 30-to-60 fps interpolation bugs that only appear
 on real uploads, and the function-id rotation that took the lane down once.
-Latencies in it were measured against the live endpoint the day it was written,
-not estimated. It is owner-gated under the external-channel rule: paste and post
-when approved.
+It was revised on 2026-09-22 to the approval pattern above: two links (the live
+demo and our retirement topic), plain-text repo paths, the NIM > Models category,
+latencies re-measured against production that day, and the NemoGuard claim
+removed (it screens outbound publishing, not chat). It is owner-gated under the
+external-channel rule: paste and post when approved.
 
 ## Drafted, not yet posted
 
