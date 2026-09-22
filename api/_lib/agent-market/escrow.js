@@ -59,6 +59,7 @@ export async function fundFromAgentWallet({ bid, listing, fundingAgent }) {
 		fromMeta: fundingAgent.meta,
 		toAddress: listing.escrow_address,
 		usdc,
+		amountAtomics: BigInt(String(bid.amount_atomics)),
 		network: marketNetwork(),
 		category: 'marketplace_bid',
 		idempotencyKey: `agent-market-bid:${bid.id}`,
