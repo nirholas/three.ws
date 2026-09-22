@@ -1,15 +1,18 @@
 ---
-venue: NVIDIA Developer Forums (community showcase / Cloud & Data Center)
-account: three.ws (official)
+venue: NVIDIA Developer Forums
+category: AI & Data Science > NVIDIA NIM > Models (where all four approved posts live)
+account: nichxbt
 suggested_title: "Running a free text-to-3D service on L4s: cold starts, keep-warm crons, and the quota arithmetic nobody publishes"
 description: "The fourth three.ws write-up for the NVIDIA developer community: how a free, keyless text-to-3D and avatar service is served from a self-hosted Cloud Run GPU fleet of L4s plus an RTX PRO 6000 Blackwell, what a FUSE-mounted weight load costs on a cold start, why min-instances is a quota decision and not a performance one, and how the NIM free tier fits into a chain that must never have an empty rung."
-tags: [l4, blackwell, nim, nemotron, inception, inference, cloud]
-status: draft, owner approval required before posting (external-channel gate in CLAUDE.md)
+tags: [nim, nemotron, inference]
+links_in_body: 2 (our Audio2Face topic and our retirement topic, both on this forum). Repo paths and three.ws are plain text on purpose; see the approval pattern in nvidia-visibility-map.md.
+images: 0
+status: revised to the approval pattern 2026-09-22, owner approval required before posting (external-channel gate in CLAUDE.md)
 ---
 
 # Running a free text-to-3D service on L4s: cold starts, keep-warm crons, and the quota arithmetic nobody publishes
 
-I run [three.ws](https://three.ws), an open-source platform where you type a sentence and get a textured, rigged, animated 3D character. I have written here three times before: [Nemotron in front of the text-to-3D generator](https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445), [NIM driving a 100-language i18n pipeline](https://forums.developer.nvidia.com/t/how-three-ws-translates-a-web-app-into-100-languages-with-nvidia-nim-an-llm-powered-i18n-pipeline/377379), and a browser-tab digital human streaming Audio2Face-3D onto whatever rig the visitor brought.
+I run three.ws, an open-source platform where you type a sentence and get a textured, rigged, animated 3D character. I have written here four times before, most recently about [a browser-tab digital human on Audio2Face-3D](https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953) and, before that, [what a retired NIM model id does to a fallback chain](https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950).
 
 This one is about the boring half that keeps the free lane free: the fleet. three.ws is an NVIDIA Inception member; that is a startup programme, not a partnership or an endorsement, and nothing below is an NVIDIA statement.
 
@@ -26,7 +29,7 @@ The lanes, and what each is for:
 - **TripoSG** (`model-triposg`): sketch to 3D. A drawing plus a prompt naming it, untextured geometry out.
 - **TripoSR**, plus the mesh pipeline around all of them: rigging, remeshing, texturing, segmentation, stylization, background removal, garment generation, avatar reconstruction from photos, text to motion, video to motion, video to scene, and sign-language synthesis.
 
-Thirty-two workers in total, most of them Docker images you can build and run yourself. The point of self-hosting was never cost alone: it is that a lane we host is a lane we can debug, and a free-tier vendor lane is a lane that changes under you.
+Thirty-four workers in total, most of them Docker images you can build and run yourself. The point of self-hosting was never cost alone: it is that a lane we host is a lane we can debug, and a free-tier vendor lane is a lane that changes under you.
 
 ## Cold starts are a model-load problem, not a container problem
 
@@ -52,7 +55,7 @@ Every generation lane has a failover chain, so an unavailable model degrades qua
 
 The text chain tries free rungs first, in order, and only touches a paid key as a last resort. NVIDIA NIM is one of the free rungs (Nemotron, on the free developer tier). Two hard-won notes for anyone building a similar chain:
 
-**Model end-of-life is a silent outage.** When a family we depended on reached end of life on NIM, the rung answered `410`. Our chain fell through correctly, but the deeper lesson was that a chain is only as good as its awareness of upstream catalogue changes, so a scheduled job now diffs our hardcoded model ids against the live catalogues and tells us before users do.
+**Model end-of-life is a silent outage.** When a family we depended on reached end of life on NIM, the rung answered `410`. Our chain fell through correctly, and nobody noticed for two weeks. That story is the retirement post linked above, so I will not repeat it here beyond the rule: a chain is only as good as its awareness of upstream catalogue changes.
 
 **Reasoning models need an explicit flag.** The Nemotron rung is a reasoning family, so it sends `enable_thinking: false` to keep the answer in `content` rather than in a reasoning field the caller does not read. A chain that treats every provider as interchangeable will produce empty answers on exactly the rungs that are working.
 
@@ -80,6 +83,6 @@ curl -s -X POST https://three.ws/api/3d/studio \
 curl "https://three.ws/api/sim-readiness?src=<glb url>"
 ```
 
-The workers, the routing, the keep-warm cron, and the failover chains are all in the open repository at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws) (Apache-2.0), and `GET https://three.ws/api/version` returns the exact commit production is running, so anything above can be checked against the code that serves it.
+The workers (workers/), the routing (api/_lib/forge-tiers.js), the keep-warm cron (api/cron/gpu-keepwarm.js), and the failover chains (api/_lib/llm.js) are all in the open repository, nirholas/three.ws on GitHub, and `GET https://three.ws/api/version` returns the exact commit production is running, so anything above can be checked against the code that serves it.
 
 If you run generation lanes on granted GPU capacity, I would like to compare notes on two things: how you decide which lanes deserve a warm floor, and whether anyone has found a better answer to cold weight loads than "pay for a floor and be honest about the wait".

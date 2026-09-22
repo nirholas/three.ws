@@ -201,6 +201,7 @@ The free NVIDIA TTS lane: **Magpie multilingual on Riva**, selected by an NVCF `
 - [NVIDIA Inception membership](/docs/nvidia-inception) - what membership adds on top of this free lane
 - [The generator was never the hard part](/docs/nvidia-nemotron-spotlight) - our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [NIM model retirements and the 410 that hides from a fallback chain](https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950) - the forum post behind the 2026-09-10 re-pins on this page
+- [A digital human in a browser tab](https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953) - Riva, Magpie and Audio2Face-3D on one WebGL face, measured against production
 - [Image-to-3D on NVIDIA L4 and Blackwell](https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell) - the self-hosted GPU fleet behind the paid lanes, and the two walls we hit moving to Blackwell
 - [How Forge works](/docs/how-forge-works) - the /forge product this layer powers
 - [REST API](/docs/api-reference) - the endpoints these models serve

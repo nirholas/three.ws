@@ -71,7 +71,7 @@ Everything here can be done today. Nothing waits on NVIDIA, a build, or a date.
 | 3 | **Portal product record correction** | `programs.nvidia.com/phoenix/application` | Gates the Showcase AND the Apps Catalog. Already specified in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) step 1. Nothing else in this doc lands well while the record says "CUDA consumer". |
 | 4 | **Inception Startup Showcase** | Existing `inceptionprogram@nvidia.com` thread | Requested 2026-09-04 and not directly answered. After #3, send only the focused routing question drafted in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md). |
 | 5 | **AI Podcast guest nomination** | Embedded form at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Free, one form, and a founder-shaped story. **Answers drafted below: [AI Podcast nomination](#ai-podcast-nomination-paste-ready).** Re-verified 2026-09-04: the form is live and self-nomination is explicitly invited. |
-| 6 | **NVIDIA Developer Forums, post 4** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 3 for 3 on posts that landed. This is the one channel with a proven track record, and it is self-serve. **Revised to the approval pattern 2026-09-22: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md)**, the positive follow-up to the retirement post. Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
+| 6 | **NVIDIA Developer Forums, post 5** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 4 for 4 on posts that landed. This is the one channel with a proven track record, and it is self-serve. The Audio2Face post [went live 2026-09-22](https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953). Next up: [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md), cut to the approval pattern. Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
 | 7 | **NVIDIA Developer Discord** | [discord.com/invite/nvidiadeveloper](https://discord.com/invite/nvidiadeveloper) | NVIDIA engineers and product staff are in there. The browser Audio2Face demo is a conversation starter with the actual ACE team, not a marketing ask. |
 | 8 | **Fix `docs/listings.md`** | Ours | The "Startup & Credit Programs" table lists Quicknode and Google Cloud and has **no NVIDIA row at all**, which is the one canonical place a reader looks for our program memberships. Fixed in this change. |
 | 9 | **"Maximize Your Membership" benefits webinar** | Region registration from the Inception member mailer (Americas / EMEA / APAC) | Announced to members 2026-09-02. NVIDIA's own walkthrough of requesting and managing benefits through the portal, which is the exact mechanism gating items 2, 3 and 4 on this list. The batched email went out 2026-09-04, so use the Q&A to chase asks 2 and 3 live rather than waiting on the inbox. |
@@ -220,11 +220,12 @@ separate chance for a reshare.
 
 ## Technical publishing (the proven channel)
 
-Three forum posts, all live, all landed:
+Four forum posts, all live, all landed:
 
 - [How Nemotron made three.ws text-to-3D pipeline usable](https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445)
 - [How three.ws translates a web app into 100 languages with NVIDIA NIM](https://forums.developer.nvidia.com/t/how-three-ws-translates-a-web-app-into-100-languages-with-nvidia-nim-an-llm-powered-i18n-pipeline/377379)
 - [NVIDIA NIM model retirements: what a 410 Gone does to a fallback chain](https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950) (posted 2026-09-21 from [nvidia-forum-model-retirement-post.md](./nvidia-forum-model-retirement-post.md), written to the pattern below)
+- [A digital human in a browser tab: streaming Audio2Face-3D onto whatever rig the visitor brought](https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953) (posted 2026-09-22 from [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md), revised to the pattern the same day)
 
 This is the only NVIDIA channel where we have a track record, it is self-serve,
 and it feeds everything else: forum posts are what a Technical Blog pitch and a
@@ -270,8 +271,8 @@ Write it against [api/_lib/a2f-nvidia.js](../api/_lib/a2f-nvidia.js) and
 behind it, and follow the house rule the existing two follow: real numbers,
 real latencies, no marketing voice.
 
-**It is written: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md)** (drafted
-2026-09-02). It covers the NVCF bidirectional stream, the 44.1 kHz to 16 kHz
+**It is live: [topic 383953](https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953)**, from [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) (drafted
+2026-09-02, posted 2026-09-22). It covers the NVCF bidirectional stream, the 44.1 kHz to 16 kHz
 resampling contract and why playback must use the original audio, the derived
 blendshape path that lets a VRM or Oculus-viseme rig lip-sync from an ARKit-52
 track, the double-stacking and 30-to-60 fps interpolation bugs that only appear
@@ -280,14 +281,13 @@ It was revised on 2026-09-22 to the approval pattern above: two links (the live
 demo and our retirement topic), plain-text repo paths, the NIM > Models category,
 latencies re-measured against production that day, and the NemoGuard claim
 removed (it screens outbound publishing, not chat). It is owner-gated under the
-external-channel rule: paste and post when approved.
+external-channel rule and cleared moderation the day it was posted.
 
 ## Drafted, not yet posted
 
 | Draft | Subject |
 |---|---|
-| [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md) | The production GPU fleet: cold weight loads on L4s, min-instances as a quota decision rather than a performance one, the keep-warm cron, and why a failover chain must never have an empty rung |
-| [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) | Audio2Face-3D streamed onto a rig the visitor generated ninety seconds earlier |
+| [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md) | The production GPU fleet: cold weight loads on L4s, min-instances as a quota decision rather than a performance one, the keep-warm cron, and why a failover chain must never have an empty rung. Cut to the approval pattern 2026-09-22 (two links, both to our own topics here); ready to paste |
 
 ## Member benefits and current disposition
 
@@ -369,7 +369,7 @@ record does not.
 | AI Podcast guest form | Fetched [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Embedded "Submit Guest Ideas" form, fields recorded above |
 | NGC publishing prerequisites | Searched the [NGC Software Partner page](https://www.nvidia.com/en-us/gpu-cloud/ngc-software-partners/) | Legal agreement, staging repo, security scan, QA, sign-off |
 | ISV program retired | `WebFetch` on `nvidia.com/en-us/programs/isv/` | HTTP 301 to `developer.nvidia.com` |
-| All three forum posts live | `curl -o /dev/null -w '%{http_code}'` | All 200 |
+| All four forum posts live | `curl -o /dev/null -w '%{http_code}'` | All 200 |
 | `/nvidia` never announced on X | Read [announcement-coverage.md](./announcement-coverage.md) inventory | Column empty for `/nvidia`, populated for `/openai` |
 | Jensen Huang engagement has no source | `data/timeline.json`, event `2026-07-18-jensen-huang` | `source_url: null`, as are 4 other NVIDIA events |
 | GPU fleet shape | `gcloud run services list` across all regions, filtered to accelerator node selectors | 8 workers, 12 deployments, 11 L4 + 1 RTX PRO 6000 |

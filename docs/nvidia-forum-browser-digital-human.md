@@ -7,7 +7,8 @@ description: "How three.ws drives real-time facial animation on a WebGL avatar f
 tags: [nim, audio2face, riva]
 links_in_body: 2 (the live demo, and our own retirement topic on this forum). Repo paths are plain text on purpose; see the approval pattern in nvidia-visibility-map.md.
 images: 0 (a short clip of the demo would be the one allowed image, if the owner wants it)
-status: revised to the approval pattern 2026-09-22, owner approval required before posting (external-channel gate in CLAUDE.md)
+status: posted 2026-09-22
+live: https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953
 ---
 
 # A digital human in a browser tab: streaming Audio2Face-3D onto whatever rig the visitor brought
