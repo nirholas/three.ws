@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Community Skills · three.ws</title>
+		<meta
+			name="description"
+			content="Open-source skills for AI agents: one markdown file of instructions each, contributed by pull request and imported onto any three.ws agent in one click. Search by tag or author, preview the full SKILL.md, then manage your agent's skills and token budget."
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="canonical" href="https://three.ws/skills/community" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/skills-community.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="sc-shell">
+			<section class="sc-hero">
+				<p class="sc-kicker"><span class="sc-dot" aria-hidden="true"></span> Open registry</p>
+				<h1 class="sc-title">Community <em>skills</em></h1>
+				<p class="sc-sub">
+					A skill is one markdown file of instructions. Import it onto an agent and the agent follows
+					it from its next reply: a risk desk that sizes every trade, diligence before any buy, an honest
+					house style for posts. Anyone can contribute one by pull request, and every skill is reviewed
+					like code.
+				</p>
+				<div class="sc-ctas">
+					<a class="sc-btn sc-btn-primary" href="https://github.com/nirholas/three.ws/blob/main/community-skills/CONTRIBUTING.md" rel="noopener">Contribute a skill</a>
+					<a class="sc-btn" href="/docs/skills">How skills work</a>
+					<a class="sc-btn" href="/marketplace?tab=skills">Marketplace skills</a>
+				</div>
+				<dl class="sc-stats" id="sc-stats" aria-live="polite"></dl>
+			</section>
+
+			<div class="sc-tabs" role="tablist" aria-label="Community skills views">
+				<button type="button" class="sc-tab is-active" role="tab" id="sc-tab-browse" aria-selected="true" aria-controls="sc-browse" data-view="browse">Browse the registry</button>
+				<button type="button" class="sc-tab" role="tab" id="sc-tab-mine" aria-selected="false" aria-controls="sc-mine" data-view="mine" tabindex="-1">Your agents' skills</button>
+			</div>
+
+			<section id="sc-browse" role="tabpanel" aria-labelledby="sc-tab-browse">
+				<div class="sc-controls">
+					<div class="sc-search">
+						<label class="sr-only" for="sc-q">Search skills</label>
+						<input class="sc-input" id="sc-q" type="search" placeholder="Search skills, tags, authors…" autocomplete="off" />
+						<kbd class="sc-kbd" aria-hidden="true">/</kbd>
+					</div>
+					<label class="sr-only" for="sc-author">Filter by author</label>
+					<select class="sc-select" id="sc-author">
+						<option value="">All authors</option>
+					</select>
+				</div>
+				<nav class="sc-tags" id="sc-tags" aria-label="Filter by tag"></nav>
+				<div class="sc-grid" id="sc-grid" aria-busy="true"></div>
+				<div id="sc-browse-state"></div>
+			</section>
+
+			<section id="sc-mine" role="tabpanel" aria-labelledby="sc-tab-mine" hidden>
+				<div id="sc-mine-gate"></div>
+				<div id="sc-mine-body" hidden>
+					<div class="sc-mine-head">
+						<div class="sc-field sc-field-inline">
+							<label for="sc-agent">Agent</label>
+							<select class="sc-select" id="sc-agent"></select>
+						</div>
+						<button type="button" class="sc-btn" id="sc-new-toggle" aria-expanded="false" aria-controls="sc-new">Write a custom skill</button>
+					</div>
+
+					<div class="sc-budget" id="sc-budget" aria-live="polite"></div>
+
+					<form class="sc-panel" id="sc-new" hidden novalidate>
+						<h2 class="sc-h2">Write a custom skill</h2>
+						<p class="sc-note">Plain instructions in markdown. The agent follows them whenever a message falls in the skill's domain.</p>
+						<div class="sc-field">
+							<label for="sc-new-name">Name</label>
+							<input class="sc-input" id="sc-new-name" required minlength="2" maxlength="80" />
+						</div>
+						<div class="sc-field">
+							<label for="sc-new-desc">Description <span class="sc-optional">(optional)</span></label>
+							<input class="sc-input" id="sc-new-desc" maxlength="400" />
+						</div>
+						<div class="sc-field">
+							<label for="sc-new-content">Instructions</label>
+							<textarea class="sc-textarea" id="sc-new-content" required rows="10" maxlength="24000"></textarea>
+							<span class="sc-count" id="sc-new-count"></span>
+						</div>
+						<div class="sc-ctas">
+							<button type="submit" class="sc-btn sc-btn-primary" id="sc-new-save">Save skill</button>
+							<button type="button" class="sc-btn" id="sc-new-cancel">Cancel</button>
+						</div>
+						<p class="sc-form-note" id="sc-new-note" role="status" aria-live="polite"></p>
+					</form>
+
+					<ol class="sc-installed" id="sc-installed" aria-label="Installed skills, in install order"></ol>
+				</div>
+			</section>
+		</main>
+
+		<dialog class="sc-dialog" id="sc-preview" aria-labelledby="sc-preview-title">
+			<div class="sc-dialog-inner">
+				<header class="sc-dialog-head">
+					<div>
+						<p class="sc-kicker" id="sc-preview-kicker"></p>
+						<h2 class="sc-dialog-title" id="sc-preview-title"></h2>
+						<p class="sc-dialog-desc" id="sc-preview-desc"></p>
+					</div>
+					<button type="button" class="sc-icon-btn" id="sc-preview-close" aria-label="Close preview">✕</button>
+				</header>
+				<div class="sc-dialog-meta" id="sc-preview-meta"></div>
+				<div class="sc-import" id="sc-import" aria-live="polite"></div>
+				<article class="sc-md" id="sc-preview-body"></article>
+			</div>
+		</dialog>
+
+		<dialog class="sc-dialog" id="sc-edit" aria-labelledby="sc-edit-title">
+			<form class="sc-dialog-inner" id="sc-edit-form" novalidate>
+				<header class="sc-dialog-head">
+					<h2 class="sc-dialog-title" id="sc-edit-title">Edit skill</h2>
+					<button type="button" class="sc-icon-btn" id="sc-edit-close" aria-label="Close editor">✕</button>
+				</header>
+				<div class="sc-field">
+					<label for="sc-edit-name">Name</label>
+					<input class="sc-input" id="sc-edit-name" required minlength="2" maxlength="80" />
+				</div>
+				<div class="sc-field">
+					<label for="sc-edit-desc">Description</label>
+					<input class="sc-input" id="sc-edit-desc" maxlength="400" />
+				</div>
+				<div class="sc-field">
+					<label for="sc-edit-content">Instructions</label>
+					<textarea class="sc-textarea" id="sc-edit-content" required rows="16" maxlength="24000"></textarea>
+					<span class="sc-count" id="sc-edit-count"></span>
+				</div>
+				<div class="sc-ctas">
+					<button type="submit" class="sc-btn sc-btn-primary" id="sc-edit-save">Save changes</button>
+					<button type="button" class="sc-btn" id="sc-edit-cancel">Cancel</button>
+				</div>
+				<p class="sc-form-note" id="sc-edit-note" role="status" aria-live="polite"></p>
+			</form>
+		</dialog>
+
+		<div id="sc-live" class="sr-only" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/skills-community.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

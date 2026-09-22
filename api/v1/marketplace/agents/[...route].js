@@ -5,6 +5,7 @@
 //   GET    /api/v1/marketplace/agents/history?agent_id=       marketplace event history
 //   GET    /api/v1/marketplace/agents/by-agent/:agentId       an agent's live listing (or null)
 //   GET    /api/v1/marketplace/agents/dashboard               seller dashboard (auth)
+//   GET    /api/v1/marketplace/agents/my-agents               my agents with balances and sale state (auth)
 //   GET    /api/v1/marketplace/agents/bids/mine               bids I placed (auth)
 //   GET    /api/v1/marketplace/agents/bids/received           bids on my listings (auth)
 //   POST   /api/v1/marketplace/agents/preview                 confirmation table for any money action (auth)
@@ -73,6 +74,7 @@ const ROUTES = [
 	['GET', 'history', null, (ctx) => svc.marketplaceHistory({ agentId: ctx.query.agent_id || null, limit: ctx.query.limit })],
 	['GET', 'by-agent/:agentId', { optional: true }, (ctx) => svc.getLiveListingForAgent(ctx.params.agentId, ctx.user?.id)],
 	['GET', 'dashboard', { scope: 'agents:read' }, (ctx) => svc.sellerDashboard(ctx.user)],
+	['GET', 'my-agents', { scope: 'agents:read' }, (ctx) => svc.myAgents(ctx.user)],
 	['GET', 'bids/mine', { scope: 'agents:read' }, (ctx) => svc.myBids(ctx.user)],
 	['GET', 'bids/received', { scope: 'agents:read' }, (ctx) => svc.receivedBids(ctx.user)],
 	['POST', 'preview', { scope: 'agents:read', write: true }, (ctx) => {

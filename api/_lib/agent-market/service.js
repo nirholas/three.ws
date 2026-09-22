@@ -219,6 +219,33 @@ export async function sellerDashboard(user) {
 	};
 }
 
+/**
+ * The caller's own agents, for the listing form and agent-wallet bid funding:
+ * wallet, live balance, and whether each is already listed or funding bids.
+ */
+export async function myAgents(user) {
+	requireUser(user);
+	const rows = await sql`
+		SELECT ai.id, ai.name, ai.meta->>'solana_address' AS wallet_address,
+		       EXISTS (SELECT 1 FROM agent_listings l WHERE l.agent_id = ai.id AND l.status IN ('active', 'settling')) AS listed,
+		       (SELECT l.id FROM agent_listings l WHERE l.agent_id = ai.id AND l.status IN ('active', 'settling') LIMIT 1) AS listing_id,
+		       EXISTS (SELECT 1 FROM agent_listing_bids b WHERE b.funding_agent_id = ai.id AND b.status IN ('awaiting_funds', 'open')) AS funding_bids
+		FROM agent_identities ai
+		WHERE ai.user_id = ${user.id} AND ai.deleted_at IS NULL
+		ORDER BY ai.updated_at DESC NULLS LAST
+		LIMIT 100
+	`;
+	return Promise.all(rows.map(async (r) => ({
+		id: r.id,
+		name: r.name,
+		wallet_address: r.wallet_address,
+		balance: r.wallet_address ? await liveBalances(r.wallet_address).catch(() => null) : null,
+		listed: r.listed,
+		listing_id: r.listing_id,
+		funding_bids: r.funding_bids,
+	})));
+}
+
 export async function myBids(user) {
 	requireUser(user);
 	const rows = await store.listBidsByBidder(user.id);

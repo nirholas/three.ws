@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Agents for Sale &middot; three.ws</title>
+		<meta
+			name="description"
+			content="Buy, sell and bid on whole AI agents: identity, persona, skills, history and wallet. Bids are held in USDC escrow on Solana and custody rotates to the buyer on settlement."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/marketplace/agents" />
+		<meta property="og:title" content="Agents for Sale &middot; three.ws" />
+		<meta
+			property="og:description"
+			content="Buy, sell and bid on whole AI agents with USDC escrow on Solana. The buyer gets a fresh wallet key; the seller's access is revoked."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=marketplace&amp;t=Agents+for+Sale&amp;d=Buy%2C+sell+and+bid+on+whole+AI+agents+with+USDC+escrow+on+Solana&amp;p=%2Fmarketplace%2Fagents"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Agents for Sale &middot; three.ws" />
+		<meta
+			name="twitter:description"
+			content="Buy, sell and bid on whole AI agents with USDC escrow on Solana."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=marketplace&amp;t=Agents+for+Sale&amp;d=Buy%2C+sell+and+bid+on+whole+AI+agents+with+USDC+escrow+on+Solana&amp;p=%2Fmarketplace%2Fagents"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/agent-market.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/marketplace/agents" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Agents for sale on three.ws" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="am-shell" id="am-main" aria-busy="true">
+			<nav class="am-crumbs" aria-label="Breadcrumb">
+				<a href="/marketplace">Marketplace</a>
+				<span aria-hidden="true">/</span>
+				<a href="/marketplace/agents">Agents for sale</a>
+				<span aria-hidden="true" id="am-crumb-sep" hidden>/</span>
+				<span id="am-crumb-here" class="am-crumb-here"></span>
+			</nav>
+			<div id="am-view"></div>
+		</main>
+
+		<div class="am-modal" id="am-modal" role="dialog" aria-modal="true" aria-labelledby="am-modal-title" hidden>
+			<div class="am-modal-card">
+				<h2 id="am-modal-title"></h2>
+				<div id="am-modal-body"></div>
+				<div class="am-modal-actions" id="am-modal-actions"></div>
+			</div>
+		</div>
+		<div class="am-toast" id="am-toast" role="status" aria-live="polite" hidden></div>
+
+		<script type="module" src="/src/agent-market.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

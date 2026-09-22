@@ -1413,6 +1413,60 @@
 			.market-skills-tab {
 				padding: 0 24px 32px;
 			}
+			/* Community registry callout: the free, open-source prompt skills that
+			   live in community-skills/ and import onto an agent from /skills/community. */
+			.market-community {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px 20px;
+				margin: 0 0 18px;
+				padding: 16px 20px;
+				border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+				border-radius: 12px;
+				background: var(--surface-1, rgba(255, 255, 255, 0.03));
+				transition: border-color 0.15s ease;
+			}
+			.market-community:hover {
+				border-color: var(--stroke-strong, rgba(255, 255, 255, 0.22));
+			}
+			.market-community-copy {
+				flex: 1 1 320px;
+			}
+			.market-community-copy h3 {
+				margin: 0 0 4px;
+				font-size: 15px;
+				color: var(--ink-bright, #fff);
+			}
+			.market-community-copy p {
+				margin: 0;
+				font-size: 13px;
+				line-height: 1.5;
+				color: var(--ink-dim, rgba(255, 255, 255, 0.65));
+			}
+			.market-community-cta {
+				display: inline-flex;
+				align-items: center;
+				padding: 8px 16px;
+				border-radius: 999px;
+				background: var(--ink-bright, #fff);
+				color: var(--bg-0, #0a0a0a);
+				font-size: 13px;
+				font-weight: 600;
+				text-decoration: none;
+				transition: opacity 0.15s ease, transform 0.15s ease;
+			}
+			.market-community-cta:hover {
+				opacity: 0.88;
+			}
+			.market-community-cta:active {
+				transform: translateY(1px);
+			}
+			.market-community-cta:focus-visible {
+				outline: 2px solid var(--focus-ring-color, #a78bfa);
+				outline-offset: 2px;
+			}
 			#skills-cat-chips {
 				display: flex;
 				flex-wrap: wrap;
@@ -3972,6 +4026,13 @@
 				</header>
 				<div class="market-skills-tab">
 					<div class="market-tag-banner" id="skills-tag-banner" role="status" hidden></div>
+					<aside class="market-community" aria-labelledby="market-community-title">
+						<div class="market-community-copy">
+							<h3 id="market-community-title">Community skills</h3>
+							<p>Free, open-source instruction sets anyone can contribute by pull request: a risk desk, token diligence, DCA planning, honest posting and more. Import one onto an agent in one click, then edit it like your own.</p>
+						</div>
+						<a class="market-community-cta" href="/skills/community">Browse community skills</a>
+					</aside>
 					<div
 						class="market-cat-chips"
 						id="skills-cat-chips"

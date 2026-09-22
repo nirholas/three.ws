@@ -1,0 +1,237 @@
+{
+	"$comment": "Single source of truth for installing three.ws inside other agent frameworks. `npm run build:distributions` renders every artifact under distributions/ and public/install/ from this file, and `npm run build:distributions -- --check` fails when anything on disk has drifted. {{...}} placeholders resolve against the top-level keys below. See docs/install-everywhere.md.",
+	"version": "1.0.0",
+	"mcp": {
+		"server": {
+			"name": "three-ws",
+			"title": "three.ws",
+			"url": "https://three.ws/api/mcp",
+			"auth": "oauth",
+			"description": "Your three.ws account: agents, avatars, memory, wallets, and the paid tool lanes. Signs in with OAuth 2.1 or an API key."
+		},
+		"free": {
+			"name": "three-ws-studio",
+			"title": "three.ws 3D Studio (free)",
+			"url": "https://three.ws/api/mcp-studio",
+			"auth": "none",
+			"description": "Free text-to-3D, image-to-3D, rigged avatars and talking personas. No account, no key."
+		},
+		"apiKeyEnv": "THREE_WS_API_KEY",
+		"apiKeyPage": "https://three.ws/dashboard/api"
+	},
+	"skills": {
+		"source": ".agents/skills",
+		"primary": "three-ws",
+		"bundle": [
+			"connect-three-ws-mcp",
+			"generate-3d-model",
+			"create-3d-avatar",
+			"rig-a-model",
+			"find-3d-assets",
+			"create-a-three-ws-agent",
+			"embed-three-ws-avatar",
+			"build-an-agent-skill",
+			"hire-an-agent",
+			"sell-an-agent-skill"
+		],
+		"installSource": "https://github.com/nirholas/three.ws/tree/main/distributions/three-ws-plugin/skills",
+		"installer": "npx -y skills@1 add"
+	},
+	"repos": {
+		"monorepo": "nirholas/three.ws",
+		"hermes": "nirholas/three-ws-agent",
+		"gemini": "nirholas/three-ws-gemini",
+		"hermesUpstream": "NousResearch/hermes-agent"
+	},
+	"setupCommand": "npx three-ws setup",
+	"firstPrompt": "Use the three.ws tools to generate a free 3D model of a brass telescope, then give me the viewer link.",
+	"frameworks": [
+		{
+			"id": "claude-code",
+			"name": "Claude Code",
+			"maker": "Anthropic",
+			"homepage": "https://claude.com/claude-code",
+			"channel": "Claude Code plugin marketplace",
+			"kind": "plugin",
+			"artifact": "distributions/three-ws-plugin",
+			"install": [
+				{
+					"label": "Install the plugin",
+					"command": "claude plugin marketplace add {{repos.monorepo}} && claude plugin install three-ws@three-ws"
+				}
+			],
+			"signIn": "Start `claude`, run `/mcp`, choose `three-ws`, press Authenticate and approve in the browser.",
+			"includes": ["Both MCP servers", "The three.ws skills", "/three-ws:setup and /three-ws:status commands"],
+			"detect": {
+				"referrers": ["claude.ai", "claude.com", "anthropic.com"]
+			}
+		},
+		{
+			"id": "codex",
+			"name": "Codex CLI",
+			"maker": "OpenAI",
+			"homepage": "https://developers.openai.com/codex",
+			"channel": "Codex plugin marketplace (reads the same marketplace file as Claude Code)",
+			"kind": "plugin",
+			"artifact": "distributions/three-ws-plugin",
+			"install": [
+				{
+					"label": "Install the plugin",
+					"command": "codex plugin marketplace add {{repos.monorepo}} --sparse .claude-plugin --sparse distributions/three-ws-plugin && codex plugin add three-ws@three-ws"
+				},
+				{
+					"label": "Sign in",
+					"command": "codex mcp login three-ws"
+				}
+			],
+			"signIn": "`codex mcp login three-ws` opens the browser; approve and return to the terminal.",
+			"alternative": {
+				"label": "Without the plugin system",
+				"command": "codex mcp add three-ws --url {{mcp.server.url}} && codex mcp add three-ws-studio --url {{mcp.free.url}} && {{skills.installer}} {{skills.installSource}} --skill '*' -g -a codex -y"
+			},
+			"includes": ["Both MCP servers", "The three.ws skills", "Setup and status skills"],
+			"detect": {
+				"referrers": ["openai.com", "chatgpt.com"]
+			}
+		},
+		{
+			"id": "gemini-cli",
+			"name": "Gemini CLI",
+			"maker": "Google",
+			"homepage": "https://geminicli.com",
+			"channel": "Gemini CLI extensions gallery (GitHub topic gemini-cli-extension)",
+			"kind": "extension",
+			"artifact": "distributions/gemini-cli",
+			"install": [
+				{
+					"label": "Install the extension",
+					"command": "gemini extensions install https://github.com/{{repos.gemini}} --auto-update --consent"
+				}
+			],
+			"signIn": "Start `gemini` and run `/mcp auth three-ws`; approve in the browser. The free studio server needs no sign-in.",
+			"alternative": {
+				"label": "Without the extension",
+				"command": "gemini mcp add -s user -t http three-ws {{mcp.server.url}} && gemini mcp add -s user -t http three-ws-studio {{mcp.free.url}} && {{skills.installer}} {{skills.installSource}} --skill '*' -g -a gemini-cli -y"
+			},
+			"includes": ["Both MCP servers", "The three.ws skills", "/three-ws:setup and /three-ws:status commands", "The three.ws theme"],
+			"detect": {
+				"referrers": ["geminicli.com", "gemini.google.com", "ai.google.dev"]
+			}
+		},
+		{
+			"id": "hermes",
+			"name": "Hermes Agent",
+			"maker": "Nous Research",
+			"homepage": "https://hermes-agent.nousresearch.com",
+			"channel": "three-ws-agent, a downstream distribution of Hermes Agent, plus a plugin for stock Hermes",
+			"kind": "distribution",
+			"artifact": "distributions/hermes",
+			"install": [
+				{
+					"label": "Install three-ws-agent (Hermes with three.ws built in)",
+					"command": "curl -fsSL https://three.ws/install/hermes.sh | bash",
+					"platform": "unix"
+				},
+				{
+					"label": "Install three-ws-agent (Hermes with three.ws built in)",
+					"command": "irm https://three.ws/install/hermes.ps1 | iex",
+					"platform": "windows"
+				}
+			],
+			"signIn": "The installer ends with `hermes three-ws setup`, which signs you in. `hermes three-ws login` re-authenticates any time.",
+			"alternative": {
+				"label": "Already running Hermes",
+				"command": "hermes plugins install {{repos.hermes}}/plugins/three-ws && hermes plugins enable three-ws && hermes three-ws setup"
+			},
+			"includes": ["Both MCP servers", "The three.ws skills", "hermes three-ws setup, login and status", "The three.ws skin as default"],
+			"detect": {
+				"referrers": ["nousresearch.com"]
+			}
+		},
+		{
+			"id": "openhands",
+			"name": "OpenHands",
+			"maker": "OpenHands",
+			"homepage": "https://openhands.dev",
+			"channel": "OpenHands CLI config recipe, plus an integrations catalog entry for OpenHands/extensions",
+			"kind": "recipe",
+			"artifact": "distributions/openhands",
+			"install": [
+				{
+					"label": "Add the servers and skills",
+					"command": "openhands mcp add three-ws --transport http --auth oauth {{mcp.server.url}} && openhands mcp add three-ws-studio --transport http {{mcp.free.url}} && {{skills.installer}} {{skills.installSource}} --skill '*' -g -a openhands -y"
+				}
+			],
+			"signIn": "Start `openhands`; the three-ws server opens the browser for sign-in on first connect.",
+			"includes": ["Both MCP servers", "The three.ws skills"],
+			"detect": {
+				"referrers": ["openhands.dev", "all-hands.dev"]
+			}
+		},
+		{
+			"id": "goose",
+			"name": "Goose",
+			"maker": "Agentic AI Foundation",
+			"homepage": "https://goose-docs.ai",
+			"channel": "Goose recipe and desktop deeplink (the official MCP Registry lists the server)",
+			"kind": "recipe",
+			"artifact": "distributions/goose",
+			"install": [
+				{
+					"label": "Install the recipe and skills, then start it",
+					"command": "mkdir -p ~/.config/goose/recipes && curl -fsSL https://three.ws/install/goose/three-ws.yaml -o ~/.config/goose/recipes/three-ws.yaml && {{skills.installer}} {{skills.installSource}} --skill '*' -g -a goose -y && goose run --recipe three-ws --interactive"
+				}
+			],
+			"deeplink": true,
+			"signIn": "Goose opens the browser on first connect; approve and return to the session.",
+			"includes": ["Both MCP servers (in the recipe)", "The three.ws skills", "A one-click desktop deeplink"],
+			"detect": {
+				"referrers": ["goose-docs.ai", "block.github.io"]
+			}
+		},
+		{
+			"id": "cline",
+			"name": "Cline",
+			"maker": "Cline",
+			"homepage": "https://cline.bot",
+			"channel": "Cline CLI, writing the settings file every Cline client shares (VS Code, JetBrains, CLI)",
+			"kind": "recipe",
+			"artifact": "distributions/cline",
+			"install": [
+				{
+					"label": "Add the servers and skills",
+					"command": "cline mcp add three-ws --transport http {{mcp.server.url}} --yes && cline mcp add three-ws-studio --transport http {{mcp.free.url}} --yes && {{skills.installer}} {{skills.installSource}} --skill '*' -g -a cline -y"
+				}
+			],
+			"signIn": "Open Cline (CLI or editor); the three-ws server opens the browser for sign-in on first connect.",
+			"includes": ["Both MCP servers", "The three.ws skills"],
+			"detect": {
+				"referrers": ["cline.bot"]
+			}
+		},
+		{
+			"id": "continue",
+			"name": "Continue",
+			"maker": "Continue",
+			"homepage": "https://continue.dev",
+			"channel": "Continue MCP block files for the IDE extensions and the cn CLI",
+			"kind": "recipe",
+			"artifact": "distributions/continue",
+			"install": [
+				{
+					"label": "Add the blocks and skills",
+					"command": "mkdir -p ~/.continue/mcpServers && curl -fsSL https://three.ws/install/continue/three-ws.yaml -o ~/.continue/mcpServers/three-ws.yaml && curl -fsSL https://three.ws/install/continue/three-ws-studio.yaml -o ~/.continue/mcpServers/three-ws-studio.yaml && {{skills.installer}} {{skills.installSource}} --skill '*' -g -a continue -y"
+				},
+				{
+					"label": "Save your API key",
+					"command": "echo \"{{mcp.apiKeyEnv}}=<key from {{mcp.apiKeyPage}}>\" >> ~/.continue/.env"
+				}
+			],
+			"signIn": "Continue's editor extension signs in to Streamable HTTP servers with a key, so create one at {{mcp.apiKeyPage}} and save it as {{mcp.apiKeyEnv}}. The free studio server needs none.",
+			"includes": ["Both MCP servers", "The three.ws skills"],
+			"detect": {
+				"referrers": ["continue.dev"]
+			}
+		}
+	]
+}
