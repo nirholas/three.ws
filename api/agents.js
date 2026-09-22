@@ -17,12 +17,9 @@ import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error, serverError, rateLimited } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { generateAgentWallet, generateSolanaAgentWallet } from './_lib/agent-wallet.js';
-import { checkIdentityIntegrity } from './_lib/identity-integrity.js';
+import { createAgentIdentity, mintAgentWalletMeta } from './_lib/agent-create.js';
 import { publicUrl, thumbnailUrl } from './_lib/r2.js';
 import { pedigreeScore } from './_lib/genome.js';
-import { pingIndexNow } from './_lib/indexnow.js';
-import { publishFeedEvent } from './_lib/feed.js';
 import { getSkillPrices, skillPriceMap } from './_lib/skill-price-cache.js';
 import { cacheWrap } from './_lib/cache.js';
 import { trackAgentOwnerVisit } from './_lib/retention.js';
@@ -194,41 +191,6 @@ async function handleList(req, res) {
 	return json(res, 200, { agents: rows.map((row) => decorate(row)) });
 }
 
-// Mint the agent's custodial EVM + Solana wallets for the initial INSERT.
-//
-// Minting can fail when the at-rest encryption key is unavailable — in
-// production secret-box.js fails CLOSED rather than encrypt custodial secrets
-// under the JWT_SECRET fallback (see api/_lib/secret-box.js). That must never
-// brick the core product action of creating an agent. The platform already mints
-// wallets lazily and idempotently on first use (ensureAgentWallet /
-// getOrCreateAgentEvmWallet), so a walletless identity self-heals the next time
-// it touches a wallet once the key is configured — exactly how the avatar-agent
-// path degrades. On failure we create the agent with a null wallet_address and
-// no encrypted keys, and log a warning (never the secret-box internals as an
-// unhandled 500). Returns { walletAddress, meta } for the INSERT.
-async function mintAgentWalletMeta() {
-	try {
-		const [wallet, sol] = await Promise.all([
-			generateAgentWallet(),
-			generateSolanaAgentWallet(),
-		]);
-		return {
-			walletAddress: wallet.address,
-			meta: {
-				encrypted_wallet_key: wallet.encrypted_key,
-				solana_address: sol.address,
-				encrypted_solana_secret: sol.encrypted_secret,
-			},
-		};
-	} catch (err) {
-		console.warn(
-			'[agents] wallet provisioning deferred — minting failed at create time, ' +
-				'agent will be provisioned lazily on first wallet use:',
-			err?.message,
-		);
-		return { walletAddress: null, meta: {} };
-	}
-}
 
 // ── Get-or-create default agent ───────────────────────────────────────────
 
@@ -327,77 +289,21 @@ async function handleCreate(req, res) {
 		avatarId = av.id;
 	}
 
-	// Granite identity-integrity gate. Refuse to mint an identity that impersonates
-	// an existing public agent (Granite embedding look-alike) or fails Granite
-	// Guardian content screening. Best-effort: any failure — or watsonx being
-	// unconfigured — lets creation proceed rather than failing closed.
-	let integrity = null;
-	try {
-		integrity = await checkIdentityIntegrity(
-			{ name, description: body.description, persona_tone_tags: body.persona_tone_tags },
-			{ userId: auth.userId },
-		);
-		if (integrity.status === 'block') {
-			return error(
-				res,
-				409,
-				'identity_conflict',
-				integrity.reasons[0] || 'this identity conflicts with an existing agent',
-				{ integrity },
-			);
-		}
-	} catch (err) {
-		console.error('[agents] identity_integrity_check_failed', err);
-		integrity = null;
-	}
-
-	const { walletAddress, meta: walletMeta } = await mintAgentWalletMeta();
-	const meta = {
-		...(body.meta || {}),
-		...walletMeta,
-	};
-	// Stamp the integrity verdict onto the identity so the profile/editor can show
-	// a "distinct identity" signal and reviewers can see what was checked at birth.
-	if (integrity && integrity.configured) {
-		meta.identity_integrity = {
-			status: integrity.status,
-			uniqueness: integrity.uniqueness,
-			guardian: integrity.guardian ? integrity.guardian.decision : null,
-			closest: integrity.similar[0]
-				? { name: integrity.similar[0].name, score: integrity.similar[0].score }
-				: null,
-			checked_at: new Date().toISOString(),
-		};
-	}
-
-	const [agent] = await sql`
-		INSERT INTO agent_identities (user_id, name, description, skills, wallet_address, meta, avatar_id)
-		VALUES (
-			${auth.userId},
-			${name},
-			${body.description ? String(body.description).slice(0, 500) : null},
-			${body.skills || ['greet', 'present-model', 'validate-model', 'remember', 'think']},
-			${walletAddress},
-			${JSON.stringify(meta)}::jsonb,
-			${avatarId}
-		)
-		RETURNING *
-	`;
-
-	// Push the new agent's URL to IndexNow so Bing / Yandex discover it within
-	// minutes instead of waiting for the next crawl. Fire-and-forget — IndexNow
-	// failures must never block agent creation.
-	pingIndexNow(`${env.APP_ORIGIN}/agents/${agent.id}`).catch(() => {});
-
-	// Announce the new agent on the site-wide live activity ticker — discovery +
-	// social proof. Fire-and-forget; never block or fail creation on the feed.
-	publishFeedEvent({
-		type: 'agent-deploy',
-		ts: Date.now(),
-		actor: name,
-		agentId: agent.id,
+	const created = await createAgentIdentity({
+		userId: auth.userId,
 		name,
-	}).catch(() => {});
+		description: body.description,
+		personaToneTags: body.persona_tone_tags,
+		avatarId,
+		skills: body.skills,
+		meta: body.meta,
+	});
+	if (created.blocked) {
+		return error(res, 409, 'identity_conflict', created.blocked.message, {
+			integrity: created.blocked.integrity,
+		});
+	}
+	const { agent } = created;
 
 	return json(res, 201, { agent: decorate(agent) });
 }

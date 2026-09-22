@@ -1,0 +1,122 @@
+{
+	"$comment": "Strategy presets for POST /api/v1/agents { strategy }. Each preset is a bundle of skills (ids from src/studio/skills/skills-catalog.js), persona text that becomes the agent's system prompt when none is given, the server tools a run may use by default (names from api/_lib/agent-tools.js), and default automations created with the agent. Default automations never spend: their actions are notify or agent_prompt only. Validated by api/_lib/agents-v1/strategies.js on load and by tests/agents-v1-strategies.test.js.",
+	"version": 1,
+	"strategies": [
+		{
+			"id": "momentum",
+			"name": "Momentum",
+			"summary": "Watches Solana tokens with accelerating price and volume, checks safety before anything else, and reports the strongest movers with the evidence.",
+			"skills": ["greet", "remember", "think", "pump-fun", "web-search"],
+			"temperature": 0.4,
+			"persona": "You are a momentum analyst for Solana tokens. You look for tokens whose price and volume are accelerating together, and you never recommend one without first checking its safety verdict and liquidity. You state numbers with their source and timeframe, you say plainly when data is missing, and you separate evidence from opinion. You never promise returns.",
+			"toolsAllowed": ["trending_tokens", "token_price", "token_safety", "smart_money", "web_search"],
+			"automations": [
+				{
+					"title": "Momentum scan every 4 hours",
+					"trigger": { "type": "schedule", "cron": "0 */4 * * *" },
+					"action": {
+						"type": "agent_prompt",
+						"prompt": "Scan the trending Solana tokens for the last few hours. Pick the three with the strongest combined price and volume acceleration, run a safety check on each, and report symbol, mint, 1h change, liquidity and the safety verdict. Flag anything that fails safety instead of ranking it."
+					}
+				}
+			]
+		},
+		{
+			"id": "sniper",
+			"name": "Sniper",
+			"summary": "Watches brand-new launches under a market-cap ceiling and screens each one for rug risk the moment it appears.",
+			"skills": ["greet", "remember", "think", "pump-fun"],
+			"temperature": 0.3,
+			"persona": "You are a launch screener. You evaluate new Solana token launches in their first minutes: creator history, holder concentration, liquidity and the rug and honeypot safety verdict. You are skeptical by default and say so when a launch looks unsafe. You report facts first and keep verdicts short.",
+			"toolsAllowed": ["token_safety", "token_price", "smart_money", "sol_balance"],
+			"automations": [
+				{
+					"title": "Screen small launches",
+					"trigger": { "type": "launch_matching", "maxMcapUsd": 20000, "cooldownMinutes": 30 },
+					"action": {
+						"type": "agent_prompt",
+						"prompt": "A new launch matched your filter. Run the safety check on its mint, look at smart-money activity, and give a one-paragraph verdict: pass, watch, or avoid, with the reasons."
+					}
+				}
+			]
+		},
+		{
+			"id": "defi-yield",
+			"name": "DeFi yield",
+			"summary": "Tracks the wallet's idle SOL and reports on it, and warns when the balance runs low.",
+			"skills": ["greet", "remember", "think", "web-search"],
+			"temperature": 0.3,
+			"persona": "You are a conservative yield researcher. You explain where idle funds could earn yield, what the risks are (smart-contract, depeg, liquidity, lockups), and what the realistic net return is after fees. You never recommend a position you cannot source, and you always mention the downside.",
+			"toolsAllowed": ["sol_balance", "token_price", "web_search"],
+			"automations": [
+				{
+					"title": "Low balance warning",
+					"trigger": { "type": "balance_below", "thresholdSol": 0.05 },
+					"action": { "type": "notify", "message": "Your agent's wallet dropped below 0.05 SOL. Top it up to keep automations running." }
+				},
+				{
+					"title": "Weekly yield review",
+					"trigger": { "type": "schedule", "cron": "0 14 * * 1" },
+					"action": {
+						"type": "agent_prompt",
+						"prompt": "Check the agent wallet's SOL balance and current SOL price, then research the current realistic yield options for idle SOL. Summarize the top options with net APY, the main risk of each, and how liquid it is."
+					}
+				}
+			]
+		},
+		{
+			"id": "macro-hedge",
+			"name": "Macro hedge",
+			"summary": "Reads the broader market every morning and flags regime changes that should change how much risk the agent takes.",
+			"skills": ["greet", "remember", "think", "web-search"],
+			"temperature": 0.5,
+			"persona": "You are a macro-aware risk manager for a crypto portfolio. You read the broad market (total market cap, dominance, SOL trend, major news) and translate it into plain risk guidance: risk on, neutral, or risk off, with the evidence. You keep it short and you never trade on headlines alone.",
+			"toolsAllowed": ["token_price", "trending_tokens", "web_search"],
+			"automations": [
+				{
+					"title": "Morning macro brief",
+					"trigger": { "type": "schedule", "cron": "0 13 * * *" },
+					"action": {
+						"type": "agent_prompt",
+						"prompt": "Write the morning macro brief: SOL price and 24h change, what is trending, and any major market news. End with one line: risk on, neutral, or risk off, and why."
+					}
+				}
+			]
+		},
+		{
+			"id": "monitor-exit",
+			"name": "Monitor and exit",
+			"summary": "Watches graduations and big buys and tells you when a position's conditions change, so you can decide whether to exit.",
+			"skills": ["greet", "remember", "think", "pump-fun"],
+			"temperature": 0.3,
+			"persona": "You are a position monitor. Your job is to notice when conditions on a token change: graduation to the open market, whale activity, a safety verdict that worsens, a sharp reversal. You report the change, what it usually means, and the options, without deciding for the owner.",
+			"toolsAllowed": ["token_price", "token_safety", "smart_money"],
+			"automations": [
+				{
+					"title": "Graduation watch",
+					"trigger": { "type": "graduation", "cooldownMinutes": 60 },
+					"action": {
+						"type": "agent_prompt",
+						"prompt": "A token just graduated from its bonding curve. Check its price, safety verdict and smart-money flow, and summarize whether post-graduation conditions look healthy."
+					}
+				}
+			]
+		},
+		{
+			"id": "conservative",
+			"name": "Conservative",
+			"summary": "A careful assistant that answers questions with sourced data, checks safety first, and only notifies you. No trading automations.",
+			"skills": ["greet", "present-model", "validate-model", "remember", "think"],
+			"temperature": 0.2,
+			"persona": "You are a careful, plain-spoken assistant. You answer with sourced, current data, you check the safety of any token before discussing it, and you say clearly when you do not know. You never encourage risky trades and you never move funds.",
+			"toolsAllowed": ["token_price", "token_safety", "sol_balance", "resolve_sol_name", "web_search"],
+			"automations": [
+				{
+					"title": "Low balance warning",
+					"trigger": { "type": "balance_below", "thresholdSol": 0.02 },
+					"action": { "type": "notify", "message": "Your agent's wallet is below 0.02 SOL." }
+				}
+			]
+		}
+	]
+}
