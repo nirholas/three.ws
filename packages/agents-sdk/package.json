@@ -1,0 +1,62 @@
+{
+  "name": "@three-ws/agents",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the three.ws v1 Agents API: create, start and chat with AI agents, run goals, automate, and trade from Solana agent wallets.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "cd ../.. && vitest run packages/agents-sdk/tests",
+    "examples": "node scripts/run-examples.mjs",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+    "release": "npm publish --access public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "three.ws",
+    "ai-agents",
+    "agents",
+    "sdk",
+    "solana",
+    "llm",
+    "automation",
+    "typescript"
+  ],
+  "author": "nirholas",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/docs/api-reference",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/agents-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3"
+  }
+}

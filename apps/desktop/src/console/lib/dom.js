@@ -91,7 +91,8 @@ export function onAction(root, handlers) {
 		if (!el || !root.contains(el)) return;
 		const fn = handlers[el.dataset.action];
 		if (!fn) return;
-		event.preventDefault();
+		// A checkbox's click is its state change; cancelling it would undo the toggle.
+		if (el.type !== 'checkbox') event.preventDefault();
 		fn(el, event);
 	};
 	root.addEventListener('click', listener);

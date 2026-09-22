@@ -5,7 +5,7 @@
 // the first time it calls a server (the 401 from /api/mcp points it at
 // /.well-known/oauth-protected-resource), so the person approves each editor
 // by name on the three.ws consent screen and can revoke it from
-// /dashboard/connections without touching this app's own session.
+// /dashboard/settings#connected-apps without touching this app's own session.
 //
 // Clients that speak Streamable HTTP get the URL directly. The ones whose
 // config only launches a local process (Claude Desktop, Codex) get the

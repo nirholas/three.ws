@@ -139,7 +139,11 @@ function parseError(body: unknown, status: number): ParsedError {
       };
     }
   }
-  return { code: `http_${status}`, message: typeof body === "string" && body ? body.slice(0, 300) : `HTTP ${status}` };
+  return {
+    code: `http_${status}`,
+    message: typeof body === "string" && body ? body.slice(0, 300) : `HTTP ${status}`,
+    details: undefined,
+  };
 }
 
 function metaFrom(body: unknown, res: Response): ResponseMeta {
@@ -192,7 +196,8 @@ export class Transport {
       authorization: `Bearer ${this.opts.apiKey}`,
       accept: stream ? "text/event-stream" : "application/json",
     };
-    if (typeof process === "undefined" || !process.versions?.node) {
+    const proc = (globalThis as { process?: { versions?: { node?: string } } }).process;
+    if (!proc?.versions?.node) {
       // Browsers forbid setting User-Agent; send our identifier separately.
       h["x-three-ws-client"] = this.opts.userAgent;
     } else {
