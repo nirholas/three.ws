@@ -27,6 +27,15 @@ export function envBps(raw, fallback) {
 	return Number.isFinite(n) && n >= 0 && n <= 10_000 ? Math.round(n) : fallback;
 }
 
+/**
+ * The published share of platform revenue committed to $THREE buybacks, in bps
+ * (default 5000). Lives here, free of the Solana stack, so the launch economics
+ * disclosure and the buyback engine read the one policy number.
+ */
+export function commitBpsFromEnv(vars = process.env) {
+	return envBps(vars.THREE_BUYBACK_COMMIT_BPS, 5000);
+}
+
 /** Whole USD → USDC atomics (6dp), floored. */
 export function usdToUsdcAtomics(usd) {
 	return BigInt(Math.floor(Number(usd) * Number(USDC_ATOMICS)));

@@ -269,22 +269,43 @@ export async function handleTrade(req, res, id) {
 		return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid request body');
 	}
 
-	const side = body.side === 'sell' ? 'sell' : body.side === 'buy' ? 'buy' : null;
-	if (!side) return error(res, 400, 'validation_error', 'side must be "buy" or "sell"');
-
-	const mintStr = typeof body.mint === 'string' ? body.mint.trim() : '';
-	if (!BASE58_RE.test(mintStr)) return error(res, 400, 'validation_error', 'mint must be a base58 Solana address');
-	if (mintStr === WSOL_MINT) return error(res, 400, 'validation_error', 'cannot trade wrapped SOL as a token');
-	let mintPk;
-	try { mintPk = new PublicKey(mintStr); } catch { return error(res, 400, 'validation_error', 'mint is not a valid Solana address'); }
-
-	const network = netOf(body.network);
-	const preview = body.preview === true;
+	const parsed = parseTradeRequest(body);
+	if (!parsed.ok) return error(res, parsed.status, parsed.code, parsed.message);
 
 	// CSRF on the state-changing path only — a live preview/quote moves no funds and
 	// would otherwise burn a single-use token on every keystroke. Bearer callers exempt.
-	if (!preview && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, network, context: 'trade' }))) return;
-	if (!preview && !(await requireCsrf(req, res, auth.userId))) return;
+	if (!parsed.preview && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, network: parsed.network, context: 'trade' }))) return;
+	if (!parsed.preview && !(await requireCsrf(req, res, auth.userId))) return;
+
+	// ownerInitiated: the hub's discretionary Trade tab is the owner acting in
+	// person (session + CSRF), not a delegated skill.
+	const out = await runAgentTrade({ agentId: id, userId: auth.userId, meta, address, encryptedSecret, parsed, req, ownerInitiated: true });
+	if (out.error) return error(res, out.status, out.error.code, out.error.message, out.error.detail);
+	return json(res, out.status, { data: out.data });
+}
+
+/**
+ * Validate a trade request body. Pure: no I/O, no auth. Every caller (the
+ * wallet hub route, the v1 REST route, the MCP swap tools) parses through here
+ * so the accepted shapes cannot drift.
+ * @returns {{ ok: false, status: number, code: string, message: string }
+ *   | { ok: true, side: 'buy'|'sell', mintStr: string, mintPk: PublicKey, network: 'mainnet'|'devnet',
+ *       preview: boolean, slippageBps: number, solAmount: number|null, tokenAmountRaw: string|null,
+ *       idempotencyKey: string|null }}
+ */
+export function parseTradeRequest(body = {}) {
+	const bad = (message) => ({ ok: false, status: 400, code: 'validation_error', message });
+	const side = body.side === 'sell' ? 'sell' : body.side === 'buy' ? 'buy' : null;
+	if (!side) return bad('side must be "buy" or "sell"');
+
+	const mintStr = typeof body.mint === 'string' ? body.mint.trim() : '';
+	if (!BASE58_RE.test(mintStr)) return bad('mint must be a base58 Solana address');
+	if (mintStr === WSOL_MINT) return bad('cannot trade wrapped SOL as a token');
+	let mintPk;
+	try { mintPk = new PublicKey(mintStr); } catch { return bad('mint is not a valid Solana address'); }
+
+	const network = netOf(body.network);
+	const preview = body.preview === true;
 
 	let slippageBps = Number(body.slippage_bps ?? body.slippageBps);
 	if (!Number.isFinite(slippageBps)) slippageBps = DEFAULT_SLIPPAGE_BPS;
@@ -295,24 +316,51 @@ export async function handleTrade(req, res, id) {
 	let tokenAmountRaw = null;
 	if (side === 'buy') {
 		solAmount = Number(body.sol_amount ?? body.amount);
-		if (!(solAmount > 0)) return error(res, 400, 'validation_error', 'sol_amount must be greater than zero');
-		if (solAmount > 1000) return error(res, 400, 'validation_error', 'sol_amount exceeds the 1000 SOL ceiling');
+		if (!(solAmount > 0)) return bad('sol_amount must be greater than zero');
+		if (solAmount > 1000) return bad('sol_amount exceeds the 1000 SOL ceiling');
 	} else {
 		const raw = body.token_amount_raw ?? body.amount_raw;
 		if (raw == null || !/^\d+$/.test(String(raw)) || BigInt(String(raw)) <= 0n) {
-			return error(res, 400, 'validation_error', 'token_amount_raw must be a positive base-unit integer');
+			return bad('token_amount_raw must be a positive base-unit integer');
 		}
 		tokenAmountRaw = String(raw);
 	}
 
+	const idempotencyKey = typeof body.idempotency_key === 'string' && body.idempotency_key.trim()
+		? body.idempotency_key.trim().slice(0, 128)
+		: null;
+
+	return { ok: true, side, mintStr, mintPk, network, preview, slippageBps, solAmount, tokenAmountRaw, idempotencyKey };
+}
+
+/**
+ * Quote (parsed.preview) or execute one discretionary trade from an agent's
+ * custodial wallet: the full guard chain (kill switch, per-trade cap, daily
+ * budget, USD spend ceiling, price-impact breaker, rug firewall, SOL headroom),
+ * then the idempotent custody ledger, key recovery, build, and protected send.
+ *
+ * The caller has already authenticated the owner, and for an execute has
+ * checked the real-funds agreement (plus CSRF for a cookie session).
+ * `ownerInitiated` is true only when the owner is acting in person; a delegated
+ * caller (an MCP tool) passes false so a wallet that requires capabilities
+ * still requires one.
+ *
+ * @returns {Promise<{ status: number, data: object } | { status: number, error: { code: string, message: string, detail?: object } }>}
+ */
+export async function runAgentTrade({ agentId, userId, meta, address, encryptedSecret, parsed, req = null, ownerInitiated = false }) {
+	const id = agentId;
+	const auth = { userId };
+	const fail = (status, code, message, detail) => ({ status, error: { code, message, ...(detail ? { detail } : {}) } });
+	const { side, mintStr, mintPk, network, preview, slippageBps, solAmount, tokenAmountRaw } = parsed;
+
 	if (!address) {
-		return error(res, 409, 'wallet_preparing', 'this agent’s wallet is still being prepared — try again in a moment');
+		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared — try again in a moment');
 	}
 	let ownerPk;
 	try {
 		ownerPk = new PublicKey(address);
 	} catch {
-		return error(res, 409, 'wallet_preparing', 'this agent’s wallet is still being prepared — try again in a moment');
+		return fail(409, 'wallet_preparing', 'this agent’s wallet is still being prepared — try again in a moment');
 	}
 
 	const readConn = solanaConnection(network);
@@ -323,11 +371,11 @@ export async function handleTrade(req, res, id) {
 		quote = await quoteTrade({ conn: readConn, side, mintPk, mintStr, network, solAmount, tokenAmountRaw, slippageBps });
 	} catch (e) {
 		if (e?.code === 'pool_not_found') {
-			return error(res, 404, 'no_market', 'no bonding curve or AMM pool found for this mint on this network — it may not be a pump.fun coin');
+			return fail(404, 'no_market', 'no bonding curve or AMM pool found for this mint on this network — it may not be a pump.fun coin');
 		}
-		if (e?.status) return error(res, e.status, e.code, e.message);
+		if (e?.status) return fail(e.status, e.code, e.message);
 		console.error('[trade] quote failed', e?.message);
-		return error(res, 502, 'quote_failed', 'could not price this trade right now — try again');
+		return fail(502, 'quote_failed', 'could not price this trade right now — try again');
 	}
 
 	// USD value of the SOL leg (buys spend SOL; sells receive it). Best-effort.
@@ -380,7 +428,7 @@ export async function handleTrade(req, res, id) {
 				// "require a capability" never blocks the owner's own trade (like withdraw).
 				// `meta` carries the natural-language policy (meta.policy_rules) so the
 				// owner's English rules govern this trade alongside the numeric caps.
-				await enforceSpendLimit({ agentId: id, meta, limits: limitsCfg, category: 'trade', usdValue, asset: 'SOL', network, ownerInitiated: true });
+				await enforceSpendLimit({ agentId: id, meta, limits: limitsCfg, category: 'trade', usdValue, asset: 'SOL', network, ownerInitiated });
 			} catch (e) {
 				if (e instanceof SpendLimitError) guardWarning = { status: e.status, code: e.code, message: e.message, detail: e.detail };
 				else throw e;
@@ -480,23 +528,21 @@ export async function handleTrade(req, res, id) {
 
 	// 3. PREVIEW — return the quote, never touch the key, never send.
 	if (preview) {
-		return json(res, 200, { data: { preview: true, ...quotePayload } });
+		return { status: 200, data: { preview: true, ...quotePayload } };
 	}
 
 	// ── EXECUTE ──────────────────────────────────────────────────────────────
 	// Hard-stop on any guard/funds breach before we go near the key.
 	if (fundsWarning) {
-		return error(res, 402, fundsWarning.code, fundsWarning.message, fundsWarning.detail);
+		return fail(402, fundsWarning.code, fundsWarning.message, fundsWarning.detail);
 	}
 	if (guardWarning) {
-		return error(res, guardWarning.status || 403, guardWarning.code, guardWarning.message, guardWarning.detail);
+		return fail(guardWarning.status || 403, guardWarning.code, guardWarning.message, guardWarning.detail);
 	}
 
 	// Idempotency key — required for execute so a retry can't double-spend.
-	const idem = typeof body.idempotency_key === 'string' && body.idempotency_key.trim()
-		? body.idempotency_key.trim().slice(0, 128)
-		: null;
-	if (!idem) return error(res, 400, 'validation_error', 'idempotency_key is required to execute a trade');
+	const idem = parsed.idempotencyKey;
+	if (!idem) return fail(400, 'validation_error', 'idempotency_key is required to execute a trade');
 
 	// Fast-path: a finished trade with this key replays its result (never re-sends).
 	const [prior] = await sql`
@@ -505,14 +551,12 @@ export async function handleTrade(req, res, id) {
 	`;
 	if (prior) {
 		if (prior.status === 'confirmed' && prior.signature) {
-			return json(res, 200, {
-				data: { replayed: true, signature: prior.signature, explorer: explorerTxUrl(prior.signature, network), ...quotePayload },
-			});
+			return { status: 200, data: { replayed: true, signature: prior.signature, explorer: explorerTxUrl(prior.signature, network), ...quotePayload } };
 		}
 		if (prior.status === 'pending') {
-			return error(res, 409, 'trade_in_progress', 'a trade with this id is already in flight — check your history before retrying', { signature: prior.signature || null });
+			return fail(409, 'trade_in_progress', 'a trade with this id is already in flight — check your history before retrying', { signature: prior.signature || null });
 		}
-		return error(res, 409, 'trade_failed', 'this trade id already failed — retry with a fresh idempotency key');
+		return fail(409, 'trade_failed', 'this trade id already failed — retry with a fresh idempotency key');
 	}
 
 	// Claim the idempotency slot (also the spend-ledger row). For a buy this counts
@@ -535,7 +579,7 @@ export async function handleTrade(req, res, id) {
 		RETURNING id
 	`;
 	if (!claim.length) {
-		return error(res, 409, 'trade_in_progress', 'a trade with this id is already in flight — check your history before retrying');
+		return fail(409, 'trade_in_progress', 'a trade with this id is already in flight — check your history before retrying');
 	}
 	const claimId = claim[0].id;
 
@@ -549,7 +593,7 @@ export async function handleTrade(req, res, id) {
 	} catch (e) {
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'key_recover_failed' } }).catch(() => {});
 		console.error('[trade] key recovery failed', e?.message);
-		return error(res, 500, 'key_recover_failed', 'could not access the agent wallet key — no funds were moved');
+		return fail(500, 'key_recover_failed', 'could not access the agent wallet key — no funds were moved');
 	}
 
 	let instructions;
@@ -557,9 +601,9 @@ export async function handleTrade(req, res, id) {
 		instructions = await buildTradeInstructions({ userId: auth.userId, side, conn: readConn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw });
 	} catch (e) {
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'build_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
-		if (e?.status) return error(res, e.status, e.code, e.message);
+		if (e?.status) return fail(e.status, e.code, e.message);
 		console.error('[trade] build failed', e?.message);
-		return error(res, 422, 'build_failed', 'could not build this trade — the market may have moved; try again');
+		return fail(422, 'build_failed', 'could not build this trade — the market may have moved; try again');
 	}
 
 	// Broadcast + confirm through the MEV-aware execution engine: dynamic compute
@@ -586,14 +630,14 @@ export async function handleTrade(req, res, id) {
 		} else {
 			await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'send_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 			logAudit({ userId: auth.userId, action: 'custody.trade_failed', resourceId: id, meta: { side, mint: mintStr, reason: 'send_failed' }, req });
-			return error(res, 502, 'send_failed', 'the trade could not be submitted and no funds were moved — try again');
+			return fail(502, 'send_failed', 'the trade could not be submitted and no funds were moved — try again');
 		}
 	}
 
 	if (!confirmed) {
 		await updateCustodyEvent(claimId, { signature, meta: { confirm: 'unconfirmed' } }).catch(() => {});
 		logAudit({ userId: auth.userId, action: 'custody.trade_unconfirmed', resourceId: id, meta: { side, mint: mintStr, signature }, req });
-		return error(res, 202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed — check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network) });
+		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed — check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network) });
 	}
 
 	await updateCustodyEvent(claimId, { status: 'confirmed', signature, usd: side === 'buy' ? usdValue ?? null : null, meta: execTelemetry ? { exec: execTelemetry } : undefined }).catch(() => {});
@@ -610,7 +654,8 @@ export async function handleTrade(req, res, id) {
 	let newSol = null;
 	try { newSol = (await signConn.getBalance(keypair.publicKey, 'confirmed')) / LAMPORTS_PER_SOL; } catch { /* best-effort */ }
 
-	return json(res, 200, {
+	return {
+		status: 200,
 		data: {
 			replayed: false, signature, explorer: explorerTxUrl(signature, network),
 			...quotePayload,
@@ -618,7 +663,7 @@ export async function handleTrade(req, res, id) {
 			new_balance_sol: newSol,
 			execution: execTelemetry,
 		},
-	});
+	};
 }
 
 // Build the on-chain instructions for the resolved venue + side, with the

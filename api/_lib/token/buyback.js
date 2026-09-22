@@ -33,11 +33,11 @@ import { treasuryWallet, treasuryWalletOrNull } from './config.js';
 import { tokenProgramIdForMint } from './token-program.js';
 import { jupiterQuote as jupQuote, jupiterSwapTx as jupSwapTx } from './jupiter.js';
 import {
+	commitBpsFromEnv,
 	computeSpend,
 	deployedPct,
 	committedUsd,
 	commitmentProgressPct,
-	envBps,
 	envSlippageBps,
 	envUsd,
 	usdcAtomicsToUsd as usdcToUsd,
@@ -68,7 +68,7 @@ export function maxUsdPerRun() {
  * conservative floor so the platform over-delivers rather than over-promises.
  */
 export function commitBps() {
-	return envBps(process.env.THREE_BUYBACK_COMMIT_BPS, 5000);
+	return commitBpsFromEnv();
 }
 
 /** Below this, a run is skipped so dust doesn't pay more in fees than it buys. */

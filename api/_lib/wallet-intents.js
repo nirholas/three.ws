@@ -10,7 +10,7 @@
 // row with meta.intent_id so the owner sees real receipts.
 //
 // Triggers : on_tip_received | on_income | on_balance_below | on_schedule
-//            | on_launch_matching | on_stream_started | credits_below
+//            | on_launch_matching | on_stream_started | credits_below | on_mail_received
 // Actions  : tip | transfer | buy | snipe | withdraw | split_income | freeze | notify
 //            | fund_inference (USDC -> account credits, api/_lib/inference-topup.js)
 //
@@ -65,6 +65,10 @@ export const INTENT_TRIGGERS = Object.freeze([
 	// this intent owns the guarded execution.
 	'on_automation',
 	'credits_below',
+	// Fired by agent mail when a message lands in the agent's inbox
+	// (api/_lib/mail/inbound.js). Email is untrusted input, so this trigger
+	// only pairs with notify and freeze: a message can never move funds.
+	'on_mail_received',
 ]);
 
 export const INTENT_ACTIONS = Object.freeze([
@@ -165,6 +169,12 @@ export function normalizeIntent(raw, { threeMint = THREE_MINT } = {}) {
 		const t = posNum(tcfg.threshold_usd);
 		if (t == null) return { ok: false, error: 'needs_threshold', message: 'a credits threshold (USD) is required' };
 		trigger.threshold_usd = t;
+	} else if (triggerType === 'on_mail_received') {
+		// Optional filters, matched case-insensitively against the sender address
+		// and the subject. Owner-authored strings; the email itself is never read
+		// as a rule.
+		trigger.from_contains = str(tcfg.from_contains, 120).trim().toLowerCase() || null;
+		trigger.subject_contains = str(tcfg.subject_contains, 120).trim().toLowerCase() || null;
 	}
 	// on_income / on_stream_started carry no required config.
 
@@ -239,6 +249,9 @@ export function normalizeIntent(raw, { threeMint = THREE_MINT } = {}) {
 	if (triggerType === 'credits_below' && !['fund_inference', 'notify'].includes(actionType)) {
 		return { ok: false, error: 'bad_pairing', message: 'a credits_below rule can top up credits (fund_inference) or notify you' };
 	}
+	if (triggerType === 'on_mail_received' && !['notify', 'freeze'].includes(actionType)) {
+		return { ok: false, error: 'bad_pairing', message: 'an email can only notify you or freeze the wallet; it can never move funds' };
+	}
 
 	// ── owner-set caps (clamped under the spend policy at execution time) ──
 	const lim = r.limits || {};
@@ -267,6 +280,7 @@ function defaultTitle(triggerType, actionType, action) {
 		on_launch_matching: 'On matching launch',
 		on_stream_started: 'On stream start',
 		credits_below: 'On low credits',
+		on_mail_received: 'On new email',
 	}[triggerType] || 'Intent';
 	const A = {
 		tip: 'tip back',
@@ -304,6 +318,10 @@ export function describeIntent(intent) {
 			return `When credits fall below $${t.threshold_usd}, ${a.type === 'fund_inference' ? `top up ${a.amount_usdc} USDC from the wallet, at most once a day` : 'notify me'}.`;
 		case 'on_stream_started':
 			return `When a money stream starts, ${a.type} ${amt}${dest ? ` to ${dest}` : ''}.`;
+		case 'on_mail_received': {
+			const filters = [t.from_contains && `from "${t.from_contains}"`, t.subject_contains && `about "${t.subject_contains}"`].filter(Boolean);
+			return `When the agent receives an email${filters.length ? ` ${filters.join(' ')}` : ''}, ${a.type === 'freeze' ? 'freeze all spending and notify me' : 'notify me'}.`;
+		}
 		default:
 			return intent.title || 'Wallet intent';
 	}
@@ -450,18 +468,22 @@ const COMPILE_TOOL = {
 				description:
 					'on_tip_received: someone tips the agent. on_income: any income arrives. on_balance_below: SOL balance drops under a floor. ' +
 					'on_schedule: a daily/weekly time. on_launch_matching: a new pump.fun launch matches a creator and/or market cap. ' +
-					'on_stream_started: a money stream to the agent begins. credits_below: the owner\'s account credits (USD) drop under a floor.',
+					'on_stream_started: a money stream to the agent begins. credits_below: the owner\'s account credits (USD) drop under a floor. ' +
+					'on_mail_received: an email lands in the agent\'s inbox (pairs only with notify or freeze).',
 			},
 			trigger_config: {
 				type: 'object',
 				description:
 					'Fields by trigger. on_tip_received: { min_sol }. on_balance_below: { threshold_sol }. on_schedule: ' +
 					'{ cadence: "daily"|"weekly", weekday: 0-6 (Sun=0..Sat=6, Fri=5), hour: 0-23 (UTC) }. on_launch_matching: ' +
-					'{ creator: base58|null, max_mcap_usd, min_mcap_usd }. credits_below: { threshold_usd }.',
+					'{ creator: base58|null, max_mcap_usd, min_mcap_usd }. credits_below: { threshold_usd }. ' +
+					'on_mail_received: { from_contains, subject_contains } (both optional).',
 				properties: {
 					min_sol: { type: 'number' },
 					threshold_sol: { type: 'number' },
 					threshold_usd: { type: 'number' },
+					from_contains: { type: 'string' },
+					subject_contains: { type: 'string' },
 					cadence: { type: 'string', enum: ['daily', 'weekly'] },
 					weekday: { type: 'number' },
 					hour: { type: 'number' },
@@ -1287,6 +1309,57 @@ export async function onStreamSettled(agentId, stream) {
 		return { fired };
 	} catch (e) {
 		console.warn('[wallet-intents] onStreamSettled failed', e?.message);
+		return { fired: 0, error: e?.message };
+	}
+}
+
+/**
+ * Fired by agent mail after an inbound message is stored. Evaluates this
+ * agent's on_mail_received intents against the sender and subject filters the
+ * owner wrote, then runs the matching ones. Only notify and freeze can pair
+ * with this trigger (normalizeIntent enforces it), so nothing here signs a
+ * transaction, and neither action reads the email: the notification carries
+ * the owner's own message, never the sender's words. One fire per message.
+ *
+ * @param {object} mail { message_id, from, subject, spam_score }
+ */
+export async function onMailReceived(agentId, mail) {
+	try {
+		const rows = await sql`
+			SELECT * FROM agent_wallet_intents
+			WHERE agent_id = ${agentId} AND enabled = true AND trigger_type = 'on_mail_received'
+		`;
+		if (!rows.length) return { fired: 0 };
+		const from = String(mail.from || '').toLowerCase();
+		const subject = String(mail.subject || '').toLowerCase();
+		const intents = rows.map(rowToIntent).filter((i) => {
+			if (!['notify', 'freeze'].includes(i.action.type)) return false;
+			if (i.trigger.from_contains && !from.includes(i.trigger.from_contains)) return false;
+			if (i.trigger.subject_contains && !subject.includes(i.trigger.subject_contains)) return false;
+			return true;
+		});
+		if (!intents.length) return { fired: 0 };
+
+		const network = intents[0].network === 'devnet' ? 'devnet' : 'mainnet';
+		const built = await buildExecContext({ agentId, userId: null, network, dryRun: false, needsKey: false });
+		if (built.error) {
+			console.warn('[wallet-intents] mail eval skipped:', built.error);
+			return { fired: 0, reason: built.error };
+		}
+		const ctx = built.ctx;
+
+		let fired = 0;
+		for (const intent of intents) {
+			ctx.discriminator = `${intent.action.type}:mail:${mail.message_id}`;
+			let res;
+			try { res = await executeAction(intent, ctx, {}); }
+			catch (e) { res = { status: 'error', note: (e?.message || 'failed').slice(0, 240) }; }
+			await stampFire(intent, res, ctx.now).catch(() => {});
+			if (res.status === 'ok' || res.status === 'notified') fired++;
+		}
+		return { fired };
+	} catch (e) {
+		console.warn('[wallet-intents] onMailReceived failed', e?.message);
 		return { fired: 0, error: e?.message };
 	}
 }

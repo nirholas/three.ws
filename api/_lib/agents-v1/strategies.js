@@ -39,6 +39,13 @@ export function validateStrategies(doc) {
 		if (!Array.isArray(s?.toolsAllowed) || !s.toolsAllowed.length) problems.push(`${at}: toolsAllowed must be a non-empty array`);
 		else for (const t of s.toolsAllowed) if (!AGENT_TOOLS[t]) problems.push(`${at}: unknown tool "${t}"`);
 		if (typeof s?.temperature !== 'number' || s.temperature < 0 || s.temperature > 2) problems.push(`${at}: temperature must be 0..2`);
+		const loop = s?.loop;
+		if (!loop || typeof loop !== 'object') problems.push(`${at}: loop must be an object`);
+		else {
+			if (!Number.isInteger(loop.intervalMinutes) || loop.intervalMinutes < 1 || loop.intervalMinutes > 1440) problems.push(`${at}: loop.intervalMinutes must be an integer 1..1440`);
+			if (typeof loop.dailyCreditCapUsd !== 'number' || loop.dailyCreditCapUsd < 0 || loop.dailyCreditCapUsd > 100) problems.push(`${at}: loop.dailyCreditCapUsd must be 0..100`);
+			if (typeof loop.goal !== 'string' || !loop.goal.trim() || loop.goal.length > 2000) problems.push(`${at}: loop.goal is required (at most 2000 characters)`);
+		}
 		if (!Array.isArray(s?.automations)) problems.push(`${at}: automations must be an array`);
 		else {
 			for (const [j, a] of s.automations.entries()) {

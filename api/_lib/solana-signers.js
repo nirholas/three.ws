@@ -151,6 +151,20 @@ export const SOLANA_SIGNERS = [
 		network: 'mainnet',
 	},
 	{
+		name: 'launch-sponsor',
+		env: 'LAUNCH_SPONSOR_SECRET_KEY_B64',
+		// Pays rent + network fees for gasless coin launches (~0.026 SOL each). Its
+		// floor matches launch_economics.gasless_sponsor_floor_lamports so the
+		// launch path refuses before the monitor would alert, and the refill covers
+		// a day of the platform-wide gasless cap. No fallback env on purpose: the
+		// marketplace payer resolves to the economy master, which never launches.
+		minSol: 0.05,
+		refillTo: 1,
+		purpose:
+			'gasless launch sponsor: pays rent + fees for launches from wallets with no SOL, and holds the platform slot of each gasless coin\'s on-chain creator-fee split, so recovered fees refill it (api/_lib/launch-sponsor.js)',
+		network: 'both',
+	},
+	{
 		name: 'a2a-payer',
 		env: 'A2A_PAYER_SOLANA_SECRET',
 		fallbackEnv: 'A2A_PAYER_SOLANA_PRIVATE_KEY',

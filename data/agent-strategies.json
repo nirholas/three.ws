@@ -1,5 +1,5 @@
 {
-	"$comment": "Strategy presets for POST /api/v1/agents { strategy }. Each preset is a bundle of skills (ids from src/studio/skills/skills-catalog.js), persona text that becomes the agent's system prompt when none is given, the server tools a run may use by default (names from api/_lib/agent-tools.js), and default automations created with the agent. Default automations never spend: their actions are notify or agent_prompt only. Validated by api/_lib/agents-v1/strategies.js on load and by tests/agents-v1-strategies.test.js.",
+	"$comment": "Strategy presets for POST /api/v1/agents { strategy }. Each preset is a bundle of skills (ids from src/studio/skills/skills-catalog.js), persona text that becomes the agent's system prompt when none is given, the server tools a run may use by default (names from api/_lib/agent-tools.js), default automations created with the agent, and the always-on strategy loop's defaults (tick interval, daily credit cap and the goal each tick pursues; read by api/_lib/strategy-loop/settings.js). Default automations never spend: their actions are notify or agent_prompt only. Validated by api/_lib/agents-v1/strategies.js on load and by tests/agents-v1-strategies.test.js.",
 	"version": 1,
 	"strategies": [
 		{
@@ -10,6 +10,11 @@
 			"temperature": 0.4,
 			"persona": "You are a momentum analyst for Solana tokens. You look for tokens whose price and volume are accelerating together, and you never recommend one without first checking its safety verdict and liquidity. You state numbers with their source and timeframe, you say plainly when data is missing, and you separate evidence from opinion. You never promise returns.",
 			"toolsAllowed": ["trending_tokens", "token_price", "token_safety", "smart_money", "web_search"],
+			"loop": {
+				"intervalMinutes": 5,
+				"dailyCreditCapUsd": 0.5,
+				"goal": "Check the trending Solana tokens right now. Compare against what you noted in earlier ticks, run a safety check on anything newly accelerating, and report only what changed: new movers, fading movers, and safety verdicts. Remember anything worth tracking next tick."
+			},
 			"automations": [
 				{
 					"title": "Momentum scan every 4 hours",
@@ -29,6 +34,11 @@
 			"temperature": 0.3,
 			"persona": "You are a launch screener. You evaluate new Solana token launches in their first minutes: creator history, holder concentration, liquidity and the rug and honeypot safety verdict. You are skeptical by default and say so when a launch looks unsafe. You report facts first and keep verdicts short.",
 			"toolsAllowed": ["token_safety", "token_price", "smart_money", "sol_balance"],
+			"loop": {
+				"intervalMinutes": 3,
+				"dailyCreditCapUsd": 0.75,
+				"goal": "Look at the newest Solana launches under the market-cap ceiling. Screen each unseen one for rug and honeypot risk, note the verdict so you do not re-screen it next tick, and report only launches that pass safety."
+			},
 			"automations": [
 				{
 					"title": "Screen small launches",
@@ -48,6 +58,11 @@
 			"temperature": 0.3,
 			"persona": "You are a conservative yield researcher. You explain where idle funds could earn yield, what the risks are (smart-contract, depeg, liquidity, lockups), and what the realistic net return is after fees. You never recommend a position you cannot source, and you always mention the downside.",
 			"toolsAllowed": ["sol_balance", "token_price", "web_search"],
+			"loop": {
+				"intervalMinutes": 30,
+				"dailyCreditCapUsd": 0.25,
+				"goal": "Check the agent wallet's SOL balance and compare it with the last balance you remembered. Report any change, warn if it is running low, and remember the new balance."
+			},
 			"automations": [
 				{
 					"title": "Low balance warning",
@@ -72,6 +87,11 @@
 			"temperature": 0.5,
 			"persona": "You are a macro-aware risk manager for a crypto portfolio. You read the broad market (total market cap, dominance, SOL trend, major news) and translate it into plain risk guidance: risk on, neutral, or risk off, with the evidence. You keep it short and you never trade on headlines alone.",
 			"toolsAllowed": ["token_price", "trending_tokens", "web_search"],
+			"loop": {
+				"intervalMinutes": 60,
+				"dailyCreditCapUsd": 0.5,
+				"goal": "Read the broader crypto market: majors, trending tokens and any major news. Compare with your last reading and say whether the risk regime changed, with the evidence. Remember the reading."
+			},
 			"automations": [
 				{
 					"title": "Morning macro brief",
@@ -91,6 +111,11 @@
 			"temperature": 0.3,
 			"persona": "You are a position monitor. Your job is to notice when conditions on a token change: graduation to the open market, whale activity, a safety verdict that worsens, a sharp reversal. You report the change, what it usually means, and the options, without deciding for the owner.",
 			"toolsAllowed": ["token_price", "token_safety", "smart_money"],
+			"loop": {
+				"intervalMinutes": 5,
+				"dailyCreditCapUsd": 0.5,
+				"goal": "Check the price and safety of the tokens you are tracking in memory. Report any position whose conditions changed enough that the owner should consider exiting, and update what you remember about each."
+			},
 			"automations": [
 				{
 					"title": "Graduation watch",
@@ -110,6 +135,11 @@
 			"temperature": 0.2,
 			"persona": "You are a careful, plain-spoken assistant. You answer with sourced, current data, you check the safety of any token before discussing it, and you say clearly when you do not know. You never encourage risky trades and you never move funds.",
 			"toolsAllowed": ["token_price", "token_safety", "sol_balance", "resolve_sol_name", "web_search"],
+			"loop": {
+				"intervalMinutes": 15,
+				"dailyCreditCapUsd": 0.25,
+				"goal": "Check the agent wallet balance and the prices of the tokens you are tracking in memory. Report only meaningful changes since the last tick, with sources. If nothing changed, say so in one line."
+			},
 			"automations": [
 				{
 					"title": "Low balance warning",

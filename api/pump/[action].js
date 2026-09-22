@@ -90,6 +90,15 @@ import { logger } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
 import { isRpcOutageError, staleEnvelope } from '../_lib/rpc-degrade.js';
+import { getLaunchEconomics, describeFeeSplit } from '../_lib/launch-economics.js';
+import {
+	GaslessError,
+	gaslessEligibility,
+	prepareGaslessCurveLaunch,
+	recordSponsorshipPrepared,
+	recordSponsorshipLaunched,
+	verifyGaslessTransaction,
+} from '../_lib/launch-sponsor.js';
 
 const log = logger('pump.launch');
 import {
@@ -1312,6 +1321,8 @@ const launchPrepSchema = z
 		//   'regular': plain pump.fun coin, no agent binding
 		//   'mayhem' : pump.fun mayhem-mode coin (V2 instruction set, token-2022)
 		coin_type: z.enum(['regular', 'mayhem', 'agent']).default('agent'),
+		// Platform-sponsored launch for a creator wallet with no SOL.
+		gasless: z.boolean().default(false),
 		// Pump SDK 2.0 holder-reward launch. Creator fees accrue to the
 		// protocol-derived holder rewards PDA instead of a creator wallet.
 		holder_reward: z.boolean().default(false),
@@ -1351,7 +1362,20 @@ const launchPrepSchema = z
 	.refine((v) => !v.holder_reward || v.coin_type === 'regular', {
 		message: 'holder_reward requires coin_type=regular',
 		path: ['holder_reward'],
-	});
+	})
+	// Gasless: the launch sponsor pays rent + fees, and the coin's creator fees are
+	// split on-chain with the platform (api/_lib/launch-sponsor.js). A dev buy
+	// needs the creator's own funds, and the fee split needs a SOL-paired coin
+	// whose creator fees reach a real wallet, so those options are excluded.
+	.refine(
+		(v) =>
+			!v.gasless ||
+			(!v.sol_buy_in && !v.usdc_buy_in && v.quote_currency !== 'usdc' && !v.quote_mint && v.coin_type !== 'mayhem' && !v.holder_reward),
+		{
+			message: 'a gasless launch has no dev buy, is SOL-paired, and is not a mayhem or holder-reward coin',
+			path: ['gasless'],
+		},
+	);
 
 
 async function handleLaunchPrep(req, res) {
@@ -1451,6 +1475,10 @@ async function handleLaunchPrep(req, res) {
 	} else {
 		mintKeypair = Keypair.generate();
 		mint = mintKeypair.publicKey;
+	}
+
+	if (body.gasless) {
+		return prepGaslessLaunch(res, { user, body, creator, signer, mint, mintKeypair, agentId: resolvedAgentId });
 	}
 
 	const { sdk, BN } = await getPumpSdk({ network: body.network });
@@ -1600,12 +1628,134 @@ async function handleLaunchPrep(req, res) {
 	});
 }
 
+// ── launch-prep (gasless) ──────────────────────────────────────────────────
+//
+// The launch sponsor pays rent + network fees; the creator (the signer) only
+// signs. Eligibility is checked against the live caps and the sponsor's floor
+// before anything is built, and the transaction is measured by simulation so
+// the sponsored cost shown to the user is the cost the chain will charge.
+
+async function prepGaslessLaunch(res, { user, body, creator, signer, mint, mintKeypair, agentId }) {
+	if (!creator.equals(signer)) {
+		return error(res, 400, 'validation_error', 'a gasless launch is signed by its creator: omit creator_address or set it to wallet_address');
+	}
+	const econ = await getLaunchEconomics();
+	const eligibility = await gaslessEligibility({ userId: user.id, network: body.network, econ });
+	if (!eligibility.eligible) {
+		const first = eligibility.reasons[0];
+		const status = /cap$/.test(first.code) ? 429 : first.code === 'gasless_disabled' ? 403 : 503;
+		return error(res, status, first.code, first.message, { gasless: eligibility });
+	}
+	let built;
+	try {
+		built = await prepareGaslessCurveLaunch({
+			network: body.network,
+			mint,
+			mintKeypair,
+			creator,
+			name: body.name,
+			symbol: body.symbol,
+			uri: body.uri,
+			econ,
+		});
+	} catch (err) {
+		if (err instanceof GaslessError) return error(res, err.status, err.code, err.message);
+		if (isRpcOutageError(err)) return error(res, 503, 'rpc_unavailable', 'Solana RPC is temporarily unavailable. Try again in a moment.');
+		throw err;
+	}
+
+	const prepId = await randomToken(24);
+	const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+	const gasless = {
+		sponsor: built.sponsor,
+		sponsored_lamports: built.sponsored_lamports,
+		sponsored_sol: built.sponsored_lamports / LAMPORTS_PER_SOL,
+		rent_forwarded_lamports: built.rent_forwarded_lamports,
+		platform_recipient: built.platform_recipient,
+		creator_share_bps: built.creator_share_bps,
+		platform_share_bps: built.platform_share_bps,
+		buyback_share_of_platform_bps: econ.buyback.share_of_platform_revenue_bps,
+		explanation: describeFeeSplit(econ, { gasless: true }),
+	};
+	await sql`
+		insert into agent_registrations_pending (user_id, cid, metadata_uri, payload, expires_at)
+		values (
+			${user.id},
+			${mint.toBase58()},
+			${body.uri},
+			${JSON.stringify({
+				kind: 'pump_launch',
+				gasless: true,
+				agent_id: agentId,
+				wallet_address: body.wallet_address,
+				creator_address: creator.toBase58(),
+				mint: mint.toBase58(),
+				name: body.name,
+				symbol: body.symbol,
+				network: body.network,
+				buyback_bps: 0,
+				coin_type: body.coin_type,
+				holder_reward: false,
+				quote_mint: null,
+				platform_fee: null,
+				transaction_version: 0,
+				prep_id: prepId,
+				sponsor: built.sponsor,
+				sponsored_lamports: built.sponsored_lamports,
+				platform_share_bps: built.platform_share_bps,
+			})}::jsonb,
+			${expiresAt}
+		)
+	`;
+	await recordSponsorshipPrepared({
+		userId: user.id,
+		agentId,
+		network: body.network,
+		mint: mint.toBase58(),
+		creator: creator.toBase58(),
+		sponsor: built.sponsor,
+		prepId,
+		sponsoredLamports: built.sponsored_lamports,
+		platformShareBps: built.platform_share_bps,
+	});
+
+	return json(res, 201, {
+		prep_id: prepId,
+		agent_id: agentId,
+		mint: mint.toBase58(),
+		mint_secret_key_b64: null,
+		client_supplied_mint: !mintKeypair,
+		mint_presigned: !!mintKeypair,
+		tx_base64: built.tx_base64,
+		transaction_version: 0,
+		tx_bytes: built.bytes,
+		fee_payer: built.sponsor,
+		platform_fee: null,
+		network: body.network,
+		coin_type: body.coin_type,
+		quote_currency: 'SOL',
+		gasless,
+		expires_at: expiresAt.toISOString(),
+		instructions: mintKeypair
+			? 'The launch sponsor and the mint have signed tx_base64 and the sponsor pays every fee. Have the creator wallet sign it (signTransaction, not signAndSend), then POST /api/pump/launch-confirm with prep_id and signed_tx_base64. The server submits it.'
+			: 'The launch sponsor has signed tx_base64 and pays every fee. Sign with your vanity mint keypair and the creator wallet, then POST /api/pump/launch-confirm with prep_id and signed_tx_base64.',
+	});
+}
+
 // ── launch-confirm ─────────────────────────────────────────────────────────
 
-const launchConfirmSchema = z.object({
-	prep_id: z.string().min(8),
-	tx_signature: z.string().min(80).max(100),
-});
+const launchConfirmSchema = z
+	.object({
+		prep_id: z.string().min(8),
+		tx_signature: z.string().min(80).max(100).optional(),
+		// Gasless launches: the fully signed transaction, submitted by the server so
+		// the creator's wallet never has to broadcast a transaction it did not pay for.
+		signed_tx_base64: z.string().min(100).max(8000).optional(),
+	})
+	.refine((v) => v.tx_signature || v.signed_tx_base64, {
+		message: 'tx_signature or signed_tx_base64 required',
+		path: ['tx_signature'],
+	});
 
 async function handleLaunchConfirm(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -1633,11 +1783,27 @@ async function handleLaunchConfirm(req, res) {
 	// launches persist their metadata like the launch-agent path does.
 	const metadataUri = pending.metadata_uri || p.metadata_uri || null;
 
+	let txSignature = body.tx_signature;
+	if (body.signed_tx_base64) {
+		try {
+			txSignature = await submitSignedLaunch({ network: p.network, signedTxBase64: body.signed_tx_base64, mint: p.mint, gasless: p.gasless ? p.sponsor : null });
+		} catch (e) {
+			return error(res, e.status || 422, e.code || 'submit_failed', e.message);
+		}
+	}
+
 	let tx;
 	try {
-		tx = await verifySignature({ network: p.network, signature: body.tx_signature });
+		tx = await verifySignature({ network: p.network, signature: txSignature });
 	} catch (e) {
 		return error(res, e.status || 422, e.code || 'tx_failed', e.message);
+	}
+	if (p.gasless) {
+		try {
+			verifyGaslessTransaction(tx, { sponsor: p.sponsor, mint: p.mint });
+		} catch (e) {
+			return error(res, e.status || 422, e.code || 'not_sponsored', e.message);
+		}
 	}
 	const accountKeys = tx.transaction.message.accountKeys.map((k) => (k.pubkey || k).toString());
 	if (!accountKeys.includes(p.mint)) {
@@ -1709,11 +1875,45 @@ async function handleLaunchConfirm(req, res) {
 		branded: hasThreeWsMark(p.mint),
 	}).catch(() => {});
 
+	if (p.gasless) {
+		await recordSponsorshipLaunched({ mint: p.mint, network: p.network, signature: txSignature });
+	}
+
 	return json(res, 201, {
 		ok: true,
+		mint: p.mint,
 		pump_agent_mint: row,
-		tx_signature: body.tx_signature,
+		tx_signature: txSignature,
+		signature: txSignature,
+		gasless: !!p.gasless,
+		launch_url: `${env.APP_ORIGIN}/launch/${p.mint}`,
+		explorer: `https://solscan.io/tx/${txSignature}${p.network === 'devnet' ? '?cluster=devnet' : ''}`,
 	});
+}
+
+/**
+ * Broadcast a wallet-signed launch transaction and wait for confirmation.
+ * For a gasless launch, the fee payer must be the sponsor that prepared it.
+ */
+async function submitSignedLaunch({ network, signedTxBase64, mint, gasless }) {
+	const { VersionedTransaction } = await import('@solana/web3.js');
+	let vtx;
+	try {
+		vtx = VersionedTransaction.deserialize(Buffer.from(signedTxBase64, 'base64'));
+	} catch {
+		throw Object.assign(new Error('signed_tx_base64 is not a serialized versioned transaction'), { status: 400, code: 'validation_error' });
+	}
+	const keys = vtx.message.staticAccountKeys.map((k) => k.toBase58());
+	if (!keys.includes(mint)) throw Object.assign(new Error('the signed transaction does not create the prepared mint'), { status: 422, code: 'mint_not_in_tx' });
+	if (gasless && keys[0] !== gasless) {
+		throw Object.assign(new Error('the signed transaction is not fee-paid by the launch sponsor'), { status: 422, code: 'not_sponsored' });
+	}
+	const connection = getConnection({ network });
+	const raw = vtx.serialize();
+	const signature = await connection.sendRawTransaction(raw, { skipPreflight: false, preflightCommitment: 'confirmed', maxRetries: 3 });
+	const { confirmOrThrow } = await import('../_lib/solana/confirm.js');
+	await confirmOrThrow(connection, signature, 'confirmed');
+	return signature;
 }
 
 // ── agent-wallet ───────────────────────────────────────────────────────────
@@ -4227,13 +4427,21 @@ async function handleLaunchConfig(req, res) {
 
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
-	const [recipient, txV1, tradeFeeBps] = await Promise.all([
+	const [recipient, txV1, tradeFeeBps, econ] = await Promise.all([
 		pumpFeeRecipient(),
 		transactionV1Status({ network }),
 		effectivePumpFeeBps(),
+		getLaunchEconomics(),
 	]);
+	// Gasless availability for the caller when signed in; the platform-level
+	// blockers (paused, sponsor floor, platform cap) for everyone else.
+	const session = await getSessionUser(req).catch(() => null);
+	const gasless = await gaslessEligibility({ userId: session?.id || null, network, econ }).catch((err) => ({
+		eligible: false,
+		reasons: [{ code: 'unavailable', message: err?.message || 'gasless eligibility could not be read' }],
+	}));
 
-	res.setHeader('cache-control', 'public, max-age=60');
+	res.setHeader('cache-control', session ? 'private, no-store' : 'public, max-age=60');
 	return json(res, 200, {
 		data: {
 			network,
@@ -4245,6 +4453,12 @@ async function handleLaunchConfig(req, res) {
 			max_sol_buy_in: 50,
 			buyback_available: pumpAgentBuybackAvailable(),
 			tx_v1: txV1,
+			economics: {
+				...econ,
+				standard_explanation: describeFeeSplit(econ, { gasless: false }),
+				gasless_explanation: describeFeeSplit(econ, { gasless: true }),
+			},
+			gasless,
 		},
 	});
 }
