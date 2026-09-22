@@ -1,0 +1,129 @@
+{
+	"meta": {
+		"q": "amazon",
+		"include_test_products": false,
+		"_endpoint": "/products/search",
+		"limit": 3,
+		"start": 0,
+		"total_results": 14,
+		"_next": "https://api-bitrefill.com/products/search?q=amazon&limit=3&start=3"
+	},
+	"data": [
+		{
+			"id": "amazon-south-africa",
+			"name": "Amazon South Africa",
+			"base_name": "Amazon",
+			"country_code": "ZA",
+			"country_name": "South Africa",
+			"currency": "ZAR",
+			"categories": [
+				"online-marketplaces"
+			],
+			"redemption_methods": [
+				"online"
+			],
+			"created_time": "2024-09-04T15:47:40.689Z",
+			"recipient_type": "none",
+			"image": "amazon-south-africa",
+			"termsAndConditions": "Restrictions apply, see amazon.co.za/gc-legal\r\n\r\n<P>\r\n\r\nBeperkings geld, sien amazon.co.za/gc-legal",
+			"in_stock": true,
+			"packages": [
+				{
+					"id": "amazon-south-africa<&>5000",
+					"value": "5000",
+					"price": 367398,
+					"amount": 5000
+				},
+				{
+					"id": "amazon-south-africa<&>2000",
+					"value": "2000",
+					"price": 146960,
+					"amount": 2000
+				},
+				{
+					"id": "amazon-south-africa<&>1000",
+					"value": "1000",
+					"price": 73480,
+					"amount": 1000
+				},
+				{
+					"id": "amazon-south-africa<&>500",
+					"value": "500",
+					"price": 36740,
+					"amount": 500
+				},
+				{
+					"id": "amazon-south-africa<&>100",
+					"value": "100",
+					"price": 7348,
+					"amount": 100
+				},
+				{
+					"id": "amazon-south-africa<&>10",
+					"value": "10",
+					"price": 735,
+					"amount": 10
+				}
+			]
+		},
+		{
+			"id": "amazon-fresh-india",
+			"name": "Amazon Fresh India",
+			"base_name": "Amazon Fresh",
+			"country_code": "IN",
+			"country_name": "India",
+			"currency": "INR",
+			"categories": [
+				"food",
+				"food-delivery"
+			],
+			"redemption_methods": [
+				"online",
+				"phone"
+			],
+			"created_time": "2026-08-26T14:25:10.733Z",
+			"recipient_type": "none",
+			"image": "2024_logos/1490328-fresh",
+			"logo_background": "#022900",
+			"in_stock": true,
+			"packages": [
+				{
+					"id": "amazon-fresh-india<&>50",
+					"value": "50",
+					"price": 643,
+					"amount": 50
+				},
+				{
+					"id": "amazon-fresh-india<&>100",
+					"value": "100",
+					"price": 1272,
+					"amount": 100
+				},
+				{
+					"id": "amazon-fresh-india<&>500",
+					"value": "500",
+					"price": 6358,
+					"amount": 500
+				},
+				{
+					"id": "amazon-fresh-india<&>1000",
+					"value": "1000",
+					"price": 12716,
+					"amount": 1000
+				},
+				{
+					"id": "amazon-fresh-india<&>2000",
+					"value": "2000",
+					"price": 25431,
+					"amount": 2000
+				},
+				{
+					"id": "amazon-fresh-india<&>10000",
+					"value": "10000",
+					"price": 127153,
+					"amount": 10000
+				}
+			]
+		}
+	]
+}

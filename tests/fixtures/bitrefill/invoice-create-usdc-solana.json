@@ -1,0 +1,48 @@
+{
+	"meta": {
+		"products": [
+			{
+				"product_id": "test-gift-card-code",
+				"value": 10,
+				"quantity": 1
+			}
+		],
+		"payment_method": "usdc_solana",
+		"auto_pay": false,
+		"_endpoint": "/invoices"
+	},
+	"data": {
+		"id": "c2b05566-fbb6-4a02-85f0-bc5153bfb090",
+		"created_time": "2026-09-22T04:57:24.164Z",
+		"status": "not_delivered",
+		"user": {
+			"id": "000000000000000000000001",
+			"email": "qa@example.invalid"
+		},
+		"payment": {
+			"method": "usdc_solana",
+			"address": "DZLnpA4gNTMDCBC3uWJWuUpytm5Erim8nPeRnABzpo5b",
+			"currency": "USDC",
+			"price": 10500000,
+			"status": "unpaid",
+			"commission": 0
+		},
+		"orders": [
+			{
+				"id": "6ab20ab466ad71725fd301e3",
+				"status": "created",
+				"product": {
+					"id": "test-gift-card-code",
+					"name": "Test Gift Card Code",
+					"value": "10",
+					"currency": "USD",
+					"image": "us",
+					"_href": "https://api-bitrefill.com/v2/products/test-gift-card-code"
+				},
+				"created_time": "2026-09-22T04:57:24.137Z",
+				"delivered_time": null,
+				"commission": 0
+			}
+		]
+	}
+}

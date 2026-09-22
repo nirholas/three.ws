@@ -1,0 +1,63 @@
+{
+	"meta": {
+		"id": "test-gift-card-code",
+		"_endpoint": "/products/test-gift-card-code"
+	},
+	"data": {
+		"id": "test-gift-card-code",
+		"name": "Test Gift Card Code",
+		"base_name": "Test Gift Card Code",
+		"country_code": "KN",
+		"country_name": "St Kitts and Nevis",
+		"currency": "USD",
+		"categories": [
+			"gifts"
+		],
+		"redemption_methods": [
+			"online"
+		],
+		"created_time": "2021-10-21T12:04:11.677Z",
+		"recipient_type": "none",
+		"image": "us",
+		"termsAndConditions": "You must comply, otherwise...",
+		"in_stock": true,
+		"range": {
+			"min": 10,
+			"max": 100,
+			"step": 10,
+			"price_rate": 1229.4097931219776
+		},
+		"packages": [
+			{
+				"id": "test-gift-card-code<&>10",
+				"value": "10",
+				"price": 12295,
+				"amount": 10
+			},
+			{
+				"id": "test-gift-card-code<&>20",
+				"value": "20",
+				"price": 24589,
+				"amount": 20
+			},
+			{
+				"id": "test-gift-card-code<&>30",
+				"value": "30",
+				"price": 36883,
+				"amount": 30
+			},
+			{
+				"id": "test-gift-card-code<&>50",
+				"value": "50",
+				"price": 61471,
+				"amount": 50
+			},
+			{
+				"id": "test-gift-card-code<&>100",
+				"value": "100",
+				"price": 122941,
+				"amount": 100
+			}
+		]
+	}
+}

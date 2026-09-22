@@ -1,0 +1,8 @@
+{
+	"meta": {
+		"id": "amazon-us",
+		"_endpoint": "/products/amazon-us"
+	},
+	"message": "Product not found",
+	"error_code": "not_found"
+}

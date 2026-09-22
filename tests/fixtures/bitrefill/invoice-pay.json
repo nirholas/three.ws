@@ -1,0 +1,39 @@
+{
+	"meta": {
+		"id": "e6661ab3-1438-40d5-94bd-db6c51e123e7",
+		"_endpoint": "/invoices/e6661ab3-1438-40d5-94bd-db6c51e123e7/pay"
+	},
+	"data": {
+		"id": "e6661ab3-1438-40d5-94bd-db6c51e123e7",
+		"created_time": "2026-09-22T05:03:34.715Z",
+		"status": "not_delivered",
+		"user": {
+			"id": "000000000000000000000001",
+			"email": "qa@example.invalid"
+		},
+		"payment": {
+			"method": "balance",
+			"currency": "BTC",
+			"price": 24583,
+			"status": "unpaid",
+			"commission": 0
+		},
+		"orders": [
+			{
+				"id": "6ab20c26196a68dc6a682002",
+				"status": "created",
+				"product": {
+					"id": "test-gift-card-code",
+					"name": "Test Gift Card Code",
+					"value": "20",
+					"currency": "USD",
+					"image": "us",
+					"_href": "https://api-bitrefill.com/v2/products/test-gift-card-code"
+				},
+				"created_time": "2026-09-22T05:03:34.698Z",
+				"delivered_time": null,
+				"commission": 0
+			}
+		]
+	}
+}

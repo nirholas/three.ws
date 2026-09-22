@@ -1,0 +1,7 @@
+{
+	"meta": {
+		"_endpoint": "/invoices"
+	},
+	"message": "Provided value or package does not exist for product",
+	"error_code": "wrong_value"
+}
