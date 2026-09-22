@@ -21,5 +21,52 @@
 			"type": "streamable-http",
 			"url": "https://three.ws/api/mcp-bazaar"
 		}
-	]
+	],
+	"_meta": {
+		"io.modelcontextprotocol.registry/publisher-provided": {
+			"resources": [
+				{
+					"uri": "three://me",
+					"name": "me",
+					"title": "Your account",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://x402/services",
+					"name": "x402-services",
+					"title": "x402 service catalog",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://marketplace",
+					"name": "marketplace",
+					"title": "Skill marketplace",
+					"mimeType": "application/json"
+				}
+			],
+			"resourceTemplates": [],
+			"prompts": [
+				{
+					"name": "get-started",
+					"title": "Get started with three.ws",
+					"arguments": []
+				},
+				{
+					"name": "hire-agent",
+					"title": "Hire an agent for a task",
+					"arguments": ["task"]
+				},
+				{
+					"name": "explore-marketplace",
+					"title": "Explore the marketplace",
+					"arguments": []
+				},
+				{
+					"name": "explore-x402",
+					"title": "Explore x402 services",
+					"arguments": ["capability"]
+				}
+			]
+		}
+	}
 }

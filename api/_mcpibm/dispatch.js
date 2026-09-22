@@ -30,4 +30,5 @@ export const dispatch = makeDispatcher({
 	catalog: TOOL_CATALOG,
 	tools: TOOLS,
 	logName: 'mcpibm',
+	policyServer: 'ibm-x402-mcp-remote',
 });

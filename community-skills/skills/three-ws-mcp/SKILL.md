@@ -53,6 +53,23 @@ Tools refuse without their confirm flag and name the preview to call first; foll
 - `delete_custom_skill` is irreversible and needs `confirm_delete: true` after `get_custom_skill`.
 - Skills are injected oldest first inside a per-agent token budget; the list shows which ones are in the prompt right now and which are skipped as over budget.
 
+## Memory and learning
+
+An agent keeps its own memory, scoped to the account it works for. Use it so the person never has to repeat themselves.
+
+- `memory_save { agent_id, kind, content }` keeps one idea. `kind` is `fact` (true about the world or the work), `preference` (how the person wants things done), `procedure` (steps that worked for a task), or `user-model` (about the person themself; also pass `section`: identity, goals, preferences, communication, expertise, constraints or context). Saving the same thing twice reinforces it instead of duplicating it.
+- `memory_search { agent_id, query }` and `memory_list { agent_id, kind }` read it back. Search before asking the person something they may already have told the agent.
+- `search_sessions { agent_id, query }` searches past conversations and runs and returns a short summary of each matching session.
+- `memory_forget` is irreversible: call `memory_search` or `memory_list`, show the memory, wait for a yes, then pass `confirm_delete: true`.
+- If a write returns `memory_disabled`, the person switched memory off at `/settings/memory`. Stop saving and do not ask them to turn it back on.
+- After a run that took many tool calls, the platform drafts a prompt-only skill from it, saved disabled for the owner to review. While a skill is in use you may improve it with `propose_skill_edit`; every edit is a new version the owner can roll back with `rollback_custom_skill`.
+
+The runtime sends this reminder at the end of a run and every few turns of a conversation:
+
+<!-- memory-nudge:start -->
+Before you finish: is there anything from this exchange worth remembering next time? Save only what is durable and specific: a preference the person stated or showed (kind preference), a fact about their situation or goals (kind user-model, with a section), a correction to something you believed, or the steps of a task that worked (kind procedure). One idea per memory, written so it makes sense with no other context. Skip small talk, one-off details, anything already in memory, and secrets such as keys, passwords or seed phrases. If nothing qualifies, save nothing and do not mention memory.
+<!-- memory-nudge:end -->
+
 ## Errors and what they mean
 
 - `sign_in_required` or HTTP 401: the tool needs an account. Connect with OAuth or an API key.

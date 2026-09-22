@@ -21,5 +21,134 @@
 			"type": "streamable-http",
 			"url": "https://three.ws/api/mcp-agent"
 		}
-	]
+	],
+	"_meta": {
+		"io.modelcontextprotocol.registry/publisher-provided": {
+			"resources": [
+				{
+					"uri": "three://me",
+					"name": "me",
+					"title": "Your account",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://agents",
+					"name": "agents",
+					"title": "Your agents",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://wallets",
+					"name": "wallets",
+					"title": "All agent wallets",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://launches",
+					"name": "launches",
+					"title": "Your token launches",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://marketplace",
+					"name": "marketplace",
+					"title": "Skill marketplace",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://x402/services",
+					"name": "x402-services",
+					"title": "x402 service catalog",
+					"mimeType": "application/json"
+				}
+			],
+			"resourceTemplates": [
+				{
+					"uriTemplate": "three://agents/{agentId}",
+					"name": "agent",
+					"title": "Agent",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/wallet",
+					"name": "agent-wallet",
+					"title": "Agent wallet",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/usage",
+					"name": "agent-usage",
+					"title": "Agent usage",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/runs",
+					"name": "agent-runs",
+					"title": "Agent runs",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/runs/{runId}",
+					"name": "agent-run",
+					"title": "Agent run",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/orders",
+					"name": "agent-orders",
+					"title": "Agent open orders",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/dca",
+					"name": "agent-dca",
+					"title": "Agent DCA strategies",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/intents",
+					"name": "agent-intents",
+					"title": "Agent wallet intents",
+					"mimeType": "application/json"
+				}
+			],
+			"prompts": [
+				{
+					"name": "get-started",
+					"title": "Get started with three.ws",
+					"arguments": []
+				},
+				{
+					"name": "setup-wallet",
+					"title": "Set up an agent wallet",
+					"arguments": ["agentId"]
+				},
+				{
+					"name": "hire-agent",
+					"title": "Hire an agent for a task",
+					"arguments": ["task"]
+				},
+				{
+					"name": "sell-a-skill",
+					"title": "Sell a skill",
+					"arguments": ["agentId"]
+				},
+				{
+					"name": "setup-dca",
+					"title": "Set up dollar-cost averaging",
+					"arguments": ["agentId"]
+				},
+				{
+					"name": "explore-marketplace",
+					"title": "Explore the marketplace",
+					"arguments": []
+				},
+				{
+					"name": "explore-x402",
+					"title": "Explore x402 services",
+					"arguments": ["capability"]
+				}
+			]
+		}
+	}
 }

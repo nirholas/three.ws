@@ -38,6 +38,10 @@ export const CONFIRM_FLAGS = Object.freeze([
 	'confirm_bid',
 	'confirm_send',
 	'confirm_run',
+	// The agent marketplace names the three custody actions it gates precisely.
+	'confirm_listing',
+	'confirm_delist',
+	'confirm_accept',
 ]);
 
 /** The argument a financial tool takes to prove its preview ran. */

@@ -18,6 +18,12 @@
 //
 // Precedence between tokens is tool over group over tier: `-trading,swap_quote`
 // hides the trading group except swap_quote.
+//
+// A spec made only of plain tool names (no base, tier, group or `-`) is an exact
+// allow list: only those tools exist for the session. That is what `three-ws
+// tools` writes into X-Three-Tools for a direct HTTP entry, and it is the
+// brief's "client's allowed-tools list". To ADD a tool to the defaults instead,
+// lead with a base: `default,swap_execute`.
 
 import { GROUP_IDS, TIERS, DEFAULT_TIERS } from './groups.js';
 
@@ -132,17 +138,42 @@ export function settingsToTokens(settings) {
  */
 export function resolveEnablement({ allowedTools, headerSpec, querySpec, keySettings, accountSettings } = {}) {
 	if (allowedTools != null && String(allowedTools).trim() !== '') return allowListEnablement(allowedTools);
-	if (headerSpec != null && String(headerSpec).trim() !== '') {
-		return enablementFromTokens(parseSpec(headerSpec).tokens, 'header');
-	}
-	if (querySpec != null && String(querySpec).trim() !== '') {
-		return enablementFromTokens(parseSpec(querySpec).tokens, 'query');
-	}
+	if (headerSpec != null && String(headerSpec).trim() !== '') return enablementFromSpec(headerSpec, 'header');
+	if (querySpec != null && String(querySpec).trim() !== '') return enablementFromSpec(querySpec, 'query');
 	const account = settingsToTokens(accountSettings);
 	const key = settingsToTokens(keySettings);
 	if (key.length) return enablementFromTokens([...account, ...key], 'key');
 	if (account.length) return enablementFromTokens(account, 'account');
 	return defaultEnablement();
+}
+
+/**
+ * Enablement from one spec string, honoring the bare-name-list rule above.
+ * @param {string} spec
+ * @param {string} source
+ */
+export function enablementFromSpec(spec, source) {
+	const { tokens } = parseSpec(spec);
+	if (tokens.length && tokens.every((t) => t.kind === 'tool' && t.on)) {
+		return allowListEnablement(tokens.map((t) => t.id), source);
+	}
+	return enablementFromTokens(tokens, source);
+}
+
+/**
+ * Enablement from a `three-ws tools` selection as the CLI stores it in the
+ * credential store: { tiers, allow, deny }.
+ * @param {{tiers?: string[], allow?: string[], deny?: string[]}} sel
+ * @param {string} source
+ */
+export function enablementFromSelection(sel, source = 'cli') {
+	const tokens = [{ kind: 'base', id: 'none', on: true }];
+	for (const tier of Array.isArray(sel?.tiers) ? sel.tiers : DEFAULT_TIERS) {
+		if (TIER_SET.has(tier)) tokens.push({ kind: 'tier', id: tier, on: true });
+	}
+	for (const name of Array.isArray(sel?.allow) ? sel.allow : []) tokens.push({ kind: 'tool', id: String(name), on: true });
+	for (const name of Array.isArray(sel?.deny) ? sel.deny : []) tokens.push({ kind: 'tool', id: String(name), on: false });
+	return enablementFromTokens(tokens, source);
 }
 
 /**

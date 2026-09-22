@@ -20,6 +20,10 @@ const INSTRUCTIONS = [
 	'browse_marketplace, get_listing, place_bid, buy_now, accept_marketplace_bid and friends. Every',
 	'financial one needs preview_marketplace_action first: show the user its table (recipient, amount,',
 	'token, chain), wait for a clear yes, then call the tool with its confirm flag and the preview_id.',
+	'Prediction markets settle in USDC on Solana: predictions_events and predictions_event research,',
+	'predictions_positions reads an agent, predictions_watch sets a probability alert. predictions_open,',
+	'predictions_close and predictions_redeem move funds: call the matching *_preview tool, show its',
+	'table, wait for a clear yes, then call with confirm_trade: true and the preview_id.',
 ].join(' ');
 
 export const dispatch = makeDispatcher({
@@ -28,5 +32,6 @@ export const dispatch = makeDispatcher({
 	catalog: TOOL_CATALOG,
 	tools: TOOLS,
 	logName: 'mcp-agent',
+	policyServer: 'threews-agent',
 	resourceServer: 'mcp-agent',
 });

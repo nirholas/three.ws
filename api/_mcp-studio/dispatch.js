@@ -11,6 +11,10 @@ import { recordEvent, logger } from '../_lib/usage.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
+import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
+
+// The @three-ws/mcp-policy server id for the free studio.
+const POLICY_SERVER = 'threews-3d-studio-free';
 import {
 	COMPONENT_HTML,
 	COMPONENT_URI,
@@ -85,6 +89,11 @@ export function toolCatalogFor(name = 'full') {
 	return surfaceOf(name).catalog;
 }
 
+/** The handler map ({ name: { handler, validate } }) behind a surface's tools. */
+export function toolsFor(name = 'full') {
+	return surfaceOf(name).tools;
+}
+
 // The Apps SDK widget resources: the model viewer every generation tool renders,
 // and the living-body persona widget the embodiment tools render. _meta (incl.
 // the CSP) is built per call so the storage origin always tracks env.
@@ -145,6 +154,9 @@ async function onToolCall(params, auth, started, req, surface) {
 	const { name, arguments: args = {} } = params || {};
 	const tool = typeof name === 'string' && Object.hasOwn(surface.tools, name) ? surface.tools[name] : null;
 	if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
+	const sentArgs = { ...args };
+	const gate = await gateCall(POLICY_SERVER, name, sentArgs, auth, req);
+	if (!gate.ok) return gate.result;
 	if (tool.validate && !tool.validate(args)) {
 		const first = tool.validate.errors?.[0];
 		const detail = first ? `${first.instancePath || '(root)'} ${first.message || 'invalid'}` : 'invalid arguments';
@@ -153,7 +165,7 @@ async function onToolCall(params, auth, started, req, surface) {
 	try {
 		const result = await tool.handler(args, auth, req);
 		recordEvent({ kind: 'tool_call', tool: name, latencyMs: Date.now() - started, meta: { args_summary: summarize(args), server: surface.server } });
-		return result;
+		return await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview);
 	} catch (err) {
 		recordEvent({ kind: 'tool_call', tool: name, status: 'error', latencyMs: Date.now() - started, meta: { error: err.message, server: surface.server } });
 		if (err.code && typeof err.code === 'number') throw err;
@@ -181,7 +193,7 @@ export async function dispatch(msg, auth, req, { surface: surfaceName = 'full' }
 		}
 		if (method === 'ping') return ok(id, {});
 		if (method === 'notifications/initialized') return null;
-		if (method === 'tools/list') return ok(id, { tools: surface.catalog });
+		if (method === 'tools/list') return ok(id, { tools: await listForRequest(POLICY_SERVER, surface.catalog, auth, req) });
 		if (method === 'tools/call') return ok(id, await onToolCall(msg.params, auth, started, req, surface));
 		if (method === 'resources/list') {
 			return ok(id, { resources: widgetResources(surface.personas).map(({ text: _t, ...r }) => r) });

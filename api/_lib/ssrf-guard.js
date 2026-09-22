@@ -286,6 +286,10 @@ export async function fetchSafePublicUrlPinned(input, init = {}, opts = {}) {
 		if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
 			if (++redirects > MAX_REDIRECTS) throw new SsrfBlockedError('too many redirects');
 			const next = new URL(res.headers.get('location'), url);
+			// A caller that restricts WHICH public hosts it may reach (not just
+			// that they are public) re-checks every hop, or a redirect walks it
+			// off its allowlist.
+			if (opts.onRedirect) await opts.onRedirect(next);
 			url = await assertSafePublicUrl(next.toString(), opts);
 			continue;
 		}

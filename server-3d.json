@@ -21,5 +21,55 @@
 			"type": "streamable-http",
 			"url": "https://three.ws/api/mcp-3d"
 		}
-	]
+	],
+	"_meta": {
+		"io.modelcontextprotocol.registry/publisher-provided": {
+			"resources": [
+				{
+					"uri": "three://me",
+					"name": "me",
+					"title": "Your account",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://agents",
+					"name": "agents",
+					"title": "Your agents",
+					"mimeType": "application/json"
+				},
+				{
+					"uri": "three://models",
+					"name": "models",
+					"title": "Model catalog",
+					"mimeType": "application/json"
+				}
+			],
+			"resourceTemplates": [
+				{
+					"uriTemplate": "three://agents/{agentId}",
+					"name": "agent",
+					"title": "Agent",
+					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://assets/{id}",
+					"name": "asset",
+					"title": "3D asset",
+					"mimeType": "application/json"
+				}
+			],
+			"prompts": [
+				{
+					"name": "get-started",
+					"title": "Get started with three.ws",
+					"arguments": []
+				},
+				{
+					"name": "generate-3d",
+					"title": "Generate a 3D model",
+					"arguments": ["prompt"]
+				}
+			]
+		}
+	}
 }

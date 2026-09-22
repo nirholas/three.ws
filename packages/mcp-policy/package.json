@@ -1,0 +1,42 @@
+{
+	"name": "@three-ws/mcp-policy",
+	"version": "0.1.0",
+	"description": "The three.ws MCP tool policy: every tool's group and tier, read-only by default with opt-in financial groups, named confirm flags, and preview ids that must precede every irreversible call.",
+	"type": "module",
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./stdio": "./src/stdio.js",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/docs/mcp#tool-policy",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/mcp-policy"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"three.ws",
+		"tool-policy",
+		"agent-safety",
+		"solana"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

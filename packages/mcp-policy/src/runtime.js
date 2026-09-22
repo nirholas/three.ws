@@ -42,6 +42,7 @@ export function normalizeEntry(name, row) {
 		previewTool: row.previewTool || null,
 		previewArg: null,
 		bind: [],
+		ownsPreview: row.ownsPreview === true,
 	};
 	if (entry.previewTool) {
 		entry.previewArg = /quote/.test(entry.previewTool) ? 'quote_id' : 'preview_id';
@@ -109,7 +110,7 @@ export function createPolicy({ serverId, table = POLICY, store = createMemoryPre
 	// Reverse index: which financial tools each preview tool authorizes.
 	const authorizes = new Map();
 	for (const e of entries.values()) {
-		if (e.tier !== 'financial' || !e.previewTool) continue;
+		if (e.tier !== 'financial' || !e.previewTool || e.ownsPreview) continue;
 		if (!authorizes.has(e.previewTool)) authorizes.set(e.previewTool, []);
 		authorizes.get(e.previewTool).push(e);
 	}
@@ -239,7 +240,9 @@ export function createPolicy({ serverId, table = POLICY, store = createMemoryPre
 				),
 			};
 		}
-		if (!e.previewTool) return { ok: true, args: strip(args), entry: e, preview: null };
+		// A tool that issues and checks its own preview ids gets the confirm flag
+		// enforced here and its preview verified by its own handler.
+		if (!e.previewTool || e.ownsPreview) return { ok: true, args: strip(args), entry: e, preview: null };
 
 		const id = args[e.previewArg];
 		const refuse = (reason, detail) =>
@@ -304,5 +307,5 @@ export function createPolicy({ serverId, table = POLICY, store = createMemoryPre
 		};
 	}
 
-	return { serverId, entry, entries, enabled, listTools, beforeCall, afterCall, disabledResult, policyMeta };
+	return { serverId, entry, entries, enabled, listTools, beforeCall, afterCall, disabledResult, policyMeta, financialNote };
 }

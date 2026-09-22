@@ -129,6 +129,19 @@
 			"schemaHash": "944e8f9d1ef7"
 		},
 		{
+			"name": "create_agent",
+			"title": "Create an agent",
+			"descHead": "Create a new three.ws agent on your account: a named identity with a per",
+			"descHash": "0def9d44d0af",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "9726365733f9"
+		},
+		{
 			"name": "identity_check",
 			"title": "Screen an agent identity for impersonation",
 			"descHead": "dynamic",
@@ -594,6 +607,21 @@
 			"schemaHash": "f98dc82b28e7"
 		}
 	],
+	"api/_mcp/tools/resources.js": [
+		{
+			"name": "read_resource",
+			"title": "Read a three:// resource",
+			"descHead": "Read a live three.ws resource by URI: three://me (account, scopes, quota",
+			"descHash": "b7b40596d6b8",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "046b33e27fe6"
+		}
+	],
 	"api/_mcp/tools/sign.js": [
 		{
 			"name": "list_sign_vocabulary",
@@ -797,6 +825,21 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "892619deae7b"
+		}
+	],
+	"api/_mcp3d/tools/resources.js": [
+		{
+			"name": "read_resource",
+			"title": "Read a three:// resource",
+			"descHead": "Read a live three.ws resource by URI: three://assets/<id> (a 3D asset wi",
+			"descHash": "a85752b643c5",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "046b33e27fe6"
 		}
 	],
 	"api/_mcp3d/tools/sim-readiness.js": [
@@ -1052,6 +1095,19 @@
 			"schemaHash": "9eb6ba57d5e7"
 		},
 		{
+			"name": "read_resource",
+			"title": "Read a three:// resource",
+			"descHead": "Read a live three.ws resource by URI: three://agents/<id>/wallet (balanc",
+			"descHash": "7792a4be3775",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "046b33e27fe6"
+		},
+		{
 			"name": "wallet_status",
 			"title": "Check the agent's wallet",
 			"descHead": "Show the signed-in user's three.ws agent wallet: address, SOL and USDC b",
@@ -1089,6 +1145,19 @@
 			"descHash": "b38eb5052ab1",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "8b343836306d"
+		},
+		{
+			"name": "read_resource",
+			"title": "Read a three:// resource",
+			"descHead": "Read a live three.ws resource by URI: three://x402/services (the x402 se",
+			"descHash": "46c1f2880c23",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "046b33e27fe6"
 		},
 		{
 			"name": "search_services",

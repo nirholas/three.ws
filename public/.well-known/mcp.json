@@ -20,7 +20,43 @@
 			"transport": "streamable-http",
 			"auth": "OAuth 2.1 (end-user), API key (server-to-server), or x402 pay-per-call",
 			"description": "Avatars, glTF/GLB validation and inspection, agent data, memory, and copy-trading tools.",
-			"documentation": "https://three.ws/docs/mcp"
+			"documentation": "https://three.ws/docs/mcp",
+			"resources": [
+				"three://me",
+				"three://agents",
+				"three://marketplace",
+				"three://models",
+				"three://wallets",
+				"three://launches",
+				"three://x402/services"
+			],
+			"resourceTemplates": [
+				"three://agents/{agentId}",
+				"three://agents/{agentId}/wallet",
+				"three://agents/{agentId}/usage",
+				"three://agents/{agentId}/chat",
+				"three://agents/{agentId}/runs",
+				"three://agents/{agentId}/runs/{runId}",
+				"three://agents/{agentId}/orders",
+				"three://agents/{agentId}/dca",
+				"three://agents/{agentId}/intents"
+			],
+			"prompts": [
+				"get-started",
+				"create-agent",
+				"trade",
+				"launch-token",
+				"hire-agent",
+				"review-costs",
+				"setup-automations",
+				"setup-dca",
+				"explore-marketplace",
+				"explore-x402",
+				"earn-yield",
+				"perps",
+				"predictions",
+				"embed-avatar"
+			]
 		},
 		{
 			"name": "3D Studio",
@@ -28,7 +64,10 @@
 			"transport": "streamable-http",
 			"auth": "OAuth 2.1 or x402 pay-per-call",
 			"description": "Paid text-to-3D and image-to-3D generation, rigging, retexture, and optimization.",
-			"documentation": "https://three.ws/docs/mcp-3d-studio"
+			"documentation": "https://three.ws/docs/mcp-3d-studio",
+			"resources": ["three://me", "three://agents", "three://models"],
+			"resourceTemplates": ["three://agents/{agentId}", "three://assets/{id}"],
+			"prompts": ["get-started", "generate-3d"]
 		},
 		{
 			"name": "3D Studio (free)",
@@ -44,7 +83,34 @@
 			"transport": "streamable-http",
 			"auth": "OAuth 2.1",
 			"description": "The agent's custodial wallet: check balance, find and pay x402 services, monetize an endpoint.",
-			"documentation": "https://three.ws/docs/mcp-agent"
+			"documentation": "https://three.ws/docs/mcp-agent",
+			"resources": [
+				"three://me",
+				"three://agents",
+				"three://wallets",
+				"three://launches",
+				"three://marketplace",
+				"three://x402/services"
+			],
+			"resourceTemplates": [
+				"three://agents/{agentId}",
+				"three://agents/{agentId}/wallet",
+				"three://agents/{agentId}/usage",
+				"three://agents/{agentId}/runs",
+				"three://agents/{agentId}/runs/{runId}",
+				"three://agents/{agentId}/orders",
+				"three://agents/{agentId}/dca",
+				"three://agents/{agentId}/intents"
+			],
+			"prompts": [
+				"get-started",
+				"setup-wallet",
+				"hire-agent",
+				"sell-a-skill",
+				"setup-dca",
+				"explore-marketplace",
+				"explore-x402"
+			]
 		},
 		{
 			"name": "x402 Bazaar",
@@ -52,7 +118,10 @@
 			"transport": "streamable-http",
 			"auth": "OAuth 2.1 or x402",
 			"description": "Discover, browse, and price paid agent services across the x402 facilitator network.",
-			"documentation": "https://three.ws/docs/mcp-x402-bazaar"
+			"documentation": "https://three.ws/docs/mcp-x402-bazaar",
+			"resources": ["three://me", "three://x402/services", "three://marketplace"],
+			"resourceTemplates": [],
+			"prompts": ["get-started", "hire-agent", "explore-marketplace", "explore-x402"]
 		},
 		{
 			"name": "pump.fun",

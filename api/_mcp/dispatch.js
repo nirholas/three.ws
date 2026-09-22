@@ -10,6 +10,11 @@ import { declareMcpDiscovery } from '../_lib/x402/bazaar-helpers.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
 import { TOOL_CATALOG, TOOLS } from './catalog.js';
+import { declaredArgs, finishCall, gateCall, listForRequest } from './policy.js';
+
+// The @three-ws/mcp-policy server id for /api/mcp.
+const POLICY_SERVER = 'three.ws';
+const CATALOG_BY_NAME = new Map(TOOL_CATALOG.map((t) => [t.name, t]));
 import { handleResourceMethod, RESOURCE_CAPABILITIES } from './resources.js';
 import { handlePromptMethod, PROMPT_CAPABILITIES } from './prompts.js';
 
@@ -73,7 +78,7 @@ export async function dispatch(msg, auth, req) {
 		if (method === 'notifications/initialized') return null;
 		if (method === 'tools/list')
 			return ok(id, {
-				tools: TOOL_CATALOG.map((t) => {
+				tools: (await listForRequest(POLICY_SERVER, TOOL_CATALOG, auth, req)).map((t) => {
 					const price = priceFor(t.name);
 					if (!price) return t;
 					// USE-13: priced tools also surface a Bazaar discovery
@@ -161,11 +166,19 @@ async function onInitialize(_params, _auth) {
 }
 
 async function onToolCall(params, auth, started, req) {
-	const { name, arguments: args = {} } = params || {};
+	const { name, arguments: rawArgs = {} } = params || {};
 	// Own-property lookup only: a name like "__proto__" or "constructor" would
 	// otherwise resolve an inherited Object member and slip past the !tool guard.
 	const tool = typeof name === 'string' && Object.hasOwn(TOOLS, name) ? TOOLS[name] : null;
 	if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
+	// Tool policy (api/_mcp/policy.js): refuse a tool this session has not
+	// enabled, and a financial one without its confirm flag and fresh preview.
+	// The policy sees an untouched copy of what the caller sent; Ajv below fills
+	// defaults into the object the handler gets.
+	const sentArgs = { ...rawArgs };
+	const gate = await gateCall(POLICY_SERVER, name, sentArgs, auth, req, declaredArgs(CATALOG_BY_NAME.get(name)));
+	if (!gate.ok) return gate.result;
+	const args = gate.args === sentArgs ? rawArgs : gate.args;
 	if (tool.scope && !hasScope(auth.scope, tool.scope)) {
 		throw rpcError(-32002, `insufficient scope, requires ${tool.scope}`);
 	}
@@ -241,7 +254,7 @@ async function onToolCall(params, auth, started, req) {
 			latencyMs: Date.now() - started,
 			meta: { args_summary: summarize(args) },
 		});
-		return result;
+		return await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview);
 	} catch (err) {
 		recordEvent({
 			userId: auth.userId,

@@ -6,6 +6,7 @@
 import { hasScope } from './auth.js';
 import { recordEvent, logger } from './usage.js';
 import { sanitizeToolError } from './mcp-error-sanitize.js';
+import { declaredArgs, finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
 import { handleResourceMethod, RESOURCE_CAPABILITIES } from '../_mcp/resources.js';
 import { handlePromptMethod, PROMPT_CAPABILITIES } from '../_mcp/prompts.js';
 
@@ -56,15 +57,34 @@ function summarize(args) {
 //                (api/_mcp/resources.js, api/_mcp/prompts.js) for this server.
 //                Servers without one answer the resources/prompts discovery
 //                methods with empty lists.
-export function makeDispatcher({ serverInfo, instructions, catalog, tools, logName, resourceServer = null }) {
+//   policyServer optional @three-ws/mcp-policy server id ('threews-agent', ...)
+//                that puts the tool policy in front of this server: tools/list
+//                shows only the session's enabled tools, and tools/call refuses
+//                a disabled tool or a financial one without its confirm flag
+//                and a fresh preview id (api/_mcp/policy.js).
+export function makeDispatcher({ serverInfo, instructions, catalog, tools, logName, resourceServer = null, policyServer = null }) {
 	const log = logger(logName);
+	const catalogByName = new Map(catalog.map((t) => [t.name, t]));
 
 	async function onToolCall(params, auth, started, req) {
-		const { name, arguments: args = {} } = params || {};
+		const { name, arguments: rawArgs = {} } = params || {};
 		// Own-property lookup only — "__proto__"/"constructor" must not resolve an
 		// inherited Object member and bypass the !tool guard.
 		const tool = typeof name === 'string' && Object.hasOwn(tools, name) ? tools[name] : null;
 		if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
+		// Ajv fills defaults into the object it validates; the policy records and
+		// compares what the caller actually sent, so keep an untouched copy.
+		const sentArgs = { ...rawArgs };
+		let args = rawArgs;
+		let preview = null;
+		if (policyServer) {
+			const gate = await gateCall(policyServer, name, sentArgs, auth, req, declaredArgs(catalogByName.get(name)));
+			if (!gate.ok) return gate.result;
+			// A financial call gets a stripped copy; anything else runs on the
+			// original object, which the validator may fill with defaults.
+			args = gate.args === sentArgs ? rawArgs : gate.args;
+			preview = gate.preview;
+		}
 		if (tool.scope && !hasScope(auth.scope, tool.scope)) {
 			throw rpcError(-32002, `insufficient scope, requires ${tool.scope}`);
 		}
@@ -90,7 +110,7 @@ export function makeDispatcher({ serverInfo, instructions, catalog, tools, logNa
 				latencyMs: Date.now() - started,
 				meta: { args_summary: summarize(args), server: logName },
 			});
-			return result;
+			return policyServer ? await finishCall(policyServer, name, sentArgs, auth, result, preview) : result;
 		} catch (err) {
 			recordEvent({
 				...event,
@@ -139,7 +159,9 @@ export function makeDispatcher({ serverInfo, instructions, catalog, tools, logNa
 			}
 			if (method === 'ping') return ok(id, {});
 			if (method === 'notifications/initialized') return null;
-			if (method === 'tools/list') return ok(id, { tools: catalog });
+			if (method === 'tools/list') {
+				return ok(id, { tools: policyServer ? await listForRequest(policyServer, catalog, auth, req) : catalog });
+			}
 			if (method === 'tools/call')
 				return ok(id, await onToolCall(msg.params, auth, started, req));
 			if (resourceServer && typeof method === 'string') {

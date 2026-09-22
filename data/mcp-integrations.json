@@ -1,0 +1,1943 @@
+{
+	"version": 1,
+	"updated": "2026-09-22",
+	"categories": [
+		{
+			"id": "docs",
+			"label": "Documentation"
+		},
+		{
+			"id": "developer",
+			"label": "Developer tools"
+		},
+		{
+			"id": "project",
+			"label": "Project management"
+		},
+		{
+			"id": "productivity",
+			"label": "Productivity"
+		},
+		{
+			"id": "communication",
+			"label": "Communication"
+		},
+		{
+			"id": "crm",
+			"label": "CRM"
+		},
+		{
+			"id": "payments",
+			"label": "Payments"
+		},
+		{
+			"id": "data",
+			"label": "Databases and data"
+		},
+		{
+			"id": "cloud",
+			"label": "Cloud and infrastructure"
+		},
+		{
+			"id": "observability",
+			"label": "Observability"
+		},
+		{
+			"id": "analytics",
+			"label": "Analytics"
+		},
+		{
+			"id": "security",
+			"label": "Security"
+		},
+		{
+			"id": "search",
+			"label": "Search"
+		},
+		{
+			"id": "web",
+			"label": "Web and sites"
+		},
+		{
+			"id": "design",
+			"label": "Design"
+		},
+		{
+			"id": "ai",
+			"label": "AI and models"
+		},
+		{
+			"id": "automation",
+			"label": "Automation"
+		},
+		{
+			"id": "local",
+			"label": "Local (your machine)"
+		}
+	],
+	"servers": [
+		{
+			"id": "deepwiki",
+			"name": "DeepWiki",
+			"vendor": "Cognition",
+			"category": "docs",
+			"description": "Ask questions about any public GitHub repository and read its generated wiki.",
+			"transport": "streamable-http",
+			"url": "https://mcp.deepwiki.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": 3,
+			"docs": "https://docs.devin.ai/work-with-devin/deepwiki-mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "cloudflare-docs",
+			"name": "Cloudflare Docs",
+			"vendor": "Cloudflare",
+			"category": "docs",
+			"description": "Search the full Cloudflare developer documentation.",
+			"transport": "streamable-http",
+			"url": "https://docs.mcp.cloudflare.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": 2,
+			"docs": "https://developers.cloudflare.com/agents/model-context-protocol/mcp-servers-for-cloudflare/",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "microsoft-learn",
+			"name": "Microsoft Learn",
+			"vendor": "Microsoft",
+			"category": "docs",
+			"description": "Search and read Microsoft and Azure documentation and code samples.",
+			"transport": "streamable-http",
+			"url": "https://learn.microsoft.com/api/mcp",
+			"package": null,
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": 3,
+			"docs": "https://learn.microsoft.com/en-us/training/support/mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "aws-knowledge",
+			"name": "AWS Knowledge",
+			"vendor": "Amazon Web Services",
+			"category": "docs",
+			"description": "Search AWS documentation, API references, What's New posts and regional availability.",
+			"transport": "streamable-http",
+			"url": "https://knowledge-mcp.global.api.aws",
+			"package": null,
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": 5,
+			"docs": "https://awslabs.github.io/mcp/servers/aws-knowledge-mcp-server",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "gitmcp",
+			"name": "GitMCP",
+			"vendor": "GitMCP",
+			"category": "docs",
+			"description": "Fetch documentation and code from any public GitHub repository, so answers cite the real source.",
+			"transport": "streamable-http",
+			"url": "https://gitmcp.io/docs",
+			"package": null,
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": 5,
+			"docs": "https://gitmcp.io",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": false
+		},
+		{
+			"id": "context7",
+			"name": "Context7",
+			"vendor": "Upstash",
+			"category": "docs",
+			"description": "Up-to-date, version-specific library documentation and code examples.",
+			"transport": "streamable-http",
+			"url": "https://mcp.context7.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"optional": true,
+				"tokenHelp": "Optional: a Context7 API key from https://context7.com/dashboard raises rate limits."
+			},
+			"toolCount": 2,
+			"docs": "https://github.com/upstash/context7",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "hugging-face",
+			"name": "Hugging Face",
+			"vendor": "Hugging Face",
+			"category": "ai",
+			"description": "Search models, datasets, Spaces and papers on the Hugging Face Hub.",
+			"transport": "streamable-http",
+			"url": "https://huggingface.co/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"optional": true,
+				"tokenHelp": "Optional: a Hugging Face access token from https://huggingface.co/settings/tokens unlocks your private repos and Spaces tools."
+			},
+			"toolCount": 4,
+			"docs": "https://huggingface.co/settings/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "ref",
+			"name": "Ref",
+			"vendor": "Ref",
+			"category": "docs",
+			"description": "Token-efficient search over public and private technical documentation.",
+			"transport": "streamable-http",
+			"url": "https://api.ref.tools/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"tokenHelp": "A Ref API key from https://ref.tools/keys.",
+				"header": "x-ref-api-key"
+			},
+			"toolCount": null,
+			"docs": "https://docs.ref.tools/",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "github",
+			"name": "GitHub",
+			"vendor": "GitHub",
+			"category": "developer",
+			"description": "Repositories, issues, pull requests, code search, Actions runs and releases.",
+			"transport": "streamable-http",
+			"url": "https://api.githubcopilot.com/mcp/",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "platform",
+				"clientEnv": "MCP_OAUTH_GITHUB",
+				"scopes": [
+					"repo",
+					"read:org",
+					"read:user"
+				],
+				"alt": "bearer",
+				"tokenHelp": "A fine-grained personal access token from https://github.com/settings/personal-access-tokens."
+			},
+			"toolCount": null,
+			"docs": "https://github.com/github/github-mcp-server",
+			"tiers": {
+				"financial": [
+					"delete_*",
+					"merge_pull_request"
+				],
+				"write": [
+					"create_*",
+					"update_*",
+					"push_*",
+					"add_*",
+					"assign_*",
+					"request_*",
+					"fork_*",
+					"submit_*",
+					"mark_*",
+					"dismiss_*",
+					"run_*",
+					"rerun_*",
+					"cancel_*",
+					"manage_*"
+				],
+				"read": [
+					"get_*",
+					"list_*",
+					"search_*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "gitlab",
+			"name": "GitLab",
+			"vendor": "GitLab",
+			"category": "developer",
+			"description": "Issues, merge requests, pipelines and code search on GitLab.com.",
+			"transport": "streamable-http",
+			"url": "https://gitlab.com/api/v4/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.gitlab.com/user/gitlab_duo/model_context_protocol/mcp_server/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "linear",
+			"name": "Linear",
+			"vendor": "Linear",
+			"category": "project",
+			"description": "Find, create and update Linear issues, projects, cycles and comments.",
+			"transport": "streamable-http",
+			"url": "https://mcp.linear.app/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://linear.app/docs/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "sentry",
+			"name": "Sentry",
+			"vendor": "Sentry",
+			"category": "observability",
+			"description": "Look up errors, issues, traces and releases; ask Seer for a root cause.",
+			"transport": "streamable-http",
+			"url": "https://mcp.sentry.dev/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.sentry.io/product/sentry-mcp/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "socket",
+			"name": "Socket",
+			"vendor": "Socket",
+			"category": "security",
+			"description": "Supply-chain security scores for npm, PyPI and other packages before you install them.",
+			"transport": "streamable-http",
+			"url": "https://mcp.socket.dev/",
+			"package": null,
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": 7,
+			"docs": "https://github.com/SocketDev/socket-mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "semgrep",
+			"name": "Semgrep",
+			"vendor": "Semgrep",
+			"category": "security",
+			"description": "Scan code for security issues with Semgrep rules.",
+			"transport": "streamable-http",
+			"url": "https://mcp.semgrep.ai/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://semgrep.dev/docs/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "buildkite",
+			"name": "Buildkite",
+			"vendor": "Buildkite",
+			"category": "developer",
+			"description": "Pipelines, builds, jobs and logs on Buildkite.",
+			"transport": "streamable-http",
+			"url": "https://mcp.buildkite.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://buildkite.com/docs/apis/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "postman",
+			"name": "Postman",
+			"vendor": "Postman",
+			"category": "developer",
+			"description": "Workspaces, collections, environments and monitors in Postman.",
+			"transport": "streamable-http",
+			"url": "https://mcp.postman.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"tokenHelp": "A Postman API key from https://go.postman.co/settings/me/api-keys."
+			},
+			"toolCount": null,
+			"docs": "https://learning.postman.com/docs/developer/postman-api/postman-mcp-server/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "jam",
+			"name": "Jam",
+			"vendor": "Jam",
+			"category": "developer",
+			"description": "Read bug reports recorded with Jam: console logs, network requests and repro steps.",
+			"transport": "streamable-http",
+			"url": "https://mcp.jam.dev/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://jam.dev/docs/debug-a-jam/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "apify",
+			"name": "Apify",
+			"vendor": "Apify",
+			"category": "web",
+			"description": "Run thousands of ready-made web scrapers and automation Actors.",
+			"transport": "streamable-http",
+			"url": "https://mcp.apify.com",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic",
+				"alt": "bearer",
+				"tokenHelp": "An Apify API token from https://console.apify.com/settings/integrations."
+			},
+			"toolCount": null,
+			"docs": "https://docs.apify.com/platform/integrations/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "firecrawl",
+			"name": "Firecrawl",
+			"vendor": "Firecrawl",
+			"category": "web",
+			"description": "Scrape, crawl and search the web into clean markdown.",
+			"transport": "streamable-http",
+			"url": "https://mcp.firecrawl.dev/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"tokenHelp": "A Firecrawl API key from https://www.firecrawl.dev/app/api-keys."
+			},
+			"toolCount": 3,
+			"docs": "https://docs.firecrawl.dev/mcp-server",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "exa",
+			"name": "Exa",
+			"vendor": "Exa",
+			"category": "search",
+			"description": "Neural web search, code context search and company research.",
+			"transport": "streamable-http",
+			"url": "https://mcp.exa.ai/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"optional": true,
+				"tokenHelp": "Optional: an Exa API key from https://dashboard.exa.ai/api-keys raises limits.",
+				"header": "x-api-key"
+			},
+			"toolCount": 2,
+			"docs": "https://docs.exa.ai/reference/exa-mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "tavily",
+			"name": "Tavily",
+			"vendor": "Tavily",
+			"category": "search",
+			"description": "Real-time web search, extraction, crawl and site maps built for agents.",
+			"transport": "streamable-http",
+			"url": "https://mcp.tavily.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.tavily.com/documentation/mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "cloudflare-bindings",
+			"name": "Cloudflare Workers Bindings",
+			"vendor": "Cloudflare",
+			"category": "cloud",
+			"description": "Manage Workers, KV, R2, D1 and Hyperdrive resources in your Cloudflare account.",
+			"transport": "streamable-http",
+			"url": "https://bindings.mcp.cloudflare.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/cloudflare/mcp-server-cloudflare/tree/main/apps/workers-bindings",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "cloudflare-observability",
+			"name": "Cloudflare Observability",
+			"vendor": "Cloudflare",
+			"category": "observability",
+			"description": "Query Workers logs and analytics to debug your applications.",
+			"transport": "streamable-http",
+			"url": "https://observability.mcp.cloudflare.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/cloudflare/mcp-server-cloudflare/tree/main/apps/workers-observability",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "cloudflare-radar",
+			"name": "Cloudflare Radar",
+			"vendor": "Cloudflare",
+			"category": "data",
+			"description": "Global internet traffic trends, URL scans and outage data from Cloudflare Radar.",
+			"transport": "streamable-http",
+			"url": "https://radar.mcp.cloudflare.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/cloudflare/mcp-server-cloudflare/tree/main/apps/radar",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "cloudflare-browser",
+			"name": "Cloudflare Browser Rendering",
+			"vendor": "Cloudflare",
+			"category": "web",
+			"description": "Fetch pages, take screenshots and convert pages to markdown with a real browser.",
+			"transport": "streamable-http",
+			"url": "https://browser.mcp.cloudflare.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/cloudflare/mcp-server-cloudflare/tree/main/apps/browser-rendering",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "supabase",
+			"name": "Supabase",
+			"vendor": "Supabase",
+			"category": "data",
+			"description": "Manage Supabase projects: tables, SQL, migrations, logs and edge functions.",
+			"transport": "streamable-http",
+			"url": "https://mcp.supabase.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://supabase.com/docs/guides/getting-started/mcp",
+			"tiers": {
+				"financial": [
+					"delete_*",
+					"pause_project",
+					"create_project",
+					"create_branch",
+					"execute_sql",
+					"apply_migration"
+				],
+				"read": [
+					"list_*",
+					"get_*",
+					"search_docs",
+					"generate_typescript_types"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "neon",
+			"name": "Neon",
+			"vendor": "Neon",
+			"category": "data",
+			"description": "Manage Neon Postgres projects, branches and run SQL.",
+			"transport": "streamable-http",
+			"url": "https://mcp.neon.tech/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://neon.com/docs/ai/neon-mcp-server",
+			"tiers": {
+				"financial": [
+					"delete_*",
+					"run_sql",
+					"run_sql_transaction",
+					"complete_database_migration",
+					"reset_from_parent"
+				],
+				"read": [
+					"list_*",
+					"describe_*",
+					"get_*",
+					"explain_sql_statement",
+					"search",
+					"fetch"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "prisma",
+			"name": "Prisma Postgres",
+			"vendor": "Prisma",
+			"category": "data",
+			"description": "Create and manage Prisma Postgres databases, backups and connection strings.",
+			"transport": "streamable-http",
+			"url": "https://mcp.prisma.io/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://www.prisma.io/docs/postgres/integrations/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "render",
+			"name": "Render",
+			"vendor": "Render",
+			"category": "cloud",
+			"description": "Services, deploys, logs and metrics on Render.",
+			"transport": "streamable-http",
+			"url": "https://mcp.render.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"tokenHelp": "A Render API key from https://dashboard.render.com/u/settings#api-keys."
+			},
+			"toolCount": null,
+			"docs": "https://render.com/docs/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "netlify",
+			"name": "Netlify",
+			"vendor": "Netlify",
+			"category": "cloud",
+			"description": "Create, deploy and manage Netlify sites.",
+			"transport": "streamable-http",
+			"url": "https://mcp.netlify.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.netlify.com/build/build-with-ai/netlify-mcp-server/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "vercel",
+			"name": "Vercel",
+			"vendor": "Vercel",
+			"category": "cloud",
+			"description": "Projects, deployments and build logs on Vercel.",
+			"transport": "streamable-http",
+			"url": "https://mcp.vercel.com",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://vercel.com/docs/mcp/vercel-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "pulumi",
+			"name": "Pulumi",
+			"vendor": "Pulumi",
+			"category": "cloud",
+			"description": "Search your cloud resources and Pulumi stacks, and ask Pulumi Neo.",
+			"transport": "streamable-http",
+			"url": "https://mcp.ai.pulumi.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://www.pulumi.com/docs/iac/guides/ai-integration/mcp-server/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "grafana",
+			"name": "Grafana Cloud",
+			"vendor": "Grafana Labs",
+			"category": "observability",
+			"description": "Dashboards, Prometheus and Loki queries, alerts and incidents in Grafana Cloud.",
+			"transport": "streamable-http",
+			"url": "https://mcp.grafana.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://grafana.com/docs/grafana-cloud/machine-learning/assistant/mcp/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "honeycomb",
+			"name": "Honeycomb",
+			"vendor": "Honeycomb",
+			"category": "observability",
+			"description": "Query traces, SLOs and triggers in Honeycomb.",
+			"transport": "streamable-http",
+			"url": "https://mcp.honeycomb.io/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.honeycomb.io/integrations/mcp/",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "axiom",
+			"name": "Axiom",
+			"vendor": "Axiom",
+			"category": "observability",
+			"description": "Query logs, traces and datasets in Axiom with APL.",
+			"transport": "streamable-http",
+			"url": "https://mcp.axiom.co/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://axiom.co/docs/console/intelligence/mcp-server",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "pagerduty",
+			"name": "PagerDuty",
+			"vendor": "PagerDuty",
+			"category": "observability",
+			"description": "Incidents, on-call schedules, services and escalation policies.",
+			"transport": "streamable-http",
+			"url": "https://mcp.pagerduty.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "platform",
+				"clientEnv": "MCP_OAUTH_PAGERDUTY",
+				"alt": "bearer",
+				"tokenHelp": "A PagerDuty user API token from My Profile, User Settings, Create API User Token."
+			},
+			"toolCount": null,
+			"docs": "https://developer.pagerduty.com/docs/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "posthog",
+			"name": "PostHog",
+			"vendor": "PostHog",
+			"category": "analytics",
+			"description": "Product analytics, feature flags, experiments and error tracking.",
+			"transport": "streamable-http",
+			"url": "https://mcp.posthog.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://posthog.com/docs/model-context-protocol",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "amplitude",
+			"name": "Amplitude",
+			"vendor": "Amplitude",
+			"category": "analytics",
+			"description": "Charts, dashboards, cohorts and experiments in Amplitude.",
+			"transport": "streamable-http",
+			"url": "https://mcp.amplitude.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://amplitude.com/docs/amplitude-ai/amplitude-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "mixpanel",
+			"name": "Mixpanel",
+			"vendor": "Mixpanel",
+			"category": "analytics",
+			"description": "Query events, funnels, retention and reports in Mixpanel.",
+			"transport": "streamable-http",
+			"url": "https://mcp.mixpanel.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.mixpanel.com/docs/features/mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "globalping",
+			"name": "Globalping",
+			"vendor": "jsDelivr",
+			"category": "web",
+			"description": "Run ping, traceroute, DNS, MTR and HTTP checks from thousands of probes worldwide.",
+			"transport": "streamable-http",
+			"url": "https://mcp.globalping.dev/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/jsdelivr/globalping-mcp-server",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "stripe",
+			"name": "Stripe",
+			"vendor": "Stripe",
+			"category": "payments",
+			"description": "Customers, products, prices, invoices, subscriptions, payment links and refunds, plus Stripe docs search.",
+			"transport": "streamable-http",
+			"url": "https://mcp.stripe.com",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic",
+				"alt": "bearer",
+				"tokenHelp": "A restricted Stripe secret key (rk_) from https://dashboard.stripe.com/apikeys."
+			},
+			"toolCount": null,
+			"docs": "https://docs.stripe.com/mcp",
+			"tiers": {
+				"financial": [
+					"create_refund",
+					"create_payment_link",
+					"create_invoice",
+					"finalize_invoice",
+					"create_invoice_item",
+					"cancel_subscription",
+					"update_subscription",
+					"create_coupon",
+					"*payout*"
+				],
+				"write": [
+					"create_customer",
+					"create_product",
+					"create_price"
+				],
+				"read": [
+					"list_*",
+					"retrieve_*",
+					"search_*",
+					"get_*",
+					"fetch_*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "paypal",
+			"name": "PayPal",
+			"vendor": "PayPal",
+			"category": "payments",
+			"description": "Invoices, orders, subscriptions, disputes and transaction reports on PayPal.",
+			"transport": "streamable-http",
+			"url": "https://mcp.paypal.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developer.paypal.com/tools/mcp-server/",
+			"tiers": {
+				"financial": [
+					"create_*",
+					"send_*",
+					"cancel_*",
+					"capture_*",
+					"pay_*",
+					"*refund*",
+					"update_subscription",
+					"accept_*"
+				],
+				"read": [
+					"list_*",
+					"get_*",
+					"show_*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "square",
+			"name": "Square",
+			"vendor": "Square",
+			"category": "payments",
+			"description": "Payments, orders, catalog, customers and inventory on Square.",
+			"transport": "sse",
+			"url": "https://mcp.squareup.com/sse",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developer.squareup.com/docs/mcp",
+			"tiers": {
+				"financial": [
+					"make_api_request"
+				],
+				"read": [
+					"get_service_info",
+					"get_type_info"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "plaid",
+			"name": "Plaid Dashboard",
+			"vendor": "Plaid",
+			"category": "payments",
+			"description": "Diagnose Plaid Items, Link conversion and API usage in your Plaid dashboard.",
+			"transport": "streamable-http",
+			"url": "https://mcp.plaid.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://plaid.com/docs/resources/mcp/",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "mercado-pago",
+			"name": "Mercado Pago",
+			"vendor": "Mercado Pago",
+			"category": "payments",
+			"description": "Search Mercado Pago developer documentation and review integration quality.",
+			"transport": "streamable-http",
+			"url": "https://mcp.mercadopago.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "bearer",
+				"tokenHelp": "A Mercado Pago access token from your application credentials."
+			},
+			"toolCount": null,
+			"docs": "https://www.mercadopago.com.br/developers/en/docs/mcp-server/overview",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "notion",
+			"name": "Notion",
+			"vendor": "Notion",
+			"category": "productivity",
+			"description": "Search, read, create and update pages and databases in your Notion workspace.",
+			"transport": "streamable-http",
+			"url": "https://mcp.notion.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developers.notion.com/docs/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "atlassian",
+			"name": "Atlassian (Jira and Confluence)",
+			"vendor": "Atlassian",
+			"category": "project",
+			"description": "Jira issues and Confluence pages: search, summarize, create and update.",
+			"transport": "streamable-http",
+			"url": "https://mcp.atlassian.com/v1/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://www.atlassian.com/platform/remote-mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "asana",
+			"name": "Asana",
+			"vendor": "Asana",
+			"category": "project",
+			"description": "Tasks, projects, goals and portfolios in Asana.",
+			"transport": "sse",
+			"url": "https://mcp.asana.com/sse",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developers.asana.com/docs/using-asanas-mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "monday",
+			"name": "monday.com",
+			"vendor": "monday.com",
+			"category": "project",
+			"description": "Boards, items, updates and workspaces on monday.com.",
+			"transport": "streamable-http",
+			"url": "https://mcp.monday.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developer.monday.com/apps/docs/mondaycom-mcp-integration",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "clickup",
+			"name": "ClickUp",
+			"vendor": "ClickUp",
+			"category": "project",
+			"description": "Tasks, docs, time tracking and chat in ClickUp.",
+			"transport": "streamable-http",
+			"url": "https://mcp.clickup.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developer.clickup.com/docs/connect-an-ai-assistant-to-clickups-mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "todoist",
+			"name": "Todoist",
+			"vendor": "Doist",
+			"category": "productivity",
+			"description": "Tasks, projects, sections and comments in Todoist.",
+			"transport": "streamable-http",
+			"url": "https://ai.todoist.net/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://www.todoist.com/help/articles/use-todoist-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "box",
+			"name": "Box",
+			"vendor": "Box",
+			"category": "productivity",
+			"description": "Search, read and summarize files and folders in Box.",
+			"transport": "streamable-http",
+			"url": "https://mcp.box.com",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "platform",
+				"clientEnv": "MCP_OAUTH_BOX"
+			},
+			"toolCount": null,
+			"docs": "https://developer.box.com/guides/box-mcp/remote/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "dropbox",
+			"name": "Dropbox",
+			"vendor": "Dropbox",
+			"category": "productivity",
+			"description": "Search and read files in your Dropbox.",
+			"transport": "streamable-http",
+			"url": "https://mcp.dropbox.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://help.dropbox.com/integrations/connect-dropbox-mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "airtable",
+			"name": "Airtable",
+			"vendor": "Airtable",
+			"category": "data",
+			"description": "Bases, tables and records in Airtable.",
+			"transport": "streamable-http",
+			"url": "https://mcp.airtable.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://support.airtable.com/docs/using-the-airtable-mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "cal-com",
+			"name": "Cal.com",
+			"vendor": "Cal.com",
+			"category": "productivity",
+			"description": "Event types, availability and bookings on Cal.com.",
+			"transport": "streamable-http",
+			"url": "https://mcp.cal.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://cal.com/docs/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "granola",
+			"name": "Granola",
+			"vendor": "Granola",
+			"category": "productivity",
+			"description": "Search and read your meeting notes and transcripts.",
+			"transport": "streamable-http",
+			"url": "https://mcp.granola.ai/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.granola.ai/help-center/sharing/integrations/mcp",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "fireflies",
+			"name": "Fireflies.ai",
+			"vendor": "Fireflies.ai",
+			"category": "productivity",
+			"description": "Meeting transcripts, summaries and action items.",
+			"transport": "streamable-http",
+			"url": "https://api.fireflies.ai/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.fireflies.ai/getting-started/mcp-configuration",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "krisp",
+			"name": "Krisp",
+			"vendor": "Krisp",
+			"category": "productivity",
+			"description": "Meeting notes, transcripts and action items recorded by Krisp.",
+			"transport": "streamable-http",
+			"url": "https://mcp.krisp.ai/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://help.krisp.ai/hc/en-us/articles/25416265429660-AI-Meeting-Assistant-Integrations",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "zapier",
+			"name": "Zapier",
+			"vendor": "Zapier",
+			"category": "automation",
+			"description": "Run the actions you configure across 8,000 apps connected to your Zapier account.",
+			"transport": "streamable-http",
+			"url": "https://mcp.zapier.com/api/mcp/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://zapier.com/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "slack",
+			"name": "Slack",
+			"vendor": "Slack",
+			"category": "communication",
+			"description": "Search messages and files, read channels and threads, and send messages in Slack.",
+			"transport": "streamable-http",
+			"url": "https://mcp.slack.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "platform",
+				"clientEnv": "MCP_OAUTH_SLACK",
+				"scopes": [
+					"search:read.public",
+					"channels:history",
+					"chat:write",
+					"users:read"
+				]
+			},
+			"toolCount": null,
+			"docs": "https://docs.slack.dev/ai/mcp-server",
+			"tiers": {
+				"financial": [
+					"*delete*"
+				],
+				"write": [
+					"*send*",
+					"*post*",
+					"*create*",
+					"*update*",
+					"*schedule*"
+				],
+				"read": [
+					"*search*",
+					"*read*",
+					"*list*",
+					"*get*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "intercom",
+			"name": "Intercom",
+			"vendor": "Intercom",
+			"category": "communication",
+			"description": "Search conversations, tickets and contacts in Intercom.",
+			"transport": "streamable-http",
+			"url": "https://mcp.intercom.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developers.intercom.com/docs/guides/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "resend",
+			"name": "Resend",
+			"vendor": "Resend",
+			"category": "communication",
+			"description": "Send and schedule transactional email, manage audiences and domains on Resend.",
+			"transport": "streamable-http",
+			"url": "https://mcp.resend.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://resend.com/docs/knowledge-base/mcp-server",
+			"tiers": {
+				"financial": [
+					"*send*",
+					"*delete*",
+					"*broadcast*"
+				],
+				"read": [
+					"list_*",
+					"get_*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "hubspot",
+			"name": "HubSpot",
+			"vendor": "HubSpot",
+			"category": "crm",
+			"description": "Contacts, companies, deals, tickets and engagements in HubSpot CRM.",
+			"transport": "streamable-http",
+			"url": "https://mcp.hubspot.com/",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "platform",
+				"clientEnv": "MCP_OAUTH_HUBSPOT"
+			},
+			"toolCount": null,
+			"docs": "https://developers.hubspot.com/mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "attio",
+			"name": "Attio",
+			"vendor": "Attio",
+			"category": "crm",
+			"description": "Records, lists, notes and tasks in your Attio CRM.",
+			"transport": "streamable-http",
+			"url": "https://mcp.attio.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://docs.attio.com/mcp/overview",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "close",
+			"name": "Close",
+			"vendor": "Close",
+			"category": "crm",
+			"description": "Leads, contacts, opportunities and activities in Close CRM.",
+			"transport": "streamable-http",
+			"url": "https://mcp.close.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://help.close.com/docs/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "figma",
+			"name": "Figma",
+			"vendor": "Figma",
+			"category": "design",
+			"description": "Read Figma frames, variables and components as design context for code.",
+			"transport": "streamable-http",
+			"url": "https://mcp.figma.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "canva",
+			"name": "Canva",
+			"vendor": "Canva",
+			"category": "design",
+			"description": "Search, create, edit and export Canva designs.",
+			"transport": "streamable-http",
+			"url": "https://mcp.canva.com/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://www.canva.dev/docs/connect/canva-mcp-server-setup/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "miro",
+			"name": "Miro",
+			"vendor": "Miro",
+			"category": "design",
+			"description": "Read boards and generate diagrams and docs on Miro.",
+			"transport": "streamable-http",
+			"url": "https://mcp.miro.com/",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developers.miro.com/docs/miro-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "gamma",
+			"name": "Gamma",
+			"vendor": "Gamma",
+			"category": "design",
+			"description": "Generate presentations, documents and web pages with Gamma.",
+			"transport": "streamable-http",
+			"url": "https://mcp.gamma.app/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic",
+				"alt": "bearer",
+				"header": "x-api-key",
+				"tokenHelp": "A Gamma API key from your Gamma account settings."
+			},
+			"toolCount": null,
+			"docs": "https://developers.gamma.app/",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "webflow",
+			"name": "Webflow",
+			"vendor": "Webflow",
+			"category": "web",
+			"description": "Sites, pages, CMS collections and items in Webflow.",
+			"transport": "sse",
+			"url": "https://mcp.webflow.com/sse",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://developers.webflow.com/data/docs/ai-tools",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "wix",
+			"name": "Wix",
+			"vendor": "Wix",
+			"category": "web",
+			"description": "Build and manage Wix sites, stores and bookings, with Wix docs search.",
+			"transport": "sse",
+			"url": "https://mcp.wix.com/sse",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://dev.wix.com/docs/sdk/articles/use-the-wix-mcp/about-the-wix-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "sanity",
+			"name": "Sanity",
+			"vendor": "Sanity",
+			"category": "web",
+			"description": "Query and edit structured content, schemas and releases in Sanity.",
+			"transport": "streamable-http",
+			"url": "https://mcp.sanity.io",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://www.sanity.io/docs/compute-and-ai/mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "stytch",
+			"name": "Stytch",
+			"vendor": "Stytch",
+			"category": "security",
+			"description": "Manage Stytch projects, redirect URLs, email templates and auth settings.",
+			"transport": "streamable-http",
+			"url": "https://mcp.stytch.dev/mcp",
+			"package": null,
+			"auth": {
+				"type": "oauth",
+				"registration": "dynamic"
+			},
+			"toolCount": null,
+			"docs": "https://stytch.com/docs/workspace-management/stytch-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "filesystem",
+			"name": "Filesystem",
+			"vendor": "Model Context Protocol",
+			"category": "local",
+			"description": "Read, write and search files inside one directory you choose.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "@modelcontextprotocol/server-filesystem",
+				"command": "npx",
+				"args": [
+					"-y",
+					"@modelcontextprotocol/server-filesystem",
+					"{{ROOT}}"
+				],
+				"args_help": {
+					"ROOT": "A directory the agent may read and write."
+				}
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+			"tiers": {
+				"financial": [
+					"move_file"
+				],
+				"write": [
+					"write_file",
+					"edit_file",
+					"create_directory"
+				],
+				"read": [
+					"read_*",
+					"list_*",
+					"search_files",
+					"get_file_info",
+					"directory_tree"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "memory",
+			"name": "Knowledge Graph Memory",
+			"vendor": "Model Context Protocol",
+			"category": "local",
+			"description": "A local knowledge graph the agent can remember entities and relations in.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "@modelcontextprotocol/server-memory",
+				"command": "npx",
+				"args": [
+					"-y",
+					"@modelcontextprotocol/server-memory"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "sequential-thinking",
+			"name": "Sequential Thinking",
+			"vendor": "Model Context Protocol",
+			"category": "local",
+			"description": "Structured step-by-step reasoning scratchpad.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "@modelcontextprotocol/server-sequential-thinking",
+				"command": "npx",
+				"args": [
+					"-y",
+					"@modelcontextprotocol/server-sequential-thinking"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "git",
+			"name": "Git",
+			"vendor": "Model Context Protocol",
+			"category": "local",
+			"description": "Read, search and commit in a local git repository.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "pypi",
+				"name": "mcp-server-git",
+				"command": "uvx",
+				"args": [
+					"mcp-server-git",
+					"--repository",
+					"{{REPO}}"
+				],
+				"args_help": {
+					"REPO": "Path to a local git repository."
+				}
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "fetch",
+			"name": "Fetch",
+			"vendor": "Model Context Protocol",
+			"category": "local",
+			"description": "Fetch any URL from your machine and convert it to markdown.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "pypi",
+				"name": "mcp-server-fetch",
+				"command": "uvx",
+				"args": [
+					"mcp-server-fetch"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/fetch",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "time",
+			"name": "Time",
+			"vendor": "Model Context Protocol",
+			"category": "local",
+			"description": "Current time and timezone conversion.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "pypi",
+				"name": "mcp-server-time",
+				"command": "uvx",
+				"args": [
+					"mcp-server-time"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/modelcontextprotocol/servers/tree/main/src/time",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "playwright",
+			"name": "Playwright",
+			"vendor": "Microsoft",
+			"category": "local",
+			"description": "Drive a real browser: navigate, click, fill forms and read pages through accessibility snapshots.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "@playwright/mcp",
+				"command": "npx",
+				"args": [
+					"-y",
+					"@playwright/mcp@latest"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/microsoft/playwright-mcp",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "mongodb",
+			"name": "MongoDB",
+			"vendor": "MongoDB",
+			"category": "local",
+			"description": "Query and inspect MongoDB databases and Atlas clusters (read-only by default).",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "mongodb-mcp-server",
+				"command": "npx",
+				"args": [
+					"-y",
+					"mongodb-mcp-server",
+					"--readOnly"
+				],
+				"env": [
+					{
+						"name": "MDB_MCP_CONNECTION_STRING",
+						"secret": true,
+						"help": "A MongoDB connection string."
+					}
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/mongodb-js/mongodb-mcp-server",
+			"tiers": null,
+			"official": true
+		},
+		{
+			"id": "brave-search",
+			"name": "Brave Search",
+			"vendor": "Brave",
+			"category": "local",
+			"description": "Web, news, image and local search through the Brave Search API.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "@brave/brave-search-mcp-server",
+				"command": "npx",
+				"args": [
+					"-y",
+					"@brave/brave-search-mcp-server"
+				],
+				"env": [
+					{
+						"name": "BRAVE_API_KEY",
+						"secret": true,
+						"help": "A Brave Search API key from https://api-dashboard.search.brave.com."
+					}
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/brave/brave-search-mcp-server",
+			"tiers": {
+				"read": [
+					"*"
+				]
+			},
+			"official": true
+		},
+		{
+			"id": "kubernetes",
+			"name": "Kubernetes",
+			"vendor": "Flux159",
+			"category": "local",
+			"description": "Inspect and manage the Kubernetes cluster in your current kubeconfig context.",
+			"transport": "stdio",
+			"url": null,
+			"package": {
+				"registry": "npm",
+				"name": "mcp-server-kubernetes",
+				"command": "npx",
+				"args": [
+					"-y",
+					"mcp-server-kubernetes"
+				]
+			},
+			"auth": {
+				"type": "none"
+			},
+			"toolCount": null,
+			"docs": "https://github.com/Flux159/mcp-server-kubernetes",
+			"tiers": null,
+			"official": false
+		}
+	]
+}

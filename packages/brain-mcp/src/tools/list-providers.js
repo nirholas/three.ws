@@ -23,19 +23,8 @@ export const def = {
 	async handler() {
 		const data = await apiRequest('/api/brain/chat');
 		const providers = Array.isArray(data?.providers) ? data.providers : [];
-		// The router serves the free open-weight tiers anonymously; everything else
-		// is a paid first-party model that needs a three.ws API key. Mirrors the
-		// ANON_BRAIN_PROVIDERS gate in api/brain/chat.js.
-		const ANON = new Set([
-			'gpt-oss-120b',
-			'nvidia-nemotron-120b',
-			'nvidia-nemotron-super-49b',
-			'nvidia-nemotron-nano',
-			'nvidia-deepseek-v4',
-			'nvidia-kimi-k2',
-			'nvidia-llama4-maverick',
-			'nvidia-minimax-m2',
-		]);
+		// `requiresAuth` comes from the server, which derives it from the same
+		// ANON_BRAIN_PROVIDERS gate its handler enforces, so the two never drift.
 		const shaped = providers.map((p) => ({
 			key: p.key,
 			label: p.label,
@@ -44,7 +33,8 @@ export const def = {
 			maxOutput: p.maxOutput,
 			description: p.description,
 			available: Boolean(p.available),
-			requiresAuth: !ANON.has(p.key),
+			requiresAuth: p.requiresAuth !== false,
+			context: p.context || null,
 		}));
 		return {
 			ok: true,

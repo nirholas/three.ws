@@ -43,6 +43,12 @@ import { solPriceUsd } from './_lib/sol-price.js';
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
 import { getTrendingSlim, getNewSlim } from './_lib/pump-trending.js';
 import { TOOLS, resolveToolName, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
+import { gateCall, listForRequest } from './_mcp/policy.js';
+
+// The @three-ws/mcp-policy server id for this server. Every tool here is read
+// or write tier, so the policy only ever narrows the list to what the caller
+// asked for with X-Three-Tools; nothing on this server moves funds.
+const POLICY_SERVER = 'threews-pumpfun';
 import { generateVanityKey } from '../src/pump/vanity-keygen.js';
 import bs58 from 'bs58';
 import { resolveSnsName, reverseLookupAddress } from '../src/solana/sns.js';
@@ -1480,6 +1486,28 @@ export async function callPumpFunTool(requestedName, args = {}) {
 	return handler(args && typeof args === 'object' ? args : {});
 }
 
+/**
+ * The tools this server advertises right now: indexer-backed tools only when
+ * the indexer is configured, exactly what tools/list returns over HTTP. The
+ * unified server at /mcp mounts this same list.
+ */
+export function listPumpFunTools() {
+	return pumpfunBotEnabled() ? TOOLS : TOOLS.filter((t) => !INDEXER_TOOLS.has(t.name));
+}
+
+/**
+ * The raw handler for one tool, for a caller that authenticates the request
+ * itself (the unified server at /mcp). Unlike callPumpFunTool this includes
+ * the gated tools, so that caller owns their bearer-or-payment check and the
+ * per-principal gated rate limit.
+ * @returns {{ handler: Function, gated: boolean } | null}
+ */
+export function pumpFunToolEntry(requestedName) {
+	const name = resolveToolName(requestedName);
+	if (typeof name !== 'string' || !Object.hasOwn(HANDLERS, name)) return null;
+	return { handler: HANDLERS[name], gated: AUTH_REQUIRED_TOOLS.has(name) };
+}
+
 // ── HTTP entrypoint ────────────────────────────────────────────────────────
 
 // Keep in sync with api/_lib/mcp-dispatch.js PROTOCOL_VERSION. Declared locally
@@ -1684,8 +1712,7 @@ async function dispatchRpc(msg, ctx) {
 		// Advertise indexer-backed tools only when the bot is configured, so MCP
 		// clients never see a tool that would just return -32004 on call. The
 		// always-on pumpfun_bot_status (not in INDEXER_TOOLS) reports capability.
-		const tools = pumpfunBotEnabled() ? TOOLS : TOOLS.filter((t) => !INDEXER_TOOLS.has(t.name));
-		return rpcEnvelope(id, { tools });
+		return rpcEnvelope(id, { tools: await listForRequest(POLICY_SERVER, listPumpFunTools(), null, ctx.req) });
 	}
 	if (rpcMethod === 'resources/list') return rpcEnvelope(id, { resources: [] });
 	if (rpcMethod === 'resources/templates/list') return rpcEnvelope(id, { resourceTemplates: [] });
@@ -1706,6 +1733,8 @@ async function dispatchRpc(msg, ctx) {
 				message: `unknown tool: ${requestedName}`,
 			});
 		}
+		const policyGate = await gateCall(POLICY_SERVER, name, params?.arguments || {}, null, ctx.req);
+		if (!policyGate.ok) return rpcEnvelope(id, policyGate.result);
 		// Auth gate: expensive (vanity grind, long-lived RPC watch) and sensitive
 		// (returns a secret key) tools require a bearer or verified x402 payment.
 		if (AUTH_REQUIRED_TOOLS.has(name)) {

@@ -30,6 +30,11 @@ import { TOOL_NAMES } from './tools.js';
 // transport cap only.
 const GEN_TOOLS = new Set(TOOL_NAMES.filter((name) => name !== 'check_job'));
 
+/** Does calling this tool start a generation that counts against the quota? */
+export function isGenerationTool(name) {
+	return GEN_TOOLS.has(name);
+}
+
 function rpcError(res, status, code, message, extra = {}) {
 	res.statusCode = status;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
@@ -40,7 +45,7 @@ function rpcError(res, status, code, message, extra = {}) {
 // cost-bearing generation quota only to calls that actually generate.
 function callsGenerationTool(body) {
 	const batch = Array.isArray(body) ? body : [body];
-	return batch.some((m) => m && m.method === 'tools/call' && GEN_TOOLS.has(m?.params?.name));
+	return batch.some((m) => m && m.method === 'tools/call' && isGenerationTool(m?.params?.name));
 }
 
 export function studioHandler({ surface = 'full' } = {}) {

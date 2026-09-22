@@ -336,9 +336,9 @@
 				"SKILL.md",
 				"metadata.json"
 			],
-			"bytes": 5315,
-			"tokens": 1212,
-			"sha256": "2f7e34ed46a4211c454da1461e6b5fdf8e52b6f67e2b5fb2861d45fc0f118631"
+			"bytes": 7496,
+			"tokens": 1757,
+			"sha256": "ec492b7b584b555efb581af6be1c8462c2dfebbd6d01cbb564fd7b7de63984e7"
 		},
 		{
 			"slug": "token-safety-check",

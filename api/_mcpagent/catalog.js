@@ -4,8 +4,9 @@ import addFormats from 'ajv-formats';
 import { buildGettingStartedTool } from '../_lib/mcp-getting-started.js';
 import { toolDefs as walletToolDefs } from './tools.js';
 import { marketplaceToolDefs } from './marketplace-tools.js';
+import { predictionToolDefs } from './predictions-tools.js';
 
-const toolDefs = [...walletToolDefs, ...marketplaceToolDefs];
+const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs];
 
 // Free, public entry point, listed first so discovery clients see it up top.
 // Annotations: a static, local overview built at module load: read-only,
