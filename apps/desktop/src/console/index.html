@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- The console has no network access of its own: every request goes
+		     through the main process. Images are the one exception (agent
+		     thumbnails served over https). -->
+		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" />
+		<title>three.ws</title>
+		<link rel="stylesheet" href="console.css" />
+	</head>
+	<body>
+		<div class="boot" id="boot" aria-busy="true" aria-label="Loading">
+			<div class="boot-mark" aria-hidden="true"></div>
+		</div>
+
+		<section class="signin" id="signin" hidden aria-labelledby="signin-title"></section>
+
+		<div class="app" id="app" hidden>
+			<aside class="side" aria-label="Main">
+				<div class="brand drag">
+					<span class="brand-mark" aria-hidden="true"></span>
+					<span class="brand-name">three.ws</span>
+				</div>
+				<nav class="nav" id="nav">
+					<a class="nav-item" href="#agents" data-view="agents"><span class="ico ico-agents" aria-hidden="true"></span>Agents<kbd>1</kbd></a>
+					<a class="nav-item" href="#chat" data-view="chat"><span class="ico ico-chat" aria-hidden="true"></span>Chat<kbd>2</kbd></a>
+					<a class="nav-item" href="#runs" data-view="runs"><span class="ico ico-runs" aria-hidden="true"></span>Runs<kbd>3</kbd></a>
+					<a class="nav-item" href="#wallet" data-view="wallet"><span class="ico ico-wallet" aria-hidden="true"></span>Wallet<kbd>4</kbd></a>
+					<a class="nav-item" href="#notifications" data-view="notifications"><span class="ico ico-bell" aria-hidden="true"></span>Notifications<span class="badge" id="unread" hidden></span><kbd>5</kbd></a>
+					<a class="nav-item" href="#editors" data-view="editors"><span class="ico ico-code" aria-hidden="true"></span>Editors<kbd>6</kbd></a>
+					<a class="nav-item" href="#settings" data-view="settings"><span class="ico ico-gear" aria-hidden="true"></span>Settings<kbd>7</kbd></a>
+				</nav>
+				<div class="update-pill" id="update-pill" hidden></div>
+				<button type="button" class="account" id="account" aria-label="Account settings"></button>
+			</aside>
+			<main class="main" id="view" tabindex="-1"></main>
+		</div>
+
+		<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+		<script type="module" src="app.js"></script>
+	</body>
+</html>
