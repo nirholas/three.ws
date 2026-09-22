@@ -647,6 +647,7 @@ const appConfig = {
 				materialize: resolve(__dirname, 'pages/materialize.html'),
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
 				'smart-home-join': resolve(__dirname, 'pages/smart-home-join.html'),
+				'cli-authorize': resolve(__dirname, 'pages/cli-authorize.html'),
 				'smart-home-plan': resolve(__dirname, 'pages/smart-home-plan.html'),
 				'smart-home-privacy': resolve(__dirname, 'pages/smart-home-privacy.html'),
 				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),

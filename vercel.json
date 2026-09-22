@@ -2235,6 +2235,10 @@
 			"dest": "/smart-home-satellite.html"
 		},
 		{
+			"src": "/cli/authorize/?",
+			"dest": "/cli-authorize.html"
+		},
+		{
 			"src": "/smart-home/plan/?",
 			"dest": "/smart-home-plan.html"
 		},
@@ -4967,6 +4971,13 @@
 		{
 			"src": "/api/bazaar/context",
 			"dest": "/api/bazaar/context.js"
+		},
+		{
+			"src": "/settings/api-keys/?",
+			"headers": {
+				"Location": "/dashboard/api"
+			},
+			"status": 301
 		},
 		{
 			"src": "/settings",

@@ -4,15 +4,12 @@
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
-import { logAudit } from '../_lib/audit.js';
-import { randomToken, sha256 } from '../_lib/crypto.js';
+import { normalizeKeyScopes, mintApiKey } from '../_lib/api-keys.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { z } from 'zod';
-
-const ALLOWED_SCOPES = new Set(['avatars:read', 'avatars:write', 'avatars:delete', 'profile', 'memory:read', 'memory:write', 'agents:read', 'agents:write', 'herald:announce']);
 
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(80),
@@ -54,8 +51,7 @@ export default wrap(async (req, res) => {
 
 	// Dedupe so "avatars:read avatars:read" stores one grant, not two: the stored
 	// string is rendered verbatim as scope chips in the dashboard key table.
-	const requestedScopes = [...new Set(body.scope.split(/\s+/).filter(Boolean))];
-	const invalid = requestedScopes.filter((s) => !ALLOWED_SCOPES.has(s));
+	const { scopes: requestedScopes, invalid } = normalizeKeyScopes(body.scope);
 	if (invalid.length)
 		return error(res, 400, 'validation_error', `unknown scopes: ${invalid.join(', ')}`);
 	// zod's .default() only fires on an absent field, so an explicit "" or "   "
@@ -67,27 +63,17 @@ export default wrap(async (req, res) => {
 	if (!requestedScopes.length)
 		return error(res, 400, 'validation_error', 'scope must name at least one permission');
 
-	const raw = `sk_${body.environment}_${randomToken(28)}`;
-	const hash = await sha256(raw);
-	const prefix = raw.slice(0, 12);
 	const expires = body.expires_in_days
 		? new Date(Date.now() + body.expires_in_days * 86400 * 1000).toISOString()
 		: null;
 
-	const [row] = await sql`
-		insert into api_keys (user_id, name, prefix, token_hash, scope, expires_at)
-		values (${user.id}, ${body.name}, ${prefix}, ${hash}, ${requestedScopes.join(' ')}, ${expires})
-		returning id, name, prefix, scope, expires_at, created_at
-	`;
-	// Issuing a long-lived credential belongs in the same trail as revoking one:
-	// without it the audit log can say a key died but not that it was ever born.
-	// Never the secret or its hash, only the id, prefix, and granted scope.
-	logAudit({
+	const { row, secret } = await mintApiKey({
 		userId: user.id,
-		action: 'create_api_key',
-		resourceId: row.id,
-		meta: { prefix, scope: row.scope, environment: body.environment },
+		name: body.name,
+		scopes: requestedScopes,
+		expiresAt: expires,
+		environment: body.environment,
 		req,
 	});
-	return json(res, 201, { key: { ...row, secret: raw } });
+	return json(res, 201, { key: { ...row, secret } });
 });

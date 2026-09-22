@@ -14,6 +14,16 @@ function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
 }
 
+// Every 401 from a hosted MCP server tells a person reading it how to fix it
+// with one command. An MCP client runs its own OAuth off the WWW-Authenticate
+// header and ignores these fields; a developer looking at a raw 401 in curl or
+// a client log gets the answer instead of a trip through the docs.
+export const SETUP_HINT = Object.freeze({
+	command: 'npx three-ws setup',
+	message: 'Run `npx three-ws setup` to sign in and wire three.ws into your MCP client in one step.',
+	docs: 'https://three.ws/docs/cli',
+});
+
 export function send401(res, msg) {
 	const resource = env.MCP_RESOURCE;
 	res.statusCode = 401;
@@ -22,7 +32,7 @@ export function send401(res, msg) {
 		`Bearer resource_metadata=${quoteString(`${env.APP_ORIGIN}/.well-known/oauth-protected-resource`)}, resource=${quoteString(resource)}`,
 	);
 	res.setHeader('content-type', 'application/json; charset=utf-8');
-	res.end(JSON.stringify({ error: 'unauthorized', error_description: msg }));
+	res.end(JSON.stringify({ error: 'unauthorized', error_description: msg, setup: SETUP_HINT }));
 }
 
 // MCP clients speaking Streamable HTTP MUST advertise SSE support in Accept
@@ -81,8 +91,11 @@ export async function sendAuthChallenge(res, { req, resourceUrl, requirements, c
 	// build402Body's defaults, used by the main /api/mcp server.
 	// build402Body is async (it signs per-accept offer receipts), so await it —
 	// stringifying the unresolved Promise shipped an empty `{}` envelope before.
-	const body = await build402Body({ resourceUrl, accepts: requirements, ...(challenge || {}) });
-	const headerValue = paymentRequiredHeaderValue(body);
+	const envelope = await build402Body({ resourceUrl, accepts: requirements, ...(challenge || {}) });
+	const headerValue = paymentRequiredHeaderValue(envelope);
+	// The setup hint rides only on the 401 a protocol client receives; the 402
+	// stays the exact x402 envelope that payment tooling and audits parse.
+	const body = isProtocolClient ? { ...envelope, setup: SETUP_HINT } : envelope;
 	if (headerValue) res.setHeader('PAYMENT-REQUIRED', headerValue);
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');

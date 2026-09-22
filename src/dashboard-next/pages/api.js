@@ -23,7 +23,7 @@ import { requireUser, get, post, del, put, esc, relTime, ApiError } from '../api
 import { apiFetch } from '../../api.js';
 import { errorStateHTML, emptyStateHTML, skeletonHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 
-// Scopes accepted by /api/keys — match api/keys/index.js ALLOWED_SCOPES exactly.
+// Scopes accepted by /api/keys: match API_KEY_SCOPES in api/_lib/api-keys.js exactly.
 const SCOPES = [
 	{ value: 'avatars:read',   label: 'avatars:read',   note: 'List, fetch, and stream avatars' },
 	{ value: 'avatars:write',  label: 'avatars:write',  note: 'Create or modify avatars' },
@@ -34,6 +34,10 @@ const SCOPES = [
 	{ value: 'agents:read',    label: 'agents:read',    note: 'Read your agents and their identities' },
 	{ value: 'agents:write',   label: 'agents:write',   note: 'Create, update, and register agents' },
 	{ value: 'herald:announce', label: 'herald:announce', note: 'Post announcements through the Herald' },
+	{ value: 'wallet:read',    label: 'wallet:read',    note: 'See your agent wallet balance and spending caps' },
+	{ value: 'wallet:write',   label: 'wallet:write',   note: 'Spend USDC from your agent wallet, within your caps' },
+	{ value: 'services:write', label: 'services:write', note: 'Publish paid services that earn USDC to your agent wallet' },
+	{ value: 'inference',      label: 'inference',      note: 'Call the OpenAI-compatible /api/v1 endpoint, billed to your credits' },
 ];
 
 const EXPIRY_OPTIONS = [

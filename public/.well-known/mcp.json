@@ -4,6 +4,11 @@
 	"description": "The 3D agent economy: generate, rig, and animate 3D avatars and worlds; pay and get paid per call with x402 (USDC on Solana and Base); read live crypto market and on-chain intelligence.",
 	"website": "https://three.ws",
 	"documentation": "https://three.ws/docs/mcp",
+	"setup": {
+		"command": "npx three-ws setup",
+		"description": "One command signs you in (OAuth or API key), writes these servers into Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes, and verifies each with a live tools/list.",
+		"documentation": "https://three.ws/docs/cli"
+	},
 	"registry": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas",
 	"x402Catalog": "https://three.ws/.well-known/x402.json",
 	"agentCard": "https://three.ws/.well-known/agent-card.json",

@@ -18,6 +18,14 @@ import { filterRegisterableScope } from '../_lib/oauth-scopes.js';
 
 // ── authorize ─────────────────────────────────────────────────────────────────
 
+// RFC 8252 §7.3: for a loopback IP redirect the authorization server MUST allow
+// any port at request time, because a native app (the `three-ws` CLI, a desktop
+// client) binds whatever ephemeral port the OS hands it and cannot know it when
+// it registers. Exact port matching forced such a client to re-register on every
+// login and burn the per-IP registration budget doing it. Only the IP literals
+// qualify: `localhost` can resolve somewhere else, so it keeps exact matching.
+const LOOPBACK_IP_HOSTS = new Set(['127.0.0.1', '[::1]']);
+
 function redirectUriMatches(requested, registered) {
 	let reqUrl;
 	try { reqUrl = new URL(requested); } catch { return false; }
@@ -25,7 +33,9 @@ function redirectUriMatches(requested, registered) {
 	return registered.some((entry) => {
 		let regUrl;
 		try { regUrl = new URL(entry); } catch { return false; }
-		return reqUrl.protocol === regUrl.protocol && reqUrl.host === regUrl.host && reqUrl.port === regUrl.port && reqUrl.pathname === regUrl.pathname;
+		if (reqUrl.protocol !== regUrl.protocol || reqUrl.hostname !== regUrl.hostname || reqUrl.pathname !== regUrl.pathname) return false;
+		if (reqUrl.protocol === 'http:' && LOOPBACK_IP_HOSTS.has(regUrl.hostname)) return true;
+		return reqUrl.port === regUrl.port;
 	});
 }
 

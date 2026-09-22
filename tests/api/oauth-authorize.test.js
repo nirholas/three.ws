@@ -237,6 +237,34 @@ describe('GET /api/oauth/authorize — client and redirect_uri', () => {
 		expect(status).toBe(400);
 		expect(tryParseJson(body).error).toBe('invalid_redirect_uri');
 	});
+
+	// RFC 8252 §7.3: native apps (the desktop console) pick an ephemeral port.
+	it('accepts any port on a registered loopback IP redirect', async () => {
+		sqlState.queue.push([{ ...VALID_CLIENT, redirect_uris: ['http://127.0.0.1/callback'] }]);
+		const params = new URLSearchParams(VALID_QS);
+		params.set('redirect_uri', 'http://127.0.0.1:53127/callback');
+		const { status, location } = await invoke({ url: `/api/oauth/authorize?${params}` });
+		expect(status).toBe(302);
+		expect(location).toContain('/login');
+	});
+
+	it('keeps the loopback path and host exact while relaxing the port', async () => {
+		sqlState.queue.push([{ ...VALID_CLIENT, redirect_uris: ['http://127.0.0.1/callback'] }]);
+		const params = new URLSearchParams(VALID_QS);
+		params.set('redirect_uri', 'http://127.0.0.1:53127/other');
+		const { status, body } = await invoke({ url: `/api/oauth/authorize?${params}` });
+		expect(status).toBe(400);
+		expect(tryParseJson(body).error).toBe('invalid_redirect_uri');
+	});
+
+	it('keeps the port exact for localhost, whose resolution the app does not control', async () => {
+		sqlState.queue.push([{ ...VALID_CLIENT, redirect_uris: ['http://localhost/callback'] }]);
+		const params = new URLSearchParams(VALID_QS);
+		params.set('redirect_uri', 'http://localhost:53127/callback');
+		const { status, body } = await invoke({ url: `/api/oauth/authorize?${params}` });
+		expect(status).toBe(400);
+		expect(tryParseJson(body).error).toBe('invalid_redirect_uri');
+	});
 });
 
 // ── Unauthenticated flow → bounce to login ────────────────────────────────

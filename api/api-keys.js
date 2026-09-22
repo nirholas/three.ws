@@ -6,8 +6,9 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { parse } from './_lib/validate.js';
 import { z } from 'zod';
+import { API_KEY_SCOPES } from './_lib/api-keys.js';
 
-const ALLOWED_SCOPES = new Set(['avatars:read', 'avatars:write', 'avatars:delete', 'profile', 'memory:read', 'memory:write', 'agents:read', 'agents:write', 'herald:announce']);
+const ALLOWED_SCOPES = new Set(API_KEY_SCOPES);
 
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(80),

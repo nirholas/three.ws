@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Authorize the three-ws CLI · three.ws</title>
+	<meta name="description" content="Approve a sign-in from the three-ws command line. Check the code matches your terminal, choose what the new API key may do, and the CLI finishes setup on its own." />
+	<link rel="canonical" href="https://three.ws/cli/authorize" />
+	<meta name="robots" content="noindex, follow" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="Authorize the three-ws CLI · three.ws" />
+	<meta property="og:description" content="Approve a sign-in from the three-ws command line and pick what the new API key may do." />
+	<meta property="og:url" content="https://three.ws/cli/authorize" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/src/cli-authorize.css" />
+</head>
+<body>
+	<main class="cla-wrap" id="main">
+		<header class="cla-hero">
+			<p class="cla-eyebrow">Command line</p>
+			<h1 class="cla-title">Sign in the three-ws CLI</h1>
+			<p class="cla-lede">
+				A terminal asked to connect to your three.ws account. Approving creates an API key that
+				only that terminal receives, once. You can revoke it any time from
+				<a href="/dashboard/api">your API keys</a>.
+			</p>
+		</header>
+
+		<!-- One live region the controller (src/cli-authorize.js) owns. The skeleton
+		     is the shape of the approval card so the page does not jump. -->
+		<div id="cla-root" aria-live="polite" aria-busy="true">
+			<section class="cla-card">
+				<div class="cla-skeleton" style="height:1.1rem;width:14rem"></div>
+				<div class="cla-skeleton" style="height:2.6rem;width:16rem;margin-top:1rem"></div>
+				<div class="cla-skeleton" style="height:0.85rem;width:100%;margin-top:1.4rem"></div>
+				<div class="cla-skeleton" style="height:0.85rem;width:80%;margin-top:0.6rem"></div>
+				<div class="cla-skeleton" style="height:2.6rem;margin-top:1.6rem"></div>
+			</section>
+		</div>
+
+		<noscript>
+			<section class="cla-card">
+				<h2 class="cla-card-title">JavaScript is required here</h2>
+				<p class="cla-muted">Approving a sign-in reads it from your account, so this page needs JavaScript. Your terminal keeps waiting: turn JavaScript on and open the link again.</p>
+			</section>
+		</noscript>
+
+		<p class="cla-foot">Did not run <code>npx three-ws</code> yourself? Deny it. Nobody at three.ws will ever ask you for a code.</p>
+	</main>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/cli-authorize.js"></script>
+</body>
+</html>

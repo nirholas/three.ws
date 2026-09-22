@@ -2543,3 +2543,30 @@ create index if not exists agent_memories_x_seed_consent
 -- The X OAuth callback never supplied social_connections.scopes, which is NOT
 -- NULL with no default, so every X connect died before writing a row.
 alter table social_connections alter column scopes set default '';
+
+-- ── CLI device links ─────────────────────────────────────────────────────────
+-- `three-ws login --device` (api/cli/[action].js, /cli/authorize). The CLI keeps
+-- the device code; only its sha256 is stored. An approved row mints one API key
+-- on the next poll and becomes `consumed`, so the key is delivered exactly once.
+-- Full rationale: api/_lib/migrations/20260922130000_cli_link_requests.sql.
+create table if not exists cli_link_requests (
+	id                uuid primary key default gen_random_uuid(),
+	device_code_hash  text not null unique,
+	user_code         text not null unique,
+	client_name       text not null,
+	hostname          text,
+	requested_scope   text not null,
+	granted_scope     text,
+	user_id           uuid references users(id) on delete cascade,
+	status            text not null default 'pending'
+	                  check (status in ('pending', 'approved', 'denied', 'consumed')),
+	api_key_id        uuid references api_keys(id) on delete set null,
+	created_ip        text,
+	created_at        timestamptz not null default now(),
+	expires_at        timestamptz not null,
+	decided_at        timestamptz,
+	consumed_at       timestamptz,
+	last_polled_at    timestamptz
+);
+create index if not exists cli_link_requests_expires_idx on cli_link_requests (expires_at);
+create index if not exists cli_link_requests_user_idx on cli_link_requests (user_id) where user_id is not null;

@@ -631,6 +631,16 @@ export const limits = {
 		getLimiter('auth:ip', { limit: 50, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
 	registerIp: (ip) =>
 		getLimiter('register:ip', { limit: 5, window: '1 h', critical: true, degradeToMemory: true }).limit(ip),
+	// `three-ws login` device links (api/cli/[action].js). Starting a link is
+	// unauthenticated, so it is capped per IP: 20 per 10 min covers a developer
+	// retrying across several machines behind one NAT and stops a script from
+	// flooding the table with codes. Polling is keyed on the device code itself
+	// and clears one poll every three seconds for the full ten-minute life of a
+	// code; anything faster is answered `slow_down` by the handler first.
+	cliLinkIp: (ip) =>
+		getLimiter('cli:link:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	cliPoll: (deviceHash) =>
+		getLimiter('cli:poll', { limit: 240, window: '10 m', local: true }).limit(deviceHash),
 	// Open inference network (api/nodes/*). Node registration is an idempotent
 	// upsert an operator runs once per boot, so it gets a tight per-IP ceiling.
 	// The poll loop and result submission are the node's steady-state traffic:
