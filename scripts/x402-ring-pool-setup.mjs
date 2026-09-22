@@ -35,9 +35,9 @@ const opt = (n, d) => { const p = args.find((a) => a.startsWith(`--${n}=`)); ret
 const size = Number(opt('size', process.env.X402_RING_POOL_SIZE || 0)) || 0;
 
 async function main() {
-	const { poolCount, growPoolToTarget, ringPoolTargetSize } = await import('../api/_lib/x402/pool.js');
+	const { poolCount, poolFundedCount, poolClaimFloors, growPoolToTarget, ringPoolTargetSize } = await import('../api/_lib/x402/pool.js');
 	const {
-		poolSolTargetLamports, poolUsdcTargetAtomic,
+		poolSolTargetLamports, poolUsdcTargetAtomic, poolUsdcFloorAtomic,
 	} = await import('../api/_lib/x402/pipelines/ring-pool-fund.js');
 
 	const target = size > 0 ? size : ringPoolTargetSize();
@@ -63,7 +63,12 @@ async function main() {
 
 	const before = await poolCount();
 	if (flag('status')) {
-		console.log(`ring pool: ${before} enabled wallet(s). target=${target || '(unset)'}.`);
+		// "funded" is what the tick's claim would actually hand out: recorded SOL
+		// over the claim floor, recorded USDC over the pool floor, read recently.
+		const floors = poolClaimFloors();
+		const funded = await poolFundedCount(undefined, { minUsdcAtomic: poolUsdcFloorAtomic() });
+		console.log(`ring pool: ${before} enabled wallet(s), ${funded} funded (>= ${floors.minSolLamports} lamports and >= ${(poolUsdcFloorAtomic() / 1e6).toFixed(2)} USDC, balances read within ${floors.maxBalanceAgeMinutes} min). target=${target || '(unset)'}.`);
+		if (before && !funded) console.log('No wallet is claimable yet: the ring keeps paying from the seed payer until ring-pool-fund has moved SOL + USDC into the pool.');
 		return;
 	}
 

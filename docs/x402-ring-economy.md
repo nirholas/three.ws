@@ -929,10 +929,22 @@ one-time, reclaimable ATA rent.
   `treasury-sweepback` never enumerates them. This is the same class of bug that
   used to close the treasury's USDC ATA every run (see the box below) — it cannot
   recur across 1,000 pool wallets because they are never in the sweepback set.
-- **Rotation.** `claimNextPayer()` atomically claims the least-recently-used enabled
-  wallet (`FOR UPDATE SKIP LOCKED`, so concurrent ticks never collide), and the ring
-  tick passes it per-settle via the shared driver's `buyerFor` hook. An empty or
-  unavailable pool falls back to the seed payer, so the ring never stalls.
+- **Rotation, funded wallets only.** `claimNextPayer()` atomically claims the
+  least-recently-used enabled wallet (`FOR UPDATE SKIP LOCKED`, so concurrent ticks
+  never collide), and the ring tick passes it per-call via the shared driver's
+  `buyerFor` hook together with the price of that call. A wallet is eligible only
+  when its **last recorded balances** cover it: SOL at or above
+  `X402_RING_POOL_CLAIM_MIN_SOL_LAMPORTS` (default 20,000, a few self-pay settles),
+  USDC at or above the call price (the ring-settle price for the carrier, the
+  $0.02 cheap-call reservation otherwise), and a record no older than
+  `X402_RING_POOL_BALANCE_MAX_AGE_MINUTES` (default 30). The claim debits the
+  record by the price plus a fee estimate so a wallet is not handed out twice
+  before the funder re-reads it. A pool with no eligible wallet (empty, freshly
+  minted, or a funder that has stopped running) returns nothing and the tick pays
+  from the seed payer, so the ring never stalls and never submits a settle from a
+  wallet that cannot pay. That gate exists because growing the pool to 2,000 fresh
+  wallets on 2026-09-22 with the old balance-blind claim handed the tick empty
+  wallets on its first 20 claims, and every one of those settles failed simulation.
 - **Funding.** `ring-pool-fund` (120s cooldown) reads all pool balances in
   **batches** (`getMultipleAccountsInfo`, ≤100/call) and tops up in **batched**
   transactions: SOL from the sponsor/master, USDC from the treasury, each below a
@@ -940,7 +952,20 @@ one-time, reclaimable ATA rent.
   a handful of transactions per run, not one per wallet. Recirculation, not spend —
   it never consumes the daily cap. The pure decision is `planPoolFunding()`
   (unit-tested); the effectful execution batches and records each move to
-  `x402_ring_ledger` as `kind='fund'`.
+  `x402_ring_ledger` as `kind='fund'`. Two more things every run does:
+  it **trims the plan to what the funders can pay** (`trimToFunderCapacity()`,
+  pure and unit-tested: SOL top-ups, new-ATA rent and tx fees share the sponsor's
+  balance above `X402_SPONSOR_SOL_FLOOR_LAMPORTS`, USDC comes from the treasury's
+  ATA, and the neediest-first head is kept while the tail is skipped and logged as
+  `pool_fund_underfunded`), so an empty master never burns doomed transactions;
+  and it **records every wallet's balances** (`recordPoolBalances()`, one
+  `unnest` round trip for the whole pool, applied after this run's moves) into
+  `x402_ring_pool.last_sol_lamports` / `last_usdc_atomic` /
+  `balances_checked_at` (migration `20260922230000`), which is what the claim
+  above reads. `node scripts/x402-ring-pool-setup.mjs --status` prints the minted
+  count and the funded count side by side, and `GET /api/x402-ring?action=status`
+  exposes the same under `pool` (`total`, `funded_for_cheap_call`,
+  `funded_for_settle`).
 
 **Turning it on.**
 
@@ -960,7 +985,8 @@ gcloud run services update three-ws-api --region us-central1 \
 (target), `X402_RING_POOL_SOL_FLOOR_LAMPORTS` / `_TARGET_LAMPORTS` (default
 0.008 / 0.012 SOL), `X402_RING_POOL_USDC_FLOOR_ATOMIC` / `_TARGET_ATOMIC` /
 `_CEIL_ATOMIC` (default $0.50 / $2 / $4), `X402_RING_POOL_FUND_MAX_PER_RUN`
-(default 60).
+(default 60), `X402_RING_POOL_CLAIM_MIN_SOL_LAMPORTS` (default 20,000) and
+`X402_RING_POOL_BALANCE_MAX_AGE_MINUTES` (default 30) for the funded-only claim.
 
 > ### Fixed 2026-07-17 — the treasury-sweepback rent churn
 >

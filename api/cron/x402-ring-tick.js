@@ -448,10 +448,23 @@ export default wrapCron(async (req, res) => {
 	// never stalls. Pool wallets are inside ringAllowedAddresses(), so the onAccept
 	// allowlist gate and the leak scanner classify them internal.
 	const usePool = ringPoolEnabled();
+	let poolClaims = 0;
+	let poolFallbacks = 0;
 	const payCtx = {
 		buyer: payer, conn, blockhash, mintInfo,
 		...(usePool
-			? { buyerFor: async () => { const c = await claimNextPayer(sql).catch(() => null); return c?.keypair || payer; } }
+			? {
+				buyerFor: async (ep) => {
+					// The claim only hands back a wallet whose recorded balances cover
+					// THIS call, so an unfunded pool falls through to the seed payer
+					// instead of producing settles that fail simulation.
+					const minUsdcAtomic = ep === RING_SETTLE_ENDPOINT ? ringSettlePriceAtomic : CHEAP_RESERVATION_ATOMIC;
+					const c = await claimNextPayer(sql, { minUsdcAtomic }).catch(() => null);
+					if (c?.keypair) { poolClaims += 1; return c.keypair; }
+					poolFallbacks += 1;
+					return payer;
+				},
+			}
 			: {}),
 	};
 	// Bounded-concurrency execution (ring-tick-exec.js): the settle carrier runs
@@ -492,12 +505,14 @@ export default wrapCron(async (req, res) => {
 		run_id: runId, tick_seq: tickSeq, settle_tick: plan.isSettleTick,
 		degraded: pbp.degraded, calls, paid, errors, spent_usdc: (spent / 1e6).toFixed(4),
 		payer: payer.publicKey.toBase58(),
+		pool_enabled: usePool, pool_claims: poolClaims, pool_fallbacks: poolFallbacks,
 	});
 
 	return json(res, 200, {
 		ok: true,
 		run_id: runId,
 		tick_seq: tickSeq,
+		pool: { enabled: usePool, claims: poolClaims, fallbacks: poolFallbacks },
 		settle_tick: plan.isSettleTick,
 		...(pbp.degraded ? { degraded: true, reason: 'settle_unaffordable' } : {}),
 		calls,

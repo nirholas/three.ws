@@ -19,6 +19,14 @@
 //   • Secrets never live in env. Each key is secret-box-encrypted at rest
 //     (WALLET_ENCRYPTION_KEY + random per-record salt), decrypted only in-process
 //     for the moment it signs.
+//   • Funded-only rotation. The funder (pipelines/ring-pool-fund.js) records every
+//     wallet's last on-chain SOL + USDC here on each run, and claimNextPayer()
+//     only draws a wallet whose recorded balances cover the call it is about to
+//     pay. A freshly minted pool is all zeros, so until the funder has moved
+//     money the claim returns null and the tick keeps paying from the seed payer.
+//     Without this gate, growing the pool to 2,000 wallets on 2026-09-22 handed
+//     the tick empty wallets on its first 20 claims and every one of those
+//     settles failed simulation.
 
 import { Keypair } from '@solana/web3.js';
 import { encryptSecret, decryptSecret } from '../secret-box.js';
@@ -26,6 +34,29 @@ import { sql as defaultSql } from '../db.js';
 import { logger } from '../usage.js';
 
 const log = logger('x402-ring-pool');
+
+const num = (v, d) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : d; };
+
+/**
+ * SOL a claim assumes the settle will burn. A 1-signature self-pay settle costs
+ * ~5k lamports base + priority fee (the ledger averages ~6.7k), so 10k leaves a
+ * margin without over-reserving; the funder's next balance read corrects it.
+ */
+export const CLAIM_FEE_ESTIMATE_LAMPORTS = 10_000;
+
+/**
+ * Floors a pool wallet must clear to be handed to the tick as a payer.
+ *   minSolLamports: enough for a few self-pay settles, not just one.
+ *   maxBalanceAgeMinutes: a recorded balance older than this is not trusted;
+ *                           the funder refreshes every run (120s cooldown), so a
+ *                           stale row means the funder has not been running.
+ */
+export function poolClaimFloors() {
+	return {
+		minSolLamports: Math.floor(num(process.env.X402_RING_POOL_CLAIM_MIN_SOL_LAMPORTS, 20_000)),
+		maxBalanceAgeMinutes: Math.max(1, Math.floor(num(process.env.X402_RING_POOL_BALANCE_MAX_AGE_MINUTES, 30))),
+	};
+}
 
 /** True when the ring should rotate through the payer pool. Off by default. */
 export function ringPoolEnabled() {
@@ -62,6 +93,11 @@ export async function ensurePoolSchema(sql = defaultSql) {
 		)`;
 	await sql`CREATE INDEX IF NOT EXISTS x402_ring_pool_rotation
 		ON x402_ring_pool (enabled, last_used_at NULLS FIRST, pubkey)`;
+	// Last recorded on-chain balances (migration 20260922230000). NULL = never
+	// read, which the claim treats as unfunded.
+	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS last_sol_lamports bigint`;
+	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS last_usdc_atomic bigint`;
+	await sql`ALTER TABLE x402_ring_pool ADD COLUMN IF NOT EXISTS balances_checked_at timestamptz`;
 	_schemaReady = true;
 }
 
@@ -70,6 +106,57 @@ export async function poolCount(sql = defaultSql) {
 	await ensurePoolSchema(sql);
 	const rows = await sql`SELECT count(*)::int AS n FROM x402_ring_pool WHERE enabled = true`;
 	return rows[0]?.n ?? 0;
+}
+
+/**
+ * Count of enabled pool wallets whose recorded balances would clear a claim for
+ * `minUsdcAtomic` right now. This is the number that says whether the rotation
+ * has anything to rotate through, which `poolCount` alone does not.
+ */
+export async function poolFundedCount(sql = defaultSql, { minUsdcAtomic = 0 } = {}) {
+	await ensurePoolSchema(sql);
+	const { minSolLamports, maxBalanceAgeMinutes } = poolClaimFloors();
+	const minUsdc = Math.max(0, Math.floor(Number(minUsdcAtomic) || 0));
+	const rows = await sql`
+		SELECT count(*)::int AS n FROM x402_ring_pool
+		WHERE enabled = true
+		  AND last_sol_lamports >= ${minSolLamports}::bigint
+		  AND last_usdc_atomic >= ${minUsdc}::bigint
+		  AND balances_checked_at > now() - (${maxBalanceAgeMinutes}::int * interval '1 minute')`;
+	return rows[0]?.n ?? 0;
+}
+
+/**
+ * Record fresh on-chain balances for a batch of pool wallets in ONE round trip
+ * (unnest, the same array-parameter shape agent-embeddings uses). The funder
+ * calls this with every wallet it read, after applying the moves it just made,
+ * so the claim always sees a balance at most one funder run old.
+ *
+ * @param {{ pubkey:string, solLamports:number|bigint, usdcAtomic:number|bigint }[]} entries
+ * @returns {Promise<number>} rows updated
+ */
+export async function recordPoolBalances(entries, sql = defaultSql) {
+	if (!entries?.length) return 0;
+	await ensurePoolSchema(sql);
+	const pubkeys = entries.map((e) => e.pubkey);
+	const sols = entries.map((e) => clampAtomic(e.solLamports));
+	const usdcs = entries.map((e) => clampAtomic(e.usdcAtomic));
+	const rows = await sql`
+		UPDATE x402_ring_pool p
+		SET last_sol_lamports = v.sol::bigint,
+		    last_usdc_atomic = v.usdc::bigint,
+		    balances_checked_at = now()
+		FROM unnest(${pubkeys}::text[], ${sols}::text[], ${usdcs}::text[]) AS v(pubkey, sol, usdc)
+		WHERE p.pubkey = v.pubkey
+		RETURNING p.pubkey`;
+	return rows.length;
+}
+
+// A balance as a non-negative integer string, whatever numeric shape it arrived in.
+function clampAtomic(v) {
+	let b;
+	try { b = typeof v === 'bigint' ? v : BigInt(Math.floor(Number(v) || 0)); } catch { b = 0n; }
+	return (b < 0n ? 0n : b).toString();
 }
 
 /** All enabled pool pubkeys (for the funding pipeline's batched balance reads). */
@@ -147,19 +234,35 @@ export async function growPoolToTarget({ target, sql = defaultSql } = {}) {
 /**
  * Atomically claim the next payer wallet on a least-recently-used rotation, bump
  * its usage cursor, and return its decrypted Keypair. Concurrent ticks never pick
- * the same wallet (FOR UPDATE SKIP LOCKED). Returns null when the pool is empty —
- * the caller falls back to the seed payer so the ring never stalls.
+ * the same wallet (FOR UPDATE SKIP LOCKED). Only a FUNDED wallet is eligible: its
+ * last recorded SOL must clear the claim floor, its last recorded USDC must cover
+ * `minUsdcAtomic` (the price of the call about to be paid), and that record must
+ * be fresh. The claim debits the recorded balances by the call price and a fee
+ * estimate so a wallet is not handed out again before the funder re-reads it.
+ * Returns null when no wallet qualifies (empty pool, unfunded pool, or a funder
+ * that has stopped running); the caller falls back to the seed payer so the ring
+ * never stalls.
  *
+ * @param {Function} [sql]
+ * @param {{ minUsdcAtomic?: number }} [opts]
  * @returns {Promise<{ keypair: Keypair, pubkey: string } | null>}
  */
-export async function claimNextPayer(sql = defaultSql) {
+export async function claimNextPayer(sql = defaultSql, { minUsdcAtomic = 0 } = {}) {
 	await ensurePoolSchema(sql);
+	const { minSolLamports, maxBalanceAgeMinutes } = poolClaimFloors();
+	const minUsdc = Math.max(0, Math.floor(Number(minUsdcAtomic) || 0));
 	const rows = await sql`
 		UPDATE x402_ring_pool
-		SET last_used_at = now(), use_count = use_count + 1
+		SET last_used_at = now(),
+		    use_count = use_count + 1,
+		    last_usdc_atomic = last_usdc_atomic - ${minUsdc}::bigint,
+		    last_sol_lamports = last_sol_lamports - ${CLAIM_FEE_ESTIMATE_LAMPORTS}::bigint
 		WHERE pubkey = (
 			SELECT pubkey FROM x402_ring_pool
 			WHERE enabled = true
+			  AND last_sol_lamports >= ${minSolLamports}::bigint
+			  AND last_usdc_atomic >= ${minUsdc}::bigint
+			  AND balances_checked_at > now() - (${maxBalanceAgeMinutes}::int * interval '1 minute')
 			ORDER BY last_used_at NULLS FIRST, pubkey
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED

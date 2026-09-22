@@ -36,7 +36,7 @@ import { logger } from '../../usage.js';
 import { solanaConnection } from '../../solana/connection.js';
 import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from '../../solana/read-guards.js';
 import { USDC_MINT } from '../pay.js';
-import { ringPoolEnabled, listEnabledPubkeys, recoverPoolKeypair, poolCount } from '../pool.js';
+import { ringPoolEnabled, listEnabledPubkeys, recoverPoolKeypair, poolCount, recordPoolBalances } from '../pool.js';
 import { ringAllowedAddresses } from '../ring-allowlist.js';
 
 const log = logger('x402-ring-pool-fund');
@@ -49,6 +49,16 @@ export function poolUsdcFloorAtomic() { return num(process.env.X402_RING_POOL_US
 export function poolUsdcTargetAtomic() { return num(process.env.X402_RING_POOL_USDC_TARGET_ATOMIC, 2_000_000); }   // $2.00
 export function poolUsdcCeilingAtomic() { return num(process.env.X402_RING_POOL_USDC_CEIL_ATOMIC, 4_000_000); }    // $4.00
 export function poolFundMaxPerRun() { return Math.max(1, num(process.env.X402_RING_POOL_FUND_MAX_PER_RUN, 60)); }
+
+/**
+ * SOL the sponsor/master keeps out of pool funding. Defaults to the facilitator's
+ * own settle floor so a funding run can never park the fee wallet under the line
+ * that pauses settlement (the 2026-07-27 failure mode, in pool form).
+ */
+export function funderReserveLamports() { return num(process.env.X402_SPONSOR_SOL_FLOOR_LAMPORTS, 20_000_000); }
+
+const ATA_RENT_LAMPORTS = 2_039_280;  // rent-exempt minimum for a new SPL token account
+const TRANSFER_FEE_LAMPORTS = 5_000;  // one signature's base fee, budgeted per transfer
 
 const SOL_TRANSFERS_PER_TX = 14;   // System transfers batched per funding tx
 const USDC_TRANSFERS_PER_TX = 6;   // (idempotent-create + transferChecked) pairs per tx
@@ -108,10 +118,67 @@ export function planPoolFunding({ pubkeys, solByPubkey, usdcByPubkey, allowed, f
 	return { solNeed, usdcNeed, usdcSweep };
 }
 
+/**
+ * Trim a funding plan to what the funders can actually pay THIS run. A transfer
+ * the funder cannot cover fails simulation, and with a 2,000-wallet pool an empty
+ * master would otherwise burn 40 doomed transactions every two minutes. SOL for
+ * top-ups, new-ATA rent and every tx fee comes out of one budget (the sponsor's
+ * balance above its reserve); USDC comes out of the treasury's ATA. Both plans
+ * keep their neediest-first order, so trimming drops the tail, never the head.
+ *
+ * @param {{ solNeed:{pk:string,add:number}[], usdcNeed:{pk:string,add:bigint}[], ataExists?:Set<string>,
+ *   funderLamports:number, treasuryUsdcAtomic:bigint|number, reserveLamports:number,
+ *   ataRentLamports?:number, feeLamports?:number }} args
+ */
+export function trimToFunderCapacity({
+	solNeed, usdcNeed, ataExists, funderLamports, treasuryUsdcAtomic, reserveLamports,
+	ataRentLamports = ATA_RENT_LAMPORTS, feeLamports = TRANSFER_FEE_LAMPORTS,
+}) {
+	let solBudget = Math.max(0, Number(funderLamports || 0) - Number(reserveLamports || 0));
+	const solKept = [];
+	for (const w of solNeed) {
+		const cost = Math.floor(w.add) + feeLamports;
+		if (cost > solBudget) break;
+		solBudget -= cost;
+		solKept.push(w);
+	}
+	let usdcBudget = BigInt(treasuryUsdcAtomic ?? 0);
+	const usdcKept = [];
+	for (const w of usdcNeed) {
+		const solCost = (ataExists?.has(w.pk) ? 0 : ataRentLamports) + feeLamports;
+		if (solCost > solBudget || BigInt(w.add) > usdcBudget) break;
+		solBudget -= solCost;
+		usdcBudget -= BigInt(w.add);
+		usdcKept.push(w);
+	}
+	return {
+		solNeed: solKept,
+		usdcNeed: usdcKept,
+		skipped: { sol: solNeed.length - solKept.length, usdc: usdcNeed.length - usdcKept.length },
+	};
+}
+
+/**
+ * The balances to record after a run: the fresh on-chain reads plus what this
+ * run just moved, so the claim never waits a whole funder cycle to see a wallet
+ * it just funded. Pure; the funder feeds it the lists of moves that landed.
+ *
+ * @returns {{ pubkey:string, solLamports:number, usdcAtomic:bigint }[]}
+ */
+export function applyFundingMoves({ pubkeys, solByPubkey, usdcByPubkey, solFunded = [], usdcFunded = [], usdcSwept = [] }) {
+	const sol = new Map(solByPubkey);
+	const usdc = new Map(usdcByPubkey);
+	for (const w of solFunded) sol.set(w.pk, Number(sol.get(w.pk) ?? 0) + Math.floor(w.add));
+	for (const w of usdcFunded) usdc.set(w.pk, BigInt(usdc.get(w.pk) ?? 0n) + BigInt(w.add));
+	for (const w of usdcSwept) usdc.set(w.pk, BigInt(usdc.get(w.pk) ?? 0n) - BigInt(w.take));
+	return pubkeys.map((pk) => ({ pubkey: pk, solLamports: Number(sol.get(pk) ?? 0), usdcAtomic: BigInt(usdc.get(pk) ?? 0n) }));
+}
+
 async function readBalances(conn, pubkeys, mint) {
 	const solByPubkey = new Map();
 	const usdcByPubkey = new Map();
 	const ataByPubkey = new Map();
+	const ataExists = new Set();
 	for (const pk of pubkeys) {
 		ataByPubkey.set(pk, getAssociatedTokenAddressSync(mint, new PublicKey(pk), false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
 	}
@@ -126,9 +193,12 @@ async function readBalances(conn, pubkeys, mint) {
 	for (let i = 0; i < ataList.length; i += ACCOUNTS_PER_READ) {
 		const chunk = ataList.slice(i, i + ACCOUNTS_PER_READ);
 		const infos = await conn.getMultipleAccountsInfo(chunk.map((c) => c.ata), 'confirmed');
-		chunk.forEach((c, j) => usdcByPubkey.set(c.pk, infos[j] ? tokenAmountFromAccountData(infos[j].data) : 0n));
+		chunk.forEach((c, j) => {
+			usdcByPubkey.set(c.pk, infos[j] ? tokenAmountFromAccountData(infos[j].data) : 0n);
+			if (infos[j]) ataExists.add(c.pk);
+		});
 	}
-	return { solByPubkey, usdcByPubkey, ataByPubkey };
+	return { solByPubkey, usdcByPubkey, ataByPubkey, ataExists };
 }
 
 async function sendIxs(conn, feePayer, signers, instructions) {
@@ -187,9 +257,9 @@ export async function run(ctx = {}) {
 	const treasuryAta = getAssociatedTokenAddressSync(mint, treasury.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 
 	const pubkeys = await listEnabledPubkeys(sql);
-	const { solByPubkey, usdcByPubkey, ataByPubkey } = await readBalances(conn, pubkeys, mint);
+	const { solByPubkey, usdcByPubkey, ataByPubkey, ataExists } = await readBalances(conn, pubkeys, mint);
 
-	const { solNeed, usdcNeed, usdcSweep } = planPoolFunding({
+	const planned = planPoolFunding({
 		pubkeys, solByPubkey, usdcByPubkey, allowed,
 		floors: {
 			solFloor: poolSolFloorLamports(), solTarget: poolSolTargetLamports(),
@@ -198,8 +268,34 @@ export async function run(ctx = {}) {
 		},
 	});
 
-	const moves = { sol_funded: 0, usdc_funded: 0, usdc_swept: 0, sigs: [] };
+	// Only submit what the funders can pay: read the sponsor's SOL and the
+	// treasury's USDC once, then cut the plan to fit (see trimToFunderCapacity).
+	let funderLamports = 0;
+	let treasuryUsdcAtomic = 0n;
+	try { funderLamports = await conn.getBalance(solFunder.publicKey, 'confirmed'); } catch { funderLamports = 0; }
+	try {
+		const info = await conn.getAccountInfo(treasuryAta, 'confirmed');
+		treasuryUsdcAtomic = info ? tokenAmountFromAccountData(info.data) : 0n;
+	} catch { treasuryUsdcAtomic = 0n; }
+	const { solNeed, usdcNeed, skipped } = trimToFunderCapacity({
+		solNeed: planned.solNeed, usdcNeed: planned.usdcNeed, ataExists,
+		funderLamports, treasuryUsdcAtomic, reserveLamports: funderReserveLamports(),
+	});
+	const usdcSweep = planned.usdcSweep;
+	if (skipped.sol || skipped.usdc) {
+		log.warn('pool_fund_underfunded', {
+			total, need_sol: planned.solNeed.length, need_usdc: planned.usdcNeed.length,
+			skipped_sol: skipped.sol, skipped_usdc: skipped.usdc,
+			funder: solFunder.publicKey.toBase58(), funder_sol: funderLamports / 1e9,
+			treasury_usdc: Number(treasuryUsdcAtomic) / 1e6,
+		});
+	}
+
+	const moves = { sol_funded: 0, usdc_funded: 0, usdc_swept: 0, sigs: [], recorded: 0 };
 	const ledgerRows = [];
+	const solFunded = [];
+	const usdcFunded = [];
+	const usdcSwept = [];
 
 	// ── SOL top-ups (batched System transfers, funded by the sponsor/master) ──────
 	for (let i = 0; i < solNeed.length; i += SOL_TRANSFERS_PER_TX) {
@@ -211,6 +307,7 @@ export async function run(ctx = {}) {
 		const res = await sendIxs(conn, solFunder, [solFunder], ixs);
 		if (res.ok) {
 			moves.sol_funded += chunk.length; moves.sigs.push(res.signature);
+			solFunded.push(...chunk);
 			for (const w of chunk) ledgerRows.push({ from: solFunder.publicKey.toBase58(), to: w.pk, amount: 0, sig: res.signature });
 		} else {
 			log.warn('pool_sol_fund_failed', { count: chunk.length, err: res.err });
@@ -234,6 +331,7 @@ export async function run(ctx = {}) {
 		const res = await sendIxs(conn, solFunder, signers, ixs);
 		if (res.ok) {
 			moves.usdc_funded += chunk.length; moves.sigs.push(res.signature);
+			usdcFunded.push(...chunk);
 			for (const w of chunk) ledgerRows.push({ from: treasury.publicKey.toBase58(), to: w.pk, amount: Number(w.add), sig: res.signature });
 		} else {
 			log.warn('pool_usdc_fund_failed', { count: chunk.length, err: res.err });
@@ -256,6 +354,7 @@ export async function run(ctx = {}) {
 		const res = await sendIxs(conn, solFunder, signers, ixs);
 		if (res.ok) {
 			moves.usdc_swept += 1; moves.sigs.push(res.signature);
+			usdcSwept.push(w);
 			ledgerRows.push({ from: w.pk, to: treasury.publicKey.toBase58(), amount: Number(w.take), sig: res.signature });
 		} else {
 			log.warn('pool_sweep_failed', { pubkey: w.pk, err: res.err });
@@ -270,10 +369,25 @@ export async function run(ctx = {}) {
 		} catch (err) { log.warn('pool_fund_ledger_write_failed', { message: err?.message }); }
 	}
 
-	log.info('ring_pool_funded', { total, ...moves, sigs: moves.sigs.length });
+	// Record what every wallet holds now (reads + this run's moves), so the tick's
+	// claim rotates through funded wallets only. A failed write leaves the previous
+	// record in place, which the claim's freshness window ages out on its own.
+	try {
+		moves.recorded = await recordPoolBalances(
+			applyFundingMoves({ pubkeys, solByPubkey, usdcByPubkey, solFunded, usdcFunded, usdcSwept }),
+			sql,
+		);
+	} catch (err) {
+		log.warn('pool_balance_record_failed', { message: err?.message });
+	}
+
+	log.info('ring_pool_funded', { total, ...moves, sigs: moves.sigs.length, skipped_sol: skipped.sol, skipped_usdc: skipped.usdc });
 	return {
 		success: true, amountAtomic: 0,
-		note: `pool_fund sol=${moves.sol_funded} usdc=${moves.usdc_funded} swept=${moves.usdc_swept}`,
-		moves: { sol_funded: moves.sol_funded, usdc_funded: moves.usdc_funded, usdc_swept: moves.usdc_swept, tx_count: moves.sigs.length },
+		note: `pool_fund sol=${moves.sol_funded} usdc=${moves.usdc_funded} swept=${moves.usdc_swept} recorded=${moves.recorded} underfunded=${skipped.sol + skipped.usdc}`,
+		moves: {
+			sol_funded: moves.sol_funded, usdc_funded: moves.usdc_funded, usdc_swept: moves.usdc_swept,
+			tx_count: moves.sigs.length, recorded: moves.recorded, skipped_sol: skipped.sol, skipped_usdc: skipped.usdc,
+		},
 	};
 }

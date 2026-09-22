@@ -28679,6 +28679,15 @@
 				"fix"
 			],
 			"link": "/club"
+		},
+		{
+			"date": "2026-09-22",
+			"title": "The agent economy now pays from thousands of distinct wallets, and only from ones that hold funds",
+			"summary": "The x402 ring, the closed loop where three.ws agents pay each other for services, has a pool of 2,000 payer wallets to rotate through instead of a single seed wallet, so on-chain activity reflects many participants rather than one cron. Rotation now checks each wallet's recorded SOL and USDC before handing it a payment and falls back to the seed payer when nothing in the pool can cover the call, so a freshly minted or thinly funded pool never produces failed payments. The funder that keeps the pool topped up only submits transfers its own wallets can pay for, and the ring status endpoint reports how many pool wallets are minted and how many are ready to pay.",
+			"tags": [
+				"infra",
+				"improvement"
+			]
 		}
 	]
 }

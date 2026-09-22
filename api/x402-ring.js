@@ -27,6 +27,8 @@ import { solPriceUsd } from './_lib/sol-price.js';
 import { loadSeedKeypair, USDC_MINT } from './_lib/x402/pay.js';
 import { SELF_FACILITATOR_ENABLED, SPONSOR_SOL_FLOOR_LAMPORTS } from './_lib/x402/self-facilitator.js';
 import { validateRingConfig, warnIfRingRoutesExternal } from './_lib/x402/ring-config.js';
+import { ringPoolEnabled, ringPoolTargetSize, poolCount, poolFundedCount } from './_lib/x402/pool.js';
+import { priceFor } from './_lib/x402-prices.js';
 
 const PERIOD_HOURS = { '24h': 24, '7d': 168, '30d': 720 };
 // 'all' is the documented lifetime window; every other key is a windowed report.
@@ -188,6 +190,24 @@ export default wrap(async (req, res) => {
 	warnIfRingRoutesExternal('x402-ring');
 	const configWarnings = validateRingConfig();
 
+	// Payer pool: how many distinct wallets the rotation can actually draw from.
+	// `total` is what was minted; the funded counts are what the claim will hand
+	// out right now (recorded balances covering a cheap call / a full settle).
+	let pool = { enabled: ringPoolEnabled(), target: ringPoolTargetSize(), total: null, funded_for_cheap_call: null, funded_for_settle: null };
+	if (dbOk) {
+		try {
+			const settlePrice = Number(priceFor('ring-settle', '1000000'));
+			const [total, cheap, settle] = await Promise.all([
+				poolCount(sql),
+				poolFundedCount(sql, { minUsdcAtomic: 20_000 }),
+				poolFundedCount(sql, { minUsdcAtomic: settlePrice }),
+			]);
+			pool = { ...pool, total, funded_for_cheap_call: cheap, funded_for_settle: settle };
+		} catch (err) {
+			if (!isDbUnavailableError(err)) throw err;
+		}
+	}
+
 	return json(res, 200, {
 		ok: true,
 		self_hosted_facilitator: SELF_FACILITATOR_ENABLED,
@@ -209,6 +229,7 @@ export default wrap(async (req, res) => {
 				below_floor: sponsorSol != null ? sponsorSol < sol(SPONSOR_SOL_FLOOR_LAMPORTS) : null,
 			},
 		},
+		pool,
 		net: {
 			ring_float_usdc: ringFloat,
 			gross_volume_usdc: settlements.gross_usdc,
