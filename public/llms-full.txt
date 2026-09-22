@@ -245,6 +245,12 @@ Indexable: no (excluded from sitemap)
 
 Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.
 
+### Community Skills
+
+URL: https://three.ws/skills/community
+
+Open-source skills for AI agents: one markdown file of instructions each, contributed by pull request and imported onto any three.ws agent in one click. Search by tag or author, preview the full SKILL.md, then manage your agent's skills and token budget.
+
 ### Community
 
 URL: https://three.ws/community
@@ -781,6 +787,13 @@ The @three-ws/avatar package: embed the platform 3D avatars in any site with a f
 URL: https://three.ws/materialize
 
 Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.
+
+### Authorize the three-ws CLI
+
+URL: https://three.ws/cli/authorize
+Indexable: no (excluded from sitemap)
+
+Approve a sign-in started by npx three-ws in your terminal. Check the code matches, choose what the new API key may do (money-moving permissions are flagged and can be removed), and the CLI finishes setup on its own.
 
 ### Join a home
 

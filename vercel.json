@@ -1035,6 +1035,10 @@
 			"dest": "/drops.html"
 		},
 		{
+			"src": "/skills/community/?$",
+			"dest": "/skills-community.html"
+		},
+		{
 			"src": "/spotlight/?$",
 			"dest": "/spotlight.html"
 		},
@@ -2596,6 +2600,13 @@
 			"status": 301
 		},
 		{
+			"src": "/dashboard/connections/?",
+			"headers": {
+				"Location": "/dashboard/settings#connected-apps"
+			},
+			"status": 302
+		},
+		{
 			"src": "/dashboard/actions",
 			"headers": {
 				"Location": "/dashboard/account"
@@ -3035,6 +3046,18 @@
 		{
 			"src": "/marketplace/(tools|skills|animations|onchain)/([^/]+)",
 			"dest": "/marketplace.html"
+		},
+		{
+			"src": "/marketplace/agents/?",
+			"dest": "/agent-market.html"
+		},
+		{
+			"src": "/marketplace/agents/dashboard/?",
+			"dest": "/agent-market.html"
+		},
+		{
+			"src": "/marketplace/agents/listing/([0-9a-fA-F-]{36})/?",
+			"dest": "/agent-market.html"
 		},
 		{
 			"src": "/marketplace/agents/([^/]+)",

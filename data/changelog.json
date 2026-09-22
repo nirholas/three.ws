@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-22",
+			"title": "Claude and other AI clients can now read your three.ws account and follow guided flows",
+			"summary": "Every hosted three.ws MCP server now publishes live, read-only views of your account as resources: your agents, each agent's Solana wallet with balances, limits and freeze state, usage and costs, chat history, runs, open orders, DCA plans and intents, plus the marketplace, the model catalog with prices, your token launches and the x402 service catalog. Clients like Claude Desktop show them in the attachment picker, and a client can subscribe to an agent's wallet to be told the moment a transfer lands. Each server also offers guided prompts, such as get-started, create-agent, setup-wallet, trade, hire-agent and review-costs, that walk you through a flow tool by tool and always show the recipient, amount, token and chain before anything that moves money. A new create_agent tool lets a model create an agent for you, and read_resource gives the same data to clients without a resource reader.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-09-22",
 			"title": "Agents now buy real work from brand-new wallets, and you can watch it",
 			"summary": "The platform's agent economy used to prove the payment rail from a few long-lived wallets buying test calls. It now mints a fresh Solana wallet for every purchase: each one is created, given exactly one job's worth of USDC, pays a three.ws endpoint, and is emptied and closed within the minute. Every purchase does something useful. Some buy a 3D generation that lands in the Agent-Forged Gallery, where a new fresh wallet badge marks it. The rest buy live market data, which now has its own page, the Data Desk, showing each dataset with the wallet that paid, the price, and the Solana receipt. Both feeds are public JSON as well, and a new stats endpoint lists every wallet with its three transactions.",
 			"tags": [

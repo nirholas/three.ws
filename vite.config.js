@@ -656,6 +656,7 @@ const appConfig = {
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
 				pocket: resolve(__dirname, 'pages/pocket.html'),
 				spotlight: resolve(__dirname, 'pages/spotlight.html'),
+				'skills-community': resolve(__dirname, 'pages/skills-community.html'),
 				'spotlight-entry': resolve(__dirname, 'pages/spotlight-entry.html'),
 				certificate: resolve(__dirname, 'pages/certificate.html'),
 				'print-insert': resolve(__dirname, 'pages/print-insert.html'),
@@ -749,6 +750,7 @@ const appConfig = {
 				'create-review': resolve(__dirname, 'pages/create-review.html'),
 				'import-rpm': resolve(__dirname, 'pages/import-rpm.html'),
 				marketplace: resolve(__dirname, 'pages/marketplace.html'),
+				'agent-market': resolve(__dirname, 'pages/agent-market.html'),
 				'marketplace-walk': resolve(__dirname, 'pages/marketplace-walk.html'),
 				'marketplace-analytics': resolve(__dirname, 'pages/marketplace-analytics.html'),
 				conversions: resolve(__dirname, 'pages/conversions.html'),
@@ -785,6 +787,7 @@ const appConfig = {
 				'agents-live': resolve(__dirname, 'pages/agents-live.html'),
 				monitor: resolve(__dirname, 'pages/monitor.html'),
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
+				'agent-cards': resolve(__dirname, 'pages/agent-cards.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
 				guardian: resolve(__dirname, 'pages/guardian.html'),
 				launches: resolve(__dirname, 'pages/launches.html'),
@@ -1636,6 +1639,8 @@ const appConfig = {
 					'/drops/': resolve(root, 'pages/drops.html'),
 					'/pocket': resolve(root, 'pages/pocket.html'),
 					'/pocket/': resolve(root, 'pages/pocket.html'),
+					'/skills/community': resolve(root, 'pages/skills-community.html'),
+					'/skills/community/': resolve(root, 'pages/skills-community.html'),
 					'/spotlight': resolve(root, 'pages/spotlight.html'),
 					'/spotlight/': resolve(root, 'pages/spotlight.html'),
 					'/cert': resolve(root, 'pages/certificate.html'),
@@ -2236,6 +2241,10 @@ const appConfig = {
 					else if (!filePath && /^\/pay\/c\/[a-z0-9][a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/c/index.html');
 					// /dashboard/x402  → x402 SKU dashboard (already in fileMap)
+					// Whole-agent marketplace: browse, dashboard, listing detail. Must
+					// precede the /marketplace/agents/:id redirect-to-profile rule.
+					else if (!filePath && /^\/marketplace\/agents(\/dashboard|\/listing\/[0-9a-fA-F-]{36})?\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-market.html');
 					else if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))
@@ -2267,6 +2276,9 @@ const appConfig = {
 					// (must precede the /agent/:id and /agents/:id catch-alls below).
 					else if (!filePath && /^\/agents?\/[^/.]+\/wallet\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-wallet.html');
+					// /agents/:id/cards and /agent-cards → Agent Cards (gift + prepaid cards).
+					else if (!filePath && /^\/(agents\/[^/.]+\/cards|agent-cards)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-cards.html');
 					// /agents/:id/classic → the preserved pre-redesign profile layout
 					else if (!filePath && /^\/agents?\/[^/.]+\/classic\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-detail-classic.html');

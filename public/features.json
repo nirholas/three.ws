@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-22T04:19:11.057Z",
+	"generated_at": "2026-09-22T06:14:49.325Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -393,6 +393,16 @@
 					"added": "2026-05-27",
 					"auth": null,
 					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/skills/community",
+					"title": "Community Skills",
+					"description": "Open-source skills for AI agents: one markdown file of instructions each, contributed by pull request and imported onto any three.ws agent in one click. Search by tag or author, preview the full SKILL.md, then manage your agent's skills and token budget.",
+					"added": "2026-09-22",
+					"auth": null,
+					"indexable": true,
 					"tags": [],
 					"showcase": false
 				},
@@ -1270,6 +1280,16 @@
 					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/cli/authorize",
+					"title": "Authorize the three-ws CLI",
+					"description": "Approve a sign-in started by npx three-ws in your terminal. Check the code matches, choose what the new API key may do (money-moving permissions are flagged and can be removed), and the CLI finishes setup on its own.",
+					"added": "2026-09-22",
+					"auth": null,
+					"indexable": false,
 					"tags": [],
 					"showcase": false
 				},

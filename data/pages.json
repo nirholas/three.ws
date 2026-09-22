@@ -341,6 +341,14 @@
 					"added": "2026-05-27"
 				},
 				{
+					"path": "/skills/community",
+					"title": "Community Skills",
+					"description": "Open-source skills for AI agents: one markdown file of instructions each, contributed by pull request and imported onto any three.ws agent in one click. Search by tag or author, preview the full SKILL.md, then manage your agent's skills and token budget.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-09-22"
+				},
+				{
 					"path": "/community",
 					"title": "Community",
 					"description": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
