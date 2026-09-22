@@ -25,6 +25,13 @@
 --                           the linked platform user, inside its ten-minute life,
 --                           can execute it.
 
+-- Paired chats also receive notifications (api/_lib/gateway/notify.js); the
+-- funnel records each delivery under its platform name, so the channel check
+-- accepts discord next to telegram.
+ALTER TABLE notification_events DROP CONSTRAINT IF EXISTS notification_events_channel_check;
+ALTER TABLE notification_events ADD CONSTRAINT notification_events_channel_check
+	CHECK (channel IN ('in_app', 'push', 'email', 'telegram', 'discord', 'avatar'));
+
 ALTER TABLE agent_messages ADD COLUMN IF NOT EXISTS channel text NOT NULL DEFAULT 'api';
 DO $$ BEGIN
 	ALTER TABLE agent_messages ADD CONSTRAINT agent_messages_channel_check CHECK (channel ~ '^[a-z0-9_-]{1,24}$');

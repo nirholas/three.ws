@@ -58,6 +58,11 @@ export const CATEGORIES = [
 		description: 'Someone paid your price to reach you through /knock. Your companion delivers it in person.',
 	},
 	{
+		key: 'mail',
+		label: 'Agent mail',
+		description: 'An email arrived in one of your agents\' inboxes (spam is held back and never notifies).',
+	},
+	{
 		key: 'account',
 		label: 'Account & security',
 		description: 'Withdrawals, payment issues, and security-sensitive events.',
@@ -70,7 +75,7 @@ export const CATEGORIES = [
 	},
 ];
 
-export const CHANNELS = ['in_app', 'push', 'email', 'telegram', 'avatar'];
+export const CHANNELS = ['in_app', 'push', 'email', 'telegram', 'discord', 'avatar'];
 
 /**
  * Channels that always deliver for a category, regardless of preferences.
@@ -126,6 +131,8 @@ const TYPE_CATEGORY = {
 
 	knock_received: 'knock',
 
+	mail_received: 'mail',
+
 	forge_complete: 'creations',
 	forge_failed: 'creations',
 
@@ -157,7 +164,8 @@ export function typeCategoryMap() {
 // no push subscription simply never receives one, so defaulting it on is not
 // spammy. email defaults on only for money + security; off for the higher-
 // frequency social/irl/alerts categories. telegram is always opt-in (needs a
-// linked chat id) so it defaults off.
+// linked chat id) so it defaults off. discord mirrors telegram: both deliver to
+// chats paired through the chat gateways (api/_lib/gateway/notify.js).
 // avatar is the most interruptive channel there is: the corner companion walks
 // on screen and says the line out loud. It defaults on only for the three
 // categories worth stopping the visitor for (money in, a creation that
@@ -165,21 +173,22 @@ export function typeCategoryMap() {
 // higher-frequency ones. Every category stays togglable in the preference
 // center either way.
 const DEFAULTS = {
-	sales:     { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
-	purchases: { in_app: true,  push: true,  email: true,  telegram: false, avatar: false },
-	social:    { in_app: true,  push: true,  email: false, telegram: false, avatar: false },
-	irl:       { in_app: true,  push: true,  email: false, telegram: false, avatar: false },
-	alerts:    { in_app: true,  push: true,  email: false, telegram: true,  avatar: false },
+	sales:     { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
+	purchases: { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: false },
+	social:    { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: false },
+	irl:       { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: false },
+	alerts:    { in_app: true,  push: true,  email: false, telegram: true,  discord: true,  avatar: false },
 	// Only unattended completions notify (api/cron/forge-finalize.js), so email
 	// defaulting on is the feature, not spam: the user left the page and asked
 	// to hear back.
-	creations: { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
+	creations: { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
 	// The companion category exists to be spoken: a message the visitor's own
 	// companion triaged as worth hearing (api/_lib/companion/triage.js). Email
 	// and telegram would just relay what the user already gets in that inbox.
-	companion: { in_app: true,  push: true,  email: false, telegram: false, avatar: true  },
-	knock:     { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
-	account:   { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
+	companion: { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: true  },
+	knock:     { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
+	mail:      { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: false },
+	account:   { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
 };
 
 /** The full default matrix, used to seed the preference-center UI. */
@@ -292,6 +301,7 @@ const PUSH_COPY = {
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],
 	pump_alert:               (p) => ['Market alert 📈', p.summary || 'A token alert you configured just fired'],
 	companion_delivery:       (p) => [p.sender ? `${p.sender} 👋` : 'Your companion 👋', p.line || p.title || 'Something worth your attention just came in'],
+	mail_received:            (p) => [`${p.agent_name || 'Your agent'} got an email ✉️`, `${p.from_name || p.from || 'Someone'}: ${p.subject || '(no subject)'}`],
 	knock_received:           (p) => [p.sender ? `${p.sender} is at your door 🚪` : 'Someone is at your door 🚪', p.title || p.body || 'Someone paid to reach you'],
 	forge_complete:           (p) => ['Your 3D model is ready ✨', p.prompt ? `"${String(p.prompt).slice(0, 80)}" finished generating` : 'Your generation finished. Tap to view it'],
 	forge_failed:             (p) => ['Generation failed ⚠️', p.prompt ? `"${String(p.prompt).slice(0, 80)}" could not be generated. Tap to retry` : 'A generation could not be completed. Tap to retry'],

@@ -20,9 +20,9 @@ import {
 describe('category model', () => {
 	it('exposes the nine display categories and five channels', () => {
 		expect(CATEGORIES.map((c) => c.key)).toEqual([
-			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'companion', 'knock', 'account',
+			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'companion', 'knock', 'mail', 'account',
 		]);
-		expect(CHANNELS).toEqual(['in_app', 'push', 'email', 'telegram', 'avatar']);
+		expect(CHANNELS).toEqual(['in_app', 'push', 'email', 'telegram', 'discord', 'avatar']);
 	});
 
 	it('every category has a label and description for the preference center', () => {

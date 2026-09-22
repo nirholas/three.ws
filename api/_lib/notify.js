@@ -8,7 +8,9 @@
  *      `in_app` channel is on,
  *   3. records a `sent` funnel event for in_app,
  *   4. fans out to Web Push for the categories the user left enabled,
- *   5. records a `sent` event per push delivery.
+ *   5. records a `sent` event per push delivery,
+ *   6. queues Telegram and Discord delivery into the chats the owner paired
+ *      through the chat gateways (api/_lib/gateway/notify.js).
  *
  * Every channel is gated by the user's preference center (api/_lib/notify-prefs)
  * so there is no notification a user can't turn off, including the bell itself:
@@ -31,6 +33,7 @@ import {
 	lockedChannelsFor,
 } from './notify-prefs.js';
 import { sendPushToUser } from './web-push.js';
+import { queueChatNotifications } from './gateway/notify.js';
 
 export function insertNotification(userId, type, payload = {}) {
 	return deliver(userId, type, payload).catch((err) => {
@@ -83,6 +86,14 @@ async function deliver(userId, type, payload) {
 		}
 	} catch (err) {
 		console.error('[notify] push fan-out failed:', err.message);
+	}
+
+	// 6: paired chats. Queued for the gateway worker, gated per channel.
+	try {
+		const queued = await queueChatNotifications({ userId, type, payload, notificationId: id, prefs });
+		for (const [channel, count] of Object.entries(queued)) recordEvent(id, userId, channel, 'sent', { count });
+	} catch (err) {
+		console.error('[notify] chat fan-out failed:', err.message);
 	}
 
 	return { id, in_app: wantsInApp };

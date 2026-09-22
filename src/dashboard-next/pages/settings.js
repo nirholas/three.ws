@@ -2,6 +2,7 @@
 //
 // Consolidates everything that doesn't fit in Account or Monetize:
 //   • Active sessions (list + revoke)
+//   • Connected apps (OAuth grants: desktop console, CLI, editors; revoke)
 //   • Notifications (list + mark-read)
 //   • Avatar storage mode (R2 vs IPFS, pin to IPFS)
 //   • Storage usage (avatar files, animation clips)
@@ -13,6 +14,8 @@
 //   GET  /api/auth/sessions                 { sessions: [...] }
 //   DELETE /api/auth/sessions/:id           revoke one session
 //   DELETE /api/auth/sessions               revoke all others + rotate current
+//   GET  /api/oauth/grants                  { grants: [...] } apps holding a live refresh token
+//   DELETE /api/oauth/grants?client_id=     revoke one app
 //   GET  /api/notifications                 { notifications: [...], unread: N }
 //   POST /api/notifications/read-all
 //   GET  /api/billing/summary               { usage: { total_bytes, avatar_count, ... } }
@@ -111,9 +114,10 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp] =
+	const [sessionsResp, grantsResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
+			safeGet('/api/oauth/grants'),
 			safeGet('/api/notifications?limit=20'),
 			safeGet('/api/notifications/preferences'),
 			safeGet('/api/avatars/mine?limit=24'),
@@ -128,6 +132,7 @@ async function loadContent(host) {
 	host.innerHTML = '';
 	host.appendChild(renderTheme());
 	host.appendChild(renderSessions(sessionsResp, retry));
+	host.appendChild(renderConnectedApps(grantsResp, retry));
 	host.appendChild(renderNotifications(notifResp, retry));
 	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
 	host.appendChild(renderDefaultNetwork(prefs));
@@ -138,6 +143,8 @@ async function loadContent(host) {
 	host.appendChild(renderPrefs(prefs));
 	host.appendChild(renderDataExport());
 	host.appendChild(renderAbout(versionResp));
+	// The OAuth consent screen and three.ws Desktop link here to revoke an app.
+	if (location.hash === '#connected-apps') document.getElementById('connected-apps')?.scrollIntoView({ block: 'start' });
 }
 
 // Returns { ok, data } so callers can tell a genuine fetch failure (show an
@@ -256,6 +263,74 @@ function renderSessions(resp, onRetry) {
 	return panel;
 }
 
+// ── Connected apps ─────────────────────────────────────────────────────────
+
+const SCOPE_WORDS = {
+	profile: 'profile', offline_access: 'stay signed in', 'agents:read': 'read agents', 'agents:write': 'edit agents',
+	'avatars:read': 'read avatars', 'avatars:write': 'edit avatars', 'avatars:delete': 'delete avatars',
+	'memory:read': 'read memory', 'memory:write': 'write memory', 'wallet:read': 'read wallets', 'wallet:write': 'spend from wallets',
+	'services:write': 'sell services', 'home:read': 'read home', 'home:act': 'control home', 'feedback:read': 'read feedback',
+};
+
+function renderConnectedApps(resp, onRetry) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+	panel.id = 'connected-apps';
+	panel.setAttribute('aria-label', 'Connected apps');
+	panel.innerHTML = `
+		<div class="set-panel-head">
+			<div>
+				<div class="dn-panel-title">Connected apps</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Apps you signed in with three.ws: the desktop app, the CLI, and coding clients using your MCP tools. Revoking stops an app within an hour, when its current access expires.</div>
+			</div>
+		</div>
+		<div data-slot="grants-list"></div>
+	`;
+	const listHost = panel.querySelector('[data-slot="grants-list"]');
+	if (!resp.ok) {
+		listHost.innerHTML = errorStateHTML({ title: "Couldn't load connected apps", body: 'We couldn’t reach the sign-in service. Check your connection and try again.' });
+		attachRetry(listHost, onRetry);
+		return panel;
+	}
+	const render = (grants) => {
+		if (!grants.length) {
+			listHost.innerHTML = emptyStateHTML({ icon: '', title: 'No connected apps', body: 'When you sign in to three.ws Desktop, the CLI, or an editor over MCP, it appears here.', compact: true });
+			return;
+		}
+		listHost.innerHTML = grants.map((g) => `
+			<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--nxt-stroke);flex-wrap:wrap" data-client-id="${esc(g.client_id)}">
+				<div style="flex:1;min-width:200px">
+					<div style="font-size:13.5px;color:var(--nxt-ink);font-weight:500">${esc(g.name)}${g.software ? ` <span style="color:var(--nxt-ink-fade);font-weight:400;font-family:${MONO};font-size:11.5px">${esc(g.software)}</span>` : ''}</div>
+					<div style="font-size:12px;color:var(--nxt-ink-fade);margin-top:3px">
+						Can ${esc(g.scopes.map((sc) => SCOPE_WORDS[sc] || sc).join(', '))} · used ${esc(relTime(g.last_used_at))} · authorized ${esc(relTime(g.authorized_at))}
+					</div>
+				</div>
+				<button class="dn-btn danger" data-action="revoke-grant" data-id="${esc(g.client_id)}" data-name="${esc(g.name)}" style="padding:5px 10px;font-size:12px">Revoke</button>
+			</div>
+		`).join('');
+		listHost.querySelectorAll('[data-action="revoke-grant"]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				if (!confirm(`Revoke ${btn.dataset.name}? It will need to sign in again.`)) return;
+				btn.disabled = true;
+				btn.textContent = 'Revoking…';
+				try {
+					await del(`/api/oauth/grants?client_id=${encodeURIComponent(btn.dataset.id)}`);
+					toast(`${btn.dataset.name} revoked`);
+					grants = grants.filter((g) => g.client_id !== btn.dataset.id);
+					render(grants);
+				} catch (err) {
+					toast(err?.message || 'Failed to revoke');
+					btn.disabled = false;
+					btn.textContent = 'Revoke';
+				}
+			});
+		});
+	};
+	let grants = resp.data?.grants || [];
+	render(grants);
+	return panel;
+}
+
 // ── Notifications ──────────────────────────────────────────────────────────
 
 function renderNotifications(resp, onRetry) {
@@ -341,10 +416,11 @@ function renderNotifications(resp, onRetry) {
 // api/_lib/notify.js checks this before sending push/email, so a toggle here
 // takes effect on the very next event, not just in the UI.
 
-const CHANNEL_LABEL = { in_app: 'In-app', push: 'Push', email: 'Email', telegram: 'Telegram', avatar: 'Avatar' };
+const CHANNEL_LABEL = { in_app: 'In-app', push: 'Push', email: 'Email', telegram: 'Telegram', discord: 'Discord', avatar: 'Avatar' };
 // One line of help per channel, shown under the table, because "Avatar" is not
 // self-explanatory the way Push and Email are.
 const CHANNEL_HINT = {
+	telegram: 'Telegram and Discord: delivered to the chats you paired with your agent, where you can reply in place. Pair a chat at /settings/connections.',
 	avatar: 'Avatar: your companion walks on screen and says it out loud while you are on the site. Turn it off for this browser only from the "Turn off" control in its bubble.',
 };
 
@@ -371,14 +447,14 @@ function renderNotificationPrefs(resp, onRetry) {
 
 	const body = resp.data || {};
 	const categories = Array.isArray(body.categories) ? body.categories : [];
-	const channels = Array.isArray(body.channels) ? body.channels : ['in_app', 'push', 'email', 'telegram', 'avatar'];
+	const channels = Array.isArray(body.channels) ? body.channels : ['in_app', 'push', 'email', 'telegram', 'discord', 'avatar'];
 	const matrix = body.prefs?.categories || {};
 	const subscribedDevices = body.push?.subscribed_devices ?? 0;
 
 	panel.innerHTML = `
 		<div style="margin-bottom:14px">
 			<div class="dn-panel-title">Notification preferences</div>
-			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel. Account and security events always stay in your bell so nothing important is silently lost, but you can still quiet their push, email, Telegram and avatar announcements.</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel. Account and security events always stay in your bell so nothing important is silently lost, but you can still quiet their push, email, Telegram, Discord and avatar announcements.</div>
 		</div>
 		${!categories.length ? emptyStateHTML({
 			icon: '',
@@ -407,12 +483,16 @@ function renderNotificationPrefs(resp, onRetry) {
 									// non-interactive rather than as a toggle that does nothing.
 									const locked = (cat.lockedChannels || []).includes(ch);
 									const on = locked || (matrix?.[cat.key]?.[ch] ?? false);
-									const noTelegram = ch === 'telegram' && !body.prefs?.telegram_chat_id;
+									// Chat channels need somewhere to deliver: a chat paired at
+									// /settings/connections (or, for Telegram, a legacy chat id).
+									const paired = body.gateways || {};
+									const noTelegram = (ch === 'telegram' && !body.prefs?.telegram_chat_id && !paired.telegram)
+										|| (ch === 'discord' && !paired.discord);
 									const disabled = locked || noTelegram;
 									const title = locked
 										? 'Always on: account and security events are kept in your bell'
 										: noTelegram
-											? 'Link a Telegram chat id to enable'
+											? `Pair a ${CHANNEL_LABEL[ch]} chat at /settings/connections to enable`
 											: '';
 									return `
 										<td style="padding:10px;text-align:center">

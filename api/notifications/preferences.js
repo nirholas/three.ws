@@ -51,9 +51,17 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const prefs = await resolvePrefs(user.id);
-		const [pushRow] = await sql`
-			select count(*)::int as count from push_subscriptions where user_id = ${user.id}
-		`;
+		const [[pushRow], chats] = await Promise.all([
+			sql`select count(*)::int as count from push_subscriptions where user_id = ${user.id}`,
+			// Chats paired through the chat gateways (/settings/connections). The
+			// telegram and discord channels deliver there, so the matrix enables
+			// those columns once a chat with notifications on exists.
+			sql`select platform, count(*)::int as count from gateway_links
+			    where user_id = ${user.id} and revoked_at is null and notify = true
+			    group by platform`.catch(() => []),
+		]);
+		const gateways = { telegram: 0, discord: 0 };
+		for (const r of chats) gateways[r.platform] = r.count;
 		return json(res, 200, {
 			categories: CATEGORIES,
 			channels: CHANNELS,
@@ -63,6 +71,7 @@ export default wrap(async (req, res) => {
 			type_categories: typeCategoryMap(),
 			prefs,
 			push: { subscribed_devices: pushRow?.count ?? 0 },
+			gateways,
 		});
 	}
 

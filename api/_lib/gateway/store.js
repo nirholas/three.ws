@@ -283,3 +283,31 @@ export async function finishPreview(id, status, result) {
 		UPDATE gateway_previews SET status = ${status}, result = ${JSON.stringify(result || {})}::jsonb
 		WHERE id = ${id}`;
 }
+
+/**
+ * Expire every live preview past its deadline and return what the sweeper
+ * needs to strip its buttons: the message ref and the chat's platform.
+ */
+export async function expireDuePreviews({ limit = 50 } = {}) {
+	return sql`
+		WITH due AS (
+			SELECT id FROM gateway_previews
+			WHERE status = 'pending' AND expires_at <= now()
+			ORDER BY expires_at
+			LIMIT ${limit}
+		)
+		UPDATE gateway_previews p
+		SET status = 'expired', decided_at = now()
+		FROM due, gateway_links l
+		WHERE p.id = due.id AND l.id = p.link_id AND p.status = 'pending'
+		RETURNING p.id, p.proposal, p.message_ref, l.platform`;
+}
+
+/** Queue depth for health reporting: open deliveries and the oldest one's age. */
+export async function inboxBacklog() {
+	const [row] = await sql`
+		SELECT count(*)::int AS open,
+		       COALESCE(EXTRACT(EPOCH FROM (now() - min(created_at))), 0)::int AS oldest_s
+		FROM gateway_inbox WHERE status IN ('queued', 'processing')`;
+	return { open: row?.open ?? 0, oldestSeconds: row?.oldest_s ?? 0 };
+}
