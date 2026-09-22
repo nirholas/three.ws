@@ -25,21 +25,26 @@ export async function issueCsrf(userId) {
 // on the live site. Machine-to-machine bearer auth is exempted below regardless.
 const IS_PROD = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
 
-export async function requireCsrf(req, res, userId) {
-	if (!IS_PROD && process.env.CSRF_DISABLED === '1') return true;
+/**
+ * Validate (and consume) the request's CSRF token without writing a response.
+ * Callers with their own error envelope (the v1 agents API) use this; everyone
+ * else uses requireCsrf below.
+ * @returns {Promise<{ ok: true } | { ok: false, code: string, message: string }>}
+ */
+export async function checkCsrf(req, userId) {
+	if (!IS_PROD && process.env.CSRF_DISABLED === '1') return { ok: true };
 
 	// Bearer-token requests are exempt: the token itself is the proof of intent
 	// and bearer tokens aren't auto-attached by browsers like cookies are.
 	const authHeader = req.headers?.authorization || '';
-	if (authHeader.startsWith('Bearer ')) return true;
+	if (authHeader.startsWith('Bearer ')) return { ok: true };
 
 	const sent =
 		req.headers['x-csrf-token'] ||
 		req.headers['X-CSRF-Token'] ||
 		(typeof req.body === 'object' && req.body?._csrf);
 	if (!sent || typeof sent !== 'string') {
-		error(res, 403, 'csrf_missing', 'X-CSRF-Token header required');
-		return false;
+		return { ok: false, code: 'csrf_missing', message: 'X-CSRF-Token header required' };
 	}
 
 	// One-time use, atomically: consume the token in the same statement that
@@ -53,8 +58,14 @@ export async function requireCsrf(req, res, userId) {
 		WHERE token = ${sent} AND user_id = ${userId} AND expires_at > now()
 		RETURNING user_id
 	`;
-	if (!row) {
-		error(res, 403, 'csrf_invalid', 'CSRF token invalid or expired');
+	if (!row) return { ok: false, code: 'csrf_invalid', message: 'CSRF token invalid or expired' };
+	return { ok: true };
+}
+
+export async function requireCsrf(req, res, userId) {
+	const verdict = await checkCsrf(req, userId);
+	if (!verdict.ok) {
+		error(res, 403, verdict.code, verdict.message);
 		return false;
 	}
 	return true;

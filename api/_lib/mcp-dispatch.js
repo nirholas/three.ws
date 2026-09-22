@@ -6,6 +6,8 @@
 import { hasScope } from './auth.js';
 import { recordEvent, logger } from './usage.js';
 import { sanitizeToolError } from './mcp-error-sanitize.js';
+import { handleResourceMethod, RESOURCE_CAPABILITIES } from '../_mcp/resources.js';
+import { handlePromptMethod, PROMPT_CAPABILITIES } from '../_mcp/prompts.js';
 
 export const PROTOCOL_VERSION = '2025-06-18';
 
@@ -49,7 +51,12 @@ function summarize(args) {
 //   catalog      tools/list array (schemas, no handlers)
 //   tools        { [name]: { scope?, handler, validate? } }
 //   logName      logger namespace + usage `server` tag
-export function makeDispatcher({ serverInfo, instructions, catalog, tools, logName }) {
+//   resourceServer  optional id ('mcp-agent' | 'mcp-3d' | 'mcp-bazaar') that
+//                turns on the shared three:// resources and guided prompts
+//                (api/_mcp/resources.js, api/_mcp/prompts.js) for this server.
+//                Servers without one answer the resources/prompts discovery
+//                methods with empty lists.
+export function makeDispatcher({ serverInfo, instructions, catalog, tools, logName, resourceServer = null }) {
 	const log = logger(logName);
 
 	async function onToolCall(params, auth, started, req) {
@@ -123,7 +130,8 @@ export function makeDispatcher({ serverInfo, instructions, catalog, tools, logNa
 					serverInfo,
 					capabilities: {
 						tools: { listChanged: false },
-						resources: { listChanged: false, subscribe: false },
+						resources: resourceServer ? RESOURCE_CAPABILITIES : { listChanged: false, subscribe: false },
+						...(resourceServer ? { prompts: PROMPT_CAPABILITIES } : {}),
 						logging: {},
 					},
 					instructions,
@@ -134,6 +142,16 @@ export function makeDispatcher({ serverInfo, instructions, catalog, tools, logNa
 			if (method === 'tools/list') return ok(id, { tools: catalog });
 			if (method === 'tools/call')
 				return ok(id, await onToolCall(msg.params, auth, started, req));
+			if (resourceServer && typeof method === 'string') {
+				if (method.startsWith('resources/')) {
+					const result = await handleResourceMethod(resourceServer, method, msg.params, auth, req);
+					if (result !== undefined) return ok(id, result);
+				}
+				if (method.startsWith('prompts/')) {
+					const result = handlePromptMethod(resourceServer, catalog, method, msg.params);
+					if (result !== undefined) return ok(id, result);
+				}
+			}
 			if (method === 'resources/list') return ok(id, { resources: [] });
 			if (method === 'resources/templates/list') return ok(id, { resourceTemplates: [] });
 			if (method === 'prompts/list') return ok(id, { prompts: [] });

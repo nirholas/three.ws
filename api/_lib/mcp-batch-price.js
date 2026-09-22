@@ -57,11 +57,22 @@ export function priceBatch(body, { priceForTool, isFreeName }) {
 // catalog before deciding to pay; the catalog is public information anyway
 // (the 402 challenge embeds it in the bazaar extension). tools/call is never
 // a discovery method, so paid work still requires credentials or payment.
+//
+// Resource and prompt discovery is free on the same terms: the catalogs are
+// public, prompts/get only renders static text, and resources/read enforces its
+// own access rules, so an anonymous principal can read only the public
+// resources (three://models, three://marketplace, three://x402/services) and
+// gets a sign-in error for account data.
 const DISCOVERY_METHODS = new Set([
 	'initialize',
 	'tools/list',
 	'ping',
 	'notifications/initialized',
+	'resources/list',
+	'resources/templates/list',
+	'resources/read',
+	'prompts/list',
+	'prompts/get',
 ]);
 
 export function isDiscoveryOnlyBatch(body) {

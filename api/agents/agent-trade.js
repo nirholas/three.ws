@@ -752,51 +752,66 @@ async function handleQuote(req, res, id) {
 	} catch (e) {
 		return boundaryError(res, e);
 	}
+
+	try {
+		return json(res, 200, { data: await previewAgentTrade({ id, userId: auth.userId, meta, input }) });
+	} catch (e) {
+		return boundaryError(res, e);
+	}
+}
+
+/**
+ * Read-only preview of a custodial trade: the same quote, platform fee and
+ * guard chain executeAgentTrade runs, with nothing signed or recorded. Shared by
+ * the HTTP quote route and the MCP trading tools, so a preview a model shows the
+ * owner is computed exactly the way the execute path will judge it.
+ *
+ * Throws a boundary error ({ status, code, message, detail }) on bad input or an
+ * unreachable RPC. A guard refusal is not thrown: it comes back as
+ * `allowed: false` with `blocked_reason`, so the preview can always be shown.
+ */
+export async function previewAgentTrade({ id, userId, meta, input }) {
 	const { side, network, slippagePct } = input;
+	const tradeLimits = getTradeLimits(meta);
 
 	const address = meta.solana_address || null;
-	if (!address) return error(res, 404, 'no_wallet', 'agent has no solana wallet yet — fund it to start trading');
+	if (!address) throw boundary(404, 'no_wallet', 'agent has no solana wallet yet: fund it to start trading');
 	const ownerPk = new PublicKey(address);
 
 	let ctx;
-	try { ctx = await getPumpTradeClient({ network }); } catch { return error(res, 502, 'rpc_error', 'could not connect to the trade RPC — try again'); }
+	try { ctx = await getPumpTradeClient({ network }); } catch { throw boundary(502, 'rpc_error', 'could not connect to the trade RPC, try again'); }
 	const conn = ctx.connection;
 
 	let walletLamports = 0n;
 	try { walletLamports = BigInt(await conn.getBalance(ownerPk, 'confirmed')); } catch { /* preview tolerates */ }
 
-	let prep;
-	try {
-		prep = await quoteTrade({ ctx, side, mintPk: input.mintPk, amount: input.amount, isMax: input.isMax, slippagePct, network, ownerPk });
-	} catch (e) {
-		return boundaryError(res, e);
-	}
+	const prep = await quoteTrade({ ctx, side, mintPk: input.mintPk, amount: input.amount, isMax: input.isMax, slippagePct, network, ownerPk });
 	if (side === 'buy' && prep.lamports != null) {
 		try { prep.usdValue = await lamportsToUsd(prep.lamports); } catch { prep.usdValue = null; }
 	}
 
 	let tradeFee = null;
-	try { tradeFee = await buildAgentTradeFee({ network, payer: ownerPk, userId: auth.userId, side, lamports: side === 'buy' ? prep.lamports : prep.minOutRaw }); } catch { tradeFee = null; }
+	try { tradeFee = await buildAgentTradeFee({ network, payer: ownerPk, userId, side, lamports: side === 'buy' ? prep.lamports : prep.minOutRaw }); } catch { tradeFee = null; }
 	const feeLamports = tradeFee ? BigInt(tradeFee.disclosure.amount) : 0n;
 
 	let blocked = null;
-	try { blocked = await runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId: auth.userId, feeLamports }); } catch { blocked = null; }
+	try { blocked = await runGuards({ id, side, tradeLimits, prep, walletLamports, network, meta, mintPk: input.mintPk, ownerPk, userId, feeLamports }); } catch { blocked = null; }
 
-	return json(res, 200, {
-		data: {
-			side, mint: input.mint, network, venue: prep.venue,
-			slippage_bps: input.slippageBps,
-			price_impact_pct: prep.priceImpactPct,
-			...(side === 'buy'
-				? { sol_in: lamportsToSol(prep.lamports), expected_tokens_out: prep.expectedOutRaw.toString() }
-				: { tokens_in: prep.baseAmount.toString(), token_decimals: prep.decimals, expected_sol_out: lamportsToSol(prep.expectedOutRaw) }),
-			min_out: prep.minOutRaw.toString(),
-			platform_fee: tradeFee ? tradeFee.disclosure : null,
-			wallet_balance_sol: Number(walletLamports) / 1e9,
-			allowed: !blocked,
-			blocked_reason: blocked ? { code: blocked.code, message: blocked.message, detail: blocked.detail } : null,
-		},
-	});
+	return {
+		side, mint: input.mint, network, venue: prep.venue,
+		slippage_bps: input.slippageBps,
+		price_impact_pct: prep.priceImpactPct,
+		...(side === 'buy'
+			? { sol_in: lamportsToSol(prep.lamports), expected_tokens_out: prep.expectedOutRaw.toString() }
+			: { tokens_in: prep.baseAmount.toString(), token_decimals: prep.decimals, expected_sol_out: lamportsToSol(prep.expectedOutRaw) }),
+		min_out: prep.minOutRaw.toString(),
+		usd_value: prep.usdValue ?? null,
+		platform_fee: tradeFee ? tradeFee.disclosure : null,
+		wallet_address: address,
+		wallet_balance_sol: Number(walletLamports) / 1e9,
+		allowed: !blocked,
+		blocked_reason: blocked ? { code: blocked.code, message: blocked.message, detail: blocked.detail } : null,
+	};
 }
 
 // ── limits (read / update) ──────────────────────────────────────────────────

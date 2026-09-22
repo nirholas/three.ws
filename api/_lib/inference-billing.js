@@ -246,12 +246,17 @@ export async function assertInferenceAllowed({ userId, agent = null }) {
 					action: 'raise_budget',
 					method: 'PATCH',
 					path: `/api/agents/${agent.id}`,
-					body: { inferenceBudget: { [window === 'daily' ? 'daily' : 'monthly']: round6(limit * 2) } },
+					body: { inferenceBudget: { [window === 'daily' ? 'daily' : 'monthly']: suggestedBudget(limit, spent) } },
 				},
 			},
 		);
 	}
 	return { balanceUsd: acct.balanceUsd, budget, spend };
+}
+
+/** A raised budget that actually readmits calls: double the old one, and never below 1.5x what is already spent. */
+export function suggestedBudget(limit, spent) {
+	return round6(Math.max(limit * 2, spent * 1.5));
 }
 
 function nextReset(window, now = new Date()) {

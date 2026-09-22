@@ -161,6 +161,16 @@ function priceForRoute(model) {
 	);
 }
 
+/**
+ * List price of a model as `[inputUsdPerMTok, outputUsdPerMTok]`, or null when
+ * the model has no metered price (a free lane or an unpriced id). Used by the
+ * public model catalog (three://models) so it quotes the numbers we meter at.
+ */
+export function modelPrice(model) {
+	const price = priceForRoute(model);
+	return price ? [...price] : null;
+}
+
 // Anthropic prompt-cache multipliers against the model's base INPUT price.
 // A cache write costs more than a plain input token; a cache read costs a
 // tenth. These are ratios, not prices, so they stay correct as list prices

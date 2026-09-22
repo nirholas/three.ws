@@ -21,6 +21,8 @@
 // Claude/paid-track only: NOT reused by the free studio (api/_mcp-studio),
 // which asserts zero wallet/crypto surface in its own catalog test.
 
+import { PublicKey } from '@solana/web3.js';
+
 import { limits } from '../../_lib/rate-limit.js';
 import { getPersona, isPersonaId, personaPublicView } from '../../_lib/persona-store.js';
 import {
@@ -28,7 +30,7 @@ import {
 	sendPersonaUsdc,
 	personaWalletAddress,
 } from '../../_lib/persona-wallet.js';
-import { PERSONA_SPEND_CAPS } from '../../_lib/persona-spend-ledger.js';
+import { PERSONA_SPEND_CAPS, checkPersonaSpend, defaultSessionId } from '../../_lib/persona-spend-ledger.js';
 import { embodimentArtifact } from '../../_lib/embodiment-artifact.js';
 import { buildIdentityCard, summarizeIdentityCard } from '../../_lib/persona-identity-card.js';
 
@@ -172,6 +174,59 @@ async function handlePersonaValueOp(args, auth, { tool, verb }) {
 	};
 }
 
+// The spend-nothing preview behind persona_tip and persona_send: the paying
+// wallet and its live USDC balance, the recipient, and the exact cap verdict the
+// send would reach, without touching a key.
+async function handlePersonaPaymentPreview(args, auth) {
+	await enforce(limits.mcp3dPersonaIdentity, auth);
+	const { record, error } = await loadPersonaOrError(args.persona_id);
+	if (error) return error;
+	const persona = personaPublicView(record);
+	const network = args.network || 'mainnet';
+	const usdc = Number(args.usdc);
+	const from = personaWalletAddress(args.persona_id);
+
+	const blockers = [];
+	let to = null;
+	try {
+		to = new PublicKey(args.to).toBase58();
+	} catch {
+		blockers.push({ code: 'bad_address', message: 'That does not look like a valid Solana address.' });
+	}
+	if (to && to === from) blockers.push({ code: 'self_payment', message: 'A persona cannot pay itself.' });
+
+	const [gate, identity] = await Promise.all([
+		checkPersonaSpend({ personaId: args.persona_id, sessionId: args.session_id || defaultSessionId(args.persona_id), usdc }),
+		getPersonaIdentity(args.persona_id, { network }),
+	]);
+	if (!gate.ok) blockers.push({ code: gate.code, message: gate.message });
+	const balance = identity.balances.usdc;
+	if (balance < usdc) blockers.push({ code: 'insufficient_balance', message: `${persona.name} holds $${balance.toFixed(2)} USDC; this needs $${usdc}.` });
+
+	const preview = {
+		persona_id: args.persona_id,
+		persona_name: persona.name,
+		chain: `solana-${network}`,
+		token: 'USDC',
+		from,
+		to,
+		usdc,
+		balance_usdc: balance,
+		balance_after_usdc: Number((balance - usdc).toFixed(6)),
+		session_spent_usdc: gate.spent_usdc ?? null,
+		session_cap_usdc: PERSONA_SPEND_CAPS.maxPerSessionUsdc,
+		per_call_cap_usdc: PERSONA_SPEND_CAPS.maxPerCallUsdc,
+		would_execute: blockers.length === 0,
+		blockers,
+	};
+	const lines = [
+		`${persona.name} would send $${usdc} USDC on ${network} from ${from} to ${to ?? args.to}.`,
+		`Balance: $${balance.toFixed(2)} USDC now, $${preview.balance_after_usdc.toFixed(2)} after.`,
+		blockers.length ? `It would be refused: ${blockers.map((b) => b.message).join(' ')}` : 'Nothing blocks this transfer.',
+	];
+	return { content: [{ type: 'text', text: lines.join('\n') }], structuredContent: preview };
+}
+
 const VALUE_INPUT_PROPS = {
 	persona_id: { type: 'string', minLength: 8, maxLength: 64, description: 'The persona whose wallet pays.' },
 	to: { type: 'string', minLength: 32, maxLength: 64, description: 'Destination Solana address (USDC associated token account is created if needed).' },
@@ -211,6 +266,29 @@ export const toolDefs = [
 			additionalProperties: false,
 		},
 		handler: handlePersonaIdentity,
+	},
+	{
+		name: 'persona_payment_preview',
+		title: "Preview a USDC payment from a persona's wallet (no funds move)",
+		annotations: READ_ANNOTATIONS,
+		description:
+			"Preview persona_tip or persona_send before it runs: the persona's wallet and live USDC balance, the recipient, " +
+			'the amount, the balance afterwards, the session spend so far against its cap, and every rule that would ' +
+			'refuse the transfer. Moves nothing. Show it to the user, get a clear yes, then call persona_tip or ' +
+			'persona_send with the same persona_id, to and usdc, the returned preview_id and confirm_send: true.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				persona_id: VALUE_INPUT_PROPS.persona_id,
+				to: VALUE_INPUT_PROPS.to,
+				usdc: VALUE_INPUT_PROPS.usdc,
+				session_id: VALUE_INPUT_PROPS.session_id,
+				network: NETWORK_PROP,
+			},
+			required: ['persona_id', 'to', 'usdc'],
+			additionalProperties: false,
+		},
+		handler: handlePersonaPaymentPreview,
 	},
 	{
 		name: 'persona_tip',

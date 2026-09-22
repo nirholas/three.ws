@@ -10,6 +10,8 @@ import { declareMcpDiscovery } from '../_lib/x402/bazaar-helpers.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
 import { TOOL_CATALOG, TOOLS } from './catalog.js';
+import { handleResourceMethod, RESOURCE_CAPABILITIES } from './resources.js';
+import { handlePromptMethod, PROMPT_CAPABILITIES } from './prompts.js';
 
 // Tools any caller may invoke with no OAuth token and no x402 payment.
 //
@@ -26,6 +28,9 @@ const PUBLIC_TOOLS = new Set([
 	'search_catalog',
 	'get_catalog_item',
 	'get_item_source',
+	// The community skills registry is a public, PR-reviewed catalog of
+	// instruction files. Browsing it reads nothing about the caller.
+	'list_available_skills',
 ]);
 
 export function isPublicTool(name) {
@@ -100,9 +105,14 @@ export async function dispatch(msg, auth, req) {
 			});
 		if (method === 'tools/call')
 			return ok(id, await onToolCall(msg.params, auth, started, req));
-		if (method === 'resources/list') return ok(id, { resources: [] });
-		if (method === 'resources/templates/list') return ok(id, { resourceTemplates: [] });
-		if (method === 'prompts/list') return ok(id, { prompts: [] });
+		if (typeof method === 'string' && method.startsWith('resources/')) {
+			const result = await handleResourceMethod('mcp', method, msg.params, auth, req);
+			if (result !== undefined) return ok(id, result);
+		}
+		if (typeof method === 'string' && method.startsWith('prompts/')) {
+			const result = handlePromptMethod('mcp', TOOL_CATALOG, method, msg.params);
+			if (result !== undefined) return ok(id, result);
+		}
 		if (method === 'logging/setLevel') return ok(id, {});
 
 		throw rpcError(-32601, `method not found: ${method}`);
@@ -135,7 +145,8 @@ async function onInitialize(_params, _auth) {
 		serverInfo: SERVER_INFO,
 		capabilities: {
 			tools: { listChanged: false },
-			resources: { listChanged: false, subscribe: false },
+			resources: RESOURCE_CAPABILITIES,
+			prompts: PROMPT_CAPABILITIES,
 			logging: {},
 		},
 		instructions: [
@@ -143,6 +154,8 @@ async function onInitialize(_params, _auth) {
 			"Use list_my_avatars to see the user's avatars and render_avatar to get embeddable viewer HTML.",
 			'Public avatars can be discovered via search_public_avatars.',
 			'Give an agent persistent memory: remember stores a memory for an agent you own, recall retrieves the most relevant memories for a query, and forget deletes one.',
+			'Live account views are published as three:// resources (three://me, three://agents, three://agents/{id}/wallet and more); read_resource returns the same data for clients without a resource reader.',
+			'Guided prompts (get-started, create-agent, trade, review-costs and others) walk a user through a flow tool by tool.',
 		].join(' '),
 	};
 }

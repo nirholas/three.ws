@@ -25,6 +25,7 @@ import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import { hasSkillAccess } from '../_lib/skill-access.js';
 import { isUuid } from '../_lib/validate.js';
 import { patronChatContext, patronStanding, listPerks, entitledPerks } from '../_lib/patronage.js';
+import { agentSkillsForPrompt } from '../_lib/agent-custom-skills.js';
 
 const ALLOWED_MODELS = new Set([
 	'claude-haiku-4-5-20251001',
@@ -175,7 +176,11 @@ export default wrap(async (req, res) => {
 	// skills are premium and whether THIS caller has already unlocked them, so it
 	// can use owned skills freely and offer to sell the ones the user lacks.
 	const ownershipBlock = await buildSkillOwnershipBlock(agent, userId, patronSkills);
-	const systemPrompt = [basePrompt, patronBlock, ownershipBlock].filter(Boolean).join('\n\n');
+	// The agent's own prompt-only custom skills (api/_lib/agent-custom-skills.js):
+	// same install order and budget as /api/chat, so an agent reached over MCP
+	// follows the skills its owner installed. Enrichment, never a failed reply.
+	const { block: agentSkillsBlock } = await agentSkillsForPrompt(agent.id).catch(() => ({ block: '' }));
+	const systemPrompt = [basePrompt, agentSkillsBlock, patronBlock, ownershipBlock].filter(Boolean).join('\n\n');
 
 	const started = Date.now();
 	let result;

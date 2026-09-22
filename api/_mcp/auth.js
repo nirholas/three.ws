@@ -9,6 +9,7 @@ import {
 	resolveResourceUrl,
 } from '../_lib/x402-spec.js';
 import { sendX402Error } from './payments.js';
+import { streamSubscriptions, dropSubscriptions } from './resources.js';
 
 function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
@@ -228,12 +229,16 @@ export async function authenticateRequest(
 // so the discovery challenge advertised the SAME rail twice at two DIFFERENT
 // amounts. A buyer reading accepts[] could not tell which one the endpoint
 // actually charges, and it is the first array a marketplace reviewer opens.
+//
+// `resourceServer` ('mcp' | 'mcp-agent' | 'mcp-3d' | 'mcp-bazaar') turns an
+// authenticated GET into the server-to-client event stream that carries
+// notifications/resources/updated for the caller's resources/subscribe calls
+// (api/_mcp/resources.js). Without it, an authenticated GET answers 405.
 export async function handleSse(
 	req,
 	res,
-	{ resourcePath = '/api/mcp', challenge, extraAccepts = [], x402Amount = null, paymentStatus = null } = {},
+	{ resourcePath = '/api/mcp', challenge, extraAccepts = [], x402Amount = null, paymentStatus = null, resourceServer = null } = {},
 ) {
-	// We don't hold long-lived server→client subscriptions yet; respond politely.
 	const bearer = extractBearer(req);
 	// Unauthenticated callers without an X-PAYMENT header get a 401 +
 	// WWW-Authenticate so OAuth clients (claude.ai) can discover the auth
@@ -254,12 +259,27 @@ export async function handleSse(
 	}
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
 	if (!auth) return send401(res, 'missing or invalid access token');
+	const wantsStream = String(req.headers?.accept || '').includes('text/event-stream');
+	if (resourceServer && req.method === 'GET' && wantsStream) {
+		return streamSubscriptions(resourceServer, req, res, auth);
+	}
 	res.statusCode = 405;
-	res.setHeader('allow', 'POST, DELETE');
+	res.setHeader('allow', resourceServer ? 'GET, POST, DELETE' : 'POST, DELETE');
 	res.end();
 }
 
-export function handleTerminate(req, res) {
+// A DELETE also releases the caller's resource subscriptions on `resourceServer`
+// (keyed by session id when sent, otherwise by credential), so a client that
+// tears down cleanly stops being polled for.
+export async function handleTerminate(req, res, { resourceServer = null } = {}) {
+	if (resourceServer) {
+		const auth = await authenticateBearer(extractBearer(req), { audience: env.MCP_RESOURCE });
+		if (auth) {
+			await dropSubscriptions(resourceServer, auth, req).catch((err) =>
+				console.warn('[mcp] subscription cleanup failed', resourceServer, err?.message),
+			);
+		}
+	}
 	// This server is stateless per request and never issues an Mcp-Session-Id, so
 	// any session id a caller presents names a session that does not exist here.
 	// The Streamable HTTP transport says a server MUST answer 404 for a session

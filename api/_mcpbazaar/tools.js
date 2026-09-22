@@ -11,6 +11,7 @@ import {
 	filterByNetwork,
 	filterByMaxPrice,
 } from '../_lib/x402/bazaar-client.js';
+import { readResourceToolResult } from '../_mcp/resources.js';
 
 function rpcError(code, message, data) {
 	const e = new Error(message);
@@ -43,8 +44,9 @@ function usdcToAtomic(usd) {
 }
 
 // Project a normalized bazaar item down to the fields a client actually needs,
-// dropping the bulky `raw` facilitator payload.
-function slim(it) {
+// dropping the bulky `raw` facilitator payload. Also shapes the
+// three://x402/services resource (api/_mcp/resources.js).
+export function slim(it) {
 	return {
 		type: it.type,
 		resource: it.resource,
@@ -312,6 +314,34 @@ export const toolDefs = [
 					prices,
 				},
 			};
+		},
+	},
+	{
+		name: 'read_resource',
+		title: 'Read a three:// resource',
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: false,
+		},
+		description:
+			'Read a live three.ws resource by URI: three://x402/services (the x402 service catalog), three://marketplace (paid agent skills and agent services) and three://me. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				uri: {
+					type: 'string',
+					maxLength: 300,
+					description:
+						'A three:// resource URI, for example three://me or three://agents/<agentId>/wallet. Omit to list every resource you can read here.',
+				},
+				format: { type: 'string', enum: ['json', 'markdown'], default: 'json' },
+			},
+			additionalProperties: false,
+		},
+		async handler(args, auth, req) {
+			return readResourceToolResult('mcp-bazaar', args, auth, req);
 		},
 	},
 ];

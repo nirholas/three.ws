@@ -22,7 +22,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -325,6 +325,10 @@
 		{
 			"src": "/agent-wallet/",
 			"dest": "/agent-wallet.html"
+		},
+		{
+			"src": "/agent-cards/?",
+			"dest": "/agent-cards.html"
 		},
 		{
 			"src": "/wallet",
@@ -729,6 +733,18 @@
 		{
 			"src": "/api/agents/([^/]+)/tiers",
 			"dest": "/api/agents/[id]/tiers?id=$1"
+		},
+		{
+			"src": "/api/v1/agents/([^/]+)/cards(/.*)?",
+			"dest": "/api/v1/agent-cards?id=$1"
+		},
+		{
+			"src": "/api/agents/([^/]+)/custom-skills/([^/]+)",
+			"dest": "/api/agents/[id]/custom-skills?id=$1&skill_id=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/custom-skills",
+			"dest": "/api/agents/[id]/custom-skills?id=$1"
 		},
 		{
 			"src": "/api/agents/([^/]+)/bundles/([^/]+)",
@@ -5116,6 +5132,10 @@
 			"dest": "/agent-wallet.html"
 		},
 		{
+			"src": "/agents/[^/.]+/cards/?",
+			"dest": "/agent-cards.html"
+		},
+		{
 			"src": "/agents/([^/.]+)/classic/?",
 			"dest": "/agent-detail-classic.html"
 		},
@@ -5246,6 +5266,14 @@
 		{
 			"src": "/api/plugins/([^/]+)",
 			"dest": "/api/plugins/[action]?id=$1"
+		},
+		{
+			"src": "/api/skills/community/([^/]+)",
+			"dest": "/api/skills/community?slug=$1"
+		},
+		{
+			"src": "/api/skills/community",
+			"dest": "/api/skills/community"
 		},
 		{
 			"src": "/api/skills/categories",
@@ -6213,6 +6241,10 @@
 		{
 			"path": "/api/cron/payment-session-sweep",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/marketplace-escrow-sweep",
+			"schedule": "*/2 * * * *"
 		},
 		{
 			"path": "/api/cron/three-market-refresh",

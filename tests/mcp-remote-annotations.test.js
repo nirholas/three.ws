@@ -31,6 +31,8 @@ const CATALOGS = [
 //                   covers and alarms in the physical world
 //   home_call     - calls an arbitrary Home Assistant service, so it can unlock a
 //                   door or open a garage
+//   delete_custom_skill - permanently removes a skill an owner may have written
+//                   by hand; gated on confirm_delete
 //
 // The two home tools are the reason this list is not just about money. Marking
 // them non-destructive would tell every MCP client that opening someone's front
@@ -40,7 +42,7 @@ const CATALOGS = [
 // that reaches an actuator belongs inside it.
 const DESTRUCTIVE_TOOLS = new Set([
 	'delete_avatar', 'forget', 'pay_and_call', 'persona_tip', 'persona_send',
-	'home_activate', 'home_call',
+	'home_activate', 'home_call', 'delete_custom_skill',
 ]);
 
 // Internal/spec-only fields that must never leak into the tools/list wire

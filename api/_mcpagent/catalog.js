@@ -2,7 +2,10 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { buildGettingStartedTool } from '../_lib/mcp-getting-started.js';
-import { toolDefs } from './tools.js';
+import { toolDefs as walletToolDefs } from './tools.js';
+import { marketplaceToolDefs } from './marketplace-tools.js';
+
+const toolDefs = [...walletToolDefs, ...marketplaceToolDefs];
 
 // Free, public entry point, listed first so discovery clients see it up top.
 // Annotations: a static, local overview built at module load: read-only,
@@ -29,8 +32,25 @@ const gettingStarted = {
 
 const allDefs = [gettingStarted, ...toolDefs];
 
-// Schema objects for tools/list; strip internal fields (scope, handler).
-export const TOOL_CATALOG = allDefs.map(({ scope: _s, handler: _h, ...schema }) => schema);
+// Schema objects for tools/list; strip internal fields (scope, handler). The
+// tool-policy fields (docs/prompts/03: group, tier, confirmFlag, previewTool)
+// travel under _meta so clients can read which calls move funds and what must
+// run first, without polluting the MCP tool shape.
+export const TOOL_CATALOG = allDefs.map(({ scope: _s, handler: _h, group, tier, confirmFlag, previewTool, ...schema }) =>
+	group
+		? {
+			...schema,
+			_meta: {
+				'three.ws/policy': {
+					group,
+					tier,
+					...(confirmFlag ? { confirm_flag: confirmFlag } : {}),
+					...(previewTool ? { preview_tool: previewTool } : {}),
+				},
+			},
+		}
+		: schema,
+);
 
 const ajv = new Ajv({ allErrors: true, useDefaults: true, coerceTypes: true, strict: false });
 addFormats(ajv);

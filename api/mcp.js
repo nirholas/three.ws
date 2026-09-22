@@ -1,8 +1,9 @@
 // MCP server — Streamable HTTP transport (MCP 2025-06-18, JSON-RPC 2.0)
 // POST /api/mcp: tool calls. DELETE /api/mcp: terminate session (stateless, 204).
 // GET /api/mcp serves the OAuth + x402 challenge to an unauthenticated caller so
-// clients can discover how to pay or sign in; there is no server-to-client
-// subscription yet, so an authenticated GET answers 405 with `allow: POST, DELETE`.
+// clients can discover how to pay or sign in. An authenticated GET that accepts
+// text/event-stream opens the server-to-client stream that carries
+// notifications/resources/updated for resources/subscribe (api/_mcp/resources.js).
 import { cors, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js';
@@ -22,8 +23,8 @@ import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,POST,DELETE,OPTIONS', origins: '*' })) return;
 
-	if (req.method === 'GET' || req.method === 'HEAD') return handleSse(req, res);
-	if (req.method === 'DELETE') return handleTerminate(req, res);
+	if (req.method === 'GET' || req.method === 'HEAD') return handleSse(req, res, { resourceServer: 'mcp' });
+	if (req.method === 'DELETE') return handleTerminate(req, res, { resourceServer: 'mcp' });
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
 	// Read + parse the body BEFORE the x402 challenge so we can price the 402 by

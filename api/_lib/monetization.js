@@ -91,7 +91,7 @@ export async function getAvailableBalance(userId, currencyMint = null) {
 				COALESCE(SUM(re.net_amount), 0)::bigint AS earned
 			FROM agent_revenue_events re
 			JOIN agent_identities ai ON ai.id = re.agent_id
-			WHERE ai.user_id = ${userId}
+			WHERE coalesce(re.owner_user_id, ai.user_id) = ${userId}
 			  AND re.currency_mint = ${currencyMint}
 		`
 		: await sql`
@@ -99,7 +99,7 @@ export async function getAvailableBalance(userId, currencyMint = null) {
 				COALESCE(SUM(re.net_amount), 0)::bigint AS earned
 			FROM agent_revenue_events re
 			JOIN agent_identities ai ON ai.id = re.agent_id
-			WHERE ai.user_id = ${userId}
+			WHERE coalesce(re.owner_user_id, ai.user_id) = ${userId}
 		`;
 
 	const [wResult] = currencyMint
@@ -135,14 +135,14 @@ export async function getAvailableBalance(userId, currencyMint = null) {
 				FROM agent_revenue_events re
 				JOIN agent_identities ai ON ai.id = re.agent_id
 				JOIN listing_splits ls ON ls.agent_id = re.agent_id AND ls.skill = re.skill
-				WHERE ai.user_id = ${userId} AND re.currency_mint = ${currencyMint}
+				WHERE coalesce(re.owner_user_id, ai.user_id) = ${userId} AND re.currency_mint = ${currencyMint}
 			`
 			: await sql`
 				SELECT COALESCE(SUM(re.net_amount), 0)::bigint AS amt
 				FROM agent_revenue_events re
 				JOIN agent_identities ai ON ai.id = re.agent_id
 				JOIN listing_splits ls ON ls.agent_id = re.agent_id AND ls.skill = re.skill
-				WHERE ai.user_id = ${userId}
+				WHERE coalesce(re.owner_user_id, ai.user_id) = ${userId}
 			`;
 		const [inRow] = currencyMint
 			? await sql`

@@ -25,6 +25,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
 import { getRedis } from './_lib/redis.js';
 import { resolveBrain, streamBrain, validateMessages, ANON_BRAIN_PROVIDERS } from './brain/chat.js';
+import { agentSkillsForPrompt } from './_lib/agent-custom-skills.js';
 
 export const maxDuration = 120;
 
@@ -62,9 +63,10 @@ export function pickProvider(configured, { authed }) {
  * then layers the live-concierge framing and the platform's $THREE-only rule so
  * the agent always answers in character, spoken-length, and on-policy.
  * @param {{ name?: string, description?: string, persona_prompt?: string, system_prompt?: string }} agent
+ * @param {string} [skillsBlock] the agent's custom-skills section (api/_lib/agent-custom-skills.js)
  * @returns {string}
  */
-export function buildSystemPrompt(agent) {
+export function buildSystemPrompt(agent, skillsBlock = '') {
 	const name = (agent?.name || 'This agent').trim() || 'This agent';
 	const persona = (agent?.persona_prompt || agent?.system_prompt || '').trim();
 	const desc = (agent?.description || '').trim();
@@ -76,6 +78,7 @@ export function buildSystemPrompt(agent) {
 		parts.push(`You are ${name}, an autonomous agent on three.ws.`);
 		if (desc) parts.push(desc);
 	}
+	if (skillsBlock) parts.push(skillsBlock);
 	parts.push(
 		`You are live on your own screen, talking to a visitor who is watching you work on three.ws. ` +
 		`Answer their questions in the first person, in your own voice — concise and conversational, ` +
@@ -276,7 +279,11 @@ export default wrap(async function handleAgentAsk(req, res) {
 		providerKey = DEFAULT_PROVIDER; // report the route actually used in the meta event
 	}
 
-	const system = buildSystemPrompt(agent);
+	// The agent's prompt-only custom skills ride right after its persona, in the
+	// same install order and budget as /api/chat. Enrichment: a store hiccup
+	// answers without them rather than failing the visitor's question.
+	const { block: skillsBlock } = await agentSkillsForPrompt(agent.id).catch(() => ({ block: '' }));
+	const system = buildSystemPrompt(agent, skillsBlock);
 	const prior = await loadThread(agentId, sessionId);
 	let messages;
 	try {

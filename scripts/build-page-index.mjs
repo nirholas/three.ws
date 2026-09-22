@@ -71,7 +71,9 @@ const sections = [...data.sections];
 // Validated hard: a malformed entry should fail the build, not ship garbage
 // to holders.
 const changelogFile = resolve(root, 'data/changelog.json');
-const CHANGELOG_TAGS = new Set(['feature', 'improvement', 'fix', 'sdk', 'infra', 'docs', 'security']);
+// `desktop` marks entries that ship in the desktop app: apps/desktop/scripts/bump-version.mjs
+// collects them into each release's notes.
+const CHANGELOG_TAGS = new Set(['feature', 'improvement', 'fix', 'sdk', 'infra', 'docs', 'security', 'desktop']);
 const curatedEntries = plainDeep(JSON.parse(readFileSync(changelogFile, 'utf8')).entries, 'data/changelog.json');
 // Community delivery keys an entry by date + title (api/_lib/changelog-push.js),
 // so a repeated entry is a repeated Telegram announcement to every subscriber.

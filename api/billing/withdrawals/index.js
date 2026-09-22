@@ -154,7 +154,7 @@ export default wrap(async (req, res) => {
 					join agent_identities ai on ai.id = re.agent_id
 					left join listing_splits ls
 					  on ls.agent_id = re.agent_id and ls.skill = re.skill
-					where ai.user_id = ${user.id}
+					where coalesce(re.owner_user_id, ai.user_id) = ${user.id}
 					  and re.currency_mint = ${currency_mint}
 					  and ls.id is null
 				) + (

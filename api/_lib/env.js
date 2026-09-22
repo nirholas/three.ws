@@ -478,6 +478,23 @@ export const env = {
 		return opt('PERSONA_WALLET_SECRET') || opt('WALLET_ENCRYPTION_KEY') || this.JWT_SECRET;
 	},
 
+	// Master seed for the whole-agent marketplace's per-listing escrow accounts
+	// (api/_lib/agent-market/chain.js): each listing's escrow keypair is
+	// HMAC-SHA256(secret, listing id), so no escrow key is ever stored. Falls back
+	// to WALLET_ENCRYPTION_KEY, never to JWT_SECRET: escrows hold buyers' money,
+	// and a session-secret rotation must never re-derive them elsewhere. Treat as
+	// append-only once a bid is open; every listing stores its escrow address and
+	// refuses to sign when the secret no longer derives it.
+	get AGENT_MARKET_ESCROW_SECRET() {
+		return opt('AGENT_MARKET_ESCROW_SECRET') || opt('WALLET_ENCRYPTION_KEY');
+	},
+
+	// Cluster the whole-agent marketplace escrows and settles on. Mainnet unless
+	// set to 'devnet' (staging only).
+	get AGENT_MARKET_NETWORK() {
+		return opt('AGENT_MARKET_NETWORK', 'mainnet');
+	},
+
 	// ── Agent-to-agent (A2A) autonomous payments ────────────────────────────
 	// Secret that signs Intent Mandates (AP2-style budgeted spend authorizations).
 	// Dedicated by preference; falls back to JWT_SECRET so the feature works in

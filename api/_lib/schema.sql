@@ -2544,6 +2544,169 @@ create index if not exists agent_memories_x_seed_consent
 -- NULL with no default, so every X connect died before writing a row.
 alter table social_connections alter column scopes set default '';
 
+-- ── Agents v1 REST API (migration 20260922130000_agents_v1_api.sql) ──────────
+-- ── lifecycle ────────────────────────────────────────────────────────────────
+-- `running` lets scheduled automations, wallet intents and runs execute.
+-- `stopped` pauses all of them without deleting anything. The wallet-intent
+-- execution context (api/_lib/wallet-intents.js buildExecContext), the
+-- automation engine and the run driver all read this column.
+ALTER TABLE agent_identities ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'running';
+ALTER TABLE agent_identities ADD COLUMN IF NOT EXISTS status_changed_at timestamptz;
+DO $$ BEGIN
+	ALTER TABLE agent_identities ADD CONSTRAINT agent_identities_status_check CHECK (status IN ('running', 'stopped'));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ── runs ─────────────────────────────────────────────────────────────────────
+-- A run is a goal the agent pursues through the server-side tool loop, one
+-- checkpointed step at a time. `checkpoint` holds the AgentRuntime state and
+-- next context between steps so any instance can resume it; `lease_until`
+-- keeps two drivers (the SSE stream and the cron) from stepping it at once.
+CREATE TABLE IF NOT EXISTS agent_runs (
+	id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	agent_id             uuid NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+	user_id              uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	goal                 text NOT NULL,
+	status               text NOT NULL DEFAULT 'queued'
+		CHECK (status IN ('scheduled', 'queued', 'running', 'paused', 'completed', 'failed', 'cancelled', 'budget_exhausted')),
+	model                text,
+	temperature          real,
+	tools_allowed        text[],
+	max_steps            int NOT NULL DEFAULT 12 CHECK (max_steps BETWEEN 1 AND 60),
+	step_count           int NOT NULL DEFAULT 0,
+	budget_credits_usd   numeric(20, 6) NOT NULL DEFAULT 0,
+	budget_usd           numeric(20, 6) NOT NULL DEFAULT 0,
+	spent_credits_usd    numeric(20, 6) NOT NULL DEFAULT 0,
+	spent_usd            numeric(20, 6) NOT NULL DEFAULT 0,
+	schedule_cron        text,
+	scheduled_for        timestamptz,
+	checkpoint           jsonb,
+	result               text,
+	error                text,
+	source               text NOT NULL DEFAULT 'api',
+	automation_id        uuid,
+	trigger_key          text,
+	lease_owner          text,
+	lease_until          timestamptz,
+	cancel_requested_at  timestamptz,
+	created_at           timestamptz NOT NULL DEFAULT now(),
+	updated_at           timestamptz NOT NULL DEFAULT now(),
+	started_at           timestamptz,
+	finished_at          timestamptz
+);
+CREATE INDEX IF NOT EXISTS agent_runs_agent_idx ON agent_runs (agent_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS agent_runs_user_idx ON agent_runs (user_id, created_at DESC);
+-- One run per automation fire: a retried sweep can never start the same run twice.
+CREATE UNIQUE INDEX IF NOT EXISTS agent_runs_trigger_uidx ON agent_runs (automation_id, trigger_key)
+	WHERE automation_id IS NOT NULL AND trigger_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS agent_runs_due_idx ON agent_runs (status, scheduled_for)
+	WHERE status IN ('scheduled', 'queued', 'running');
+
+CREATE TABLE IF NOT EXISTS agent_run_steps (
+	id              bigserial PRIMARY KEY,
+	run_id          uuid NOT NULL REFERENCES agent_runs(id) ON DELETE CASCADE,
+	seq             int NOT NULL,
+	kind            text NOT NULL
+		CHECK (kind IN ('status', 'model_call', 'tool_call', 'tool_result', 'tool_blocked', 'final', 'error')),
+	provider        text,
+	model           text,
+	tool_name       text,
+	input           jsonb,
+	output          jsonb,
+	input_tokens    int,
+	output_tokens   int,
+	cost_micro_usd  bigint,
+	latency_ms      int,
+	created_at      timestamptz NOT NULL DEFAULT now(),
+	UNIQUE (run_id, seq)
+);
+
+-- ── chat history ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS agent_messages (
+	id              bigserial PRIMARY KEY,
+	agent_id        uuid NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+	user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	role            text NOT NULL CHECK (role IN ('user', 'assistant')),
+	content         text NOT NULL,
+	model           text,
+	provider        text,
+	input_tokens    int,
+	output_tokens   int,
+	cost_micro_usd  bigint,
+	charged_usd     numeric(20, 6) NOT NULL DEFAULT 0,
+	free_tier       boolean NOT NULL DEFAULT false,
+	tool_calls      jsonb NOT NULL DEFAULT '[]'::jsonb,
+	signatures      text[] NOT NULL DEFAULT '{}',
+	created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS agent_messages_thread_idx ON agent_messages (agent_id, user_id, id DESC);
+CREATE INDEX IF NOT EXISTS agent_messages_user_day_idx ON agent_messages (user_id, created_at) WHERE role = 'user';
+
+-- ── automations ──────────────────────────────────────────────────────────────
+-- One trigger, one action. Spend and notify actions execute through a backing
+-- wallet intent (trigger_type 'on_automation', never swept on its own) so they
+-- inherit the intent engine's caps, spend policy and custody ledger. The
+-- `agent_prompt` action starts an agent run.
+CREATE TABLE IF NOT EXISTS agent_automations (
+	id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	agent_id        uuid NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+	user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	title           text,
+	trigger_type    text NOT NULL
+		CHECK (trigger_type IN ('price_threshold', 'schedule', 'balance_below', 'tip_received', 'launch_matching', 'graduation', 'whale_buy')),
+	trigger_config  jsonb NOT NULL DEFAULT '{}'::jsonb,
+	action_type     text NOT NULL CHECK (action_type IN ('agent_prompt', 'swap', 'transfer', 'notify')),
+	action_config   jsonb NOT NULL DEFAULT '{}'::jsonb,
+	trigger_once    boolean NOT NULL DEFAULT false,
+	enabled         boolean NOT NULL DEFAULT true,
+	intent_id       uuid,
+	state           jsonb NOT NULL DEFAULT '{}'::jsonb,
+	fire_count      int NOT NULL DEFAULT 0,
+	last_fired_at   timestamptz,
+	last_checked_at timestamptz,
+	last_status     text,
+	last_note       text,
+	source          text NOT NULL DEFAULT 'api',
+	created_at      timestamptz NOT NULL DEFAULT now(),
+	updated_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS agent_automations_agent_idx ON agent_automations (agent_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS agent_automations_live_idx ON agent_automations (trigger_type) WHERE enabled = true;
+
+-- ── link codes ───────────────────────────────────────────────────────────────
+-- An eight-character code pairs a device or chat gateway to an account for ten
+-- minutes. Only the sha256 of the code is stored; redemption is single use.
+CREATE TABLE IF NOT EXISTS account_link_codes (
+	id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	code_hash    text NOT NULL UNIQUE,
+	user_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	agent_id     uuid REFERENCES agent_identities(id) ON DELETE SET NULL,
+	label        text,
+	scopes       text NOT NULL,
+	created_at   timestamptz NOT NULL DEFAULT now(),
+	expires_at   timestamptz NOT NULL,
+	redeemed_at  timestamptz,
+	link_id      uuid
+);
+CREATE INDEX IF NOT EXISTS account_link_codes_user_idx ON account_link_codes (user_id, created_at DESC);
+
+-- A redeemed code becomes a link: which device or gateway identity is paired,
+-- and the API key it was issued (revoking the link revokes the key).
+CREATE TABLE IF NOT EXISTS account_links (
+	id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	user_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	agent_id     uuid REFERENCES agent_identities(id) ON DELETE SET NULL,
+	kind         text NOT NULL,
+	external_id  text,
+	label        text,
+	api_key_id   uuid REFERENCES api_keys(id) ON DELETE SET NULL,
+	created_at   timestamptz NOT NULL DEFAULT now(),
+	last_seen_at timestamptz,
+	revoked_at   timestamptz
+);
+CREATE INDEX IF NOT EXISTS account_links_user_idx ON account_links (user_id) WHERE revoked_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS account_links_external_uidx ON account_links (kind, external_id)
+	WHERE revoked_at IS NULL AND external_id IS NOT NULL;
+
 -- ── CLI device links ─────────────────────────────────────────────────────────
 -- `three-ws login --device` (api/cli/[action].js, /cli/authorize). The CLI keeps
 -- the device code; only its sha256 is stored. An approved row mints one API key
@@ -2570,3 +2733,212 @@ create table if not exists cli_link_requests (
 );
 create index if not exists cli_link_requests_expires_idx on cli_link_requests (expires_at);
 create index if not exists cli_link_requests_user_idx on cli_link_requests (user_id) where user_id is not null;
+
+-- Whole-agent marketplace: listings, escrowed bids, settlement, custody rotation
+-- (migrations/20260922140000_agent_marketplace.sql; docs/agent-marketplace.md).
+create table if not exists agent_listings (
+    id                    uuid primary key default gen_random_uuid(),
+    agent_id              uuid not null references agent_identities(id),
+    seller_user_id        uuid not null references users(id),
+    status                text not null default 'active',
+    -- Buy-now price in USDC atomics (6dp). Null means auction only.
+    ask_usdc_atomics      bigint,
+    -- Optional buy-now price in $THREE atomics.
+    ask_three_atomics     numeric,
+    -- Floor for bids, USDC atomics.
+    min_bid_usdc_atomics  bigint not null,
+    expires_at            timestamptz not null,
+    -- true: the agent wallet's balance goes to the buyer with the agent.
+    -- false: the balance is swept to the seller's payout address first.
+    include_balance       boolean not null default false,
+    -- true: memories, chat and activity history transfer. false: they are
+    -- detached from the agent before the buyer takes ownership.
+    include_history       boolean not null default true,
+    -- Seller's Solana address for sale proceeds and (when excluded) the balance.
+    payout_address        text not null,
+    escrow_address        text not null,
+    note                  text,
+    -- What the listing advertised at creation: skills, persona summary, wallet
+    -- balance, so a buyer can compare it with what actually transferred.
+    snapshot              jsonb not null default '{}'::jsonb,
+    sold_bid_id           uuid,
+    -- Set once the escrow token accounts are closed and their rent returned.
+    escrow_closed_at      timestamptz,
+    closed_at             timestamptz,
+    created_at            timestamptz not null default now(),
+    updated_at            timestamptz not null default now()
+);
+
+do $$
+begin
+    if not exists (select 1 from pg_constraint where conname = 'agent_listings_status_chk') then
+        alter table agent_listings add constraint agent_listings_status_chk
+            check (status in ('active', 'settling', 'sold', 'delisted', 'expired'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'agent_listings_price_chk') then
+        alter table agent_listings add constraint agent_listings_price_chk
+            check (min_bid_usdc_atomics > 0
+                   and (ask_usdc_atomics is null or ask_usdc_atomics >= min_bid_usdc_atomics)
+                   and (ask_three_atomics is null or ask_three_atomics > 0));
+    end if;
+end $$;
+
+-- One live listing per agent: a second would let two buyers win the same agent.
+create unique index if not exists agent_listings_one_live
+    on agent_listings (agent_id)
+    where status in ('active', 'settling');
+create index if not exists agent_listings_browse
+    on agent_listings (status, created_at desc);
+create index if not exists agent_listings_seller
+    on agent_listings (seller_user_id, created_at desc);
+create index if not exists agent_listings_expiry
+    on agent_listings (expires_at)
+    where status = 'active';
+
+create table if not exists agent_listing_bids (
+    id                  uuid primary key default gen_random_uuid(),
+    listing_id          uuid not null references agent_listings(id),
+    bidder_user_id      uuid not null references users(id),
+    kind                text not null default 'bid',          -- bid | buy_now
+    currency            text not null default 'USDC',         -- USDC | THREE
+    amount_atomics      numeric not null,
+    status              text not null default 'awaiting_funds',
+    -- agent_wallet: escrowed by the platform from one of the bidder's agents.
+    -- connected_wallet: the bidder signed the escrow transfer in their wallet.
+    funding_source      text not null,
+    funding_agent_id    uuid references agent_identities(id),
+    -- Where the escrowed funds came from, and so where a refund goes.
+    funding_address     text not null,
+    -- Solana Pay reference key riding the escrow transfer (connected wallet).
+    escrow_reference    text,
+    escrow_signature    text,
+    funded_at           timestamptz,
+    -- Unfunded bids lapse; a signed-but-unsent wallet transaction expires with
+    -- its blockhash long before this.
+    fund_by             timestamptz,
+    decided_at          timestamptz,
+    refund_status       text,
+    refund_signature    text,
+    refund_error        text,
+    refund_attempts     integer not null default 0,
+    -- Exactly-once record of the refund transaction ({signature,
+    -- lastValidBlockHeight}), written before broadcast (chain.js sendLeg).
+    refund_leg          jsonb,
+    -- Lease: an inline refund and the sweep cron never send the same refund.
+    refund_locked_until timestamptz,
+    created_at          timestamptz not null default now(),
+    updated_at          timestamptz not null default now()
+);
+
+do $$
+begin
+    if not exists (select 1 from pg_constraint where conname = 'agent_listing_bids_status_chk') then
+        alter table agent_listing_bids add constraint agent_listing_bids_status_chk
+            check (status in ('awaiting_funds', 'open', 'accepted', 'rejected', 'withdrawn', 'expired'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'agent_listing_bids_refund_chk') then
+        alter table agent_listing_bids add constraint agent_listing_bids_refund_chk
+            check (refund_status is null or refund_status in ('pending', 'sent', 'failed'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'agent_listing_bids_shape_chk') then
+        alter table agent_listing_bids add constraint agent_listing_bids_shape_chk
+            check (amount_atomics > 0
+                   and kind in ('bid', 'buy_now')
+                   and currency in ('USDC', 'THREE')
+                   and funding_source in ('agent_wallet', 'connected_wallet'));
+    end if;
+end $$;
+
+-- An escrow transfer funds exactly one bid.
+create unique index if not exists agent_listing_bids_escrow_signature_key
+    on agent_listing_bids (escrow_signature) where escrow_signature is not null;
+create unique index if not exists agent_listing_bids_escrow_reference_key
+    on agent_listing_bids (escrow_reference) where escrow_reference is not null;
+create index if not exists agent_listing_bids_listing
+    on agent_listing_bids (listing_id, status, amount_atomics desc);
+create index if not exists agent_listing_bids_bidder
+    on agent_listing_bids (bidder_user_id, created_at desc);
+create index if not exists agent_listing_bids_refund_due
+    on agent_listing_bids (updated_at) where refund_status in ('pending', 'failed');
+
+create table if not exists agent_transfers (
+    id                   uuid primary key default gen_random_uuid(),
+    listing_id           uuid not null unique references agent_listings(id),
+    bid_id               uuid not null unique references agent_listing_bids(id),
+    agent_id             uuid not null references agent_identities(id),
+    buyer_user_id        uuid not null references users(id),
+    seller_user_id       uuid not null references users(id),
+    currency             text not null,
+    amount_atomics       numeric not null,
+    fee_atomics          numeric not null,
+    seller_net_atomics   numeric not null,
+    -- The state machine's resume point (see settlement.js STEPS).
+    step                 text not null default 'pay_seller',
+    status               text not null default 'in_progress',   -- in_progress | completed | failed
+    payout_signature     text,
+    fee_signature        text,
+    old_wallet_address   text,
+    new_wallet_address   text,
+    -- The custody rotation record: every step, its time, and its signatures.
+    -- The pending new key sits here encrypted (secret-box) only between key
+    -- generation and the ownership swap, then is cleared.
+    rotation             jsonb not null default '{}'::jsonb,
+    -- Exactly-once records of every on-chain leg, keyed by leg id.
+    legs                 jsonb not null default '{}'::jsonb,
+    attempts             integer not null default 0,
+    last_error           text,
+    -- Lease so two workers never drive the same transfer at once.
+    locked_until         timestamptz,
+    completed_at         timestamptz,
+    created_at           timestamptz not null default now(),
+    updated_at           timestamptz not null default now()
+);
+
+create index if not exists agent_transfers_open
+    on agent_transfers (updated_at) where status <> 'completed';
+create index if not exists agent_transfers_buyer
+    on agent_transfers (buyer_user_id, created_at desc);
+create index if not exists agent_transfers_seller
+    on agent_transfers (seller_user_id, created_at desc);
+
+create table if not exists agent_marketplace_history (
+    id              bigserial primary key,
+    agent_id        uuid not null,
+    listing_id      uuid,
+    bid_id          uuid,
+    transfer_id     uuid,
+    actor_user_id   uuid,
+    event           text not null,
+    currency        text,
+    amount_atomics  numeric,
+    signature       text,
+    meta            jsonb not null default '{}'::jsonb,
+    created_at      timestamptz not null default now()
+);
+
+create index if not exists agent_marketplace_history_agent
+    on agent_marketplace_history (agent_id, created_at desc);
+create index if not exists agent_marketplace_history_listing
+    on agent_marketplace_history (listing_id, created_at desc);
+
+-- Preview records for the financial MCP tools: each commit must cite a preview
+-- the same user produced for the same action and arguments in the last ten
+-- minutes, so a model can never skip showing the user what it is about to do.
+create table if not exists agent_market_previews (
+    id            text primary key,
+    user_id       uuid not null,
+    action        text not null,
+    params_hash   text not null,
+    payload       jsonb not null,
+    consumed_at   timestamptz,
+    created_at    timestamptz not null default now()
+);
+
+create index if not exists agent_market_previews_user
+    on agent_market_previews (user_id, created_at desc);
+
+-- Revenue follows the owner who earned it. Earnings balances join revenue to
+-- the agent's CURRENT owner, so without this a sale would hand the seller's
+-- unwithdrawn earnings to the buyer. Settlement stamps every pre-sale row with
+-- the seller; rows written after the sale stay null and follow the new owner.
+alter table agent_revenue_events add column if not exists owner_user_id uuid;

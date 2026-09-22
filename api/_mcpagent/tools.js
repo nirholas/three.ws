@@ -33,6 +33,7 @@ import {
 	MonetizeError,
 } from '../_lib/agent-paid-services.js';
 import { currentSignatureFor, agreementRequirement } from '../_lib/real-funds-agreement.js';
+import { readResourceToolResult } from '../_mcp/resources.js';
 
 function rpcError(code, message, data) {
 	const e = new Error(message);
@@ -639,6 +640,34 @@ export const toolDefs = [
 					bazaar_listed: row.bazaar_listed,
 				},
 			};
+		},
+	},
+	{
+		name: 'read_resource',
+		title: 'Read a three:// resource',
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: false,
+		},
+		description:
+			'Read a live three.ws resource by URI: three://agents/<id>/wallet (balances, spend limits, allowlist, freeze state), three://wallets (every agent wallet), three://me, three://agents, .../usage, .../runs, .../orders, .../dca, .../intents, three://launches, three://marketplace and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				uri: {
+					type: 'string',
+					maxLength: 300,
+					description:
+						'A three:// resource URI, for example three://me or three://agents/<agentId>/wallet. Omit to list every resource you can read here.',
+				},
+				format: { type: 'string', enum: ['json', 'markdown'], default: 'json' },
+			},
+			additionalProperties: false,
+		},
+		async handler(args, auth, req) {
+			return readResourceToolResult('mcp-agent', args, auth, req);
 		},
 	},
 ];

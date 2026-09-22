@@ -183,6 +183,113 @@ async function registerOnSolana({ agent, network, force }) {
 
 export const toolDefs = [
 	{
+		name: 'create_agent',
+		title: 'Create an agent',
+		// Inserts a new agent (with its custodial wallets) on every call: a
+		// reversible write, not a spend. Deleting the agent undoes it.
+		annotations: {
+			readOnlyHint: false,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: false,
+		},
+		description:
+			'Create a new three.ws agent on your account: a named identity with a persona, a brain model, a custodial Solana wallet and a public page. Returns the agent id, its Solana address and its page URL. Read three://models (or read_resource uri "three://models") for the model ids. Creating an agent moves no funds; fund the wallet separately.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				name: { type: 'string', minLength: 1, maxLength: 100, description: 'Display name.' },
+				persona: {
+					type: 'string',
+					maxLength: 8000,
+					description: 'Who the agent is and how it speaks. Becomes its system persona.',
+				},
+				description: { type: 'string', maxLength: 500, description: 'One-line public description.' },
+				model: {
+					type: 'string',
+					maxLength: 80,
+					description: 'Brain model id from three://models agent_models (for example claude-sonnet-5). Omit for the free platform default.',
+				},
+				avatar_id: { type: 'string', format: 'uuid', description: 'An avatar you own to use as the body.' },
+			},
+			required: ['name'],
+			additionalProperties: false,
+		},
+		scope: 'agents:write',
+		async handler(args, auth) {
+			if (!auth.userId) {
+				return toolResult(
+					{ error: 'sign_in_required', message: 'Sign in with three.ws OAuth or an API key to create an agent.' },
+					{ isError: true },
+				);
+			}
+			const rl = await limits.agentCreateIp(`user:${auth.userId}`);
+			if (!rl.success)
+				throw rpcError(-32000, 'rate_limited', {
+					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
+				});
+
+			const meta = {};
+			if (args.model) {
+				const { getAvailableProviders, canonicalProviderKey } = await import('../../brain/chat.js');
+				const key = canonicalProviderKey(args.model.trim());
+				const known = getAvailableProviders().find((p) => p.key === key);
+				if (!known) {
+					return toolResult(
+						{
+							error: 'unknown_model',
+							message: `Unknown model "${args.model}". Read three://models for the ids an agent brain accepts.`,
+						},
+						{ isError: true },
+					);
+				}
+				meta.brain = { provider: key };
+			}
+
+			let avatarId = null;
+			if (args.avatar_id) {
+				const [av] = await sql`
+					SELECT id FROM avatars
+					 WHERE id = ${args.avatar_id} AND owner_id = ${auth.userId} AND deleted_at IS NULL
+					 LIMIT 1
+				`;
+				if (!av) {
+					return toolResult(
+						{ error: 'avatar_not_found', message: 'No avatar with that id on your account. list_my_avatars shows yours.' },
+						{ isError: true },
+					);
+				}
+				avatarId = av.id;
+			}
+
+			const { createAgentIdentity } = await import('../../_lib/agent-create.js');
+			const created = await createAgentIdentity({
+				userId: auth.userId,
+				name: args.name.trim().slice(0, 100),
+				description: args.description || null,
+				avatarId,
+				meta,
+				personaPrompt: args.persona || null,
+			});
+			if (created.blocked) {
+				return toolResult(
+					{ error: 'identity_conflict', message: created.blocked.message },
+					{ isError: true },
+				);
+			}
+			const agent = created.agent;
+			return toolResult({
+				agent_id: agent.id,
+				name: agent.name,
+				model: meta.brain?.provider || null,
+				solana_address: agent.meta?.solana_address || null,
+				page: agentHomeUrl(agent.id),
+				resource: `three://agents/${agent.id}`,
+				next: `Read three://agents/${agent.id}/wallet for the wallet, or attach_avatar_to_agent to give it a body.`,
+			});
+		},
+	},
+	{
 		name: 'call_agent',
 		title: 'Call agent',
 		// Invokes another agent's LLM turn — not a pure read, never destructive.

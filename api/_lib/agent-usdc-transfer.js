@@ -56,6 +56,9 @@ export function usdcToAtomics(usdc) {
  * @param {object} a.fromMeta      payer agent.meta (encrypted secret + spend limits)
  * @param {string} a.toAddress     recipient base58 Solana address (USDC ATA derived)
  * @param {number} a.usdc          amount in USDC (= USD)
+ * @param {bigint|string} [a.amountAtomics]  exact 6-decimal amount to send. Pass it
+ *   when the payee quoted an exact atomic price (a card invoice), so float
+ *   rounding in `usdc` can never underpay it. Must match `usdc` to the cent.
  * @param {string} [a.network]
  * @param {string} [a.category]    custody category (default 'signal')
  * @param {string} a.idempotencyKey
@@ -64,12 +67,16 @@ export function usdcToAtomics(usdc) {
  *   custodyEventId?:number, usdc?:number, code?:string, message?:string}>}
  */
 export async function transferUsdcGuarded({
-	fromAgentId, fromUserId, fromMeta, toAddress, usdc,
+	fromAgentId, fromUserId, fromMeta, toAddress, usdc, amountAtomics = null,
 	network = 'mainnet', category = 'signal', idempotencyKey, rowMeta = {},
 }) {
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 	const amount = Number(usdc);
 	if (!(amount > 0)) return { status: 'failed', code: 'zero_amount' };
+	const exactRaw = amountAtomics != null ? BigInt(amountAtomics) : null;
+	if (exactRaw != null && (exactRaw <= 0n || Math.abs(Number(exactRaw) / 10 ** USDC_DECIMALS - amount) > 0.005)) {
+		return { status: 'failed', code: 'amount_mismatch' };
+	}
 	if (!idempotencyKey) return { status: 'failed', code: 'idempotency_required' };
 
 	const encryptedSecret = fromMeta?.encrypted_solana_secret || null;
@@ -116,7 +123,7 @@ export async function transferUsdcGuarded({
 
 	// Attach the idempotency key to the reserved row so a retry replays it.
 	await updateCustodyEvent(reservationId, { meta: { idempotency_key: idempotencyKey, ...rowMeta } }).catch(() => {});
-	await sql`UPDATE agent_custody_events SET idempotency_key = ${idempotencyKey}, amount_raw = ${usdcToAtomics(amount).toString()} WHERE id = ${reservationId} AND idempotency_key IS NULL`.catch(() => {});
+	await sql`UPDATE agent_custody_events SET idempotency_key = ${idempotencyKey}, amount_raw = ${(exactRaw ?? usdcToAtomics(amount)).toString()} WHERE id = ${reservationId} AND idempotency_key IS NULL`.catch(() => {});
 
 	// 2. Recover the key (audit-logged), build the USDC transfer, settle on-chain.
 	let keypair;
@@ -132,7 +139,7 @@ export async function transferUsdcGuarded({
 
 	const fromAta = getAssociatedTokenAddressSync(mintPk, keypair.publicKey, false, TOKEN_PROGRAM_ID);
 	const toAta = getAssociatedTokenAddressSync(mintPk, toPk, false, TOKEN_PROGRAM_ID);
-	const raw = usdcToAtomics(amount);
+	const raw = exactRaw ?? usdcToAtomics(amount);
 	const instructions = [
 		// Idempotent: a no-op if the recipient already holds a USDC account.
 		createAssociatedTokenAccountIdempotentInstruction(keypair.publicKey, toAta, toPk, mintPk, TOKEN_PROGRAM_ID),

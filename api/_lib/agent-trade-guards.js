@@ -336,6 +336,124 @@ export async function setTradeLimits(agentId, userId, patch, { req = null } = {}
 	return next;
 }
 
+// ── prediction-market limits ─────────────────────────────────────────────────
+// Stored at agent_identities.meta.prediction_limits. Prediction orders are off
+// until the owner turns them on for the agent: `enabled` defaults to false, so
+// a fresh agent can browse, research and watch markets but cannot stake. Once
+// on, two USD ceilings bound the stake on top of the wallet-wide spend policy
+// (which still applies in full, including the freeze and anomaly guard):
+//
+//   max_stake_per_market_usd  total USDC at risk in any one market
+//   max_daily_stake_usd       rolling-24h USDC staked across every market
+export const PREDICTION_LIMIT_DEFAULTS = Object.freeze({
+	enabled: false,
+	max_stake_per_market_usd: 25,
+	max_daily_stake_usd: 100,
+});
+
+const PREDICTION_STAKE_CEILING_USD = 1_000_000;
+
+/** Coerce arbitrary input into clean, bounded prediction limits. */
+export function normalizePredictionLimits(raw) {
+	const r = raw && typeof raw === 'object' ? raw : {};
+	return {
+		enabled: r.enabled === true,
+		max_stake_per_market_usd: clampNum(r.max_stake_per_market_usd, PREDICTION_LIMIT_DEFAULTS.max_stake_per_market_usd, { min: 1, max: PREDICTION_STAKE_CEILING_USD }),
+		max_daily_stake_usd: clampNum(r.max_daily_stake_usd, PREDICTION_LIMIT_DEFAULTS.max_daily_stake_usd, { min: 1, max: PREDICTION_STAKE_CEILING_USD }),
+		updated_at: typeof r.updated_at === 'string' ? r.updated_at : null,
+	};
+}
+
+/** Read the effective prediction limits off an agent's meta blob. */
+export function getPredictionLimits(meta) {
+	return normalizePredictionLimits(meta?.prediction_limits);
+}
+
+/**
+ * Persist a prediction-limit patch (owner-only). Keys absent from `patch` keep
+ * their value. Audited in the custody trail and the platform audit log.
+ */
+export async function setPredictionLimits(agentId, userId, patch, { req = null } = {}) {
+	const [row] = await sql`
+		SELECT id, user_id, meta FROM agent_identities
+		WHERE id = ${agentId} AND deleted_at IS NULL
+	`;
+	if (!row) throw Object.assign(new Error('agent not found'), { status: 404, code: 'not_found' });
+	if (row.user_id !== userId) throw Object.assign(new Error('not your agent'), { status: 403, code: 'forbidden' });
+
+	const prev = getPredictionLimits(row.meta);
+	const p = patch && typeof patch === 'object' ? patch : {};
+	const next = normalizePredictionLimits({
+		enabled: 'enabled' in p ? p.enabled : prev.enabled,
+		max_stake_per_market_usd: 'max_stake_per_market_usd' in p ? p.max_stake_per_market_usd : prev.max_stake_per_market_usd,
+		max_daily_stake_usd: 'max_daily_stake_usd' in p ? p.max_daily_stake_usd : prev.max_daily_stake_usd,
+	});
+	next.updated_at = new Date().toISOString();
+
+	await sql`
+		UPDATE agent_identities
+		SET meta = jsonb_set(coalesce(meta, '{}'::jsonb), '{prediction_limits}', ${JSON.stringify(next)}::jsonb)
+		WHERE id = ${agentId}
+	`;
+
+	await recordCustodyEvent({
+		agentId,
+		userId,
+		eventType: 'limit_change',
+		reason: 'prediction_limits_updated',
+		meta: { prev, next },
+	}).catch((e) => console.warn('[custody] prediction limit_change record failed', e?.message));
+	logAudit({ userId, action: 'custody.prediction_limit_change', resourceId: agentId, meta: { prev, next }, req });
+
+	return next;
+}
+
+/**
+ * Is this stake allowed under the agent's prediction limits? Pure: the caller
+ * supplies the current exposure in the market and the rolling-24h stake.
+ * @returns {null | { reason: string, detail: object }}
+ */
+export function checkPredictionStake({ limits, stakeUsd, marketExposureUsd = 0, dailyStakedUsd = 0 }) {
+	const lim = normalizePredictionLimits(limits);
+	const stake = Number(stakeUsd);
+	if (!lim.enabled) return { reason: 'predictions_disabled', detail: {} };
+	if (!Number.isFinite(stake) || stake <= 0) return { reason: 'invalid_stake', detail: { stake_usd: stakeUsd } };
+	const exposure = Math.max(0, Number(marketExposureUsd) || 0);
+	if (exposure + stake > lim.max_stake_per_market_usd + 1e-9) {
+		return {
+			reason: 'market_stake_exceeded',
+			detail: { stake_usd: stake, exposure_usd: exposure, max_stake_per_market_usd: lim.max_stake_per_market_usd },
+		};
+	}
+	const daily = Math.max(0, Number(dailyStakedUsd) || 0);
+	if (daily + stake > lim.max_daily_stake_usd + 1e-9) {
+		return {
+			reason: 'daily_stake_exceeded',
+			detail: { stake_usd: stake, staked_today_usd: daily, max_daily_stake_usd: lim.max_daily_stake_usd },
+		};
+	}
+	return null;
+}
+
+/**
+ * USDC staked into prediction markets over the trailing window, optionally for
+ * one market. Pending rows count: an order in flight is money committed.
+ */
+export async function getPredictionStakeUsd(agentId, { marketId = null, windowHours = 24 } = {}) {
+	const [row] = await sql`
+		SELECT coalesce(sum(usd), 0)::float8 AS usd
+		FROM agent_custody_events
+		WHERE agent_id = ${agentId}
+		  AND event_type = 'spend'
+		  AND category = 'prediction'
+		  AND meta->>'prediction_action' = 'open'
+		  AND status IN ('pending', 'confirmed')
+		  AND created_at > now() - make_interval(hours => ${windowHours})
+		  AND (${marketId}::text IS NULL OR meta->>'market_id' = ${marketId})
+	`;
+	return Number(row?.usd || 0);
+}
+
 // ── trade guard predicates ────────────────────────────────────────────────────
 // Each returns null when the trade is allowed, or a structured
 // { reason, detail } when blocked. These are the single source of truth for the
@@ -533,6 +651,22 @@ const GUARD_RESPONSE = {
 	price_impact: {
 		status: 422,
 		message: (d) => `Price impact is ${Number(d.impact_pct).toFixed(2)}% — above the ${Number(d.max_pct).toFixed(2)}% safety breaker. Lower the trade size or raise the impact limit under Limits & Safety.`,
+	},
+	predictions_disabled: {
+		status: 403,
+		message: () => 'Prediction orders are off for this agent. Turn them on under Prediction limits on the agent\'s predictions page to continue.',
+	},
+	invalid_stake: {
+		status: 400,
+		message: () => 'The stake must be a positive USDC amount.',
+	},
+	market_stake_exceeded: {
+		status: 422,
+		message: (d) => `This stake of $${Number(d.stake_usd).toFixed(2)} would put $${(Number(d.exposure_usd) + Number(d.stake_usd)).toFixed(2)} at risk in this market, over the per-market limit of $${Number(d.max_stake_per_market_usd).toFixed(2)}. Lower the stake or raise the limit.`,
+	},
+	daily_stake_exceeded: {
+		status: 422,
+		message: (d) => `This stake would bring today's prediction stakes to $${(Number(d.staked_today_usd) + Number(d.stake_usd)).toFixed(2)}, over the daily limit of $${Number(d.max_daily_stake_usd).toFixed(2)}. Wait for the window to roll over or raise the limit.`,
 	},
 };
 

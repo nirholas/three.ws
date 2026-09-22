@@ -165,8 +165,17 @@ async function handlePreview(req, res, id) {
 	const network = netOf(req);
 	const norm = normalizeOrder({ ...body, network });
 	if (!norm.ok) return json(res, 200, { data: { ok: false, error: norm.error, message: norm.message } });
-	const o = norm.order;
+	return json(res, 200, { data: { ok: true, ...(await buildOrderPreview({ meta: owned.meta, order: norm.order })) } });
+}
 
+/**
+ * The live preview of a normalized order: current metric value, whether the
+ * trigger would fire right now, the firewall verdict for a buy, and the spend
+ * limits it will run under. Read-only. Shared by the HTTP preview route and the
+ * MCP order tools, so both show the owner the same thing.
+ */
+export async function buildOrderPreview({ meta, order: o }) {
+	const network = o.network;
 	// Live signals: only what this order's trigger references.
 	const need = o.type === 'conditional' ? conditionSignals(o.condition) : [];
 	if (o.type === 'trailing' || o.type === 'conditional') need.push('mcap_usd');
@@ -189,19 +198,19 @@ async function handlePreview(req, res, id) {
 
 	// Firewall verdict for buys (real on-chain simulated round-trip + authority audit).
 	let firewall = null;
-	if (o.side === 'buy' && owned.meta.solana_address && o.size_sol) {
+	if (o.side === 'buy' && meta.solana_address && o.size_sol) {
 		try {
 			const ctx = await getPumpTradeClient({ network });
 			const lamports = BigInt(Math.round(Number(o.size_sol) * 1e9));
 			const a = await assessTradeSafety({
-				network, mint: o.mint, side: 'buy', payer: new PublicKey(owned.meta.solana_address),
+				network, mint: o.mint, side: 'buy', payer: new PublicKey(meta.solana_address),
 				quoteAmount: lamports, connection: ctx.connection,
 			});
 			if (a) firewall = { verdict: a.verdict, score: a.score, simulated: a.simulated, reasons: a.reasons?.slice(0, 4) || [] };
 		} catch { firewall = null; }
 	}
 
-	return json(res, 200, { data: { ok: true, order: o, readback: describeOrder(o), preview, firewall, spend_limits: previewLimits(owned.meta) } });
+	return { order: o, readback: describeOrder(o), preview, firewall, spend_limits: previewLimits(meta) };
 }
 
 function previewLimits(meta) {

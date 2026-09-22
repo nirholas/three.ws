@@ -27,4 +27,5 @@ export const dispatch = makeDispatcher({
 	catalog: TOOL_CATALOG,
 	tools: TOOLS,
 	logName: 'mcp3d',
+	resourceServer: 'mcp-3d',
 });

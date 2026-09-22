@@ -28,8 +28,8 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,HEAD,POST,DELETE,OPTIONS', origins: '*' })) return;
 
 	if (req.method === 'GET' || req.method === 'HEAD')
-		return handleSse(req, res, { resourcePath: RESOURCE_PATH, challenge: STUDIO_CHALLENGE });
-	if (req.method === 'DELETE') return handleTerminate(req, res);
+		return handleSse(req, res, { resourceServer: 'mcp-3d', resourcePath: RESOURCE_PATH, challenge: STUDIO_CHALLENGE });
+	if (req.method === 'DELETE') return handleTerminate(req, res, { resourceServer: 'mcp-3d' });
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
 	// Read + parse the body before auth so free traffic can be served without

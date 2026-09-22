@@ -67,6 +67,7 @@ import {
 } from './_lib/home/turn-gate.js';
 import { listMembershipHomes } from './_lib/home/members.js';
 import { loadInstalledSkills, skillsPromptBlock } from './_lib/installed-skills.js';
+import { agentSkillsForPrompt } from './_lib/agent-custom-skills.js';
 import {
 	vertexClaudeEnabled,
 	vertexClaudePrimary,
@@ -576,6 +577,7 @@ export default wrap(async (req, res) => {
 
 	let personaPrompt = null;
 	let isOwner = false;
+	let agentVisible = false;
 	if (body.agentId) {
 		// Persona prompts are private IP: only serve them for published agents,
 		// or to the agent's owner. Anonymous callers get published personas only.
@@ -585,6 +587,7 @@ export default wrap(async (req, res) => {
 			  AND (is_published = true OR user_id = ${auth?.userId ?? null})
 			LIMIT 1
 		`;
+		agentVisible = Boolean(agentRow);
 		isOwner = Boolean(auth?.userId && agentRow?.user_id === auth.userId);
 		// Brain Studio preview: the owner may audition an unsaved compiled persona.
 		// The override only applies to the agent's owner — never published-agent
@@ -630,6 +633,21 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	// Prompt-only custom skills installed on the agent itself (hand-written or
+	// imported from /skills/community). Unlike the per-user marketplace installs
+	// above, these belong to the agent, so they shape its replies for every
+	// visitor, under the same visibility rule as the persona. Install order and
+	// the token budget come from api/_lib/agent-custom-skills.js. Best-effort,
+	// like every other prompt layer here.
+	let agentSkills = { block: '', applied: [] };
+	if (agentVisible) {
+		try {
+			agentSkills = await agentSkillsForPrompt(body.agentId);
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'agent-custom-skills', agentId: body.agentId });
+		}
+	}
+
 	// Home tools are offered only to an account that has a house connected, so a
 	// model is never handed a tool it cannot use. One indexed read of a tiny
 	// membership table; a failure degrades to a home-less turn, never a failed
@@ -654,6 +672,7 @@ export default wrap(async (req, res) => {
 		personaPrompt,
 		recalledMemories,
 		installedSkills,
+		agentSkills.block,
 	);
 	const systemPrompt = sys.text;
 	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
@@ -1153,6 +1172,8 @@ export default wrap(async (req, res) => {
 		recalledTs: new Date().toISOString(),
 		// Marketplace skills whose playbooks were in this reply's context.
 		skills_applied: installedSkills.map((s) => s.slug),
+		// The agent's own custom skills injected into this reply, install order.
+		agent_skills_applied: agentSkills.applied,
 	});
 	res.end();
 
@@ -2049,7 +2070,7 @@ async function recallForChat(agentId, message, isOwner) {
 // the Anthropic route can put a prompt-cache breakpoint after it; `volatile`
 // (recalled memories + live viewer context) changes per message and stays
 // after the breakpoint. `text` is the joined form every other provider uses.
-export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = []) {
+export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = [], agentSkillsBlock = '') {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
 		: 'No model is currently loaded in the viewer.';
@@ -2061,6 +2082,10 @@ export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [],
 
 	const lines = [];
 	if (personaPrompt) lines.push(personaPrompt, '');
+	// The agent's own custom skills sit right after its persona: they are part
+	// of who this agent is, and they are byte-stable across turns so they stay
+	// inside the prompt-cached prefix.
+	if (agentSkillsBlock) lines.push(agentSkillsBlock, '');
 	const skillsBlock = skillsPromptBlock(installedSkills);
 	if (skillsBlock) lines.push(skillsBlock, '');
 	lines.push(

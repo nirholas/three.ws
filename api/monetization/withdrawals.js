@@ -247,7 +247,7 @@ export default wrap(async (req, res) => {
 					SELECT COALESCE(SUM(re.net_amount), 0)::bigint
 					FROM agent_revenue_events re
 					JOIN agent_identities ai ON ai.id = re.agent_id
-					WHERE ai.user_id = ${userId}
+					WHERE coalesce(re.owner_user_id, ai.user_id) = ${userId}
 					  AND re.currency_mint = ${currencyMint}
 				) - (
 					SELECT COALESCE(SUM(w2.amount), 0)::bigint

@@ -16,6 +16,10 @@ const INSTRUCTIONS = [
 	'caps; monetize_endpoint publishes one of your agent endpoints as a priced x402 service so other',
 	'agents can pay it and you earn USDC. Always check wallet_status before spending, and confirm the',
 	'price with the user when it is non-trivial.',
+	'The agent marketplace tools buy, sell and bid on whole agents with USDC escrow on Solana:',
+	'browse_marketplace, get_listing, place_bid, buy_now, accept_marketplace_bid and friends. Every',
+	'financial one needs preview_marketplace_action first: show the user its table (recipient, amount,',
+	'token, chain), wait for a clear yes, then call the tool with its confirm flag and the preview_id.',
 ].join(' ');
 
 export const dispatch = makeDispatcher({
@@ -24,4 +28,5 @@ export const dispatch = makeDispatcher({
 	catalog: TOOL_CATALOG,
 	tools: TOOLS,
 	logName: 'mcp-agent',
+	resourceServer: 'mcp-agent',
 });

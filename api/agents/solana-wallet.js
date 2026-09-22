@@ -89,6 +89,29 @@ function classifyBalanceError(err) {
 	return rateLimited ? 'rpc_rate_limited' : 'rpc_error';
 }
 
+/**
+ * The agent wallet's SOL balance exactly as the wallet card shows it: the same
+ * 60s fleet cache, the same primary-then-public RPC fallback. Every surface that
+ * quotes "your balance" (the chat gateways' /balance, for one) reads it here so
+ * the numbers can never disagree.
+ * @returns {Promise<{ lamports:number|null, error:string|null }>}
+ */
+export async function readAgentSolBalance(address, network) {
+	const net = network === 'devnet' ? 'devnet' : 'mainnet';
+	const key = `sol:bal:${address}:${net}`;
+	const cached = await cacheGet(key);
+	if (cached !== null) return { lamports: cached, error: null };
+	const res = await _solRpcWithBackoffFallback(
+		solanaConnection(net),
+		solanaPublicConnection(net),
+		(c) => c.getBalance(new PublicKey(address)),
+		'getBalance',
+	);
+	if (!res.ok) return { lamports: null, error: classifyBalanceError(res.error) };
+	await cacheSet(key, res.value, SOL_CACHE_TTL_S);
+	return { lamports: res.value, error: null };
+}
+
 // Calls `fn(conn)` with exponential backoff (500 ms → 1000 ms) before the
 // public-RPC fallback fires. Returns { ok, value } or { ok: false, error }.
 async function _solRpcWithBackoffFallback(primaryConn, fallbackConn, fn, label) {
@@ -473,23 +496,7 @@ async function handleWallet(req, res, id) {
 
 	const network = (req.query?.network || new URL(req.url, 'http://x').searchParams.get('network') || 'mainnet').toString();
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
-	const balCacheKey = `sol:bal:${meta.solana_address}:${net}`;
-	let lamports = await cacheGet(balCacheKey);
-	let balanceError = null;
-	if (lamports === null) {
-		const balResult = await _solRpcWithBackoffFallback(
-			solanaConnection(net),
-			solanaPublicConnection(net),
-			(c) => c.getBalance(new PublicKey(meta.solana_address)),
-			'getBalance',
-		);
-		if (balResult.ok) {
-			lamports = balResult.value;
-			await cacheSet(balCacheKey, lamports, SOL_CACHE_TTL_S);
-		} else {
-			balanceError = classifyBalanceError(balResult.error);
-		}
-	}
+	const { lamports, error: balanceError } = await readAgentSolBalance(meta.solana_address, net);
 
 	// SNS is mainnet-only. Skip the lookup on devnet — it always returns null
 	// and just burns a network round-trip. Prefer the user's manually-attached
@@ -581,6 +588,23 @@ async function handleWithdraw(req, res, id) {
 	const network = body.network === 'devnet' ? 'devnet' : 'mainnet';
 	const asset = typeof body.asset === 'string' && body.asset.trim() ? body.asset.trim() : 'SOL';
 	const simulate = body.simulate === true;
+
+	// A wallet balance promised to marketplace bidders cannot be withdrawn out
+	// from under them: once a listing that includes the balance has an escrowed
+	// bid (or is settling), the balance belongs to the sale.
+	if (!simulate) {
+		const [promised] = await sql`
+			SELECT l.id FROM agent_listings l
+			WHERE l.agent_id = ${id} AND l.include_balance
+			  AND (l.status = 'settling' OR (l.status = 'active' AND EXISTS (
+			        SELECT 1 FROM agent_listing_bids b WHERE b.listing_id = l.id AND b.status = 'open')))
+			LIMIT 1
+		`;
+		if (promised) {
+			return error(res, 409, 'balance_listed',
+				'this wallet\'s balance is part of a marketplace listing with open bids; delist it at /marketplace/agents/dashboard before withdrawing');
+		}
+	}
 
 	// CSRF: sweeping a custodial wallet is the single highest-stakes action on the
 	// platform — it must be at least as protected as message-signing. Bearer/API-key

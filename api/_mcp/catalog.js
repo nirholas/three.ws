@@ -21,6 +21,9 @@ import { toolDefs as signDefs } from './tools/sign.js';
 import { toolDefs as feedbackDefs } from './tools/feedback.js';
 import { toolDefs as homeDefs } from './tools/home.js';
 import { toolDefs as libraryDefs } from './tools/library.js';
+import { toolDefs as cardDefs } from './tools/cards.js';
+import { toolDefs as customSkillDefs } from './tools/custom-skills.js';
+import { toolDefs as resourceDefs } from './tools/resources.js';
 
 const baseDefs = [
 	...libraryDefs,
@@ -33,6 +36,7 @@ const baseDefs = [
 	...solanaDefs,
 	...pumpfunDefs,
 	...agentDefs,
+	...customSkillDefs,
 	...memoryDefs,
 	...oracleDefs,
 	...traderDefs,
@@ -41,6 +45,8 @@ const baseDefs = [
 	...garmentDefs,
 	...feedbackDefs,
 	...homeDefs,
+	...resourceDefs,
+	...cardDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.
@@ -52,7 +58,7 @@ const gettingStarted = {
 	...buildGettingStartedTool({
 		server: 'three.ws',
 		tagline:
-			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, a free searchable catalog of ready-made CC0 props, rigged characters and motion clips with paste-ready embed source, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, the trader leaderboard + copy-trading system, and safe control of a connected Home Assistant house.',
+			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, a free searchable catalog of ready-made CC0 props, rigged characters and motion clips with paste-ready embed source, an agent registry, agent memory, prompt-only custom skills with one-call import from the public community skills registry, live pump.fun market data, Oracle conviction signals, the trader leaderboard + copy-trading system, and safe control of a connected Home Assistant house.',
 		tools: baseDefs,
 		priceFor,
 		access: [
@@ -72,7 +78,14 @@ const gettingStarted = {
 const allDefs = [gettingStarted, ...baseDefs];
 
 // Schema objects for tools/list — strip internal fields (scope, handler).
-export const TOOL_CATALOG = allDefs.map(({ scope: _s, handler: _h, ...schema }) => schema);
+// Policy fields (group, tier, confirmFlag, previewTool) are not part of the MCP
+// Tool schema, so they move under `_meta` where clients may read them.
+export const TOOL_CATALOG = allDefs.map(
+	({ scope: _s, handler: _h, group, tier, confirmFlag, previewTool, ...schema }) =>
+		group || tier
+			? { ...schema, _meta: { ...(schema._meta || {}), 'three.ws/policy': { group, tier, confirmFlag, previewTool } } }
+			: schema,
+);
 
 // Compile each tool's inputSchema once per process so dispatch can validate
 // args before invoking the handler. The handlers currently trust their args

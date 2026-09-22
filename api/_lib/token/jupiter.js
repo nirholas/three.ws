@@ -72,16 +72,22 @@ export async function fetchJson(url, opts, { timeoutMs = JUP_QUOTE_TIMEOUT_MS, a
 
 /**
  * ExactIn quote: how much `outputMint` a given `amount` of `inputMint` buys.
- * @param {{ inputMint: string, outputMint: string, amount: bigint|number|string, slippageBps: number }} args
+ * `dexes` restricts routing to one or more venue labels (as Jupiter names them,
+ * e.g. 'Whirlpool', 'Raydium CLMM', 'Meteora DLMM'), and `onlyDirectRoutes`
+ * forbids multi-hop routes: together they price a pair on one venue, which is
+ * what a cross-venue comparison needs.
+ * @param {{ inputMint: string, outputMint: string, amount: bigint|number|string, slippageBps: number, dexes?: string[]|null, onlyDirectRoutes?: boolean }} args
  * @returns {Promise<object>} the raw Jupiter quoteResponse
  */
-export async function jupiterQuote({ inputMint, outputMint, amount, slippageBps }) {
+export async function jupiterQuote({ inputMint, outputMint, amount, slippageBps, dexes = null, onlyDirectRoutes = false }) {
 	const u = new URL(JUP_QUOTE_URL);
 	u.searchParams.set('inputMint', inputMint);
 	u.searchParams.set('outputMint', outputMint);
 	u.searchParams.set('amount', String(amount));
 	u.searchParams.set('slippageBps', String(slippageBps));
 	u.searchParams.set('swapMode', 'ExactIn');
+	if (Array.isArray(dexes) && dexes.length) u.searchParams.set('dexes', dexes.join(','));
+	if (onlyDirectRoutes) u.searchParams.set('onlyDirectRoutes', 'true');
 	// A quote is an idempotent GET: retry it through the transient statuses
 	// (429/5xx/network) so one rate-limited response never fails a paid swap.
 	return fetchJson(u.toString(), { headers: { accept: 'application/json' } }, {

@@ -19,4 +19,5 @@ export const dispatch = makeDispatcher({
 	catalog: TOOL_CATALOG,
 	tools: TOOLS,
 	logName: 'mcp-bazaar',
+	resourceServer: 'mcp-bazaar',
 });

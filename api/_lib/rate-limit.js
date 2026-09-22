@@ -1870,6 +1870,16 @@ export const limits = {
 	// Preference-center writes — debounced client, generous ceiling.
 	notifPrefsWrite: (userId) =>
 		getLimiter('notif:prefs:write', { limit: 60, window: '1 h' }).limit(userId),
+	// Chat gateways (api/_lib/gateway/). A paired chat drives LLM turns and
+	// wallet reads, so each link gets its own per-minute budget; an unpaired chat
+	// can only ask for pairing codes, capped hourly so a group cannot mint them in
+	// a loop; the settings page's issue/redeem/revoke writes share one ceiling.
+	gatewayMessage: (linkId) =>
+		getLimiter('gateway:msg', { limit: 20, window: '1 m' }).limit(linkId),
+	gatewayPair: (chatKey) =>
+		getLimiter('gateway:pair', { limit: 8, window: '1 h' }).limit(chatKey),
+	gatewaySiteWrite: (userId) =>
+		getLimiter('gateway:site', { limit: 30, window: '1 h' }).limit(userId),
 	// Herald delivery rail (/api/herald/*). Announces are machine-written (CI,
 	// crons, agents holding an API key) and land as a physical interruption on
 	// the owner's screen, so the ceiling is a spam guard on their own attention
