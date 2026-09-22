@@ -22,7 +22,7 @@
     "@ethereum-attestation-service/eas-sdk": "0.29.1",
     "@metaplex-foundation/mpl-candy-machine": "^6.1.0",
     "@metaplex-foundation/umi": "^1.0.0",
-    "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.6.0",
     "@metaplex-foundation/umi-serializers": "^1.5.1",
     "@pixiv/three-vrm": "^3.5.5",
     "@pump-fun/pump-sdk": "^2.0.0",
