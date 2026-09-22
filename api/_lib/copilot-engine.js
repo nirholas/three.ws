@@ -1,0 +1,513 @@
+// The Conversational Trading Copilot engine: one owner turn against an agent's
+// self-custodied Solana wallet, shared by every surface that talks to it.
+//
+// Born inside api/agents/copilot.js (the web copilot, SSE) and extracted so the
+// chat gateways (api/_lib/gateway/, Telegram and Discord) run the exact same
+// tools, prompt and proposal rules. A surface supplies the agent row, the
+// conversation so far and an `emit(event, data)` sink; the engine runs the
+// read-only tools server-side and turns every state-changing intent into a
+// proposal the owner must confirm on a gated endpoint. It never signs.
+//
+// Events emitted: `status` {phase}, `tool_start` {name}, `tool` {name, summary,
+// data}, `proposal` (a confirm-before-execute card), `chunk` {text}.
+//
+// $THREE (FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump) is the only coin three.ws
+// promotes. The copilot trades whatever mint the owner names at runtime (generic
+// coin-agnostic plumbing) and never names or recommends any other token.
+
+import { sql } from './db.js';
+import { PublicKey } from '@solana/web3.js';
+import { solanaPublicConnection } from './agent-pumpfun.js';
+import { quoteTrade } from '../agents/solana-trade.js';
+import { assessTradeSafety } from './trade-firewall.js';
+import { getSmartMoneyForMint } from './smart-money.js';
+import { getTradeLimits } from './agent-trade-guards.js';
+import { providerChain, streamRound } from './llm-tool-chain.js';
+
+const NETWORKS = new Set(['mainnet', 'devnet']);
+export const netOf = (v) => (NETWORKS.has(v) ? v : 'mainnet');
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const LAMPORTS_PER_SOL = 1_000_000_000;
+const MAX_ROUNDS = 4; // tool-loop rounds before we force a final answer
+export const COPILOT_MAX_MESSAGES = 24; // trailing turns we keep as context
+
+// ── tool schema (OpenAI function-calling format) ───────────────────────────────
+export const COPILOT_TOOLS = [
+	{
+		type: 'function',
+		function: {
+			name: 'get_portfolio',
+			description: "Read the agent wallet's live SOL balance, token holdings, and open sniper positions with unrealized PnL. Use to answer 'how's my position?' / 'what do I hold?'.",
+			parameters: { type: 'object', properties: {}, additionalProperties: false },
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'get_coin_intel',
+			description: 'Live intelligence for one coin mint: quality score, bundle/organic/concentration signals, risk flags, dev-sold, narrative, and graduation/rug outcome. Use before discussing or proposing a buy.',
+			parameters: { type: 'object', properties: { mint: { type: 'string', description: 'base58 token mint address' } }, required: ['mint'], additionalProperties: false },
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'get_smart_money',
+			description: 'Smart-money read for one coin: count of reputable wallets in it, a 0-100 smart-money score, and whether one funder cluster dominates (sybil). Use for "is smart money in this?".',
+			parameters: { type: 'object', properties: { mint: { type: 'string' } }, required: ['mint'], additionalProperties: false },
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'assess_safety',
+			description: 'Run the rug/honeypot firewall on a prospective BUY: returns verdict (allow/warn/block), a 0-100 safety score, and plain-language reasons (mint authority, honeypot round-trip, concentration, price impact). Always run before proposing a buy.',
+			parameters: { type: 'object', properties: { mint: { type: 'string' }, sol_amount: { type: 'number', description: 'SOL the owner would spend' } }, required: ['mint'], additionalProperties: false },
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'get_quote',
+			description: 'Non-binding live quote: expected output and price impact for a buy (sol_amount) or sell (token_amount in UI units). Cite these exact numbers; never invent a quote.',
+			parameters: {
+				type: 'object',
+				properties: {
+					side: { type: 'string', enum: ['buy', 'sell'] },
+					mint: { type: 'string' },
+					sol_amount: { type: 'number', description: 'for buy: SOL to spend' },
+					token_amount: { type: 'number', description: 'for sell: tokens to sell, in UI units' },
+					slippage_bps: { type: 'integer', description: 'default 300 (3%)' },
+				},
+				required: ['side', 'mint'],
+				additionalProperties: false,
+			},
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'get_trade_limits',
+			description: "Read the owner's discretionary trade guardrails: per-trade SOL cap, daily budget, max price impact, max slippage, and kill-switch state.",
+			parameters: { type: 'object', properties: {}, additionalProperties: false },
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'propose_buy',
+			description: 'Surface a BUY proposal for the owner to confirm. Does NOT execute. It returns a confirm card grounded with a fresh quote + firewall verdict. Call this when the owner clearly wants to buy. Never claim a buy happened until the owner confirms it.',
+			parameters: {
+				type: 'object',
+				properties: {
+					mint: { type: 'string' },
+					sol_amount: { type: 'number', description: 'SOL to spend (> 0)' },
+					slippage_bps: { type: 'integer', description: 'default 300' },
+					rationale: { type: 'string', description: 'one short sentence on why, citing real signals' },
+				},
+				required: ['mint', 'sol_amount'],
+				additionalProperties: false,
+			},
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'propose_sell',
+			description: 'Surface a SELL proposal for the owner to confirm. Does NOT execute. Provide either token_pct (1-100 of the held balance) or token_amount (UI units).',
+			parameters: {
+				type: 'object',
+				properties: {
+					mint: { type: 'string' },
+					token_pct: { type: 'number', description: 'percent of holding to sell, 1-100' },
+					token_amount: { type: 'number', description: 'tokens to sell in UI units (alternative to token_pct)' },
+					slippage_bps: { type: 'integer', description: 'default 300' },
+					rationale: { type: 'string' },
+				},
+				required: ['mint'],
+				additionalProperties: false,
+			},
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'propose_set_limits',
+			description: "Surface a risk-control change for the owner to confirm (does NOT apply until confirmed): per-trade SOL cap, daily SOL budget, max price-impact %, or the kill switch (kill_switch:true halts all trading). Use for 'cap my trades at 0.5 SOL', 'pause trading', 'set a daily budget'.",
+			parameters: {
+				type: 'object',
+				properties: {
+					per_trade_sol: { type: 'number' },
+					daily_budget_sol: { type: 'number' },
+					max_price_impact_pct: { type: 'number' },
+					kill_switch: { type: 'boolean' },
+					rationale: { type: 'string' },
+				},
+				additionalProperties: false,
+			},
+		},
+	},
+];
+
+// ── server-side tool execution (read-only) ─────────────────────────────────────
+function num(v) { return v == null || !Number.isFinite(Number(v)) ? null : Number(v); }
+
+async function loadIntel(mint, network) {
+	const [row] = await sql`
+		SELECT i.mint, i.symbol, i.name, i.quality_score, i.bundle_score, i.organic_score,
+		       i.snipe_ratio, i.concentration_top10, i.fresh_wallet_ratio, i.risk_flags,
+		       i.category, i.narrative, i.dev_sold, i.unique_buyers, i.observation_seconds,
+		       o.outcome, o.ath_multiple
+		FROM pump_coin_intel i
+		LEFT JOIN pump_coin_outcomes o ON o.mint = i.mint AND o.network = i.network
+		WHERE i.mint = ${mint} AND i.network = ${network}
+		LIMIT 1`.catch(() => []);
+	if (!row) return { mint, found: false, note: 'No intelligence on this mint yet. The engine only fingerprints pump.fun launches it has observed.' };
+	return {
+		mint, found: true, symbol: row.symbol, name: row.name,
+		quality_score: num(row.quality_score),
+		bundle_score: num(row.bundle_score), organic_score: num(row.organic_score),
+		snipe_ratio: num(row.snipe_ratio), concentration_top10: num(row.concentration_top10),
+		fresh_wallet_ratio: num(row.fresh_wallet_ratio), risk_flags: row.risk_flags || [],
+		category: row.category, narrative: row.narrative, dev_sold: row.dev_sold,
+		unique_buyers: row.unique_buyers, observation_seconds: row.observation_seconds,
+		outcome: row.outcome || null, ath_multiple: num(row.ath_multiple),
+	};
+}
+
+export async function loadPortfolio(agentId, address, network) {
+	const out = { network, wallet: address, sol_balance: null, holdings: [], open_positions: [] };
+	if (!address) return out;
+	const conn = solanaPublicConnection(network);
+	const ownerPk = new PublicKey(address);
+	try {
+		const lamports = await conn.getBalance(ownerPk);
+		out.sol_balance = Number(lamports) / LAMPORTS_PER_SOL;
+	} catch { /* RPC hiccup — report null, copilot says balance unavailable */ }
+	try {
+		const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+		const TOKEN22 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+		const accounts = [];
+		for (const prog of [TOKEN, TOKEN22]) {
+			const r = await conn.getParsedTokenAccountsByOwner(ownerPk, { programId: prog }).catch(() => null);
+			if (r?.value) accounts.push(...r.value);
+		}
+		out.holdings = accounts
+			.map((a) => {
+				const info = a.account.data.parsed?.info;
+				const amt = info?.tokenAmount;
+				return amt && Number(amt.uiAmount) > 0
+					? { mint: info.mint, ui_amount: Number(amt.uiAmount), decimals: amt.decimals }
+					: null;
+			})
+			.filter(Boolean)
+			.slice(0, 30);
+	} catch { /* token read failed — holdings stay empty */ }
+	try {
+		const rows = await sql`
+			SELECT mint, symbol, status, entry_quote_lamports, last_value_lamports,
+			       realized_pnl_lamports, realized_pnl_pct, exit_reason
+			FROM agent_sniper_positions
+			WHERE agent_id = ${agentId} AND network = ${network} AND status = 'open'
+			ORDER BY opened_at DESC LIMIT 20`;
+		out.open_positions = rows.map((p) => ({
+			mint: p.mint, symbol: p.symbol,
+			entry_sol: num(p.entry_quote_lamports) != null ? num(p.entry_quote_lamports) / LAMPORTS_PER_SOL : null,
+			current_sol: num(p.last_value_lamports) != null ? num(p.last_value_lamports) / LAMPORTS_PER_SOL : null,
+			unrealized_pnl_pct: num(p.realized_pnl_pct),
+		}));
+	} catch { /* positions table read failed — leave empty */ }
+	return out;
+}
+
+export async function runQuote({ side, mint, solAmount, tokenAmount, slippageBps, network }) {
+	const conn = solanaPublicConnection(network);
+	const mintPk = new PublicKey(mint);
+	let tokenAmountRaw;
+	if (side === 'sell') {
+		// Convert UI tokens → raw using on-chain decimals.
+		let decimals = 6;
+		try {
+			const info = await conn.getParsedAccountInfo(mintPk);
+			const d = info?.value?.data?.parsed?.info?.decimals;
+			if (Number.isInteger(d)) decimals = d;
+		} catch { /* default 6 */ }
+		tokenAmountRaw = BigInt(Math.floor(Number(tokenAmount || 0) * 10 ** decimals)).toString();
+	}
+	const q = await quoteTrade({ conn, side, mintPk, mintStr: mint, network, solAmount, tokenAmountRaw, slippageBps });
+	return {
+		side, mint, venue: q.venue, price_impact_pct: num(q.priceImpactPct),
+		in_asset: q.inAsset, in_amount: num(q.inAmount),
+		out_asset: q.outAsset, expected_out: num(q.outUi),
+		min_received: num(q.minOutUi),
+	};
+}
+
+// Best-effort coin label (symbol/name) for proposal cards.
+async function coinLabel(mint, network) {
+	const intel = await loadIntel(mint, network).catch(() => null);
+	if (intel?.found && (intel.symbol || intel.name)) return { symbol: intel.symbol || null, name: intel.name || null };
+	return { symbol: null, name: null };
+}
+
+// ── system prompt ──────────────────────────────────────────────────────────────
+export function buildSystemPrompt({ agentName, persona, network }) {
+	const base = (persona || '').trim();
+	return [
+		base ? `You speak in character as ${agentName}. Persona:\n${base}\n` : `You are ${agentName}, a trading copilot.`,
+		`You are the in-world CONVERSATIONAL TRADING COPILOT for the three.ws agent "${agentName}" and its self-custodied Solana wallet (network: ${network}).`,
+		`Your job: help the owner snipe, trade, and manage risk by talking. You have real tools, so use them; never invent numbers, prices, balances, safety verdicts, or smart-money counts. If a tool returns no data, say so plainly.`,
+		`RULES:`,
+		`• ACT, don't ask. The read-only tools (get_portfolio, get_coin_intel, get_smart_money, assess_safety, get_quote, get_trade_limits) are free and instant, so CALL them immediately to answer. NEVER ask the owner for permission to read their own wallet or check a coin ("would you like me to check…?" is forbidden). If they ask "how's my portfolio?", call get_portfolio right away and answer with the real numbers. Only the propose_* actions need confirmation.`,
+		`• You NEVER execute or sign anything. To buy, sell, or change risk limits you MUST call the matching propose_* tool, which surfaces a confirm card. The owner confirms; a guarded server endpoint then enforces spend caps, the firewall, and the kill switch and signs. Never say a trade is done. Say you've prepared it for confirmation.`,
+		`• Before proposing OR recommending a buy, ground it: call assess_safety (firewall) and get_quote, and mention the safety verdict and price impact. If the firewall verdict is "block", refuse the buy and explain why.`,
+		`• Keep answers tight and conversational (2-5 sentences), because this may be read aloud. Light markdown is fine (bold, short bullet lists) but no tables or code blocks. The UI already shows the raw numbers as cards, so narrate the takeaway and don't re-list every figure.`,
+		`• The only coin three.ws promotes is $THREE. You may trade any mint the owner explicitly names (that is their call), but never suggest, shill, or name a specific other token on your own initiative.`,
+		`• When the owner is vague ("buy the safe one"), ask one brief clarifying question or have them paste a mint. Do not guess a mint address.`,
+	].join('\n');
+}
+
+
+/**
+ * Run one copilot turn.
+ *
+ * @param {object} opts
+ * @param {{ id:string, name?:string, persona_prompt?:string, meta?:object }} opts.agent  the owned agent row
+ * @param {Array<{role:'user'|'assistant', content:string}>} opts.history  trailing turns, last one the user's
+ * @param {'mainnet'|'devnet'} opts.network
+ * @param {(event:string, data:object) => void} [opts.emit]  event sink (see header)
+ * @param {() => boolean} [opts.isActive]  false once the caller has gone away
+ * @param {string} [opts.surfaceNote]  extra system guidance for the delivering surface
+ * @param {Array} [opts.chain]  provider chain override (defaults to providerChain())
+ * @returns {Promise<{ reply:string, proposals:object[], citations:object[], toolCalls:{name:string, summary:string}[] }>}
+ */
+export async function runCopilotTurn({ agent, history, network, emit = () => {}, isActive = () => true, surfaceNote = '', chain = providerChain() }) {
+	if (!chain.length) {
+		throw Object.assign(new Error('No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (or GOOGLE_CLOUD_PROJECT for the Vertex credits anchor).'), { code: 'llm_unavailable' });
+	}
+	const id = agent.id;
+	const meta = agent.meta || {};
+	const address = meta.solana_address || null;
+	const send = (event, data) => { if (isActive()) emit(event, data); };
+	const system = buildSystemPrompt({ agentName: agent.name || 'Agent', persona: agent.persona_prompt, network });
+	const messages = [{ role: 'system', content: surfaceNote ? `${system}\n${surfaceNote}` : system }, ...history];
+	const proposals = [];
+	const citations = [];
+	const toolCalls = [];
+	let finalText = '';
+	const active = () => isActive();
+
+	// Read-only tools are pure within a turn — the wallet/intel/quote a round sees
+	// won't change between the model's rounds. Memoize by (name, args) so when the
+	// model re-issues an identical read (a common small-model tic that otherwise
+	// burns a whole tool-loop round and paints a duplicate "Portfolio: …" line in
+	// the UI) we serve it from cache: no second RPC, no duplicate `tool` event, and
+	// the loop can tell the round made no new progress and cut to a final answer.
+	const readCache = new Map();
+
+	// One read-only tool execution → returns a compact result for the model + a UI summary.
+	async function execReadTool(name, args) {
+		if (name === 'get_portfolio') {
+			const p = await loadPortfolio(id, address, network);
+			citations.push({ kind: 'portfolio', sol: p.sol_balance, holdings: p.holdings.length, positions: p.open_positions.length });
+			return {
+				result: p,
+				summary: address ? `Portfolio: ${p.sol_balance != null ? p.sol_balance.toFixed(4) + ' SOL' : 'balance unavailable'}, ${p.holdings.length} token(s), ${p.open_positions.length} open position(s)` : 'No wallet provisioned yet',
+				card: { kind: 'portfolio', wallet: p.wallet, sol_balance: p.sol_balance, holdings: p.holdings, open_positions: p.open_positions, network },
+			};
+		}
+		if (name === 'get_coin_intel') {
+			const intel = await loadIntel(args.mint, network);
+			citations.push({ kind: 'intel', mint: args.mint, quality: intel.quality_score ?? null });
+			return {
+				result: intel,
+				summary: intel.found ? `Intel ${intel.symbol || ''}: quality ${intel.quality_score ?? 'n/a'}/100, ${(intel.risk_flags || []).length} risk flag(s)${intel.outcome ? `, outcome ${intel.outcome}` : ''}` : 'No intel on this mint',
+				card: { kind: 'intel', ...intel },
+			};
+		}
+		if (name === 'get_smart_money') {
+			const sm = await getSmartMoneyForMint(args.mint, network);
+			citations.push({ kind: 'smart_money', mint: args.mint, score: sm.smart_money_score, count: sm.count });
+			return {
+				result: sm,
+				summary: `Smart money: ${sm.count} reputable wallet(s), score ${sm.smart_money_score}/100${sm.sybil_flag ? ' (sybil-dominated)' : ''}`,
+				card: { kind: 'smart_money', mint: args.mint, count: sm.count, score: sm.smart_money_score, sybil: !!sm.sybil_flag },
+			};
+		}
+		if (name === 'assess_safety') {
+			const conn = solanaPublicConnection(network);
+			const quoteLamports = args.sol_amount > 0 ? BigInt(Math.floor(Number(args.sol_amount) * LAMPORTS_PER_SOL)) : null;
+			const a = await assessTradeSafety({ network, mint: args.mint, side: 'buy', payer: address, quoteAmount: quoteLamports, connection: conn });
+			citations.push({ kind: 'safety', mint: args.mint, verdict: a.verdict, score: a.score });
+			return {
+				result: { verdict: a.verdict, score: a.score, reasons: a.reasons, simulated: a.simulated },
+				summary: `Firewall: ${a.verdict.toUpperCase()} (${a.score}/100)${a.reasons?.[0] ? ': ' + a.reasons[0] : ''}`,
+				card: { kind: 'safety', mint: args.mint, verdict: a.verdict, score: a.score, reasons: a.reasons || [], simulated: !!a.simulated },
+			};
+		}
+		if (name === 'get_quote') {
+			const q = await runQuote({ side: args.side, mint: args.mint, solAmount: args.sol_amount, tokenAmount: args.token_amount, slippageBps: args.slippage_bps || 300, network });
+			citations.push({ kind: 'quote', mint: args.mint, side: args.side, impact: q.price_impact_pct });
+			return {
+				result: q,
+				summary: `Quote ${args.side}: ${q.expected_out != null ? q.expected_out.toLocaleString(undefined, { maximumFractionDigits: 4 }) : 'n/a'} ${q.out_asset}, ${q.price_impact_pct != null ? q.price_impact_pct.toFixed(2) + '% impact' : 'impact n/a'}`,
+				card: { kind: 'quote', mint: args.mint, side: q.side, in_asset: q.in_asset, in_amount: q.in_amount, out_asset: q.out_asset, expected_out: q.expected_out, price_impact_pct: q.price_impact_pct, min_received: q.min_received },
+			};
+		}
+		if (name === 'get_trade_limits') {
+			const lim = getTradeLimits(meta);
+			return {
+				result: lim,
+				summary: `Limits: per-trade ${lim.per_trade_sol ?? '∞'} SOL, daily ${lim.daily_budget_sol ?? '∞'} SOL, kill switch ${lim.kill_switch ? 'ON' : 'off'}`,
+				card: { kind: 'limits', ...lim },
+			};
+		}
+		return { result: { error: 'unknown_tool' }, summary: 'unknown tool' };
+	}
+
+	// A propose_* tool → grounded proposal card, never executed here.
+	async function execProposeTool(name, args) {
+		if (name === 'propose_buy') {
+			if (!BASE58_RE.test(args.mint || '')) return { result: { error: 'invalid_mint' }, summary: 'invalid mint' };
+			const slippageBps = Math.max(0, Math.min(5000, Math.round(args.slippage_bps || 300)));
+			const [quote, safety, label] = await Promise.all([
+				runQuote({ side: 'buy', mint: args.mint, solAmount: args.sol_amount, slippageBps, network }).catch((e) => ({ error: e?.message || 'quote_failed' })),
+				assessTradeSafety({ network, mint: args.mint, side: 'buy', payer: address, quoteAmount: BigInt(Math.floor(Number(args.sol_amount) * LAMPORTS_PER_SOL)), connection: solanaPublicConnection(network) })
+					.then((a) => ({ verdict: a.verdict, score: a.score, reasons: a.reasons, simulated: a.simulated }))
+					.catch(() => null),
+				coinLabel(args.mint, network),
+			]);
+			const proposal = { id: `p${proposals.length + 1}`, kind: 'buy', mint: args.mint, coin: label, sol_amount: Number(args.sol_amount), slippage_bps: slippageBps, network, quote, safety, rationale: args.rationale || null };
+			proposals.push(proposal);
+			send('proposal', proposal);
+			const blocked = safety?.verdict === 'block';
+			return { result: { surfaced: true, blocked, safety_verdict: safety?.verdict, price_impact_pct: quote?.price_impact_pct }, summary: `Buy proposal surfaced (awaiting confirmation). Firewall ${safety?.verdict || 'n/a'}.${blocked ? ' BLOCKED, do not encourage this trade.' : ''}` };
+		}
+		if (name === 'propose_sell') {
+			if (!BASE58_RE.test(args.mint || '')) return { result: { error: 'invalid_mint' }, summary: 'invalid mint' };
+			const slippageBps = Math.max(0, Math.min(5000, Math.round(args.slippage_bps || 300)));
+			// Resolve the held balance so a percent maps to a concrete UI amount.
+			const port = await loadPortfolio(id, address, network).catch(() => null);
+			const held = port?.holdings?.find((h) => h.mint === args.mint) || null;
+			let tokenAmount = num(args.token_amount);
+			let tokenPct = num(args.token_pct);
+			if (tokenAmount == null && tokenPct != null && held) tokenAmount = (held.ui_amount * Math.max(1, Math.min(100, tokenPct))) / 100;
+			if (tokenAmount == null && held) tokenAmount = held.ui_amount; // default: sell all
+			if (!(tokenAmount > 0)) return { result: { error: 'no_holding' }, summary: 'owner does not hold this coin' };
+			const [quote, label] = await Promise.all([
+				runQuote({ side: 'sell', mint: args.mint, tokenAmount, slippageBps, network }).catch((e) => ({ error: e?.message || 'quote_failed' })),
+				coinLabel(args.mint, network),
+			]);
+			const proposal = { id: `p${proposals.length + 1}`, kind: 'sell', mint: args.mint, coin: label, token_amount: tokenAmount, token_pct: tokenPct ?? null, decimals: held?.decimals ?? 6, slippage_bps: slippageBps, network, quote, rationale: args.rationale || null };
+			proposals.push(proposal);
+			send('proposal', proposal);
+			return { result: { surfaced: true, expected_sol: quote?.expected_out }, summary: `Sell proposal surfaced (awaiting confirmation): ~${quote?.expected_out != null ? Number(quote.expected_out).toFixed(4) : 'n/a'} SOL.` };
+		}
+		if (name === 'propose_set_limits') {
+			const cur = getTradeLimits(meta);
+			const changes = {};
+			for (const k of ['per_trade_sol', 'daily_budget_sol', 'max_price_impact_pct']) {
+				if (num(args[k]) != null) changes[k] = Number(args[k]);
+			}
+			if (typeof args.kill_switch === 'boolean') changes.kill_switch = args.kill_switch;
+			if (!Object.keys(changes).length) return { result: { error: 'no_change' }, summary: 'no limit change specified' };
+			const proposal = { id: `p${proposals.length + 1}`, kind: 'limits', network, current: cur, changes, rationale: args.rationale || null };
+			proposals.push(proposal);
+			send('proposal', proposal);
+			return { result: { surfaced: true }, summary: 'Risk-limit change surfaced (awaiting confirmation).' };
+		}
+		return { result: { error: 'unknown_tool' }, summary: 'unknown tool' };
+	}
+
+	// ── tool loop ──────────────────────────────────────────────────────────────
+	let answered = false;
+	for (let round = 0; round < MAX_ROUNDS && active() && !answered; round++) {
+		send('status', { phase: round === 0 ? 'thinking' : 'continuing' });
+		// Pick the first provider that yields a round; once content has been
+		// streamed to the client we can't fail over, so stream-failover only
+		// applies before any byte for THIS round was emitted.
+		let roundOut = null;
+		let lastErr = null;
+		for (const provider of chain) {
+			let emitted = false;
+			try {
+				roundOut = await streamRound(provider, {
+					messages,
+					tools: COPILOT_TOOLS,
+					onContent: (t) => { emitted = true; finalText += t; send('chunk', { text: t }); },
+				});
+				break;
+			} catch (e) {
+				lastErr = e;
+				if (emitted) { roundOut = { content: '', toolCalls: [] }; break; } // mid-stream failure; stop
+			}
+		}
+		if (!roundOut) throw lastErr || new Error('all providers failed');
+
+		if (!roundOut.toolCalls.length) { answered = true; break; }
+
+		// Record the assistant's tool-call turn, then resolve each call.
+		messages.push({
+			role: 'assistant',
+			content: roundOut.content || null,
+			tool_calls: roundOut.toolCalls.map((tc) => ({ id: tc.id, type: 'function', function: { name: tc.name, arguments: tc.args || '{}' } })),
+		});
+		// A round is only "progress" if at least one call surfaced something new —
+		// a fresh read, or a proposal. If every call this round is a repeat of a
+		// read the model already ran this turn, it's spinning: feed the cached
+		// results back (OpenAI requires a tool result per tool_call) but break out
+		// afterward so the finalize step turns what we have into a real answer
+		// instead of stalling the owner behind more identical "Analyzing…" rounds.
+		let progressed = false;
+		for (const tc of roundOut.toolCalls) {
+			let args = {};
+			try { args = tc.args ? JSON.parse(tc.args) : {}; } catch { args = {}; }
+			const isPropose = tc.name.startsWith('propose_');
+			send('tool_start', { name: tc.name });
+			let outcome;
+			let cached = false;
+			try {
+				if (isPropose) {
+					outcome = await execProposeTool(tc.name, args);
+					progressed = true;
+				} else {
+					const key = `${tc.name}:${JSON.stringify(args)}`;
+					if (readCache.has(key)) {
+						outcome = readCache.get(key);
+						cached = true;
+					} else {
+						outcome = await execReadTool(tc.name, args);
+						readCache.set(key, outcome);
+						progressed = true;
+					}
+				}
+			} catch (e) {
+				outcome = { result: { error: e?.message || 'tool_failed' }, summary: `Tool ${tc.name} failed: ${e?.message || 'error'}` };
+				progressed = true; // a genuine failure is new information, not a spin
+			}
+			// Surface read activity once per distinct read — never re-paint a cached repeat.
+			if (!isPropose && !cached) send('tool', { name: tc.name, summary: outcome.summary, data: outcome.card || null });
+			if (!cached) toolCalls.push({ name: tc.name, summary: outcome.summary });
+			messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(outcome.result).slice(0, 6000) });
+		}
+		if (!progressed) break; // model looped on data it already has — go answer.
+	}
+
+	// If the loop hit its round cap mid-tool without a natural answer, ask for a
+	// final plain-language wrap-up (no tools) so the user always gets a reply.
+	if (!finalText.trim() && active()) {
+		send('status', { phase: 'finalizing' });
+		for (const provider of chain) {
+			try {
+				const out = await streamRound(provider, {
+					messages: [...messages, { role: 'user', content: 'Briefly summarize what you found and what I should do next. Plain language, 2-4 sentences.' }],
+					tools: [],
+					onContent: (t) => { finalText += t; send('chunk', { text: t }); },
+				});
+				if (out) break;
+			} catch { /* try next provider */ }
+		}
+	}
+
+	return { reply: finalText.trim(), proposals, citations, toolCalls };
+}

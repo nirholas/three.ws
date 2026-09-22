@@ -1,0 +1,103 @@
+# Cloud Build -> Cloud Run for the Signal bridge (workers/signal-bridge), the
+# Signal leg of the agent gateway. Build context is THIS directory.
+#
+#   gcloud builds submit workers/signal-bridge --config workers/signal-bridge/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s)
+#
+# Why the flags below are load-bearing:
+#   --max-instances=1      signal-cli owns one registered number's key material.
+#                          Two instances would each advance the ratchets and
+#                          corrupt the other's sessions.
+#   --min-instances=1 and  the gateway holds the receive websocket open; an idle
+#   --no-cpu-throttling    scale-to-zero would drop inbound Signal messages.
+#   --no-allow-unauthenticated
+#                          the upstream REST bridge has no auth of its own. Only
+#                          the runtime service account (the gateway) may invoke
+#                          it, with a Google ID token.
+#   state volume           the bucket keeps the snapshot persist.sh writes, so a
+#                          new revision restores the registration instead of
+#                          needing the number re-verified.
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: signal-bridge
+  _REPO: signal-bridge
+  _RUN_SA: three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _STATE_BUCKET: three-ws-signal-bridge-state
+
+steps:
+  - id: ensure-repo-and-bucket
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -e
+        gcloud artifacts repositories describe ${_REPO} --location=${_REGION} >/dev/null 2>&1 \
+          || gcloud artifacts repositories create ${_REPO} --repository-format=docker --location=${_REGION}
+        if ! gcloud storage buckets describe gs://${_STATE_BUCKET} >/dev/null 2>&1; then
+          gcloud storage buckets create gs://${_STATE_BUCKET} --location=${_REGION} --uniform-bucket-level-access
+          gcloud storage buckets update gs://${_STATE_BUCKET} --versioning
+        fi
+        gcloud storage buckets add-iam-policy-binding gs://${_STATE_BUCKET} \
+          --member=serviceAccount:${_RUN_SA} --role=roles/storage.objectAdmin >/dev/null
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}']
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --execution-environment=gen2
+      - --port=8080
+      - --cpu=1
+      - --memory=1Gi
+      - --min-instances=1
+      - --max-instances=1
+      - --no-cpu-throttling
+      - --timeout=3600
+      - --no-allow-unauthenticated
+      - --add-volume=name=state,type=cloud-storage,bucket=${_STATE_BUCKET},mount-options=uid=1000;gid=1000
+      - --add-volume-mount=volume=state,mount-path=/state
+      - --startup-probe=httpGet.path=/v1/health,initialDelaySeconds=10,periodSeconds=10,failureThreshold=30
+
+  - id: grant-invoker
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - services
+      - add-iam-policy-binding
+      - ${_SERVICE}
+      - --region=${_REGION}
+      - --member=serviceAccount:${_RUN_SA}
+      - --role=roles/run.invoker
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s
