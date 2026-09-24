@@ -1685,6 +1685,10 @@
 			"dest": "/marketplace-walk.html"
 		},
 		{
+			"src": "/data-desk/?",
+			"dest": "/data-desk.html"
+		},
+		{
 			"src": "/irl/sign/?",
 			"dest": "/irl-sign.html"
 		},
