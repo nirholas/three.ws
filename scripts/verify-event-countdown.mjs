@@ -1,10 +1,8 @@
 #!/usr/bin/env node
-// Drives a real Chromium through every state of the live-event countdown, on
-// both surfaces that carry it: the /play lobby banner + in-world pill
-// (src/game/event-countdown.js) and the home-page strip
-// (src/home-event-banner.js). Run it before an event goes live; it is the
-// go/no-go evidence that the countdown a holder sees is the countdown that
-// actually ticks.
+// Drives a real Chromium through every state of the live-event countdown on
+// /play: the lobby banner + in-world pill (src/game/event-countdown.js). Run it
+// before an event goes live; it is the go/no-go evidence that the countdown a
+// holder sees is the countdown that actually ticks.
 //
 //   npm run verify:event                       # against a local `npm run dev`
 //   BASE=https://three.ws npm run verify:event # against production
@@ -313,102 +311,6 @@ console.log('\n/play at 375px');
 		&& overlap.pill.top >= 0 && overlap.pill.bottom <= overlap.viewportH + 1, JSON.stringify(overlap.pill));
 	check('pill clears chat and the touch controls', overlap.hits.length === 0, JSON.stringify(overlap.hits));
 	await ctx.close();
-}
-
-// ── home page strip: upcoming ──────────────────────────────────────────────
-console.log('\nhome page strip, upcoming');
-{
-	const { ctx, page, errors } = await newPage({ body: cfg({ startsIn: 3 * 86400e3, endsIn: 4 * 86400e3 }) });
-	await go(page, '/');
-	await waitFor(page, '.tws-eventbar', { timeout: PAGE_TIMEOUT });
-	const bar = page.locator('.tws-eventbar');
-	check('state is upcoming', (await bar.getAttribute('data-state')) === 'upcoming');
-	check('event name rendered', (await bar.locator('.tws-eventbar-name').textContent()) === NAME);
-	const place = await page.evaluate(() => {
-		const b = document.querySelector('.tws-eventbar').getBoundingClientRect();
-		const hero = document.querySelector('.hero').getBoundingClientRect();
-		const nav = document.querySelector('#nav-container').getBoundingClientRect();
-		return { aboveHero: b.bottom <= hero.top + 1, belowNav: b.top >= nav.bottom - 1 };
-	});
-	check('sits between the nav and the hero', place.aboveHero && place.belowNav, JSON.stringify(place));
-	await ticks(page, '.tws-eventbar-clock', 'clock ticks');
-
-	const cta = bar.locator('.tws-eventbar-cta');
-	check('CTA points into the $THREE world', (await cta.getAttribute('href')).includes(COIN));
-	const rest = await cta.evaluate((n) => getComputedStyle(n).backgroundColor);
-	await cta.hover();
-	await page.waitForTimeout(250);
-	check('CTA hover state', (await cta.evaluate((n) => getComputedStyle(n).backgroundColor)) !== rest);
-	check('CTA focus-visible ring',
-		(await cta.evaluate((n) => { n.focus(); return getComputedStyle(n).outlineWidth; })) !== '0px');
-	check('no console errors', ownErrors(errors).length === 0, ownErrors(errors).join(' | '));
-	await ctx.close();
-}
-
-// ── home page strip: live, then over ───────────────────────────────────────
-console.log('\nhome page strip, upcoming to live to over');
-{
-	const { ctx, page, errors } = await newPage({ body: cfg({ startsIn: 8000, endsIn: 20000 }) });
-	await go(page, '/');
-	await waitFor(page, '.tws-eventbar[data-state="upcoming"]', { timeout: PAGE_TIMEOUT });
-	check('mounts as upcoming', true);
-	await waitFor(page, '.tws-eventbar[data-state="live"]', { timeout: 30000 });
-	check('flips to live with no reload', true);
-	check('kicker reads live', (await page.locator('.tws-eventbar-kicker').textContent()).trim() === 'Live now');
-	check('clock reads LIVE', (await page.locator('.tws-eventbar-clock').textContent()) === 'LIVE');
-	check('live dot pulses', (await cssAnim(page.locator('.tws-eventbar-dot'))) === 'tws-eventbar-pulse');
-	await waitFor(page, '.tws-eventbar', { gone: true, timeout: 30000 });
-	check('unmounts at endsAt', true);
-	check('no console errors', ownErrors(errors).length === 0, ownErrors(errors).join(' | '));
-	await ctx.close();
-}
-
-// ── home page strip: reduced motion, already over, dismissal, 375px ────────
-console.log('\nhome page strip, reduced motion / already over / dismissal / 375px');
-{
-	const rm = await newPage({ body: cfg({ startsIn: -60e3, endsIn: 3600e3 }), reducedMotion: 'reduce' });
-	await go(rm.page, '/');
-	await waitFor(rm.page, '.tws-eventbar[data-state="live"]', { timeout: PAGE_TIMEOUT });
-	check('no pulse animation under reduced motion', (await cssAnim(rm.page.locator('.tws-eventbar-dot'))) === 'none');
-	await rm.ctx.close();
-
-	const over = await newPage({ body: cfg({ startsIn: -7200e3, endsIn: -3600e3 }) });
-	await go(over.page, '/');
-	await waitFor(over.page, '.hero', { timeout: PAGE_TIMEOUT });
-	await over.page.waitForTimeout(4000);
-	check('an already-ended event mounts nothing', (await over.page.locator('.tws-eventbar').count()) === 0);
-	await over.ctx.close();
-
-	const body = cfg({ startsIn: 3 * 86400e3, endsIn: 4 * 86400e3 });
-	const d = await newPage({ body });
-	await go(d.page, '/');
-	await waitFor(d.page, '.tws-eventbar', { timeout: PAGE_TIMEOUT });
-	await d.page.locator('.tws-eventbar-x').click();
-	await d.page.waitForTimeout(300);
-	check('dismiss removes the strip', (await d.page.locator('.tws-eventbar').count()) === 0);
-	const storage = await d.ctx.storageState();
-	await d.ctx.close();
-
-	const again = await newPage({ body, storage });
-	await go(again.page, '/');
-	await waitFor(again.page, '.hero', { timeout: PAGE_TIMEOUT });
-	await again.page.waitForTimeout(4000);
-	check('dismissal survives a reload', (await again.page.locator('.tws-eventbar').count()) === 0);
-	await again.ctx.close();
-
-	const m = await newPage({ body, viewport: { width: 375, height: 812 } });
-	await go(m.page, '/');
-	await waitFor(m.page, '.tws-eventbar', { timeout: PAGE_TIMEOUT });
-	const geo = await m.page.evaluate(() => ({
-		scrollW: document.documentElement.scrollWidth,
-		clientW: document.documentElement.clientWidth,
-		nameTop: document.querySelector('.tws-eventbar-name').getBoundingClientRect().top,
-		ctaTop: document.querySelector('.tws-eventbar-cta').getBoundingClientRect().top,
-		right: document.querySelector('.tws-eventbar-in').getBoundingClientRect().right,
-	}));
-	check('page does not scroll sideways at 375px', geo.scrollW <= geo.clientW + 1, JSON.stringify(geo));
-	check('strip wraps instead of clipping', geo.ctaTop > geo.nameTop && geo.right <= 376, JSON.stringify(geo));
-	await m.ctx.close();
 }
 
 await browser.close();

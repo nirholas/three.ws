@@ -2,8 +2,8 @@
 // Assert public/event.json describes an event that will actually happen.
 //
 // One file drives every live-event surface on the platform: the /play lobby
-// banner and in-world countdown pill (src/game/event-countdown.js), the home
-// page strip (src/home-event-banner.js), the in-world meetup layer with its
+// banner and in-world countdown pill (src/game/event-countdown.js), the
+// in-world meetup layer with its
 // agenda, go-live moments and fireworks (src/game/meetup-event.js), the game
 // server's quest gate (multiplayer/src/event-window.js), the leaderboard
 // endpoints (api/_lib/event-config.js), and the souvenir grant
