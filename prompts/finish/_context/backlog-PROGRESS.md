@@ -2419,3 +2419,74 @@ contract. A verified-dead pin with a comment beats an unverified guess.
 200k tokens/day, far too small for bulk), OpenAI (`billing_not_active`), Google Vertex AND the
 Generative Language API (both denied project-wide by the same dunning hold, so ISSUES item 1 and
 the fact-check order's row 20 share one cause).
+
+## 2026-09-24 | 01 x402 settle runway | settle is ok again; the reject book was a caller-gate leak
+
+Re-measured live against production `c8f10f437` (revision `three-ws-api-00458-njs`) at
+06:32 UTC, nothing carried forward. Since the 2026-09-09 pass the sponsor was refunded
+(1,157,626 lamports then, 31,994,962 now), so the regime changed from floor refusals to
+governor pacing.
+
+| Fact | Value | Source |
+|---|---|---|
+| `x402_settle` | **ok, 92.2%** (235/255 paid attempts, 3h), 900 paced by the fee governor | `/api/healthz` |
+| Facilitator settle rejects, 24h | `fee_runway_exhausted` **40,939**, `broadcast_failed` 33, `signature_already_settled` 33, `settlement_pending` 22, `idempotent_replay` 17; settled 4,341 | `x402_self_facilitator_log` grouped by reason class |
+| Hourly shape | ~230 settled and ~1,700 refused every hour, one buyer (the ring payer), all day | same, by hour over 30h |
+| Sponsor / economy master `Wwwu...T3WwW` | 0.031995 SOL (runway-lab), 0.034730 SOL (treasury-topup a minute later) | both endpoints |
+| Governor | pacing ON, `runway_days` 1, min budget 10,000,000; 8,960,879 spent by 06:32 | `/api/x402/runway-lab` |
+| Fee per settle | 10,001 lamports (`observed_median_24h`); 24h burn 48,813,416 lamports = **0.0488 SOL/day** | runway-lab |
+| `treasury-topup?dry=1` | `master_deficit_sol` **0.27508**, `spendable_sol` 0.00273, plan `[]` (`master_insufficient_spendable` for both targets), reclaim moves `[]`, agent_reclaim moves `[]`, 2 `secret_undecryptable` (Atlas #22 0.0684, Echo #22 0.0545) | cron dry run |
+
+### Findings and fixes (`22f1e08df`, no funds moved, no config changed)
+
+1. **The caller-side admission gate leaked under pacing.** A fresh read cached "yes" for
+   20 seconds. With pacing on, the unlocked budget sits at the spent line all day, so each
+   read found room for about one settle and then admitted every call in the window: about
+   1,700 an hour reached the settle-path meter and were refused there after an ATA read, a
+   signature and a simulated verify. That is why `fee_runway_exhausted` was back on top of
+   the reject book while `x402_settle` itself read ok. Admissions now spend their fee from
+   the snapshot's headroom with the same pure arithmetic, concurrent callers share one
+   in-flight read, and the first call past the headroom becomes the cached refusal. Four
+   new tests in `tests/x402-fee-admission.test.js`.
+2. **`/api/x402/runway-lab` undercounted refusals about a hundredfold.** It grouped on the
+   full reject string (which carries per-call lamport arithmetic) under `LIMIT 40`, so it
+   counted 391 of 40,987 governor refusals and reported `capacity_admission_rate` 0.917
+   for a rail admitting 0.096. It now groups by reason class in SQL; verified against the
+   production table.
+3. **A fourth instance of the one-string-two-situations defect.** 31 agent wallets read
+   `at_or_below_floor:0.019334483<0.01`, a reason whose own numbers disprove it. They sit
+   above their keep line with excess under `ECONOMY_SWEEPBACK_MIN_SOL` (0.01). They now
+   read `below_min_sweep:<excess><<min>`, with `excessSol`; the settle-health and
+   sponsor-runway hints and both runbooks name the class. Total excess across them:
+   **0.161 SOL**.
+
+Verification: 2,227 tests green across the 185 x402/economy/treasury/sweep suites;
+`npm run test:gate` green; `check:rules` clean on all touched files; `audit:docs` has no
+findings in touched docs. `npm run gate` is red on two peers' files only
+(`check:model-viewer` on `src/erc8004/register-ui.js` pinning 4.3.1, and
+`check:fetch-timeouts` on `api/_lib/sandbox/clients/node/three_ws/index.js:98`), plus
+five README-less directories under `packages/` and `workers/`; none are touched here.
+
+### DoD after this pass
+
+1. `x402_settle` ok above 90%: **passes** (92.2%, 3h window).
+2. `fee_runway_exhausted` not the top reject class: **fails until `22f1e08df` is deployed**
+   (it moves those refusals from the facilitator book to caller-side governor skips).
+3. Non-zero deficit AND non-zero reclaim plan: deficit passes (0.27508), plan is empty.
+4. to 6. Recurrence guard, changelog, PROGRESS: done.
+
+### Owner actions (stop-and-ask gate 1 and gate 2)
+
+- **Deploy** `22f1e08df` (runbook in CLAUDE.md, `npm run deploy:gcp:full` from a prepared
+  worktree), then re-read the reject book after 3h.
+- **Fund the fee wallet before it hits its floor.** At 0.0488 SOL/day against about 0.030
+  SOL spendable above the 0.002 SOL floor, and with `runway_days` 1 letting the governor
+  spend it all in a day, the sponsor reaches its floor in under a day and `x402_settle`
+  returns to `down / sponsor_floor`. Send SOL to `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`
+  only: about **0.7 SOL** buys 14 days of settle fees; about **1.39 SOL** also lifts the
+  master to its 0.3 SOL operating reserve (0.265) and fills both treasury-topup targets
+  (relayer bundle `wwwq...HGUn` 0.00496 to 1.0, ring payer `X4o2...stML` 0.04989 to 0.18).
+- **Free alternative for part of it:** lowering `ECONOMY_SWEEPBACK_MIN_SOL` (for example to
+  0.001) lets the armed reclaim cron sweep the 0.161 SOL of `below_min_sweep` excess back to
+  the master. It is a config change whose effect is an automatic SOL move, so it is the
+  owner's call, not a pre-approved config tweak.
