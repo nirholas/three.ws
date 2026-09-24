@@ -1764,7 +1764,6 @@ class CheckoutModal {
 			// signature added. The facilitator's fee-payer signature is added by
 			// PayAI during /settle.
 			const SolanaWeb3 = await loadSolanaWeb3();
-			const tx = SolanaWeb3.VersionedTransaction.deserialize(txBytes);
 			// Wallets with auto priority fees or "transaction protection" (Phantom,
 			// Solflare) rewrite a transaction before signing. The facilitator settles
 			// a rewritten tx fine as long as the rewrite only touches ComputeBudget
@@ -1775,8 +1774,14 @@ class CheckoutModal {
 			// of a silent 402-retry loop. Snapshot the message bytes before the
 			// wallet touches the object (some wallets mutate in place); the deep
 			// classification re-reads the prepared tx from the original bytes.
-			const preparedMsg = tx.message.serialize();
-			const signed = await provider.signTransaction(tx);
+			const preparedMsg = SolanaWeb3.VersionedTransaction.deserialize(txBytes).message.serialize();
+			const signed = await signPreparedSolanaTx({
+				provider,
+				address: payerAddress,
+				network: accept.network,
+				txBytes,
+				SolanaWeb3,
+			});
 			const signedMsg = signed?.message?.serialize?.();
 			if (signedMsg && !bytesEqual(preparedMsg, signedMsg)) {
 				const prepared = SolanaWeb3.VersionedTransaction.deserialize(txBytes);
@@ -2439,6 +2444,67 @@ async function loadSolanaWeb3() {
 		throw err;
 	}
 	return _solanaWeb3;
+}
+
+// Wallet Standard chain id for a CAIP-2 Solana network.
+const SOLANA_DEVNET_GENESIS = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
+function walletStandardChain(network) {
+	return String(network || '').includes(SOLANA_DEVNET_GENESIS) ? 'solana:devnet' : 'solana:mainnet';
+}
+
+// The Wallet Standard account that owns the connected address and can sign a
+// v0 transaction from raw bytes, or null. The registry library is small and
+// only fetched on a Solana checkout; a wallet that registers nothing (the
+// Seeker MWA bridge) or a blocked CDN simply means the injected provider signs.
+async function findStandardSigner(address) {
+	try {
+		const { loadModule } = await import('./load-module.js');
+		const { getWallets } = await loadModule('https://esm.sh/@wallet-standard/app@1.1.0?bundle');
+		for (const wallet of getWallets().get()) {
+			const feature = wallet?.features?.['solana:signTransaction'];
+			const versions = feature?.supportedTransactionVersions;
+			if (!feature?.signTransaction || (versions && !versions.includes(0))) continue;
+			const account = wallet.accounts?.find((a) => a.address === address);
+			if (account) return { feature, account };
+		}
+	} catch {
+		return null;
+	}
+	return null;
+}
+
+function isWalletRefusal(err) {
+	return friendlyError(err) === 'cancelled in wallet';
+}
+
+// Have the buyer's wallet sign the prepared payment transaction.
+//
+// Phantom refused the club cover with "The app's signature request cannot be
+// shown due to invalid formatting" even though the prepared bytes decode as a
+// well-formed v0 transferChecked. The legacy provider.signTransaction(tx) hands
+// the wallet a VersionedTransaction built by our CDN copy of web3.js, which the
+// wallet re-serializes through its own; the Wallet Standard feature takes the
+// exact bytes /prepare built, so nothing is lost in that handoff. It goes first,
+// and the injected provider is the fallback for wallets without the standard or
+// when the standard path fails for any reason other than the buyer declining.
+export async function signPreparedSolanaTx({ provider, address, network, txBytes, SolanaWeb3 }) {
+	const standard = provider?.isThreeWs ? null : await findStandardSigner(address);
+	if (standard) {
+		try {
+			const [result] = await standard.feature.signTransaction({
+				account: standard.account,
+				transaction: txBytes,
+				chain: walletStandardChain(network),
+			});
+			if (result?.signedTransaction) {
+				return SolanaWeb3.VersionedTransaction.deserialize(result.signedTransaction);
+			}
+		} catch (err) {
+			if (isWalletRefusal(err)) throw err;
+			console.warn('[x402] Wallet Standard signing failed, retrying through the injected provider', err);
+		}
+	}
+	return provider.signTransaction(SolanaWeb3.VersionedTransaction.deserialize(txBytes));
 }
 
 async function postJson(url, body) {
