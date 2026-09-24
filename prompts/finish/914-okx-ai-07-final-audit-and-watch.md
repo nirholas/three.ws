@@ -13,6 +13,26 @@ Read `prompts/finish/_context/okx-ai-00-CONTEXT.md`, all of `prompts/finish/_con
 3. CLAUDE.md hard rules: no mocks, no TODO comments, no em-dash or en-dash characters. Stage
    explicit paths only.
 
+## State on 2026-09-24, re-measured
+
+- **Part 1:** item 1 PASS (four paid rows 402, spec-valid, OKX SDK parse PASS 20 probes).
+  Items 2 and 3 blocked on a funded buyer and a session. Item 4 PASS on the three local copies,
+  on-chain copy unreadable without a session. Item 5: the stream's files carried 16 legacy
+  em-dashes in `tests/api/okx-identity-studio.test.js` and `tests/api/okx-3d-services.test.js`,
+  now removed; no TODOs, no stubs, repo root clean. Item 6: `npm run build:pages` exit 0 (952
+  pages); `npm run audit:docs` has 5 findings, all README-less directories outside this stream
+  (`packages/agent-cli`, `packages/agents-sdk`, `packages/mcp-policy`, `packages/three-ws-cli`,
+  `workers/signal-bridge`, all added by other features on 2026-09-22); `npm test` had 30 failing
+  files, of which the forge lane suites (18 tests, a stale `forge-store.js` mock) and
+  `mcp-3d-challenge` (two unclassified tools) touched this stream's path and were fixed
+  (`9acf0cba2`, `bfeca3aa1`). The rest are outside it.
+- **Part 2:** unchanged since 2026-09-10 and re-checked: the doc's curls answer as documented,
+  `docs/okx-marketplace.md` is linked from `docs/start-here.md`, and its "Verified behavior"
+  section still matches production (no settlement claimed).
+- **Part 3:** approval status could NOT be read (onchainos v4.6.2 installed, `loggedIn: false`,
+  every agent read needs the session). No branch executed. RUNBOOK §0.5 and the CLI version line
+  were corrected.
+
 ## Part 1: independent adversarial audit (against production, today)
 
 1. Unpaid 402 on the cheapest and the flagship endpoints, still spec-valid. Challenges drift
@@ -82,7 +102,7 @@ current watch status. Update `MEMORY.md`.
 
 | Blocker | Do this |
 |---|---|
-| The bot is offline | `npm run okx:bot`. Exit 0 means online, exit 2 means staged but logged out (login URL printed). |
+| The bot is offline | Read the Cloud Run host (`curl -s https://three.ws/api/healthz \| jq '.subsystems.subsystems[]\|select(.name=="okx_chat_bot")'`); fixes ship with `npm run okx:bot:deploy` (owner-gated). Never `npm run okx:bot` while that host beats: it is a second writer on the bot's identity. |
 | Wallet dry or logged out | One batched owner message with the funding table and the OTP request. Everything else proceeds without it. |
 | A doc claim cannot be reproduced | That is a defect in the doc, not in your test. Correct the doc in the same session. |
 | A deploy would be needed to fix a live string | Deploys are owner-gated. Prepare it as one command, say so, and finish everything else. |

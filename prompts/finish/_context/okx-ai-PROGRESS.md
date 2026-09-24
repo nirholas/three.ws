@@ -4288,3 +4288,60 @@ npm run okx:bot:deploy                                    # bot: provision lane,
 npm run okx:bot:gateway -- --verify --cli                 # prove the real CLI through the lane on production
 curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[]|select(.name=="okx_chat_bot")'
 ```
+
+## 2026-09-24 | orders 907, 911, 913, 914 | re-measured end to end; nothing on-chain, nothing paid, nothing deployed
+
+One session ran all four open orders' Step 0 against production. Standing constraints for this
+session, set by the owner's instruction and binding over the orders: no payment, no signature
+of any kind (including the `--no-spend` authorizations), no on-chain listing write, no OTP, no
+deploy, no push, and no commit of any file that names OKX until the owner approves it.
+
+**907, chat bot.** The API half shipped: live API `c8f10f437` (`three-ws-api-00458-njs`)
+contains `53687d994`, `d3074c1c8` and `f7f7da9b6`, and the agent-scoped path answers
+`404 agent not found` instead of `No API route matches`. The bot host is unchanged:
+`okx-chat-bot-00001-926`, beat 20 s old, `loggedIn: true`, `activeClients: 1`,
+`daemonRestarts: 0`, instance rebooted 2026-09-22T13:44Z, no `providerLane` or `leaseHolder` in
+the beat, Vertex still `403 Lightning dunning decision is deny`. `npm run okx:bot:deploy --
+--dry-run` passes its live-API check and stops on `gcloud`, which is not installed here at all.
+One owner step left: install and authenticate `gcloud`, then `npm run okx:bot:deploy`.
+
+**911, relisting.** Step 0 PASS (seven forge/free rows listed, nine unlisted). Step 1 PASS:
+four paid rows 402 with `accepts[0]` `exact`/`eip155:196` at 10000/50000/250000/250000, one entry
+per rail and asset, free rows free, compliance probe PASS 20 with OKX's own parser, three local
+copies identical, OKX suites 228/228. Steps 2 and 3 need the session: `onchainos` v4.6.2 was
+installed from the release binary (sha256 matches the release `checksums.txt`; the release has
+no `installer-checksums.txt`), and every agent read answers `session expired`.
+
+**913, real payment.** Every unsigned leg green: `--dry-run` 3/3 (cases 1, 1d, 5d). Its captures
+overwrote three committed evidence files with a narrower record, so they were restored from
+git and the 2026-09-09 `--no-spend` evidence stands. `/api/okx/3d/health` now carries
+`relayer_funded: true` (the `4e9ad0419` field is live). X Layer at block 71462665: buyer
+`0x75d0…cf69` 0 USD₮0 / 0 OKB, seller `0x4022de2D…f402` 2.427731 USD₮0 / 0.839596 OKB, relayer
+`0xe81DE501…415B` 0.02 OKB with nonce 0. The seller balance has not moved since 2026-09-09, so
+no sale has settled on this rail since then. `--budget`: a clean run needs 1.08 USD₮0; with
+the order's retry margin, 2.16 USD₮0 to the buyer on X Layer, plus 0.02 USDC on Solana for
+case 7.
+
+**914, audit.** Findings fixed: 16 legacy em-dashes in the two OKX test suites; the forge lane
+tests broken by a stale `forge-store.js` mock (`9acf0cba2`, 18 tests); two unclassified studio
+tools (`bfeca3aa1`). RUNBOOK §0.5 retitled so it no longer leads with the rival-daemon
+command, with today's host state and `npm run okx:bot:deploy` as the ship path; CLI version line
+updated. The 913 and 914 "never blocked" rows that still said `npm run okx:bot` now say to read
+the Cloud Run host. Not fixed, outside this stream: 5 README-less directories flagged by
+`audit:docs`, and about 25 failing test files unrelated to OKX. Approval status of #2632 was
+not readable; the last reading is still 2026-09-09's `Listing rejected`.
+
+**Owner actions, in order:**
+1. Approve committing the uncommitted OKX-naming files from this session and the earlier ones.
+2. Install and authenticate `gcloud`, then `npm run okx:bot:deploy` (preview with `-- --dry-run`).
+3. Browser login for `claude@three.ws` (`onchainos wallet login --phase init`, open the URL,
+   enter the emailed code), then run 911 Steps 2 and 3. That gives an on-chain
+   `agent update --agent-id 2632` replacing the seven stored rows' descriptions, then
+   `agent activate --agent-id 2632 --preferred-language en-US`, confirmed by the owner on the
+   diff card.
+4. Fund buyer `0x75d00a2713565171f33216e5aa2a375e076ecf69` with 2.16 USD₮0
+   (`0x779ded0c9e1022225f8e0630b35a9b54be713736`) on X Layer (chain 196), plus 0.02 USDC on
+   Solana to the buyer's Solana address, then approve the 913 gauntlet
+   (`npm run okx:gauntlet -- --yes`), which settles 1.07 USD₮0 on X Layer to seller
+   `0x4022de2D36C334E73C7a108805Cea11C0564f402` (cases 2, 2b, 3, 3i, 3r, 5a) and 0.01 USDC on
+   Solana to the Solana payTo `wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU` (case 7).

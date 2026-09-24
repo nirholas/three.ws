@@ -73,6 +73,24 @@ host. Build it:
    host detect an expired session and emit an actionable alert naming the exact
    command, rather than failing chat silently.
 
+## State on 2026-09-24, re-measured: the API half has shipped, only the bot deploy is left
+
+- **API deploy: DONE.** Live API `c8f10f437` (`three-ws-api-00458-njs`) contains `53687d994`,
+  `d3074c1c8` and `f7f7da9b6`. The agent-scoped path is served: a POST to
+  `/api/llm/anthropic/agents/<unknown id>/v1/messages` answers `404 agent not found`, where it
+  answered `No API route matches` on 2026-09-18. Owner action 1 below is complete.
+- **Bot host: unchanged revision, still beating.** `bot_heartbeat` row `okx-chat-bot` was 20 s
+  old at 06:33 UTC, `host cloudrun:okx-chat-bot (okx-chat-bot-00001-926)`, `loggedIn: true`,
+  `activeClients: 1`, `agentCount: 1`, `daemonRestarts: 0`, instance `bootAt`
+  2026-09-22T13:44Z. No `providerLane` / `leaseHolder` in the beat, so it is still the pre-lane,
+  pre-lease code, pinned to Vertex, which still answers `403 Lightning dunning decision is deny`.
+  `/api/healthz` reports `okx_chat_bot` `degraded` for exactly that reason.
+- **`npm run okx:bot:deploy -- --dry-run`** reaches step [4] green ("live API c8f10f437 contains
+  d3074c1c8") and stops at steps [1] and [3] because this workspace has no `gcloud` binary at all
+  (`spawn gcloud ENOENT`), not just an expired login. The metering service account
+  `marketplace-chat@agents.three.ws` does not exist yet, as expected: `--apply` creates it.
+- **What remains is owner step 2 below**, preceded by installing and authenticating `gcloud`.
+
 ## State on 2026-09-18, and the one command left
 
 The payment-free reply lane is built and proven, the rollout overlap is closed, and the deploy
@@ -100,11 +118,12 @@ is one command. Full measurements: [okx-ai-PROGRESS.md](_context/okx-ai-PROGRESS
 ### Owner actions, in order (either deploy may go first)
 
 ```sh
-# 0. This workspace's gcloud login has expired.
+# 0. As of 2026-09-24 this workspace has no gcloud binary at all (install the Google Cloud CLI
+#    first), and any earlier login is gone with it.
 gcloud auth login && gcloud auth application-default login
 
-# 1. Approve and commit the gated files still uncommitted (see the report), then ship the API,
-#    which carries the agent-scoped proxy path:
+# 1. DONE by 2026-09-24 (live API c8f10f437 serves the agent-scoped path). Kept for the record:
+#    approve and commit the gated files, then ship the API:
 npm run clean:worktrees -- --apply
 npm run prep:worktree -- --apply
 (cd /workspaces/.deploy-wt && npm run deploy:gcp:full)

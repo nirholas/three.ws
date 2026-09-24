@@ -7,8 +7,10 @@ human or agent: every command below was run from this repo and its real output r
 - **Full history:** [`okx-ai-PROGRESS.md`](okx-ai-PROGRESS.md).
 - **Public docs:** [`docs/okx-marketplace.md`](../../docs/okx-marketplace.md), [`specs/okx-agent-payments.md`](../../specs/okx-agent-payments.md).
 
-**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.5.2 as of 2026-09-02; check drift with
-`onchainos --version`). Almost everything here needs an authenticated session as
+**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.6.2 as of 2026-09-24, installed from the
+`okx/onchainos-skills` release binary and checked against that release's `checksums.txt`; the
+release publishes no `installer-checksums.txt`, so the installer script cannot be verified and
+the binary route is the one to use; check drift with `onchainos --version`). Almost everything here needs an authenticated session as
 `claude@three.ws`: every **write** (update, activate, resubmit) and, as of v4.3.0, the
 **reads** too (see the note after the login block). **Login mechanics
 changed as of v4.3.0** (older sessions in `okx-ai-PROGRESS.md` describe a direct `wallet login
@@ -47,8 +49,19 @@ Only `curl` against our own `/api/okx/3d/*` endpoints (§7), public RPC reads, a
 
 ---
 
-## 0.5 The chat bot goes offline on its own: `npm run okx:bot`
+## 0.5 The chat bot: read the Cloud Run host, never start a local daemon
 
+> **State on 2026-09-24.** Cloud Run `okx-chat-bot-00001-926` is still the only host: its
+> `bot_heartbeat` row was 20 s old, `loggedIn: true`, `activeClients: 1`, `daemonRestarts: 0`,
+> instance booted 2026-09-22. It still has no `providerLane` in its beat, so it is the pre-lane
+> code pinned to Vertex, which answers `Lightning dunning decision is deny`: chat arrives and no
+> reply is authored. The API half of the fix is LIVE (`c8f10f437` contains `53687d994` and
+> `d3074c1c8`; the agent-scoped path answers `agent not found` instead of `no API route
+> matches`). What remains is the bot deploy, `npm run okx:bot:deploy` (preview with
+> `-- --dry-run`), which needs an authenticated `gcloud` and is owner-gated. It replaces the
+> bare `gcloud builds submit` further down this section: it also provisions the metering lane
+> and waits for the new revision to take the single-writer lease.
+>
 > **Read this first, 2026-09-09.** The bot is NOT local any more. It runs on Cloud Run
 > (`okx-chat-bot`, up since 2026-09-04) and that host owns the GCS state object and the XMTP
 > identity, with `--max-instances=1` enforcing exactly one writer. **Running `npm run okx:bot`

@@ -1,5 +1,5 @@
 /**
- * Agent Identity Studio — the OKX.AI flagship A2MCP service
+ * Agent Identity Studio: the OKX.AI flagship A2MCP service
  * (/api/okx/3d/identity-studio, engine in api/_okx3d/identity.js, catalog row
  * in api/_lib/okx-catalog.js).
  *
@@ -16,7 +16,7 @@ import { encodeAbiParameters, parseAbiParameters } from 'viem';
 process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 process.env.X402_PAY_TO_BASE ||= '0x0000000000000000000000000000000000000001';
 process.env.X402_ASSET_ADDRESS_BASE ||= '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-// The OKX X Layer rail — the reason this service exists on OKX.AI. With these
+// The OKX X Layer rail, the reason this service exists on OKX.AI. With these
 // set, xlayerSettleable() is true and the flagship 402 must lead with eip155:196.
 process.env.X402_PAY_TO_XLAYER ||= '0x75d00a2713565171f33216e5aa2a375e076ecf69';
 process.env.X402_XLAYER_RELAYER_KEY ||=
@@ -71,7 +71,7 @@ vi.mock('../../api/_lib/r2.js', () => ({
 	publicUrl: (key) => `https://cdn.test/${key}`,
 }));
 
-// Reference-image validation calls the real SSRF guard's public-URL check —
+// Reference-image validation calls the real SSRF guard's public-URL check;
 // stub it to a pass-through so tests control reachability via fetch alone.
 // fetchSafePublicUrlPinned is routed through the fetch router for the same
 // reason (the pinned variant opens raw sockets, which the sandbox has no
@@ -92,7 +92,7 @@ vi.mock('../../api/_lib/llm.js', () => ({
 		llmSpy.fn ? llmSpy.fn(...args) : Promise.reject(new Error('llm unavailable')),
 }));
 
-// The pipeline is a pure HTTP client over three.ws surfaces — mock global
+// The pipeline is a pure HTTP client over three.ws surfaces, so mock global
 // fetch with a tiny programmable router.
 const fetchRoutes = {
 	chat: null,
@@ -357,7 +357,7 @@ describe('free lanes over HTTP', () => {
 		expect(rail.relayer_error).toBeTruthy();
 	});
 
-	it('GET /health goes 503 when a subsystem is down — never a hardcoded ok', async () => {
+	it('GET /health goes 503 when a subsystem is down, never a hardcoded ok', async () => {
 		fetchRoutes.render = () => new Response(null, { status: 500 });
 		fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);
 		const res = makeRes();
@@ -433,7 +433,7 @@ describe('free lanes over HTTP', () => {
 	});
 
 	// The generation probe used to GET /api/forge bare, which answers 400
-	// missing_job whether the lane is healthy or not — it only failed on a 5xx.
+	// missing_job whether the lane is healthy or not; it only failed on a 5xx.
 	// It now reads ?catalog and requires a real tier + backend matrix.
 	it('GET /health fails generation on an empty forge catalog, not just on a 5xx', async () => {
 		fetchRoutes.forgeSubmit = (u) => {
@@ -503,7 +503,7 @@ describe('402 challenge and pricing', () => {
 		expect(JSON.stringify(challenge)).toContain('identity-studio');
 	});
 
-	it('the 402 LEADS with the OKX X Layer (eip155:196) accept — the flagship must be OKX-payable', async () => {
+	it('the 402 LEADS with the OKX X Layer (eip155:196) accept: the flagship must be OKX-payable', async () => {
 		const res = makeRes();
 		await handler(
 			makeReq({
@@ -530,7 +530,7 @@ describe('402 challenge and pricing', () => {
 
 	// The 402 envelope is how a buying agent learns to call this server. It used
 	// to inherit build402Body's default bazaar entry, which describes the main
-	// /api/mcp server and told buyers to call validate_model — a tool this
+	// /api/mcp server and told buyers to call validate_model, a tool this
 	// dispatcher does not have, so an agent that followed it paid $1.50 and then
 	// sent a call that could only be rejected.
 	it('the 402 bazaar extension describes THIS server: create_identity, never validate_model', async () => {
@@ -633,7 +633,7 @@ describe('402 challenge and pricing', () => {
 		expect(challenge.accepts[0].amount).toBe('1500000');
 	});
 
-	it('identity_status is free — served anonymously, no 402', async () => {
+	it('identity_status is free, served anonymously, no 402', async () => {
 		const res = makeRes();
 		await handler(
 			makeReq({
@@ -648,7 +648,7 @@ describe('402 challenge and pricing', () => {
 		);
 		expect(res.statusCode).toBe(200);
 		const rpc = JSON.parse(res.body);
-		expect(rpc.result.isError).toBe(true); // invalid token — but no payment demanded
+		expect(rpc.result.isError).toBe(true); // invalid token, but no payment demanded
 		expect(rpc.result.structuredContent.error).toBe('invalid_job_id');
 	});
 
@@ -754,7 +754,7 @@ describe('pipeline state machine', () => {
 		const status = await call('identity_status', { job_id: created.result.structuredContent.job_id });
 		const sc = status.result.structuredContent;
 		expect(sc.directed).toBe(true);
-		// First line only, surrounding quotes stripped — no fallback scaffolding.
+		// First line only, surrounding quotes stripped, no fallback scaffolding.
 		expect(sc.prompt).toBe(shaped);
 		expect(sc.prompt).not.toContain('full-body humanoid character:');
 	});
