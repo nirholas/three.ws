@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-22T06:14:49.340Z",
+	"generated_at": "2026-09-24T05:04:10.617Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "Every release now posts to the @trythreews X thread again",
+			"summary": "Changelog entries go out automatically to X as replies in one running thread on @trythreews, alongside the Telegram channel. The newest releases post first, the lane waits out X rate limits on its own and resumes, and it rebuilds the thread if a post in it is ever deleted.",
+			"link": "/changelog",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-22",
 			"type": "launch",
@@ -54,6 +65,17 @@
 			"link": "/data-desk",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-22",
+			"type": "update",
+			"title": "Claude and other AI clients can now read your three.ws account and follow guided flows",
+			"summary": "Every hosted three.ws MCP server now publishes live, read-only views of your account as resources: your agents, each agent's Solana wallet with balances, limits and freeze state, usage and costs, chat history, runs, open orders, DCA plans and intents, plus the marketplace, the model catalog with prices, your token launches and the x402 service catalog. Clients like Claude Desktop show them in the attachment picker, and a client can subscribe to an agent's wallet to be told the moment a transfer lands. Each server also offers guided prompts, such as get-started, create-agent, setup-wallet, trade, hire-agent and review-costs, that walk you through a flow tool by tool and always show the recipient, amount, token and chain before anything that moves money. A new create_agent tool lets a model create an agent for you, and read_resource gives the same data to clients without a resource reader.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

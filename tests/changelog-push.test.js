@@ -5,6 +5,7 @@ import {
 	formatTelegramMessage,
 	formatTweet,
 	weightedLength,
+	classifyXError,
 	pushTelegramLane,
 	pushXLane,
 } from '../api/_lib/changelog-push.js';
@@ -91,6 +92,34 @@ describe('formatTweet', () => {
 		const weighted = weightedLength(t.replace(/https:\/\/\S+$/, 'x'.repeat(23)));
 		expect(weighted).toBeLessThanOrEqual(280);
 		expect(t).toContain('…');
+	});
+});
+
+describe('classifyXError', () => {
+	const now = 1_800_000_000_000;
+
+	it('backs off until the exhausted 24h window resets, not the 15-minute one', () => {
+		const err = {
+			code: 429,
+			rateLimit: { limit: 200, remaining: 150, reset: now / 1000 + 900, userDay: { limit: 17, remaining: 0, reset: now / 1000 + 36_000 } },
+		};
+		expect(classifyXError(err, now)).toEqual({ kind: 'rate_limited', until: now + 36_000_000 });
+	});
+
+	it('falls back to a fixed wait when a 429 carries no usable reset', () => {
+		const verdict = classifyXError({ code: 429 }, now);
+		expect(verdict.kind).toBe('rate_limited');
+		expect(verdict.until).toBeGreaterThan(now);
+	});
+
+	it('recognizes duplicate content and a deleted reply target', () => {
+		expect(classifyXError({ code: 403, data: { detail: 'You are not allowed to create a Tweet with duplicate content.' } }).kind).toBe('duplicate');
+		expect(classifyXError({ code: 403, data: { detail: 'You attempted to reply to a Tweet that is deleted or not visible to you.' } }).kind).toBe('thread_gone');
+	});
+
+	it('treats auth and unknown failures as fatal so they surface', () => {
+		expect(classifyXError({ code: 401, data: { title: 'Unauthorized' } }).kind).toBe('fatal');
+		expect(classifyXError(new Error('socket hang up')).kind).toBe('fatal');
 	});
 });
 

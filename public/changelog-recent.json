@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-09-22T06:14:49.374Z",
+	"generated_at": "2026-09-24T05:04:10.646Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3750,
+	"total": 3752,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "Every release now posts to the @trythreews X thread again",
+			"summary": "Changelog entries go out automatically to X as replies in one running thread on @trythreews, alongside the Telegram channel. The newest releases post first, the lane waits out X rate limits on its own and resumes, and it rebuilds the thread if a post in it is ever deleted.",
+			"link": "/changelog",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-22",
 			"type": "launch",
@@ -57,6 +68,17 @@
 			"link": "/data-desk",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-22",
+			"type": "update",
+			"title": "Claude and other AI clients can now read your three.ws account and follow guided flows",
+			"summary": "Every hosted three.ws MCP server now publishes live, read-only views of your account as resources: your agents, each agent's Solana wallet with balances, limits and freeze state, usage and costs, chat history, runs, open orders, DCA plans and intents, plus the marketplace, the model catalog with prices, your token launches and the x402 service catalog. Clients like Claude Desktop show them in the attachment picker, and a client can subscribe to an agent's wallet to be told the moment a transfer lands. Each server also offers guided prompts, such as get-started, create-agent, setup-wallet, trade, hire-agent and review-costs, that walk you through a flow tool by tool and always show the recipient, amount, token and chain before anything that moves money. A new create_agent tool lets a model create an agent for you, and read_resource gives the same data to clients without a resource reader.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1587,28 +1609,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Oracle reference now reads the model it is describing",
-			"summary": "The complete Oracle documentation at /oracle/docs described version 2 of the conviction model while production had moved on to version 3, and the difference was not cosmetic. Version 3 changed the question the score answers: earlier versions ranked the odds of a spike, and version 3 ranks the odds of a spike that holds, counting a launch as a hit only if a holder who bought at first sight is still up. A coin that ran 3x and gave it all back was a success under the old target and is a miss under the new one, which is why the base rate underneath every figure on the page is far lower than it used to be. The page had the old target, the old tier probabilities and the old holdout numbers throughout, and its roadmap still promised fitted weights and calibration that had already shipped. Every model figure on the page is now read live from the published model card when you open it, because the engine refits itself every six hours behind a promotion gate and any number typed into a document goes stale on a clock. When that read fails the page says so, shows the values it was published with, explains that they may trail production, and offers a retry rather than a blank space. Two public endpoints that existed but were undocumented are now in the reference: the one that publishes the whole scoring machine, weights and holdout curve and the record of every fit ever refused, and the one that publishes the realized win rate per conviction band from real fills. The tier ladder used to truncate its own evidence, cutting off the sample counts on every band below the top, and now gives each band a full line. In light mode the tier names were near-white on a white card and the strongest bands were invisible; they now have their own ramp.",
-			"link": "/oracle/docs",
-			"tags": [
-				"docs",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The partner page gets its footer back, fits a narrow phone, and stops naming three partners it does not have",
-			"summary": "An end-to-end audit of /partners found it was the only page on the site that carried a footer slot but never loaded the footer, so the whole bottom of the page was missing. It is back. On a 320px phone the partner cards were 38px wider than the screen and the overhanging text was silently cut off, because a card header could not shrink past its logo, name and category chip on one line; the chip now wraps and every card fits. The page description search engines and link previews read was also stale: it advertised Intel, Microsoft and Oracle, none of which have a card, and left out OpenAI and HackerNoon, which do. The AWS card said View on AWS Marketplace above a link to our own AWS page, so it now says what it actually opens. Beyond that: the 8 partners and 22 chains counters are no longer hidden from screen readers and the partner number is now counted from the cards themselves, keyboard users get a visible ring on every card and button, the card lift is dropped for anyone who asks for reduced motion, and the page eyebrow, the four benefit headings and every card call to action are translatable instead of staying English on a translated page. The floating walk companion also got a full-size dismiss, avatar-swap and narration button on touch devices, everywhere it appears.",
-			"link": "/partners",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

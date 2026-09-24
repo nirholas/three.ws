@@ -28698,6 +28698,16 @@
 				"infra",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-09-24",
+			"title": "Every release now posts to the @trythreews X thread again",
+			"summary": "Changelog entries go out automatically to X as replies in one running thread on @trythreews, alongside the Telegram channel. The newest releases post first, the lane waits out X rate limits on its own and resumes, and it rebuilds the thread if a post in it is ever deleted.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/changelog"
 		}
 	]
 }

@@ -21,7 +21,7 @@
 //      have actually drifted before and cost a session each: the cron count,
 //      the build:gcp chain order, the db:migrate safety semantics, the
 //      README-coverage standard, the documented git remotes (the push target
-//      must actually resolve), and the retired X changelog lane. Each is
+//      must actually resolve), and whether the X changelog lane is live. Each is
 //      re-derived from the source of truth on every run, so the doc cannot
 //      quietly go stale again.
 //
@@ -239,12 +239,14 @@ if (/EVERY cloudbuild config must pin/.test(md)) {
 	}
 }
 
-// 4e. The retired X changelog lane. If the cron ever calls it again, the
-// "retired" wording in CLAUDE.md becomes a lie in the other direction.
+// 4e. The X changelog lane. CLAUDE.md states whether the cron delivers to X;
+// if the handler and that sentence disagree, agents act on a lie either way.
 const cronHandler = path.join(root, 'api/cron/changelog-push.js');
 if (existsSync(cronHandler)) {
 	const handler = readFileSync(cronHandler, 'utf8');
-	const callsX = /\bpushXLane\s*\(/.test(handler);
+	// Any use outside the import line counts: it may be called directly or
+	// handed to a runner, e.g. runLane(pushXLane).
+	const callsX = /\bpushXLane\b/.test(handler.replace(/^import[^;]*;$/gm, ''));
 	const docSaysRetired = /X\.com delivery is retired/.test(md);
 	if (callsX && docSaysRetired) {
 		failures.push('changelog-push now calls pushXLane again, but CLAUDE.md still says X.com delivery is retired');
