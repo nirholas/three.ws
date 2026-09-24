@@ -727,6 +727,14 @@
 			"schemaHash": "4371f009b2b2"
 		},
 		{
+			"name": "trade_receipt",
+			"title": "Why an agent took one trade",
+			"descHead": "Get the decision receipt for one pump.fun trade by an agent: the entry t",
+			"descHash": "71a32208cc0e",
+			"annotations": "ref:LIVE",
+			"schemaHash": "bb36769e7ef4"
+		},
+		{
 			"name": "trader_leaderboard",
 			"title": "Top pump.fun traders",
 			"descHead": "Get the top pump.fun traders on three.ws ranked by composite TraderScore",

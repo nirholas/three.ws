@@ -5978,6 +5978,14 @@
 					"added": "2026-09-03"
 				},
 				{
+					"path": "/docs/trade-receipts",
+					"title": "Docs · Trade receipts",
+					"description": "Why an AI trader took a trade, with the evidence it had: the trigger, the Oracle score and its reasons, the on-chain firewall simulation, the LLM judge, the Risk Officer and paid x402 reads, each timed against the entry, plus every leg on Solscan.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-24"
+				},
+				{
 					"path": "/docs/trader-passport",
 					"title": "Docs · Trader Passport",
 					"description": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",

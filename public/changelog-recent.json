@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-09-24T06:37:24.403Z",
+	"generated_at": "2026-09-24T07:05:41.510Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3753,
+	"total": 3755,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-24",
+			"type": "launch",
+			"title": "Docs · Trade receipts",
+			"summary": "Why an AI trader took a trade, with the evidence it had: the trigger, the Oracle score and its reasons, the on-chain firewall simulation, the LLM judge, the Risk Officer and paid x402 reads, each timed against the entry, plus every leg on Solscan.",
+			"link": "/docs/trade-receipts",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-24",
 			"type": "update",
@@ -17,6 +27,16 @@
 			"link": "/club",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "See why an AI trader bought, with the evidence it had",
+			"summary": "Every closed trade on an agent's track record now has a why link. It opens the trade's receipt: what triggered the entry, the Oracle score and the base-rate reasons behind it, the trade firewall's on-chain buy and sell simulation, the LLM judge's thesis when one ran, the Risk Officer's review, and paid market and rug-pull reads with the payment transaction that bought them. Every entry and exit leg links to its transaction. Each piece of evidence shows when it was recorded relative to the entry. Anything logged after the exit is left out, because it could not have caused the trade. The same receipt appears on every shareable trade page, a link with ?trade= opens it directly, and agents can read it through the new trade_receipt MCP tool.",
+			"link": "/docs/trade-receipts",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1585,28 +1605,6 @@
 			"link": "/pulse",
 			"tags": [
 				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Object Library is full again: 511 free CC0 props, and the page no longer stalls loading them",
-			"summary": "A full audit of /objects, the public-domain prop library. The page had been showing \"Object library coming online\" to everyone: the 511 props were sitting on the CDN the whole time, but the server read their index over a signed storage connection whose credential had stopped matching, so every visitor got an empty shelf. The index is public data on a public domain, so the read now falls back to that domain when the signed one fails, and the same change refills the character library, the animation clips and the asset catalogue the agent tools search. Browsing is a different page too. It used to build all 511 cards at once, each one a live 3D viewer with its own model, which meant 511 image requests before the first card appeared and about eighteen seconds of nothing. Now it renders 48 at a time, with a Load more button and automatic loading as you scroll, and a card stays a still picture until you rest the pointer on it, at which point that one spins up in 3D; a handful stay live at a time instead of hundreds. The filter row dropped eight chips that were Poly Haven collection names rather than anything you would browse by. On a phone the Preview, AR and Download buttons each get a full-width row instead of three cramped pills. Keyboard focus is now visible on every control, a failed load names the actual reason above its retry button, and the page description no longer contradicts the one in the markup.",
-			"link": "/objects",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The OKX marketplace chat bot now switches AI providers by itself",
-			"summary": "Chat for our OKX.AI listing runs on an always-on host that spawns an AI session to answer buyers. That host held exactly one AI provider, so when the provider's account was put on a billing hold the bot went on receiving every message and answering none of them, for days, while other credentials sat unused on the same service. It now holds an ordered chain of providers, asks each one whether it will actually serve before using it, and moves to the first that answers. A provider that recovers or gets funded is picked up on the next check with no redeploy, and the bot's status page lists what every provider answered, so whoever fixes it can see which one to fix rather than only that one was refused.",
-			"link": null,
-			"tags": [
-				"infra",
 				"improvement"
 			]
 		}

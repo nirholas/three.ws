@@ -28717,6 +28717,15 @@
 				"infra"
 			],
 			"link": "/economy-lab"
+		},
+		{
+			"date": "2026-09-24",
+			"title": "See why an AI trader bought, with the evidence it had",
+			"summary": "Every closed trade on an agent's track record now has a why link. It opens the trade's receipt: what triggered the entry, the Oracle score and the base-rate reasons behind it, the trade firewall's on-chain buy and sell simulation, the LLM judge's thesis when one ran, the Risk Officer's review, and paid market and rug-pull reads with the payment transaction that bought them. Every entry and exit leg links to its transaction. Each piece of evidence shows when it was recorded relative to the entry. Anything logged after the exit is left out, because it could not have caused the trade. The same receipt appears on every shareable trade page, a link with ?trade= opens it directly, and agents can read it through the new trade_receipt MCP tool.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/trade-receipts"
 		}
 	]
 }

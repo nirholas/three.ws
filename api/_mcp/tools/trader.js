@@ -9,6 +9,11 @@
 //   trader_profile      unscoped. Full track record for one agent: score,
 //                       all headline metrics, and the 10 most recent trades.
 //
+//   trade_receipt       unscoped. Why an agent took one trade: the evidence
+//                       every gate recorded before the entry (Oracle score and
+//                       reasons, trade firewall, LLM judge, Risk Officer, paid
+//                       x402 reads) plus each journal leg and its tx.
+//
 //   copy_subscribe      auth-gated (agents:write). Set up copy-trading: mirror
 //                       a leader's future entries to your own wallet with your
 //                       own sizing and risk caps. Non-custodial: we never
@@ -25,6 +30,7 @@ import { sql, isDbUnavailableError } from '../../_lib/db.js';
 import { limits } from '../../_lib/rate-limit.js';
 import { getLeaderboard, getTraderStats, WINDOWS, LEADERBOARD_SORTS } from '../../_lib/trader-stats.js';
 import { normalizeSubscriptionInput } from '../../_lib/copy-engine.js';
+import { loadTradeReceipt } from '../../_lib/trade-receipt.js';
 import { isUuid } from '../../_lib/validate.js';
 
 const NETWORKS  = new Set(['mainnet', 'devnet']);
@@ -219,6 +225,7 @@ export const toolDefs = [
 			// ride along because a partial exit and a self-launched coin are exactly
 			// what an agent vetting a leader must not be shown a clean number for.
 			const topTrades = (stats.closed || []).slice(0, 10).map((t) => ({
+				trade_id:        t.id,
 				symbol:          t.symbol,
 				mint:            t.mint,
 				outcome:         t.pnl_pct > 5 ? 'win' : t.pnl_pct < -5 ? 'loss' : 'flat',
@@ -282,6 +289,42 @@ export const toolDefs = [
 				generated_at:    new Date().toISOString(),
 			};
 			return mcpOk(payload);
+		},
+	},
+
+	{
+		name: 'trade_receipt',
+		title: 'Why an agent took one trade',
+		annotations: LIVE,
+		description:
+			"Get the decision receipt for one pump.fun trade by an agent: the entry trigger, the Oracle conviction score and pillars at entry with the base-rate reasons behind it, the trade firewall verdict and its checks (including the simulated buy/sell round-trip), the LLM judge's thesis when one ran, the Risk Officer review, paid x402 sentiment and rug-pull reads with their payment transaction, launch intel, and every journal leg with its on-chain signature. Evidence recorded after the exit is excluded because it could not have caused the trade; evidence seen while holding is tagged during_trade. Use a trade_id from trader_profile's recent_trades to understand what a leader actually trades on before copying it.",
+		inputSchema: {
+			type: 'object',
+			properties: {
+				trade_id: { type: 'string', description: 'Trade (position) UUID, from trader_profile recent_trades[].trade_id.' },
+			},
+			required: ['trade_id'],
+			additionalProperties: false,
+		},
+		async handler(args, auth) {
+			const tradeId = (args?.trade_id || '').trim();
+			if (!isUuid(tradeId)) return mcpErr('Invalid trade_id: must be a UUID (get it from trader_profile recent_trades).');
+
+			const rl = await limits.mcpIp(rateKeyFor(auth));
+			if (!rl.success) return mcpErr('Rate limit exceeded, try again in a moment.');
+
+			let receipt;
+			try {
+				receipt = await loadTradeReceipt(tradeId);
+			} catch (err) {
+				return unavailable(err, 'This trade receipt');
+			}
+			if (!receipt) return mcpErr(`Trade ${tradeId} not found, never filled, or its agent is not public.`);
+			return mcpOk({
+				...receipt,
+				receipt_url: `https://three.ws/trader/${receipt.position.agent_id}?trade=${tradeId}`,
+				generated_at: new Date().toISOString(),
+			});
 		},
 	},
 

@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Trade receipts</title>
+			<link>https://three.ws/docs/trade-receipts</link>
+			<guid isPermaLink="false">2026-09-24:Docs · Trade receipts</guid>
+			<pubDate>Thu, 24 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Why an AI trader took a trade, with the evidence it had: the trigger, the Oracle score and its reasons, the on-chain firewall simulation, the LLM judge, the Risk Officer and paid x402 reads, each timed against the entry, plus every leg on Solscan.</description>
+		</item>
+		<item>
 			<title>Paying the Club cover in USDC works in wallets that refused to show the request</title>
 			<link>https://three.ws/club</link>
 			<guid isPermaLink="false">2026-09-24:Paying the Club cover in USDC works in wallets that refused to show the request</guid>
 			<pubDate>Thu, 24 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Some visitors paying the Club cover in USDC saw their wallet refuse to open the approval window, and the payment stopped with &quot;Your wallet could not display this payment request&quot;. The payment itself was well formed; the problem was in how the page handed it to the wallet. The payment window now passes the transaction to your wallet through the Wallet Standard interface that Phantom, Solflare and Backpack all support, exactly as our server built it, and only falls back to the older wallet connection for wallets that do not offer it. Nothing was ever charged on a refused attempt.</description>
+		</item>
+		<item>
+			<title>See why an AI trader bought, with the evidence it had</title>
+			<link>https://three.ws/docs/trade-receipts</link>
+			<guid isPermaLink="false">2026-09-24:See why an AI trader bought, with the evidence it had</guid>
+			<pubDate>Thu, 24 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every closed trade on an agent's track record now has a why link. It opens the trade's receipt: what triggered the entry, the Oracle score and the base-rate reasons behind it, the trade firewall's on-chain buy and sell simulation, the LLM judge's thesis when one ran, the Risk Officer's review, and paid market and rug-pull reads with the payment transaction that bought them. Every entry and exit leg links to its transaction. Each piece of evidence shows when it was recorded relative to the entry. Anything logged after the exit is left out, because it could not have caused the trade. The same receipt appears on every shareable trade page, a link with ?trade= opens it directly, and agents can read it through the new trade_receipt MCP tool.</description>
 		</item>
 		<item>
 			<title>The x402 payment rail stops starting payments it cannot afford to finish</title>

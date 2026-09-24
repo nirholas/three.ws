@@ -3802,6 +3802,10 @@
 			"dest": "/api/sniper/trader.js"
 		},
 		{
+			"src": "/api/sniper/receipt",
+			"dest": "/api/sniper/receipt.js"
+		},
+		{
 			"src": "/api/traders/preview",
 			"dest": "/api/traders/preview.js"
 		},

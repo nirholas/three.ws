@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-24T06:25:11.604Z",
+	"generated_at": "2026-09-24T07:05:41.465Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7693,6 +7693,16 @@
 					"title": "Docs · Fork a trade",
 					"description": "One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.",
 					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trade-receipts",
+					"title": "Docs · Trade receipts",
+					"description": "Why an AI trader took a trade, with the evidence it had: the trigger, the Oracle score and its reasons, the on-chain firewall simulation, the LLM judge, the Risk Officer and paid x402 reads, each timed against the entry, plus every leg on Solscan.",
+					"added": "2026-09-24",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
