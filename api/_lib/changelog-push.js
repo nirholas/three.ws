@@ -117,7 +117,7 @@ function cutoffDate() {
 	return new Date(Date.now() - CUTOFF_DAYS * 86400000).toISOString().slice(0, 10);
 }
 
-export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) {
+export function pendingEntries(feed, posted, limit, { newestWin = false, accept = () => true } = {}) {
 	const cutoff = cutoffDate();
 	// The posted-set is keyed by entryKey, so it can only suppress an entry that
 	// went out on an EARLIER tick. Two feed entries sharing one key are both
@@ -129,7 +129,7 @@ export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) 
 	// rather than a repeated message to every subscriber.
 	const seen = new Set();
 	const unposted = feed.entries
-		.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && e.type !== 'launch')
+		.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && e.type !== 'launch' && accept(e))
 		.filter((e) => {
 			const key = entryKey(e);
 			if (seen.has(key)) return false;
@@ -234,6 +234,35 @@ export async function pushTelegramLane(feed) {
 
 // --- X lane ------------------------------------------------------------------
 
+// The X lane posts to a public feed with no human in the loop, so it only ever
+// sees entries that pass data/changelog-x-filter.json: nothing about wallets,
+// funds, payment internals, keys, outages, or other coins, and nothing that is
+// only a fix or plumbing. Telegram, a community channel, still gets them all.
+export function loadXFilter() {
+	const filter = JSON.parse(readFileSync(join(process.cwd(), 'data', 'changelog-x-filter.json'), 'utf8'));
+	// Projects the owner put under the coin gate for announcements stay off X too.
+	const gated = loadRepoState('announce-gate-terms.json')?.terms || [];
+	const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	for (const term of gated) {
+		filter.patterns.push({ pattern: `\\b${escape(term)}\\b`, reason: 'A project name the owner gated in data/announce-gate-terms.json.' });
+	}
+	return filter;
+}
+
+/** @returns {string|null} why the entry must not go to X, or null when it may */
+export function xFilterReason(e, filter) {
+	const tags = e.tags || [];
+	const blocked = tags.find((t) => filter.blockedTags?.[t]);
+	if (blocked) return `tag ${blocked}: ${filter.blockedTags[blocked]}`;
+	const required = filter.requireAnyTag;
+	if (required?.tags?.length && !tags.some((t) => required.tags.includes(t))) return required.reason;
+	const text = `${e.title}\n${e.summary}`;
+	for (const rule of filter.patterns || []) {
+		if (new RegExp(rule.pattern, 'i').test(text)) return rule.reason;
+	}
+	return null;
+}
+
 // X counts every URL as 23 chars (t.co wrapping) and each emoji/astral
 // codepoint as 2. Compose title + summary + link within the 280 budget,
 // trimming the summary on a word boundary when it overflows.
@@ -318,7 +347,8 @@ export async function pushXLane(feed) {
 	// X is a rate-limited showcase, not the full log: when there is more to say
 	// than the daily budget allows, the newest releases win (as on Telegram),
 	// otherwise a busy week keeps the lane posting entries days late.
-	const { pending, backlog } = pendingEntries(feed, posted, X_LIMIT, { newestWin: true });
+	const filter = loadXFilter();
+	const { pending, backlog } = pendingEntries(feed, posted, X_LIMIT, { newestWin: true, accept: (e) => !xFilterReason(e, filter) });
 	if (pending.length === 0) {
 		await saveState(); // persist the pruned 24h window
 		return { posted: 0, backlog };

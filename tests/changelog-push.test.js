@@ -6,6 +6,8 @@ import {
 	formatTweet,
 	weightedLength,
 	classifyXError,
+	xFilterReason,
+	loadXFilter,
 	pushTelegramLane,
 	pushXLane,
 } from '../api/_lib/changelog-push.js';
@@ -92,6 +94,33 @@ describe('formatTweet', () => {
 		const weighted = weightedLength(t.replace(/https:\/\/\S+$/, 'x'.repeat(23)));
 		expect(weighted).toBeLessThanOrEqual(280);
 		expect(t).toContain('…');
+	});
+});
+
+describe('the X filter', () => {
+	const filter = loadXFilter();
+	const verdict = (over) => xFilterReason(entry(over), filter);
+
+	it('passes a plain product feature', () => {
+		expect(verdict({ title: 'Text avatars now wear what you describe', summary: 'Describe an outfit and the avatar wears it.', tags: ['feature'] })).toBeNull();
+	});
+
+	it('keeps agent wallets, x402, funds, and keys off X', () => {
+		expect(verdict({ title: 'Agents now buy real work from brand-new wallets', tags: ['feature'] })).not.toBeNull();
+		expect(verdict({ summary: 'Paid calls settle over x402.', tags: ['feature'] })).not.toBeNull();
+		expect(verdict({ summary: 'The pool only pays from wallets that hold funds.', tags: ['improvement'] })).not.toBeNull();
+		expect(verdict({ summary: 'Rotate your API keys from the dashboard.', tags: ['feature'] })).not.toBeNull();
+	});
+
+	it('skips security work, bare fixes, and plumbing', () => {
+		expect(verdict({ tags: ['security', 'feature'] })).not.toBeNull();
+		expect(verdict({ tags: ['fix'] })).not.toBeNull();
+		expect(verdict({ tags: ['infra', 'docs'] })).not.toBeNull();
+	});
+
+	it('allows $THREE and blocks any other ticker', () => {
+		expect(verdict({ summary: 'Every coin on the launchpad is bought with $THREE.', tags: ['feature'] })).toBeNull();
+		expect(verdict({ summary: 'Now quoting $ABC next to the chart.', tags: ['feature'] })).not.toBeNull();
 	});
 });
 
