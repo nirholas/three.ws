@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-24
+
+- **Paying the Club cover in USDC works in wallets that refused to show the request**: Some visitors paying the Club cover in USDC saw their wallet refuse to open the approval window, and the payment stopped with "Your wallet could not display this payment request". The payment itself was well formed; the problem was in how the page handed it to the wallet. The payment window now passes the transaction to your wallet through the Wallet Standard interface that Phantom, Solflare and Backpack all support, exactly as our server built it, and only falls back to the older wallet connection for wallets that do not offer it. Nothing was ever charged on a refused attempt. (`/club`) `[fix]`
+
 ## 2026-09-22
 
 - **Authorize the three-ws CLI** (`/cli/authorize`): Approve a sign-in started by npx three-ws in your terminal. Check the code matches, choose what the new API key may do (money-moving permissions are flagged and can be removed), and the CLI finishes setup on its own.

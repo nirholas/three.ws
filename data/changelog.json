@@ -28698,6 +28698,15 @@
 				"infra",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-09-24",
+			"title": "Paying the Club cover in USDC works in wallets that refused to show the request",
+			"summary": "Some visitors paying the Club cover in USDC saw their wallet refuse to open the approval window, and the payment stopped with \"Your wallet could not display this payment request\". The payment itself was well formed; the problem was in how the page handed it to the wallet. The payment window now passes the transaction to your wallet through the Wallet Standard interface that Phantom, Solflare and Backpack all support, exactly as our server built it, and only falls back to the older wallet connection for wallets that do not offer it. Nothing was ever charged on a refused attempt.",
+			"tags": [
+				"fix"
+			],
+			"link": "/club"
 		}
 	]
 }
