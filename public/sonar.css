@@ -16,9 +16,9 @@
 	--sn-accent: #7dd3fc;
 	--sn-accent-ink: #04141f;
 	--sn-muted: rgba(255, 255, 255, 0.6);
-	--sn-live: #4ade80;
-	--sn-warn: #fbbf24;
-	--sn-error: #f87171;
+	--sn-live: var(--success);
+	--sn-warn: var(--warn);
+	--sn-error: var(--danger);
 }
 :root[data-theme='light'] {
 	--sn-border: rgba(0, 0, 0, 0.1);
