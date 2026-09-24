@@ -571,6 +571,29 @@ test('the reported keep line is the one that made the sweep return nothing', () 
 	}
 });
 
+// The other half of the same defect: a wallet ABOVE its keep line whose excess is
+// merely under the minimum sweep. Production 2026-09-24 printed
+// `at_or_below_floor:0.019334483<0.01` for 31 agent wallets, a reason whose own two
+// numbers disprove it, while those wallets held 0.161 SOL of excess between them.
+test('a wallet above its keep line reports sweep dust, never a floor it is not at', () => {
+	const dust = floorBlockedSkip('Sable #25', 0.019334483, 0.005);
+	assert.equal(dust.keepSol, 0.01);
+	assert.equal(dust.excessSol, 0.009334483);
+	assert.equal(dust.reason, `below_min_sweep:0.009334483<${MIN_SWEEP_SOL}`);
+	assert.doesNotMatch(dust.reason, /at_or_below_floor/);
+	// The sizing agrees: this is exactly the case reclaimableSol returns 0 for.
+	assert.equal(reclaimableSol(0.019334483, 0.005), 0);
+
+	// The planner passes its own minimum through, so the reason names the threshold used.
+	const planned = planAgentReclaim([
+		{ agentId: 'a', name: 'Sable #25', address: 'S25', owner: BOT, sol: 0.0193, strategy: { enabled: false } },
+	], { minSweepSol: 0.02 });
+	assert.match(planned.skipped[0].reason, /^below_min_sweep:[0-9.]+<0\.02$/);
+
+	// A wallet genuinely under its keep line still reads as a floor skip.
+	assert.match(floorBlockedSkip('Swarm 1', 0.02499497, 0.05).reason, /^at_or_below_floor:/);
+});
+
 test('floorHeldSol totals only the SOL a floor is fencing', () => {
 	const skipped = [
 		floorBlockedSkip('treasury', 0.054995, 0.1),

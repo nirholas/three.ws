@@ -222,6 +222,58 @@ describe('verdict cache', () => {
 	});
 });
 
+describe('headroom: a cached admission funds only what the budget can pay', () => {
+	// Production 2026-09-24, paced wallet: every fresh read found room for about one
+	// settle, then the cached "yes" admitted every call for 20 seconds. ~230 settles
+	// an hour landed and ~1,700 an hour were refused at the END of the handshake by
+	// the settle-path meter. The snapshot now spends each admission's fee out of its
+	// own headroom, so the calls past it are held back before any work is done.
+	it('admits exactly the settles that fit, then refuses from the same snapshot', async () => {
+		// 1_000_000 budget, 985_000 spent: room for three 5_000-lamport settles.
+		h.sql.mockResolvedValue([{ spent: '985000' }]);
+		const verdicts = [];
+		for (let i = 0; i < 6; i++) verdicts.push(await admit({ estFeeLamports: 5_000 }));
+		expect(verdicts.map((v) => v.ok)).toEqual([true, true, true, false, false, false]);
+		// The refusal names the arithmetic, including what this window already admitted.
+		expect(verdicts[3].reason).toBe('fee_runway_exhausted:1000000+5000>1000000');
+		// One ledger read and one balance read served the whole burst.
+		expect(h.sql).toHaveBeenCalledTimes(1);
+		expect(h.sponsorSolLamports).toHaveBeenCalledTimes(1);
+	});
+
+	it('a headroom refusal holds for the refusal window, then a fresh read reopens the rail', async () => {
+		h.sql.mockResolvedValue([{ spent: '995000' }]);
+		expect((await admit()).ok).toBe(true);
+		expect((await admit()).ok).toBe(false);
+
+		// Still inside the 20s admission window, but the snapshot is now a refusal:
+		// it must not flip back to "yes" while nothing has changed.
+		vi.setSystemTime(T0 + 15_000);
+		expect((await admit()).ok).toBe(false);
+
+		vi.setSystemTime(T0 + 15_000 + 60_001);
+		h.sponsorSolLamports.mockResolvedValue(SOL_FOR_1M_BUDGET + 10_000_000);
+		const v = await admit();
+		expect(v.ok).toBe(true);
+		expect(v.cached).toBe(false);
+	});
+
+	it('concurrent callers share one snapshot and still admit no more than it funds', async () => {
+		// A ring tick fires its calls in parallel. Before single-flight, every one of
+		// them missed the cache together, read the same headroom, and all said yes.
+		h.sql.mockResolvedValue([{ spent: '990000' }]);
+		const verdicts = await Promise.all(Array.from({ length: 8 }, () => admit({ estFeeLamports: 5_000 })));
+		expect(verdicts.filter((v) => v.ok)).toHaveLength(2);
+		expect(h.sql).toHaveBeenCalledTimes(1);
+		expect(h.sponsorSolLamports).toHaveBeenCalledTimes(1);
+	});
+
+	it('an unreadable ledger still fails open for every caller in the window', async () => {
+		h.sql.mockRejectedValue(new Error('db down'));
+		for (let i = 0; i < 4; i++) expect((await admit()).ok).toBe(true);
+	});
+});
+
 describe('parity with the settle-path meter', () => {
 	// The gate's whole value is that it predicts the settle path's answer. A laxer
 	// admission re-creates the wasted handshakes it exists to remove; a stricter

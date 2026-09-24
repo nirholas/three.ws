@@ -271,7 +271,10 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
      `skipped_floor_held_sol` 0**. A floor skip carries its numbers
      (`at_or_below_floor:<held><<keep>`), so a non-zero held total means the SOL is
      sitting on a platform wallet behind a configured floor, not that the fleet is
-     empty; review that wallet's `minSol` before asking for capital. See
+     empty; review that wallet's `minSol` before asking for capital. A
+     `below_min_sweep:<excess><<min>` skip is a wallet above its keep line whose
+     excess is under `ECONOMY_SWEEPBACK_MIN_SOL` (default 0.01 SOL): dust the
+     sweep declines to move, released by that minimum rather than by a floor. See
      [economy-master.md](../economy-master.md) "A floor skip says whether the
      wallet is empty or fenced".
   2. `--grep "data_unavailable"` hits = paid endpoints refunding honestly (no

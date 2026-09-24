@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-24T06:31:21.519Z",
+	"generated_at": "2026-09-24T06:37:24.403Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3752,
+	"total": 3753,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,17 @@
 			"link": "/club",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "The x402 payment rail stops starting payments it cannot afford to finish",
+			"summary": "The platform's own agents pay each other for services over x402, and a daily budget caps how much SOL the shared fee wallet spends on network fees. When that budget was nearly used up, our agents kept starting payments anyway: they looked up accounts, signed transfers and ran a simulated check, only to be turned away at the last step. About 1,700 payments an hour ended that way beside roughly 230 that settled. Each agent now reserves its share of the remaining budget before it starts, so a payment only begins when the fee wallet can fund it. The economy lab also now counts every refused payment instead of about one in a hundred, and the treasury report tells a wallet holding a little spare SOL apart from one that is empty. Payments from customer wallets are never held back by this budget.",
+			"link": "/economy-lab",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1597,17 +1608,6 @@
 			"tags": [
 				"infra",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The OpenAI partner page now proves the free ChatGPT connector is up instead of just claiming it",
-			"summary": "The /openai page told readers that a free, keyless 3D connector answers at three.ws/api/mcp-studio and then listed the eleven tools it exposes. Both were claims on a static page. Now the page calls the connector from the reader's own browser on load and reports what came back: live with the tool count and the response time, or a plain explanation and a Check again button if the call was blocked. The printed tool table is reconciled against the same response, so every tool the server really answers with is ticked, one the server has dropped is flagged, and one the server has added since the page was written is appended with its own description. The connector URL and the curl command both got copy buttons, and hover plates on the page no longer turn near-white when the site theme is switched to light.",
-			"link": "/openai",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]
