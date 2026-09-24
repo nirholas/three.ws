@@ -1,25 +1,14 @@
 {
-	"generated_at": "2026-09-24T05:04:10.646Z",
+	"generated_at": "2026-09-24T06:25:11.639Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3752,
+	"total": 3751,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
-		{
-			"date": "2026-09-24",
-			"type": "update",
-			"title": "Every release now posts to the @trythreews X thread again",
-			"summary": "Changelog entries go out automatically to X as replies in one running thread on @trythreews, alongside the Telegram channel. The newest releases post first, the lane waits out X rate limits on its own and resumes, and it rebuilds the thread if a post in it is ever deleted.",
-			"link": "/changelog",
-			"tags": [
-				"improvement",
-				"infra"
-			]
-		},
 		{
 			"date": "2026-09-22",
 			"type": "launch",
@@ -1608,6 +1597,17 @@
 			"link": "/openai",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The Oracle reference now reads the model it is describing",
+			"summary": "The complete Oracle documentation at /oracle/docs described version 2 of the conviction model while production had moved on to version 3, and the difference was not cosmetic. Version 3 changed the question the score answers: earlier versions ranked the odds of a spike, and version 3 ranks the odds of a spike that holds, counting a launch as a hit only if a holder who bought at first sight is still up. A coin that ran 3x and gave it all back was a success under the old target and is a miss under the new one, which is why the base rate underneath every figure on the page is far lower than it used to be. The page had the old target, the old tier probabilities and the old holdout numbers throughout, and its roadmap still promised fitted weights and calibration that had already shipped. Every model figure on the page is now read live from the published model card when you open it, because the engine refits itself every six hours behind a promotion gate and any number typed into a document goes stale on a clock. When that read fails the page says so, shows the values it was published with, explains that they may trail production, and offers a retry rather than a blank space. Two public endpoints that existed but were undocumented are now in the reference: the one that publishes the whole scoring machine, weights and holdout curve and the record of every fit ever refused, and the one that publishes the realized win rate per conviction band from real fills. The tier ladder used to truncate its own evidence, cutting off the sample counts on every band below the top, and now gives each band a full line. In light mode the tier names were near-white on a white card and the strongest bands were invisible; they now have their own ramp.",
+			"link": "/oracle/docs",
+			"tags": [
+				"docs",
 				"fix"
 			]
 		}

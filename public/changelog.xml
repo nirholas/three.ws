@@ -7,14 +7,6 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
-			<title>Every release now posts to the @trythreews X thread again</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-09-24:Every release now posts to the @trythreews X thread again</guid>
-			<pubDate>Thu, 24 Sep 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>Changelog entries go out automatically to X as replies in one running thread on @trythreews, alongside the Telegram channel. The newest releases post first, the lane waits out X rate limits on its own and resumes, and it rebuilds the thread if a post in it is ever deleted.</description>
-		</item>
-		<item>
 			<title>Authorize the three-ws CLI</title>
 			<link>https://three.ws/cli/authorize</link>
 			<guid isPermaLink="false">2026-09-22:Authorize the three-ws CLI</guid>

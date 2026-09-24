@@ -165,9 +165,10 @@ export const CRONS = [
 	// sit in 'rigging' forever).
 	{ id: 'db-retention', label: 'DB retention' },
 	{ id: 'reconstruct-sweep', label: 'Reconstruct sweep' },
-	// Community delivery: posts every shipped release to Telegram and the X
-	// thread. It answers 502 when either lane fails, which reads as red here.
-	{ id: 'changelog-push', label: 'Changelog push (Telegram + X)' },
+	// Community delivery: posts every shipped release to Telegram, and the
+	// reviewed @trythreews queue. Each answers 502 on failure, red here.
+	{ id: 'changelog-push', label: 'Changelog push (Telegram)' },
+	{ id: 'x-content', label: 'X content queue' },
 ].map((c) => {
 	const schedule = CRON_SCHEDULES.get(c.driven_by || c.id) || null;
 	return { ...c, schedule, stale_after_ms: deriveStaleAfterMs(schedule) };

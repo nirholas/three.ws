@@ -4,10 +4,6 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
-## 2026-09-24
-
-- **Every release now posts to the @trythreews X thread again**: Changelog entries go out automatically to X as replies in one running thread on @trythreews, alongside the Telegram channel. The newest releases post first, the lane waits out X rate limits on its own and resumes, and it rebuilds the thread if a post in it is ever deleted. (`/changelog`) `[improvement, infra]`
-
 ## 2026-09-22
 
 - **Authorize the three-ws CLI** (`/cli/authorize`): Approve a sign-in started by npx three-ws in your terminal. Check the code matches, choose what the new API key may do (money-moving permissions are flagged and can be removed), and the CLI finishes setup on its own.
