@@ -2,6 +2,25 @@
 
 Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 
+> ## Re-measured 2026-09-24: settle is ok; two owner gates remain
+>
+> Live at 06:32 UTC on `c8f10f437`: `x402_settle` **ok, 92.2%** (235/255, 3h), so DoD 1
+> passes. The sponsor was refunded since 09-09 (0.032 SOL), so the regime is governor
+> pacing, not the floor. `fee_runway_exhausted` was back on top of the facilitator's reject
+> book (40,939 in 24h against 4,341 settles) because the caller-side admission gate cached
+> "yes" for 20s under pacing; fixed in `22f1e08df` together with a hundredfold refusal
+> undercount in `/api/x402/runway-lab` and a self-contradicting `at_or_below_floor` reason
+> (now `below_min_sweep`). Evidence in [PROGRESS.md](_context/backlog-PROGRESS.md),
+> 2026-09-24 entry. What remains, both owner-owned:
+>
+> 1. **Deploy `22f1e08df`** (gate 2), then re-read the reject book 3h later for DoD 2.
+> 2. **Fund `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`** (gate 1). Burn is 0.0488
+>    SOL/day against about 0.030 SOL spendable, so the sponsor is back at its floor within
+>    a day. About 0.7 SOL buys 14 days; about 1.39 SOL also fills the 0.3 SOL operating
+>    reserve and both treasury-topup targets, which is what turns the empty reclaim plan
+>    in DoD 3 non-zero. Lowering `ECONOMY_SWEEPBACK_MIN_SOL` would instead let the reclaim
+>    cron sweep 0.161 SOL of agent-wallet excess; it moves SOL, so it is also the owner's call.
+
 > ## Re-measured 2026-09-04: three agent-doable defects were still here
 >
 > The 2026-09-02 header below said only capital remained. That was wrong in a way

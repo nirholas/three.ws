@@ -1,7 +1,7 @@
 /**
- * Trader MCP tools (api/_mcp/tools/trader.js), the four tools that close the
+ * Trader MCP tools (api/_mcp/tools/trader.js), the tools that close the
  * autonomous copy-trading loop: trader_leaderboard, trader_profile,
- * copy_subscribe, copy_status.
+ * trade_receipt, copy_subscribe, copy_status.
  *
  * The handlers themselves are the real shipped code. Only their leaf boundaries
  * are stubbed: the Neon client, the trader-stats aggregators, and the rate
@@ -84,6 +84,11 @@ vi.mock('../api/_lib/trader-stats.js', async (importOriginal) => {
 	};
 });
 
+const loadTradeReceipt = vi.fn();
+vi.mock('../api/_lib/trade-receipt.js', () => ({
+	loadTradeReceipt: (...a) => loadTradeReceipt(...a),
+}));
+
 const mcpIp = vi.fn(async () => ({ success: true, limit: 600, remaining: 599, reset: 0 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '203.0.113.7',
@@ -146,14 +151,15 @@ beforeEach(() => {
 	queryError = null;
 	getLeaderboard.mockReset();
 	getTraderStats.mockReset();
+	loadTradeReceipt.mockReset();
 	mcpIp.mockClear();
 	mcpIp.mockResolvedValue({ success: true, limit: 600, remaining: 599, reset: 0 });
 });
 
 describe('tool surface', () => {
-	it('exports the four trader tools with handlers and input schemas', () => {
+	it('exports the trader tools with handlers and input schemas', () => {
 		expect(Object.keys(TOOLS).sort()).toEqual(
-			['copy_status', 'copy_subscribe', 'trader_leaderboard', 'trader_profile'],
+			['copy_status', 'copy_subscribe', 'trade_receipt', 'trader_leaderboard', 'trader_profile'],
 		);
 		for (const t of toolDefs) {
 			expect(typeof t.handler).toBe('function');
@@ -168,6 +174,8 @@ describe('tool surface', () => {
 		expect(TOOLS.copy_status.scope).toBe('agents:read');
 		expect(TOOLS.trader_leaderboard.scope).toBeUndefined();
 		expect(TOOLS.trader_profile.scope).toBeUndefined();
+		expect(TOOLS.trade_receipt.scope).toBeUndefined();
+		expect(TOOLS.trade_receipt.annotations.readOnlyHint).toBe(true);
 		expect(TOOLS.copy_subscribe.annotations.readOnlyHint).toBe(false);
 		expect(TOOLS.copy_status.annotations.readOnlyHint).toBe(true);
 	});
@@ -321,6 +329,46 @@ describe('trader_profile', () => {
 		expect(res.isError).toBe(true);
 		expect(textOf(res)).toMatch(/temporarily unavailable/i);
 		expect(textOf(res)).not.toMatch(/not found/i);
+	});
+});
+
+describe('trade_receipt', () => {
+	const TRADE_ID = '99999999-2222-4333-8444-555555555555';
+	const receipt = {
+		position: { id: TRADE_ID, agent_id: LEADER_ID, symbol: 'THREE', mint: THREE_MINT, status: 'closed' },
+		trigger: { key: 'oracle_crossing', label: 'Oracle crossing' },
+		legs: [],
+		evidence: { oracle: { score: 85, timing: 'before_entry' } },
+		evidence_count: 1,
+		summary: 'Sniper One bought $THREE. Trigger: Oracle crossing. Oracle score 85.',
+	};
+
+	it('returns the receipt with a deep link into the trader page', async () => {
+		loadTradeReceipt.mockResolvedValueOnce(receipt);
+		const out = payloadOf(await TOOLS.trade_receipt.handler({ trade_id: TRADE_ID }, ANON));
+		expect(loadTradeReceipt).toHaveBeenCalledWith(TRADE_ID);
+		expect(out.summary).toBe(receipt.summary);
+		expect(out.evidence.oracle.score).toBe(85);
+		expect(out.receipt_url).toBe(`https://three.ws/trader/${LEADER_ID}?trade=${TRADE_ID}`);
+	});
+
+	it('rejects a non-UUID trade_id before any lookup', async () => {
+		const res = await TOOLS.trade_receipt.handler({ trade_id: 'last-trade' }, ANON);
+		expect(res.isError).toBe(true);
+		expect(textOf(res)).toMatch(/must be a UUID/i);
+		expect(loadTradeReceipt).not.toHaveBeenCalled();
+	});
+
+	it('says not found for an unknown or private trade, and unavailable for an outage', async () => {
+		loadTradeReceipt.mockResolvedValueOnce(null);
+		const missing = await TOOLS.trade_receipt.handler({ trade_id: TRADE_ID }, ANON);
+		expect(missing.isError).toBe(true);
+		expect(textOf(missing)).toMatch(/not found/i);
+
+		loadTradeReceipt.mockRejectedValueOnce(new Error('Error connecting to database: fetch failed'));
+		const down = await TOOLS.trade_receipt.handler({ trade_id: TRADE_ID }, ANON);
+		expect(down.isError).toBe(true);
+		expect(textOf(down)).toMatch(/temporarily unavailable/i);
 	});
 });
 

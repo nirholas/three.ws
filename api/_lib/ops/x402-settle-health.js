@@ -206,7 +206,9 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 				'at_or_below_floor or secret_undecryptable AND that plan reports ' +
 				'skipped_floor_held_sol 0. A floor skip carries its numbers ' +
 				'(at_or_below_floor:<held><<keep>), so a non-zero held total means the SOL exists on a ' +
-				'platform wallet and a floor is fencing it, not that the fleet is empty. ' +
+				'platform wallet and a floor is fencing it, not that the fleet is empty. A ' +
+				'below_min_sweep:<excess><<min> skip is a wallet ABOVE its keep line whose excess is under ' +
+				'ECONOMY_SWEEPBACK_MIN_SOL: that SOL is released by the sweep minimum, not by a floor. ' +
 				'See docs/ops/production-log-triage.md.',
 		};
 	}

@@ -1,10 +1,12 @@
 {
 	"id": "awesome",
 	"contentHash": "aa2d1ecaa43622b2fedc10e1eb17f965fcf1346095929e9e0bacb5abe2ed36c0",
-	"reviewedAt": "2026-09-20T07:50:59.086Z",
+	"reviewedAt": "2026-09-24T06:28:28.682Z",
 	"passed": false,
 	"blockers": [
-		"the AI editor did not run: no model was reachable:"
+		"evidence:page https://three.ws/awesome: browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+		"evidence:page https://three.ws/awesome: browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+		"probe:browser the page renders the counters, the tag filters and the Markdown copy: browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
 	],
 	"texts": [
 		"Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
@@ -12,21 +14,21 @@
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "152 entries across 15 sections",
 				"kind": "evidence:page",
 				"target": "https://three.ws/awesome",
-				"ok": true,
-				"detail": "live page shows \"152 entries across 15 sections\""
+				"ok": false,
+				"detail": "browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
 			},
 			{
 				"claim": "121 of them free to use",
 				"kind": "evidence:page",
 				"target": "https://three.ws/awesome",
-				"ok": true,
-				"detail": "live page shows \"FREE TO USE 121\""
+				"ok": false,
+				"detail": "browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
 			},
 			{
 				"kind": "probe:api",
@@ -43,8 +45,8 @@
 			{
 				"kind": "probe:browser",
 				"target": "the page renders the counters, the tag filters and the Markdown copy",
-				"ok": true,
-				"detail": "4 steps passed"
+				"ok": false,
+				"detail": "browserType.launch: Executable doesn't exist at /home/codespace/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
 			},
 			{
 				"kind": "link",
@@ -54,6 +56,49 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run."
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "152 entries across 15 sections",
+				"problem": "The two page-content checks failed on a missing Playwright binary, not on a content mismatch, so they are uninformative rather than contradicting. The passing API probe confirms 152 entries across 15 sections, and the captured frame shows ENTRIES 152, SECTIONS 15, FREE TO USE 121, so every number in the copy is corroborated by the live page itself. No change needed; rerun the browser checks after npx playwright install for a clean record before the slot.",
+				"fix": "No text change. Run npx playwright install and re-run the review so the evidence:page checks pass on the record."
+			},
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "The same list is published in the standard awesome list format on GitHub, so it can be forked and added to.",
+				"problem": "No passing check names GitHub explicitly, but the live frame shows a Star it on GitHub button, a Copy as Markdown button, and a Suggest an entry button, which together support the sentence. It stays within what the surface demonstrably does.",
+				"fix": "No change required."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
+				"Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The same list is published in the standard awesome list format on GitHub, so it can be forked and added to."
+			],
+			"altText": [
+				"The Awesome 3D Agents page on three.ws: a heading reading Everything you need to give an AI agent a body, counters for 152 entries, 15 sections, 121 free to use and 97 tags, a row of tag filters, and a grid of cards for projects such as TRELLIS, Hunyuan3D 2 and TripoSR, each with a one sentence description."
+			]
+		},
+		"summary": "The post's numbers match the captured live frame exactly (152 entries, 15 sections, 121 free to use) and the failed checks are an infrastructure error, not a content contradiction. Voice, length, image, and alt text all meet the contract; ship it, and re-run the browser checks once Playwright is installed for a clean verification record.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }

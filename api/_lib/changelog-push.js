@@ -35,6 +35,8 @@ const TELEGRAM_PACE_MS = 3500;
 const X_LIMIT = 3; // per run
 const X_PACE_MS = 10000;
 const X_DAILY_CAP = 15; // free tier caps user writes at ~17/24h, stay under
+// Wait applied after a 429 whose headers carry no usable reset time.
+const X_BACKOFF_FALLBACK_MS = 15 * 60_000;
 const LOCK_KEY = 'changelog_push_lock';
 const LOCK_TTL_S = 240;
 // Bounded, and well under LOCK_TTL_S on purpose: a send that hangs longer than
@@ -115,7 +117,7 @@ function cutoffDate() {
 	return new Date(Date.now() - CUTOFF_DAYS * 86400000).toISOString().slice(0, 10);
 }
 
-export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) {
+export function pendingEntries(feed, posted, limit, { newestWin = false, accept = () => true } = {}) {
 	const cutoff = cutoffDate();
 	// The posted-set is keyed by entryKey, so it can only suppress an entry that
 	// went out on an EARLIER tick. Two feed entries sharing one key are both
@@ -127,7 +129,7 @@ export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) 
 	// rather than a repeated message to every subscriber.
 	const seen = new Set();
 	const unposted = feed.entries
-		.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && e.type !== 'launch')
+		.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && e.type !== 'launch' && accept(e))
 		.filter((e) => {
 			const key = entryKey(e);
 			if (seen.has(key)) return false;
@@ -135,9 +137,8 @@ export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) 
 			return true;
 		})
 		.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-	// Telegram keeps the NEWEST entries when over the limit (newestWin); the X
-	// thread takes the OLDEST so the chain stays chronological. Both post in
-	// chronological order.
+	// Both lanes pass newestWin, keeping the NEWEST entries when over the limit;
+	// without it the OLDEST win. Either way the batch posts in chronological order.
 	const pending = newestWin ? unposted.slice(-limit) : unposted.slice(0, limit);
 	return { pending, backlog: unposted.length };
 }
@@ -233,6 +234,35 @@ export async function pushTelegramLane(feed) {
 
 // --- X lane ------------------------------------------------------------------
 
+// The X lane posts to a public feed with no human in the loop, so it only ever
+// sees entries that pass data/changelog-x-filter.json: nothing about wallets,
+// funds, payment internals, keys, outages, or other coins, and nothing that is
+// only a fix or plumbing. Telegram, a community channel, still gets them all.
+export function loadXFilter() {
+	const filter = JSON.parse(readFileSync(join(process.cwd(), 'data', 'changelog-x-filter.json'), 'utf8'));
+	// Projects the owner put under the coin gate for announcements stay off X too.
+	const gated = loadRepoState('announce-gate-terms.json')?.terms || [];
+	const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	for (const term of gated) {
+		filter.patterns.push({ pattern: `\\b${escape(term)}\\b`, reason: 'A project name the owner gated in data/announce-gate-terms.json.' });
+	}
+	return filter;
+}
+
+/** @returns {string|null} why the entry must not go to X, or null when it may */
+export function xFilterReason(e, filter) {
+	const tags = e.tags || [];
+	const blocked = tags.find((t) => filter.blockedTags?.[t]);
+	if (blocked) return `tag ${blocked}: ${filter.blockedTags[blocked]}`;
+	const required = filter.requireAnyTag;
+	if (required?.tags?.length && !tags.some((t) => required.tags.includes(t))) return required.reason;
+	const text = `${e.title}\n${e.summary}`;
+	for (const rule of filter.patterns || []) {
+		if (new RegExp(rule.pattern, 'i').test(text)) return rule.reason;
+	}
+	return null;
+}
+
 // X counts every URL as 23 chars (t.co wrapping) and each emoji/astral
 // codepoint as 2. Compose title + summary + link within the 280 budget,
 // trimming the summary on a word boundary when it overflows.
@@ -259,6 +289,33 @@ export function formatTweet(e) {
 	return `${body}${suffix}`;
 }
 
+// How an X write failure is handled, decided from the error alone so the
+// policy is testable without the network. twitter-api-v2 raises an
+// ApiResponseError carrying the HTTP status (`code`), the v2 problem body
+// (`data`), and the parsed rate-limit headers (`rateLimit`).
+//   rate_limited  wait until X's own reset time, then resume (not a failure)
+//   duplicate     X already holds this exact text; count it posted and move on,
+//                 otherwise the same entry blocks the lane on every tick
+//   thread_gone   the reply target was deleted; re-chain and retry
+//   fatal         auth, suspension, outage: surface it as a lane error
+export function classifyXError(err, now = Date.now()) {
+	const detail = [err?.data?.detail, err?.data?.title, err?.data?.errors?.[0]?.message, err?.message]
+		.filter(Boolean)
+		.join(' ');
+	if (err?.code === 429 || err?.rateLimitError) {
+		const rl = err?.rateLimit;
+		// The 24h user/app write windows reset far later than the 15-minute one;
+		// when one of them is the window that ran out, its reset is the real one.
+		const window = [rl?.userDay, rl?.day].find((w) => w && w.remaining === 0) || rl;
+		const resetMs = Number(window?.reset) * 1000;
+		const until = Number.isFinite(resetMs) && resetMs > now ? resetMs : now + X_BACKOFF_FALLBACK_MS;
+		return { kind: 'rate_limited', until };
+	}
+	if (/duplicate content/i.test(detail)) return { kind: 'duplicate' };
+	if (/deleted or not visible|in_reply_to_tweet_id/i.test(detail)) return { kind: 'thread_gone' };
+	return { kind: 'fatal' };
+}
+
 export async function pushXLane(feed) {
 	const creds = {
 		appKey: process.env.X_API_KEY,
@@ -280,13 +337,24 @@ export async function pushXLane(feed) {
 	let thread = state.thread || null;
 	// Free-tier write budget: timestamps of posts in the trailing 24h.
 	let recent = (state.recent || []).filter((t) => Date.now() - t < 86400000);
+	let backoffUntil = state.backoffUntil || 0;
+	let lastPostAt = state.lastPostAt || null;
+	let lastError = state.lastError || null;
 
-	const saveState = () => setState('changelog_push_x', { posted: [...posted], thread, recent });
+	const saveState = () =>
+		setState('changelog_push_x', { posted: [...posted], thread, recent, backoffUntil, lastPostAt, lastError });
 
-	const { pending, backlog } = pendingEntries(feed, posted, X_LIMIT);
+	// X is a rate-limited showcase, not the full log: when there is more to say
+	// than the daily budget allows, the newest releases win (as on Telegram),
+	// otherwise a busy week keeps the lane posting entries days late.
+	const filter = loadXFilter();
+	const { pending, backlog } = pendingEntries(feed, posted, X_LIMIT, { newestWin: true, accept: (e) => !xFilterReason(e, filter) });
 	if (pending.length === 0) {
 		await saveState(); // persist the pruned 24h window
 		return { posted: 0, backlog };
+	}
+	if (backoffUntil > Date.now()) {
+		return { posted: 0, backlog, skipped: 'rate_limited', until: new Date(backoffUntil).toISOString() };
 	}
 	if (recent.length >= X_DAILY_CAP) {
 		return { posted: 0, backlog, skipped: 'daily_cap' };
@@ -298,34 +366,74 @@ export async function pushXLane(feed) {
 		const payload = replyToId ? { reply: { in_reply_to_tweet_id: replyToId } } : undefined;
 		const { data } = await client.v2.tweet(text, payload);
 		recent.push(Date.now());
+		lastPostAt = new Date().toISOString();
 		return data.id;
 	};
 
 	let sent = 0;
 	let anchorPosted = null;
-	try {
-		if (!thread) {
-			// One-time: the profile keeps a single pinned anchor; every release
-			// chains under it as a reply. The owner pins the anchor once.
-			const id = await post(ANCHOR_TEXT);
-			thread = { anchor: id, last: id };
-			anchorPosted = id;
-			await saveState();
-			await sleep(X_PACE_MS);
+	// The profile keeps a single pinned anchor; every release chains under it
+	// as a reply. The owner pins the anchor once, and again after a re-anchor.
+	const startThread = async () => {
+		let id;
+		try {
+			id = await post(ANCHOR_TEXT);
+		} catch (err) {
+			// Never let an anchor failure read as a per-entry duplicate below: that
+			// would mark releases posted that never went out.
+			if (classifyXError(err).kind !== 'duplicate') throw err;
+			throw Object.assign(new Error(`X rejected the thread anchor as duplicate content: ${err.message}`), { code: err.code });
 		}
+		thread = { anchor: id, last: id };
+		anchorPosted = id;
+		await saveState();
+		await sleep(X_PACE_MS);
+	};
+	// Reply under the chain. A deleted tweet in the chain would otherwise fail
+	// every tick forever: fall back to the anchor, then to a fresh anchor.
+	const postReply = async (text) => {
+		for (let attempt = 0; ; attempt++) {
+			if (!thread) await startThread();
+			try {
+				return await post(text, thread.last);
+			} catch (err) {
+				if (attempt >= 2 || classifyXError(err).kind !== 'thread_gone') throw err;
+				thread = thread.last !== thread.anchor ? { ...thread, last: thread.anchor } : null;
+				await saveState();
+			}
+		}
+	};
+
+	try {
 		for (const e of pending) {
 			if (recent.length >= X_DAILY_CAP) break;
-			const id = await post(formatTweet(e), thread.last);
+			let id;
+			try {
+				id = await postReply(formatTweet(e));
+			} catch (err) {
+				if (classifyXError(err).kind !== 'duplicate') throw err;
+				posted.add(entryKey(e));
+				await saveState();
+				continue;
+			}
 			posted.add(entryKey(e));
 			thread = { ...thread, last: id };
 			sent++;
+			lastError = null;
 			// Persist after every post so a crash can't double-post or fork the chain.
 			await saveState();
 			await sleep(X_PACE_MS);
 		}
 	} catch (err) {
+		const verdict = classifyXError(err);
+		if (verdict.kind === 'rate_limited') {
+			backoffUntil = verdict.until;
+			await saveState().catch(() => {});
+			return { posted: sent, backlog, anchor: anchorPosted, skipped: 'rate_limited', until: new Date(backoffUntil).toISOString() };
+		}
+		lastError = { at: new Date().toISOString(), status: err?.code ?? null, message: String(err?.message || err).slice(0, 300) };
 		await saveState().catch(() => {});
-		return { posted: sent, backlog, anchor: anchorPosted, error: String(err?.message || err) };
+		return { posted: sent, backlog, anchor: anchorPosted, error: lastError.message };
 	}
 	return { posted: sent, backlog, anchor: anchorPosted };
 }

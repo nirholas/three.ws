@@ -6,8 +6,8 @@
 	--pm-line: #5b8ff0;
 	--pm-area: rgba(91, 143, 240, 0.12);
 	--pm-no: #1f9e70;
-	--pm-up: #4ade80;
-	--pm-down: #f87171;
+	--pm-up: var(--success);
+	--pm-down: var(--danger);
 	--pm-grid: rgba(255, 255, 255, 0.07);
 	--pm-radius: 14px;
 }

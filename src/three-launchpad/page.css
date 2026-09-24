@@ -48,8 +48,8 @@
 	box-shadow: 0 0 10px var(--tl-accent);
 }
 .tl-dot[data-state='pending'] {
-	background: #fbbf24;
-	box-shadow: 0 0 10px #fbbf24;
+	background: var(--warn);
+	box-shadow: 0 0 10px var(--warn);
 }
 .tl h1 {
 	margin: 0;
@@ -225,7 +225,7 @@
 	gap: 12px;
 	padding: 16px 18px;
 	border: 1px solid var(--stroke);
-	border-left: 3px solid #fbbf24;
+	border-left: 3px solid var(--warn);
 	border-radius: 12px;
 	background: var(--surface-2);
 	font-size: 14px;

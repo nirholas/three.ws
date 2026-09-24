@@ -374,15 +374,32 @@ export function reclaimKeepLineSol(minSol) {
  * @param {number} minSol
  * @returns {{name:string, reason:string, heldSol:number, keepSol:number, floorSol:number}}
  */
-export function floorBlockedSkip(name, currentSol, minSol) {
+export function floorBlockedSkip(name, currentSol, minSol, minSweep = MIN_SWEEP_SOL) {
 	const heldSol = round(Math.max(0, currentSol));
 	const keepSol = reclaimKeepLineSol(minSol);
+	const floorSol = round(Math.max(0, minSol));
+	// A wallet ABOVE its keep line whose excess is under the minimum sweep is not at
+	// its floor; it holds dust the sweep declines to move. Printing it as
+	// `at_or_below_floor:0.0193<0.01` contradicted itself in one token, and on
+	// 2026-09-24 31 agent wallets read that way while holding 0.161 SOL of excess
+	// between them. The lever for that SOL is ECONOMY_SWEEPBACK_MIN_SOL, not a floor.
+	const excessSol = round(heldSol - keepSol);
+	if (excessSol > 0) {
+		return {
+			name,
+			reason: `below_min_sweep:${excessSol}<${round(minSweep)}`,
+			heldSol,
+			keepSol,
+			floorSol,
+			excessSol,
+		};
+	}
 	return {
 		name,
 		reason: `at_or_below_floor:${heldSol}<${keepSol}`,
 		heldSol,
 		keepSol,
-		floorSol: round(Math.max(0, minSol)),
+		floorSol,
 	};
 }
 
@@ -605,7 +622,7 @@ export function planAgentReclaim(candidates, opts = {}) {
 		const floorSol = agentReclaimFloorSol(c.strategy);
 		const reclaimable = reclaimableSol(c.sol, floorSol, minSweep);
 		if (reclaimable <= 0) {
-			skipped.push(floorBlockedSkip(c.name, c.sol, floorSol));
+			skipped.push(floorBlockedSkip(c.name, c.sol, floorSol, minSweep));
 			continue;
 		}
 		if (plan.length >= maxWallets) {

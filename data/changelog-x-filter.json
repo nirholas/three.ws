@@ -1,0 +1,56 @@
+{
+	"$comment": "Which changelog entries the automatic X lane (api/_lib/changelog-push.js, pushXLane) must never post. Telegram is unaffected. An entry is skipped when it carries a blocked tag, carries none of the required tags, or when its title or summary matches any pattern (case-insensitive regular expressions). Every rule records why, so removing one is a decision, not a guess. Project names the owner gated in data/announce-gate-terms.json are blocked here too.",
+	"blockedTags": {
+		"security": "Security work is described on the changelog page, never advertised on a public feed."
+	},
+	"requireAnyTag": {
+		"tags": [
+			"feature",
+			"improvement",
+			"sdk"
+		],
+		"reason": "Bare fixes and infra or docs-only entries read as outage notes or plumbing, not as something a reader can use."
+	},
+	"patterns": [
+		{
+			"pattern": "\\bx402\\b",
+			"reason": "Agent payment rail internals."
+		},
+		{
+			"pattern": "\\bagent economy\\b",
+			"reason": "Internal agent-to-agent payment loop."
+		},
+		{
+			"pattern": "\\b(agent|payer|pool|fee|hot|custodial|funding|treasury|brand-new|distinct|seed) wallets?\\b|\\bwallets? (that|which) (cannot|can't) sign\\b",
+			"reason": "Agent and platform wallet operations (funding, signing, pools) are sensitive on a public feed."
+		},
+		{
+			"pattern": "\\b(payer|payout|treasury|custod\\w*|fee claims?|settle\\w*|funds?|funded|funding)\\b",
+			"reason": "Money movement internals."
+		},
+		{
+			"pattern": "\\b(private key|seed phrase|secret|credential|api key)s?\\b",
+			"reason": "Key material."
+		},
+		{
+			"pattern": "\\b(exploit|vulnerab\\w*|leak\\w*|bypass\\w*|drain\\w*|attack\\w*)\\b",
+			"reason": "Security surface."
+		},
+		{
+			"pattern": "\\b(outage|downtime|answering again|fail\\w* silently|incident)\\b",
+			"reason": "Reliability admissions belong on the changelog page."
+		},
+		{
+			"pattern": "\\breal[- ](funds|money)\\b|\\btransaction protection\\b",
+			"reason": "Real-money risk, or copy that reads as advice to lower a protection."
+		},
+		{
+			"pattern": "\\$(?!THREE\\b)[A-Z][A-Z0-9]{1,9}\\b",
+			"reason": "$THREE is the only coin the account promotes."
+		},
+		{
+			"pattern": "@trythreews|\\bannouncement (queue|machine)\\b|\\bqueued posts?\\b|\\bpost slots?\\b",
+			"reason": "Posts about our own posting machinery."
+		}
+	]
+}

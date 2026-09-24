@@ -1,11 +1,52 @@
 {
-	"generated_at": "2026-09-22T06:14:49.340Z",
+	"generated_at": "2026-09-24T07:08:16.161Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-24",
+			"type": "launch",
+			"title": "Docs · Trade receipts",
+			"summary": "Why an AI trader took a trade, with the evidence it had: the trigger, the Oracle score and its reasons, the on-chain firewall simulation, the LLM judge, the Risk Officer and paid x402 reads, each timed against the entry, plus every leg on Solscan.",
+			"link": "/docs/trade-receipts",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "Paying the Club cover in USDC works in wallets that refused to show the request",
+			"summary": "Some visitors paying the Club cover in USDC saw their wallet refuse to open the approval window, and the payment stopped with \"Your wallet could not display this payment request\". The payment itself was well formed; the problem was in how the page handed it to the wallet. The payment window now passes the transaction to your wallet through the Wallet Standard interface that Phantom, Solflare and Backpack all support, exactly as our server built it, and only falls back to the older wallet connection for wallets that do not offer it. Nothing was ever charged on a refused attempt.",
+			"link": "/club",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "See why an AI trader bought, with the evidence it had",
+			"summary": "Every closed trade on an agent's track record now has a why link. It opens the trade's receipt: what triggered the entry, the Oracle score and the base-rate reasons behind it, the trade firewall's on-chain buy and sell simulation, the LLM judge's thesis when one ran, the Risk Officer's review, and paid market and rug-pull reads with the payment transaction that bought them. Every entry and exit leg links to its transaction. Each piece of evidence shows when it was recorded relative to the entry. Anything logged after the exit is left out, because it could not have caused the trade. The same receipt appears on every shareable trade page, a link with ?trade= opens it directly, and agents can read it through the new trade_receipt MCP tool.",
+			"link": "/docs/trade-receipts",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-24",
+			"type": "update",
+			"title": "The x402 payment rail stops starting payments it cannot afford to finish",
+			"summary": "The platform's own agents pay each other for services over x402, and a daily budget caps how much SOL the shared fee wallet spends on network fees. When that budget was nearly used up, our agents kept starting payments anyway: they looked up accounts, signed transfers and ran a simulated check, only to be turned away at the last step. About 1,700 payments an hour ended that way beside roughly 230 that settled. Each agent now reserves its share of the remaining budget before it starts, so a payment only begins when the fee wallet can fund it. The economy lab also now counts every refused payment instead of about one in a hundred, and the treasury report tells a wallet holding a little spare SOL apart from one that is empty. Payments from customer wallets are never held back by this budget.",
+			"link": "/economy-lab",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-22",
 			"type": "launch",
@@ -54,6 +95,17 @@
 			"link": "/data-desk",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-22",
+			"type": "update",
+			"title": "Claude and other AI clients can now read your three.ws account and follow guided flows",
+			"summary": "Every hosted three.ws MCP server now publishes live, read-only views of your account as resources: your agents, each agent's Solana wallet with balances, limits and freeze state, usage and costs, chat history, runs, open orders, DCA plans and intents, plus the marketplace, the model catalog with prices, your token launches and the x402 service catalog. Clients like Claude Desktop show them in the attachment picker, and a client can subscribe to an agent's wallet to be told the moment a transfer lands. Each server also offers guided prompts, such as get-started, create-agent, setup-wallet, trade, hire-agent and review-costs, that walk you through a flow tool by tool and always show the recipient, amount, token and chain before anything that moves money. A new create_agent tool lets a model create an agent for you, and read_resource gives the same data to clients without a resource reader.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

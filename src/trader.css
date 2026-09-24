@@ -210,6 +210,14 @@
 /* Share is an action, not a proof link: solid underline, accent on hover. */
 .tp-proof-share { border-bottom-style: solid; border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .tp-proof-share:hover, .tp-proof-share:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
+/* "why" opens the trade receipt: a button styled as a proof link. */
+button.tp-proof-link { background: none; border-top: 0; border-left: 0; border-right: 0; padding: 0; font: inherit; font-size: var(--text-2xs); cursor: pointer; }
+.tp-why-btn { color: var(--accent); border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tp-why-btn:hover { color: var(--ink-bright); }
+.tp-why-btn:active { transform: translateY(1px); }
+.tp-why-btn[aria-expanded="true"] { color: var(--ink-bright); border-bottom-style: solid; }
+.tp-table .tp-why-row td,
+.tp-table .tp-why-row:hover td { background: var(--surface-1); text-align: left; padding: var(--space-sm) var(--space-md) var(--space-md); }
 
 /* ---- Proof callout ---- */
 .tp-proof-note {
@@ -559,6 +567,9 @@
 	   two fields that matter most. Scrolling keeps every column on every table. */
 	.tp-panel, .tp-curve-wrap { overflow-x: auto; }
 	.tp-table { min-width: 560px; }
+	/* The receipt lives in a row of that scrolling table: pin it to the visible
+	   width so it reads without sideways scrolling. */
+	.tp-why-row .rc { position: sticky; left: 0; max-width: calc(100vw - 4 * var(--space-md)); }
 }
 @media (prefers-reduced-motion: reduce) {
 	.tp-panel.is-active, .tp-sk { animation: none; }

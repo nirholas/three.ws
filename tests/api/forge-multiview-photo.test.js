@@ -58,6 +58,7 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	materializeCreation: vi.fn(async ({ glbUrl }) => ({ id: 'creation-1', glbUrl })),
 	markFailed: vi.fn(async () => {}),
 	findByJob: vi.fn(async () => null),
+	runWithCreationContext: (_facts, fn) => fn(),
 }));
 
 // Lane health: the real snapshot probes the worker URL over the network, which

@@ -785,9 +785,15 @@ export function wrapCron(handler, { requireWriteCapacity = false } = {}) {
 		}
 		try {
 			await handler(req, res, ...rest);
-			// Write heartbeat after success — fire-and-forget, never blocks.
+			// Write heartbeat after the handler returns, fire-and-forget, never blocks.
+			// A handler that reports its own failure as a 5xx (instead of throwing)
+			// failed too; recording it as healthy hid a broken cron on the ops board.
+			const failed = res.statusCode >= 500;
+			const beat = failed
+				? { ok: false, t: t0, ms: Date.now() - t0, err: `answered HTTP ${res.statusCode}` }
+				: { ok: true, t: t0, ms: Date.now() - t0 };
 			import('./cache.js').then(({ cacheSet }) => {
-				cacheSet(`cron:heartbeat:${cronName}`, { ok: true, t: t0, ms: Date.now() - t0 }, 7 * 24 * 60 * 60).catch(() => {});
+				cacheSet(`cron:heartbeat:${cronName}`, beat, 7 * 24 * 60 * 60).catch(() => {});
 			}).catch(() => {});
 		} catch (err) {
 			import('./cache.js').then(({ cacheSet }) => {

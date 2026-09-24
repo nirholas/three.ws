@@ -5,6 +5,27 @@
 Read `prompts/finish/_context/okx-ai-00-CONTEXT.md`, `prompts/finish/_context/okx-ai-RUNBOOK.md`, `specs/okx-agent-payments.md`
 and `CLAUDE.md` first. Append your outcome to `prompts/finish/_context/okx-ai-PROGRESS.md` at the end.
 
+## State on 2026-09-24, re-measured: every leg that signs nothing is GREEN, funding is the gate
+
+- **Step 0: PASS.** Free lane 200 (`health` status ok, `payment-rail` `settleable: true`,
+  `relayer_funded: true`, the field `4e9ad0419` added is now live), catalog byte-identical to the
+  module, unlisted `text-to-3d` 402 unpaid, `okx-3d-services` suite green, listing payload
+  generates seven rows.
+- **`npm run okx:gauntlet -- --dry-run`**: 3/3 exercised cases PASS (1, 1d, 5d), 11 skipped,
+  0 settlements. `--no-spend` was NOT run: it signs real authorizations and needs a logged-in
+  session. The dry run rewrote three committed captures with a narrower record; they were
+  restored from git, so the 2026-09-09 `--no-spend` evidence stands.
+- **Wallets on X Layer at block 71462665** (public RPC, `balanceOf` + `eth_getBalance`), unchanged
+  since 2026-09-09: buyer `0x75d0…cf69` 0 USD₮0 / 0 OKB (nonce 1, EIP-7702 delegation code);
+  seller `0x4022de2D…f402` 2.427731 USD₮0 / 0.839596 OKB; relayer `0xe81DE501…415B` 0.02 OKB,
+  nonce 0 (never broadcast). Gas price 0.02 gwei.
+- **Funding need, from `okx-e2e-gauntlet.mjs --budget`:** one clean run settles $1.07 and needs
+  a starting float of **1.08 USD₮0**; the order's "times two for retries" makes it **2.16 USD₮0**
+  on X Layer to buyer `0x75d00a2713565171f33216e5aa2a375e076ecf69`, token
+  `0x779ded0c9e1022225f8e0630b35a9b54be713736`, chain 196. The buyer needs no OKB (EIP-3009,
+  relayer pays gas). Plus **0.02 USDC on Solana** to the buyer's Solana address for case 7
+  (read it with `onchainos wallet addresses` once logged in).
+
 ## Binding operating clause
 
 1. Finish 100% of everything that does not move money. Never end with a question about scope,
@@ -109,7 +130,7 @@ iteration in PROGRESS.md; iterations are evidence of rigor.
 | Blocker | Do this |
 |---|---|
 | Wallet not logged in | `onchainos wallet login claude@three.ws --locale en_US`, then include the OTP request in your single owner message. Never guess a code. |
-| The bot or daemon is offline | `npm run okx:bot` (`scripts/okx-bot-revive.mjs`) installs, starts and reports health. Exit 2 means staged but logged out. |
+| The bot or daemon is offline | Read the Cloud Run host, do not start a local one: `curl -s https://three.ws/api/healthz \| jq '.subsystems.subsystems[]\|select(.name=="okx_chat_bot")'`. `npm run okx:bot` starts a second writer on the bot's identity and refuses (exit 3) while the host beats. The chat bot is not on this order's path anyway. |
 | A deploy is needed for a fix | Deploys are owner-gated. Prepare everything so the ship is one command, state it, and continue with what does not need it. |
 | Catalog drift between module, live endpoint and listing | Fix the module first, then redeploy, then re-verify the live endpoint. The three copies must never diverge, even for one review cycle. |
 | Settlement tx not found | The test is not passed. Find the tx or find the bug; never mark a 200 response as success. |

@@ -1,6 +1,6 @@
 # The Pump.fun Trading Arena — Master Plan
 
-**Status:** Strategy / roadmap. Owner-facing. Last updated 2026-09-09.
+**Status:** Strategy / roadmap. Owner-facing. Last updated 2026-09-24.
 **Scope:** ONLY pump.fun trading, deploying, agent monetization, and copy-trading. Nothing else.
 
 > **Build status (verified 2026-09-03).** Phases 0 to 6 are shipped, on surfaces that
@@ -60,6 +60,19 @@
 > [production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md).
 > Everything else in this plan is written, tested and applied to the production
 > schema.
+>
+> **Re-verified 2026-09-24.** Still exactly two owner-gated steps, nothing else.
+> Against the production database at 06:50 UTC: 23 fleet buys in the previous 24
+> hours (last at 06:46 UTC), `sniper_risk_reviews` still at the same 7 rows from
+> 2026-09-04 with none from the fleet, and all 28 strategy rows (13 enabled) at
+> `risk_officer_level = shadow`. So the agent-sniper image still predates
+> `risk-officer.js` and `amm-exit.js`; `npm run deploy:sniper` remains step (1).
+> One product gap in section 3.2 closed the same day: "why it traded" was only
+> visible to the owner (the private `/api/sniper/journal`). Every public trade
+> now carries a receipt of the evidence its gates recorded before the entry
+> (`api/_lib/trade-receipt.js`, `GET /api/sniper/receipt`, the "why" drawer on
+> `/trader/:id`, the "Why it traded" section on `/trade/:id`, the `trade_receipt`
+> MCP tool; doc `docs/trade-receipts.md`).
 >
 > **Prove the deploy state from the database, not from `gcloud`.** The Codespace
 > loses its gcloud login on every recycle, so `gcloud run services describe

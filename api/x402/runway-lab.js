@@ -108,21 +108,28 @@ async function observeWindow() {
 		WHERE action = 'settle' AND ts >= ${since}
 	`;
 
+	// Group on the reason CLASS (the text before the first colon), not the whole
+	// string. Governor refusals carry their lamport arithmetic
+	// (`fee_runway_exhausted:8600843+10000>7509606`), so nearly every one is a
+	// distinct string; grouping on the full text under a row limit counted 391 of
+	// the 40,987 governor refusals on 2026-09-24 and reported a 92% capacity
+	// admission rate for a rail that was admitting 10%.
 	const reasons = await sql`
-		SELECT reject_reason, COUNT(*)::int AS n
+		SELECT split_part(COALESCE(reject_reason, ''), ':', 1) AS reason_class,
+		       COUNT(*)::int AS n,
+		       (ARRAY_AGG(reject_reason ORDER BY ts DESC))[1] AS example
 		FROM x402_self_facilitator_log
 		WHERE action = 'settle' AND ok = false AND ts >= ${since}
-		GROUP BY reject_reason
+		GROUP BY 1
 		ORDER BY n DESC
-		LIMIT 40
 	`;
 
 	const buckets = new Map();
 	for (const row of reasons) {
-		const key = bucketReason(row.reject_reason);
+		const key = bucketReason(row.reason_class);
 		const hit = buckets.get(key) || { cause: key, count: 0, example: null };
 		hit.count += Number(row.n) || 0;
-		if (!hit.example) hit.example = row.reject_reason || null;
+		if (!hit.example) hit.example = row.example || null;
 		buckets.set(key, hit);
 	}
 

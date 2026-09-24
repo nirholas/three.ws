@@ -2,8 +2,7 @@
 //
 // The event window lives in exactly one file (`public/event.json`, served at
 // `/event.json`) and every countdown surface reads it through here: the `/play`
-// lobby banner and in-world pill (src/game/event-countdown.js) and the home page
-// strip (src/home-event-banner.js). Two surfaces reading two copies of a start
+// lobby banner and in-world pill (src/game/event-countdown.js). Two surfaces reading two copies of a start
 // time is how a countdown ends up disagreeing with itself on the day, so the
 // parsing, the state machine, and the clock formatting are all shared.
 //

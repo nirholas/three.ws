@@ -17,6 +17,7 @@ import { mountPassport, resetPassport } from './trader-passport.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { embedSnippet } from './shared/trader-embed.js';
 import { ring, playRings, countUp } from './ui-juice.js';
+import { receiptHTML, receiptSkeletonHTML, RECEIPT_CSS } from './shared/trade-receipt-view.js';
 
 const WINDOWS = ['24h', '7d', '30d', 'all'];
 const WINDOW_LABEL = { '24h': '24h', '7d': '7d', '30d': '30d', all: 'All-time' };
@@ -31,6 +32,9 @@ const ctx = {
 	window: 'all',
 	data: null,
 	refCode: null,
+	/** ?trade=<position id> deep-links straight to one trade's receipt. */
+	openTrade: '',
+	receipts: new Map(),
 };
 
 // A Solana base58 address — 32-44 chars, no hyphens. Used to distinguish
@@ -48,6 +52,7 @@ function parseParams() {
 	ctx.agentId = m ? decodeURIComponent(m[1]) : (qp.get('agent_id') || qp.get('agent') || '');
 	if (NETWORKS.has(qp.get('network'))) ctx.network = qp.get('network');
 	if (WINDOWS.includes(qp.get('window'))) ctx.window = qp.get('window');
+	if (UUID_RE.test(qp.get('trade') || '')) ctx.openTrade = qp.get('trade');
 }
 
 function solscanAddr(addr) {
@@ -259,6 +264,11 @@ function closedRows(closed) {
 		const held = t.opened_at && t.closed_at
 			? holdTime((new Date(t.closed_at) - new Date(t.opened_at)) / 1000) : '—';
 		const proof = [
+			// "why" opens the trade receipt: the evidence every gate recorded
+			// before this entry (Oracle, firewall, LLM judge, Risk Officer, paid
+			// x402 reads) plus each journal leg. Rendered in a row below.
+			t.id ? `<button type="button" class="tp-proof-link tp-why-btn" data-why="${escapeHtml(t.id)}"
+				aria-expanded="false" title="Why the agent took this trade, with the evidence it had">why</button>` : '',
 			t.buy_url ? `<a class="tp-proof-link" href="${escapeHtml(t.buy_url)}" target="_blank" rel="noopener">buy ↗</a>` : '',
 			t.sell_url ? `<a class="tp-proof-link" href="${escapeHtml(t.sell_url)}" target="_blank" rel="noopener">sell ↗</a>` : '',
 			// /trade/<id> is the per-trade share page: its own OG card, the four
@@ -277,7 +287,7 @@ function closedRows(closed) {
 				? `<span class="tp-tag tp-tag-moonbag" title="Not a full exit: the initial buy-in was sold and ${t.moonbag_value_sol != null ? `~${fmtSol(t.moonbag_value_sol, { sign: false })} of` : ''} tokens still ride at zero cost basis">moon-bag held</span>`
 				: '',
 		].filter(Boolean).join('');
-		return `<tr${t.self_dealing ? ' class="tp-row-muted"' : ''}>
+		return `<tr data-trade-row="${escapeHtml(t.id || '')}"${t.self_dealing ? ' class="tp-row-muted"' : ''}>
 			<td><div class="tp-coin"><span class="tp-coin-sym">${escapeHtml(t.symbol || t.name || '—')}</span><span class="tp-coin-mint">${escapeHtml(shortAddr(t.mint, 4, 4))}</span>${tags}</div></td>
 			<td>${pnl}<div class="tp-metric-sub">${pct}</div></td>
 			<td><span class="tp-reason">${escapeHtml(t.exit_reason || '—')}</span>${t.moonbag_held ? '<div class="tp-metric-sub">initials out, rest rides</div>' : ''}</td>
@@ -445,6 +455,7 @@ function render(data) {
 	wireWindow();
 	wireShare();
 	wireWalletChips(content);
+	openDeepLinkedReceipt();
 	const panel = document.getElementById('tp-copy-panel');
 	if (panel) mountCopyPanel(panel, { leaderAgentId: a.id, leaderName: a.name, network: ctx.network });
 
@@ -713,6 +724,93 @@ async function loadRefCode() {
 		ctx.refCode = card.referral_code || card.code || card.referralCode || null;
 	} catch { /* signed-out or unavailable — share the bare profile link */ }
 }
+
+// --- Trade receipts ("why") ---------------------------------------------------
+function injectReceiptStyles() {
+	if (document.getElementById('rc-styles')) return;
+	const style = document.createElement('style');
+	style.id = 'rc-styles';
+	style.textContent = RECEIPT_CSS;
+	document.head.appendChild(style);
+}
+
+async function fetchReceipt(id) {
+	if (ctx.receipts.has(id)) return ctx.receipts.get(id);
+	const res = await fetch(`/api/sniper/receipt?id=${encodeURIComponent(id)}`, { headers: { accept: 'application/json' } });
+	if (res.status === 404) throw Object.assign(new Error('not_found'), { code: 'not_found' });
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	const receipt = await res.json();
+	ctx.receipts.set(id, receipt);
+	return receipt;
+}
+
+function receiptErrorHTML(err) {
+	const msg = err?.code === 'not_found'
+		? 'This trade is no longer public, so its evidence is hidden.'
+		: 'The evidence for this trade did not load. This is usually transient.';
+	return `<div class="rc"><p class="rc-empty">${escapeHtml(msg)}${err?.code === 'not_found' ? '' : ' <button type="button" class="tp-proof-link tp-why-retry">Retry</button>'}</p></div>`;
+}
+
+async function fillReceipt(cell, id) {
+	cell.innerHTML = receiptSkeletonHTML();
+	try {
+		const receipt = await fetchReceipt(id);
+		if (!cell.isConnected) return;
+		cell.innerHTML = receiptHTML(receipt);
+	} catch (err) {
+		if (!cell.isConnected) return;
+		cell.innerHTML = receiptErrorHTML(err);
+		cell.querySelector('.tp-why-retry')?.addEventListener('click', () => fillReceipt(cell, id));
+	}
+}
+
+function syncTradeParam(id) {
+	const url = new URL(location.href);
+	if (id) url.searchParams.set('trade', id);
+	else url.searchParams.delete('trade');
+	history.replaceState(null, '', url);
+}
+
+/** Open or close the receipt row under one trade row. */
+function toggleReceipt(btn) {
+	const id = btn.dataset.why;
+	const row = btn.closest('tr');
+	if (!id || !row) return;
+	const next = row.nextElementSibling;
+	if (next && next.classList.contains('tp-why-row')) {
+		next.remove();
+		btn.setAttribute('aria-expanded', 'false');
+		btn.textContent = 'why';
+		if (ctx.openTrade === id) { ctx.openTrade = ''; syncTradeParam(''); }
+		return;
+	}
+	injectReceiptStyles();
+	const panel = btn.closest('.tp-panel')?.dataset.panel || 'record';
+	const cellId = `tp-why-${panel}-${id}`;
+	const cols = row.children.length || 6;
+	row.insertAdjacentHTML('afterend', `<tr class="tp-why-row"><td colspan="${cols}" id="${cellId}"></td></tr>`);
+	btn.setAttribute('aria-expanded', 'true');
+	btn.setAttribute('aria-controls', cellId);
+	btn.textContent = 'hide';
+	ctx.openTrade = id;
+	syncTradeParam(id);
+	fillReceipt(document.getElementById(cellId), id);
+}
+
+function openDeepLinkedReceipt() {
+	if (!ctx.openTrade) return;
+	const btn = content.querySelector(`.tp-panel[data-panel="record"] .tp-why-btn[data-why="${CSS.escape(ctx.openTrade)}"]`);
+	if (!btn) return;
+	toggleReceipt(btn);
+	btn.closest('tr')?.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+
+// One delegated listener on the persistent content node: rows are re-rendered on
+// every window switch, so per-row listeners would leak or go stale.
+content.addEventListener('click', (e) => {
+	const btn = e.target.closest?.('.tp-why-btn');
+	if (btn && content.contains(btn)) toggleReceipt(btn);
+});
 
 // --- Skeleton / states -------------------------------------------------------
 function showSkeleton() {

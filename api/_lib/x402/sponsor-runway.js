@@ -232,7 +232,8 @@ export function formatSponsorRunwayAlert(r) {
 			: 'Below the floor the Solana accept is withdrawn from every 402 challenge and settles stop while rail ' +
 				'faults stay flat, so this will not look like a rail outage when it lands.',
 		'Free self-heal first: POST /api/cron/treasury-topup?dry=1 (Bearer CRON_SECRET) to see the reclaim plan, ' +
-			'then without ?dry=1 to apply. Owner SOL is needed only when every source reports at_or_below_floor.',
+			'then without ?dry=1 to apply. Owner SOL is needed only when every source reports at_or_below_floor; ' +
+			'a below_min_sweep skip is excess above the keep line that ECONOMY_SWEEPBACK_MIN_SOL declines to move.',
 		topUp != null && topUp > 0
 			? `A top-up of about ${topUp.toFixed(3)} SOL buys 14 days at the measured burn. Send it to the SPONSOR or ` +
 				'the economy master, NEVER to per-agent wallets (that strands SOL and kills the rail).'

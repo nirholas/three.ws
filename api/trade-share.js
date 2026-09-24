@@ -19,6 +19,8 @@
 import { cors, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { loadTradeCard } from './_lib/trade-card-store.js';
+import { loadTradeReceipt } from './_lib/trade-receipt.js';
+import { receiptHTML, RECEIPT_CSS } from '../src/shared/trade-receipt-view.js';
 
 const CACHE = 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600';
 
@@ -35,13 +37,18 @@ export default wrap(async (req, res) => {
 	const id = (url.searchParams.get('id') || '').trim();
 	const origin = env.APP_ORIGIN || 'https://three.ws';
 
-	const card = await loadTradeCard(id, { origin });
+	// The receipt is best-effort: a private agent or an evidence query that fails
+	// still leaves the finished trade page, just without the "why" section.
+	const [card, receipt] = await Promise.all([
+		loadTradeCard(id, { origin }),
+		loadTradeReceipt(id).catch(() => null),
+	]);
 	if (!card) return redirect(res, `${origin}/arena`);
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', CACHE);
-	res.end(renderHtml(card, origin));
+	res.end(renderHtml(card, origin, receipt));
 });
 
 function redirect(res, to) {
@@ -64,7 +71,7 @@ function stat(label, value, cls = '') {
 			</div>`;
 }
 
-function renderHtml(card, origin) {
+function renderHtml(card, origin, receipt = null) {
 	const t = esc(card.title);
 	const d = esc(card.description);
 	const xIntent = `https://x.com/intent/post?text=${encodeURIComponent(card.shareText)}&url=${encodeURIComponent(card.shareUrl)}`;
@@ -184,6 +191,11 @@ function renderHtml(card, origin) {
 		.foot{margin:32px 0 0;font-size:12px;color:var(--ink-faint);line-height:1.6}
 		.foot a{color:var(--ink-dim)}
 
+		.why{margin:30px 0 0;padding-top:22px;border-top:1px solid var(--line)}
+		.why h2{font-size:16px;font-weight:800;margin:0 0 12px;color:var(--ink)}
+		.why .rc{--rc-faint:#6b7280}
+		${RECEIPT_CSS}
+
 		@media (max-width:640px){
 			.stats{grid-template-columns:repeat(2,1fr)}
 			.who h1{font-size:18px}
@@ -231,9 +243,16 @@ function renderHtml(card, origin) {
 
 		<div class="actions">
 			<a class="btn btn-primary" href="${esc(xIntent)}" target="_blank" rel="noopener noreferrer">Post this trade</a>
-			<a class="btn" href="${esc(card.agentUrl)}">Full track record</a>
+			<a class="btn" href="${esc(receipt ? `${card.agentUrl}?trade=${encodeURIComponent(receipt.position.id)}` : card.agentUrl)}">Full track record</a>
 			<a class="btn" href="${esc(origin)}/arena">Watch the Arena</a>
 		</div>
+
+		${receipt
+			? `<section class="why" aria-labelledby="why-h">
+			<h2 id="why-h">Why it traded</h2>
+			${receiptHTML(receipt, { showLinks: false })}
+		</section>`
+			: ''}
 
 		<p class="note">
 			${card.paper

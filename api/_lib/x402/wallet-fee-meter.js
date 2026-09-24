@@ -98,6 +98,7 @@ export function resetWalletFeeMeterCaches() {
 	_allowCache = { set: null, at: 0 };
 	_spentCache.clear();
 	_admissionCache.clear();
+	_admissionInflight.clear();
 }
 
 // ── Caller-side admission ───────────────────────────────────────────────────────
@@ -131,9 +132,65 @@ export function resetWalletFeeMeterCaches() {
 // the budget down). One minute collapses a storm while still letting a top-up
 // reopen the rail promptly.
 const ADMISSION_REFUSED_TTL_MS = 60_000;
-const _admissionCache = new Map(); // pubkeyB58 → { ok, reason, at, day, ttl }
+// pubkeyB58 → { ok, reason, at, day, ttl, spent, budget, admitted }
+const _admissionCache = new Map();
+// pubkeyB58 → in-flight snapshot promise, so a burst of concurrent calls shares
+// one balance read and one ledger read instead of each racing its own.
+const _admissionInflight = new Map();
 
 const ADMIT = { ok: true, reason: null };
+
+// Why an admitted snapshot carries its headroom instead of a bare "yes".
+//
+// A cached admission used to mean "admit everything for the next spentCacheMs".
+// Under intraday pacing the unlocked budget sits right at the spent line all day
+// (the wallet earns one settle's worth of budget roughly every half minute), so
+// every fresh read found room for exactly one settle and then admitted every call
+// for twenty seconds. Measured on production 2026-09-24: about 230 settles an hour
+// landed and about 1,700 an hour were refused by the settle-path meter with
+// `fee_runway_exhausted`, one wallet, every hour of the day. Each refusal had
+// already paid for an ATA read, a signature and a simulated verify, which is the
+// exact waste this gate exists to remove.
+//
+// Each admission now spends its estimated fee out of the snapshot's headroom, with
+// the same pure arithmetic the settle path runs, so one cache window admits only
+// what the budget can actually fund. The first call past the headroom turns the
+// snapshot into a refusal. It changes no money and no budget: the settles it holds
+// back were going to be refused at the end of the handshake anyway.
+function snapshotVerdict(entry, estFeeLamports, now) {
+	if (!entry.ok) return { ok: false, reason: entry.reason };
+	const verdict = assessWalletFeeBudget({
+		spentTodayLamports: entry.spent + entry.admitted,
+		budgetLamports: entry.budget,
+		nextFeeLamports: estFeeLamports,
+	});
+	if (verdict.ok) {
+		entry.admitted += Math.max(0, Number(estFeeLamports) || 0);
+		return verdict;
+	}
+	entry.ok = false;
+	entry.reason = verdict.reason;
+	entry.at = now;
+	entry.ttl = ADMISSION_REFUSED_TTL_MS;
+	return verdict;
+}
+
+async function readAdmissionSnapshot({ feeWalletB58, connection, cfg, now, day }) {
+	let solLamports;
+	try {
+		const conn = connection || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+		// Shares self-facilitator.js's balance cache, so this adds no RPC traffic of
+		// its own beyond what the settle path already reads for the same wallet.
+		solLamports = await sponsorSolLamports(conn, new PublicKey(feeWalletB58), now);
+	} catch {
+		return null;
+	}
+	const spent = await spentTodayLamports(feeWalletB58, cfg.spentCacheMs, now);
+	const budget = effectiveBudgetLamports(solLamports, cfg, now);
+	const entry = { ok: true, reason: null, at: now, day, ttl: cfg.spentCacheMs, spent, budget, admitted: 0 };
+	_admissionCache.set(feeWalletB58, entry);
+	return entry;
+}
 
 export async function assessFeeAdmission({
 	feeWalletB58, estFeeLamports = 0, connection = null, config, now = Date.now(),
@@ -146,7 +203,8 @@ export async function assessFeeAdmission({
 	const day = utcDay(now);
 	const hit = _admissionCache.get(feeWalletB58);
 	if (hit && hit.day === day && now - hit.at < hit.ttl) {
-		return { ok: hit.ok, reason: hit.reason, cached: true };
+		const verdict = snapshotVerdict(hit, estFeeLamports, now);
+		return { ok: verdict.ok, reason: verdict.reason, cached: true };
 	}
 
 	// Only platform-controlled wallets are governed. An external buyer self-paying
@@ -159,37 +217,24 @@ export async function assessFeeAdmission({
 	}
 	if (!allowed || !allowed.has(feeWalletB58)) return ADMIT;
 
-	let solLamports;
-	try {
-		const conn = connection || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
-		// Shares self-facilitator.js's balance cache, so this adds no RPC traffic of
-		// its own beyond what the settle path already reads for the same wallet.
-		solLamports = await sponsorSolLamports(conn, new PublicKey(feeWalletB58), now);
-	} catch {
-		return ADMIT;
+	let pending = _admissionInflight.get(feeWalletB58);
+	const leader = !pending;
+	if (leader) {
+		pending = readAdmissionSnapshot({ feeWalletB58, connection, cfg, now, day })
+			.finally(() => _admissionInflight.delete(feeWalletB58));
+		_admissionInflight.set(feeWalletB58, pending);
 	}
+	const entry = await pending;
+	// Unreadable balance: fail open, exactly like the settle-path meter.
+	if (!entry) return ADMIT;
 
-	const spent = await spentTodayLamports(feeWalletB58, cfg.spentCacheMs, now);
-	const budget = effectiveBudgetLamports(solLamports, cfg, now);
-	const verdict = assessWalletFeeBudget({
-		spentTodayLamports: spent,
-		budgetLamports: budget,
-		nextFeeLamports: estFeeLamports,
-	});
-
-	_admissionCache.set(feeWalletB58, {
-		ok: verdict.ok,
-		reason: verdict.reason,
-		at: now,
-		day,
-		ttl: verdict.ok ? cfg.spentCacheMs : ADMISSION_REFUSED_TTL_MS,
-	});
+	const verdict = snapshotVerdict(entry, estFeeLamports, now);
 	return {
 		ok: verdict.ok,
 		reason: verdict.reason,
-		budgetLamports: budget,
-		spentTodayLamports: spent,
-		cached: false,
+		budgetLamports: entry.budget,
+		spentTodayLamports: entry.spent,
+		cached: !leader,
 	};
 }
 

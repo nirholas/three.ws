@@ -9,6 +9,29 @@ This superseded `okx-ai-05-relisting-resubmission.md`, which submitted the back-
 identity-studio catalog. That order was deleted on 2026-09-09; this file is the only
 relisting order.
 
+## State on 2026-09-24, re-measured: every gate that needs no session is GREEN
+
+- **Step 0: PASS.** Live API `c8f10f437`. `GET /api/okx/3d/catalog` lists exactly the seven
+  forge/free rows (`forge-draft`, `forge-standard`, `forge-hd`, `forge-image`, `forge-status`,
+  `catalog`, `health`) with the nine back-burner rows, `identity-studio` among them, under
+  `unlisted`. Production does not predate the rebuild.
+- **Step 1: PASS on items 1 to 6.** Unpaid `forge_3d` calls answer 402, `x402Version 2`,
+  `accepts[0]` = `exact` / `eip155:196` / USD₮0 / `payTo 0x4022de2D…f402` at 10000 / 50000 /
+  250000 / 250000. Each rail and asset appears once (X Layer USD₮0, Solana USDC, Solana $THREE,
+  Base USDC). `forge-status` does not 402, `getting_started` is free (200), `catalog` and `health`
+  answer 200 on GET. `node scripts/okx-compliance-probe.mjs` PASS 20 probes, read back with OKX's
+  own `parsePaymentRequired`. `node scripts/okx-three-copy-check.mjs`: module == live == listing
+  submission; **on-chain copy NOT COMPARED** (no session). OKX suites 228/228 pass, including
+  `okx-forge`.
+- **Steps 2 and 3: blocked on the session.** `onchainos` v4.6.2 is installed (binary checked
+  against the release `checksums.txt`), `wallet status` reads `loggedIn: false`, and
+  `get-agents`, `service-list` and `search` all answer
+  `session expired, please login again`. The delta, the QA pass and the on-chain update all need
+  the human browser login first, and the update itself needs the owner's explicit confirm.
+  Approval state of #2632 could not be read today; the last reading (2026-09-09) is
+  `approvalDisplayStatus 5`, `Listing rejected`, `status 2`, `soldCount 2`, with the on-chain
+  descriptions two-part against the module's four-part (7 divergences).
+
 ## Binding operating clause
 
 1. Finish 100% of everything that is not an on-chain write or an OTP. Never end with a

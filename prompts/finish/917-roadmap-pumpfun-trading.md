@@ -1,6 +1,49 @@
 # Pump.fun Trading — Product Plan & Prompt Library
 
-**Status:** planning · **Owner:** TBD · **Last updated:** 2026-06-15 (creative-plays + cold-start expansion)
+**Status:** mostly shipped (see build status) · **Owner:** TBD · **Last updated:** 2026-09-24
+
+> **Build status (verified 2026-09-24).** Most of this plan shipped, largely
+> under the newer master plan
+> [918-roadmap-pumpfun-trading-arena.md](918-roadmap-pumpfun-trading-arena.md),
+> which supersedes sections 3, 4, 5, 8 and 10 of this doc. It is NOT retired,
+> because a handful of section 12 to 14 items exist nowhere else and are not built.
+>
+> | Plan item | State | Evidence |
+> |---|---|---|
+> | Phase 0 foundations | Shipped | `workers/agent-sniper/`, strategy DSL (`api/sniper/compile.js`, `/strategy-lab`), positions ledger, feeds |
+> | Phase 1 Arena + profile | Shipped | `/play/arena`, `/arena` (tournaments), `/trader/:id` (`api/sniper/trader.js`, `api/_lib/trader-stats.js`) |
+> | Phase 2 copy-trade + perf fees | Shipped | `/mirror` (custodial) + `/dashboard/copy` (non-custodial), `copy_subscriptions` / `copy_executions`, HWM fee `api/copy/settle-fee.js`, `api/_lib/copy-eligibility.js`. The fee split is leader 80 / treasury 15 / holders 5 (918's choice), not this doc's 70/20/10 with a referrer slice |
+> | 4.4 skin in the game | Shipped | Open exposure + deployed-capital bar on `/trader/:id`, `minDeployedSol` in `copy-eligibility.js` |
+> | Phase 3 Studio | Shipped | `/strategy-lab`, backtest (`api/sniper/backtest.js`), paper mode, `/sniper/experiments` |
+> | Phase 4 virality | Shipped | PnL/trade cards (`/trade/:id`, `api/trade-og.js`), `/trades`, `/feed`, referrals, copy intents to Telegram (`20260616220000_copy_telegram.sql`) |
+> | Phase 5 tournaments / battles | Shipped | `/arena` tournaments (`20260623120000_tournaments.sql`), `/docs/rivalries`, Coin Wars |
+> | Phase 6 index + marketplace | Shipped | Agent Index (`/docs/agent-index`, `api/_lib/meta-allocator.js`), signal marketplace (`20260626000000_signal_marketplace.sql`) |
+> | Phase 6 on-chain copy vault | Not started | Needs an audited program; owner decision (section 9) |
+> | 12.1 Co-Pilot | Shipped | Trading Copilot tab on `/agents/:id/wallet` (confirm-before-execute trade cards, `docs/trading-copilot.md`) |
+> | 12.2 Ghost-copy | Shipped | `/ghost-copy`, `api/pump/ghost-copy.js` |
+> | 12.3 Fork-this-trade | Shipped | `src/fork-trade.js`, `/docs/fork-trade` |
+> | 12.4 Trader Wrapped | Shipped | `/wrapped`, `api/pump/wrapped.js` |
+> | 12.5 Talk to your trader | Shipped | `src/voice/wallet-intent.js` + `api/agents/solana-intent.js` |
+> | 12.6 Agent prediction markets | Not started | Needs a new table and a $THREE wager rail (spend gate, regulatory framing) |
+> | 12.7 Syndicates | Not started | Blocked on demand: production has 0 copy subscriptions (2026-09-24), so a syndicate board would render empty |
+> | 12.8 Fade mode | Shipped | `/fade`, `api/pump/fade.js` |
+> | 12.9 Index agents | Shipped | Agent Index, `meta-allocator.js` |
+> | 12.10 Sentiment with receipts | Shipped 2026-09-24 | Trade receipts: `api/_lib/trade-receipt.js`, `GET /api/sniper/receipt`, "why" on `/trader/:id`, `trade_receipt` MCP tool (paid x402 reads shown with their payment tx) |
+> | 12.11 Daily streaks and quests | Partial | Streaks + badges (`20260712020000_leaderboard_streaks_badges.sql`); no trading-specific quests with $THREE rewards |
+> | 12.12 Embeddable copy-me widget | Shipped | `<trader-card>` (`/docs/trader-card-embed`) |
+> | 12.13 Live trade rooms in the world | Not started | |
+> | 12.14 Auto-rivalry engine | Shipped | `api/_lib/rivalries.js`, `api/sniper/rivalries.js` |
+> | 12.15 First-rug softener | Not started | Flagged "not committed" by this doc; spends $THREE |
+> | 13.1 to 13.3 cold start | Shipped | House paper agents (`20260814180000_arena_house_daily.sql`), claim-your-wallet trader card, logged-out `/trades` |
+> | 13.5 push wins to Telegram / X | Partial | Copy intents to Telegram shipped; no X auto-poster (see 3.8) |
+> | 13.4 early-leader $THREE program | Not started | Pays $THREE out: spend gate |
+> | 3.8 X auto-poster for big wins | Not started | Posting to external channels is owner-gated |
+> | 14.1 Copy-Conductor | Superseded | Deterministic sizing in `api/_lib/copy-engine.js` |
+> | 14.2 Sentiment Scout, 14.3 Onboarding Coach prompts | Not started | |
+> | 15 Coin Intelligence Engine | Shipped | `pump_coin_intel` / `pump_coin_wallets` / `pump_coin_outcomes` / `pump_intel_weights` (`20260615060000_coin_intel.sql`), `/coin-intel`, `get_coin_intel` |
+>
+> Retire this file once the "Not started" rows are either built or explicitly
+> dropped by the owner.
 
 > Scope lock: this document is *only* about pump.fun trading, deploying, and the
 > copy-trade / earn-when-copied economy around it. Everything else (forge,

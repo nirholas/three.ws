@@ -86,6 +86,7 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	materializeCreation: vi.fn(async ({ glbUrl }) => ({ id: 'creation-1', glbUrl })),
 	markFailed: vi.fn(async () => {}),
 	findByJob: vi.fn(async () => null),
+	runWithCreationContext: (_facts, fn) => fn(),
 }));
 
 // Vision pre-check is a no-op pass (irrelevant to text→3D anyway).

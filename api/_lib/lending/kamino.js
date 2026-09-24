@@ -326,6 +326,5 @@ export const venue = {
 	getPosition,
 	buildDeposit,
 	buildWithdraw,
-	accountsToCreate,
 	invalidateMarket,
 };

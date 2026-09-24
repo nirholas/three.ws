@@ -1685,6 +1685,10 @@
 			"dest": "/marketplace-walk.html"
 		},
 		{
+			"src": "/data-desk/?",
+			"dest": "/data-desk.html"
+		},
+		{
 			"src": "/irl/sign/?",
 			"dest": "/irl-sign.html"
 		},
@@ -3796,6 +3800,10 @@
 		{
 			"src": "/api/sniper/trader",
 			"dest": "/api/sniper/trader.js"
+		},
+		{
+			"src": "/api/sniper/receipt",
+			"dest": "/api/sniper/receipt.js"
 		},
 		{
 			"src": "/api/traders/preview",

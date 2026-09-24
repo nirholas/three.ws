@@ -5,6 +5,9 @@ import {
 	formatTelegramMessage,
 	formatTweet,
 	weightedLength,
+	classifyXError,
+	xFilterReason,
+	loadXFilter,
 	pushTelegramLane,
 	pushXLane,
 } from '../api/_lib/changelog-push.js';
@@ -91,6 +94,61 @@ describe('formatTweet', () => {
 		const weighted = weightedLength(t.replace(/https:\/\/\S+$/, 'x'.repeat(23)));
 		expect(weighted).toBeLessThanOrEqual(280);
 		expect(t).toContain('…');
+	});
+});
+
+describe('the X filter', () => {
+	const filter = loadXFilter();
+	const verdict = (over) => xFilterReason(entry(over), filter);
+
+	it('passes a plain product feature', () => {
+		expect(verdict({ title: 'Text avatars now wear what you describe', summary: 'Describe an outfit and the avatar wears it.', tags: ['feature'] })).toBeNull();
+	});
+
+	it('keeps agent wallets, x402, funds, and keys off X', () => {
+		expect(verdict({ title: 'Agents now buy real work from brand-new wallets', tags: ['feature'] })).not.toBeNull();
+		expect(verdict({ summary: 'Paid calls settle over x402.', tags: ['feature'] })).not.toBeNull();
+		expect(verdict({ summary: 'The pool only pays from wallets that hold funds.', tags: ['improvement'] })).not.toBeNull();
+		expect(verdict({ summary: 'Rotate your API keys from the dashboard.', tags: ['feature'] })).not.toBeNull();
+	});
+
+	it('skips security work, bare fixes, and plumbing', () => {
+		expect(verdict({ tags: ['security', 'feature'] })).not.toBeNull();
+		expect(verdict({ tags: ['fix'] })).not.toBeNull();
+		expect(verdict({ tags: ['infra', 'docs'] })).not.toBeNull();
+	});
+
+	it('allows $THREE and blocks any other ticker', () => {
+		expect(verdict({ summary: 'Every coin on the launchpad is bought with $THREE.', tags: ['feature'] })).toBeNull();
+		expect(verdict({ summary: 'Now quoting $ABC next to the chart.', tags: ['feature'] })).not.toBeNull();
+	});
+});
+
+describe('classifyXError', () => {
+	const now = 1_800_000_000_000;
+
+	it('backs off until the exhausted 24h window resets, not the 15-minute one', () => {
+		const err = {
+			code: 429,
+			rateLimit: { limit: 200, remaining: 150, reset: now / 1000 + 900, userDay: { limit: 17, remaining: 0, reset: now / 1000 + 36_000 } },
+		};
+		expect(classifyXError(err, now)).toEqual({ kind: 'rate_limited', until: now + 36_000_000 });
+	});
+
+	it('falls back to a fixed wait when a 429 carries no usable reset', () => {
+		const verdict = classifyXError({ code: 429 }, now);
+		expect(verdict.kind).toBe('rate_limited');
+		expect(verdict.until).toBeGreaterThan(now);
+	});
+
+	it('recognizes duplicate content and a deleted reply target', () => {
+		expect(classifyXError({ code: 403, data: { detail: 'You are not allowed to create a Tweet with duplicate content.' } }).kind).toBe('duplicate');
+		expect(classifyXError({ code: 403, data: { detail: 'You attempted to reply to a Tweet that is deleted or not visible to you.' } }).kind).toBe('thread_gone');
+	});
+
+	it('treats auth and unknown failures as fatal so they surface', () => {
+		expect(classifyXError({ code: 401, data: { title: 'Unauthorized' } }).kind).toBe('fatal');
+		expect(classifyXError(new Error('socket hang up')).kind).toBe('fatal');
 	});
 });
 

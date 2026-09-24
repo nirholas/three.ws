@@ -1,5 +1,5 @@
 /**
- * Work order 03 — the decomposed 3D studio on OKX.AI
+ * Work order 03: the decomposed 3D studio on OKX.AI
  * (/api/okx/3d/<service>, catalog rows in api/_lib/okx-catalog.js, engines in
  * api/_okx3d/rest-services.js).
  *
@@ -53,7 +53,7 @@ vi.mock('../../api/_lib/x402/payment-identifier-server.js', () => ({
 }));
 
 // Payment verification/settlement are exercised against the live rail in the
-// WO-04 gauntlet; here they are seams — the suite asserts WHEN they run
+// WO-04 gauntlet; here they are seams: the suite asserts WHEN they run
 // (verify before engine, settle only after success), not chain mechanics.
 const verifyPaymentMock = vi.fn();
 const settlePaymentMock = vi.fn();
@@ -183,7 +183,7 @@ function makeReq({ method = 'POST', service, headers = {}, body = null } = {}) {
 const decode402Header = (res) =>
 	JSON.parse(Buffer.from(res.headers['payment-required'], 'base64').toString('utf8'));
 
-describe('okx catalog — work order 03 rows', () => {
+describe('okx catalog, work order 03 rows', () => {
 	it('all eight decomposed services exist at the work-order price points', () => {
 		expect(validateCatalog()).toBe(true);
 		const prices = Object.fromEntries(
@@ -348,7 +348,7 @@ describe('per-service 402 (unpaid POST)', () => {
 	});
 });
 
-describe('paid dispatch — verify → engine → settle', () => {
+describe('paid dispatch: verify → engine → settle', () => {
 	function paidReq(service, body) {
 		return makeReq({ service, body, headers: { 'payment-signature': 'c2ln' } });
 	}
@@ -430,7 +430,7 @@ describe('paid dispatch — verify → engine → settle', () => {
 		expect(settlePaymentMock).toHaveBeenCalledTimes(1);
 	});
 
-	it('pose-seed resolves deterministically in-process — same prompt, same seed, real engine', async () => {
+	it('pose-seed resolves deterministically in-process: same prompt, same seed, real engine', async () => {
 		const res1 = makeRes();
 		await handler(paidReq('pose-seed', VALID_INPUT['pose-seed']), res1);
 		expect(res1.statusCode).toBe(200);

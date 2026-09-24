@@ -120,6 +120,12 @@ export const FREE_TOOLS = Object.freeze(
 		// nobody calls, and one nobody calls prevents nothing.
 		'x402_preflight',
 		'persona_identity',
+		// Reads the wallet, balance and refusal rules for a tip or send and moves
+		// nothing; charging for the preview would tax the confirm step itself.
+		'persona_payment_preview',
+		// Serves the three:// resources for clients that render tools but not
+		// resources: discovery, which is free everywhere on this server.
+		'read_resource',
 		'persona_tip',
 		'persona_send',
 		'inspect_model',

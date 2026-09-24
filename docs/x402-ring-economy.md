@@ -122,6 +122,14 @@ decision logic in
   `api/cron/x402-autonomous-loop.js` (the autonomous buyer) gate on it; the loop
   records each skip to `x402_autonomous_log` so a paced rail reads as paced rather
   than as a rail nobody used.
+- **An admission spends its own headroom.** A fresh read caches the wallet's
+  budget and spent-today for `X402_WALLET_FEE_SPENT_CACHE_MS`, and every call
+  admitted from that snapshot deducts its estimated fee from it. The first call
+  past the headroom turns the snapshot into a refusal for a minute. Concurrent
+  callers share one in-flight read. Before 2026-09-24 a cached "yes" admitted
+  every call in the window, and under intraday pacing (where the unlocked budget
+  sits at the spent line all day) that let about 1,700 doomed handshakes an hour
+  reach the settle path to be refused there, beside about 230 that settled.
 - **Platform wallets only.** The meter governs only wallets in
   `ringAllowedAddresses()`. An external organic buyer self-paying through this
   facilitator spends its own SOL and is always admitted.
