@@ -19,6 +19,10 @@
 //   { venue, chain, input, output, in_amount_raw, out_amount_raw, min_out_raw,
 //     price_impact_pct, slippage_bps, route: string[] }
 //
+// Solana DEX venues are not a fixed list: the arbitrage desk discovers them at
+// runtime (api/_lib/trading-tools/arbitrage.js), and any venue label the
+// router reports is addressable here as `dex:<label>`.
+//
 // Solana executors plug into the guarded custodial trade executor in
 // api/agents/solana-trade.js (runAgentTrade). That executor owns the whole
 // guard chain (kill switch, per-trade cap, daily budget, USD spend ceiling,
@@ -40,14 +44,11 @@
 import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 
 import { jupiterQuote, jupiterSwapTx } from '../token/jupiter.js';
-import { ARB_VENUES } from './arbitrage.js';
+import { launchpadLabels } from './arbitrage.js';
 import { ToolInputError, WSOL_MINT, tokenDecimals } from './market.js';
 
 export const SOLANA = 'solana';
 export const EVM = 'evm';
-
-// The launchpad's curve and graduated pool, as the aggregator labels them.
-const LAUNCHPAD_ROUTES = ARB_VENUES.filter((v) => v.launchpad);
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
@@ -200,8 +201,8 @@ const launchpad = {
 	kind: 'launchpad',
 	name: 'Launchpad bonding curve and its graduated AMM',
 	quote: async (req) => {
-		for (const route of LAUNCHPAD_ROUTES) {
-			const q = await solanaQuote(route.label, req).catch(() => null);
+		for (const label of await launchpadLabels()) {
+			const q = await solanaQuote(label, req).catch(() => null);
 			if (q) return { venue: 'launchpad', ...q };
 		}
 		return null;
@@ -210,16 +211,23 @@ const launchpad = {
 	executor: null,
 };
 
-// Every individually priced venue. The launchpad's own routes fill through the
-// executor's default path, so they carry no custom executor.
-const dexVenues = ARB_VENUES.map((v) => ({
-	id: v.id,
-	chain: SOLANA,
-	kind: 'dex',
-	name: v.name,
-	quote: (req) => solanaQuote(v.label, req).then((q) => (q ? { venue: v.id, ...q } : null)),
-	executor: v.launchpad ? null : aggregatorExecutor(v.label),
-}));
+// One DEX, addressed by the label the router reports for it (the labels
+// arbitragePrices returns). Built on demand because the set is discovered at
+// runtime, never listed here.
+const DEX_PREFIX = 'dex:';
+const LABEL_RE = /^[\w .+()'-]{1,64}$/;
+
+function dexVenue(label) {
+	const id = `${DEX_PREFIX}${label}`;
+	return {
+		id,
+		chain: SOLANA,
+		kind: 'dex',
+		name: label,
+		quote: (req) => solanaQuote(label, req).then((q) => (q ? { venue: id, ...q } : null)),
+		executor: aggregatorExecutor(label),
+	};
+}
 
 const evmAggregator = {
 	id: 'evm-aggregator',
@@ -249,15 +257,17 @@ const evmAggregator = {
 	executor: null,
 };
 
-/** Every venue, Solana first. */
-export const VENUES = Object.freeze([auto, launchpad, ...dexVenues, evmAggregator]);
+/** The fixed venues, Solana first. Individual DEXes are `dex:<label>` (see dexVenue). */
+export const VENUES = Object.freeze([auto, launchpad, evmAggregator]);
 const BY_ID = new Map(VENUES.map((v) => [v.id, v]));
 
 /** Venue by id. Throws a ToolInputError naming the valid ids. */
 export function getVenue(id = 'auto') {
-	const v = BY_ID.get(String(id || 'auto'));
-	if (!v) throw new ToolInputError('invalid_venue', `Unknown venue "${id}". Use one of: ${VENUES.map((x) => x.id).join(', ')}.`);
-	return v;
+	const key = String(id || 'auto');
+	const fixed = BY_ID.get(key);
+	if (fixed) return fixed;
+	if (key.startsWith(DEX_PREFIX) && LABEL_RE.test(key.slice(DEX_PREFIX.length))) return dexVenue(key.slice(DEX_PREFIX.length));
+	throw new ToolInputError('invalid_venue', `Unknown venue "${id}". Use one of: ${VENUES.map((x) => x.id).join(', ')}, or dex:<label> with a label arbitrage_prices returned.`);
 }
 
 /** Venues on one chain, as plain descriptors for a tool or page. */

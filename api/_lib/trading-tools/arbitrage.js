@@ -1,12 +1,17 @@
 // Cross-venue price comparison and two-leg arbitrage routes on Solana.
 //
-// Every venue is priced the same way: a Jupiter ExactIn quote restricted to
-// that one venue (`dexes=<label>`) with direct routes only, so the number is
-// what that venue's own pool pays for the size asked, fees and price impact
-// included. The aggregate best route is quoted alongside as the baseline.
+// Venues are discovered at runtime, never hardcoded: the swap aggregator
+// (api/_lib/token/jupiter.js) is asked for the best direct route for the pair,
+// the venue that route used is recorded and then excluded, and the question is
+// asked again, until no further venue can fill the pair or MAX_VENUES is
+// reached. Each discovered venue is then priced on its own (`dexes=<label>`,
+// direct routes only), so every number is what that venue's own pool pays for
+// the size asked, fees and price impact included. Venue names are the labels
+// the aggregator reports: runtime data, shown as fields, never interpreted.
 //
 // arbitragePrices  buy and sell price for one pair on every venue that can
-//                  fill it, plus the widest cross-venue spread.
+//                  fill it, the aggregate best route as the baseline, and the
+//                  widest cross-venue spread.
 // arbitrageQuote   the best two-leg route (buy on the cheapest venue, sell on
 //                  the richest) with the expected profit after network fees.
 //                  It never executes: each leg is handed back as the exact
@@ -15,41 +20,42 @@
 //                  second one is re-priced when it is quoted, and the result
 //                  says so.
 
-import { jupiterQuote } from '../token/jupiter.js';
+import { jupiterQuote, jupiterVenueLabels } from '../token/jupiter.js';
+import { PUMP_PROGRAM_ID, PUMP_AMM_PROGRAM_ID } from '../solana/programs.js';
 import { fetchCexTicker } from '../cex-public.js';
 import { solPriceUsd } from '../sol-price.js';
 import { cacheWrap } from '../cache.js';
 import { ToolInputError, WSOL_MINT, USDC_MINT, resolveMint, tokenDecimals, tokenSearch } from './market.js';
 
-/** The Solana venues priced individually, by the label Jupiter routes them under. */
-export const ARB_VENUES = Object.freeze([
-	{ id: 'orca-whirlpool', label: 'Whirlpool', name: 'Orca Whirlpools' },
-	{ id: 'raydium-clmm', label: 'Raydium CLMM', name: 'Raydium CLMM' },
-	{ id: 'raydium-amm', label: 'Raydium', name: 'Raydium AMM' },
-	{ id: 'raydium-cpmm', label: 'Raydium CP', name: 'Raydium CPMM' },
-	{ id: 'meteora-dlmm', label: 'Meteora DLMM', name: 'Meteora DLMM' },
-	{ id: 'meteora-damm', label: 'Meteora DAMM v2', name: 'Meteora DAMM v2' },
-	{ id: 'pump-amm', label: 'Pump.fun Amm', name: 'PumpSwap AMM' },
-	{ id: 'pump-curve', label: 'Pump.fun', name: 'Pump.fun bonding curve' },
-	{ id: 'solfi', label: 'SolFi V2', name: 'SolFi' },
-	{ id: 'humidifi', label: 'HumidiFi', name: 'HumidiFi' },
-]);
-const AGGREGATE = { id: 'jupiter', label: null, name: 'Jupiter best route' };
-const VENUE_BY_ID = new Map(ARB_VENUES.map((v) => [v.id, v]));
-
-/** Venue id or Jupiter label -> venue, or null for the aggregate route. */
-export function venueFor(idOrLabel) {
-	if (idOrLabel == null || idOrLabel === '' || idOrLabel === 'jupiter') return null;
-	const v = VENUE_BY_ID.get(idOrLabel) || ARB_VENUES.find((x) => x.label.toLowerCase() === String(idOrLabel).toLowerCase());
-	if (!v) throw new ToolInputError('invalid_venue', `Unknown venue "${idOrLabel}". Use one of: jupiter, ${ARB_VENUES.map((x) => x.id).join(', ')}.`);
-	return v;
-}
-
-// Two transactions, each a base fee plus a typical priority fee. Kept
-// deliberately conservative so an "expected profit" is not an optimistic one.
-const LEG_FEE_LAMPORTS = 5_000 + 100_000;
+/** The most venues priced individually for one pair. */
+export const MAX_VENUES = 8;
+// Discovery rounds: one route can split across several venues, so a round can
+// find more than one; the round cap bounds the sequential calls either way.
+const MAX_DISCOVERY_ROUNDS = 8;
 const QUOTE_CONCURRENCY = 4;
 const SLIPPAGE_BPS = 50;
+// Two transactions, each a base fee plus a typical priority fee. Kept
+// deliberately conservative so an "expected profit" is not an optimistic one.
+export const LEG_FEE_LAMPORTS = 5_000 + 100_000;
+
+const AGGREGATE_ID = 'auto';
+
+/** The venue id for a router label, as api/_lib/trading-tools/venues.js addresses it. */
+export function venueId(label) {
+	return `dex:${label}`;
+}
+
+/**
+ * The router's labels for the launchpad's bonding curve and its graduated AMM,
+ * resolved from their program ids at runtime (cached for an hour). Empty when
+ * the label index is unreachable, so callers fall back to the launchpad's own
+ * quote path rather than guessing.
+ * @returns {Promise<string[]>}
+ */
+export async function launchpadLabels() {
+	const labels = await cacheWrap('trading-tools:venue-labels:v1', 3600, () => jupiterVenueLabels()).catch(() => ({}));
+	return [PUMP_PROGRAM_ID, PUMP_AMM_PROGRAM_ID].map((id) => labels?.[id]).filter(Boolean);
+}
 
 async function mapLimit(items, limit, fn) {
 	const out = new Array(items.length);
@@ -64,25 +70,49 @@ async function mapLimit(items, limit, fn) {
 	return out;
 }
 
-/** One venue's ExactIn quote, or null when the venue cannot fill it. Cached briefly. */
-async function venueQuote(venue, inputMint, outputMint, amount) {
-	const key = `trading-tools:arbq:v1:${venue.id}:${inputMint}:${outputMint}:${amount}`;
-	const q = await cacheWrap(key, 10, async () => {
+function routeLabels(q) {
+	return [...new Set((q?.routePlan || []).map((p) => p?.swapInfo?.label).filter(Boolean))];
+}
+
+/**
+ * One ExactIn quote, cached briefly. Returns { outAmount, priceImpactPct, labels }
+ * for a fill, { none: true } when the venue set has no pool for the pair, and
+ * { error: true } on a transport failure (reported per venue, never as a price).
+ */
+async function quoteOnce({ inputMint, outputMint, amount, dexes = null, excludeDexes = null, direct = Boolean(dexes || excludeDexes) }) {
+	const key = `trading-tools:arbq:v2:${inputMint}:${outputMint}:${amount}:${direct ? 'd' : 'a'}:${(dexes || []).join('|')}:${(excludeDexes || []).join('|')}`;
+	return cacheWrap(key, 10, async () => {
 		try {
 			const r = await jupiterQuote({
 				inputMint, outputMint, amount, slippageBps: SLIPPAGE_BPS,
-				dexes: venue.label ? [venue.label] : null,
-				onlyDirectRoutes: Boolean(venue.label),
+				dexes, excludeDexes, onlyDirectRoutes: direct,
 			});
-			return r?.outAmount ? { outAmount: String(r.outAmount), priceImpactPct: r.priceImpactPct, route: (r.routePlan || []).map((p) => p?.swapInfo?.label).filter(Boolean) } : { none: true };
+			return r?.outAmount
+				? { outAmount: String(r.outAmount), priceImpactPct: r.priceImpactPct, labels: routeLabels(r) }
+				: { none: true };
 		} catch (err) {
-			// 400/404 are "this venue has no pool for the pair", an answer; the
-			// rest are transport failures, reported per venue, never as a price.
 			const s = Number(err?.status);
 			return s === 400 || s === 404 ? { none: true } : { error: true };
 		}
 	}).catch(() => ({ error: true }));
-	return q;
+}
+
+/**
+ * Discover every venue that can fill `inputMint -> outputMint` directly at this
+ * size, by asking for the best direct route and excluding what it used.
+ * @returns {Promise<string[]>} venue labels, in discovery order
+ */
+export async function discoverVenues({ inputMint, outputMint, amount, max = MAX_VENUES }) {
+	const found = [];
+	for (let round = 0; round < MAX_DISCOVERY_ROUNDS && found.length < max; round++) {
+		// Direct routes only, so every label names a pool of this exact pair.
+		const q = await quoteOnce({ inputMint, outputMint, amount, excludeDexes: found.length ? found : null, direct: true });
+		if (!q?.outAmount) break;
+		const fresh = q.labels.filter((l) => !found.includes(l));
+		if (!fresh.length) break;
+		found.push(...fresh);
+	}
+	return found.slice(0, max);
 }
 
 async function resolvePair({ token, quote }) {
@@ -93,60 +123,74 @@ async function resolvePair({ token, quote }) {
 	return { base, quoteMint: q, baseDecimals: bd, quoteDecimals: qd };
 }
 
-function toAtomic(amount, decimals) {
+/** A UI amount to base units in string space (no float multiply). */
+export function toAtomic(amount, decimals) {
 	const n = Number(amount);
 	if (!Number.isFinite(n) || n <= 0) throw new ToolInputError('invalid_amount', 'amount must be a positive number of the quote token.');
-	const [w, f = ''] = String(amount).split('.');
+	const [w, f = ''] = Number(amount).toFixed(decimals).split('.');
 	return (BigInt(w || '0') * 10n ** BigInt(decimals) + BigInt((f + '0'.repeat(decimals)).slice(0, decimals) || '0')).toString();
 }
 
 const human = (atomic, decimals) => Number(BigInt(atomic)) / 10 ** decimals;
 
 /**
- * Price one pair on every venue: what `amount` of the quote token buys there,
- * and what those tokens sell back for.
- * @param {{ token: string, quote?: string, amount?: number|string, venues?: string[] }} args
+ * Price the discovered venues on both sides of a pair: what `amountIn` of the
+ * quote token buys on each, and what the aggregate-sized token amount sells
+ * back for on each.
  */
-export async function arbitragePrices({ token, quote = 'SOL', amount = 1, venues = null }) {
-	const pair = await resolvePair({ token, quote });
-	const amountIn = toAtomic(amount, pair.quoteDecimals);
-	const pool = venues?.length ? venues.map((v) => venueFor(v)).filter(Boolean) : ARB_VENUES;
-	const all = [AGGREGATE, ...pool];
-
-	const buys = await mapLimit(all, QUOTE_CONCURRENCY, (v) => venueQuote(v, pair.quoteMint, pair.base, amountIn));
-	const aggBuy = buys[0];
-	// Sell side is priced for the token amount the aggregate buy returns, so
-	// every venue is compared on the same size.
+async function priceVenues(pair, amountIn, labels) {
+	const buys = await mapLimit(labels, QUOTE_CONCURRENCY, (l) => quoteOnce({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn, dexes: [l] }));
+	const aggBuy = await quoteOnce({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
 	const sellSize = aggBuy?.outAmount || buys.find((b) => b?.outAmount)?.outAmount || null;
 	const sells = sellSize
-		? await mapLimit(all, QUOTE_CONCURRENCY, (v) => venueQuote(v, pair.base, pair.quoteMint, sellSize))
-		: all.map(() => null);
+		? await mapLimit(labels, QUOTE_CONCURRENCY, (l) => quoteOnce({ inputMint: pair.base, outputMint: pair.quoteMint, amount: sellSize, dexes: [l] }))
+		: labels.map(() => null);
+	const aggSell = sellSize ? await quoteOnce({ inputMint: pair.base, outputMint: pair.quoteMint, amount: sellSize }) : null;
+	return { buys, sells, aggBuy, aggSell, sellSize };
+}
 
-	const rows = all.map((v, i) => {
-		const b = buys[i];
-		const s = sells[i];
-		const tokensOut = b?.outAmount ? human(b.outAmount, pair.baseDecimals) : null;
-		const quoteBack = s?.outAmount ? human(s.outAmount, pair.quoteDecimals) : null;
-		const sellTokens = sellSize ? human(sellSize, pair.baseDecimals) : null;
-		return {
-			venue: v.id,
-			name: v.name,
-			status: b?.outAmount || s?.outAmount ? 'ok' : b?.error || s?.error ? 'error' : 'no_pool',
-			buy: tokensOut ? { tokens_out: tokensOut, price: Number(amount) / tokensOut, price_impact_pct: b.priceImpactPct != null ? Number(b.priceImpactPct) * 100 : null } : null,
-			sell: quoteBack && sellTokens ? { tokens_in: sellTokens, quote_out: quoteBack, price: quoteBack / sellTokens, price_impact_pct: s.priceImpactPct != null ? Number(s.priceImpactPct) * 100 : null } : null,
-			executable: true,
-		};
-	});
+function venueRow({ id, name, buy, sell, sellSize, amount, pair }) {
+	const tokensOut = buy?.outAmount ? human(buy.outAmount, pair.baseDecimals) : null;
+	const quoteBack = sell?.outAmount ? human(sell.outAmount, pair.quoteDecimals) : null;
+	const sellTokens = sellSize ? human(sellSize, pair.baseDecimals) : null;
+	return {
+		venue: id,
+		name,
+		status: buy?.outAmount || sell?.outAmount ? 'ok' : buy?.error || sell?.error ? 'error' : 'no_pool',
+		buy: tokensOut
+			? { tokens_out: tokensOut, price: Number(amount) / tokensOut, price_impact_pct: buy.priceImpactPct != null ? Number(buy.priceImpactPct) * 100 : null }
+			: null,
+		sell: quoteBack && sellTokens
+			? { tokens_in: sellTokens, quote_out: quoteBack, price: quoteBack / sellTokens, price_impact_pct: sell.priceImpactPct != null ? Number(sell.priceImpactPct) * 100 : null }
+			: null,
+	};
+}
 
-	const venuesOk = rows.filter((r) => r.venue !== 'jupiter' && (r.buy || r.sell));
+/**
+ * Price one pair on every venue that can fill it: what `amount` of the quote
+ * token buys there, and what those tokens sell back for.
+ * @param {{ token: string, quote?: string, amount?: number|string }} args
+ */
+export async function arbitragePrices({ token, quote = 'SOL', amount = 1 }) {
+	const pair = await resolvePair({ token, quote });
+	const amountIn = toAtomic(amount, pair.quoteDecimals);
+	const labels = await discoverVenues({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
+	const priced = await priceVenues(pair, amountIn, labels);
+
+	const venueRows = labels.map((label, i) => venueRow({
+		id: venueId(label), name: label, buy: priced.buys[i], sell: priced.sells[i], sellSize: priced.sellSize, amount, pair,
+	}));
+	const aggregate = venueRow({ id: AGGREGATE_ID, name: 'Best route (aggregated)', buy: priced.aggBuy, sell: priced.aggSell, sellSize: priced.sellSize, amount, pair });
+
+	const venuesOk = venueRows.filter((r) => r.buy || r.sell);
 	const bestBuy = venuesOk.filter((r) => r.buy).sort((a, b) => a.buy.price - b.buy.price)[0] || null;
 	const bestSell = venuesOk.filter((r) => r.sell).sort((a, b) => b.sell.price - a.sell.price)[0] || null;
 	const spreadPct = bestBuy && bestSell && bestBuy.venue !== bestSell.venue
 		? ((bestSell.sell.price - bestBuy.buy.price) / bestBuy.buy.price) * 100
 		: null;
 
-	// Off-chain reference: the first healthy centralized venue's ticker, when
-	// the token is listed there. Shown for context, never routable.
+	// Off-chain reference: the first healthy centralized ticker for the symbol,
+	// when one lists it. Shown for context, never routable.
 	let reference = null;
 	const sym = await tokenSearch({ query: pair.base, limit: 1, deep: false }).then((r) => r.best?.symbol).catch(() => null);
 	if (sym) {
@@ -158,14 +202,37 @@ export async function arbitragePrices({ token, quote = 'SOL', amount = 1, venues
 		token: pair.base,
 		quote: pair.quoteMint,
 		amount_in: Number(amount),
-		venues_quoted: rows.filter((r) => r.status === 'ok').length,
-		venues: rows,
-		best_buy: bestBuy ? { venue: bestBuy.venue, price: bestBuy.buy.price } : null,
-		best_sell: bestSell ? { venue: bestSell.venue, price: bestSell.sell.price } : null,
+		venues_quoted: venuesOk.length,
+		venues: venueRows,
+		aggregate,
+		best_buy: bestBuy ? { venue: bestBuy.venue, name: bestBuy.name, price: bestBuy.buy.price } : null,
+		best_sell: bestSell ? { venue: bestSell.venue, name: bestSell.name, price: bestSell.sell.price } : null,
 		gross_spread_pct: spreadPct,
 		reference,
 		quoted_at: new Date().toISOString(),
 	};
+}
+
+/** Network fees for two legs, expressed in the quote token, or null when unpriceable. */
+export function twoLegFeeInQuote(quoteMint, solUsd) {
+	const feeSol = (2 * LEG_FEE_LAMPORTS) / 1e9;
+	if (quoteMint === WSOL_MINT) return feeSol;
+	if (quoteMint === USDC_MINT && solUsd) return feeSol * solUsd;
+	return null;
+}
+
+/**
+ * Rank buy-venue x sell-venue candidates by net profit. Pure.
+ * @param {{ buy: { venue: string, tokens_atomic: string }, sell: { venue: string, out: number } }[]} candidates
+ */
+export function rankRoutes(candidates, amount, feeInQuote) {
+	return candidates
+		.map((c) => {
+			const gross = c.sell.out - Number(amount);
+			const net = feeInQuote != null ? gross - feeInQuote : null;
+			return { ...c, gross, net };
+		})
+		.sort((a, b) => (b.net ?? b.gross) - (a.net ?? a.gross));
 }
 
 /**
@@ -176,69 +243,66 @@ export async function arbitragePrices({ token, quote = 'SOL', amount = 1, venues
 export async function arbitrageQuote({ token, quote = 'SOL', amount = 1 }) {
 	const pair = await resolvePair({ token, quote });
 	const amountIn = toAtomic(amount, pair.quoteDecimals);
+	const labels = await discoverVenues({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
 
-	const buys = await mapLimit(ARB_VENUES, QUOTE_CONCURRENCY, (v) => venueQuote(v, pair.quoteMint, pair.base, amountIn));
-	const buyable = ARB_VENUES.map((v, i) => ({ v, q: buys[i] })).filter((x) => x.q?.outAmount);
+	const buys = await mapLimit(labels, QUOTE_CONCURRENCY, (l) => quoteOnce({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn, dexes: [l] }));
+	const buyable = labels.map((label, i) => ({ label, q: buys[i] })).filter((x) => x.q?.outAmount);
 	if (buyable.length < 2) {
 		throw new ToolInputError('insufficient_venues', `Only ${buyable.length} venue(s) can fill this pair at this size, so there is no cross-venue route.`, {
-			venues_quoted: buyable.map((x) => x.v.id),
+			venues_quoted: buyable.map((x) => venueId(x.label)),
 		});
 	}
 	buyable.sort((a, b) => (BigInt(b.q.outAmount) > BigInt(a.q.outAmount) ? 1 : -1));
 
-	// Try the two cheapest buy venues against every other venue's sell.
+	// The two richest buy venues against every other venue's sell.
 	const candidates = [];
 	for (const buy of buyable.slice(0, 2)) {
-		const others = ARB_VENUES.filter((v) => v.id !== buy.v.id);
-		const sells = await mapLimit(others, QUOTE_CONCURRENCY, (v) => venueQuote(v, pair.base, pair.quoteMint, buy.q.outAmount));
-		others.forEach((v, i) => {
-			if (sells[i]?.outAmount) candidates.push({ buy, sell: { v, q: sells[i] } });
+		const others = labels.filter((l) => l !== buy.label);
+		const sells = await mapLimit(others, QUOTE_CONCURRENCY, (l) => quoteOnce({ inputMint: pair.base, outputMint: pair.quoteMint, amount: buy.q.outAmount, dexes: [l] }));
+		others.forEach((label, i) => {
+			if (sells[i]?.outAmount) {
+				candidates.push({
+					buy: { venue: buy.label, tokens_atomic: buy.q.outAmount },
+					sell: { venue: label, out: human(sells[i].outAmount, pair.quoteDecimals) },
+				});
+			}
 		});
 	}
 	if (!candidates.length) throw new ToolInputError('no_route', 'No second venue can buy back what the first leg returns.');
 
 	const solUsd = await solPriceUsd().catch(() => null);
-	const feeLamports = 2 * LEG_FEE_LAMPORTS;
-	let feeInQuote;
-	if (pair.quoteMint === WSOL_MINT) feeInQuote = feeLamports / 1e9;
-	else if (pair.quoteMint === USDC_MINT && solUsd) feeInQuote = (feeLamports / 1e9) * solUsd;
-	else feeInQuote = null;
-
-	const scored = candidates.map((c) => {
-		const out = human(c.sell.q.outAmount, pair.quoteDecimals);
-		const gross = out - Number(amount);
-		const net = feeInQuote != null ? gross - feeInQuote : null;
-		return { ...c, out, gross, net };
-	}).sort((a, b) => (b.net ?? b.gross) - (a.net ?? a.gross));
+	const feeInQuote = twoLegFeeInQuote(pair.quoteMint, solUsd);
+	const scored = rankRoutes(candidates, amount, feeInQuote);
 	const best = scored[0];
-	const tokens = human(best.buy.q.outAmount, pair.baseDecimals);
+	const tokens = human(best.buy.tokens_atomic, pair.baseDecimals);
 
 	return {
 		token: pair.base,
 		quote: pair.quoteMint,
 		amount_in: Number(amount),
+		venues_quoted: labels.length,
 		profitable: best.net != null ? best.net > 0 : best.gross > 0,
 		expected: {
-			quote_out: best.out,
+			quote_out: best.sell.out,
 			gross_profit: best.gross,
 			network_fees: feeInQuote,
 			net_profit: best.net,
 			net_profit_pct: best.net != null ? (best.net / Number(amount)) * 100 : null,
-			net_profit_usd: best.net != null && pair.quoteMint === WSOL_MINT && solUsd ? best.net * solUsd : pair.quoteMint === USDC_MINT ? best.net : null,
+			net_profit_usd: best.net == null ? null : pair.quoteMint === USDC_MINT ? best.net : pair.quoteMint === WSOL_MINT && solUsd ? best.net * solUsd : null,
 		},
 		legs: [
 			{
-				step: 1, action: 'buy', venue: best.buy.v.id, venue_name: best.buy.v.name,
+				step: 1, action: 'buy', venue: venueId(best.buy.venue), venue_name: best.buy.venue,
 				pays: Number(amount), receives_tokens: tokens,
-				swap_quote: { input_mint: pair.quoteMint, output_mint: pair.base, amount: Number(amount), venue: best.buy.v.id },
+				swap_quote: { input_mint: pair.quoteMint, output_mint: pair.base, amount: Number(amount), venue: venueId(best.buy.venue) },
 			},
 			{
-				step: 2, action: 'sell', venue: best.sell.v.id, venue_name: best.sell.v.name,
-				sells_tokens: tokens, receives: best.out,
-				swap_quote: { input_mint: pair.base, output_mint: pair.quoteMint, amount: tokens, venue: best.sell.v.id },
+				step: 2, action: 'sell', venue: venueId(best.sell.venue), venue_name: best.sell.venue,
+				sells_tokens: tokens, receives: best.sell.out,
+				swap_quote: { input_mint: pair.base, output_mint: pair.quoteMint, amount: tokens, venue: venueId(best.sell.venue) },
 			},
 		],
-		alternatives: scored.slice(1, 4).map((c) => ({ buy_venue: c.buy.v.id, sell_venue: c.sell.v.id, gross_profit: c.gross, net_profit: c.net })),
+		alternatives: scored.slice(1, 4).map((c) => ({ buy_venue: venueId(c.buy.venue), sell_venue: venueId(c.sell.venue), gross_profit: c.gross, net_profit: c.net })),
 		execution:
 			'Not atomic. Execute leg 1 with swap_quote then swap_execute, then quote leg 2 fresh (the price will have moved) and execute it only if it still clears the fees. Each leg is a separate confirmed swap.',
 		quoted_at: new Date().toISOString(),

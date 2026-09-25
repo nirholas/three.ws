@@ -33,6 +33,7 @@ const JUP_QUOTE_ATTEMPTS = 3;
 
 const JUP_QUOTE_URL = 'https://lite-api.jup.ag/swap/v1/quote';
 const JUP_SWAP_URL = 'https://lite-api.jup.ag/swap/v1/swap';
+const JUP_LABELS_URL = 'https://lite-api.jup.ag/swap/v1/program-id-to-label';
 const JUP_TOKENS_URL = 'https://lite-api.jup.ag/tokens/v2';
 const JUP_SHIELD_URL = 'https://lite-api.jup.ag/ultra/v1/shield';
 
@@ -164,6 +165,18 @@ export async function jupiterTokenSearch(query, { limit, signal } = {}) {
 	if (limit) u.searchParams.set('limit', String(limit));
 	const data = await fetchJson(u.toString(), { headers: { accept: 'application/json' }, signal });
 	return Array.isArray(data) ? data : [];
+}
+
+/**
+ * Every venue the router can route through, as { programId: label }. The
+ * labels are what quote routePlans report and what `dexes` / `excludeDexes`
+ * accept, so callers resolve a venue from its program id at runtime instead of
+ * hardcoding names.
+ * @returns {Promise<Record<string, string>>}
+ */
+export async function jupiterVenueLabels() {
+	const data = await fetchJson(JUP_LABELS_URL, { headers: { accept: 'application/json' } });
+	return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
 }
 
 /**
