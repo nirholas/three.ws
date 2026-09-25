@@ -105,10 +105,8 @@ export const handleCredits = wrap(async (req, res, agentId, action, sub) => {
 			previewId: body.preview_id,
 			confirmDeposit: body.confirm_deposit,
 			sources: ['owner'],
+			agentId: agent.id,
 		});
-		if (result.agent_id && result.agent_id !== agent.id) {
-			return error(res, 409, 'agent_mismatch', 'that preview belongs to a different agent');
-		}
 		return json(res, result.status === 'pending' ? 202 : 200, result);
 	} catch (err) {
 		return sendTyped(res, err);

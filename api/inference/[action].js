@@ -11,7 +11,8 @@
 //   POST /api/me/inference/provision          { preview_id, confirm_deposit: true, name? }
 //                                             → settles the top-up, then mints an API key
 //                                             scoped to `inference` alone, bound to the
-//                                             agent, and returns it ONCE.
+//                                             agent, and returns it ONCE
+//                                             (api/_lib/inference-provision.js).
 //
 // vercel.json maps the /api/me/* paths here (?action=usage | provision-preview |
 // provision). Reads accept a session or any Bearer key carrying `inference`,
@@ -23,12 +24,10 @@ import { sql } from '../_lib/db.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { mintApiKey } from '../_lib/api-keys.js';
-import { inferenceUsage, inferencePricing } from '../_lib/inference-billing.js';
-import { previewTopup, executeTopup, reconcilePendingTopups } from '../_lib/inference-topup.js';
+import { inferenceUsage } from '../_lib/inference-billing.js';
+import { reconcilePendingTopups } from '../_lib/inference-topup.js';
+import { previewProvision, executeProvision, INFERENCE_BASE_URL } from '../_lib/inference-provision.js';
 import { isUuid } from '../_lib/validate.js';
-
-const BASE_URL = 'https://three.ws/api/v1';
 
 async function resolveCaller(req) {
 	const session = await getSessionUser(req);
@@ -80,7 +79,7 @@ async function handleUsage(req, res, caller) {
 	}
 	await reconcilePendingTopups(caller.userId);
 	const usage = await inferenceUsage({ userId: caller.userId, agent });
-	return json(res, 200, { ...usage, base_url: BASE_URL });
+	return json(res, 200, { ...usage, base_url: INFERENCE_BASE_URL });
 }
 
 async function handleProvision(req, res, caller, action) {
@@ -95,72 +94,21 @@ async function handleProvision(req, res, caller, action) {
 	const body = (await readJson(req).catch(() => null)) || {};
 	try {
 		if (action === 'provision-preview') {
-			const agentId = String(body.agent_id || '');
-			if (!isUuid(agentId)) return error(res, 400, 'bad_request', 'agent_id is required: the agent whose wallet funds the key');
-			const preview = await previewTopup({
+			const preview = await previewProvision({
 				userId: caller.userId,
-				agentId,
+				agentId: body.agent_id,
 				amountUsdc: body.amount_usdc ?? body.amount,
-				source: 'provision',
 			});
-			return json(res, 200, {
-				...preview,
-				key: { scope: 'inference', bound_agent_id: agentId, base_url: BASE_URL },
-			});
+			return json(res, 200, preview);
 		}
-
-		const topup = await executeTopup({
+		const out = await executeProvision({
 			userId: caller.userId,
 			previewId: body.preview_id,
 			confirmDeposit: body.confirm_deposit,
-			sources: ['provision'],
-		});
-		if (topup.status === 'pending') return json(res, 202, topup);
-		if (topup.status !== 'settled') return error(res, 502, 'topup_failed', 'the top-up did not settle, so no key was minted', topup);
-
-		// The key is minted once per settled top-up. A retry of a provision that
-		// already minted reports the key's prefix; the secret was shown once.
-		if (topup.api_key_id) {
-			const [k] = await sql`SELECT id, prefix, scope FROM api_keys WHERE id = ${topup.api_key_id}`;
-			return json(res, 200, {
-				...topup,
-				key: { id: k?.id, prefix: k?.prefix, scope: k?.scope, token: null, base_url: BASE_URL },
-				note: 'This top-up already minted its key; the secret is only shown once. Revoke it at /dashboard/api and provision again if it was lost.',
-			});
-		}
-		const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim().slice(0, 80) : 'Inference key';
-		const minted = await mintApiKey({
-			userId: caller.userId,
-			name,
-			scopes: ['inference'],
+			name: body.name,
 			req,
-			via: 'inference_provision',
 		});
-		const [claimed] = await sql`
-			UPDATE inference_topups SET api_key_id = ${minted.row.id}
-			WHERE id = ${topup.topup_id} AND api_key_id IS NULL
-			RETURNING id
-		`;
-		if (!claimed) {
-			await sql`UPDATE api_keys SET revoked_at = now() WHERE id = ${minted.row.id}`;
-			return error(res, 409, 'already_provisioned', 'A concurrent request already minted the key for this top-up.');
-		}
-		await sql`
-			INSERT INTO inference_keys (api_key_id, user_id, agent_id, topup_id)
-			VALUES (${minted.row.id}, ${caller.userId}, ${topup.agent_id}, ${topup.topup_id})
-		`;
-		return json(res, 201, {
-			...topup,
-			api_key_id: minted.row.id,
-			key: {
-				id: minted.row.id,
-				prefix: minted.row.prefix,
-				scope: minted.row.scope,
-				token: minted.secret,
-				base_url: BASE_URL,
-				model: inferencePricing().model,
-			},
-		});
+		return json(res, out.status, out.body);
 	} catch (err) {
 		return sendTyped(res, err);
 	}

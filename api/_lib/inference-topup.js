@@ -244,10 +244,11 @@ function rowResult(row, extra = {}) {
 
 /**
  * Execute a previewed top-up. Requires `confirmDeposit === true` and a fresh,
- * unused preview owned by the caller. Retrying a settled or pending preview is
+ * unused preview owned by the caller (and, when `agentId` is given, previewed
+ * for that agent). Retrying a settled or pending preview is
  * safe: it returns the recorded result or reconciles the recorded signature.
  */
-export async function executeTopup({ userId, previewId, confirmDeposit, sources = ['owner'] }) {
+export async function executeTopup({ userId, previewId, confirmDeposit, sources = ['owner'], agentId = null }) {
 	if (confirmDeposit !== true) {
 		throw new TopupError(400, 'confirm_required', 'Moving funds needs confirm_deposit: true together with a preview_id from the matching /preview call. Show the preview to the owner first.');
 	}
@@ -257,6 +258,11 @@ export async function executeTopup({ userId, previewId, confirmDeposit, sources 
 	const [row] = await sql`SELECT * FROM inference_topups WHERE id = ${previewId} AND user_id = ${userId}`;
 	if (!row || !sources.includes(row.source)) {
 		throw new TopupError(404, 'preview_not_found', 'No preview with that id belongs to this account. Create a new one with /preview.');
+	}
+	// A route scoped to one agent refuses another agent's preview before
+	// anything moves, never after.
+	if (agentId && String(row.agent_id) !== String(agentId)) {
+		throw new TopupError(409, 'agent_mismatch', 'That preview belongs to a different agent. Create a new one for this agent with /preview.');
 	}
 	if (row.status === 'settled') return rowResult(row, { replay: true });
 	if (row.status === 'pending') return reconcileTopup(row);
