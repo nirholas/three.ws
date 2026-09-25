@@ -1,69 +1,78 @@
-// How v1 chat messages and runs pay for their model calls.
+// How v1 chat messages pay for their model calls.
 //
-// Every account gets FREE_DAILY_CALLS free agent calls per UTC day. A chat
-// message counts as one call, and so does each model call a run makes. The
-// count comes from the rows the calls themselves write (agent_messages with
-// free_tier = true, run model_call steps marked freeTier), so there is no
-// separate counter to drift.
+// Every account gets a daily free allowance of messages, set in
+// app_settings['free_tier'] and metered by api/_lib/free-tier.js (the same
+// allowance /pricing shows and GET /api/v1/me/free-tier reports). It covers
+// the free open models the roster marks `free` (api/_lib/model-roster.js) and
+// the platform's free-first chain when no model is named. Each message draws
+// one unit; the day resets at 00:00 UTC.
 //
-// Past the free allowance a call is billed from credits, one of two ways:
-//   • the platform's free-first chain (no model named) at the published
-//     three-ws/agent rate, through chargeInference (api/_lib/inference-billing.js),
-//     which also enforces the per-agent inference budget;
-//   • a paid model the caller named explicitly, at that model's list price
+//   • A free model named explicitly (per message or as the agent's default)
+//     runs ONLY on the allowance. Once it is spent the call is refused with a
+//     429 free_tier_exhausted carrying the reset time: a free model never
+//     quietly starts costing credits.
+//   • No model named: the allowance pays first; past it the platform chain is
+//     billed from credits at the published three-ws/agent rate through
+//     chargeInference (api/_lib/inference-billing.js), which also enforces the
+//     per-agent inference budget.
+//   • A paid model named explicitly is billed at that model's list price
 //     (api/_lib/llm-pricing.js), because the flat agent rate would not cover it.
 // assertInferenceAllowed gates every billed call up front, so an empty balance
 // or an exhausted agent budget is refused before any tokens are spent.
 
-import { sql } from '../db.js';
 import { debitCredits } from '../credits.js';
-import { MODEL_CATALOG } from '../chat-models.js';
+import { MODEL_CATALOG, resolveModelId, isFreeTierModel } from '../chat-models.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { assertInferenceAllowed, chargeInference } from '../inference-billing.js';
-
-export const FREE_DAILY_CALLS = 50;
-
-function utcDayStart(now = new Date()) {
-	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-}
+import { consumeFreeMessage, getFreeTierStatus, FreeTierExhaustedError } from '../free-tier.js';
+import { freeRosterIds } from '../model-roster.js';
 
 /** Whether a catalog model id draws on credits at its own price. */
 export function isPaidModel(model) {
-	return Boolean(model && MODEL_CATALOG[model] && !isFreeLane(MODEL_CATALOG[model].provider, model));
+	const id = model ? resolveModelId(model) : null;
+	const meta = id ? MODEL_CATALOG[id] : null;
+	if (!meta || meta.free) return false;
+	if (meta.paid) return true;
+	return !isFreeLane(meta.provider, id);
 }
 
 /**
  * The caller's free allowance for today.
- * @returns {Promise<{ limit: number, used: number, remaining: number, period: 'utc_day', resetsAt: string }>}
+ * @returns {Promise<{ limit: number, used: number, remaining: number, period: 'utc_day', resetsAt: string, models: string[] }>}
  */
-export async function freeTierStatus(userId, now = new Date()) {
-	const since = utcDayStart(now);
-	const [row] = await sql`
-		SELECT
-			(SELECT count(*)::int FROM agent_messages
-			  WHERE user_id = ${userId} AND role = 'user' AND free_tier = true AND created_at >= ${since.toISOString()})
-			+
-			(SELECT count(*)::int FROM agent_run_steps s JOIN agent_runs r ON r.id = s.run_id
-			  WHERE r.user_id = ${userId} AND s.kind = 'model_call' AND s.created_at >= ${since.toISOString()}
-			    AND (s.output->>'freeTier')::boolean IS TRUE)
-			AS used
-	`;
-	const used = Number(row?.used || 0);
-	const resetsAt = new Date(since.getTime() + 86_400_000).toISOString();
-	return { limit: FREE_DAILY_CALLS, used, remaining: Math.max(0, FREE_DAILY_CALLS - used), period: 'utc_day', resetsAt };
+export async function freeTierStatus(userId) {
+	const s = await getFreeTierStatus({ userId });
+	return {
+		limit: s.limit,
+		used: s.used,
+		remaining: s.remaining,
+		period: 'utc_day',
+		resetsAt: s.resetAt,
+		models: freeRosterIds(),
+	};
 }
 
 /**
  * Decide how the next call is paid for, and refuse it now if it cannot be.
- * @returns {Promise<{ free: boolean }>}
+ * @param {{ userId: string, agent: object|null, model: string|null }} o
+ * @returns {Promise<{ free: boolean, allowance: object|null }>}
+ * @throws {FreeTierExhaustedError} a named free model with the allowance spent
  */
 export async function admitCall({ userId, agent, model }) {
+	if (model && isFreeTierModel(model)) {
+		const allowance = await consumeFreeMessage({ userId, model });
+		return { free: true, allowance };
+	}
 	if (!isPaidModel(model)) {
-		const tier = await freeTierStatus(userId);
-		if (tier.remaining > 0) return { free: true };
+		try {
+			const allowance = await consumeFreeMessage({ userId, model });
+			return { free: true, allowance };
+		} catch (err) {
+			if (!(err instanceof FreeTierExhaustedError)) throw err;
+		}
 	}
 	await assertInferenceAllowed({ userId, agent });
-	return { free: false };
+	return { free: false, allowance: null };
 }
 
 /**
@@ -79,6 +88,7 @@ export async function chargeCall({ userId, agentId, callId, event, model, free }
 			const r = await debitCredits({
 				userId,
 				amountUsd,
+				// Counted by the per-agent budget (inference-billing.js AGENT_SPEND_ACTIONS).
 				action: 'agent.model',
 				refType: 'agent',
 				refId: agentId,
