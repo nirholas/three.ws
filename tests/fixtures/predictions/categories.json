@@ -1,0 +1,920 @@
+{
+	"data": [
+		{
+			"category": "sports",
+			"eventCount": 3048,
+			"subcategories": [
+				{
+					"subcategory": "basketball",
+					"label": "Basketball",
+					"eventCount": 34,
+					"filterSubcategories": [
+						"nba",
+						"wnba"
+					],
+					"children": [
+						{
+							"subcategory": "nba",
+							"label": "NBA",
+							"eventCount": 22,
+							"filterSubcategories": [
+								"nba"
+							]
+						},
+						{
+							"subcategory": "wnba",
+							"label": "WNBA",
+							"eventCount": 12,
+							"filterSubcategories": [
+								"wnba"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "soccer",
+					"label": "Soccer",
+					"eventCount": 1548,
+					"filterSubcategories": [
+						"soccer",
+						"epl",
+						"ucl",
+						"uel",
+						"lal",
+						"sea",
+						"mls",
+						"fl1",
+						"fif",
+						"mex",
+						"tur",
+						"bra",
+						"por",
+						"elc",
+						"es2",
+						"chi1",
+						"chi2",
+						"ukr1",
+						"uru1",
+						"geo1",
+						"uslc",
+						"slo",
+						"col1",
+						"el1",
+						"unl",
+						"svk1",
+						"col2",
+						"pol",
+						"cze1",
+						"usl1",
+						"bra2",
+						"rou1",
+						"aze1"
+					],
+					"children": [
+						{
+							"subcategory": "epl",
+							"label": "Premier League",
+							"eventCount": 23,
+							"filterSubcategories": [
+								"epl"
+							]
+						},
+						{
+							"subcategory": "ucl",
+							"label": "Champions League",
+							"eventCount": 17,
+							"filterSubcategories": [
+								"ucl"
+							]
+						},
+						{
+							"subcategory": "uel",
+							"label": "Europa League",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"uel"
+							]
+						},
+						{
+							"subcategory": "lal",
+							"label": "La Liga",
+							"eventCount": 11,
+							"filterSubcategories": [
+								"lal"
+							]
+						},
+						{
+							"subcategory": "sea",
+							"label": "Serie A",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"sea"
+							]
+						},
+						{
+							"subcategory": "mls",
+							"label": "MLS",
+							"eventCount": 3,
+							"filterSubcategories": [
+								"mls"
+							]
+						},
+						{
+							"subcategory": "fl1",
+							"label": "Ligue 1 2025",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"fl1"
+							]
+						},
+						{
+							"subcategory": "fif",
+							"label": "Fifa Friendly",
+							"eventCount": 225,
+							"filterSubcategories": [
+								"fif"
+							]
+						},
+						{
+							"subcategory": "mex",
+							"label": "Liga MX",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"mex"
+							]
+						},
+						{
+							"subcategory": "tur",
+							"label": "Turkish Super Lig",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"tur"
+							]
+						},
+						{
+							"subcategory": "bra",
+							"label": "Brasileirao Serie A",
+							"eventCount": 57,
+							"filterSubcategories": [
+								"bra"
+							]
+						},
+						{
+							"subcategory": "por",
+							"label": "Liga Portugal",
+							"eventCount": 8,
+							"filterSubcategories": [
+								"por"
+							]
+						},
+						{
+							"subcategory": "elc",
+							"label": "EFL Championship",
+							"eventCount": 13,
+							"filterSubcategories": [
+								"elc"
+							]
+						},
+						{
+							"subcategory": "es2",
+							"label": "La Liga 2",
+							"eventCount": 155,
+							"filterSubcategories": [
+								"es2"
+							]
+						},
+						{
+							"subcategory": "chi1",
+							"label": "Chile Primera Division",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"chi1"
+							]
+						},
+						{
+							"subcategory": "chi2",
+							"label": "China League 1",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"chi2"
+							]
+						},
+						{
+							"subcategory": "ukr1",
+							"label": "Ukrainian Premier League",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"ukr1"
+							]
+						},
+						{
+							"subcategory": "uru1",
+							"label": "Primera División (Uruguay)",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"uru1"
+							]
+						},
+						{
+							"subcategory": "geo1",
+							"label": "Erovnuli Liga",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"geo1"
+							]
+						},
+						{
+							"subcategory": "uslc",
+							"label": "USL Championship",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"uslc"
+							]
+						},
+						{
+							"subcategory": "slo",
+							"label": "Slovenian PrvaLiga",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"slo"
+							]
+						},
+						{
+							"subcategory": "col1",
+							"label": "Colombian Primera A",
+							"eventCount": 16,
+							"filterSubcategories": [
+								"col1"
+							]
+						},
+						{
+							"subcategory": "el1",
+							"label": "EFL League One",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"el1"
+							]
+						},
+						{
+							"subcategory": "unl",
+							"label": "UEFA Nations League",
+							"eventCount": 826,
+							"filterSubcategories": [
+								"unl"
+							]
+						},
+						{
+							"subcategory": "svk1",
+							"label": "Slovak Super Liga",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"svk1"
+							]
+						},
+						{
+							"subcategory": "col2",
+							"label": "Primera B (Colombia)",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"col2"
+							]
+						},
+						{
+							"subcategory": "pol",
+							"label": "Ekstraklasa",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"pol"
+							]
+						},
+						{
+							"subcategory": "cze1",
+							"label": "Czech First League",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"cze1"
+							]
+						},
+						{
+							"subcategory": "usl1",
+							"label": "USL League One",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"usl1"
+							]
+						},
+						{
+							"subcategory": "bra2",
+							"label": "Brasileirao Serie B",
+							"eventCount": 168,
+							"filterSubcategories": [
+								"bra2"
+							]
+						},
+						{
+							"subcategory": "rou1",
+							"label": "Romanian SuperLiga",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"rou1"
+							]
+						},
+						{
+							"subcategory": "aze1",
+							"label": "Azerbaijan Premier League",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"aze1"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "tennis",
+					"label": "Tennis",
+					"eventCount": 105,
+					"filterSubcategories": [
+						"tennis",
+						"atp",
+						"wta",
+						"atp-doubles",
+						"wta-doubles",
+						"itf"
+					],
+					"children": [
+						{
+							"subcategory": "atp",
+							"label": "ATP",
+							"eventCount": 29,
+							"filterSubcategories": [
+								"atp"
+							]
+						},
+						{
+							"subcategory": "wta",
+							"label": "WTA",
+							"eventCount": 10,
+							"filterSubcategories": [
+								"wta"
+							]
+						},
+						{
+							"subcategory": "atp-doubles",
+							"label": "ATP Doubles",
+							"eventCount": 13,
+							"filterSubcategories": [
+								"atp-doubles"
+							]
+						},
+						{
+							"subcategory": "wta-doubles",
+							"label": "WTA Doubles",
+							"eventCount": 5,
+							"filterSubcategories": [
+								"wta-doubles"
+							]
+						},
+						{
+							"subcategory": "itf",
+							"label": "ITF",
+							"eventCount": 47,
+							"filterSubcategories": [
+								"itf"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "football",
+					"label": "Football",
+					"eventCount": 789,
+					"filterSubcategories": [
+						"nfl",
+						"cfb"
+					],
+					"children": [
+						{
+							"subcategory": "nfl",
+							"label": "NFL",
+							"eventCount": 553,
+							"filterSubcategories": [
+								"nfl"
+							]
+						},
+						{
+							"subcategory": "cfb",
+							"label": "College Football",
+							"eventCount": 236,
+							"filterSubcategories": [
+								"cfb"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "motorsports",
+					"label": "Motorsports",
+					"eventCount": 28,
+					"filterSubcategories": [
+						"f1",
+						"nascar",
+						"nascar-truck",
+						"nascar-xfinity"
+					],
+					"children": [
+						{
+							"subcategory": "f1",
+							"label": "Formula 1",
+							"eventCount": 23,
+							"filterSubcategories": [
+								"f1"
+							]
+						},
+						{
+							"subcategory": "nascar",
+							"label": "NASCAR",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"nascar"
+							]
+						},
+						{
+							"subcategory": "nascar-truck",
+							"label": "NASCAR Truck Series",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"nascar-truck"
+							]
+						},
+						{
+							"subcategory": "nascar-xfinity",
+							"label": "NASCAR Xfinity Series",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"nascar-xfinity"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "combat",
+					"label": "Combat",
+					"eventCount": 62,
+					"filterSubcategories": [
+						"ufc",
+						"boxing"
+					],
+					"children": [
+						{
+							"subcategory": "ufc",
+							"label": "UFC",
+							"eventCount": 60,
+							"filterSubcategories": [
+								"ufc"
+							]
+						},
+						{
+							"subcategory": "boxing",
+							"label": "Boxing",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"boxing"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "nhl",
+					"label": "NHL",
+					"eventCount": 181,
+					"filterSubcategories": [
+						"nhl"
+					]
+				},
+				{
+					"subcategory": "baseball",
+					"label": "Baseball",
+					"eventCount": 156,
+					"filterSubcategories": [
+						"mlb",
+						"kbo",
+						"npb",
+						"cpbl",
+						"lmb"
+					],
+					"children": [
+						{
+							"subcategory": "mlb",
+							"label": "MLB",
+							"eventCount": 95,
+							"filterSubcategories": [
+								"mlb"
+							]
+						},
+						{
+							"subcategory": "kbo",
+							"label": "KBO",
+							"eventCount": 38,
+							"filterSubcategories": [
+								"kbo"
+							]
+						},
+						{
+							"subcategory": "npb",
+							"label": "NPB",
+							"eventCount": 7,
+							"filterSubcategories": [
+								"npb"
+							]
+						},
+						{
+							"subcategory": "cpbl",
+							"label": "CPBL",
+							"eventCount": 15,
+							"filterSubcategories": [
+								"cpbl"
+							]
+						},
+						{
+							"subcategory": "lmb",
+							"label": "Liga Mexicana de Béisbol",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"lmb"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "golf",
+					"label": "Golf",
+					"eventCount": 16,
+					"filterSubcategories": [
+						"golf",
+						"pga",
+						"lpga",
+						"liv",
+						"dpwt"
+					],
+					"children": [
+						{
+							"subcategory": "pga",
+							"label": "PGA",
+							"eventCount": 12,
+							"filterSubcategories": [
+								"pga"
+							]
+						},
+						{
+							"subcategory": "lpga",
+							"label": "LPGA",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"lpga"
+							]
+						},
+						{
+							"subcategory": "liv",
+							"label": "LIV Golf",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"liv"
+							]
+						},
+						{
+							"subcategory": "dpwt",
+							"label": "DP World Tour",
+							"eventCount": 1,
+							"filterSubcategories": [
+								"dpwt"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "cricket",
+					"label": "Cricket",
+					"eventCount": 6,
+					"filterSubcategories": [
+						"cricjclt10",
+						"cricmukono"
+					],
+					"children": [
+						{
+							"subcategory": "cricjclt10",
+							"label": "JCL T10",
+							"eventCount": 4,
+							"filterSubcategories": [
+								"cricjclt10"
+							]
+						},
+						{
+							"subcategory": "cricmukono",
+							"label": "Mukono Super Smash T20",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"cricmukono"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "rugby",
+					"label": "Rugby",
+					"eventCount": 2,
+					"filterSubcategories": [
+						"rlsuper"
+					],
+					"children": [
+						{
+							"subcategory": "rlsuper",
+							"label": "Super League",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"rlsuper"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "table-tennis",
+					"label": "Table Tennis",
+					"eventCount": 99,
+					"filterSubcategories": [
+						"setkameua",
+						"setkamemd",
+						"setkamecz",
+						"setkawoua"
+					],
+					"children": [
+						{
+							"subcategory": "setkameua",
+							"label": "Setka Cup UA (M)",
+							"eventCount": 74,
+							"filterSubcategories": [
+								"setkameua"
+							]
+						},
+						{
+							"subcategory": "setkamemd",
+							"label": "Setka Cup MD (M)",
+							"eventCount": 19,
+							"filterSubcategories": [
+								"setkamemd"
+							]
+						},
+						{
+							"subcategory": "setkamecz",
+							"label": "Setka Cup CZ (M)",
+							"eventCount": 2,
+							"filterSubcategories": [
+								"setkamecz"
+							]
+						},
+						{
+							"subcategory": "setkawoua",
+							"label": "Setka Cup UA (W)",
+							"eventCount": 4,
+							"filterSubcategories": [
+								"setkawoua"
+							]
+						}
+					]
+				},
+				{
+					"subcategory": "poker",
+					"label": "Poker",
+					"eventCount": 2,
+					"filterSubcategories": [
+						"poker"
+					]
+				},
+				{
+					"subcategory": "chess",
+					"label": "Chess",
+					"eventCount": 3,
+					"filterSubcategories": [
+						"chess"
+					]
+				},
+				{
+					"subcategory": "pickleball",
+					"label": "Pickleball",
+					"eventCount": 10,
+					"filterSubcategories": [
+						"pickleball"
+					]
+				},
+				{
+					"subcategory": "vb2bundesliga",
+					"label": "2. Bundesliga",
+					"eventCount": 7,
+					"filterSubcategories": [
+						"vb2bundesliga"
+					]
+				}
+			]
+		},
+		{
+			"category": "crypto",
+			"eventCount": 755,
+			"subcategories": [
+				{
+					"subcategory": "bnb",
+					"label": "BNB",
+					"eventCount": 55,
+					"filterSubcategories": [
+						"bnb"
+					]
+				},
+				{
+					"subcategory": "btc",
+					"label": "Bitcoin",
+					"eventCount": 102,
+					"filterSubcategories": [
+						"btc"
+					]
+				},
+				{
+					"subcategory": "doge",
+					"label": "Dogecoin",
+					"eventCount": 53,
+					"filterSubcategories": [
+						"doge"
+					]
+				},
+				{
+					"subcategory": "eth",
+					"label": "Ethereum",
+					"eventCount": 96,
+					"filterSubcategories": [
+						"eth"
+					]
+				},
+				{
+					"subcategory": "hype",
+					"label": "HYPE",
+					"eventCount": 61,
+					"filterSubcategories": [
+						"hype"
+					]
+				},
+				{
+					"subcategory": "sol",
+					"label": "Solana",
+					"eventCount": 79,
+					"filterSubcategories": [
+						"sol"
+					]
+				},
+				{
+					"subcategory": "xrp",
+					"label": "XRP",
+					"eventCount": 73,
+					"filterSubcategories": [
+						"xrp"
+					]
+				}
+			]
+		},
+		{
+			"category": "esports",
+			"eventCount": 97,
+			"subcategories": [
+				{
+					"subcategory": "cs2",
+					"label": "Counter-Strike",
+					"eventCount": 53,
+					"filterSubcategories": [
+						"cs2"
+					]
+				},
+				{
+					"subcategory": "dota2",
+					"label": "Dota 2",
+					"eventCount": 12,
+					"filterSubcategories": [
+						"dota2"
+					]
+				},
+				{
+					"subcategory": "lol",
+					"label": "League of Legends",
+					"eventCount": 24,
+					"filterSubcategories": [
+						"lol"
+					]
+				},
+				{
+					"subcategory": "val",
+					"label": "Valorant",
+					"eventCount": 8,
+					"filterSubcategories": [
+						"val"
+					]
+				}
+			]
+		},
+		{
+			"category": "climate & science",
+			"eventCount": 123,
+			"subcategories": [
+				{
+					"subcategory": "pandemics",
+					"label": "Pandemics",
+					"eventCount": 1,
+					"filterSubcategories": [
+						"pandemics"
+					]
+				}
+			]
+		},
+		{
+			"category": "culture",
+			"eventCount": 359,
+			"subcategories": [
+				{
+					"subcategory": "pop-culture",
+					"label": "Pop Culture",
+					"eventCount": 22,
+					"filterSubcategories": [
+						"pop-culture"
+					]
+				}
+			]
+		},
+		{
+			"category": "economics",
+			"eventCount": 183,
+			"subcategories": [
+				{
+					"subcategory": "economy",
+					"label": "Economy",
+					"eventCount": 41,
+					"filterSubcategories": [
+						"economy"
+					]
+				}
+			]
+		},
+		{
+			"category": "finance",
+			"eventCount": 255,
+			"subcategories": []
+		},
+		{
+			"category": "mentions",
+			"eventCount": 15,
+			"subcategories": []
+		},
+		{
+			"category": "politics",
+			"eventCount": 2283,
+			"subcategories": [
+				{
+					"subcategory": "election",
+					"label": "Election",
+					"eventCount": 1552,
+					"filterSubcategories": [
+						"election"
+					]
+				},
+				{
+					"subcategory": "geopolitics",
+					"label": "Geopolitics",
+					"eventCount": 74,
+					"filterSubcategories": [
+						"geopolitics"
+					]
+				},
+				{
+					"subcategory": "politics",
+					"label": "Politics",
+					"eventCount": 35,
+					"filterSubcategories": [
+						"politics"
+					]
+				}
+			]
+		},
+		{
+			"category": "tech",
+			"eventCount": 352,
+			"subcategories": [
+				{
+					"subcategory": "tech",
+					"label": "Tech",
+					"eventCount": 44,
+					"filterSubcategories": [
+						"tech"
+					]
+				}
+			]
+		},
+		{
+			"category": "weather",
+			"eventCount": 175,
+			"subcategories": []
+		}
+	]
+}

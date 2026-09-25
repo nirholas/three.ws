@@ -1,0 +1,2474 @@
+{
+	"eventId": "POLY-30829",
+	"isActive": true,
+	"isLive": false,
+	"category": "politics",
+	"subcategory": "politics",
+	"tags": [
+		"world-elections",
+		"global-elections",
+		"elections",
+		"politics",
+		"us-presidential-election",
+		"earn-4",
+		"primaries",
+		"united-states",
+		"international-election-props"
+	],
+	"metadata": {
+		"slug": "democratic-presidential-nominee-2028",
+		"title": "Democratic Presidential Nominee 2028",
+		"isLive": false,
+		"series": "polymarket",
+		"eventId": "POLY-30829",
+		"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/democrats+2028+donkey.png",
+		"subtitle": "",
+		"closeTime": "2028-11-07T00:00:00Z"
+	},
+	"volumeUsd": "1285053028000000",
+	"volume24hr": "890315000000",
+	"beginAt": "1857211200",
+	"closeCondition": "This market will close and expire after a winner is declared.",
+	"rulesPdf": "",
+	"markets": [
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559653",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Alexandria Ocasio-Cortez",
+			"openTime": 1752258959,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 183000,
+				"sellYesPriceUsd": 182000,
+				"sellNoPriceUsd": 817000,
+				"buyNoPriceUsd": 818000,
+				"volume": 15242792
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-alexandria-ocasio-cortez-win-the-2028-us-presidential-election-eX2nG09sPJUu.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"107064985435494333113391038470401719113272800530429703182710416066774068907304",
+				"65176072261324737856085688071627118509549293922582857186996392180609764586527"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559661",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Jon Ossoff",
+			"openTime": 1752258966,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 164000,
+				"sellYesPriceUsd": 163000,
+				"sellNoPriceUsd": 836000,
+				"buyNoPriceUsd": 837000,
+				"volume": 13005799
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Jon_Ossoff.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"70071592420137476676935286377781779672157004436137616627487590484756055232944",
+				"107829893465244243112531790315844862173967342141753896250561816305880797209350"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559652",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Gavin Newsom",
+			"openTime": 1752258956,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 152000,
+				"sellYesPriceUsd": 151000,
+				"sellNoPriceUsd": 848000,
+				"buyNoPriceUsd": 849000,
+				"volume": 27749680
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-gavin-newsom-win-the-2028-us-presidential-election-x9lPL7_gXn--.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"54533043819946592547517511176940999955633860128497669742211153063842200957669",
+				"87854174148074652060467921081181402357467303721471806610111179101805869578687"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559658",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Kamala Harris",
+			"openTime": 1752258963,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 63000,
+				"sellYesPriceUsd": 62000,
+				"sellNoPriceUsd": 937000,
+				"buyNoPriceUsd": 938000,
+				"volume": 13557212
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-kamala-harris-win-the-2028-us-presidential-election-9XuXzOE7K1B1.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"38171024903091354977195167437673496224420673639143973968032407064172828043588",
+				"26930844951471612827925270830087046333229637930899178134435055616497220846773"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559655",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Josh Shapiro",
+			"openTime": 1752258961,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 62000,
+				"sellYesPriceUsd": 60000,
+				"sellNoPriceUsd": 938000,
+				"buyNoPriceUsd": 940000,
+				"volume": 10048888
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-josh-shapiro-win-the-2028-us-presidential-election-h3nL-gpVkam1.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"71169839497420596285841847514123589847893415750912355173877524195175834054354",
+				"55290827599553280245963175724940496753557722439999671239772487781170052583987"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559654",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Pete Buttigieg",
+			"openTime": 1752258958,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 51000,
+				"sellYesPriceUsd": 50000,
+				"sellNoPriceUsd": 949000,
+				"buyNoPriceUsd": 950000,
+				"volume": 12115360
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-pete-buttigieg-win-the-2028-us-presidential-election-jPrwim0rDJDu.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"91031279171981959197361710127213577102576826515163085396576756946418341946256",
+				"18494065527924073750217237765784380365430319396356251245973222791140100738948"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559668",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Mark Kelly",
+			"openTime": 1752258973,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 30000,
+				"sellYesPriceUsd": 29000,
+				"sellNoPriceUsd": 970000,
+				"buyNoPriceUsd": 971000,
+				"volume": 17656604
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Mark_Kelly.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"92325249719485031139867422012514654102580961954747753469470405147070256604118",
+				"5116999494213083595175041146469973274436003044730013359502912125889113751080"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559660",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Andy Beshear",
+			"openTime": 1752258964,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 28000,
+				"sellYesPriceUsd": 27000,
+				"sellNoPriceUsd": 972000,
+				"buyNoPriceUsd": 973000,
+				"volume": 13282547
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-andy-beshear-win-the-2028-us-presidential-election-gHwMpj0k-Xon.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"26468656392978559668331516709623917078428425933265692717836103090220693717685",
+				"26335362363448644358593284423242327477307616743233875606762153873424287882825"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559695",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "James Talarico",
+			"openTime": 1752259000,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 24000,
+				"sellYesPriceUsd": 23000,
+				"sellNoPriceUsd": 976000,
+				"buyNoPriceUsd": 977000,
+				"volume": 10683682
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-james-talarico-win-the-2028-democratic-presidential-nomination-j09xGObKdUkH.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"52535923606561722941567320365820395300598958985353103429657683100920373025261",
+				"20643805904661385280242837899001038341346631607217619709766724611396929658707"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559669",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Rahm Emanuel",
+			"openTime": 1752258973,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 21000,
+				"sellYesPriceUsd": 20000,
+				"sellNoPriceUsd": 979000,
+				"buyNoPriceUsd": 980000,
+				"volume": 14586799
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/rahm.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"10521981432803570450946212503203364998108630328528216082760514453664705157397",
+				"91949042216127305292438280992722171735754548787382833799906976841509942727662"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559656",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Wes Moore",
+			"openTime": 1752258960,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 20000,
+				"sellYesPriceUsd": 18000,
+				"sellNoPriceUsd": 980000,
+				"buyNoPriceUsd": 982000,
+				"volume": 18427238
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-wes-moore-win-the-2028-us-presidential-election-XPjvhtcLdoZV.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"90227223115596293448966158151606153337847900483048338623540402385929720677904",
+				"105134691322323565615831879054043168027913414000042547943201361115853277749482"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559663",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "J.B. Pritzker",
+			"openTime": 1752258969,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 15000,
+				"sellYesPriceUsd": 13000,
+				"sellNoPriceUsd": 985000,
+				"buyNoPriceUsd": 987000,
+				"volume": 15768749
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-jb-pritzker-win-the-2028-us-presidential-election-iASug1bJ5kub.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"103988345069738240821107916249290759786442703283901164377120414690701074137717",
+				"108650988487983371520585351370999192979899647080710024226285750050382033453124"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559694",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Ro Khanna",
+			"openTime": 1752259000,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 15000,
+				"sellYesPriceUsd": 13000,
+				"sellNoPriceUsd": 985000,
+				"buyNoPriceUsd": 987000,
+				"volume": 11304733
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Ro_Khanna1.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"20374050108659687356429749447884880983779889840007423115803042125707701269498",
+				"2610336024939503976910443133965525155112118948066646227040491461288298872236"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559686",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Dwayne 'The Rock' Johnson",
+			"openTime": 1752258992,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 12000,
+				"sellYesPriceUsd": 8000,
+				"sellNoPriceUsd": 988000,
+				"buyNoPriceUsd": 992000,
+				"volume": 12514688
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/the+rock.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"40963724357262746498642320898188195118391211877976821531149510360187173789737",
+				"14959910401705469574520698331840889689202579612030624016640567510369602599866"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559659",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Gretchen Whitmer",
+			"openTime": 1752258965,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 9000,
+				"sellYesPriceUsd": 8000,
+				"sellNoPriceUsd": 991000,
+				"buyNoPriceUsd": 992000,
+				"volume": 12122205
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-gretchen-whitmer-win-the-2028-us-presidential-election-l1zZ4pOvvoCN.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"57761428076807364758801249497410455358987881775226117256631754592198558850468",
+				"64300336035644500626313522990854070672468621241744347587785777226296613235598"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559684",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Chelsea Clinton",
+			"openTime": 1752258990,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 8000,
+				"sellYesPriceUsd": 7000,
+				"sellNoPriceUsd": 992000,
+				"buyNoPriceUsd": 993000,
+				"volume": 50603883
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/chelsea+clinton.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"46211769122513729244602558513001215391004042100934296321661285791281233261657",
+				"76057920052421891902791411567177996435483774677774664174053982044923692373687"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559665",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Cory Booker",
+			"openTime": 1752258970,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 8000,
+				"sellYesPriceUsd": 6000,
+				"sellNoPriceUsd": 992000,
+				"buyNoPriceUsd": 994000,
+				"volume": 26320291
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-corey-booker-win-the-2028-democratic-presidential-nomination-125-Nw5wVdP1Y36Q.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"50887272939612765629559172143901565817521391945540156085421963433918821328137",
+				"29006371059590547574472177233842141554614007974283936149779962779213443973844"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559682",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Hunter Biden",
+			"openTime": 1752258988,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 6000,
+				"sellYesPriceUsd": 4000,
+				"sellNoPriceUsd": 994000,
+				"buyNoPriceUsd": 996000,
+				"volume": 44501622
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/huter+biden.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"11343337042526652606304508556838778144915122118685013460142819817079620240439",
+				"19117858613830240204442128472263675815111662346578092643025820800380629933012"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559664",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Raphael Warnock",
+			"openTime": 1752258971,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 6000,
+				"sellYesPriceUsd": 5000,
+				"sellNoPriceUsd": 994000,
+				"buyNoPriceUsd": 995000,
+				"volume": 32470392
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Raphael_Warnock.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"52310257194926233099477326083312959938983447523839326865869372741334281264830",
+				"88403451835230950222119400360490338078378790763472355557584611572247419676051"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559679",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Bernie Sanders",
+			"openTime": 1752258982,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 5000,
+				"sellYesPriceUsd": 4000,
+				"sellNoPriceUsd": 995000,
+				"buyNoPriceUsd": 996000,
+				"volume": 52751733
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Bernie_Sanders.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"113510300123120868861281132282742729065975487298059944817273881893086209196585",
+				"3444964147133304300560138317203877470064591148213906708394693248804691192318"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559675",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Jon Stewart",
+			"openTime": 1752258978,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 5000,
+				"sellYesPriceUsd": 3000,
+				"sellNoPriceUsd": 995000,
+				"buyNoPriceUsd": 997000,
+				"volume": 24767037
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Jon_Stewart.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"58343456405874365460518182619380252930558598368174305791768670198253267891911",
+				"84566561349071752664514432513198569980219178901068420341175150225620958953893"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559662",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Mark Cuban",
+			"openTime": 1752258968,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 5000,
+				"sellYesPriceUsd": 4000,
+				"sellNoPriceUsd": 995000,
+				"buyNoPriceUsd": 996000,
+				"volume": 23143121
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Mark_Cuban.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"58378309871183461257693288827678410871907006920578755035402846056315798427503",
+				"55392527126713018429304496836617506663024188480522297953714346140749923557790"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559691",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Chris Murphy",
+			"openTime": 1752258996,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 5000,
+				"sellYesPriceUsd": 4000,
+				"sellNoPriceUsd": 995000,
+				"buyNoPriceUsd": 996000,
+				"volume": 17409116
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Chris+Murphy.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"8815924480259634499011776432080696931704057619336093802050596292915996723758",
+				"45099054006923138281311463758770234951153596952213440096254242321807308634603"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559677",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Hillary Clinton",
+			"openTime": 1752258982,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 4000,
+				"sellYesPriceUsd": 2000,
+				"sellNoPriceUsd": 996000,
+				"buyNoPriceUsd": 998000,
+				"volume": 44065007
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Hillary_Clinton.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"6349038249650226718426900942104344803413105653564595362433352811865798195800",
+				"57931882677606943294773135604094039468334392354204920135953322654005083822055"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559667",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Michelle Obama",
+			"openTime": 1752258972,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 3000,
+				"sellYesPriceUsd": 2000,
+				"sellNoPriceUsd": 997000,
+				"buyNoPriceUsd": 998000,
+				"volume": 26325766
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Michelle_Obama.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"83723134981785004242996949681785273460678873813693556756054904164484296299719",
+				"107146110974011455665373243296921398136854344089489911087344946921091914123046"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559680",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Phil Murphy",
+			"openTime": 1752258987,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 42890785
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-phil-murphy-win-the-2028-democratic-presidential-nomination-611-TSpDwU2ocX34.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"81633484456710374417231462107666791993850637546563366185897100962157481970040",
+				"114507466536734360808195115190160357255467689128176113085692265197019898971527"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559671",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Zohran Mamdani",
+			"openTime": 1752258976,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 38949797
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Zohran_Mamdani.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"19323997520040734631220675039559156784534982703459512097490198935565229528445",
+				"111309365336519526711604102518316708823622751854213281307404397618571408959194"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559692",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Jasmine Crockett",
+			"openTime": 1752258998,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 36471837
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Jasmine+Crockett.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"22103094389913052942362639589409218272323168761614999702665821259175535456835",
+				"10893367019711826592833821276710094799225035200719824531380610476790390190688"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559670",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Gina Raimondo",
+			"openTime": 1752258974,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 35775900
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-gina-raimondo-win-the-2028-democratic-presidential-nomination-676-PWRJIxLqOlSS.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"35165603539035270209469650915267170915291414186795231160733227083640059691764",
+				"82254794773423437491598574581796732934760602553828664932786984448280136473130"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559676",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Barack Obama",
+			"openTime": 1752258982,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 34173908
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Barack_Obama.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"88927218779847397120407909832537568114340511586397698395193736044476021744522",
+				"93993883668914241189795812807312922412111034935516092303580333564217329905759"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559672",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Roy Cooper",
+			"openTime": 1752258976,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 31723707
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Roy_Cooper.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"30732552320006664177902085971957467957450485111214036633872573588757974348601",
+				"55053374667733007627913689484290555932799177921000957543346276204775142445823"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559674",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Jared Polis",
+			"openTime": 1752258978,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 27409642
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Jared_Polis.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"42119164854283656238382173699154739480090965550328051492328192273011556335098",
+				"39150381508679235943386404690610035044747196600759141560840372170757042543675"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559657",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Stephen A. Smith",
+			"openTime": 1752258962,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 23052206
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-stephen-smith-win-the-2028-us-presidential-election-TLNFUsNkT8yf.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"60590045489347122735554346200880179420435533609307820342798544098823516727807",
+				"76005700027045000587004110133818166617024719626220722682005164003117993034812"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559693",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Ruben Gallego",
+			"openTime": 1752258998,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 8862588
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Ruben_Gallego1.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"94658518227479141344875476648819337938746150529318297759951212169676959854478",
+				"89549550119611798541187132573193884477265258658615163602217456913355320927577"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559697",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Abigail Spanberger",
+			"openTime": 1752259002,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 3081365
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/spanberger-2f60d94c40.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"67834126955354466786049932246962827069514258320708123726234642047236874537300",
+				"85842730802801029317331291122638780955014362480310249655739704629273608465884"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559701",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Josh Stein",
+			"openTime": 1752259006,
+			"closeTime": 1857168000,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 2388076
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/stein-1544cd1f6e.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"88892629978057552473594496509394432528313837466696628191322608851106929962536",
+				"86408082986810982428934766746057237103501895775284376283076301431054177694153"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559698",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Hakeem Jeffries",
+			"openTime": 1752259004,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 2134405
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/jeffries-7cbd13c40d.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"23940655822937666554179928631365405234554137716172612284986318717257054413669",
+				"74558297484750387958365610940184220316219182006445006209048673137036909262424"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559699",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Elissa Slotkin",
+			"openTime": 1752259004,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 1614389
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/slotkin-81c21567c3.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"48455736546094517370011063312529885328905072240106316551156607253162886762655",
+				"21910945789202551310737182019481519202352824012676720876277298283641159588352"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559704",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Mitch Landrieu",
+			"openTime": 1752259008,
+			"closeTime": 1857168000,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 2000,
+				"sellYesPriceUsd": 1000,
+				"sellNoPriceUsd": 998000,
+				"buyNoPriceUsd": 999000,
+				"volume": 680973
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-mitch-landrieu-win-the-2028-democratic-presidential-nomination--ldVUPKxEwxr.jpg",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"4865811310965824253043301476456494687696227904538198271117692275943047535567",
+				"79794608519930936057256245365460158683416637197135162121080424897667989834195"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559687",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Oprah Winfrey",
+			"openTime": 1752258992,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 54420314
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/oprah+winfrey.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"2213957649161627793381994368131485505647723208738124952452819345058597751695",
+				"44046525152074436753629616217525652949736205933417533647338274649282385796755"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559688",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Andrew Yang",
+			"openTime": 1752258994,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 48740392
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/andrew+yang.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"102504892414163237174864879683522880588750452841477290216845150938663289742135",
+				"21234886083000978203440582985665409733123024063268807484684316771005736994028"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559681",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "LeBron James",
+			"openTime": 1752258986,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 43986276
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Lebron_James.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"100561779829530520068956424581003844045516012444425572625523659025114550346085",
+				"46254744034025107660239982269249567113656697231872036621777316158933638064598"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559666",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Tim Walz",
+			"openTime": 1752258973,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 43498351
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-tim-walz-win-the-2028-us-presidential-election-V8-ATYdzVQA9.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"104464678880204778606895232389511543522030897731392516718349574106843434770446",
+				"90935594925886073322524509252821043048115343298080885997215308777385571383769"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559683",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "George Clooney",
+			"openTime": 1752258988,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 43453381
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/george+clooney.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"48218088132821386640274752564592889805082274744128282833036735027928992155024",
+				"5645396948464928632054207670692862818297222862819597089648758232622731040046"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559690",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Kim Kardashian",
+			"openTime": 1752258996,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 42919728
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/kim.k.prez-f262548783.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"55087250670040717711131370018408221134109122974378698780636020561523521220754",
+				"108145967398435925971960442906832714254932011684365058146885679351681137451999"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559689",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Beto O’Rourke",
+			"openTime": 1752258994,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 42812956
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/beto+o'rourke.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"37126434962149084556522721025504254258386171468763869879755961635390358765833",
+				"2426274669138238576933962603416907393958833898063513872892433203206006096668"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559685",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "MrBeast",
+			"openTime": 1752258990,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 41009534
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/mrbeast+pres.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"51035537065442638321333063915918274102446051033989435618245745345113522914516",
+				"93910251767329056141706007839545721784238465183449597462421810827705938093892"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559678",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Liz Cheney",
+			"openTime": 1752258982,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 38534645
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/Liz_Cheney.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"41340056280794024415573839406074658402877379128871144681466050648033201160259",
+				"63802361760137863513735993346883582181207639895442036953936089060482564982249"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559673",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "John Fetterman",
+			"openTime": 1752258976,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 25659972
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/John_Fetterman.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"71289010523270989807437428651002770360280908813019627976988032260868574107425",
+				"68686505966910102763700888296813272792512562699674656659355148432859571994559"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559696",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Graham Platner",
+			"openTime": 1752259002,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 8531338
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-graham-platner-win-the-2028-democratic-presidential-nomination-9DMrUzD3p7MR.jpg",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"54840717483866263964304723492966182979723045222316848733193673523986124053075",
+				"2830559553603011758209706316487895188007644895898957662939818867834634821212"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559702",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Alex Padilla",
+			"openTime": 1752259006,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 932669
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/padilla-25d72bafed.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"70419914298819599884598619432566620509485573636622456902301761941886565776666",
+				"17607158498290934698430813319324932561291042726975634499432565780430086473903"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559700",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Adam Schiff",
+			"openTime": 1752259006,
+			"closeTime": 1857272340,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 655801
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/schiff-ffd4cd4d01.png",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"62721325588078416441678692954905586544000289214339415151384834742710012983810",
+				"4587616472715295492925849115245921456579283399977029619430824277410859697"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		},
+		{
+			"provider": "polymarket",
+			"marketId": "POLY-559703",
+			"status": "open",
+			"result": null,
+			"marketResultPubkey": null,
+			"title": "Chris Van Hollen",
+			"openTime": 1752259008,
+			"closeTime": 1857168000,
+			"isTeamMarket": false,
+			"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+			"rulesSecondary": "",
+			"resolveAt": null,
+			"pricing": {
+				"buyYesPriceUsd": 1000,
+				"sellYesPriceUsd": 0,
+				"sellNoPriceUsd": 999000,
+				"buyNoPriceUsd": 1000000,
+				"volume": 263206
+			},
+			"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-chris-van-hollen-win-the-2028-democratic-presidential-nomination-8tOnyAm19uoO.jpg",
+			"team": null,
+			"outcomes": [
+				"Yes",
+				"No"
+			],
+			"clobTokenIds": [
+				"82322606787689507186452368934268895797822450917805855938369533831277560432502",
+				"89468624821153339755038928248216667629141563933414663720232714629209306424979"
+			],
+			"marketOptions": [
+				{
+					"label": "Yes",
+					"buyYes": true
+				},
+				{
+					"label": "No",
+					"buyYes": false
+				}
+			],
+			"sportsMarketType": null,
+			"sportsLine": null,
+			"periodType": null,
+			"periodNumber": null,
+			"gameNumber": null
+		}
+	],
+	"sportsMarketGroups": []
+}

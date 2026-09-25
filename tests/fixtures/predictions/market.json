@@ -1,0 +1,47 @@
+{
+	"provider": "polymarket",
+	"marketId": "POLY-559653",
+	"status": "open",
+	"result": null,
+	"marketResultPubkey": null,
+	"title": "Alexandria Ocasio-Cortez",
+	"openTime": 1752258959,
+	"closeTime": 1857272340,
+	"isTeamMarket": false,
+	"rulesPrimary": "This market will resolve to “Yes” if the named individual wins and accepts the 2028 nomination of the Democratic Party for U.S. president. Otherwise, this market will resolve to “No”.\n\nThe resolution source for this market will be a consensus of official Democratic Party sources.\n\nAny replacement of the democratic nominee before election day will not change the resolution of the market.",
+	"rulesSecondary": "",
+	"resolveAt": null,
+	"pricing": {
+		"buyYesPriceUsd": 183000,
+		"sellYesPriceUsd": 182000,
+		"sellNoPriceUsd": 817000,
+		"buyNoPriceUsd": 818000,
+		"volume": 15242792
+	},
+	"imageUrl": "https://polymarket-upload.s3.us-east-2.amazonaws.com/will-alexandria-ocasio-cortez-win-the-2028-us-presidential-election-eX2nG09sPJUu.png",
+	"team": null,
+	"outcomes": [
+		"Yes",
+		"No"
+	],
+	"clobTokenIds": [
+		"107064985435494333113391038470401719113272800530429703182710416066774068907304",
+		"65176072261324737856085688071627118509549293922582857186996392180609764586527"
+	],
+	"marketOptions": [
+		{
+			"label": "Yes",
+			"buyYes": true
+		},
+		{
+			"label": "No",
+			"buyYes": false
+		}
+	],
+	"sportsMarketType": null,
+	"sportsLine": null,
+	"periodType": null,
+	"periodNumber": null,
+	"gameNumber": null,
+	"eventId": "POLY-30829"
+}
