@@ -1,0 +1,4 @@
+{
+	"$comment": "Release history for three.ws Desktop, newest first. Written by scripts/bump-version.mjs, which collects the data/changelog.json entries tagged `desktop` since the previous release into `notes`. scripts/release-manifest.mjs copies the current version's notes into the published release.json that /desktop and the in-app updater show.",
+	"releases": []
+}

@@ -1,11 +1,11 @@
 {
-	"name": "three-ws-companion-desktop",
-	"productName": "three.ws Companion",
+	"name": "three-ws-desktop",
+	"productName": "three.ws Desktop",
 	"version": "0.1.0",
-	"description": "A 3D companion that lives on your desktop, walks across it, and tells you the things worth interrupting you for.",
+	"description": "The three.ws agent console for macOS, Windows and Linux: sign in, chat with your agents, follow runs, approve what they spend, and keep the 3D companion on your desktop.",
 	"author": "three.ws <support@three.ws> (https://three.ws)",
 	"license": "Apache-2.0",
-	"homepage": "https://three.ws/companion",
+	"homepage": "https://three.ws/desktop",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/nirholas/three.ws.git",
@@ -17,10 +17,15 @@
 	"scripts": {
 		"start": "electron .",
 		"dev": "electron . --dev",
-		"dist": "electron-builder --publish never",
-		"dist:mac": "electron-builder --mac --publish never",
-		"dist:win": "electron-builder --win --publish never",
-		"dist:linux": "electron-builder --linux --publish never"
+		"icons": "node scripts/make-icons.mjs",
+		"bump": "node scripts/bump-version.mjs",
+		"dist": "electron-builder --config electron-builder.config.cjs --publish never",
+		"dist:mac": "electron-builder --config electron-builder.config.cjs --mac --publish never",
+		"dist:win": "electron-builder --config electron-builder.config.cjs --win --publish never",
+		"dist:linux": "electron-builder --config electron-builder.config.cjs --linux --publish never",
+		"release:manifest": "node scripts/release-manifest.mjs",
+		"release:mac": "bash scripts/release-mac.sh",
+		"release:github": "node scripts/github-release.mjs"
 	},
 	"dependencies": {
 		"@three-ws/companion": "file:../../packages/companion-sdk",
@@ -32,36 +37,5 @@
 	"devDependencies": {
 		"electron": "^33.2.0",
 		"electron-builder": "^25.1.8"
-	},
-	"build": {
-		"appId": "ws.three.companion",
-		"productName": "three.ws Companion",
-		"files": [
-			"src/**/*",
-			"assets/**/*",
-			"node_modules/**/*"
-		],
-		"mac": {
-			"category": "public.app-category.productivity",
-			"icon": "assets/icon.png",
-			"target": [
-				"dmg",
-				"zip"
-			]
-		},
-		"win": {
-			"icon": "assets/icon.png",
-			"target": [
-				"nsis"
-			]
-		},
-		"linux": {
-			"icon": "assets/icon.png",
-			"category": "Utility",
-			"target": [
-				"AppImage",
-				"deb"
-			]
-		}
 	}
 }
