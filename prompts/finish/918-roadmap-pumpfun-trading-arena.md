@@ -74,6 +74,19 @@
 > `/trader/:id`, the "Why it traded" section on `/trade/:id`, the `trade_receipt`
 > MCP tool; doc `docs/trade-receipts.md`).
 >
+> **Re-verified 2026-09-25, unchanged.** Production database at 05:14 UTC: 23
+> fleet buys in the previous 24 hours (last at 05:12 UTC), zero
+> `sniper_risk_reviews` rows in that window (still the same 7 from 2026-09-04),
+> and all 28 strategy rows (11 enabled) at `risk_officer_level = shadow`. gcloud
+> was logged in this time and confirms it directly: the service still serves
+> `agent-sniper-00033-rg6`, built 2026-08-11, with 14 commits to
+> `workers/agent-sniper/` since. `node scripts/deploy-sniper.mjs --dry-run` is
+> clean (runtime SA, registry and all required secrets present; it rolls
+> `services update --image` and preserves the live env), and the 28 sniper test
+> files (468 tests, including `agent-sniper-amm-exit`, `sniper-risk-officer` and
+> `copy-eligibility`) pass at HEAD. Step (1) is still one command waiting on the
+> owner's yes.
+>
 > **Prove the deploy state from the database, not from `gcloud`.** The Codespace
 > loses its gcloud login on every recycle, so `gcloud run services describe
 > agent-sniper` (the image-date check) is usually unavailable, and its failure
