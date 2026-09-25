@@ -6,7 +6,8 @@
  * EIP-3009 authorization through the `onchainos` TEE wallet, replays it, takes
  * delivery of the artifact, and then proves the money actually moved by reading
  * the settlement transaction off X Layer. Every case writes its evidence to
- * prompts/okx-ai/e2e-evidence/.
+ * prompts/okx-ai/e2e-evidence/, except a --dry-run, which writes to a temp
+ * directory (see EVIDENCE below) unless --out names one.
  *
  * The listed line-up is A2MCP (rebuilt 2026-08-22): every paid row is an MCP
  * Streamable HTTP server whose `forge_3d` tool is x402-gated, and generation is
@@ -41,6 +42,7 @@
  *   node scripts/okx-e2e-gauntlet.mjs --yes --only 2,3,4
  *   node scripts/okx-e2e-gauntlet.mjs --no-spend         # every case that cannot move money
  *   node scripts/okx-e2e-gauntlet.mjs --dry-run          # no signing at all
+ *   node scripts/okx-e2e-gauntlet.mjs --dry-run --out d  # keep the dry-run capture in d
  *   node scripts/okx-e2e-gauntlet.mjs --budget           # what a full run costs
  *
  * --dry-run and --no-spend are different tools. A dry run signs nothing, so it
@@ -53,11 +55,12 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { dirname, relative, resolve } from 'node:path';
 import { catalogEntry, listedCatalog, FORGE_TOOL, FORGE_STATUS_TOOL } from '../api/_lib/okx-catalog.js';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const EVIDENCE = resolve(REPO, 'prompts/okx-ai/e2e-evidence');
+const COMMITTED_EVIDENCE = resolve(REPO, 'prompts/okx-ai/e2e-evidence');
 const CLI = `${process.env.HOME}/.local/bin/onchainos`;
 
 const XLAYER_RPCS = ['https://rpc.xlayer.tech', 'https://xlayerrpc.okx.com', 'https://rpc.ankr.com/xlayer'];
@@ -79,7 +82,7 @@ const POLL_TIMEOUT_MS = 15 * 60 * 1000;
 const POLL_INTERVAL_MS = 5000;
 
 function parseArgs(argv) {
-	const args = { base: 'https://three.ws', yes: false, dryRun: false, noSpend: false, budget: false, only: null };
+	const args = { base: 'https://three.ws', yes: false, dryRun: false, noSpend: false, budget: false, only: null, out: null };
 	for (let i = 0; i < argv.length; i++) {
 		if (argv[i] === '--base') args.base = argv[++i].replace(/\/$/, '');
 		else if (argv[i] === '--yes') args.yes = true;
@@ -87,6 +90,7 @@ function parseArgs(argv) {
 		else if (argv[i] === '--no-spend') args.noSpend = true;
 		else if (argv[i] === '--budget') args.budget = true;
 		else if (argv[i] === '--only') args.only = new Set(argv[++i].split(',').map((s) => s.trim()));
+		else if (argv[i] === '--out') args.out = resolve(argv[++i]);
 	}
 	return args;
 }
@@ -118,6 +122,12 @@ const noSpendReason = (id) =>
 		? '--no-spend: needs a funded buyer, or it passes for the wrong reason'
 		: '--no-spend: this case moves real money on a live rail';
 
+// A dry run signs nothing, so its capture is strictly narrower than any record
+// already committed, and writing it into the committed directory replaced the
+// 2026-09-09 --no-spend evidence twice (2026-09-24 and 2026-09-25) with a record
+// of three free-lane cases. It writes to a temp directory instead; --out keeps
+// it anywhere else on purpose.
+const EVIDENCE = args.out || (args.dryRun ? resolve(tmpdir(), 'okx-gauntlet-dry-run') : COMMITTED_EVIDENCE);
 mkdirSync(EVIDENCE, { recursive: true });
 const results = [];
 const settlements = [];
@@ -126,7 +136,8 @@ const log = (m) => console.log(m);
 const evidence = (name, data) => {
 	const path = `${EVIDENCE}/${name}`;
 	writeFileSync(path, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
-	return `prompts/okx-ai/e2e-evidence/${name}`;
+	const inRepo = relative(REPO, path);
+	return inRepo.startsWith('..') ? path : inRepo;
 };
 // A case that never ran is not a case that failed. A dry run used to report
 // every paid leg as FAIL and headline "4/14 cases passed", which reads as ten
@@ -942,7 +953,7 @@ async function main() {
 	// Case 4 runs last: it verifies every settlement the paid cases produced.
 	if (wanted('4')) await case4Settlement();
 
-	const ref = evidence('00-gauntlet-summary.json', { base: args.base, dryRun: args.dryRun, ranAt: new Date().toISOString(), results, settlements });
+	const ref = evidence('00-gauntlet-summary.json', { base: args.base, dryRun: args.dryRun, noSpend: args.noSpend, ranAt: new Date().toISOString(), results, settlements });
 	const ran = results.filter((r) => !r.skipped);
 	const passed = ran.filter((r) => r.ok).length;
 	const skippedCount = results.length - ran.length;
