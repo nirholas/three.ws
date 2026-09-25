@@ -354,7 +354,7 @@ export async function swapKeys({ transfer, agent }) {
 // Each revocation is its own statement so one table's absence on an older
 // database cannot block the rest. Every column here is verified against the
 // migrations; a missing TABLE (42P01) is the only error tolerated.
-function revocations(agentId, sellerId) {
+export function revocations(agentId, sellerId) {
 	return [
 		['wallet_capabilities', () => sql`UPDATE agent_wallet_capabilities SET revoked_at = now(), revoked_reason = 'marketplace_transfer', updated_at = now() WHERE agent_id = ${agentId} AND revoked_at IS NULL RETURNING id`],
 		['recovery_guardians', () => sql`UPDATE agent_recovery_guardians SET status = 'removed', updated_at = now() WHERE agent_id = ${agentId} AND status = 'active' RETURNING id`],
@@ -384,11 +384,28 @@ function revocations(agentId, sellerId) {
 		['mirror_follows', () => sql`UPDATE agent_mirror_follows SET enabled = false, paused_reason = 'marketplace_transfer', updated_at = now() WHERE follower_agent_id = ${agentId} AND enabled RETURNING id`],
 		['launcher_queue', () => sql`UPDATE launcher_queue SET enabled = false WHERE agent_id = ${agentId} AND enabled RETURNING agent_id`],
 		['autopilot_proposals', () => sql`UPDATE agent_autopilot_proposals SET status = 'dismissed', decided_at = now() WHERE agent_id = ${agentId} AND status = 'pending' RETURNING id`],
+		// Signing mode: an external signer is the seller's own wallet and a
+		// session key spends from the seller's wallet under their SPL approval,
+		// so both go, and with them the encrypted session secret. With no row the
+		// agent signs with the platform custodial key, which is now the new one.
+		['signers', () => sql`DELETE FROM agent_signers WHERE agent_id = ${agentId} RETURNING agent_id`],
+		['external_txs', () => sql`UPDATE pending_external_txs SET status = 'expired', error = 'marketplace_transfer', updated_at = now() WHERE agent_id = ${agentId} AND status = 'prepared' RETURNING id`],
+		// API keys the seller minted for this agent: self-funded inference keys
+		// and the keys behind account links (CLI, chat gateways).
+		['inference_api_keys', () => sql`UPDATE api_keys SET revoked_at = now() WHERE revoked_at IS NULL AND id IN (SELECT api_key_id FROM inference_keys WHERE agent_id = ${agentId} AND user_id = ${sellerId}) RETURNING id`],
+		['link_api_keys', () => sql`UPDATE api_keys SET revoked_at = now() WHERE revoked_at IS NULL AND id IN (SELECT api_key_id FROM account_links WHERE agent_id = ${agentId} AND user_id = ${sellerId} AND api_key_id IS NOT NULL) RETURNING id`],
+		['account_links', () => sql`UPDATE account_links SET revoked_at = now() WHERE agent_id = ${agentId} AND user_id = ${sellerId} AND revoked_at IS NULL RETURNING id`],
+		['gateway_links', () => sql`UPDATE gateway_links SET default_agent_id = NULL WHERE default_agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
+		// Third-party credentials the seller connected for the agent.
+		['x_connection', () => sql`DELETE FROM agent_x_connections WHERE agent_id = ${agentId} RETURNING agent_id`],
+		['bounty_venue_accounts', () => sql`DELETE FROM bounty_venue_accounts WHERE agent_id = ${agentId} RETURNING agent_id`],
+		['automations', () => sql`UPDATE agent_automations SET enabled = false, last_note = 'paused at marketplace transfer', updated_at = now() WHERE agent_id = ${agentId} AND enabled RETURNING id`],
+		['strategy_loop', () => sql`UPDATE agent_loops SET enabled = false, financial_enabled = false, paused_reason = 'marketplace_transfer', paused_at = now(), updated_at = now() WHERE agent_id = ${agentId} AND (enabled OR financial_enabled) RETURNING agent_id`],
 	];
 }
 
 // Owner copies that must follow the agent to its new owner.
-function ownerMoves(agentId, sellerId, buyerId) {
+export function ownerMoves(agentId, sellerId, buyerId) {
 	return [
 		['sniper_strategies', () => sql`UPDATE agent_sniper_strategies SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
 		['sniper_positions', () => sql`UPDATE agent_sniper_positions SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
@@ -411,6 +428,8 @@ function ownerMoves(agentId, sellerId, buyerId) {
 		['pump_agent_mints', () => sql`UPDATE pump_agent_mints SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
 		['wallet_intents', () => sql`UPDATE agent_wallet_intents SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
 		['autopilot_proposals', () => sql`UPDATE agent_autopilot_proposals SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
+		['automations', () => sql`UPDATE agent_automations SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
+		['strategy_loop', () => sql`UPDATE agent_loops SET user_id = ${buyerId} WHERE agent_id = ${agentId} AND user_id = ${sellerId} RETURNING agent_id`],
 	];
 }
 
