@@ -167,13 +167,34 @@ export function enablementFromSpec(spec, source) {
  * @param {string} source
  */
 export function enablementFromSelection(sel, source = 'cli') {
+	return enablementFromTokens(selectionToTokens(sel), source);
+}
+
+/**
+ * The tokens a `three-ws tools` selection stands for: start from nothing, turn
+ * on its tiers, then its per-tool exceptions either way.
+ * @param {{tiers?: string[], allow?: string[], deny?: string[]}} sel
+ */
+export function selectionToTokens(sel) {
 	const tokens = [{ kind: 'base', id: 'none', on: true }];
 	for (const tier of Array.isArray(sel?.tiers) ? sel.tiers : DEFAULT_TIERS) {
 		if (TIER_SET.has(tier)) tokens.push({ kind: 'tier', id: tier, on: true });
 	}
 	for (const name of Array.isArray(sel?.allow) ? sel.allow : []) tokens.push({ kind: 'tool', id: String(name), on: true });
 	for (const name of Array.isArray(sel?.deny) ? sel.deny : []) tokens.push({ kind: 'tool', id: String(name), on: false });
-	return enablementFromTokens(tokens, source);
+	return tokens;
+}
+
+/**
+ * The same selection as a spec string for the X-Three-Tools header, so a
+ * direct HTTP entry and a proxied one resolve to the same enablement. It always
+ * leads with a base, which keeps it from reading as an exact allow list.
+ * @param {{tiers?: string[], allow?: string[], deny?: string[]}} sel
+ */
+export function specFromSelection(sel) {
+	return selectionToTokens(sel)
+		.map((t) => (t.on ? t.id : `-${t.id}`))
+		.join(',');
 }
 
 /**
