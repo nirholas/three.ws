@@ -4,6 +4,7 @@
 
 import { transcribeNvidiaAsr, nvidiaAsrConfigured } from '../asr-nvidia.js';
 import { describeImage, visionConfigured } from '../vision.js';
+import { toSpeechInput, AudioError } from './audio.js';
 
 export const MAX_VOICE_BYTES = 8 * 1024 * 1024;
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -16,16 +17,23 @@ export class MediaError extends Error {
 }
 
 /**
- * Transcribe a chat voice note. Telegram and Discord both deliver Ogg/Opus at
- * 48 kHz, which Riva accepts directly (no transcode).
+ * Transcribe a chat voice note. Ogg/Opus (Telegram, Discord, WhatsApp) and FLAC
+ * go to Riva as-is; AAC, MP4 and WebM (Signal, iOS, Slack clips) are converted
+ * to 16 kHz PCM first (./audio.js).
  * @returns {Promise<string>}
  */
 export async function transcribeVoice({ buffer, mimeType = 'audio/ogg', language = 'en-US' }) {
 	if (!nvidiaAsrConfigured()) throw new MediaError('asr_unavailable', 'Voice notes are not available right now. Type your message instead.');
 	if (!buffer?.length) throw new MediaError('empty_audio', 'That voice note was empty.');
 	if (buffer.length > MAX_VOICE_BYTES) throw new MediaError('audio_too_large', 'That voice note is too long. Keep it under about five minutes.');
-	const encoding = /ogg|opus/i.test(mimeType) ? 'OGGOPUS' : /flac/i.test(mimeType) ? 'FLAC' : 'OGGOPUS';
-	const out = await transcribeNvidiaAsr({ audio: buffer, encoding, sampleRateHz: 48000, language });
+	let input;
+	try {
+		input = await toSpeechInput({ buffer, mimeType });
+	} catch (e) {
+		if (e instanceof AudioError) throw new MediaError('audio_unreadable', 'I could not read that voice note. Try recording it again, or type it.');
+		throw e;
+	}
+	const out = await transcribeNvidiaAsr({ audio: input.audio, encoding: input.encoding, sampleRateHz: input.sampleRateHz, language });
 	const text = String(out?.text || '').trim();
 	if (!text) throw new MediaError('no_speech', 'I could not make out any words in that voice note.');
 	return text;

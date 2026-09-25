@@ -1,12 +1,13 @@
 // One conversation per (agent, owner), shared by every surface that talks to
-// the agent: the web copilot, the v1 messages API, Telegram and Discord. Rows
+// the agent: the web copilot, the v1 messages API and every chat gateway
+// (Telegram, Discord, Slack, WhatsApp, Signal, SMS, email). Rows
 // live in agent_messages; `channel` says which surface a message came from so
 // each surface can label the others ("via Telegram") while the model sees one
 // continuous history.
 
 import { sql } from './db.js';
 
-export const THREAD_CHANNELS = ['web', 'api', 'telegram', 'discord'];
+export const THREAD_CHANNELS = ['web', 'api', 'telegram', 'discord', 'slack', 'whatsapp', 'signal', 'sms', 'email'];
 const MAX_CONTENT = 8000;
 
 /**

@@ -32,7 +32,8 @@ export async function getLinkById(id) {
 export async function listLinksForUser(userId) {
 	return sql`
 		SELECT l.id, l.platform, l.platform_username, l.chat_id, l.chat_type, l.chat_title,
-		       l.default_agent_id, a.name AS default_agent_name, l.notify, l.created_at, l.last_seen_at
+		       l.default_agent_id, a.name AS default_agent_name, l.notify, l.voice_replies, l.preferred,
+		       l.created_at, l.last_seen_at
 		FROM gateway_links l
 		LEFT JOIN agent_identities a ON a.id = l.default_agent_id AND a.deleted_at IS NULL
 		WHERE l.user_id = ${userId} AND l.revoked_at IS NULL
@@ -41,7 +42,7 @@ export async function listLinksForUser(userId) {
 
 export async function listNotifyLinks(userId) {
 	return sql`
-		SELECT id, platform, chat_id FROM gateway_links
+		SELECT id, platform, chat_id, preferred, last_seen_at FROM gateway_links
 		WHERE user_id = ${userId} AND revoked_at IS NULL AND notify = true`;
 }
 
@@ -50,7 +51,7 @@ export async function listNotifyLinks(userId) {
  * that link unchanged; a chat paired to another account is refused, so one chat
  * can never drive two accounts.
  */
-export async function createLink({ platform, platformUserId, platformUsername = null, chatId, chatType = null, chatTitle = null, userId }) {
+export async function createLink({ platform, platformUserId, platformUsername = null, chatId, chatType = null, chatTitle = null, userId, defaultAgentId = null }) {
 	const existing = await getLiveLink(platform, chatId);
 	if (existing) {
 		if (existing.user_id !== userId) throw new GatewayError('chat_taken', 'This chat is already paired to a different three.ws account. Send /unlink from that account first.', 409);
@@ -58,8 +59,8 @@ export async function createLink({ platform, platformUserId, platformUsername = 
 	}
 	try {
 		const [row] = await sql`
-			INSERT INTO gateway_links (platform, platform_user_id, platform_username, chat_id, chat_type, chat_title, user_id, last_seen_at)
-			VALUES (${platform}, ${String(platformUserId)}, ${platformUsername}, ${String(chatId)}, ${chatType}, ${chatTitle}, ${userId}, now())
+			INSERT INTO gateway_links (platform, platform_user_id, platform_username, chat_id, chat_type, chat_title, user_id, default_agent_id, last_seen_at)
+			VALUES (${platform}, ${String(platformUserId)}, ${platformUsername}, ${String(chatId)}, ${chatType}, ${chatTitle}, ${userId}, ${defaultAgentId}, now())
 			RETURNING *`;
 		return row;
 	} catch (e) {
@@ -76,7 +77,7 @@ export async function createLink({ platform, platformUserId, platformUsername = 
 
 export async function revokeLink(linkId, userId) {
 	const [row] = await sql`
-		UPDATE gateway_links SET revoked_at = now()
+		UPDATE gateway_links SET revoked_at = now(), preferred = false
 		WHERE id = ${linkId} AND user_id = ${userId} AND revoked_at IS NULL
 		RETURNING id, platform, chat_id`;
 	if (row) {
@@ -97,6 +98,37 @@ export async function setLinkNotify(linkId, userId, notify) {
 		WHERE id = ${linkId} AND user_id = ${userId} AND revoked_at IS NULL
 		RETURNING id, notify`;
 	return row || null;
+}
+
+export async function setLinkVoiceReplies(linkId, userId, on) {
+	const [row] = await sql`
+		UPDATE gateway_links SET voice_replies = ${!!on}
+		WHERE id = ${linkId} AND user_id = ${userId} AND revoked_at IS NULL
+		RETURNING id, voice_replies`;
+	return row || null;
+}
+
+/**
+ * Make one chat the account's preferred notification channel, or clear it.
+ * The partial unique index allows one preferred live link per account, so the
+ * old one is cleared first, in the same transaction.
+ */
+export async function setLinkPreferred(linkId, userId, on) {
+	if (!on) {
+		const [row] = await sql`
+			UPDATE gateway_links SET preferred = false
+			WHERE id = ${linkId} AND user_id = ${userId} AND revoked_at IS NULL
+			RETURNING id, preferred`;
+		return row || null;
+	}
+	const [, rows] = await sql.transaction([
+		sql`UPDATE gateway_links SET preferred = false WHERE user_id = ${userId} AND preferred AND id <> ${linkId}`,
+		sql`
+			UPDATE gateway_links SET preferred = true, notify = true
+			WHERE id = ${linkId} AND user_id = ${userId} AND revoked_at IS NULL
+			RETURNING id, preferred`,
+	]);
+	return rows?.[0] || null;
 }
 
 export async function resetLinkContext(linkId) {

@@ -1,11 +1,17 @@
-// Plain-text rendering for chat replies. Both platforms get the same text:
-// Telegram is sent without a parse mode (nothing to escape, links auto-link)
-// and Discord renders it as-is, so one formatter serves both.
+// Plain-text rendering for chat replies. Every platform gets the same text:
+// Telegram is sent without a parse mode (nothing to escape, links auto-link),
+// Discord, Slack, WhatsApp and Signal render it as-is, and SMS and email carry
+// it verbatim, so one formatter serves them all.
 
 import { env } from '../env.js';
 
-export const PLATFORM_LABEL = { telegram: 'Telegram', discord: 'Discord', web: 'the web', api: 'the API' };
-export const MAX_TEXT = { telegram: 4000, discord: 1900 };
+export const PLATFORM_LABEL = {
+	telegram: 'Telegram', discord: 'Discord', slack: 'Slack', whatsapp: 'WhatsApp', signal: 'Signal',
+	sms: 'SMS', email: 'email', web: 'the web', api: 'the API',
+};
+// Per-message ceilings. SMS is split by the carrier past 160 characters, so a
+// reply is kept to a few segments; email has no practical ceiling.
+export const MAX_TEXT = { telegram: 4000, discord: 1900, slack: 3500, whatsapp: 4000, signal: 4000, sms: 600, email: 20000 };
 
 export function appOrigin() {
 	return env.APP_ORIGIN || 'https://three.ws';
