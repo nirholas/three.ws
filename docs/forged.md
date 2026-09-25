@@ -29,7 +29,7 @@ The page ([pages/forged.html](../pages/forged.html), rendered by
   whatever categories are actually present in the feed. Filtering and sorting
   happen client-side over the loaded feed.
 - **Designed empty, no-match, and error states.** The empty state explains that
-  the autonomous loop pays the Forge for a new prop every hour; the error state
+  the autonomous loop pays the Forge for a new prop every 30 minutes; the error state
   names the reason the load failed (the API's own message) and has a retry
   button.
 
@@ -54,7 +54,12 @@ runs as a registry entry inside that loop, and on each run it:
    the platform's self-hosted facilitator on Solana mainnet. The same seeder
    wallet is the `x402-ring-payer` signer in the
    [x402 ring economy](./x402-ring-economy.md), and the loop's daily spend cap
-   applies to these calls like every other.
+   applies to these calls like every other. The Forge generates the mesh
+   before it settles, and a standard NIM job finishes 20 to 55 seconds after
+   the request, so this call waits up to 90 seconds (`FORGE_PAID_TIMEOUT_MS`,
+   passed to `payX402` as `paidTimeoutMs`) instead of the shared 20 second
+   default. Giving up earlier does not cancel the server: it still settles, and
+   the loop would record a paid prop as a failure and never store it.
 3. **Scores diversity.** The prompt is embedded (a configured provider when
    available, a deterministic local feature-hash space otherwise) and scored
    against the last 200 props in the same vector space: novelty is one minus
