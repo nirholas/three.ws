@@ -112,6 +112,24 @@ export async function renderTurntable({ glbUrl, views, size, background = 'trans
 	return { frames, failed, size: dim };
 }
 
+// Geometry facts come from the free inspector (/api/3d/inspect) rather than a
+// second glTF parser, so "what this model is" has exactly one implementation.
+// Best-effort: an inspector hiccup costs the caller its stats, never its frames,
+// because the frames are the thing that could not be got any other way.
+export async function fetchGeometryStats(base, glbUrl) {
+	try {
+		const res = await fetch(`${base}/api/3d/inspect?url=${encodeURIComponent(glbUrl)}`, {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(20_000),
+		});
+		if (!res.ok) return null;
+		const body = await res.json();
+		return body?.stats && typeof body.stats === 'object' ? body.stats : null;
+	} catch {
+		return null;
+	}
+}
+
 // Plain-language reading of the geometry, for an agent that has the numbers but
 // no intuition for what they mean. Every line is derived from the stats the
 // inspector already returns; nothing here guesses at quality it cannot measure.

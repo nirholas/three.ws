@@ -43,7 +43,7 @@ import { startForge, pollOnce, originFromReq } from '../_mcp-studio/gpt-forge-cl
 import { shapeSubmit, shapePoll, tierOf } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { objectStorageUsable } from '../_lib/r2.js';
-import { renderTurntable, describeGeometry } from '../_lib/3d-vision.js';
+import { renderTurntable, describeGeometry, fetchGeometryStats } from '../_lib/3d-vision.js';
 
 export { PROTOCOL_VERSION, FORGE_TOOL, FORGE_STATUS_TOOL };
 
@@ -418,12 +418,15 @@ function buildLookTool() {
 			} catch (err) {
 				return toolError('render_failed', String(err?.message || 'could not render this model').slice(0, 300));
 			}
+			const stats = await fetchGeometryStats(BASE, glbUrl);
+			const notes = describeGeometry(stats);
 			const shown = turntable.frames.map((f) => f.view).join(', ');
 			const content = [
 				{
 					type: 'text',
 					text:
 						`Rendered from ${turntable.frames.length} angle(s): ${shown}. ` +
+						(notes.length ? `Geometry: ${notes.join(' ')} ` : '') +
 						'Look at the frames below: is the subject complete and recognisable, is the far side ' +
 						'finished, is anything melted or fused?',
 				},
@@ -440,6 +443,7 @@ function buildLookTool() {
 					size: turntable.size,
 					views: turntable.frames.map((f) => ({ view: f.view, theta: f.theta, phi: f.phi })),
 					...(turntable.failed.length ? { missing_views: turntable.failed } : {}),
+					...(stats ? { stats, notes } : {}),
 				},
 			};
 		},

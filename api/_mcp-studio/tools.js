@@ -45,7 +45,7 @@ import {
 	directPrompt,
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
-import { renderTurntable, describeGeometry } from '../_lib/3d-vision.js';
+import { renderTurntable, describeGeometry, fetchGeometryStats } from '../_lib/3d-vision.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
 // The same pure cold-start core the browser surfaces render from
 // (src/shared/forge-frames.js). Zero DOM, zero env, zero network, so it is safe
@@ -749,22 +749,6 @@ function widgetMeta(invoking, invoked) {
 //
 // Frames are capped at 512 px and four views by default: enough for a model to
 // judge form and completeness, small enough not to flood the caller's context.
-// Geometry from the free inspector, best-effort: a hiccup there costs the
-// caller its numbers, never its frames.
-async function lookStats(base, glbUrl) {
-	try {
-		const res = await fetch(`${base}/api/3d/inspect?url=${encodeURIComponent(glbUrl)}`, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(20_000),
-		});
-		if (!res.ok) return null;
-		const body = await res.json();
-		return body?.stats && typeof body.stats === 'object' ? body.stats : null;
-	} catch {
-		return null;
-	}
-}
-
 async function handleLookAtModel(args, _auth, req) {
 	const base = originFromReq(req);
 	const glbUrl = String(args?.glb_url || '').trim();
@@ -779,7 +763,7 @@ async function handleLookAtModel(args, _auth, req) {
 		return toolError(String(err?.message || 'could not render this model').slice(0, 300));
 	}
 
-	const stats = await lookStats(base, glbUrl);
+	const stats = await fetchGeometryStats(base, glbUrl);
 	const notes = describeGeometry(stats);
 	const shown = turntable.frames.map((f) => f.view).join(', ');
 	const missing = turntable.failed.length ? ` Could not render: ${turntable.failed.map((f) => f.view).join(', ')}.` : '';

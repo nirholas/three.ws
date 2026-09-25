@@ -51,6 +51,18 @@ vi.mock('../../api/_lib/r2.js', async (importOriginal) => ({
 	objectStorageUsable: vi.fn(async () => ({ ok: true, reason: null, message: null })),
 }));
 
+// look_at_model renders through the shared headless browser. Stub only the
+// render; the geometry fetch and its plain reading stay real, fed by the fetch
+// router's /api/3d/inspect branch below.
+vi.mock('../../api/_lib/3d-vision.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	renderTurntable: vi.fn(async ({ views }) => ({
+		frames: (views || ['front']).map((view) => ({ view, theta: 0, phi: 0, png: Buffer.from([0x89, 0x50, 0x4e, 0x47]) })),
+		failed: [],
+		size: 256,
+	})),
+}));
+
 vi.mock('../../api/_lib/usage.js', () => ({
 	recordEvent: vi.fn(),
 	logger: () => ({ info: () => {}, warn: () => {}, error: () => {} }),
@@ -72,6 +84,7 @@ globalThis.fetch = vi.fn(async (input, init) => {
 		}
 		return lane.poll ? lane.poll(url) : jsonResponse(200, { status: 'running' });
 	}
+	if (url.includes('/api/3d/inspect')) return jsonResponse(200, { stats: { triangles: 12400, materials: 2, textures: 1 } });
 	throw new Error(`unexpected fetch: ${url}`);
 });
 
@@ -183,6 +196,17 @@ describe('the listed line-up is the forge', () => {
 			expect(surface.isPublicTool('look_at_model')).toBe(true);
 			expect(surface.x402Amount('look_at_model')).toBe(null);
 		}
+	});
+
+	// The tool's description promises the geometry and a plain reading of it, so
+	// the response has to carry both, not frames alone.
+	it('look_at_model returns the geometry and its reading alongside the frames', async () => {
+		const look = forgeSurface('forge-draft').TOOLS.look_at_model;
+		const out = await look.handler({ glb_url: 'https://cdn.test/model.glb', views: ['front', 'side'] });
+		expect(out.content.filter((c) => c.type === 'image')).toHaveLength(2);
+		expect(out.content[0].text).toContain('12,400 triangles');
+		expect(out.structuredContent.stats).toEqual({ triangles: 12400, materials: 2, textures: 1 });
+		expect(out.structuredContent.notes[0]).toContain('12,400 triangles');
 	});
 
 	it('exposes one client shape: the same tool names on every endpoint', () => {

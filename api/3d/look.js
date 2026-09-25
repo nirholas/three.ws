@@ -29,29 +29,11 @@
 
 import { cors, wrap, json, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { renderTurntable, describeGeometry, VIEW_ANGLES, DEFAULT_VIEWS, MAX_VIEWS, MIN_SIZE, MAX_SIZE, DEFAULT_SIZE } from '../_lib/3d-vision.js';
+import { renderTurntable, describeGeometry, fetchGeometryStats, VIEW_ANGLES, DEFAULT_VIEWS, MAX_VIEWS, MIN_SIZE, MAX_SIZE, DEFAULT_SIZE } from '../_lib/3d-vision.js';
 import { persistImageBytes } from '../_lib/image-persist.js';
 import { originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/gpt-forge-client.js';
 
 const MAX_BODY_BYTES = 4_000;
-
-// Geometry facts come from the free inspector rather than a second glTF parser
-// here, so "what this model is" has exactly one implementation. It is
-// best-effort: an inspector hiccup costs the caller its stats, never its
-// frames, because the frames are the thing that could not be got any other way.
-async function statsFor(base, glbUrl) {
-	try {
-		const res = await fetch(`${base}/api/3d/inspect?url=${encodeURIComponent(glbUrl)}`, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(20_000),
-		});
-		if (!res.ok) return null;
-		const body = await res.json();
-		return body?.stats && typeof body.stats === 'object' ? body.stats : null;
-	} catch {
-		return null;
-	}
-}
 
 function discovery(base) {
 	return {
@@ -136,7 +118,7 @@ export default wrap(async (req, res) => {
 	}
 
 	const wantStats = body?.stats !== false;
-	const stats = wantStats ? await statsFor(base, glbUrl) : null;
+	const stats = wantStats ? await fetchGeometryStats(base, glbUrl) : null;
 
 	return json(res, 200, {
 		model_url: glbUrl,
