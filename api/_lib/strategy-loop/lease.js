@@ -17,11 +17,14 @@ import { sql } from '../db.js';
 
 /**
  * Claim up to `limit` agents whose loop is due (or has a tick left open by a
- * worker whose lease lapsed).
+ * worker whose lease lapsed). `agentIds`, when given, limits the sweep to
+ * those agents: a local run against the shared database uses it so it never
+ * picks up anyone else's loop.
  * @returns {Promise<Array<{ agent_id: string, reclaimed: boolean, previous_worker: string|null }>>}
  */
-export async function claimDue({ workerId, limit, leaseMs }) {
+export async function claimDue({ workerId, limit, leaseMs, agentIds = null }) {
 	const leaseSecs = Math.max(10, Math.round(leaseMs / 1000));
+	const only = Array.isArray(agentIds) && agentIds.length ? agentIds : null;
 	const rows = await sql`
 		WITH due AS (
 			SELECT l.agent_id
@@ -29,6 +32,7 @@ export async function claimDue({ workerId, limit, leaseMs }) {
 			  JOIN agent_identities a ON a.id = l.agent_id AND a.deleted_at IS NULL
 			  LEFT JOIN agent_leases k ON k.agent_id = l.agent_id
 			 WHERE (k.agent_id IS NULL OR k.lease_until < now())
+			   AND (${only}::uuid[] IS NULL OR l.agent_id = ANY(${only}::uuid[]))
 			   AND (
 					(l.enabled = true AND a.status = 'running' AND l.next_tick_at IS NOT NULL AND l.next_tick_at <= now()
 					  AND (l.paused_until IS NULL OR l.paused_until <= now()))

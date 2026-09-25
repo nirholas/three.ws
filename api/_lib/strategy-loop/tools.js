@@ -110,8 +110,10 @@ function clampText(v, max) {
  * @param {object} o.loop    serialized loop settings (serializeLoop)
  * @param {object} o.tick    agent_loop_ticks row
  * @param {object} [o.deps]  injectable trade engine (tests); defaults to the real one
+ * @param {'simulate'|'live'} [o.tradeMode]  'simulate' runs every execute as a
+ *        simulation that signs and broadcasts nothing (the worker default)
  */
-export function buildTickTools({ agent, loop, tick, deps = {} }) {
+export function buildTickTools({ agent, loop, tick, deps = {}, tradeMode = 'simulate' }) {
 	const tiers = toolTiers(loop);
 	const schemas = [];
 	const handlers = {};
@@ -163,7 +165,7 @@ export function buildTickTools({ agent, loop, tick, deps = {} }) {
 		schemas.push(schema('trade_preview', FINANCIAL_TOOLS.trade_preview));
 		schemas.push(schema('trade_execute', FINANCIAL_TOOLS.trade_execute));
 		handlers.trade_preview = (args) => tradePreview({ agent, loop, tick, args, engine });
-		handlers.trade_execute = (args) => tradeExecute({ agent, loop, tick, args, engine });
+		handlers.trade_execute = (args) => tradeExecute({ agent, loop, tick, args, engine, simulate: tradeMode !== 'live' });
 	}
 
 	return { schemas, handlers, tiers };
@@ -286,7 +288,7 @@ async function tradePreview({ agent, loop, tick, args, engine }) {
 	};
 }
 
-async function tradeExecute({ agent, loop, tick, args, engine }) {
+async function tradeExecute({ agent, loop, tick, args, engine, simulate }) {
 	if (args?.confirm_swap !== true) {
 		return { ok: false, error: 'confirm_swap must be true to execute a trade.' };
 	}
@@ -357,6 +359,7 @@ async function tradeExecute({ agent, loop, tick, args, engine }) {
 	} catch (err) {
 		return { ok: false, error: err?.message || 'invalid trade' };
 	}
+	if (simulate) input.simulate = true;
 	const out = await engine.execute({
 		id: agent.id,
 		userId: agent.user_id,
@@ -367,6 +370,24 @@ async function tradeExecute({ agent, loop, tick, args, engine }) {
 	});
 	if (!out.ok) {
 		return { ok: false, blocked: true, code: out.code, error: out.message, detail: out.detail || null };
+	}
+	if (simulate) {
+		// Nothing was signed, so nothing counts against the loop's USD cap, but
+		// the action is still recorded on the tick.
+		if (!replay) {
+			await sql`UPDATE agent_loop_ticks SET actions = actions + 1, updated_at = now() WHERE id = ${tick.id}`;
+		}
+		return {
+			ok: true,
+			simulated: true,
+			side: preview.side,
+			mint: preview.mint,
+			amount: preview.amount,
+			usd_value: preview.usd,
+			expected_out: out.data?.expected_out ?? null,
+			signature: null,
+			note: 'Simulate mode: the trade passed every guard and was simulated on chain. Nothing was signed or sent.',
+		};
 	}
 	if (!replay && !out.data?.replayed) {
 		const usd = preview.side === 'buy' && preview.usd ? preview.usd : 0;

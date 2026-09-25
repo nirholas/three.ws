@@ -85,7 +85,7 @@ function fmtUsd(n) {
  * The messages that open a tick: persona, the loop's operating rules, what the
  * agent remembers and what its last ticks concluded, then the goal.
  */
-export function buildTickMessages({ agent, loop, preset, memory, recentTicks, tickNumber, now, remainingUsd }) {
+export function buildTickMessages({ agent, loop, preset, memory, recentTicks, tickNumber, now, remainingUsd, tradeMode = 'live' }) {
 	const name = agent.name || 'this agent';
 	const persona =
 		(agent.persona_prompt && agent.persona_prompt.trim()) ||
@@ -93,8 +93,12 @@ export function buildTickMessages({ agent, loop, preset, memory, recentTicks, ti
 		`You are ${name}, an autonomous agent on three.ws. You are careful, factual and concise.`;
 
 	const minutes = Math.round(loop.intervalSeconds / 60);
+	const wallet = agent.meta?.solana_address || null;
 	const rules = [
 		`You are running unattended as the strategy loop of ${name}, one tick every ${minutes} minute${minutes === 1 ? '' : 's'}. This is tick ${tickNumber}, at ${now.toISOString()}.`,
+		wallet
+			? `The agent's own Solana wallet address is ${wallet}. Use it whenever the goal mentions the agent wallet.`
+			: 'This agent has no Solana wallet yet, so skip any wallet check and say so.',
 		'Use your tools to gather what you need. Never invent prices, balances or verdicts; if a tool returns nothing, say so.',
 		'Keep the tick short. Finish with a report of at most 120 words that starts with the most important change since the last tick, or with "No change." when nothing material moved.',
 		'Call remember for anything the next tick needs (levels, tokens you track, balances). Call notify_owner only for something the owner would act on.',
@@ -104,6 +108,9 @@ export function buildTickMessages({ agent, loop, preset, memory, recentTicks, ti
 		rules.push(
 			`You may trade from the agent wallet: call trade_preview first, then trade_execute with its preview_id and confirm_swap: true. Every trade passes the owner's spend limits, the rug and honeypot firewall and the anomaly guard. The loop may buy at most ${fmtUsd(remainingUsd)} more today. Trade only when your evidence clearly supports it, and report every trade.`,
 		);
+		if (tradeMode === 'simulate') {
+			rules.push('This loop host runs trades in simulate mode: trade_execute returns a simulation that signs and sends nothing, so report such trades as simulated, never as filled.');
+		}
 	} else {
 		rules.push('You cannot trade or move funds in this loop. Report and recommend instead.');
 	}
@@ -414,12 +421,18 @@ function eventRow(event) {
  * @param {object} o
  * @param {string} o.agentId
  * @param {string} o.workerId
- * @param {{ tickTimeoutMs: number }} o.cfg
+ * @param {{ tickTimeoutMs: number, tradeMode?: 'simulate'|'live' }} o.cfg
+ *        tradeMode 'simulate' (the worker default) runs every trade_execute as
+ *        a simulation that signs and broadcasts nothing.
  * @param {{ info: Function, warn: Function, error: Function }} o.log
+ * @param {{ aborted: boolean }} [o.signal]  set by a draining worker: the tick
+ *        stops at the next step boundary, still open with its checkpoint, so
+ *        whichever worker claims the agent next resumes it.
  * @param {object} [o.deps]  { chain, trade } overrides for tests
  * @returns {Promise<{ outcome: string, tickId?: string, reason?: string }>}
  */
-export async function runAgentTick({ agentId, workerId, cfg, log, deps = {} }) {
+export async function runAgentTick({ agentId, workerId, cfg, log, signal = null, deps = {} }) {
+	const tradeMode = cfg.tradeMode === 'live' ? 'live' : 'simulate';
 	const [agent] = await sql`
 		SELECT id, user_id, name, persona_prompt, meta, status, deleted_at
 		  FROM agent_identities WHERE id = ${agentId}
@@ -484,6 +497,7 @@ export async function runAgentTick({ agentId, workerId, cfg, log, deps = {} }) {
 			tickNumber: n,
 			now: new Date(),
 			remainingUsd: Math.max(0, loop.caps.dailyUsdcUsd - spent.usdcUsd),
+			tradeMode,
 		});
 		({ state, context } = initialLoopState({ operationId: `tick-${tick.id}`, messages, maxSteps: runtimeSteps }));
 	}
@@ -495,7 +509,7 @@ export async function runAgentTick({ agentId, workerId, cfg, log, deps = {} }) {
 		return { outcome: 'failed', tickId: tick.id, reason: 'no_provider' };
 	}
 
-	const tools = buildTickTools({ agent, loop, tick, deps });
+	const tools = buildTickTools({ agent, loop, tick, deps, tradeMode });
 	let pending = [];
 	const agentLoop = createAgentLoop({
 		chain,
@@ -516,6 +530,12 @@ export async function runAgentTick({ agentId, workerId, cfg, log, deps = {} }) {
 
 	try {
 		while (!loopFinished(state, context)) {
+			// A draining worker hands the tick over between steps: it stays open
+			// with its checkpoint and the next claimant resumes it.
+			if (signal?.aborted) {
+				log.info('tick interrupted for shutdown', { agentId, tickId: tick.id, step: stepCount });
+				return { outcome: 'interrupted', tickId: tick.id };
+			}
 			// Everything that can stop a tick is re-checked before each step.
 			if (!(await stillOwned({ workerId, agentId }))) {
 				log.warn('lease lost mid-tick', { agentId, tickId: tick.id });
