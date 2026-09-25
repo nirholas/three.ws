@@ -1725,6 +1725,19 @@ export const env = {
 		return opt('X_OAUTH_CLIENT_SECRET');
 	},
 
+	// Google sign-in (OpenID Connect, authorization code + PKCE) for
+	// /api/auth/google/*: link Google to an existing account, then sign in with
+	// it. Create a "Web application" OAuth client in the Google Cloud console
+	// with the redirect URI `${PUBLIC_APP_ORIGIN}/api/auth/google/callback`.
+	// When unset the Google buttons stay hidden and the routes answer
+	// `unconfigured` (docs/authentication.md, "Sign in with Google").
+	get GOOGLE_OAUTH_CLIENT_ID() {
+		return opt('GOOGLE_OAUTH_CLIENT_ID');
+	},
+	get GOOGLE_OAUTH_CLIENT_SECRET() {
+		return opt('GOOGLE_OAUTH_CLIENT_SECRET');
+	},
+
 	// Livepeer AI Gateway, optional. When set, the Livepeer lanes route to
 	// https://livepeer.studio/api/generate with bearer auth. When unset they
 	// resolve to the no-key public dream gateway, which api/_lib/livepeer-
