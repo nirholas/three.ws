@@ -266,3 +266,107 @@ export async function fixedEligibility({ network, wallet, connection = null }) {
 	}
 	return { eligible: reasons.length === 0, reasons, wallet_lamports: lamports, required_lamports: FIXED_LAUNCH_COST_LAMPORTS };
 }
+
+// ── Launch flows ───────────────────────────────────────────────────────────
+//
+// Everything that names the venue's own identifiers stays in this module; the
+// launch service (api/_lib/launch-service.js) and the routes speak only of a
+// "launch account", which is what the venue calls its per-launch state account.
+
+/**
+ * The venue builder's transactions for a creator wallet, inspected: every one
+ * is fee-paid by the creator and together they create the prepared mint.
+ * @returns {Promise<{ transactions_base64: string[], mint: string, launch_account: string, input: object }>}
+ */
+export async function prepareFixedForWallet({ network = 'mainnet', wallet, fundsRecipient = null, launch }) {
+	const prepared = await prepareFixedLaunch({ network, wallet, fundsRecipient, launch });
+	inspectPreparedTransactions(prepared.transactions_base64, { wallet, mint: prepared.mint });
+	return {
+		transactions_base64: prepared.transactions_base64,
+		mint: prepared.mint,
+		launch_account: prepared.genesis_account,
+		input: prepared.input,
+	};
+}
+
+/**
+ * A wallet-signed set must be exactly the prepared set: same count, and each
+ * message byte-identical to what the venue built. A wallet can only add its
+ * signature; any other change is refused before anything is broadcast.
+ */
+export function assertSignedMatchesPrepared(preparedBase64, signedBase64) {
+	if (!Array.isArray(signedBase64) || signedBase64.length !== preparedBase64.length) {
+		throw new FixedLaunchError(400, 'transaction_count_mismatch', `expected ${preparedBase64.length} signed transactions, got ${Array.isArray(signedBase64) ? signedBase64.length : 0}`);
+	}
+	preparedBase64.forEach((b64, i) => {
+		let signed;
+		try {
+			signed = VersionedTransaction.deserialize(Buffer.from(signedBase64[i], 'base64'));
+		} catch {
+			throw new FixedLaunchError(400, 'validation_error', `signed transaction ${i + 1} is not a serialized versioned transaction`);
+		}
+		const prepared = VersionedTransaction.deserialize(Buffer.from(b64, 'base64'));
+		const a = Buffer.from(prepared.message.serialize());
+		const b = Buffer.from(signed.message.serialize());
+		if (!a.equals(b)) throw new FixedLaunchError(422, 'transaction_modified', `signed transaction ${i + 1} differs from the prepared one`);
+	});
+}
+
+/**
+ * Land a signed launch, prove it on-chain, and register it with the venue.
+ * @returns {Promise<{ signatures: string[], venue_url: string|null, registration_error: string|null }>}
+ */
+export async function landFixedLaunch({ network = 'mainnet', signedBase64, mint, launchAccount, wallet, input }) {
+	const signatures = await submitInOrder({ network, signedBase64 });
+	await verifyFixedLaunchOnChain({ network, mint, genesisAccount: launchAccount });
+	const reg = await registerFixedLaunch({ network, wallet, genesisAccount: launchAccount, input });
+	return { signatures, venue_url: reg.venue_url, registration_error: reg.error };
+}
+
+/**
+ * The custodial path: build, sign with a server-held keypair, land, register.
+ * @returns {Promise<{ mint: string, launch_account: string, signatures: string[], venue_url: string|null, registration_error: string|null }>}
+ */
+export async function launchFixedWithKeypair({ network = 'mainnet', keypair, fundsRecipient = null, launch }) {
+	const wallet = keypair.publicKey.toBase58();
+	const prepared = await prepareFixedForWallet({ network, wallet, fundsRecipient, launch });
+	const signed = signPreparedTransactions(prepared.transactions_base64, keypair);
+	const landed = await landFixedLaunch({
+		network,
+		signedBase64: signed,
+		mint: prepared.mint,
+		launchAccount: prepared.launch_account,
+		wallet,
+		input: prepared.input,
+	});
+	return { mint: prepared.mint, launch_account: prepared.launch_account, ...landed };
+}
+
+/** Record a landed fixed-supply launch; the directory and agent profiles read this table. */
+export async function recordFixedLaunch({ userId, agentId = null, network = 'mainnet', mint, launchAccount, launch, creator, signatures, venueUrl = null }) {
+	const [row] = await sql`
+		INSERT INTO fixed_supply_launches
+			(agent_id, user_id, network, mint, genesis_account, name, symbol, image_url, description, creator_address,
+			 token_allocation, raise_goal_sol, liquidity_bps, deposit_start_at, deposit_end_at, signatures, venue_url)
+		VALUES
+			(${agentId}, ${userId}, ${network}, ${mint}, ${launchAccount}, ${launch.name}, ${launch.symbol}, ${launch.image_url},
+			 ${launch.description || null}, ${creator}, ${launch.token_allocation}, ${launch.raise_goal_sol}, ${launch.liquidity_bps},
+			 ${launch.deposit_start_at}, ${launch.deposit_end_at}, ${JSON.stringify(signatures)}::jsonb, ${venueUrl})
+		ON CONFLICT (mint, network) DO NOTHING
+		RETURNING id, mint, network, created_at
+	`;
+	return row || null;
+}
+
+/** One fixed-supply launch by mint, with the launch account under its neutral name. */
+export async function getFixedLaunch({ mint, network = 'mainnet' }) {
+	const [row] = await sql`
+		SELECT f.id, f.agent_id, f.user_id, f.network, f.mint, f.genesis_account AS launch_account, f.name, f.symbol,
+		       f.image_url, f.description, f.creator_address, f.token_allocation, f.raise_goal_sol, f.liquidity_bps,
+		       f.deposit_start_at, f.deposit_end_at, f.signatures, f.venue_url, f.created_at
+		FROM fixed_supply_launches f
+		WHERE f.mint = ${mint} AND f.network = ${network}
+		LIMIT 1
+	`;
+	return row || null;
+}

@@ -160,6 +160,15 @@ export function applyInferenceBudget(meta, budget) {
 	return next;
 }
 
+/**
+ * Every credit_ledger action that is model spend on behalf of one agent, booked
+ * with ref_type 'agent' and ref_id = the agent id: the flat three-ws/agent rate
+ * (chat completions, the strategy loop) and the metered spend of a v1 run's
+ * paid model lanes. The per-agent budget is judged against all of them, so an
+ * agent cannot outrun its budget by spending through a different surface.
+ */
+export const AGENT_SPEND_ACTIONS = Object.freeze([INFERENCE_ACTION, 'agent_run_step']);
+
 /** Inference credits an agent has burned today and this month (UTC). */
 export async function agentInferenceSpend(agentId) {
 	const [row] = await sql`
@@ -172,7 +181,8 @@ export async function agentInferenceSpend(agentId) {
 				WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
 			)::int AS calls_today
 		FROM credit_ledger
-		WHERE action = ${INFERENCE_ACTION} AND ref_type = 'agent' AND ref_id = ${String(agentId)}
+		WHERE ref_type = 'agent' AND ref_id = ${String(agentId)}
+		  AND action IN (${AGENT_SPEND_ACTIONS[0]}, ${AGENT_SPEND_ACTIONS[1]})
 		  AND created_at >= (date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
 	`;
 	return {
@@ -221,9 +231,23 @@ export async function assertInferenceAllowed({ userId, agent = null }) {
 		);
 	}
 	if (!agent) return { balanceUsd: acct.balanceUsd, budget: null, spend: null };
+	const { budget, spend } = await assertAgentBudget({ userId, agent });
+	return { balanceUsd: acct.balanceUsd, budget, spend };
+}
 
-	const budget = getInferenceBudget(agent.meta);
-	if (!budget) return { balanceUsd: acct.balanceUsd, budget: null, spend: null };
+/**
+ * The per-agent half of the gate, for a caller that meters credits itself (a
+ * v1 run debits its own paid lanes): refuse when the agent's daily or monthly
+ * inference budget is used up, stamping the exhaustion, stopping its
+ * automations and notifying the owner exactly once per window.
+ *
+ * @param {{ userId: string, agent: { id: string, name?: string, meta?: object } }} p
+ * @returns {Promise<{ budget: object|null, spend: object|null }>}
+ * @throws {InferenceBillingError} 402 inference_budget_exhausted
+ */
+export async function assertAgentBudget({ userId, agent }) {
+	const budget = getInferenceBudget(agent?.meta);
+	if (!budget) return { budget: null, spend: null };
 
 	const spend = await agentInferenceSpend(agent.id);
 	const window = exhaustedWindow(budget, spend);
@@ -251,7 +275,7 @@ export async function assertInferenceAllowed({ userId, agent = null }) {
 			},
 		);
 	}
-	return { balanceUsd: acct.balanceUsd, budget, spend };
+	return { budget, spend };
 }
 
 /** A raised budget that actually readmits calls: double the old one, and never below 1.5x what is already spent. */
@@ -437,7 +461,7 @@ export async function inferenceUsage({ userId, agent = null }) {
 			SELECT COALESCE(SUM(-amount_usd), 0)::float8 AS spent7,
 			       COUNT(*)::int AS calls7
 			FROM credit_ledger
-			WHERE user_id = ${userId} AND action = ${INFERENCE_ACTION}
+			WHERE user_id = ${userId} AND action IN (${AGENT_SPEND_ACTIONS[0]}, ${AGENT_SPEND_ACTIONS[1]})
 			  AND (${agentId}::text IS NULL OR (ref_type = 'agent' AND ref_id = ${agentId ? String(agentId) : null}))
 			  AND created_at > now() - interval '7 days'
 		`,
@@ -457,7 +481,7 @@ export async function inferenceUsage({ userId, agent = null }) {
 			       COALESCE(SUM((meta->>'input_tokens')::bigint), 0)::bigint AS input_tokens,
 			       COALESCE(SUM((meta->>'output_tokens')::bigint), 0)::bigint AS output_tokens
 			FROM credit_ledger
-			WHERE user_id = ${userId} AND action = ${INFERENCE_ACTION}
+			WHERE user_id = ${userId} AND action IN (${AGENT_SPEND_ACTIONS[0]}, ${AGENT_SPEND_ACTIONS[1]})
 			  AND (${agentId}::text IS NULL OR (ref_type = 'agent' AND ref_id = ${agentId ? String(agentId) : null}))
 			  AND created_at >= (date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
 		`,

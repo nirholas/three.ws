@@ -1,14 +1,36 @@
 {
-	"generated_at": "2026-09-24T07:08:16.190Z",
+	"generated_at": "2026-09-25T05:37:06.420Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3755,
+	"total": 3757,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-25",
+			"type": "update",
+			"title": "Props the platform pays Forge to make now land in the /forged gallery",
+			"summary": "Every half hour the platform pays its own Forge to make a new 3D prop for the public /forged gallery. A standard generation takes 20 to 55 seconds, but the paying side gave up after 20. Forge still finished the model and took the payment, so most of those props were paid for, never saved to the gallery, and logged as failed. The paying side now waits up to 90 seconds for a generation. Each paid prop lands in the gallery, and the payment health numbers stop counting these successful payments as failures.",
+			"link": "/forged",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-25",
+			"type": "update",
+			"title": "The model catalog AI clients read now shows the real price of every model",
+			"summary": "The three://models resource that Claude and other MCP clients read listed free models with no price and left some paid models blank. Free models now read as costing nothing, and a model served through a partner route is priced at the model that actually answers, so an assistant comparing costs for you works from real numbers.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
 		{
 			"date": "2026-09-24",
 			"type": "launch",
@@ -1584,28 +1606,6 @@
 			"link": "/",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The in-game economy page reads correctly on a phone, and the boutique shows what you are buying",
-			"summary": "A full audit of /play/economy, the published reference for every price, prize and gate in the /play world. On a 320px screen the general store and currency panels were wider than the viewport, and because the page suppresses sideways scrolling their right edge was simply cut off: the store's price column was unreachable on the narrowest phones. Those panels now shrink to fit, and the wide tables scroll inside their own labelled box instead. The bar showing how a paid $THREE sale splits used to print its labels inside the coloured segments, where \"50% holder rewards\" was truncated to \"50% holder re...\"; the split now reads from a legend beneath the bar, which stays legible at any ratio. In the boutique, the Stetson and the Shades rendered as blank grey circles while the five colour items showed their colour, because the page ignored the thumbnail the server was already sending; both now show the item, with the colour swatch as the fallback if an image ever goes missing. The wheel's top prize is relabelled \"JACKPOT: 100 Cash\", and a failed load now reads as a proper sentence before the retry hint.",
-			"link": "/play/economy",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "The Money Pulse now tells you when its stats are down, and retries on the spot",
-			"summary": "When the money-intelligence call behind /pulse failed, the three side panels (Top earners, Busiest wallets, Fresh launches) sat on \"Loading...\" forever and the 7-day activity strip went blank, which reads as \"the platform is quiet\" rather than \"we could not fetch this\". Each surface now says what went wrong, notes that the live feed itself is unaffected and that it retries every minute, and offers a Retry button that refetches immediately. First paint uses skeletons shaped like the real counters, bars and rows instead of dashes and a loading label, so nothing shifts when the numbers land. The empty states point somewhere useful now: no tips yet links to the agent directory, no wallet activity links to the agents that are online. Switching between mainnet and devnet shows the skeletons again rather than leaving the previous network's numbers under the new label. The stat cards report their filter state to screen readers, the rail cards are real headings, and the per-row explorer link is a full-size tap target that says where it goes.",
-			"link": "/pulse",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

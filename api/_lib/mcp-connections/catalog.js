@@ -1,9 +1,9 @@
 // The vetted catalog of external MCP servers an agent can be connected to.
 //
-// Source of truth: data/mcp-integrations.json. Every remote entry was probed
+// Source of truth: data/mcp-catalog.json. Every remote entry was probed
 // live by scripts/vet-mcp-integrations.mjs (initialize, then either tools/list
 // for an open server or RFC 9728 / RFC 8414 discovery for a protected one), and
-// `npm run check:mcp-integrations` fails the build on a malformed entry.
+// `npm run check:mcp-catalog` fails the build on a malformed entry.
 //
 // Not to be confused with public/mcp-catalog.json, which lists the tools
 // three.ws itself publishes. This file lists servers other people run.
@@ -11,12 +11,16 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export const CATALOG_PATH = fileURLToPath(new URL('../../../data/mcp-integrations.json', import.meta.url));
+export const CATALOG_PATH = fileURLToPath(new URL('../../../data/mcp-catalog.json', import.meta.url));
 
 export const TRANSPORTS = Object.freeze(['streamable-http', 'sse', 'stdio']);
 export const AUTH_TYPES = Object.freeze(['oauth', 'bearer', 'none']);
 export const REGISTRATIONS = Object.freeze(['dynamic', 'platform']);
 const ID_RE = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
+// The catalog lists general developer and productivity vendors. Crypto
+// projects are out of scope: the platform promotes one coin, and an entry for
+// any other project would be an endorsement shipped to every agent owner.
+const OUT_OF_SCOPE_RE = /\b(blockchain|crypto(currency)?|defi|nfts?|web3|on-?chain|coins?|wallets?|dex)\b/i;
 const ENV_RE = /^[A-Z][A-Z0-9_]{2,60}$/;
 
 function isHttps(u) {
@@ -72,6 +76,9 @@ export function validateCatalog(doc) {
 			if (typeof s[f] !== 'string' || !s[f].trim()) errors.push(`${at}.${f} is required`);
 		}
 		if (typeof s.description === 'string' && s.description.length > 200) errors.push(`${at}.description is over 200 characters`);
+		if (OUT_OF_SCOPE_RE.test([s.id, s.name, s.vendor, s.description].join(' '))) {
+			errors.push(`${at} looks like a crypto project; the catalog lists general developer and productivity servers only`);
+		}
 		if (!categories.has(s.category)) errors.push(`${at}.category ${s.category} is not declared`);
 		if (!TRANSPORTS.includes(s.transport)) errors.push(`${at}.transport must be one of ${TRANSPORTS.join(', ')}`);
 		if (!isHttps(s.docs)) errors.push(`${at}.docs must be an https link`);
@@ -111,7 +118,7 @@ export function loadCatalog() {
 	if (cached) return cached;
 	const doc = JSON.parse(readFileSync(CATALOG_PATH, 'utf8'));
 	const errors = validateCatalog(doc);
-	if (errors.length) throw new Error(`data/mcp-integrations.json is invalid: ${errors.slice(0, 5).join('; ')}`);
+	if (errors.length) throw new Error(`data/mcp-catalog.json is invalid: ${errors.slice(0, 5).join('; ')}`);
 	cached = doc;
 	return doc;
 }

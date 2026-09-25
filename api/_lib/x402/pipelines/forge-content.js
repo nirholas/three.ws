@@ -56,6 +56,15 @@ const log = logger('x402-forge-content');
 
 const ASSET = USDC_MINT || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
+// How long the paid generation call may run. /api/x402/forge generates BEFORE it
+// settles, and a standard-tier NIM job finishes 20 to 55s after the request
+// (its submit phase alone may use 30s before the lane falls back). On the shared
+// 20s default the ring aborted first while the server went on to settle: 7 of
+// the 9 ring-paid generations on 2026-09-24/25 were charged, recorded here as
+// `This operation was aborted`, and never reached forge_autonomous_props. 90s
+// clears the observed tail and still leaves the loop tick inside its budget.
+export const FORGE_PAID_TIMEOUT_MS = 90_000;
+
 // Vector space tag for the dependency-free fallback embedding. Tagged distinctly
 // so it is NEVER compared against real NIM/OpenAI vectors: cosine only ever runs
 // within a single embedder space (the rule embeddings.js enforces everywhere).
@@ -404,7 +413,10 @@ export async function run(ctx = {}) {
 	// so guard it and record the failed call rather than crash the tick.
 	let result;
 	try {
-		result = await payX402({ url: endpointUrl, method: 'POST', body, buyer, conn, blockhash, mintInfo, remainingCap });
+		result = await payX402({
+			url: endpointUrl, method: 'POST', body, buyer, conn, blockhash, mintInfo, remainingCap,
+			paidTimeoutMs: FORGE_PAID_TIMEOUT_MS,
+		});
 	} catch (err) {
 		const errorMsg = err?.message || 'forge_pay_error';
 		await recordCall(runId, {

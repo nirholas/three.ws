@@ -26,6 +26,7 @@
 		"@upstash/redis": "^1.38.0",
 		"agent0-sdk": "^1.7.1",
 		"ethers": "^6.16.0",
+		"eventsource": "^5.1.0",
 		"express": "^5.2.1",
 		"livepeer": "3.5.0",
 		"short-uuid": "6.0.3"

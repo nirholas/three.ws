@@ -73,6 +73,23 @@ host. Build it:
    host detect an expired session and emit an actionable alert naming the exact
    command, rather than failing chat silently.
 
+## State on 2026-09-25, re-measured: gcloud is back, the deploy is one approval away
+
+- **Bot host: unchanged.** `/api/healthz` still reports `okx_chat_bot` `degraded` on
+  `cloudrun:okx-chat-bot (okx-chat-bot-00001-926)`, same Vertex `403 Lightning dunning decision is
+  deny`. Live API still `c8f10f437` (`three-ws-api-00458-njs`).
+- **Owner step 0 is done.** `gcloud` is installed and authenticated (project
+  `aerial-vehicle-466722-p5`); `npm run okx:bot:deploy -- --dry-run` passes step [1].
+- **Fresh-clone fix.** This workspace has no `.env.local`, so step [3] died on `DATABASE_URL is not
+  set`. `scripts/okx-bot-llm-gateway.mjs` now falls back to the API service's `DATABASE_URL`
+  (`requireServiceEnvValue`, the same path `rug-signature.mjs` uses). Measured after the change,
+  with no local env: step [3] reads production and reports service account, metering agent, key
+  and secret all `missing`, which is exactly what `--apply` creates. Steps [1] and [4] green.
+- **Why the bot is not deployed yet:** the real run refuses while
+  `scripts/okx-bot-llm-gateway.mjs` has uncommitted edits, and committing a file that names the
+  marketplace needs owner approval (commit gate). Owner: approve the commit of that file plus this
+  order, then run `npm run okx:bot:deploy`, then step 3 below.
+
 ## State on 2026-09-24, re-measured: the API half has shipped, only the bot deploy is left
 
 - **API deploy: DONE.** Live API `c8f10f437` (`three-ws-api-00458-njs`) contains `53687d994`,

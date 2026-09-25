@@ -1,11 +1,33 @@
 {
-	"generated_at": "2026-09-24T07:08:16.161Z",
+	"generated_at": "2026-09-25T05:37:06.304Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-25",
+			"type": "update",
+			"title": "Props the platform pays Forge to make now land in the /forged gallery",
+			"summary": "Every half hour the platform pays its own Forge to make a new 3D prop for the public /forged gallery. A standard generation takes 20 to 55 seconds, but the paying side gave up after 20. Forge still finished the model and took the payment, so most of those props were paid for, never saved to the gallery, and logged as failed. The paying side now waits up to 90 seconds for a generation. Each paid prop lands in the gallery, and the payment health numbers stop counting these successful payments as failures.",
+			"link": "/forged",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-25",
+			"type": "update",
+			"title": "The model catalog AI clients read now shows the real price of every model",
+			"summary": "The three://models resource that Claude and other MCP clients read listed free models with no price and left some paid models blank. Free models now read as costing nothing, and a model served through a partner route is priced at the model that actually answers, so an assistant comparing costs for you works from real numbers.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
 		{
 			"date": "2026-09-24",
 			"type": "launch",

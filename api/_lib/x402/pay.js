@@ -363,6 +363,12 @@ export async function payX402({
 	// null/undefined continues the normal flow. Sync or async; a thrown hook is
 	// treated as an abort (fail-closed), never a crash.
 	onAccept = null,
+	// Budget for the PAID replay only. The probe stays on FETCH_TIMEOUT_MS: it is
+	// a cheap 402 read. A route that runs its work before settling (the paid Forge
+	// generates the mesh, then settles) can legitimately outlast 20s, and aborting
+	// there does not cancel the server: it still settles, so the buyer pays for a
+	// result it already threw away and books the settlement as a fault.
+	paidTimeoutMs = FETCH_TIMEOUT_MS,
 }) {
 	// ringFeeConfig applies the sponsor-mode price constraint itself (sponsor sits
 	// exactly at the fee ceiling, so only zero-lamport priority slots are legal),
@@ -502,7 +508,7 @@ export async function payX402({
 		const paidRes = await fetchWithTimeout(url, {
 			...reqInit,
 			headers: { ...reqInit.headers, 'x-payment': xPayment },
-		});
+		}, paidTimeoutMs);
 		return { paidRes, amountAtomic: attemptAmount };
 	}
 

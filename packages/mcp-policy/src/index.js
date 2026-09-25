@@ -16,6 +16,8 @@ export {
 	enablementFromTokens,
 	enablementFromSpec,
 	enablementFromSelection,
+	selectionToTokens,
+	specFromSelection,
 	defaultEnablement,
 	allowListEnablement,
 	settingsToTokens,

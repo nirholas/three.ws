@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Props the platform pays Forge to make now land in the /forged gallery</title>
+			<link>https://three.ws/forged</link>
+			<guid isPermaLink="false">2026-09-25:Props the platform pays Forge to make now land in the /forged gallery</guid>
+			<pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every half hour the platform pays its own Forge to make a new 3D prop for the public /forged gallery. A standard generation takes 20 to 55 seconds, but the paying side gave up after 20. Forge still finished the model and took the payment, so most of those props were paid for, never saved to the gallery, and logged as failed. The paying side now waits up to 90 seconds for a generation. Each paid prop lands in the gallery, and the payment health numbers stop counting these successful payments as failures.</description>
+		</item>
+		<item>
+			<title>The model catalog AI clients read now shows the real price of every model</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-09-25:The model catalog AI clients read now shows the real price of every model</guid>
+			<pubDate>Fri, 25 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The three://models resource that Claude and other MCP clients read listed free models with no price and left some paid models blank. Free models now read as costing nothing, and a model served through a partner route is priced at the model that actually answers, so an assistant comparing costs for you works from real numbers.</description>
+		</item>
+		<item>
 			<title>Docs · Trade receipts</title>
 			<link>https://three.ws/docs/trade-receipts</link>
 			<guid isPermaLink="false">2026-09-24:Docs · Trade receipts</guid>

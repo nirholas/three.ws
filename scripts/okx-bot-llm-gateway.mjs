@@ -46,6 +46,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { config as loadEnv } from 'dotenv';
+import { requireServiceEnvValue } from './lib/service-env.mjs';
 
 loadEnv({ path: '.env.local', quiet: true });
 loadEnv({ path: '.env', quiet: true });
@@ -130,7 +131,15 @@ function gcloud(argv, { input } = {}) {
 }
 
 async function db() {
-	if (!process.env.DATABASE_URL) die('DATABASE_URL is not set (it lives in .env.local)');
+	// A fresh clone has no .env.local, so resolve production's copy off the API
+	// service (a Secret Manager reference) rather than stall the deploy on it.
+	if (!process.env.DATABASE_URL) {
+		try {
+			process.env.DATABASE_URL = requireServiceEnvValue('DATABASE_URL');
+		} catch (err) {
+			die(`DATABASE_URL is not set in .env.local and ${err.message}`);
+		}
+	}
 	const { sql } = await import('../api/_lib/db.js');
 	return sql;
 }

@@ -1,4 +1,26 @@
-# Work Order 04: funding request (re-verified 2026-09-09)
+# Work Order 04: funding request (current ask re-verified 2026-09-25)
+
+## Current ask, 2026-09-25 (supersedes the 5.0 USD₮0 and 0.10 USDC figures further down)
+
+Re-measured on a fresh host: Step 0 green (health `ok` with `payment-rail` `settleable: true`,
+`relayer_funded: true`; catalog byte-identical module == live == listing; unpaid
+`text-to-3d` 402 with `eip155:196` first at 10000; `okx-3d-services` 36/36;
+`--dry-run` 3/3). `onchainos` v4.6.2 sha256 `ca606d24...c699a` matches the release
+`checksums.txt`. Balances at X Layer block 71544237: buyer 0 USD₮0 / 0 OKB, seller
+2.427731 USD₮0 / 0.839596 OKB. Buyer Solana account `9PirGw9w...fnyc` holds no USDC
+account at all.
+
+| Leg | To | Chain | Token | Amount |
+| --- | --- | --- | --- | --- |
+| Float | `0x75d00a2713565171f33216e5aa2a375e076ecf69` | X Layer (196) | USD₮0 `0x779ded0c9e1022225f8e0630b35a9b54be713736` | **2.16** (1.08 float x 2 for retries) |
+| Case 7 | `9PirGw9wVLLNFgVyjgAt5jvuFQwJ3pYUBWt9n3vZfnyc` | Solana mainnet | USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | **0.02** |
+
+The payTo wallet cannot fund the buyer from this side: the Cloud Run service holds only its
+address (`X402_PAY_TO_XLAYER`), not its key. The wallet session is logged OUT on this host,
+so the browser login (email OTP for `claude@three.ws`) is required again.
+
+## Earlier record, 2026-09-09
+
 
 Every leg of the gauntlet that does not move money is finished and green against production.
 The paid legs are blocked on one owner action. Amounts below are computed from the live
@@ -178,7 +200,7 @@ Cases 1, 1d, 2, 2b, 3, 3i, 3r, 5a, 5b, 5c, 5d, 6, 7, then case 4 (on-chain settl
 verification of every payment the run produced), writing evidence for each into this
 directory.
 
-## The wallet is already logged in
+## Wallet session
 
-`onchainos wallet status` reads `loggedIn: true` as `claude@three.ws` (verified 2026-09-09),
-so no OTP is needed for this work order. Funding is the single remaining owner action.
+Logged in on 2026-09-09; logged out on the 2026-09-25 host, so the browser login is needed
+again before any case can sign.

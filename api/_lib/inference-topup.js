@@ -128,13 +128,35 @@ function spendLimitToTopupError(e) {
 	return new TopupError(403, e.code || 'spend_limit', e.message, e.detail || {});
 }
 
-// ── preview ─────────────────────────────────────────────────────────────────
+async function checkTopupPolicy({ agent, userId, amount, payTo }) {
+	try {
+		await enforceSpendLimit({
+			agentId: agent.id,
+			meta: agent.meta,
+			userId,
+			category: CUSTODY_CATEGORY,
+			usdValue: amount,
+			asset: 'USDC',
+			destination: payTo,
+		});
+	} catch (e) {
+		if (e instanceof SpendLimitError) throw spendLimitToTopupError(e);
+		throw e;
+	}
+}
+
+// ── quote and preview ───────────────────────────────────────────────────────
 
 /**
- * Write a single-use preview of a wallet-funded top-up. Nothing moves.
- * @returns {Promise<object>} the confirmation table the owner must approve
+ * Price a wallet-funded top-up without writing anything: reads the agent
+ * wallet from Solana, runs the owner's spend policy against it, and returns
+ * the confirmation table. previewTopup() is this plus the single-use preview
+ * row; a dry run (scripts/inference-topup-dryrun.mjs) calls it directly.
+ * `checkPolicy: false` skips the spend-policy pass, whose anomaly guard can
+ * record an event or freeze the wallet: a dry run must write nothing.
+ * @returns {Promise<object>} the confirmation table (no preview_id)
  */
-export async function previewTopup({ userId, agentId, amountUsdc, source = 'owner' }) {
+export async function quoteTopup({ userId, agentId, amountUsdc, checkPolicy = true }) {
 	const amount = normalizeTopupAmount(amountUsdc);
 	const agent = await loadOwnedAgent(agentId, userId);
 	const payTo = treasuryAddress();
@@ -155,20 +177,7 @@ export async function previewTopup({ userId, agentId, amountUsdc, source = 'owne
 	// Fail fast on the owner's own policy (freeze, per-tx cap, English rules)
 	// so a preview never shows a top-up the guard would refuse. The binding
 	// check is the atomic reserve at execution time.
-	try {
-		await enforceSpendLimit({
-			agentId: agent.id,
-			meta: agent.meta,
-			userId,
-			category: CUSTODY_CATEGORY,
-			usdValue: amount,
-			asset: 'USDC',
-			destination: payTo,
-		});
-	} catch (e) {
-		if (e instanceof SpendLimitError) throw spendLimitToTopupError(e);
-		throw e;
-	}
+	if (checkPolicy) await checkTopupPolicy({ agent, userId, amount, payTo });
 
 	const sponsor = sponsorOrNull();
 	if (!sponsor && !(balances.sol > 0.00001)) {
@@ -177,18 +186,7 @@ export async function previewTopup({ userId, agentId, amountUsdc, source = 'owne
 
 	const credits = creditsForUsdc(amount);
 	const acct = await getCreditAccount(userId);
-	const [row] = await sql`
-		INSERT INTO inference_topups
-			(user_id, agent_id, source, status, amount_usdc, credits_usd, payer_address, pay_to, network, expires_at)
-		VALUES
-			(${userId}, ${agent.id}, ${source}, 'previewed', ${amount.toFixed(6)}, ${credits.toFixed(6)},
-			 ${agent.meta.solana_address}, ${payTo}, 'mainnet', now() + make_interval(mins => ${PREVIEW_TTL_MINUTES}))
-		RETURNING id, expires_at
-	`;
-
 	return {
-		preview_id: row.id,
-		expires_at: row.expires_at,
 		confirm_flag: 'confirm_deposit',
 		agent: { id: agent.id, name: agent.name },
 		from: agent.meta.solana_address,
@@ -207,7 +205,25 @@ export async function previewTopup({ userId, agentId, amountUsdc, source = 'owne
 		wallet_usdc_after: Math.round((balances.usdc - amount) * 1e6) / 1e6,
 		balance_before_usd: acct.balanceUsd,
 		balance_after_usd: Math.round((acct.balanceUsd + credits) * 1e6) / 1e6,
+		policy_checked: checkPolicy,
 	};
+}
+
+/**
+ * Write a single-use preview of a wallet-funded top-up. Nothing moves.
+ * @returns {Promise<object>} the confirmation table the owner must approve
+ */
+export async function previewTopup({ userId, agentId, amountUsdc, source = 'owner' }) {
+	const quote = await quoteTopup({ userId, agentId, amountUsdc });
+	const [row] = await sql`
+		INSERT INTO inference_topups
+			(user_id, agent_id, source, status, amount_usdc, credits_usd, payer_address, pay_to, network, expires_at)
+		VALUES
+			(${userId}, ${quote.agent.id}, ${source}, 'previewed', ${quote.amount_usdc.toFixed(6)}, ${quote.credits_usd.toFixed(6)},
+			 ${quote.from}, ${quote.to}, 'mainnet', now() + make_interval(mins => ${PREVIEW_TTL_MINUTES}))
+		RETURNING id, expires_at
+	`;
+	return { preview_id: row.id, expires_at: row.expires_at, ...quote };
 }
 
 // ── execute ─────────────────────────────────────────────────────────────────

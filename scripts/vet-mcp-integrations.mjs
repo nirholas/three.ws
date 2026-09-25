@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Vet every entry in data/mcp-integrations.json against the live internet.
+// Vet every entry in data/mcp-catalog.json against the live internet.
 //
 // For each remote server: open an MCP session with no credentials. An open
 // server must answer initialize and tools/list (its tool count is recorded); a
@@ -13,11 +13,11 @@
 //   node scripts/vet-mcp-integrations.mjs --only=github,linear
 //
 // Network-bound on purpose, so it is not part of the offline build check
-// (scripts/check-mcp-integrations.mjs). Run it before adding or changing entries.
+// (scripts/check-mcp-catalog.mjs). Run it before adding or changing entries.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { CATALOG_PATH, validateCatalog } from '../api/_lib/mcp-connections/catalog.js';
-import { probeServer } from '../api/_lib/mcp-connections/client.js';
+import { discoverAuth, probeServer } from '../api/_lib/mcp-connections/client.js';
 
 const args = process.argv.slice(2);
 const write = args.includes('--write');
@@ -62,7 +62,13 @@ async function vet(entry) {
 		if (probe.auth === 'none') {
 			notes.push(`open, ${probe.tools.length} tools`);
 			if (write) entry.toolCount = probe.tools.length;
-			if (entry.auth.type === 'oauth') problems.push('catalog says oauth but the server is open');
+			// Some servers publish their tool list to anyone and demand sign-in only
+			// on tools/call. That is still an OAuth server, as long as it says so.
+			if (entry.auth.type === 'oauth') {
+				const found = await discoverAuth(entry.url);
+				if (found) notes.push(`tool list is public, calls need oauth (${found.registration})`);
+				else problems.push('catalog says oauth but the server is open and publishes no OAuth metadata');
+			}
 		} else if (probe.auth === 'oauth') {
 			notes.push(`oauth (${probe.registration})`);
 			if (entry.auth.type === 'none') problems.push('catalog says no auth but the server demands it');

@@ -43,10 +43,9 @@
 import { z } from 'zod';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { PUMP_FRONTEND_BASE, pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { calloutsToPosts, fetchPumpFunCallouts } from '../_lib/pump-callouts.js';
 
 const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const FETCH_TIMEOUT_MS = 8000;
 
 const bodySchema = z.object({
 	token: z.string().regex(SOLANA_MINT_RE, 'token must be a base58 Solana mint pubkey'),
@@ -54,50 +53,7 @@ const bodySchema = z.object({
 	extraTexts: z.array(z.string().max(2000)).max(200).optional(),
 });
 
-/**
- * Map raw pump.fun callout rows into the scorer's post shape, newest first.
- * Rows with no thesis carry no sentiment and are dropped rather than counted
- * as neutral, which would drag every score toward zero.
- *
- * @param {any[]} callouts
- * @param {number} limit
- * @returns {Array<{ id?: string, ts?: string, text: string, author?: string }>}
- */
-export function calloutsToPosts(callouts, limit) {
-	if (!Array.isArray(callouts)) return [];
-	return callouts
-		.map((c) => {
-			const at = Number(c?.createdAt);
-			const ms = Number.isFinite(at) && at > 0 ? at : null;
-			return {
-				id: c?.calloutId ? String(c.calloutId) : undefined,
-				ts: ms ? new Date(ms).toISOString() : undefined,
-				text: String(c?.thesis || '').trim().slice(0, 2000),
-				author: c?.username ? String(c.username) : undefined,
-				_at: ms ?? 0,
-			};
-		})
-		.filter((p) => p.text)
-		.sort((a, b) => b._at - a._at)
-		.slice(0, limit)
-		.map(({ _at, ...post }) => post);
-}
-
-/**
- * Fetch a coin's most recent pump.fun callouts. Never throws: an upstream
- * failure is reported as `{ error, url }` for the handler to surface.
- */
-async function fetchPumpFunCallouts(mint, limit) {
-	const url =
-		`${PUMP_FRONTEND_BASE}/callout/top/${encodeURIComponent(mint)}` +
-		`?limit=${limit}&sortBy=TIMESTAMP&sortOrder=DESC`;
-	const { ok, status, body } = await pumpFetchJson(url, { timeoutMs: FETCH_TIMEOUT_MS });
-	if (!ok) {
-		return { error: status ? `pump.fun returned ${status}` : 'pump.fun unreachable', url };
-	}
-	const rows = Array.isArray(body?.callouts) ? body.callouts : Array.isArray(body) ? body : [];
-	return { posts: calloutsToPosts(rows, limit), url };
-}
+export { calloutsToPosts };
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: false })) return;

@@ -135,18 +135,11 @@ export function toolResultToText(result, maxChars = 16_000) {
 }
 
 /**
- * Discover how a server wants to be authenticated, without credentials.
- * Returns { auth: 'none', tools } for an open server, { auth: 'oauth',
- * registration } for one that publishes RFC 9728 metadata, or { auth: 'bearer' }
- * for one that answers 401 with no discovery document.
+ * Read a server's OAuth discovery documents (RFC 9728 protected resource, then
+ * RFC 8414 authorization server) without credentials. Returns null when the
+ * server publishes neither.
  */
-export async function probeServer(url, { transport = 'streamable-http' } = {}) {
-	try {
-		const listed = await fetchTools({ url, transport });
-		return { auth: 'none', ...listed };
-	} catch (err) {
-		if (err.code !== 'needs_auth') throw err;
-	}
+export async function discoverAuth(url) {
 	const fetchFn = createSafeFetch();
 	let resource = null;
 	try {
@@ -161,11 +154,28 @@ export async function probeServer(url, { transport = 'streamable-http' } = {}) {
 	} catch {
 		metadata = null;
 	}
-	if (!resource && !metadata) return { auth: 'bearer', registration: null, authorizationServer: null };
+	if (!resource && !metadata) return null;
 	return {
-		auth: 'oauth',
 		registration: metadata?.registration_endpoint ? 'dynamic' : 'platform',
 		authorizationServer: asUrl,
 		scopes: resource?.scopes_supported || metadata?.scopes_supported || [],
 	};
+}
+
+/**
+ * Discover how a server wants to be authenticated, without credentials.
+ * Returns { auth: 'none', tools } for an open server, { auth: 'oauth',
+ * registration } for one that publishes RFC 9728 metadata, or { auth: 'bearer' }
+ * for one that answers 401 with no discovery document.
+ */
+export async function probeServer(url, { transport = 'streamable-http' } = {}) {
+	try {
+		const listed = await fetchTools({ url, transport });
+		return { auth: 'none', ...listed };
+	} catch (err) {
+		if (err.code !== 'needs_auth') throw err;
+	}
+	const found = await discoverAuth(url);
+	if (!found) return { auth: 'bearer', registration: null, authorizationServer: null };
+	return { auth: 'oauth', ...found };
 }

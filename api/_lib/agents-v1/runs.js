@@ -25,6 +25,7 @@ import { providerChainFor } from '../llm-tool-chain.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
 import { debitCredits } from '../credits.js';
+import { assertAgentBudget, InferenceBillingError } from '../inference-billing.js';
 import { AGENT_SYSTEM_NOTE, createAgentLoop, finalAnswer, initialLoopState, loopFinished } from '../agent-loop.js';
 
 const LEASE_SECONDS = 120;
@@ -305,6 +306,15 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 		});
 	}
 
+	// A run that can spend on paid lanes is held to its agent's inference
+	// budget before every model step, the same budget chat completions and the
+	// strategy loop answer to. The first refusal in a window stops the agent's
+	// automations and notifies the owner (assertAgentBudget latches it).
+	if (toNumber(run.budget_credits_usd) > 0) {
+		const refused = await agentBudgetRefusal(run);
+		if (refused) return finalize(run, 'budget_exhausted', refused);
+	}
+
 	const events = [];
 	const { schemas, handlers } = toolsFor(run);
 	const loop = createAgentLoop({
@@ -346,10 +356,11 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 				userId: run.user_id,
 				amountUsd: costUsd,
 				action: 'agent_run_step',
-				refType: 'agent_run',
-				refId: run.id,
+				// Booked against the agent, so its inference budget counts run spend.
+				refType: 'agent',
+				refId: String(run.agent_id),
 				idempotencyKey: `agent_run:${run.id}:${run.step_count + 1}`,
-				meta: { agentId: run.agent_id },
+				meta: { agentId: run.agent_id, runId: run.id },
 			});
 			spent += costUsd;
 		} catch (err) {
@@ -380,6 +391,21 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 		return finalize(row, 'completed', { result: finalAnswer(next.state) || 'Reached the step limit before a final answer.' });
 	}
 	return row;
+}
+
+/** The run's refusal when its agent's inference budget is used up, else null. */
+async function agentBudgetRefusal(run) {
+	const [agent] = await sql`SELECT id, name, meta FROM agent_identities WHERE id = ${run.agent_id} LIMIT 1`;
+	if (!agent) return null;
+	try {
+		await assertAgentBudget({ userId: run.user_id, agent });
+		return null;
+	} catch (err) {
+		if (err instanceof InferenceBillingError) {
+			return { error: err.message, note: err.code };
+		}
+		throw err;
+	}
 }
 
 async function persistEvents(run, events) {

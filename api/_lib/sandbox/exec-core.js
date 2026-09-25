@@ -170,7 +170,8 @@ function sampleProc(pid) {
 	}
 }
 
-class CappedBuffer {
+/** Keep the first 40% and the last 60% of a stream up to `cap` bytes. */
+export class CappedBuffer {
 	constructor(cap) {
 		this.cap = cap;
 		this.head = [];
@@ -220,8 +221,10 @@ class CappedBuffer {
  * @returns {Promise<{ exitCode: number|null, signal: string|null, stdout: object, stderr: object,
  *   timedOut: boolean, killed: boolean, outputFlood: boolean, wallMs: number, cpuMs: number|null, peakMemoryMb: number|null }>}
  */
-export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, signal }) {
-	const wrapped = withLimits(argv, { limits, nproc, language });
+export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, signal, hostLimits = true, onKill = null }) {
+	// hostLimits=false: the argv is a launcher (the docker CLI) whose own limits
+	// are enforced elsewhere; kernel rlimits on the launcher would only break it.
+	const wrapped = hostLimits ? withLimits(argv, { limits, nproc, language }) : argv;
 	const started = Date.now();
 	return new Promise((resolve) => {
 		const child = spawn(wrapped[0], wrapped.slice(1), {
@@ -242,6 +245,7 @@ export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, 
 		let done = false;
 
 		const killTree = () => {
+			if (onKill) Promise.resolve().then(onKill).catch(() => {});
 			try {
 				process.kill(-child.pid, 'SIGKILL');
 			} catch {
@@ -310,45 +314,56 @@ export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, 
 }
 
 /**
- * Serve the bridge on a unix socket. One JSON object per line in each
- * direction; requests carry an `id` the response echoes, so a client may keep
- * several calls in flight on one connection.
- * @param {string} socketPath
+ * Speak the bridge protocol on one duplex stream: one JSON object per line in
+ * each direction; requests carry an `id` the response echoes, so a client may
+ * keep several calls in flight on one connection. Used for the local unix
+ * socket and for a socket forwarded over ssh.
+ * @param {import('node:stream').Duplex} conn
  * @param {(msg: object) => Promise<object>} handle  resolves to the response body
+ */
+export function handleBridgeStream(conn, handle) {
+	let buf = '';
+	conn.setEncoding?.('utf8');
+	const send = (obj) => {
+		if (!conn.destroyed) conn.write(`${JSON.stringify(obj)}\n`);
+	};
+	conn.on('data', (chunk) => {
+		buf += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+		if (buf.length > MAX_BRIDGE_LINE) {
+			buf = '';
+			send({ ok: false, error: { code: 'too_large', message: 'bridge request larger than 8 MB' } });
+			conn.end();
+			return;
+		}
+		let nl;
+		while ((nl = buf.indexOf('\n')) >= 0) {
+			const line = buf.slice(0, nl);
+			buf = buf.slice(nl + 1);
+			if (!line.trim()) continue;
+			let msg;
+			try {
+				msg = JSON.parse(line);
+			} catch {
+				send({ ok: false, error: { code: 'bad_json', message: 'bridge request is not JSON' } });
+				continue;
+			}
+			Promise.resolve()
+				.then(() => handle(msg))
+				.catch((e) => ({ ok: false, error: { code: e?.code || 'bridge_error', message: String(e?.message || e).slice(0, 500) } }))
+				.then((body) => send({ id: msg.id ?? null, ...body }));
+		}
+	});
+	conn.on('error', () => {});
+}
+
+/**
+ * Serve the bridge on a unix socket (see handleBridgeStream for the protocol).
+ * @param {string} socketPath
+ * @param {(msg: object) => Promise<object>} handle
  */
 export async function serveBridge(socketPath, handle) {
 	await fs.rm(socketPath, { force: true });
-	const server = net.createServer((conn) => {
-		let buf = '';
-		conn.setEncoding('utf8');
-		conn.on('data', (chunk) => {
-			buf += chunk;
-			if (buf.length > MAX_BRIDGE_LINE) {
-				conn.end(`${JSON.stringify({ ok: false, error: { code: 'too_large', message: 'bridge request larger than 8 MB' } })}\n`);
-				return;
-			}
-			let nl;
-			while ((nl = buf.indexOf('\n')) >= 0) {
-				const line = buf.slice(0, nl);
-				buf = buf.slice(nl + 1);
-				if (!line.trim()) continue;
-				let msg;
-				try {
-					msg = JSON.parse(line);
-				} catch {
-					conn.write(`${JSON.stringify({ ok: false, error: { code: 'bad_json', message: 'bridge request is not JSON' } })}\n`);
-					continue;
-				}
-				Promise.resolve()
-					.then(() => handle(msg))
-					.catch((e) => ({ ok: false, error: { code: e?.code || 'bridge_error', message: String(e?.message || e).slice(0, 500) } }))
-					.then((body) => {
-						if (!conn.destroyed) conn.write(`${JSON.stringify({ id: msg.id ?? null, ...body })}\n`);
-					});
-			}
-		});
-		conn.on('error', () => {});
-	});
+	const server = net.createServer((conn) => handleBridgeStream(conn, handle));
 	await new Promise((resolve, reject) => {
 		server.once('error', reject);
 		server.listen(socketPath, resolve);
