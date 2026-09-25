@@ -1,0 +1,124 @@
+# three.ws Desktop release build: Linux (.AppImage, .deb) and Windows (NSIS
+# installer, portable .exe) on Cloud Build, published to the release bucket
+# that the three.ws load balancer serves at https://three.ws/releases/desktop/.
+# macOS builds on a Mac (apps/desktop/scripts/release-mac.sh) because a
+# universal binary and notarization need Apple's toolchain, and merges into
+# the same release.json.
+#
+# Submit from the repo root. Publishing is owner-gated: the default
+# (_PUBLISH=0) builds, writes release.json and stages everything under
+# staging/<version>/<build id>/ without touching the live feed.
+#
+#   gcloud builds submit --config apps/desktop/cloudbuild.yaml \
+#     --ignore-file apps/desktop/.gcloudignore \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions _PUBLISH=1
+#
+# Windows signing: when Secret Manager holds desktop-windows-csc-link (the
+# .pfx, base64) and desktop-windows-csc-password, the installer is signed.
+# Without them the build is complete and unsigned, and /desktop shows the
+# SmartScreen "Run anyway" steps. See docs/ops/desktop-release.md.
+
+steps:
+  - id: prepare
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        mkdir -p /workspace/.release
+        if gcloud secrets versions access latest --secret=desktop-windows-csc-link --project=$PROJECT_ID > /workspace/.release/win.pfx.b64 2>/dev/null \
+          && gcloud secrets versions access latest --secret=desktop-windows-csc-password --project=$PROJECT_ID > /workspace/.release/win.pass 2>/dev/null; then
+          echo 1 > /workspace/.release/win.signed
+          echo "Windows certificate found: the installer will be signed."
+        else
+          rm -f /workspace/.release/win.pfx.b64 /workspace/.release/win.pass
+          echo 0 > /workspace/.release/win.signed
+          echo "No Windows certificate in Secret Manager: building unsigned."
+        fi
+        if ! gcloud storage cp gs://${_BUCKET}/releases/desktop/release.json /workspace/.release/published.json 2>/dev/null; then
+          echo '{}' > /workspace/.release/published.json
+          echo "No published release.json yet: this is the first release."
+        fi
+
+  - id: install
+    name: electronuserland/builder:20-wine
+    dir: apps/desktop
+    entrypoint: bash
+    args: ['-c', 'npm ci --no-audit --no-fund']
+
+  - id: linux
+    name: electronuserland/builder:20-wine
+    dir: apps/desktop
+    entrypoint: bash
+    args: ['-c', 'npx electron-builder --config electron-builder.config.cjs --linux --publish never']
+
+  - id: windows
+    name: electronuserland/builder:20-wine
+    dir: apps/desktop
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "$$(cat /workspace/.release/win.signed)" = "1" ]; then
+          export CSC_LINK="$$(cat /workspace/.release/win.pfx.b64)"
+          export CSC_KEY_PASSWORD="$$(cat /workspace/.release/win.pass)"
+        else
+          export CSC_IDENTITY_AUTO_DISCOVERY=false
+        fi
+        npx electron-builder --config electron-builder.config.cjs --win --publish never
+
+  - id: manifest
+    name: electronuserland/builder:20-wine
+    dir: apps/desktop
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        rm -f /workspace/.release/win.pfx.b64 /workspace/.release/win.pass
+        THREE_WS_SIGNED_WIN="$$(cat /workspace/.release/win.signed)" \
+          node scripts/release-manifest.mjs --merge /workspace/.release/published.json
+        node -e "process.stdout.write(require('./package.json').version)" > /workspace/.release/version
+
+  - id: publish
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    dir: apps/desktop/dist
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        shopt -s nullglob
+        VERSION="$$(cat /workspace/.release/version)"
+        BINARIES=(*.AppImage *.deb *.exe *.blockmap)
+        FEED_FILES=(latest*.yml release.json)
+        STAGE="gs://${_BUCKET}/staging/$${VERSION}/$BUILD_ID"
+        gcloud storage cp "$${BINARIES[@]}" "$${FEED_FILES[@]}" "$$STAGE/"
+        echo "Staged $${#BINARIES[@]} binaries for $$VERSION at $$STAGE/"
+        if [ "${_PUBLISH}" != "1" ]; then
+          echo "Dry run (_PUBLISH=${_PUBLISH}): the live feed is unchanged. Publish with --substitutions _PUBLISH=1."
+          exit 0
+        fi
+        LIVE="gs://${_BUCKET}/releases/desktop"
+        # Binaries first, versioned names, cached forever; the feed files that
+        # point at them last, never cached, so no client sees a feed entry
+        # before its file exists.
+        gcloud storage cp "$${BINARIES[@]}" "$$LIVE/" --cache-control="public, max-age=31536000, immutable"
+        gcloud storage cp release.json "$$LIVE/versions/$${VERSION}.json" --cache-control="public, max-age=300"
+        gcloud storage cp "$${FEED_FILES[@]}" "$$LIVE/" --cache-control="no-cache, max-age=0"
+        echo "Published three.ws Desktop $$VERSION to https://three.ws/releases/desktop/"
+
+substitutions:
+  _BUCKET: three-ws-desktop-releases
+  _PUBLISH: '0'
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+timeout: 3600s
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+  diskSizeGb: 100
+tags: ['three-ws-desktop-release']

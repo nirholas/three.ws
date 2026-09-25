@@ -6,17 +6,26 @@
 
 import { requestJson } from './http.js';
 
-// Offered pre-selected. The two keyless servers are always offered too, since
-// they work with no account at all.
+// The unified endpoint mounts every tool of every hosted server behind one
+// OAuth grant, so one client entry is all a person needs. When the directory
+// lists it, it is the only server offered pre-selected: picking a legacy
+// server as well would put the same tools in the client twice.
+export const UNIFIED_PATH = '/mcp';
+
+// Offered pre-selected against a directory that predates the unified endpoint.
+// The keyless servers are always offered too, since they need no account.
 export const DEFAULT_PATHS = ['/api/mcp', '/api/mcp-agent', '/api/mcp-3d'];
 
 /**
- * The config key a server gets in every client: /api/mcp -> three-ws,
- * /api/mcp-agent -> three-ws-agent, /api/pump-fun-mcp -> three-ws-pump-fun.
+ * The config key a server gets in every client: /mcp -> three-ws (the unified
+ * endpoint), /api/mcp -> three-ws-main, /api/mcp-agent -> three-ws-agent,
+ * /api/pump-fun-mcp -> three-ws-pump-fun.
  */
 export function slugForPath(pathname) {
+	if (pathname === UNIFIED_PATH) return 'three-ws';
+	if (pathname === '/api/mcp') return 'three-ws-main';
 	const rest = String(pathname)
-		.replace(/^\/api\//, '')
+		.replace(/^\/(api\/)?/, '')
 		.split('-')
 		.filter((part) => part && part !== 'mcp')
 		.join('-');
@@ -30,11 +39,13 @@ export function authRequired(authText) {
 /** Normalize the live directory into the CLI's server records, rebased onto `origin`. */
 export function hostedServers(directory, origin) {
 	const list = Array.isArray(directory?.servers) ? directory.servers : [];
-	return list
-		.filter((s) => s?.endpoint && (s.transport || 'streamable-http') === 'streamable-http')
+	const streamable = list.filter((s) => s?.endpoint && (s.transport || 'streamable-http') === 'streamable-http');
+	const hasUnified = streamable.some((s) => new URL(s.endpoint).pathname === UNIFIED_PATH);
+	return streamable
 		.map((s) => {
 			const pathname = new URL(s.endpoint).pathname;
 			const needsAuth = authRequired(s.auth);
+			const defaultSelected = hasUnified ? pathname === UNIFIED_PATH : DEFAULT_PATHS.includes(pathname) || !needsAuth;
 			return {
 				slug: slugForPath(pathname),
 				name: s.name,
@@ -42,9 +53,11 @@ export function hostedServers(directory, origin) {
 				url: `${origin}${pathname}`,
 				description: s.description || '',
 				auth: needsAuth ? 'required' : 'none',
-				defaultSelected: DEFAULT_PATHS.includes(pathname) || !needsAuth,
+				unified: pathname === UNIFIED_PATH,
+				defaultSelected,
 			};
-		});
+		})
+		.sort((a, b) => Number(b.unified) - Number(a.unified));
 }
 
 /** The stdio packages from the catalog, each run with `npx -y <package>`. */

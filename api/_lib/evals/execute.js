@@ -9,8 +9,9 @@
 //     configuration's tools;
 //   • sandbox tools, whose handler returns the preview declared in the suite
 //     and never executes anything;
-//   • preview-only mode (replay), in which ONLY the read-only registry runs and
-//     every other tool call is blocked before it reaches a handler;
+//   • preview-only mode (replay), in which ONLY the read-only registry runs,
+//     tools with side effects answer with a sandbox preview, and any other
+//     tool call is blocked before it reaches a handler;
 //   • a trace of every model call, tool call, block and result, with tokens,
 //     cost and latency, which the checks score and the report keeps.
 
@@ -32,7 +33,8 @@ function preview(value) {
 	return s.length > RESULT_PREVIEW_CHARS ? `${s.slice(0, RESULT_PREVIEW_CHARS)}…` : s;
 }
 
-function sandboxHandler(tool) {
+/** The handler a sandbox tool gets: it echoes the request and its preview, and executes nothing. */
+export function sandboxHandler(tool) {
 	return async (args) => ({ preview: true, executed: false, tool: tool.name, request: args ?? {}, ...tool.preview });
 }
 
@@ -50,21 +52,22 @@ export function buildToolSurface({ allowed, sandbox = [], previewOnly = false })
 		schemas.push({ type: 'function', function: { name, description: t.description, parameters: t.parameters } });
 		handlers[name] = t.handler;
 	}
-	if (!previewOnly) {
-		for (const tool of sandbox) {
-			if (!allowed.includes(tool.name)) continue;
-			schemas.push({
-				type: 'function',
-				function: { name: tool.name, description: `[preview] ${tool.description}`, parameters: tool.parameters },
-			});
-			handlers[tool.name] = sandboxHandler(tool);
-			sandboxNames.add(tool.name);
-		}
+	for (const tool of sandbox) {
+		if (!allowed.includes(tool.name) || READ_ONLY_TOOLS.has(tool.name)) continue;
+		schemas.push({
+			type: 'function',
+			function: { name: tool.name, description: `[preview] ${tool.description}`, parameters: tool.parameters },
+		});
+		handlers[tool.name] = sandboxHandler(tool);
+		sandboxNames.add(tool.name);
 	}
 	// Belt and braces for preview-only: nothing outside the read-only registry
-	// can hold a handler, whatever the caller passed.
+	// can hold a handler other than the sandbox preview, whatever the caller
+	// passed.
 	if (previewOnly) {
-		for (const name of Object.keys(handlers)) if (!READ_ONLY_TOOLS.has(name)) delete handlers[name];
+		for (const name of Object.keys(handlers)) {
+			if (!READ_ONLY_TOOLS.has(name) && !sandboxNames.has(name)) delete handlers[name];
+		}
 	}
 	return { schemas, handlers, sandboxNames };
 }
@@ -86,7 +89,7 @@ export function systemMessages(systemPrompt, { sandboxed = false } = {}) {
  * @param {object} o.rung              the pinned provider rung
  * @param {string[]} o.allowed         tool names the model may call
  * @param {object[]} [o.sandbox]       sandbox tool definitions
- * @param {boolean} [o.previewOnly]    only read-only registry tools may execute
+ * @param {boolean} [o.previewOnly]    only read-only registry tools execute; sandbox tools preview; all else is blocked
  * @param {number} [o.temperature]
  * @param {number} [o.maxToolRounds]
  * @param {number} [o.deadlineMs]
@@ -118,7 +121,9 @@ export async function executeConversation({
 		maxToolRounds,
 		temperature,
 		preflight: async (name) => {
-			if (previewOnly && !READ_ONLY_TOOLS.has(name)) return `Preview-only replay: ${name} would have run here and was not executed.`;
+			if (previewOnly && !READ_ONLY_TOOLS.has(name) && !sandboxNames.has(name)) {
+				return `Preview-only replay: ${name} would have run here and was not executed.`;
+			}
 			return null;
 		},
 		onEvent: (e) => {

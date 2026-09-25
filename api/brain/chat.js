@@ -37,6 +37,7 @@ import {
 } from '../_lib/vertex-gemini.js';
 import { recordEvent } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
+import { meterFreeModel, FreeTierExhaustedError, freeTierErrorBody, retryAfterSeconds } from '../_lib/free-tier.js';
 import { openrouterUsageFetch } from '../_lib/openrouter-usage.js';
 
 const WATSONX_HEADERS_TIMEOUT_MS = 45_000;
@@ -1284,8 +1285,31 @@ export default wrap(async function handler(req, res) {
 	const system = typeof body.system === 'string' ? body.system.slice(0, 8000) : undefined;
 	const maxTokens = resolveMaxTokens(body.maxTokens, providerKey, plan.spec.maxOutput);
 
+	// A free open model costs the caller nothing per message but draws one unit
+	// from the daily free-tier allowance (api/_lib/free-tier.js); a spent
+	// allowance is the same 429 body every message surface answers with.
+	const freeTier = await meterFreeTurn(res, providerKey, { userId, ip: userId ? null : clientIp(req) });
+	if (freeTier === false) return;
+	if (freeTier) res.setHeader('x-free-tier-remaining', String(freeTier.remaining));
+
 	await streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId });
 });
+
+/**
+ * Draw one free-tier unit when the provider key is a free open model. Returns
+ * the allowance after the draw, null for a model the free tier does not cover,
+ * or false after answering 429 on a spent allowance. Exported for tests.
+ */
+export async function meterFreeTurn(res, providerKey, who) {
+	try {
+		return await meterFreeModel(providerKey, who);
+	} catch (err) {
+		if (!(err instanceof FreeTierExhaustedError)) throw err;
+		res.setHeader('Retry-After', String(retryAfterSeconds(err.resetAt)));
+		error(res, 429, 'free_tier_exhausted', err.message, freeTierErrorBody(err));
+		return false;
+	}
+}
 
 /**
  * Output-token budget for one /brain turn, clamped to what the model can serve.

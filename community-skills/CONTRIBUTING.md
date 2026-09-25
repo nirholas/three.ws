@@ -4,7 +4,7 @@ Thanks for writing one. A good skill makes an agent reliably better at one job, 
 
 ## 1. Fork and add a folder
 
-Fork this repository (the small mirror, [nirholas/three-ws-community-skills](https://github.com/nirholas/three-ws-community-skills), or the canonical [nirholas/three.ws](https://github.com/nirholas/three.ws) under `community-skills/`). Add `skills/<your-slug>/` with:
+Fork this repository (the small mirror, [nirholas/three-ws-skills](https://github.com/nirholas/three-ws-skills), or the canonical [nirholas/three.ws](https://github.com/nirholas/three.ws) under `community-skills/`). Add `skills/<your-slug>/` with:
 
 - `SKILL.md`: frontmatter `name` (exactly the folder name) and `description`, then the instructions.
 - `metadata.json`: `name`, `description`, `author`, `tags` (1 to 8, lowercase kebab-case), `version` (semver), optional `license` (SPDX id, MIT by default).

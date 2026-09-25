@@ -154,8 +154,13 @@ export async function sweepOldWallet({ transfer, agent, destination, connection 
 		// Keys already swapped on an earlier run; the sweep finished before that.
 		return transfer.rotation?.sweep || { swept: [], stranded: [], sol_lamports: '0' };
 	}
+	// custodyOverride: the seller's own listing and acceptance authorized this
+	// one sweep, like the owner-initiated rotation after a key export. Listing
+	// is refused outside platform custody, but an owner who switched signing
+	// mode after listing must not strand the buyer's paid-for transfer.
 	const oldKp = await recoverSolanaAgentKeypair(agent.meta.encrypted_solana_secret, {
 		agentId: agent.id, userId: transfer.seller_user_id, reason: 'marketplace_sweep', meta: { transfer_id: transfer.id },
+		custodyOverride: true,
 	});
 	if (oldKp.publicKey.toBase58() !== oldAddress) {
 		throw typed(500, 'wallet_key_mismatch', 'the stored key does not match the agent wallet address');

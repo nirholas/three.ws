@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Keep community-skills/ and its public mirror (nirholas/three-ws-community-skills)
+ * Keep community-skills/ and its public mirror (nirholas/three-ws-skills)
  * in step. Canonical source is this monorepo; outsiders open pull requests on
  * the small mirror, which is easier to fork than a 60-directory monorepo.
  *

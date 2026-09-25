@@ -788,6 +788,7 @@ const appConfig = {
 				monitor: resolve(__dirname, 'pages/monitor.html'),
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
 				'agent-cards': resolve(__dirname, 'pages/agent-cards.html'),
+				'agent-mail': resolve(__dirname, 'pages/agent-mail.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
 				guardian: resolve(__dirname, 'pages/guardian.html'),
 				launches: resolve(__dirname, 'pages/launches.html'),
@@ -2279,6 +2280,9 @@ const appConfig = {
 					// /agents/:id/cards and /agent-cards → Agent Cards (gift + prepaid cards).
 					else if (!filePath && /^\/(agents\/[^/.]+\/cards|agent-cards)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-cards.html');
+					// /agents/:id/mail and /agent-mail → Agent Mail (the agent's inbox).
+					else if (!filePath && /^\/(agents\/[^/.]+\/mail|agent-mail)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-mail.html');
 					// /agents/:id/classic → the preserved pre-redesign profile layout
 					else if (!filePath && /^\/agents?\/[^/.]+\/classic\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-detail-classic.html');

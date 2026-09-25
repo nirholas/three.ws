@@ -17,6 +17,7 @@ import {
 	INTENT_TTL_MINUTES, QUOTED_INTENT_TTL_MINUTES,
 	planPriceUsd, threePlanDiscountBps,
 } from '../_config.js';
+import { forgetUserPlan } from '../../_lib/plans.js';
 
 const SOLANA_RPC_MAINNET = process.env.SOLANA_RPC_URL        || 'https://api.mainnet-beta.solana.com';
 const SOLANA_RPC_DEVNET  = process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
@@ -253,6 +254,8 @@ async function handleConfirm(req, res) {
 		sql`update users set plan=${intent.plan} where id=${user.id}`,
 	]);
 	if (!claimed?.[0]) return error(res, 409, 'already_confirmed', 'payment already confirmed');
+	// The new plan's limits and rate limit apply from the very next request.
+	forgetUserPlan(user.id);
 	queueMicrotask(() => sendSubscriptionConfirmEmail({ to: user.email, plan: intent.plan, chain: `Solana ${network}`, txId: tx_signature }).catch(() => {}));
 	return json(res, 200, { ok: true, plan: intent.plan, asset, active_until: activeUntil.toISOString(), tx_signature });
 }

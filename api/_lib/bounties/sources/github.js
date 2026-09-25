@@ -8,6 +8,7 @@
 // search quota from 10 to 30 requests a minute; the hourly refresh needs two.
 
 import { fetchUpstreamJson } from '../../upstream-fetch.js';
+import { cacheGet, cacheSet } from '../../cache.js';
 import { markdownToText, parseUsdLabel, tagList } from '../normalize.js';
 
 export const id = 'github';
@@ -19,6 +20,17 @@ const BOUNTY_LABEL = '💎 Bounty';
 const REWARDED_LABEL = '💰 Rewarded';
 const PAGES = 2;
 const PER_PAGE = 50;
+
+// The raw label search is dominated by freshly created repositories that open
+// hundreds of "bounty" issues to farm agent pull requests. A repository has to
+// look like a real project before its bounties reach the feed: some age, some
+// community, not archived, and only a handful of listings each so one farm can
+// never fill the page.
+export const REPO_MIN_STARS = 25;
+export const REPO_MIN_AGE_DAYS = 90;
+export const PER_REPO_CAP = 5;
+const REPO_META_TTL_S = 24 * 60 * 60;
+const REPO_LOOKUPS_PER_REFRESH = 25;
 
 // Labels that describe the work rather than the money or triage state.
 const NOISE_LABELS = new Set(['bounty', 'help wanted', 'good first issue', 'enhancement', 'bug', 'feature', 'documentation']);
@@ -77,6 +89,63 @@ export function mapIssue(issue) {
 	};
 }
 
+/**
+ * Why a repository fails the quality gate, or null when it passes. Pure.
+ * @param {{ stars: number, created_at: string|null, archived: boolean }|null} meta
+ */
+export function repoRejection(meta, now = Date.now()) {
+	if (!meta) return 'unknown';
+	if (meta.archived) return 'archived';
+	if (!(meta.stars >= REPO_MIN_STARS)) return 'few_stars';
+	const created = meta.created_at ? Date.parse(meta.created_at) : NaN;
+	if (!Number.isFinite(created) || now - created < REPO_MIN_AGE_DAYS * 86_400_000) return 'too_new';
+	return null;
+}
+
+/**
+ * Keep listings from repositories that pass the gate, at most PER_REPO_CAP per
+ * repository (the most recently updated first, the order search returned). Pure.
+ */
+export function applyRepoGate(listings, metaByRepo, now = Date.now()) {
+	const perRepo = new Map();
+	const out = [];
+	for (const l of listings) {
+		const repo = l.raw?.repo;
+		if (!repo || repoRejection(metaByRepo.get(repo) || null, now)) continue;
+		const n = perRepo.get(repo) || 0;
+		if (n >= PER_REPO_CAP) continue;
+		perRepo.set(repo, n + 1);
+		out.push(l);
+	}
+	return out;
+}
+
+async function repoMeta(repo) {
+	const key = `bounties:gh-repo:${repo}`;
+	const hit = await cacheGet(key).catch(() => null);
+	if (hit) return hit;
+	const r = await fetchUpstreamJson(`https://api.github.com/repos/${repo}`, { headers: authHeaders() }, { name: 'bounties-github', timeoutMs: 8_000, label: 'github repo' });
+	const meta = { stars: Number(r?.stargazers_count) || 0, created_at: r?.created_at || null, archived: Boolean(r?.archived) };
+	await cacheSet(key, meta, REPO_META_TTL_S).catch(() => {});
+	return meta;
+}
+
+/** Repository metadata for every repo in `listings`, bounded per refresh. */
+async function loadRepoMeta(listings) {
+	const repos = [...new Set(listings.map((l) => l.raw?.repo).filter(Boolean))].slice(0, REPO_LOOKUPS_PER_REFRESH);
+	const out = new Map();
+	await Promise.all(
+		repos.map(async (repo) => {
+			try {
+				out.set(repo, await repoMeta(repo));
+			} catch {
+				// An unreadable repository is left out of this refresh, never let through.
+			}
+		}),
+	);
+	return out;
+}
+
 export async function fetchListings() {
 	const q = encodeURIComponent(`label:"${BOUNTY_LABEL}" -label:"${REWARDED_LABEL}" state:open is:issue`);
 	const out = [];
@@ -90,7 +159,7 @@ export async function fetchListings() {
 		}
 		if (items.length < PER_PAGE) break;
 	}
-	return out;
+	return applyRepoGate(out, await loadRepoMeta(out));
 }
 
 /**

@@ -2,13 +2,19 @@
 // Prices are set in USD. On-chain settlement is USDC (6 decimals on EVM and
 // Solana), native SOL, or $THREE (Solana-only; see PLAN_ASSETS below).
 
-export const PLANS = {
-	// Single source of truth for plan prices — pages/pricing.html and
-	// pages/x-pricing.html render what checkout quotes from here.
-	pro:        { label: 'Pro',        price_usd: 49,  duration_days: 30 },
-	team:       { label: 'Team',       price_usd: 79,  duration_days: 30 },
-	enterprise: { label: 'Enterprise', price_usd: 299, duration_days: 30 },
-};
+import { PLANS as PLAN_ROWS, BILLING_PERIOD_DAYS } from '../_lib/plans.js';
+
+// Purchasable plans, priced from data/plans.json (the single source the
+// /pricing page, the docs and the quota checks also read), so checkout always
+// quotes the number the pricing page shows.
+export const PLANS = Object.freeze(
+	Object.fromEntries(
+		PLAN_ROWS.filter((p) => p.purchasable).map((p) => [
+			p.id,
+			Object.freeze({ label: p.name, price_usd: p.price_usd, duration_days: BILLING_PERIOD_DAYS }),
+		]),
+	),
+);
 
 // Assets accepted for plan checkout on Solana. USDC settles 1:1 with the USD
 // price; SOL and $THREE are quoted at the live price when the checkout session

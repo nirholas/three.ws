@@ -16,15 +16,10 @@
 			"unit": "automations",
 			"description": "Triggers and wallet rules across all your agents: schedules, price and balance triggers, tip and launch watchers."
 		},
-		"agent_calls_per_day": {
-			"label": "Free agent calls a day",
-			"unit": "calls / UTC day",
-			"description": "Agent chat messages and run steps on the free-first model chain before credits are drawn."
-		},
 		"free_model_messages_per_day": {
 			"label": "Free-model messages a day",
 			"unit": "messages / UTC day",
-			"description": "Messages on the free open models of the model roster, at no charge."
+			"description": "Agent and chat messages on the free open models, and on the platform's free-first chain when no model is named, at no charge. Resets at 00:00 UTC."
 		},
 		"community_skills": {
 			"label": "Community skills",
@@ -64,7 +59,6 @@
 			"limits": {
 				"hosted_agents": 1,
 				"automations": 3,
-				"agent_calls_per_day": 50,
 				"free_model_messages_per_day": 100,
 				"community_skills": null,
 				"max_avatars": 10,
@@ -94,7 +88,6 @@
 			"limits": {
 				"hosted_agents": 25,
 				"automations": 50,
-				"agent_calls_per_day": 500,
 				"free_model_messages_per_day": 1000,
 				"community_skills": null,
 				"max_avatars": 500,
@@ -122,7 +115,6 @@
 			"limits": {
 				"hosted_agents": 100,
 				"automations": 250,
-				"agent_calls_per_day": 2500,
 				"free_model_messages_per_day": 5000,
 				"community_skills": null,
 				"max_avatars": 5000,
@@ -149,7 +141,6 @@
 			"limits": {
 				"hosted_agents": null,
 				"automations": null,
-				"agent_calls_per_day": 10000,
 				"free_model_messages_per_day": 20000,
 				"community_skills": null,
 				"max_avatars": 100000,

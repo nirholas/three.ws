@@ -26,6 +26,7 @@ export const BADGES = Object.freeze({
 	FIRST_CREATION: 'first_creation',
 	FIRST_REMIX_RECEIVED: 'first_remix_received',
 	STREAK_7: 'streak_7',
+	COPY_PATH_COMPLETE: 'copy_path_complete',
 	TOP10: (metric) => `top10_${metric}`,
 });
 
@@ -44,6 +45,11 @@ export const BADGE_META = {
 		label: '7-Day Streak',
 		description: 'Showed up on three.ws seven days running.',
 		icon: '🔥',
+	},
+	copy_path_complete: {
+		label: 'First Copy',
+		description: 'Watched a verified trade, ghost-copied a leader, placed a real trade, and started a guarded copy.',
+		icon: '🧭',
 	},
 };
 

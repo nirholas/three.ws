@@ -692,10 +692,18 @@ async function readModels() {
 			price_usd_per_mtok: free ? [0, 0] : modelPrice(id),
 		};
 	});
+	// The full picker catalog (context, tool calling, per-model health from the
+	// last roster probe) and the daily free allowance, the same payload
+	// GET /api/v1/models carries.
+	const { publicModelCatalog, freeTierAllowance } = await import('../_lib/model-catalog.js');
+	const [catalog, freeTier] = await Promise.all([publicModelCatalog({ health: 'cached' }), freeTierAllowance()]);
 	return {
 		agent_models: agentModels,
 		chat_models: chatModels,
-		note: 'agent_models ids are what an agent brain accepts (create_agent model argument). Prices are USD per million tokens, [input, output]; free models are [0, 0], and null means the model is not metered by list price.',
+		models: catalog.models,
+		health_checked_at: catalog.healthCheckedAt,
+		free_tier: freeTier,
+		note: 'agent_models ids are what an agent brain accepts (create_agent model argument). Prices are USD per million tokens, [input, output]; free models are [0, 0], and null means the model is not metered by list price. `models` adds context, tool calling (a model without tools can chat but cannot drive a run) and live health; `free_tier` is the daily allowance free models draw on.',
 	};
 }
 
@@ -946,7 +954,7 @@ export const RESOURCES = [
 		uri: 'three://models',
 		name: 'models',
 		title: 'Model catalog',
-		description: 'Every model an agent brain can run, with availability, free-tier status and USD price per million input and output tokens.',
+		description: 'Every model an agent brain can run, with availability, free-tier status, USD price per million input and output tokens, context window, tool calling, live health, and the daily free allowance.',
 		access: 'public',
 		read: readModels,
 	},

@@ -331,6 +331,10 @@
 			"dest": "/agent-cards.html"
 		},
 		{
+			"src": "/agent-mail/?",
+			"dest": "/agent-mail.html"
+		},
+		{
 			"src": "/wallet",
 			"dest": "/wallet.html"
 		},
@@ -737,6 +741,10 @@
 		{
 			"src": "/api/v1/agents/([^/]+)/cards(/.*)?",
 			"dest": "/api/v1/agent-cards?id=$1"
+		},
+		{
+			"src": "/api/v1/agents/([^/]+)/mail(/.*)?",
+			"dest": "/api/v1/agent-mail?id=$1"
 		},
 		{
 			"src": "/api/agents/([^/]+)/custom-skills/([^/]+)",
@@ -5165,6 +5173,10 @@
 		{
 			"src": "/agents/[^/.]+/cards/?",
 			"dest": "/agent-cards.html"
+		},
+		{
+			"src": "/agents/[^/.]+/mail/?",
+			"dest": "/agent-mail.html"
 		},
 		{
 			"src": "/agents/([^/.]+)/classic/?",

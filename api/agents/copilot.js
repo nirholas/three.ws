@@ -12,7 +12,17 @@
 // (api/_lib/trade-firewall.js), and the custody audit (agent_custody_events).
 // Conversation can never bypass a guard, the kill switch, or a spend cap.
 //
-//   POST /api/agents/:id/copilot   { messages:[{role,content}], network }  → SSE
+//   POST /api/agents/:id/copilot   { messages:[{role,content}], network, model? }  → SSE
+//        `model` overrides the agent's default model for this message
+//        (api/_lib/agent-model.js). The copilot is a tool loop, so an override
+//        without tool calling is refused; an agent default without tools
+//        answers on the platform chain. A free open model draws on the owner's
+//        daily free-tier allowance (api/_lib/free-tier.js).
+//   GET  /api/agents/:id/copilot?after=<message id>&limit=<1-100>
+//        → { messages:[{id,role,content,channel,createdAt}], latest_id }
+//        the agent's cross-channel thread, oldest first, so the web panel can
+//        show what the owner said to the agent from a paired chat (tagged
+//        "via Telegram" and so on) and carry it into the next web turn.
 //
 // SSE events: `status` (phase), `tool` (a read-only tool ran), `proposal`
 // (a confirm-before-execute trade/limits card), `chunk` (streamed narration
@@ -29,11 +39,15 @@
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
-import { cors, method, error, readJson, rateLimited } from '../_lib/http.js';
+import { cors, method, error, json, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { providerChain } from '../_lib/llm-tool-chain.js';
 import { runCopilotTurn, netOf, COPILOT_MAX_MESSAGES } from '../_lib/copilot-engine.js';
-import { appendThreadMessage } from '../_lib/agent-thread.js';
+import { appendThreadMessage, listThread } from '../_lib/agent-thread.js';
+import { resolveMessageModel, modelChain, ModelChoiceError } from '../_lib/agent-model.js';
+import { meterFreeModel, FreeTierExhaustedError, freeTierErrorBody, retryAfterSeconds } from '../_lib/free-tier.js';
+import { recordEvent } from '../_lib/usage.js';
+import { costMicroUsd } from '../_lib/llm-pricing.js';
 export { providerChain };
 
 // ── auth / ownership ──────────────────────────────────────────────────────────
@@ -47,8 +61,8 @@ async function resolveAuth(req) {
 
 // ── handler ─────────────────────────────────────────────────────────────────────
 export default async function handler(req, res, id) {
-	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
-	if (!method(req, res, ['POST'])) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in to talk to this copilot');
@@ -59,6 +73,8 @@ export default async function handler(req, res, id) {
 	const [row] = await sql`SELECT id, user_id, name, persona_prompt, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 	if (row.user_id !== auth.userId) return error(res, 403, 'forbidden', 'only the owner can use this copilot');
+
+	if (req.method === 'GET') return sendThread(req, res, { agentId: row.id, userId: auth.userId });
 
 	const body = await readJson(req).catch(() => null);
 	const network = netOf(body?.network);
@@ -71,7 +87,22 @@ export default async function handler(req, res, id) {
 		return error(res, 422, 'no_message', 'send at least one user message');
 	}
 
-	const chain = providerChain();
+	let choice;
+	try {
+		choice = copilotModel(body?.model, row.meta);
+	} catch (e) {
+		if (e instanceof ModelChoiceError) return error(res, e.status, e.code, e.message);
+		throw e;
+	}
+	try {
+		await meterFreeModel(choice.model, { userId: auth.userId });
+	} catch (e) {
+		if (!(e instanceof FreeTierExhaustedError)) throw e;
+		res.setHeader('Retry-After', String(retryAfterSeconds(e.resetAt)));
+		return error(res, 429, 'free_tier_exhausted', e.message, freeTierErrorBody(e));
+	}
+
+	const { chain } = modelChain(choice.model);
 	if (!chain.length) return error(res, 503, 'llm_unavailable', 'No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (or GOOGLE_CLOUD_PROJECT for the Vertex credits anchor).');
 
 	// SSE open.
@@ -90,6 +121,7 @@ export default async function handler(req, res, id) {
 	// every 15s so the client's stall watchdog can stay tight and only fire on a
 	// genuinely dead connection, never on a model that's just thinking.
 	const heartbeat = setInterval(() => { if (active) res.write(': ping\n\n'); }, 15_000);
+	send('model', { model: choice.model, source: choice.source });
 
 	try {
 		const turn = await runCopilotTurn({
@@ -98,6 +130,10 @@ export default async function handler(req, res, id) {
 			network,
 			chain,
 			isActive: () => active,
+			onRound: (served) => {
+				send('model', { model: choice.model, source: choice.source, served: served.catalogModel || served.model, lane: served.provider });
+				meterRound({ userId: auth.userId, agentId: id, served });
+			},
 			// tool_start is for surfaces that paint a live status line (the chat
 			// gateways); the web UI already paints each finished read as a card.
 			emit: (event, data) => { if (event !== 'tool_start') send(event, data); },
@@ -110,6 +146,63 @@ export default async function handler(req, res, id) {
 		clearInterval(heartbeat);
 		if (active) res.end();
 	}
+}
+
+// The thread since `after` (a message id), oldest first. Without `after` it is
+// the most recent page, which is what a panel opening for the first time shows.
+async function sendThread(req, res, { agentId, userId }) {
+	const q = new URL(req.url, 'http://x').searchParams;
+	const after = /^\d{1,18}$/.test(q.get('after') || '') ? Number(q.get('after')) : null;
+	const limit = Math.max(1, Math.min(100, Number(q.get('limit')) || 30));
+	const { messages } = await listThread({ agentId, userId, limit });
+	const rows = messages.filter((m) => after == null || m.id > after).reverse();
+	const latestId = messages.length ? messages[0].id : after;
+	return json(res, 200, {
+		messages: rows.map((m) => ({ id: m.id, role: m.role, content: m.content, channel: m.channel, signatures: m.signatures, createdAt: m.createdAt })),
+		latest_id: latestId ?? null,
+	}, { 'cache-control': 'no-store' });
+}
+
+/**
+ * The model one copilot message runs on. An explicit override must call tools
+ * (the copilot is a tool loop); an agent default without tools is skipped for
+ * the platform chain rather than blocking the owner's chat. Exported for tests.
+ * @param {unknown} requested body.model
+ * @param {object|null} meta agent meta
+ */
+export function copilotModel(requested, meta) {
+	const override = typeof requested === 'string' && requested.trim() ? requested.trim().slice(0, 80) : null;
+	try {
+		return resolveMessageModel({ requested: override, agentMeta: meta, purpose: 'run' });
+	} catch (e) {
+		if (!override && e instanceof ModelChoiceError && e.code === 'model_lacks_tools') {
+			return { model: null, source: 'platform', tools: true };
+		}
+		throw e;
+	}
+}
+
+// Every model round is recorded against the owner, priced at the lane that
+// served it (free lanes cost 0), the same ledger /brain and the runs write.
+function meterRound({ userId, agentId, served }) {
+	if (!served.usage) return;
+	recordEvent({
+		userId,
+		agentId,
+		kind: 'llm',
+		tool: 'agent.copilot',
+		provider: served.provider,
+		model: served.model,
+		inputTokens: served.usage.input,
+		outputTokens: served.usage.output,
+		costMicroUsd: costMicroUsd({
+			provider: served.provider,
+			model: served.model,
+			input: served.usage.input,
+			output: served.usage.output,
+			reportedCostUsd: served.usage.reportedCostUsd,
+		}),
+	});
 }
 
 // Append the finished web turn to the agent's cross-channel thread, so Telegram

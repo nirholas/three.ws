@@ -16,7 +16,8 @@
 // Bearer callers need `wallet:write` to move funds or change the rule and
 // `wallet:read` (or `profile`) to read; a browser session is the owner itself.
 // The move is api/_lib/inference-topup.js; the read model is
-// api/_lib/inference-billing.js; the rule is api/_lib/wallet-intents.js.
+// api/_lib/inference-billing.js; the rule is api/_lib/inference-autofund.js over
+// api/_lib/wallet-intents.js.
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { sql } from '../../_lib/db.js';
@@ -25,7 +26,7 @@ import { requireCsrf } from '../../_lib/csrf.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { inferenceUsage, autoFundIntent } from '../../_lib/inference-billing.js';
 import { previewTopup, executeTopup, reconcilePendingTopups } from '../../_lib/inference-topup.js';
-import { normalizeIntent, createIntent, updateIntent, describeIntent } from '../../_lib/wallet-intents.js';
+import { saveAutoFund } from '../../_lib/inference-autofund.js';
 
 async function resolveCaller(req) {
 	const session = await getSessionUser(req);
@@ -130,34 +131,9 @@ async function handleAutoFund(req, res, caller, agent) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = (await readJson(req).catch(() => null)) || {};
-	const current = await autoFundIntent(agent.id);
-	const enabled = body.enabled !== false;
-
-	// Turning an absent rule off is a no-op, not an error.
-	if (!current && !enabled) return json(res, 200, { auto_fund: null });
-
-	const threshold = body.threshold_usd ?? current?.threshold_usd;
-	const amount = body.amount_usdc ?? current?.amount_usdc;
-	const norm = normalizeIntent({
-		title: 'Keep the agent thinking',
-		trigger_type: 'credits_below',
-		trigger_config: { threshold_usd: threshold },
-		action_type: 'fund_inference',
-		action_config: { amount_usdc: amount },
-		limits: {
-			per_action_usd: amount,
-			daily_usd: body.daily_usd ?? current?.limits?.daily_usd ?? amount,
-			total_usd: body.total_usd ?? current?.limits?.total_usd ?? null,
-		},
-	});
-	if (!norm.ok) return error(res, 400, norm.error, norm.message);
-	const readback = describeIntent(norm.intent);
-	norm.intent.readback = readback;
-
-	if (current) {
-		await updateIntent(agent.id, caller.userId, current.intent_id, { intent: norm.intent, enabled });
-	} else {
-		await createIntent(agent.id, caller.userId, norm.intent, { sourceText: readback });
+	try {
+		return json(res, 200, await saveAutoFund({ agentId: agent.id, userId: caller.userId, input: body }));
+	} catch (err) {
+		return sendTyped(res, err);
 	}
-	return json(res, 200, { auto_fund: await autoFundIntent(agent.id), readback });
 }

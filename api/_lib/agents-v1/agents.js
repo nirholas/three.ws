@@ -13,6 +13,12 @@ import { env } from '../env.js';
 import { apiError, strParam, numParam } from './http.js';
 import { getStrategy } from './strategies.js';
 import { createAutomation } from './automations.js';
+import {
+	normalizeInferenceBudget,
+	getInferenceBudget,
+	resumeAfterBudgetChange,
+	InferenceBillingError,
+} from '../inference-billing.js';
 
 const MAX_SKILLS = 30;
 
@@ -28,6 +34,7 @@ export function serializeAgent(row) {
 		model: runtime.model || null,
 		temperature: runtime.temperature ?? null,
 		strategy: runtime.strategy || null,
+		inferenceBudget: serializeBudget(meta),
 		skills: row.skills || [],
 		status: row.status || 'running',
 		statusChangedAt: row.status_changed_at || null,
@@ -41,6 +48,37 @@ export function serializeAgent(row) {
 		createdAt: row.created_at,
 		updatedAt: row.updated_at || null,
 	};
+}
+
+/** The owner-set inference budget in credits (USD), or null when uncapped. */
+function serializeBudget(meta) {
+	const b = getInferenceBudget(meta);
+	if (!b) return null;
+	const exhausted = meta.inference_budget?.exhausted || null;
+	return {
+		daily: b.daily_usd,
+		monthly: b.monthly_usd,
+		exhausted: exhausted ? { window: exhausted.window, at: exhausted.at } : null,
+	};
+}
+
+/**
+ * The validated `inferenceBudget` of a PATCH body as the meta fragment to
+ * store: `{ inference_budget: {...} }`, or `{}` when the caller cleared it.
+ * Absent from the body means untouched (undefined).
+ */
+function readBudget(body) {
+	const raw = 'inferenceBudget' in body ? body.inferenceBudget : 'inference_budget' in body ? body.inference_budget : undefined;
+	if (raw === undefined) return undefined;
+	let budget;
+	try {
+		budget = normalizeInferenceBudget(raw);
+	} catch (err) {
+		if (err instanceof InferenceBillingError) throw apiError(400, 'invalid_parameter', err.message, { parameter: 'inferenceBudget' });
+		throw err;
+	}
+	if (!budget) return {};
+	return { inference_budget: { ...budget, updated_at: new Date().toISOString() } };
 }
 
 /**
@@ -140,9 +178,15 @@ export async function createAgent(userId, body) {
 	return { agent: serializeAgent(agent), automations };
 }
 
-/** Patch an agent's settings. Unknown fields are ignored; meta is merged. */
+/**
+ * Patch an agent's settings. Unknown fields are ignored; meta is merged.
+ * `inferenceBudget: { daily, monthly } | null` caps the credits its model calls
+ * may burn (api/_lib/inference-billing.js); changing it clears a recorded
+ * exhaustion and restarts an agent the budget had stopped.
+ */
 export async function updateAgent(agent, body) {
 	const s = readSettings(body, { partial: true });
+	const budget = readBudget(body);
 	const runtime = { ...(agent.meta?.runtime || {}) };
 	if ('model' in s) runtime.model = s.model;
 	if ('temperature' in s) runtime.temperature = s.temperature;
@@ -154,11 +198,16 @@ export async function updateAgent(agent, body) {
 			description = CASE WHEN ${'persona' in s} THEN ${s.persona ?? null} ELSE description END,
 			persona_prompt = CASE WHEN ${'systemPrompt' in s} THEN ${s.systemPrompt ?? null} ELSE persona_prompt END,
 			skills = COALESCE(${s.skills ?? null}::text[], skills),
-			meta = meta || ${JSON.stringify({ runtime })}::jsonb,
+			meta = CASE WHEN ${budget !== undefined}
+				THEN (meta - 'inference_budget') || ${JSON.stringify(budget || {})}::jsonb
+				ELSE meta END || ${JSON.stringify({ runtime })}::jsonb,
 			updated_at = now()
 		WHERE id = ${agent.id} AND deleted_at IS NULL
 		RETURNING *
 	`;
+	if (budget !== undefined && (await resumeAfterBudgetChange(agent.id, agent.meta))) {
+		row.status = 'running';
+	}
 	return serializeAgent(row);
 }
 

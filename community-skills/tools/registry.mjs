@@ -2,7 +2,7 @@
 //
 // One implementation, two homes. The three.ws monorepo imports this from
 // scripts/build-community-registry.mjs (wired into `npm run build:pages`), and the
-// public mirror (nirholas/three-ws-community-skills) runs it as
+// public mirror (nirholas/three-ws-skills) runs it as
 // `node tools/validate.mjs` so a contributor sees exactly the verdict the build
 // will reach before they open a pull request. It is deliberately dependency-free:
 // a fresh clone of the mirror has no node_modules.
@@ -26,7 +26,7 @@ import { join, relative, sep } from 'node:path';
 // public repository contributors fork. scripts/sync-community-skills.mjs keeps
 // the two in step in both directions.
 export const REGISTRY_SOURCE = 'https://github.com/nirholas/three.ws/tree/main/community-skills';
-export const REGISTRY_MIRROR = 'https://github.com/nirholas/three-ws-community-skills';
+export const REGISTRY_MIRROR = 'https://github.com/nirholas/three-ws-skills';
 export const REGISTRY_PAGE = 'https://three.ws/skills/community';
 
 // Bounds. The body cap keeps any one community skill well inside the per-agent

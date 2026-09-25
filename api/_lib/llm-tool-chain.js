@@ -99,11 +99,13 @@ export function providerChain() {
 
 // Stream one chat-completion round. Emits assistant content deltas via
 // onContent; accumulates streamed tool_calls. Resolves { content, toolCalls }.
+// `maxTokens` defaults to the server loops' 1024; the client-tool passthrough
+// (api/_lib/client-tool-round.js) raises it so a file write is not cut short.
 // Throws on transport / non-2xx so the caller can fail over to the next provider.
-export async function streamRound(provider, { messages, tools, onContent, temperature = 0.4 }) {
+export async function streamRound(provider, { messages, tools, onContent, temperature = 0.4, maxTokens = 1024 }) {
 	const body = {
 		model: provider.model,
-		max_tokens: 1024,
+		max_tokens: maxTokens,
 		temperature,
 		stream: true,
 		messages,

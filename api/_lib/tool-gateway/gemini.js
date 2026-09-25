@@ -34,9 +34,10 @@ function generateUrl() {
  * @param {string} o.instruction   what to do with the file
  * @param {number} [o.maxOutputTokens]
  * @param {number} [o.timeoutMs]
- * @returns {Promise<{ text: string, model: string, usage: { input: number, output: number } }>}
+ * @param {object} [o.responseSchema]  when set, Gemini answers JSON matching this schema
+ * @returns {Promise<{ text: string, model: string, usage: { input: number, output: number, byModality: Record<string, number> } }>}
  */
-export async function geminiReadFile({ data, mimeType, instruction, maxOutputTokens = 8192, timeoutMs = 90_000 }) {
+export async function geminiReadFile({ data, mimeType, instruction, maxOutputTokens = 8192, timeoutMs = 90_000, responseSchema = null }) {
 	if (!geminiFilesAvailable()) {
 		throw new GatewayError(503, 'not_configured', 'Gemini on Vertex AI is not configured on this deployment (GOOGLE_CLOUD_PROJECT is unset).');
 	}
@@ -62,7 +63,12 @@ export async function geminiReadFile({ data, mimeType, instruction, maxOutputTok
 						parts: [{ inlineData: { mimeType, data: data.toString('base64') } }, { text: instruction }],
 					},
 				],
-				generationConfig: { temperature: 0, maxOutputTokens, thinkingConfig: { thinkingBudget: 0 } },
+				generationConfig: {
+					temperature: 0,
+					maxOutputTokens,
+					thinkingConfig: { thinkingBudget: 0 },
+					...(responseSchema ? { responseMimeType: 'application/json', responseSchema } : {}),
+				},
 			}),
 			signal: AbortSignal.timeout(timeoutMs),
 		});
@@ -89,6 +95,28 @@ export async function geminiReadFile({ data, mimeType, instruction, maxOutputTok
 	return {
 		text,
 		model: `vertex-ai/${model}`,
-		usage: { input: Number(json?.usageMetadata?.promptTokenCount || 0), output: Number(json?.usageMetadata?.candidatesTokenCount || 0) },
+		finishReason: cand?.finishReason || null,
+		usage: {
+			input: Number(json?.usageMetadata?.promptTokenCount || 0),
+			output: Number(json?.usageMetadata?.candidatesTokenCount || 0),
+			byModality: modalityTokens(json?.usageMetadata?.promptTokensDetails),
+		},
 	};
 }
+
+// Prompt tokens per input modality (AUDIO, DOCUMENT, TEXT, IMAGE). Gemini bills
+// audio at a fixed 32 tokens a second and a PDF at 258 tokens a page, so these
+// counts double as a duration and page measure for formats the gateway cannot
+// parse itself.
+function modalityTokens(details) {
+	const out = {};
+	for (const d of Array.isArray(details) ? details : []) {
+		if (d?.modality) out[String(d.modality).toUpperCase()] = Number(d.tokenCount || 0);
+	}
+	return out;
+}
+
+/** Gemini audio input rate: tokens per second of audio. */
+export const GEMINI_AUDIO_TOKENS_PER_SECOND = 32;
+/** Gemini document input rate: tokens per PDF page. */
+export const GEMINI_TOKENS_PER_PDF_PAGE = 258;

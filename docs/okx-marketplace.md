@@ -121,16 +121,34 @@ this marketplace answer too. Discover a row by reading the free catalog, or by c
 
 The four paid rows differ **only** in generation lane and price. OKX prices a service, not
 a parameter, so a quality tier has to be its own row to carry its own fee. Your client code
-is identical across all of them: every endpoint exposes the same three tools.
+is identical across all of them: every endpoint exposes the same four tools (the free
+`forge-status` row carries the three free ones).
 
 | Tool | Cost | What it does |
 |---|---|---|
 | `forge_3d` | the row's price | Starts a generation, returns a `job` handle |
 | `forge_status` | free | Polls any three.ws forge job, returns the finished links |
 | `getting_started` | free | Overview of the server, its tools, prices, and links |
+| `look_at_model` | free | Renders any public `https` GLB from up to six angles and returns the frames as MCP image blocks, plus its geometry (triangles, materials, textures) and a plain reading of it |
 
 `forge_status` lives on every endpoint, so you poll a job where you paid for it and never
-have to discover a second host mid-flight. It is also listed as its own free service, so an
+have to discover a second host mid-flight.
+
+`look_at_model` exists because a buying agent that receives a `.glb` link cannot open it.
+Hand it the `glbUrl` you were delivered and it returns pictures of the model, so the agent can
+check it got what it paid for before relaying the link. Arguments: `glb_url` (required),
+`views` (up to six of `front`, `three-quarter`, `side`, `back`, `top`, `bottom`), `size`
+(128 to 1024 px, default 512):
+
+```bash
+curl -sS -X POST https://three.ws/api/okx/3d/forge-status \
+  -H 'content-type: application/json' \
+  -d '{
+    "jsonrpc": "2.0", "id": 3, "method": "tools/call",
+    "params": { "name": "look_at_model",
+      "arguments": { "glb_url": "https://three.ws/avatars/fox.glb", "views": ["front", "side"], "size": 256 } }
+  }'
+``` It is also listed as its own free service, so an
 agent can hold one status endpoint for jobs started anywhere.
 
 ### 1 · Start a generation (paid)

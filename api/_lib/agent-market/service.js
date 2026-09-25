@@ -366,9 +366,13 @@ async function listingBlockers(agent) {
 		  (SELECT count(*)::int FROM agent_vaults WHERE agent_id = ${agent.id} AND status IN ('open', 'paused', 'closing')) AS vaults,
 		  (SELECT count(*)::int FROM agent_recovery_requests WHERE agent_id = ${agent.id} AND status IN ('pending_approvals', 'time_locked', 'ready')) AS recoveries,
 		  (SELECT count(*)::int FROM agent_listing_bids WHERE funding_agent_id = ${agent.id} AND status IN ('awaiting_funds', 'open')) AS funding_bids,
-		  (SELECT count(*)::int FROM agent_listings WHERE agent_id = ${agent.id} AND status IN ('active', 'settling')) AS live
+		  (SELECT count(*)::int FROM agent_listings WHERE agent_id = ${agent.id} AND status IN ('active', 'settling')) AS live,
+		  (SELECT mode FROM agent_signers WHERE agent_id = ${agent.id}) AS signer_mode
 	`;
 	if (row.live) fail(409, 'already_listed', 'this agent already has a live listing');
+	if (row.signer_mode && row.signer_mode !== 'platform') {
+		fail(409, 'self_custody_signer', `this agent signs in ${row.signer_mode} mode; switch it back to platform custody before listing, so the sale can sweep and rotate its wallet`);
+	}
 	if (row.vaults) fail(409, 'vault_open', 'this agent manages a vault holding backers\' funds; close the vault before selling the agent');
 	if (row.recoveries) fail(409, 'recovery_pending', 'this agent has a pending recovery request; resolve it before listing');
 	if (row.funding_bids) fail(409, 'agent_funding_bids', 'this agent is funding open marketplace bids; withdraw them before listing it');

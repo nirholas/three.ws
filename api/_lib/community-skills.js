@@ -1,5 +1,5 @@
 // Read side of the community skills registry (community-skills/ in this repo,
-// mirrored to nirholas/three-ws-community-skills).
+// mirrored to nirholas/three-ws-skills).
 //
 // The registry ships inside the image: registry.json is regenerated and
 // validated by `npm run build:pages`, and the skill folders sit beside it. Both

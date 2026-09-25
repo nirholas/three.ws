@@ -8,6 +8,8 @@
 //   3. Record in launcher_claims (claimed_sol, buyback_sol earmarked, claim_sig)
 //
 // This closes the creator-fee loop: launch → creator fees accrue → claim → record.
+// The same tick cranks the fee distribution of every gasless (sponsored) launch,
+// which is how the sponsor recovers its fronted rent (api/_lib/launch-sponsor.js).
 // buyback_sol records the buyback-earmarked share of those CREATOR fees (the run's
 // buyback_bps) for revenue tracking - it is NOT a transfer made here. The on-chain
 // $THREE-aligned buy pressure for these coins comes from the buyback_bps binding baked
@@ -22,6 +24,7 @@ import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { createSession, revokeSessionToken } from '../_lib/auth.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { crankSponsoredDistributions } from '../_lib/launch-sponsor.js';
 
 const CLAIM_THRESHOLD_SOL = 0.01;
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
@@ -200,5 +203,13 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 	const out = await runClaimerTick().catch((err) => ({ ok: false, error: err?.message, checked: 0, claimed: 0 }));
-	return json(res, 200, { ok: true, ...out });
+	// Gasless launches: distribute each sponsored coin's shared creator fees so
+	// the platform slot (launch_economics.gasless_platform_share_bps) pays back
+	// the rent the sponsor fronted. Cadence-gated per coin inside the crank.
+	const sponsored = await crankSponsoredDistributions({ network: 'mainnet' }).catch((err) => ({
+		checked: 0,
+		distributed: 0,
+		error: err?.message,
+	}));
+	return json(res, 200, { ok: true, ...out, sponsored });
 });

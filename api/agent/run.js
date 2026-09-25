@@ -25,6 +25,12 @@
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { sql } from '../_lib/db.js';
+import { isUuid } from '../_lib/validate.js';
+import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../_lib/auth.js';
+import { learningContext, afterRunCompleted } from '../_lib/agent-learning/runtime.js';
+import { countUserTurns } from '../_lib/agent-learning/nudge.js';
+import { agentSkillsForPrompt } from '../_lib/agent-custom-skills.js';
 import { providerChain } from '../_lib/llm-tool-chain.js';
 import { agentToolSchemas, agentToolHandlers } from '../_lib/agent-tools.js';
 import {
@@ -62,6 +68,43 @@ function sanitizeMessages(raw) {
 	return out.length ? out : null;
 }
 
+// Scopes a bearer may carry to bind the loop to one of its account's agents.
+const LEARNING_SCOPES = ['memory:write', 'agents:write', 'inference'];
+
+/**
+ * The (agent, account) the completion speaks for, when the request names an
+ * agent (`agent_id` in the body or an `x-three-agent` header). A named agent
+ * must belong to the caller. Returns null for an anonymous, agent-less call,
+ * which runs exactly as before: no memory, no learning.
+ *
+ * @returns {Promise<{ agentId: string, userId: string } | { error: [number, string, string] } | null>}
+ */
+export async function resolveLearningBinding(req, body) {
+	const named = body?.agent_id || req.headers?.['x-three-agent'] || null;
+	if (!named) return null;
+	if (!isUuid(String(named))) return { error: [400, 'bad_agent_id', 'agent_id must be the id of one of your agents.'] };
+	let userId = null;
+	const token = extractBearer(req);
+	if (token) {
+		const bearer = await authenticateBearer(token);
+		if (bearer && LEARNING_SCOPES.some((s) => hasScope(bearer.scope, s))) userId = bearer.userId;
+	} else {
+		const session = await getSessionUser(req);
+		if (session) userId = session.id;
+	}
+	if (!userId) return { error: [401, 'sign_in_required', 'Naming an agent needs its owner: sign in, or send an API key with memory:write, agents:write or inference.'] };
+	const [row] = await sql`SELECT user_id FROM agent_identities WHERE id = ${String(named)} AND deleted_at IS NULL`;
+	if (!row || String(row.user_id) !== String(userId)) {
+		return { error: [404, 'agent_not_found', 'No agent with that id belongs to this account.'] };
+	}
+	return { agentId: String(named), userId: String(userId) };
+}
+
+function lastUserText(messages) {
+	for (let i = messages.length - 1; i >= 0; i--) if (messages[i].role === 'user') return String(messages[i].content || '');
+	return '';
+}
+
 /** OpenAI chat.completion.chunk SSE frame. */
 function chunkFrame(id, delta, finishReason = null) {
 	return `data: ${JSON.stringify({
@@ -85,6 +128,13 @@ function chunkFrame(id, delta, finishReason = null) {
  * the request asked for `stream_options.include_usage`. `opts.onUsage(usage,
  * completionId)` receives the same totals once the answer is complete, which is
  * where a metered caller books the charge.
+ *
+ * When the request names one of the caller's agents (`agent_id`, or
+ * `opts.learning` from a caller that already resolved it), the loop speaks as
+ * that agent for its owner: the memory section and the agent's prompt-only
+ * skills join the system prompt, the memory tools join the registry, the
+ * memory nudge rides every N turns (api/_lib/agent-learning/runtime.js), and a
+ * run with enough real tool work drafts a skill for the owner to review.
  */
 export async function runAgentCompletion(req, res, body, opts = {}) {
 	if (!opts.rateLimited) {
@@ -105,8 +155,30 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	const sysIdx = messages[0]?.role === 'system' ? 1 : 0;
 	messages.splice(sysIdx, 0, { role: 'system', content: AGENT_SYSTEM_NOTE });
 
-	const stream = body?.stream !== false;
 	const completionId = `agentrun-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+	let binding = opts.learning || null;
+	if (!binding) {
+		const resolved = await resolveLearningBinding(req, body);
+		if (resolved?.error) return error(res, ...resolved.error);
+		binding = resolved;
+	}
+	const goal = lastUserText(messages);
+	const learning = binding
+		? await learningContext({
+				agentId: binding.agentId,
+				userId: binding.userId,
+				query: goal,
+				source: 'chat',
+				runRef: completionId,
+				userTurns: countUserTurns(messages),
+			})
+		: null;
+	const skillsBlock = binding ? (await agentSkillsForPrompt(binding.agentId).catch(() => ({ block: '' }))).block : '';
+	const learningNote = [learning?.block, skillsBlock, learning?.nudge].filter(Boolean).join('\n\n');
+	if (learningNote) messages.splice(sysIdx + 1, 0, { role: 'system', content: learningNote });
+
+	const stream = body?.stream !== false;
 
 	let sseOpen = false;
 	const sse = (text) => {
@@ -122,13 +194,14 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	};
 
 	let streamedAny = false;
+	const toolTrace = [];
 	// Platform cost rides along (null when any round hit an unpriced lane) so a
 	// metered caller can record honest spend next to what it billed.
 	const usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, estimated: false, cost_micro_usd: 0, lanes: [] };
 	const loop = createAgentLoop({
 		chain,
-		toolSchemas: agentToolSchemas(),
-		toolHandlers: agentToolHandlers(),
+		toolSchemas: [...agentToolSchemas(), ...(learning?.schemas || [])],
+		toolHandlers: { ...agentToolHandlers(), ...(learning?.handlers || {}) },
 		maxToolRounds: MAX_TOOL_ROUNDS,
 		onContent: (delta) => {
 			streamedAny = true;
@@ -144,6 +217,10 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 					usage.cost_micro_usd == null || event.costMicroUsd == null ? null : usage.cost_micro_usd + event.costMicroUsd;
 				usage.lanes.push({ provider: event.provider, model: event.model });
 			}
+			if (event.kind === 'tool_result') {
+				toolTrace.push({ kind: 'tool_result', tool: event.tool, input: event.args, output: event.error ? { error: event.error } : event.result });
+			}
+			if (event.kind === 'tool_call' || event.kind === 'tool_blocked') toolTrace.push({ kind: event.kind, tool: event.tool, input: event.args });
 			if (stream && event.kind === 'tool_call') sse(`: tool ${event.tool}\n\n`);
 		},
 	});
@@ -186,6 +263,12 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		total_tokens: usage.total_tokens,
 	};
 	const billed = opts.onUsage ? await opts.onUsage(usage, completionId) : null;
+	// Drafting happens before the connection closes (a closed request loses its
+	// CPU on Cloud Run) and only costs time when the run qualifies.
+	const learnFromRun = () =>
+		binding && learning?.enabled
+			? afterRunCompleted({ agentId: binding.agentId, userId: binding.userId, runRef: completionId, goal, steps: toolTrace, finalAnswer: finalContent })
+			: null;
 
 	if (stream) {
 		// A run whose final round emitted no deltas (e.g. everything came from a
@@ -204,9 +287,11 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 			})}\n\n`);
 		}
 		sse('data: [DONE]\n\n');
+		await learnFromRun();
 		return res.end();
 	}
 
+	await learnFromRun();
 	return json(res, 200, {
 		id: completionId,
 		object: 'chat.completion',

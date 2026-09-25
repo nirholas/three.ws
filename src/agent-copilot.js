@@ -52,6 +52,8 @@ const STYLE = `
 .awh-cop-msg.is-agent .awh-cop-bubble { background: var(--surface-2, rgba(255,255,255,.05)); color: var(--ink,#e8e8e8); border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-bottom-left-radius: 4px; }
 .awh-cop-bubble.is-empty { color: var(--ink-dim,#888); }
 .awh-cop-name { font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); padding: 0 4px; }
+.awh-cop-via { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line,rgba(255,255,255,.14)); font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); vertical-align: 1px; }
+.awh-cop-msg.is-user .awh-cop-via { margin: 0 4px 2px 0; align-self: flex-end; }
 
 .awh-cop-tools { display: flex; flex-direction: column; gap: 4px; }
 .awh-cop-tool { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); }
@@ -260,10 +262,23 @@ function saveHistory(agentId, network, messages, actionLog) {
 			.filter((m) => (m.role === 'user' && m.content) || (m.role === 'agent' && (m.content || (m.tools || []).length)))
 			.slice(-40)
 			.map((m) => m.role === 'user'
-				? { role: 'user', content: m.content }
-				: { role: 'agent', content: m.content, tools: (m.tools || []).map((t) => ({ name: t.name, summary: t.summary, data: t.data })) });
+				? { role: 'user', content: m.content, ...(m.channel ? { channel: m.channel } : {}) }
+				: { role: 'agent', content: m.content, ...(m.channel ? { channel: m.channel } : {}), tools: (m.tools || []).map((t) => ({ name: t.name, summary: t.summary, data: t.data })) });
 		localStorage.setItem(storageKey(agentId, network), JSON.stringify({ v: STORAGE_VERSION, messages: clean, actionLog: actionLog.slice(0, 30) }));
 	} catch { /* storage full / disabled — persistence is best-effort */ }
+}
+
+// The agent's thread is shared with every paired chat (Telegram, Discord, Slack,
+// WhatsApp, Signal, SMS, email: docs/chat-gateways.md). The panel remembers the
+// last server message id it merged, per agent, so each open only pulls what the
+// owner said elsewhere since.
+const CHANNEL_LABEL = { telegram: 'Telegram', discord: 'Discord', slack: 'Slack', whatsapp: 'WhatsApp', signal: 'Signal', sms: 'SMS', email: 'email', api: 'the API' };
+function threadCursorKey(agentId) { return `awh.copilot.${agentId}.thread`; }
+function loadThreadCursor(agentId) {
+	try { const v = Number(localStorage.getItem(threadCursorKey(agentId))); return Number.isFinite(v) && v > 0 ? v : null; } catch { return null; }
+}
+function saveThreadCursor(agentId, id) {
+	try { localStorage.setItem(threadCursorKey(agentId), String(id)); } catch { /* storage disabled: the next open re-reads the latest page */ }
 }
 
 export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isOwner, getNetwork, onNetworkChange, toast = () => {} }) {
@@ -290,8 +305,8 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 	const restored = loadHistory(agentId, getNetwork());
 	if (restored) {
 		restored.messages.forEach((m) => messages.push(m.role === 'user'
-			? { role: 'user', content: m.content }
-			: { role: 'agent', content: m.content || '', tools: m.tools || [], proposals: [], streaming: false }));
+			? { role: 'user', content: m.content, channel: m.channel || null }
+			: { role: 'agent', content: m.content || '', channel: m.channel || null, tools: m.tools || [], proposals: [], streaming: false }));
 		(restored.actionLog || []).forEach((a) => actionLog.push(a));
 	}
 
@@ -361,7 +376,7 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 
 	function msgHtml(m, i) {
 		if (m.role === 'user') {
-			return `<div class="awh-cop-msg is-user"><div class="awh-cop-bubble">${esc(m.content)}</div></div>`;
+			return `<div class="awh-cop-msg is-user">${viaTag(m)}<div class="awh-cop-bubble">${esc(m.content)}</div></div>`;
 		}
 		const tools = m.tools || [];
 		// Cards carry the grounded numbers; the reply narrates them. A tool with no
@@ -390,9 +405,41 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 					${i === lastAgentIndex() ? `<button class="awh-cop-msg-act" type="button" data-msgact="regen" title="Regenerate">↻ Retry</button>` : ''}
 				</div>` : '';
 		return `<div class="awh-cop-msg is-agent">
-			<div class="awh-cop-name">${esc(agentName)}</div>
+			<div class="awh-cop-name">${esc(agentName)}${viaTag(m)}</div>
 			${activity}${body}${props}${actions}
 		</div>`;
+	}
+
+	function viaTag(m) {
+		const label = m.channel && CHANNEL_LABEL[m.channel];
+		return label ? `<span class="awh-cop-via" title="Sent in a paired ${esc(label)} chat">via ${esc(label)}</span>` : '';
+	}
+
+	// Pull what the owner and the agent said in paired chats since the last merge.
+	// Web turns are skipped: this panel already holds them, with their cards.
+	// A failed read changes nothing; the next open tries again.
+	let syncingThread = false;
+	async function syncThread() {
+		if (syncingThread || destroyed || streaming) return;
+		syncingThread = true;
+		try {
+			const cursor = loadThreadCursor(agentId);
+			const resp = await fetch(`/api/agents/${encodeURIComponent(agentId)}/copilot?limit=40${cursor ? `&after=${cursor}` : ''}`, { credentials: 'include' });
+			if (!resp.ok) return;
+			const data = await resp.json();
+			const fresh = (data.messages || []).filter((m) => m.channel && m.channel !== 'web' && m.content);
+			if (data.latest_id) saveThreadCursor(agentId, data.latest_id);
+			if (!fresh.length || destroyed || streaming) return;
+			for (const m of fresh) {
+				messages.push(m.role === 'user'
+					? { role: 'user', content: m.content, channel: m.channel }
+					: { role: 'agent', content: m.content, channel: m.channel, tools: [], proposals: [], streaming: false });
+			}
+			persist();
+			render();
+		} catch { /* offline or signed out: the local history still stands */ } finally {
+			syncingThread = false;
+		}
 	}
 
 	function lastAgentIndex() {
@@ -1035,13 +1082,14 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 	wireIntroEvents();
 	updateComposerMode();
 	if (messages.length) render(); // paint restored history
+	syncThread();
 
 	if (onNetworkChange) {
 		detachNet = onNetworkChange(() => { /* network is read live per turn; nothing to reset */ });
 	}
 
 	return {
-		onShow() { elInput?.focus(); },
+		onShow() { elInput?.focus(); syncThread(); },
 		onHide() { stopListening(); stopSpeaking(); },
 		destroy() {
 			destroyed = true;

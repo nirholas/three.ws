@@ -2166,7 +2166,36 @@ export const limits = {
 	// rights will ever need. NOT local: this must hold across instances.
 	homePrivacy: (userId) =>
 		getLimiter('home:privacy', { limit: 20, window: '1 h' }).limit(userId),
+	// The per-plan API envelope (data/plans.json `rate_limit`), applied to every
+	// /api request by server/index.mjs through api/_lib/plan-rate-limit.js and
+	// advertised as RateLimit-* headers. Keyed per account (or per IP when
+	// signed out), sized by the caller's plan. A fixed window counted per serving
+	// instance: it runs on every API request, so it never spends a Redis command
+	// (the June 2026 Upstash quota outage), and a per-instance count can only
+	// ever be more generous than the published number, never stricter.
+	planApi: (planId, key, { limit, windowSeconds }) => planWindowLimit(`${planId}\u0000${key}`, limit, windowSeconds * 1000),
 };
+
+// Fixed-window counters for limits.planApi. One small record per principal, so
+// the envelope costs O(1) per request however high a plan's ceiling is.
+const planWindows = new Map();
+const PLAN_WINDOWS_MAX = 50_000;
+function planWindowLimit(id, limit, windowMs) {
+	const now = Date.now();
+	let w = planWindows.get(id);
+	if (!w || now >= w.start + windowMs) {
+		if (!w && planWindows.size >= PLAN_WINDOWS_MAX) {
+			for (const [k, v] of planWindows) if (now >= v.start + windowMs) planWindows.delete(k);
+			if (planWindows.size >= PLAN_WINDOWS_MAX) planWindows.clear();
+		}
+		w = { start: now, count: 0 };
+		planWindows.set(id, w);
+	}
+	const reset = w.start + windowMs;
+	if (w.count >= limit) return { success: false, limit, remaining: 0, reset };
+	w.count += 1;
+	return { success: true, limit, remaining: limit - w.count, reset };
+}
 
 // ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────
 // Most call sites fail OPEN when a limiter throws: the request is bounded by

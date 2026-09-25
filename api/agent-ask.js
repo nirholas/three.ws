@@ -5,7 +5,7 @@
 // SSE so the avatar can speak it aloud. Each exchange is written to a
 // session-scoped memory thread so follow-up questions answer in context.
 //
-// Body: { agentId, question, sessionId }
+// Body: { agentId, question, sessionId, model? }  (model: per-message override)
 // Response: SSE — the same protocol as /api/brain/chat (meta / first / data
 //   chunks / done / error / fallback), so the client reuses one parser.
 //
@@ -24,7 +24,8 @@ import { isUuid } from './_lib/validate.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
 import { getRedis } from './_lib/redis.js';
-import { resolveBrain, streamBrain, validateMessages, ANON_BRAIN_PROVIDERS } from './brain/chat.js';
+import { resolveBrain, streamBrain, validateMessages, meterFreeTurn, ANON_BRAIN_PROVIDERS } from './brain/chat.js';
+import { agentDefaultModel } from './_lib/agent-model.js';
 import { agentSkillsForPrompt } from './_lib/agent-custom-skills.js';
 
 export const maxDuration = 120;
@@ -266,7 +267,10 @@ export default wrap(async function handleAgentAsk(req, res) {
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
 
 	const isOwner = !!userId && agent.user_id === userId;
-	const configuredProvider = agent.meta?.brain?.provider ?? null;
+	// A per-message `model` override wins over the agent's default; either is
+	// clamped to the free models for anyone but the owner (pickProvider).
+	const requested = typeof body.model === 'string' && body.model.trim() ? body.model.trim().slice(0, 80) : null;
+	const configuredProvider = requested ?? agent.meta?.brain?.provider ?? agentDefaultModel(agent.meta);
 	let providerKey = pickProvider(configuredProvider, { authed: isOwner });
 
 	const plan = resolveBrain(providerKey);
@@ -292,6 +296,11 @@ export default wrap(async function handleAgentAsk(req, res) {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}
 	const maxTokens = Math.min(MAX_OUTPUT, plan.spec.maxOutput);
+
+	// Free open models draw on the asker's daily free-tier allowance (the
+	// visitor's, not the agent owner's), answered as a 429 when it is spent.
+	const freeTier = await meterFreeTurn(res, providerKey, { userId, ip: userId ? null : clientIp(req) });
+	if (freeTier === false) return;
 
 	const { res: capRes, getText } = captureAnswer(res);
 	await streamBrain(capRes, { plan, providerKey, messages, system, maxTokens, userId });

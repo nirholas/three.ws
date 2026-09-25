@@ -263,7 +263,8 @@ async function acquireLease(runId, owner) {
 	return row || null;
 }
 
-async function agentSystemPrompt(agentId) {
+/** The system prompt a run speaks with; a replay rebuilds it for a run that never checkpointed. */
+export async function agentSystemPrompt(agentId) {
 	const [a] = await sql`SELECT name, description, persona_prompt FROM agent_identities WHERE id = ${agentId} LIMIT 1`;
 	const parts = [`You are ${a?.name || 'a three.ws agent'}, running an autonomous task on three.ws.`];
 	if (a?.persona_prompt) parts.push(String(a.persona_prompt).slice(0, 4000));

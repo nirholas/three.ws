@@ -1,7 +1,7 @@
 {
 	"schema": "three.ws/community-skills-registry@1",
 	"source": "https://github.com/nirholas/three.ws/tree/main/community-skills",
-	"mirror": "https://github.com/nirholas/three-ws-community-skills",
+	"mirror": "https://github.com/nirholas/three-ws-skills",
 	"page": "https://three.ws/skills/community",
 	"count": 12,
 	"tags": [

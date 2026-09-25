@@ -57,13 +57,56 @@ function unwrapFreeze(node) {
 	return node;
 }
 
-/** Every `const x = …` in the module, by name. */
+/**
+ * The object literal an expression names: the literal itself, a const holding
+ * one, or a non-computed member of one (`def.inputSchema`). Null otherwise.
+ */
+function resolveObjectExpression(node, consts, seen = new Set()) {
+	const target = unwrapFreeze(node);
+	if (!target || seen.has(target)) return null;
+	seen.add(target);
+	if (target.type === 'ObjectExpression') return target;
+	if (target.type === 'Identifier') {
+		const bound = consts.get(target.name);
+		return bound ? resolveObjectExpression(bound, consts, seen) : null;
+	}
+	if (target.type === 'MemberExpression' && !target.computed) {
+		const owner = resolveObjectExpression(target.object, consts, seen);
+		const prop = owner?.properties.find(
+			(p) => p.type === 'Property' && !p.computed && propKey(p) === target.property?.name,
+		);
+		return prop ? resolveObjectExpression(prop.value, consts, seen) : null;
+	}
+	return null;
+}
+
+/**
+ * Every `const x = …` in the module, by name.
+ *
+ * A rest destructure (`const { confirm: _c, ...previewShape } = def.inputSchema`)
+ * is how a preview tool drops its executing tool's confirm flag, so the rest
+ * binding is recorded too, as the source literal minus the picked keys. Those
+ * resolve in a second pass, once every plain const they may name is known.
+ */
 function collectLocalConsts(ast) {
 	const out = new Map();
+	const rests = [];
 	walk(ast, (node) => {
-		if (node.type !== 'VariableDeclarator' || node.id?.type !== 'Identifier') return;
-		if (node.init) out.set(node.id.name, unwrapFreeze(node.init));
+		if (node.type !== 'VariableDeclarator' || !node.init) return;
+		if (node.id?.type === 'Identifier') out.set(node.id.name, unwrapFreeze(node.init));
+		else if (node.id?.type === 'ObjectPattern') rests.push(node);
 	});
+	for (const { id, init } of rests) {
+		const rest = id.properties.find((p) => p.type === 'RestElement' && p.argument?.type === 'Identifier');
+		if (!rest || out.has(rest.argument.name)) continue;
+		const source = resolveObjectExpression(init, out);
+		if (!source) continue;
+		const picked = new Set(id.properties.filter((p) => p.type === 'Property' && !p.computed).map(propKey));
+		out.set(rest.argument.name, {
+			...source,
+			properties: source.properties.filter((p) => !(p.type === 'Property' && !p.computed && picked.has(propKey(p)))),
+		});
+	}
 	return out;
 }
 
@@ -576,6 +619,12 @@ export function materializeSchema(node, consts) {
 	let target = node;
 	if (target?.type === 'Identifier') {
 		const resolved = consts.get(target.name);
+		if (resolved) target = resolved;
+	}
+	// `inputSchema: def.inputSchema`: a preview tool reusing the schema of the
+	// tool it previews. Read the literal that member names.
+	if (target?.type === 'MemberExpression') {
+		const resolved = resolveObjectExpression(target, consts);
 		if (resolved) target = resolved;
 	}
 

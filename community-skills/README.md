@@ -85,4 +85,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). In short: add a folder under `skills/`, 
 | `tools/registry.mjs` | the validation rules and registry builder (no dependencies) |
 | `tools/validate.mjs` | run it before every pull request |
 
-Canonical source: [nirholas/three.ws/community-skills](https://github.com/nirholas/three.ws/tree/main/community-skills). Mirror for contributors: [nirholas/three-ws-community-skills](https://github.com/nirholas/three-ws-community-skills). MIT licensed.
+Canonical source: [nirholas/three.ws/community-skills](https://github.com/nirholas/three.ws/tree/main/community-skills). Mirror for contributors: [nirholas/three-ws-skills](https://github.com/nirholas/three-ws-skills). MIT licensed.

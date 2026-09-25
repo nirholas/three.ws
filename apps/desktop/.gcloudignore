@@ -1,0 +1,14 @@
+# Upload context for apps/desktop/cloudbuild.yaml, submitted from the repo root
+# with --ignore-file apps/desktop/.gcloudignore. The desktop build needs only
+# the app and the companion SDK it links (file:../../packages/companion-sdk),
+# so everything else in the monorepo stays on this machine.
+/*
+!/apps/
+/apps/*
+!/apps/desktop/
+/apps/desktop/node_modules/
+/apps/desktop/dist/
+!/packages/
+/packages/*
+!/packages/companion-sdk/
+/packages/companion-sdk/node_modules/

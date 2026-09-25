@@ -3,8 +3,10 @@
 // A configuration is everything about an agent that changes how it behaves on
 // a task except the model: the system prompt, the tools it may call and the
 // sampling temperature. Its version is a short content hash of exactly those
-// fields, so the Evaluate tab can plot score history per configuration and a
-// prompt edit shows up as a new version automatically, with no counter to keep.
+// fields, plus the platform system note every configuration speaks with and
+// the definition (description and parameters) of every tool it may call, so
+// the Evaluate tab can plot score history per configuration and a prompt or
+// tool edit shows up as a new version automatically, with no counter to keep.
 //
 // Presets:
 //   default   the platform agent loop as /api/agent/run serves it: no persona,
@@ -16,6 +18,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { AGENT_TOOLS } from '../agent-tools.js';
+import { AGENT_SYSTEM_NOTE } from '../agent-loop.js';
 
 const STRATEGIES_PATH = fileURLToPath(new URL('../../../data/agent-strategies.json', import.meta.url));
 const ALL_TOOLS = Object.keys(AGENT_TOOLS);
@@ -32,11 +35,18 @@ function readStrategies() {
 	}
 }
 
-/** Short content hash of the fields that define a configuration. */
+/** The definition of one registry tool as the model sees it. */
+function toolDefinition(name) {
+	const t = AGENT_TOOLS[name];
+	return t ? { name, description: t.description, parameters: t.parameters } : { name };
+}
+
+/** Short content hash of everything that defines how a configuration behaves. */
 export function configVersion({ systemPrompt, tools, temperature }) {
 	const canonical = JSON.stringify({
 		systemPrompt: systemPrompt || '',
-		tools: [...(tools || [])].sort(),
+		systemNote: AGENT_SYSTEM_NOTE,
+		tools: [...(tools || [])].sort().map(toolDefinition),
 		temperature: temperature ?? null,
 	});
 	return createHash('sha256').update(canonical).digest('hex').slice(0, 12);

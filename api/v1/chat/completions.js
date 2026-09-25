@@ -9,6 +9,12 @@
 // read-only tool registry), billed to the caller's account credits at the
 // published rate (api/_lib/pricing/catalog.js INFERENCE_USD_PER_MTOK).
 //
+// A request that sends its own `tools` is answered as a plain tool-calling
+// model instead: one round over the same lanes, with the model's tool_calls
+// returned for the caller to execute (api/_lib/client-tool-round.js). That is
+// how the local agent (packages/agent-cli) runs file, shell and MCP tools on
+// its own machine while the tokens bill here.
+//
 // Billing, in order:
 //   1. assertInferenceAllowed: 402 insufficient_credits when the account is
 //      empty, 402 inference_budget_exhausted when the agent this call runs for
@@ -35,6 +41,8 @@ import {
 	INFERENCE_MODEL_ID,
 } from '../../_lib/inference-billing.js';
 import { runAgentCompletion } from '../../agent/run.js';
+import { providerChain } from '../../_lib/llm-tool-chain.js';
+import { runClientToolCompletion, sanitizeClientTools } from '../../_lib/client-tool-round.js';
 
 const MAX_BODY_BYTES = 512_000;
 const ACCEPTED_MODELS = new Set([INFERENCE_MODEL_ID, 'three-ws', 'default']);
@@ -112,42 +120,63 @@ export default wrap(async function handler(req, res) {
 		throw err;
 	}
 
+	// A request that brings its own `tools` gets one plain tool-calling round:
+	// the model's tool_calls go back to the caller, whose runtime executes them
+	// (api/_lib/client-tool-round.js). Validated before any spend.
+	let clientTools;
+	try {
+		clientTools = sanitizeClientTools(body?.tools);
+	} catch (err) {
+		return openAiError(res, err.status || 400, err.code || 'bad_tools', err.message);
+	}
+
 	const started = Date.now();
+	const onUsage = async (usage, completionId) => {
+		const charge = await chargeInference({
+			userId: caller.userId,
+			agentId: agent?.id ?? null,
+			apiKeyId: caller.apiKeyId,
+			callId: completionId,
+			inputTokens: usage.prompt_tokens,
+			outputTokens: usage.completion_tokens,
+			estimated: usage.estimated,
+			provider: usage.lanes.at(-1)?.provider ?? null,
+			model: usage.lanes.at(-1)?.model ?? null,
+		});
+		recordEvent({
+			userId: caller.userId,
+			apiKeyId: caller.apiKeyId,
+			clientId: caller.clientId,
+			agentId: agent?.id ?? null,
+			kind: 'llm',
+			tool: 'v1.chat.completions',
+			latencyMs: Date.now() - started,
+			provider: usage.lanes.at(-1)?.provider ?? null,
+			model: usage.lanes.at(-1)?.model ?? null,
+			inputTokens: usage.prompt_tokens,
+			outputTokens: usage.completion_tokens,
+			costMicroUsd: usage.cost_micro_usd,
+			meta: { billed_usd: charge.chargedUsd, estimated: usage.estimated, rounds: usage.lanes.length },
+		});
+		return {
+			charged_usd: charge.chargedUsd,
+			balance_usd: charge.balanceUsd,
+			agent_id: agent?.id ?? null,
+			...(charge.shortfallUsd > 0 ? { shortfall_usd: charge.shortfallUsd } : {}),
+		};
+	};
+
+	if (clientTools) {
+		const chain = providerChain();
+		if (!chain.length) return openAiError(res, 503, 'llm_unavailable', 'No model lane is configured right now. Try again shortly.');
+		return runClientToolCompletion(req, res, body, { chain, tools: clientTools, modelId: INFERENCE_MODEL_ID, onUsage });
+	}
+
 	return runAgentCompletion(req, res, body, {
 		rateLimited: true,
-		onUsage: async (usage, completionId) => {
-			const charge = await chargeInference({
-				userId: caller.userId,
-				agentId: agent?.id ?? null,
-				apiKeyId: caller.apiKeyId,
-				callId: completionId,
-				inputTokens: usage.prompt_tokens,
-				outputTokens: usage.completion_tokens,
-				estimated: usage.estimated,
-				provider: usage.lanes.at(-1)?.provider ?? null,
-				model: usage.lanes.at(-1)?.model ?? null,
-			});
-			recordEvent({
-				userId: caller.userId,
-				apiKeyId: caller.apiKeyId,
-				clientId: caller.clientId,
-				agentId: agent?.id ?? null,
-				kind: 'llm',
-				tool: 'v1.chat.completions',
-				latencyMs: Date.now() - started,
-				provider: usage.lanes.at(-1)?.provider ?? null,
-				model: usage.lanes.at(-1)?.model ?? null,
-				inputTokens: usage.prompt_tokens,
-				outputTokens: usage.completion_tokens,
-				costMicroUsd: usage.cost_micro_usd,
-				meta: { billed_usd: charge.chargedUsd, estimated: usage.estimated, rounds: usage.lanes.length },
-			});
-			return {
-				charged_usd: charge.chargedUsd,
-				balance_usd: charge.balanceUsd,
-				agent_id: agent?.id ?? null,
-				...(charge.shortfallUsd > 0 ? { shortfall_usd: charge.shortfallUsd } : {}),
-			};
-		},
+		// A completion billed to one of the caller's agents speaks as that agent:
+		// its memory, its skills, and the learning loop (docs/agent-memory.md).
+		learning: agent ? { agentId: String(agent.id), userId: String(caller.userId) } : null,
+		onUsage,
 	});
 });

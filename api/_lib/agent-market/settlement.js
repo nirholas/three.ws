@@ -29,6 +29,7 @@ import {
 	revokeSellerAccess, swapKeys, sweepOldEvmWallet, sweepOldWallet,
 } from './custody.js';
 import { addHistory } from './store.js';
+import { recordCustodyEvent } from '../agent-trade-guards.js';
 
 export const STEPS = [
 	'pay_seller',
@@ -312,6 +313,33 @@ export const defaultSteps = {
 
 // ── Runner ───────────────────────────────────────────────────────────────────
 
+/**
+ * One agent_custody_events row per completed step, so the agent's custody
+ * ledger shows the whole rotation next to its trades and withdrawals. The
+ * idempotency key is unique per (agent, key), and a step advances exactly once
+ * (compare-and-set), so a resumed run never writes a step twice.
+ */
+export async function recordStepCustody(transfer, step) {
+	const ownerFlipped = STEPS.indexOf(step) >= STEPS.indexOf('reassign_owner');
+	await recordCustodyEvent({
+		agentId: transfer.agent_id,
+		userId: ownerFlipped ? transfer.buyer_user_id : transfer.seller_user_id,
+		eventType: 'marketplace_transfer',
+		category: 'marketplace_transfer',
+		reason: `marketplace_${step}`,
+		status: 'confirmed',
+		signature: step === 'pay_seller' ? transfer.payout_signature || null : step === 'pay_fee' ? transfer.fee_signature || null : null,
+		idempotencyKey: `agent-market:${transfer.id}:${step}`,
+		meta: {
+			transfer_id: transfer.id, listing_id: transfer.listing_id, step, label: STEP_LABELS[step],
+			buyer: transfer.buyer_user_id, seller: transfer.seller_user_id,
+			old_wallet: transfer.old_wallet_address || null, new_wallet: transfer.new_wallet_address || null,
+		},
+	}).catch((err) => {
+		if (err?.code !== '23505') console.warn('[agent-market] custody step record failed', transfer.id, step, err?.message);
+	});
+}
+
 async function defaultContext(transfer) {
 	const [listing, agent] = await Promise.all([loadListing(transfer.listing_id), loadAgent(transfer.agent_id)]);
 	return { transfer, listing, agent };
@@ -358,6 +386,7 @@ export async function runTransfer(transferId, deps = {}) {
 				agentId: transfer.agent_id, listingId: transfer.listing_id, transferId, event: 'transfer_step',
 				meta: { step, label: STEP_LABELS[step] },
 			}).catch(() => {});
+			await recordStepCustody(transfer, step);
 		}
 	}
 	return { transfer };

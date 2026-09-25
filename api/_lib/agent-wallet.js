@@ -552,6 +552,13 @@ export async function ensureAgentWallet(agentId, userId = null, opts = {}) {
  * is traceable.
  */
 export async function recoverSolanaAgentKeypair(encryptedSecret, audit = null) {
+	// Self-custody: an agent whose owner chose external or session signing is
+	// never signed for by the platform, whichever route asked. Rotation after a
+	// key export is the one owner-initiated exception (`custodyOverride`).
+	if (audit?.agentId && !audit.custodyOverride) {
+		const { assertPlatformSigningAllowed } = await import('./custody/signing.js');
+		await assertPlatformSigningAllowed(audit.agentId);
+	}
 	const { Keypair } = await import('@solana/web3.js');
 	const secretB64 = await decrypt(encryptedSecret);
 	const kp = Keypair.fromSecretKey(Buffer.from(secretB64, 'base64'));

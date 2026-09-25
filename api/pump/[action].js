@@ -185,6 +185,22 @@ async function resolveAuth(req) {
 }
 
 /**
+ * The account behind a non-custodial trade prep or confirm. These four
+ * handlers never touch a platform key: prep returns an unsigned transaction
+ * for the caller's own wallet and confirm only records a trade it has verified
+ * on chain. A bearer caller (an API key, or the trading tools over MCP and
+ * /api/v1/trading) is therefore as safe as the cookie session they always
+ * accepted, and the session path is unchanged.
+ * @returns {Promise<{ id: string } | null>}
+ */
+async function walletTradeUser(req) {
+	const session = await getSessionUser(req);
+	if (session) return session;
+	const bearer = await authenticateBearer(extractBearer(req));
+	return bearer ? { id: bearer.userId } : null;
+}
+
+/**
  * Session lookup for the handlers that sign and BROADCAST with an agent's
  * custodial keypair server-side (launch-agent, the *-agent fee cranks). Those
  * need nothing from the caller but a cookie, so a cross-site POST alone was
@@ -389,7 +405,7 @@ async function handleBuyPrep(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
+	const user = await walletTradeUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
@@ -591,7 +607,7 @@ async function handleBuyConfirm(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
+	const user = await walletTradeUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
@@ -702,7 +718,7 @@ async function handleSellPrep(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
+	const user = await walletTradeUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
@@ -909,7 +925,7 @@ async function handleSellConfirm(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const user = await getSessionUser(req);
+	const user = await walletTradeUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));

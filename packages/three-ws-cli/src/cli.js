@@ -43,7 +43,7 @@ ${c.bold('Sign-in options')} (setup, login)
 
 ${c.bold('Setup options')}
   --clients a,b         claude-code, claude-desktop, cursor, windsurf, vscode, codex, gemini, hermes, print
-  --servers a,b         Server slugs or paths (default: /api/mcp, /api/mcp-agent, /api/mcp-3d + keyless servers)
+  --servers a,b         Server slugs or paths (default: /mcp, the unified server with every tool)
   --packages a,b        Also add stdio @three-ws/*-mcp packages
   --project             Write project-scoped config (.mcp.json, .cursor/, .vscode/, .gemini/) in this directory
   --proxy               Route every server through the local proxy (enforces tool choices in every client)
