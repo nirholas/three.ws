@@ -63,7 +63,7 @@
 		"@solana/web3.js": "^1.98.4",
 		"@tetsuo-ai/protocol": "^0.2.0",
 		"@tetsuo-ai/sdk": "^1.4.0",
-		"@x402/core": "^2.25.0",
+		"@x402/core": "^2.26.0",
 		"@x402/evm": "^2.13.0",
 		"@x402/extensions": "^2.25.0",
 		"@x402/mcp": "^2.13.0",
