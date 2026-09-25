@@ -539,7 +539,7 @@
 		"@dimforge/rapier3d-compat": "^0.19.3",
 		"@elevenlabs/elevenlabs-js": "^2.68.0",
 		"@ellipsis-labs/rise": "^0.5.26",
-		"@ethereum-attestation-service/eas-sdk": "^2.9.1",
+		"@ethereum-attestation-service/eas-sdk": "^2.10.0",
 		"@ffmpeg/ffmpeg": "^0.12.15",
 		"@ffmpeg/util": "^0.12.2",
 		"@gltf-transform/core": "^4.4.0",
