@@ -210,6 +210,40 @@ On success attach `PAYMENT-RESPONSE` (base64 of the `SettleResponse`). Shape (SD
 - `status: "pending"` (default, `syncSettle` unset/false), facilitator accepted, tx settles async; seller may confirm later via `GET /api/v6/pay/x402/settle/status?txHash=…`.
 - `status: "timeout"`, on-chain confirmation timed out.
 
+### 1.5 Rules added after the Work Order 02 landing (re-verified against production 2026-09-25)
+
+Each of these came out of a rejection or an audit after §5 was written. They are part of the
+contract now, and a change that breaks one reopens the rejection it closed.
+
+- **One accept per rail, at the row's list price, on every unpaid POST.** That includes a
+  bodyless `curl -i -X POST <endpoint>` (the A2MCP guide's compliance self-check), an empty
+  JSON body, a business payload that names no priced tool, and a well-formed `tools/call`.
+  A duplicated `eip155:196` accept at two prices is what the 2026-09-04 rejection's internal
+  note calls a quotation that "cannot be parsed". Gate: `node scripts/okx-compliance-probe.mjs`,
+  which also reads every challenge back with OKX's own `parsePaymentRequired()` from
+  `@okxweb3/app-x402-core` (PASS 20 probes, 2026-09-25).
+- **The listed A2MCP rows carry discovery extensions; the X Layer accept stays minimal.** The
+  four Forge rows answer through the MCP payment path, so their 402 envelope adds top-level
+  `extensions.bazaar` (a `tools/call` example against this server's own tools, in the x402
+  v2 Bazaar discovery shape, built by `forgeBazaarExtension()` in
+  [api/_okx3d/forge.js](../api/_okx3d/forge.js)) and `extensions.offer-receipt`, plus
+  `resource.description`, `serviceName`, `tags` and `iconUrl`. The `eip155:196` accept inside
+  it has no per-accept extension, and OKX's parser reads the whole envelope. Only the
+  back-burner REST rows use `sendOkx402()`, the minimal `{x402Version, resource, accepts}` body
+  that G10 describes.
+- **Async rows settle when the lane accepts the job.** "Settle only after tool success" (§5)
+  means, for the Forge rows, that the generator accepted the job and returned a handle.
+  Everything that can refuse the call runs before that line and answers with `charged: false`:
+  input validation, the age-13+ content gate, `delivery_unavailable` (the delivery bucket is
+  not writable) and `tier_unavailable` (the HD lane will not take the job). A job that fails
+  during generation has been charged.
+- **The free health lane reports whether a payment could be collected.** `payment-rail` on
+  `GET /api/okx/3d/health` carries `settleable`, `facilitator_configured` and, when the
+  relayer is the settlement route, `relayer_funded`; the row fails (and the endpoint answers
+  `503`) when nothing can settle. Production on 2026-09-25: `facilitator_configured: false`,
+  `relayer_funded: true`, so settlement routes through the relayer's direct EIP-3009
+  redemption.
+
 ---
 
 ## 2. Answer table, the 8 questions
@@ -293,7 +327,7 @@ of the presented payment. Spec → code map (file:line at landing commit `05de05
 | §1.4, G8 | Emit `PAYMENT-RESPONSE` (x402 v2) receipt with `status`+`amount`; keep `x-payment-response` (v1) as an alias | [`encodePaymentResponseHeader()`](../api/_lib/x402-spec.js#L1169-L1186) now passes through `status`/`amount`; both header names set in [mcp-3d.js#L108-L116](../api/mcp-3d.js#L108-L116) and [service].js; both added to the [CORS expose list](../api/_lib/http.js#L383-L386) |
 | §Q4/§Q5, G6/G11 | OKX facilitator client (HMAC-SHA256 auth) | Adopt the official SDK [`OKXFacilitatorClient` from `@okxweb3/app-x402-core@^0.2.0`](../api/_lib/x402-xlayer-okx.js#L51) behind our seams (SDK decision §3), no hand-rolled dialect |
 | G9 | HTTP-level 402 gate | Already present (Appx H.1); unchanged. The `send402`/`sendAuthChallenge` non-MCP branch emits the challenge to bare `tools/call` |
-| G10 | Keep the OKX accept minimal | The X Layer accept carries no per-accept Bazaar extension; `sendOkx402()` ([x402-xlayer-okx.js#L218-L232](../api/_lib/x402-xlayer-okx.js#L218-L232)) emits the minimal `{x402Version,resource,accepts}` for the decomposed `/api/okx/3d/*` services. (The `/api/mcp-3d` MCP endpoint keeps its Bazaar body for its non-OKX discovery role; the X Layer accept inside it is still minimal.) |
+| G10 | Keep the OKX accept minimal | Superseded in part, see §1.5: the listed Forge rows' envelope carries top-level `bazaar` and `offer-receipt` extensions by design. The X Layer accept carries no per-accept Bazaar extension; `sendOkx402()` ([x402-xlayer-okx.js#L218-L232](../api/_lib/x402-xlayer-okx.js#L218-L232)) emits the minimal `{x402Version,resource,accepts}` for the decomposed `/api/okx/3d/*` services. (The `/api/mcp-3d` MCP endpoint keeps its Bazaar body for its non-OKX discovery role; the X Layer accept inside it is still minimal.) |
 
 **Config / env (all through `api/_lib/env.js`, never hardcoded):**
 
@@ -304,7 +338,7 @@ of the presented payment. Spec → code map (file:line at landing commit `05de05
 | `X402_XLAYER_RELAYER_KEY` | Relayer key for the direct-redemption settle fallback (no OKX creds) | ✅ Preview + Production |
 | `OKX_API_KEY` / `OKX_SECRET_KEY` / `OKX_PASSPHRASE` | OKX facilitator HMAC, enables the official `/verify`+`/settle` route | ❌ **owner action** (see PROGRESS) |
 
-With `X402_PAY_TO_XLAYER` + `X402_XLAYER_RELAYER_KEY` set, `xlayerSettleable()` is true and the rail is advertised and settleable via direct redemption today. The OKX facilitator creds are the preferred settle route (gasless, first-party) and remain the one owner blocker for WO-04's funded run.
+With `X402_PAY_TO_XLAYER` + `X402_XLAYER_RELAYER_KEY` set, `xlayerSettleable()` is true and the rail is advertised and settleable via direct redemption today. The OKX facilitator creds are the preferred settle route (gasless for us, first-party) but they do not gate anything: production settles through the relayer (`/api/okx/3d/health` reads `facilitator_configured: false`, `relayer_funded: true` on 2026-09-25). What gates WO-04's funded run is the buyer wallet holding no USD₮0.
 
 **Verification captured this session (local, real module over `node:http`):** unpaid `POST tools/call text_to_3d` → `HTTP/1.1 402` whose `accepts[1]` is the `eip155:196` USD₮0 entry with every §1.1 field byte-exact (`extra.name` bytes = `555344e282ae30`, confirmed). `onchainos payment pay --selected-index 1` ACCEPTED it and returned a `PAYMENT-SIGNATURE` header signing `value:"150000"` to our payTo on `eip155:196`. Replaying that header against our endpoint (wallet holds 0 USD₮0) ran the real on-chain verify and returned `402 error:"insufficient_balance"` with a fresh full challenge, the tool did not run. Field-validated captures in `prompts/okx-ai/e2e-evidence/`.
 
