@@ -667,7 +667,7 @@ async function readModels() {
 			import('../_lib/llm-pricing.js'),
 		]);
 	const agentModels = getAvailableProviders().map((p) => {
-		const price = modelPrice(p.key);
+		const free = ANON_BRAIN_PROVIDERS.has(p.key);
 		return {
 			id: p.key,
 			label: p.label,
@@ -675,22 +675,27 @@ async function readModels() {
 			tier: p.tier,
 			max_output_tokens: p.maxOutput,
 			available: p.available,
-			free: ANON_BRAIN_PROVIDERS.has(p.key),
-			price_usd_per_mtok: price,
+			free,
+			// A key like ibm-granite names no priced model itself; the model it
+			// routes to does.
+			price_usd_per_mtok: free ? [0, 0] : modelPrice(p.key) || modelPrice(p.openrouterModel),
 			description: p.description || null,
 		};
 	});
-	const chatModels = Object.entries(MODEL_CATALOG).map(([id, m]) => ({
-		id,
-		provider: m.provider,
-		tools: Boolean(m.tools),
-		free: isFreeLane(m.provider, id),
-		price_usd_per_mtok: modelPrice(id),
-	}));
+	const chatModels = Object.entries(MODEL_CATALOG).map(([id, m]) => {
+		const free = isFreeLane(m.provider, id);
+		return {
+			id,
+			provider: m.provider,
+			tools: Boolean(m.tools),
+			free,
+			price_usd_per_mtok: free ? [0, 0] : modelPrice(id),
+		};
+	});
 	return {
 		agent_models: agentModels,
 		chat_models: chatModels,
-		note: 'agent_models ids are what an agent brain accepts (create_agent model argument). Prices are USD per million tokens, [input, output].',
+		note: 'agent_models ids are what an agent brain accepts (create_agent model argument). Prices are USD per million tokens, [input, output]; free models are [0, 0], and null means the model is not metered by list price.',
 	};
 }
 

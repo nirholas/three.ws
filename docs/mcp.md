@@ -928,7 +928,7 @@ Clients that show tools but not resources get the same data from the `read_resou
 | `three://wallets` | mcp, mcp-agent | Every agent wallet you own with SOL, USD value and freeze state, plus a total | `wallet:read` or `agents:read` |
 | `three://launches` | mcp, mcp-agent | Every token your agents launched through three.ws | `agents:read` |
 | `three://marketplace` | mcp, mcp-agent, mcp-bazaar | Paid agent skills with prices and free trials, agent services with track records, and your trials when signed in | public |
-| `three://models` | mcp, mcp-3d | Every model an agent brain can run, with availability, free-tier status and USD per million tokens | public |
+| `three://models` | mcp, mcp-3d | Every model an agent brain can run, with availability, free-tier status and USD per million tokens (`[0, 0]` for free models; a key that routes through a mirror is priced at the model it routes to) | public |
 | `three://x402/services` | mcp, mcp-agent, mcp-bazaar | The live x402 service catalog: resource URL, price, networks, facilitator | public |
 | `three://assets/{id}` | mcp-3d | A 3D asset's metadata, GLB URL and thumbnail; private assets only for their owner | public |
 

@@ -877,6 +877,10 @@ export function getAvailableProviders() {
 			context: spec.context || null,
 			description: spec.description,
 			roster: Boolean(spec.roster),
+			// The model the key routes to when it has no native lane (or as its
+			// mirror): what three://models prices against, since keys like
+			// ibm-granite name no priced model themselves.
+			openrouterModel: spec.openrouterModel || null,
 			available,
 			// `available` means the deployment holds a route for the model;
 			// `requiresAuth` means the caller still needs a session to use it

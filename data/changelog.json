@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-25",
+			"title": "The model catalog AI clients read now shows the real price of every model",
+			"summary": "The three://models resource that Claude and other MCP clients read listed free models with no price and left some paid models blank. Free models now read as costing nothing, and a model served through a partner route is priced at the model that actually answers, so an assistant comparing costs for you works from real numbers.",
+			"tags": [
+				"fix",
+				"sdk"
+			],
+			"link": "/docs/mcp"
+		},
+		{
 			"date": "2026-09-22",
 			"title": "Claude and other AI clients can now read your three.ws account and follow guided flows",
 			"summary": "Every hosted three.ws MCP server now publishes live, read-only views of your account as resources: your agents, each agent's Solana wallet with balances, limits and freeze state, usage and costs, chat history, runs, open orders, DCA plans and intents, plus the marketplace, the model catalog with prices, your token launches and the x402 service catalog. Clients like Claude Desktop show them in the attachment picker, and a client can subscribe to an agent's wallet to be told the moment a transfer lands. Each server also offers guided prompts, such as get-started, create-agent, setup-wallet, trade, hire-agent and review-costs, that walk you through a flow tool by tool and always show the recipient, amount, token and chain before anything that moves money. A new create_agent tool lets a model create an agent for you, and read_resource gives the same data to clients without a resource reader.",

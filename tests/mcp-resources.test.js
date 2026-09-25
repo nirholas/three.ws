@@ -215,6 +215,18 @@ describe('resources/read access', () => {
 		expect(md.contents[0].text).toContain('| mint | name | symbol |');
 	});
 
+	it('prices models through the model a key routes to, and free models at zero', async () => {
+		const out = await resources.handleResourceMethod('mcp', 'resources/read', { uri: 'three://models' }, anon, req);
+		const { agent_models, chat_models } = JSON.parse(out.contents[0].text);
+		const byId = new Map(agent_models.map((m) => [m.id, m]));
+		// ibm-granite names no priced model; its OpenRouter route does.
+		expect(byId.get('ibm-granite').price_usd_per_mtok).toEqual([0.05, 0.1]);
+		expect(byId.get('claude-opus-5').price_usd_per_mtok).toEqual([5, 25]);
+		for (const m of [...agent_models, ...chat_models].filter((x) => x.free)) {
+			expect(m.price_usd_per_mtok, m.id).toEqual([0, 0]);
+		}
+	});
+
 	it('hides internal errors behind a generic message with a reference', async () => {
 		db.launches = null;
 		const err = await resources
