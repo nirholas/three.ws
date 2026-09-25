@@ -42,6 +42,11 @@ export const CONFIRM_FLAGS = Object.freeze([
 	'confirm_listing',
 	'confirm_delist',
 	'confirm_accept',
+	// Named by the venue that gates them: a prediction order, a card secret
+	// reveal, and a card cancellation.
+	'confirm_trade',
+	'confirm_reveal',
+	'confirm_cancel',
 ]);
 
 /** The argument a financial tool takes to prove its preview ran. */
@@ -73,6 +78,8 @@ export const GROUPS = Object.freeze([
 	{ id: 'account', label: 'Account', summary: 'Notifications, delivery preferences, and push devices.' },
 	{ id: 'allowlist', label: 'Allowlist', summary: 'The destinations an agent wallet may send funds to.' },
 	{ id: 'assets', label: 'Assets', summary: '3D generation, avatars, animation, rigging, rendering, and the asset catalog.' },
+	{ id: 'gateway', label: 'Tool gateway', summary: 'Web search, page fetch, a headless browser, image and video generation, speech and transcription, and document parsing, billed per call in credits.' },
+	{ id: 'sandbox', label: 'Sandbox', summary: 'Run code in an isolated workspace: execute scripts, a persistent terminal, and the files a run reads and writes.' },
 	{ id: 'utility', label: 'Utility', summary: 'Getting-started guides, name resolution, vision, speech, and other stateless helpers.' },
 ]);
 

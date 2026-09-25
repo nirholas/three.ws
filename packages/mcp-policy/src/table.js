@@ -128,6 +128,23 @@ export const POLICY = {
 		create_custom_skill: w('skills'),
 		update_custom_skill: w('skills'),
 		delete_custom_skill: f('skills', 'confirm_delete', 'get_custom_skill', ['agent_id', 'skill_id']),
+		trade_receipt: r('trading'),
+		// Agent cards (api/_mcp/tools/cards.js). The service verifies its own
+		// quote and reveal ids, so the policy enforces enablement and the flag.
+		agent_card_search_merchants: r('cards'),
+		agent_card_search_gift_cards: r('cards'),
+		agent_card_quote: w('cards'),
+		agent_card_create: own('cards', 'confirm_spend', 'agent_card_quote'),
+		agent_card_list: r('cards'),
+		agent_card_get: r('cards'),
+		agent_card_status: r('cards'),
+		agent_card_balance: r('cards'),
+		agent_card_data: w('cards'),
+		agent_card_reveal: own('cards', 'confirm_reveal', 'agent_card_data'),
+		agent_card_cancel: own('cards', 'confirm_cancel', 'agent_card_get'),
+		agent_card_withdraw: own('cards', 'confirm_withdraw', 'agent_card_balance'),
+		agent_card_connect: r('cards'),
+		agent_card_connect_link: w('cards'),
 	},
 
 	// /api/mcp-agent
@@ -158,6 +175,18 @@ export const POLICY = {
 		withdraw_marketplace_bid: own('marketplace', 'confirm_withdraw', 'preview_marketplace_action'),
 		get_agent_transfer: r('marketplace'),
 		resume_agent_transfer: w('marketplace'),
+		// Prediction markets (api/_mcpagent/predictions-tools.js). The engine
+		// issues and checks its own preview ids.
+		predictions_events: r('predictions'),
+		predictions_event: r('predictions'),
+		predictions_positions: r('predictions'),
+		predictions_open_preview: r('predictions'),
+		predictions_open: own('predictions', 'confirm_trade', 'predictions_open_preview'),
+		predictions_close_preview: r('predictions'),
+		predictions_close: own('predictions', 'confirm_trade', 'predictions_close_preview'),
+		predictions_redeem_preview: r('predictions'),
+		predictions_redeem: own('predictions', 'confirm_trade', 'predictions_redeem_preview'),
+		predictions_watch: w('predictions'),
 	},
 
 	// /api/mcp-3d
