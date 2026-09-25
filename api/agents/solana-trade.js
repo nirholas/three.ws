@@ -345,9 +345,15 @@ export function parseTradeRequest(body = {}) {
  * caller (an MCP tool) passes false so a wallet that requires capabilities
  * still requires one.
  *
+ * `executor` (optional) swaps where the trade is priced and built without
+ * touching the guard chain: `{ quote(args), build(args) }` from a venue in
+ * api/_lib/trading-tools/venues.js. quote() returns quoteTrade()'s shape and
+ * build() returns `{ instructions, addressLookupTables }`. Omitted, the trade
+ * runs the launchpad path below (curve, then AMM), exactly as before.
+ *
  * @returns {Promise<{ status: number, data: object } | { status: number, error: { code: string, message: string, detail?: object } }>}
  */
-export async function runAgentTrade({ agentId, userId, meta, address, encryptedSecret, parsed, req = null, ownerInitiated = false }) {
+export async function runAgentTrade({ agentId, userId, meta, address, encryptedSecret, parsed, req = null, ownerInitiated = false, executor = null }) {
 	const id = agentId;
 	const auth = { userId };
 	const fail = (status, code, message, detail) => ({ status, error: { code, message, ...(detail ? { detail } : {}) } });
@@ -368,7 +374,8 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	// 1. Quote (always; preview and execute both need it).
 	let quote;
 	try {
-		quote = await quoteTrade({ conn: readConn, side, mintPk, mintStr, network, solAmount, tokenAmountRaw, slippageBps });
+		const quoteArgs = { conn: readConn, side, mintPk, mintStr, network, solAmount, tokenAmountRaw, slippageBps };
+		quote = executor ? await executor.quote(quoteArgs) : await quoteTrade(quoteArgs);
 	} catch (e) {
 		if (e?.code === 'pool_not_found') {
 			return fail(404, 'no_market', 'no bonding curve or AMM pool found for this mint on this network; it may not be a pump.fun coin');
@@ -597,8 +604,11 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	}
 
 	let instructions;
+	let addressLookupTables = [];
 	try {
-		instructions = await buildTradeInstructions({ userId: auth.userId, side, conn: readConn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw });
+		const buildArgs = { userId: auth.userId, side, conn: readConn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw };
+		if (executor) ({ instructions, addressLookupTables } = await buildVenueTradeInstructions({ executor, ...buildArgs }));
+		else instructions = await buildTradeInstructions(buildArgs);
 	} catch (e) {
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'build_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 		if (e?.status) return fail(e.status, e.code, e.message);
@@ -618,7 +628,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	try {
 		const result = await submitProtected({
 			network, connection: signConn, payer: keypair, instructions,
-			opts: { tipMode: 'off', confirmTimeoutMs: 45_000 },
+			opts: { tipMode: 'off', confirmTimeoutMs: 45_000, addressLookupTables },
 		});
 		signature = result.signature;
 		execTelemetry = { route: result.route, priority_fee_microlamports: result.priorityFeeMicroLamports, landed_ms: result.landedMs, attempts: result.attempts };
@@ -678,6 +688,21 @@ export async function buildTradeInstructions({ userId = null, ...args }) {
 	const fee = await buildAgentTradeFee({ network: args.network, payer: args.ownerPk, userId, side: args.side, lamports });
 	if (fee) instructions.push(...fee.instructions);
 	return instructions;
+}
+
+/**
+ * The venue-executor variant of buildTradeInstructions: the venue builds the
+ * swap (with the lookup tables its route needs) and the same three.ws trade
+ * fee is appended, so no venue can skip it.
+ * @returns {Promise<{ instructions: object[], addressLookupTables: object[] }>}
+ */
+export async function buildVenueTradeInstructions({ executor, userId = null, ...args }) {
+	const built = await executor.build(args);
+	const instructions = [...built.instructions];
+	const lamports = args.side === 'buy' ? args.quote.inAtomics : args.quote.minOutAtomics;
+	const fee = await buildAgentTradeFee({ network: args.network, payer: args.ownerPk, userId, side: args.side, lamports });
+	if (fee) instructions.push(...fee.instructions);
+	return { instructions, addressLookupTables: built.addressLookupTables || [] };
 }
 
 // Curve trades use the pump-sdk v2 builders; graduated trades use the pump-swap
