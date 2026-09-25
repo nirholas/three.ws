@@ -155,7 +155,6 @@ export function mountPriceChart({ host, mint }) {
 				background: { color: 'transparent' },
 				textColor: colors.dim,
 				fontFamily: getComputedStyle(host).getPropertyValue('--font-mono') || 'ui-monospace, monospace',
-				attributionLogo: false,
 			},
 			grid: {
 				vertLines: { color: colors.grid },
