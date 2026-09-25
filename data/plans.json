@@ -1,0 +1,223 @@
+{
+	"version": 1,
+	"updated": "2026-09-25",
+	"about": "The single source for three.ws plans: prices, free-tier allowances, quotas and per-plan API rate limits. Read by the quota checks (api/_lib/plans.js), the checkout (api/payments/_config.js), the API rate limiter (api/_lib/rate-limit.js), GET /api/plans, the /pricing page and docs/pricing.md. A null limit means unlimited. Metered prices are listed by group here and priced by the module that charges them, so a price can never be quoted in one place and charged in another.",
+	"currency": "USD",
+	"billing_period_days": 30,
+	"default_plan": "free",
+	"limits": {
+		"hosted_agents": {
+			"label": "Hosted agents",
+			"unit": "agents",
+			"description": "Agents you own, each with its own wallet, public page, chat and runs."
+		},
+		"automations": {
+			"label": "Automations",
+			"unit": "automations",
+			"description": "Triggers and wallet rules across all your agents: schedules, price and balance triggers, tip and launch watchers."
+		},
+		"agent_calls_per_day": {
+			"label": "Free agent calls a day",
+			"unit": "calls / UTC day",
+			"description": "Agent chat messages and run steps on the free-first model chain before credits are drawn."
+		},
+		"free_model_messages_per_day": {
+			"label": "Free-model messages a day",
+			"unit": "messages / UTC day",
+			"description": "Messages on the free open models of the model roster, at no charge."
+		},
+		"community_skills": {
+			"label": "Community skills",
+			"unit": "installs",
+			"description": "Skills installed from the community registry."
+		},
+		"max_avatars": {
+			"label": "Stored avatars",
+			"unit": "avatars",
+			"description": "3D models kept in your library."
+		},
+		"max_bytes_per_avatar": {
+			"label": "Largest avatar file",
+			"unit": "bytes",
+			"description": "Maximum size of one uploaded or generated model."
+		},
+		"max_total_bytes": {
+			"label": "Avatar storage",
+			"unit": "bytes",
+			"description": "Total size of every model in your library."
+		},
+		"mcp_calls_per_day": {
+			"label": "MCP tool calls a day",
+			"unit": "calls / 24 h",
+			"description": "Tool calls through the three.ws MCP servers."
+		}
+	},
+	"plans": [
+		{
+			"id": "free",
+			"name": "Free",
+			"tagline": "Deploy a hosted agent at no cost. Pay only for the models you use beyond the free allowance.",
+			"price_usd": 0,
+			"purchasable": false,
+			"contact_sales": false,
+			"cta": { "label": "Start free", "href": "/start" },
+			"limits": {
+				"hosted_agents": 1,
+				"automations": 3,
+				"agent_calls_per_day": 50,
+				"free_model_messages_per_day": 100,
+				"community_skills": null,
+				"max_avatars": 10,
+				"max_bytes_per_avatar": 26214400,
+				"max_total_bytes": 262144000,
+				"mcp_calls_per_day": 1000
+			},
+			"rate_limit": { "requests_per_minute": 1200 },
+			"features": [
+				"One hosted agent with a Solana wallet, public page and chat",
+				"Free open models every day, no card needed",
+				"Unlimited <agent-3d> embeds",
+				"Unlimited community skills",
+				"Voice chat and lipsync",
+				"Self-serve API keys"
+			]
+		},
+		{
+			"id": "pro",
+			"name": "Pro",
+			"tagline": "More agents, more automations and a bigger free allowance for builders shipping every day.",
+			"price_usd": 49,
+			"purchasable": true,
+			"contact_sales": false,
+			"featured": true,
+			"cta": { "label": "Upgrade to Pro", "href": "/pricing?upgrade=pro" },
+			"limits": {
+				"hosted_agents": 25,
+				"automations": 50,
+				"agent_calls_per_day": 500,
+				"free_model_messages_per_day": 1000,
+				"community_skills": null,
+				"max_avatars": 500,
+				"max_bytes_per_avatar": 52428800,
+				"max_total_bytes": 26843545600,
+				"mcp_calls_per_day": 50000
+			},
+			"rate_limit": { "requests_per_minute": 6000 },
+			"features": [
+				"Everything in Free",
+				"25 hosted agents and 50 automations",
+				"10x the daily free allowance",
+				"Larger sandbox machines and longer runs",
+				"Priority email support"
+			]
+		},
+		{
+			"id": "team",
+			"name": "Team",
+			"tagline": "Room for a whole fleet of agents and the automations that run them.",
+			"price_usd": 79,
+			"purchasable": true,
+			"contact_sales": false,
+			"cta": { "label": "Upgrade to Team", "href": "/pricing?upgrade=team" },
+			"limits": {
+				"hosted_agents": 100,
+				"automations": 250,
+				"agent_calls_per_day": 2500,
+				"free_model_messages_per_day": 5000,
+				"community_skills": null,
+				"max_avatars": 5000,
+				"max_bytes_per_avatar": 104857600,
+				"max_total_bytes": 536870912000,
+				"mcp_calls_per_day": 500000
+			},
+			"rate_limit": { "requests_per_minute": 20000 },
+			"features": [
+				"Everything in Pro",
+				"100 hosted agents and 250 automations",
+				"50x the daily free allowance",
+				"The largest sandbox machines"
+			]
+		},
+		{
+			"id": "enterprise",
+			"name": "Enterprise",
+			"tagline": "Unlimited agents and automations, dedicated capacity and a named contact.",
+			"price_usd": 299,
+			"purchasable": true,
+			"contact_sales": true,
+			"cta": { "label": "Talk to us", "href": "mailto:support@three.ws?subject=three.ws%20Enterprise" },
+			"limits": {
+				"hosted_agents": null,
+				"automations": null,
+				"agent_calls_per_day": 10000,
+				"free_model_messages_per_day": 20000,
+				"community_skills": null,
+				"max_avatars": 100000,
+				"max_bytes_per_avatar": 524288000,
+				"max_total_bytes": 10995116277760,
+				"mcp_calls_per_day": 10000000
+			},
+			"rate_limit": { "requests_per_minute": 60000 },
+			"features": [
+				"Everything in Team",
+				"Unlimited hosted agents and automations",
+				"Self-hosted runtime option and white-label embeds",
+				"SSO, audit logs and embed-policy allowlists",
+				"Dedicated infrastructure and a solutions engineer"
+			]
+		}
+	],
+	"anonymous": {
+		"name": "Signed out",
+		"limits": {
+			"free_model_messages_per_day": 20
+		},
+		"rate_limit": { "requests_per_minute": 600 }
+	},
+	"rate_limit_window_seconds": 60,
+	"rate_limit_exempt_prefixes": ["/api/cron/", "/api/webhooks/", "/api/healthz", "/api/version", "/api/x402-facilitator"],
+	"metered": [
+		{
+			"id": "models",
+			"label": "Model usage",
+			"description": "Tokens on paid models, billed from credits at the model's list price. Free models cost nothing inside the daily allowance.",
+			"source": "api/_lib/model-roster.js, api/_lib/llm-pricing.js, api/_lib/pricing/catalog.js"
+		},
+		{
+			"id": "gateway",
+			"label": "Tool gateway",
+			"description": "Web search, fetch, browser, image and video generation, speech and document tools an agent calls, billed per unit from credits.",
+			"source": "api/_lib/tool-gateway/pricing.js"
+		},
+		{
+			"id": "sandbox",
+			"label": "Sandboxed code execution",
+			"description": "Per-second compute for code an agent runs in its sandbox. Machine size and run length grow with your plan.",
+			"source": "api/_lib/sandbox/limits.js"
+		},
+		{
+			"id": "mail",
+			"label": "Agent mail",
+			"description": "An agent's own inbox and every message it sends.",
+			"source": "api/_lib/mail/config.js"
+		},
+		{
+			"id": "cards",
+			"label": "Agent cards",
+			"description": "Prepaid cards bought by an agent. three.ws adds no platform fee; the card provider's fee is shown on every quote before you confirm.",
+			"source": "api/_lib/cards/bitrefill.js"
+		},
+		{
+			"id": "marketplace",
+			"label": "Marketplace fees",
+			"description": "The platform share of paid skill calls, agent sales and marketplace purchases.",
+			"source": "api/_lib/fee.js, api/_lib/agent-market/settlement.js, api/_lib/marketplace-platform-fee.js"
+		},
+		{
+			"id": "launch",
+			"label": "Launch fees",
+			"description": "Fees on coins launched and traded through three.ws.",
+			"source": "api/_lib/launch-economics.js, api/_lib/pump-platform-fee.js, api/_lib/fixed-launch.js"
+		}
+	]
+}
