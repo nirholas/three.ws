@@ -1,6 +1,7 @@
-// Slash commands shared by Telegram (/balance) and Discord (/balance and
-// /three balance). Each reads the same data the web shows: the wallet card's
-// balance, the Portfolio tab, the agent's runs and its launch history.
+// Commands shared by every chat gateway: /balance on Telegram, WhatsApp, Signal
+// and SMS, /balance or /three balance on Discord, /three balance on Slack. Each
+// reads the same data the web shows: the wallet card's balance, the Portfolio
+// tab, the agent's runs and its launch history.
 
 import { sql } from '../db.js';
 import { readAgentSolBalance } from '../../agents/solana-wallet.js';
@@ -8,7 +9,8 @@ import { lamportsToUsd, listCustodyEvents } from '../agent-trade-guards.js';
 import { getPortfolio } from '../portfolio.js';
 import { queryAgentLaunches } from '../pump-agent-launches.js';
 import { listAccountAgents, pickAgent, resolveChatAgent } from './agents.js';
-import { revokeLink, resetLinkContext, setLinkDefaultAgent } from './store.js';
+import { revokeLink, resetLinkContext, setLinkDefaultAgent, setLinkVoiceReplies } from './store.js';
+import { voiceRepliesAvailable } from './voice.js';
 import { appOrigin, agentWalletUrl, explorerTx, fmtNum, fmtUsd, short } from './format.js';
 
 export const COMMANDS = [
@@ -19,18 +21,27 @@ export const COMMANDS = [
 	{ name: 'agents', description: 'List your agents' },
 	{ name: 'use', description: 'Pick the agent this chat talks to', arg: 'agent' },
 	{ name: 'new', description: 'Start a fresh conversation thread' },
+	{ name: 'voice', description: 'Turn spoken replies on or off', arg: 'on|off' },
 	{ name: 'unlink', description: 'Disconnect this chat from your account' },
 	{ name: 'link', description: 'Pair this chat with your three.ws account', arg: 'code' },
 	{ name: 'help', description: 'What this bot can do' },
 ];
 
-export function helpText() {
+/**
+ * @param {{ buttons?:boolean, prefix?:string }} [opts]
+ *   buttons  false on channels approved by reply code (SMS, Signal, email)
+ *   prefix   how a command is typed there: '/' everywhere except Slack ('/three ')
+ */
+export function helpText({ buttons = true, prefix = '/' } = {}) {
+	const approval = buttons
+		? 'Trades never run from text alone. When your agent prepares one you get a preview with Approve and Cancel buttons; only Approve executes it, and a preview expires after ten minutes.'
+		: 'Trades never run from text alone. When your agent prepares one you get a preview ending with a six-digit code; only a reply of APPROVE and that exact code executes it, from this chat, within ten minutes.';
 	return [
 		'Talk to your three.ws agent here. Just write, send a voice note, or send a photo.',
 		'',
-		...COMMANDS.filter((c) => c.name !== 'link').map((c) => `/${c.name}${c.arg ? ` <${c.arg}>` : ''}: ${c.description}`),
+		...COMMANDS.filter((c) => c.name !== 'link').map((c) => `${prefix}${c.name}${c.arg ? ` <${c.arg}>` : ''}: ${c.description}`),
 		'',
-		'Trades never run from text alone. When your agent prepares one you get a preview with Approve and Cancel buttons; only Approve executes it, and a preview expires after ten minutes.',
+		approval,
 		`Manage paired chats: ${appOrigin()}/settings/connections`,
 	].join('\n');
 }
@@ -75,6 +86,19 @@ export async function cmdUnlink({ gw, event, link }) {
 export async function cmdNew({ gw, event, link }) {
 	await resetLinkContext(link.id);
 	return gw.sendText(event.chatId, 'Started a fresh thread. Your agent will not see earlier messages here; the full history stays on the web.');
+}
+
+export async function cmdVoice({ gw, event, link }) {
+	const arg = String(event.args || '').trim().toLowerCase();
+	if (typeof gw.sendVoice !== 'function') return gw.sendText(event.chatId, 'This channel cannot play voice notes, so spoken replies are not available here.');
+	if (!['on', 'off'].includes(arg)) {
+		return gw.sendText(event.chatId, `Spoken replies are ${link.voice_replies ? 'on' : 'off'} for this chat. Send /voice on or /voice off to change it.`);
+	}
+	if (arg === 'on' && !voiceRepliesAvailable()) return gw.sendText(event.chatId, 'Speech synthesis is not available right now, so spoken replies cannot be turned on. Try again later.');
+	await setLinkVoiceReplies(link.id, link.user_id, arg === 'on');
+	return gw.sendText(event.chatId, arg === 'on'
+		? 'Spoken replies are on. Every answer arrives as text, then as a voice note.'
+		: 'Spoken replies are off. Answers arrive as text only.');
 }
 
 export async function cmdBalance({ gw, event, link }) {
@@ -168,6 +192,7 @@ export const COMMAND_HANDLERS = {
 	use: cmdUse,
 	unlink: cmdUnlink,
 	new: cmdNew,
+	voice: cmdVoice,
 	balance: cmdBalance,
 	portfolio: cmdPortfolio,
 	runs: cmdRuns,

@@ -4,30 +4,45 @@
 // over the agent's cross-channel thread (api/_lib/agent-thread.js), so a
 // conversation started on the web continues here and the other way round. While
 // the agent works, the chat shows a typing indicator and one compact status
-// line ("working: get_quote") edited in place. Every trade or limit change the
-// agent proposes becomes a preview with Approve and Cancel buttons; nothing in
-// the reply text can execute one.
+// line ("working: get_quote") edited in place, on platforms that can edit a
+// message (SMS, Signal and email cannot, so they get neither). Every trade or
+// limit change the agent proposes becomes a preview with Approve and Cancel
+// buttons, or on a channel without buttons a single-use reply code
+// (./reply-codes.js); nothing in the reply text can execute one. When the
+// owner turned on voice replies for the chat, the reply is also spoken
+// (./voice.js).
 
 import { runCopilotTurn } from '../copilot-engine.js';
 import { appendThreadMessage, threadHistoryForModel } from '../agent-thread.js';
 import { resolveChatAgent, listAccountAgents } from './agents.js';
 import { createPreview, setPreviewMessageRef, PREVIEW_TTL_MINUTES } from './store.js';
 import { chunkText, describeProposal, plainText, MAX_TEXT, PLATFORM_LABEL, appOrigin } from './format.js';
+import { maybeSpeakReply } from './voice.js';
 
 export const APPROVE = 'gw:ap:';
 export const CANCEL = 'gw:cx:';
 const TYPING_EVERY_MS = 4500;
 
-function surfaceNote(platform) {
+/** Whether a gateway renders buttons (true unless it says otherwise). */
+export function hasButtons(gw) {
+	return gw.buttons !== false;
+}
+
+function surfaceNote(platform, { buttons = true } = {}) {
 	const where = PLATFORM_LABEL[platform] || platform;
+	const approval = buttons
+		? 'Every propose_* card you surface reaches the owner as a preview message with Approve and Cancel buttons. Tell them to press Approve to execute it or Cancel to discard it, and that it expires in ten minutes. Never claim a trade happened.'
+		: 'Every propose_* card you surface reaches the owner as a preview message ending with a six-digit code. Tell them to reply APPROVE and that code to execute it, or CANCEL and the code to discard it, and that it expires in ten minutes. Never claim a trade happened.';
+	const brevity = platform === 'sms' ? ' This is SMS: answer in two or three short sentences.' : ' Keep it short.';
 	return [
-		`SURFACE: you are replying in a ${where} chat with your owner. Write plain text: no tables, no headings, no code blocks. Keep it short.`,
-		'Every propose_* card you surface reaches the owner as a preview message with Approve and Cancel buttons. Tell them to press Approve to execute it or Cancel to discard it, and that it expires in ten minutes. Never claim a trade happened.',
+		`SURFACE: you are replying in a ${where} chat with your owner. Write plain text: no tables, no headings, no code blocks.${brevity}`,
+		approval,
 	].join('\n');
 }
 
 /** Keep the platform's typing indicator alive until stop() is called. */
 function keepTyping(gw, chatId) {
+	if (typeof gw.typing !== 'function') return () => {};
 	let stopped = false;
 	const tick = () => { if (!stopped) Promise.resolve(gw.typing(chatId)).catch(() => {}); };
 	tick();
@@ -40,6 +55,9 @@ function keepTyping(gw, chatId) {
  * left behind as a compact record of what the agent looked at.
  */
 function statusLine(gw, chatId) {
+	// A channel that cannot edit would get one new message per tool call; on
+	// SMS that is a bill, so those channels skip the status line entirely.
+	if (gw.canEdit === false) return { working() {}, async finish() {} };
 	let ref = null;
 	let chain = Promise.resolve();
 	const used = [];
@@ -82,7 +100,7 @@ export function previewText(proposal) {
 async function sendPreviews({ gw, event, link, agent, proposals }) {
 	for (const p of proposals) {
 		const preview = await createPreview({ linkId: link.id, userId: link.user_id, agentId: agent.id, kind: p.kind, proposal: p });
-		const ref = await gw.sendChoice(event.chatId, previewText(p), choicesFor(preview, p));
+		const ref = await gw.sendChoice(event.chatId, previewText(p), choicesFor(preview, p), { link });
 		if (ref) await setPreviewMessageRef(preview.id, ref);
 	}
 }
@@ -117,7 +135,7 @@ export async function converse({ gw, event, link, text }) {
 			agent,
 			history,
 			network: 'mainnet',
-			surfaceNote: surfaceNote(event.platform),
+			surfaceNote: surfaceNote(event.platform, { buttons: hasButtons(gw) }),
 			emit: (name, data) => { if (name === 'tool_start') status.working(data.name); },
 		});
 	} catch (e) {
@@ -134,6 +152,7 @@ export async function converse({ gw, event, link, text }) {
 
 	const reply = plainText(turn.reply) || (turn.proposals.length ? 'Here is what I prepared:' : 'I have nothing to add to that.');
 	await sendReply(gw, event.chatId, reply);
+	await maybeSpeakReply({ gw, chatId: event.chatId, link, text: reply, agentId: agent.id });
 	if (turn.proposals.length) await sendPreviews({ gw, event, link, agent, proposals: turn.proposals });
 
 	await appendThreadMessage({

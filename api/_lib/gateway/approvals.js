@@ -126,11 +126,21 @@ export async function handleAction({ gw, event, link }) {
 	}
 	const ref = preview.message_ref || event.messageRef || null;
 	const base = previewText(preview.proposal);
-	const settle = async (line) => { if (ref) await gw.editMessage(ref, `${base}\n\n${line}`, { choices: [] }).catch(() => {}); };
+	// A channel that can edit rewrites the preview in place and drops its
+	// buttons. One that cannot (SMS, Signal, email: approved by reply code)
+	// gets the outcome as a new message, and skips the transient acks that
+	// would otherwise arrive as a second, redundant text.
+	const editable = gw.canEdit !== false;
+	const settle = async (line) => {
+		if (!editable) return gw.sendText(event.chatId, line).catch(() => {});
+		if (ref) await gw.editMessage(ref, `${base}\n\n${line}`, { choices: [] }).catch(() => {});
+	};
+	const ackThenSettle = (text) => (editable ? gw.ackAction(event, text) : null);
 
 	if (verb === 'cancel') {
 		const done = await cancelPreview(preview.id);
-		await gw.ackAction(event, done ? 'Cancelled' : `Already ${preview.status}`);
+		if (done) await ackThenSettle('Cancelled');
+		else await gw.ackAction(event, `Already ${preview.status}`);
 		if (done) {
 			await settle('Cancelled. Nothing was sent.');
 			await appendThreadMessage({ agentId: preview.agent_id, userId: preview.user_id, role: 'assistant', content: `Cancelled the ${preview.kind} preview. Nothing was sent.`, channel: event.platform }).catch(() => {});
@@ -141,7 +151,7 @@ export async function handleAction({ gw, event, link }) {
 	if (preview.status !== 'pending') return gw.ackAction(event, `Already ${preview.status}.`);
 	if (new Date(preview.expires_at) <= new Date()) {
 		await expirePreview(preview.id);
-		await gw.ackAction(event, 'This preview expired.');
+		await ackThenSettle('This preview expired.');
 		return settle('Expired. Ask your agent again for a fresh quote.');
 	}
 	const rl = await limits.gatewayMessage(link.id);
@@ -149,7 +159,7 @@ export async function handleAction({ gw, event, link }) {
 
 	const claimed = await claimPreview(preview.id);
 	if (!claimed) return gw.ackAction(event, 'This preview was already handled.');
-	await gw.ackAction(event, 'Approved. Executing...');
+	await ackThenSettle('Approved. Executing...');
 	await settle('Approved. Executing...');
 
 	let result;

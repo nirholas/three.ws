@@ -1,9 +1,9 @@
 // Verification and normalisation for the chat gateway webhooks. The receivers
-// (api/gateway/telegram.js, api/gateway/discord.js) verify the platform's proof,
+// (api/gateway/{telegram,discord,slack,whatsapp,sms}.js) verify the platform's proof,
 // queue the delivery in gateway_inbox and answer at once; the worker does the
 // slow part. Kept free of HTTP so the tests can drive every branch.
 
-import { createHash, createPublicKey, timingSafeEqual, verify } from 'node:crypto';
+import { createHash, createHmac, createPublicKey, timingSafeEqual, verify } from 'node:crypto';
 
 // ── Telegram ─────────────────────────────────────────────────────────────────
 
@@ -88,4 +88,133 @@ export function discordInboxKeys(interaction) {
 	if (!interaction?.id || !interaction.channel_id) return null;
 	if (interaction.type !== DISCORD_INTERACTION.APPLICATION_COMMAND && interaction.type !== DISCORD_INTERACTION.MESSAGE_COMPONENT) return null;
 	return { dedupeKey: String(interaction.id), chatKey: `discord:${interaction.channel_id}` };
+}
+
+// ── Slack ────────────────────────────────────────────────────────────────────
+
+const SLACK_MAX_SKEW_S = 300;
+
+/**
+ * Verify Slack's v0 request signature: HMAC-SHA256 of `v0:<timestamp>:<raw body>`
+ * keyed with the app's signing secret, sent as `v0=<hex>` in X-Slack-Signature.
+ * A timestamp more than five minutes off is refused so a capture cannot be replayed.
+ */
+export function verifySlackSignature({ rawBody, signature, timestamp, signingSecret, now = Date.now() }) {
+	if (!signingSecret || !rawBody) return false;
+	if (!/^\d{1,12}$/.test(String(timestamp || ''))) return false;
+	if (Math.abs(now / 1000 - Number(timestamp)) > SLACK_MAX_SKEW_S) return false;
+	const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody));
+	const expected = `v0=${createHmac('sha256', signingSecret).update(`v0:${timestamp}:`).update(body).digest('hex')}`;
+	return safeEqual(signature, expected);
+}
+
+/**
+ * Classify a verified Slack delivery. The one endpoint receives three shapes:
+ * Events API JSON, slash commands (form fields) and interactivity (a form field
+ * `payload` holding JSON). Returns what the receiver should do with it.
+ * @param {{ contentType:string, rawBody:Buffer|string }} req
+ * @returns {{ type:'challenge', challenge:string }
+ *   | { type:'enqueue', dedupeKey:string, chatKey:string, payload:object }
+ *   | { type:'ignore' }}
+ */
+export function classifySlackDelivery({ contentType, rawBody }) {
+	const text = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : String(rawBody || '');
+	if (/application\/json/i.test(contentType || '')) {
+		let body;
+		try { body = JSON.parse(text); } catch { return { type: 'ignore' }; }
+		if (body?.type === 'url_verification' && typeof body.challenge === 'string') return { type: 'challenge', challenge: body.challenge };
+		if (body?.type !== 'event_callback' || !body.event) return { type: 'ignore' };
+		const ev = body.event;
+		// The bot's own posts, edits and joins come back as events too.
+		if (ev.bot_id || ev.subtype) return { type: 'ignore' };
+		const direct = ev.type === 'message' && ev.channel_type === 'im';
+		if (!direct && ev.type !== 'app_mention') return { type: 'ignore' };
+		if (!ev.channel || !ev.user) return { type: 'ignore' };
+		return { type: 'enqueue', dedupeKey: `event:${body.event_id || ev.client_msg_id || ev.ts}`, chatKey: `slack:${ev.channel}`, payload: { kind: 'slack_event', team_id: body.team_id, event: ev } };
+	}
+	const form = Object.fromEntries(new URLSearchParams(text));
+	if (form.payload) {
+		let p;
+		try { p = JSON.parse(form.payload); } catch { return { type: 'ignore' }; }
+		if (p?.type !== 'block_actions' || !Array.isArray(p.actions) || !p.actions.length) return { type: 'ignore' };
+		const channel = p.channel?.id || p.container?.channel_id;
+		if (!channel) return { type: 'ignore' };
+		const a = p.actions[0];
+		return { type: 'enqueue', dedupeKey: `action:${p.trigger_id || `${a.action_id}:${a.action_ts}`}`, chatKey: `slack:${channel}`, payload: { kind: 'slack_action', action: p } };
+	}
+	if (form.command && form.channel_id && form.user_id) {
+		return { type: 'enqueue', dedupeKey: `command:${form.trigger_id || `${form.channel_id}:${form.user_id}:${Date.now()}`}`, chatKey: `slack:${form.channel_id}`, payload: { kind: 'slack_command', command: form } };
+	}
+	return { type: 'ignore' };
+}
+
+// ── WhatsApp (Cloud API) ─────────────────────────────────────────────────────
+
+/**
+ * Verify Meta's X-Hub-Signature-256: `sha256=` + HMAC-SHA256 of the raw body
+ * keyed with the app secret.
+ */
+export function verifyWhatsAppSignature({ rawBody, signature, appSecret }) {
+	if (!appSecret || !rawBody) return false;
+	const body = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody));
+	const expected = `sha256=${createHmac('sha256', appSecret).update(body).digest('hex')}`;
+	return safeEqual(String(signature || '').toLowerCase(), expected);
+}
+
+/**
+ * Answer Meta's subscription handshake (GET ?hub.mode=subscribe&hub.verify_token=
+ * &hub.challenge=). Returns the challenge to echo, or null to refuse.
+ */
+export function whatsappChallenge(query, verifyToken) {
+	if (!verifyToken) return null;
+	if (query?.['hub.mode'] !== 'subscribe') return null;
+	if (!safeEqual(query?.['hub.verify_token'], verifyToken)) return null;
+	const challenge = String(query?.['hub.challenge'] || '');
+	return /^[\w-]{1,128}$/.test(challenge) ? challenge : null;
+}
+
+/**
+ * One Cloud API webhook can batch several messages (and status receipts, which
+ * the gateway ignores). Each message becomes its own inbox row.
+ * @returns {Array<{ dedupeKey:string, chatKey:string, payload:object }>}
+ */
+export function whatsappInboxEntries(body) {
+	const out = [];
+	if (body?.object !== 'whatsapp_business_account') return out;
+	for (const entry of body.entry || []) {
+		for (const change of entry.changes || []) {
+			const value = change?.value;
+			if (change?.field !== 'messages' || !value) continue;
+			for (const message of value.messages || []) {
+				if (!message?.id || !message.from) continue;
+				const contact = (value.contacts || []).find((c) => c.wa_id === message.from) || null;
+				out.push({
+					dedupeKey: String(message.id),
+					chatKey: `whatsapp:${message.from}`,
+					payload: { kind: 'whatsapp_message', phone_number_id: value.metadata?.phone_number_id || null, contact, message },
+				});
+			}
+		}
+	}
+	return out;
+}
+
+// ── SMS (Twilio) ─────────────────────────────────────────────────────────────
+
+/**
+ * Verify X-Twilio-Signature: base64 HMAC-SHA1, keyed with the auth token, of the
+ * exact public URL Twilio posted to followed by every form field as key+value,
+ * keys sorted.
+ */
+export function verifyTwilioSignature({ url, params, signature, authToken }) {
+	if (!authToken || !url || !signature) return false;
+	const data = Object.keys(params || {}).sort().reduce((s, k) => s + k + String(params[k] ?? ''), String(url));
+	const expected = createHmac('sha1', authToken).update(Buffer.from(data, 'utf8')).digest('base64');
+	return safeEqual(signature, expected);
+}
+
+/** @returns {{ dedupeKey:string, chatKey:string } | null} */
+export function smsInboxKeys(params) {
+	if (!params?.MessageSid || !params.From) return null;
+	return { dedupeKey: String(params.MessageSid), chatKey: `sms:${params.From}` };
 }
