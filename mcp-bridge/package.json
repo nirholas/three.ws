@@ -53,7 +53,7 @@
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@solana/kit": "^8.3.0",
-		"@x402/axios": "^2.25.0",
+		"@x402/axios": "^2.26.0",
 		"@x402/core": "^2.25.0",
 		"@x402/evm": "^2.13.0",
 		"@x402/svm": "^2.13.0",
