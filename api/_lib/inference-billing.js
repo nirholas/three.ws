@@ -163,11 +163,13 @@ export function applyInferenceBudget(meta, budget) {
 /**
  * Every credit_ledger action that is model spend on behalf of one agent, booked
  * with ref_type 'agent' and ref_id = the agent id: the flat three-ws/agent rate
- * (chat completions, the strategy loop) and the metered spend of a v1 run's
- * paid model lanes. The per-agent budget is judged against all of them, so an
- * agent cannot outrun its budget by spending through a different surface.
+ * (chat completions, the strategy loop), the metered spend of a v1 run's paid
+ * model lanes, and a v1 chat message that named a paid model and was billed at
+ * its list price (api/_lib/agents-v1/billing.js). The per-agent budget is
+ * judged against all of them, so an agent cannot outrun its budget by spending
+ * through a different surface or by naming an expensive model.
  */
-export const AGENT_SPEND_ACTIONS = Object.freeze([INFERENCE_ACTION, 'agent_run_step']);
+export const AGENT_SPEND_ACTIONS = Object.freeze([INFERENCE_ACTION, 'agent_run_step', 'agent.model']);
 
 /** Inference credits an agent has burned today and this month (UTC). */
 export async function agentInferenceSpend(agentId) {
@@ -182,7 +184,7 @@ export async function agentInferenceSpend(agentId) {
 			)::int AS calls_today
 		FROM credit_ledger
 		WHERE ref_type = 'agent' AND ref_id = ${String(agentId)}
-		  AND action IN (${AGENT_SPEND_ACTIONS[0]}, ${AGENT_SPEND_ACTIONS[1]})
+		  AND action = ANY(${AGENT_SPEND_ACTIONS})
 		  AND created_at >= (date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
 	`;
 	return {
@@ -391,6 +393,10 @@ export async function resumeAfterBudgetChange(agentId, previousMeta) {
  * the full price (the call was admitted with a thin balance), the remaining
  * balance is taken instead and the shortfall reported, never a negative balance.
  *
+ * `priceUsd` replaces the published-rate price for a call that named a paid
+ * model and is billed at that model's list price; `billedModel` records the
+ * model id the price is for.
+ *
  * @returns {Promise<{ chargedUsd: number, pricedUsd: number, balanceUsd: number, shortfallUsd: number, replay: boolean }>}
  */
 export async function chargeInference({
@@ -403,10 +409,15 @@ export async function chargeInference({
 	estimated = false,
 	provider = null,
 	model = null,
+	priceUsd = null,
+	billedModel = INFERENCE_MODEL_ID,
 }) {
-	const pricedUsd = priceInference({ inputTokens, outputTokens });
+	const pricedUsd =
+		Number.isFinite(priceUsd) && priceUsd > 0
+			? Math.max(INFERENCE_MIN_CALL_USD, Math.ceil(priceUsd * 1e6 - 1e-9) / 1e6)
+			: priceInference({ inputTokens, outputTokens });
 	const meta = {
-		model: INFERENCE_MODEL_ID,
+		model: billedModel,
 		agent_id: agentId,
 		api_key_id: apiKeyId,
 		input_tokens: inputTokens,
@@ -461,7 +472,7 @@ export async function inferenceUsage({ userId, agent = null }) {
 			SELECT COALESCE(SUM(-amount_usd), 0)::float8 AS spent7,
 			       COUNT(*)::int AS calls7
 			FROM credit_ledger
-			WHERE user_id = ${userId} AND action IN (${AGENT_SPEND_ACTIONS[0]}, ${AGENT_SPEND_ACTIONS[1]})
+			WHERE user_id = ${userId} AND action = ANY(${AGENT_SPEND_ACTIONS})
 			  AND (${agentId}::text IS NULL OR (ref_type = 'agent' AND ref_id = ${agentId ? String(agentId) : null}))
 			  AND created_at > now() - interval '7 days'
 		`,
@@ -481,7 +492,7 @@ export async function inferenceUsage({ userId, agent = null }) {
 			       COALESCE(SUM((meta->>'input_tokens')::bigint), 0)::bigint AS input_tokens,
 			       COALESCE(SUM((meta->>'output_tokens')::bigint), 0)::bigint AS output_tokens
 			FROM credit_ledger
-			WHERE user_id = ${userId} AND action IN (${AGENT_SPEND_ACTIONS[0]}, ${AGENT_SPEND_ACTIONS[1]})
+			WHERE user_id = ${userId} AND action = ANY(${AGENT_SPEND_ACTIONS})
 			  AND (${agentId}::text IS NULL OR (ref_type = 'agent' AND ref_id = ${agentId ? String(agentId) : null}))
 			  AND created_at >= (date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
 		`,
