@@ -10,7 +10,7 @@
 		"dev": "node --watch src/index.js"
 	},
 	"engines": {
-		"node": ">=20"
+		"node": ">=22.12"
 	},
 	"dependencies": {
 		"@bonfida/spl-name-service": "^0.1.67",
