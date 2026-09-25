@@ -2490,3 +2490,53 @@ five README-less directories under `packages/` and `workers/`; none are touched 
   0.001) lets the armed reclaim cron sweep the 0.161 SOL of `below_min_sweep` excess back to
   the master. It is a config change whose effect is an automatic SOL move, so it is the
   owner's call, not a pre-approved config tweak.
+
+## 2026-09-25 | 01 x402 settle runway | settle still ok; the top rail fault was paid forge calls the ring abandoned
+
+Re-measured live against production `c8f10f437` (revision `three-ws-api-00458-njs`, so
+`22f1e08df` is still not deployed) at 05:13 UTC.
+
+| Fact | Value | Source |
+|---|---|---|
+| `x402_settle` | **ok, 92.6%** (224/242 paid attempts, 3h), 923 paced by the fee governor; top faults `This operation was aborted` 17, `rpc_preflight_failed` 1 | `/api/healthz` |
+| Facilitator settle rejects since boot | `fee_runway_exhausted` **42,760** of 42,784; settled 3,403 | `x402.self_facilitator` on `/api/healthz` |
+| Sponsor / economy master `Wwwu...T3WwW` | **0.019011 SOL**, spendable 0.017011 (was 0.031995 on 09-24) | `/api/x402/runway-lab` |
+| 24h fee burn | 27,602,800 lamports = **0.0276 SOL/day** at a 10,000 lamport median | runway-lab |
+| `treasury-topup?dry=1` | `master_deficit_sol` **0.290989**, `spendable_sol` 0, plan `[]` (`master_insufficient_spendable` for both targets), reclaim and agent_reclaim moves `[]`; agent wallets still read the pre-`22f1e08df` `at_or_below_floor:0.0193<0.01` wording | cron dry run |
+
+### Finding and fix (`fb533a6ec`, swept in by a peer commit; no funds moved, no config changed)
+
+**The ring abandoned paid Forge generations that the server went on to settle.** All 17
+`aborted` faults trace to `x402_autonomous_log`: 84 in 24h from the forge prop pipeline
+(each run logs twice, a pipeline row plus the loop's summary row) plus 8s timeouts on
+third-party uptime probes. `/api/x402/forge` generates before it settles, a standard NIM
+job takes 20 to 55s, and `payX402` gave the paid replay the shared 20s budget. Aborting
+did not cancel the server: `forge_creations` holds 9 ring-paid generations with settle
+signatures in 24h, and 7 of them match a ring row reading `This operation was aborted`.
+That is 1.05 USDC/day charged, recorded as rail faults, and never written to
+`forge_autonomous_props` (so never shown on `/forged`). `payX402` now takes
+`paidTimeoutMs` for the paid replay only (probe unchanged), and the forge pipeline passes
+`FORGE_PAID_TIMEOUT_MS` = 90,000. Four tests in `tests/x402-pay-paid-timeout.test.js`
+against a real local 402 server; the payX402 402-retry, blockhash-freshness and forge
+suites stay green. Docs in `docs/forged.md` (`871b307c5`); the `/forged` empty state now
+states the real 30 minute cadence (`842dd8d53`). The other 84 locales still say hourly:
+re-translation failed here because Vertex returned 403 (the workspace needs `gcloud auth
+login`) and the service's Gemini key is billing-denied, so the old translations were kept.
+
+### DoD after this pass
+
+1. `x402_settle` ok above 90%: **passes** (92.6%). With the forge fix deployed, about 5
+   aborted faults per 3h become settles.
+2. `fee_runway_exhausted` not the top reject class: **fails until `22f1e08df` is deployed.**
+3. Non-zero deficit AND non-zero reclaim plan: deficit passes (0.290989), plan empty.
+4. to 6. Recurrence guard, changelog (`fb533a6ec` carries the forge entry), PROGRESS: done.
+
+### Owner actions (unchanged, now more urgent)
+
+- **Deploy** (gate 2): HEAD carries `22f1e08df` and the forge budget fix.
+- **Fund `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`** (gate 1). 0.017 SOL spendable
+  against 0.0276 SOL/day of burn: the sponsor hits its 0.002 SOL floor within about 15
+  hours of this reading, after which `x402_settle` goes `down / sponsor_floor`. The sizing
+  from the 09-24 entry still holds: about 0.4 SOL buys 14 days at today's burn; about 1.4 SOL
+  also fills the 0.3 SOL operating reserve and both topup targets, which is what makes the
+  DoD 3 plan non-zero.

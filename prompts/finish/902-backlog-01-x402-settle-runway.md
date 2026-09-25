@@ -2,6 +2,19 @@
 
 Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 
+> ## Re-measured 2026-09-25: still ok; same two owner gates, less time on the second
+>
+> Live at 05:13 UTC, still on `c8f10f437`: `x402_settle` **ok, 92.6%** (224/242, 3h).
+> `fee_runway_exhausted` is still 42,760 of 42,784 facilitator rejects because
+> `22f1e08df` is not deployed. The sponsor fell to 0.019 SOL (0.017 spendable) against
+> 0.0276 SOL/day of burn, so it reaches its floor about 15 hours after that reading.
+> Fixed this pass: the top rail fault (`This operation was aborted`) was the forge prop
+> pipeline abandoning paid generations at 20s while the server settled them anyway
+> (7 of 9 in 24h); `payX402` now takes `paidTimeoutMs` and the pipeline waits 90s
+> (`fb533a6ec`). Evidence in [PROGRESS.md](_context/backlog-PROGRESS.md), 2026-09-25.
+> Remaining: deploy (gate 2), then fund `Wwwu...T3WwW` (gate 1), about 0.4 SOL for 14 days
+> or about 1.4 SOL to also make the DoD 3 reclaim plan non-zero.
+
 > ## Re-measured 2026-09-24: settle is ok; two owner gates remain
 >
 > Live at 06:32 UTC on `c8f10f437`: `x402_settle` **ok, 92.2%** (235/255, 3h), so DoD 1
