@@ -18,7 +18,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const dbState = { deleted: [], marked: [], stored: null, pushDevices: 0 };
+const dbState = { deleted: [], marked: [], stored: null, pushDevices: 0, iosDevices: 0 };
 const sqlCalls = [];
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: Object.assign(
@@ -32,6 +32,9 @@ vi.mock('../../api/_lib/db.js', () => ({
 			}
 			if (/from push_subscriptions/.test(text)) {
 				return Promise.resolve([{ count: dbState.pushDevices }]);
+			}
+			if (/from apns_devices/.test(text)) {
+				return Promise.resolve([{ count: dbState.iosDevices }]);
 			}
 			return Promise.resolve([]);
 		}),
@@ -194,11 +197,19 @@ describe('GET /api/notifications/preferences', () => {
 		// Pinned deliberately as a literal, not derived from CHANNELS: this is the
 		// wire contract the notifications page and the SDK read, so adding a
 		// channel should have to come here and say so. 'avatar' landed with the
-		// corner-avatar delivery lane.
-		expect(body.channels).toEqual(['in_app', 'push', 'email', 'telegram', 'avatar']);
+		// corner-avatar delivery lane, 'discord' with the chat gateways.
+		expect(body.channels).toEqual(['in_app', 'push', 'email', 'telegram', 'discord', 'avatar']);
 		expect(body.categories.map((c) => c.key)).toContain('social');
 		expect(body.prefs.categories.social).toBeTruthy();
-		expect(body.push).toEqual({ subscribed_devices: 2 });
+		expect(body.push).toEqual({ subscribed_devices: 2, ios_devices: 0 });
+	});
+
+	it('counts iPhones enrolled through the iOS app as push devices', async () => {
+		dbState.pushDevices = 1;
+		dbState.iosDevices = 2;
+		const { body } = await call(prefsHandler, { method: 'GET' });
+		expect(body.push).toEqual({ subscribed_devices: 3, ios_devices: 2 });
+		dbState.iosDevices = 0;
 	});
 });
 

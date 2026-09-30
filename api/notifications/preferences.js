@@ -51,8 +51,12 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const prefs = await resolvePrefs(user.id);
-		const [[pushRow], chats] = await Promise.all([
+		const [[pushRow], [iosRow], chats] = await Promise.all([
 			sql`select count(*)::int as count from push_subscriptions where user_id = ${user.id}`,
+			// iPhones enrolled through the iOS app (APNs), which has no Web Push
+			// endpoint. Counted beside browsers so an iPhone-only user is not told
+			// push is off everywhere.
+			sql`select count(*)::int as count from apns_devices where user_id = ${user.id}`.catch(() => [{ count: 0 }]),
 			// Chats paired through the chat gateways (/settings/connections). The
 			// telegram and discord channels deliver there, so the matrix enables
 			// those columns once a chat with notifications on exists.
@@ -70,7 +74,10 @@ export default wrap(async (req, res) => {
 			// gates push and email with. Shipping it here keeps one source of truth.
 			type_categories: typeCategoryMap(),
 			prefs,
-			push: { subscribed_devices: pushRow?.count ?? 0 },
+			push: {
+				subscribed_devices: (pushRow?.count ?? 0) + (iosRow?.count ?? 0),
+				ios_devices: iosRow?.count ?? 0,
+			},
 			gateways,
 		});
 	}
