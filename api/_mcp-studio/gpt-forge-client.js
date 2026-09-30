@@ -18,6 +18,7 @@
 import { env } from '../_lib/env.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { llmComplete } from '../_lib/llm.js';
+import { TICKET_HEADER, newTicket, ticketHandle } from '../_lib/forge-submit-ticket.js';
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_POLL_MS = 3_000;
@@ -30,10 +31,13 @@ const RIG_SUBMIT_TIMEOUT_MS = 30_000;
 // the deadline: without an accepted job there is nothing to hand back, and the
 // surface's budget leaves room for it under the host's limit.
 const SUBMIT_FLOOR_MS = 8_000;
+// A ticketed submit has a handle to hand back whatever happens, so it needs no
+// room past the deadline, only enough to get the request onto the wire.
+const TICKET_SUBMIT_FLOOR_MS = 3_000;
 
-function submitWindow(deadline, capMs) {
+function submitWindow(deadline, capMs, floorMs = SUBMIT_FLOOR_MS) {
 	if (!deadline) return capMs;
-	return Math.min(capMs, Math.max(SUBMIT_FLOOR_MS, deadline - Date.now()));
+	return Math.min(capMs, Math.max(floorMs, deadline - Date.now()));
 }
 
 function envNum(key, def) {
@@ -114,7 +118,19 @@ function internalHeaders() {
 // and silently received standard has been overcharged, and the seller side
 // settles on success, so refusing here is what keeps their money in their
 // wallet.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, strictTier = false }, { deadline } = {}) {
+//
+// `director: false` tells the server not to run its own prompt director: the
+// studio tools direct the prompt before they submit, and a second pass rewrote
+// an already-directed brief (with the mesh director, even for an avatar) while
+// spending up to another 15 s of the caller's budget.
+//
+// A bounded call (`deadline`) sends a submit ticket (see
+// ../_lib/forge-submit-ticket.js). If the submit is still running at the
+// deadline, it resolves to the ticket's handle, `{ status: 'submitting',
+// job_id: 't1.…' }`, instead of a timeout: the server records the job under the
+// ticket when it lands, and polling that handle collects it.
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, strictTier = false }, { deadline } = {}) {
+	const ticket = deadline ? newTicket() : null;
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
 			...(prompt ? { prompt } : {}),
@@ -123,14 +139,19 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 			...(backend ? { backend } : {}),
 			...(path ? { path } : {}),
 			...(tierId ? { tier: tierId } : {}),
+			...(director === false ? { director: false } : {}),
 		};
 		let res;
 		try {
 			res = await fetch(`${base}/api/gpt-forge`, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json', ...(withInternal ? internalHeaders() : {}) },
+				headers: {
+					'content-type': 'application/json',
+					...(withInternal ? internalHeaders() : {}),
+					...(ticket ? { [TICKET_HEADER]: ticket } : {}),
+				},
 				body: JSON.stringify(payload),
-				signal: AbortSignal.timeout(submitWindow(deadline, SUBMIT_TIMEOUT_MS)),
+				signal: AbortSignal.timeout(submitWindow(deadline, SUBMIT_TIMEOUT_MS, ticket ? TICKET_SUBMIT_FLOOR_MS : SUBMIT_FLOOR_MS)),
 			});
 		} catch (err) {
 			if (err?.name === 'TimeoutError' || err?.name === 'AbortError')
@@ -147,6 +168,10 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		({ res, data } = await attempt(tier, !!internal));
 	} catch (err) {
 		if (err?.code !== 'timeout') throw err;
+		// The submit is still running server-side and will record its job under
+		// the ticket, so hand back the ticket's handle rather than submit a
+		// second job or report a timeout.
+		if (ticket) return { status: 'submitting', job_id: ticketHandle(ticket) };
 		// A bounded call that spent its budget on the first submit has no time
 		// left for a second one; the caller reports the timeout instead.
 		if (deadline && deadline - Date.now() < SUBMIT_FLOOR_MS) throw err;
@@ -284,6 +309,8 @@ export async function pollOnce(base, jobId) {
 export async function generate(base, submitArgs, { timeoutEnv, deadline } = {}) {
 	const job = await startForge(base, submitArgs, { deadline });
 	if (job.status === 'done' && job.glb_url) return job;
+	// The submit outlived the call budget: its ticket handle is the job id.
+	if (job.status === 'submitting') return { _timedOut: true, job_id: job.job_id };
 	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
@@ -351,6 +378,11 @@ export function isUsableDirectorRewrite(refined, rawPrompt) {
 	const text = refined.trim();
 	if (text.length < 3 || text.length > DIRECTOR_MAX_CHARS) return false;
 	if (!ENDS_COMPLETE.test(text)) return false;
+	// A brief describes an object; it never carries a link. A URL or a markdown
+	// link means the reply is a provider notice ("raise the key budget at
+	// https://...") or chatter, and reconstructing a mesh from it is how 22
+	// production generations came out of a billing message.
+	if (/https?:\/\/|\]\(|\bwww\./i.test(text)) return false;
 	// The director's contract is to ENRICH a rough idea into a denser spec. A
 	// result no longer than what the caller typed has added nothing, and is more
 	// likely a clipped opening clause than a genuine tightening, so the user's

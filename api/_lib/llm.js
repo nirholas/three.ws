@@ -241,6 +241,22 @@ export function resetLlmCooldowns() {
 	COOLDOWNS.clear();
 }
 
+// Some hosts answer an exhausted key with HTTP 200 and put the account notice in
+// message.content, so the chain took it as the answer. Production forge rows
+// from 2026-09-12 on carry "The API key used for this request has reached its
+// budget. Please [raise the key budget](https://enter.pollinations.ai/...)" as
+// their prompt: the prompt director accepted the notice, and a 3D model was
+// reconstructed from it. Matched narrowly: a short reply whose whole content is
+// a key or account running out of budget, quota or credits, not any answer that
+// happens to discuss API keys.
+const ACCOUNT_NOTICE_MAX_CHARS = 600;
+const ACCOUNT_NOTICE = /\b(?:api key|key|account|token)\b[^.]{0,80}?\b(?:has reached|reached|exceeded|exhausted|run out of|ran out of|is out of|insufficient)\b[^.]{0,40}?\b(?:budget|quota|credits?|balance|spend(?:ing)? limit|usage limit)\b/i;
+
+export function isProviderAccountNotice(text) {
+	const t = String(text || '').trim();
+	return t.length > 0 && t.length <= ACCOUNT_NOTICE_MAX_CHARS && ACCOUNT_NOTICE.test(t);
+}
+
 // Per-provider wall clock for one rung of the chain. Shared so a rung that wants
 // "the same budget as everyone else" cannot drift from the number llmComplete
 // actually enforces.
@@ -1015,6 +1031,14 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			if (!lastEmpty) lastEmpty = { text: '', provider: p.name, model: p.model, usage, raw: data };
 			lastErr = Object.assign(new Error(`${p.name} returned an empty completion`), { status: 502, code: 'empty_completion' });
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'empty completion' });
+			continue;
+		}
+		if (isProviderAccountNotice(text)) {
+			// A billing or quota notice delivered as the completion itself. It is a
+			// failed call wearing a 200, so it fails over like one and is never
+			// returned: a caller cannot tell it from an answer.
+			lastErr = Object.assign(new Error(`${p.name} answered with an account notice instead of a completion`), { status: 502, code: 'provider_notice' });
+			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'account notice as completion' });
 			continue;
 		}
 		COOLDOWNS.delete(rungKey(p));

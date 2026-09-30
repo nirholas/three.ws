@@ -130,6 +130,15 @@ import {
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
 import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
 import { recallDoneFrame, rememberDoneFrame } from './_lib/forge-done-cache.js';
+import {
+	captureTicketOutcome,
+	markTicketSubmitting,
+	recallTicket,
+	resolveTicket,
+	ticketFromHandle,
+	ticketFromRequest,
+	ticketHandle,
+} from './_lib/forge-submit-ticket.js';
 import { sanitizeJobError } from './_lib/provider-job-error.js';
 import { normalizeForgeOptions, providerReconstructParams, summarizeForgeOptions } from './_lib/forge-options.js';
 import { bindJobToOptions, optionsForJob } from './_lib/forge-job-options.js';
@@ -2777,6 +2786,29 @@ async function pollGcpStatus({ gcp, upstreamId, clientKey, createdAt }) {
 	return result; // genuinely orphaned → existing failover path acts on it
 }
 
+// Poll a submit-ticket handle (`t1.<ticket>`): the job a bounded caller could
+// not wait for. Once the submit has answered, the ticket resolves to its real
+// job and the poll is served exactly as a poll of that job would be.
+async function pollTicket(req, res, ticket) {
+	const out = resolveTicket(await recallTicket(ticket), Date.now(), ticket);
+	if (out.kind === 'job') return pollJob(req, res, out.jobId);
+	const rl = await limits.mcp3dStatus(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const handle = ticketHandle(ticket);
+	if (out.kind === 'done') return json(res, 200, { ...out.body, job_id: handle });
+	if (out.kind === 'submitting') {
+		return json(res, 200, {
+			job_id: handle,
+			status: 'queued',
+			stage: 'submit',
+			elapsed_seconds: Math.round(out.elapsedMs / 1000),
+			message: 'The generation request is still being accepted.',
+		});
+	}
+	if (out.kind === 'failed') return json(res, 200, { job_id: handle, status: 'failed', error: out.message });
+	return json(res, 404, { error: 'unknown_job', message: 'That job id is not recognized (it may be mistyped or expired).' });
+}
+
 async function pollJob(req, res, jobId) {
 	// A job handle is either a bare Replicate prediction id (legacy / image-
 	// TRELLIS path) or a forge token encoding the geometry/GCP provider + the
@@ -3136,6 +3168,14 @@ export default wrap(async (req, res) => {
 		if ((url.searchParams.get('action') || '').trim() === 'rig') {
 			return startRigJob(req, res);
 		}
+		// A bounded caller (the ChatGPT surface) sends a ticket so a submit that
+		// outlives its call budget still yields a job it can collect. See
+		// _lib/forge-submit-ticket.js.
+		const ticket = ticketFromRequest(req);
+		if (ticket) {
+			await markTicketSubmitting(ticket).catch((err) => console.warn(`[forge] submit ticket mark failed: ${err?.message || err}`));
+			captureTicketOutcome(res, ticket);
+		}
 		return startJob(req, res);
 	}
 
@@ -3175,5 +3215,7 @@ export default wrap(async (req, res) => {
 	if (!jobId) {
 		return json(res, 400, { error: 'missing_job', message: 'Pass ?job=<id> to poll a job.' });
 	}
+	const ticket = ticketFromHandle(jobId);
+	if (ticket) return pollTicket(req, res, ticket);
 	return pollJob(req, res, jobId);
 });
