@@ -122,6 +122,7 @@ buyer's USDC settles **directly** to that wallet and the platform never holds it
 | -------- | -------- | ------ |
 | `/api/x402/skill-call` | skill **author** | `author_payto_*` ([skill-call.js:205](../api/x402/skill-call.js#L205)) |
 | `/api/x402/service` | service **provider** | `row.payout_address` ([service.js:91](../api/x402/service.js#L91)) |
+| `/api/x402/agents/:id` | the **agent** sold as an API | Solana payout wallet, else the agent's own Solana wallet (`resolveServicePayTo` in [agent-api-service.js](../api/_lib/agent-api-service.js)) |
 | `/api/x402/asset-download` | 3D-asset **creator** | `creator_payto_*` ([asset-download.js:124](../api/x402/asset-download.js#L124)) |
 | `/api/x402/animation-download` | clip **creator** | `creator_payto_*` ([animation-download.js:115](../api/x402/animation-download.js#L115)) |
 | `/api/x402/pay-by-name` | **buyer-named** wallet | resolved name/`.sol`/address, direct SPL transfer ([pay-by-name.js:280](../api/x402/pay-by-name.js#L280)) |
@@ -225,6 +226,7 @@ datapoints at **$0.0005** USDC each by default, overridable per family with
 | `/api/x402/onchain-identity-verify` | $0.005    | Verifies an on-chain identity claim.       |
 | `/api/x402/skill-marketplace`       | $0.001    | Skill listings + pricing.                  |
 | `/api/x402/skill-call`              | per skill | Invoke a listed agent skill.               |
+| `/api/x402/agents/:id`              | per agent | One turn with a whole agent its owner sells as an API: `POST { message, history? }` returns `{ reply, model, usage }`. The owner sets the price; `GET /api/x402/agents` lists every agent on sale. See [Sell your agent as an API](x402.md#sell-your-agent-as-an-api). |
 | `/api/x402/pump-agent-audit`        | $0.02     | Audit of a pump agent's behavior/holdings. |
 
 ## Generation & 3D endpoints

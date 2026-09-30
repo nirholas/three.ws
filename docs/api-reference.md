@@ -4807,6 +4807,61 @@ Streamed responses are never idempotency-cached (a streamed body isn't buffered)
 
 ---
 
+## Sell an Agent as an API
+
+An owner can sell a whole agent as a pay-per-call x402 endpoint. Buyers need no account: they pay USDC on Solana straight to the agent's payout wallet. Full buyer walkthrough: [x402: Sell your agent as an API](x402.md#sell-your-agent-as-an-api).
+
+### Call an agent: `POST /api/x402/agents/:agentId`
+
+Body (JSON, up to 32 KB):
+
+| Field | Type | Notes |
+|---|---|---|
+| `message` | string, 1 to 4000 chars | Required. What the agent should answer. |
+| `history` | array, up to 20 items | Optional. Earlier turns, oldest first: `{ "role": "user" \| "assistant", "content": string }`. |
+
+Responses:
+
+| Status | Meaning |
+|---|---|
+| `402` | No payment attached. The `PAYMENT-REQUIRED` header (and body) carries the challenge: Solana USDC first, `payTo` the agent's payout wallet, `amount` the owner's price in USDC atomics. |
+| `200` | `{ "reply": string, "model": string, "usage": object \| null, "agent_id": string }`, settlement in `X-PAYMENT-RESPONSE`. |
+| `400` / `413` | Malformed or oversized body. Refused before the payment is verified, so nothing is charged. |
+| `404` | `agent_not_found`, `service_inactive` (the owner has not turned the service on), or `service_unavailable` (private agent, brain mode `none`, or no Solana payout address; `reasons` lists which). |
+| `502` / `503` | `upstream_error` / `llm_unavailable`: the turn failed. The turn runs before settlement, so the buyer is not charged. |
+
+```bash
+curl -i -X POST https://three.ws/api/x402/agents/<agentId> \
+  -H 'content-type: application/json' \
+  -d '{"message":"hi"}'
+```
+
+### List agents on sale: `GET /api/x402/agents`
+
+Free, cached 60 s. Returns `{ count, input_schema, output_schema, services: [{ agent_id, name, description, image, price_usd, price_atomics, network, network_label, asset, pay_to, url, path, method, profile_url }] }`. The same agents appear as resources in `/.well-known/x402.json` and under **Agents** in the [x402 catalog](https://three.ws/x402).
+
+### Owner switch: `GET` / `PUT /api/agents/:id/api-service`
+
+Owner only (session cookie with CSRF on `PUT`, or a bearer token). A non-owner gets `404`.
+
+`PUT` body: `{ "active": boolean, "price_usd": number, "description": string }`. `price_usd` must be between the facilitator floor ($0.001) and $50; `description` is up to 280 characters and at least 10 when `active` is true. Errors: `400 invalid_price`, `400 invalid_description`, `409 not_sellable` with `reasons` (the agent is private, has brain mode `none`, or has no Solana payout address).
+
+Both methods return the snapshot the Earn tab renders:
+
+```json
+{
+  "service": { "active": true, "price_usd": 0.05, "description": "Ask Ada about on-chain research.", "updated_at": "2026-09-30T08:26:52.022Z" },
+  "endpoint_url": "https://three.ws/api/x402/agents/<agentId>",
+  "pay_to": { "solana": "<base58>", "base": null },
+  "sellable": { "ok": true, "reasons": [] },
+  "limits": { "min_price_usd": 0.001, "max_price_usd": 50, "description_max": 280, "fee_bps": 250 },
+  "input_schema": { "type": "object", "required": ["message"] },
+  "earnings": { "calls": 0, "gross_usd": 0, "fee_usd": 0, "net_usd": 0, "net_week_usd": 0, "last_at": null, "fee_bps": 250, "recent": [] }
+}
+```
+
+Earnings come from `agent_revenue_events` rows with `skill = 'agent-api'`, recorded net of `PLATFORM_FEE_BPS` once a call settles. Those rows carry `settled_to_wallet = true`: the USDC is already in the agent's wallet, so they never count toward a treasury withdrawal.
+
 ## Multi-rail x402 payments (X Layer / OKX Agent Payments Protocol)
 
 Paid MCP and A2MCP endpoints advertise **every settlement rail the deployment can serve** in a single 402 challenge — one `accepts[]` array, one entry per rail. A buyer picks the rail it can pay on.

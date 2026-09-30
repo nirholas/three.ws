@@ -31,6 +31,7 @@ import {
 	setFrozen,
 	fetchApiService,
 	saveApiService,
+	provisionSolanaWallet,
 } from '../../agent-economy-hub.js';
 import { timeAgo, shortAddress, explorerTxUrl, explorerAddressUrl, copyToClipboard } from '../util.js';
 
@@ -121,7 +122,7 @@ const STYLE = `
 .awh-api-switch.is-disabled { cursor: not-allowed; opacity: .6; }
 .awh-api-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .awh-api-track { flex: none; position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--surface-3, rgba(255,255,255,.12)); transition: background var(--duration-base,220ms) var(--ease-standard,ease); }
-.awh-api-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink-bright,#fff); transition: transform var(--duration-base,220ms) var(--ease-standard,ease); }
+.awh-api-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.35); transition: transform var(--duration-base,220ms) var(--ease-standard,ease); }
 .awh-api-switch.is-on .awh-api-track { background: var(--success,#4ade80); }
 .awh-api-switch.is-on .awh-api-track::after { transform: translateX(16px); }
 .awh-api-switch input:focus-visible + .awh-api-track { outline: var(--focus-ring-width,2px) solid var(--focus-ring-color,#fff); outline-offset: 2px; }
@@ -228,6 +229,7 @@ registerWalletTab({
 			apiMsg: null,
 			apiOk: false,
 			apiReasons: null,
+			apiProvisioning: false,
 			// kill switch
 			freezing: false,
 			// "earned while away"
@@ -498,8 +500,11 @@ registerWalletTab({
 			const dirty = on !== snap.service.active
 				|| String(d.price) !== String(snap.service.price_usd ?? '')
 				|| d.description !== (snap.service.description || '');
+			const fixWallet = !snap.pay_to?.solana
+				? `<div class="awh-earn-save-row" style="margin-top:8px"><button class="awh-btn" type="button" data-act="api-provision" ${state.apiProvisioning ? 'disabled' : ''}>${state.apiProvisioning ? 'Creating wallet…' : 'Create its Solana wallet'}</button></div>`
+				: '';
 			const blockerHtml = blockers.length && !snap.service.active
-				? `<div class="awh-api-blockers" role="alert"><strong>This agent can’t be sold yet</strong><ul>${blockers.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>`
+				? `<div class="awh-api-blockers" role="alert"><strong>This agent can’t be sold yet</strong><ul>${blockers.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>${fixWallet}</div>`
 				: '';
 			const serverReasons = state.apiReasons?.length
 				? `<div class="awh-api-blockers" role="alert"><strong>Not saved</strong><ul>${state.apiReasons.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul></div>`
@@ -642,6 +647,21 @@ registerWalletTab({
 				const max = snap.limits.description_max;
 				count.textContent = `${d.description.length}/${max} · shown in the x402 catalog`;
 				count.classList.toggle('over', d.description.length > max);
+			}
+		}
+
+		async function provisionWallet() {
+			state.apiProvisioning = true;
+			renderApi();
+			const res = await provisionSolanaWallet(ctx.agentId);
+			if (destroyed) return;
+			state.apiProvisioning = false;
+			if (res.ok) {
+				toast('Solana wallet created');
+				await loadApi();
+			} else {
+				toast(res.message || 'Could not create the wallet');
+				renderApi();
 			}
 		}
 
@@ -872,6 +892,8 @@ registerWalletTab({
 				state.apiError = null;
 				renderApi();
 				loadApi();
+			} else if (act === 'api-provision') {
+				provisionWallet();
 			} else if (act === 'api-copy-url' && state.api) {
 				copyText(state.api.endpoint_url, 'Endpoint URL');
 			} else if (act === 'api-copy-curl' && state.api) {

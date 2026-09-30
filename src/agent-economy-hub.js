@@ -98,3 +98,12 @@ export function fetchApiService(agentId) {
 export function saveApiService(agentId, config) {
 	return call(`/api/agents/${enc(agentId)}/api-service`, { method: 'PUT', body: config });
 }
+
+/**
+ * Provision the agent's custodial Solana wallet (a fresh keypair, no on-chain
+ * transaction). The sell-as-API card offers this when the agent has no Solana
+ * payout address, which is the one thing a paid call needs to settle to.
+ */
+export function provisionSolanaWallet(agentId) {
+	return call(`/api/agents/${enc(agentId)}/solana`, { method: 'POST', body: {} });
+}
