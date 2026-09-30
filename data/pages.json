@@ -2733,6 +2733,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/stories",
+					"title": "Success Stories",
+					"description": "Agents with results anyone can check: coins launched, creator fees and service income, computed by three.ws from launch records and settled payments and shown only when the agent's owner opts in. Grouped by category, each linking to the full Spotlight entry and the coin on Solscan.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-09-30"
+				},
+				{
 					"path": "/ledger",
 					"title": "Reasoning Ledger",
 					"description": "An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.",

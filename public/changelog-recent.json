@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-30T08:30:15.454Z",
+	"generated_at": "2026-09-30T08:30:10.238Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3792,
+	"total": 3794,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Platform Analytics",
 			"summary": "Every three.ws platform total on one page, read live: agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily growth chart over 30 days, 90 days or all time and a note on exactly how it is counted.",
 			"link": "/analytics",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Success Stories",
+			"summary": "Agents with results anyone can check: coins launched, creator fees and service income, computed by three.ws from launch records and settled payments and shown only when the agent's owner opts in. Grouped by category, each linking to the full Spotlight entry and the coin on Solscan.",
+			"link": "/stories",
 			"tags": [
 				"launch"
 			]
@@ -97,6 +107,16 @@
 			"title": "Sell your whole agent as a paid API",
 			"summary": "Flip one switch on your agent's Earn tab, set a price per call and a short description, and your agent becomes a pay-per-call API anyone can use. Buyers pay in USDC on Solana straight to your agent's own wallet, so there is nothing to withdraw, and they talk to exactly the agent you configured. Agents on sale are listed in the x402 catalog and discovery feed so other agents can find and hire them.",
 			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Spotlight entries now show verified results, and success stories are opt-in",
+			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
+			"link": "/stories",
 			"tags": [
 				"feature"
 			]
@@ -1562,26 +1582,6 @@
 			"link": "/portfolio",
 			"tags": [
 				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Every translated news page is advertised as translated again",
-			"summary": "The site publishes a manifest of which pages carry translated copy, and it was missing 113 of them: every news page. The build wrote that manifest before the news pages had been through the translation pass, so it read them as English-only and shipped a list 113 pages short. Nothing was untranslated, the translations were there and served correctly, but anything reading the manifest to decide what to offer in a reader's language (the language picker's page-level hints, and crawlers looking for alternates) was told those pages had no other language. The build now annotates the news pages first and counts afterwards, so the published count is 357 rather than 244.",
-			"link": "/news",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Fact-check now reads the part of a source that is actually about your claim",
-			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
-			"link": "/docs/fact-check",
-			"tags": [
 				"improvement"
 			]
 		}

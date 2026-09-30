@@ -26,6 +26,7 @@ import {
 	validate,
 } from './spotlight-form.js';
 import { el, entryPath, errorMessage, monogram, relativeTime, stageFor, voteButton } from './spotlight-shared.js';
+import { verifiedBlock } from './spotlight-verified.js';
 
 const root = document.getElementById('sp-entry');
 const live = document.getElementById('sp-live');
@@ -236,8 +237,59 @@ function ownerControls(e) {
 	return el('div', { class: 'sp-owner-bar' }, [
 		el('span', { class: 'sp-owner-label', text: 'You can edit this entry' }),
 		edit,
+		storyToggle(e),
 		remove,
 	]);
+}
+
+// Story consent is the owner's alone. A curated entry never becomes a success
+// story until this button is pressed by the agent's owner; pressing it again
+// withdraws, and the entry leaves /stories on the next read.
+function storyToggle(e) {
+	if (!e.owned_by_me) return null;
+	const label = () => (entry.story_consent ? 'Withdraw from stories' : 'Feature as a success story');
+	const button = el('button', {
+		type: 'button',
+		class: `sp-btn sp-btn-sm${e.story_consent ? '' : ' sp-btn-primary'}`,
+		'aria-pressed': e.story_consent ? 'true' : 'false',
+		title: 'Show this entry and its verified results on /stories',
+		text: label(),
+	});
+	button.addEventListener('click', async () => {
+		const next = !entry.story_consent;
+		button.disabled = true;
+		button.textContent = next ? 'Featuring…' : 'Withdrawing…';
+		try {
+			const res = await apiFetch('/api/spotlight/consent', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ id: entry.id, consent: next }),
+				allowAnonymous: true,
+			});
+			const data = await res.json().catch(() => null);
+			if (res.status === 401) throw new Error('your session expired; sign in and try again');
+			if (!res.ok) throw new Error(errorMessage(data, `the change returned ${res.status}`));
+			entry.story_consent = Boolean(data.story_consent);
+			entry.story_consented_at = data.story_consented_at || null;
+			const qualifies = Boolean(entry.verified?.qualifies);
+			renderNote(
+				entry.story_consent
+					? qualifies
+						? 'Featured. This entry now appears on /stories with its verified results.'
+						: 'Consent saved. It appears on /stories as soon as the agent has a verified result: a coin launched, creator fees, or service income.'
+					: 'Withdrawn. This entry no longer appears on /stories.',
+			);
+			announce(entry.story_consent ? 'Featured as a success story.' : 'Withdrawn from stories.');
+		} catch (err) {
+			renderNote(err?.message || 'the change did not save', 'error');
+		} finally {
+			button.disabled = false;
+			button.textContent = label();
+			button.setAttribute('aria-pressed', entry.story_consent ? 'true' : 'false');
+			button.classList.toggle('sp-btn-primary', !entry.story_consent);
+		}
+	});
+	return button;
 }
 
 // Two-step, in place: a destructive action gets a real confirmation, and the
@@ -433,6 +485,7 @@ function render() {
 	const sections = [
 		el('div', { class: 'sp-detail-hero' }, [stageFor(entry, { eager: true }), header]),
 		ownerControls(entry),
+		verifiedBlock(entry),
 		entry.editable_by_me ? editorPanel() : null,
 		el('p', { class: 'sp-form-note', id: 'sp-detail-note', role: 'status', 'aria-live': 'polite' }),
 		el('div', { class: 'sp-detail-body' }, [main, factsPanel(entry)]),

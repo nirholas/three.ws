@@ -2014,6 +2014,12 @@ URL: https://three.ws/spotlight
 
 The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.
 
+### Success Stories
+
+URL: https://three.ws/stories
+
+Agents with results anyone can check: coins launched, creator fees and service income, computed by three.ws from launch records and settled payments and shown only when the agent's owner opts in. Grouped by category, each linking to the full Spotlight entry and the coin on Solscan.
+
 ### Reasoning Ledger
 
 URL: https://three.ws/ledger

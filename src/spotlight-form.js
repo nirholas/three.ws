@@ -106,6 +106,20 @@ export function buildFields(container, { prefix = 'sp', withAgentPicker = true }
 		autocomplete: 'off',
 	});
 
+	// Story consent: off by default, and only ever set by the builder ticking it.
+	// Stories make claims about results, so this is the owner saying yes to that.
+	const storyCheckbox = el('input', { type: 'checkbox', id: id('story-consent'), class: 'sp-check-input' });
+	const storyConsent = el('div', { class: 'sp-field sp-check' }, [
+		storyCheckbox,
+		el('label', { for: id('story-consent') }, [
+			el('strong', { text: 'Feature this as a success story' }),
+			el('span', {
+				class: 'sp-hint',
+				text: ' Show it on /stories with its verified results (coins launched, creator fees, service income), computed by three.ws. Untick any time to withdraw.',
+			}),
+		]),
+	]);
+
 	const nodes = [];
 	if (withAgentPicker) {
 		nodes.push(
@@ -145,6 +159,7 @@ export function buildFields(container, { prefix = 'sp', withAgentPicker = true }
 				hint: 'Comma separated. Lowercase letters, digits and hyphens.',
 			}),
 		]),
+		storyConsent,
 	);
 	container.replaceChildren(...nodes);
 
@@ -157,6 +172,7 @@ export function buildFields(container, { prefix = 'sp', withAgentPicker = true }
 		story: storyArea,
 		demo: demoInput,
 		tags: tagsInput,
+		featureStory: storyCheckbox,
 	};
 	wireCounters(container);
 	return refs;
@@ -191,6 +207,7 @@ export function fillEntry(refs, entry) {
 	refs.story.value = entry.story || '';
 	refs.demo.value = entry.demo_url || '';
 	refs.tags.value = (entry.tags || []).join(', ');
+	refs.featureStory.checked = Boolean(entry.story_consent);
 	for (const input of [refs.title, refs.tagline, refs.story]) {
 		input.dispatchEvent(new Event('input'));
 	}
@@ -214,6 +231,7 @@ export function readValues(refs, agentId) {
 		demoUrl: refs.demo.value.trim() || null,
 		category: refs.category.value,
 		tags: parseTags(refs.tags.value),
+		featureStory: Boolean(refs.featureStory?.checked),
 	};
 }
 

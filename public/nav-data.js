@@ -260,6 +260,12 @@ export const NAV_GROUPS = [
 						desc: 'The community showcase: agents people actually built something with, ranked by upvotes',
 					},
 					{
+						title: 'Success Stories',
+						href: '/stories',
+						tier: 'advanced',
+						desc: 'Agents with verified results: coins launched, creator fees and service income, shown with the builder\'s consent',
+					},
+					{
 						title: 'Pocket Console',
 						href: '/pocket',
 						desc: 'A handheld with a live 3D agent in the screen: the D-pad walks it, and one iframe puts it on your site',

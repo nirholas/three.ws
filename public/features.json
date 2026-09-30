@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-30T08:30:15.396Z",
+	"generated_at": "2026-09-30T08:30:10.181Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3372,6 +3372,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/stories",
+					"title": "Success Stories",
+					"description": "Agents with results anyone can check: coins launched, creator fees and service income, computed by three.ws from launch records and settled payments and shown only when the agent's owner opts in. Grouped by category, each linking to the full Spotlight entry and the coin on Solscan.",
+					"added": "2026-09-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				},
 				{
 					"path": "/ledger",

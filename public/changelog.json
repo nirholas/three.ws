@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-30T08:30:15.416Z",
+	"generated_at": "2026-09-30T08:30:10.207Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Platform Analytics",
 			"summary": "Every three.ws platform total on one page, read live: agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily growth chart over 30 days, 90 days or all time and a note on exactly how it is counted.",
 			"link": "/analytics",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Success Stories",
+			"summary": "Agents with results anyone can check: coins launched, creator fees and service income, computed by three.ws from launch records and settled payments and shown only when the agent's owner opts in. Grouped by category, each linking to the full Spotlight entry and the coin on Solscan.",
+			"link": "/stories",
 			"tags": [
 				"launch"
 			]
@@ -94,6 +104,16 @@
 			"title": "Sell your whole agent as a paid API",
 			"summary": "Flip one switch on your agent's Earn tab, set a price per call and a short description, and your agent becomes a pay-per-call API anyone can use. Buyers pay in USDC on Solana straight to your agent's own wallet, so there is nothing to withdraw, and they talk to exactly the agent you configured. Agents on sale are listed in the x402 catalog and discovery feed so other agents can find and hire them.",
 			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Spotlight entries now show verified results, and success stories are opt-in",
+			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
+			"link": "/stories",
 			"tags": [
 				"feature"
 			]

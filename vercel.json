@@ -1059,6 +1059,10 @@
 			"dest": "/spotlight.html"
 		},
 		{
+			"src": "/stories/?$",
+			"dest": "/stories.html"
+		},
+		{
 			"src": "/pocket/?$",
 			"headers": {
 				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh; worker-src 'self' blob:; report-uri /api/client-errors",

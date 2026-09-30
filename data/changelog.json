@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-30",
+			"title": "Spotlight entries now show verified results, and success stories are opt-in",
+			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
+			"tags": ["feature"],
+			"link": "/stories"
+		},
+		{
+			"date": "2026-09-30",
 			"title": "Trader duels: call which trader wins, free to play",
 			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
 			"tags": ["feature"],
