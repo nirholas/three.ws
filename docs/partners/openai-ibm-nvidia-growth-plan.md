@@ -239,7 +239,7 @@ audience and product.
 | Sep 18 to 24 | Publish the prepared OpenAI and NVIDIA technical posts on a measured cadence | Owner | live URLs added to the publishing tracker |
 | After portal save | Reply once to NVIDIA with only the unanswered Showcase-routing and ACE-contact questions | Owner | sent reply in the existing thread |
 | By Sep 29 | Decide on IBM TechXchange attendance | Owner | registration or explicit close |
-| By Oct 14 | Assemble 30-day proof: usage, completion rate, latency, installs, and examples | Growth + engineering | partner-ready one-page evidence brief |
+| By Oct 14 | Assemble 30-day proof: usage, completion rate, latency, installs, and examples | Growth + engineering | [30-day proof brief, October 2026](./proof-brief-2026-10.md) (regenerate monthly with `npm run partners:proof`) |
 
 ## Official program references
 

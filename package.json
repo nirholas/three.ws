@@ -442,6 +442,7 @@
 		"db:restamp": "node scripts/apply-migrations.mjs --restamp",
 		"forge:errors": "node scripts/forge-error-report.mjs",
 		"forge:funnel": "node scripts/forge-funnel-report.mjs",
+		"partners:proof": "node scripts/partner-proof-brief.mjs",
 		"worker:oracle": "node --env-file-if-exists=.env workers/oracle/index.js",
 		"worker:sniper": "node workers/agent-sniper/index.js",
 		"worker:sniper:live": "SNIPER_MODE=live node workers/agent-sniper/index.js",
