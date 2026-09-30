@@ -53,7 +53,7 @@ async function load({ quiet = false } = {}) {
 		contentEl.innerHTML = `
 			<div class="sy-state" role="alert">
 				<h2>This duel did not load</h2>
-				<p>${esc(err.message || 'Check your connection.')} If you already made a call it is safe: calls are stored with the duel and settle on schedule.</p>
+				<p>${esc(err instanceof TypeError ? 'Could not reach three.ws. Check your connection.' : err.message)} If you already made a call it is safe: calls are stored with the duel and settle on schedule.</p>
 				<button type="button" class="sy-btn primary" id="dxRetry">Try again</button>
 			</div>`;
 		document.getElementById('dxRetry').addEventListener('click', () => load());
@@ -298,7 +298,7 @@ function resultPanel() {
 	else if (c) mine = '<p style="margin-top:10px">Your call is settling.</p>';
 	const body = d.phase === 'void'
 		? `<h2>Void</h2><p>${esc(VOID_TEXT[d.void_reason] || 'Every call was refunded.')}</p>`
-		: `<h2><span style="color:var(--dx-${d.winner})">${esc(name(d.winner))}</span> won</h2><p>${esc(name(d.winner))} booked more realized profit in the window. Final numbers are on each trader card, measured ${esc(fmtUtc(d.resolved_at || d.resolves_at))}.</p>`;
+		: `<h2><span style="color:var(--dx-${d.winner})">${esc(name(d.winner))}</span> won</h2><p>${esc(name(d.winner))} finished ahead on realized P&L in the window. Final numbers are on each trader card, measured ${esc(fmtUtc(d.resolved_at || d.resolves_at))}.</p>`;
 	return `
 		<section class="sy-panel dx-result" aria-live="polite">
 			${body}
@@ -346,6 +346,7 @@ function wireCall() {
 	for (const r of form.querySelectorAll('input[name="side"]')) {
 		r.addEventListener('change', () => {
 			side = r.value;
+			document.getElementById('dxErr').hidden = true;
 			payoffText();
 		});
 	}

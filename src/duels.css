@@ -31,7 +31,7 @@
 }
 
 /* ── board ───────────────────────────────────────────────── */
-.dx-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.dx-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); }
 .dx-card {
 	display: flex; flex-direction: column; gap: 14px; height: 100%;
 	background: var(--sy-panel); border: 1px solid var(--sy-line); border-radius: var(--sy-radius);
@@ -46,8 +46,8 @@
 .dx-vs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
 .dx-side { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .dx-side.b { flex-direction: row-reverse; text-align: right; }
-.dx-side b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dx-side small { display: block; font-size: 12px; color: var(--sy-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dx-side b { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; font-size: 15px; line-height: 1.25; overflow: hidden; overflow-wrap: anywhere; }
+.dx-side small { display: block; font-size: 12px; color: var(--sy-faint); margin-top: 2px; line-height: 1.35; }
 .dx-side > div { min-width: 0; }
 .dx-side.win b::after { content: ' ✓'; color: var(--sy-green); }
 .dx-vs-mark { font-size: 12px; font-weight: 900; letter-spacing: .1em; color: var(--sy-faint); text-transform: uppercase; }
@@ -88,11 +88,13 @@
 .dx-lb a { text-decoration: none; }
 .dx-lb a:hover b { color: var(--sy-accent-2); }
 .dx-lb .net { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dx-calls { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dx-calls { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.dx-calls li { min-width: 0; }
 .dx-calls a { display: flex; justify-content: space-between; gap: 10px; align-items: center; text-decoration: none; padding: 10px 12px; border-radius: 11px; background: var(--sy-panel-2); border: 1px solid var(--sy-line); font-size: 13.5px; transition: border-color var(--sy-fast); }
 .dx-calls a:hover { border-color: var(--sy-accent); }
 .dx-calls a:focus-visible { outline: 2px solid var(--sy-accent-2); outline-offset: 2px; }
-.dx-calls span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dx-calls a > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dx-calls a > :last-child { flex: none; white-space: nowrap; }
 .dx-two { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 900px) { .dx-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
 
@@ -133,7 +135,7 @@
 .dx-pick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .dx-pick:has(input:checked) { border-color: var(--dx-side); background: color-mix(in srgb, var(--dx-side) 12%, var(--sy-panel-2)); }
 .dx-pick:has(input:focus-visible) { outline: 2px solid var(--sy-accent-2); outline-offset: 2px; }
-.dx-pick b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.dx-pick b { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 14px; line-height: 1.25; }
 .dx-stake { display: grid; gap: 10px; margin-top: 16px; }
 .dx-stake-row { display: flex; align-items: center; gap: 12px; }
 .dx-stake-row input[type='range'] { flex: 1; accent-color: var(--sy-accent); min-width: 0; height: 28px; }
@@ -152,6 +154,9 @@
 
 @media (max-width: 520px) {
 	.dx-pickers { grid-template-columns: minmax(0, 1fr); }
+	.dx-vs { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+	.dx-side.b { flex-direction: row; text-align: left; }
+	.dx-vs-mark { padding-left: 50px; }
 	.dx-lb li { grid-template-columns: 28px 26px minmax(0, 1fr) auto; gap: 8px; padding: 8px 10px; }
 }
 

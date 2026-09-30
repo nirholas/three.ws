@@ -86,7 +86,7 @@ async function loadBoard() {
 		listEl.innerHTML = `
 			<div class="sy-state" role="alert">
 				<h2>Duels did not load</h2>
-				<p>${esc(err.message || 'Check your connection.')} Calls you already made are safe: they are stored with the duel and settle on schedule.</p>
+				<p>${esc(err instanceof TypeError ? 'Could not reach three.ws. Check your connection.' : err.message)} Calls you already made are safe: they are stored with the duel and settle on schedule.</p>
 				<button type="button" class="sy-btn primary" id="dxRetry">Try again</button>
 			</div>`;
 		document.getElementById('dxRetry').addEventListener('click', loadBoard);
@@ -220,7 +220,7 @@ function renderMe() {
 			<div class="sy-panel" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:22px">
 				<div style="min-width:0;max-width:62ch">
 					<b style="font-size:16px">Sign in to make calls</b>
-					<p class="sy-muted" style="margin:4px 0 0;line-height:1.5">You get ${esc(pts(me.rules.daily_allowance))} free every day. Correct calls earn points, XP and badges. ${esc(FREE_LINE)}</p>
+					<p class="sy-muted" style="margin:4px 0 0;line-height:1.5">You get ${esc(pts(me.rules.daily_allowance))} free every day. Correct calls earn points, XP and badges.</p>
 				</div>
 				<div class="sy-actions"><a class="sy-btn primary" href="/login?next=${next}">Sign in</a><a class="sy-btn" href="/register?next=${next}">Create an account</a></div>
 			</div>`;
@@ -302,7 +302,7 @@ async function loadLeaderboard() {
 				: '<div class="sy-chart-empty">No duel has settled this season yet. The first correct call takes the top spot.</div>'}`;
 		hydrateAvatars(lbEl);
 	} catch (err) {
-		lbEl.innerHTML = `<h2 class="sy-h2">Season predictors</h2><div class="sy-err" role="alert">${esc(err.message)} <button type="button" class="sy-btn sm" id="dxLbRetry">Retry</button></div>`;
+		lbEl.innerHTML = `<h2 class="sy-h2">Season predictors</h2><div class="sy-err" role="alert">${esc(err instanceof TypeError ? 'Could not reach three.ws.' : err.message)} <button type="button" class="sy-btn sm" id="dxLbRetry">Retry</button></div>`;
 		document.getElementById('dxLbRetry').addEventListener('click', loadLeaderboard);
 	}
 }
