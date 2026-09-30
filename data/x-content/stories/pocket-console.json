@@ -1,0 +1,37 @@
+{
+	"id": "pocket-console",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/pocket", "/docs/pocket"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/pocket", "settle": 9000 },
+			{ "scroll": "cartridge 01", "ms": 900, "caption": "A real 3D agent inside the screen, not a drawing of one" },
+			{ "read": "cartridge", "selector": "#pk-model-line", "match": "cartridge (\\d+)" },
+			{ "hold": 1400 },
+			{ "press": "w", "hold": 2400, "caption": "The D-pad steers it. Keys and a real gamepad do too." },
+			{ "click": "A wave", "caption": "A waves. B jumps." },
+			{ "hold": 1600 },
+			{ "click": "R", "awaits": "/api/agents/", "caption": "Every cartridge is a public agent someone built here" },
+			{ "read": "cartridgeNext", "selector": "#pk-model-line", "match": "cartridge (\\d+)" },
+			{ "hold": 2200 },
+			{ "press": "Space", "caption": "Space changes the scene. One iframe puts it on your site." },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the public agent roster the cartridges come from answers", "url": "https://three.ws/api/agents/public?limit=24", "expect": { "status": 200 } }
+	],
+	"posts": [
+		{ "text": "placeholder head post for the pocket console story" },
+		{ "text": "placeholder reply three.ws/pocket" }
+	],
+	"claims": [],
+	"mentions": {}
+}

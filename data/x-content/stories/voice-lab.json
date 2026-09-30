@@ -1,0 +1,38 @@
+{
+	"id": "voice-lab",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/voice", "api/tts/catalog", "api/tts/synthesize"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/voice", "settle": 7000, "caption": "Voice Lab: every voice your agent can speak in, one grid" },
+			{ "scroll": "Browse voices", "ms": 900 },
+			{ "read": "voices", "match": "(\\d+) voices across \\d+ providers" },
+			{ "read": "providers", "match": "\\d+ voices across (\\d+) providers" },
+			{ "hold": 2200 },
+			{ "type": "warm", "into": "Search by name, accent, or use case...", "caption": "Search by name, accent or use case" },
+			{ "wait": 1200 },
+			{ "read": "matches", "match": "(\\d+) voices across \\d+ providers" },
+			{ "hold": 1800 },
+			{ "click": "Use this voice", "caption": "Pick one and it drops into the playground" },
+			{ "hold": 1600 },
+			{ "click": "Speak", "awaits": "/api/tts/synthesize", "caption": "Type anything and it is spoken. Free lane, no account." },
+			{ "expect": "free lane" },
+			{ "hold": 3500 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" }
+	],
+	"posts": [
+		{ "text": "placeholder head" },
+		{ "text": "placeholder reply" }
+	],
+	"claims": [],
+	"mentions": {}
+}

@@ -2289,7 +2289,7 @@
 					},
 					{
 						"hold": 1500,
-						"caption": "24 engines that build realistic 3D humans, on one map"
+						"caption": "24 engines that build 3D humans"
 					},
 					{
 						"read": "engines",
@@ -2303,7 +2303,7 @@
 					{
 						"scroll": 640,
 						"ms": 1600,
-						"caption": "The photoreal heads are research code. Read the license line."
+						"caption": "The photoreal heads are research code"
 					},
 					{
 						"hold": 1700
@@ -2311,7 +2311,7 @@
 					{
 						"scroll": -310,
 						"ms": 900,
-						"caption": "Keep only the licenses that let you ship a product"
+						"caption": "Keep only licenses you can ship under"
 					},
 					{
 						"click": "Commercial-use only"
@@ -2330,7 +2330,7 @@
 					{
 						"scroll": 920,
 						"ms": 2400,
-						"caption": "One generator, plus the formats and platforms already in production"
+						"caption": "One generator, plus production formats"
 					},
 					{
 						"hold": 2800
@@ -2501,12 +2501,12 @@
 		},
 		{
 			"id": "herald-reasons",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "mechanism",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-09-30T10:32:42.257Z",
 			"covers": [
 				"/herald",
 				"/docs/herald"
@@ -2819,7 +2819,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "splat-viewer",
@@ -2842,7 +2843,7 @@
 					},
 					{
 						"hold": 1400,
-						"caption": "A Gaussian splat viewer that runs in a browser tab"
+						"caption": "Gaussian splats, in a browser tab"
 					},
 					{
 						"scroll": "Samples",
@@ -2850,7 +2851,7 @@
 					},
 					{
 						"click": "Synthetic head bust · 14k splats",
-						"caption": "The built-in sample is synthetic, generated on the page"
+						"caption": "The built-in sample is synthetic"
 					},
 					{
 						"expect": "Synthetic head bust · 14,000 splats",
@@ -2865,7 +2866,7 @@
 						"drag": [
 							[
 								0.012,
-								0.45
+								0.5
 							],
 							[
 								0.012,
@@ -2877,7 +2878,7 @@
 					{
 						"scroll": -670,
 						"ms": 900,
-						"caption": "Decoded and sorted on your device, not on a server"
+						"caption": "Decoded on your device, not a server"
 					},
 					{
 						"hold": 1000
@@ -3089,6 +3090,3791 @@
 							"type": "page",
 							"url": "https://three.ws/docs/splat",
 							"contains": "the same scene that is a 1 GB PLY is roughly 100 MB as SPZ"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "agent-monitor",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "number",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/monitor"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/monitor",
+						"settle": 8000
+					},
+					{
+						"read": "fleet",
+						"selector": "#fleet-badge",
+						"match": "/\\s*([\\d,]+)"
+					},
+					{
+						"read": "active",
+						"selector": "#fleet-badge",
+						"match": "([\\d,]+)\\s*active"
+					},
+					{
+						"scroll": 60,
+						"ms": 600,
+						"caption": "The public agent fleet on one board, ranked by most recent real action"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"type": "host",
+						"into": "Search agents",
+						"awaits": "/api/agents/public",
+						"caption": "Search runs on the server, over names and descriptions"
+					},
+					{
+						"hold": 1300
+					},
+					{
+						"click": "Vera the Host",
+						"awaits": "/api/agents/210e9990",
+						"caption": "Pick an agent and its 3D body loads in the page"
+					},
+					{
+						"expect": "virtual hotel concierge",
+						"within": 30000
+					},
+					{
+						"wait": 6000
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"drag": [
+							[
+								0.6,
+								0.55
+							],
+							[
+								0.9,
+								0.55
+							]
+						],
+						"ms": 2400,
+						"caption": "It is the agent's own avatar, live. Turn it around."
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the public fleet feed answers",
+					"url": "https://three.ws/api/agents/public?sort=live&limit=1",
+					"expect": {
+						"contains": "active_total"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
+					"media": [
+						{
+							"path": "public/x-media/agent-monitor/reel.mp4",
+							"probe": {
+								"durationSec": 12.4,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "A failed panel degrades alone: it badges itself stale and keeps its last good data rather than blanking, so one dead endpoint never takes the board down. Polling pauses while the tab is hidden and every panel refreshes on the way back.\n\nKeys: f focuses the search, r refreshes everything. three.ws/monitor"
+				}
+			],
+			"claims": [
+				{
+					"says": "More than 2,500 public agents",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "fleet",
+							"contains": "2,5"
+						}
+					]
+				},
+				{
+					"says": "ranked by the most recent real thing each one did",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "ranked by its most recent real action"
+						}
+					]
+				},
+				{
+					"says": "the ops room for the fleet",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "is the ops room for the three.ws agent fleet"
+						}
+					]
+				},
+				{
+					"says": "live panels on one screen, each one a public endpoint polled on its own cadence",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "live panels on one screen, each one a real public endpoint polled on its own cadence"
+						}
+					]
+				},
+				{
+					"says": "nothing on the page needs a session",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Nothing on this page needs a session"
+						}
+					]
+				},
+				{
+					"says": "the fleet narrows on the server",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Server-side search on name and description"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/agents/public"
+						}
+					]
+				},
+				{
+					"says": "its own 3D avatar renders in the page, live",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "live 3D avatar, rendered in the page"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/agents/210e9990"
+						}
+					]
+				},
+				{
+					"says": "Nothing on it is simulated",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Nothing is simulated"
+						}
+					]
+				},
+				{
+					"says": "the board shows zeroes and says so",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "the board shows zeroes and says so"
+						}
+					]
+				},
+				{
+					"says": "A failed panel degrades alone",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "A failed panel degrades alone"
+						}
+					]
+				},
+				{
+					"says": "badges itself stale and keeps its last good data rather than blanking",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "badges itself stale"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "keeps showing it rather than blanking"
+						}
+					]
+				},
+				{
+					"says": "one dead endpoint never takes the board down",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "One dead endpoint never takes the board down"
+						}
+					]
+				},
+				{
+					"says": "Polling pauses while the tab is hidden and every panel refreshes on the way back",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "Polling pauses when the tab is hidden"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "every panel refreshes on the way back"
+						}
+					]
+				},
+				{
+					"says": "f focuses the search, r refreshes everything",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/monitor",
+							"contains": "f focuses fleet search, r refreshes everything"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "agent-spotlight",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/spotlight"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/spotlight",
+						"settle": 7000
+					},
+					{
+						"read": "showcased",
+						"match": "(\\d+)\\s+agents showcased"
+					},
+					{
+						"scroll": 870,
+						"ms": 1000,
+						"caption": "A showcase of agents, each with a write-up of what it is for"
+					},
+					{
+						"hold": 900
+					},
+					{
+						"type": "translator",
+						"into": "Search agents, write-ups, builders",
+						"awaits": "/api/spotlight/list",
+						"caption": "The search reads the write-ups, not just the names"
+					},
+					{
+						"hold": 600
+					},
+					{
+						"scroll": 500,
+						"ms": 1100
+					},
+					{
+						"hold": 1100
+					},
+					{
+						"click": "The translator that refuses to flatten your voice",
+						"caption": "The entry opens on the agent itself, standing in 3D"
+					},
+					{
+						"expect": "Machine translation solved meaning years ago",
+						"within": 30000
+					},
+					{
+						"wait": 5000
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.55
+							],
+							[
+								0.62,
+								0.55
+							]
+						],
+						"ms": 2000
+					},
+					{
+						"hover": "Agent Spotlight"
+					},
+					{
+						"scroll": 560,
+						"ms": 1200,
+						"caption": "A write-up by three.ws is marked Curated until the builder writes their own"
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"scroll": 480,
+						"ms": 1100,
+						"caption": "Conversations, upvotes and views are read live off the agent"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the spotlight list answers",
+					"url": "https://three.ws/api/spotlight/list?limit=1",
+					"expect": {
+						"contains": "entries"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Open the Agent Spotlight, type the job you need done, and the agent that does it is standing there in 3D with a write-up of what it is for: three.ws/spotlight\n\nThe agents index lists thousands of rows. The Spotlight is the other thing: 15 agents so far, each one a pitch attached to a live agent, never a copy of it. Rename the agent or swap its avatar and the card updates with it.\n\nSearch reads the headline, the one-liner, the write-up and the agent's own description, so a plain word finds the agent built for it.",
+					"media": [
+						{
+							"path": "public/x-media/agent-spotlight/reel.mp4",
+							"probe": {
+								"durationSec": 17.3,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "The write-ups we wrote ourselves carry a Curated badge, so a visitor is never told a builder said something they did not write. The builder's own write-up replaces ours the moment they submit one.\n\nOne upvote per account per entry, and trending decays by the day, so a new entry is seen before it is buried under what was already popular."
+				},
+				{
+					"text": "Open any one of them, talk to it, fork it, or put your own in front of everybody. Showcase your agent takes a public agent you own, a headline and a one-liner, and the entry is live on its own page with the agent in 3D."
+				}
+			],
+			"claims": [
+				{
+					"says": "standing there in 3D",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "the agent standing in 3D, live from its own GLB"
+						}
+					]
+				},
+				{
+					"says": "thousands of rows",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "which is thousands of rows"
+						}
+					]
+				},
+				{
+					"says": "15 agents so far",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "showcased",
+							"equals": "15"
+						}
+					]
+				},
+				{
+					"says": "a pitch attached to a live agent, never a copy of it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "pitch attached to a live agent, never a copy of it"
+						}
+					]
+				},
+				{
+					"says": "Rename the agent or swap its avatar and the card updates with it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Rename your agent, swap its avatar, register it on-chain: the card updates with it"
+						}
+					]
+				},
+				{
+					"says": "Search reads the headline, the one-liner, the write-up and the agent's own description",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Full-text over headline, one-liner, write-up, agent name and description"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/spotlight/list"
+						}
+					]
+				},
+				{
+					"says": "carry a Curated badge",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Some entries carry a Curated badge"
+						}
+					]
+				},
+				{
+					"says": "a visitor is never told a builder said something they did not write",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "so a visitor is never told a builder said something they did not write"
+						}
+					]
+				},
+				{
+					"says": "The builder's own write-up replaces ours the moment they submit one",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "replaces the curated one and the badge goes away"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/spotlight/8fecd65a-4ab9-484a-9714-691d4040e9e5",
+							"contains": "Its builder can replace it with their own write-up at any time"
+						}
+					]
+				},
+				{
+					"says": "One upvote per account per entry",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "One upvote per account per entry"
+						}
+					]
+				},
+				{
+					"says": "trending decays by the day",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "The clock runs in days, not hours"
+						}
+					]
+				},
+				{
+					"says": "a new entry is seen before it is buried",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "the newest submission is seen at all rather than buried"
+						}
+					]
+				},
+				{
+					"says": "Open any one of them, talk to it, fork it, or put your own in front of everybody",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/spotlight",
+							"contains": "Open any one of them, talk to it, fork it, or put your own in front of everybody"
+						}
+					]
+				},
+				{
+					"says": "a public agent you own",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Only your own public agents that are not already showcased appear"
+						}
+					]
+				},
+				{
+					"says": "live on its own page with the agent in 3D",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Every entry has its own page at"
+						},
+						{
+							"type": "proof",
+							"saw": "Machine translation solved meaning years ago"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "avatar-cli",
+			"status": "draft",
+			"kind": "post",
+			"tier": 3,
+			"lane": "developer",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/avatar-cli",
+				"@three-ws/avatar-cli"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/avatar-cli",
+						"settle": 5000
+					},
+					{
+						"hold": 1400,
+						"caption": "Pin an avatar to the bytes of its model"
+					},
+					{
+						"scroll": 130,
+						"ms": 600
+					},
+					{
+						"read": "commands",
+						"match": "Commands\\s*(\\d+)"
+					},
+					{
+						"read": "networkCalls",
+						"match": "Network calls\\s*(\\d+)"
+					},
+					{
+						"read": "runtimeDeps",
+						"match": "Runtime deps\\s*(\\d+)"
+					},
+					{
+						"hold": 1600,
+						"caption": "Runs offline. Safe inside a release script."
+					},
+					{
+						"goto": "https://three.ws/avatar-cli#ci",
+						"settle": 400
+					},
+					{
+						"hold": 2600,
+						"caption": "A swapped model fails the build"
+					},
+					{
+						"goto": "https://three.ws/avatar-cli#live",
+						"settle": 400
+					},
+					{
+						"read": "viewer",
+						"selector": "#live-stage[data-state=\"ready\"] + .cli-live-caption",
+						"match": "(michelle\\.glb)"
+					},
+					{
+						"hold": 2000,
+						"caption": "preview prints two lines of HTML"
+					},
+					{
+						"scroll": 470,
+						"ms": 1000,
+						"caption": "Those two lines, pasted in unmodified"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"drag": [
+							[
+								0.36,
+								0.5
+							],
+							[
+								0.66,
+								0.5
+							]
+						],
+						"ms": 2200,
+						"caption": "A live viewer, not a screenshot. Turn it."
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the avatar CLI page is up",
+					"url": "https://three.ws/avatar-cli",
+					"expect": {
+						"contains": "three-ws-avatar"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nthree-ws-avatar reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
+					"media": [
+						{
+							"path": "public/x-media/avatar-cli/reel.mp4",
+							"probe": {
+								"durationSec": 15.8,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "validate exits non-zero on an invalid manifest and prints each error at the path where it happened, so a bad file fails the build step instead of logging a warning. hash prints the digest alone on stdout, which makes the drift check a one-line comparison.\n\nInstall line, the four commands, and the manifest fields: three.ws/avatar-cli"
+				},
+				{
+					"text": "The owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is."
+				}
+			],
+			"claims": [
+				{
+					"says": "carries the SHA-256 of the mesh it was built from",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "Reads the mesh once to compute its SHA-256 and size, so the document cannot disagree with the bytes it was built from"
+						}
+					]
+				},
+				{
+					"says": "swapped under the same filename fails your build instead of your page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "the teammate who swapped the model and kept the filename"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "Fail the build, not the page"
+						}
+					]
+				},
+				{
+					"says": "reads the GLB once and writes its digest and size into the manifest",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "Reads the mesh once to compute its SHA-256 and size"
+						}
+					]
+				},
+				{
+					"says": "validates the whole document against the published schema",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "validate it against the published schema"
+						}
+					]
+				},
+				{
+					"says": "Four commands",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "commands",
+							"equals": "4"
+						}
+					]
+				},
+				{
+					"says": "one runtime dependency",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "runtimeDeps",
+							"equals": "1"
+						}
+					]
+				},
+				{
+					"says": "no network calls",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "networkCalls",
+							"equals": "0"
+						}
+					]
+				},
+				{
+					"says": "runs offline inside a release script",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "Offline, deterministic, and safe to put in a release script"
+						}
+					]
+				},
+				{
+					"says": "preview prints the two lines of HTML that embed the avatar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "That is why preview always prints them together"
+						}
+					]
+				},
+				{
+					"says": "The page pastes them in unmodified, and the viewer on it is that markup rendering",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "The markup below is exactly what preview prints, pasted into this page unmodified"
+						},
+						{
+							"type": "proof",
+							"fact": "viewer",
+							"equals": "michelle.glb"
+						}
+					]
+				},
+				{
+					"says": "validate exits non-zero on an invalid manifest and prints each error at the path where it happened",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "prints every error at the instance path where it happened. Non-zero exit makes it a build gate rather than a report"
+						}
+					]
+				},
+				{
+					"says": "hash prints the digest alone on stdout, which makes the drift check a one-line comparison",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "alone on stdout so it composes"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "makes drift detection a one-line comparison"
+						}
+					]
+				},
+				{
+					"says": "the four commands",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "commands",
+							"equals": "4"
+						}
+					]
+				},
+				{
+					"says": "The owner is a chain-scoped account, so ownership is unambiguous off-platform",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "Chain-scoped account, so ownership is unambiguous off-platform"
+						}
+					]
+				},
+				{
+					"says": "A Solana address is accepted as is",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/avatar-schema/src/index.d.ts",
+							"contains": "solana:mainnet-beta"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "choreograph",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/choreograph"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/choreograph",
+						"settle": 6000
+					},
+					{
+						"scroll": "Start from a routine",
+						"ms": 900,
+						"caption": "A routine is a sequence of gestures on a timeline"
+					},
+					{
+						"click": "Shipped it",
+						"caption": "Start from a routine: sign, celebrate, dance"
+					},
+					{
+						"expect": "sign ·",
+						"within": 90000
+					},
+					{
+						"scroll": "Your routine",
+						"ms": 800,
+						"caption": "A live avatar performs each beat in order"
+					},
+					{
+						"hold": 3600
+					},
+					{
+						"scroll": "Add a gesture",
+						"ms": 800,
+						"caption": "Add a beat while it plays"
+					},
+					{
+						"click": "wave +"
+					},
+					{
+						"expect": "wave ·",
+						"within": 30000,
+						"film": true,
+						"caption": "The stage follows the edit"
+					},
+					{
+						"hold": 2500
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the choreographer page is up",
+					"url": "https://three.ws/choreograph",
+					"expect": {
+						"contains": "Choreographer"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Load a routine and your agent performs it: sign, celebrate, dance. Add a beat while it plays and the stage follows.\n\nA routine is a performance built from gestures on a timeline. Each row is one beat: drag to reorder, set how long it holds, and point any step at a different clip. Save it to an agent you own and it travels with that agent, so any embed can play it by name.\n\nthree.ws/choreograph",
+					"media": [
+						{
+							"path": "public/x-media/choreograph/reel.mp4",
+							"probe": {
+								"durationSec": 10,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Five performances ship as starting points. A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture. A routine holds up to 24 steps."
+				}
+			],
+			"claims": [
+				{
+					"says": "Load a routine and your agent performs it: sign, celebrate, dance",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "sign ·"
+						},
+						{
+							"type": "file",
+							"path": "src/runtime/choreography.js",
+							"contains": "A win: sign, celebrate, dance."
+						}
+					]
+				},
+				{
+					"says": "Add a beat while it plays and the stage follows",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "wave ·"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "The stage follows every edit"
+						}
+					]
+				},
+				{
+					"says": "A routine is a performance",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "A routine is a performance"
+						}
+					]
+				},
+				{
+					"says": "Each row is one beat: drag to reorder, set how long it holds, and point any step at a different clip",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "Each row is one beat"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "Drag to reorder, set how long it holds, and point any step at a different clip"
+						}
+					]
+				},
+				{
+					"says": "Save it to an agent you own and it travels with that agent, so any embed can play it by name",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "Save the routine to an agent you own and it travels with that agent"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "any embed can play it by name"
+						}
+					]
+				},
+				{
+					"says": "Five performances ship as starting points",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "Five performances built from the shipped slot vocabulary"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "they are starting points"
+						}
+					]
+				},
+				{
+					"says": "A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/choreograph",
+							"contains": "A step names a slot, so a routine shared with another agent still plays that agent's own take on each gesture"
+						}
+					]
+				},
+				{
+					"says": "A routine holds up to 24 steps",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/runtime/choreography.js",
+							"contains": "export const MAX_STEPS = 24;"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "docs-world",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/docs/world"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/world",
+						"settle": 8000
+					},
+					{
+						"read": "pages",
+						"match": "Search (\\d+) pages"
+					},
+					{
+						"click": "Next →",
+						"caption": "The three.ws docs, built as a place"
+					},
+					{
+						"read": "pavilions",
+						"match": "Each of the (\\d+) pavilions"
+					},
+					{
+						"click": "Skip"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.6
+							],
+							[
+								0.72,
+								0.6
+							]
+						],
+						"ms": 3200,
+						"caption": "Every docs section is a pavilion on a ring"
+					},
+					{
+						"hold": 600
+					},
+					{
+						"click": "Search docs",
+						"caption": "Search every page from where you stand"
+					},
+					{
+						"type": "forge",
+						"into": "Search every page"
+					},
+					{
+						"hold": 900
+					},
+					{
+						"press": "Shift+Enter",
+						"caption": "Shift+Enter lays a trail to the pavilion that holds the page"
+					},
+					{
+						"expect": "Read now"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"drag": [
+							[
+								0.62,
+								0.7
+							],
+							[
+								0.45,
+								0.62
+							]
+						],
+						"ms": 1800
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Read now",
+						"awaits": "/docs/forge",
+						"caption": "The real page opens inside the scene"
+					},
+					{
+						"expect": "free-first engine grid"
+					},
+					{
+						"hold": 3200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the docs index still holds the 15 sections the post counts",
+					"url": "https://three.ws/docs/nav.json",
+					"expect": {
+						"json": {
+							"path": "sections.length",
+							"equals": 15
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "This is the documentation, rebuilt as a place. 306 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+					"media": [
+						{
+							"path": "public/x-media/docs-world/reel.mp4",
+							"probe": {
+								"durationSec": 18.67,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
+				}
+			],
+			"claims": [
+				{
+					"says": "306 pages",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "pages",
+							"equals": "306"
+						}
+					]
+				},
+				{
+					"says": "you read them by walking up to them",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "you walk an avatar between them and read the real pages inside the scene"
+						}
+					]
+				},
+				{
+					"says": "Every docs section is a pavilion on a ring",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "Every section of the sidebar is a glowing pavilion on a ring"
+						}
+					]
+				},
+				{
+					"says": "15 in all",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "pavilions",
+							"equals": "15"
+						}
+					]
+				},
+				{
+					"says": "Search a page from wherever you stand",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "opens a palette over every page"
+						}
+					]
+				},
+				{
+					"says": "a trail of arrows leads to the pavilion that holds it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/docs-world/wayfinder.js",
+							"contains": "draws it as a stream of chevrons flowing along the ground"
+						},
+						{
+							"type": "proof",
+							"saw": "Read now"
+						}
+					]
+				},
+				{
+					"says": "Enter reads it there and then",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "Enter on a result opens the page at once"
+						}
+					]
+				},
+				{
+					"says": "the real page opens inside the scene",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/docs/forge"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "read the real pages inside the scene"
+						}
+					]
+				},
+				{
+					"says": "as text you can select and zoom",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "text is selectable, zoomable"
+						}
+					]
+				},
+				{
+					"says": "Same files as the classic docs, so the two can never drift apart",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "Both render the same files"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "the two surfaces can never drift apart"
+						}
+					]
+				},
+				{
+					"says": "Walk with the arrow keys or the touch joystick",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "WASD or arrow keys"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "Virtual joystick"
+						}
+					]
+				},
+				{
+					"says": "pass any rigged GLB with ?avatar= to make it your body in the world",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/docs-world",
+							"contains": "Pass any rigged GLB with ?avatar="
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "drive-copilot",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/drive"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/drive?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+						"settle": 8000
+					},
+					{
+						"expect": "Ready"
+					},
+					{
+						"hold": 1800,
+						"caption": "three.ws Drive: your agent on a car screen"
+					},
+					{
+						"hover": "Driving",
+						"caption": "While the car moves the keyboard stays locked"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"click": "Driving",
+						"caption": "Parked, you can type. Moving, it is voice only."
+					},
+					{
+						"expect": "Parked"
+					},
+					{
+						"click": "Type"
+					},
+					{
+						"type": "What should I listen to on a long drive?",
+						"into": "Ask your agent something"
+					},
+					{
+						"press": "Enter",
+						"awaits": "/api/chat",
+						"caption": "The agent answers in a sentence or two, out loud"
+					},
+					{
+						"expect": "Speaking",
+						"within": 60000
+					},
+					{
+						"hold": 5000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the Drive page is up",
+					"url": "https://three.ws/drive",
+					"expect": {
+						"contains": "three.ws Drive"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Put your phone in the cradle, open Drive, and your agent rides along.\n\nThe page starts in Driving: a face, a voice, four controls, and no keyboard. Hold Talk and speak. The reply comes back in one or two short sentences, spoken in full and clamped to two lines on screen. Park, and Type unlocks. Night is the default, because a bright panel at speed is glare.",
+					"media": [
+						{
+							"path": "public/x-media/drive-copilot/reel.mp4",
+							"probe": {
+								"durationSec": 13.4,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar), sized for a car panel. Runs on a head unit browser or a phone in a cradle: three.ws/drive"
+				},
+				{
+					"text": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server."
+				}
+			],
+			"claims": [
+				{
+					"says": "Put your phone in the cradle",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "on a phone in a cradle"
+						}
+					]
+				},
+				{
+					"says": "The page starts in Driving",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "The page starts in Driving and hides text entry"
+						},
+						{
+							"type": "proof",
+							"saw": "Ready"
+						}
+					]
+				},
+				{
+					"says": "four controls, and no keyboard",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "Four controls, no more. Hands free, Repeat, Stop, Type."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "hides text entry"
+						}
+					]
+				},
+				{
+					"says": "Hold Talk and speak",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/drive.html",
+							"contains": "data-placeholder=\"Hold Talk and speak.\""
+						}
+					]
+				},
+				{
+					"says": "The reply comes back in one or two short sentences",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "Reply in one or two short sentences that sound right out loud."
+						},
+						{
+							"type": "proof",
+							"responded": "/api/chat"
+						}
+					]
+				},
+				{
+					"says": "spoken in full and clamped to two lines on screen",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "The reply is clamped to two lines and spoken in full"
+						},
+						{
+							"type": "proof",
+							"saw": "Speaking"
+						}
+					]
+				},
+				{
+					"says": "Park, and Type unlocks",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/index.js",
+							"contains": "Driving locks the keyboard. Switch to Parked to type."
+						},
+						{
+							"type": "proof",
+							"saw": "Parked"
+						}
+					]
+				},
+				{
+					"says": "Night is the default, because a bright panel at speed is glare",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "Night is the default because a bright panel at speed is glare"
+						}
+					]
+				},
+				{
+					"says": "It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar)",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "The loop is the platform's existing one, unchanged"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "audio into the lipsync driver and onto a real rigged avatar"
+						}
+					]
+				},
+				{
+					"says": "Runs on a head unit browser or a phone in a cradle",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "on a head unit browser, on a phone in a cradle"
+						}
+					]
+				},
+				{
+					"says": "are answered by the page itself, with no round trip to a server",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "Local commands with no round trip"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/carplay",
+							"contains": "are answered by the page itself"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "gestures",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/gestures"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/gestures",
+						"settle": 6000
+					},
+					{
+						"read": "slots",
+						"match": "Slots\\s*(\\d+)"
+					},
+					{
+						"scroll": "The slot vocabulary",
+						"ms": 900,
+						"caption": "Every gesture an agent can make has a name"
+					},
+					{
+						"click": {
+							"selector": "[data-role=\"grid\"] [data-slot=\"wave\"]"
+						},
+						"caption": "Pick a name and a live avatar plays it"
+					},
+					{
+						"expect": "Wave · wave",
+						"within": 60000
+					},
+					{
+						"hold": 2600
+					},
+					{
+						"scroll": 300,
+						"ms": 700
+					},
+					{
+						"click": {
+							"selector": "[data-role=\"grid\"] [data-slot=\"celebrate\"]"
+						},
+						"caption": "An agent asks for celebrate. The platform picks the clip."
+					},
+					{
+						"expect": "Celebrate · celebrate",
+						"within": 60000
+					},
+					{
+						"hold": 2600
+					},
+					{
+						"scroll": 610,
+						"ms": 900
+					},
+					{
+						"click": {
+							"selector": "[data-role=\"grid\"] [data-slot=\"dance\"]"
+						},
+						"caption": "Point any name at a different clip and the agent changes its move"
+					},
+					{
+						"expect": "Rumba · rumba",
+						"within": 60000
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the gestures page is up",
+					"url": "https://three.ws/gestures",
+					"expect": {
+						"contains": "Agent gestures"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nAn agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
+					"media": [
+						{
+							"path": "public/x-media/gestures/reel.mp4",
+							"probe": {
+								"durationSec": 13.8,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Choose any slot to play it on a live avatar. Every row of what triggers a gesture is generated from the shipped skill definitions, and each clip is measured from its own keyframes: how energetic it is and how much of that energy is above the waist.\n\nthree.ws/gestures"
+				}
+			],
+			"claims": [
+				{
+					"says": "An agent waves, celebrates, then dances",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "Wave · wave"
+						},
+						{
+							"type": "proof",
+							"saw": "Celebrate · celebrate"
+						},
+						{
+							"type": "proof",
+							"saw": "Rumba · rumba"
+						}
+					]
+				},
+				{
+					"says": "An agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "An agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip."
+						}
+					]
+				},
+				{
+					"says": "There are 19 slots",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "slots",
+							"equals": "19"
+						}
+					]
+				},
+				{
+					"says": "fixed names an agent can override",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "Fixed names an agent can override"
+						}
+					]
+				},
+				{
+					"says": "point a slot at any other clip in the library",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "how to point a slot at any other clip in the library"
+						}
+					]
+				},
+				{
+					"says": "A skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "A skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it."
+						}
+					]
+				},
+				{
+					"says": "Choose any slot to play it on a live avatar",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "Choose any slot to play it on a live avatar"
+						}
+					]
+				},
+				{
+					"says": "Every row of what triggers a gesture is generated from the shipped skill definitions",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "Every row below is generated from the shipped skill definitions"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "What triggers a gesture"
+						}
+					]
+				},
+				{
+					"says": "each clip is measured from its own keyframes: how energetic it is and how much of that energy is above the waist",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/gestures",
+							"contains": "measured from its own keyframes and plotted by how energetic it is and how much of that energy is above the waist"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "glance",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/glance",
+				"@three-ws/agent-glance"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/glance",
+						"settle": 6000
+					},
+					{
+						"hold": 1500,
+						"caption": "Glance: an agent reduced to one card"
+					},
+					{
+						"scroll": 150,
+						"ms": 700
+					},
+					{
+						"type": "62e1863d-3c32-4f9b-a11c-7d89ce2bcd57",
+						"into": "00000000-0000-0000-0000-000000000000",
+						"awaits": "/api/glance/card",
+						"caption": "Paste the id of any public agent"
+					},
+					{
+						"expect": "Showing the agent you pasted"
+					},
+					{
+						"scroll": 300,
+						"ms": 900,
+						"caption": "Its card, as a live element and as a plain image URL"
+					},
+					{
+						"read": "name",
+						"selector": "agent-glance .name",
+						"match": "(.+)"
+					},
+					{
+						"read": "metric",
+						"selector": "agent-glance .metric",
+						"match": "(moves today)"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"hover": {
+							"selector": "#theme-select"
+						},
+						"caption": "Light, dark, or follow the reader's system"
+					},
+					{
+						"press": "Tab"
+					},
+					{
+						"press": "Tab"
+					},
+					{
+						"press": "ArrowDown",
+						"awaits": "/api/glance/card"
+					},
+					{
+						"press": "ArrowDown",
+						"awaits": "/api/glance/card"
+					},
+					{
+						"read": "theme",
+						"selector": "#snippet-html",
+						"match": "theme=\"(\\w+)\""
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "Take it with you",
+						"ms": 1000,
+						"caption": "One line each for a page, a README, a terminal, and the API"
+					},
+					{
+						"read": "cli",
+						"selector": "#snippet-cli",
+						"match": "(npx @three-ws/agent-glance)"
+					},
+					{
+						"hold": 3200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the glance card endpoint answers for the agent in the reel",
+					"url": "https://three.ws/api/glance/card?agent=62e1863d-3c32-4f9b-a11c-7d89ce2bcd57",
+					"expect": {
+						"contains": "Moves today"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Paste an agent id on three.ws/glance and the page hands back that agent's status card four ways: a live element for any page, an image URL for a README or a Slack message, a command for your terminal, and the raw API call.\n\nAll four read one endpoint, so the number on the card is what the agent did today. Pick light, dark, or the reader's system setting, and the Windows 11 widgets board runs the same card.",
+					"media": [
+						{
+							"path": "public/x-media/glance/reel.mp4",
+							"probe": {
+								"durationSec": 16.03,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "The live element is one module script and one tag, and it polls only while it is on screen and the tab is visible.\n\nThe image is one URL, with the size and theme in the query string.\n\nOn Windows 11, install the site from Edge, open the widgets board, and pick Agent glance; it refreshes itself every 15 minutes."
+				}
+			],
+			"claims": [
+				{
+					"says": "four ways",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "A page"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "A README"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "Your terminal"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "The API"
+						}
+					]
+				},
+				{
+					"says": "a live element for any page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "Live element"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "on any page"
+						}
+					]
+				},
+				{
+					"says": "an image URL for a README or a Slack message",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "One URL. Works in a README, Slack, or any <img>"
+						}
+					]
+				},
+				{
+					"says": "a command for your terminal, and the raw API call",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "cli",
+							"contains": "npx @three-ws/agent-glance"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "The API"
+						}
+					]
+				},
+				{
+					"says": "All four read one endpoint",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "from one endpoint that reads your real activity"
+						}
+					]
+				},
+				{
+					"says": "the number on the card is what the agent did today",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "metric",
+							"contains": "moves today"
+						}
+					]
+				},
+				{
+					"says": "Pick light, dark, or the reader's system setting",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "theme",
+							"equals": "dark"
+						},
+						{
+							"type": "file",
+							"path": "public/glance/index.html",
+							"contains": "<option value=\"auto\" selected"
+						},
+						{
+							"type": "file",
+							"path": "docs/glance.md",
+							"contains": "prefers-color-scheme"
+						}
+					]
+				},
+				{
+					"says": "the Windows 11 widgets board runs the same card",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "The same card renders on the Windows 11 widgets board"
+						}
+					]
+				},
+				{
+					"says": "one module script and one tag",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "one module script, one tag"
+						}
+					]
+				},
+				{
+					"says": "polls only while it is on screen and the tab is visible",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "It polls only while it is on screen and the tab is visible"
+						}
+					]
+				},
+				{
+					"says": "The image is one URL",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "One URL. Works in a README"
+						}
+					]
+				},
+				{
+					"says": "with the size and theme in the query string",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/glance/card"
+						},
+						{
+							"type": "file",
+							"path": "public/glance/glance-page.js",
+							"contains": "&format=svg&size=${size}&theme=${theme}"
+						}
+					]
+				},
+				{
+					"says": "install the site from Edge, open the widgets board, and pick Agent glance",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "Open three.ws in Edge and install it"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "Open the widgets board"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "Pick Agent glance"
+						}
+					]
+				},
+				{
+					"says": "it refreshes itself every 15 minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/glance",
+							"contains": "It refreshes itself every 15 minutes"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "glb-diff",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "correction",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/diff",
+				"@three-ws/glb-diff"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/diff",
+						"settle": 6000
+					},
+					{
+						"scroll": "No files handy?",
+						"ms": 900,
+						"caption": "Two 3D models. A checksum only says the files differ."
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"click": "Two different characters",
+						"caption": "Both files are parsed and compared in this tab"
+					},
+					{
+						"expect": "Clips that target them will not play",
+						"within": 90000,
+						"film": true
+					},
+					{
+						"read": "severity",
+						"match": "(none|cosmetic|minor|major|breaking)\\s*\\n\\s*\\+\\d+ / -\\d+"
+					},
+					{
+						"read": "jointsLost",
+						"match": "lost (\\d+) joint"
+					},
+					{
+						"read": "clipsRemoved",
+						"match": "(\\d+) animations were removed"
+					},
+					{
+						"read": "renamed",
+						"match": "renamed (\\d+)"
+					},
+					{
+						"drag": [
+							[
+								0.012,
+								0.5
+							],
+							[
+								0.012,
+								0.5
+							]
+						],
+						"ms": 200
+					},
+					{
+						"scroll": 270,
+						"ms": 900,
+						"caption": "Before and after, overlaid in one scene"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"drag": [
+							[
+								0.36,
+								0.42
+							],
+							[
+								0.62,
+								0.42
+							]
+						],
+						"ms": 1800
+					},
+					{
+						"click": "Side by side",
+						"caption": "Or set them side by side"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"scroll": "Something a consumer references by name is gone",
+						"ms": 1100,
+						"caption": "The verdict names what broke: joints lost, clips removed"
+					},
+					{
+						"hold": 3600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the diff page is up",
+					"url": "https://three.ws/diff",
+					"expect": {
+						"contains": "Model Diff"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A checksum tells you two GLB files differ. It cannot tell a lossless re-export from a rig that quietly lost joints, and only one of those takes your avatar off the screen.\n\nModel Diff reads both files and reports the change set: geometry, materials, textures, skeletons and animation clips, with renames and moves detected the way git detects them. Both files are parsed and compared in your browser. Nothing is uploaded.\n\nIn the reel, two different characters: the verdict is breaking, with 2 joints lost, 5 animations removed and 4 objects renamed rather than rewritten. three.ws/diff",
+					"media": [
+						{
+							"path": "public/x-media/glb-diff/reel.mp4",
+							"probe": {
+								"durationSec": 16,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Severity is one of none, cosmetic, minor, major, breaking, so a build can gate on it. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh. That is the failure that renders fine and never moves.\n\nVertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does."
+				},
+				{
+					"text": "The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. The package is three-ws/glb-diff on npm: hand the CLI two files and a --fail-on level, and the build fails on the severity you choose."
+				}
+			],
+			"claims": [
+				{
+					"says": "A checksum tells you two GLB files differ",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "A checksum says two files differ"
+						}
+					]
+				},
+				{
+					"says": "It cannot tell a lossless re-export from a rig that quietly lost joints",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "It cannot tell a lossless recompression from a rig that quietly lost three finger joints"
+						}
+					]
+				},
+				{
+					"says": "only one of those takes your avatar off the screen",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "only one of those takes your avatar off the screen"
+						}
+					]
+				},
+				{
+					"says": "reports the change set: geometry, materials, textures, skeletons and animation clips",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "get the change set: geometry, materials, textures, skeletons, and clips"
+						}
+					]
+				},
+				{
+					"says": "with renames and moves detected the way git detects them",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "with renames and moves detected the way git detects them"
+						}
+					]
+				},
+				{
+					"says": "Both files are parsed and compared in your browser",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "The comparison runs on your machine"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "RUNS IN YOUR BROWSER"
+						}
+					]
+				},
+				{
+					"says": "Nothing is uploaded",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Nothing is uploaded"
+						}
+					]
+				},
+				{
+					"says": "two different characters",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Two different characters"
+						}
+					]
+				},
+				{
+					"says": "the verdict is breaking",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "severity",
+							"contains": "breaking"
+						}
+					]
+				},
+				{
+					"says": "2 joints lost",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "jointsLost",
+							"equals": "2"
+						}
+					]
+				},
+				{
+					"says": "5 animations removed",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "clipsRemoved",
+							"equals": "5"
+						}
+					]
+				},
+				{
+					"says": "4 objects renamed rather than rewritten",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "renamed",
+							"equals": "4"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "reads as a rename, not as a rewrite"
+						}
+					]
+				},
+				{
+					"says": "Severity is one of none, cosmetic, minor, major, breaking, so a build can gate on it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Severity you can gate on"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "none, cosmetic, minor, major, breaking"
+						}
+					]
+				},
+				{
+					"says": "Breaking means something a consumer references by name is gone: a clip, a joint, a mesh",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Breaking means something a consumer references by name is gone: a clip, a joint, a mesh"
+						}
+					]
+				},
+				{
+					"says": "That is the failure that renders fine and never moves",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "That is the failure that renders fine and never moves"
+						}
+					]
+				},
+				{
+					"says": "Vertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Vertex data is compared at a quantum of 1e-4 units, so the float drift a re-export or a Draco round trip introduces does not register while a genuine edit does"
+						}
+					]
+				},
+				{
+					"says": "The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "This page, the glb-diff CLI, and the free API all run @three-ws/glb-diff, so a verdict in CI can never disagree with what you see here"
+						}
+					]
+				},
+				{
+					"says": "hand the CLI two files and a --fail-on level, and the build fails on the severity you choose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "glb-diff base.glb candidate.glb --fail-on major"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "if (changes.severity === 'breaking') process.exit(1);"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "machine-atlas",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "mechanism",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/assembly"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/assembly",
+						"settle": 8000
+					},
+					{
+						"scroll": 72,
+						"ms": 500
+					},
+					{
+						"read": "machines",
+						"match": "(Two) machines"
+					},
+					{
+						"read": "cylinders",
+						"selector": "#ma-p-cylinders-out",
+						"match": "(\\d+)"
+					},
+					{
+						"read": "displacement",
+						"match": "Displacement\\s*([\\d.]+ L)"
+					},
+					{
+						"hold": 1600,
+						"caption": "No model file. This engine is computed when the page loads."
+					},
+					{
+						"drag": [
+							[
+								0.5,
+								0.8
+							],
+							[
+								0.6,
+								0.66
+							]
+						],
+						"ms": 2200,
+						"caption": "Every fin, pushrod and blade is a function of a few dimensions"
+					},
+					{
+						"drag": [
+							[
+								0.8806,
+								0.278
+							],
+							[
+								0.7,
+								0.278
+							]
+						],
+						"ms": 1500,
+						"caption": "Change a dimension and the geometry is rebuilt: nine cylinders to five"
+					},
+					{
+						"expect": "16.5 L"
+					},
+					{
+						"read": "cylindersAfter",
+						"selector": "#ma-p-cylinders-out",
+						"match": "(\\d+)"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Coupled Six",
+						"caption": "The second machine is a steam locomotive, built the same way"
+					},
+					{
+						"expect": "Outside-cylinder steam locomotive"
+					},
+					{
+						"expect": "Solved four-bar chain, not baked animation"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"press": "e",
+						"caption": "Pull it apart. Every part is its own geometry."
+					},
+					{
+						"hold": 3800
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the machine atlas page is up",
+					"url": "https://three.ws/assembly",
+					"expect": {
+						"contains": "Machine Atlas"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A nine-cylinder radial engine and a steam locomotive, with no model file behind either one. It is a Labs experiment in building 3D geometry from code instead of files.\n\nBoth machines are built when the page loads: dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see. Move a slider and the geometry is rebuilt. Nine cylinders to five, and the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers.",
+					"media": [
+						{
+							"path": "public/x-media/machine-atlas/reel.mp4",
+							"probe": {
+								"durationSec": 15.9,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "The motion is solved, not baked animation. Pistons come from the exact planar slider-crank, and the locomotive valve gear closes a four-bar chain by intersecting circles every frame, which is why a rod length that cannot physically reach refuses to move rather than stretching.\n\nEach machine is a small JSON object of numbers. Copy the spec, hand it to an agent, get a different machine back, then export the result as GLB. three.ws/assembly"
+				}
+			],
+			"claims": [
+				{
+					"says": "A nine-cylinder radial engine",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "cylinders",
+							"equals": "9"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Air-cooled radial aero engine"
+						}
+					]
+				},
+				{
+					"says": "a steam locomotive",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "Outside-cylinder steam locomotive"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Coupled Six"
+						}
+					]
+				},
+				{
+					"says": "no model file behind either one",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "no model files"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Two machines. Nothing downloaded."
+						}
+					]
+				},
+				{
+					"says": "a Labs experiment in building 3D geometry from code instead of files",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "The rest of the experiments running live on three.ws"
+						},
+						{
+							"type": "file",
+							"path": "data/pages.json",
+							"contains": "\"path\": \"/assembly\""
+						}
+					]
+				},
+				{
+					"says": "Both machines are built when the page loads",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Both machines are built when the page loads"
+						}
+					]
+				},
+				{
+					"says": "dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see"
+						}
+					]
+				},
+				{
+					"says": "Move a slider and the geometry is rebuilt",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "cylindersAfter",
+							"equals": "5"
+						},
+						{
+							"type": "proof",
+							"saw": "16.5 L"
+						}
+					]
+				},
+				{
+					"says": "Nine cylinders to five",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "cylinders",
+							"equals": "9"
+						},
+						{
+							"type": "proof",
+							"fact": "cylindersAfter",
+							"equals": "5"
+						}
+					]
+				},
+				{
+					"says": "the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "displacement",
+							"equals": "29.7 L"
+						},
+						{
+							"type": "proof",
+							"saw": "16.5 L"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Generated from the values on the right, so it always matches what is on screen"
+						}
+					]
+				},
+				{
+					"says": "The motion is solved, not baked animation",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "The motion is solved, not keyframed"
+						},
+						{
+							"type": "proof",
+							"saw": "Solved four-bar chain, not baked animation"
+						}
+					]
+				},
+				{
+					"says": "Pistons come from the exact planar slider-crank",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Pistons come from the exact planar slider-crank"
+						}
+					]
+				},
+				{
+					"says": "the locomotive valve gear closes a four-bar chain by intersecting circles every frame",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "The valve gear closes a four-bar chain by intersecting circles every frame"
+						},
+						{
+							"type": "proof",
+							"saw": "Solved four-bar chain, not baked animation"
+						}
+					]
+				},
+				{
+					"says": "a rod length that cannot physically reach refuses to move rather than stretching",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "a rod length that cannot physically reach refuses to move rather than stretching"
+						}
+					]
+				},
+				{
+					"says": "Each machine is a small JSON object of numbers",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Every machine is a small JSON object of numbers"
+						}
+					]
+				},
+				{
+					"says": "Copy the spec, hand it to an agent, get a different machine back",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Copy the spec, hand it to an agent, get a different machine back"
+						}
+					]
+				},
+				{
+					"says": "export the result as GLB",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Export the result as GLB"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "model-inspect",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "number",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/3d"
+			],
+			"scenario": {
+				"format": "square",
+				"hide": [
+					".brand-mark-chip"
+				],
+				"steps": [
+					{
+						"goto": "https://three.ws/3d#quickstart",
+						"settle": 6000,
+						"caption": "A free 3D API for AI agents, over HTTP"
+					},
+					{
+						"scroll": -64,
+						"ms": 300
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"click": "Run it live ▶",
+						"awaits": "/api/3d/inspect",
+						"caption": "One GET with a URL. No key, no account."
+					},
+					{
+						"expect": "\"valid\": true"
+					},
+					{
+						"read": "vertices",
+						"match": "\"vertices\": (\\d+)"
+					},
+					{
+						"read": "triangles",
+						"match": "\"triangles\": (\\d+)"
+					},
+					{
+						"read": "joints",
+						"match": "\"joints\": (\\d+)"
+					},
+					{
+						"read": "animations",
+						"match": "\"animations\": (\\d+)"
+					},
+					{
+						"read": "errors",
+						"match": "\"numErrors\": (\\d+)"
+					},
+					{
+						"read": "warnings",
+						"match": "\"numWarnings\": (\\d+)"
+					},
+					{
+						"hold": 2200,
+						"caption": "Is the file valid, and what is inside it"
+					},
+					{
+						"hover": {
+							"selector": ".out pre"
+						}
+					},
+					{
+						"scroll": 330,
+						"ms": 1800,
+						"caption": "Then what to fix, most severe first"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": 156,
+						"ms": 1200,
+						"caption": "Each validator finding, with its location"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"hover": "Run it live ▶"
+					},
+					{
+						"scroll": "Drag to orbit",
+						"ms": 2000,
+						"caption": "This is the model it just described"
+					},
+					{
+						"scroll": 70,
+						"ms": 500
+					},
+					{
+						"hold": 3000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "inspect answers for the sample model",
+					"url": "https://three.ws/api/3d/inspect?url=https://three.ws/avatars/cesium-man.glb",
+					"expect": {
+						"json": {
+							"path": "valid",
+							"equals": true
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "4,672 triangles, 19 joints, 1 animation, 0 validator errors and 1 warning. One GET request told us that about a 3D file, with no API key and no account.\n\nThe inspect endpoint is free. Hand it the address of a glTF or GLB and it answers in JSON: whether the file is valid, what is inside it, and a prioritized plan to make it smaller and faster.\n\nIt is built for AI agents that make or buy 3D mid-task and need to know what they got before they use it.",
+					"media": [
+						{
+							"path": "public/x-media/model-inspect/reel.mp4",
+							"probe": {
+								"durationSec": 17.8,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Send the address in a GET, or POST the file itself. The cap is 32 MB a file and 60 requests a minute.\n\nIt reports up to 10 validator findings, each with its code and where in the file it sits, beside the true totals.\n\nThe spec is OpenAPI 3.1, so an agent can read it and call this on its own: three.ws/3d"
+				}
+			],
+			"claims": [
+				{
+					"says": "4,672 triangles",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "triangles",
+							"equals": "4672"
+						}
+					]
+				},
+				{
+					"says": "19 joints",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "joints",
+							"equals": "19"
+						}
+					]
+				},
+				{
+					"says": "1 animation",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "animations",
+							"equals": "1"
+						}
+					]
+				},
+				{
+					"says": "0 validator errors",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "errors",
+							"equals": "0"
+						}
+					]
+				},
+				{
+					"says": "1 warning",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "warnings",
+							"equals": "1"
+						}
+					]
+				},
+				{
+					"says": "One GET request told us that about a 3D file",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/3d/inspect"
+						}
+					]
+				},
+				{
+					"says": "with no API key and no account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "No key, no header, no account."
+						}
+					]
+				},
+				{
+					"says": "The inspect endpoint is free",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "Every row is free and keyless."
+						}
+					]
+				},
+				{
+					"says": "Hand it the address of a glTF or GLB",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "validate and optimize any glTF/GLB"
+						}
+					]
+				},
+				{
+					"says": "whether the file is valid",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "\"valid\": true"
+						}
+					]
+				},
+				{
+					"says": "what is inside it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "reports exactly what's inside one of these"
+						}
+					]
+				},
+				{
+					"says": "a prioritized plan to make it smaller and faster",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "a prioritized plan to make it smaller and faster"
+						}
+					]
+				},
+				{
+					"says": "It is built for AI agents",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "Give your AI agent a 3D toolchain"
+						}
+					]
+				},
+				{
+					"says": "Send the address in a GET, or POST the file itself",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/inspect.js",
+							"contains": "raw .glb/.gltf bytes as the request body"
+						}
+					]
+				},
+				{
+					"says": "32 MB a file",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/inspect.js",
+							"contains": "const MAX_BYTES = 32 * 1024 * 1024;"
+						}
+					]
+				},
+				{
+					"says": "60 requests a minute",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/inspect.js",
+							"contains": "limit: 60, window: '1 m'"
+						}
+					]
+				},
+				{
+					"says": "up to 10 validator findings",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/inspect.js",
+							"contains": "const MAX_REPORTED_ISSUES = 10;"
+						}
+					]
+				},
+				{
+					"says": "each with its code and where in the file it sits",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/inspect.js",
+							"contains": "issues:[{ code, message, severity, pointer? }]"
+						}
+					]
+				},
+				{
+					"says": "beside the true totals",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/inspect.js",
+							"contains": "the counts beside it are the true totals"
+						}
+					]
+				},
+				{
+					"says": "The spec is OpenAPI 3.1",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/3d",
+							"contains": "OpenAPI 3.1"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "model-inspector",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/inspect"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/inspect",
+						"settle": 6000
+					},
+					{
+						"hold": 1500,
+						"caption": "The quality gate our own catalog has to pass, pointed at any GLB"
+					},
+					{
+						"click": "Mannequin",
+						"caption": "A real model from the library that does not pass"
+					},
+					{
+						"expect": "short of the catalog bar",
+						"within": 90000,
+						"film": true
+					},
+					{
+						"read": "failed",
+						"match": "(\\d+) checks? short of the catalog bar"
+					},
+					{
+						"read": "meshes",
+						"match": "(\\d+) meshes"
+					},
+					{
+						"read": "meshLimit",
+						"match": "at most (\\d+)"
+					},
+					{
+						"read": "vertices",
+						"match": "([\\d,]+) vertices"
+					},
+					{
+						"drag": [
+							[
+								0.012,
+								0.5
+							],
+							[
+								0.012,
+								0.5
+							]
+						],
+						"ms": 200
+					},
+					{
+						"scroll": 520,
+						"ms": 900,
+						"caption": "The file is read in the browser. Nothing is uploaded."
+					},
+					{
+						"drag": [
+							[
+								0.36,
+								0.55
+							],
+							[
+								0.66,
+								0.55
+							]
+						],
+						"ms": 2200
+					},
+					{
+						"hold": 600
+					},
+					{
+						"drag": [
+							[
+								0.012,
+								0.5
+							],
+							[
+								0.012,
+								0.5
+							]
+						],
+						"ms": 200
+					},
+					{
+						"scroll": 500,
+						"ms": 1000,
+						"caption": "Each rule shows what it measured against its bound"
+					},
+					{
+						"hold": 2600
+					},
+					{
+						"scroll": 330,
+						"ms": 1000,
+						"caption": "A failed rule comes with the fix"
+					},
+					{
+						"hold": 3600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the inspector page is up",
+					"url": "https://three.ws/inspect",
+					"expect": {
+						"contains": "Model Inspector"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Pick a model, or drop your own .glb, and the inspector runs the exact quality gate our catalog applies to its own entries: same module, same thresholds, same decision. It runs in your browser, and the file never leaves your machine.\n\nEvery rule shows what it measured against its bound, and a failed rule comes with the fix. The mannequin in the reel is 2 checks short: no texture, and 22 meshes where a character may have at most 8, so it will not rig or animate as one body.",
+					"media": [
+						{
+							"path": "public/x-media/model-inspector/reel.mp4",
+							"probe": {
+								"durationSec": 16.3,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Switch the category to Prop and the assembled-character rule stops applying, because loose parts are legitimate on a prop. Michelle from the library is a clean pass. Fox passes, barely. Copy any verdict as JSON or as a shareable link. three.ws/inspect"
+				}
+			],
+			"claims": [
+				{
+					"says": "Pick a model, or drop your own .glb",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Drop a .glb, paste a URL, or pick a sample"
+						}
+					]
+				},
+				{
+					"says": "runs the exact quality gate our catalog applies to its own entries",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "This runs the exact quality gate three.ws applies to its own catalog entries"
+						}
+					]
+				},
+				{
+					"says": "same module, same thresholds, same decision",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Same module, same thresholds, same decision"
+						}
+					]
+				},
+				{
+					"says": "It runs in your browser, and the file never leaves your machine",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "It runs entirely in your browser: nothing is uploaded"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "It never leaves your machine"
+						}
+					]
+				},
+				{
+					"says": "Every rule shows what it measured against its bound, and a failed rule comes with the fix",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "it reports every structural check the catalog applies, what it measured, and how to fix anything that failed"
+						}
+					]
+				},
+				{
+					"says": "2 checks short",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "failed",
+							"equals": "2"
+						},
+						{
+							"type": "proof",
+							"saw": "short of the catalog bar"
+						}
+					]
+				},
+				{
+					"says": "no texture",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "Untextured geometry reads as flat grey clay"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Untextured"
+						}
+					]
+				},
+				{
+					"says": "22 meshes",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "meshes",
+							"equals": "22"
+						}
+					]
+				},
+				{
+					"says": "at most 8",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "meshLimit",
+							"equals": "8"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "m.meshCount > 8"
+						}
+					]
+				},
+				{
+					"says": "it will not rig or animate as one body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "it will not rig or animate as one body"
+						}
+					]
+				},
+				{
+					"says": "Switch the category to Prop and the assembled-character rule stops applying, because loose parts are legitimate on a prop",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Props skip the character-only checks"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "switch the category to Prop, where loose parts are legitimate and this check does not apply"
+						}
+					]
+				},
+				{
+					"says": "Michelle from the library is a clean pass",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "A clean pass"
+						}
+					]
+				},
+				{
+					"says": "Fox passes, barely",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Passes, barely"
+						}
+					]
+				},
+				{
+					"says": "Copy any verdict as JSON or as a shareable link",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/inspect.html",
+							"contains": "Copy verdict JSON"
+						},
+						{
+							"type": "file",
+							"path": "pages/inspect.html",
+							"contains": "Copy shareable link"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "prompt-library",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "walkthrough",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/prompts",
+				"/docs/prompts",
+				"/prompts.txt",
+				"/prompts.json"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/prompts",
+						"settle": 6000,
+						"caption": "Prompts written to be pasted into Claude"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"read": "nosetup",
+						"match": "No setup\\s*(\\d+)"
+					},
+					{
+						"scroll": "Search prompts",
+						"ms": 1800,
+						"caption": "Filter by what you want to get done"
+					},
+					{
+						"read": "prompts",
+						"match": "(\\d+) of \\d+ prompts"
+					},
+					{
+						"click": "Make 3D things"
+					},
+					{
+						"read": "making",
+						"match": "(\\d+) of \\d+ prompts"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"type": "rig",
+						"into": "Search prompts",
+						"caption": "Or search: rigging, avatar, embed"
+					},
+					{
+						"hold": 1000
+					},
+					{
+						"scroll": "Generate a rigged avatar from a description",
+						"ms": 1500,
+						"caption": "Each one names the tools and the checks"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"click": "Copy prompt",
+						"caption": "Copy, paste, swap the angle-bracket words"
+					},
+					{
+						"expect": "Copied",
+						"within": 5000
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the prompt library answers as JSON",
+					"url": "https://three.ws/prompts.json",
+					"expect": {
+						"json": {
+							"path": "prompts",
+							"min": 1
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Pick what you want to make, copy the prompt, paste it into Claude, and swap the words in angle brackets for your own.\n\nThat is the whole Prompt Library: 24 prompts, each written to produce something real, like a 3D model you can download or a live avatar on your page. 15 of them need nothing installed.\n\n10 are for making 3D: a model from a sentence, a rigged avatar from a description, a rig for a GLB you already have.",
+					"media": [
+						{
+							"path": "public/x-media/prompt-library/reel.mp4",
+							"probe": {
+								"durationSec": 14.03,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Each prompt names the tools to call and what to check before it answers. The rigged avatar one has Claude look at the rendered frames and fix the proportions before it says it is done.\n\nThe library is also published as plain text and as JSON, so an agent can read it too.\n\nthree.ws/prompts"
+				},
+				{
+					"text": "The prompts that can move real money are written to stop for your yes first."
+				}
+			],
+			"claims": [
+				{
+					"says": "paste it into Claude",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "pasted straight into Claude"
+						}
+					]
+				},
+				{
+					"says": "swap the words in angle brackets for your own",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Placeholders in angle brackets are the parts you replace."
+						}
+					]
+				},
+				{
+					"says": "24 prompts",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "prompts",
+							"equals": "24"
+						}
+					]
+				},
+				{
+					"says": "each written to produce something real",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "to produce something real"
+						}
+					]
+				},
+				{
+					"says": "a 3D model you can download",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "a 3D model you can download"
+						}
+					]
+				},
+				{
+					"says": "a live avatar on your page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Put a live avatar on your page"
+						}
+					]
+				},
+				{
+					"says": "15 of them need nothing installed",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "nosetup",
+							"equals": "15"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Nothing to install."
+						}
+					]
+				},
+				{
+					"says": "10 are for making 3D",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "making",
+							"equals": "10"
+						}
+					]
+				},
+				{
+					"says": "a model from a sentence",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Turn a sentence into a 3D model"
+						}
+					]
+				},
+				{
+					"says": "a rigged avatar from a description",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Generate a rigged avatar from a description"
+						}
+					]
+				},
+				{
+					"says": "a rig for a GLB you already have",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Rig a GLB you already have"
+						}
+					]
+				},
+				{
+					"says": "Each prompt names the tools to call and what to check before it answers",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Before you tell me it is done, call look_at_model on the result"
+						}
+					]
+				},
+				{
+					"says": "look at the rendered frames",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "actually look at the frames"
+						}
+					]
+				},
+				{
+					"says": "fix the proportions before it says it is done",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "If the silhouette or the proportions are wrong, fix it"
+						}
+					]
+				},
+				{
+					"says": "published as plain text and as JSON",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "Plain text"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts.json",
+							"contains": "\"prompts\""
+						}
+					]
+				},
+				{
+					"says": "The prompts that can move real money are written to stop for your yes first",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/prompts",
+							"contains": "These prompts can move real money, so they are written to stop for your yes first."
 						}
 					]
 				}

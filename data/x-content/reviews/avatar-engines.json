@@ -1,11 +1,10 @@
 {
 	"id": "avatar-engines",
-	"contentHash": "34f2d071626c94f2c2fa318d642922415374c01a267e821aa71591803263d057",
-	"reviewedAt": "2026-09-30T08:06:54.594Z",
+	"contentHash": "2d7fdb65f119441b9c7a4089af0f5106f3647289ca6f86dfc72ddb910bf37c66",
+	"reviewedAt": "2026-09-30T08:30:06.815Z",
 	"passed": false,
 	"blockers": [
-		"evidence:page https://three.ws/docs/avatar-engines: page.evaluate: TypeError: Cannot read properties of null (reading 'innerText')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:21)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
-		"the AI editor did not run: no model was reachable:"
+		"editor verdict is revise"
 	],
 	"texts": [
 		"The avatar engine with the most realistic demo is usually one you cannot put in a product. Most of the highest-fidelity work in this field is research code under a non-commercial license.\n\nThe Avatar Engines Atlas maps 24 engines and puts each license next to the technique. Turn on the commercial-use filter and 5 remain.\n\nthree.ws/avatar-engines",
@@ -14,14 +13,14 @@
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "The avatar engine with the most realistic demo is usually one you cannot put in a product",
 				"kind": "evidence:page",
 				"target": "https://three.ws/docs/avatar-engines",
-				"ok": false,
-				"detail": "page.evaluate: TypeError: Cannot read properties of null (reading 'innerText')\n    at eval (eval at evaluate (:311:30), <anonymous>:1:21)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+				"ok": true,
+				"detail": "live page shows \"The best-looking research engines in this field ship under non-commercial research licenses\""
 			},
 			{
 				"claim": "Most of the highest-fidelity work in this field is research code under a non-commercial license",
@@ -127,6 +126,43 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "For several photorealistic engines the gate is compute, not the license.",
+				"problem": "The passing verification only confirms the second sentence of this paragraph (\"a per-subject training run is not something you put behind a button\"). Nothing verified shows that for several photorealistic engines the license is not the gate, and the claim sits in tension with the same thread's lead (the photoreal heads ship as non-commercial research code, per post 1 and the reel captions) and with the reel frames, which show Non-commercial badges on the photoreal cards. A reader is left with a false impression that these engines are licensable but heavy.",
+				"fix": "Cut the sentence and keep only the verified wording: \"A per-subject training run is not something you put behind a button.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"The avatar engine with the most realistic demo is usually one you cannot put in a product. Most of the highest-fidelity work in this field is research code under a non-commercial license.\n\nThe Avatar Engines Atlas maps 24 engines and puts each license next to the technique. Turn on the commercial-use filter and 5 remain.\n\nthree.ws/avatar-engines",
+				"Each card states what the engine takes in, what it outputs, what it runs on, and what its license permits.\n\nA per-subject training run is not something you put behind a button.",
+				"2 of the 24 are live on the platform today: the MIT-licensed generator behind the free text and image to 3D lane, and the skeleton the animation pipeline canonicalizes against.\n\nFilters are written into the URL, so a filtered view is a link you can share."
+			],
+			"altText": []
+		},
+		"summary": "Strong correction-lead thread with every number (24, 5, 2) confirmed by the run and matching reel. The single fix is cutting one unverified sentence in post 2 whose \"compute, not the license\" framing conflicts with the reel's non-commercial badges on the photoreal cards.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"For several photorealistic engines the gate is compute, not the license. A training run per subject is not something you put behind a button\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

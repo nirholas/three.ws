@@ -1,0 +1,37 @@
+{
+	"id": "labs-gallery",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "labs",
+	"pattern": "number",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/labs"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/labs", "settle": 9000 },
+			{ "read": "features", "selector": "#labs-gem-count", "match": "(\\d+)" },
+			{ "read": "live", "selector": "#labs-live-count", "match": "(\\d+)" },
+			{ "scroll": 380, "ms": 200 },
+			{ "hold": 1800, "caption": "Every experiment on the site, on one page" },
+			{ "scroll": 300, "ms": 900, "caption": "Each card is the live page itself, and a live check that it answers" },
+			{ "hold": 1600 },
+			{ "scroll": -300, "ms": 700 },
+			{ "click": "3D Live", "caption": "Filter to the ones that run a scene in the browser" },
+			{ "read": "shown", "selector": "#labs-result-count", "match": "(\\d+) features" },
+			{ "hold": 1400 },
+			{ "scroll": 300, "ms": 900 },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the feature manifest the gallery reads is up", "url": "https://three.ws/features.json", "expect": { "json": { "path": "sections", "min": 1 } } }
+	],
+	"posts": [
+		{ "text": "placeholder head post for the labs gallery story, written after the reel is watched and checked against the page three.ws/labs" }
+	],
+	"claims": [],
+	"mentions": {}
+}

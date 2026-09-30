@@ -1,0 +1,40 @@
+{
+	"id": "sonar",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "number",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/sonar", "src/sonar"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/sonar", "settle": 6000, "caption": "No camera. A tone you cannot hear reads your hand." },
+			{ "hold": 2200 },
+			{ "scroll": "The stage is idle", "ms": 900, "caption": "A real 3D agent, driven by three hand gestures" },
+			{ "hold": 1200 },
+			{ "press": "ArrowRight", "awaits": "/animations/clips/nod.json", "caption": "Filmed with no microphone, so the arrow key stands in for a sweep" },
+			{ "wait": 3000 },
+			{ "expect": "Next: nod" },
+			{ "hold": 2500 },
+			{ "press": "ArrowRight", "awaits": "/animations/clips/celebrate.json", "caption": "Each sweep steps to the next gesture in the vocabulary" },
+			{ "wait": 2000 },
+			{ "hold": 2500 },
+			{ "press": "+", "caption": "A push toward the screen moves the camera in" },
+			{ "hold": 2000 },
+			{ "press": "]", "caption": "A lifted hand turns the camera around the agent" },
+			{ "press": "]" },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" }
+	],
+	"posts": [
+		{ "text": "placeholder head" },
+		{ "text": "placeholder reply" }
+	],
+	"claims": [],
+	"mentions": {}
+}

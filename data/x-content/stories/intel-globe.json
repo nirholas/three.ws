@@ -1,0 +1,36 @@
+{
+	"id": "intel-globe",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "labs",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/globe", "/docs/globe", "/api/globe/intel"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/globe", "settle": 10000 },
+			{ "read": "points", "match": "([\\d,]+) points" },
+			{ "read": "range", "match": "points · (Last \\d+ days)" },
+			{ "hold": 1600, "caption": "Eleven layers of open data on one globe" },
+			{ "drag": [[0.3, 0.42], [0.62, 0.46]], "ms": 2200, "caption": "Drag to spin. Every point links to its source." },
+			{ "click": "30d", "awaits": "/api/globe/intel", "caption": "The time window is real: change it and the count changes" },
+			{ "read": "pointsMonth", "match": "([\\d,]+) points" },
+			{ "hold": 2000 },
+			{ "click": "Conflicts", "caption": "Switch a layer off and its points leave the globe" },
+			{ "hold": 1800 },
+			{ "click": "Flat", "caption": "Flat lays the same data out as a map" },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the intel payload answers with its eleven layers", "url": "https://three.ws/api/globe/intel?range=7d", "expect": { "json": { "path": "requested.length", "equals": 11 } } }
+	],
+	"posts": [
+		{ "text": "placeholder head post for the globe story three.ws/globe" }
+	],
+	"claims": [],
+	"mentions": {}
+}

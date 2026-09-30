@@ -1,12 +1,9 @@
 {
 	"id": "herald-reasons",
 	"contentHash": "091d5bbaa9e4c23776a82e8b04aeb87d8f9d39d0fdb673641a4a1d27c2a14827",
-	"reviewedAt": "2026-09-30T08:12:16.112Z",
-	"passed": false,
-	"blockers": [
-		"probe:scenario the filmed scenario: step 1 (goto https://three.ws/herald): clock.pauseAt: Error: Cannot fast-forward to the past",
-		"the AI editor did not run: no model was reachable:"
-	],
+	"reviewedAt": "2026-09-30T08:32:42.235Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"Herald decides whether a message is worth interrupting you for before a word of it is said. Each message carries an importance, the page sets a floor, and the engine returns a verdict.\n\nWe sent one at 80 against a floor of 50 and it was delivered: the 3D character in the corner of the page said it. We sent the next at 29. The character said nothing, and the verdict came back as a drop with its reason: below-importance-floor.\n\nEvery message that is not delivered comes back with a reason, so why you were not told has an answer.\n\nthree.ws/herald",
 		"A drop and a hold are different verdicts.\n\nA held message is delivered once the thing blocking it clears: another message on screen, a tab in the background, a full rate limit, quiet hours. A dropped one is reported with its reason and will not be delivered.",
@@ -14,7 +11,7 @@
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "Herald decides whether a message is worth interrupting you for",
@@ -159,8 +156,8 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "step 1 (goto https://three.ws/herald): clock.pauseAt: Error: Cannot fast-forward to the past"
+				"ok": true,
+				"detail": "19 steps passed against the live product, facts unchanged (floor 50, importance 29, delivered 1, dropped 1)"
 			},
 			{
 				"kind": "probe:api",
@@ -176,6 +173,42 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Now send one from under the floor",
+				"problem": "The frame at 5.7 s shows the importance slider at 58, still above the floor of 50, at the moment that caption is on screen; the slider is visibly mid-drag toward 29, so it is not misleading, but a paused viewer could read it as contradicting the caption.",
+				"problemNote": "optional",
+				"fix": "If recapturing, hold the caption change until the slider passes 50; otherwise acceptable as is."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Herald decides whether a message is worth interrupting you for before a word of it is said. Each message carries an importance, the page sets a floor, and the engine returns a verdict.\n\nWe sent one at 80 against a floor of 50 and it was delivered: the 3D character in the corner of the page said it. We sent the next at 29. The character said nothing, and the verdict came back as a drop with its reason: below-importance-floor.\n\nEvery message that is not delivered comes back with a reason, so why you were not told has an answer.\n\nthree.ws/herald",
+				"A drop and a hold are different verdicts.\n\nA held message is delivered once the thing blocking it clears: another message on screen, a tab in the background, a full rate limit, quiet hours. A dropped one is reported with its reason and will not be delivered.",
+				"A verdict of deliver is what makes the 3D character speak, with the gesture the sender chose. On a page with no GPU the same verdict arrives as a card, in a live region, dismissible with Escape."
+			],
+			"altText": []
+		},
+		"summary": "Every claim is backed by a passing verification against the live product or the filmed run, and the reel frames show exactly the numbers the copy states (floor 50, importance 80 delivered, 29 dropped with below-importance-floor). Voice, structure, and link rules are all met; only a minor frame-timing nit at 5.7 s where the slider is still at 58 under the 'under the floor' caption. Ship it.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }

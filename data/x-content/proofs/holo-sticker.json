@@ -1,10 +1,10 @@
 {
 	"id": "holo-sticker",
-	"scenarioHash": "ac0b0c7d04686dea1cb7fd33e0e449325bcfa375fa9c2c33daddbe4cd5c018db",
-	"ranAt": "2026-09-29T09:41:44.593Z",
+	"scenarioHash": "be688c1ea7d091f8121edc3cbb279e3916e5558e55bb13b8911ca6bab3dffb0b",
+	"ranAt": "2026-09-30T08:21:45.738Z",
 	"target": {
-		"commit": "f2081d946",
-		"revision": "three-ws-api-00460-4j6"
+		"commit": "07a1ab3b5",
+		"revision": "three-ws-api-00466-85g"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/holo",
 			"detail": "loaded https://three.ws/holo",
 			"ok": true,
-			"ms": 15466,
+			"ms": 19421,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "250",
 			"detail": "scrolled 250 px",
 			"ok": true,
-			"ms": 25969,
+			"ms": 35347,
 			"frames": 18
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "peel",
 			"detail": "peel = \"30\"",
 			"ok": true,
-			"ms": 2,
+			"ms": 7,
 			"frames": 0
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "stage",
 			"detail": "stage = \"DRAG TO TILT\"",
 			"ok": true,
-			"ms": 22,
+			"ms": 35,
 			"frames": 0
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "foils",
 			"detail": "foils = \"Rainbow holo\nChrome\nGold foil\nNeon\"",
 			"ok": true,
-			"ms": 2,
+			"ms": 4,
 			"frames": 0
 		},
 		{
@@ -59,17 +59,17 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 47558,
+			"ms": 70248,
 			"frames": 42
 		},
 		{
 			"index": 7,
 			"kind": "drag",
-			"target": "0.2,0.55,0.44,0.3",
-			"detail": "dragged over 72 frames",
+			"target": "0.27,0.52,0.34,0.45",
+			"detail": "dragged over 66 frames",
 			"ok": true,
-			"ms": 85827,
-			"frames": 90
+			"ms": 139910,
+			"frames": 84
 		},
 		{
 			"index": 8,
@@ -77,17 +77,17 @@
 			"target": "Gold foil",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 26353,
+			"ms": 28965,
 			"frames": 21
 		},
 		{
 			"index": 9,
 			"kind": "drag",
-			"target": "0.44,0.3,0.22,0.5",
-			"detail": "dragged over 60 frames",
+			"target": "0.34,0.45,0.27,0.5",
+			"detail": "dragged over 54 frames",
 			"ok": true,
-			"ms": 80799,
-			"frames": 78
+			"ms": 118815,
+			"frames": 72
 		},
 		{
 			"index": 10,
@@ -95,7 +95,7 @@
 			"target": "Your text",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 25377,
+			"ms": 48717,
 			"frames": 21
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "gm agents",
 			"detail": "typed 9 characters",
 			"ok": true,
-			"ms": 47183,
+			"ms": 68779,
 			"frames": 34
 		},
 		{
@@ -113,17 +113,17 @@
 			"target": "Cut it",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 20548,
+			"ms": 25664,
 			"frames": 21
 		},
 		{
 			"index": 13,
 			"kind": "hold",
-			"target": "1200",
-			"detail": "1200 ms",
+			"target": "1400",
+			"detail": "1400 ms",
 			"ok": true,
-			"ms": 18088,
-			"frames": 36
+			"ms": 35135,
+			"frames": 42
 		},
 		{
 			"index": 14,
@@ -131,7 +131,7 @@
 			"target": "Neon",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 10939,
+			"ms": 24156,
 			"frames": 21
 		},
 		{
@@ -140,7 +140,7 @@
 			"target": "foilAfter",
 			"detail": "foilAfter = \"Neon\"",
 			"ok": true,
-			"ms": 5,
+			"ms": 6,
 			"frames": 0
 		},
 		{
@@ -155,20 +155,20 @@
 		{
 			"index": 17,
 			"kind": "drag",
-			"target": "0.22,0.5,0.45,0.32",
-			"detail": "dragged over 72 frames",
+			"target": "0.28,0.48,0.33,0.44",
+			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 39121,
-			"frames": 90
+			"ms": 110549,
+			"frames": 78
 		},
 		{
 			"index": 18,
 			"kind": "hold",
-			"target": "3000",
-			"detail": "3000 ms",
+			"target": "3200",
+			"detail": "3200 ms",
 			"ok": true,
-			"ms": 32570,
-			"frames": 90
+			"ms": 122359,
+			"frames": 96
 		}
 	],
 	"facts": {
@@ -183,10 +183,10 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/holo-sticker/reel.mp4",
-		"sha256": "da0a1241365419258878e5491d245cf7b5ebb0fe5c0f09ec338c91c0119d173a",
-		"frames": 562,
+		"sha256": "7702750c0c64b5af521be156218485aea88a0c197544f0b13bfaa78c24d6bd23",
+		"frames": 550,
 		"motion": 1,
-		"durationSec": 18.73,
+		"durationSec": 18.33,
 		"width": 1280,
 		"height": 720,
 		"fps": 30,

@@ -1,0 +1,38 @@
+{
+	"id": "avatar-artifact",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "labs",
+	"pattern": "clip",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/avatar-artifact"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/avatar-artifact", "settle": 7000 },
+			{ "read": "title", "selector": "#artifact-title", "match": "(a live Three.js portrait)" },
+			{ "hold": 1400, "caption": "A portrait built from code at load. No model file, no image." },
+			{ "drag": [[0.5, 0.5], [0.12, 0.3]], "ms": 1800, "caption": "Move the cursor and it looks where you point" },
+			{ "drag": [[0.12, 0.3], [0.88, 0.42]], "ms": 2000 },
+			{ "drag": [[0.88, 0.42], [0.5, 0.8]], "ms": 1600 },
+			{ "press": "ArrowUp", "caption": "Arrow keys steer the gaze without a pointer" },
+			{ "press": "ArrowUp" },
+			{ "press": "ArrowLeft" },
+			{ "press": "ArrowLeft" },
+			{ "hold": 1000 },
+			{ "click": "Copy embed", "caption": "Copy embed hands you the iframe that puts it on any page" },
+			{ "read": "copied", "selector": "#copy-status", "match": "(Embed code copied|Copy the snippet below)" },
+			{ "hold": 3000 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the artifact page is up", "url": "https://three.ws/avatar-artifact", "expect": { "contains": "Avatar Artifact" } }
+	],
+	"posts": [
+		{ "text": "placeholder head post for the avatar artifact story, written after the reel is watched and checked against the page three.ws/avatar-artifact" }
+	],
+	"claims": [],
+	"mentions": {}
+}

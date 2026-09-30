@@ -1,0 +1,37 @@
+{
+	"id": "restyle-presets",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "number",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/restyle", "/docs/restyle", "@three-ws/viewer-presets"],
+	"scenario": {
+		"format": "landscape",
+		"steps": [
+			{ "goto": "https://three.ws/restyle", "settle": 9000 },
+			{ "scroll": "Material presets", "ms": 900, "caption": "18 material presets, applied in your browser to any GLB" },
+			{ "hold": 1400 },
+			{ "click": "Gold", "caption": "One click re-skins every material on the model" },
+			{ "read": "history", "selector": "#history .is-current", "match": "(Gold)" },
+			{ "hold": 1400 },
+			{ "click": "Glass (real)", "caption": "Real PBR values: metalness, roughness, transmission" },
+			{ "hold": 1400 },
+			{ "click": "Holographic" },
+			{ "drag": [[0.2, 0.55], [0.42, 0.55]], "ms": 2200, "caption": "Turn it under the light. It is a material, not a filter." },
+			{ "click": "Reset to original", "caption": "Your original is never touched. Reset restores it." },
+			{ "read": "reset", "selector": "#history .is-current", "match": "(Original)" },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the restyle page is up and names its sample avatar", "url": "https://three.ws/restyle", "expect": { "contains": "sample avatar loads by default" } }
+	],
+	"posts": [
+		{ "text": "placeholder head post for the restyle story three.ws/restyle" }
+	],
+	"claims": [],
+	"mentions": {}
+}

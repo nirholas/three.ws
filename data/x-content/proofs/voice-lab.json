@@ -1,0 +1,129 @@
+{
+	"id": "voice-lab",
+	"scenarioHash": "b2bcd1f704e821de5dba1dc5b342e82b6a027543e141d82abb1e3a7c8423f54f",
+	"ranAt": "2026-09-30T08:36:17.110Z",
+	"target": {
+		"commit": "07a1ab3b5",
+		"revision": "three-ws-api-00468-qbr"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/voice",
+			"detail": "loaded https://three.ws/voice",
+			"ok": true,
+			"ms": 8499,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "Browse voices",
+			"detail": "scrolled 639 px",
+			"ok": true,
+			"ms": 1775,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "voices",
+			"detail": "voices = \"357\"",
+			"ok": true,
+			"ms": 17,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "read",
+			"target": "providers",
+			"detail": "providers = \"3\"",
+			"ok": true,
+			"ms": 13,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 2038,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "type",
+			"target": "warm",
+			"detail": "typed 4 characters",
+			"ok": true,
+			"ms": 1491,
+			"frames": 0
+		},
+		{
+			"index": 7,
+			"kind": "wait",
+			"target": "1200",
+			"detail": "1200 ms, not filmed",
+			"ok": true,
+			"ms": 1223,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "read",
+			"target": "matches",
+			"detail": "matches = \"5\"",
+			"ok": true,
+			"ms": 10,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 882,
+			"frames": 0
+		},
+		{
+			"index": 10,
+			"kind": "click",
+			"target": "Use this voice",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 1369,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 863,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "click",
+			"target": "Speak",
+			"ok": false,
+			"detail": "POST /api/tts/synthesize answered HTTP 502",
+			"ms": 3886,
+			"frames": 0
+		}
+	],
+	"facts": {
+		"voices": "357",
+		"providers": "3",
+		"matches": "5"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

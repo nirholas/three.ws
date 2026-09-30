@@ -1,0 +1,36 @@
+{
+	"id": "agent-symphony",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "labs",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-01T00:00:00Z",
+	"covers": ["/symphony"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/symphony", "settle": 7000 },
+			{ "read": "events", "selector": "#sy-events", "match": "(\\d+)" },
+			{ "read": "status", "selector": "#sy-status", "match": "(live)" },
+			{ "scroll": 250, "ms": 600, "caption": "A Labs experiment: the agent economy, played as music" },
+			{ "hold": 1500 },
+			{ "click": "Coin buys · bass", "caption": "Each kind of event is a voice. Click one to mute it." },
+			{ "hold": 1200 },
+			{ "click": "Play the economy", "caption": "Play, and the last ten real events open as an overture" },
+			{ "hold": 1800 },
+			{ "read": "playing", "selector": "#sy-play", "match": "(Pause)" },
+			{ "caption": "One orb per note. Nothing is prerecorded or simulated." },
+			{ "hold": 2400 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the activity feed the symphony plays still answers with events", "url": "https://three.ws/api/feed?limit=40", "expect": { "json": { "path": "events", "min": 1 } } }
+	],
+	"posts": [
+		{ "text": "placeholder head post for the agent symphony story, written after the reel is watched and checked against the page three.ws/symphony" }
+	],
+	"claims": [],
+	"mentions": {}
+}

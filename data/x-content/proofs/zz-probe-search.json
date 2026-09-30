@@ -1,0 +1,71 @@
+{
+	"id": "zz-probe-search",
+	"scenarioHash": "3894df7b588a5d73f530ce4433e5e588da7c40fe7cbd29d4a53a180f62327c34",
+	"ranAt": "2026-09-30T08:36:29.305Z",
+	"target": {
+		"commit": "fa1136197",
+		"revision": "three-ws-api-00469-jz4"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/search",
+			"detail": "loaded https://three.ws/search",
+			"ok": true,
+			"ms": 11095,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "click",
+			"target": "Agents",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 734,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "type",
+			"target": "design",
+			"detail": "typed 6 characters",
+			"ok": true,
+			"ms": 569,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "press",
+			"target": "Enter",
+			"detail": "pressed Enter",
+			"ok": true,
+			"ms": 60,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "wait",
+			"target": "5000",
+			"detail": "5000 ms, not filmed",
+			"ok": true,
+			"ms": 5012,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "expect",
+			"target": "ZZZNOTHERE",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 1000ms exceeded.",
+			"ms": 1370,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}
