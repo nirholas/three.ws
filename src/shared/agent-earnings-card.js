@@ -159,11 +159,22 @@ function claimRow(c) {
 }
 
 function footer(d) {
-	const updated = d.refreshed_at ? `Updated ${esc(relTime(d.refreshed_at))}` : 'Not refreshed yet';
+	const updated = d.refreshed_at ? `Updated ${esc(relTime(d.refreshed_at))}` : '';
 	return `<div class="ern-foot${d.stale ? ' stale' : ''}">
-		<span>${d.stale ? 'Figures may be out of date. ' : ''}${updated}</span>
+		${updated ? `<span>${d.stale ? 'Figures may be out of date. ' : ''}${updated}</span>` : ''}
 		<details class="ern-how"><summary>How it's calculated</summary><p>${esc(d.method)}</p></details>
 	</div>`;
+}
+
+function subline(zero, coins, service) {
+	if (!zero) return `Lifetime creator fees from its coins${service.usd ? ' plus service income' : ''}.`;
+	if (coins.length && coins.every((c) => c.status === 'other_wallet')) {
+		return 'None counted for this agent: its coins pay creator fees to a wallet that is not its own, listed below.';
+	}
+	if (coins.length && coins.every((c) => c.status === 'not_reported')) {
+		return 'pump.fun has not reported creator fees for its coins yet.';
+	}
+	return 'Nothing earned yet. Creator fees accrue with every trade of this agent’s coin.';
 }
 
 function render(d) {
@@ -208,11 +219,7 @@ function render(d) {
 			${totalUsd != null ? `<span class="ern-usd">${esc(fmtUsd(totalUsd))}</span>` : ''}
 			${rank}
 		</div>
-		<p class="ern-sub">${
-			zero
-				? 'Nothing earned yet. Creator fees accrue with every trade of this agent’s coin.'
-				: 'Lifetime creator fees from its coins' + (service.usd ? ' plus service income' : '') + '.'
-		}</p>
+		<p class="ern-sub">${esc(subline(zero, coins, service))}</p>
 		<div class="ern-stats">${stats
 			.map(
 				([k, v, s]) =>
