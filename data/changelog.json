@@ -3,10 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-09-30",
-			"title": "Spotlight entries now show verified results, and success stories are opt-in",
-			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
-			"tags": ["feature"],
-			"link": "/stories"
+			"title": "Experiment write-up: can autonomous agents trade new coins at a profit?",
+			"summary": "The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.",
+			"tags": ["docs"],
+			"link": "/docs/experiments-autonomous-trading"
+		},
+		{
+			"date": "2026-09-30",
+			"title": "Experiment write-up: how many new agents ever launch a coin?",
+			"summary": "Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.",
+			"tags": ["docs"],
+			"link": "/docs/experiments-agent-launch-funnel"
 		},
 		{
 			"date": "2026-09-30",
@@ -14,6 +21,13 @@
 			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
 			"tags": ["feature"],
 			"link": "/duels"
+		},
+		{
+			"date": "2026-09-30",
+			"title": "Spotlight entries now show verified results, and success stories are opt-in",
+			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
+			"tags": ["feature"],
+			"link": "/stories"
 		},
 		{
 			"date": "2026-09-30",

@@ -1,14 +1,64 @@
 {
-	"generated_at": "2026-09-30T08:30:10.238Z",
+	"generated_at": "2026-09-30T08:35:45.908Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3794,
+	"total": 3802,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Docs · How we run and publish experiments",
+			"summary": "The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.",
+			"link": "/docs/experiments",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Docs · Trader duels",
+			"summary": "How trader duels are generated from the rivalry engine, how calls lock, how a duel resolves from the realized P&L ledger (ties, empty windows, idle and private traders), points, XP, seasons, badges, the anti-abuse rules and the full API. Free to play; points have no cash value.",
+			"link": "/docs/trader-duels",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Experiment · Can autonomous agents trade new coins at a profit?",
+			"summary": "1,296 real trades by AI agents on Solana: 16.4% winners and a net loss of 0.5402 SOL on 9.1444 SOL deployed. Which exits made money, what the retune got wrong, and every query behind the numbers.",
+			"link": "/docs/experiments-autonomous-trading",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Experiment · How many new agents ever launch a coin?",
+			"summary": "Measured from production: of 788 agents created in the 30 days to 2026-09-30, 2 launched a coin, about three in four had no wallet, and no token plan has ever been saved. What we got wrong and what we changed, with every query.",
+			"link": "/docs/experiments-agent-launch-funnel",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Experiments",
+			"summary": "What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.",
+			"link": "/experiments",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-30",
 			"type": "launch",
@@ -68,6 +118,26 @@
 			"link": "/analytics",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Experiment write-up: can autonomous agents trade new coins at a profit?",
+			"summary": "The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.",
+			"link": "/docs/experiments-autonomous-trading",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Experiment write-up: how many new agents ever launch a coin?",
+			"summary": "Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.",
+			"link": "/docs/experiments-agent-launch-funnel",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -150,6 +220,16 @@
 			"link": "/oracle-lab",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Trader duels: call which trader wins, free to play",
+			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
+			"link": "/duels",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1496,93 +1576,6 @@
 			"link": "/docs/home-scene",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "An app key can no longer say yes to unlocking your door",
-			"summary": "A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the \"the owner already approved this\" flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with \"a person has to approve this\", exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.",
-			"link": "/smart-home",
-			"tags": [
-				"security",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "An embedded avatar no longer crashes the page it was removed from",
-			"summary": "Sites embed three.ws avatars with the <agent-3d> tag, and a single-page app can swap the whole page out while an avatar is still loading. When that happened the avatar was left holding a piece of the page that no longer existed, and its own tidy-up threw an error into the host site console instead of quietly reporting that loading had stopped. The avatar had already handled the failure correctly; the report of it was what broke. Embedders now get the agent:error event they listen for, and nothing else, whether or not the page moved on while the avatar was still loading.",
-			"link": "/docs/web-component",
-			"tags": [
-				"fix",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Arm your agent stops telling signed-out visitors to create an agent, and shows them the live conviction stream instead",
-			"summary": "A full audit of /oracle/arm found that anyone not signed in was shown “Create a 3D agent to arm it”, a dead end for a visitor with no account, and the rest of the page was hidden behind it. Signing in now gets its own state with sign-in and register buttons, and the live “clearing your bar” preview plus the 30-day win-rate readout stay on screen for everyone, because both run on public data. If the agents list itself fails to load, the page now says so with the status it got back and a Try again button, instead of pretending the account is empty. Four more fixes went with it: the arm switch and the two rule toggles can now be operated from the keyboard (they were focusable but did nothing on Enter or Space), coin artwork routes through the site image proxy so icons stop failing on IPFS gateways, the status line no longer flips back to “Disarmed” when the translation catalog lands after the page has rendered, and every form field now has a real label attached to it.",
-			"link": "/oracle/arm",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Avatars and token art load again on sites that embed three.ws",
-			"summary": "Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Connecting a home: the page now says which state it is in, out loud",
-			"summary": "Two moments on /smart-home were doing the right thing silently. Typing an address that can never work (a 192.168 number, a .local name) has always put the reason under the field straight away, before anything is sent, but the message was carried by colour alone and a screen reader never read it out; it is now announced the moment it appears, and marked in a way that does not depend on seeing red. And a house that has stopped answering, is refusing the stored token, or has simply gone quiet is now labelled as such by the page itself rather than only in the sentence on its card. Nothing about what you see moves: the last known summary of your house stays exactly where it was, with how long ago it last answered, because a home that went quiet should never look like a home that was deleted.",
-			"link": "/smart-home",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Disconnecting a home now stops the screens that were showing it",
-			"summary": "A kitchen tablet or wall display left open on a connected home kept saying \"Live\" and kept drawing that house after the home had been disconnected from another device. The connection was really gone, but the open page was never told, so it sat on a stale picture of somebody's house with a green Live badge on it. Disconnecting now closes the live connection and hands every screen still watching a final message that says what happened, and those screens stop asking for more. They keep showing the last state they saw, greyed and dated, with the reason and a Reconnect button, which is what every other kind of drop already did.",
-			"link": "/docs/home-scene",
-			"tags": [
-				"fix",
-				"security"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy",
-			"summary": "A full audit of /shopper, the page where you describe a task, set a budget, and let an agent shop the x402 Bazaar for endpoints that can answer it. Three things were wrong. A run that came back with no plan and no answer, which is what happens when nothing in the Bazaar matches the task or everything that does prices above your ceiling, painted an empty white column and stopped: no explanation, no way forward. That case now says no endpoints matched, quotes the task back, and offers the three things that change the outcome (rewrite the task, raise the budget, browse the Bazaar) plus a button to run again. Second, when the request could not reach us at all, the page showed the browser's own wording for a dropped connection, which names no cause and suggests no fix; it now says the agent service could not be reached and what to do about it. Third, on a phone narrower than 560px the four navigation links were squeezed into a strip about 76px wide and had to be dragged sideways a few pixels at a time to read; they now wrap onto their own full-width row. Alongside those: the results column announces itself to a screen reader while a run is in flight and when it settles, the Task label sits above its box as intended rather than beside it, and an internal ticket number that had been sitting in the page's headline label since launch is gone.",
-			"link": "/shopper",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Ethereum wallets load on the portfolio page again, keylessly, and every token logo shows up",
-			"summary": "A full audit of /portfolio, where you paste any Solana or Ethereum address and get a live portfolio. The Ethereum half had gone dark: the single provider behind it ran out of monthly capacity, so every 0x address answered \"Data source unavailable\" with nothing behind it. Ethereum now has the same keyless floor Solana has always had. The ETH balance comes from the public Ethereum nodes the rest of the platform already uses, the token list with its prices and icons comes from a public block explorer, and the 24h move comes from the same market source the Solana side uses, with the coverage it achieved stated on the card. The Data panel names whichever lane actually answered, so you can see whether you are reading the paid provider or the free one. Token logos were another visible break: the page pointed your browser straight at an IPFS gateway, which the browser refuses on cross-origin grounds, so every holding fell back to a three-letter monogram and your address bar handed your IP to the gateway on every load. Logos now come through three.ws, sized for the row. Keyboard users could tab onto a slice of the allocation donut and get nothing: the tooltip was wired to an event handler property that browsers do not actually support, so it never fired once; the slice now names its asset and share, and Escape dismisses it. When a lookup fails, the page now shows the reason the server actually sent instead of a generic sentence, and clicking Retry after a rejected address no longer silently reloads the wallet you looked at before it. Underneath, the fallback that names Solana tokens when the primary metadata source is out of quota had never run at all, because of a missing import; token symbols and names come back on that path.",
-			"link": "/portfolio",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

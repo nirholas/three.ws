@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Experiments · three.ws</title>
+	<meta name="description" content="What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ships the queries that produced its numbers." />
+	<link rel="canonical" href="https://three.ws/experiments" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="three.ws Experiments" />
+	<meta property="og:description" content="What we tried, what it cost, what the numbers said and what we got wrong, with the queries behind every number." />
+	<meta property="og:url" content="https://three.ws/experiments" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Experiments&amp;d=What+three.ws+tried%2C+what+it+cost%2C+what+the+numbers+said+and+what+we+got+wrong%2C+with+the+queries+behind+every+number.&amp;p=%2Fexperiments" />
+	<meta property="og:image:alt" content="three.ws Experiments" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="three.ws Experiments" />
+	<meta name="twitter:description" content="What we tried, what it cost, what the numbers said and what we got wrong." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Experiments&amp;d=What+three.ws+tried%2C+what+it+cost%2C+what+the+numbers+said+and+what+we+got+wrong%2C+with+the+queries+behind+every+number.&amp;p=%2Fexperiments" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Experiments","description":"What three.ws tried, what it cost, what the numbers said and what we got wrong.","url":"https://three.ws/experiments","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<style>
+		:root { --ex-maxw: 980px; --ex-run: #16a34a; --ex-kill: var(--danger, #f87171); }
+		:root:not([data-theme="light"]) { --ex-run: #4ade80; }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		a { color: inherit; }
+
+		.ex-wrap { max-width: var(--ex-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		.ex-hero { padding: 40px 0 6px; }
+		.ex-eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); font-weight: 650; margin: 0 0 10px; }
+		.ex-hero h1 { font-size: clamp(1.8rem, 4.6vw, 2.7rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright, var(--ink)); }
+		.ex-hero p { margin: 0 0 10px; max-width: 66ch; color: var(--ink-dim); line-height: 1.6; font-size: 1.02rem; }
+		.ex-hero a { text-decoration: underline; text-underline-offset: 3px; }
+		.ex-hero a:hover { color: var(--ink-bright, var(--ink)); }
+		.ex-hero a:focus-visible, .ex-card a:focus-visible, .ex-empty a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+		.ex-filter { display: inline-flex; flex-wrap: wrap; gap: 2px; margin: 22px 0 18px; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: 10px; padding: 3px; }
+		.ex-filter button {
+			appearance: none; border: 0; background: none; color: var(--ink-dim); font: inherit; font-size: 0.84rem; font-weight: 600;
+			padding: 6px 12px; min-height: 32px; border-radius: 7px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+			transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), color var(--duration-fast, 140ms) var(--ease-standard, ease), transform 80ms;
+		}
+		.ex-filter button:hover { color: var(--ink-bright, var(--ink)); background: var(--surface-2); }
+		.ex-filter button:active { transform: translateY(1px); }
+		.ex-filter button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+		.ex-filter button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink-bright, var(--ink)); }
+		.ex-count { font-size: 0.72rem; font-variant-numeric: tabular-nums; opacity: 0.75; }
+
+		.ex-list { display: grid; gap: 12px; }
+		.ex-card {
+			padding: 20px 20px 18px; border-radius: var(--radius-md, 10px); background: var(--surface-1); border: 1px solid var(--stroke);
+			transition: border-color var(--duration-fast, 140ms) var(--ease-standard, ease), background var(--duration-fast, 140ms) var(--ease-standard, ease);
+			animation: ex-in 240ms var(--ease-standard, ease) both;
+		}
+		.ex-card:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+		.ex-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 0.8rem; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+		.ex-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 650; padding: 3px 9px 3px 8px; border-radius: 999px; border: 1px solid var(--stroke-strong); color: var(--ink); }
+		.ex-status::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+		.ex-status[data-status="running"] { color: var(--ex-run); border-color: color-mix(in srgb, var(--ex-run) 45%, transparent); }
+		.ex-status[data-status="killed"] { color: var(--ex-kill); border-color: color-mix(in srgb, var(--ex-kill) 45%, transparent); }
+		.ex-status[data-status="concluded"] { color: var(--ink-dim); }
+		.ex-card h2 { margin: 12px 0 6px; font-size: 1.2rem; letter-spacing: -0.01em; line-height: 1.3; }
+		.ex-card h2 a { text-decoration: none; color: var(--ink-bright, var(--ink)); }
+		.ex-card h2 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+		.ex-q { margin: 0; color: var(--ink); line-height: 1.55; font-size: 0.95rem; }
+		.ex-q strong { color: var(--ink-dim); font-weight: 600; }
+		.ex-headline { margin: 10px 0 0; padding-left: 12px; border-left: 2px solid var(--stroke-strong); color: var(--ink-dim); line-height: 1.55; font-size: 0.92rem; }
+		.ex-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px; font-size: 0.88rem; }
+		.ex-links a { text-decoration: underline; text-underline-offset: 3px; color: var(--ink-dim); }
+		.ex-links a:hover { color: var(--ink-bright, var(--ink)); }
+		.ex-links a.is-primary { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+
+		.ex-skel { height: 170px; border-radius: var(--radius-md, 10px); }
+		.skeleton { background: var(--surface-2); background-image: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-3) 50%, var(--surface-1) 100%); background-size: 200% 100%; animation: ex-shimmer 1.4s ease-in-out infinite; }
+		@keyframes ex-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@keyframes ex-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+		.ex-empty { padding: 28px 20px; border-radius: var(--radius-md, 10px); border: 1px dashed var(--stroke-strong); color: var(--ink-dim); line-height: 1.6; }
+		.ex-empty strong { color: var(--ink-bright, var(--ink)); display: block; margin-bottom: 4px; }
+		.ex-empty a, .ex-empty button { color: var(--ink-bright, var(--ink)); text-decoration: underline; text-underline-offset: 3px; }
+		.ex-empty button { appearance: none; background: none; border: 0; font: inherit; padding: 0; cursor: pointer; }
+		.ex-empty button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+		.ex-error { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; border-radius: var(--radius-md, 10px); border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 9%, transparent); line-height: 1.5; font-size: 0.9rem; }
+		.ex-error button { appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-2); color: var(--ink-bright, var(--ink)); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background var(--duration-fast, 140ms), transform 80ms; }
+		.ex-error button:hover { background: var(--surface-3); }
+		.ex-error button:active { transform: translateY(1px); }
+		.ex-error button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.ex-foot { margin-top: 28px; font-size: 0.86rem; color: var(--ink-dim); line-height: 1.6; }
+		.ex-foot a { text-decoration: underline; text-underline-offset: 3px; }
+		.ex-foot a:hover { color: var(--ink-bright, var(--ink)); }
+		.ex-foot a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+		@media (prefers-reduced-motion: reduce) { .skeleton, .ex-card { animation: none; } }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="ex-wrap" id="main">
+		<section class="ex-hero">
+			<p class="ex-eyebrow">Experiments</p>
+			<h1>What we tried, and what the numbers said</h1>
+			<p>Each write-up asks one question, says what it cost, shows the result measured from production data, and names what we got wrong and what we changed because of it. The queries behind every number are printed at the end, so you can re-run them.</p>
+			<p><a href="/docs/experiments">How we run and publish an experiment</a></p>
+		</section>
+
+		<div class="ex-filter" id="ex-filter" role="group" aria-label="Filter by status">
+			<button type="button" data-status="all" aria-pressed="true">All <span class="ex-count" data-count="all"></span></button>
+			<button type="button" data-status="running" aria-pressed="false">Running <span class="ex-count" data-count="running"></span></button>
+			<button type="button" data-status="concluded" aria-pressed="false">Concluded <span class="ex-count" data-count="concluded"></span></button>
+			<button type="button" data-status="killed" aria-pressed="false">Killed <span class="ex-count" data-count="killed"></span></button>
+		</div>
+
+		<div class="ex-list" id="ex-list" aria-live="polite" aria-busy="true">
+			<div class="ex-skel skeleton" aria-hidden="true"></div>
+			<div class="ex-skel skeleton" aria-hidden="true"></div>
+		</div>
+
+		<p class="ex-foot">Numbers that move every day live on <a href="/analytics">platform analytics</a>. The trading experiment's live scoreboard is <a href="/sniper/experiments">/sniper/experiments</a>.</p>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+	<script type="module" src="/src/experiments-index.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

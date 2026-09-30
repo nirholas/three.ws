@@ -1,11 +1,61 @@
 {
-	"generated_at": "2026-09-30T08:30:10.207Z",
+	"generated_at": "2026-09-30T08:35:45.854Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Docs · How we run and publish experiments",
+			"summary": "The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.",
+			"link": "/docs/experiments",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Docs · Trader duels",
+			"summary": "How trader duels are generated from the rivalry engine, how calls lock, how a duel resolves from the realized P&L ledger (ties, empty windows, idle and private traders), points, XP, seasons, badges, the anti-abuse rules and the full API. Free to play; points have no cash value.",
+			"link": "/docs/trader-duels",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Experiment · Can autonomous agents trade new coins at a profit?",
+			"summary": "1,296 real trades by AI agents on Solana: 16.4% winners and a net loss of 0.5402 SOL on 9.1444 SOL deployed. Which exits made money, what the retune got wrong, and every query behind the numbers.",
+			"link": "/docs/experiments-autonomous-trading",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Experiment · How many new agents ever launch a coin?",
+			"summary": "Measured from production: of 788 agents created in the 30 days to 2026-09-30, 2 launched a coin, about three in four had no wallet, and no token plan has ever been saved. What we got wrong and what we changed, with every query.",
+			"link": "/docs/experiments-agent-launch-funnel",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "launch",
+			"title": "Experiments",
+			"summary": "What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.",
+			"link": "/experiments",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-30",
 			"type": "launch",
@@ -65,6 +115,26 @@
 			"link": "/analytics",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Experiment write-up: can autonomous agents trade new coins at a profit?",
+			"summary": "The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.",
+			"link": "/docs/experiments-autonomous-trading",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Experiment write-up: how many new agents ever launch a coin?",
+			"summary": "Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.",
+			"link": "/docs/experiments-agent-launch-funnel",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -147,6 +217,16 @@
 			"link": "/oracle-lab",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Trader duels: call which trader wins, free to play",
+			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
+			"link": "/duels",
+			"tags": [
+				"feature"
 			]
 		},
 		{

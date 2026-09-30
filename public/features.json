@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-30T08:30:10.181Z",
+	"generated_at": "2026-09-30T08:35:45.828Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -94,7 +94,8 @@
 					"/awesome",
 					"/changelog",
 					"/blog",
-					"/status"
+					"/status",
+					"/experiments"
 				]
 			}
 		]
@@ -3001,6 +3002,16 @@
 					"title": "Agent Economy Volume",
 					"description": "Live dashboard of total agent-to-agent economy volume: real USDC settled between AI agents hiring each other for paid skills over x402, with top earners, top spenders, and a 90-day volume chart.",
 					"added": "2026-06-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/experiments",
+					"title": "Experiments",
+					"description": "What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.",
+					"added": "2026-09-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7358,6 +7369,36 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/experiments",
+					"title": "Docs · How we run and publish experiments",
+					"description": "The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.",
+					"added": "2026-09-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/experiments-agent-launch-funnel",
+					"title": "Experiment · How many new agents ever launch a coin?",
+					"description": "Measured from production: of 788 agents created in the 30 days to 2026-09-30, 2 launched a coin, about three in four had no wallet, and no token plan has ever been saved. What we got wrong and what we changed, with every query.",
+					"added": "2026-09-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/experiments-autonomous-trading",
+					"title": "Experiment · Can autonomous agents trade new coins at a profit?",
+					"description": "1,296 real trades by AI agents on Solana: 16.4% winners and a net loss of 0.5402 SOL on 9.1444 SOL deployed. Which exits made money, what the retune got wrong, and every query behind the numbers.",
+					"added": "2026-09-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/tutorials/getting-started",
 					"title": "Tutorial · Getting started (hosted)",
 					"description": "A five-minute, no-code tour: create an agent, pick a body, give it a personality, share the URL.",
@@ -7872,6 +7913,16 @@
 					"title": "Docs · Syndicates",
 					"description": "How copy-trading syndicates work: founding around copyable leaders, joining with your own wallet and caps, how the group curve and rival standing are computed from real copies, and the full API.",
 					"added": "2026-09-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trader-duels",
+					"title": "Docs · Trader duels",
+					"description": "How trader duels are generated from the rivalry engine, how calls lock, how a duel resolves from the realized P&L ledger (ties, empty windows, idle and private traders), points, XP, seasons, badges, the anti-abuse rules and the full API. Free to play; points have no cash value.",
+					"added": "2026-09-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

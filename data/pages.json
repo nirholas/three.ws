@@ -39,7 +39,7 @@
 			},
 			{
 				"title": "Learn",
-				"paths": ["/docs", "/tutorials", "/examples", "/awesome", "/changelog", "/blog", "/status"]
+				"paths": ["/docs", "/tutorials", "/examples", "/awesome", "/changelog", "/blog", "/status", "/experiments"]
 			}
 		]
 	},
@@ -2436,6 +2436,14 @@
 					"priority": 0.7,
 					"changefreq": "daily",
 					"added": "2026-06-29"
+				},
+				{
+					"path": "/experiments",
+					"title": "Experiments",
+					"description": "What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-09-30"
 				},
 				{
 					"path": "/analytics",
@@ -5667,6 +5675,30 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/experiments",
+					"title": "Docs · How we run and publish experiments",
+					"description": "The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-09-30"
+				},
+				{
+					"path": "/docs/experiments-agent-launch-funnel",
+					"title": "Experiment · How many new agents ever launch a coin?",
+					"description": "Measured from production: of 788 agents created in the 30 days to 2026-09-30, 2 launched a coin, about three in four had no wallet, and no token plan has ever been saved. What we got wrong and what we changed, with every query.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-30"
+				},
+				{
+					"path": "/docs/experiments-autonomous-trading",
+					"title": "Experiment · Can autonomous agents trade new coins at a profit?",
+					"description": "1,296 real trades by AI agents on Solana: 16.4% winners and a net loss of 0.5402 SOL on 9.1444 SOL deployed. Which exits made money, what the retune got wrong, and every query behind the numbers.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-30"
 				},
 				{
 					"path": "/tutorials/getting-started",

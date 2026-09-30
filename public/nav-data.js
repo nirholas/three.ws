@@ -337,6 +337,12 @@ export const NAV_GROUPS = [
 						desc: 'Live price, bonding-curve chart, streaming trades & one-click buy',
 					},
 					{
+						title: 'Experiments',
+						href: '/experiments',
+						tier: 'advanced',
+						desc: 'What we tried, what it cost, what the numbers said and what we got wrong, with the queries behind every number',
+					},
+					{
 						title: 'Platform Analytics',
 						href: '/analytics',
 						tier: 'advanced',

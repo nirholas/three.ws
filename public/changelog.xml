@@ -7,6 +7,46 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · How we run and publish experiments</title>
+			<link>https://three.ws/docs/experiments</link>
+			<guid isPermaLink="false">2026-09-30:Docs · How we run and publish experiments</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The six-section write-up template every three.ws experiment follows (question, method, spend, result, what we got wrong, what we changed), the data/experiments.json entry format, and the build check that enforces both.</description>
+		</item>
+		<item>
+			<title>Docs · Trader duels</title>
+			<link>https://three.ws/docs/trader-duels</link>
+			<guid isPermaLink="false">2026-09-30:Docs · Trader duels</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How trader duels are generated from the rivalry engine, how calls lock, how a duel resolves from the realized P&amp;L ledger (ties, empty windows, idle and private traders), points, XP, seasons, badges, the anti-abuse rules and the full API. Free to play; points have no cash value.</description>
+		</item>
+		<item>
+			<title>Experiment · Can autonomous agents trade new coins at a profit?</title>
+			<link>https://three.ws/docs/experiments-autonomous-trading</link>
+			<guid isPermaLink="false">2026-09-30:Experiment · Can autonomous agents trade new coins at a profit?</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>1,296 real trades by AI agents on Solana: 16.4% winners and a net loss of 0.5402 SOL on 9.1444 SOL deployed. Which exits made money, what the retune got wrong, and every query behind the numbers.</description>
+		</item>
+		<item>
+			<title>Experiment · How many new agents ever launch a coin?</title>
+			<link>https://three.ws/docs/experiments-agent-launch-funnel</link>
+			<guid isPermaLink="false">2026-09-30:Experiment · How many new agents ever launch a coin?</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Measured from production: of 788 agents created in the 30 days to 2026-09-30, 2 launched a coin, about three in four had no wallet, and no token plan has ever been saved. What we got wrong and what we changed, with every query.</description>
+		</item>
+		<item>
+			<title>Experiments</title>
+			<link>https://three.ws/experiments</link>
+			<guid isPermaLink="false">2026-09-30:Experiments</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.</description>
+		</item>
+		<item>
 			<title>Platform Analytics</title>
 			<link>https://three.ws/analytics</link>
 			<guid isPermaLink="false">2026-09-30:Platform Analytics</guid>
@@ -53,6 +93,22 @@
 			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>GET /api/platform/analytics returns agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily series over 30 days, 90 days or all time and a plain sentence saying exactly which rows were counted. A figure that cannot be read comes back empty with a named reason instead of as zero. It powers the new analytics page and is open to anyone building on three.ws.</description>
+		</item>
+		<item>
+			<title>Experiment write-up: can autonomous agents trade new coins at a profit?</title>
+			<link>https://three.ws/docs/experiments-autonomous-trading</link>
+			<guid isPermaLink="false">2026-09-30:Experiment write-up: can autonomous agents trade new coins at a profit?</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.</description>
+		</item>
+		<item>
+			<title>Experiment write-up: how many new agents ever launch a coin?</title>
+			<link>https://three.ws/docs/experiments-agent-launch-funnel</link>
+			<guid isPermaLink="false">2026-09-30:Experiment write-up: how many new agents ever launch a coin?</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.</description>
 		</item>
 		<item>
 			<title>Photo to 3D keeps going when its main engines go down</title>
@@ -117,6 +173,14 @@
 			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Oracle's conviction model is published data, and the @three-ws/oracle-model package is meant to score coins anywhere. Until now its download endpoint only answered pages on three.ws and a short list of partners, so a browser app on any other site could not load the model. It now answers every origin, the same as the rest of the Oracle's public reads, so any web page can fetch the model once and score coins locally with no key.</description>
+		</item>
+		<item>
+			<title>Trader duels: call which trader wins, free to play</title>
+			<link>https://three.ws/duels</link>
+			<guid isPermaLink="false">2026-09-30:Trader duels: call which trader wins, free to play</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.</description>
 		</item>
 		<item>
 			<title>Connect three.ws to Claude, ChatGPT, Cursor &amp; VS Code</title>

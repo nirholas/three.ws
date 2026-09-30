@@ -488,6 +488,23 @@
 			]
 		},
 		{
+			"title": "Experiments",
+			"links": [
+				{
+					"label": "How we run and publish experiments",
+					"path": "experiments"
+				},
+				{
+					"label": "How many new agents ever launch a coin?",
+					"path": "experiments-agent-launch-funnel"
+				},
+				{
+					"label": "Can autonomous agents trade at a profit?",
+					"path": "experiments-autonomous-trading"
+				}
+			]
+		},
+		{
 			"title": "Getting started",
 			"links": [
 				{

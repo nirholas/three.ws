@@ -92,9 +92,10 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [Changelog](https://three.ws/changelog): What is new on three.ws: features, improvements, and releases, newest first.
 - [Blog](https://three.ws/blog): Editorial index of three.ws launches and long-form posts.
 - [Status](https://three.ws/status): Live operational status and 90-day uptime history for the platform, API, and x402 surfaces: probed every 5 minutes.
+- [Experiments](https://three.ws/experiments): What three.ws tried, what it cost, what the numbers said and what we got wrong. Every write-up is measured from production data and ends with the queries that produced its numbers, filterable by running, concluded or killed.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (918), grouped by section, with full descriptions.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (923), grouped by section, with full descriptions.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

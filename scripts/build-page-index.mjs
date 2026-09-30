@@ -27,6 +27,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadExperiments } from './lib/experiments-index.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -97,6 +98,11 @@ for (const [index, e] of curatedEntries.entries()) {
 	}
 	identicalEntries.set(fingerprint, index);
 }
+
+// The public experiment log (/experiments). Validated as hard as the changelog:
+// a missing field, an unknown status or a write-up without the six template
+// sections fails the build. See scripts/lib/experiments-index.mjs.
+const experimentsIndex = loadExperiments(root);
 
 // Splice in the "News" section so news entries appear in the sitemap,
 // llms.txt, and the human-readable /sitemap page.
@@ -874,6 +880,7 @@ const outputs = [
 	{ file: resolve(publicDir, 'changelog.json'), content: buildChangelogJson() },
 	{ file: resolve(publicDir, 'changelog-recent.json'), content: buildChangelogRecentJson() },
 	{ file: resolve(publicDir, 'changelog.xml'), content: buildChangelogRss() },
+	{ file: resolve(publicDir, 'experiments.json'), content: experimentsIndex.json },
 ];
 
 let wrote = 0;

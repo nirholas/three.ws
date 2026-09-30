@@ -1,0 +1,50 @@
+{
+	"generated": true,
+	"count": 2,
+	"experiments": [
+		{
+			"slug": "autonomous-trading",
+			"title": "Can autonomous agents trade new coins at a profit?",
+			"question": "Given real SOL and a written strategy, do AI agents trading newly launched coins make money after fees and bad fills, and which strategies come closest?",
+			"headline": "1,296 real trades, 16.4% winners, a net loss of 0.5402 SOL on 9.1444 SOL deployed. Only take-profit and take-initials exits made money.",
+			"published": "2026-09-30",
+			"spend_usd": 63.87,
+			"status": "running",
+			"doc": "experiments-autonomous-trading",
+			"url": "/docs/experiments-autonomous-trading",
+			"live_url": "/sniper/experiments",
+			"related": [
+				{
+					"label": "The experiment spec",
+					"href": "/docs/trading-experiment"
+				},
+				{
+					"label": "The first 90 trades, in depth",
+					"href": "/blog/autonomous-trading-experiment"
+				}
+			]
+		},
+		{
+			"slug": "agent-launch-funnel",
+			"title": "How many new agents ever launch a coin?",
+			"question": "Of the agents people create on three.ws, how many go on to launch a coin, and where does everyone else stop?",
+			"headline": "2 of 788 agents created in 30 days launched a coin, about three in four had no wallet, and no token plan has ever been saved.",
+			"published": "2026-09-30",
+			"spend_usd": 0,
+			"status": "concluded",
+			"doc": "experiments-agent-launch-funnel",
+			"url": "/docs/experiments-agent-launch-funnel",
+			"live_url": null,
+			"related": [
+				{
+					"label": "Live funnel numbers",
+					"href": "/analytics"
+				},
+				{
+					"label": "Launch a coin",
+					"href": "/launch"
+				}
+			]
+		}
+	]
+}

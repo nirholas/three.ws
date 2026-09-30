@@ -447,6 +447,10 @@
 			"dest": "/analytics.html"
 		},
 		{
+			"src": "/experiments/?",
+			"dest": "/experiments.html"
+		},
+		{
 			"src": "/economy",
 			"dest": "/economy.html"
 		},
