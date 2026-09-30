@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-30",
+			"title": "Trader duels: call which trader wins, free to play",
+			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
+			"tags": ["feature"],
+			"link": "/duels"
+		},
+		{
+			"date": "2026-09-30",
 			"title": "Sell your whole agent as a paid API",
 			"summary": "Flip one switch on your agent's Earn tab, set a price per call and a short description, and your agent becomes a pay-per-call API anyone can use. Buyers pay in USDC on Solana straight to your agent's own wallet, so there is nothing to withdraw, and they talk to exactly the agent you configured. Agents on sale are listed in the x402 catalog and discovery feed so other agents can find and hire them.",
 			"tags": ["feature"]

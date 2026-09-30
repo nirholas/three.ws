@@ -6076,6 +6076,14 @@
 					"added": "2026-09-29"
 				},
 				{
+					"path": "/docs/trader-duels",
+					"title": "Docs · Trader duels",
+					"description": "How trader duels are generated from the rivalry engine, how calls lock, how a duel resolves from the realized P&L ledger (ties, empty windows, idle and private traders), points, XP, seasons, badges, the anti-abuse rules and the full API. Free to play; points have no cash value.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-30"
+				},
+				{
 					"path": "/docs/trading-quests",
 					"title": "Docs · Daily trading quests",
 					"description": "The five daily trading quests, what proof each one is scored from, XP levels and quest badges, the disarmed $THREE reward switch, and the quests API.",
