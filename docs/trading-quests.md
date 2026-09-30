@@ -29,7 +29,9 @@ signed in with), and each signature can be claimed once.
 
 Reaching level `L` takes `50 x L x (L - 1)` XP in total: 100 XP for level 2,
 300 for level 3, 600 for level 4. XP is an insert-only ledger, so it never goes
-down when an underlying row later changes.
+down when an underlying row later changes. Correct calls on
+[trader duels](trader-duels.md) add 15 XP each to the same ledger (code
+`duel:<duel id>`); they raise your level but do not count as completed quests.
 
 | Badge | Earned by |
 |---|---|
@@ -125,5 +127,6 @@ ghost-copies per leader), `trading_quest_completions` (the XP ledger) and
 ## Related
 
 - [Syndicates](syndicates.md): copy-trade as a team
+- [Trader duels](trader-duels.md): free-to-play calls on head-to-head traders, more XP
 - [Fork a trade](fork-trade.md) and [Ghost-copy](ghost-copy.md): two of the quests
 - [Copy trading](copy-trading.md): where copy intents come from
