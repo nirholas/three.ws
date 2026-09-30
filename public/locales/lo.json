@@ -20866,7 +20866,7 @@
 		"next1_desc": "ທຸກການເຄື່ອນໄຫວທີ່ຮິກຂອງທ່ານຕ້ອງການໃຫ້ກົງກັນ, ສາມາດສະແດງລອງໄດ້. ນີ້ແມ່ນເພາະຫຍັງມີ 52 ຂໍ້ຕ່ອມ.",
 		"next1_title": "ຫ້ອງສະຫຼຸບຄລິບ",
 		"next2_desc": "ສ້າງໂຄງສ້າງ, ແຮຊ, ແລະກວດສອບແຜນງານຈາກ shell ຫຼື CI.",
-		"next2_title": "",
+		"next2_title": "Avatar CLI",
 		"next3_desc": "ຄວາມໝາຍຂອງແຕ່ລະຄຳຕິຊົມ, ລາຍການຂໍ້ຕ່ອມທີ່ຖືກຕ້ອງທັງໝົດ, ແລະວິທີແກ້ໄຂແຕ່ລະອັນ.",
 		"next3_title": "ອ່ານແລະອ້າງອີງ",
 		"next_go": "ເປີດ <svg width=\"13\" height=\"13\" viewBox=\"0 0 14 14\" fill=\"none\"><path d=\"M3 7h8M7 3l4 4-4 4\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>",
@@ -20900,7 +20900,7 @@
 		"tab_manifest": "Manifest",
 		"tabs_aria": "ຜົນລັບທີ່ສ້າງ",
 		"tw_desc": "ລາງ GLB ລົງ. ຮັບຜົນການປະເມີນ, ຄວາມຄຸມຄອງແຕ່ລະສ່ວນຂອງຮ່າງກາຍ, ແລະໄຟລ໌ທີ່ໄດ້ຮັບການແກ້ໄຂ. ບໍ່ມີອະໄຫຼ່ໃດອອກຈາກເຄື່ອງຂອງເຈົ້າ.",
-		"tw_title": "",
+		"tw_title": "Rig Doctor · three.ws",
 		"unmapped_foot": "ຖ້ານີ້ແມ່ນ rig ມາດຕະຖານ, ມັນຄວນເປັນສ່ວນຂອງ <a href=\"https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js\" target=\"_blank\" rel=\"noopener noreferrer\">the canonicalizer</a>. <a href=\"https://github.com/nirholas/three.ws/issues/new?title=Rig%20convention%20not%20recognised%20by%20Rig%20Doctor&amp;body=These%20joint%20names%20were%20not%20recognised%3A%0A%0A\" target=\"_blank\" rel=\"noopener noreferrer\">ເປີດບັນຫາພ້ອມລາຍການນີ້</a> ແລະ rig ທຸກຄັ້ງທີ່ອັບໂຫຼດຕໍ່ໄປຈະມີການເຄື່ອນໄຫວ.",
 		"unmapped_note": "ບໍ່ຢູ່ໃນມາດຕະຖານໃດໆທີ່ພວກເຮົາຮູ້"
 	},
@@ -20909,13 +20909,13 @@
 		"markets": "ຕະຫຼາດ",
 		"meta_description": "ລາຄາສົດ, ສະພາບຄ່ອງ, ຜູ້ຖື, ແລະຂັ້ນຕອນການຊື້ທີ່ແທ້ຈິງສຳລັບມີມຄອຍຂອງ Robinhood Chain.",
 		"meta_title": "ຫຼຽນ Robinhood Chain · three.ws",
-		"robinhood_chain": ""
+		"robinhood_chain": "ຫນ້າຊື້ Robinhood Chain"
 	},
 	"robinhood_stock": {
 		"markets": "ຕະຫຼາດ",
 		"meta_description": "Chainlink NAV ສົດ, ສ່ວນເພີ່ມ/ສ່ວນຫຼຸດຂອງ DEX, ຜູ້ຖື, ແລະລິ້ງສັນຍາສຳລັບໂທເຄັນຫຸ້ນ Robinhood Chain.",
 		"meta_title": "ໂທເຄັນຫຸ້ນ Robinhood Chain · three.ws",
-		"robinhood_chain": "",
+		"robinhood_chain": "ຫນ້າຊື້ Robinhood Chain",
 		"stock": "ຫຸ້ນ"
 	},
 	"scan": {
@@ -20978,7 +20978,7 @@
 		"your_browser_can_t_open_the_camera": "ບຣາວເຊີຂອງເຈົ້າບໍ່ສາມາດເປີດກ້ອງໄດ້ທີ່ນີ້ — ໃຊ້ການອັບໂຫຼດແທນ, ຫຼືເປີດໜ້ານີ້ໃນ Safari / Chrome ຢູ່ອຸປະກອນທີ່ມີກ້ອງ."
 	},
 	"scene": {
-		"h1": "",
+		"h1": "ສະຕູດິໂອ Scene",
 		"meta_description": "ເຄື່ອງມືແກ້ໄຂສາກ 3D ເຕັມຮູບແບບໃນບຣາວເຊີ. ນໍາເຂົ້າໂມເດວ GLB, ຈັດວາງພວກມັນດ້ວຍ transform gizmos, ແກ້ໄຂວັດສະດຸ ແລະ ແສງ, ແລະ ສົ່ງອອກສາກທີ່ສົມບູນ.",
 		"meta_og_description": "ເຄື່ອງມືແກ້ໄຂສາກ 3D ເຕັມຮູບແບບໃນບຣາວເຊີ. ນໍາເຂົ້າໂມເດວ, ປະກອບສາກ, ແກ້ໄຂວັດສະດຸ ແລະ ແສງ, ສົ່ງອອກ GLB.",
 		"meta_og_title": "Scene Studio — ປະກອບໂລກ 3D · three.ws",
@@ -21228,7 +21228,7 @@
 		"ai_model_endpoints": "ຈຸດເຊື່ອມຕໍ່ແບບຈໍາລອງ AI",
 		"dashboard": "ແຜງຄວບຄຸມ",
 		"describe_a_task_set_a_budget_the": "ອະທິບາຍໜ້າວຽກ, ກໍານົດງົບປະມານ. ຕົວແທນຈະຄົ້ນພົບຈຸດເຊື່ອມຕໍ່ x402 ທີ່ກ່ຽວຂ້ອງໃນ Bazaar, ຈ່າຍຄ່າໂທແຕ່ລະຄັ້ງ, ແລະສັງເຄາະຄໍາຕອບສຸດທ້າຍ.",
-		"endpoint_shopper": "",
+		"endpoint_shopper": "ຜູ້ຊື້ Endpoint",
 		"endpoint_shopper_ai_that_chains_paid_apis": "Endpoint Shopper<br><em>AI ທີ່ເຊື່ອມຕໍ່ API ທີ່ຕ້ອງຈ່າຍເງິນ</em>",
 		"eth_price": "ລາຄາ ETH",
 		"explore": "ສຳຫຼວດ",
@@ -21238,10 +21238,10 @@
 		"max_budget": "ງົບປະມານສູງສຸດ",
 		"meta_description": "ຕົວແທນ AI ທີ່ຄົ້ນພົບຈຸດເຊື່ອມຕໍ່ x402 ທີ່ຕ້ອງຈ່າຍເງິນ, ເຊື່ອມຕໍ່ພວກມັນເຂົ້າກັນ, ແລະສັງເຄາະຄໍາຕອບສຸດທ້າຍສໍາລັບທຸກໜ້າວຽກ.",
 		"meta_og_description": "ອະທິບາຍໜ້າວຽກ ແລະກໍານົດງົບປະມານ. ຕົວແທນ AI ຈະຄົ້ນພົບຈຸດເຊື່ອມຕໍ່ x402 ທີ່ກ່ຽວຂ້ອງຜ່ານ Bazaar, ເຊື່ອມຕໍ່ພວກມັນເຂົ້າກັນ, ແລະສັງເຄາະຄໍາຕອບສຸດທ້າຍ — ຈ່າຍຕໍ່ການຮຽກໃຊ້ API.",
-		"meta_og_title": "",
-		"meta_title": "",
+		"meta_og_title": "ຜູ້ຊື້ Endpoint · three.ws",
+		"meta_title": "ຜູ້ຊື້ Endpoint — three.ws",
 		"meta_twitter_description": "ອະທິບາຍໜ້າວຽກ ແລະກໍານົດງົບປະມານ. ຕົວແທນ AI ຈະຄົ້ນພົບຈຸດເຊື່ອມຕໍ່ x402 ທີ່ກ່ຽວຂ້ອງຜ່ານ Bazaar, ເຊື່ອມຕໍ່ພວກມັນເຂົ້າກັນ, ແລະສັງເຄາະຄໍາຕອບສຸດທ້າຍ — ຈ່າຍຕໍ່ການຮຽກໃຊ້ API.",
-		"meta_twitter_title": "",
+		"meta_twitter_title": "ຜູ້ຊື້ Endpoint · three.ws",
 		"pump_fun_trends": "ແນວໂນ້ມ Pump.fun",
 		"run_task": "ດໍາເນີນໜ້າວຽກ",
 		"running_costs_usdc_you_ll_pay_once": "ຄ່າໃຊ້ຈ່າຍໃນການດໍາເນີນງານ USDC: ທ່ານຈະຈ່າຍຄັ້ງດຽວດ້ວຍກະເປົາເງິນ Base ຫຼື Solana ເມື່ອຖືກກະຕຸ້ນ.",

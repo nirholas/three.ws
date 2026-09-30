@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-30T08:35:45.908Z",
+	"generated_at": "2026-09-30T08:38:20.847Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3802,
+	"total": 3803,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -107,6 +107,17 @@
 			"link": "/airdrops",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-30",
+			"type": "update",
+			"title": "Every agent now shows what its coin has earned",
+			"summary": "Agent pages, agent profiles and coin pages now carry an Earned card: the creator fees an agent's coins have earned on pump.fun, in SOL with dollars beside it, how much has been claimed and how much is still waiting, a per-coin breakdown, and every claim linked to its transaction on Solscan. Skill sales and hires by other agents count too. The figures refresh every 30 minutes, each card says how old its numbers are and how they are calculated, and developers can read the same data from the public earnings API or over MCP. Automatic fee claiming for autonomous launches also works again.",
+			"link": "/launches",
+			"tags": [
+				"feature",
 				"fix"
 			]
 		},
@@ -1566,16 +1577,6 @@
 			"link": "/fade",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "A link that opens your house in 3D now really opens it in 3D",
-			"summary": "The live home page remembers whether you last looked at your house in 3D or as a room list, which is what you want when you open it yourself. It was also overruling links that asked for one view by name: once you had used the 2D view even once on a device, every /smart-home/<id>?view=3d link on that device quietly opened flat again. That matters for the two cases the parameter exists for, a link you share with someone in the house and the address a kitchen or wall display is pinned to. A view asked for in the link now wins, for 3D, 2D and the floorplan alike, and following such a link no longer overwrites the preference that device chose for itself.",
-			"link": "/docs/home-scene",
-			"tags": [
-				"fix"
 			]
 		}
 	]
