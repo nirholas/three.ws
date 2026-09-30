@@ -17,7 +17,8 @@
  *   Cloud Billing Catalog API  public list price per GPU, vCPU and GiB second
  *   npm registry + downloads   every package in the three-ws npm org
  *   GitHub REST API            stars, forks, forks created in the window
- *   Cloud Logging (opt-in)     MCP request user agents (slow: --mcp-logs)
+ *   Cloud Logging (opt-in)     MCP request user agents (slow: --mcp-logs) and
+ *                              the NVIDIA voice loop (--voice-logs)
  *
  * Usage:
  *   node scripts/partner-proof-brief.mjs                       last 30 days
@@ -26,6 +27,8 @@
  *   node scripts/partner-proof-brief.mjs --skip-gcp --skip-public
  *   node scripts/partner-proof-brief.mjs --mcp-logs            adds Cloud Logging
  *                                                              user-agent census
+ *   node scripts/partner-proof-brief.mjs --voice-logs          adds the Magpie, Riva
+ *                                                              and Audio2Face series
  *
  * `--to` is inclusive. Reads DATABASE_URL from .env.local, then .env, then the
  * shell. GITHUB_TOKEN is optional: without it the stargazer timeline (which
@@ -566,6 +569,43 @@ async function mcpLogCensus() {
 	return { filter, posts: [...agents.values()].reduce((a, n) => a + n, 0), user_agents: sorted(agents).slice(0, 40), distinct_user_agents: agents.size, endpoints: sorted(endpoints) };
 }
 
+async function voiceLogCensus() {
+	// The NVIDIA voice loop (Magpie TTS first in /api/tts/speak, Riva ASR in
+	// /api/asr, Audio2Face-3D in /api/a2f) keeps no per-call ledger, so the
+	// request log is the only completion and latency series it has.
+	const filter = [
+		'resource.type="cloud_run_revision"',
+		'resource.labels.service_name="three-ws-api"',
+		'httpRequest.requestMethod="POST"',
+		'(httpRequest.requestUrl:"/api/a2f" OR httpRequest.requestUrl:"/api/asr" OR httpRequest.requestUrl:"/api/tts/speak")',
+		`timestamp>="${FROM}"`,
+		`timestamp<"${TO_EXCL}"`,
+	].join(' ');
+	const csv = execFileSync('gcloud', [
+		'logging', 'read', filter, '--project', PROJECT, '--limit=1000000',
+		'--format=csv[no-heading](httpRequest.requestUrl,httpRequest.status,httpRequest.latency)',
+	], { encoding: 'utf8', maxBuffer: 1 << 28, timeout: 3600_000 });
+	const byPath = new Map();
+	for (const line of csv.split('\n')) {
+		if (!line) continue;
+		const [url, status, latency] = line.split(',');
+		const route = url.replace(/^https?:\/\/[^/]+/, '').replace(/\?.*$/, '');
+		const row = byPath.get(route) || { route, posts: 0, ok: 0, rate_limited: 0, errors: 0, latencies: [] };
+		row.posts++;
+		if (status.startsWith('2')) {
+			row.ok++;
+			if (latency) row.latencies.push(Number(latency.replace(/s$/, '')));
+		} else if (status === '429') row.rate_limited++;
+		else row.errors++;
+		byPath.set(route, row);
+	}
+	const q = (arr, f) => (arr.length ? round(arr[Math.min(arr.length - 1, Math.floor(f * arr.length))], 2) : null);
+	return [...byPath.values()].map(({ latencies, ...r }) => {
+		latencies.sort((a, b) => a - b);
+		return { ...r, completion_pct: pct(r.ok, r.ok + r.errors), p50_s: q(latencies, 0.5), p95_s: q(latencies, 0.95) };
+	}).sort((a, b) => b.posts - a.posts);
+}
+
 // ── Public sources ───────────────────────────────────────────────────────────
 
 async function getJson(url, headers = {}) {
@@ -665,6 +705,7 @@ if (!has('skip-gcp')) {
 		await section('gpu_cost', () => gpuCost(report.gpu_fleet, report.gpu_hours, report.lane_outputs_all_origins || {}));
 	}
 	if (has('mcp-logs')) await section('mcp_log_census', mcpLogCensus);
+	if (has('voice-logs')) await section('voice_log_census', voiceLogCensus);
 }
 if (!has('skip-public')) {
 	await section('npm', npmDownloads);
@@ -740,6 +781,11 @@ if (ok('mcp_log_census')) {
 	heading(`MCP HTTP census (Cloud Logging, excluding Go-http-client): ${c.posts} POSTs, ${c.distinct_user_agents} user-agent products`);
 	table(['user agent', 'posts'], c.user_agents.map((u) => [u.k, u.n]));
 	table(['endpoint', 'posts'], c.endpoints.map((u) => [u.k, u.n]));
+}
+if (ok('voice_log_census')) {
+	heading('NVIDIA voice loop (Cloud Logging POSTs; completion excludes 429 rate limits)');
+	table(['route', 'posts', 'ok', '429', 'errors', 'completion %', 'p50 s', 'p95 s'],
+		report.voice_log_census.map((r) => [r.route, r.posts, r.ok, r.rate_limited, r.errors, r.completion_pct, r.p50_s, r.p95_s]));
 }
 if (ok('platform')) {
 	const p = report.platform;
