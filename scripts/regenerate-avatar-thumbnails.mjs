@@ -194,6 +194,18 @@ async function saveCurrent(key, file) {
 	return true;
 }
 
+// One model that never finishes rendering (seen in the chromium lane) once
+// held a whole pass for seven hours. It is counted as failed and the pass moves on.
+const RENDER_TIMEOUT_MS = 120_000;
+
+function withRenderTimeout(render, key) {
+	let timer;
+	const timeout = new Promise((_, reject) => {
+		timer = setTimeout(() => reject(new Error(`render of ${key} did not finish in ${RENDER_TIMEOUT_MS / 1000} s`)), RENDER_TIMEOUT_MS);
+	});
+	return Promise.race([render, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function processKey(row) {
 	const shape = shapeOf(row.key);
 	if (!shape) return { status: 'skipped', reason: 'unrecognised key shape' };
@@ -204,7 +216,7 @@ async function processKey(row) {
 
 	let pose = { posed: false, mode: 'unknown' };
 	const t0 = Date.now();
-	const png = await renderGlbToPng({
+	const png = await withRenderTimeout(renderGlbToPng({
 		glbUrl: await glbUrlFor(row.storage_key),
 		...canvasFor(shape),
 		background: THUMB_BACKGROUND,
@@ -212,7 +224,7 @@ async function processKey(row) {
 		onPose: (result) => {
 			pose = result;
 		},
-	});
+	}), row.key);
 	const ms = Date.now() - t0;
 	if (!png?.length) throw new Error('renderer returned no bytes');
 
