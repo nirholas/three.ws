@@ -137,11 +137,10 @@ instructions scoped to the plugin's purpose.
 references one the endpoint does not serve. When run online it first checks that
 the live endpoint and this checkout agree on the tool surface, and fails if they
 do not, because that disagreement means production is running different code.
-`find-3d-assets` is excluded today on the first rule: its `search_catalog` /
-`get_catalog_item` / `get_item_source` tools live on the full MCP server, not on
-the hosted studio endpoint, and inside ChatGPT there is no shell to reach the
-skill's `curl` fallback. Ship those three on mcp-studio and the skill rejoins the
-bundle with no edit to the builder.
+`find-3d-assets` was excluded on this rule until its `search_catalog` /
+`get_catalog_item` / `get_item_source` tools shipped on the studio endpoint
+([`api/_mcp-studio/catalog-tools.js`](../api/_mcp-studio/catalog-tools.js)); it is
+in the bundle now, with no edit to the builder.
 
 Published Markdown follows the repo's dash rule; the canonical files under
 `.agents/skills/` are never rewritten.
@@ -180,8 +179,8 @@ schema, and failure envelope, so the model does not have to guess.
 
 The platform's signature set, safe to reuse anywhere:
 
-- **`find-3d-assets`**: search the 3,492 ready-made assets three.ws already
-  publishes (511 CC0 props, 107 rigged characters, 2,874 motion clips) and get
+- **`find-3d-assets`**: search the thousands of ready-made assets three.ws already
+  publishes (CC0 props, rigged characters, and the motion-clip library) and get
   paste-ready code or a downloaded file. Free, and the one to try FIRST: an
   existing asset is instant where a generation is GPU minutes. Reachable three
   ways off one catalog (the `search_catalog` / `get_catalog_item` /

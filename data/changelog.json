@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-01",
+			"title": "Search the 3D asset catalog from any AI client without an account",
+			"summary": "Our docs said an AI client could connect to the main three.ws MCP server and search the ready-made asset catalog with no account, but adding that server makes the client ask you to sign in straight away, because most of its tools work on your own avatars and agents. The free studio server, three.ws/api/mcp-studio, now carries the same three catalog tools (search, item details and paste-ready code), so an AI client with no account can check the thousands of ready-made props, characters and motion clips before it generates anything. The docs, the find-3d-assets skill and the registry post now say which server to add, and the asset counts no longer go stale.",
+			"tags": ["fix", "docs"],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-10-01",
 			"title": "Trending and the agent directory show only real agents",
 			"summary": "A behind-the-scenes agent the platform uses to budget its marketplace chat bot was showing up in the public agent directory and sitting at number one on Trending, counted up by the bot's own conversations. It is no longer listed, and both lists now leave out any agent the platform runs for itself unless it has been deliberately published, so Trending ranks agents people actually talk to.",
 			"tags": ["fix"],

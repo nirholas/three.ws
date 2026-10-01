@@ -29,10 +29,10 @@ generation quota:
 
 | URL | Serves | Use it for |
 |---|---|---|
-| `https://three.ws/api/mcp-studio` | all eleven tools, both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-studio` | all fourteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
 | `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | the ChatGPT plugin directory listing |
 
-The ChatGPT surface leaves out the three persona tools because their widget
+The ChatGPT surface leaves out the three catalog tools, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
 frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app
 guidelines reserve frame domains for embedding an essential third-party
 experience and say those apps "are often not approved for broad distribution";
@@ -76,16 +76,18 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-`tools/list` returns exactly **eleven** tools, and they split four ways:
+`tools/list` returns exactly **fourteen** tools, and they split five ways:
 
 - **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
   `rig_mesh`, `forge_avatar`, `refine_model`), in the table below.
 - **One collector**, `check_job`, also in the table below.
 - **One inspector**, `look_at_model`, also in the table below.
+- **Three asset catalog reads** (`search_catalog`, `get_catalog_item`,
+  `get_item_source`), in **Ready-made assets** below.
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All eleven are free and keyless.
+All fourteen are free and keyless.
 
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
@@ -111,6 +113,25 @@ quota as the six generators.
 | `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?` | refined GLB + version lineage |
 | `check_job` | Check a pending 3D generation and collect it | `job_id` | GLB model, or an updated pending state |
 | `look_at_model` | Look at a 3D model | `glb_url`, `views?` (up to 6 of `front`, `three-quarter`, `side`, `back`, `top`, `bottom`; default three-quarter, front, side, back), `size?` (128 to 1024 px, default 512) | rendered frames as images, plus geometry stats (triangles, materials, textures) and a plain reading of them |
+
+### Ready-made assets (`search_catalog`, `get_catalog_item`, `get_item_source`)
+
+Before generating anything, check whether three.ws already publishes it. These
+three read-only tools search the same catalog as the main server's tools of the
+same names ([`api/_mcp/tools/library.js`](../api/_mcp/tools/library.js), served
+here by [`api/_mcp-studio/catalog-tools.js`](../api/_mcp-studio/catalog-tools.js)):
+the CC0 prop library, the ready-made rigged characters and the motion-clip library.
+`search_catalog` takes `q`, `kind`, `category`, `tag`, `limit` and `offset`;
+`get_catalog_item` and `get_item_source` take the `id` it returns, and
+`get_item_source` hands back paste-ready code (the `<agent-3d>` tag pinned to a
+release and its integrity hash, `<model-viewer>`, three.js or React). Schemas and
+example responses are in [docs/mcp.md](./mcp.md#search_catalog).
+
+They are here because this is the server an MCP client can use with no account.
+The main server at `https://three.ws/api/mcp` lists the same three tools, but a
+protocol client that connects there is sent through three.ws sign-in first,
+because most of that server's tools act on an account. The catalog tools never
+count against the generation quota.
 
 ### Quality tiers
 

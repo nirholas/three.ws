@@ -9,6 +9,7 @@ https://three.ws/api/mcp-studio.
 | --- | --- |
 | [`create-3d-avatar`](create-3d-avatar/SKILL.md) | Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB). |
 | [`embed-three-ws-avatar`](embed-three-ws-avatar/SKILL.md) | Embed a live, animated three.ws 3D avatar in any website with the &lt;agent-3d&gt; web component. |
+| [`find-3d-assets`](find-3d-assets/SKILL.md) | Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file. |
 | [`generate-3d-model`](generate-3d-model/SKILL.md) | Turn a text prompt into a downloadable, textured 3D model (GLB). |
 | [`rig-a-model`](rig-a-model/SKILL.md) | Auto-rig a static 3D GLB model into an animation-ready one. |
 

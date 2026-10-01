@@ -69,7 +69,8 @@
 
         <h2>What the MCP listing unlocks</h2>
         <p>The Model Context Protocol Registry is Anthropic's official index of remote tool servers that AI assistants can call. Being listed here means Claude — and any other MCP-compatible agent — can natively discover and invoke the three.ws toolkit without any custom configuration from the developer.</p>
-        <p>What that means in practice: drop <code>https://three.ws/api/mcp</code> as a remote server into Claude Desktop, Cursor, or any MCP client, and you instantly have access to the full three.ws 3D agent toolkit. Create a 3D avatar, give it an on-chain identity, wire it to an LLM brain, and embed it anywhere — all driven by natural language through the same tools Claude already knows how to call.</p>
+        <p>What that means in practice: drop <code>https://three.ws/api/mcp</code> as a remote server into Claude Desktop, Cursor, or any MCP client, sign in with your three.ws account when the client asks, and you have the full three.ws 3D agent toolkit. Create a 3D avatar, give it an on-chain identity, wire it to an LLM brain, and embed it anywhere, all driven by natural language through the same tools Claude already knows how to call.</p>
+        <p>The sign-in comes first because most of those tools act on your own avatars, agents, and wallet, so the client is asked to authorize as soon as it connects. To try three.ws with no account at all, add <code>https://three.ws/api/mcp-studio</code> instead. It never asks you to sign in, and it serves free text-to-3D and image-to-3D generation, rigged avatars, and a search of the ready-made asset catalog (CC0 props, rigged characters, and motion clips) with paste-ready code for each. See the <a href="/docs/mcp-studio">studio server docs</a>.</p>
 
         <h2>What the three.ws MCP server exposes</h2>
         <ul>

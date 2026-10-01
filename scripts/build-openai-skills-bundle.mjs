@@ -26,10 +26,9 @@
 // 2. No dead paths. A skill is only true if its tools exist. This reads the
 //    tool names the studio endpoint actually declares and drops any skill
 //    referencing one that is missing, naming it in the report. find-3d-assets
-//    is excluded today for exactly that reason: its catalog tools live on the
-//    full MCP server, not on mcp-studio, and inside ChatGPT there is no shell,
-//    so the skill's documented curl fallback cannot rescue it either. Ship
-//    those tools on mcp-studio and the skill rejoins with no edit here.
+//    was excluded for exactly that reason until its catalog tools shipped on
+//    mcp-studio (api/_mcp-studio/catalog-tools.js); inside ChatGPT there is no
+//    shell, so the skill's curl fallback could not have rescued it.
 //
 // 3. Determinism. Published output is tracked, so a rebuild that changes bytes
 //    for no reason would show up as a diff in everyone else's worktree. Staged

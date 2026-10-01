@@ -179,6 +179,8 @@ GET /.well-known/oauth-protected-resource
 
 On a `401`, the `WWW-Authenticate` header points clients at the protected-resource metadata URL so they can begin the flow.
 
+This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client with no account belongs on `https://three.ws/api/mcp-studio`, which never challenges and serves the free 3D generation and asset catalog tools.
+
 ### API key (server-to-server)
 
 For scripts, CI, and server agents, generate a key at **[/dashboard/api](https://three.ws/dashboard/api)** and pass it as a bearer token:
@@ -240,16 +242,17 @@ Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The se
 
 All tools return `{ content: [{ type, text }], structuredContent: {...} }`. On error, `isError: true` is set and `content[0].text` contains the message.
 
-`search_catalog`, `get_catalog_item`, and `get_item_source` are free and need no account, API key, or payment: start there. The tools below them are the core avatar, validation, minting, and market-data set. The server registers more beyond this page (memory `remember`/`recall`/`forget`, `register_agent`, oracle and pump.fun intel reads, trader analytics, copy-trading); call `tools/list` for the complete live catalog with schemas.
+`search_catalog`, `get_catalog_item`, and `get_item_source` are free and need no API key or payment: start there. How you reach them without an account depends on the client. A plain JSON-RPC `tools/call` to `https://three.ws/api/mcp` (curl, `fetch`, any script that does not speak the MCP transport) is served anonymously. An MCP client that connects to `/api/mcp` is a different case: the server answers its `initialize` with `401` so the client starts three.ws sign-in (see [Authentication](#authentication)), because most tools on this server act on an account. To use the catalog from an MCP client with no account, connect it to the free studio server, `https://three.ws/api/mcp-studio`, which serves the same three tools keyless ([docs/mcp-studio.md](./mcp-studio.md)). The tools below them are the core avatar, validation, minting, and market-data set. The server registers more beyond this page (memory `remember`/`recall`/`forget`, `register_agent`, oracle and pump.fun intel reads, trader analytics, copy-trading); call `tools/list` for the complete live catalog with schemas.
 
 ---
 
 ### `search_catalog`
 
-Search every ready-made asset three.ws publishes in one call: 511 CC0 props, 107 rigged
-characters, and 2,874 retargetable motion clips (live counts come back in `facets.kinds`).
+Search every ready-made asset three.ws publishes in one call: the CC0 prop library, the
+rigged character library, and thousands of retargetable motion clips. The libraries grow, so
+read the live counts from `facets.kinds` in any response rather than trusting a number here.
 
-**Free. No account, no API key, no x402 payment.** Discovery works before you connect.
+**Free. No API key, no x402 payment.** No account either: call it as plain JSON-RPC here, or from an MCP client on the keyless `https://three.ws/api/mcp-studio`.
 
 ```json
 {

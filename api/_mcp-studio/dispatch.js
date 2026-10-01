@@ -11,6 +11,7 @@ import { recordEvent, logger } from '../_lib/usage.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
+import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from './catalog-tools.js';
 import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
 
 // The @three-ws/mcp-policy server id for the free studio.
@@ -52,6 +53,12 @@ const CHATGPT_INSTRUCTIONS = [
 // response's own trip back through ChatGPT.
 export const CHATGPT_CALL_BUDGET_MS = 40_000;
 
+const CATALOG_INSTRUCTIONS = [
+	'Before generating a prop, character or animation, search_catalog(q) checks the thousands of ready-made CC0 props,',
+	'rigged characters and motion clips three.ws already publishes; get_item_source(id) returns paste-ready code for a',
+	'match. Say whether you used an existing asset or generated a new one.',
+];
+
 const PERSONA_INSTRUCTIONS = [
 	'To give the assistant a LIVING body: create_agent_persona(glb_url, name) saves a rigged model as a named,',
 	'persistent persona and returns a persona_id; persona_say(persona_id, text) makes that body lip-sync the reply and',
@@ -62,7 +69,9 @@ const PERSONA_INSTRUCTIONS = [
 // Two surfaces share this dispatcher, each advertising a consistent set of
 // tools, widgets and model instructions.
 //   full     /api/mcp-studio: every tool and both widgets, for Claude, the
-//            examples, and any MCP host that renders the inline living body.
+//            examples, and any MCP host that renders the inline living body,
+//            plus the free asset catalog tools (./catalog-tools.js), the only
+//            place a keyless MCP client can reach them.
 //   chatgpt  /api/mcp-chatgpt: the eight tools in ./tools.js and the
 //            model-viewer widget only. The persona widget frames the hosted
 //            embodiment page, which requires frameDomains, and OpenAI's app
@@ -77,10 +86,10 @@ const PERSONA_INSTRUCTIONS = [
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
-		catalog: [...TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
-		tools: { ...TOOLS, ...PERSONA_TOOLS },
+		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		personas: true,
-		instructions: [...BASE_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
+		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 	},
 	chatgpt: {
 		server: 'mcp-chatgpt',

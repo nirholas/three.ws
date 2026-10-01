@@ -5,7 +5,8 @@ and put it in your project, with the code that renders it.
 
 Free and public. No account, no API key, no payment, nothing to sign up for. The catalog it
 searches is the platform's published CC0 object library, ready-made character library, and
-motion-clip library: **3,492 assets** as of September 2026.
+motion-clip library: thousands of assets and growing. `GET https://three.ws/api/catalog?limit=1`
+returns the live count as `total`.
 
 ```bash
 npx @three-ws/assets search wooden chair --kind object
@@ -158,12 +159,15 @@ Or talk to the endpoint directly: `GET https://three.ws/api/catalog?q=desk+lamp&
 ## The same catalog from an AI client
 
 Every three.ws MCP client gets the same data through three free tools, `search_catalog`,
-`get_catalog_item`, and `get_item_source`. Add the server and ask for a chair in plain
-language:
+`get_catalog_item`, and `get_item_source`. Add the keyless studio server, which needs no
+account, and ask for a chair in plain language:
 
 ```json
-{ "mcpServers": { "three-ws": { "type": "http", "url": "https://three.ws/api/mcp" } } }
+{ "mcpServers": { "three-ws-studio": { "type": "http", "url": "https://three.ws/api/mcp-studio" } } }
 ```
+
+The main server at `https://three.ws/api/mcp` lists the same tools, but an MCP client that
+adds it is asked to sign in to a three.ws account first.
 
 See [docs/mcp.md](https://three.ws/docs/mcp) for the tool schemas.
 

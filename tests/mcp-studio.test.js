@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { TOOL_CATALOG, TOOL_NAMES } from '../api/_mcp-studio/tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOL_NAMES } from '../api/_mcp-studio/persona-tools.js';
+import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from '../api/_mcp-studio/catalog-tools.js';
+import { toolDefs as LIBRARY_TOOLS } from '../api/_mcp/tools/library.js';
 import { dispatch, toolCatalogFor } from '../api/_mcp-studio/dispatch.js';
 import { COMPONENT_HTML, COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
 import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
@@ -10,10 +12,13 @@ import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
 // model-viewer widget) + check_job (collects a pending generation) +
 // look_at_model (renders frames of an existing model). PERSONA adds the three
 // embodiment tools from api/_mcp-studio/persona-tools.js (which render the
-// living-body embed), for the eleven the connector advertises in total.
+// living-body embed). CATALOG adds the three free asset catalog reads
+// (api/_mcp-studio/catalog-tools.js) on the full surface only, for the fourteen
+// /api/mcp-studio advertises in total.
 const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'look_at_model'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
-const ALL = [...ALLOWED, ...PERSONA];
+const CATALOG = ['search_catalog', 'get_catalog_item', 'get_item_source'];
+const ALL = [...ALLOWED, ...CATALOG, ...PERSONA];
 
 // Anything that would signal a crypto / payment surface. The whole point of the
 // free studio app is that NONE of this appears anywhere in its contract — the
@@ -127,7 +132,7 @@ describe('mcp-studio dispatch', () => {
 		expect(FORBIDDEN.test(JSON.stringify(r))).toBe(false);
 	});
 
-	it('tools/list returns the generation + persona tools', async () => {
+	it('tools/list returns the generation, catalog and persona tools', async () => {
 		const r = await dispatch({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, auth, mkReq());
 		expect(r.result.tools.map((t) => t.name).sort()).toEqual([...ALL].sort());
 	});
@@ -591,6 +596,42 @@ describe('mcp-studio dispatch', () => {
 // The ChatGPT plugin surface (/api/mcp-chatgpt). It must never advertise a tool
 // or widget that needs frameDomains, and a persona call on it must fail rather
 // than succeed off-listing.
+// A keyless MCP client is sent through OAuth on /api/mcp, so this server is where
+// it reaches the asset catalog. The tools must be the main server's own (same
+// handler, same schema) and hold the studio's no-payment-vocabulary bar.
+describe('mcp-studio asset catalog tools', () => {
+	it('serves the main server catalog tools with their own handlers and schemas', () => {
+		expect(CATALOG_TOOL_CATALOG.map((t) => t.name)).toEqual(CATALOG);
+		for (const name of CATALOG) {
+			const lib = LIBRARY_TOOLS.find((d) => d.name === name);
+			const studio = CATALOG_TOOL_CATALOG.find((t) => t.name === name);
+			expect(CATALOG_TOOLS[name].handler).toBe(lib.handler);
+			expect(studio.inputSchema).toEqual(lib.inputSchema);
+			expect(studio.annotations.readOnlyHint).toBe(true);
+			expect(studio.description.startsWith('Free, no account needed.')).toBe(true);
+		}
+	});
+
+	it('carries no payment vocabulary', () => {
+		expect(FORBIDDEN.test(JSON.stringify(CATALOG_TOOL_CATALOG))).toBe(false);
+	});
+
+	it('rejects a call with no id before reaching the catalog', async () => {
+		const r = await dispatch(
+			{ jsonrpc: '2.0', id: 30, method: 'tools/call', params: { name: 'get_item_source', arguments: {} } },
+			auth,
+			mkReq(),
+		);
+		expect(r.error.code).toBe(-32602);
+		expect(r.error.message).toMatch(/required property 'id'/);
+	});
+
+	it('tells the model to check the catalog before generating', async () => {
+		const r = await dispatch({ jsonrpc: '2.0', id: 31, method: 'initialize' }, auth, mkReq());
+		expect(r.result.instructions).toMatch(/search_catalog/);
+	});
+});
+
 describe('mcp-studio chatgpt surface', () => {
 	const opts = { surface: 'chatgpt' };
 
