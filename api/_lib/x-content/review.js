@@ -17,6 +17,7 @@ import { copyProblems, maxLengthOf } from './quality.js';
 import { buildReviewRequest, reviewWithEditor } from './editor.js';
 import { itemTexts, verifyItem } from './verify.js';
 import { bestPosts, outcomesStore } from './outcomes.js';
+import { articleProse, loadArticle } from './queue.js';
 
 export const REVIEW_MAX_AGE_DAYS = 14;
 export const reviewPath = (id) => `data/x-content/reviews/${id}.json`;
@@ -26,13 +27,20 @@ const fileHash = (root, path) => {
 	return path && existsSync(absolute) ? createHash('sha256').update(readFileSync(absolute)).digest('hex') : null;
 };
 
+// An Article's inline images, so replacing one makes its review stale even
+// though the Markdown that names it did not change.
+function articleImages(root, item) {
+	if (!item.article?.body || !existsSync(resolve(root, item.article.body))) return [];
+	return loadArticle(root, item.article).images.map((image) => ({ path: image.path, alt: image.caption || null }));
+}
+
 export function contentHash(item, root) {
 	const media = (row) => ({ path: row.path, sha256: fileHash(root, row.path), alt: row.alt || null, probe: row.probe || null });
 	const subject = {
 		kind: item.kind,
 		posts: (item.posts || []).map((post) => ({ text: String(post.text || '').trim(), media: (post.media || []).map(media) })),
 		article: item.kind === 'article'
-			? { title: item.article?.title, body: fileHash(root, item.article?.body), cover: item.article?.cover ? media(item.article.cover) : null }
+			? { title: item.article?.title, body: fileHash(root, item.article?.body), cover: item.article?.cover ? media(item.article.cover) : null, images: articleImages(root, item).map(media) }
 			: null,
 		claims: item.claims || [],
 		mentions: item.mentions || {},
@@ -50,7 +58,7 @@ export function loadReview(root, id) {
 }
 
 // Offline lint for every post in an item, as structured findings.
-export function lintItem(item, { maximum } = {}) {
+export function lintItem(item, { maximum, articleText = '' } = {}) {
 	const findings = [];
 	(item.posts || []).forEach((post, index) => {
 		const where = index === 0 ? 'head' : `reply ${index}`;
@@ -60,7 +68,10 @@ export function lintItem(item, { maximum } = {}) {
 	if (item.kind === 'article' && item.article?.title) {
 		for (const problem of languageProblems(item.article.title)) findings.push({ where: 'article title', ...problem });
 	}
-	for (const problem of claimProblems(item)) findings.push({ where: 'claims', ...problem });
+	if (item.kind === 'article' && articleText) {
+		for (const problem of languageProblems(articleText)) findings.push({ where: 'article body', ...problem });
+	}
+	for (const problem of claimProblems(item, { articleText })) findings.push({ where: 'claims', ...problem });
 	return findings;
 }
 
@@ -96,7 +107,7 @@ export function editorFailure(message) {
 
 export async function reviewItem(item, { root, glossary = [], quality = {}, env = process.env, skipEditor = false }) {
 	const maximum = maxLengthOf(quality);
-	const lint = lintItem(item, { maximum });
+	const lint = lintItem(item, { maximum, articleText: articleProse(root, item) });
 	for (const [index, post] of (item.posts || []).entries()) {
 		for (const problem of await mediaQualityProblems(post, root)) lint.push({ where: index === 0 ? 'head' : `reply ${index}`, ...problem });
 	}

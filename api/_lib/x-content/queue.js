@@ -52,6 +52,24 @@ export function loadArticle(root, article) {
 	return markdownToContentState(markdown, { articlePath: article.body });
 }
 
+// The words an Article says, as a reader sees them: headings, paragraphs, list
+// items and quotes. Code blocks and tables are left out because they are
+// literal samples, not statements. Every number and absolute in it is held to
+// the claims ledger and the language rules, the same as a post.
+export function articleProse(root, item) {
+	if (item?.kind !== 'article' || !item.article?.body) return '';
+	if (!existsSync(resolve(root, item.article.body))) return '';
+	const { blocks } = loadArticle(root, item.article).content_state;
+	return blocks.filter((block) => block.type !== 'atomic').map((block) => block.text).filter(Boolean).join('\n');
+}
+
+// Every link an Article body makes, so each is resolved like a link in a post.
+export function articleLinks(root, item) {
+	if (item?.kind !== 'article' || !item.article?.body) return [];
+	if (!existsSync(resolve(root, item.article.body))) return [];
+	return loadArticle(root, item.article).content_state.entities.filter((entity) => entity.value.type === 'link').map((entity) => entity.value.data.url).filter((url) => /^https?:/i.test(url));
+}
+
 // A post may name the announcement-pack file its copy was reviewed in
 // (docs/announcements/<slug>.post.txt). In a checkout the inline text must match
 // that file byte for byte, so a pack edit cannot drift from what ships. The
@@ -176,11 +194,15 @@ export function validateItem(item, root, { quality = qualityAt(root), now = Date
 	}
 
 	// Editorial standards that can be judged offline block at every stage.
+	const articleText = articleProse(root, item);
 	const texts = [item.kind === 'article' ? item.article?.title : null, ...(item.posts || []).map((post) => post.text)].filter(Boolean);
 	for (const text of texts) {
 		for (const finding of languageProblems(text)) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
 	}
-	for (const finding of claimProblems(item)) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
+	if (articleText) {
+		for (const finding of languageProblems(articleText)) if (finding.severity === 'blocking') problems.push(`article body ${finding.rule}: ${finding.message}`);
+	}
+	for (const finding of claimProblems(item, { articleText })) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
 
 	// A scenario is the item's claim that the feature works. It has to be
 	// runnable as written, it has to be the item's probe, and the reel on the

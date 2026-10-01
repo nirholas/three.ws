@@ -630,6 +630,41 @@ describe('editorial', () => {
 			.toMatch(/does not appear in the copy[\s\S]*has no evidence/);
 	});
 
+	it('holds every number and absolute in an Article body to the claims ledger', async () => {
+		const { claimProblems } = await import('../api/_lib/x-content/editorial.js');
+		const item = { kind: 'article', article: { title: 'How the gate works' }, posts: [{ text: 'The write-up: three.ws/a' }] };
+		const articleText = 'The raster is 640 pixels wide.\nIt is the only cutter we ship.';
+		const messages = claimProblems(item, { articleText }).map((row) => row.message).join('\n');
+		expect(messages).toMatch(/"640" is an unverified number/);
+		expect(messages).toMatch(/"only" is an absolute/);
+		const declared = {
+			...item,
+			claims: [
+				{ says: 'The raster is 640 pixels wide', evidence: [{ type: 'file', path: 'x', contains: 'y' }] },
+				{ says: 'the only cutter we ship', evidence: [{ type: 'file', path: 'x', contains: 'y' }] },
+			],
+		};
+		expect(claimProblems(declared, { articleText })).toEqual([]);
+		// Without the body a claim quoting it has nothing to appear in.
+		expect(claimProblems(declared).map((row) => row.message).join('\n')).toMatch(/does not appear in the copy/);
+	});
+
+	it('reads an Article body as prose, leaving code blocks out', async () => {
+		const { articleProse } = await import('../api/_lib/x-content/queue.js');
+		const dir = sandbox();
+		mkdirSync(join(dir, 'data/x-content/articles'), { recursive: true });
+		writeFileSync(join(dir, 'data/x-content/articles/a.md'), 'Opening line with 3 facts.\n\n## A heading\n\n- a list item\n\n```\nPOST /api 402\n```\n');
+		const prose = articleProse(dir, { kind: 'article', article: { body: 'data/x-content/articles/a.md' } });
+		expect(prose).toBe('Opening line with 3 facts.\nA heading\na list item');
+		expect(articleProse(dir, { kind: 'post' })).toBe('');
+	});
+
+	it('reads "world\'s" as an absolute and "worlds" as a plain word', async () => {
+		const { ABSOLUTES } = await import('../api/_lib/x-content/editorial.js');
+		expect('private invite-only worlds'.match(ABSOLUTES)).toEqual(['only']);
+		expect("the world's first".match(ABSOLUTES)).toEqual(["world's", 'first']);
+	});
+
 	it('flags soft, badly cropped, undescribed, and stale media', async () => {
 		const { mediaQualityProblems } = await import('../api/_lib/x-content/editorial.js');
 		const { default: sharp } = await import('sharp');

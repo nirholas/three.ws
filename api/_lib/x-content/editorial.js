@@ -80,7 +80,7 @@ export const PUSHY_CTAS = [
 ];
 
 // Words that assert something absolute. Each needs a declared claim.
-export const ABSOLUTES = /\b(?:first|only|fastest|largest|biggest|best|leading|never|always|every|no one|nobody|zero|unlimited|instant(?:ly)?|world'?s|#1|number one)\b/gi;
+export const ABSOLUTES = /\b(?:first|only|fastest|largest|biggest|best|leading|never|always|every|no one|nobody|zero|unlimited|instant(?:ly)?|world['\u2019]s|#1|number one)\b/gi;
 
 function termHits(text, terms) {
 	return terms.map((term) => text.match(term)?.[0]).filter(Boolean);
@@ -136,10 +136,12 @@ export function assertionsIn(text) {
 
 // The claims ledger. Every number and absolute in the copy must sit inside a
 // claim's `says`, every claim must appear in the copy and carry evidence, and
-// every @mention must record why the tag is true.
-export function claimProblems(item) {
+// every @mention must record why the tag is true. For an Article the copy
+// includes its body (`articleText`, the prose from articleProse()), so a
+// number in the fourth section is held to evidence like one in the title.
+export function claimProblems(item, { articleText = '' } = {}) {
 	const problems = [];
-	const texts = [...(item.posts || []).map((post) => post.text), item.kind === 'article' ? item.article?.title : null].filter(Boolean);
+	const texts = [...(item.posts || []).map((post) => post.text), item.kind === 'article' ? item.article?.title : null, item.kind === 'article' ? articleText : null].filter(Boolean);
 	const corpus = texts.join('\n').toLowerCase();
 	const claims = item.claims || [];
 
