@@ -270,9 +270,6 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 		const bandReason = marketCapBandReason(mint.market_cap_usd, strat);
 		if (bandReason) return skip(tag, bandReason);
 
-		// 1. global throttle (platform-wide backstop)
-		if (!throttle.tryConsume()) return skip(tag, 'global_throttle');
-
 		// 2. concurrency cap
 		const open = await countOpenPositions(strat.agent_id, cfg.network);
 		const concurrency = checkConcurrency(open, strat.max_concurrent_positions);
@@ -355,6 +352,13 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 		const sized = resolveEntrySize(preBalance, perTrade, cfg.minTradeLamports);
 		if (sized.skip) return skip(tag, sized.skip);
 		perTrade = sized.sizeLamports;
+
+		// 4b. global throttle (platform-wide backstop), taken only by an entry that
+		//     can actually proceed. It used to be the first gate, so a dry arm burned
+		//     a slot on every candidate before discovering it could not pay: in one
+		//     6-hour window a starved arm took 1,428 throttle slots while the one
+		//     funded arm lost entries to the same throttle.
+		if (!throttle.tryConsume()) return skip(tag, 'global_throttle');
 
 		// 5. idempotency lock — claim the (agent,mint,network) slot BEFORE the tx.
 		//    The wallet is known now, so it's written on the claim (no later UPDATE).
