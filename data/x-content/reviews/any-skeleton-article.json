@@ -1,0 +1,532 @@
+{
+	"id": "any-skeleton-article",
+	"contentHash": "73bc79be1907627aabf54f54c24d06d6ebbcda35dabf5bee98fc943c3c16914b",
+	"reviewedAt": "2026-10-01T19:28:44.631Z",
+	"passed": false,
+	"blockers": [
+		"spelling retargeter: did you mean retargeted, retarget, retargets?",
+		"spelling lowerarm: did you mean lower, lowers, lowery?",
+		"spelling canonicalizer: did you mean canonicalize, canonicalized, canonicalizes?",
+		"spelling Miku: did you mean mike, Mike, maik?",
+		"spelling SMPL: did you mean sspl, SSPL, simpl?",
+		"spelling chibi: did you mean chiai, chiba, chili?"
+	],
+	"texts": [
+		"One animation library, any humanoid skeleton: how three.ws retargets motion",
+		"Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "made once, against one reference skeleton",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Every clip in the three.ws library is authored against one canonical skeleton\""
+			},
+			{
+				"claim": "made once, against one reference skeleton",
+				"kind": "evidence:file",
+				"target": "src/animation-manager.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "made once, on one reference skeleton",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Every clip in the three.ws library is authored against one canonical skeleton\""
+			},
+			{
+				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a Mixamo character, a VRoid model, an Unreal mannequin",
+				"kind": "evidence:file",
+				"target": "tests/glb-canonicalize.test.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Mixamo, VRoid, Unreal and Daz avatars",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Mixamo, VRoid, Unreal and Daz avatars",
+				"kind": "evidence:file",
+				"target": "tests/glb-canonicalize.test.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a body our text-to-3D lane rigged a minute ago",
+				"kind": "evidence:page",
+				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "live page shows \"Type a description → rigged 3D avatar in about a minute\""
+			},
+			{
+				"claim": "a body our text-to-3D lane rigged a minute ago",
+				"kind": "evidence:file",
+				"target": "tests/glb-canonicalize.test.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "No clip is re-authored per avatar",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total.\""
+			},
+			{
+				"claim": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total",
+				"kind": "evidence:module",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "CANONICAL_BONES has 52 entries; the claim needs 52"
+			},
+			{
+				"claim": "A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l",
+				"kind": "evidence:page",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "live page shows \"A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l.\""
+			},
+			{
+				"claim": "It strips vendor prefixes and namespaces, collapses separators and case, then looks what is left up in alias tables",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It strips vendor prefixes and namespaces, collapses separators and case, then looks what is left up in alias tables",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Fingers are 30 of the clip library's 53 tracks, so a rig whose hands do not map scores about 40% coverage and gets no animation at all",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "from Unreal's index_01_l to the VRM 1.0 names that call each phalanx proximal, intermediate or distal",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "from Unreal's index_01_l to the VRM 1.0 names that call each phalanx proximal, intermediate or distal",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Rigify names the collarbone shoulder.L and the upper arm upper_arm.L; SMPL names the collarbone left_collar and the upper arm left_shoulder",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Rigify names the collarbone shoulder.L and the upper arm upper_arm.L; SMPL names the collarbone left_collar and the upper arm left_shoulder",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a second pass looks at the hierarchy instead, because the collarbone is the parent of the upper arm",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reference rig the clips were baked on rests in an A-pose, and Mixamo rigs rest in a T-pose",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Mixamo exports also bake a 90 degree turn into the armature and the hips",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "an avatar plays with its limbs in the wrong frame, or tips the body onto its back",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "replays the clip bone's motion as the same change in world space from that rest",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "replays the clip bone's motion as the same change in world space from that rest",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A rig that already matches the reference gets no correction at all",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Only joint rotations and the root (Hips) translation are true motion, so only those cross over, and the hip track is rescaled so root motion lands at the new rig's height",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Only joint rotations and the root (Hips) translation are true motion, so only those cross over, and the hip track is rescaled so root motion lands at the new rig's height",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "keeps its own proportions instead of being stretched into the reference body",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A model needs a skinned mesh and at least eight canonical bones before the library will drive it",
+				"kind": "evidence:file",
+				"target": "src/animation-manager.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A model needs a skinned mesh and at least eight canonical bones before the library will drive it",
+				"kind": "evidence:file",
+				"target": "src/animation-manager.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A clip that finds a home for less than half of its tracks on a rig is not played on it",
+				"kind": "evidence:file",
+				"target": "src/animation-retarget.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the stuck arms are swung down to a relaxed rest by their direction, with no name needed",
+				"kind": "evidence:file",
+				"target": "src/animation-manager.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the stuck arms are swung down to a relaxed rest by their direction, with no name needed",
+				"kind": "evidence:file",
+				"target": "src/animation-arm-relax.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Their deform bones hang off tracker nodes instead of forming a chain, and glTF has no constraints to carry",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Their deform bones hang off tracker nodes instead of forming a chain, and glTF has no constraints to carry",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Those uploads need re-rigging, not renaming",
+				"kind": "evidence:file",
+				"target": "src/glb-canonicalize.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A rig can map all 52 joints and still move badly",
+				"kind": "evidence:file",
+				"target": "docs/avatar-thumbnails.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it plays one held frame of the standing idle through the retargeter, then checks that both upper arms end at least 30 degrees below horizontal",
+				"kind": "evidence:file",
+				"target": "docs/avatar-thumbnails.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it plays one held frame of the standing idle through the retargeter, then checks that both upper arms end at least 30 degrees below horizontal",
+				"kind": "evidence:file",
+				"target": "docs/avatar-thumbnails.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "for a thumbnail or a social card",
+				"kind": "evidence:file",
+				"target": "docs/avatar-thumbnails.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the model renders as authored and is reported, rather than replaced with something worse",
+				"kind": "evidence:file",
+				"target": "docs/avatar-thumbnails.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it retargets the idle onto whatever skeleton the file carries",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:browser",
+				"target": "Rig Doctor maps every canonical joint of the Mixamo sample",
+				"ok": true,
+				"detail": "3 steps passed"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Avatar Artifact viewer is served",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the clip library manifest is served",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws",
+				"ok": true,
+				"detail": "HTTP 200 via https://three.ws/"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/avatar-artifact",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/rig-doctor",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/pose",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/docs/first-contribution",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "retargeter",
+				"ok": false,
+				"detail": "did you mean retargeted, retarget, retargets?"
+			},
+			{
+				"kind": "spelling",
+				"target": "lowerarm",
+				"ok": false,
+				"detail": "did you mean lower, lowers, lowery?"
+			},
+			{
+				"kind": "spelling",
+				"target": "canonicalizer",
+				"ok": false,
+				"detail": "did you mean canonicalize, canonicalized, canonicalizes?"
+			},
+			{
+				"kind": "spelling",
+				"target": "Miku",
+				"ok": false,
+				"detail": "did you mean mike, Mike, maik?"
+			},
+			{
+				"kind": "spelling",
+				"target": "SMPL",
+				"ok": false,
+				"detail": "did you mean sspl, SSPL, simpl?"
+			},
+			{
+				"kind": "spelling",
+				"target": "chibi",
+				"ok": false,
+				"detail": "did you mean chiai, chiba, chili?"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Article cover: public/x-media/any-skeleton-article/cover.png",
+				"problem": "The cover shows one avatar on one skeleton, while the post's claim is that the same clips play across Mixamo, VRoid, Unreal and Daz rigs. It is real product, sharp, and does not contradict the copy, so it ships, but a multi-avatar frame (like the article's own one-idle-four-bodies.png) would support the claim more directly.",
+				"fix": "Optional: use the four-avatar frame /x-media/any-skeleton-article/one-idle-four-bodies.png as the cover instead; not required to ship."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
+			],
+			"altText": [
+				"A generated 3D circus ringmaster in a red tailcoat, top hat and tall boots standing at rest with his hands open in front of him, lit in red and violet on a dark stage under a starfield. He is idling on the shared animation library in the three.ws Avatar Artifact viewer."
+			]
+		},
+		"summary": "Every claim in the post and article passed verification against live pages and source files, and the voice is clean: no hashtags, no emoji, no dashes, mechanism first. The only note is that the cover shows a single avatar rather than the cross-skeleton claim, but it is real product and accurate, so this is ready to publish.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"made once, against one reference skeleton\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a Mixamo character, a VRoid model, an Unreal mannequin\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a body our text-to-3D lane rigged a minute ago\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"No clip is re-authored per avatar\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It strips vendor prefixes and namespaces, collapses separators and case, then looks what is left up in alias tables\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Fingers are 30 of the clip library's 53 tracks, so a rig whose hands do not map scores about 40% coverage and gets no animation at all\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"from Unreal's index_01_l to the VRM 1.0 names that call each phalanx proximal, intermediate or distal\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Rigify names the collarbone shoulder.L and the upper arm upper_arm.L; SMPL names the collarbone left_collar and the upper arm left_shoulder\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a second pass looks at the hierarchy instead, because the collarbone is the parent of the upper arm\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The reference rig the clips were baked on rests in an A-pose, and Mixamo rigs rest in a T-pose\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Mixamo exports also bake a 90 degree turn into the armature and the hips\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"an avatar plays with its limbs in the wrong frame, or tips the body onto its back\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"replays the clip bone's motion as the same change in world space from that rest\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A rig that already matches the reference gets no correction at all\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Only joint rotations and the root (Hips) translation are true motion, so only those cross over, and the hip track is rescaled so root motion lands at the new rig's height\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"keeps its own proportions instead of being stretched into the reference body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A model needs a skinned mesh and at least eight canonical bones before the library will drive it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A clip that finds a home for less than half of its tracks on a rig is not played on it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the stuck arms are swung down to a relaxed rest by their direction, with no name needed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Their deform bones hang off tracker nodes instead of forming a chain, and glTF has no constraints to carry\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Those uploads need re-rigging, not renaming\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A rig can map all 52 joints and still move badly\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it plays one held frame of the standing idle through the retargeter, then checks that both upper arms end at least 30 degrees below horizontal\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"for a thumbnail or a social card\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the model renders as authored and is reported, rather than replaced with something worse\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it retargets the idle onto whatever skeleton the file carries\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

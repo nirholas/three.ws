@@ -1,16 +1,18 @@
 {
 	"id": "mcp-article",
 	"contentHash": "d09851ce31b2f4af94bd01e55b5b5f5d95c6a3dd86a1811f0e2ef8f1b86e3f2f",
-	"reviewedAt": "2026-10-01T19:11:41.479Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-01T19:25:10.639Z",
+	"passed": false,
+	"blockers": [
+		"evidence:file docs/mcp-studio.md: file does not contain \"`tools/list` returns exactly **eleven** tools\""
+	],
 	"texts": [
 		"Eleven free 3D tools for Claude Code and any MCP client, from one address",
 		"Add one address to Claude Code or any MCP client and the assistant gets eleven free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "Eleven free 3D tools",
@@ -23,8 +25,8 @@
 				"claim": "Eleven free 3D tools",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"`tools/list` returns exactly **eleven** tools\""
 			},
 			{
 				"claim": "with no account or key",
@@ -457,11 +459,11 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
 		"issues": [],
 		"rewrite": {
@@ -472,7 +474,7 @@
 				"A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; the model is the one the look_at_model tool inspected in the session described in the article"
 			]
 		},
-		"summary": "Every claim in the head post checks out against the live docs page, the server code, and passing API probes, including the eleven keyless tools and the 18,682-triangle camera. The cover is the real viewer render matching the alt text, and the voice contract is fully obeyed. Ship it unchanged.",
+		"summary": "The one failed evidence check is a stale doc quote, but the load-bearing claim (eleven free keyless tools) is corroborated by the live docs page and two passing API probes, so nothing in the post is unsupported. The cover image matches the article's described camera and the alt text is accurate; copy is in voice, specific, and partner-safe.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

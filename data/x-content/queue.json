@@ -3,21 +3,21 @@
 	"account": "trythreews",
 	"cadence": {
 		"windowMinutes": 30,
-		"minimumMinutesApart": 240,
+		"minimumMinutesApart": 180,
 		"dailyCap": 3,
 		"quietHoursUtc": null,
 		"slots": [
-			{
-				"tier": 3,
-				"at": "04:00"
-			},
 			{
 				"tier": 2,
 				"at": "12:00"
 			},
 			{
 				"tier": 1,
-				"at": "20:00"
+				"at": "15:30"
+			},
+			{
+				"tier": 3,
+				"at": "19:00"
 			}
 		]
 	},
@@ -58,7 +58,8 @@
 			"GPU",
 			"retopo",
 			"photoreal",
-			"crossfade"
+			"crossfade",
+			"retargeter"
 		],
 		"maximumLength": 1000
 	},
@@ -11548,6 +11549,915 @@
 			"posts": [
 				{
 					"text": "The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "any-skeleton-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"@three-ws/retarget",
+				"/avatar-artifact"
+			],
+			"article": {
+				"title": "One animation library, any humanoid skeleton: how three.ws retargets motion",
+				"body": "data/x-content/articles/any-skeleton-article.md",
+				"cover": {
+					"path": "public/x-media/any-skeleton-article/cover.png",
+					"alt": "A generated 3D circus ringmaster in a red tailcoat, top hat and tall boots standing at rest with his hands open in front of him, lit in red and violet on a dark stage under a starfield. He is idling on the shared animation library in the three.ws Avatar Artifact viewer."
+				}
+			},
+			"probes": [
+				{
+					"type": "browser",
+					"name": "Rig Doctor maps every canonical joint of the Mixamo sample",
+					"steps": [
+						{
+							"goto": "https://three.ws/rig-doctor"
+						},
+						{
+							"click": "Mixamo rig"
+						},
+						{
+							"expect": "52 of 52 canonical joints mapped"
+						}
+					]
+				},
+				{
+					"type": "api",
+					"name": "the Avatar Artifact viewer is served",
+					"url": "https://three.ws/avatar-artifact",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the clip library manifest is served",
+					"url": "https://three.ws/animations/manifest.json",
+					"expect": {
+						"status": 200,
+						"contains": "\"name\": \"idle\""
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
+				}
+			],
+			"claims": [
+				{
+					"says": "made once, against one reference skeleton",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Every clip in the three.ws library is authored against one canonical skeleton"
+						},
+						{
+							"type": "file",
+							"path": "src/animation-manager.js",
+							"contains": "Mixamo FBX → retargeted to canonical Avaturn skeleton → JSON"
+						}
+					]
+				},
+				{
+					"says": "made once, on one reference skeleton",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Every clip in the three.ws library is authored against one canonical skeleton"
+						}
+					]
+				},
+				{
+					"says": "a Mixamo character, a VRoid model, an Unreal mannequin",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Mixamo:          `mixamorig:LeftArm`"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • VRM / VRoid:     `J_Bip_C_Hips`"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Unreal mannequin: `pelvis`"
+						},
+						{
+							"type": "file",
+							"path": "tests/glb-canonicalize.test.js",
+							"contains": "Unreal mannequin: %s → %s"
+						}
+					]
+				},
+				{
+					"says": "Mixamo, VRoid, Unreal and Daz avatars",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Daz / Genesis:   `hip`, `abdomen`, `lShldr`"
+						},
+						{
+							"type": "file",
+							"path": "tests/glb-canonicalize.test.js",
+							"contains": "Daz / Genesis: %s → %s"
+						}
+					]
+				},
+				{
+					"says": "a body our text-to-3D lane rigged a minute ago",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/create/prompt",
+							"contains": "Type a description → rigged 3D avatar in about a minute"
+						},
+						{
+							"type": "file",
+							"path": "tests/glb-canonicalize.test.js",
+							"contains": "Every bone must map onto the canonical set so\n\t// a freshly rigged avatar can drive the full clip library with 100%\n\t// coverage"
+						}
+					]
+				},
+				{
+					"says": "No clip is re-authored per avatar",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "motion lives in the [shared clip library](./animations.md) and is retargeted onto whatever skeleton the rig uses"
+						}
+					]
+				},
+				{
+					"says": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total."
+						},
+						{
+							"type": "module",
+							"path": "src/glb-canonicalize.js",
+							"export": "CANONICAL_BONES",
+							"length": 52
+						}
+					]
+				},
+				{
+					"says": "A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l."
+						}
+					]
+				},
+				{
+					"says": "It strips vendor prefixes and namespaces, collapses separators and case, then looks what is left up in alias tables",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "// Strips vendor prefixes and separators; returns null on no match."
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "return LOOKUP.get(key) ?? UNREAL_ALIASES.get(key) ?? EXTRA_ALIASES.get(key) ?? null;"
+						}
+					]
+				},
+				{
+					"says": "Its header lists more than twenty naming schemes, from Mixamo, Unreal, VRM and VRoid, Daz and Genesis, MakeHuman and Blender to Kinect, MediaPipe and the Japanese bone names of MikuMikuDance",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"matches": "Handled name variants:(?:[\\s\\S]*?\\n//   • ){21}"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • MakeHuman:       `upperarm.L`"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Kinect:          `SpineBase`"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • MediaPipe Pose:  `left_hip`"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • MMD (PMX/PMD):   `センター`, `上半身`, `左腕`, `左ひじ`"
+						}
+					]
+				},
+				{
+					"says": "Fingers are 30 of the clip library's 53 tracks, so a rig whose hands do not map scores about 40% coverage and gets no animation at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "// Fingers are 30 of the clip library's 53 tracks, so a rig whose hands don't\n\t// name-map scores ~40% coverage and falls under animation-retarget.js's\n\t// MIN_COVERAGE gate: production then builds NO action for it"
+						}
+					]
+				},
+				{
+					"says": "from Unreal's index_01_l to the VRM 1.0 names that call each phalanx proximal, intermediate or distal",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "`index_01_l` (Unreal), `leftIndexProximal` (VRM 1.0)"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "// VRM 1.0 and anatomical rigs name the phalanges instead of numbering them:\n\t\t// proximal / intermediate / distal"
+						}
+					]
+				},
+				{
+					"says": "Rigify names the collarbone shoulder.L and the upper arm upper_arm.L; SMPL names the collarbone left_collar and the upper arm left_shoulder",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "Rigify names the clavicle `shoulder.L` and the upper arm `upper_arm.L`;"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "SMPL names the clavicle `left_collar` and the upper arm `left_shoulder`;"
+						}
+					]
+				},
+				{
+					"says": "a second pass looks at the hierarchy instead, because the collarbone is the parent of the upper arm",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "// Whether Object3D `a` is an ancestor of `b`. Feeds the hierarchy tie-break in\n// resolveArmShoulderCollisions: the clavicle parents the upper arm."
+						}
+					]
+				},
+				{
+					"says": "The reference rig the clips were baked on rests in an A-pose, and Mixamo rigs rest in a T-pose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "rests in an A-pose,\n// Mixamo in a T-pose"
+						}
+					]
+				},
+				{
+					"says": "Mixamo exports also bake a 90 degree turn into the armature and the hips",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "Mixamo/FBX bake a +90°X on the armature"
+						}
+					]
+				},
+				{
+					"says": "an avatar plays with its limbs in the wrong frame, or tips the body onto its back",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "copying the clip's Hips rotation verbatim wipes that out and tips the body onto\n// its back"
+						}
+					]
+				},
+				{
+					"says": "replays the clip bone's motion as the same change in world space from that rest",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "replay the clip bone's motion as the same"
+						},
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "export function canonicalWorldRestMapFromObject(root)"
+						}
+					]
+				},
+				{
+					"says": "A rig that already matches the reference gets no correction at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "Bones whose\n * correction is identity are omitted, so a matching rig skips the work and\n * round-trips unchanged."
+						}
+					]
+				},
+				{
+					"says": "Only joint rotations and the root (Hips) translation are true motion, so only those cross over, and the hip track is rescaled so root motion lands at the new rig's height",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "Only joint\n\t\t// rotations and the root (Hips) translation are true motion"
+						},
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "translation so root motion lands at the new rig's height"
+						}
+					]
+				},
+				{
+					"says": "keeps its own proportions instead of being stretched into the reference body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "and skip the structural channels so every rig keeps its own proportions."
+						}
+					]
+				},
+				{
+					"says": "A model needs a skinned mesh and at least eight canonical bones before the library will drive it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-manager.js",
+							"contains": "const MIN_CANONICAL_BONES = 8;"
+						},
+						{
+							"type": "file",
+							"path": "src/animation-manager.js",
+							"contains": "return hasSkinnedMesh && canonical.size >= MIN_CANONICAL_BONES;"
+						}
+					]
+				},
+				{
+					"says": "A clip that finds a home for less than half of its tracks on a rig is not played on it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "export const MIN_COVERAGE = 0.5;"
+						}
+					]
+				},
+				{
+					"says": "the stuck arms are swung down to a relaxed rest by their direction, with no name needed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-manager.js",
+							"contains": "Swing those un-driven\n\t * arms down to a relaxed rest"
+						},
+						{
+							"type": "file",
+							"path": "src/animation-arm-relax.js",
+							"contains": "This finds those un-driven arms GEOMETRICALLY (no name needed)"
+						}
+					]
+				},
+				{
+					"says": "Their deform bones hang off tracker nodes instead of forming a chain, and glTF has no constraints to carry",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "Constraint-driven CONTROL RIGS also fall through on purpose"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "glTF has no constraint\n// system, so they export as inert nodes."
+						}
+					]
+				},
+				{
+					"says": "Those uploads need re-rigging, not renaming",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "The remedy for these uploads is re-rigging (workers/rig), not name mapping."
+						}
+					]
+				},
+				{
+					"says": "A rig can map all 52 joints and still move badly",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-thumbnails.md",
+							"contains": "A retarget that leaves the arms out,\n   or swings them up over the head (seen on a real production rig)"
+						}
+					]
+				},
+				{
+					"says": "it plays one held frame of the standing idle through the retargeter, then checks that both upper arms end at least 30 degrees below horizontal",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-thumbnails.md",
+							"contains": "the avatar takes one held frame of the motion library's\n   standing idle"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-thumbnails.md",
+							"contains": "both upper arms must\n   end at least 30 degrees below horizontal"
+						}
+					]
+				},
+				{
+					"says": "for a thumbnail or a social card",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-thumbnails.md",
+							"contains": "That covers the OG card (`/api/avatar/:id/og`)"
+						}
+					]
+				},
+				{
+					"says": "the model renders as authored and is reported, rather than replaced with something worse",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-thumbnails.md",
+							"contains": "the rig renders as\n   authored and reports `pose-rejected`, so the regeneration script skips it\n   rather than replacing a T-pose with something worse."
+						}
+					]
+				},
+				{
+					"says": "it retargets the idle onto whatever skeleton the file carries",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "it attaches an `AnimationManager`, loads the `idle` clip and retargets it"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "wardrobe-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"workers/garment-forge",
+				"/wardrobe"
+			],
+			"article": {
+				"title": "How we rig a 3D garment: put it on a body, rig the pair, then take the body away",
+				"body": "data/x-content/articles/wardrobe-article.md",
+				"cover": {
+					"path": "public/x-media/wardrobe-article/cover.png",
+					"alt": "Three generated 3D garments from the three.ws wardrobe catalog shown side by side in their live viewers on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
+				}
+			},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the wardrobe page is served",
+					"url": "https://three.ws/wardrobe",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the public garment catalog is served and still carries the oxford shirt the article quotes",
+					"url": "https://storage.googleapis.com/three-ws-garments/garments/catalog.json",
+					"expect": {
+						"status": 200,
+						"contains": "a-white-oxford-cotton-dress-cf4ea6"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the quoted manifest is live",
+					"url": "https://storage.googleapis.com/three-ws-garments/garments/top/a-white-oxford-cotton-dress-cf4ea6/v1/manifest.json",
+					"expect": {
+						"status": 200,
+						"contains": "three.ws-canonical-v1"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the wardrobe docs page is served",
+					"url": "https://three.ws/docs/avatar-wardrobe",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
+				}
+			],
+			"claims": [
+				{
+					"says": "Rig one on its own and the auto-rigger fits a whole skeleton inside the cloth, which tears the shirt apart as soon as it moves",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "Rigging a shirt alone would fit a full\n   skeleton inside the shirt and shred it on first animation."
+						}
+					]
+				},
+				{
+					"says": "rigs each piece while a reference body is wearing it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the *composite* (body + garment) goes\n   to the deployed `model-rig` worker (Make-It-Animatable)."
+						}
+					]
+				},
+				{
+					"says": "then takes the body away and keeps the weights each patch of cloth picked up from the joint underneath it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the reference body is\n   stripped back out."
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the garment's vertices pick up weights from the\n   joints they actually sit on."
+						}
+					]
+				},
+				{
+					"says": "removes the body and keeps the weights the cloth picked up from the joints underneath",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the garment's vertices pick up weights from the\n   joints they actually sit on."
+						}
+					]
+				},
+				{
+					"says": "top, bottom, footwear, outerwear, hair, headwear, glasses or accessory",
+					"evidence": [
+						{
+							"type": "module",
+							"path": "src/garment-taxonomy.js",
+							"export": "GARMENT_SLOTS",
+							"equals": [
+								"top",
+								"bottom",
+								"footwear",
+								"outerwear",
+								"hair",
+								"headwear",
+								"glasses",
+								"accessory"
+							]
+						}
+					]
+				},
+				{
+					"says": "The forge walks it through seven stages in order, and the wardrobe page shows each one as it runs: image, mesh, compose, rig, extract, validate, publish",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/wardrobe-page.js",
+							"contains": "const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "Watch every real stage below."
+						}
+					]
+				},
+				{
+					"says": "the seven stages",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/wardrobe-page.js",
+							"contains": "const STAGES = ['image', 'mesh', 'compose', 'rig', 'extract', 'validate', 'publish'];"
+						}
+					]
+				},
+				{
+					"says": "A finished piece takes about seven minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "the forge will build, rig, validate, and publish it in about seven minutes"
+						}
+					]
+				},
+				{
+					"says": "The image stage paints a ghost-mannequin product photo: the garment as if worn, in an A-pose, from the front, on a plain background",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "The photo is posed to match the reference body: worn shape,\n   A-pose, front view, plain background."
+						}
+					]
+				},
+				{
+					"says": "The mesh stage rebuilds that photo as a textured 3D model on our image-to-3D lanes, falling through to the next engine when one is down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "image→3D failover chain, first healthy rung wins:"
+						}
+					]
+				},
+				{
+					"says": "places it in its slot's region on a canonical reference body: an A-pose figure 1.667 m tall with 52 joints",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "placed into its slot's region box on the canonical reference body\n   (`assets/refbody.glb`, staged from `public/avatars/parametric-base.glb` at\n   build time: A-pose, 1.667 m, 52 mixamorig joints, front +Z)."
+						}
+					]
+				},
+				{
+					"says": "on the same auto-rigging worker that rigs our avatars",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "to the deployed `model-rig` worker (Make-It-Animatable)"
+						},
+						{
+							"type": "file",
+							"path": "tests/glb-canonicalize.test.js",
+							"contains": "rig worker skeleton (workers/rig, Make-It-Animatable output)"
+						}
+					]
+				},
+				{
+					"says": "The rigger sees an ordinary clothed person, so the skeleton lands at body scale, and each vertex of the sleeve takes its weights from the arm bones it actually sits on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the\n   rigger sees a normally proportioned clothed humanoid, so the skeleton\n   lands at body scale and the garment's vertices pick up weights from the\n   joints they actually sit on."
+						}
+					]
+				},
+				{
+					"says": "The file is rebuilt from scratch with only the garment's geometry, skin and textures, and the joint names are rewritten to the canonical skeleton, so mixamorig:LeftArm becomes LeftArm",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "The binary buffer is rebuilt from scratch (only the\n   garment's geometry, skin matrices, and textures survive), and joint names\n   are canonicalized (`mixamorig:LeftArm` → `LeftArm`)."
+						}
+					]
+				},
+				{
+					"says": "The same generated shirt was skinned both ways, put on the reference body and walked through the canonical walk clip",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the same generated shirt was skinned by (A) the rig-worker composite lane this\nworker uses and (B) a local proximity weight-transfer"
+						}
+					]
+				},
+				{
+					"says": "Rigged as a pair, the cloth stayed a mean 2.87 cm from the body across the gait. Copying weights from the nearest body vertex left it 5.88 cm away. The pair-rigging lane is the one in production",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "| A rig-worker (production) | **2.87 cm** | **6.36 cm** | 16.12 cm |\n| B proximity transfer | 5.88 cm | 13.06 cm | 21.02 cm |"
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "A won decisively and is the only production lane."
+						}
+					]
+				},
+				{
+					"says": "A generator once answered a prompt for long straight hair with a mesh about 1.4 m deep whose width was still perfect",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "a generator asked for \"long straight hair\" can return a mesh\n   1.4 m deep whose width is still a perfect 0.30"
+						}
+					]
+				},
+				{
+					"says": "a mesh outside it fails the job with the measurement instead of reaching the catalog",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "so the job fails with the\n   measurement instead of publishing it."
+						}
+					]
+				},
+				{
+					"says": "The share of the garment's skin weight that lands on bones a body really has is measured before publishing. Under 60% and the job fails",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "This worker measures that same\nnumber before publishing and fails the job loudly rather than emitting a bad\nasset."
+						},
+						{
+							"type": "file",
+							"path": "src/garment-taxonomy.js",
+							"contains": "export const MIN_BIND_COVERAGE = 0.6;"
+						}
+					]
+				},
+				{
+					"says": "A region counts when it carries at least 10% of the garment's skin weight, and the result is clamped to what the slot may plausibly hide: a shirt cannot hide the legs, and hair can hide nothing at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "any REGION_BONES region carrying ≥ 10% of the\n   garment's skin weight, then clamped to the slot's plausible region set"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "a shirt cannot\n   hide the legs, and headwear/hair can hide nothing at all"
+						}
+					]
+				},
+				{
+					"says": "The manifest pins the file's sha256 and a licence from an approved set",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "Every manifest pins its GLB's `sha256`"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "a licence outside the approved\ncommercial set (CC0, CC-BY, MIT, Apache-2.0, BSD) drops the entry"
+						}
+					]
+				},
+				{
+					"says": "The pieces in the catalog today are all generated and licensed CC0",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "v1 · CC0-1.0 · generated"
+						}
+					]
+				},
+				{
+					"says": "A piece that passes lands in its own versioned directory, and its manifest is appended to one public catalog file",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "land in\n   `garments/<slot>/<id>/v<version>/` and the manifest is appended to\n   `garments/catalog.json`"
+						}
+					]
+				},
+				{
+					"says": "Each garment bone is matched to the avatar's bone through the same canonicalizer that lets our animation library drive any humanoid, and a helper joint the avatar lacks falls back to its nearest mapped parent",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "the same machinery\nthat lets any humanoid drive the animation clip library."
+						},
+						{
+							"type": "file",
+							"path": "src/avatar-garment.js",
+							"contains": "A garment bone with no canonical counterpart on the avatar falls back to its\n * nearest *mapped ancestor*"
+						}
+					]
+				},
+				{
+					"says": "The garment keeps its own inverse bind matrices, which is what lets a piece authored in one rest pose land on an avatar resting in another",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-garment.js",
+							"contains": "Keeping the garment's own inverses is what makes divergent\n//      rest poses reconcile"
+						}
+					]
+				},
+				{
+					"says": "The client refuses a piece that binds under 60% of its skin weight, or that is larger than 0.75 times the avatar's height on any axis, and it checks the file's hash before attaching anything",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/garment-taxonomy.js",
+							"contains": "export const MIN_BIND_COVERAGE = 0.6;"
+						},
+						{
+							"type": "file",
+							"path": "src/garment-taxonomy.js",
+							"contains": "export const MAX_GARMENT_EXTENT_RATIO = 0.75;"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "both\nthe client and the baker verify the bytes before attaching"
+						}
+					]
+				},
+				{
+					"says": "Rigid pieces such as glasses are parented to a single joint instead of deformed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "A garment with no skin at all (hat, glasses) is parented to a single joint\n(`rig.attachBone`) instead of deformed."
+						}
+					]
+				},
+				{
+					"says": "A garment keeps the shape it had on the reference body and follows the avatar's bones from there",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-garment.js",
+							"contains": "boneInverses re-indexed into avatar-bone-order, keeping the *garment's*\n//      matrices."
+						},
+						{
+							"type": "file",
+							"path": "workers/garment-forge/README.md",
+							"contains": "the garment mesh is scaled and\n   placed into its slot's region box on the canonical reference body"
+						}
+					]
+				},
+				{
+					"says": "you open one of your avatars in the editor and dress it from the Wardrobe tab",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "then open your avatar's editor and wear it"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-wardrobe.md",
+							"contains": "Open any avatar in the editor (`/avatar-edit?id=…`), Wardrobe tab."
+						}
+					]
+				},
+				{
+					"says": "Browsing the catalog and turning any piece around in 3D needs nothing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/wardrobe",
+							"contains": "Browse the catalog, inspect a piece in 3D"
+						}
+					]
 				}
 			],
 			"mentions": {}

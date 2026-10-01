@@ -1,7 +1,7 @@
 {
 	"id": "proof-reels-article",
 	"contentHash": "1ab762e1e3ba94c08b6f7a532d17e175310072ad8904eecec56bc75f1d8d851f",
-	"reviewedAt": "2026-10-01T19:12:36.389Z",
+	"reviewedAt": "2026-10-01T19:25:53.436Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -539,28 +539,13 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "a holographic foil sticker",
-				"problem": "The top right crop shows a layered blue chevron shape without the foil or sticker context the article describes (holographic sticker), so a reader cannot connect the crop to the named feature from the image alone.",
-				"fix": "If easy on recapture, use a frame of the sticker reel that shows the foil effect mid-drag; otherwise it is acceptable as an abstract crop in a six-up grid."
-			},
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "a splat-rendered head bust",
-				"problem": "The bottom right crop is visibly soft and low detail compared with the other five crops, which slightly weakens an article whose argument is that reels show the product exactly.",
-				"fix": "Optional: recapture that frame at a higher render resolution or pick a sharper frame from the same reel."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
@@ -569,7 +554,7 @@
 				"Six crops from filmed reels in a grid on black: a blue robot portrait, a nine-cylinder radial engine, a holographic foil sticker, an avatar with headphones and red sunglasses, a steam locomotive on its track, and a splat-rendered head bust, each a frame from a scripted run against the live three.ws site"
 			]
 		},
-		"summary": "Every claim in the post and article traces to a passing verification against the code or the proof records, and the copy obeys the voice contract: no hashtags, no emoji, no dashes, mechanism first. Ship it; the only notes are two minor visual nits on the cover grid crops, neither of which contradicts the copy.",
+		"summary": "Every factual statement in the teaser and article maps to a passing verification result, and the claims about fail-to-film gating, clock stepping, and refusals are all backed by code evidence. The voice contract is fully observed, the cover and alt text are accurate, and the post stands on its own for a new reader.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

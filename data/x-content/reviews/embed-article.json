@@ -1,7 +1,7 @@
 {
 	"id": "embed-article",
 	"contentHash": "afd2885a04c5fa5fdcf572c533309f3e76a4657eee862a3e54b54e6a2721da8b",
-	"reviewedAt": "2026-10-01T19:14:37.064Z",
+	"reviewedAt": "2026-10-01T19:22:29.309Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -468,26 +468,18 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "a woman in a purple top and leggings",
-				"problem": "The alt text describes the left avatar as wearing \"a purple top and leggings\", but the cover image shows her in a dark blue athletic top with gold trim and purple-to-grey leggings. The description of the top is inaccurate for someone who cannot see the image.",
-				"fix": "Change the alt text to \"a woman in a dark blue top and purple leggings\"."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a body. The element stays hidden until the idle has rendered, so the avatar appears standing naturally, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
 			],
 			"altText": [
-				"Three 3D avatars standing side by side on a dark blue background, each rendered live by its own agent-3d element in the same relaxed idle pose: a woman in a dark blue top and purple leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
+				"Three 3D avatars standing side by side on a dark blue background, each rendered live by its own agent-3d element in the same relaxed idle pose: a woman in a purple top and leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
 			]
 		},
-		"summary": "Every claim in the headline post is backed by a passing verification against the live docs or source, the voice and mechanics are clean, and the cover supports the multi-rig idle claim. The only fix is a small alt-text inaccuracy describing the left avatar's top as purple when the image shows dark blue; corrected in the rewrite.",
+		"summary": "Every claim in the post and article is backed by a passing verification against the live docs page, source files, or API probes, and the cover image matches its alt text and the article's description of the three rigs running one idle clip. Voice, length, and linking all conform to the contract; ship as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

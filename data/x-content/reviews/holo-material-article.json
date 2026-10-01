@@ -1,16 +1,20 @@
 {
 	"id": "holo-material-article",
 	"contentHash": "82add87cfae43ed4c3b5cca79f504b5bd5782659c78b964208569d2501469a54",
-	"reviewedAt": "2026-10-01T19:11:12.186Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-01T19:24:15.580Z",
+	"passed": false,
+	"blockers": [
+		"evidence:file src/holo.js: file does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\"",
+		"editor (accuracy): This sentence is in the published article body and its only verification check failed: src/holo.js does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\". The numbers 0.17 and 0.18 are unverified and must not publish.",
+		"editor verdict is revise"
+	],
 	"texts": [
 		"How a holographic sticker is cut, lit and peeled in the browser, with no image files",
 		"A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel."
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "with no image files",
@@ -583,8 +587,8 @@
 				"claim": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
 				"kind": "evidence:file",
 				"target": "src/holo.js",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\""
 			},
 			{
 				"claim": "The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent",
@@ -726,10 +730,10 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
-			"clarity": 4,
+			"accuracy": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
@@ -737,11 +741,11 @@
 		},
 		"issues": [
 			{
-				"severity": "minor",
+				"severity": "blocking",
 				"area": "accuracy",
-				"quote": "lit by a thin film 120 to 480 nanometres thick",
-				"problem": "120 to 480 is the backing's thickness range; the raised mark uses 140 to 860. The article states both ranges correctly, so the impression is corrected, but the head line quotes only one of the two films.",
-				"fix": "Optional: 'lit by thin films 120 to 860 nanometres thick' would cover both ranges without lengthening the post; the article already disambiguates."
+				"quote": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel.",
+				"problem": "This sentence is in the published article body and its only verification check failed: src/holo.js does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\". The numbers 0.17 and 0.18 are unverified and must not publish.",
+				"fix": "Delete the sentence from the \"The peel happens in the vertex shader\" section of the article. The post text itself does not contain it, so only the article body changes. No replacement claim is possible because no passing check verifies any radius value."
 			}
 		],
 		"rewrite": {
@@ -752,7 +756,7 @@
 				"A die-cut holographic foil sticker of three slanted bars floating on black, tilted toward the viewer, its rim shifting from green to violet and its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
 			]
 		},
-		"summary": "Every claim in the head post and article is verified against the source code and the live page, the voice is clean, and the cover image shows the real rendered sticker with accurate alt text. One optional polish on the film thickness range; the post is safe to ship unchanged.",
+		"summary": "The post text, cover image, and alt text are all verified, specific, and on voice. One blocking issue sits in the article body: the peel-radius sentence (0.17 at rest, 0.18 at full peel) failed verification against src/holo.js and must be cut before publishing.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
