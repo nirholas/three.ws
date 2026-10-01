@@ -318,10 +318,23 @@ async function scoreViaVertex({ imageBase64, mimeType, prompt, subject, timeoutM
 	return { json: parseJsonLoose(text), provider: 'vertex', model: `vertex-ai/${model}` };
 }
 
-// Score one render via the free platform vision chain (NVIDIA NIM VLMs). Reuses
-// describeImageJson so the free-first doctrine and spend ledger are inherited.
+// The rung the gate asks first. Measured 2026-09-30 with this rubric on real
+// turntable renders from production (a TRELLIS avatar and a catalog armchair):
+// Workers AI's Llama 4 Scout returned the JSON verdict 8 times in 8, in 2.4 to
+// 6.9 s, while the NIM 11B lane returned it 4 times in 8, in 8 to 20 s, and
+// described the avatar in prose on all four tries. Asked first, that lane spent
+// most of the gate's 29 s deadline and then failed, and the rungs behind it
+// (free OpenRouter routes at 429, Vertex on a billing hold, OpenAI with billing
+// inactive) could not answer either, so the gate failed open on 8 of 10
+// production checks. Leading with the measured-reliable rung keeps the rest of
+// the chain as its fallback, cooldowns included.
+export const QUALITY_GATE_VISION_LEAD = Object.freeze(['cloudflare']);
+
+// Score one render via the platform vision chain. Reuses describeImageJson so
+// the JSON acceptance test and the spend ledger are inherited.
 async function scoreViaPlatformVision({ imageBase64, mimeType, prompt, subject, timeoutMs, track }) {
 	const out = await describeImageJson({
+		lead: QUALITY_GATE_VISION_LEAD,
 		prompt: rubricPrompt(subject, prompt),
 		imageBase64,
 		mimeType,

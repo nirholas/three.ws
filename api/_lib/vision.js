@@ -502,10 +502,21 @@ function normalizeStatus(status) {
 // successful call records a kind:'vision' usage event with provider/model/tokens/cost
 // (free NIM prices to 0 in llm-pricing.js).
 //
+// `lead` (provider names) moves those rungs to the front for one caller that has
+// measured them as its reliable answerers; cooldowns still apply on top, so a
+// cooling lead rung drops to the back like any other.
+//
 // Returns { text, provider, model, usage:{input,output}, raw }.
 // Throws VisionUnavailableError when nothing is configured, or the last upstream
 // error (with .status = 502/504, .code = normalized) when every provider failed
 // or the deadline elapsed.
+/** Stable reorder: rungs whose provider name is in `lead` first, in chain order. */
+export function leadWith(chain, lead) {
+	if (!Array.isArray(lead) || !lead.length) return chain;
+	const names = new Set(lead);
+	return [...chain.filter((p) => names.has(p.name)), ...chain.filter((p) => !names.has(p.name))];
+}
+
 export async function describeImage({
 	prompt,
 	imageUrl = null,
@@ -517,8 +528,9 @@ export async function describeImage({
 	deadlineMs = null,
 	track = null,
 	accept = null,
+	lead = null,
 }) {
-	const chain = visionChain();
+	const chain = leadWith(visionChain(), lead);
 	if (!chain.length) throw new VisionUnavailableError();
 	const deadlineAt = deadlineMs != null ? Date.now() + deadlineMs : Infinity;
 
