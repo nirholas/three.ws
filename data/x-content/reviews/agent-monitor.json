@@ -1,27 +1,23 @@
 {
 	"id": "agent-monitor",
-	"contentHash": "e02df0329e0a2e1466cd00aeeea084afdb7d16d37e3476e35eb0028fdd42be68",
-	"reviewedAt": "2026-09-30T08:45:45.698Z",
-	"passed": false,
-	"blockers": [
-		"probe:scenario the filmed scenario: fleet is now \"2,549\", the reel shows \"2,546\"; prove it again",
-		"editor (accuracy): The scenario re-probe failed: the fleet now reads \"2,549\" while the filmed reel shows \"2,546\" in the fleet counter of every frame. The copy stays true either way, but the attached proof run is stale and the verification record for the reel fails, so the package must be re-filmed against the live product before it ships.",
-		"editor verdict is revise"
-	],
+	"contentHash": "d1e940fa67710703344938ccd3c5bd48f758ab7d86b65d9ddded9ae47a3cef86",
+	"reviewedAt": "2026-10-01T06:27:22.390Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
 		"A failed panel degrades alone: it badges itself stale and keeps its last good data rather than blanking, so one dead endpoint never takes the board down. Polling pauses while the tab is hidden and every panel refreshes on the way back.\n\nKeys: f focuses the search, r refreshes everything. three.ws/monitor"
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "More than 2,500 public agents",
 				"kind": "evidence:proof",
 				"target": "fleet",
 				"ok": true,
-				"detail": "the run read fleet = \"2,546\""
+				"detail": "the run read fleet = \"2,546\", at least 2500"
 			},
 			{
 				"claim": "ranked by the most recent real thing each one did",
@@ -145,8 +141,8 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "fleet is now \"2,549\", the reel shows \"2,546\"; prove it again"
+				"ok": true,
+				"detail": "13 steps passed against the live product, every claimed fact still holds (fleet 2,553, active 647)"
 			},
 			{
 				"kind": "probe:api",
@@ -163,24 +159,16 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
+			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 3
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "More than 2,500 public agents",
-				"problem": "The scenario re-probe failed: the fleet now reads \"2,549\" while the filmed reel shows \"2,546\" in the fleet counter of every frame. The copy stays true either way, but the attached proof run is stale and the verification record for the reel fails, so the package must be re-filmed against the live product before it ships.",
-				"fix": "Re-run the scenario and recapture the reel so the film and the probe record the current live fleet number (2,549 at last probe). No copy change is needed since 'More than 2,500' holds."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
@@ -188,7 +176,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every factual claim passed against the live docs page and the API, and the copy obeys the voice contract cleanly. The one blocker is media freshness: the reel shows 2,546 while the live fleet is 2,549 and the re-probe failed, so re-film the scenario before shipping; the text itself ships unchanged.",
+		"summary": "Every claim verifies against the live docs page or the proof run, and the reel frames show exactly what the post describes: the 2,546-agent fleet board, server-side search on 'host', and Vera the Host's own 3D avatar loading and rotating in the page. The voice contract is fully obeyed (no hashtags, emoji, dashes, or hype openers), the lead is a verified number, and the link works, so this ships unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

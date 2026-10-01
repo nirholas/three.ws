@@ -1,15 +1,13 @@
 {
 	"id": "splat-viewer",
-	"contentHash": "14b82c8faa27a36f7b18ebd422432277140b289d7b746c66f3ef861a3264c669",
-	"reviewedAt": "2026-09-30T08:42:30.481Z",
-	"passed": false,
-	"blockers": [
-		"editor verdict is revise"
-	],
+	"contentHash": "4e0a67768953428d183d4179f1b04c4627895dd881e07b7b5eb539554836a550",
+	"reviewedAt": "2026-10-01T06:24:29.228Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"A Gaussian splat rebuilds a person or a room as millions of tiny blobs instead of polygons. The splat viewer decodes one on your own device and draws it in a browser tab with WebGL, so the file stays with you.\n\nPaste a link to a capture or drop the file in. It reads five formats and tells them apart by their bytes, not their filenames.\n\nThe reel is the built-in sample: 14,000 splats, synthetic, generated on the page.",
 		"Both built-in samples are synthetic. They exist to exercise the renderer and are not real captures. A real one comes out of a capture engine trained on footage of a person, exported as a file, then opened here.\n\nthree.ws/splat",
-		"To share a capture, add ?src= and the address of the file to the address of the viewer. The scene loads as the page opens, so the link is the whole handoff.\n\nThe same scene that is a 1 GB PLY is roughly 100 MB as SPZ, which is the difference between a capture you can send as a link and one you cannot."
+		"To share a capture, add ?src= and the address of the file to the address of the viewer. The scene loads as the page opens, so the link is the whole handoff.\n\nThe same scene that is a 1 GB PLY is roughly 100 MB as SPZ."
 	],
 	"lint": [],
 	"verification": {
@@ -124,7 +122,7 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "12 steps passed against the live product, facts unchanged (splats 14,000)"
+				"detail": "12 steps passed against the live product, every claimed fact still holds (splats 14,000)"
 			},
 			{
 				"kind": "probe:api",
@@ -141,24 +139,16 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
-			"clarity": 5,
+			"accuracy": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "which is the difference between a capture you can send as a link and one you cannot",
-				"problem": "The verified evidence covers only the size comparison (a 1 GB PLY is roughly 100 MB as SPZ). The conclusion that file size determines whether a capture can be sent as a link is unverified and misleading: the previous sentence just explained that ?src= passing works for any address, so a 1 GB file is equally linkable. It overreads the docs quote and invites a pedantic correction from the developer audience.",
-				"fix": "End the sentence at the verified fact: \"The same scene that is a 1 GB PLY is roughly 100 MB as SPZ.\""
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"A Gaussian splat rebuilds a person or a room as millions of tiny blobs instead of polygons. The splat viewer decodes one on your own device and draws it in a browser tab with WebGL, so the file stays with you.\n\nPaste a link to a capture or drop the file in. It reads five formats and tells them apart by their bytes, not their filenames.\n\nThe reel is the built-in sample: 14,000 splats, synthetic, generated on the page.",
@@ -167,7 +157,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every claim verifies against the live pages and the run, and the reel frames and captions match the copy including the 14,000 splats figure. The only fix is trimming the unverified and misleading tail of post 3, which implied file size determines whether a capture can be shared as a link.",
+		"summary": "Every claim passes verification against the live pages, and the filmed run confirms the 14,000-splat figure shown on screen; the reel captions match their frames and the frames contradict nothing in the copy. Voice, single link, and mechanic-first structure all comply with the contract, so this ships unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

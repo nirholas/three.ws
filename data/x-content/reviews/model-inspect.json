@@ -1,0 +1,179 @@
+{
+	"id": "model-inspect",
+	"contentHash": "e4ac9fcc242888003df795367bf6f28a187114fe8bd3eaa08cc81482cf7ac0c1",
+	"reviewedAt": "2026-10-01T07:07:27.401Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable:"
+	],
+	"texts": [
+		"4,672 triangles, 19 joints, 1 animation, 0 validator errors and 1 warning. One GET request told us that about a 3D file, with no API key and no account.\n\nThe inspect endpoint is free. Hand it the address of a glTF or GLB and it answers in JSON: whether the file is valid, what is inside it, and a prioritized plan to make it smaller and faster.\n\nIt is built for AI agents that make or buy 3D mid-task and need to know what they got before they use it.",
+		"Send the address in a GET, or POST the file itself. The cap is 32 MB a file and 60 requests a minute.\n\nIt reports up to 10 validator findings, each with its code and where in the file it sits, beside the true totals.\n\nThe spec is OpenAPI 3.1, so an agent can read it and call this on its own: three.ws/3d"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "4,672 triangles",
+				"kind": "evidence:proof",
+				"target": "triangles",
+				"ok": true,
+				"detail": "the run read triangles = \"4672\""
+			},
+			{
+				"claim": "19 joints",
+				"kind": "evidence:proof",
+				"target": "joints",
+				"ok": true,
+				"detail": "the run read joints = \"19\""
+			},
+			{
+				"claim": "1 animation",
+				"kind": "evidence:proof",
+				"target": "animations",
+				"ok": true,
+				"detail": "the run read animations = \"1\""
+			},
+			{
+				"claim": "0 validator errors",
+				"kind": "evidence:proof",
+				"target": "errors",
+				"ok": true,
+				"detail": "the run read errors = \"0\""
+			},
+			{
+				"claim": "1 warning",
+				"kind": "evidence:proof",
+				"target": "warnings",
+				"ok": true,
+				"detail": "the run read warnings = \"1\""
+			},
+			{
+				"claim": "One GET request told us that about a 3D file",
+				"kind": "evidence:proof",
+				"target": "/api/3d/inspect",
+				"ok": true,
+				"detail": "GET /api/3d/inspect answered 200 in 0 s"
+			},
+			{
+				"claim": "with no API key and no account",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"No key, no header, no account.\""
+			},
+			{
+				"claim": "The inspect endpoint is free",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"Every row is free and keyless.\""
+			},
+			{
+				"claim": "Hand it the address of a glTF or GLB",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"validate and optimize any glTF/GLB\""
+			},
+			{
+				"claim": "whether the file is valid",
+				"kind": "evidence:proof",
+				"target": "\"valid\": true",
+				"ok": true,
+				"detail": "the run waited for and saw \"\"valid\": true\""
+			},
+			{
+				"claim": "what is inside it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"reports exactly what's inside one of these\""
+			},
+			{
+				"claim": "a prioritized plan to make it smaller and faster",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"a prioritized plan to make it smaller and faster\""
+			},
+			{
+				"claim": "It is built for AI agents",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"Give your AI agent a 3D toolchain\""
+			},
+			{
+				"claim": "Send the address in a GET, or POST the file itself",
+				"kind": "evidence:file",
+				"target": "api/3d/inspect.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "32 MB a file",
+				"kind": "evidence:file",
+				"target": "api/3d/inspect.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "60 requests a minute",
+				"kind": "evidence:file",
+				"target": "api/3d/inspect.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to 10 validator findings",
+				"kind": "evidence:file",
+				"target": "api/3d/inspect.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each with its code and where in the file it sits",
+				"kind": "evidence:file",
+				"target": "api/3d/inspect.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "beside the true totals",
+				"kind": "evidence:file",
+				"target": "api/3d/inspect.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The spec is OpenAPI 3.1",
+				"kind": "evidence:page",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "live page shows \"OpenAPI 3.1\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "21 steps passed against the live product, every claimed fact still holds (vertices 3273, triangles 4672, joints 19, animations 1, errors 0, warnings 1)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "inspect answers for the sample model",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/3d",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+}

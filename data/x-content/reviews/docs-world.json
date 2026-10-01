@@ -1,27 +1,23 @@
 {
 	"id": "docs-world",
-	"contentHash": "c6329dfe58f5c87cc0403919adac6ec4c3793263ddf4eb9c937a9a5badd2aded",
-	"reviewedAt": "2026-09-30T08:56:12.523Z",
-	"passed": false,
-	"blockers": [
-		"probe:scenario the filmed scenario: pages is now \"307\", the reel shows \"306\"; prove it again",
-		"editor (accuracy): The probe scenario failed: the live product now reads pages = 307, while the reel and the copy both say 306. The live product is the source of truth, so the filmed run is stale and the number in the copy is no longer supported by a passing check.",
-		"editor verdict is revise"
-	],
+	"contentHash": "ff72e0aff1445d80640ba694802a26c521f2ee515ae7930a08c5820e338376a8",
+	"reviewedAt": "2026-10-01T06:50:23.721Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"This is the documentation, rebuilt as a place. 306 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+		"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 		"Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
-				"claim": "306 pages",
+				"claim": "More than 300 pages",
 				"kind": "evidence:proof",
 				"target": "pages",
 				"ok": true,
-				"detail": "the run read pages = \"306\""
+				"detail": "the run read pages = \"306\", at least 300"
 			},
 			{
 				"claim": "you read them by walking up to them",
@@ -131,8 +127,8 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "pages is now \"307\", the reel shows \"306\"; prove it again"
+				"ok": true,
+				"detail": "19 steps passed against the live product, every claimed fact still holds (pages 307, pavilions 15)"
 			},
 			{
 				"kind": "probe:api",
@@ -149,53 +145,31 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 3,
+			"accuracy": 5,
 			"clarity": 5,
-			"specificity": 4,
-			"voice": 5,
+			"specificity": 5,
+			"voice": 4,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "306 pages, and you read them by walking up to them",
-				"problem": "The probe scenario failed: the live product now reads pages = 307, while the reel and the copy both say 306. The live product is the source of truth, so the filmed run is stale and the number in the copy is no longer supported by a passing check.",
-				"fix": "Rerun npm run x:content prove for this scenario to recapture the reel against current production so pages reads the live count, and update the copy to the number the new run reads off the screen. Until then, drop the page count from the copy."
-			},
-			{
-				"severity": "minor",
-				"area": "specificity",
-				"quote": "Search a page from wherever you stand",
-				"problem": "The reel caption and the on-screen UI both show Shift+Enter lays the trail, which is a concrete detail the copy omits in favor of a vaguer phrasing. This is polish, not a discrepancy.",
-				"fix": "Optionally tighten to: press Shift+Enter on a result and a trail of chevrons leads to the pavilion that holds it."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
-				"This is the documentation, rebuilt as a place: every docs section is a pavilion on a ring, 15 in all, and you read the pages by walking an avatar up to them.\n\nSearch a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter opens the real page at once inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+				"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 				"Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
 			],
-			"altText": [
-				"A 3D scene of the three.ws Docs World: glowing pavilions arranged on a ring, an avatar walking between them, a search palette listing every docs page, a chevron trail on the ground leading to a pavilion, and the real Forge docs page opening as selectable, zoomable text inside the scene."
-			]
+			"altText": []
 		},
-		"summary": "The post is well written and in voice, but the scenario probe failed: production now shows 307 pages while the copy and reel say 306, so the number and the footage must not ship as is. Recapture the reel against current production and update the copy to the live count; the rewrite drops the count as a fallback so the post is accurate either way.",
+		"summary": "Every claim in the post is backed by a passing verification against the live page, the source file, or the filmed run, and the reel frames show exactly what the copy describes, including the 15 pavilions, the search palette, the chevron trail, and the real page opening in scene. The voice is clean, the link resolves, and there is nothing blocking.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"306 pages\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"you read them by walking up to them\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Enter reads it there and then\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the real page opens inside the scene\" does not appear in the copy; claims must quote the post"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }

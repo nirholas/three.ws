@@ -1,0 +1,203 @@
+{
+	"id": "model-inspector",
+	"contentHash": "748c799d42db41f6a42be3d8bde0849066d38b8a44dc22630f15ca4e3be60f5d",
+	"reviewedAt": "2026-10-01T07:09:34.397Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Pick a model, or drop your own .glb, and the inspector runs the exact quality gate our catalog applies to its own entries: same module, same thresholds, same decision. It runs in your browser, and the file never leaves your machine.\n\nEvery rule shows what it measured against its bound, and a failed rule comes with the fix. The mannequin in the reel is 2 checks short: no texture, and 22 meshes where a character may have at most 8, so it will not rig or animate as one body.",
+		"Switch the category to Prop and the assembled-character rule stops applying, because loose parts are legitimate on a prop. Michelle from the library is a clean pass. Fox passes, barely. Copy any verdict as JSON or as a shareable link. three.ws/inspect"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "Pick a model, or drop your own .glb",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"Drop a .glb, paste a URL, or pick a sample\""
+			},
+			{
+				"claim": "runs the exact quality gate our catalog applies to its own entries",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"This runs the exact quality gate three.ws applies to its own catalog entries\""
+			},
+			{
+				"claim": "same module, same thresholds, same decision",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"Same module, same thresholds, same decision\""
+			},
+			{
+				"claim": "It runs in your browser, and the file never leaves your machine",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"It runs entirely in your browser: nothing is uploaded\""
+			},
+			{
+				"claim": "It runs in your browser, and the file never leaves your machine",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"It never leaves your machine\""
+			},
+			{
+				"claim": "Every rule shows what it measured against its bound, and a failed rule comes with the fix",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"it reports every structural check the catalog applies, what it measured, and how to fix anything that failed\""
+			},
+			{
+				"claim": "2 checks short",
+				"kind": "evidence:proof",
+				"target": "failed",
+				"ok": true,
+				"detail": "the run read failed = \"2\""
+			},
+			{
+				"claim": "2 checks short",
+				"kind": "evidence:proof",
+				"target": "short of the catalog bar",
+				"ok": true,
+				"detail": "the run waited for and saw \"short of the catalog bar\""
+			},
+			{
+				"claim": "no texture",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "no texture",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"Untextured\""
+			},
+			{
+				"claim": "22 meshes",
+				"kind": "evidence:proof",
+				"target": "meshes",
+				"ok": true,
+				"detail": "the run read meshes = \"22\""
+			},
+			{
+				"claim": "at most 8",
+				"kind": "evidence:proof",
+				"target": "meshLimit",
+				"ok": true,
+				"detail": "the run read meshLimit = \"8\""
+			},
+			{
+				"claim": "at most 8",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it will not rig or animate as one body",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Switch the category to Prop and the assembled-character rule stops applying, because loose parts are legitimate on a prop",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"Props skip the character-only checks\""
+			},
+			{
+				"claim": "Switch the category to Prop and the assembled-character rule stops applying, because loose parts are legitimate on a prop",
+				"kind": "evidence:file",
+				"target": "api/_lib/seed-mesh-gate.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Michelle from the library is a clean pass",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"A clean pass\""
+			},
+			{
+				"claim": "Fox passes, barely",
+				"kind": "evidence:page",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "live page shows \"Passes, barely\""
+			},
+			{
+				"claim": "Copy any verdict as JSON or as a shareable link",
+				"kind": "evidence:file",
+				"target": "pages/inspect.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Copy any verdict as JSON or as a shareable link",
+				"kind": "evidence:file",
+				"target": "pages/inspect.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "17 steps passed against the live product, every claimed fact still holds (failed 2, meshes 22, meshLimit 8, vertices 5,196)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the inspector page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/inspect",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Pick a model, or drop your own .glb, and the inspector runs the exact quality gate our catalog applies to its own entries: same module, same thresholds, same decision. It runs in your browser, and the file never leaves your machine.\n\nEvery rule shows what it measured against its bound, and a failed rule comes with the fix. The mannequin in the reel is 2 checks short: no texture, and 22 meshes where a character may have at most 8, so it will not rig or animate as one body.",
+				"Switch the category to Prop and the assembled-character rule stops applying, because loose parts are legitimate on a prop. Michelle from the library is a clean pass. Fox passes, barely. Copy any verdict as JSON or as a shareable link. three.ws/inspect"
+			],
+			"altText": []
+		},
+		"summary": "Every factual claim is verified word for word against the live page, the code, or the filmed run's screen readings (2 failed checks, 22 meshes, limit of 8), and the reel frames match each caption. Voice is clean throughout: no dashes, hashtags, or hype. Ship it unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

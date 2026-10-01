@@ -1,13 +1,11 @@
 {
 	"id": "avatar-cli",
-	"contentHash": "c1b7bf2bdc9d324c6d16e5e168eca0067a45ac8cfd39305ace852dec723fd8b5",
-	"reviewedAt": "2026-09-30T08:50:44.785Z",
-	"passed": false,
-	"blockers": [
-		"editor verdict is revise"
-	],
+	"contentHash": "b69970c6f2ba03d58bc52ad4060cf30751c7653235f75e74c44859489b0a79e8",
+	"reviewedAt": "2026-10-01T06:40:54.025Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nthree-ws-avatar reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
+		"An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nThe three-ws-avatar command reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
 		"validate exits non-zero on an invalid manifest and prints each error at the path where it happened, so a bad file fails the build step instead of logging a warning. hash prints the digest alone on stdout, which makes the drift check a one-line comparison.\n\nInstall line, the four commands, and the manifest fields: three.ws/avatar-cli",
 		"The owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is."
 	],
@@ -142,10 +140,24 @@
 				"detail": "file supports the claim"
 			},
 			{
+				"claim": "The three-ws-avatar command",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"three-ws-avatar hash\""
+			},
+			{
+				"claim": "The three-ws-avatar command",
+				"kind": "evidence:file",
+				"target": "packages/avatar-cli/package.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "16 steps passed against the live product, facts unchanged (commands 4, networkCalls 0, runtimeDeps 1, viewer michelle.glb)"
+				"detail": "16 steps passed against the live product, every claimed fact still holds (commands 4, networkCalls 0, runtimeDeps 1, viewer michelle.glb)"
 			},
 			{
 				"kind": "probe:api",
@@ -162,9 +174,9 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
+			"accuracy": 5,
 			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
@@ -173,29 +185,29 @@
 		},
 		"issues": [
 			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "three-ws-avatar reads the GLB once",
-				"problem": "The tool is never named that anywhere in the evidence. The live page, the reel frame, and the install line all name the package @three-ws/avatar-cli. A developer typing 'three-ws-avatar' into npm finds nothing. The post asks readers to install the tool, so the name has to be the one they install.",
-				"fix": "Replace with '@three-ws/avatar-cli reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema.'"
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "The owner is a chain-scoped account",
+				"problem": "\"The owner\" appears without antecedent in a reply two posts deep; a reader who lands on this post directly does not know it means the manifest's owner field.",
+				"fix": "Reword to \"The manifest's owner field is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is.\""
 			},
 			{
 				"severity": "minor",
-				"area": "clarity",
-				"quote": "The owner is a chain-scoped account, so ownership is unambiguous off-platform.",
-				"problem": "Post 3 never says whose owner it means. A reader who has not seen the page does not know whether the owner of the CLI, the site, or the manifest is meant. One word pins it.",
-				"fix": "Change to 'The manifest's owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is.'"
+				"area": "visual",
+				"quote": "A live viewer, not a screenshot. Turn it.",
+				"problem": "The 14.2s frame freezes the avatar mid-rotation in a horizontal pose that could read as a broken render to a scrubbing viewer, though it does demonstrate interactivity and the caption covers it.",
+				"fix": "Optional: choose a mid-turn frame closer to upright for the rotation beat; acceptable as is since the pose proves the viewer is live."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\n@three-ws/avatar-cli reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
+				"An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nThe three-ws-avatar command reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
 				"validate exits non-zero on an invalid manifest and prints each error at the path where it happened, so a bad file fails the build step instead of logging a warning. hash prints the digest alone on stdout, which makes the drift check a one-line comparison.\n\nInstall line, the four commands, and the manifest fields: three.ws/avatar-cli",
-				"The manifest's owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is."
+				"The manifest's owner field is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is."
 			],
 			"altText": []
 		},
-		"summary": "Every stated number and mechanism verified against the live page and the filmed run, and the reel frames support each caption. Two fixes: the tool is called by a name nobody can install, and post 3's owner claim never says what it is the owner of.",
+		"summary": "Every claim is backed by a passing verification against the live page, the schema source, or the filmed run, and the reel's captions match what each frame shows, including the pasted markup rendering live. Voice and structure follow the contract; the only nit is post 3 saying \"The owner\" without naming the manifest, which is minor polish rather than a blocker.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -203,8 +215,7 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
-			"claims: claim \"The owner is a chain-scoped account, so ownership is unambiguous off-platform\" does not appear in the copy; claims must quote the post",
-			"claims: @three has no recorded reason; tag only an account the feature genuinely runs on"
+			"claims: claim \"The owner is a chain-scoped account, so ownership is unambiguous off-platform\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

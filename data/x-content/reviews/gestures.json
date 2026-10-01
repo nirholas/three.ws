@@ -1,13 +1,13 @@
 {
 	"id": "gestures",
-	"contentHash": "7dfd76e0a23d4e49a38a730523b5ecb0fc749a20ec4577448b76afeeb993ffd1",
-	"reviewedAt": "2026-09-30T09:02:27.520Z",
+	"contentHash": "24ad1659448b5794f1c351b73ba77989fa5588c24f3dd2dde34b5d4ab8b4b2e7",
+	"reviewedAt": "2026-10-01T06:59:48.874Z",
 	"passed": false,
 	"blockers": [
-		"editor verdict is revise"
+		"the AI editor did not run: no model was reachable:"
 	],
 	"texts": [
-		"An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nAn agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
+		"An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nIt names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
 		"Choose any slot to play it on a live avatar. Every row of what triggers a gesture is generated from the shipped skill definitions, and each clip is measured from its own keyframes: how energetic it is and how much of that energy is above the waist.\n\nthree.ws/gestures"
 	],
 	"lint": [],
@@ -36,7 +36,7 @@
 				"detail": "the run waited for and saw \"Rumba · rumba\""
 			},
 			{
-				"claim": "An agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip.",
+				"claim": "It names a slot, and the platform resolves that slot to a real clip.",
 				"kind": "evidence:page",
 				"target": "https://three.ws/gestures",
 				"ok": true,
@@ -102,7 +102,7 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "14 steps passed against the live product, facts unchanged (slots 19)"
+				"detail": "14 steps passed against the live product, every claimed fact still holds (slots 19)"
 			},
 			{
 				"kind": "probe:api",
@@ -118,42 +118,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "revise",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 4,
-			"specificity": 4,
-			"voice": 4,
-			"professionalism": 5,
-			"visual": 5
-		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "and it did not pick an animation file for any of them.\n\nAn agent does not pick animation files.",
-				"problem": "The same point is stated twice in back-to-back paragraphs, and the head repeats 'An agent' to open both sentences. The reel shows the wave, celebrate, and dance clips being resolved, so the copy only needs to say it once, then spend the saved characters on the mechanism.",
-				"fix": "Drop the second occurrence of 'An agent does not pick animation files.' and continue directly with 'It names a slot, and the platform resolves that slot to a real clip.'"
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nIt names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
-				"Choose any slot to play it on a live avatar. Every row of what triggers a gesture is generated from the shipped skill definitions, and each clip is measured from its own keyframes: how energetic it is and how much of that energy is above the waist.\n\nthree.ws/gestures"
-			],
-			"altText": []
-		},
-		"summary": "Every claim is verified against the live gestures page and the filmed run, including the 19-slot count, and the reel frames and captions genuinely show slot selection and clip resolution on a live avatar. The only fix needed is removing the duplicated 'does not pick animation files' sentence in the head post, then it ships.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": [
-			"claims: claim \"An agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip.\" does not appear in the copy; claims must quote the post"
-		]
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
 }

@@ -2824,12 +2824,12 @@
 		},
 		{
 			"id": "splat-viewer",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "mechanism",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T08:24:29.235Z",
 			"covers": [
 				"/splat",
 				"/docs/splat"
@@ -3094,16 +3094,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "agent-monitor",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "number",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T08:27:22.393Z",
 			"covers": [
 				"/monitor"
 			],
@@ -3370,7 +3371,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "agent-spotlight",
@@ -3673,12 +3675,12 @@
 		},
 		{
 			"id": "avatar-cli",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
 			"pattern": "mechanism",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T08:40:54.050Z",
 			"covers": [
 				"/avatar-cli",
 				"@three-ws/avatar-cli"
@@ -3982,16 +3984,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "choreograph",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "walkthrough",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T08:45:48.935Z",
 			"covers": [
 				"/choreograph"
 			],
@@ -4182,16 +4185,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "docs-world",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T08:50:23.737Z",
 			"covers": [
 				"/docs/world"
 			],
@@ -4465,7 +4469,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "drive-copilot",
@@ -6302,12 +6307,12 @@
 		},
 		{
 			"id": "model-inspector",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "walkthrough",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:09:34.408Z",
 			"covers": [
 				"/inspect"
 			],
@@ -6618,16 +6623,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "prompt-library",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "walkthrough",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:11:43.196Z",
 			"covers": [
 				"/prompts",
 				"/docs/prompts",
@@ -6910,7 +6916,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		}
 	]
 }

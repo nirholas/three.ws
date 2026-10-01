@@ -1,0 +1,191 @@
+{
+	"id": "prompt-library",
+	"contentHash": "13e36e675d6cd864ea48d9c543056fefea10de68167c2b943aadb2e4945ebde7",
+	"reviewedAt": "2026-10-01T07:11:43.184Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Pick what you want to make, copy the prompt, paste it into Claude, and swap the words in angle brackets for your own.\n\nThat is the whole Prompt Library: 24 prompts, each written to produce something real, like a 3D model you can download or a live avatar on your page. 15 of them need nothing installed.\n\n10 are for making 3D: a model from a sentence, a rigged avatar from a description, a rig for a GLB you already have.",
+		"Each prompt names the tools to call and what to check before it answers. The rigged avatar one has Claude look at the rendered frames and fix the proportions before it says it is done.\n\nThe library is also published as plain text and as JSON, so an agent can read it too.\n\nthree.ws/prompts",
+		"The prompts that can move real money are written to stop for your yes first."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "paste it into Claude",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"pasted straight into Claude\""
+			},
+			{
+				"claim": "swap the words in angle brackets for your own",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Placeholders in angle brackets are the parts you replace.\""
+			},
+			{
+				"claim": "24 prompts",
+				"kind": "evidence:proof",
+				"target": "prompts",
+				"ok": true,
+				"detail": "the run read prompts = \"24\""
+			},
+			{
+				"claim": "each written to produce something real",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"to produce something real\""
+			},
+			{
+				"claim": "a 3D model you can download",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"a 3D model you can download\""
+			},
+			{
+				"claim": "a live avatar on your page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Put a live avatar on your page\""
+			},
+			{
+				"claim": "15 of them need nothing installed",
+				"kind": "evidence:proof",
+				"target": "nosetup",
+				"ok": true,
+				"detail": "the run read nosetup = \"15\""
+			},
+			{
+				"claim": "15 of them need nothing installed",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Nothing to install.\""
+			},
+			{
+				"claim": "10 are for making 3D",
+				"kind": "evidence:proof",
+				"target": "making",
+				"ok": true,
+				"detail": "the run read making = \"10\""
+			},
+			{
+				"claim": "a model from a sentence",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Turn a sentence into a 3D model\""
+			},
+			{
+				"claim": "a rigged avatar from a description",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Generate a rigged avatar from a description\""
+			},
+			{
+				"claim": "a rig for a GLB you already have",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Rig a GLB you already have\""
+			},
+			{
+				"claim": "Each prompt names the tools to call and what to check before it answers",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Before you tell me it is done, call look_at_model on the result\""
+			},
+			{
+				"claim": "look at the rendered frames",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"actually look at the frames\""
+			},
+			{
+				"claim": "fix the proportions before it says it is done",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"If the silhouette or the proportions are wrong, fix it\""
+			},
+			{
+				"claim": "published as plain text and as JSON",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"Plain text\""
+			},
+			{
+				"claim": "published as plain text and as JSON",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts.json",
+				"ok": true,
+				"detail": "live page shows \"\"prompts\"\""
+			},
+			{
+				"claim": "The prompts that can move real money are written to stop for your yes first",
+				"kind": "evidence:page",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "live page shows \"These prompts can move real money, so they are written to stop for your yes first.\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "15 steps passed against the live product, every claimed fact still holds (nosetup 15, prompts 24, making 10)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the prompt library answers as JSON",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/prompts",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Pick what you want to make, copy the prompt, paste it into Claude, and swap the words in angle brackets for your own.\n\nThat is the whole Prompt Library: 24 prompts, each written to produce something real, like a 3D model you can download or a live avatar on your page. 15 of them need nothing installed.\n\n10 are for making 3D: a model from a sentence, a rigged avatar from a description, a rig for a GLB you already have.",
+				"Each prompt names the tools to call and what to check before it answers. The rigged avatar one has Claude look at the rendered frames and fix the proportions before it says it is done.\n\nThe library is also published as plain text and as JSON, so an agent can read it too.\n\nthree.ws/prompts",
+				"The prompts that can move real money are written to stop for your yes first."
+			],
+			"altText": []
+		},
+		"summary": "Every claim passes verification against the live page and the filmed run, and the reel frames show exactly what the copy describes with matching numbers (24, 15, 10). The captions are true of their frames, the voice contract is followed, and the post stands alone as an explanation of the Prompt Library for a first-time reader.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

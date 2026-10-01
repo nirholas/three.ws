@@ -1,14 +1,12 @@
 {
 	"id": "choreograph",
-	"contentHash": "ec236c6b553481a0e9375a0880f687c23da9369a46eaaba2f23129057774098a",
-	"reviewedAt": "2026-09-30T08:54:02.489Z",
-	"passed": false,
-	"blockers": [
-		"editor verdict is revise"
-	],
+	"contentHash": "1ac7eab076b9ecda220cb83e5a018ff7d58a7b89575209b90457425bee511688",
+	"reviewedAt": "2026-10-01T06:45:48.926Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"Load a routine and your agent performs it: sign, celebrate, dance. Add a beat while it plays and the stage follows.\n\nA routine is a performance built from gestures on a timeline. Each row is one beat: drag to reorder, set how long it holds, and point any step at a different clip. Save it to an agent you own and it travels with that agent, so any embed can play it by name.\n\nthree.ws/choreograph",
-		"Five performances ship as starting points. A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture. A routine holds up to 24 steps."
+		"Five performances ship as starting points. A step names a slot, so a routine shared with another agent still plays that agent's own take on each gesture. A routine holds up to 24 steps."
 	],
 	"lint": [],
 	"verification": {
@@ -92,7 +90,7 @@
 				"detail": "live page shows \"they are starting points\""
 			},
 			{
-				"claim": "A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture",
+				"claim": "A step names a slot, so a routine shared with another agent still plays that agent's own take on each gesture",
 				"kind": "evidence:page",
 				"target": "https://three.ws/choreograph",
 				"ok": true,
@@ -126,24 +124,16 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
+			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "A step names a slot rather than a file",
-				"problem": "The passing verification supports \"A step names a slot\" from the live page, but the words \"rather than a file\" appear in no passing check. The claim smuggles in an unverified contrast about file handling.",
-				"fix": "Cut the unverified clause: \"A step names a slot, so a routine shared with another agent still plays that agent's own take on each gesture.\""
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"Load a routine and your agent performs it: sign, celebrate, dance. Add a beat while it plays and the stage follows.\n\nA routine is a performance built from gestures on a timeline. Each row is one beat: drag to reorder, set how long it holds, and point any step at a different clip. Save it to an agent you own and it travels with that agent, so any embed can play it by name.\n\nthree.ws/choreograph",
@@ -151,16 +141,14 @@
 			],
 			"altText": []
 		},
-		"summary": "Every claim was verified against the live page and code, the reel frames match the captions and the copy, and the voice is clean. The only fix is dropping \"rather than a file\", an unverified addition to an otherwise supported slot claim in post 2.",
+		"summary": "Every claim traces to a passing verification against the live page, the runtime source, or the filmed run, and the reel frames show exactly what the copy describes (loading a routine, performing beats, adding a beat mid-play, the stage following). Voice, link, and structure all match the contract; ship unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture\" does not appear in the copy; claims must quote the post"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }

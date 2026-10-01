@@ -1,7 +1,7 @@
 {
 	"id": "agent-spotlight",
 	"contentHash": "ee9c078011bc89a7e7b7cd35b8428bec518bdbcdde61c4e68640f3f2306f9974",
-	"reviewedAt": "2026-09-30T08:48:02.272Z",
+	"reviewedAt": "2026-10-01T06:34:23.304Z",
 	"passed": false,
 	"blockers": [
 		"the AI editor did not run: no model was reachable:"
@@ -145,7 +145,7 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "18 steps passed against the live product, facts unchanged (showcased 15)"
+				"detail": "18 steps passed against the live product, every claimed fact still holds (showcased 15)"
 			},
 			{
 				"kind": "probe:api",
@@ -162,5 +162,5 @@
 		]
 	},
 	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  fetch failed"
 }
