@@ -117,7 +117,12 @@ covers the thing you meant to film.
 | `{ "caption": "..." }` | Changes the caption and does nothing else. | no |
 
 Any step can carry `"caption"`, up to 90 characters. The caption stays until another replaces it;
-`""` clears it. An action (`click`, `type`, `press`) can carry `"awaits": "/api/path"`: the request
+`""` clears it. The bar shows two lines, and how much fits depends on the format: a square reel
+holds far less than a landscape one, and the stamp and cut badge share the width. `prove` measures
+every caption in the real bar before it films, beside the longest stamp and badge, and refuses a
+caption that would be cut off, naming it. About 40 characters is safe in square.
+
+An action (`click`, `type`, `press`) can carry `"awaits": "/api/path"`: the request
 the action has to cause. The run fails if no such request answers, or if it answers with an error.
 
 ### What makes a scenario prove something

@@ -46,6 +46,7 @@ Third-party project names are left out on purpose; the pages named below carry t
 - A tap-only `press` could not walk a character; a key can now be held for a filmed stretch.
 - A loose control-name match clicked "Clear search" for "Search"; exact names are matched first.
 - The caption bar clamps at two lines; captions over about 90 characters were cut off, and the validator now refuses them.
+- A 90-character limit was still too loose for a square reel: four filmed stories (agent monitor, model inspector, spotlight, glb diff) shipped captions cut off mid-sentence. The camera now measures every caption in the real bar before filming and refuses one that would clip.
 
 ## Surfaces judged not to be stories
 

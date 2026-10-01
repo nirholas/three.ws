@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { FORMATS, MIN_MOTION, PROOF_MAX_AGE_DAYS, factCheck, formatCut, proofPath, proofProblems, reelPath, scenarioHash, scenarioProblems, stepKind } from '../api/_lib/x-content/reel.js';
+import { FORMATS, MIN_MOTION, PROOF_MAX_AGE_DAYS, captionsThatClip, factCheck, formatCut, proofPath, proofProblems, reelPath, scenarioHash, scenarioProblems, stepKind } from '../api/_lib/x-content/reel.js';
 import { SITE_CHROME, chromeStylesheet } from '../api/_lib/x-content/site-chrome.js';
 import { PREMIUM_MAX_LENGTH, STANDARD_MAX_LENGTH, maxLengthOf } from '../api/_lib/x-content/quality.js';
 import { validateItem } from '../api/_lib/x-content/queue.js';
@@ -385,5 +385,25 @@ describe('a held key', () => {
 		const steps = [{ goto: 'https://three.ws/walk' }, { press: 'w', hold: 2000 }, { expect: 'Walking' }];
 		expect(scenarioProblems({ steps })).toEqual([]);
 		expect(scenarioProblems({ steps: [steps[0], { press: 'w', hold: 60_000 }, steps[2]] }).join('\n')).toMatch(/step 2: hold is .* of the key held down/);
+	});
+});
+
+// The bar is measured in a real browser, because how much of a caption fits
+// depends on the font and the format, not on a character count.
+const browserStarts = await import('playwright')
+	.then(({ chromium }) => chromium.launch())
+	.then((browser) => browser.close().then(() => true))
+	.catch(() => false);
+
+describe.skipIf(!browserStarts)('caption fit', () => {
+	it('finds a caption the square bar would cut off, and passes one that fits', async () => {
+		const long = 'The entry opens on the agent itself, standing in 3D, with its name and its last move';
+		const short = 'The agent, standing in 3D';
+		const clipped = await captionsThatClip({ format: 'square', steps: [{ goto: 'https://three.ws/' }, { caption: long }, { caption: short }] });
+		expect(clipped).toEqual([long]);
+	}, 60_000);
+
+	it('has nothing to measure in a scenario without captions', async () => {
+		expect(await captionsThatClip({ steps: [{ goto: 'https://three.ws/' }] })).toEqual([]);
 	});
 });

@@ -75,7 +75,8 @@ production and has been filmed, so that `public/x-media/<id>/reel.mp4` and
 ## What good looks like
 
 - Reel of 8 to 20 seconds, the action visible, the result held, at least 25% of frames changing.
-  Captions under about 70 characters: the bar shows two short lines and clips the rest.
+  Short captions: the bar shows two lines, and `prove` refuses to film a caption that would be cut
+  off in the story's format (about 40 characters is safe in square).
 - Head post that opens with the strongest true statement as news, in plain words, and stands on
   its first 280 characters; then the mechanism. 250 to 600 characters is the usual range.
 - One or two replies with the detail, the limits and what to do next.

@@ -385,10 +385,53 @@ class Bar {
 		const next = { ...this.state, ...change };
 		if (JSON.stringify(next) === JSON.stringify(this.state) && this.shot) return;
 		this.state = next;
-		await this.page.evaluate((state) => {
+		const clipped = await this.page.evaluate((state) => {
 			for (const [id, text] of Object.entries(state)) document.getElementById(id).textContent = text;
+			const caption = document.getElementById('caption');
+			return caption.scrollHeight > caption.clientHeight + 1;
 		}, next);
+		// The bar shows two lines and cuts the rest with an ellipsis. How much
+		// fits depends on the format and the font, so it is measured, not counted:
+		// a caption cut off mid-word would ship in the reel.
+		if (clipped) throw new Error(`the caption "${next.caption}" does not fit the bar in this format; shorten it`);
 		this.shot = await this.page.screenshot({ type: 'png', scale: 'device' });
+	}
+
+	// Whether a caption fits the bar, without changing what it shows.
+	async fits(caption) {
+		return this.page.evaluate((text) => {
+			const node = document.getElementById('caption');
+			const before = node.textContent;
+			node.textContent = text;
+			const fits = node.scrollHeight <= node.clientHeight + 1;
+			node.textContent = before;
+			return fits;
+		}, caption);
+	}
+}
+
+// Every caption of a scenario that would be cut off in its format, measured in
+// the same bar the camera films. The stamp and the cut badge share the bar's
+// width with the caption, so it is measured beside the longest of each, which
+// is the narrowest the caption can ever get. Runs before anything is filmed.
+export const WIDEST_STAMP = 'live on three.ws @ 000000000, 2026-12-31';
+export const WIDEST_BADGE = `cut ${formatCut(59 * 60 + 59)}`;
+
+export async function captionsThatClip(scenario) {
+	const captions = [...new Set((scenario.steps || []).map((step) => step.caption).filter(Boolean))];
+	if (!captions.length) return [];
+	const { chromium } = await import('playwright');
+	const format = FORMATS[scenario.format || 'landscape'];
+	const browser = await chromium.launch({ args: BROWSER_ARGS });
+	try {
+		const context = await browser.newContext({ deviceScaleFactor: format.scale });
+		const bar = await Bar.open(context, format, scenario.stamp === false ? '' : WIDEST_STAMP);
+		await bar.set({ badge: WIDEST_BADGE });
+		const clipped = [];
+		for (const caption of captions) if (!(await bar.fits(caption))) clipped.push(caption);
+		return clipped;
+	} finally {
+		await browser.close();
 	}
 }
 
@@ -818,6 +861,12 @@ async function productionVersion(scenario) {
 export async function proveItem(item, { root, film = true, now = Date.now(), failureShot = null }) {
 	const problems = scenarioProblems(item.scenario);
 	if (problems.length) throw new Error(`scenario is not runnable: ${problems.join('; ')}`);
+	// Measured up front, so a caption too long for the format fails in a
+	// second rather than after the whole scenario has been filmed.
+	if (film) {
+		const clipped = await captionsThatClip(item.scenario);
+		if (clipped.length) throw new Error(`caption(s) too long for the ${item.scenario.format || 'landscape'} bar, shorten: ${clipped.map((caption) => `"${caption}"`).join(', ')}`);
+	}
 	const version = await productionVersion(item.scenario);
 	const day = new Date(now).toISOString().slice(0, 10);
 	const host = new URL(item.scenario.steps[0].goto).host;
