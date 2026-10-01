@@ -44,6 +44,7 @@ import { approvalProblems, loadReview, reviewItem } from '../api/_lib/x-content/
 import { FORMATS, proofPath, proofProblems, proveItem, scoutPage } from '../api/_lib/x-content/reel.js';
 import { approvalPolicy, policyBlockers, releaseDigest, vetoUntil } from '../api/_lib/x-content/approval.js';
 import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
+import { browserProblem } from '../api/_lib/x-content/verify.js';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DAY = 24 * 60 * 60_000;
@@ -73,6 +74,13 @@ const command = positional[0] || 'check';
 function fail(message) {
 	console.error(message);
 	process.exit(1);
+}
+
+// Reviews, proofs and the line all drive a real browser. When this machine
+// cannot start one, nothing they record would be about the post.
+async function requireBrowser() {
+	const problem = await browserProblem();
+	if (problem) fail(`x-content: ${problem}. Nothing was reviewed or recorded.`);
 }
 
 const store = () => (process.env.DATABASE_URL ? dbStore() : memoryStore());
@@ -395,6 +403,7 @@ function prepareVideo() {
 // --- proof reels -----------------------------------------------------------
 
 async function scout() {
+	await requireBrowser();
 	const url = positional[1];
 	if (!/^https:\/\//.test(String(url))) fail('Usage: scout <https url> [--format landscape|square|portrait] [--shot file.png]');
 	const format = option('format', 'landscape');
@@ -445,6 +454,7 @@ const saveQueue = (queue) => saveJson(resolve(root, QUEUE_PATH), queue);
 const STORY_DIR = 'data/x-content/stories';
 
 async function prove() {
+	await requireBrowser();
 	const filming = !has('no-film');
 	const file = option('file');
 	if (file) {
@@ -514,6 +524,7 @@ async function pause() {
 // One command for the whole line. Each item is taken as far as it can go and
 // stops at the first thing that needs a person, with the reason.
 async function advance() {
+	await requireBrowser();
 	const queue = loadQueue(root);
 	const id = positional[1];
 	const dryRun = has('dry-run');
@@ -643,6 +654,7 @@ function printReview(record) {
 }
 
 async function review() {
+	await requireBrowser();
 	const queue = loadQueue(root);
 	const status = option('status');
 	const id = positional[1];

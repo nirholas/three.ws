@@ -74,6 +74,28 @@ export async function linkChecks(texts) {
 	return checks;
 }
 
+// Whether this machine can run the browser the checks need. A missing system
+// library fails every page check, probe and scenario at once, and a review
+// that ran anyway would record those failures against the posts.
+export function describeBrowserError(message) {
+	const text = String(message || '');
+	const missing = /error while loading shared libraries: ([^:\s]+)/.exec(text)?.[1];
+	if (missing) return `the browser cannot start: ${missing} is missing on this machine. Install the system libraries with \`npx playwright install-deps chromium\` and run it again`;
+	if (/Executable doesn't exist/i.test(text)) return 'the browser is not installed on this machine. Install it with `npx playwright install chromium` and run it again';
+	return `the browser cannot start: ${text.split('\n')[0]}`;
+}
+
+export async function browserProblem() {
+	try {
+		const { chromium } = await import('playwright');
+		const browser = await chromium.launch();
+		await browser.close();
+		return null;
+	} catch (err) {
+		return describeBrowserError(err?.message || err);
+	}
+}
+
 export function createPageReader() {
 	let browser = null;
 	const cache = new Map();

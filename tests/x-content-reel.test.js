@@ -363,3 +363,13 @@ describe('facts that move', () => {
 		expect(factDrift(uncited, filmed, { agents: '9' })).toEqual([]);
 	});
 });
+
+describe('a machine that cannot run the browser', () => {
+	it('says which library is missing and how to install it', async () => {
+		const { describeBrowserError } = await import('../api/_lib/x-content/verify.js');
+		const launch = 'browserType.launch: Target page, context or browser has been closed\n[pid=1][err] /home/user/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell: error while loading shared libraries: libxkbcommon.so.0: cannot open shared object file: No such file or directory';
+		expect(describeBrowserError(launch)).toBe('the browser cannot start: libxkbcommon.so.0 is missing on this machine. Install the system libraries with `npx playwright install-deps chromium` and run it again');
+		expect(describeBrowserError("browserType.launch: Executable doesn't exist at /x/chrome")).toMatch(/npx playwright install chromium/);
+		expect(describeBrowserError('something else\nmore')).toBe('the browser cannot start: something else');
+	});
+});
