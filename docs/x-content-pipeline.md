@@ -132,12 +132,19 @@ Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC), `win
 
 **When:** three slots a day, one per tier, eight hours apart, every day of the week: T3 at 04:00 UTC, T2 at 12:00, T1 at 20:00. That cadence is the owner's (2026-09-20): three a day, weekends included. It replaced a tighter window drawn from the volume study, which measured every original post against 1-minute candles of the $THREE pool and found that a post between 12:00 and 20:00 UTC was followed by a volume response about 1.7 times as often as one outside it. Two of the three slots still sit in that window; the third takes the off-peak turn so the day stays evenly spaced. Each slot opens at a minute only the production seed can reproduce (up to `windowMinutes` late), and stays open for three hours (`slotOpenMinutes`), so a missed run or a deploy still posts, but no slot is ever spent twice. Slots are at least `minimumMinutesApart` apart even at their latest opening, so an earlier post never blocks a later slot. There are no quiet hours: with fixed slots eight hours apart, the slot times already say when the account posts. `flagshipWeekdaysOnly` would withhold the T1 slot on Saturday and Sunday and keep T1 posts out of the lower slots too; the queue no longer sets it, and it is the one lever that would return the account to weekdays-only flagships.
 
-**Three a day is a quota** (owner, 2026-09-30), so a slot is never left empty while a post exists
-to fill it. A post the policy released is embargoed only so the owner can take it back; when a slot
-opens with nothing else ready, that embargo yields, the post goes out, and an alert says so. An
-embargo the owner set by hand is never shortened. A tick that finds an open slot with nothing to
-post raises an alert at once, and any slot that closed unfilled in the last day is raised once as
-missed. The cure for either is stock: `npm run x:content -- advance --ship`.
+**Three a day is a quota** (owner, 2026-09-30), so a slot is never left empty while an approved post
+could fill it. When the usual order finds nothing, the slot takes, in turn:
+
+1. **A higher tier's last ready post.** The usual order keeps a tier's last post for that tier's
+   own slot, which only moves the gap: a post sent now is one the later slot can still be given new
+   stock for.
+2. **A post the policy released that is still in its veto window.** That embargo exists so the
+   owner can take the post back, and an empty slot outweighs it; an alert says it went out early.
+   An embargo the owner set by hand is never shortened.
+
+A tick that finds an open slot with nothing to post raises an alert at once, and any slot that
+closed unfilled in the last day is raised once as missed. The cure for either is stock:
+`npm run x:content -- advance --ship`.
 
 **What:** the slot's own tier first, highest priority first. Priority leads with **volume**, not engagement: [`data/x-content/volume-model.json`](../data/x-content/volume-model.json) is a logistic model fitted on every original post moment, and it gives each draft a chance of being followed by a volume response on the pool (the first hour after the post running at least twice the hour before). Pool volume is what pays creator rewards, so it outranks attention. The model rewards what the data rewarded: announcing something shipped, partner or recognition language, naming a tier-1 company, more than 180 characters, and a thread rather than a single post. `npm run x:content -- plan` prints each post's chance and the attributes found on it. If the model file is missing, the older engagement estimate takes over. Refit and re-export it from the study repo with `node analyze/volume-chart.mjs --asset three --export-model <this repo>/data/x-content/volume-model.json --export-exclude cryptoNative`. An empty tier falls to the next tier down, so the best available post always gets the best time. A higher tier only fills a lower slot when it has more than one post ready, so the last flagship post is kept for prime time. When nothing is ready, nothing posts, and the tick says so loudly (see the quota paragraph above).
 
@@ -155,7 +162,7 @@ missed. The cure for either is stock: `npm run x:content -- advance --ship`.
 
 **Quoting an earlier post:** a post item may carry `quotes`, the numeric id of an existing post (the id, not the URL, which the validator enforces). The head becomes a quote tweet of it and any further posts thread under the head as usual. That is how a follow-up adds the detail its original left out, such as the numbers behind a page, without repeating the original's copy.
 
-**When a post fails:** it is held, not dropped. Link or probe failures and X rejecting the content (a 4xx such as a duplicate) hold the post for 2 hours, then 6, then 24, and the slot goes to the next post in the same run. Editing the post releases the hold at once. X being down, rate limiting, or rejecting our credentials is not the post's fault, so the run stops and the next run retries the same post. A thread cut off mid-way always resumes before anything else.
+**When a post fails:** it is held, not dropped. Link or probe failures and X rejecting the content (a 4xx such as a duplicate) hold the post for 2 hours, then 6, then 24, and the slot goes to the next post in the same run. Editing the post releases the hold at once. X being down, rate limiting, rejecting our credentials, or refusing the account because its API credits are spent (402) is not the post's fault, so the run stops and the next run retries the same post. A refusal of the account (401, 402, or a 403 that is not a duplicate) is also raised once a day as a critical alert that says what to fix, because until a person acts every slot is a missed one. A thread cut off mid-way always resumes before anything else.
 
 **Stock:** every run counts approved, ready posts per tier (one per day). When any tier has fewer than 3 days left, it raises one alert a day through the platform's ops alerts: always recorded in `ops_alerts`, and pushed to Telegram when `TELEGRAM_ALERTS_CHAT_ID` is set on the service. Running low never makes the queue post something unreviewed; it only posts less.
 
@@ -203,10 +210,14 @@ of the account's largest posts. It reported that video loses to a still and that
 characters is the best length. The X API says the opposite on both.
 
 So the queue measures itself. After each tick's publish attempt it reads the account's head posts
-of the last 90 days (at most once every 6 hours), describes each one by its shape, and learns what
-each attribute is worth: recency weighted, shrunk toward nothing for small samples, and counted
-only once a post is 48 hours old. Replies are left out of the outcome on purpose, because on this
-account they are mostly `$three @grok` farming. Hand-written posts teach it as much as its own.
+(at most once every 6 hours), describes each one by its shape, and learns what each attribute is
+worth over the last 90 days. X bills every post a read returns, so a refresh reads back only as far
+as metrics can still be moving (7 days before the last read) and keeps the older, settled rows from
+the stored record; only the first read, or one after a long gap, reads the whole window. A failed
+read is paced like a read, so a refusal is not repeated every fifteen minutes. Outcomes are recency
+weighted, small samples are shrunk toward nothing, and a post counts only once it is 48 hours old.
+Replies are left out of the outcome on purpose, because on this account they are mostly
+`$three @grok` farming. Hand-written posts teach it as much as its own.
 
 ```bash
 npm run x:outcomes                # the learned table, and the best and worst posts of the window
