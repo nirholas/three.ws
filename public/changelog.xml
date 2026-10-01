@@ -87,6 +87,14 @@
 			<description>Pick any of the 85 languages in the language menu and 59 more pages now follow it, including the Airdrop Checker, Portfolio, Drops, Crews, Launch, the Agent Monitor and the rig and embed doctors. Titles, buttons, form labels, hints, error messages and the text shown when a page is shared all translate. Live numbers and statuses on those pages (counters, balances, scan results, play and pause buttons) keep updating in every language: the translation step now recognises a value the page has already filled in and leaves it alone, instead of putting a placeholder like &quot;Loading&quot; back over it.</description>
 		</item>
 		<item>
+			<title>Every agent now shows what its coin has earned</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-09-30:Every agent now shows what its coin has earned</guid>
+			<pubDate>Wed, 30 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agent pages, agent profiles and coin pages now carry an Earned card: the creator fees an agent's coins have earned on pump.fun, in SOL with dollars beside it, how much has been claimed and how much is still waiting, a per-coin breakdown, and every claim linked to its transaction on Solscan. Skill sales and hires by other agents count too. The figures refresh every 30 minutes, each card says how old its numbers are and how they are calculated, and developers can read the same data from the public earnings API or over MCP. Automatic fee claiming for autonomous launches also works again.</description>
+		</item>
+		<item>
 			<title>Every platform total in one free API call</title>
 			<link>https://three.ws/analytics</link>
 			<guid isPermaLink="false">2026-09-30:Every platform total in one free API call</guid>
