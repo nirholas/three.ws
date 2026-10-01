@@ -102,3 +102,34 @@ until billing is settled in the Cloud console. The editorial chain kept working 
 ### The X account
 
 On 2026-10-01 the X API answered `402 credits depleted` to every read and every post, so nothing could be published until the account's API credits are topped up in the X developer console. The credits belong to the app, and the app is shared by the content queue, the changelog's X lane, the Sentiment Scout's recent search (billed per returned post, guarded only by rate limits), and users' connected-X features (scheduled posts, triggers, and a metrics fetch every six hours). The console's usage breakdown says which of them spent it.
+
+## Found while writing X Articles, 2026-10-01
+
+Article authors use each feature end to end and quote the code, so they found these. Items marked
+"fix in progress" have an agent on them; the rest are open.
+
+| Surface | What happens | Status |
+|---|---|---|
+| `<agent-3d agent-id>` off three.ws | `src/agent-resolver.js` builds the API URL from the host page's origin, so on any other site the agent 404s and the element shows a default body named "Agent"; memory calls 404 the same way. | fix in progress |
+| `<agent-3d>` chat mode off three.ws | No text input (removed in `770c7ccb0`), and the viewer's debug panel spills out unstyled below the element because its hiding CSS lives in `public/style.css`, outside the shadow root. | fix in progress |
+| `<agent-3d>` bare mode | Wider than 3:4, the camera crops the avatar's feet. | fix in progress |
+| `/agent-3d/1.5.2/` | Served as immutable but rebuilt on every deploy, so SRI pins in docs and catalog snippets stop matching and browsers refuse the script. | fix in progress |
+| `blog/agent-3d-web-component` | Its snippet loads `https://three.ws/agent.js`, a 404. | fix in progress |
+| MCP catalog tools | Docs and the find-3d-assets skill say they work with no account; a real MCP client gets a 401 sign-in prompt on connect. The skill's asset count is stale. | fix in progress |
+| `/api/agents/public`, `/api/trending` | An internal agent described as "Not a public agent" is listed and ranks first. | fix in progress |
+| `/holo` | The corner peel tears into shards from about 40% up; the faces have no interior vertices for the roll to bend. | fix in progress |
+| Parametric base | The garment forge's own reference body folds its arms into its torso under the idle; legs splay. | fix in progress |
+| Avatar Studio avatars | 3 of 6 sampled idle with arms out or forearms detached from the shoulders. | fix in progress |
+| `/pose` | A dancing chibi floats above the floor grid. | fix in progress |
+| `/wardrobe` on another body | A garment keeps the shape it had on the reference body; on the stylized base, jeans become tubes, shoes stretch up the shins, a jacket grows a flap to the knees. | open |
+| `/gallery` | Avatars with no thumbnail yet show T-posed in their 3D cards; card descriptions contain em-dashes; cards carry "$0.00" price badges. | open |
+| Public forge models | The sorceress (`0532c12c`) renders as blocky panels with a black thumbnail; the orchestral conductor as a burst of spikes. | open |
+| Garment catalog | Near-duplicate entries (two peacoats, two trench coats, two cargo pants, two grey trousers, two buzz cuts, two red ponytails). | open |
+| Garment manifests | Every `spec` URL (`/specs/garment-manifest-v1`) returns 404. | open |
+
+### Pipeline gaps found and fixed
+
+- An Article's body was never held to the claims ledger, the voice lint, the link checks or the
+  spell check; only its title and quote post were. The one article already posted carries eight
+  unverified numbers. Bodies now go through all of it (code blocks excepted), may link to several
+  pages, and an inline image change makes the review stale.
