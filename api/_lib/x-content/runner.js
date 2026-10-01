@@ -270,7 +270,7 @@ async function fillSlot({ queue, state, store, root, now, requestedId, client, c
 	const missed = requestedId ? [] : await alertMissedSlots(state, store, queue.cadence || {}, context.seed, now).catch(() => []);
 	const held = [];
 	for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_TICK; attempt++) {
-		const decision = pickDue({ ...context, exclude, yieldVeto: !requestedId });
+		const decision = pickDue({ ...context, exclude, quota: !requestedId });
 		if (!decision.item) {
 			if (decision.slot && !requestedId) await alertEmptySlot(state, store, decision.slot, decision.reason).catch(() => {});
 			return { published: null, reason: decision.reason, held, blocked, stock, lowStock, missed };
@@ -300,7 +300,7 @@ async function fillSlot({ queue, state, store, root, now, requestedId, client, c
 				delete state.holds[item.id];
 				await store.save(state);
 			}
-			return { published: row, stock, lowStock, score: decision.score, tier: decision.tier, filledDown: Boolean(decision.filledDown), vetoYielded: Boolean(decision.vetoYielded), resumed: Boolean(decision.resuming), held, blocked, missed };
+			return { published: row, stock, lowStock, score: decision.score, tier: decision.tier, filledDown: Boolean(decision.filledDown), filledUp: Boolean(decision.filledUp), vetoYielded: Boolean(decision.vetoYielded), resumed: Boolean(decision.resuming), held, blocked, missed };
 		} catch (err) {
 			if (!isPostSpecific(err) || !untouched(state, item)) {
 				const refusal = accountRefusal(err);

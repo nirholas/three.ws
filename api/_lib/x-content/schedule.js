@@ -141,6 +141,12 @@ export function tierOrder(slotTier, readyByTier) {
 	return [...lower, ...higher];
 }
 
+// Every tier, in the order a slot that must not stay empty tries them: its
+// own, the lower ones, then the higher ones nearest first.
+export function everyTier(slotTier) {
+	return [...TIERS.filter((tier) => tier >= slotTier), ...TIERS.filter((tier) => tier < slotTier).reverse()];
+}
+
 export const tierOf = (item) => (TIERS.includes(Number(item.tier)) ? Number(item.tier) : 2);
 
 // `requestedId` names one item and skips pacing and ranking; `anyStatus` lets a
@@ -158,7 +164,7 @@ export function pickDue({
 	lifts = null,
 	reviews = null,
 	exclude = new Set(),
-	yieldVeto = false,
+	quota = false,
 }) {
 	const cadence = { ...DEFAULT_CADENCE, ...rawCadence };
 	const published = [...(state?.published || [])].sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
@@ -200,34 +206,47 @@ export function pickDue({
 	// On a weekend a flagship post waits for Monday instead of filling a lower slot.
 	const holdFlagship = Boolean(cadence.flagshipWeekdaysOnly) && isWeekend(slot.opensAt);
 	const candidates = unpublished.filter((item) => !exclude.has(item.id) && !(holdFlagship && tierOf(item) === 1));
-	let ready = candidates.filter((item) => Date.parse(item.notBefore) <= now);
-	// Three a day is a quota, not a ceiling (owner, 2026-09-30). A post the
-	// policy released is embargoed only so the owner can take it back; when the
-	// alternative is an empty slot, the schedule wins and the embargo yields.
-	// The owner's own embargo (an item approved by hand) is never shortened.
-	let vetoYielded = false;
-	if (!ready.length && yieldVeto) {
-		ready = candidates.filter((item) => item.approvedBy === 'policy');
-		vetoYielded = ready.length > 0;
-	}
+	const ready = candidates.filter((item) => Date.parse(item.notBefore) <= now);
 	const context = { lifts, published, quality, reviews, now };
-	const readyByTier = new Map(TIERS.map((tier) => [tier, ready.filter((item) => tierOf(item) === tier).length]));
-	for (const tier of tierOrder(slot.tier, readyByTier)) {
-		const ranked = rankItems(ready.filter((item) => tierOf(item) === tier), context);
-		if (!ranked.length) continue;
-		const [top] = ranked;
-		return {
-			item: top.item,
-			slot,
-			tier,
-			filledDown: tier !== slot.tier,
-			vetoYielded,
-			score: top.score,
-			parts: top.parts,
-			ranking: ranked.map((row) => ({ id: row.item.id, score: row.score })),
-		};
+	const choose = (pool, order, how) => {
+		for (const tier of order) {
+			const ranked = rankItems(pool.filter((item) => tierOf(item) === tier), context);
+			if (!ranked.length) continue;
+			const [top] = ranked;
+			return {
+				item: top.item,
+				slot,
+				tier,
+				filledDown: tier > slot.tier,
+				filledUp: tier < slot.tier,
+				vetoYielded: how === 'veto',
+				score: top.score,
+				parts: top.parts,
+				ranking: ranked.map((row) => ({ id: row.item.id, score: row.score })),
+			};
+		}
+		return null;
+	};
+	const countByTier = (pool) => new Map(TIERS.map((tier) => [tier, pool.filter((item) => tierOf(item) === tier).length]));
+
+	const usual = choose(ready, tierOrder(slot.tier, countByTier(ready)), 'usual');
+	if (usual || !quota) return usual || empty();
+	// Three a day is a quota, not a ceiling (owner, 2026-09-30), so a slot is
+	// never left empty while an approved post could fill it. First a higher
+	// tier's last ready post: keeping it for its own slot only moves the gap,
+	// because a post sent now is one the later slot can still be given new
+	// stock for. Then a post the policy released that is still in its veto
+	// window: that embargo exists so the owner can take the post back, and an
+	// empty slot outweighs it. An embargo the owner set by hand never yields.
+	return (
+		choose(ready, everyTier(slot.tier), 'up') ||
+		choose(candidates.filter((item) => item.approvedBy === 'policy'), everyTier(slot.tier), 'veto') ||
+		empty()
+	);
+
+	function empty() {
+		const embargoed = unpublished.filter((item) => !exclude.has(item.id) && Date.parse(item.notBefore) > now).sort((a, b) => a.notBefore.localeCompare(b.notBefore));
+		if (embargoed[0]) return { item: null, slot, reason: `nothing is ready for slot ${slot.key}; ${embargoed[0].id} is embargoed until ${embargoed[0].notBefore}` };
+		return { item: null, slot, reason: exclude.size ? `every ready post was held this tick; slot ${slot.key} stays open` : 'queue has no approved unpublished posts' };
 	}
-	const embargoed = unpublished.filter((item) => !exclude.has(item.id) && Date.parse(item.notBefore) > now).sort((a, b) => a.notBefore.localeCompare(b.notBefore));
-	if (embargoed[0]) return { item: null, slot, reason: `nothing is ready for slot ${slot.key}; ${embargoed[0].id} is embargoed until ${embargoed[0].notBefore}` };
-	return { item: null, slot, reason: exclude.size ? `every ready post was held this tick; slot ${slot.key} stays open` : 'queue has no approved unpublished posts' };
 }

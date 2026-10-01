@@ -146,7 +146,7 @@ describe('three a day is a quota', () => {
 		const embargoed = post('later', { approvedBy: 'policy', notBefore: '2026-09-30T14:00:00Z' });
 		const state = { published: [], inflight: {} };
 		expect(pickDue({ items: [embargoed], state, now, cadence }).item).toBe(null);
-		const decision = pickDue({ items: [embargoed], state, now, cadence, yieldVeto: true });
+		const decision = pickDue({ items: [embargoed], state, now, cadence, quota: true });
 		expect(decision.item?.id).toBe('later');
 		expect(decision.vetoYielded).toBe(true);
 	});
@@ -155,12 +155,28 @@ describe('three a day is a quota', () => {
 		const { pickDue } = await import('../api/_lib/x-content/schedule.js');
 		const now = at('2026-09-30T12:30:00Z');
 		const owner = post('owner-held', { notBefore: '2026-10-02T00:00:00Z' });
-		expect(pickDue({ items: [owner], state: { published: [], inflight: {} }, now, cadence, yieldVeto: true }).item).toBe(null);
+		expect(pickDue({ items: [owner], state: { published: [], inflight: {} }, now, cadence, quota: true }).item).toBe(null);
 		const ready = post('ready');
 		const embargoed = post('later', { approvedBy: 'policy', notBefore: '2026-09-30T14:00:00Z' });
-		const decision = pickDue({ items: [embargoed, ready], state: { published: [], inflight: {} }, now, cadence, yieldVeto: true });
+		const decision = pickDue({ items: [embargoed, ready], state: { published: [], inflight: {} }, now, cadence, quota: true });
 		expect(decision.item.id).toBe('ready');
 		expect(decision.vetoYielded).toBe(false);
+	});
+
+	it('fills an empty slot with a higher tier last ready post before it yields any embargo', async () => {
+		const { pickDue, everyTier } = await import('../api/_lib/x-content/schedule.js');
+		expect(everyTier(3)).toEqual([3, 2, 1]);
+		expect(everyTier(2)).toEqual([2, 3, 1]);
+		expect(everyTier(1)).toEqual([1, 2, 3]);
+		const morning = at('2026-09-30T04:30:00Z');
+		const feature = post('feature', { tier: 2 });
+		const embargoed = post('later', { tier: 3, approvedBy: 'policy', notBefore: '2026-09-30T06:00:00Z' });
+		const state = { published: [], inflight: {} };
+		expect(pickDue({ items: [feature], state, now: morning, cadence }).item).toBe(null);
+		const up = pickDue({ items: [feature, embargoed], state, now: morning, cadence, quota: true });
+		expect([up.item.id, up.filledUp, up.vetoYielded]).toEqual(['feature', true, false]);
+		const veto = pickDue({ items: [embargoed], state, now: morning, cadence, quota: true });
+		expect([veto.item.id, veto.vetoYielded]).toEqual(['later', true]);
 	});
 
 	it('names every slot of the last day that closed with no post, once', async () => {
