@@ -437,6 +437,9 @@ function normalizeTrade(d, solPrice = 0) {
 // keep stalls bounded so a slow upstream can't pin the SSE worker.
 
 const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
+// Per-coin lookups use the v2 route: pump.fun retired `/coins/:mint` on this host
+// around 2026-09-17 (404 "Cannot GET"); `/coins-v2/:mint` returns the same fields.
+const PUMPFUN_COIN_DETAIL_API = 'https://frontend-api-v3.pump.fun/coins-v2';
 const PUMPFUN_USER_COINS_API = 'https://frontend-api-v3.pump.fun/coins/user-created-coins';
 const ENRICH_TIMEOUT_MS = 2_500;
 const COIN_CACHE_TTL_MS = 30_000;
@@ -459,7 +462,7 @@ async function fetchJsonWithTimeout(url, ms = ENRICH_TIMEOUT_MS) {
 async function fetchCoin(mint) {
 	const hit = _coinCache.get(mint);
 	if (hit && Date.now() - hit.t < COIN_CACHE_TTL_MS) return hit.v;
-	const v = await fetchJsonWithTimeout(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`);
+	const v = await fetchJsonWithTimeout(`${PUMPFUN_COIN_DETAIL_API}/${encodeURIComponent(mint)}`);
 	if (_coinCache.size > 500) _coinCache.clear();
 	_coinCache.set(mint, { t: Date.now(), v });
 	return v;

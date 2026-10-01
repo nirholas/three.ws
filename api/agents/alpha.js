@@ -38,7 +38,9 @@ const NETWORKS = new Set(['mainnet', 'devnet']);
 const netOf = (v) => (NETWORKS.has(v) ? v : 'mainnet');
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const LAMPORTS_PER_SOL = 1_000_000_000;
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
+// Per-coin lookups use the v2 route: pump.fun retired `/coins/:mint` on this host
+// around 2026-09-17 (404 "Cannot GET"); `/coins-v2/:mint` returns the same fields.
+const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
 const REFERENCE_BUY_SOL = 0.1; // probe size for a real, non-binding price-impact read
 
 const num = (v) => (v == null || !Number.isFinite(Number(v)) ? null : Number(v));

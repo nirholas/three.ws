@@ -42,7 +42,9 @@ const MAX_MARKETS = 120; // distinct prediction markets priced per run
 const TRADES_LIMIT = 50;
 const FETCH_TIMEOUT_MS = 2_500;
 
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
+// Per-coin lookups use the v2 route: pump.fun retired `/coins/:mint` on this host
+// around 2026-09-17 (404 "Cannot GET"); `/coins-v2/:mint` returns the same fields.
+const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
 const PUMPFUN_TRADES_API = 'https://frontend-api-v3.pump.fun/trades/all';
 
 /**

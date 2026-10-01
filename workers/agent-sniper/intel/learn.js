@@ -11,7 +11,13 @@
 // Run both from a cron (see api/cron or the worker loop). Pure-math helpers are
 // exported for testing.
 
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
+// The v2 coin route. pump.fun retired `/coins/:mint` on this host around
+// 2026-09-17 ("Cannot GET", 404), and because fetchCoin() reads any non-2xx as
+// "no data", the labeler silently stopped labeling: oracle_training_set froze and
+// every Oracle refit retrained on the same rows. `/coins-v2/:mint` carries every
+// field this module reads (complete, pump_swap_pool, usd_market_cap, market_cap,
+// ath_market_cap) with the same types.
+const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
 const FETCH_TIMEOUT_MS = 4_000;
 
 // Signals we train on - all are ~0..1 (or normalized below). Counts are excluded;
