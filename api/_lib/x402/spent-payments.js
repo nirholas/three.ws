@@ -69,29 +69,38 @@ export const PAID_RETRY_WINDOW_SECONDS = Math.max(
  * buyer was charged, may it still be retried?
  *
  * @param {string|null|undefined} paymentHash Hash of the signed X-PAYMENT proof.
- * @returns {Promise<{ spent: boolean, unavailable: boolean, retryable: boolean, endpoint: string|null }>}
+ * @returns {Promise<{ spent: boolean, unavailable: boolean, retryable: boolean, outcome: string|null, endpoint: string|null, settlement: object|null }>}
  *   `spent` is true only on a positive, durable answer. `retryable` is true when
  *   the proof settled but its work failed, retries remain and the window is
  *   open. `unavailable` marks the fail-open path so the caller can log it rather
  *   than silently trusting a "not spent" that was never actually checked.
  */
 export async function isPaymentSpent(paymentHash) {
-	if (!paymentHash) return { spent: false, unavailable: false, retryable: false, endpoint: null };
+	const none = { spent: false, retryable: false, outcome: null, endpoint: null, settlement: null };
+	if (!paymentHash) return { ...none, unavailable: false };
 	try {
 		const rows = await sql`
-			SELECT endpoint, outcome, retry_count, retry_until
+			SELECT endpoint, outcome, retry_count, retry_until, settlement
 			FROM x402_spent_payments WHERE payment_hash = ${paymentHash} LIMIT 1
 		`;
 		const row = rows?.[0];
-		if (!row) return { spent: false, unavailable: false, retryable: false, endpoint: null };
+		if (!row) return { ...none, unavailable: false };
 		const retryable =
 			row.outcome === 'failed_after_settle' &&
 			Number(row.retry_count || 0) < PAID_RETRY_MAX &&
 			(!row.retry_until || new Date(row.retry_until).getTime() > Date.now());
-		return { spent: true, unavailable: false, retryable, endpoint: row.endpoint ?? null };
+		const settlement = typeof row.settlement === 'string' ? JSON.parse(row.settlement) : row.settlement;
+		return {
+			spent: true,
+			unavailable: false,
+			retryable,
+			outcome: row.outcome || 'delivered',
+			endpoint: row.endpoint ?? null,
+			settlement: settlement || null,
+		};
 	} catch (err) {
 		logDegraded('lookup', err);
-		return { spent: false, unavailable: true, retryable: false, endpoint: null };
+		return { ...none, unavailable: true };
 	}
 }
 
