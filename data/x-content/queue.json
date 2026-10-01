@@ -2369,7 +2369,7 @@
 					]
 				},
 				{
-					"text": "Each card states what the engine takes in, what it outputs, what it runs on, and what its license permits.\n\nFor several photorealistic engines the gate is compute, not the license. A training run per subject is not something you put behind a button."
+					"text": "Each card states what the engine takes in, what it outputs, what it runs on, and what its license permits.\n\nFor the photoreal engines a product could license, a training run per subject is not something you put behind a button."
 				},
 				{
 					"text": "2 of the 24 are live on the platform today: the MIT-licensed generator behind the free text and image to 3D lane, and the skeleton the animation pipeline canonicalizes against.\n\nFilters are written into the URL, so a filtered view is a link you can share."
@@ -2447,7 +2447,7 @@
 					]
 				},
 				{
-					"says": "For several photorealistic engines the gate is compute, not the license. A training run per subject is not something you put behind a button",
+					"says": "a training run per subject is not something you put behind a button",
 					"evidence": [
 						{
 							"type": "page",
@@ -2950,7 +2950,7 @@
 					"text": "Both built-in samples are synthetic. They exist to exercise the renderer and are not real captures. A real one comes out of a capture engine trained on footage of a person, exported as a file, then opened here.\n\nthree.ws/splat"
 				},
 				{
-					"text": "To share a capture, add ?src= and the address of the file to the address of the viewer. The scene loads as the page opens, so the link is the whole handoff.\n\nThe same scene that is a 1 GB PLY is roughly 100 MB as SPZ, which is the difference between a capture you can send as a link and one you cannot."
+					"text": "To share a capture, add ?src= and the address of the file to the address of the viewer. The scene loads as the page opens, so the link is the whole handoff.\n\nThe same scene that is a 1 GB PLY is roughly 100 MB as SPZ."
 				}
 			],
 			"claims": [
@@ -3217,7 +3217,7 @@
 						{
 							"type": "proof",
 							"fact": "fleet",
-							"contains": "2,5"
+							"min": 2500
 						}
 					]
 				},
@@ -3777,7 +3777,7 @@
 			],
 			"posts": [
 				{
-					"text": "An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nthree-ws-avatar reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
+					"text": "An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nThe three-ws-avatar command reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
 					"media": [
 						{
 							"path": "public/x-media/avatar-cli/reel.mp4",
@@ -3965,6 +3965,21 @@
 							"contains": "solana:mainnet-beta"
 						}
 					]
+				},
+				{
+					"says": "The three-ws-avatar command",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-cli",
+							"contains": "three-ws-avatar hash"
+						},
+						{
+							"type": "file",
+							"path": "packages/avatar-cli/package.json",
+							"contains": "\"three-ws-avatar\": \"./src/cli.js\""
+						}
+					]
 				}
 			],
 			"mentions": {}
@@ -4059,7 +4074,7 @@
 					]
 				},
 				{
-					"text": "Five performances ship as starting points. A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture. A routine holds up to 24 steps."
+					"text": "Five performances ship as starting points. A step names a slot, so a routine shared with another agent still plays that agent's own take on each gesture. A routine holds up to 24 steps."
 				}
 			],
 			"claims": [
@@ -4147,7 +4162,7 @@
 					]
 				},
 				{
-					"says": "A step names a slot rather than a file, so a routine shared with another agent still plays that agent's own take on each gesture",
+					"says": "A step names a slot, so a routine shared with another agent still plays that agent's own take on each gesture",
 					"evidence": [
 						{
 							"type": "page",
@@ -4290,7 +4305,7 @@
 			],
 			"posts": [
 				{
-					"text": "This is the documentation, rebuilt as a place. 306 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+					"text": "This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 					"media": [
 						{
 							"path": "public/x-media/docs-world/reel.mp4",
@@ -4312,12 +4327,12 @@
 			],
 			"claims": [
 				{
-					"says": "306 pages",
+					"says": "More than 300 pages",
 					"evidence": [
 						{
 							"type": "proof",
 							"fact": "pages",
-							"equals": "306"
+							"min": 300
 						}
 					]
 				},
@@ -4786,7 +4801,7 @@
 			],
 			"posts": [
 				{
-					"text": "An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nAn agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
+					"text": "An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nIt names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
 					"media": [
 						{
 							"path": "public/x-media/gestures/reel.mp4",
@@ -4825,7 +4840,7 @@
 					]
 				},
 				{
-					"says": "An agent does not pick animation files. It names a slot, and the platform resolves that slot to a real clip.",
+					"says": "It names a slot, and the platform resolves that slot to a real clip.",
 					"evidence": [
 						{
 							"type": "page",
@@ -5375,7 +5390,7 @@
 					"text": "Severity is one of none, cosmetic, minor, major, breaking, so a build can gate on it. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh. That is the failure that renders fine and never moves.\n\nVertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does."
 				},
 				{
-					"text": "The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. The package is three-ws/glb-diff on npm: hand the CLI two files and a --fail-on level, and the build fails on the severity you choose."
+					"text": "The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. The page shows the one command line that runs it in CI: hand it two files and a --fail-on level, and the build fails on the severity you choose."
 				}
 			],
 			"claims": [
@@ -5565,7 +5580,7 @@
 					]
 				},
 				{
-					"says": "hand the CLI two files and a --fail-on level, and the build fails on the severity you choose",
+					"says": "hand it two files and a --fail-on level, and the build fails on the severity you choose",
 					"evidence": [
 						{
 							"type": "file",
@@ -5576,6 +5591,21 @@
 							"type": "file",
 							"path": "packages/glb-diff/README.md",
 							"contains": "if (changes.severity === 'breaking') process.exit(1);"
+						}
+					]
+				},
+				{
+					"says": "The page shows the one command line that runs it in CI",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "--fail-on breaking exits 1"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/package.json",
+							"contains": "\"glb-diff\": \"./src/cli.js\""
 						}
 					]
 				}
