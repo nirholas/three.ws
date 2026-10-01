@@ -9,7 +9,7 @@ import { markdownToContentState, attachArticleMedia } from '../api/_lib/x-conten
 import { DEFAULT_SLOTS, currentSlot, inQuietHours, jitterMinutes, pickDue, slotOpenings, tierOrder } from '../api/_lib/x-content/schedule.js';
 import { linkProbeUrl } from '../api/_lib/x-content/verify.js';
 import { engagementSignals, loadLifts, loadVolumeModel, rankItems, scoreItem, volumeScore } from '../api/_lib/x-content/priority.js';
-import { activeHolds, inventory, isPostSpecific, placeHold, runTick } from '../api/_lib/x-content/runner.js';
+import { accountRefusal, activeHolds, inventory, isPostSpecific, placeHold, runTick } from '../api/_lib/x-content/runner.js';
 import { memoryStore } from '../api/_lib/x-content/state.js';
 import { validateItem, validateQueue, loadQueue } from '../api/_lib/x-content/queue.js';
 import { previewClient, publishItem } from '../api/_lib/x-content/publisher.js';
@@ -323,8 +323,40 @@ describe('holds and fall-through', () => {
 		expect(isPostSpecific({ code: 403, data: { detail: 'forbidden' } })).toBe(false);
 		expect(isPostSpecific({ code: 401 })).toBe(false);
 		expect(isPostSpecific({ code: 429 })).toBe(false);
+		expect(isPostSpecific({ code: 402, data: { detail: 'credits depleted', type: 'https://api.x.com/2/problems/credits-depleted' } })).toBe(false);
 		expect(isPostSpecific({ code: 503 })).toBe(false);
 		expect(isPostSpecific(new Error('socket hang up'))).toBe(false);
+	});
+
+	it('names an account-level refusal in words the owner can act on', () => {
+		expect(accountRefusal({ code: 402, data: { detail: 'credits depleted' } })).toMatch(/run out of credits; top it up/);
+		expect(accountRefusal({ code: 402, data: { detail: 'payment required' } })).toMatch(/402 Payment Required/);
+		expect(accountRefusal({ code: 401 })).toMatch(/rejected the credentials/);
+		expect(accountRefusal({ code: 403, data: { detail: 'forbidden' } })).toMatch(/refused the account/);
+		expect(accountRefusal({ code: 403, data: { detail: 'You are not allowed to create a Tweet with duplicate content.' } })).toBe(null);
+		expect(accountRefusal({ code: 429 })).toBe(null);
+		expect(accountRefusal({ code: 503 })).toBe(null);
+	});
+
+	it('stops on an account refusal without holding the post, and keeps it ready for the next tick', async () => {
+		const { mkdtempSync: mk, mkdirSync: md, writeFileSync: wf } = await import('node:fs');
+		const { contentHash: hashOf, reviewPath: pathOf } = await import('../api/_lib/x-content/review.js');
+		const dir = mk(join(tmpdir(), 'x-refusal-'));
+		md(join(dir, 'data/x-content/reviews'), { recursive: true });
+		const cadence = { slots: [{ tier: 2, at: '12:00' }], windowMinutes: 0, minimumMinutesApart: 1, dailyCap: 3, quietHoursUtc: null };
+		const item = { id: 'ready', status: 'approved', kind: 'post', tier: 2, lane: 'a', pattern: 'b', notBefore: '2026-09-17T00:00:00Z', textOnly: true, posts: [{ text: HEAD }] };
+		wf(join(dir, pathOf(item.id)), JSON.stringify({ id: item.id, contentHash: hashOf(item, dir), reviewedAt: '2026-09-17T00:00:00Z', passed: true, blockers: [] }));
+		wf(join(dir, 'data/x-content/queue.json'), JSON.stringify({ account: 'trythreews', cadence, items: [item] }));
+		const store = memoryStore();
+		const client = previewClient();
+		client.tweet = async () => {
+			throw Object.assign(new Error('Request failed with code 402'), { code: 402, data: { detail: 'credits depleted' } });
+		};
+		const now = Date.parse('2026-09-17T12:30:00Z');
+		await expect(runTick({ root: dir, store, dryRun: false, now, env: {}, client, checks: async () => [], outcomes: null })).rejects.toThrow('402');
+		const state = await store.load();
+		expect(state.holds?.ready).toBeUndefined();
+		expect(Object.keys(state.accountAlerted)).toEqual([accountRefusal({ code: 402, data: { detail: 'credits depleted' } })]);
 	});
 
 	it('backs off a held post and releases it when the post changes', () => {

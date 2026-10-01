@@ -53,7 +53,9 @@ export function placeHold(state, item, root, reason, now = Date.now()) {
 // the account or the platform (stop, retry the same post next tick).
 export function isPostSpecific(err) {
 	const status = Number(err?.code ?? err?.status);
-	if (!status || status === 429 || status >= 500 || status === 401) return false;
+	// 402 is the X account out of API credits: every post would be refused the
+	// same way, so holding this one would only shelve good stock.
+	if (!status || status === 429 || status >= 500 || status === 401 || status === 402) return false;
 	const text = JSON.stringify(err?.data || err?.message || '').toLowerCase();
 	if (status === 403) return /duplicate|not allowed to create/.test(text);
 	return status >= 400 && status < 500;
@@ -127,6 +129,35 @@ async function refreshOutcomes({ outcomes, stored, collect, client, ledger, now 
 		console.warn('[x-content] outcomes refresh failed', err?.message || err);
 		return { refreshed: false, sample: sample(stored?.posts) };
 	}
+}
+
+// ── The account, not the post ───────────────────────────────────────────────
+// What X says when it refuses the account rather than the post, in words the
+// owner can act on. Rate limits and outages are left out: the next tick
+// retries them and they clear on their own.
+export function accountRefusal(err) {
+	const status = Number(err?.code ?? err?.status);
+	const text = JSON.stringify(err?.data || err?.message || '').toLowerCase();
+	if (status === 402) {
+		return /credits/.test(text)
+			? 'the X API account has run out of credits; top it up in the X developer console, and the next tick posts'
+			: 'X answered 402 Payment Required for the account; check its billing in the X developer console';
+	}
+	if (status === 401) return 'X rejected the credentials (401); the access token or the app keys on the service need replacing';
+	if (status === 403 && !/duplicate|not allowed to create/.test(text)) return 'X refused the account (403); check the app permissions and the account status in the X developer console';
+	return null;
+}
+
+// Raised once a day per cause, as critical: no post can go out until a person
+// acts, and every slot until then is a missed one.
+async function alertAccountRefusal(state, store, refusal, now) {
+	const today = new Date(now).toISOString().slice(0, 10);
+	state.accountAlerted ||= {};
+	if (state.accountAlerted[refusal] === today) return;
+	state.accountAlerted[refusal] = today;
+	await store.save(state);
+	const { sendOpsAlert } = await import('../alerts.js');
+	await sendOpsAlert('🚨 x-content: X is refusing the account, nothing can post', refusal, { severity: 'critical' });
 }
 
 // ── Missed slots ────────────────────────────────────────────────────────────
@@ -270,7 +301,11 @@ async function fillSlot({ queue, state, store, root, now, requestedId, client, c
 			}
 			return { published: row, stock, lowStock, score: decision.score, tier: decision.tier, filledDown: Boolean(decision.filledDown), vetoYielded: Boolean(decision.vetoYielded), resumed: Boolean(decision.resuming), held, blocked, missed };
 		} catch (err) {
-			if (!isPostSpecific(err) || !untouched(state, item)) throw err;
+			if (!isPostSpecific(err) || !untouched(state, item)) {
+				const refusal = accountRefusal(err);
+				if (refusal) await alertAccountRefusal(state, store, refusal, now).catch(() => {});
+				throw err;
+			}
 			const reason = `X rejected the post: ${err.message}`;
 			held.push({ id: item.id, reason, hold: placeHold(state, item, root, reason, now) });
 			delete state.inflight?.[item.id];
