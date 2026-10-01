@@ -27,6 +27,8 @@ import { log } from './log.js';
 import { cachedStrategies } from './strategy-store.js';
 import { executeBuy } from './executor.js';
 import { rugpullVeto } from './oracle-gate.js';
+import { getTradeCtx } from './trade-client.js';
+import { PUMP_SDK, bondingCurvePda, bondingCurveMarketCap } from '@pump-fun/pump-sdk';
 
 const POLL_MS = Math.max(5_000, Number(process.env.SNIPER_CROSSING_POLL_MS || 20_000));
 // Only coins this young qualify: the edge is the EARLY crossing (median 2m).
@@ -36,6 +38,12 @@ const MAX_COIN_AGE_MIN = Math.max(5, Number(process.env.SNIPER_CROSSING_MAX_AGE_
 // Only act on scores computed recently; a stale row is not a live crossing.
 const MAX_SCORE_AGE_MIN = Math.max(1, Number(process.env.SNIPER_CROSSING_SCORE_AGE_MIN || 10));
 const DEFAULT_MIN_SCORE = 50;
+const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+// A bonding curve with no real reserves prices at ~27.96 SOL and can never go
+// lower, so a coin sitting under ~40 SOL is a dead curve, not a crossing. In the
+// 2026-10-01 review, 36% of this trigger's trades bought such curves: 2% won,
+// none graduated, and 241 of 256 left through liquidity decay.
+const MIN_CURVE_MCAP_SOL = Math.max(0, Number(process.env.SNIPER_CROSSING_MIN_MCAP_SOL ?? 40));
 
 const MAX_ATTEMPTED = 5_000;
 
@@ -64,6 +72,53 @@ export function crossingCandidates(rows, arms, attempted) {
 	return out;
 }
 
+/**
+ * Should a crossing buy go ahead given the coin's live curve? Pure.
+ *
+ * Unknown curve state passes: executeBuy re-quotes the curve itself and fails a
+ * graduated or missing coin safely, so an RPC hiccup here must not silently
+ * starve the arm.
+ *
+ * @param {{complete:boolean, mcapSol:number}|null} state
+ * @param {{minMcapSol:number}} opts
+ * @returns {{pass:boolean, reason?:string, mcapSol?:number}}
+ */
+export function curveEntryVerdict(state, { minMcapSol }) {
+	if (!state) return { pass: true };
+	if (state.complete) return { pass: false, reason: 'curve_complete', mcapSol: state.mcapSol };
+	if (state.mcapSol != null && Number.isFinite(state.mcapSol) && state.mcapSol < minMcapSol) {
+		return { pass: false, reason: 'dead_curve', mcapSol: state.mcapSol };
+	}
+	return { pass: true, mcapSol: state.mcapSol };
+}
+
+/** Read a coin's bonding curve: completion flag and market cap in SOL. Null when unreadable. */
+async function readCurveState(network, mint) {
+	try {
+		const ctx = await getTradeCtx(network);
+		const mintPk = new ctx.web3.PublicKey(mint);
+		const info = await ctx.connection.getAccountInfo(bondingCurvePda(mintPk));
+		if (!info) return null;
+		const curve = PUMP_SDK.decodeBondingCurve(info);
+		// A curve quoted in another token prices its market cap in THAT token's
+		// units, so it is not comparable to a SOL floor. Report it as unknown and
+		// leave the quote-mint policy to executeBuy (require_sol_quote).
+		const quoteMint = curve.quoteMint?.toBase58?.();
+		if (quoteMint && quoteMint !== ctx.web3.PublicKey.default.toBase58() && quoteMint !== WSOL_MINT) {
+			return { complete: curve.complete === true, mcapSol: null };
+		}
+		const mcapLamports = bondingCurveMarketCap({
+			mintSupply: curve.tokenTotalSupply,
+			virtualQuoteReserves: curve.virtualQuoteReserves ?? curve.virtualSolReserves,
+			virtualTokenReserves: curve.virtualTokenReserves,
+		});
+		return { complete: curve.complete === true, mcapSol: Number(mcapLamports.toString()) / 1e9 };
+	} catch (err) {
+		log.warn('crossing curve read failed', { mint, err: err?.message });
+		return null;
+	}
+}
+
 export function startOracleCrossingWatch({ cfg, queue, throttle, isHalted }) {
 	const attempted = new Set(); // `${strategyId}:${mint}`
 	let stopped = false;
@@ -86,6 +141,11 @@ export function startOracleCrossingWatch({ cfg, queue, throttle, isHalted }) {
 				  and score >= ${floor}
 				  and scored_at > now() - make_interval(mins => ${MAX_SCORE_AGE_MIN})
 				  and coin_first_seen_at > now() - make_interval(mins => ${MAX_COIN_AGE_MIN})
+				  -- A graduated coin has no curve to buy on: 894 of this trigger's
+				  -- 1,748 attempts died on CoinGraduatedError before this filter.
+				  and not exists (
+				    select 1 from pumpfun_graduations g where g.mint = oracle_conviction.mint
+				  )
 				order by score desc
 				limit 25
 			`;
@@ -110,6 +170,11 @@ export function startOracleCrossingWatch({ cfg, queue, throttle, isHalted }) {
 				const rug = await rugpullVeto(coin.mint, cfg.network);
 				if (rug.reject) {
 					log.info('crossing rugpull veto', { agent: strat.agent_id, mint: coin.mint, level: rug.level, score: rug.score });
+					return;
+				}
+				const curve = curveEntryVerdict(await readCurveState(cfg.network, coin.mint), { minMcapSol: MIN_CURVE_MCAP_SOL });
+				if (!curve.pass) {
+					log.info('crossing curve skip', { agent: strat.agent_id, mint: coin.mint, reason: curve.reason, mcap_sol: curve.mcapSol });
 					return;
 				}
 				await executeBuy({

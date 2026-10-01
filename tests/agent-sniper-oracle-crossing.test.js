@@ -14,8 +14,27 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { crossingCandidates } from '../workers/agent-sniper/oracle-crossing.js';
+import { crossingCandidates, curveEntryVerdict } from '../workers/agent-sniper/oracle-crossing.js';
 import { decideExit } from '../workers/agent-sniper/exit-logic.js';
+
+describe('curveEntryVerdict', () => {
+	const opts = { minMcapSol: 40 };
+	it('skips a completed (graduated) curve', () => {
+		expect(curveEntryVerdict({ complete: true, mcapSol: 400 }, opts)).toMatchObject({ pass: false, reason: 'curve_complete' });
+	});
+	it('skips a dead curve sitting near the 27.96 SOL floor', () => {
+		expect(curveEntryVerdict({ complete: false, mcapSol: 27.96 }, opts)).toMatchObject({ pass: false, reason: 'dead_curve' });
+	});
+	it('passes a live curve above the floor', () => {
+		expect(curveEntryVerdict({ complete: false, mcapSol: 55 }, opts).pass).toBe(true);
+	});
+	it('passes when the curve could not be read, leaving it to executeBuy', () => {
+		expect(curveEntryVerdict(null, opts).pass).toBe(true);
+	});
+	it('passes a non-SOL-quoted curve whose cap is not in SOL units', () => {
+		expect(curveEntryVerdict({ complete: false, mcapSol: null }, opts).pass).toBe(true);
+	});
+});
 
 describe('crossingCandidates', () => {
 	const armA = { id: 'arm-a', min_oracle_score: 50 };
