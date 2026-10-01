@@ -56,7 +56,8 @@
 			"retargets",
 			"reprojection",
 			"GPU",
-			"retopo"
+			"retopo",
+			"photoreal"
 		],
 		"maximumLength": 1000
 	},
@@ -5395,7 +5396,7 @@
 					"text": "Severity is one of none, cosmetic, minor, major, breaking, so a build can gate on it. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh. That is the failure that renders fine and never moves.\n\nVertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does."
 				},
 				{
-					"text": "The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. The page shows the one command line that runs it in CI: hand it two files and a --fail-on level, and the build fails on the severity you choose."
+					"text": "The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. Hand the CLI two files and a --fail-on level, and the build fails on the severity you choose."
 				}
 			],
 			"claims": [
@@ -5585,7 +5586,7 @@
 					]
 				},
 				{
-					"says": "hand it two files and a --fail-on level, and the build fails on the severity you choose",
+					"says": "Hand the CLI two files and a --fail-on level, and the build fails on the severity you choose",
 					"evidence": [
 						{
 							"type": "file",
@@ -5596,21 +5597,6 @@
 							"type": "file",
 							"path": "packages/glb-diff/README.md",
 							"contains": "if (changes.severity === 'breaking') process.exit(1);"
-						}
-					]
-				},
-				{
-					"says": "The page shows the one command line that runs it in CI",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/diff",
-							"contains": "--fail-on breaking exits 1"
-						},
-						{
-							"type": "file",
-							"path": "packages/glb-diff/package.json",
-							"contains": "\"glb-diff\": \"./src/cli.js\""
 						}
 					]
 				}
@@ -6918,6 +6904,2111 @@
 			],
 			"mentions": {},
 			"approvedBy": "policy"
+		},
+		{
+			"id": "agent-symphony",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/symphony"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/symphony",
+						"settle": 7000
+					},
+					{
+						"read": "events",
+						"selector": "#sy-events",
+						"match": "(\\d+)"
+					},
+					{
+						"read": "status",
+						"selector": "#sy-status",
+						"match": "(live)"
+					},
+					{
+						"scroll": 250,
+						"ms": 600,
+						"caption": "The agent economy, played as music"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Coin buys · bass",
+						"caption": "Six voices. Click one to mute it."
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"click": "Play the economy",
+						"caption": "Play opens on the last ten real events"
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"read": "playing",
+						"selector": "#sy-play",
+						"match": "(Pause)"
+					},
+					{
+						"caption": "One orb per note. Nothing is simulated."
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"read": "notes",
+						"selector": "#sy-notes",
+						"match": "([1-9]\\d*)"
+					},
+					{
+						"caption": "Height is pitch. Color is the voice."
+					},
+					{
+						"hold": 1000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the activity feed the symphony plays still answers with events",
+					"url": "https://three.ws/api/feed?limit=40",
+					"expect": {
+						"json": {
+							"path": "events",
+							"min": 1
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Every payment, coin buy, new agent and safety refusal on three.ws/symphony becomes a synthesized note the moment it happens. It is a Labs experiment: the agent economy played live as music, with nothing prerecorded.\n\nThe notes all land on one minor-pentatonic scale, so a stream of unrelated events always harmonizes. Bigger money plays lower. Each agent hashes to its own motif, so one that comes back is recognizable by ear.",
+					"media": [
+						{
+							"path": "public/x-media/agent-symphony/reel.mp4",
+							"probe": {
+								"durationSec": 9.1,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "The reel has no sound, so watch the stage: one orb per note, placed left to right by the agent that caused it and up by pitch. Play opens on the last ten real events as an overture, then follows the live feed."
+				},
+				{
+					"text": "Under the stage, a ledger lists the real event behind every note. Mute any of the six voices, solo one agent so everything else drops out, or record up to a minute of it as a video with the sound."
+				}
+			],
+			"claims": [
+				{
+					"says": "Every payment, coin buy, new agent and safety refusal",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/symphony",
+							"contains": "payments pluck, whale buys land as bass, new agents chime, safety refusals cut through as dissonance"
+						}
+					]
+				},
+				{
+					"says": "becomes a synthesized note the moment it happens",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/symphony",
+							"contains": "Every real event on three.ws becomes a synthesized note the moment it happens"
+						},
+						{
+							"type": "proof",
+							"fact": "status",
+							"equals": "LIVE"
+						}
+					]
+				},
+				{
+					"says": "It is a Labs experiment",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/labs",
+							"contains": "Agent Symphony"
+						}
+					]
+				},
+				{
+					"says": "the agent economy played live as music, with nothing prerecorded",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/symphony",
+							"contains": "The agent economy, played live as music."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/symphony",
+							"contains": "Nothing is prerecorded and nothing is simulated."
+						}
+					]
+				},
+				{
+					"says": "The notes all land on one minor-pentatonic scale, so a stream of unrelated events always harmonizes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/symphony-score.js",
+							"contains": "Everything lands on one minor-pentatonic scale"
+						},
+						{
+							"type": "file",
+							"path": "src/symphony-score.js",
+							"contains": "unrelated events always harmonizes instead of producing noise"
+						}
+					]
+				},
+				{
+					"says": "Bigger money plays lower",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/symphony-score.js",
+							"contains": "Bigger money sits lower"
+						}
+					]
+				},
+				{
+					"says": "Each agent hashes to its own motif, so one that comes back is recognizable by ear",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/symphony-score.js",
+							"contains": "Each actor hashes to a stable motif, so a returning agent is recognizable"
+						}
+					]
+				},
+				{
+					"says": "one orb per note, placed left to right by the agent that caused it and up by pitch",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/symphony.js",
+							"contains": "(one orb per note, positioned by the"
+						},
+						{
+							"type": "file",
+							"path": "src/symphony-score.js",
+							"contains": "const h = hashString((evt && (evt.actor || evt.id)) || '');"
+						},
+						{
+							"type": "file",
+							"path": "src/symphony.js",
+							"contains": "y: h * (0.82 - 0.6 * (note.degree / 20)),"
+						}
+					]
+				},
+				{
+					"says": "Play opens on the last ten real events as an overture",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/symphony.js",
+							"contains": "state.events.slice(0, 10).reverse()"
+						},
+						{
+							"type": "proof",
+							"fact": "notes",
+							"equals": "10"
+						}
+					]
+				},
+				{
+					"says": "a ledger lists the real event behind every note",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/symphony",
+							"contains": "every note is one of these real events"
+						}
+					]
+				},
+				{
+					"says": "Mute any of the six voices",
+					"evidence": [
+						{
+							"type": "module",
+							"path": "src/symphony-score.js",
+							"export": "CATEGORIES",
+							"length": 6
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/symphony",
+							"contains": "Click a voice below to mute it."
+						}
+					]
+				},
+				{
+					"says": "solo one agent so everything else drops out",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/symphony.html",
+							"contains": "Everything else is muted."
+						}
+					]
+				},
+				{
+					"says": "record up to a minute of it as a video with the sound",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/symphony.js",
+							"contains": "const RECORD_MAX_MS = 60_000;"
+						},
+						{
+							"type": "file",
+							"path": "src/symphony.js",
+							"contains": "alongside the master bus so a recording is a postable video"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "avatar-artifact",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "clip",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/avatar-artifact"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/avatar-artifact",
+						"settle": 7000
+					},
+					{
+						"read": "title",
+						"selector": "#artifact-title",
+						"match": "(a live Three.js portrait)"
+					},
+					{
+						"hold": 1400,
+						"caption": "A 3D portrait built from code, not a file"
+					},
+					{
+						"drag": [
+							[
+								0.5,
+								0.5
+							],
+							[
+								0.12,
+								0.3
+							]
+						],
+						"ms": 1800,
+						"caption": "It looks wherever the cursor goes"
+					},
+					{
+						"drag": [
+							[
+								0.12,
+								0.3
+							],
+							[
+								0.88,
+								0.42
+							]
+						],
+						"ms": 2000
+					},
+					{
+						"drag": [
+							[
+								0.88,
+								0.42
+							],
+							[
+								0.5,
+								0.8
+							]
+						],
+						"ms": 1600
+					},
+					{
+						"press": "ArrowUp",
+						"caption": "Arrow keys steer it without a mouse"
+					},
+					{
+						"press": "ArrowUp"
+					},
+					{
+						"press": "ArrowLeft"
+					},
+					{
+						"press": "ArrowLeft"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "Copy embed",
+						"caption": "Copy embed: one iframe, any website"
+					},
+					{
+						"read": "copied",
+						"selector": "#copy-status",
+						"match": "(Embed code copied|Copy the snippet below)"
+					},
+					{
+						"hold": 3000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the artifact page is up",
+					"url": "https://three.ws/avatar-artifact",
+					"expect": {
+						"contains": "Avatar Artifact"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "This 3D character follows your cursor, and there is no model file behind it. The figure is procedural, built in code, down to the blink.\n\nIt lives on the Avatar Artifact, a page with one job: render one avatar from a link, with no app around it. Move a mouse, drag a finger or press the arrow keys and it turns to look. Copy embed hands you a single iframe for any website.",
+					"media": [
+						{
+							"path": "public/x-media/avatar-artifact/reel.mp4",
+							"probe": {
+								"durationSec": 14.7,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Point it at your own agent with ?agent= and that avatar renders instead, resolved live from the agent's public record. ?model= takes any GLB from an allowed host, and anything else is refused with a sentence saying why, not a blank frame.\n\nthree.ws/avatar-artifact"
+				},
+				{
+					"text": "It is deliberately the smallest viewer we ship. The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN, and a hidden tab suspends the render loop instead of burning the host page's GPU."
+				}
+			],
+			"claims": [
+				{
+					"says": "This 3D character follows your cursor",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "The house portrait: a procedural figure that follows your cursor."
+						},
+						{
+							"type": "proof",
+							"fact": "title",
+							"equals": "a live Three.js portrait"
+						}
+					]
+				},
+				{
+					"says": "there is no model file behind it. The figure is procedural, built in code",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-artifact.js",
+							"contains": "(no params)     the house portrait: a procedural figure that tracks you"
+						}
+					]
+				},
+				{
+					"says": "down to the blink",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-artifact.js",
+							"contains": "Eyelids: a blink is a Y scale on these caps."
+						}
+					]
+				},
+				{
+					"says": "a page with one job: render one avatar from a link, with no app around it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "is one page that renders one avatar and nothing else"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "This page has one job: show the artifact, beautifully, from a link."
+						}
+					]
+				},
+				{
+					"says": "Move a mouse, drag a finger or press the arrow keys and it turns to look",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/avatar-artifact",
+							"contains": "Move your cursor · drag on touch · arrow keys"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "Every input drives one look-target, so the page works with a mouse, a finger or a keyboard alone"
+						}
+					]
+				},
+				{
+					"says": "Copy embed hands you a single iframe for any website",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "copied",
+							"contains": "Copy the snippet below"
+						},
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "Click **Copy embed** on the page and you get an iframe pointed at exactly what you are looking at"
+						}
+					]
+				},
+				{
+					"says": "that avatar renders instead, resolved live from the agent's public record",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "The page fetches the agent's public record, reads `avatar_model_url`, and renders it."
+						}
+					]
+				},
+				{
+					"says": "?model= takes any GLB from an allowed host",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "Any GLB served from an allowed host."
+						}
+					]
+				},
+				{
+					"says": "anything else is refused with a sentence saying why, not a blank frame",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "Anything else is refused with an explanation instead of rendered."
+						}
+					]
+				},
+				{
+					"says": "It is deliberately the smallest viewer we ship",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "It is deliberately the smallest viewer we ship."
+						}
+					]
+				},
+				{
+					"says": "The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "**No third-party CDN.** three.js ships with the bundle. An embed host never picks up a cross-origin script tag it did not agree to."
+						}
+					]
+				},
+				{
+					"says": "a hidden tab suspends the render loop",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/avatar-artifact.md",
+							"contains": "A hidden tab suspends the render loop"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "community-skills",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/skills/community"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/skills/community",
+						"settle": 6000,
+						"caption": "One markdown file teaches an agent a job"
+					},
+					{
+						"read": "skills",
+						"match": "skills\\s+(\\d+)\\s+tags"
+					},
+					{
+						"read": "scripts",
+						"match": "with runnable scripts\\s+(\\d+)"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "Browse the registry",
+						"ms": 1000,
+						"caption": "Every skill is reviewed like code"
+					},
+					{
+						"type": "risk",
+						"into": "Search skills, tags, authors…",
+						"caption": "Search by what the agent should do"
+					},
+					{
+						"expect": "Risk Manager"
+					},
+					{
+						"scroll": 320,
+						"ms": 700
+					},
+					{
+						"hold": 1300
+					},
+					{
+						"click": "Preview Risk Manager",
+						"awaits": "/api/skills/community/risk-manager",
+						"caption": "Read the whole file before you import it"
+					},
+					{
+						"expect": "RISK CHECK"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"scroll": "The rules",
+						"ms": 1400,
+						"caption": "1% risk per trade, a stop on every one"
+					},
+					{
+						"hold": 3500
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the risk desk skill the reel opens is still in the registry",
+					"url": "https://three.ws/api/skills/community/risk-manager",
+					"expect": {
+						"json": {
+							"path": "skill.slug",
+							"equals": "risk-manager"
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "An agent learns a new job from one markdown file. Import a community skill onto your agent and it follows that file from its next reply.\n\nThe one in the reel is a risk desk. Every reply to a trade request opens with a risk check: the position sized from its stop at 1% of the portfolio, the loss if the stop is hit, and a verdict to go ahead, reduce the size, or not trade at all. It does not skip the check because the user is in a hurry.",
+					"media": [
+						{
+							"path": "public/x-media/community-skills/reel.mp4",
+							"probe": {
+								"durationSec": 13.8,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Anyone can contribute a skill by pull request, and every one is reviewed like code. Search the registry and open any skill to read the whole file before it touches your agent.\n\nthree.ws/skills/community"
+				},
+				{
+					"text": "Others in the registry run diligence before any buy and end in a verdict of pass, caution or fail, or draft an agent's posts about its own trades with losses shown alongside wins.\n\nSome carry a script beside the instructions, like the position-size calculator that ships with the risk desk."
+				}
+			],
+			"claims": [
+				{
+					"says": "one markdown file",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "A skill is one markdown file of instructions"
+						}
+					]
+				},
+				{
+					"says": "it follows that file from its next reply",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "the agent follows it from its next reply"
+						}
+					]
+				},
+				{
+					"says": "Every reply to a trade request opens with a risk check",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "community-skills/skills/risk-manager/SKILL.md",
+							"contains": "Every reply to a trade request"
+						},
+						{
+							"type": "proof",
+							"saw": "RISK CHECK"
+						}
+					]
+				},
+				{
+					"says": "the position sized from its stop at 1% of the portfolio",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "sizes every position from its stop at 1% portfolio risk"
+						}
+					]
+				},
+				{
+					"says": "the loss if the stop is hit",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "community-skills/skills/risk-manager/SKILL.md",
+							"contains": "Max loss at stop"
+						}
+					]
+				},
+				{
+					"says": "a verdict to go ahead, reduce the size, or not trade at all",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "a GO, REDUCE or NO-GO verdict"
+						}
+					]
+				},
+				{
+					"says": "It does not skip the check because the user is in a hurry",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "community-skills/skills/risk-manager/SKILL.md",
+							"contains": "You never skip the check because the user is excited, in a hurry"
+						}
+					]
+				},
+				{
+					"says": "Anyone can contribute a skill by pull request",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "Anyone can contribute one by pull request"
+						}
+					]
+				},
+				{
+					"says": "every one is reviewed like code",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "every skill is reviewed like code"
+						}
+					]
+				},
+				{
+					"says": "open any skill to read the whole file",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/skills/community/risk-manager"
+						},
+						{
+							"type": "proof",
+							"saw": "RISK CHECK"
+						}
+					]
+				},
+				{
+					"says": "end in a verdict of pass, caution or fail",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "ending in a PASS, CAUTION or FAIL verdict"
+						}
+					]
+				},
+				{
+					"says": "losses shown alongside wins",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "losses shown alongside wins"
+						}
+					]
+				},
+				{
+					"says": "Some carry a script beside the instructions",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/skills/community",
+							"contains": "with runnable scripts"
+						}
+					]
+				},
+				{
+					"says": "the position-size calculator that ships with the risk desk",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "community-skills/skills/risk-manager/SKILL.md",
+							"contains": "The bundled calculator applies rules 1, 3 and 5"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "holo-sticker",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "clip",
+			"notBefore": "2026-09-30T00:00:00Z",
+			"covers": [
+				"/holo"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/holo",
+						"settle": 7000
+					},
+					{
+						"scroll": 250,
+						"ms": 600
+					},
+					{
+						"read": "peel",
+						"match": "Corner peel\\s*(\\d+)%"
+					},
+					{
+						"read": "stage",
+						"selector": "#stage[data-state=\"ready\"]",
+						"match": "(drag to tilt)"
+					},
+					{
+						"read": "foils",
+						"selector": "#foilChips",
+						"match": "(Rainbow holo\\s+Chrome\\s+Gold foil\\s+Neon)"
+					},
+					{
+						"hold": 1400,
+						"caption": "A foil sticker drawn live in the browser. No image, no model file."
+					},
+					{
+						"drag": [
+							[
+								0.27,
+								0.52
+							],
+							[
+								0.34,
+								0.45
+							]
+						],
+						"ms": 2200,
+						"caption": "Tilt it and the foil answers the light, like the real thing"
+					},
+					{
+						"click": "Gold foil",
+						"caption": "The foil is a material with thin-film iridescence, so it can change"
+					},
+					{
+						"drag": [
+							[
+								0.34,
+								0.45
+							],
+							[
+								0.27,
+								0.5
+							]
+						],
+						"ms": 1800
+					},
+					{
+						"click": "Your text",
+						"caption": "Type a word and it is die-cut into a sticker of its own"
+					},
+					{
+						"type": "agents",
+						"into": "Text to die-cut"
+					},
+					{
+						"click": "Cut it"
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"click": "Neon"
+					},
+					{
+						"read": "foilAfter",
+						"selector": "#foilChips .is-on",
+						"match": "(\\w+)"
+					},
+					{
+						"read": "markAfter",
+						"selector": "#markChips .is-on",
+						"match": "(Your text)"
+					},
+					{
+						"drag": [
+							[
+								0.28,
+								0.48
+							],
+							[
+								0.33,
+								0.44
+							]
+						],
+						"ms": 2000,
+						"caption": "The outline is traced from the letters, holes included"
+					},
+					{
+						"hold": 3200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the holo sticker page is up",
+					"url": "https://three.ws/holo",
+					"expect": {
+						"contains": "Holo Sticker"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "The sticker in this reel is not an image. It is a holographic foil sticker drawn live in your browser, a Labs experiment in rendering a physical material on the spot: the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch, with no images and no model files.\n\nTilt it with your pointer the way you would tilt the real thing, or type your own text and it is cut into a sticker of its own. three.ws/holo",
+					"media": [
+						{
+							"path": "public/x-media/holo-sticker/reel.mp4",
+							"probe": {
+								"durationSec": 18.13,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, up to 16 characters of your own text, and a PNG download of whatever you make."
+				}
+			],
+			"claims": [
+				{
+					"says": "not an image",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "no images, no model files"
+						}
+					]
+				},
+				{
+					"says": "a holographic foil sticker drawn live in your browser",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "A holographic foil sticker, rendered live"
+						},
+						{
+							"type": "proof",
+							"fact": "stage",
+							"contains": "drag to tilt"
+						}
+					]
+				},
+				{
+					"says": "a Labs experiment in rendering a physical material on the spot",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The foil is a physical material"
+						},
+						{
+							"type": "file",
+							"path": "data/pages.json",
+							"contains": "\"path\": \"/holo\""
+						}
+					]
+				},
+				{
+					"says": "the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The die-cut outline, the iridescent foil, the light it reflects, and the peeling corner are all computed in your browser"
+						}
+					]
+				},
+				{
+					"says": "no images and no model files",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "no images, no model files"
+						}
+					]
+				},
+				{
+					"says": "Tilt it with your pointer the way you would tilt the real thing",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "Tilt it with your pointer the way you would tilt the real thing"
+						}
+					]
+				},
+				{
+					"says": "type your own text and it is cut into a sticker of its own",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "type your own text and get it cut into a sticker of its own"
+						},
+						{
+							"type": "proof",
+							"fact": "markAfter",
+							"equals": "Your text"
+						}
+					]
+				},
+				{
+					"says": "the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included"
+						}
+					]
+				},
+				{
+					"says": "The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real"
+						}
+					]
+				},
+				{
+					"says": "Four foils",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "foils",
+							"contains": "Gold foil"
+						},
+						{
+							"type": "proof",
+							"fact": "foilAfter",
+							"equals": "Neon"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "label: 'Rainbow holo'[\\s\\S]*label: 'Chrome'[\\s\\S]*label: 'Gold foil'[\\s\\S]*label: 'Neon'[\\s\\S]*const MARKS"
+						}
+					]
+				},
+				{
+					"says": "up to 16 characters of your own text",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "up to 16 characters"
+						}
+					]
+				},
+				{
+					"says": "a PNG download of whatever you make",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "Download PNG"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "voice-lab",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/voice",
+				"/api/tts/catalog",
+				"/api/tts/synthesize"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/voice",
+						"settle": 7000,
+						"caption": "One grid of voices for your agent"
+					},
+					{
+						"scroll": "Browse voices",
+						"ms": 900
+					},
+					{
+						"read": "voices",
+						"match": "(\\d+) voices across \\d+ providers"
+					},
+					{
+						"hold": 2200
+					},
+					{
+						"type": "en-GB",
+						"into": "Search by name, accent, or use case...",
+						"caption": "Search by name, accent or use case"
+					},
+					{
+						"wait": 1200
+					},
+					{
+						"read": "matches",
+						"match": "(\\d+) voices? across \\d+ providers"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Use this voice",
+						"caption": "Pick one and it drops into the playground"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "Speak",
+						"awaits": "/api/tts/synthesize",
+						"caption": "Type a line. It speaks, no sign-in."
+					},
+					{
+						"expect": "KB ·"
+					},
+					{
+						"hold": 3800
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the catalog still offers more than 300 voices, as the post says",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"expect": {
+						"json": {
+							"path": "total",
+							"min": 300
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "a free voice still speaks for a signed-out visitor",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"expect": {
+						"contains": "\"anonymous\":true"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Your agent can speak in more than 300 voices, and three.ws/voice lets you hear them before you pick one, without signing in.\n\nThey sit in one grid you search by name, accent or use case: en-GB leaves 5. Press Use this voice, type a line, press Speak, and the playground reads it back. The Microsoft Edge and NVIDIA Magpie voices are free and need no account.",
+					"media": [
+						{
+							"path": "public/x-media/voice-lab/reel.mp4",
+							"probe": {
+								"durationSec": 12.57,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis.\n\nTo use your own voice instead, record 20 to 30 seconds on the same page and clone it. Cloning runs on ElevenLabs, on credits or your own key. Either way the voice works across your avatars and agents."
+				}
+			],
+			"claims": [
+				{
+					"says": "more than 300 voices",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "voices",
+							"min": 300
+						}
+					]
+				},
+				{
+					"says": "lets you hear them before you pick one, without signing in",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/tts/synthesize"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "No key, no account, works signed out."
+						}
+					]
+				},
+				{
+					"says": "one grid you search by name, accent or use case",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/voice.html",
+							"contains": "placeholder=\"Search by name, accent, or use case...\""
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Browse every ready-made voice across five providers in one grid"
+						}
+					]
+				},
+				{
+					"says": "en-GB leaves 5",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "matches",
+							"equals": "5"
+						}
+					]
+				},
+				{
+					"says": "Press Use this voice, type a line, press Speak, and the playground reads it back",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/tts/synthesize"
+						},
+						{
+							"type": "proof",
+							"saw": "KB ·"
+						}
+					]
+				},
+				{
+					"says": "The Microsoft Edge and NVIDIA Magpie voices are free and need no account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "\"label\":\"Microsoft Edge\",\"tagline\":\"Free"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "\"label\":\"NVIDIA Magpie\",\"tagline\":\"Free"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "| NVIDIA Magpie | 11 personas | Free |"
+						}
+					]
+				},
+				{
+					"says": "Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "Every clip is cached in R2 keyed on a hash of the full request"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "an identical request is served from storage with no upstream call and no charge"
+						}
+					]
+				},
+				{
+					"says": "record 20 to 30 seconds on the same page and clone it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/voice",
+							"contains": "record 20-30 seconds of clear speech and clone your own"
+						}
+					]
+				},
+				{
+					"says": "Cloning runs on ElevenLabs, on credits or your own key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/tts/catalog?limit=1",
+							"contains": "Credits or your own key · full library · voice cloning"
+						},
+						{
+							"type": "file",
+							"path": "docs/voice-lab.md",
+							"contains": "The only lane that can clone your voice."
+						}
+					]
+				},
+				{
+					"says": "the voice works across your avatars and agents",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/voice",
+							"contains": "Either way it works across your avatars and agents."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "intel-globe",
+			"status": "paused",
+			"kind": "post",
+			"tier": 2,
+			"lane": "labs",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/globe",
+				"/docs/globe",
+				"/api/globe/intel"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/globe",
+						"settle": 10000
+					},
+					{
+						"read": "points",
+						"match": "([\\d,]+) points"
+					},
+					{
+						"read": "range",
+						"match": "points · (Last \\d+ days)"
+					},
+					{
+						"hold": 1600,
+						"caption": "Eleven layers of open data on one globe"
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.42
+							],
+							[
+								0.62,
+								0.46
+							]
+						],
+						"ms": 2200,
+						"caption": "Drag to spin. Every point cites a source."
+					},
+					{
+						"click": "30d",
+						"awaits": "/api/globe/intel",
+						"caption": "Change the window and the count follows"
+					},
+					{
+						"expect": "Last 30 days",
+						"within": 60000
+					},
+					{
+						"read": "pointsMonth",
+						"match": "([\\d,]+) points"
+					},
+					{
+						"hold": 2000
+					},
+					{
+						"click": "Conflicts",
+						"caption": "Switch a layer off and it leaves the globe"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": "Flat",
+						"caption": "Flat lays the same data out as a map"
+					},
+					{
+						"hold": 2600
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the 7 day window still holds more than the 1,000 points the post states",
+					"url": "https://three.ws/api/globe/intel?range=7d",
+					"expect": {
+						"json": {
+							"path": "totalEvents",
+							"min": 1000
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the 30 day window still holds more than the 5,000 points the post states",
+					"url": "https://three.ws/api/globe/intel?range=30d",
+					"expect": {
+						"json": {
+							"path": "totalEvents",
+							"min": 5000
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the payload still requests eleven layers",
+					"url": "https://three.ws/api/globe/intel?range=7d",
+					"expect": {
+						"json": {
+							"path": "requested.length",
+							"equals": 11
+						}
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Every point on three.ws/globe is open data, and it links back to its source. Conflict, force posture and sanctions are classified from a global news event stream and held in a rolling window, so the time control is real: switching from 7 days to 30 took the map from more than 1,000 points to more than 5,000.\n\nEleven layers on one globe: conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points. None of it needs a key.",
+					"media": [
+						{
+							"path": "public/x-media/intel-globe/reel.mp4",
+							"probe": {
+								"durationSec": 12.9,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "Natural events come from the US Geological Survey and NASA, severe weather from the Global Disaster Alert and Coordination System, internet outages from Georgia Tech, and economic stress from World Bank indicators. Ask for more time than the rolling window holds and the layer tells you how much it actually covered, rather than padding the rest."
+				},
+				{
+					"text": "Press F to flatten the globe into a map, Space to pause the spin. The whole payload is one GET to /api/globe/intel, documented in the globe reference."
+				}
+			],
+			"claims": [
+				{
+					"says": "is open data",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Eleven layers of open data on one globe"
+						}
+					]
+				},
+				{
+					"says": "it links back to its source",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "every point links to its source"
+						}
+					]
+				},
+				{
+					"says": "held in a rolling window",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "kept in a rolling window on three.ws"
+						}
+					]
+				},
+				{
+					"says": "the time control is real",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "so the time control is real rather than decorative"
+						}
+					]
+				},
+				{
+					"says": "switching from 7 days to 30",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "range",
+							"equals": "Last 7 days"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/globe/intel"
+						},
+						{
+							"type": "proof",
+							"saw": "Last 30 days"
+						}
+					]
+				},
+				{
+					"says": "more than 1,000 points",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "points",
+							"min": 1000
+						}
+					]
+				},
+				{
+					"says": "more than 5,000",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "pointsMonth",
+							"min": 5000
+						}
+					]
+				},
+				{
+					"says": "economic stress from World Bank indicators",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "economic stress from World Bank indicators"
+						}
+					]
+				},
+				{
+					"says": "Eleven layers on one globe",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Eleven layers of open data on one globe"
+						}
+					]
+				},
+				{
+					"says": "the layer tells you how much it actually covered",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Every layer states the window it actually covered"
+						},
+						{
+							"type": "file",
+							"path": "src/globe-intel-core.js",
+							"contains": "so far`"
+						}
+					]
+				},
+				{
+					"says": "Press F to flatten the globe into a map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Press F to flatten"
+						}
+					]
+				},
+				{
+					"says": "Space to pause the spin",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Space to pause the spin"
+						}
+					]
+				},
+				{
+					"says": "The whole payload is one GET to /api/globe/intel",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "The full payload is one call: /api/globe/intel"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/globe/intel"
+						}
+					]
+				},
+				{
+					"says": "documented in the globe reference",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "documented in the globe reference"
+						}
+					]
+				},
+				{
+					"says": "Every point on",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "every point links to its source"
+						}
+					]
+				},
+				{
+					"says": "classified from a global news event stream",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "classified from the GDELT event stream by CAMEO code"
+						}
+					]
+				},
+				{
+					"says": "conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, over military bases, nuclear sites and maritime choke points",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Armed conflict, force posture and sanctions"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Severe weather"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Internet outages"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Economic stress"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Military bases, nuclear sites and maritime chokepoints are reference geography"
+						}
+					]
+				},
+				{
+					"says": "None of it needs a key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "No credential is needed to read any of it"
+						}
+					]
+				},
+				{
+					"says": "Natural events come from the US Geological Survey and NASA",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "Natural events come from the USGS earthquake feed and NASA EONET"
+						}
+					]
+				},
+				{
+					"says": "severe weather from the Global Disaster Alert and Coordination System",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "severe weather from GDACS"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/globe-sources.js",
+							"contains": "https://www.gdacs.org/gdacsapi/"
+						}
+					]
+				},
+				{
+					"says": "internet outages from Georgia Tech",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/globe",
+							"contains": "connectivity loss from Georgia Tech's IODA project"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"note": "Held 2026-10-01 for the owner: it puts conflict and force-posture layers over military bases and nuclear sites on the company account, and its conflict classifier tagged a story about US House district maps as conventional military force. Approve only if the owner wants this subject on @trythreews."
+		},
+		{
+			"id": "restyle-presets",
+			"status": "paused",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "number",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/restyle",
+				"/docs/restyle",
+				"@three-ws/viewer-presets"
+			],
+			"scenario": {
+				"format": "landscape",
+				"steps": [
+					{
+						"goto": "https://three.ws/restyle",
+						"settle": 9000
+					},
+					{
+						"scroll": 220,
+						"ms": 900,
+						"caption": "18 material presets for any GLB, applied in your browser"
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"click": "Gold",
+						"caption": "One click re-skins every material on the model"
+					},
+					{
+						"read": "history",
+						"selector": "#history .is-current",
+						"match": "(Gold)"
+					},
+					{
+						"hold": 1000
+					},
+					{
+						"drag": [
+							[
+								0.18,
+								0.6
+							],
+							[
+								0.42,
+								0.6
+							]
+						],
+						"ms": 2000,
+						"caption": "Real PBR values, so the light answers as you turn it"
+					},
+					{
+						"click": "Chrome"
+					},
+					{
+						"hold": 1400
+					},
+					{
+						"click": "Holographic",
+						"caption": "Holographic is a material too, not a filter"
+					},
+					{
+						"scroll": -484,
+						"ms": 800
+					},
+					{
+						"read": "last",
+						"selector": "#history .is-current",
+						"match": "(Holographic)"
+					},
+					{
+						"drag": [
+							[
+								0.42,
+								0.6
+							],
+							[
+								0.2,
+								0.6
+							]
+						],
+						"ms": 2000
+					},
+					{
+						"hold": 2800
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the restyle page is up and still loads its sample avatar by default",
+					"url": "https://three.ws/restyle",
+					"expect": {
+						"contains": "sample avatar loads by default"
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "18 finishes for any 3D model, one click each, right in your browser: three.ws/restyle\n\nGold, chrome, copper, glass, wood, stone, car paint, neon, holographic. Each one is a set of real PBR values (color, how metallic, how rough), so the model reflects light as you turn it instead of wearing a flat tint.\n\nYour original is never touched, and Reset puts it back.",
+					"media": [
+						{
+							"path": "public/x-media/restyle-presets/reel.mp4",
+							"probe": {
+								"durationSec": 15.6,
+								"width": 1280,
+								"height": 720,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "For a finish that is not on the list, describe it in plain words, like worn copper or glossy ceramic, and IBM Granite proposes the PBR values. They are applied live and saved as a new version, never over the one before it.\n\nThen fine-tune how metallic and how rough it is with sliders and export a validated GLB."
+				},
+				{
+					"text": "The reel uses the platform's sample avatar, which loads by default when you bring no model. Drop in a .glb, or paste a public link to one, and every finish works the same way on it."
+				}
+			],
+			"claims": [
+				{
+					"says": "18 finishes",
+					"evidence": [
+						{
+							"type": "module",
+							"path": "packages/viewer-presets/src/materials.js",
+							"export": "MATERIAL_PRESET_NAMES",
+							"length": 18
+						}
+					]
+				},
+				{
+					"says": "for any 3D model",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Re-skin any 3D model in your browser"
+						}
+					]
+				},
+				{
+					"says": "one click each",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "history",
+							"equals": "Gold"
+						},
+						{
+							"type": "file",
+							"path": "src/restyle.js",
+							"contains": "b.addEventListener('click', () => applyPreset(name));"
+						}
+					]
+				},
+				{
+					"says": "right in your browser",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Re-skin any 3D model in your browser"
+						}
+					]
+				},
+				{
+					"says": "Gold, chrome, copper, glass, wood, stone, car paint, neon, holographic",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Car paint"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Holographic"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Stone"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Copper"
+						}
+					]
+				},
+				{
+					"says": "Each one is a set of real PBR values (color, how metallic, how rough)",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "apply a PBR material preset"
+						},
+						{
+							"type": "file",
+							"path": "packages/viewer-presets/src/materials.js",
+							"contains": "gold: freeze({ label: 'Gold', color: '#ffcf5c', metalness: 1, roughness: 0.18"
+						}
+					]
+				},
+				{
+					"says": "so the model reflects light as you turn it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/viewer-presets/src/materials.js",
+							"contains": "metalness: 1, roughness: 0.05, envMapIntensity: 1.6"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Drag to orbit"
+						}
+					]
+				},
+				{
+					"says": "Your original is never touched, and Reset puts it back",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Your original is never touched; Reset restores it instantly."
+						}
+					]
+				},
+				{
+					"says": "IBM Granite proposes the PBR values",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "IBM Granite proposes real PBR values"
+						}
+					]
+				},
+				{
+					"says": "like worn copper or glossy ceramic",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/restyle.html",
+							"contains": "placeholder=\"e.g. cyberpunk neon, worn copper, glossy ceramic\""
+						}
+					]
+				},
+				{
+					"says": "They are applied live and saved as a new version, never over the one before it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "applied live and checkpointed as a new version"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "overwriting the one before it"
+						}
+					]
+				},
+				{
+					"says": "fine-tune how metallic and how rough it is with sliders and export a validated GLB",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "fine-tune metalness and roughness live, then export a validated GLB"
+						}
+					]
+				},
+				{
+					"says": "Drop in a .glb, or paste a public link to one",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "drop a .glb to load"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "Load URL"
+						}
+					]
+				},
+				{
+					"says": "every finish works the same way on it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/restyle.js",
+							"contains": "applyMaterialPreset(THREE, state.root, name);"
+						}
+					]
+				},
+				{
+					"says": "the platform's sample avatar, which loads by default",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/restyle",
+							"contains": "The platform's sample avatar loads by default"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"note": "Held 2026-10-01: the reel shows /restyle's sample avatar in a bind-pose T-pose throughout, which the operating rules say never to ship. Fix the page to load a sample that idles, then film again and approve."
 		}
 	]
 }

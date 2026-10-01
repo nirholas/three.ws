@@ -1,0 +1,163 @@
+{
+	"id": "intel-globe",
+	"scenarioHash": "c9cfd84c600562182c048053e00d21cee62ffb646ba3d2f28245c6408c293d1c",
+	"ranAt": "2026-10-01T07:04:07.613Z",
+	"target": {
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/globe",
+			"detail": "loaded https://three.ws/globe",
+			"ok": true,
+			"ms": 11733,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "points",
+			"detail": "points = \"1,112\"",
+			"ok": true,
+			"ms": 19,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "range",
+			"detail": "range = \"Last 7 days\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 9184,
+			"frames": 48
+		},
+		{
+			"index": 5,
+			"kind": "drag",
+			"target": "0.3,0.42,0.62,0.46",
+			"detail": "dragged over 66 frames",
+			"ok": true,
+			"ms": 17596,
+			"frames": 84
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "30d",
+			"detail": "clicked; GET /api/globe/intel answered 200 in 15.7 s",
+			"ok": true,
+			"ms": 18423,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "expect",
+			"target": "Last 30 days",
+			"detail": "appeared after 1.5 s",
+			"ok": true,
+			"ms": 1473,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "read",
+			"target": "pointsMonth",
+			"detail": "pointsMonth = \"5,767\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 12399,
+			"frames": 60
+		},
+		{
+			"index": 10,
+			"kind": "click",
+			"target": "Conflicts",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 4525,
+			"frames": 21
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 10630,
+			"frames": 54
+		},
+		{
+			"index": 12,
+			"kind": "click",
+			"target": "Flat",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 4428,
+			"frames": 21
+		},
+		{
+			"index": 13,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 14304,
+			"frames": 78
+		}
+	],
+	"facts": {
+		"points": "1,112",
+		"range": "Last 7 days",
+		"pointsMonth": "5,767"
+	},
+	"saw": [
+		"Last 30 days"
+	],
+	"responses": [
+		{
+			"method": "GET",
+			"path": "/api/globe/intel",
+			"status": 200,
+			"seconds": 15.7
+		}
+	],
+	"cuts": [
+		{
+			"afterStep": 6,
+			"seconds": 13.9
+		}
+	],
+	"video": {
+		"path": "public/x-media/intel-globe/reel.mp4",
+		"sha256": "d36a60ed4ce727f12354730bf42fb678ae51b911ea5a6eed77a46301eebbfac8",
+		"frames": 387,
+		"motion": 1,
+		"durationSec": 12.9,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

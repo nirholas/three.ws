@@ -1,0 +1,157 @@
+{
+	"id": "restyle-presets",
+	"scenarioHash": "58886054056ed9828577fbf500bb2d78341c37706a4a357d120622fbb563a5de",
+	"ranAt": "2026-10-01T07:01:36.070Z",
+	"target": {
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/restyle",
+			"detail": "loaded https://three.ws/restyle",
+			"ok": true,
+			"ms": 13045,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "220",
+			"detail": "scrolled 220 px",
+			"ok": true,
+			"ms": 7227,
+			"frames": 27
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 10588,
+			"frames": 42
+		},
+		{
+			"index": 4,
+			"kind": "click",
+			"target": "Gold",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 5643,
+			"frames": 21
+		},
+		{
+			"index": 5,
+			"kind": "read",
+			"target": "history",
+			"detail": "history = \"Gold\"",
+			"ok": true,
+			"ms": 7,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "1000",
+			"detail": "1000 ms",
+			"ok": true,
+			"ms": 7241,
+			"frames": 30
+		},
+		{
+			"index": 7,
+			"kind": "drag",
+			"target": "0.18,0.6,0.42,0.6",
+			"detail": "dragged over 60 frames",
+			"ok": true,
+			"ms": 20452,
+			"frames": 78
+		},
+		{
+			"index": 8,
+			"kind": "click",
+			"target": "Chrome",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 5314,
+			"frames": 21
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 10903,
+			"frames": 42
+		},
+		{
+			"index": 10,
+			"kind": "click",
+			"target": "Holographic",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 5047,
+			"frames": 21
+		},
+		{
+			"index": 11,
+			"kind": "scroll",
+			"target": "-484",
+			"detail": "scrolled -484 px",
+			"ok": true,
+			"ms": 5895,
+			"frames": 24
+		},
+		{
+			"index": 12,
+			"kind": "read",
+			"target": "last",
+			"detail": "last = \"Holographic\"",
+			"ok": true,
+			"ms": 4,
+			"frames": 0
+		},
+		{
+			"index": 13,
+			"kind": "drag",
+			"target": "0.42,0.6,0.2,0.6",
+			"detail": "dragged over 60 frames",
+			"ok": true,
+			"ms": 20853,
+			"frames": 78
+		},
+		{
+			"index": 14,
+			"kind": "hold",
+			"target": "2800",
+			"detail": "2800 ms",
+			"ok": true,
+			"ms": 19818,
+			"frames": 84
+		}
+	],
+	"facts": {
+		"history": "Gold",
+		"last": "Holographic"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/restyle-presets/reel.mp4",
+		"sha256": "3b3efa99d5261582a0e4b414f8ced3d8b6a4e87e1eb72d03f5430b2ca0992055",
+		"frames": 468,
+		"motion": 0.837,
+		"durationSec": 15.6,
+		"width": 1280,
+		"height": 720,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}
