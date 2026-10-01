@@ -299,6 +299,7 @@
 		"ui:review": "node scripts/ui-review.mjs",
 		"agent:vitals": "node scripts/agent-vitals.mjs",
 		"bots:report": "node scripts/trading-bot-report.mjs",
+		"sniper:reclaim-rent": "node --env-file-if-exists=.env.local scripts/sniper-reclaim-rent.mjs",
 		"logs": "node scripts/gcp-logs.mjs",
 		"logs:tail": "node scripts/gcp-logs.mjs --follow",
 		"gpu": "node scripts/gpu-capacity.mjs",

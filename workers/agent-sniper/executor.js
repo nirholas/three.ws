@@ -28,6 +28,7 @@ import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } fro
 import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
 import { screenPush } from './screen-push.js';
 import { buildAgentTradeFee } from '../../api/_lib/pump-platform-fee.js';
+import { reclaimMintRent } from './rent-reclaim.js';
 
 // Self-rated conviction for a snipe entry, 0..1. Lower price impact and a clean
 // firewall verdict raise it; a warned verdict and heavy impact lower it. This is
@@ -859,6 +860,16 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 				},
 			);
 			notifySell({ agentName: position.agent_name || position.agent_id, symbol: position.symbol, mint: position.mint, pnlSol, pnlPct, exitReason: reason, mode: cfg.mode, sig, chatId: position.telegram_chat_id || null });
+			// A full exit leaves the coin's token account empty; close it so its rent
+			// (~0.0015-0.002 SOL, as much as a whole small position) returns to the
+			// wallet. Separate tx, not awaited: the exit is already booked and a failed
+			// close must never hold the agent lock or touch the sell.
+			if (cfg.mode === 'live' && !retainsMoonbag) {
+				void reclaimMintRent({
+					ctx, keypair, mint: position.mint, tag,
+					sendTx: (ixs) => signAndSend(ctx, keypair, ixs, cfg.confirmTimeoutMs),
+				});
+			}
 			return { status: 'closed', sig, pnl: pnl.toString(), venue, moonbagBase: keptBase.toString() };
 		} catch (err) {
 			// A failed sell must NOT terminate the position — leave it 'open' so the
