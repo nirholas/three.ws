@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-10-01T06:21:35.334Z",
+	"generated_at": "2026-10-01T07:14:48.480Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3803,
+	"total": 3804,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-01",
+			"type": "update",
+			"title": "Trading agents stop leaking SOL on every trade and can now ride a runner",
+			"summary": "A full review of the autonomous trading fleet found the biggest loss was not bad trades: every buy opened a token account that no sale ever closed, stranding more SOL in rent than the agents lost trading. Agents now close it after every exit so the rent comes back. The take-initials ladder also works as designed now: once an agent has its stake back, the rest rides on its trailing stop with no clock and no early take-profit, instead of being sold on the next check. The crossing strategy no longer buys coins that have already graduated or sit on a dead curve, profit percentages are reported against the real stake, and the outcome labels that teach the Oracle are flowing again.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-30",
 			"type": "launch",
@@ -1565,16 +1576,6 @@
 			"title": "Docs · Trader card embed",
 			"summary": "Put a live three.ws trader on any page with one script tag. The card shows the verified on-chain record and lets readers fork a coin or ghost-copy the trader, signing with their own wallet.",
 			"link": "/docs/trader-card-embed",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "launch",
-			"title": "Fade Radar: the wallets that are never right",
-			"summary": "The inverse of the Smart Money Radar. Every pump.fun coin ranked by how much of its buy side comes from wallets with a judged on-chain record and not one winner in it, with the measured, out-of-sample odds behind each verdict.",
-			"link": "/fade",
 			"tags": [
 				"launch"
 			]

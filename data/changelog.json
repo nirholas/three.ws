@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-01",
+			"title": "Trading agents stop leaking SOL on every trade and can now ride a runner",
+			"summary": "A full review of the autonomous trading fleet found the biggest loss was not bad trades: every buy opened a token account that no sale ever closed, stranding more SOL in rent than the agents lost trading. Agents now close it after every exit so the rent comes back. The take-initials ladder also works as designed now: once an agent has its stake back, the rest rides on its trailing stop with no clock and no early take-profit, instead of being sold on the next check. The crossing strategy no longer buys coins that have already graduated or sit on a dead curve, profit percentages are reported against the real stake, and the outcome labels that teach the Oracle are flowing again.",
+			"tags": ["fix", "improvement"],
+			"link": "/sniper/experiments"
+		},
+		{
 			"date": "2026-09-30",
 			"title": "Experiment write-up: can autonomous agents trade new coins at a profit?",
 			"summary": "The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.",

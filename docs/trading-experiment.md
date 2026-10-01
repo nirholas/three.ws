@@ -86,9 +86,12 @@ stay behind, recorded on the position row (`moonbag_base_amount`,
 [/sniper/experiments](https://three.ws/sniper/experiments).
 
 Because loss exits still sell out completely, rugs close fully and only *winners*
-leave a bag behind. That bounds the retained-rent cost to the number of winners
-rather than the number of trades (each held SPL token account locks about
-0.002 SOL of rent).
+leave a bag behind. Every full exit now also closes the coin's token account, so
+its rent (about 0.0015-0.002 SOL) returns to the wallet; only a retained bag keeps
+its account open. Before 2026-10-01 no exit closed the account, and the sniper
+wallets had accumulated more than 2 SOL of stranded rent (see the
+[fleet review](ops/sniper-fleet-review-2026-10-01.md) and
+`npm run sniper:reclaim-rent`).
 
 Set `moonbag_always = false` on a strategy to opt a single arm out. The column
 defaults to true and a null is read as true, so every existing strategy has the
