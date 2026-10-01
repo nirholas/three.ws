@@ -86,3 +86,11 @@ describe('an empty reply', () => {
 		await expect(chatCompletionsRung(request, { ...rung, fetchImpl })).rejects.toThrow('nvidia returned an empty reply (finish_reason length) after 3 tries');
 	});
 });
+
+describe('a review whose editor never ran', () => {
+	it('keeps every rung failure on the one blocker line', async () => {
+		const { editorFailure } = await import('../api/_lib/x-content/review.js');
+		expect(editorFailure('no model was reachable:\n  Vertex 403: billing\n  nvidia fetch failed (after 3 tries)')).toBe('the AI editor did not run: no model was reachable: Vertex 403: billing; nvidia fetch failed (after 3 tries)');
+		expect(editorFailure(null)).toBe('the AI editor did not run');
+	});
+});

@@ -86,6 +86,14 @@ async function calibrationPosts(env) {
 	}
 }
 
+// The chain's error lists every rung on its own line. A blocker is one line,
+// and it keeps them all, because which rung failed and why is the only thing
+// the operator can act on.
+export function editorFailure(message) {
+	if (!message) return 'the AI editor did not run';
+	return `the AI editor did not run: ${String(message).replace(/:?\s*\n\s*/g, (gap) => (gap.startsWith(':') ? ': ' : '; ')).trim()}`;
+}
+
 export async function reviewItem(item, { root, glossary = [], quality = {}, env = process.env, skipEditor = false }) {
 	const maximum = maxLengthOf(quality);
 	const lint = lintItem(item, { maximum });
@@ -121,7 +129,7 @@ export async function reviewItem(item, { root, glossary = [], quality = {}, env 
 		const overridden = item.editorOverride?.reason && editor.verdict === 'revise' && !editor.issues.some((row) => row.severity === 'blocking');
 		if (editor.verdict !== 'publish' && !overridden) blockers.push(`editor verdict is ${editor.verdict}`);
 	} else {
-		blockers.push(editorError ? `the AI editor did not run: ${editorError.split('\n')[0]}` : 'the AI editor did not run');
+		blockers.push(editorFailure(editorError));
 	}
 
 	// The editor's rewrite is a draft like any other: lint it, and list every
