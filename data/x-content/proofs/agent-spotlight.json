@@ -1,10 +1,10 @@
 {
 	"id": "agent-spotlight",
-	"scenarioHash": "c30302acd93beb01dea3a6448674570089b5048714c398e8790c0166fd9ee4ea",
-	"ranAt": "2026-09-29T10:25:55.758Z",
+	"scenarioHash": "9308eeec9a51d14cbdf78bc969eddac174f235ddaa2a2a48ca24b1d66c817b48",
+	"ranAt": "2026-10-01T08:58:28.748Z",
 	"target": {
-		"commit": "f2081d946",
-		"revision": "three-ws-api-00460-4j6"
+		"commit": "b4eb6de7a",
+		"revision": "three-ws-api-00473-tkb"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/spotlight",
 			"detail": "loaded https://three.ws/spotlight",
 			"ok": true,
-			"ms": 9444,
+			"ms": 8833,
 			"frames": 0
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "870",
 			"detail": "scrolled 870 px",
 			"ok": true,
-			"ms": 6885,
+			"ms": 6296,
 			"frames": 30
 		},
 		{
@@ -41,16 +41,16 @@
 			"target": "900",
 			"detail": "900 ms",
 			"ok": true,
-			"ms": 4937,
+			"ms": 4533,
 			"frames": 27
 		},
 		{
 			"index": 5,
 			"kind": "type",
 			"target": "translator",
-			"detail": "typed 10 characters; GET /api/spotlight/list answered 200 in 3.9 s",
+			"detail": "typed 10 characters; GET /api/spotlight/list answered 200 in 3.8 s",
 			"ok": true,
-			"ms": 7246,
+			"ms": 6840,
 			"frames": 36
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "600",
 			"detail": "600 ms",
 			"ok": true,
-			"ms": 3054,
+			"ms": 2976,
 			"frames": 18
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "500",
 			"detail": "scrolled 500 px",
 			"ok": true,
-			"ms": 4848,
+			"ms": 4833,
 			"frames": 33
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "1100",
 			"detail": "1100 ms",
 			"ok": true,
-			"ms": 4189,
+			"ms": 4266,
 			"frames": 33
 		},
 		{
@@ -86,16 +86,16 @@
 			"target": "The translator that refuses to flatten your voice",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 6372,
+			"ms": 5627,
 			"frames": 21
 		},
 		{
 			"index": 10,
 			"kind": "expect",
 			"target": "Machine translation solved meaning years ago",
-			"detail": "appeared after 0.0 s",
+			"detail": "appeared after 0.1 s",
 			"ok": true,
-			"ms": 30,
+			"ms": 96,
 			"frames": 0
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "5000",
 			"detail": "5000 ms, not filmed",
 			"ok": true,
-			"ms": 5165,
+			"ms": 5193,
 			"frames": 0
 		},
 		{
@@ -113,7 +113,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 8532,
+			"ms": 8871,
 			"frames": 36
 		},
 		{
@@ -122,7 +122,7 @@
 			"target": "0.3,0.55,0.62,0.55",
 			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 19718,
+			"ms": 20217,
 			"frames": 78
 		},
 		{
@@ -131,7 +131,7 @@
 			"target": "Agent Spotlight",
 			"detail": "hovered",
 			"ok": true,
-			"ms": 4566,
+			"ms": 4782,
 			"frames": 18
 		},
 		{
@@ -140,7 +140,7 @@
 			"target": "560",
 			"detail": "scrolled 560 px",
 			"ok": true,
-			"ms": 8912,
+			"ms": 9095,
 			"frames": 36
 		},
 		{
@@ -149,7 +149,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 9756,
+			"ms": 9733,
 			"frames": 42
 		},
 		{
@@ -158,7 +158,7 @@
 			"target": "480",
 			"detail": "scrolled 480 px",
 			"ok": true,
-			"ms": 4148,
+			"ms": 4103,
 			"frames": 33
 		},
 		{
@@ -167,7 +167,7 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 8569,
+			"ms": 8312,
 			"frames": 78
 		}
 	],
@@ -182,7 +182,7 @@
 			"method": "GET",
 			"path": "/api/spotlight/list",
 			"status": 200,
-			"seconds": 3.9
+			"seconds": 3.8
 		}
 	],
 	"cuts": [
@@ -193,9 +193,9 @@
 	],
 	"video": {
 		"path": "public/x-media/agent-spotlight/reel.mp4",
-		"sha256": "46a5344480478da10e85e185ac5d50696e9334d79ba93847c496eb19ea1fadcb",
+		"sha256": "bf9a00b51f9b7c4d679352e7b967638b7d937236831565912da9401e43f82945",
 		"frames": 519,
-		"motion": 0.786,
+		"motion": 0.78,
 		"durationSec": 17.3,
 		"width": 1080,
 		"height": 1080,

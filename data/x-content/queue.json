@@ -3101,12 +3101,12 @@
 		},
 		{
 			"id": "agent-monitor",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "number",
-			"notBefore": "2026-10-01T08:27:22.393Z",
+			"notBefore": "2026-10-01T11:37:01.196Z",
 			"covers": [
 				"/monitor"
 			],
@@ -3378,12 +3378,12 @@
 		},
 		{
 			"id": "agent-spotlight",
-			"status": "paused",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "walkthrough",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T11:03:40.303Z",
 			"covers": [
 				"/spotlight"
 			],
@@ -3684,7 +3684,7 @@
 				}
 			],
 			"mentions": {},
-			"note": "Held 2026-10-01: the entry page shows the agent in a bind-pose T-pose with a second copy of the avatar behind it, which the operating rules say never to ship. Captions were shortened to fit the square bar. Once the /spotlight entry fix is live, film again (prove agent-spotlight) and advance it."
+			"approvedBy": "policy"
 		},
 		{
 			"id": "avatar-cli",
@@ -7794,7 +7794,7 @@
 			"tier": 2,
 			"lane": "labs",
 			"pattern": "clip",
-			"notBefore": "2026-10-01T10:28:10.044Z",
+			"notBefore": "2026-10-01T11:33:41.757Z",
 			"covers": [
 				"/holo"
 			],

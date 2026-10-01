@@ -1,7 +1,7 @@
 {
 	"id": "holo-sticker",
-	"contentHash": "c6fd05f7327f11d4fccf3e25f1af6fb9ce5fa8e054be91167ec8ffca88f46b30",
-	"reviewedAt": "2026-10-01T08:28:10.038Z",
+	"contentHash": "e840093a3f7d953588400c4fcd500508491724d1580d000e472df9df2a385c99",
+	"reviewedAt": "2026-10-01T09:33:41.751Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -181,11 +181,9 @@
 				"The sticker in this reel is not an image. It is a holographic foil sticker drawn live in your browser, a Labs experiment in rendering a physical material on the spot: the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch, with no images and no model files.\n\nTilt it with your pointer the way you would tilt the real thing, or type your own text and it is cut into a sticker of its own. three.ws/holo",
 				"How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, up to 16 characters of your own text, and a PNG download of whatever you make."
 			],
-			"altText": [
-				"A reel of the three.ws/holo sticker tool: a die-cut foil sticker tilts under the pointer, the foil changes from Rainbow holo to Gold foil, the word 'agents' is typed and cut into a holographic Neon sticker, with foil selectors and a 30% corner peel slider visible."
-			]
+			"altText": []
 		},
-		"summary": "Every claim is verified verbatim against the live page, source files, and the filmed run, and the reel frames match each caption and show the feature doing exactly what the copy says. The voice is compliant (no hashtags, emoji, dashes, or hype openers) and the mechanism lead is strong; ship unchanged.",
+		"summary": "Every claim in both posts is verified word for word against the live page, the run's proof points (peel 30, four foils, markAfter Your text), and the source files, and the reel's frames and captions show exactly what the copy describes. The voice is compliant, the link is the surface itself, and the post stands alone as a description of what the reel shows. Ship it.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
