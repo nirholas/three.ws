@@ -1,10 +1,10 @@
 {
 	"id": "agent-spotlight",
 	"contentHash": "ee9c078011bc89a7e7b7cd35b8428bec518bdbcdde61c4e68640f3f2306f9974",
-	"reviewedAt": "2026-10-01T06:34:23.304Z",
+	"reviewedAt": "2026-10-01T07:19:47.553Z",
 	"passed": false,
 	"blockers": [
-		"the AI editor did not run: no model was reachable:"
+		"editor verdict is revise"
 	],
 	"texts": [
 		"Open the Agent Spotlight, type the job you need done, and the agent that does it is standing there in 3D with a write-up of what it is for: three.ws/spotlight\n\nThe agents index lists thousands of rows. The Spotlight is the other thing: 15 agents so far, each one a pitch attached to a live agent, never a copy of it. Rename the agent or swap its avatar and the card updates with it.\n\nSearch reads the headline, the one-liner, the write-up and the agent's own description, so a plain word finds the agent built for it.",
@@ -161,6 +161,59 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  fetch failed"
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 3
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "The entry opens on the agent itself, standing in 3D",
+				"problem": "The frames behind this caption (6.9 s and 11.2 s) show the avatar in a raw T-pose with a second avatar duplicated behind it, which reads as a broken or unfinished render rather than \"the agent standing in 3D, live from its own GLB.\" The first visual proof of the core claim looks buggy.",
+				"fix": "Recapture the segment on an entry whose GLB has finished loading and resolved to its rest pose (a single avatar in its normal stance), or cut to the translator entry frame at 15.6 s where the write-up and Open in 3D button do the work. Keep the caption only if the frame under it shows a properly loaded agent."
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "trending decays by the day",
+				"problem": "The verified source says \"The clock runs in days, not hours,\" which supports ordering on a day timescale but does not, as quoted, state a decay curve. The copy slightly over-specifies the mechanism.",
+				"fix": "Say \"One upvote per account per entry, and the trending clock runs in days, not hours, so a new entry is seen before it is buried under what was already popular.\""
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "The Spotlight is the other thing",
+				"problem": "Mildly elliptical phrasing; a first-time reader has to infer the contrast with the agents index. The post still stands, since the surrounding sentence carries the meaning.",
+				"fix": "Optional polish: \"The Agents index lists thousands of rows. The Agent Spotlight is the other thing: 15 entries so far, each a pitch attached to a live agent, never a copy of it.\""
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Open the Agent Spotlight, type the job you need done, and the agent that does it is standing there in 3D with a write-up of what it is for: three.ws/spotlight\n\nThe agents index lists thousands of rows. The Spotlight is the other thing: 15 agents so far, each one a pitch attached to a live agent, never a copy of it. Rename the agent or swap its avatar and the card updates with it.\n\nSearch reads the headline, the one-liner, the write-up and the agent's own description, so a plain word finds the agent built for it.",
+				"The write-ups we wrote ourselves carry a Curated badge, so a visitor is never told a builder said something they did not write. The builder's own write-up replaces ours the moment they submit one.\n\nOne upvote per account per entry, and the trending clock runs in days, not hours, so a new entry is seen before it is buried under what was already popular.",
+				"Open any one of them, talk to it, fork it, or put your own in front of everybody. Showcase your agent takes a public agent you own, a headline and a one-liner, and the entry is live on its own page with the agent in 3D."
+			],
+			"altText": [
+				"Reel of the Agent Spotlight on three.ws: a search field typed into over a list of agent entries, an entry opening on a 3D agent, a Curated badge on a three.ws written write-up, and a stats panel with conversations, upvotes and views."
+			]
+		},
+		"summary": "Every factual claim verifies against the live page or the filmed run, and the copy is in voice. The one real problem is visual: the frames under \"standing in 3D\" show a T-posed, duplicated avatar that looks broken, so recapture that segment, and tighten the trending wording to match the verified text exactly.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"trending decays by the day\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
 }

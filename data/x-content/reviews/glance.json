@@ -1,11 +1,9 @@
 {
 	"id": "glance",
 	"contentHash": "5edcc20180079aa136fda85f5d3e4fb37ab6edf1d18bef77c826fa305fee0e5b",
-	"reviewedAt": "2026-10-01T07:01:27.927Z",
-	"passed": false,
-	"blockers": [
-		"the AI editor did not run: no model was reachable:"
-	],
+	"reviewedAt": "2026-10-01T07:49:40.260Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"Paste an agent id on three.ws/glance and the page hands back that agent's status card four ways: a live element for any page, an image URL for a README or a Slack message, a command for your terminal, and the raw API call.\n\nAll four read one endpoint, so the number on the card is what the agent did today. Pick light, dark, or the reader's system setting, and the Windows 11 widgets board runs the same card.",
 		"The live element is one module script and one tag, and it polls only while it is on screen and the tab is visible.\n\nThe image is one URL, with the size and theme in the query string.\n\nOn Windows 11, install the site from Edge, open the widgets board, and pick Agent glance; it refreshes itself every 15 minutes."
@@ -202,6 +200,32 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"Paste an agent id on three.ws/glance and the page hands back that agent's status card four ways: a live element for any page, an image URL for a README or a Slack message, a command for your terminal, and the raw API call.\n\nAll four read one endpoint, so the number on the card is what the agent did today. Pick light, dark, or the reader's system setting, and the Windows 11 widgets board runs the same card.",
+				"The live element is one module script and one tag, and it polls only while it is on screen and the tab is visible.\n\nThe image is one URL, with the size and theme in the query string.\n\nOn Windows 11, install the site from Edge, open the widgets board, and pick Agent glance; it refreshes itself every 15 minutes."
+			],
+			"altText": []
+		},
+		"summary": "Every claim is backed by a passing check against the live page, the code, or the filmed run itself, and the reel's frames and captions match the copy exactly. The post opens on the mechanism, gives checkable specifics, and follows the voice contract with no hashtags, emoji, or dashes.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }

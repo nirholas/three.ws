@@ -1,11 +1,9 @@
 {
 	"id": "model-inspect",
 	"contentHash": "e4ac9fcc242888003df795367bf6f28a187114fe8bd3eaa08cc81482cf7ac0c1",
-	"reviewedAt": "2026-10-01T07:07:27.401Z",
-	"passed": false,
-	"blockers": [
-		"the AI editor did not run: no model was reachable:"
-	],
+	"reviewedAt": "2026-10-01T07:59:50.856Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"4,672 triangles, 19 joints, 1 animation, 0 validator errors and 1 warning. One GET request told us that about a 3D file, with no API key and no account.\n\nThe inspect endpoint is free. Hand it the address of a glTF or GLB and it answers in JSON: whether the file is valid, what is inside it, and a prioritized plan to make it smaller and faster.\n\nIt is built for AI agents that make or buy 3D mid-task and need to know what they got before they use it.",
 		"Send the address in a GET, or POST the file itself. The cap is 32 MB a file and 60 requests a minute.\n\nIt reports up to 10 validator findings, each with its code and where in the file it sits, beside the true totals.\n\nThe spec is OpenAPI 3.1, so an agent can read it and call this on its own: three.ws/3d"
@@ -174,6 +172,32 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"4,672 triangles, 19 joints, 1 animation, 0 validator errors and 1 warning. One GET request told us that about a 3D file, with no API key and no account.\n\nThe inspect endpoint is free. Hand it the address of a glTF or GLB and it answers in JSON: whether the file is valid, what is inside it, and a prioritized plan to make it smaller and faster.\n\nIt is built for AI agents that make or buy 3D mid-task and need to know what they got before they use it.",
+				"Send the address in a GET, or POST the file itself. The cap is 32 MB a file and 60 requests a minute.\n\nIt reports up to 10 validator findings, each with its code and where in the file it sits, beside the true totals.\n\nThe spec is OpenAPI 3.1, so an agent can read it and call this on its own: three.ws/3d"
+			],
+			"altText": []
+		},
+		"summary": "Every number and mechanism in both posts is verified against the live run, the live page, and the API source file, and the reel frames show the exact values quoted in the copy. Voice, structure, and the single link all conform to the contract, so this ships unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }

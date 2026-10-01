@@ -1,20 +1,17 @@
 {
 	"id": "glb-diff",
-	"contentHash": "8c43f0f10ff582fd2c48cca354180b4f273d6ba7858de6fae4520728b56e8bfc",
-	"reviewedAt": "2026-10-01T07:05:34.248Z",
-	"passed": false,
-	"blockers": [
-		"evidence:page https://three.ws/diff: live page does not show \"--fail-on breaking exits 1\"",
-		"editor verdict is revise"
-	],
+	"contentHash": "d00bd665e99c82daac61969a6316ad3aa8cb5798b7cc9945b722694d95ce27fe",
+	"reviewedAt": "2026-10-01T07:57:15.141Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"A checksum tells you two GLB files differ. It cannot tell a lossless re-export from a rig that quietly lost joints, and only one of those takes your avatar off the screen.\n\nModel Diff reads both files and reports the change set: geometry, materials, textures, skeletons and animation clips, with renames and moves detected the way git detects them. Both files are parsed and compared in your browser. Nothing is uploaded.\n\nIn the reel, two different characters: the verdict is breaking, with 2 joints lost, 5 animations removed and 4 objects renamed rather than rewritten. three.ws/diff",
 		"Severity is one of none, cosmetic, minor, major, breaking, so a build can gate on it. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh. That is the failure that renders fine and never moves.\n\nVertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does.",
-		"The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. The page shows the one command line that runs it in CI: hand it two files and a --fail-on level, and the build fails on the severity you choose."
+		"The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. Hand the CLI two files and a --fail-on level, and the build fails on the severity you choose."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "A checksum tells you two GLB files differ",
@@ -157,30 +154,16 @@
 				"detail": "live page shows \"This page, the glb-diff CLI, and the free API all run @three-ws/glb-diff, so a verdict in CI can never disagree with what you see here\""
 			},
 			{
-				"claim": "hand it two files and a --fail-on level, and the build fails on the severity you choose",
+				"claim": "Hand the CLI two files and a --fail-on level, and the build fails on the severity you choose",
 				"kind": "evidence:file",
 				"target": "packages/glb-diff/README.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "hand it two files and a --fail-on level, and the build fails on the severity you choose",
+				"claim": "Hand the CLI two files and a --fail-on level, and the build fails on the severity you choose",
 				"kind": "evidence:file",
 				"target": "packages/glb-diff/README.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The page shows the one command line that runs it in CI",
-				"kind": "evidence:page",
-				"target": "https://three.ws/diff",
-				"ok": false,
-				"detail": "live page does not show \"--fail-on breaking exits 1\""
-			},
-			{
-				"claim": "The page shows the one command line that runs it in CI",
-				"kind": "evidence:file",
-				"target": "packages/glb-diff/package.json",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -205,43 +188,32 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 4,
+			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "The page shows the one command line that runs it in CI: hand it two files and a --fail-on level, and the build fails on the severity you choose.",
-				"problem": "The check that the live diff page shows the CI command line failed: the live page does not contain \"--fail-on breaking exits 1\". The --fail-on behavior itself is verified against the CLI README, but the post attributes it to the page.",
-				"fix": "Restate the sentence so it describes the CLI rather than the page, using the verified README wording: \"The CLI is one command: pass it two files and a --fail-on level, and the build fails on the severity you choose.\""
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"A checksum tells you two GLB files differ. It cannot tell a lossless re-export from a rig that quietly lost joints, and only one of those takes your avatar off the screen.\n\nModel Diff reads both files and reports the change set: geometry, materials, textures, skeletons and animation clips, with renames and moves detected the way git detects them. Both files are parsed and compared in your browser. Nothing is uploaded.\n\nIn the reel, two different characters: the verdict is breaking, with 2 joints lost, 5 animations removed and 4 objects renamed rather than rewritten. three.ws/diff",
 				"Severity is one of none, cosmetic, minor, major, breaking, so a build can gate on it. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh. That is the failure that renders fine and never moves.\n\nVertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does.",
-				"The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. The CLI is one command: pass it two files and a --fail-on level, and the build fails on the severity you choose."
+				"The same engine runs this page, the CLI and the free API, so a verdict in CI cannot disagree with what you see here. Hand the CLI two files and a --fail-on level, and the build fails on the severity you choose."
 			],
 			"altText": []
 		},
-		"summary": "Every claim verifies against the live page, the README, and the filmed run, and the reel frames match the copy's numbers, except one: the post says the diff page shows the CI command line, but the live page does not. The rewrite keeps the verified --fail-on behavior but attributes it to the CLI instead of the page.",
+		"summary": "Every claim passes verification against the live page, the README, and the filmed run, and the reel frames confirm the stated numbers (BREAKING, 2 joints, 5 clips, 4 renames) on screen. The correction lead, mechanism detail, and CLI gating instructions are specific, in voice, and the captions match their frames; nothing needs to change.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"hand it two files and a --fail-on level, and the build fails on the severity you choose\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The page shows the one command line that runs it in CI\" does not appear in the copy; claims must quote the post"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }

@@ -2271,12 +2271,12 @@
 		},
 		{
 			"id": "avatar-engines",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "correction",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:34:22.430Z",
 			"covers": [
 				"/avatar-engines",
 				"/docs/avatar-engines"
@@ -2498,7 +2498,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "herald-reasons",
@@ -3145,8 +3146,7 @@
 					},
 					{
 						"click": "Vera the Host",
-						"awaits": "/api/agents/210e9990",
-						"caption": "Pick an agent and its 3D body loads in the page"
+						"awaits": "/api/agents/210e9990"
 					},
 					{
 						"expect": "virtual hotel concierge",
@@ -3156,7 +3156,8 @@
 						"wait": 6000
 					},
 					{
-						"hold": 1800
+						"hold": 1800,
+						"caption": "Pick an agent and its 3D body loads in the page"
 					},
 					{
 						"drag": [
@@ -4486,12 +4487,12 @@
 		},
 		{
 			"id": "drive-copilot",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "walkthrough",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:44:20.768Z",
 			"covers": [
 				"/drive"
 			],
@@ -4755,16 +4756,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "gestures",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:47:39.956Z",
 			"covers": [
 				"/gestures"
 			],
@@ -4972,16 +4974,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "glance",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "walkthrough",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:49:40.267Z",
 			"covers": [
 				"/glance",
 				"@three-ws/agent-glance"
@@ -5297,16 +5300,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "glb-diff",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "correction",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:57:15.147Z",
 			"covers": [
 				"/diff",
 				"@three-ws/glb-diff"
@@ -5642,7 +5646,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "machine-atlas",
@@ -5991,12 +5996,12 @@
 		},
 		{
 			"id": "model-inspect",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "number",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T09:59:50.864Z",
 			"covers": [
 				"/3d"
 			],
@@ -6330,16 +6335,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "model-inspector",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
 			"pattern": "walkthrough",
-			"notBefore": "2026-10-01T09:09:34.408Z",
+			"notBefore": "2026-10-01T10:03:28.106Z",
 			"covers": [
 				"/inspect"
 			],
@@ -6948,12 +6954,12 @@
 		},
 		{
 			"id": "agent-symphony",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
 			"pattern": "mechanism",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-02T00:00:00.000Z",
 			"covers": [
 				"/symphony"
 			],
@@ -7234,16 +7240,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "avatar-artifact",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
 			"pattern": "clip",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-02T00:00:00.000Z",
 			"covers": [
 				"/avatar-artifact"
 			],
@@ -7513,16 +7520,17 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "community-skills",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "mechanism",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-02T00:00:00.000Z",
 			"covers": [
 				"/skills/community"
 			],
@@ -7776,11 +7784,12 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "holo-sticker",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
@@ -8060,9 +8069,19 @@
 					"says": "up to 16 characters of your own text",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/holo",
-							"contains": "up to 16 characters"
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "Text to die-cut (up to 16 characters)"
+						},
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "maxlength=\"16\""
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "customInput.value.trim().slice(0, 16)"
 						}
 					]
 				},
@@ -8081,12 +8100,12 @@
 		},
 		{
 			"id": "voice-lab",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "walkthrough",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-02T00:00:00.000Z",
 			"covers": [
 				"/voice",
 				"/api/tts/catalog",
@@ -8326,7 +8345,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "intel-globe",

@@ -1,10 +1,10 @@
 {
 	"id": "glb-diff",
-	"scenarioHash": "37ef64aec5c5244ee72b7a6b4c5d3793cc004c8fa852832c837aa6f897abf1b0",
-	"ranAt": "2026-09-29T09:33:24.530Z",
+	"scenarioHash": "2969d2bb7f1afc1de8ba1148d4daa5f9121c54ff4876ec5872d50299d950b88f",
+	"ranAt": "2026-10-01T07:49:40.277Z",
 	"target": {
-		"commit": "f2081d946",
-		"revision": "three-ws-api-00460-4j6"
+		"commit": "e6f175ac2",
+		"revision": "three-ws-api-00472-jqb"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/diff",
 			"detail": "loaded https://three.ws/diff",
 			"ok": true,
-			"ms": 6888,
+			"ms": 7152,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "No files handy?",
 			"detail": "scrolled 707 px",
 			"ok": true,
-			"ms": 3396,
+			"ms": 4116,
 			"frames": 27
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 5301,
+			"ms": 5699,
 			"frames": 42
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "Two different characters",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 9395,
+			"ms": 8400,
 			"frames": 21
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "Clips that target them will not play",
 			"detail": "appeared after 0 filmed frames",
 			"ok": true,
-			"ms": 10,
+			"ms": 15,
 			"frames": 0
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "severity",
 			"detail": "severity = \"BREAKING\"",
 			"ok": true,
-			"ms": 3,
+			"ms": 4,
 			"frames": 0
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "jointsLost",
 			"detail": "jointsLost = \"2\"",
 			"ok": true,
-			"ms": 2,
+			"ms": 3,
 			"frames": 0
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "0.012,0.5,0.012,0.5",
 			"detail": "dragged over 6 frames",
 			"ok": true,
-			"ms": 9863,
+			"ms": 12326,
 			"frames": 24
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "270",
 			"detail": "scrolled 270 px",
 			"ok": true,
-			"ms": 11052,
+			"ms": 13635,
 			"frames": 27
 		},
 		{
@@ -113,7 +113,7 @@
 			"target": "1500",
 			"detail": "1500 ms",
 			"ok": true,
-			"ms": 19088,
+			"ms": 23128,
 			"frames": 45
 		},
 		{
@@ -122,7 +122,7 @@
 			"target": "0.36,0.42,0.62,0.42",
 			"detail": "dragged over 54 frames",
 			"ok": true,
-			"ms": 29502,
+			"ms": 35499,
 			"frames": 72
 		},
 		{
@@ -131,7 +131,7 @@
 			"target": "Side by side",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 9313,
+			"ms": 10682,
 			"frames": 21
 		},
 		{
@@ -140,7 +140,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 26377,
+			"ms": 29427,
 			"frames": 60
 		},
 		{
@@ -149,7 +149,7 @@
 			"target": "Something a consumer references by name is gone",
 			"detail": "scrolled 491 px",
 			"ok": true,
-			"ms": 16844,
+			"ms": 13367,
 			"frames": 33
 		},
 		{
@@ -158,7 +158,7 @@
 			"target": "3600",
 			"detail": "3600 ms",
 			"ok": true,
-			"ms": 57455,
+			"ms": 54281,
 			"frames": 108
 		}
 	],
@@ -175,9 +175,9 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/glb-diff/reel.mp4",
-		"sha256": "16d9f291442f65b45a910ef029492a0e85dca74081d0f2eaa08c94e23e8611e3",
+		"sha256": "86d87f5f22956d0d254a6972cd618235036f9a208fb8ba100cbea7507d9b41f5",
 		"frames": 480,
-		"motion": 0.562,
+		"motion": 0.564,
 		"durationSec": 16,
 		"width": 1080,
 		"height": 1080,

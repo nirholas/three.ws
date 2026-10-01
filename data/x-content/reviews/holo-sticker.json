@@ -1,0 +1,196 @@
+{
+	"id": "holo-sticker",
+	"contentHash": "16b4a4191958f2fa95eea3c5dbfd68d37a5a916b3dfeb42a7bfbd2ead96a5fa7",
+	"reviewedAt": "2026-10-01T08:18:52.373Z",
+	"passed": false,
+	"blockers": [
+		"evidence:page https://three.ws/holo: live page does not show \"up to 16 characters\"",
+		"editor (accuracy): The page-text verification for this claim failed: the live page check reports \"live page does not show 'up to 16 characters'\". Although a filmed frame shows the phrase, the rewrite rule only permits facts from a passing verification result or live page text quoted by a passing check, and neither exists for the number 16.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"The sticker in this reel is not an image. It is a holographic foil sticker drawn live in your browser, a Labs experiment in rendering a physical material on the spot: the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch, with no images and no model files.\n\nTilt it with your pointer the way you would tilt the real thing, or type your own text and it is cut into a sticker of its own. three.ws/holo",
+		"How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, up to 16 characters of your own text, and a PNG download of whatever you make."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "not an image",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"no images, no model files\""
+			},
+			{
+				"claim": "a holographic foil sticker drawn live in your browser",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"A holographic foil sticker, rendered live\""
+			},
+			{
+				"claim": "a holographic foil sticker drawn live in your browser",
+				"kind": "evidence:proof",
+				"target": "stage",
+				"ok": true,
+				"detail": "the run read stage = \"DRAG TO TILT\""
+			},
+			{
+				"claim": "a Labs experiment in rendering a physical material on the spot",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"The foil is a physical material\""
+			},
+			{
+				"claim": "a Labs experiment in rendering a physical material on the spot",
+				"kind": "evidence:file",
+				"target": "data/pages.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"The die-cut outline, the iridescent foil, the light it reflects, and the peeling corner are all computed in your browser\""
+			},
+			{
+				"claim": "no images and no model files",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"no images, no model files\""
+			},
+			{
+				"claim": "Tilt it with your pointer the way you would tilt the real thing",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"Tilt it with your pointer the way you would tilt the real thing\""
+			},
+			{
+				"claim": "type your own text and it is cut into a sticker of its own",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"type your own text and get it cut into a sticker of its own\""
+			},
+			{
+				"claim": "type your own text and it is cut into a sticker of its own",
+				"kind": "evidence:proof",
+				"target": "markAfter",
+				"ok": true,
+				"detail": "the run read markAfter = \"Your text\""
+			},
+			{
+				"claim": "the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"The mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included\""
+			},
+			{
+				"claim": "The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real\""
+			},
+			{
+				"claim": "Four foils",
+				"kind": "evidence:proof",
+				"target": "foils",
+				"ok": true,
+				"detail": "the run read foils = \"Rainbow holo\nChrome\nGold foil\nNeon\""
+			},
+			{
+				"claim": "Four foils",
+				"kind": "evidence:proof",
+				"target": "foilAfter",
+				"ok": true,
+				"detail": "the run read foilAfter = \"Neon\""
+			},
+			{
+				"claim": "Four foils",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to 16 characters of your own text",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": false,
+				"detail": "live page does not show \"up to 16 characters\""
+			},
+			{
+				"claim": "a PNG download of whatever you make",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"Download PNG\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "18 steps passed against the live product, every claimed fact still holds (peel 30, stage DRAG TO TILT, foils Rainbow holo\nChrome\nGold foil\nNeon, foilAfter Neon, markAfter Your text)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the holo sticker page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 3,
+			"clarity": 5,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "up to 16 characters of your own text",
+				"problem": "The page-text verification for this claim failed: the live page check reports \"live page does not show 'up to 16 characters'\". Although a filmed frame shows the phrase, the rewrite rule only permits facts from a passing verification result or live page text quoted by a passing check, and neither exists for the number 16.",
+				"fix": "Drop the number. Replace with \"your own text\", which is verified by a passing proof (markAfter = \"Your text\")."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"The sticker in this reel is not an image. It is a holographic foil sticker drawn live in your browser, a Labs experiment in rendering a physical material on the spot: the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch, with no images and no model files.\n\nTilt it with your pointer the way you would tilt the real thing, or type your own text and it is cut into a sticker of its own. three.ws/holo",
+				"How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, your own text, and a PNG download of whatever you make."
+			],
+			"altText": []
+		},
+		"summary": "Strong, accurate, well-filmed post with one unverified claim: the page check for \"up to 16 characters\" failed, so the number must come out of the second post. Everything else, including the reel frames and captions, is verified against the live product and can ship once that phrase is replaced.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"up to 16 characters of your own text\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

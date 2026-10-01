@@ -1,7 +1,7 @@
 {
 	"id": "model-inspector",
-	"contentHash": "748c799d42db41f6a42be3d8bde0849066d38b8a44dc22630f15ca4e3be60f5d",
-	"reviewedAt": "2026-10-01T07:09:34.397Z",
+	"contentHash": "0506a8e90195c9e357f848a5f0bc6c6445289a4a2983e0b9a855b333a51238d0",
+	"reviewedAt": "2026-10-01T08:03:28.099Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -190,7 +190,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every factual claim is verified word for word against the live page, the code, or the filmed run's screen readings (2 failed checks, 22 meshes, limit of 8), and the reel frames match each caption. Voice is clean throughout: no dashes, hashtags, or hype. Ship it unchanged.",
+		"summary": "Every claim is verified against the live page, source files, or the filmed run's own readings (2 failed, 22 meshes, limit 8), and the reel frames confirm each caption and every number in the copy. Voice, format, link, and mechanism lead all conform to the contract; ship as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

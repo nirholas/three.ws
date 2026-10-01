@@ -1,0 +1,177 @@
+{
+	"id": "avatar-artifact",
+	"contentHash": "33e9099187f2085ce1ab21115d63f74631010ccb5d4ff32d3323bc99e41d2451",
+	"reviewedAt": "2026-10-01T08:08:04.642Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"This 3D character follows your cursor, and there is no model file behind it. The figure is procedural, built in code, down to the blink.\n\nIt lives on the Avatar Artifact, a page with one job: render one avatar from a link, with no app around it. Move a mouse, drag a finger or press the arrow keys and it turns to look. Copy embed hands you a single iframe for any website.",
+		"Point it at your own agent with ?agent= and that avatar renders instead, resolved live from the agent's public record. ?model= takes any GLB from an allowed host, and anything else is refused with a sentence saying why, not a blank frame.\n\nthree.ws/avatar-artifact",
+		"It is deliberately the smallest viewer we ship. The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN, and a hidden tab suspends the render loop instead of burning the host page's GPU."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "This 3D character follows your cursor",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "This 3D character follows your cursor",
+				"kind": "evidence:proof",
+				"target": "title",
+				"ok": true,
+				"detail": "the run read title = \"a live Three.js portrait\""
+			},
+			{
+				"claim": "there is no model file behind it. The figure is procedural, built in code",
+				"kind": "evidence:file",
+				"target": "src/avatar-artifact.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "down to the blink",
+				"kind": "evidence:file",
+				"target": "src/avatar-artifact.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a page with one job: render one avatar from a link, with no app around it",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a page with one job: render one avatar from a link, with no app around it",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Move a mouse, drag a finger or press the arrow keys and it turns to look",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-artifact",
+				"ok": true,
+				"detail": "live page shows \"Move your cursor · drag on touch · arrow keys\""
+			},
+			{
+				"claim": "Move a mouse, drag a finger or press the arrow keys and it turns to look",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Copy embed hands you a single iframe for any website",
+				"kind": "evidence:proof",
+				"target": "copied",
+				"ok": true,
+				"detail": "the run read copied = \"Copy the snippet below\""
+			},
+			{
+				"claim": "Copy embed hands you a single iframe for any website",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "that avatar renders instead, resolved live from the agent's public record",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "?model= takes any GLB from an allowed host",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "anything else is refused with a sentence saying why, not a blank frame",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It is deliberately the smallest viewer we ship",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a hidden tab suspends the render loop",
+				"kind": "evidence:file",
+				"target": "docs/avatar-artifact.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "14 steps passed against the live product, every claimed fact still holds (title a live Three.js portrait, copied Copy the snippet below)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the artifact page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/avatar-artifact",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"This 3D character follows your cursor, and there is no model file behind it. The figure is procedural, built in code, down to the blink.\n\nIt lives on the Avatar Artifact, a page with one job: render one avatar from a link, with no app around it. Move a mouse, drag a finger or press the arrow keys and it turns to look. Copy embed hands you a single iframe for any website.",
+				"Point it at your own agent with ?agent= and that avatar renders instead, resolved live from the agent's public record. ?model= takes any GLB from an allowed host, and anything else is refused with a sentence saying why, not a blank frame.\n\nthree.ws/avatar-artifact",
+				"It is deliberately the smallest viewer we ship. The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN, and a hidden tab suspends the render loop instead of burning the host page's GPU."
+			],
+			"altText": []
+		},
+		"summary": "Every claim traces to a passing verification against the docs, source, live page, or the filmed run, and the reel's frames and captions match the copy (cursor tracking, arrow keys, one-iframe embed). Voice, link placement, and length all conform to the house contract; ship it unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

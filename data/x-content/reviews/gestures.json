@@ -1,11 +1,9 @@
 {
 	"id": "gestures",
 	"contentHash": "24ad1659448b5794f1c351b73ba77989fa5588c24f3dd2dde34b5d4ab8b4b2e7",
-	"reviewedAt": "2026-10-01T06:59:48.874Z",
-	"passed": false,
-	"blockers": [
-		"the AI editor did not run: no model was reachable:"
-	],
+	"reviewedAt": "2026-10-01T07:47:39.948Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nIt names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
 		"Choose any slot to play it on a live avatar. Every row of what triggers a gesture is generated from the shipped skill definitions, and each clip is measured from its own keyframes: how energetic it is and how much of that energy is above the waist.\n\nthree.ws/gestures"
@@ -118,6 +116,40 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "An agent asks for celebrate. The platform picks the clip.",
+				"problem": "The caption that sits under the frame at 9s describes the celebrate flow, but that frame shows the idle avatar beside the concern, bow, point, shrug, fidget, and dance cards with no celebrate card selected or visible. The caption is true of the run, just not of that specific frame.",
+				"fix": "If recapturing is cheap, cut the 9s segment so the celebrate caption stays only over the frames where the celebrate card is selected (as at 5.5s); otherwise leave it, since the run record confirms the action occurred."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"An agent waves, celebrates, then dances, and it did not pick an animation file for any of them.\n\nIt names a slot, and the platform resolves that slot to a real clip. There are 19 slots, fixed names an agent can override: point a slot at any other clip in the library and the agent changes its move.\n\nA skill declares a hint when it starts. The hint resolves to a slot, the slot resolves to a clip, and the avatar plays it.",
+				"Choose any slot to play it on a live avatar. Every row of what triggers a gesture is generated from the shipped skill definitions, and each clip is measured from its own keyframes: how energetic it is and how much of that energy is above the waist.\n\nthree.ws/gestures"
+			],
+			"altText": []
+		},
+		"summary": "Every claim is backed by a passing verification against the live page or the filmed run, the reel frames support the copy, and the voice contract is followed exactly. One cosmetic note: the celebrate caption lingers over a frame where the celebrate card is not visible, worth trimming on a recapture but not a reason to hold the post.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }

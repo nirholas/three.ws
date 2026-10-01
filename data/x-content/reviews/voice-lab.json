@@ -1,0 +1,198 @@
+{
+	"id": "voice-lab",
+	"contentHash": "cb0ad21458176ebc54fdd294a704c942bf53f58eee4e5a54b8401cd93ffe484a",
+	"reviewedAt": "2026-10-01T08:19:59.779Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Your agent can speak in more than 300 voices, and three.ws/voice lets you hear them before you pick one, without signing in.\n\nThey sit in one grid you search by name, accent or use case: en-GB leaves 5. Press Use this voice, type a line, press Speak, and the playground reads it back. The Microsoft Edge and NVIDIA Magpie voices are free and need no account.",
+		"Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis.\n\nTo use your own voice instead, record 20 to 30 seconds on the same page and clone it. Cloning runs on ElevenLabs, on credits or your own key. Either way the voice works across your avatars and agents."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "more than 300 voices",
+				"kind": "evidence:proof",
+				"target": "voices",
+				"ok": true,
+				"detail": "the run read voices = \"357\", at least 300"
+			},
+			{
+				"claim": "lets you hear them before you pick one, without signing in",
+				"kind": "evidence:proof",
+				"target": "/api/tts/synthesize",
+				"ok": true,
+				"detail": "POST /api/tts/synthesize answered 200 in 0.6 s"
+			},
+			{
+				"claim": "lets you hear them before you pick one, without signing in",
+				"kind": "evidence:file",
+				"target": "docs/voice-lab.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "one grid you search by name, accent or use case",
+				"kind": "evidence:file",
+				"target": "pages/voice.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "one grid you search by name, accent or use case",
+				"kind": "evidence:file",
+				"target": "docs/voice-lab.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "en-GB leaves 5",
+				"kind": "evidence:proof",
+				"target": "matches",
+				"ok": true,
+				"detail": "the run read matches = \"5\""
+			},
+			{
+				"claim": "Press Use this voice, type a line, press Speak, and the playground reads it back",
+				"kind": "evidence:proof",
+				"target": "/api/tts/synthesize",
+				"ok": true,
+				"detail": "POST /api/tts/synthesize answered 200 in 0.6 s"
+			},
+			{
+				"claim": "Press Use this voice, type a line, press Speak, and the playground reads it back",
+				"kind": "evidence:proof",
+				"target": "KB ·",
+				"ok": true,
+				"detail": "the run waited for and saw \"KB ·\""
+			},
+			{
+				"claim": "The Microsoft Edge and NVIDIA Magpie voices are free and need no account",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/tts/catalog?limit=1",
+				"ok": true,
+				"detail": "live page shows \"\"label\":\"Microsoft Edge\",\"tagline\":\"Free\""
+			},
+			{
+				"claim": "The Microsoft Edge and NVIDIA Magpie voices are free and need no account",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/tts/catalog?limit=1",
+				"ok": true,
+				"detail": "live page shows \"\"label\":\"NVIDIA Magpie\",\"tagline\":\"Free\""
+			},
+			{
+				"claim": "The Microsoft Edge and NVIDIA Magpie voices are free and need no account",
+				"kind": "evidence:file",
+				"target": "docs/voice-lab.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis",
+				"kind": "evidence:file",
+				"target": "docs/voice-lab.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis",
+				"kind": "evidence:file",
+				"target": "docs/voice-lab.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "record 20 to 30 seconds on the same page and clone it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/voice",
+				"ok": true,
+				"detail": "live page shows \"record 20-30 seconds of clear speech and clone your own\""
+			},
+			{
+				"claim": "Cloning runs on ElevenLabs, on credits or your own key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/tts/catalog?limit=1",
+				"ok": true,
+				"detail": "live page shows \"Credits or your own key · full library · voice cloning\""
+			},
+			{
+				"claim": "Cloning runs on ElevenLabs, on credits or your own key",
+				"kind": "evidence:file",
+				"target": "docs/voice-lab.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the voice works across your avatars and agents",
+				"kind": "evidence:page",
+				"target": "https://three.ws/voice",
+				"ok": true,
+				"detail": "live page shows \"Either way it works across your avatars and agents.\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "13 steps passed against the live product, every claimed fact still holds (voices 357, matches 5)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the catalog still offers more than 300 voices, as the post says",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "a free voice still speaks for a signed-out visitor",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/voice",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "en-GB leaves 5",
+				"problem": "\"leaves 5\" is cryptic on its own; a reader has to infer it means the search narrows the grid to five matching voices. The reel (frame at 5 s showing \"5 voices\" after typing en-GB) makes the meaning clear, but the text should stand alone.",
+				"fix": "Replace with \"typing en-GB narrows it to 5\"."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Your agent can speak in more than 300 voices, and three.ws/voice lets you hear them before you pick one, without signing in.\n\nThey sit in one grid you search by name, accent or use case: typing en-GB narrows it to 5. Press Use this voice, type a line, press Speak, and the playground reads it back. The Microsoft Edge and NVIDIA Magpie voices are free and need no account.",
+				"Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis.\n\nTo use your own voice instead, record 20 to 30 seconds on the same page and clone it. Cloning runs on ElevenLabs, on credits or your own key. Either way the voice works across your avatars and agents."
+			],
+			"altText": []
+		},
+		"summary": "Every claim is verified by passing proofs and live page checks, and the reel frames, captions, and run records (357 voices, 5 matches, 200 from /api/tts/synthesize) all support the copy. Voice and format follow the contract; the only polish is rewording the terse \"en-GB leaves 5\" so the post stands alone without the reel.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"en-GB leaves 5\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

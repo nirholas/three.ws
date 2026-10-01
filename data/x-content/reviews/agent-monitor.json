@@ -1,9 +1,11 @@
 {
 	"id": "agent-monitor",
-	"contentHash": "d1e940fa67710703344938ccd3c5bd48f758ab7d86b65d9ddded9ae47a3cef86",
-	"reviewedAt": "2026-10-01T06:27:22.390Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "898c9c9c9b8af84977738aedf3173870477334c937c75dcae00b97c5c063486a",
+	"reviewedAt": "2026-10-01T07:39:56.058Z",
+	"passed": false,
+	"blockers": [
+		"editor verdict is revise"
+	],
 	"texts": [
 		"More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
 		"A failed panel degrades alone: it badges itself stale and keeps its last good data rather than blanking, so one dead endpoint never takes the board down. Polling pauses while the tab is hidden and every panel refreshes on the way back.\n\nKeys: f focuses the search, r refreshes everything. three.ws/monitor"
@@ -17,7 +19,7 @@
 				"kind": "evidence:proof",
 				"target": "fleet",
 				"ok": true,
-				"detail": "the run read fleet = \"2,546\", at least 2500"
+				"detail": "the run read fleet = \"2,553\", at least 2500"
 			},
 			{
 				"claim": "ranked by the most recent real thing each one did",
@@ -59,7 +61,7 @@
 				"kind": "evidence:proof",
 				"target": "/api/agents/public",
 				"ok": true,
-				"detail": "GET /api/agents/public answered 200 in 2.6 s"
+				"detail": "GET /api/agents/public answered 200 in 2.5 s"
 			},
 			{
 				"claim": "its own 3D avatar renders in the page, live",
@@ -73,7 +75,7 @@
 				"kind": "evidence:proof",
 				"target": "/api/agents/210e9990",
 				"ok": true,
-				"detail": "GET /api/agents/210e9990-7d7e-47e7-8b80-1e4894ec6b83 answered 200 in 0.3 s"
+				"detail": "GET /api/agents/210e9990-7d7e-47e7-8b80-1e4894ec6b83 answered 200 in 0.4 s"
 			},
 			{
 				"claim": "Nothing on it is simulated",
@@ -159,16 +161,31 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
+			"accuracy": 4,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 3
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "The public fleet, newest real action first",
+				"problem": "The first reel frame carries this caption, but the sort control in the same frame reads \"most active\". A reader sees a dropdown asserting a different ranking than the caption and the post's \"ranked by the most recent real thing each one did\". The row timestamps (11h, 16h, 1d, 2d) do look recency-ordered, so the label is likely wrong or the wrong option is selected, but as filmed the frame contradicts the copy.",
+				"fix": "Recapture the reel with the sort control showing the recency ranking the docs describe (\"ranked by its most recent real action\"), or if \"most active\" is a separate selectable sort, film the default view with the recency sort visibly selected so caption, control, and copy agree."
+			},
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Pick an agent and its 3D body loads in the page",
+				"problem": "This caption sits on the 5s frame where the spotlight panel is still empty: no 3D body is visible yet. The avatar only appears at 8.1s under the next caption.",
+				"fix": "Move the caption to the frame where Vera the Host's avatar is visible (8.1s), or trim the film so the pick and the render sit under one caption."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
@@ -176,7 +193,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every claim verifies against the live docs page or the proof run, and the reel frames show exactly what the post describes: the 2,546-agent fleet board, server-side search on 'host', and Vera the Host's own 3D avatar loading and rotating in the page. The voice contract is fully obeyed (no hashtags, emoji, dashes, or hype openers), the lead is a verified number, and the link works, so this ships unchanged.",
+		"summary": "The copy is fully verified, in voice, and specific; every claim traces to the live docs or the run. The reel contradicts it visually: the sort control reads \"most active\" under a caption claiming newest-first ranking, and the 5s caption claims a 3D body that has not rendered yet, so recapture before shipping.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

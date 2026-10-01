@@ -1,0 +1,220 @@
+{
+	"id": "agent-symphony",
+	"contentHash": "9923dbc237a99e61efa71b8dfbf37a2413bf47ee7ee1e1ec7a2b8f047dd96e34",
+	"reviewedAt": "2026-10-01T08:05:43.260Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"Every payment, coin buy, new agent and safety refusal on three.ws/symphony becomes a synthesized note the moment it happens. It is a Labs experiment: the agent economy played live as music, with nothing prerecorded.\n\nThe notes all land on one minor-pentatonic scale, so a stream of unrelated events always harmonizes. Bigger money plays lower. Each agent hashes to its own motif, so one that comes back is recognizable by ear.",
+		"The reel has no sound, so watch the stage: one orb per note, placed left to right by the agent that caused it and up by pitch. Play opens on the last ten real events as an overture, then follows the live feed.",
+		"Under the stage, a ledger lists the real event behind every note. Mute any of the six voices, solo one agent so everything else drops out, or record up to a minute of it as a video with the sound."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "Every payment, coin buy, new agent and safety refusal",
+				"kind": "evidence:page",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "live page shows \"payments pluck, whale buys land as bass, new agents chime, safety refusals cut through as dissonance\""
+			},
+			{
+				"claim": "becomes a synthesized note the moment it happens",
+				"kind": "evidence:page",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "live page shows \"Every real event on three.ws becomes a synthesized note the moment it happens\""
+			},
+			{
+				"claim": "becomes a synthesized note the moment it happens",
+				"kind": "evidence:proof",
+				"target": "status",
+				"ok": true,
+				"detail": "the run read status = \"LIVE\""
+			},
+			{
+				"claim": "It is a Labs experiment",
+				"kind": "evidence:page",
+				"target": "https://three.ws/labs",
+				"ok": true,
+				"detail": "live page shows \"Agent Symphony\""
+			},
+			{
+				"claim": "the agent economy played live as music, with nothing prerecorded",
+				"kind": "evidence:page",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "live page shows \"The agent economy, played live as music.\""
+			},
+			{
+				"claim": "the agent economy played live as music, with nothing prerecorded",
+				"kind": "evidence:page",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "live page shows \"Nothing is prerecorded and nothing is simulated.\""
+			},
+			{
+				"claim": "The notes all land on one minor-pentatonic scale, so a stream of unrelated events always harmonizes",
+				"kind": "evidence:file",
+				"target": "src/symphony-score.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The notes all land on one minor-pentatonic scale, so a stream of unrelated events always harmonizes",
+				"kind": "evidence:file",
+				"target": "src/symphony-score.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Bigger money plays lower",
+				"kind": "evidence:file",
+				"target": "src/symphony-score.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each agent hashes to its own motif, so one that comes back is recognizable by ear",
+				"kind": "evidence:file",
+				"target": "src/symphony-score.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "one orb per note, placed left to right by the agent that caused it and up by pitch",
+				"kind": "evidence:file",
+				"target": "src/symphony.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "one orb per note, placed left to right by the agent that caused it and up by pitch",
+				"kind": "evidence:file",
+				"target": "src/symphony-score.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "one orb per note, placed left to right by the agent that caused it and up by pitch",
+				"kind": "evidence:file",
+				"target": "src/symphony.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Play opens on the last ten real events as an overture",
+				"kind": "evidence:file",
+				"target": "src/symphony.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Play opens on the last ten real events as an overture",
+				"kind": "evidence:proof",
+				"target": "notes",
+				"ok": true,
+				"detail": "the run read notes = \"10\""
+			},
+			{
+				"claim": "a ledger lists the real event behind every note",
+				"kind": "evidence:page",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "live page shows \"every note is one of these real events\""
+			},
+			{
+				"claim": "Mute any of the six voices",
+				"kind": "evidence:module",
+				"target": "src/symphony-score.js",
+				"ok": true,
+				"detail": "CATEGORIES has 6 entries; the claim needs 6"
+			},
+			{
+				"claim": "Mute any of the six voices",
+				"kind": "evidence:page",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "live page shows \"Click a voice below to mute it.\""
+			},
+			{
+				"claim": "solo one agent so everything else drops out",
+				"kind": "evidence:file",
+				"target": "pages/symphony.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "record up to a minute of it as a video with the sound",
+				"kind": "evidence:file",
+				"target": "src/symphony.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "record up to a minute of it as a video with the sound",
+				"kind": "evidence:file",
+				"target": "src/symphony.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "15 steps passed against the live product, every claimed fact still holds (events 40, status LIVE, playing Pause, notes 10)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the activity feed the symphony plays still answers with events",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/symphony",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "Play opens on the last ten real events",
+				"problem": "In the 5.9s and 8.2s frames the counter reads NOTES PLAYED 5 and 10 while only three or four orbs are visible on the stage, so a viewer pausing the reel could not count one orb per note. The orbs almost certainly overlap by position or fade, but the caption 'One orb per note' sits beside a frame that visually under-counts.",
+				"fix": "Not required to ship. If the reel is easy to re-run, recapture so the 8.2s frame shows the overture with more distinct orbs on screen; otherwise leave as is, since the live counter matches the run proof (notes = 10)."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Every payment, coin buy, new agent and safety refusal on three.ws/symphony becomes a synthesized note the moment it happens. It is a Labs experiment: the agent economy played live as music, with nothing prerecorded.\n\nThe notes all land on one minor-pentatonic scale, so a stream of unrelated events always harmonizes. Bigger money plays lower. Each agent hashes to its own motif, so one that comes back is recognizable by ear.",
+				"The reel has no sound, so watch the stage: one orb per note, placed left to right by the agent that caused it and up by pitch. Play opens on the last ten real events as an overture, then follows the live feed.",
+				"Under the stage, a ledger lists the real event behind every note. Mute any of the six voices, solo one agent so everything else drops out, or record up to a minute of it as a video with the sound."
+			],
+			"altText": []
+		},
+		"summary": "Every claim is verified against the live page, the source files, and a passing end-to-end run, and the captions match their frames; voice, link, and length rules all hold. The only soft spot is a frame where fewer orbs are visible than the notes-played counter, which is a cosmetic mismatch worth a recapture if convenient but not a blocker.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

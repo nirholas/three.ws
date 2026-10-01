@@ -1,0 +1,177 @@
+{
+	"id": "community-skills",
+	"contentHash": "e14eb7c4a1b75ec0cc83f8ce4086725fa069c1d1126289f81bc72b0de3c804bf",
+	"reviewedAt": "2026-10-01T08:09:54.045Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"An agent learns a new job from one markdown file. Import a community skill onto your agent and it follows that file from its next reply.\n\nThe one in the reel is a risk desk. Every reply to a trade request opens with a risk check: the position sized from its stop at 1% of the portfolio, the loss if the stop is hit, and a verdict to go ahead, reduce the size, or not trade at all. It does not skip the check because the user is in a hurry.",
+		"Anyone can contribute a skill by pull request, and every one is reviewed like code. Search the registry and open any skill to read the whole file before it touches your agent.\n\nthree.ws/skills/community",
+		"Others in the registry run diligence before any buy and end in a verdict of pass, caution or fail, or draft an agent's posts about its own trades with losses shown alongside wins.\n\nSome carry a script beside the instructions, like the position-size calculator that ships with the risk desk."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "one markdown file",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"A skill is one markdown file of instructions\""
+			},
+			{
+				"claim": "it follows that file from its next reply",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"the agent follows it from its next reply\""
+			},
+			{
+				"claim": "Every reply to a trade request opens with a risk check",
+				"kind": "evidence:file",
+				"target": "community-skills/skills/risk-manager/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every reply to a trade request opens with a risk check",
+				"kind": "evidence:proof",
+				"target": "RISK CHECK",
+				"ok": true,
+				"detail": "the run waited for and saw \"RISK CHECK\""
+			},
+			{
+				"claim": "the position sized from its stop at 1% of the portfolio",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"sizes every position from its stop at 1% portfolio risk\""
+			},
+			{
+				"claim": "the loss if the stop is hit",
+				"kind": "evidence:file",
+				"target": "community-skills/skills/risk-manager/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a verdict to go ahead, reduce the size, or not trade at all",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"a GO, REDUCE or NO-GO verdict\""
+			},
+			{
+				"claim": "It does not skip the check because the user is in a hurry",
+				"kind": "evidence:file",
+				"target": "community-skills/skills/risk-manager/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Anyone can contribute a skill by pull request",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"Anyone can contribute one by pull request\""
+			},
+			{
+				"claim": "every one is reviewed like code",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"every skill is reviewed like code\""
+			},
+			{
+				"claim": "open any skill to read the whole file",
+				"kind": "evidence:proof",
+				"target": "/api/skills/community/risk-manager",
+				"ok": true,
+				"detail": "GET /api/skills/community/risk-manager answered 200 in 0 s"
+			},
+			{
+				"claim": "open any skill to read the whole file",
+				"kind": "evidence:proof",
+				"target": "RISK CHECK",
+				"ok": true,
+				"detail": "the run waited for and saw \"RISK CHECK\""
+			},
+			{
+				"claim": "end in a verdict of pass, caution or fail",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"ending in a PASS, CAUTION or FAIL verdict\""
+			},
+			{
+				"claim": "losses shown alongside wins",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"losses shown alongside wins\""
+			},
+			{
+				"claim": "Some carry a script beside the instructions",
+				"kind": "evidence:page",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "live page shows \"with runnable scripts\""
+			},
+			{
+				"claim": "the position-size calculator that ships with the risk desk",
+				"kind": "evidence:file",
+				"target": "community-skills/skills/risk-manager/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "14 steps passed against the live product, every claimed fact still holds (skills 12, scripts 5)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the risk desk skill the reel opens is still in the registry",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/skills/community",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"An agent learns a new job from one markdown file. Import a community skill onto your agent and it follows that file from its next reply.\n\nThe one in the reel is a risk desk. Every reply to a trade request opens with a risk check: the position sized from its stop at 1% of the portfolio, the loss if the stop is hit, and a verdict to go ahead, reduce the size, or not trade at all. It does not skip the check because the user is in a hurry.",
+				"Anyone can contribute a skill by pull request, and every one is reviewed like code. Search the registry and open any skill to read the whole file before it touches your agent.\n\nthree.ws/skills/community",
+				"Others in the registry run diligence before any buy and end in a verdict of pass, caution or fail, or draft an agent's posts about its own trades with losses shown alongside wins.\n\nSome carry a script beside the instructions, like the position-size calculator that ships with the risk desk."
+			],
+			"altText": []
+		},
+		"summary": "Every claim is verified word for word against the live page, the skill file, or the filmed run, and the reel frames and captions confirm the risk desk behaves exactly as written. The voice is clean (mechanism lead, no banned structures) and the single link sits in the second post; ship as is.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

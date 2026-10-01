@@ -1,10 +1,10 @@
 {
 	"id": "agent-monitor",
-	"scenarioHash": "0371e8845ce507395d43ac99a720669121e5c2376e0e9b03381eaba9d995e695",
-	"ranAt": "2026-09-29T09:55:57.860Z",
+	"scenarioHash": "c2e13679889eb6e74f51c67a779fd421680c07bbcdd4945442a3987cb0979455",
+	"ranAt": "2026-10-01T07:34:22.434Z",
 	"target": {
-		"commit": "f2081d946",
-		"revision": "three-ws-api-00460-4j6"
+		"commit": "e6f175ac2",
+		"revision": "three-ws-api-00472-jqb"
 	},
 	"passed": true,
 	"steps": [
@@ -14,23 +14,23 @@
 			"target": "https://three.ws/monitor",
 			"detail": "loaded https://three.ws/monitor",
 			"ok": true,
-			"ms": 19535,
+			"ms": 20159,
 			"frames": 0
 		},
 		{
 			"index": 2,
 			"kind": "read",
 			"target": "fleet",
-			"detail": "fleet = \"2,546\"",
+			"detail": "fleet = \"2,553\"",
 			"ok": true,
-			"ms": 55,
+			"ms": 64,
 			"frames": 0
 		},
 		{
 			"index": 3,
 			"kind": "read",
 			"target": "active",
-			"detail": "active = \"645\"",
+			"detail": "active = \"647\"",
 			"ok": true,
 			"ms": 4,
 			"frames": 0
@@ -41,7 +41,7 @@
 			"target": "60",
 			"detail": "scrolled 60 px",
 			"ok": true,
-			"ms": 4991,
+			"ms": 4783,
 			"frames": 18
 		},
 		{
@@ -50,16 +50,16 @@
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 11214,
+			"ms": 10655,
 			"frames": 48
 		},
 		{
 			"index": 6,
 			"kind": "type",
 			"target": "host",
-			"detail": "typed 4 characters; GET /api/agents/public answered 200 in 2.6 s",
+			"detail": "typed 4 characters; GET /api/agents/public answered 200 in 2.5 s",
 			"ok": true,
-			"ms": 6544,
+			"ms": 6337,
 			"frames": 24
 		},
 		{
@@ -68,25 +68,25 @@
 			"target": "1300",
 			"detail": "1300 ms",
 			"ok": true,
-			"ms": 9191,
+			"ms": 9738,
 			"frames": 39
 		},
 		{
 			"index": 8,
 			"kind": "click",
 			"target": "Vera the Host",
-			"detail": "clicked; GET /api/agents/210e9990-7d7e-47e7-8b80-1e4894ec6b83 answered 200 in 0.3 s",
+			"detail": "clicked; GET /api/agents/210e9990-7d7e-47e7-8b80-1e4894ec6b83 answered 200 in 0.4 s",
 			"ok": true,
-			"ms": 8121,
+			"ms": 4823,
 			"frames": 21
 		},
 		{
 			"index": 9,
 			"kind": "expect",
 			"target": "virtual hotel concierge",
-			"detail": "appeared after 0.1 s",
+			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 72,
+			"ms": 49,
 			"frames": 0
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "6000",
 			"detail": "6000 ms, not filmed",
 			"ok": true,
-			"ms": 6112,
+			"ms": 6239,
 			"frames": 0
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 15690,
+			"ms": 13952,
 			"frames": 54
 		},
 		{
@@ -113,7 +113,7 @@
 			"target": "0.6,0.55,0.9,0.55",
 			"detail": "dragged over 72 frames",
 			"ok": true,
-			"ms": 23213,
+			"ms": 23218,
 			"frames": 90
 		},
 		{
@@ -122,13 +122,13 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 19929,
+			"ms": 21963,
 			"frames": 78
 		}
 	],
 	"facts": {
-		"fleet": "2,546",
-		"active": "645"
+		"fleet": "2,553",
+		"active": "647"
 	},
 	"saw": [
 		"virtual hotel concierge"
@@ -138,13 +138,13 @@
 			"method": "GET",
 			"path": "/api/agents/public",
 			"status": 200,
-			"seconds": 2.6
+			"seconds": 2.5
 		},
 		{
 			"method": "GET",
 			"path": "/api/agents/210e9990-7d7e-47e7-8b80-1e4894ec6b83",
 			"status": 200,
-			"seconds": 0.3
+			"seconds": 0.4
 		}
 	],
 	"cuts": [
@@ -155,7 +155,7 @@
 	],
 	"video": {
 		"path": "public/x-media/agent-monitor/reel.mp4",
-		"sha256": "7c4cb3a2cff2ce1cbe643c4c9559f8e0826c651c88e619c735637354fb3c3d67",
+		"sha256": "5b092581963670e29f79e1cb975df41a20345e632a84bbb52a9ad71cc9e93f0d",
 		"frames": 372,
 		"motion": 1,
 		"durationSec": 12.4,

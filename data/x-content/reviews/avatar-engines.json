@@ -1,11 +1,9 @@
 {
 	"id": "avatar-engines",
 	"contentHash": "eb7443cf5e237c046ea927898f3801553c3f6ecd0e688e87f27739dd0ac8b0a5",
-	"reviewedAt": "2026-10-01T06:17:54.279Z",
-	"passed": false,
-	"blockers": [
-		"spelling photoreal: did you mean photocell, photoed, photomap?"
-	],
+	"reviewedAt": "2026-10-01T07:34:22.423Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"The avatar engine with the most realistic demo is usually one you cannot put in a product. Most of the highest-fidelity work in this field is research code under a non-commercial license.\n\nThe Avatar Engines Atlas maps 24 engines and puts each license next to the technique. Turn on the commercial-use filter and 5 remain.\n\nthree.ws/avatar-engines",
 		"Each card states what the engine takes in, what it outputs, what it runs on, and what its license permits.\n\nFor the photoreal engines a product could license, a training run per subject is not something you put behind a button.",
@@ -13,7 +11,7 @@
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "The avatar engine with the most realistic demo is usually one you cannot put in a product",
@@ -123,12 +121,6 @@
 				"target": "https://three.ws/avatar-engines",
 				"ok": true,
 				"detail": "HTTP 200"
-			},
-			{
-				"kind": "spelling",
-				"target": "photoreal",
-				"ok": false,
-				"detail": "did you mean photocell, photoed, photomap?"
 			}
 		]
 	},
@@ -140,9 +132,24 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "5 of 24 remain",
+				"problem": "The 5.3s frame sits under the caption \"Keep only licenses you can ship under\" and shows the Commercial-use only checkbox engaged while the count still reads \"24 of 24 engines\". The run did wait for and see \"5 of 24 engines\", so the state exists; this frame appears to be transitional and slightly undercuts the caption it sits under.",
+				"fix": "If recutting the reel is cheap, shift this caption half a second later so it lands on the frame where the count has updated to 5 of 24; otherwise the run record confirms the state change is filmed and this is acceptable."
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "the skeleton the animation pipeline canonicalizes against",
+				"problem": "\"Canonicalizes against\" is precise but dense; a reader outside the animation-retargeting world may not parse why a skeleton is one of the two live engines.",
+				"fix": "Optional: \"the Mixamo skeleton the three.ws animation pipeline retargets every rig to\". Not required; the developer lane supports the current phrasing."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"The avatar engine with the most realistic demo is usually one you cannot put in a product. Most of the highest-fidelity work in this field is research code under a non-commercial license.\n\nThe Avatar Engines Atlas maps 24 engines and puts each license next to the technique. Turn on the commercial-use filter and 5 remain.\n\nthree.ws/avatar-engines",
@@ -151,7 +158,7 @@
 			],
 			"altText": []
 		},
-		"summary": "Every number and claim (24 engines, 5 commercial-use, 2 live) is backed by a passing proof or live-page check, and the reel frames and captions match the copy including the '5 of 24' filter result. Voice is clean: no hashtags, emoji, dashes, or hype openers; the correction lead fits the contract. Safe to ship unchanged.",
+		"summary": "Every number and claim is verified by the run or live page (24 engines, 5 commercial, 2 live), the voice contract is fully respected, and the reel genuinely shows the feature. One transitional frame shows the filter engaged before the count updates, which is cosmetic; ship it.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

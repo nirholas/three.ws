@@ -1,13 +1,9 @@
 {
 	"id": "drive-copilot",
-	"contentHash": "fd85956638bce5179cab098917a7e799ca4e3eec39b8ea479529dd5e4d8002eb",
-	"reviewedAt": "2026-10-01T06:57:13.139Z",
-	"passed": false,
-	"blockers": [
-		"probe:scenario the filmed scenario: step 11 (expect Speaking): locator.waitFor: Timeout 60000ms exceeded.",
-		"editor (accuracy): The scenario probe failed: \"step 11 (expect Speaking): locator.waitFor: Timeout 60000ms exceeded.\" The reel's own record says it saw \"Speaking\" and the probe:proof entries pass, but a failed end-to-end verification on the filmed scenario is a blocking issue until the run is clean. The film cannot be certified as a passing run as it stands.",
-		"editor verdict is revise"
-	],
+	"contentHash": "d122767e1bef88e1866a4dd257121941bad91d98272187d1146f9ba829893651",
+	"reviewedAt": "2026-10-01T07:44:20.763Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"Put your phone in the cradle, open Drive, and your agent rides along.\n\nThe page starts in Driving: a face, a voice, four controls, and no keyboard. Hold Talk and speak. The reply comes back in one or two short sentences, spoken in full and clamped to two lines on screen. Park, and Type unlocks. Night is the default, because a bright panel at speed is glare.",
 		"It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar), sized for a car panel. Runs on a head unit browser or a phone in a cradle: three.ws/drive",
@@ -15,7 +11,7 @@
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "Put your phone in the cradle",
@@ -144,10 +140,45 @@
 				"detail": "live page shows \"are answered by the page itself\""
 			},
 			{
+				"claim": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:file",
+				"target": "src/drive/commands.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:file",
+				"target": "src/drive/commands.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:file",
+				"target": "src/drive/commands.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:file",
+				"target": "src/drive/commands.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:file",
+				"target": "src/drive/commands.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "step 11 (expect Speaking): locator.waitFor: Timeout 60000ms exceeded."
+				"ok": true,
+				"detail": "12 steps passed against the live product"
 			},
 			{
 				"kind": "probe:api",
@@ -164,67 +195,40 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 3,
-			"clarity": 5,
-			"specificity": 4,
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
 			"voice": 5,
-			"professionalism": 4,
-			"visual": 3
+			"professionalism": 5,
+			"visual": 5
 		},
 		"issues": [
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "spoken in full and clamped to two lines on screen",
-				"problem": "The scenario probe failed: \"step 11 (expect Speaking): locator.waitFor: Timeout 60000ms exceeded.\" The reel's own record says it saw \"Speaking\" and the probe:proof entries pass, but a failed end-to-end verification on the filmed scenario is a blocking issue until the run is clean. The film cannot be certified as a passing run as it stands.",
-				"fix": "Re-run the scenario end to end against production until every step passes, then recapture the reel from that passing run. If the Speaking state is flaky because /api/chat took 6.8 s, raise the wait timeout in the scenario before filming, not in the reel."
-			},
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\"",
-				"problem": "The quoted command phrases are not verified anywhere: the passing checks only confirm the live page says \"Local commands with no round trip\" and \"are answered by the page itself\". Quoting specific trigger phrases as fact without a check is the kind of unverifiable specificity this queue exists to prevent.",
-				"fix": "Either add a claim with evidence for the exact command list (from src/drive/index.js or the live docs page) and verify it, or drop the quoted phrases and write only what passed: \"Local commands are answered by the page itself, with no round trip to a server.\""
-			},
-			{
 				"severity": "minor",
-				"area": "visual",
-				"quote": "Reel frame at 8.7 s",
-				"problem": "The frame shows the reply mid-stream (\"For a long drive, something with a steady...\") with a \"cut 6 s\" label, which is fine and honest, but the caption \"The agent answers in a sentence or two, out loud\" sits over a frame where the transported phrase \"Parked\" is visible in the header, slightly weakening the driving-mode story. Not a contradiction, just the weakest frame-choice moment.",
-				"fix": "No recapture required; if the reel is refilmed for the blocking fix anyway, prefer a frame where the reply has completed for this caption."
-			},
-			{
-				"severity": "minor",
-				"area": "specificity",
-				"quote": "It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar)",
-				"problem": "The parenthetical lists the pipeline well, but \"the site already runs\" is verified only as \"the platform's existing one, unchanged\"; the phrasing is fine, just confirm the five-stage list is not read as a literal ordered spec the docs state verbatim.",
-				"fix": "No change required; optionally tighten to \"the same talk loop the platform already runs\" to match the verified wording."
+				"area": "clarity",
+				"quote": "Put your phone in the cradle, open Drive, and your agent rides along.",
+				"problem": "The head post never names the thing as a product (\"three.ws Drive\") before using \"Drive\", so a reader new to the platform does a small amount of inferring, though post two's URL and the reel's first caption (\"three.ws Drive: your agent on a car screen\") resolve it. Not worth a recut; the thread stands alone as written.",
+				"fix": "Optional polish only: no change required for publication."
 			}
 		],
 		"rewrite": {
 			"posts": [
 				"Put your phone in the cradle, open Drive, and your agent rides along.\n\nThe page starts in Driving: a face, a voice, four controls, and no keyboard. Hold Talk and speak. The reply comes back in one or two short sentences, spoken in full and clamped to two lines on screen. Park, and Type unlocks. Night is the default, because a bright panel at speed is glare.",
-				"It is the same talk loop the platform already runs (mic, transcript, reply, voice, lip sync on a rigged avatar), sized for a car panel. Runs on a head unit browser or a phone in a cradle: three.ws/drive",
-				"Local commands like repeat, stop talking, and night mode are answered by the page itself, with no round trip to a server."
+				"It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar), sized for a car panel. Runs on a head unit browser or a phone in a cradle: three.ws/drive",
+				"\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server."
 			],
-			"altText": [
-				"Room-dark car interface showing a stylized 3D agent with headphones beside a large Talk button and four controls: Hands free, Repeat, Stop, Type.",
-				"Typing screen labeled Type with an input field reading Ask your agent something and a Send button, available when parked.",
-				"The agent mid-reply in Parked mode with the question What should I listen to on a long drive? and a clamped two-line answer on screen."
-			]
+			"altText": []
 		},
-		"summary": "The copy is well written and nearly every claim verifies against the live docs and source, but the filmed scenario itself failed its final step (timeout waiting for Speaking), which blocks publication until the run is re-executed cleanly. Also tighten the third post: the specific quoted command phrases were never verified, so either add evidence for them or state only the verified fact that local commands are answered by the page itself.",
+		"summary": "Every claim is verified against the live docs, the source files, and the filmed run (12 steps passed, /api/chat answered 200, states Ready/Parked/Speaking observed), and the reel frames match both the captions and the copy. Voice contract is clean: no hashtags, emoji, dashes, hype openers, or withholding teaser; the only nit is that the head post uses \"Drive\" before naming it, which the reel caption and the URL resolve. Ship it.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar)\" does not appear in the copy; claims must quote the post"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }
