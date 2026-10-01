@@ -9,6 +9,7 @@ import { SITE_CHROME, chromeStylesheet } from '../api/_lib/x-content/site-chrome
 import { PREMIUM_MAX_LENGTH, STANDARD_MAX_LENGTH, maxLengthOf } from '../api/_lib/x-content/quality.js';
 import { validateItem } from '../api/_lib/x-content/queue.js';
 import { contentHash } from '../api/_lib/x-content/review.js';
+import { emojiRendersInColor } from '../api/_lib/x-content/verify.js';
 import { buildReviewRequest } from '../api/_lib/x-content/editor.js';
 import { bestPosts } from '../api/_lib/x-content/outcomes.js';
 
@@ -401,6 +402,18 @@ describe.skipIf(!browserStarts)('caption fit', () => {
 		const short = 'The agent, standing in 3D';
 		const clipped = await captionsThatClip({ format: 'square', steps: [{ goto: 'https://three.ws/' }, { caption: long }, { caption: short }] });
 		expect(clipped).toEqual([long]);
+	}, 60_000);
+
+	it('tells a glyph drawn in one colour from an emoji drawn in colour', async () => {
+		const { chromium } = await import('playwright');
+		const browser = await chromium.launch();
+		try {
+			const page = await browser.newPage();
+			expect(await emojiRendersInColor(page, 'A')).toBe(false);
+			expect(await emojiRendersInColor(page, '\u25A1')).toBe(false);
+		} finally {
+			await browser.close();
+		}
 	}, 60_000);
 
 	it('has nothing to measure in a scenario without captions', async () => {

@@ -50,7 +50,9 @@ production and has been filmed, so that `public/x-media/<id>/reel.mp4` and
   `{ "type": "proof", "fact": "agents", "min": 500 }`, so the post stays true as the count moves.
 - Check the browser starts before you scout or prove:
   `node -e "require('playwright').chromium.launch().then(b=>{console.log('ok');return b.close()})"`.
-  If it reports a missing library, run `npx playwright install-deps chromium` once.
+  If it reports a missing library, run `npx playwright install-deps chromium` once. `scout`,
+  `prove` and `advance` also refuse to run when the browser draws emoji as empty boxes, and print
+  the one command that installs a colour emoji font it can use.
 
 ## How to work
 

@@ -85,14 +85,43 @@ export function describeBrowserError(message) {
 	return `the browser cannot start: ${text.split('\n')[0]}`;
 }
 
+// A machine with no colour emoji font Chromium can use draws every emoji as an
+// empty box, and a reel filmed there shows the product broken where it is not.
+// Debian's Noto Color Emoji is a bitmap font this Chromium skips, so the fix is
+// the outline (COLRv1) build of the same font.
+export const EMOJI_FONT_FIX = 'install the COLRv1 build of Noto Color Emoji: curl -sSL -o ~/.local/share/fonts/Noto-COLRv1.ttf --create-dirs https://raw.githubusercontent.com/googlefonts/noto-emoji/main/2D/fonts/Noto-COLRv1.ttf && fc-cache -f';
+
+// Draws an emoji and counts the pixels that carry colour. A box or a missing
+// glyph is grey or empty; a drawn emoji is mostly colour.
+export async function emojiRendersInColor(page, text = '\u{1F44B}') {
+	return page.evaluate((glyph) => {
+		const canvas = document.createElement('canvas');
+		canvas.width = canvas.height = 64;
+		const context = canvas.getContext('2d');
+		context.font = '48px sans-serif';
+		context.textBaseline = 'top';
+		context.fillText(glyph, 4, 4);
+		const { data } = context.getImageData(0, 0, 64, 64);
+		let coloured = 0;
+		for (let i = 0; i < data.length; i += 4) {
+			if (data[i + 3] > 128 && Math.max(data[i], data[i + 1], data[i + 2]) - Math.min(data[i], data[i + 1], data[i + 2]) > 60) coloured++;
+		}
+		return coloured > 100;
+	}, text);
+}
+
 export async function browserProblem() {
+	let browser;
 	try {
 		const { chromium } = await import('playwright');
-		const browser = await chromium.launch();
-		await browser.close();
+		browser = await chromium.launch();
+		const page = await browser.newPage();
+		if (!(await emojiRendersInColor(page))) return `the browser draws emoji as empty boxes on this machine, so reels would show the product broken; ${EMOJI_FONT_FIX}`;
 		return null;
 	} catch (err) {
 		return describeBrowserError(err?.message || err);
+	} finally {
+		await browser?.close().catch(() => {});
 	}
 }
 

@@ -70,7 +70,7 @@ holds: a surface that did not pass is listed here instead of being posted.
 | `/globe` | Works, and the story is filmed, but held for the owner: it shows conflict and force-posture layers over military bases and nuclear sites, and the conflict layer misclassifies (a story about US House district maps tagged as conventional military force). The 30-day request takes 4 to 16 s. |
 | `/sonar` | Works and was filmed, then withdrawn: the stage avatar (`/avatars/cz.glb`, used by `src/animations-live-preview.js`) is the likeness of a figure tied to another crypto project. After a push zoom the head leaves the frame. |
 | `/labs` | `categorize()` in `src/labs.js` files every page it does not recognise as x402, so Animation Gallery and Character Library are badged and filtered as x402. A filter scrolls a heading naming another coin into view, and that heading contains an em-dash. Its live card previews slow the browser so badly that a 9 second scenario took 11 minutes. |
-| `/rankings` | The Creations board shows the public QA account and T-pose thumbnails; medal emoji render as empty boxes. |
+| `/rankings` | The Creations board shows the public QA account and T-pose thumbnails. (Medal emoji drawn as empty boxes were the filming machine missing a colour emoji font, not the page.) |
 | `/walk-leaderboard`, `/daily-match`, `/reputation/market` | Effectively empty (one walker, one competitor, no stakes). |
 | `/search`, `/ledger`, `/showcase` | Results, decision rows and chain chips name third-party coins and chains. `/search` returns twelve generations all titled the same for one query. |
 | `/hydrate`, `/bundles` | A connect-wallet wall and a sign-in wall, with nothing to show signed out. |
