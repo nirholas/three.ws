@@ -81,6 +81,24 @@ holds: a surface that did not pass is listed here instead of being posted.
 - **Drive:** the agent reached "Speaking" in every run on a quiet machine and timed out at 60 s twice under heavy load; worth watching, not yet a defect.
 - **Spelling gate:** rejects "metalness", "GDELT" and "chokepoints"; authors worded around them.
 
+### Fixed after filming found them
+
+- **`/spotlight` entry:** the agent stood in a T-pose with a second, T-posed copy behind it. The copy
+  was the preview thumbnail left under the transparent viewer (the page watched for a canvas that
+  `<agent-3d>` draws inside its shadow root); the T-pose was `<agent-3d>` painting every body in its
+  bind pose before the idle clip arrived. Both are fixed: the viewer is revealed on `agent:ready`, and
+  the element stays hidden until the first clip has rendered. Thumbnails rendered by
+  `api/_lib/render-glb.js` are still T-posed and still show for a second while the 3D loads.
+- **`/monitor`:** the default fleet sort is by latest real action, but the control said "most
+  active". It now says "recently active" in every locale.
+
+### Google Cloud billing
+
+On 2026-10-01 every Vertex AI and Gemini API call from project `aerial-vehicle-466722-p5` answered
+`403 Lightning dunning decision is deny`: the billing account behind the project is in dunning, so
+the strongest editor rung (Claude on Vertex) and the default translation backend are both refused
+until billing is settled in the Cloud console. The editorial chain kept working on the NVIDIA rung.
+
 ### The X account
 
 On 2026-10-01 the X API answered `402 credits depleted` to every read and every post, so nothing could be published until the account's API credits are topped up in the X developer console. The credits belong to the app, and the app is shared by the content queue, the changelog's X lane, the Sentiment Scout's recent search (billed per returned post, guarded only by rate limits), and users' connected-X features (scheduled posts, triggers, and a metrics fetch every six hours). The console's usage breakdown says which of them spent it.
