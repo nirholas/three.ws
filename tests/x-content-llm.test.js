@@ -61,3 +61,28 @@ describe('a chat-completions rung', () => {
 		expect(await chatCompletionsRung(request, { ...rung, key: '', fetchImpl: async () => ok('x') })).toBe(null);
 	});
 });
+
+describe('an empty reply', () => {
+	it('sends an answer budget only on the rung that is given one', async () => {
+		const { RUNG_MAX_TOKENS, modelRungs } = await import('../api/_lib/x-content/llm.js');
+		const budgeted = scripted(ok('{"verdict":"publish"}'));
+		await chatCompletionsRung(request, { ...rung, fetchImpl: budgeted.fetchImpl, maxTokens: RUNG_MAX_TOKENS });
+		expect(JSON.parse(budgeted.calls[0].body).max_tokens).toBe(RUNG_MAX_TOKENS);
+		const plain = scripted(ok('{"verdict":"publish"}'));
+		await chatCompletionsRung(request, { ...rung, fetchImpl: plain.fetchImpl });
+		expect(JSON.parse(plain.calls[0].body)).not.toHaveProperty('max_tokens');
+		expect(modelRungs(request, {}).length).toBe(5);
+	});
+
+	it('is tried again, and answers when the model does', async () => {
+		const { calls, fetchImpl } = scripted(ok(''), ok('{"verdict":"publish"}'));
+		expect((await chatCompletionsRung(request, { ...rung, fetchImpl })).text).toBe('{"verdict":"publish"}');
+		expect(calls).toHaveLength(2);
+	});
+
+	it('fails with the finish reason when every try comes back empty', async () => {
+		const empty = { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: null, reasoning_content: 'thinking' }, finish_reason: 'length' }] }), text: async () => '' };
+		const { fetchImpl } = scripted(empty, empty, empty);
+		await expect(chatCompletionsRung(request, { ...rung, fetchImpl })).rejects.toThrow('nvidia returned an empty reply (finish_reason length) after 3 tries');
+	});
+});

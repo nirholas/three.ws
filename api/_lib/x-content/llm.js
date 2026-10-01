@@ -36,6 +36,13 @@ async function viaVertex({ system, parts }) {
 // through to the next rung at once.
 export const RUNG_ATTEMPTS = 3;
 export const RUNG_RETRY_MS = 4000;
+// The answer budget the reasoning rung asks for. Kimi K3 spends part of it
+// thinking before it writes, and with no limit sent the provider's default ran
+// out mid-thought: the reply came back with no content at all and the review
+// failed as if no model had answered. This leaves room for both. Only that rung
+// sends it: Groq counts a requested budget against its per-minute token limit,
+// and OpenAI's reasoning models refuse the parameter outright.
+export const RUNG_MAX_TOKENS = 16_000;
 
 export function isRetryable({ status = null, body = '', networkError = false } = {}) {
 	if (networkError) return true;
@@ -45,11 +52,11 @@ export function isRetryable({ status = null, body = '', networkError = false } =
 
 const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 
-async function viaChatCompletions({ system, parts }, { url, key, model, label, extraHeaders = {}, textOnly = false, fetchImpl = fetch, attempts = RUNG_ATTEMPTS, retryMs = RUNG_RETRY_MS }) {
+async function viaChatCompletions({ system, parts }, { url, key, model, label, extraHeaders = {}, textOnly = false, fetchImpl = fetch, attempts = RUNG_ATTEMPTS, retryMs = RUNG_RETRY_MS, maxTokens = null }) {
 	if (!key) return null;
 	if (textOnly && parts.some((part) => part.type === 'image')) return null;
 	const content = parts.map((part) => (part.type === 'image' ? { type: 'image_url', image_url: { url: `data:${part.mime};base64,${part.data}` } } : { type: 'text', text: part.text }));
-	const body = JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content }] });
+	const body = JSON.stringify({ model, ...(maxTokens ? { max_tokens: maxTokens } : {}), messages: [{ role: 'system', content: system }, { role: 'user', content }] });
 	for (let attempt = 1; ; attempt++) {
 		let response;
 		try {
@@ -68,7 +75,16 @@ async function viaChatCompletions({ system, parts }, { url, key, model, label, e
 		}
 		if (response.ok) {
 			const parsed = await response.json();
-			return { model: `${label}:${model}`, text: parsed.choices?.[0]?.message?.content || '' };
+			const choice = parsed.choices?.[0];
+			const text = choice?.message?.content || '';
+			if (text.trim()) return { model: `${label}:${model}`, text };
+			// An empty reply is the model running out of room or having a bad
+			// minute, not an answer, so it is tried again like a dropped call.
+			if (attempt < attempts) {
+				await pause(retryMs * attempt);
+				continue;
+			}
+			throw new Error(`${label} returned an empty reply${choice?.finish_reason ? ` (finish_reason ${choice.finish_reason})` : ''} after ${attempt} tries`);
 		}
 		const text = (await response.text()).slice(0, 200);
 		if (attempt < attempts && isRetryable({ status: response.status, body: text })) {
@@ -88,7 +104,7 @@ export function modelRungs(request, env = process.env) {
 		() => viaChatCompletions(request, { url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'openai/gpt-oss-120b', label: 'groq', textOnly: true }),
 		() => viaChatCompletions(request, { url: 'https://openrouter.ai/api/v1/chat/completions', key: env.OPENROUTER_API_KEY, model: `anthropic/${EDITOR_MODEL}`, label: 'openrouter', extraHeaders: { 'http-referer': 'https://three.ws', 'x-title': 'three.ws editorial review' } }),
 		() => viaChatCompletions(request, { url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.5-pro', label: 'openai' }),
-		() => viaChatCompletions(request, { url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'moonshotai/kimi-k3', label: 'nvidia' }),
+		() => viaChatCompletions(request, { url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'moonshotai/kimi-k3', label: 'nvidia', maxTokens: RUNG_MAX_TOKENS }),
 	];
 }
 
