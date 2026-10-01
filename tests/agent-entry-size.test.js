@@ -60,6 +60,14 @@ describe('resolveEntrySize', () => {
 		expect(got.skip).toBe('insufficient_sol');
 	});
 
+	it('sits out below the operational floor even when the size itself fits', () => {
+		// The production case: a 0.002 SOL arm on a 0.00999 SOL wallet covers size +
+		// headroom, but cannot afford the firewall round-trip and CU simulation.
+		const got = resolveEntrySize(sol(0.00999497), sol(0.002), MIN_TRADE);
+		expect(got.skip).toBe('insufficient_sol');
+		expect(resolveEntrySize(OPERATIONAL, sol(0.002), MIN_TRADE).sizeLamports).toBe(sol(0.002));
+	});
+
 	it('accepts number and string balances, not just bigint', () => {
 		const want = sol(0.05);
 		const wallet = want + ENTRY_HEADROOM_LAMPORTS;

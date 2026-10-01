@@ -579,13 +579,18 @@ export function resolveEntrySize(walletLamports, wantLamports, minTradeLamports)
 	const wallet = BigInt(walletLamports);
 	const want = BigInt(wantLamports);
 	const minTrade = BigInt(minTradeLamports);
+	// The operational floor applies to EVERY entry, full size included. It used to
+	// be checked only on the shrink path, so a small configured size let a wallet
+	// under the floor through at full size: a 0.002 SOL arm on a 0.00999 SOL wallet
+	// read "funded" on /api/sniper/status while /api/sniper/experiments (and every
+	// real attempt) found it dry.
+	if (wallet < BigInt(Math.round(MIN_OPERATIONAL_WALLET_SOL * 1e9))) {
+		return { skip: 'insufficient_sol' };
+	}
 	const headroom = checkSolHeadroom(wallet, want, ENTRY_HEADROOM_LAMPORTS);
 	if (!headroom) return { sizeLamports: want };
-	// Short for the configured size. Shrinking is allowed (learning > profit), but
-	// only from a wallet that can still run the pre-broadcast simulations.
-	if (wallet < BigInt(Math.round(MIN_OPERATIONAL_WALLET_SOL * 1e9))) {
-		return { skip: headroom.reason };
-	}
+	// Short for the configured size. Shrinking is allowed (learning > profit) from a
+	// wallet that can still run the pre-broadcast simulations (checked above).
 	const dustCapable = wallet - ENTRY_HEADROOM_LAMPORTS;
 	if (dustCapable < minTrade) return { skip: headroom.reason };
 	return { sizeLamports: dustCapable };
