@@ -664,6 +664,10 @@ describe('editorial', () => {
 		const prose = articleProse(dir, { kind: 'article', article: { body: 'data/x-content/articles/a.md' } });
 		expect(prose).toBe('Opening line with 3 facts.\nA heading\na list item');
 		expect(articleProse(dir, { kind: 'post' })).toBe('');
+		writeFileSync(join(dir, 'data/x-content/articles/b.md'), 'Bones named `mixamorig:LeftArm` map to one set.\n');
+		const item = { kind: 'article', article: { body: 'data/x-content/articles/b.md' } };
+		expect(articleProse(dir, item)).toBe('Bones named mixamorig:LeftArm map to one set.');
+		expect(articleProse(dir, item, { inlineCode: false })).toBe('Bones named   map to one set.');
 	});
 
 	it('reads "world\'s" as an absolute and "worlds" as a plain word', async () => {

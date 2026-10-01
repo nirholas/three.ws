@@ -404,7 +404,7 @@ export async function verifyItem(item, { root, glossary = [], env = process.env 
 	// An Article's body is copy too: its words are spell-checked and its links
 	// resolved, the same as a post's.
 	const { articleLinks, articleProse } = await import('./queue.js');
-	const body = articleProse(root, item);
+	const body = articleProse(root, item, { inlineCode: false });
 	const texts = [...itemTexts(item), ...(body ? [body] : []), ...articleLinks(root, item)];
 	const pages = createPageReader();
 	const checks = [];

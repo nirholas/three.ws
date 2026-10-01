@@ -56,10 +56,17 @@ export function loadArticle(root, article) {
 // items and quotes. Code blocks and tables are left out because they are
 // literal samples, not statements. Every number and absolute in it is held to
 // the claims ledger and the language rules, the same as a post.
-export function articleProse(root, item) {
+//
+// `inlineCode: false` drops inline code spans too, for the spelling check: a
+// bone name like `mixamorig:LeftArm` is an identifier quoted from a file, not
+// a word the article spells.
+export function articleProse(root, item, { inlineCode = true } = {}) {
 	if (item?.kind !== 'article' || !item.article?.body) return '';
 	if (!existsSync(resolve(root, item.article.body))) return '';
-	const { blocks } = loadArticle(root, item.article).content_state;
+	const article = inlineCode ? item.article : null;
+	const { blocks } = article
+		? loadArticle(root, article).content_state
+		: markdownToContentState(readFileSync(resolve(root, item.article.body), 'utf8').replace(/`[^`\n]+`/g, ' '), { articlePath: item.article.body }).content_state;
 	return blocks.filter((block) => block.type !== 'atomic').map((block) => block.text).filter(Boolean).join('\n');
 }
 
