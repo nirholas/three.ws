@@ -63,10 +63,12 @@ export function loadVolumeModel(root) {
 	return { ...model, features: model.features.map((row) => ({ ...row, regex: row.pattern ? new RegExp(row.pattern.source, row.pattern.flags) : null })) };
 }
 
-// The attributes that are not a text pattern. Every slot sits inside the hours
-// the model calls `usHours` (schedule.js), and the queue only ever posts from the
-// company account, so both are true for every queued post: they move every score
-// by the same amount and are kept so the reported chance is an honest one.
+// The attributes that are not a text pattern. Every slot in the queue's cadence
+// sits inside the hours the model calls `usHours` (12:00 to 20:00 UTC), and the
+// queue only ever posts from the company account, so both are true for every
+// queued post: they move every score by the same amount and are kept so the
+// reported chance is an honest one. A cadence with a slot outside that window
+// would make `usHours` untrue; keep the slots inside it.
 const VOLUME_CHECKS = {
 	video: (item) => (item.posts?.[0]?.media || []).some((row) => /\.(mp4|mov)$/i.test(row.path || '')),
 	thread: (item) => (item.posts?.length || 0) >= 2,

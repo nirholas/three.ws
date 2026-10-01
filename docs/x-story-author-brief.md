@@ -88,6 +88,29 @@ production and has been filmed, so that `public/x-media/<id>/reel.mp4` and
   probe when the feature has a public GET (and one asserting any count the copy states), and
   `"covers"` listing the backlog keys the story speaks for.
 
+## Writing for volume
+
+The queue ranks every post by its chance of being followed by a volume response on the $THREE pool
+(the hour after the post trading at least twice the hour before). The chance comes from
+[`data/x-content/volume-model.json`](../data/x-content/volume-model.json), a model fitted on 313
+original posts and the pool's 15-minute candles. What it found, strongest first:
+
+| Attribute | Odds ratio | What it means for the copy |
+|---|---|---|
+| Announces something shipped | 1.96 | Lead with the launch, in plain words: "is live", "shipped", "now". The voice rules still ban "Introducing" and hype; "is live on three.ws" is neither. |
+| Posted 12:00 to 20:00 UTC | 1.73 | The slots handle this; every slot sits in that window. |
+| Recognition language | 1.63 | When the feature runs on, or is recognised by, a partner programme we are really in, say so: partner, listed, verified, featured, joined. |
+| Names a tier-1 company by its @handle | 1.49 | Tag the company the feature genuinely runs on (@nvidia, @GoogleCloud, @OpenAI, @IBM, @awscloud ...), at most two, each with its reason in `mentions`. A tagged post waits for the owner; that is fine. |
+| Longer than 180 characters | 1.47 | The head carries the news and the mechanism. |
+| A thread | 1.34 | One or two replies with the detail. |
+| Talks about the token | 0.97 | No effect either way. Do not lead with $THREE to move the pool. |
+
+So the strongest story is a feature that shipped, running on a partner we are really in, told as
+news. Our real programmes, as `/partners` states them: OpenAI Select Partner, IBM Business Partner,
+AWS Partner (Software Path; the Marketplace listing is "coming", not live), Google Cloud (production
+runs on it), NVIDIA Inception, Alibaba Cloud. Quote the status exactly as the page words it; never
+upgrade it.
+
 ## The report
 
 For each finished story: id, the one-sentence story, tier, lane, pattern, reel length and
