@@ -373,3 +373,17 @@ describe('a machine that cannot run the browser', () => {
 		expect(describeBrowserError('something else\nmore')).toBe('the browser cannot start: something else');
 	});
 });
+
+describe('a held key', () => {
+	it('reads as a key press that is held, not as a plain hold', () => {
+		expect(stepKind({ press: 'w', hold: 2000 })).toBe('press');
+		expect(stepKind({ hold: 2000 })).toBe('hold');
+		expect(stepKind({ hold: 1500, caption: 'Watch it walk' })).toBe('hold');
+	});
+
+	it('validates the hold length on a held key', () => {
+		const steps = [{ goto: 'https://three.ws/walk' }, { press: 'w', hold: 2000 }, { expect: 'Walking' }];
+		expect(scenarioProblems({ steps })).toEqual([]);
+		expect(scenarioProblems({ steps: [steps[0], { press: 'w', hold: 60_000 }, steps[2]] }).join('\n')).toMatch(/step 2: hold is .* of the key held down/);
+	});
+});

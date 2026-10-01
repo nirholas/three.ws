@@ -80,9 +80,11 @@ const PAUSE_ATTEMPTS = 4;
 const RIPPLE_FRAMES = 9;
 const TYPE_FRAMES_PER_CHAR = 2;
 
-// `caption` is last on purpose: any step may carry a caption as well as its
-// action, and a step is only a caption step when it does nothing else.
-export const STEP_KINDS = ['goto', 'hold', 'click', 'hover', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'caption'];
+// The first kind a step carries is what it does, so a kind that another step
+// can carry as a modifier comes after the steps that use it that way: `hold`
+// after `press` (a held key is `{ "press": "w", "hold": 2000 }`), and
+// `caption` last, because any step may carry a caption as well as its action.
+export const STEP_KINDS = ['goto', 'click', 'hover', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'hold', 'caption'];
 
 // The steps that can cause a request, and so may carry `awaits`.
 const ACTIONS = ['click', 'press', 'type'];
