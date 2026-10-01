@@ -292,6 +292,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "lo",
+			"name": "ລາວ",
+			"dir": "ltr"
+		},
+		{
 			"code": "my",
 			"name": "မြန်မာ",
 			"dir": "ltr"
