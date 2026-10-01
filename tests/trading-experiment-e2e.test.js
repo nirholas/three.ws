@@ -113,8 +113,14 @@ describe('position lifecycle — take initials, hold a moon bag, never cut 100% 
 		expect(d.sellFraction).toBe(1);
 	});
 
-	it('times out after 24h', () => {
-		const d = decideLadderedExit(pos({ initials_recovered: true }), 1.5 * ENTRY, 1.6 * ENTRY, new Date('2026-07-04T01:00:00Z').getTime());
+	it('times out after 24h while the stake is still at risk', () => {
+		const d = decideLadderedExit(pos(), 1.5 * ENTRY, 1.6 * ENTRY, new Date('2026-07-04T01:00:00Z').getTime());
 		expect(d.reason).toBe('timeout');
+		expect(d.keepsMoonbag).toBe(true);
+	});
+
+	it('never times out a recovered moon bag: house money has no clock', () => {
+		const d = decideLadderedExit(pos({ initials_recovered: true }), 1.5 * ENTRY, 1.6 * ENTRY, new Date('2026-07-04T01:00:00Z').getTime());
+		expect(d).toBe(null);
 	});
 });
