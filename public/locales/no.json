@@ -14200,7 +14200,7 @@
 		"refresh_title": "Oppdater hvert panel nå (r)",
 		"share_desc": "Oppdragskontroll-dashbord for three.ws 3D AI-agentflåten: live aktivitet, pengepuls, agent-til-agent ansettelser og plattformhelse.",
 		"share_title": "Agentmonitor · three.ws",
-		"sort_active": "mest aktiv",
+		"sort_recent": "nylig aktiv",
 		"sort_name": "navn",
 		"sort_newest": "nyeste",
 		"sort_popular": "populær",

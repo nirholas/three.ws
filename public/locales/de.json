@@ -14200,7 +14200,7 @@
 		"refresh_title": "Jetzt jedes Panel aktualisieren (r)",
 		"share_desc": "Mission-Control-Dashboard für die three.ws 3D AI-Agentenflotte: Live-Aktivität, Geldpuls, Agent-zu-Agent Einstellungen und Plattformgesundheit.",
 		"share_title": "Agent Monitor · three.ws",
-		"sort_active": "aktivste",
+		"sort_recent": "kürzlich aktiv",
 		"sort_name": "Name",
 		"sort_newest": "neueste",
 		"sort_popular": "beliebteste",

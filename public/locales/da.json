@@ -14200,7 +14200,7 @@
 		"refresh_title": "Opdater hvert panel nu (r)",
 		"share_desc": "Mission-control dashboard for three.ws 3D AI agent flåden: live aktivitet, penge puls, agent-til-agent ansættelser og platformens sundhed.",
 		"share_title": "Agent Monitor · three.ws",
-		"sort_active": "mest aktiv",
+		"sort_recent": "senest aktive",
 		"sort_name": "navn",
 		"sort_newest": "nyeste",
 		"sort_popular": "populær",

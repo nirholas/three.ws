@@ -14200,7 +14200,7 @@
 		"refresh_title": "Refresh every panel now (r)",
 		"share_desc": "Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, agent-to-agent hires and platform health.",
 		"share_title": "Agent Monitor · three.ws",
-		"sort_active": "most active",
+		"sort_recent": "recently active",
 		"sort_name": "name",
 		"sort_newest": "newest",
 		"sort_popular": "popular",

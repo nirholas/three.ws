@@ -14200,7 +14200,7 @@
 		"refresh_title": "Actualiser chaque panneau maintenant (r)",
 		"share_desc": "Tableau de bord de contrôle de mission pour la flotte d'agents IA 3D three.ws : activité en direct, pouls monétaire, recrutements d'agent à agent et santé de la plateforme.",
 		"share_title": "Agent Monitor · three.ws",
-		"sort_active": "le plus actif",
+		"sort_recent": "récemment actifs",
 		"sort_name": "nom",
 		"sort_newest": "le plus récent",
 		"sort_popular": "populaire",
