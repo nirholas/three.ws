@@ -21,6 +21,12 @@
  * /trending is therefore a real filter on both rankings, not a decoration: the
  * coin list used to ignore it entirely and always answer with a fixed 36h floor.
  *
+ * Internal agents are excluded by the same rule as /api/agents/public: an agent
+ * owned by a service account that was never published is platform machinery
+ * (the marketplace chat bot's AI-budget meter ranked #1 here on 2026-10-01 off
+ * its own bot traffic), so both agent queries require "published, or owned by
+ * a person".
+ *
  * Cache: 2 min public CDN (trending doesn't need sub-minute freshness).
  */
 
@@ -92,6 +98,9 @@ export default wrap(async (req, res) => {
 				left join avatars a on a.id = i.avatar_id and a.deleted_at is null
 				where i.deleted_at is null
 				  and i.is_public = true
+				  and not (i.is_published is not true and exists (
+				        select 1 from users su where su.id = i.user_id and su.service_account
+				      ))
 			) t
 			where t.chat_count > 0
 			order by t.chat_count desc
@@ -121,6 +130,9 @@ export default wrap(async (req, res) => {
 			  and u.created_at >= now() - ${interval}::interval
 			  and i.deleted_at is null
 			  and i.is_public = true
+			  and not (i.is_published is not true and exists (
+			        select 1 from users su where su.id = i.user_id and su.service_account
+			      ))
 			group by i.id, i.name, i.description, i.meta,
 			         a.thumbnail_key, a.visibility
 			order by window_chats desc

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-01",
+			"title": "Trending and the agent directory show only real agents",
+			"summary": "A behind-the-scenes agent the platform uses to budget its marketplace chat bot was showing up in the public agent directory and sitting at number one on Trending, counted up by the bot's own conversations. It is no longer listed, and both lists now leave out any agent the platform runs for itself unless it has been deliberately published, so Trending ranks agents people actually talk to.",
+			"tags": ["fix"],
+			"link": "/trending"
+		},
+		{
+			"date": "2026-10-01",
 			"title": "Avatar pictures show a natural standing pose instead of a T-pose",
 			"summary": "The small pictures of avatars around the site, on Spotlight cards, in the Monitor fleet list, on Characters and on the Rankings board, were drawn with every avatar standing arms out in a stiff T. Avatar pictures are now drawn with the avatar standing naturally, arms relaxed at its sides, using the same posing the live 3D viewer uses, and that works for every skeleton style the viewer already understands. Props, vehicles and creatures are drawn exactly as they were made. Avatar pictures also keep their colored backdrop and their real textures again, where some had come out on plain black with bare white materials. Every avatar picture drawn from now on uses the new pose, and the older pictures can now be redrawn in place.",
 			"tags": ["fix"],

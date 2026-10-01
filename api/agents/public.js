@@ -26,6 +26,15 @@
  * carries `total` (the wall's addressable size) and `active_total` (agents with
  * any activity) for the header stats.
  *
+ * Internal agents never list. An agent the platform made for itself (owned by a
+ * `users.service_account` row) and never published is infrastructure, such as
+ * the meter that budgets the marketplace chat bot's AI spend, not something to
+ * browse. `is_public` defaults to true, so a provisioning script that forgets to
+ * clear it would otherwise put that machinery on the public wall; every query
+ * here therefore also requires "published, or owned by a person". The platform's
+ * own published persona agents (service-account owned, published) still list,
+ * and so do people's unpublished starter agents.
+ *
  * Public, IP rate-limited, 30-second CDN cache.
  */
 
@@ -121,6 +130,9 @@ export default wrap(async (req, res) => {
 			) ch on true
 			where i.deleted_at is null
 			  and i.is_public = true
+			  and not (i.is_published is not true and exists (
+			        select 1 from users su where su.id = i.user_id and su.service_account
+			      ))
 			  and (${!q} or (
 			        to_tsvector('english', coalesce(i.name,'') || ' ' || coalesce(i.description,''))
 			        @@ plainto_tsquery('english', ${q})
@@ -166,6 +178,9 @@ export default wrap(async (req, res) => {
 					))::int as active_total
 				from agent_identities i
 				where i.deleted_at is null and i.is_public = true
+				  and not (i.is_published is not true and exists (
+				        select 1 from users su where su.id = i.user_id and su.service_account
+				      ))
 				  and (
 				        exists (select 1 from agent_actions aa where aa.agent_id = i.id)
 				        or exists (select 1 from usage_events ue where ue.agent_id = i.id and ue.kind = 'llm')
@@ -216,6 +231,9 @@ export default wrap(async (req, res) => {
 		left join avatars a on a.id = i.avatar_id and a.deleted_at is null
 		where i.deleted_at is null
 		  and i.is_public = true
+		  and not (i.is_published is not true and exists (
+		        select 1 from users su where su.id = i.user_id and su.service_account
+		      ))
 		  and (${!q} or (
 		        to_tsvector('english', coalesce(i.name,'') || ' ' || coalesce(i.description,''))
 		        @@ plainto_tsquery('english', ${q})

@@ -204,17 +204,20 @@ async function ensureUser(sql) {
 async function ensureAgent(sql, userId, model) {
 	const policy = JSON.stringify(gatewayPolicy(model));
 	const existing = await findAgent(sql, userId);
+	// The meter is machinery, not a listed agent. is_public defaults to true on
+	// agent_identities, so it is set false explicitly on both paths; a re-run also
+	// heals a meter that was created before this was enforced.
 	if (existing) {
-		await sql`update agent_identities set embed_policy = ${policy}::jsonb, updated_at = now() where id = ${existing.id}`;
+		await sql`update agent_identities set embed_policy = ${policy}::jsonb, is_public = false, updated_at = now() where id = ${existing.id}`;
 		return { id: existing.id, created: false };
 	}
 	const meta = JSON.stringify({ purpose: AGENT_PURPOSE, meters: 'the marketplace chat bot reply subsession (workers/okx-chat-bot)' });
 	const [row] = await sql`
-		insert into agent_identities (user_id, name, description, is_published, meta, embed_policy, created_at, updated_at)
+		insert into agent_identities (user_id, name, description, is_published, is_public, meta, embed_policy, created_at, updated_at)
 		values (
 			${userId}, ${AGENT_NAME},
 			'Meters the AI budget of the three.ws marketplace chat bot. Not a public agent.',
-			false, ${meta}::jsonb, ${policy}::jsonb, now(), now()
+			false, false, ${meta}::jsonb, ${policy}::jsonb, now(), now()
 		)
 		returning id
 	`;
