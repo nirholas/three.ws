@@ -1,0 +1,157 @@
+{
+	"id": "avatar-artifact",
+	"scenarioHash": "85621beeab78780537022e58873cabc67e7d7977e988dd6d0659c0383f8af4ea",
+	"ranAt": "2026-10-01T06:30:02.768Z",
+	"target": {
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/avatar-artifact",
+			"detail": "loaded https://three.ws/avatar-artifact",
+			"ok": true,
+			"ms": 8876,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "title",
+			"detail": "title = \"a live Three.js portrait\"",
+			"ok": true,
+			"ms": 39,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 16944,
+			"frames": 42
+		},
+		{
+			"index": 4,
+			"kind": "drag",
+			"target": "0.5,0.5,0.12,0.3",
+			"detail": "dragged over 54 frames",
+			"ok": true,
+			"ms": 26987,
+			"frames": 72
+		},
+		{
+			"index": 5,
+			"kind": "drag",
+			"target": "0.12,0.3,0.88,0.42",
+			"detail": "dragged over 60 frames",
+			"ok": true,
+			"ms": 31550,
+			"frames": 78
+		},
+		{
+			"index": 6,
+			"kind": "drag",
+			"target": "0.88,0.42,0.5,0.8",
+			"detail": "dragged over 48 frames",
+			"ok": true,
+			"ms": 23920,
+			"frames": 66
+		},
+		{
+			"index": 7,
+			"kind": "press",
+			"target": "ArrowUp",
+			"detail": "pressed ArrowUp",
+			"ok": true,
+			"ms": 2212,
+			"frames": 6
+		},
+		{
+			"index": 8,
+			"kind": "press",
+			"target": "ArrowUp",
+			"detail": "pressed ArrowUp",
+			"ok": true,
+			"ms": 2050,
+			"frames": 6
+		},
+		{
+			"index": 9,
+			"kind": "press",
+			"target": "ArrowLeft",
+			"detail": "pressed ArrowLeft",
+			"ok": true,
+			"ms": 2066,
+			"frames": 6
+		},
+		{
+			"index": 10,
+			"kind": "press",
+			"target": "ArrowLeft",
+			"detail": "pressed ArrowLeft",
+			"ok": true,
+			"ms": 2033,
+			"frames": 6
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 16816,
+			"frames": 48
+		},
+		{
+			"index": 12,
+			"kind": "click",
+			"target": "Copy embed",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 7873,
+			"frames": 21
+		},
+		{
+			"index": 13,
+			"kind": "read",
+			"target": "copied",
+			"detail": "copied = \"Copy the snippet below\"",
+			"ok": true,
+			"ms": 7,
+			"frames": 0
+		},
+		{
+			"index": 14,
+			"kind": "hold",
+			"target": "3000",
+			"detail": "3000 ms",
+			"ok": true,
+			"ms": 48409,
+			"frames": 90
+		}
+	],
+	"facts": {
+		"title": "a live Three.js portrait",
+		"copied": "Copy the snippet below"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/avatar-artifact/reel.mp4",
+		"sha256": "caaf535a0687ca49f3c30c05623ead83b1c47ca9993e7d5e083266552878f7de",
+		"frames": 441,
+		"motion": 1,
+		"durationSec": 14.7,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

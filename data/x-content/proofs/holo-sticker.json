@@ -1,10 +1,10 @@
 {
 	"id": "holo-sticker",
-	"scenarioHash": "be688c1ea7d091f8121edc3cbb279e3916e5558e55bb13b8911ca6bab3dffb0b",
-	"ranAt": "2026-09-30T08:21:45.738Z",
+	"scenarioHash": "e0cfc3d4ef2ffd3e2d4f9409f062b8ccf1ab4c397a94c1163fe687de245fc9f2",
+	"ranAt": "2026-10-01T06:39:50.870Z",
 	"target": {
-		"commit": "07a1ab3b5",
-		"revision": "three-ws-api-00466-85g"
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/holo",
 			"detail": "loaded https://three.ws/holo",
 			"ok": true,
-			"ms": 19421,
+			"ms": 19970,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "250",
 			"detail": "scrolled 250 px",
 			"ok": true,
-			"ms": 35347,
+			"ms": 35777,
 			"frames": 18
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "peel",
 			"detail": "peel = \"30\"",
 			"ok": true,
-			"ms": 7,
+			"ms": 2,
 			"frames": 0
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "stage",
 			"detail": "stage = \"DRAG TO TILT\"",
 			"ok": true,
-			"ms": 35,
+			"ms": 34,
 			"frames": 0
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "foils",
 			"detail": "foils = \"Rainbow holo\nChrome\nGold foil\nNeon\"",
 			"ok": true,
-			"ms": 4,
+			"ms": 5,
 			"frames": 0
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 70248,
+			"ms": 100272,
 			"frames": 42
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "0.27,0.52,0.34,0.45",
 			"detail": "dragged over 66 frames",
 			"ok": true,
-			"ms": 139910,
+			"ms": 170705,
 			"frames": 84
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "Gold foil",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 28965,
+			"ms": 47334,
 			"frames": 21
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "0.34,0.45,0.27,0.5",
 			"detail": "dragged over 54 frames",
 			"ok": true,
-			"ms": 118815,
+			"ms": 159126,
 			"frames": 72
 		},
 		{
@@ -95,17 +95,17 @@
 			"target": "Your text",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 48717,
+			"ms": 43240,
 			"frames": 21
 		},
 		{
 			"index": 11,
 			"kind": "type",
-			"target": "gm agents",
-			"detail": "typed 9 characters",
+			"target": "agents",
+			"detail": "typed 6 characters",
 			"ok": true,
-			"ms": 68779,
-			"frames": 34
+			"ms": 59800,
+			"frames": 28
 		},
 		{
 			"index": 12,
@@ -113,7 +113,7 @@
 			"target": "Cut it",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 25664,
+			"ms": 40466,
 			"frames": 21
 		},
 		{
@@ -122,7 +122,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 35135,
+			"ms": 50718,
 			"frames": 42
 		},
 		{
@@ -131,7 +131,7 @@
 			"target": "Neon",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 24156,
+			"ms": 23425,
 			"frames": 21
 		},
 		{
@@ -140,7 +140,7 @@
 			"target": "foilAfter",
 			"detail": "foilAfter = \"Neon\"",
 			"ok": true,
-			"ms": 6,
+			"ms": 7,
 			"frames": 0
 		},
 		{
@@ -149,7 +149,7 @@
 			"target": "markAfter",
 			"detail": "markAfter = \"Your text\"",
 			"ok": true,
-			"ms": 2,
+			"ms": 4,
 			"frames": 0
 		},
 		{
@@ -158,7 +158,7 @@
 			"target": "0.28,0.48,0.33,0.44",
 			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 110549,
+			"ms": 80533,
 			"frames": 78
 		},
 		{
@@ -167,7 +167,7 @@
 			"target": "3200",
 			"detail": "3200 ms",
 			"ok": true,
-			"ms": 122359,
+			"ms": 86103,
 			"frames": 96
 		}
 	],
@@ -183,10 +183,10 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/holo-sticker/reel.mp4",
-		"sha256": "7702750c0c64b5af521be156218485aea88a0c197544f0b13bfaa78c24d6bd23",
-		"frames": 550,
+		"sha256": "4109f397ffbec7e1be52eec877c63931b4d8ac8788bb5b75aabede9a037273e9",
+		"frames": 544,
 		"motion": 1,
-		"durationSec": 18.33,
+		"durationSec": 18.13,
 		"width": 1280,
 		"height": 720,
 		"fps": 30,

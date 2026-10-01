@@ -5,34 +5,275 @@
 	"tier": 2,
 	"lane": "labs",
 	"pattern": "clip",
-	"notBefore": "2026-10-01T00:00:00Z",
-	"covers": ["/avatar-artifact"],
+	"notBefore": "2026-10-02T00:00:00Z",
+	"covers": [
+		"/avatar-artifact"
+	],
 	"scenario": {
 		"format": "square",
 		"steps": [
-			{ "goto": "https://three.ws/avatar-artifact", "settle": 7000 },
-			{ "read": "title", "selector": "#artifact-title", "match": "(a live Three.js portrait)" },
-			{ "hold": 1400, "caption": "A portrait built from code at load. No model file, no image." },
-			{ "drag": [[0.5, 0.5], [0.12, 0.3]], "ms": 1800, "caption": "Move the cursor and it looks where you point" },
-			{ "drag": [[0.12, 0.3], [0.88, 0.42]], "ms": 2000 },
-			{ "drag": [[0.88, 0.42], [0.5, 0.8]], "ms": 1600 },
-			{ "press": "ArrowUp", "caption": "Arrow keys steer the gaze without a pointer" },
-			{ "press": "ArrowUp" },
-			{ "press": "ArrowLeft" },
-			{ "press": "ArrowLeft" },
-			{ "hold": 1000 },
-			{ "click": "Copy embed", "caption": "Copy embed hands you the iframe that puts it on any page" },
-			{ "read": "copied", "selector": "#copy-status", "match": "(Embed code copied|Copy the snippet below)" },
-			{ "hold": 3000 }
+			{
+				"goto": "https://three.ws/avatar-artifact",
+				"settle": 7000
+			},
+			{
+				"read": "title",
+				"selector": "#artifact-title",
+				"match": "(a live Three.js portrait)"
+			},
+			{
+				"hold": 1400,
+				"caption": "A 3D portrait built from code, not a file"
+			},
+			{
+				"drag": [
+					[
+						0.5,
+						0.5
+					],
+					[
+						0.12,
+						0.3
+					]
+				],
+				"ms": 1800,
+				"caption": "It looks wherever the cursor goes"
+			},
+			{
+				"drag": [
+					[
+						0.12,
+						0.3
+					],
+					[
+						0.88,
+						0.42
+					]
+				],
+				"ms": 2000
+			},
+			{
+				"drag": [
+					[
+						0.88,
+						0.42
+					],
+					[
+						0.5,
+						0.8
+					]
+				],
+				"ms": 1600
+			},
+			{
+				"press": "ArrowUp",
+				"caption": "Arrow keys steer it without a mouse"
+			},
+			{
+				"press": "ArrowUp"
+			},
+			{
+				"press": "ArrowLeft"
+			},
+			{
+				"press": "ArrowLeft"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"click": "Copy embed",
+				"caption": "Copy embed: one iframe, any website"
+			},
+			{
+				"read": "copied",
+				"selector": "#copy-status",
+				"match": "(Embed code copied|Copy the snippet below)"
+			},
+			{
+				"hold": 3000
+			}
 		]
 	},
 	"probes": [
-		{ "type": "scenario" },
-		{ "type": "api", "name": "the artifact page is up", "url": "https://three.ws/avatar-artifact", "expect": { "contains": "Avatar Artifact" } }
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the artifact page is up",
+			"url": "https://three.ws/avatar-artifact",
+			"expect": {
+				"contains": "Avatar Artifact"
+			}
+		}
 	],
 	"posts": [
-		{ "text": "placeholder head post for the avatar artifact story, written after the reel is watched and checked against the page three.ws/avatar-artifact" }
+		{
+			"text": "This 3D character follows your cursor, and there is no model file behind it. The figure is procedural, built in code, down to the blink.\n\nIt lives on the Avatar Artifact, a page with one job: render one avatar from a link, with no app around it. Move a mouse, drag a finger or press the arrow keys and it turns to look. Copy embed hands you a single iframe for any website.",
+			"media": [
+				{
+					"path": "public/x-media/avatar-artifact/reel.mp4",
+					"probe": {
+						"durationSec": 14.7,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Point it at your own agent with ?agent= and that avatar renders instead, resolved live from the agent's public record. ?model= takes any GLB from an allowed host, and anything else is refused with a sentence saying why, not a blank frame.\n\nthree.ws/avatar-artifact"
+		},
+		{
+			"text": "It is deliberately the smallest viewer we ship. The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN, and a hidden tab suspends the render loop instead of burning the host page's GPU."
+		}
 	],
-	"claims": [],
+	"claims": [
+		{
+			"says": "This 3D character follows your cursor",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "The house portrait: a procedural figure that follows your cursor."
+				},
+				{
+					"type": "proof",
+					"fact": "title",
+					"equals": "a live Three.js portrait"
+				}
+			]
+		},
+		{
+			"says": "there is no model file behind it. The figure is procedural, built in code",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/avatar-artifact.js",
+					"contains": "(no params)     the house portrait: a procedural figure that tracks you"
+				}
+			]
+		},
+		{
+			"says": "down to the blink",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/avatar-artifact.js",
+					"contains": "Eyelids: a blink is a Y scale on these caps."
+				}
+			]
+		},
+		{
+			"says": "a page with one job: render one avatar from a link, with no app around it",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "is one page that renders one avatar and nothing else"
+				},
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "This page has one job: show the artifact, beautifully, from a link."
+				}
+			]
+		},
+		{
+			"says": "Move a mouse, drag a finger or press the arrow keys and it turns to look",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/avatar-artifact",
+					"contains": "Move your cursor · drag on touch · arrow keys"
+				},
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "Every input drives one look-target, so the page works with a mouse, a finger or a keyboard alone"
+				}
+			]
+		},
+		{
+			"says": "Copy embed hands you a single iframe for any website",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "copied",
+					"contains": "Copy the snippet below"
+				},
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "Click **Copy embed** on the page and you get an iframe pointed at exactly what you are looking at"
+				}
+			]
+		},
+		{
+			"says": "that avatar renders instead, resolved live from the agent's public record",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "The page fetches the agent's public record, reads `avatar_model_url`, and renders it."
+				}
+			]
+		},
+		{
+			"says": "?model= takes any GLB from an allowed host",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "Any GLB served from an allowed host."
+				}
+			]
+		},
+		{
+			"says": "anything else is refused with a sentence saying why, not a blank frame",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "Anything else is refused with an explanation instead of rendered."
+				}
+			]
+		},
+		{
+			"says": "It is deliberately the smallest viewer we ship",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "It is deliberately the smallest viewer we ship."
+				}
+			]
+		},
+		{
+			"says": "The 3D engine is inside the bundle, so a site that embeds it never picks up a script from a third-party CDN",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "**No third-party CDN.** three.js ships with the bundle. An embed host never picks up a cross-origin script tag it did not agree to."
+				}
+			]
+		},
+		{
+			"says": "a hidden tab suspends the render loop",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/avatar-artifact.md",
+					"contains": "A hidden tab suspends the render loop"
+				}
+			]
+		}
+	],
 	"mentions": {}
 }

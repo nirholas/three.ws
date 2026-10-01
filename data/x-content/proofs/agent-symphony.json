@@ -1,0 +1,168 @@
+{
+	"id": "agent-symphony",
+	"scenarioHash": "c1e02ae728189d48ca698279f62cedbf10919826f463a31089b7e17868d28547",
+	"ranAt": "2026-10-01T06:37:46.415Z",
+	"target": {
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/symphony",
+			"detail": "loaded https://three.ws/symphony",
+			"ok": true,
+			"ms": 9063,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "events",
+			"detail": "events = \"40\"",
+			"ok": true,
+			"ms": 49,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "status",
+			"detail": "status = \"LIVE\"",
+			"ok": true,
+			"ms": 14,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "250",
+			"detail": "scrolled 250 px",
+			"ok": true,
+			"ms": 6298,
+			"frames": 18
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 15325,
+			"frames": 54
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "Coin buys · bass",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 6263,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 10917,
+			"frames": 42
+		},
+		{
+			"index": 8,
+			"kind": "click",
+			"target": "Play the economy",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 6418,
+			"frames": 21
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 10522,
+			"frames": 42
+		},
+		{
+			"index": 10,
+			"kind": "read",
+			"target": "playing",
+			"detail": "playing = \"Pause\"",
+			"ok": true,
+			"ms": 10,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "caption",
+			"target": "One orb per note. Nothing is simulated.",
+			"detail": "caption set",
+			"ok": true,
+			"ms": 112,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 11828,
+			"frames": 45
+		},
+		{
+			"index": 13,
+			"kind": "read",
+			"target": "notes",
+			"detail": "notes = \"10\"",
+			"ok": true,
+			"ms": 9,
+			"frames": 0
+		},
+		{
+			"index": 14,
+			"kind": "caption",
+			"target": "Height is pitch. Color is the voice.",
+			"detail": "caption set",
+			"ok": true,
+			"ms": 42,
+			"frames": 0
+		},
+		{
+			"index": 15,
+			"kind": "hold",
+			"target": "1000",
+			"detail": "1000 ms",
+			"ok": true,
+			"ms": 6656,
+			"frames": 30
+		}
+	],
+	"facts": {
+		"events": "40",
+		"status": "LIVE",
+		"playing": "Pause",
+		"notes": "10"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/agent-symphony/reel.mp4",
+		"sha256": "dd93ad0d4e9f375b777ef39d38c9aa85cd5b166ee85f92c5a8aadf3a1ee4b7c0",
+		"frames": 273,
+		"motion": 0.651,
+		"durationSec": 9.1,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

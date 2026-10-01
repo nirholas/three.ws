@@ -74,7 +74,7 @@
 				"caption": "Type a word and it is die-cut into a sticker of its own"
 			},
 			{
-				"type": "gm agents",
+				"type": "agents",
 				"into": "Text to die-cut"
 			},
 			{
@@ -135,7 +135,7 @@
 				{
 					"path": "public/x-media/holo-sticker/reel.mp4",
 					"probe": {
-						"durationSec": 18.33,
+						"durationSec": 18.13,
 						"width": 1280,
 						"height": 720,
 						"fps": 30,
