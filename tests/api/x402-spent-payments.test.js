@@ -34,9 +34,10 @@ vi.mock('../../api/_lib/x402/audit-log.js', async (importActual) => {
 	};
 });
 
-// In-memory stand-in for the Neon tagged template, scoped to the two statements
-// spent-payments.js issues. `dbDown` flips it into the failure mode the module's
-// fail-open policy is written for.
+// In-memory stand-in for the Neon tagged template, modelling the x402_spent_payments
+// table and every statement spent-payments.js issues against it: the lookup, the
+// atomic claim, and the three updates that drive a paid retry. `dbDown` flips it
+// into the failure mode the module's fail-open policy is written for.
 const spentRows = new Map();
 let dbDown = false;
 function fakeSql(strings, ...values) {
@@ -44,15 +45,39 @@ function fakeSql(strings, ...values) {
 	if (dbDown) {
 		return Promise.reject(Object.assign(new Error('connection refused'), { code: 'ECONNREFUSED' }));
 	}
-	if (/SELECT 1 FROM x402_spent_payments/i.test(query)) {
+	if (/SELECT endpoint, outcome, retry_count, retry_until, settlement\s+FROM x402_spent_payments/i.test(query)) {
 		const [hash] = values;
-		return Promise.resolve(spentRows.has(hash) ? [{ '?column?': 1 }] : []);
+		const row = spentRows.get(hash);
+		if (!row) return Promise.resolve([]);
+		return Promise.resolve([{ endpoint: row.endpoint, outcome: row.outcome || 'delivered', retry_count: row.retry_count || 0, retry_until: row.retry_until || null, settlement: row.settlement || null }]);
 	}
 	if (/INSERT INTO x402_spent_payments/i.test(query)) {
-		const [hash, endpoint, amount] = values;
+		const [hash, endpoint, amount, outcome, settlement, lastError, retryUntil] = values;
 		if (spentRows.has(hash)) return Promise.resolve([]); // ON CONFLICT DO NOTHING
-		spentRows.set(hash, { endpoint, amount_atomics: amount, created_at: new Date() });
+		spentRows.set(hash, { endpoint, amount_atomics: amount, outcome, settlement: settlement ? JSON.parse(settlement) : null, last_error: lastError, retry_until: retryUntil, retry_count: 0, created_at: new Date() });
 		return Promise.resolve([{ payment_hash: hash }]);
+	}
+	if (/SET outcome = 'failed_after_settle'/i.test(query)) {
+		const [settlement, lastError, retryUntil, hash] = values;
+		const row = spentRows.get(hash);
+		if (!row) return Promise.resolve([]);
+		Object.assign(row, { outcome: 'failed_after_settle', settlement: row.settlement || (settlement ? JSON.parse(settlement) : null), last_error: lastError, retry_until: row.retry_until || retryUntil });
+		return Promise.resolve([{ retry_count: row.retry_count || 0, retry_until: row.retry_until }]);
+	}
+	if (/SET outcome = 'retrying'/i.test(query)) {
+		const [hash, endpoint, max] = values;
+		const row = spentRows.get(hash);
+		const open = row && (!row.retry_until || new Date(row.retry_until).getTime() > Date.now());
+		if (!row || row.endpoint !== endpoint || row.outcome !== 'failed_after_settle' || (row.retry_count || 0) >= max || !open) return Promise.resolve([]);
+		row.outcome = 'retrying';
+		row.retry_count = (row.retry_count || 0) + 1;
+		return Promise.resolve([{ settlement: row.settlement, retry_count: row.retry_count }]);
+	}
+	if (/SET outcome = 'delivered'/i.test(query)) {
+		const [hash] = values;
+		const row = spentRows.get(hash);
+		if (row) Object.assign(row, { outcome: 'delivered', last_error: null });
+		return Promise.resolve([]);
 	}
 	return Promise.resolve([]);
 }
