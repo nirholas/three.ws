@@ -3100,7 +3100,7 @@
 		},
 		{
 			"id": "agent-monitor",
-			"status": "approved",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -3129,7 +3129,7 @@
 					{
 						"scroll": 60,
 						"ms": 600,
-						"caption": "The public agent fleet on one board, ranked by most recent real action"
+						"caption": "The public fleet, newest real action first"
 					},
 					{
 						"hold": 1600
@@ -3138,7 +3138,7 @@
 						"type": "host",
 						"into": "Search agents",
 						"awaits": "/api/agents/public",
-						"caption": "Search runs on the server, over names and descriptions"
+						"caption": "Search runs on the server"
 					},
 					{
 						"hold": 1300
@@ -3170,7 +3170,7 @@
 							]
 						],
 						"ms": 2400,
-						"caption": "It is the agent's own avatar, live. Turn it around."
+						"caption": "Its own avatar, live. Turn it around."
 					},
 					{
 						"hold": 2600
@@ -3377,7 +3377,7 @@
 		},
 		{
 			"id": "agent-spotlight",
-			"status": "review",
+			"status": "paused",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -3400,7 +3400,7 @@
 					{
 						"scroll": 870,
 						"ms": 1000,
-						"caption": "A showcase of agents, each with a write-up of what it is for"
+						"caption": "Each agent comes with a write-up"
 					},
 					{
 						"hold": 900
@@ -3409,7 +3409,7 @@
 						"type": "translator",
 						"into": "Search agents, write-ups, builders",
 						"awaits": "/api/spotlight/list",
-						"caption": "The search reads the write-ups, not just the names"
+						"caption": "Search reads the write-ups too"
 					},
 					{
 						"hold": 600
@@ -3423,7 +3423,7 @@
 					},
 					{
 						"click": "The translator that refuses to flatten your voice",
-						"caption": "The entry opens on the agent itself, standing in 3D"
+						"caption": "The entry opens on the agent, in 3D"
 					},
 					{
 						"expect": "Machine translation solved meaning years ago",
@@ -3454,7 +3454,7 @@
 					{
 						"scroll": 560,
 						"ms": 1200,
-						"caption": "A write-up by three.ws is marked Curated until the builder writes their own"
+						"caption": "three.ws write-ups are marked Curated"
 					},
 					{
 						"hold": 1400
@@ -3462,7 +3462,7 @@
 					{
 						"scroll": 480,
 						"ms": 1100,
-						"caption": "Conversations, upvotes and views are read live off the agent"
+						"caption": "Conversations, upvotes, views: all live"
 					},
 					{
 						"hold": 2600
@@ -3484,7 +3484,7 @@
 			],
 			"posts": [
 				{
-					"text": "Open the Agent Spotlight, type the job you need done, and the agent that does it is standing there in 3D with a write-up of what it is for: three.ws/spotlight\n\nThe agents index lists thousands of rows. The Spotlight is the other thing: 15 agents so far, each one a pitch attached to a live agent, never a copy of it. Rename the agent or swap its avatar and the card updates with it.\n\nSearch reads the headline, the one-liner, the write-up and the agent's own description, so a plain word finds the agent built for it.",
+					"text": "Open the Agent Spotlight, type the job you need done, and the agent that does it is standing there in 3D with a write-up of what it is for: three.ws/spotlight\n\nThe agents index lists thousands of rows. The Agent Spotlight is the other thing: 15 agents so far, each one a pitch attached to a live agent, never a copy of it. Rename the agent or swap its avatar and the card updates with it.\n\nSearch reads the headline, the one-liner, the write-up and the agent's own description, so a plain word finds the agent built for it.",
 					"media": [
 						{
 							"path": "public/x-media/agent-spotlight/reel.mp4",
@@ -3624,6 +3624,16 @@
 							"type": "page",
 							"url": "https://three.ws/docs/spotlight",
 							"contains": "The clock runs in days, not hours"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/spotlight",
+							"contains": "Trending decays with age"
+						},
+						{
+							"type": "file",
+							"path": "docs/spotlight.md",
+							"contains": "score = (upvotes + 1) / (age_in_days + 1) ^ 1.2"
 						}
 					]
 				},
@@ -3672,7 +3682,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Held 2026-10-01: the entry page shows the agent in a bind-pose T-pose with a second copy of the avatar behind it, which the operating rules say never to ship. Captions were shortened to fit the square bar. Once the /spotlight entry fix is live, film again (prove agent-spotlight) and advance it."
 		},
 		{
 			"id": "avatar-cli",
@@ -4712,6 +4723,36 @@
 							"contains": "are answered by the page itself"
 						}
 					]
+				},
+				{
+					"says": "\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "so the page answers them itself, before\n// the network is touched"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['repeat', ['repeat', 'repeat that'"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['hush', ['stop', 'stop talking'"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['louder', ['louder'"
+						},
+						{
+							"type": "file",
+							"path": "src/drive/commands.js",
+							"contains": "['night', ['night mode'"
+						}
+					]
 				}
 			],
 			"mentions": {}
@@ -5280,14 +5321,14 @@
 					{
 						"scroll": "No files handy?",
 						"ms": 900,
-						"caption": "Two 3D models. A checksum only says the files differ."
+						"caption": "A checksum only says two files differ"
 					},
 					{
 						"hold": 1400
 					},
 					{
 						"click": "Two different characters",
-						"caption": "Both files are parsed and compared in this tab"
+						"caption": "Both files are compared in this tab"
 					},
 					{
 						"expect": "Clips that target them will not play",
@@ -5354,7 +5395,7 @@
 					{
 						"scroll": "Something a consumer references by name is gone",
 						"ms": 1100,
-						"caption": "The verdict names what broke: joints lost, clips removed"
+						"caption": "The verdict names what broke"
 					},
 					{
 						"hold": 3600
@@ -6293,7 +6334,7 @@
 		},
 		{
 			"id": "model-inspector",
-			"status": "approved",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -6311,11 +6352,11 @@
 					},
 					{
 						"hold": 1500,
-						"caption": "The quality gate our own catalog has to pass, pointed at any GLB"
+						"caption": "Our catalog's quality gate, on any GLB"
 					},
 					{
 						"click": "Mannequin",
-						"caption": "A real model from the library that does not pass"
+						"caption": "A library model that does not pass"
 					},
 					{
 						"expect": "short of the catalog bar",
@@ -6354,7 +6395,7 @@
 					{
 						"scroll": 520,
 						"ms": 900,
-						"caption": "The file is read in the browser. Nothing is uploaded."
+						"caption": "Read in the browser. Nothing is uploaded."
 					},
 					{
 						"drag": [
@@ -6388,7 +6429,7 @@
 					{
 						"scroll": 500,
 						"ms": 1000,
-						"caption": "Each rule shows what it measured against its bound"
+						"caption": "Each rule, its measure and its bound"
 					},
 					{
 						"hold": 2600
