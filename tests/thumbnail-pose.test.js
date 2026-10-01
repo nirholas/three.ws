@@ -23,6 +23,7 @@ import { AvatarModel } from '@three-ws/render';
 import {
 	applyThumbnailPose,
 	armsAlreadyHanging,
+	armsPointBelow,
 	sampleClipPose,
 	THUMBNAIL_POSE_CLIP,
 } from '../src/thumbnail-pose.js';
@@ -209,6 +210,16 @@ describe('applyThumbnailPose', () => {
 		const result = await applyThumbnailPose(root, poseClip);
 		expect(result).toMatchObject({ posed: false, mode: 'authored-rest' });
 		expect(snapshot(root)).toEqual(before);
+	});
+
+	it('accepts arms that hang and refuses arms left out or raised over the head', () => {
+		expect(armsPointBelow(makeHumanoid(MIXAMO, { armsDown: true }), -0.5)).toBe(true);
+		expect(armsPointBelow(makeHumanoid(MIXAMO), -0.5)).toBe(false);
+		const raised = makeHumanoid(MIXAMO);
+		raised.getObjectByName('mixamorigLeftArm').rotation.z = Math.PI / 2;
+		raised.getObjectByName('mixamorigRightArm').rotation.z = -Math.PI / 2;
+		expect(armDropY(raised, 'mixamorigLeftArm', 'mixamorigLeftForeArm')).toBeGreaterThan(0.9);
+		expect(armsPointBelow(raised, -0.5)).toBe(false);
 	});
 
 	it('leaves a non-humanoid rig exactly as authored', async () => {

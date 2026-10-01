@@ -57,6 +57,12 @@ const POSE_CLIP_NAME = 'thumbnail-rest';
 // the side. A T-pose reads about 0 and an A-pose about -0.7, so both get posed.
 const ARM_HANGING_Y = -0.87;
 
+// What a posed result has to reach: both upper arms at least 30 degrees below
+// horizontal. A clip that retargets badly can leave a rig with its arms still
+// out, or swing them up over its head, which reads worse than the T-pose it
+// replaced; neither is allowed through.
+const ARM_POSED_Y = -0.5;
+
 const _shoulder = new Vector3();
 const _elbow = new Vector3();
 
@@ -146,6 +152,19 @@ export function refreshSkinning(root) {
  * @returns {boolean}
  */
 export function armsAlreadyHanging(root) {
+	return armsPointBelow(root, ARM_HANGING_Y);
+}
+
+/**
+ * Whether both upper arms point further down than `limit` (the y of the unit
+ * vector from shoulder to elbow, in world space).
+ *
+ * @param {import('three').Object3D} root
+ * @param {number} limit
+ * @returns {boolean}
+ */
+export function armsPointBelow(root, limit) {
+	root.updateMatrixWorld(true);
 	const nodes = canonicalBoneNodesFromObject(root);
 	for (const [arm, forearm] of [['LeftArm', 'LeftForeArm'], ['RightArm', 'RightForeArm']]) {
 		const a = nodes.get(arm);
@@ -155,7 +174,7 @@ export function armsAlreadyHanging(root) {
 		b.getWorldPosition(_elbow);
 		const dir = _elbow.sub(_shoulder);
 		const length = dir.length();
-		if (length < 1e-6 || dir.y / length > ARM_HANGING_Y) return false;
+		if (length < 1e-6 || dir.y / length > limit) return false;
 	}
 	return true;
 }
@@ -163,9 +182,10 @@ export function armsAlreadyHanging(root) {
 /**
  * @typedef {Object} ThumbnailPoseResult
  * @property {boolean} posed   true when the avatar was moved into the rest pose
- * @property {'rest'|'arms-relaxed'|'authored-rest'|'not-humanoid'|'no-pose'} mode
+ * @property {'rest'|'arms-relaxed'|'authored-rest'|'not-humanoid'|'pose-rejected'|'no-pose'} mode
  *   how it was posed, or why it was left as authored ('authored-rest': a
- *   humanoid whose own bind pose already has its arms down)
+ *   humanoid whose own bind pose already has its arms down; 'pose-rejected':
+ *   neither the clip nor the arm swing brought both arms down)
  * @property {() => void} restore undo every change; safe to call more than once
  */
 
@@ -214,13 +234,21 @@ export async function applyThumbnailPose(root, poseClipJson) {
 	if (playing) {
 		manager.update(SETTLE_SECONDS);
 		refreshSkinning(root);
-		return { posed: true, mode: 'rest', restore };
+		if (armsPointBelow(root, ARM_POSED_Y)) return { posed: true, mode: 'rest', restore };
 	}
 
-	// The rig is humanoid but the clip could not drive it. Swing the arms down
+	// The rig is humanoid but the clip could not drive it, or drove the arms
+	// somewhere wrong. Start again from the bind pose and swing the arms down
 	// with no name-mapping gate, which is what a T-pose needs most.
 	manager.detach();
+	restoreTransforms(root, saved);
+	refreshSkinning(root);
 	const relaxed = relaxUndrivenArms(root, new Map());
 	refreshSkinning(root);
-	return { posed: relaxed > 0, mode: relaxed > 0 ? 'arms-relaxed' : 'not-humanoid', restore };
+	if (relaxed > 0 && armsPointBelow(root, ARM_POSED_Y)) return { posed: true, mode: 'arms-relaxed', restore };
+	// Nothing reached a rest pose. The rig stays as authored rather than in a
+	// pose worse than the one it started in.
+	restore();
+	refreshSkinning(root);
+	return { posed: false, mode: relaxed > 0 ? 'pose-rejected' : 'not-humanoid', restore };
 }

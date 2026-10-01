@@ -140,8 +140,15 @@ How it poses, in order:
    `src/animation-retarget.js`, and the fallen-pose guard. Only joint rotations
    are applied; the avatar keeps its own hip height.
 4. **The clip cannot drive the rig** (too few bones map, for example a rig with
-   no finger bones): the arms are swung down geometrically by
-   `relaxUndrivenArms()`, so the result is at worst an arms-down stance.
+   no finger bones), **or it drove the arms somewhere wrong**: the rig goes back
+   to its bind pose and the arms are swung down geometrically by
+   `relaxUndrivenArms()`.
+5. **Every posed result is checked** (`armsPointBelow()`): both upper arms must
+   end at least 30 degrees below horizontal. A retarget that leaves the arms out,
+   or swings them up over the head (seen on a real production rig), fails it
+   and falls to step 4. If the arm swing fails it too, the rig renders as
+   authored and reports `pose-rejected`, so the regeneration script skips it
+   rather than replacing a T-pose with something worse.
 
 Renderers report the outcome through an `onPose({ posed, mode })` callback, and
 `/api/render/glb` through its `x-render-pose` header. Pass `pose: 'bind'` to any
