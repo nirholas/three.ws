@@ -1,0 +1,201 @@
+{
+	"id": "drive-copilot",
+	"contentHash": "fd85956638bce5179cab098917a7e799ca4e3eec39b8ea479529dd5e4d8002eb",
+	"reviewedAt": "2026-09-30T08:59:43.116Z",
+	"passed": false,
+	"blockers": [
+		"probe:scenario the filmed scenario: step 11 (expect Speaking): locator.waitFor: Timeout 60000ms exceeded."
+	],
+	"texts": [
+		"Put your phone in the cradle, open Drive, and your agent rides along.\n\nThe page starts in Driving: a face, a voice, four controls, and no keyboard. Hold Talk and speak. The reply comes back in one or two short sentences, spoken in full and clamped to two lines on screen. Park, and Type unlocks. Night is the default, because a bright panel at speed is glare.",
+		"It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar), sized for a car panel. Runs on a head unit browser or a phone in a cradle: three.ws/drive",
+		"\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "Put your phone in the cradle",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"on a phone in a cradle\""
+			},
+			{
+				"claim": "The page starts in Driving",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"The page starts in Driving and hides text entry\""
+			},
+			{
+				"claim": "The page starts in Driving",
+				"kind": "evidence:proof",
+				"target": "Ready",
+				"ok": true,
+				"detail": "the run waited for and saw \"Ready\""
+			},
+			{
+				"claim": "four controls, and no keyboard",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"Four controls, no more. Hands free, Repeat, Stop, Type.\""
+			},
+			{
+				"claim": "four controls, and no keyboard",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"hides text entry\""
+			},
+			{
+				"claim": "Hold Talk and speak",
+				"kind": "evidence:file",
+				"target": "pages/drive.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reply comes back in one or two short sentences",
+				"kind": "evidence:file",
+				"target": "src/drive/index.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The reply comes back in one or two short sentences",
+				"kind": "evidence:proof",
+				"target": "/api/chat",
+				"ok": true,
+				"detail": "POST /api/chat answered 200 in 6.8 s"
+			},
+			{
+				"claim": "spoken in full and clamped to two lines on screen",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"The reply is clamped to two lines and spoken in full\""
+			},
+			{
+				"claim": "spoken in full and clamped to two lines on screen",
+				"kind": "evidence:proof",
+				"target": "Speaking",
+				"ok": true,
+				"detail": "the run waited for and saw \"Speaking\""
+			},
+			{
+				"claim": "Park, and Type unlocks",
+				"kind": "evidence:file",
+				"target": "src/drive/index.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Park, and Type unlocks",
+				"kind": "evidence:proof",
+				"target": "Parked",
+				"ok": true,
+				"detail": "the run waited for and saw \"Parked\""
+			},
+			{
+				"claim": "Night is the default, because a bright panel at speed is glare",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"Night is the default because a bright panel at speed is glare\""
+			},
+			{
+				"claim": "It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar)",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"The loop is the platform's existing one, unchanged\""
+			},
+			{
+				"claim": "It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar)",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"audio into the lipsync driver and onto a real rigged avatar\""
+			},
+			{
+				"claim": "Runs on a head unit browser or a phone in a cradle",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"on a head unit browser, on a phone in a cradle\""
+			},
+			{
+				"claim": "are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"Local commands with no round trip\""
+			},
+			{
+				"claim": "are answered by the page itself, with no round trip to a server",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/carplay",
+				"ok": true,
+				"detail": "live page shows \"are answered by the page itself\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": false,
+				"detail": "step 11 (expect Speaking): locator.waitFor: Timeout 60000ms exceeded."
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Drive page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/drive",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "expect Speaking: locator.waitFor: Timeout 60000ms exceeded",
+				"problem": "One scenario probe timed out waiting for the Speaking state, although a separate proof in the same verification saw 'Speaking', the API answered 200, and the reel frame at 8.7 s visibly shows 'Michelle Speaking' with the reply on screen. The filmed evidence supports the claim, but the failing probe should not recur silently.",
+				"fix": "No copy change. Re-run npm run x:content -- prove for this scenario and confirm the Speaking step passes before the next Drive post; the current reel already shows the state it claims."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Put your phone in the cradle, open Drive, and your agent rides along.\n\nThe page starts in Driving: a face, a voice, four controls, and no keyboard. Hold Talk and speak. The reply comes back in one or two short sentences, spoken in full and clamped to two lines on screen. Park, and Type unlocks. Night is the default, because a bright panel at speed is glare.",
+				"It is the same talk loop the site already runs (mic, transcript, reply, voice, lip sync on a rigged avatar), sized for a car panel. Runs on a head unit browser or a phone in a cradle: three.ws/drive",
+				"\"Repeat that\", \"stop talking\", \"louder\" and \"night mode\" are answered by the page itself, with no round trip to a server."
+			],
+			"altText": []
+		},
+		"summary": "Every claim in the copy is verified word for word against the live docs page or the code, and the reel frames corroborate each step (Driving lock, Parked typing, Speaking with a two-line reply). The only blemish is one timed-out probe for the Speaking state, contradicted by a passing proof, a 200 API answer, and the film itself, so it is noted as minor rather than blocking.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

@@ -1,0 +1,280 @@
+{
+	"id": "glance",
+	"contentHash": "5edcc20180079aa136fda85f5d3e4fb37ab6edf1d18bef77c826fa305fee0e5b",
+	"reviewedAt": "2026-09-30T09:09:00.461Z",
+	"passed": false,
+	"blockers": [
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"evidence:page https://three.ws/glance: page answered HTTP 0",
+		"editor (accuracy): The only evidence for this is a page check that failed (page answered HTTP 0), and no frame of the reel shows this behavior. A claim whose verification failed cannot ship.",
+		"editor (accuracy): All three supporting page checks failed (HTTP 0), and no frame of the reel shows an Edge install flow, a widgets board, or a refresh interval. The 15-minute figure is unverified.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"Paste an agent id on three.ws/glance and the page hands back that agent's status card four ways: a live element for any page, an image URL for a README or a Slack message, a command for your terminal, and the raw API call.\n\nAll four read one endpoint, so the number on the card is what the agent did today. Pick light, dark, or the reader's system setting, and the Windows 11 widgets board runs the same card.",
+		"The live element is one module script and one tag, and it polls only while it is on screen and the tab is visible.\n\nThe image is one URL, with the size and theme in the query string.\n\nOn Windows 11, install the site from Edge, open the widgets board, and pick Agent glance; it refreshes itself every 15 minutes."
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "four ways",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "four ways",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "four ways",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "four ways",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "a live element for any page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "a live element for any page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "an image URL for a README or a Slack message",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "a command for your terminal, and the raw API call",
+				"kind": "evidence:proof",
+				"target": "cli",
+				"ok": true,
+				"detail": "the run read cli = \"npx @three-ws/agent-glance\""
+			},
+			{
+				"claim": "a command for your terminal, and the raw API call",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "All four read one endpoint",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "the number on the card is what the agent did today",
+				"kind": "evidence:proof",
+				"target": "metric",
+				"ok": true,
+				"detail": "the run read metric = \"moves today\""
+			},
+			{
+				"claim": "Pick light, dark, or the reader's system setting",
+				"kind": "evidence:proof",
+				"target": "theme",
+				"ok": true,
+				"detail": "the run read theme = \"dark\""
+			},
+			{
+				"claim": "Pick light, dark, or the reader's system setting",
+				"kind": "evidence:file",
+				"target": "public/glance/index.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Pick light, dark, or the reader's system setting",
+				"kind": "evidence:file",
+				"target": "docs/glance.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the Windows 11 widgets board runs the same card",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "one module script and one tag",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "polls only while it is on screen and the tab is visible",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "The image is one URL",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "with the size and theme in the query string",
+				"kind": "evidence:proof",
+				"target": "/api/glance/card",
+				"ok": true,
+				"detail": "GET /api/glance/card answered 200 in 36.7 s"
+			},
+			{
+				"claim": "with the size and theme in the query string",
+				"kind": "evidence:file",
+				"target": "public/glance/glance-page.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "install the site from Edge, open the widgets board, and pick Agent glance",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "install the site from Edge, open the widgets board, and pick Agent glance",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "install the site from Edge, open the widgets board, and pick Agent glance",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"claim": "it refreshes itself every 15 minutes",
+				"kind": "evidence:page",
+				"target": "https://three.ws/glance",
+				"ok": false,
+				"detail": "page answered HTTP 0"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "19 steps passed against the live product, facts unchanged (name Whatchget, metric moves today, theme dark, cli npx @three-ws/agent-glance)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the glance card endpoint answers for the agent in the reel",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/glance",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "it polls only while it is on screen and the tab is visible",
+				"problem": "The only evidence for this is a page check that failed (page answered HTTP 0), and no frame of the reel shows this behavior. A claim whose verification failed cannot ship.",
+				"fix": "Cut the sentence, or re-run a check that passes on the live page before including it."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "On Windows 11, install the site from Edge, open the widgets board, and pick Agent glance; it refreshes itself every 15 minutes.",
+				"problem": "All three supporting page checks failed (HTTP 0), and no frame of the reel shows an Edge install flow, a widgets board, or a refresh interval. The 15-minute figure is unverified.",
+				"fix": "Cut it from post 2. Post 1's 'the Windows 11 widgets board runs the same card' can stay because the filmed live page states 'The same card renders on the Windows 11 widgets board' in the passing run."
+			},
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "a command for your terminal, and the raw API call",
+				"problem": "The run verified the exact command (npx @three-ws/agent-glance) and the live endpoint (GET /api/glance/card answered 200), and frame 4 shows both, so the post can name them instead of gesturing at them.",
+				"fix": "Name the command and the endpoint in post 2."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"Paste an agent id on three.ws/glance and the page hands back that agent's status card four ways: a live element for any page, an image URL for a README or a Slack message, a command for your terminal, and the raw API call.\n\nAll four read one endpoint, so the number on the card is what the agent did today. Pick light, dark, or the reader's system setting, and the Windows 11 widgets board runs the same card.",
+				"The live element is one module script and one tag. The image is one URL, with the size and theme in the query string. The terminal command is npx @three-ws/agent-glance, and the API call is a GET to three.ws/api/glance/card, which answered 200 during the filming of this reel."
+			],
+			"altText": []
+		},
+		"summary": "The reels and the passing run back the core of the post: four surfaces, one endpoint, themes, and the Windows 11 card all appear on the filmed live page. Post 2's polling behavior, Edge install steps, and 15-minute refresh rest entirely on page checks that failed, so they are cut and the verified command and endpoint are named instead.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"polls only while it is on screen and the tab is visible\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"install the site from Edge, open the widgets board, and pick Agent glance\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it refreshes itself every 15 minutes\" does not appear in the copy; claims must quote the post",
+			"claims: \"200\" is an unverified number; declare it in claims with evidence",
+			"claims: @three has no recorded reason; tag only an account the feature genuinely runs on"
+		]
+	},
+	"editorError": null
+}

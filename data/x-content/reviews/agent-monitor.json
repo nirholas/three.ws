@@ -1,0 +1,201 @@
+{
+	"id": "agent-monitor",
+	"contentHash": "e02df0329e0a2e1466cd00aeeea084afdb7d16d37e3476e35eb0028fdd42be68",
+	"reviewedAt": "2026-09-30T08:45:45.698Z",
+	"passed": false,
+	"blockers": [
+		"probe:scenario the filmed scenario: fleet is now \"2,549\", the reel shows \"2,546\"; prove it again",
+		"editor (accuracy): The scenario re-probe failed: the fleet now reads \"2,549\" while the filmed reel shows \"2,546\" in the fleet counter of every frame. The copy stays true either way, but the attached proof run is stale and the verification record for the reel fails, so the package must be re-filmed against the live product before it ships.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
+		"A failed panel degrades alone: it badges itself stale and keeps its last good data rather than blanking, so one dead endpoint never takes the board down. Polling pauses while the tab is hidden and every panel refreshes on the way back.\n\nKeys: f focuses the search, r refreshes everything. three.ws/monitor"
+	],
+	"lint": [],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "More than 2,500 public agents",
+				"kind": "evidence:proof",
+				"target": "fleet",
+				"ok": true,
+				"detail": "the run read fleet = \"2,546\""
+			},
+			{
+				"claim": "ranked by the most recent real thing each one did",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"ranked by its most recent real action\""
+			},
+			{
+				"claim": "the ops room for the fleet",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"is the ops room for the three.ws agent fleet\""
+			},
+			{
+				"claim": "live panels on one screen, each one a public endpoint polled on its own cadence",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"live panels on one screen, each one a real public endpoint polled on its own cadence\""
+			},
+			{
+				"claim": "nothing on the page needs a session",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"Nothing on this page needs a session\""
+			},
+			{
+				"claim": "the fleet narrows on the server",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"Server-side search on name and description\""
+			},
+			{
+				"claim": "the fleet narrows on the server",
+				"kind": "evidence:proof",
+				"target": "/api/agents/public",
+				"ok": true,
+				"detail": "GET /api/agents/public answered 200 in 2.6 s"
+			},
+			{
+				"claim": "its own 3D avatar renders in the page, live",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"live 3D avatar, rendered in the page\""
+			},
+			{
+				"claim": "its own 3D avatar renders in the page, live",
+				"kind": "evidence:proof",
+				"target": "/api/agents/210e9990",
+				"ok": true,
+				"detail": "GET /api/agents/210e9990-7d7e-47e7-8b80-1e4894ec6b83 answered 200 in 0.3 s"
+			},
+			{
+				"claim": "Nothing on it is simulated",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"Nothing is simulated\""
+			},
+			{
+				"claim": "the board shows zeroes and says so",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"the board shows zeroes and says so\""
+			},
+			{
+				"claim": "A failed panel degrades alone",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"A failed panel degrades alone\""
+			},
+			{
+				"claim": "badges itself stale and keeps its last good data rather than blanking",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"badges itself stale\""
+			},
+			{
+				"claim": "badges itself stale and keeps its last good data rather than blanking",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"keeps showing it rather than blanking\""
+			},
+			{
+				"claim": "one dead endpoint never takes the board down",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"One dead endpoint never takes the board down\""
+			},
+			{
+				"claim": "Polling pauses while the tab is hidden and every panel refreshes on the way back",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"Polling pauses when the tab is hidden\""
+			},
+			{
+				"claim": "Polling pauses while the tab is hidden and every panel refreshes on the way back",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"every panel refreshes on the way back\""
+			},
+			{
+				"claim": "f focuses the search, r refreshes everything",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/monitor",
+				"ok": true,
+				"detail": "live page shows \"f focuses fleet search, r refreshes everything\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": false,
+				"detail": "fleet is now \"2,549\", the reel shows \"2,546\"; prove it again"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the public fleet feed answers",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/monitor",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 3
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "More than 2,500 public agents",
+				"problem": "The scenario re-probe failed: the fleet now reads \"2,549\" while the filmed reel shows \"2,546\" in the fleet counter of every frame. The copy stays true either way, but the attached proof run is stale and the verification record for the reel fails, so the package must be re-filmed against the live product before it ships.",
+				"fix": "Re-run the scenario and recapture the reel so the film and the probe record the current live fleet number (2,549 at last probe). No copy change is needed since 'More than 2,500' holds."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"More than 2,500 public agents on one board, ranked by the most recent real thing each one did.\n\nThe Agent Monitor is the ops room for the fleet: live panels on one screen, each one a public endpoint polled on its own cadence, and nothing on the page needs a session. Type a name or a word from a description and the fleet narrows on the server. Pick an agent and its own 3D avatar renders in the page, live.\n\nNothing on it is simulated. When the platform is quiet the board shows zeroes and says so.",
+				"A failed panel degrades alone: it badges itself stale and keeps its last good data rather than blanking, so one dead endpoint never takes the board down. Polling pauses while the tab is hidden and every panel refreshes on the way back.\n\nKeys: f focuses the search, r refreshes everything. three.ws/monitor"
+			],
+			"altText": []
+		},
+		"summary": "Every factual claim passed against the live docs page and the API, and the copy obeys the voice contract cleanly. The one blocker is media freshness: the reel shows 2,546 while the live fleet is 2,549 and the re-probe failed, so re-film the scenario before shipping; the text itself ships unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

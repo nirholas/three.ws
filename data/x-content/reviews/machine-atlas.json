@@ -1,0 +1,245 @@
+{
+	"id": "machine-atlas",
+	"contentHash": "15c9a3ec33835ad11b3d544b5b2cac961c73ee94fbb3032dc149084411f06f32",
+	"reviewedAt": "2026-09-30T09:16:58.920Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"A nine-cylinder radial engine and a steam locomotive, with no model file behind either one. It is a Labs experiment in building 3D geometry from code instead of files.\n\nBoth machines are built when the page loads: dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see. Move a slider and the geometry is rebuilt. Nine cylinders to five, and the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers.",
+		"The motion is solved, not baked animation. Pistons come from the exact planar slider-crank, and the locomotive valve gear closes a four-bar chain by intersecting circles every frame, which is why a rod length that cannot physically reach refuses to move rather than stretching.\n\nEach machine is a small JSON object of numbers. Copy the spec, hand it to an agent, get a different machine back, then export the result as GLB. three.ws/assembly"
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "A nine-cylinder radial engine",
+				"kind": "evidence:proof",
+				"target": "cylinders",
+				"ok": true,
+				"detail": "the run read cylinders = \"9\""
+			},
+			{
+				"claim": "A nine-cylinder radial engine",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Air-cooled radial aero engine\""
+			},
+			{
+				"claim": "a steam locomotive",
+				"kind": "evidence:proof",
+				"target": "Outside-cylinder steam locomotive",
+				"ok": true,
+				"detail": "the run waited for and saw \"Outside-cylinder steam locomotive\""
+			},
+			{
+				"claim": "a steam locomotive",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Coupled Six\""
+			},
+			{
+				"claim": "no model file behind either one",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"no model files\""
+			},
+			{
+				"claim": "no model file behind either one",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Two machines. Nothing downloaded.\""
+			},
+			{
+				"claim": "a Labs experiment in building 3D geometry from code instead of files",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"The rest of the experiments running live on three.ws\""
+			},
+			{
+				"claim": "a Labs experiment in building 3D geometry from code instead of files",
+				"kind": "evidence:file",
+				"target": "data/pages.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Both machines are built when the page loads",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Both machines are built when the page loads\""
+			},
+			{
+				"claim": "dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see\""
+			},
+			{
+				"claim": "Move a slider and the geometry is rebuilt",
+				"kind": "evidence:proof",
+				"target": "cylindersAfter",
+				"ok": true,
+				"detail": "the run read cylindersAfter = \"5\""
+			},
+			{
+				"claim": "Move a slider and the geometry is rebuilt",
+				"kind": "evidence:proof",
+				"target": "16.5 L",
+				"ok": true,
+				"detail": "the run waited for and saw \"16.5 L\""
+			},
+			{
+				"claim": "Nine cylinders to five",
+				"kind": "evidence:proof",
+				"target": "cylinders",
+				"ok": true,
+				"detail": "the run read cylinders = \"9\""
+			},
+			{
+				"claim": "Nine cylinders to five",
+				"kind": "evidence:proof",
+				"target": "cylindersAfter",
+				"ok": true,
+				"detail": "the run read cylindersAfter = \"5\""
+			},
+			{
+				"claim": "the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers",
+				"kind": "evidence:proof",
+				"target": "displacement",
+				"ok": true,
+				"detail": "the run read displacement = \"29.7 L\""
+			},
+			{
+				"claim": "the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers",
+				"kind": "evidence:proof",
+				"target": "16.5 L",
+				"ok": true,
+				"detail": "the run waited for and saw \"16.5 L\""
+			},
+			{
+				"claim": "the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Generated from the values on the right, so it always matches what is on screen\""
+			},
+			{
+				"claim": "The motion is solved, not baked animation",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"The motion is solved, not keyframed\""
+			},
+			{
+				"claim": "The motion is solved, not baked animation",
+				"kind": "evidence:proof",
+				"target": "Solved four-bar chain, not baked animation",
+				"ok": true,
+				"detail": "the run waited for and saw \"Solved four-bar chain, not baked animation\""
+			},
+			{
+				"claim": "Pistons come from the exact planar slider-crank",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Pistons come from the exact planar slider-crank\""
+			},
+			{
+				"claim": "the locomotive valve gear closes a four-bar chain by intersecting circles every frame",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"The valve gear closes a four-bar chain by intersecting circles every frame\""
+			},
+			{
+				"claim": "the locomotive valve gear closes a four-bar chain by intersecting circles every frame",
+				"kind": "evidence:proof",
+				"target": "Solved four-bar chain, not baked animation",
+				"ok": true,
+				"detail": "the run waited for and saw \"Solved four-bar chain, not baked animation\""
+			},
+			{
+				"claim": "a rod length that cannot physically reach refuses to move rather than stretching",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"a rod length that cannot physically reach refuses to move rather than stretching\""
+			},
+			{
+				"claim": "Each machine is a small JSON object of numbers",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Every machine is a small JSON object of numbers\""
+			},
+			{
+				"claim": "Copy the spec, hand it to an agent, get a different machine back",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Copy the spec, hand it to an agent, get a different machine back\""
+			},
+			{
+				"claim": "export the result as GLB",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Export the result as GLB\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "17 steps passed against the live product, facts unchanged (machines TWO, cylinders 9, displacement 29.7 L, cylindersAfter 5)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the machine atlas page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"A nine-cylinder radial engine and a steam locomotive, with no model file behind either one. It is a Labs experiment in building 3D geometry from code instead of files.\n\nBoth machines are built when the page loads: dimensions become profiles, profiles get revolved or extruded, and the results are merged into the parts you can see. Move a slider and the geometry is rebuilt. Nine cylinders to five, and the displacement readout, the parts list and the source panel follow, because all of them are derived from the same numbers.",
+				"The motion is solved, not baked animation. Pistons come from the exact planar slider-crank, and the locomotive valve gear closes a four-bar chain by intersecting circles every frame, which is why a rod length that cannot physically reach refuses to move rather than stretching.\n\nEach machine is a small JSON object of numbers. Copy the spec, hand it to an agent, get a different machine back, then export the result as GLB. three.ws/assembly"
+			],
+			"altText": []
+		},
+		"summary": "Every claim passed verification against the live page and the filmed run: nine cylinders to five, solved four-bar motion, JSON spec, GLB export, and the link resolves. The reel frames and captions match the copy, the voice contract is fully obeyed, and the first line leads with the strongest checkable fact.\nShip it unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
+}

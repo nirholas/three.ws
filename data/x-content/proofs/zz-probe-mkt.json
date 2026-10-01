@@ -1,0 +1,53 @@
+{
+	"id": "zz-probe-mkt",
+	"scenarioHash": "1cf6e9c21e0dba64601d7873a474c538a7966b0032d7642c9150ad24d7063fd1",
+	"ranAt": "2026-09-30T08:41:17.590Z",
+	"target": {
+		"commit": "fa1136197",
+		"revision": "three-ws-api-00469-jz4"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/marketplace",
+			"detail": "loaded https://three.ws/marketplace",
+			"ok": true,
+			"ms": 11039,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "Academic",
+			"detail": "scrolled 1264 px",
+			"ok": true,
+			"ms": 17793,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "wait",
+			"target": "1500",
+			"detail": "1500 ms, not filmed",
+			"ok": true,
+			"ms": 1525,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "expect",
+			"target": "ZZZNOTHERE",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 1000ms exceeded.",
+			"ms": 1597,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

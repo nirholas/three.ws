@@ -1,0 +1,211 @@
+{
+	"id": "avatar-cli",
+	"contentHash": "c1b7bf2bdc9d324c6d16e5e168eca0067a45ac8cfd39305ace852dec723fd8b5",
+	"reviewedAt": "2026-09-30T08:50:44.785Z",
+	"passed": false,
+	"blockers": [
+		"editor verdict is revise"
+	],
+	"texts": [
+		"An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\nthree-ws-avatar reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
+		"validate exits non-zero on an invalid manifest and prints each error at the path where it happened, so a bad file fails the build step instead of logging a warning. hash prints the digest alone on stdout, which makes the drift check a one-line comparison.\n\nInstall line, the four commands, and the manifest fields: three.ws/avatar-cli",
+		"The owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "carries the SHA-256 of the mesh it was built from",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"Reads the mesh once to compute its SHA-256 and size, so the document cannot disagree with the bytes it was built from\""
+			},
+			{
+				"claim": "swapped under the same filename fails your build instead of your page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"the teammate who swapped the model and kept the filename\""
+			},
+			{
+				"claim": "swapped under the same filename fails your build instead of your page",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"Fail the build, not the page\""
+			},
+			{
+				"claim": "reads the GLB once and writes its digest and size into the manifest",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"Reads the mesh once to compute its SHA-256 and size\""
+			},
+			{
+				"claim": "validates the whole document against the published schema",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"validate it against the published schema\""
+			},
+			{
+				"claim": "Four commands",
+				"kind": "evidence:proof",
+				"target": "commands",
+				"ok": true,
+				"detail": "the run read commands = \"4\""
+			},
+			{
+				"claim": "one runtime dependency",
+				"kind": "evidence:proof",
+				"target": "runtimeDeps",
+				"ok": true,
+				"detail": "the run read runtimeDeps = \"1\""
+			},
+			{
+				"claim": "no network calls",
+				"kind": "evidence:proof",
+				"target": "networkCalls",
+				"ok": true,
+				"detail": "the run read networkCalls = \"0\""
+			},
+			{
+				"claim": "runs offline inside a release script",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"Offline, deterministic, and safe to put in a release script\""
+			},
+			{
+				"claim": "preview prints the two lines of HTML that embed the avatar",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"That is why preview always prints them together\""
+			},
+			{
+				"claim": "The page pastes them in unmodified, and the viewer on it is that markup rendering",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"The markup below is exactly what preview prints, pasted into this page unmodified\""
+			},
+			{
+				"claim": "The page pastes them in unmodified, and the viewer on it is that markup rendering",
+				"kind": "evidence:proof",
+				"target": "viewer",
+				"ok": true,
+				"detail": "the run read viewer = \"michelle.glb\""
+			},
+			{
+				"claim": "validate exits non-zero on an invalid manifest and prints each error at the path where it happened",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"prints every error at the instance path where it happened. Non-zero exit makes it a build gate rather than a report\""
+			},
+			{
+				"claim": "hash prints the digest alone on stdout, which makes the drift check a one-line comparison",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"alone on stdout so it composes\""
+			},
+			{
+				"claim": "hash prints the digest alone on stdout, which makes the drift check a one-line comparison",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"makes drift detection a one-line comparison\""
+			},
+			{
+				"claim": "the four commands",
+				"kind": "evidence:proof",
+				"target": "commands",
+				"ok": true,
+				"detail": "the run read commands = \"4\""
+			},
+			{
+				"claim": "The owner is a chain-scoped account, so ownership is unambiguous off-platform",
+				"kind": "evidence:page",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "live page shows \"Chain-scoped account, so ownership is unambiguous off-platform\""
+			},
+			{
+				"claim": "A Solana address is accepted as is",
+				"kind": "evidence:file",
+				"target": "packages/avatar-schema/src/index.d.ts",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "16 steps passed against the live product, facts unchanged (commands 4, networkCalls 0, runtimeDeps 1, viewer michelle.glb)"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the avatar CLI page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/avatar-cli",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 4,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "three-ws-avatar reads the GLB once",
+				"problem": "The tool is never named that anywhere in the evidence. The live page, the reel frame, and the install line all name the package @three-ws/avatar-cli. A developer typing 'three-ws-avatar' into npm finds nothing. The post asks readers to install the tool, so the name has to be the one they install.",
+				"fix": "Replace with '@three-ws/avatar-cli reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema.'"
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "The owner is a chain-scoped account, so ownership is unambiguous off-platform.",
+				"problem": "Post 3 never says whose owner it means. A reader who has not seen the page does not know whether the owner of the CLI, the site, or the manifest is meant. One word pins it.",
+				"fix": "Change to 'The manifest's owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is.'"
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"An avatar manifest that carries the SHA-256 of the mesh it was built from, so a model re-exported or swapped under the same filename fails your build instead of your page.\n\n@three-ws/avatar-cli reads the GLB once and writes its digest and size into the manifest, then validates the whole document against the published schema. Four commands, one runtime dependency, no network calls, so it runs offline inside a release script.\n\npreview prints the two lines of HTML that embed the avatar. The page pastes them in unmodified, and the viewer on it is that markup rendering.",
+				"validate exits non-zero on an invalid manifest and prints each error at the path where it happened, so a bad file fails the build step instead of logging a warning. hash prints the digest alone on stdout, which makes the drift check a one-line comparison.\n\nInstall line, the four commands, and the manifest fields: three.ws/avatar-cli",
+				"The manifest's owner is a chain-scoped account, so ownership is unambiguous off-platform. A Solana address is accepted as is."
+			],
+			"altText": []
+		},
+		"summary": "Every stated number and mechanism verified against the live page and the filmed run, and the reel frames support each caption. Two fixes: the tool is called by a name nobody can install, and post 3's owner claim never says what it is the owner of.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"The owner is a chain-scoped account, so ownership is unambiguous off-platform\" does not appear in the copy; claims must quote the post",
+			"claims: @three has no recorded reason; tag only an account the feature genuinely runs on"
+		]
+	},
+	"editorError": null
+}

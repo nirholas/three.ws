@@ -3098,7 +3098,7 @@
 		},
 		{
 			"id": "agent-monitor",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -3374,7 +3374,7 @@
 		},
 		{
 			"id": "agent-spotlight",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -3673,7 +3673,7 @@
 		},
 		{
 			"id": "avatar-cli",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 3,
 			"lane": "developer",
@@ -3971,7 +3971,7 @@
 		},
 		{
 			"id": "choreograph",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4171,7 +4171,7 @@
 		},
 		{
 			"id": "docs-world",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4454,7 +4454,7 @@
 		},
 		{
 			"id": "drive-copilot",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4697,7 +4697,7 @@
 		},
 		{
 			"id": "gestures",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4914,7 +4914,7 @@
 		},
 		{
 			"id": "glance",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -5239,7 +5239,7 @@
 		},
 		{
 			"id": "glb-diff",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
@@ -5584,12 +5584,12 @@
 		},
 		{
 			"id": "machine-atlas",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
 			"pattern": "mechanism",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-09-30T11:16:58.931Z",
 			"covers": [
 				"/assembly"
 			],
@@ -5924,11 +5924,12 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "model-inspect",
-			"status": "draft",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "developer",
