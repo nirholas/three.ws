@@ -128,7 +128,10 @@ function qualityAt(root) {
 	}
 }
 
-export function validateItem(item, root, { quality = qualityAt(root) } = {}) {
+// `now` is the moment the item is judged at. A tick passes its own, so a
+// review's age and a proof's age are measured against the tick and not against
+// whenever the code happens to run.
+export function validateItem(item, root, { quality = qualityAt(root), now = Date.now() } = {}) {
 	const problems = [];
 	const maximum = maxLengthOf(quality);
 	if (!/^[a-z0-9][a-z0-9-]{1,80}$/.test(String(item.id || ''))) problems.push('id must be a lowercase slug');
@@ -185,11 +188,11 @@ export function validateItem(item, root, { quality = qualityAt(root) } = {}) {
 	if (item.scenario !== undefined) {
 		problems.push(...scenarioProblems(item.scenario).map((problem) => `scenario: ${problem}`));
 		if (!(item.probes || []).some((probe) => probe.type === 'scenario')) problems.push('scenario: declare { "type": "scenario" } in probes so every review runs it again');
-		if (['review', 'approved'].includes(item.status)) problems.push(...proofProblems(item, root).map((problem) => `proof: ${problem}`));
+		if (['review', 'approved'].includes(item.status)) problems.push(...proofProblems(item, root, now).map((problem) => `proof: ${problem}`));
 	}
 
 	// Approval is only real while a passing review covers these exact bytes.
-	if (item.status === 'approved') problems.push(...approvalProblems(item, root).map((problem) => `review: ${problem}`));
+	if (item.status === 'approved') problems.push(...approvalProblems(item, root, now).map((problem) => `review: ${problem}`));
 	return problems;
 }
 
@@ -197,12 +200,12 @@ export function headText(item) {
 	return item.kind === 'article' ? `${item.article?.title || ''}\n${item.posts?.[0]?.text || ''}` : item.posts?.[0]?.text || '';
 }
 
-export function validateQueue(queue, root, { state = null } = {}) {
+export function validateQueue(queue, root, { state = null, now = Date.now() } = {}) {
 	const problems = {};
 	const notes = [];
 	const ids = new Set();
 	for (const item of queue.items || []) {
-		const list = validateItem(item, root, { quality: queue.quality || {} });
+		const list = validateItem(item, root, { quality: queue.quality || {}, now });
 		if (ids.has(item.id)) list.push('id is duplicated');
 		ids.add(item.id);
 		problems[item.id] = list;

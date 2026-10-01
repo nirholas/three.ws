@@ -177,7 +177,7 @@ export async function runTick({
 }) {
 	const queue = loadQueue(root);
 	const state = await store.load();
-	const { problems } = validateQueue(queue, root, { state });
+	const { problems } = validateQueue(queue, root, { state, now });
 	const stored = await loadOutcomes(outcomes);
 	const learned = stored ? learnLifts(stored.posts, { now }) : null;
 	const lifts = loadLifts(root);
