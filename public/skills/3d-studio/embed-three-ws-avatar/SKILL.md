@@ -22,7 +22,7 @@ the three.ws CDN with `access-control-allow-origin: *`, so it loads from any ori
 <script
   type="module"
   src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
-  integrity="sha384-xkFDjVP866hYt7voUhfnQHj6IO4hYxA6n8Laupk+VtD6y+IKiO/AZdE3VbfLtg0C"
+  integrity="sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q"
   crossorigin="anonymous"
 ></script>
 

@@ -124,7 +124,7 @@ Pin the exact bundle version and validate with Subresource Integrity:
 ></script>
 ```
 
-SRI hashes for each release are at `/agent-3d/<version>/integrity.json`. The `latest` channel (served with `max-age=3600, s-maxage=300, stale-while-revalidate=86400`) should never be used in production; use a pinned `MAJOR.MINOR.PATCH` URL, which is served with `max-age=31536000, immutable`.
+SRI hashes for each release are at `/agent-3d/<version>/integrity.json`, and a released version's bytes never change, so the hash stays valid for as long as the release exists ([how releases are frozen](./web-component.md#what-immutable-guarantees)). The `latest` channel (served with `max-age=3600, s-maxage=300, stale-while-revalidate=86400`) should never be used in production; use a pinned `MAJOR.MINOR.PATCH` URL, which is served with `max-age=31536000, immutable`.
 
 ### postMessage security
 

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-01",
+			"title": "Pinned agent-3d embeds keep working after every update",
+			"summary": "If you embedded the 3D avatar component with a pinned version and an integrity hash, as our docs recommend for production, the embed could stop loading after one of our updates: the file behind a version that is promised never to change was being rebuilt each time we shipped, so its fingerprint changed and browsers refused to run it. A released version is now frozen for good, every update serves exactly the same file under it, and the build fails if any hash in our docs, skills or code snippets ever disagrees with the file it points to. Version 1.5.2 is frozen as it is served today; if your page pins an older hash for 1.5.2, update it once from /agent-3d/1.5.2/integrity.json.",
+			"tags": ["fix", "sdk"],
+			"link": "/docs/web-component"
+		},
+		{
+			"date": "2026-10-01",
 			"title": "Search the 3D asset catalog from any AI client without an account",
 			"summary": "Our docs said an AI client could connect to the main three.ws MCP server and search the ready-made asset catalog with no account, but adding that server makes the client ask you to sign in straight away, because most of its tools work on your own avatars and agents. The free studio server, three.ws/api/mcp-studio, now carries the same three catalog tools (search, item details and paste-ready code), so an AI client with no account can check the thousands of ready-made props, characters and motion clips before it generates anything. The docs, the find-3d-assets skill and the registry post now say which server to add, and the asset counts no longer go stale.",
 			"tags": ["fix", "docs"],

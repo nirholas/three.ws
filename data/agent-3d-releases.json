@@ -1,0 +1,14 @@
+{
+	"$comment": "Released <agent-3d> CDN versions and the exact bytes each one is. Written only by `npm run release:lib`; scripts/publish-lib.mjs serves every version listed here from the archive (verified against these hashes) under its immutable /agent-3d/<version>/ path, and scripts/check-dist.mjs fails a build whose dist or documented SRI pins disagree with it. See docs/web-component.md#cdn-versioning.",
+	"archive": "https://storage.googleapis.com/three-ws-lib-releases/agent-3d",
+	"releases": {
+		"1.5.2": {
+			"publishedAt": "2026-10-01T19:22:44.064Z",
+			"source": "https://three.ws/agent-3d/1.5.2/",
+			"integrity": {
+				"agent-3d.js": "sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q",
+				"agent-3d.umd.cjs": "sha384-z74vjNbQ8KKXBZHL6JFhl4h45B+InYbzbV8ArjZSgzR+ATWOEthqu0S/eadTA0XC"
+			}
+		}
+	}
+}

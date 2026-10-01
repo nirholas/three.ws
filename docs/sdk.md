@@ -383,7 +383,9 @@ The `build:lib` step runs Vite with `TARGET=lib`. The output is a self-contained
 node scripts/publish-lib.mjs
 ```
 
-This copies `dist-lib/agent-3d.js` and `dist-lib/agent-3d.umd.cjs` into `dist/agent-3d/<version>/` and creates channel aliases (`<major>`, `<major>.<minor>`, `latest`). It also emits SRI hashes and a `versions.json` manifest so embedders can pin with `integrity` attributes.
+This copies the current build (`dist-lib/agent-3d.js` and `dist-lib/agent-3d.umd.cjs`) into the moving channels (`<major>`, `<major>.<minor>`, `latest`), lays out every released version under `dist/agent-3d/<version>/` from the release archive (verified against the SRI hashes in `data/agent-3d-releases.json`, never from the current build), and writes the `versions.json` manifest embedders pin from. It fails when `package.json` names a version that has not been released.
+
+To release new code under a pinned URL, bump `package.json` and run `npm run release:lib`: it builds the library, archives the bytes once, and records their hashes. See [CDN versioning](./web-component.md#cdn-versioning) for the guarantees.
 
 Requires the library bundle to have been built first. It's also wired as the `npm run publish:lib` script, and runs automatically inside the production build: `npm run build:gcp` chains `build:lib:full` (which emits both the ES and UMD formats) straight into `publish:lib`, then verifies the result with `check:dist`.
 

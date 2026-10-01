@@ -268,7 +268,7 @@ The RAF loop pauses when the element is fully off-screen and resumes on re-entry
 | `/agent-3d/1/agent-3d.js` | 5 min | Follow minor + patch releases |
 | `/agent-3d/latest/agent-3d.js` | 5 min | Demos and prototypes only |
 
-The current SRI hash for each release is at `/agent-3d/<version>/integrity.json`. A UMD build (`agent-3d.umd.cjs`) is available at the same paths for non-ESM environments.
+The current SRI hash for each release is at `/agent-3d/<version>/integrity.json`. A released version's bytes are frozen, so its hash never goes stale; the moving channels follow the current build and are not for SRI pinning ([details](./web-component.md#what-immutable-guarantees)). A UMD build (`agent-3d.umd.cjs`) is available at the same paths for non-ESM environments.
 
 ---
 

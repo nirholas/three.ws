@@ -1036,15 +1036,45 @@ Three URL channels are available. Pick based on how strictly you need to control
 | Path | Cache | Use when |
 |------|-------|----------|
 | `/agent-3d/<MAJOR>.<MINOR>.<PATCH>/agent-3d.js` | `immutable` | **Production.** Pin exact bytes. Combine with SRI. |
-| `/agent-3d/<MAJOR>.<MINOR>/agent-3d.js` | 5 min | Follow patch releases automatically. |
-| `/agent-3d/<MAJOR>/agent-3d.js` | 5 min | Follow minor + patch releases. |
+| `/agent-3d/<MAJOR>.<MINOR>/agent-3d.js` | 5 min | Follow the newest code on this minor line. |
+| `/agent-3d/<MAJOR>/agent-3d.js` | 5 min | Follow the newest code on this major line. |
 | `/agent-3d/latest/agent-3d.js` | 5 min | Demos and prototypes only. Never in production. |
+
+### What "immutable" guarantees
+
+A `MAJOR.MINOR.PATCH` URL serves the same bytes for as long as that release exists, so
+an `integrity` hash taken from it never goes stale. Each version is cut exactly once:
+
+- `npm run release:lib` builds the library, uploads `agent-3d.js` and `agent-3d.umd.cjs`
+  to a write-once archive (`gs://three-ws-lib-releases/agent-3d/<version>/`, public at
+  `https://storage.googleapis.com/three-ws-lib-releases/agent-3d/<version>/`), and records
+  their SRI hashes in [`data/agent-3d-releases.json`](../data/agent-3d-releases.json). It
+  refuses to re-cut a version that already exists with different bytes: bump
+  `package.json` instead.
+- Every deploy (`scripts/publish-lib.mjs`, inside `build:gcp`) serves each released
+  version from that archive, after checking the bytes against the recorded hash. It never
+  writes a version directory from the current build.
+- The moving channels (`<MAJOR>.<MINOR>`, `<MAJOR>`, `latest`) serve the build that is
+  currently deployed, which can be newer than the newest release. `versions.json` marks
+  them `"build": "current"` and lists that build's hashes under `currentBuild`; do not
+  pin those hashes, because the next deploy replaces them.
+- `check:dist` fails a build when a released file in `dist/` does not hash to its
+  recorded value, when `versions.json` advertises anything else, or when a documented
+  `integrity` pin in the docs or skills disagrees with the release it names.
+  `npm run check:sri-pins -- --fix` rewrites stale documented pins from the ledger, and
+  the same check runs under `npm test`.
+
+Before 2026-10-01 the version directory was rebuilt on every deploy while the version
+string stayed at 1.5.2, so its bytes, and therefore its hash, changed under every pinned
+embed. 1.5.2 is now frozen at the bytes production served on that date
+(`sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q`); a pin taken
+from an earlier deploy has to be updated to that value once.
 
 Current SRI hashes are at `/agent-3d/<version>/integrity.json`. The full release manifest is at `/agent-3d/versions.json`, or from the origin API at `/api/agent-3d/versions`, which serves the identical JSON with an `ETag`:
 
 ```bash
 curl -s https://three.ws/api/agent-3d/versions
-# {"latest":"1.5.2","channels":{…},"publishedAt":"2026-08-10T16:20:09.870Z"}
+# {"latest":"1.5.2","channels":{"1.5.2":{"integrity":{…},"immutable":true,…},…},"currentBuild":{…},"publishedAt":"…"}
 
 # Poll cheaply: an unchanged manifest answers 304 with no body.
 curl -s -o /dev/null -w '%{http_code}\n' \
@@ -1060,7 +1090,7 @@ Both are CORS-open (`access-control-allow-origin: *`) and cached for 60 seconds.
 <script
   type="module"
   src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
-  integrity="sha384-…"
+  integrity="sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q"
   crossorigin="anonymous"
 ></script>
 ```

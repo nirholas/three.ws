@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LEDGER_REL, RELEASE_FILES, checkPins, readLedger, releasedVersions, sri } from './lib/agent-3d-releases.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -38,6 +39,56 @@ if (ok) {
 		);
 		ok = false;
 	}
+}
+
+// ── Immutable <agent-3d> releases ──────────────────────────────────────────
+// /agent-3d/<version>/ is served `immutable` and pinned with SRI, so its bytes
+// must be the released bytes and nothing else. Until 2026-10-01 the publish
+// step rebuilt that directory on every deploy, the hash changed under every
+// pinned embed, and browsers refused to run the script. Every release in the
+// ledger must be present and hash to its recorded value, versions.json must
+// advertise exactly those hashes, and so must every SRI pin in the docs.
+let ledger = null;
+try {
+	ledger = readLedger(root);
+} catch (err) {
+	console.error(`[check-dist] ${LEDGER_REL} is unreadable: ${err.message}`);
+	ok = false;
+}
+if (ledger) {
+	const releases = releasedVersions(ledger);
+	const manifestPath = resolve(root, 'dist/agent-3d/versions.json');
+	const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
+	let releaseProblems = 0;
+	for (const v of releases) {
+		for (const name of RELEASE_FILES) {
+			const expected = ledger.releases[v].integrity?.[name];
+			const p = resolve(root, 'dist/agent-3d', v, name);
+			if (!existsSync(p)) {
+				console.error(`[check-dist] MISSING released file: dist/agent-3d/${v}/${name}`);
+				releaseProblems++;
+				continue;
+			}
+			const actual = sri(readFileSync(p));
+			if (actual !== expected) {
+				console.error(`[check-dist] dist/agent-3d/${v}/${name} hashes to ${actual} but release ${v} is ${expected}; an immutable URL would change bytes`);
+				releaseProblems++;
+			}
+			const advertised = manifest?.channels?.[v]?.integrity?.[name];
+			if (manifest && advertised !== expected) {
+				console.error(`[check-dist] versions.json advertises ${advertised ?? 'nothing'} for ${v} ${name}; the release is ${expected}`);
+				releaseProblems++;
+			}
+		}
+	}
+	const pins = checkPins(root, ledger);
+	for (const p of pins.problems) {
+		console.error(`[check-dist] SRI pin ${p.file}:${p.line} ${p.message}`);
+		releaseProblems++;
+	}
+	if (pins.problems.length) console.error('[check-dist] fix the pins with: npm run check:sri-pins -- --fix');
+	if (releaseProblems) ok = false;
+	else console.log(`[check-dist] ${releases.length} immutable agent-3d release(s) byte-exact; ${pins.checked} documented SRI pin(s) match`);
 }
 
 // dist-lib mirror checks

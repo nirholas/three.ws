@@ -209,7 +209,7 @@ One script tag, one element. Create `index.html`:
   <script
     type="module"
     src="https://three.ws/agent-3d/1.5.2/agent-3d.js"
-    integrity="sha384-qCG5gH4q2+k2Gsf98zs9RFXyN8iezoklCWt63pA2Xk2YF7Onae4rfUwu+oZSqRzN"
+    integrity="sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q"
     crossorigin="anonymous"
   ></script>
 

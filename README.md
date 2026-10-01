@@ -11030,7 +11030,8 @@ plan_quotas   (plan, max_avatars, max_bytes_per_avatar, max_total_bytes)
 | `npm run build:lib`        | Build `<agent-3d>` web component library to `dist-lib/`            |
 | `npm run build:artifact`   | Build standalone Claude artifact viewer bundle                     |
 | `npm run build:all`        | Chat build, then `build` + `build:lib` + `build:rider` in parallel |
-| `npm run publish:lib`      | Publish versioned CDN bundles to `/agent-3d/`                      |
+| `npm run publish:lib`      | Lay out the `/agent-3d/` CDN: released versions from the archive, channels from the build |
+| `npm run release:lib`      | Cut a new `<agent-3d>` release: archive its bytes once, record their SRI hashes |
 | `npm run test`             | Vitest unit suite + Playwright end-to-end suite                    |
 | `npm run test:e2e`         | Playwright end-to-end suite only                                   |
 | `npm run verify`           | Prettier check + Vite build (pre-deploy gate)                      |
