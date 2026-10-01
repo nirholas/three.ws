@@ -1,0 +1,807 @@
+{
+	"id": "holo-material-article",
+	"contentHash": "82add87cfae43ed4c3b5cca79f504b5bd5782659c78b964208569d2501469a54",
+	"reviewedAt": "2026-10-01T19:11:12.186Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"How a holographic sticker is cut, lit and peeled in the browser, with no image files",
+		"A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "with no image files",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"no images, no model files\""
+			},
+			{
+				"claim": "no image behind it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"The die-cut outline, the iridescent foil, the light it reflects, and the peeling corner are all computed in your browser: no images, no model files\""
+			},
+			{
+				"claim": "the mark is drawn into a 640 pixel canvas",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the mark is drawn into a 640 pixel canvas",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "grown by a 28 pixel disc the way a cutter adds a margin",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "grown by a 28 pixel disc the way a cutter adds a margin",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"dilated by a disc the way a cutter adds a margin\""
+			},
+			{
+				"claim": "traced back into outlines with marching squares",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"traced back into vector outlines with marching squares, holes included\""
+			},
+			{
+				"claim": "traced back into outlines with marching squares",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "lit by a thin film 120 to 480 nanometres thick",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "lit by a thin film 120 to 480 nanometres thick",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"The foil is a physical material with thin-film iridescence\""
+			},
+			{
+				"claim": "from the cut to the vertex-shader peel",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "from the cut to the vertex-shader peel",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"the peel is a vertex-shader cylinder roll\""
+			},
+			{
+				"claim": "Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker",
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"type your own text and get it cut into a sticker of its own\""
+			},
+			{
+				"claim": "holes inside the letters",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"holes included\""
+			},
+			{
+				"claim": "holes inside the letters",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "No image or model file is downloaded to draw it",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"no images, no model files\""
+			},
+			{
+				"claim": "the code that does all of it is one file of under 800 lines",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the code that does all of it is one file of under 800 lines",
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Everything starts as white pixels on a 640 by 640 canvas that stays off screen",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Everything starts as white pixels on a 640 by 640 canvas that stays off screen",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The default mark is three slanted bars, and each slant is 45 degrees so the notches between the bars come out crisp",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The default mark is three slanted bars, and each slant is 45 degrees so the notches between the bars come out crisp",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "shapes that sit closer than twice that radius merge into one backing",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "counts a pixel as inside when it is over half opaque, and walks the image in 2 by 2 cells",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "counts a pixel as inside when it is over half opaque, and walks the image in 2 by 2 cells",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each cell is one of 16 cases",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The code fixes one pairing, so each edge midpoint touches exactly two segments and stitching a loop together cannot fork",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The code fixes one pairing, so each edge midpoint touches exactly two segments and stitching a loop together cannot fork",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Loops under 30 square pixels are thrown away as specks",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Both sets of outlines are scaled so the cut is 3.1 units wide, with the same transform, so the mark lands exactly on its backing",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Both sets of outlines are scaled so the cut is 3.1 units wide, with the same transform, so the mark lands exactly on its backing",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "that slight bow is what smears the reflections into gradients across each face",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Both surfaces use a physical material that is fully metallic, with a clear coat on top",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Both surfaces use a physical material that is fully metallic, with a clear coat on top",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Both surfaces use a physical material that is fully metallic, with a clear coat on top",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The backing's film has an index of 1.32 and a thickness range of 120 to 480 nanometres",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The backing's film has an index of 1.32 and a thickness range of 120 to 480 nanometres",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The raised mark uses 1.28 and 140 to 860",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The raised mark uses 1.28 and 140 to 860",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A 256 pixel noise texture roughens both surfaces slightly",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A 256 pixel noise texture roughens both surfaces slightly",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A 256 pixel noise texture roughens both surfaces slightly",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "That light is painted when the page loads, into a 1024 by 512 canvas",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "That light is painted when the page loads, into a 1024 by 512 canvas",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The canvas is then blurred ahead of time at several strengths, so rough surfaces reflect a softer version of it",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The rainbow and neon foils run iridescence at full strength, gold at 0.35 and chrome at 0.18",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Switching foil swaps the light and the numbers and leaves the geometry alone",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The blobs sit in fixed places, so a reload gives you the same sticker",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Before the material compiles, the page injects a few lines into its vertex shader",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Before the material compiles, the page injects a few lines into its vertex shader",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A fold line runs at 45 degrees across one corner, and each vertex past it is wrapped around a virtual cylinder",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A fold line runs at 45 degrees across one corner, and each vertex past it is wrapped around a virtual cylinder",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"so the light on the curled lip is real\""
+			},
+			{
+				"claim": "The corner rests at 30% and breathes by 2.8% either way",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The corner rests at 30% and breathes by 2.8% either way",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The corner rests at 30% and breathes by 2.8% either way",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"Corner peel 30%\""
+			},
+			{
+				"claim": "unless your system asks for reduced motion, in which case both stop",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "unless your system asks for reduced motion, in which case both stop",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too",
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "One line of text, up to 16 characters",
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Download PNG saves the frame you are looking at",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"Download PNG\""
+			},
+			{
+				"claim": "Download PNG saves the frame you are looking at",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Without it the page says so instead of drawing",
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Without it the page says so instead of drawing",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The sticker is at three.ws/holo",
+				"kind": "evidence:page",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "live page shows \"Holo Sticker\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the holo sticker page is up",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:browser",
+				"target": "the sticker renders and the foil controls answer",
+				"ok": true,
+				"detail": "5 steps passed"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/holo",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 4,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "lit by a thin film 120 to 480 nanometres thick",
+				"problem": "120 to 480 is the backing's thickness range; the raised mark uses 140 to 860. The article states both ranges correctly, so the impression is corrected, but the head line quotes only one of the two films.",
+				"fix": "Optional: 'lit by thin films 120 to 860 nanometres thick' would cover both ranges without lengthening the post; the article already disambiguates."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel."
+			],
+			"altText": [
+				"A die-cut holographic foil sticker of three slanted bars floating on black, tilted toward the viewer, its rim shifting from green to violet and its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
+			]
+		},
+		"summary": "Every claim in the head post and article is verified against the source code and the live page, the voice is clean, and the cover image shows the real rendered sticker with accurate alt text. One optional polish on the film thickness range; the post is safe to ship unchanged.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"holes inside the letters\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"No image or model file is downloaded to draw it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the code that does all of it is one file of under 800 lines\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Everything starts as white pixels on a 640 by 640 canvas that stays off screen\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The default mark is three slanted bars, and each slant is 45 degrees so the notches between the bars come out crisp\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"shapes that sit closer than twice that radius merge into one backing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"counts a pixel as inside when it is over half opaque, and walks the image in 2 by 2 cells\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Each cell is one of 16 cases\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The code fixes one pairing, so each edge midpoint touches exactly two segments and stitching a loop together cannot fork\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Loops under 30 square pixels are thrown away as specks\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Both sets of outlines are scaled so the cut is 3.1 units wide, with the same transform, so the mark lands exactly on its backing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"that slight bow is what smears the reflections into gradients across each face\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Both surfaces use a physical material that is fully metallic, with a clear coat on top\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The backing's film has an index of 1.32 and a thickness range of 120 to 480 nanometres\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The raised mark uses 1.28 and 140 to 860\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A 256 pixel noise texture roughens both surfaces slightly\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"That light is painted when the page loads, into a 1024 by 512 canvas\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The canvas is then blurred ahead of time at several strengths, so rough surfaces reflect a softer version of it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The rainbow and neon foils run iridescence at full strength, gold at 0.35 and chrome at 0.18\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Switching foil swaps the light and the numbers and leaves the geometry alone\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The blobs sit in fixed places, so a reload gives you the same sticker\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Before the material compiles, the page injects a few lines into its vertex shader\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A fold line runs at 45 degrees across one corner, and each vertex past it is wrapped around a virtual cylinder\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The corner rests at 30% and breathes by 2.8% either way\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"unless your system asks for reduced motion, in which case both stop\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"One line of text, up to 16 characters\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Download PNG saves the frame you are looking at\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Without it the page says so instead of drawing\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The sticker is at three.ws/holo\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

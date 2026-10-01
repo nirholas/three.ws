@@ -1,0 +1,619 @@
+{
+	"id": "proof-reels-article",
+	"contentHash": "1ab762e1e3ba94c08b6f7a532d17e175310072ad8904eecec56bc75f1d8d851f",
+	"reviewedAt": "2026-10-01T19:12:36.389Z",
+	"passed": true,
+	"blockers": [],
+	"texts": [
+		"How our feature reels are filmed: a scripted test run against the live site",
+		"The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
+	],
+	"lint": [],
+	"verification": {
+		"ok": true,
+		"checks": [
+			{
+				"claim": "If any step fails, there is no video and the feature is not announced",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If any step fails, there is no video and the feature is not announced",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If any step fails, there is no video and the feature is not announced",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/queue.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The page clock is stepped one frame at a time",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "1/30 of a second each",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "1/30 of a second each",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "on a machine with no GPU",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "what it refuses to film",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "what it refuses to film",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "what it refuses to film",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each one is a scripted test run against the live site, filmed while it runs",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Each one is a scripted test run against the live site, filmed while it runs",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If any step of the run fails, no video is made, and the feature is not announced",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If any step of the run fails, no video is made, and the feature is not announced",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If any step of the run fails, no video is made, and the feature is not announced",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/queue.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A step can goto a page, click a control by its visible text, type into a field, press a key, drag across the scene, expect a text to appear, or read a fact off the screen with a pattern",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A step can goto a page, click a control by its visible text, type into a field, press a key, drag across the scene, expect a text to appear, or read a fact off the screen with a pattern",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "These are five of the steps behind the Machine Atlas reel",
+				"kind": "evidence:file",
+				"target": "data/x-content/queue.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "These are five of the steps behind the Machine Atlas reel",
+				"kind": "evidence:file",
+				"target": "data/x-content/queue.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "On the filmed run it read 9, then 5, and it waited for the new displacement before it went on",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/machine-atlas.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "On the filmed run it read 9, then 5, and it waited for the new displacement before it went on",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/machine-atlas.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "On the filmed run it read 9, then 5, and it waited for the new displacement before it went on",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/machine-atlas.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "When the Drive reel types a question to an agent, the run waits for the chat request to answer, and an error fails the run",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/drive-copilot.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "When the Drive reel types a question to an agent, the run waits for the chat request to answer, and an error fails the run",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The machine that films has no GPU",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A headless browser renders WebGL in software at one to three frames a second, and a screen recorder pads that out by repeating frames",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It advances the clock by one frame, a thirtieth of a second, takes a picture, and repeats",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "It advances the clock by one frame, a thirtieth of a second, takes a picture, and repeats",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every frame of a reel is a distinct frame at 1/30 s of page time",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every frame of a reel is a distinct frame at 1/30 s of page time",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "On the galaxy page, recording in real time gave 1.3 distinct frames a second; stepping gave 30",
+				"kind": "evidence:file",
+				"target": "docs/x-content-pipeline.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "one frame of a plain list page measured 3.5 to 15 seconds",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the 3D scene still renders in software exactly as before",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the 3D scene still renders in software exactly as before",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The holographic sticker reel is 18.13 seconds and 544 frames long",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/holo-sticker.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The holographic sticker reel is 18.13 seconds and 544 frames long",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/holo-sticker.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "One drag in it is 84 frames, 2.8 seconds of reel, and took 90 seconds to film",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/holo-sticker.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Nothing is drawn over the product except the pointer",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The stamp names the site, the production commit that answered, read from the site's own version endpoint, and the day the reel was filmed",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The stamp names the site, the production commit that answered, read from the site's own version endpoint, and the day the reel was filmed",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Anything that waits on the network runs on the real clock while the camera is off",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If a wait lasts two seconds or more",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If a wait lasts two seconds or more",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a badge such as cut 6 s appears in the bar for the next second and a half",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a badge such as cut 6 s appears in the bar for the next second and a half",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "a badge such as cut 6 s appears in the bar for the next second and a half",
+				"kind": "evidence:file",
+				"target": "data/x-content/proofs/drive-copilot.json",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each caption is set in the real bar, beside the longest stamp and the longest badge it could share the line with, and a caption that would be cut off is refused by name",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "each caption is set in the real bar, beside the longest stamp and the longest badge it could share the line with, and a caption that would be cut off is refused by name",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "We added that check after reels were filmed with captions that ended mid-sentence",
+				"kind": "evidence:file",
+				"target": "docs/ops/x-story-findings-2026-09-30.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "together with a hash of the scenario and of the video",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "together with a hash of the scenario and of the video",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Change a step or swap the file and the post no longer validates",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Change a step or swap the file and the post no longer validates",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A record also expires after 14 days",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "When a post is reviewed, the scenario runs again without the camera",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A fact the post states exactly has to read the same as the reel shows. A fact stated as a floor has to stay at or above it",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A fact the post states exactly has to read the same as the reel shows. A fact stated as a floor has to stay at or above it",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "A post that states a count can also carry a check that runs again seconds before it is sent",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it is given four frames from the reel, the captions in order, and the record of the run, and asked whether each caption is true of the frame under it",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "it is given four frames from the reel, the captions in order, and the record of the run, and asked whether each caption is true of the frame under it",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/editor.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The camera saves a picture of the page at the moment the step failed",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If fewer than 15% of its frames change, the reel does not validate",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "If fewer than 15% of its frames change, the reel does not validate",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the camera draws a waving hand emoji into a small canvas and counts the coloured pixels",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the camera draws a waving hand emoji into a small canvas and counts the coloured pixels",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "So it refuses, and says which font to install",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "So it refuses, and says which font to install",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/verify.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Some features did not pass when we used them. They are not in this feed",
+				"kind": "evidence:file",
+				"target": "docs/ops/x-story-findings-2026-09-30.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reels are made where posts are reviewed, not in production, which reads the record and does not film",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "reels are made where posts are reviewed, not in production, which reads the record and does not film",
+				"kind": "evidence:file",
+				"target": "api/_lib/x-content/reel.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The engine above is at three.ws/assembly",
+				"kind": "evidence:page",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "live page shows \"Radial Nine\""
+			},
+			{
+				"kind": "probe:api",
+				"target": "the version endpoint the reel stamp reads still names the production commit",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
+				"target": "the Machine Atlas page the article links is live",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:command",
+				"target": "scenario validation, the proof binding and proof evidence still behave as the article says",
+				"ok": true,
+				"detail": "exit 0"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/assembly",
+				"ok": true,
+				"detail": "HTTP 200"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 4
+		},
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "a holographic foil sticker",
+				"problem": "The top right crop shows a layered blue chevron shape without the foil or sticker context the article describes (holographic sticker), so a reader cannot connect the crop to the named feature from the image alone.",
+				"fix": "If easy on recapture, use a frame of the sticker reel that shows the foil effect mid-drag; otherwise it is acceptable as an abstract crop in a six-up grid."
+			},
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "a splat-rendered head bust",
+				"problem": "The bottom right crop is visibly soft and low detail compared with the other five crops, which slightly weakens an article whose argument is that reels show the product exactly.",
+				"fix": "Optional: recapture that frame at a higher render resolution or pick a sharper frame from the same reel."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
+			],
+			"altText": [
+				"Six crops from filmed reels in a grid on black: a blue robot portrait, a nine-cylinder radial engine, a holographic foil sticker, an avatar with headphones and red sunglasses, a steam locomotive on its track, and a splat-rendered head bust, each a frame from a scripted run against the live three.ws site"
+			]
+		},
+		"summary": "Every claim in the post and article traces to a passing verification against the code or the proof records, and the copy obeys the voice contract: no hashtags, no emoji, no dashes, mechanism first. Ship it; the only notes are two minor visual nits on the cover grid crops, neither of which contradicts the copy.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"Each one is a scripted test run against the live site, filmed while it runs\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"If any step of the run fails, no video is made, and the feature is not announced\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A step can goto a page, click a control by its visible text, type into a field, press a key, drag across the scene, expect a text to appear, or read a fact off the screen with a pattern\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"These are five of the steps behind the Machine Atlas reel\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"On the filmed run it read 9, then 5, and it waited for the new displacement before it went on\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"When the Drive reel types a question to an agent, the run waits for the chat request to answer, and an error fails the run\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The machine that films has no GPU\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A headless browser renders WebGL in software at one to three frames a second, and a screen recorder pads that out by repeating frames\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"It advances the clock by one frame, a thirtieth of a second, takes a picture, and repeats\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Every frame of a reel is a distinct frame at 1/30 s of page time\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"On the galaxy page, recording in real time gave 1.3 distinct frames a second; stepping gave 30\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"one frame of a plain list page measured 3.5 to 15 seconds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the 3D scene still renders in software exactly as before\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The holographic sticker reel is 18.13 seconds and 544 frames long\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"One drag in it is 84 frames, 2.8 seconds of reel, and took 90 seconds to film\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Nothing is drawn over the product except the pointer\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The stamp names the site, the production commit that answered, read from the site's own version endpoint, and the day the reel was filmed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Anything that waits on the network runs on the real clock while the camera is off\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"If a wait lasts two seconds or more\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a badge such as cut 6 s appears in the bar for the next second and a half\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"each caption is set in the real bar, beside the longest stamp and the longest badge it could share the line with, and a caption that would be cut off is refused by name\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"We added that check after reels were filmed with captions that ended mid-sentence\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"together with a hash of the scenario and of the video\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Change a step or swap the file and the post no longer validates\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A record also expires after 14 days\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"When a post is reviewed, the scenario runs again without the camera\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A fact the post states exactly has to read the same as the reel shows. A fact stated as a floor has to stay at or above it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"A post that states a count can also carry a check that runs again seconds before it is sent\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"it is given four frames from the reel, the captions in order, and the record of the run, and asked whether each caption is true of the frame under it\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The camera saves a picture of the page at the moment the step failed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"If fewer than 15% of its frames change, the reel does not validate\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the camera draws a waving hand emoji into a small canvas and counts the coloured pixels\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"So it refuses, and says which font to install\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"Some features did not pass when we used them. They are not in this feed\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"reels are made where posts are reviewed, not in production, which reads the record and does not film\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"The engine above is at three.ws/assembly\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

@@ -57,7 +57,8 @@
 			"reprojection",
 			"GPU",
 			"retopo",
-			"photoreal"
+			"photoreal",
+			"crossfade"
 		],
 		"maximumLength": 1000
 	},
@@ -9071,6 +9072,2485 @@
 			],
 			"mentions": {},
 			"note": "Held 2026-10-01: the reel shows /restyle's sample avatar in a bind-pose T-pose throughout, which the operating rules say never to ship. Fix the page to load a sample that idles, then film again and approve."
+		},
+		{
+			"id": "embed-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/docs/web-component"
+			],
+			"article": {
+				"title": "One HTML tag puts a live 3D avatar on any page, already idling when it appears",
+				"body": "data/x-content/articles/embed-article.md",
+				"cover": {
+					"path": "public/x-media/embed-article/cover.png",
+					"alt": "Three 3D avatars standing side by side on a dark blue background, each rendered live by its own agent-3d element in the same relaxed idle pose: a woman in a purple top and leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
+				}
+			},
+			"posts": [
+				{
+					"text": "A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a body. The element stays hidden until the idle has rendered, so the avatar appears standing naturally, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
+				}
+			],
+			"claims": [
+				{
+					"says": "One HTML tag puts a live 3D avatar on any page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "ships the entire three.ws stack in a single script tag"
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "no build step, no framework required"
+						}
+					]
+				},
+				{
+					"says": "already idling when it appears",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "The body is already on screen holding its first clip"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "this._scene.playClipByName('idle', { loop: true, fade_ms: 0 });"
+						}
+					]
+				},
+				{
+					"says": "one script line and one <agent-3d> tag pointed at a body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/tutorials/embed-in-30-seconds.md",
+							"contains": "One script tag, one `<agent-3d>` tag, one working 3D agent."
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "| `body` | Bare GLB URL (ad-hoc agent) |"
+						}
+					]
+				},
+				{
+					"says": "The element stays hidden until the idle has rendered",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "The stage stays hidden until the body holds its first pose"
+						}
+					]
+				},
+				{
+					"says": "on Mixamo, VRM and other rigs alike",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Mixamo:          `mixamorig:LeftArm`"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • VRM / VRoid:     `J_Bip_C_Hips`, `J_Bip_L_UpperArm`"
+						}
+					]
+				},
+				{
+					"says": "what reduced motion does to it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Reduced-motion path: settle into a single clean idle pose and freeze it, so"
+						}
+					]
+				},
+				{
+					"says": "There is no API key and no build step",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "renders a silent 3D viewer with no API key"
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "no build step, no framework required"
+						}
+					]
+				},
+				{
+					"says": "The 1 in the script path tracks the 1.x line of the element",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/agent-3d/versions.json",
+							"contains": ">=1.0.0 <2.0.0"
+						},
+						{
+							"type": "file",
+							"path": "scripts/publish-lib.mjs",
+							"contains": "[major]: { tracks: `>=${major}.0.0 <${Number(major) + 1}.0.0` }"
+						}
+					]
+				},
+				{
+					"says": "boots it once it comes within 300 pixels of the viewport",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "{ rootMargin: '300px 0px' }"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "The 300px margin gives lead time to boot before the avatar is on screen"
+						}
+					]
+				},
+				{
+					"says": "The eager attribute skips the wait",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "Add the `eager` attribute to skip this and boot immediately on connection."
+						}
+					]
+				},
+				{
+					"says": "loads the idle and walk clips",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "_am.ensureLoaded('idle'), _am.ensureLoaded('walk')"
+						}
+					]
+				},
+				{
+					"says": "Clip addresses are rebased onto the origin the script came from",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Rebase each onto the bundle's own origin"
+						}
+					]
+				},
+				{
+					"says": "The canvas sits at opacity 0 while that happens",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": ".stage.is-settling { opacity: 0; transition: none; }"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Held while a freshly loaded body has no pose yet."
+						}
+					]
+				},
+				{
+					"says": "It snaps the idle in and waits two frames",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "The clip snaps in instead (fade 0), and the stage is"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "revealed two frames later"
+						}
+					]
+				},
+				{
+					"says": "The agent:ready event fires once the element has booted, with the body already on screen holding its idle",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "The body is already on screen holding its first clip"
+						}
+					]
+				},
+				{
+					"says": "That is the event to swap out your own placeholder image on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "This is the event to swap out your own placeholder image on."
+						}
+					]
+				},
+				{
+					"says": "The mapping covers Mixamo, Blender and Rigify, VRM and VRoid, Unreal, Daz and Genesis, MakeHuman, Roblox and Second Life",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Mixamo:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Blender:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Rigify:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • VRM / VRoid:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Unreal mannequin:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Daz / Genesis:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • MakeHuman:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Roblox R15/R6:"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "//   • Second Life:"
+						}
+					]
+				},
+				{
+					"says": "30 of the 53 tracks in every clip in the library drive a finger joint",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "of the 53 tracks in every clip in /public/animations/clips address a finger"
+						}
+					]
+				},
+				{
+					"says": "a Mixamo character whose bones carry the mixamorig: prefix",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/avatars/michelle.glb",
+							"contains": "mixamorig:Hips"
+						}
+					]
+				},
+				{
+					"says": "the retarget builds no animation at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "and gets NO action built at all."
+						}
+					]
+				},
+				{
+					"says": "is shown in whatever pose the viewer gave it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "A rig that cannot take the clip is"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "revealed all the same, on whatever pose the viewer gave it."
+						}
+					]
+				},
+				{
+					"says": "will appear in its own rest pose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "revealed all the same, on whatever pose the viewer gave it."
+						}
+					]
+				},
+				{
+					"says": "A plain tag with a body is a bare avatar",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Default is BARE: a plain <agent-3d> (or one given"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "chat, no input, no debug GUI, no name-plate."
+						}
+					]
+				},
+				{
+					"says": "a bare avatar settles into a single idle pose and freezes there, which also lets the render loop stop drawing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Reduced-motion path: settle into a single clean idle pose and freeze it, so"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "render loop can idle (no continuous GPU/CPU cost)."
+						}
+					]
+				},
+				{
+					"says": "captures taken seconds apart came out byte for byte identical",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "am.freeze();"
+						}
+					]
+				},
+				{
+					"says": "switching it in the operating system takes effect without a reload",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "so a runtime flip of the OS setting re-applies playback:"
+						}
+					]
+				},
+				{
+					"says": "playClip(name, { userInitiated: true }) is the call for an animation behind a button",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "Play even when the visitor has prefers-reduced-motion set"
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "| `opts.userInitiated` | boolean | Play even when the visitor has `prefers-reduced-motion` set."
+						}
+					]
+				},
+				{
+					"says": "around 16 in Chrome",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Browsers cap the number of simultaneous WebGL contexts (~16 in Chrome)."
+						}
+					]
+				},
+				{
+					"says": "By default eight avatars are live at a time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "We cap the number of *live* viewers instead."
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"matches": "return 8;\\n}\\)\\(\\);\\nconst _liveViewers = new Set\\(\\);"
+						}
+					]
+				},
+				{
+					"says": "it boots again when it scrolls back into view",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "re-boots automatically the moment it scrolls back into view."
+						}
+					]
+				},
+				{
+					"says": "Whatever the reader is looking at is never the one evicted",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "user is actually looking at is never evicted."
+						}
+					]
+				},
+				{
+					"says": "switched on with a chat attribute or by binding a published agent with agent-id",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "the explicit `chat` attribute"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "binding to a published agent identity (`agent-id` / `manifest`)"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the runtime the snippet loads is served from the 1.x channel",
+					"url": "https://three.ws/agent-3d/1/agent-3d.js",
+					"expect": {
+						"status": 200,
+						"contains": "is-settling"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the default body in the snippet is live",
+					"url": "https://three.ws/avatars/default.glb",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the shared clip library still leads with the idle the element plays on load",
+					"url": "https://three.ws/animations/manifest.json",
+					"expect": {
+						"json": {
+							"path": "0.name",
+							"equals": "idle"
+						}
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the element reference documents the hidden-until-posed reveal",
+					"steps": [
+						{
+							"goto": "https://three.ws/docs/web-component"
+						},
+						{
+							"expect": "the element keeps its canvas hidden until that pose has rendered"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "holo-material-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/holo"
+			],
+			"article": {
+				"title": "How a holographic sticker is cut, lit and peeled in the browser, with no image files",
+				"body": "data/x-content/articles/holo-material-article.md",
+				"cover": {
+					"path": "public/x-media/holo-material-article/cover.png",
+					"alt": "A die-cut holographic foil sticker of three slanted bars floating on black, tilted toward the viewer, its rim shifting from green to violet and its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
+				}
+			},
+			"claims": [
+				{
+					"says": "with no image files",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "no images, no model files"
+						}
+					]
+				},
+				{
+					"says": "no image behind it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The die-cut outline, the iridescent foil, the light it reflects, and the peeling corner are all computed in your browser: no images, no model files"
+						}
+					]
+				},
+				{
+					"says": "the mark is drawn into a 640 pixel canvas",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const RASTER = 640; // offscreen raster resolution, px"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "markDraw(markCanvas.getContext('2d'), RASTER);"
+						}
+					]
+				},
+				{
+					"says": "grown by a 28 pixel disc the way a cutter adds a margin",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const baseCanvas = dilate(markCanvas, RASTER * 0.044);"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "dilated by a disc the way a cutter adds a margin"
+						}
+					]
+				},
+				{
+					"says": "traced back into outlines with marching squares",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "traced back into vector outlines with marching squares, holes included"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "function traceContours(canvas) {"
+						}
+					]
+				},
+				{
+					"says": "lit by a thin film 120 to 480 nanometres thick",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "iridescenceThicknessRange: [120, 480],"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "The foil is a physical material with thin-film iridescence"
+						}
+					]
+				},
+				{
+					"says": "from the cut to the vertex-shader peel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "material.onBeforeCompile = (shader) => {"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "the peel is a vertex-shader cylinder roll"
+						}
+					]
+				},
+				{
+					"says": "Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "Text to die-cut (up to 16 characters)"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "customInput.value.trim().slice(0, 16)"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "type your own text and get it cut into a sticker of its own"
+						}
+					]
+				},
+				{
+					"says": "holes inside the letters",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "holes included"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (e.depth % 2 !== 0) continue;"
+						}
+					]
+				},
+				{
+					"says": "No image or model file is downloaded to draw it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "no images, no model files"
+						}
+					]
+				},
+				{
+					"says": "the code that does all of it is one file of under 800 lines",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "^(?<![\\s\\S])(?!(?:[^\\n]*\\n){800})"
+						},
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "<script type=\"module\" src=\"/src/holo.js\"></script>"
+						}
+					]
+				},
+				{
+					"says": "Everything starts as white pixels on a 640 by 640 canvas that stays off screen",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const RASTER = 640; // offscreen raster resolution, px"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const markCanvas = makeCanvas(RASTER);"
+						}
+					]
+				},
+				{
+					"says": "Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const font = (px) => `900 ${px}px Inter"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "let fontSize = size * 0.36;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const pad = size * 0.1;"
+						}
+					]
+				},
+				{
+					"says": "The default mark is three slanted bars, and each slant is 45 degrees so the notches between the bars come out crisp",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "slants are 45 degrees so the die-cut notches between bars come out crisp."
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "mark: 'chevrons',"
+						}
+					]
+				},
+				{
+					"says": "it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const steps = 48;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const baseCanvas = dilate(markCanvas, RASTER * 0.044);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "ctx.drawImage(markCanvas, 0, 0);"
+						}
+					]
+				},
+				{
+					"says": "shapes that sit closer than twice that radius merge into one backing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "die-cut margin, and it merges nearby islands exactly like a real cut line."
+						}
+					]
+				},
+				{
+					"says": "counts a pixel as inside when it is over half opaque, and walks the image in 2 by 2 cells",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (data[(y * size + x) * 4 + 3] > 127) grid[(y + pad) * W + (x + pad)] = 1;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const idx = at(x, y) * 8 + at(x + 1, y) * 4 + at(x + 1, y + 1) * 2 + at(x, y + 1);"
+						}
+					]
+				},
+				{
+					"says": "Each cell is one of 16 cases",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "const SEGS = \\[\\n\\t\\tnull, \\[\\[L, B\\]\\], \\[\\[B, R\\]\\], \\[\\[L, R\\]\\],\\n\\t\\t\\[\\[T, R\\]\\], \\[\\[T, R\\], \\[L, B\\]\\], \\[\\[T, B\\]\\], \\[\\[T, L\\]\\],\\n\\t\\t\\[\\[T, L\\]\\], \\[\\[T, B\\]\\], \\[\\[T, L\\], \\[B, R\\]\\], \\[\\[T, R\\]\\],\\n\\t\\t\\[\\[L, R\\]\\], \\[\\[B, R\\]\\], \\[\\[L, B\\]\\], null,\\n\\t\\];"
+						}
+					]
+				},
+				{
+					"says": "The code fixes one pairing, so each edge midpoint touches exactly two segments and stitching a loop together cannot fork",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "Saddle cells use a fixed pairing so"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "every edge midpoint has degree exactly 2 and loop stitching cannot fork."
+						}
+					]
+				},
+				{
+					"says": "smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "smoothLoop(c, 3)"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "out.push([ax * 0.75 + bx * 0.25, ay * 0.75 + by * 0.25]);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const minDist = 1.4;"
+						}
+					]
+				},
+				{
+					"says": "Loops under 30 square pixels are thrown away as specks",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": ".filter((e) => e.area > 30)"
+						}
+					]
+				},
+				{
+					"says": "The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": ".sort((a, b) => b.area - a.area);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "e.depth = entries.filter((o) => o !== e && o.area > e.area && pointInPoly(e.pts[0], o.pts)).length;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (e.depth % 2 !== 0) continue;"
+						}
+					]
+				},
+				{
+					"says": "Both sets of outlines are scaled so the cut is 3.1 units wide, with the same transform, so the mark lands exactly on its backing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const WORLD_W = 3.1; // sticker width in world units"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "// transform maps canvas px to world XY (shared by base and mark so they align)."
+						}
+					]
+				},
+				{
+					"says": "the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const BASE_DEPTH = 0.028;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "bevelSize: 0.016,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const MARK_DEPTH = 0.05;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "bevelSize: 0.02,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "if (mark) mark.translate(0, 0, BASE_DEPTH + 0.002);"
+						}
+					]
+				},
+				{
+					"says": "A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "0.038 * Math.sin(x * 1.9 + 0.7) +"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "0.03 * Math.sin(y * 2.3 - 0.4) +"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "0.014 * Math.sin((x + y) * 3.1);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "nor.setXYZ(i, n.x, n.y, n.z);"
+						}
+					]
+				},
+				{
+					"says": "that slight bow is what smears the reflections into gradients across each face",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "A real sticker sheet bows a little, and that bow is what smears the"
+						}
+					]
+				},
+				{
+					"says": "Both surfaces use a physical material that is fully metallic, with a clear coat on top",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const baseMaterial = injectPeel(new THREE.MeshPhysicalMaterial({"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "metalness: 1,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "clearcoat: 1,"
+						}
+					]
+				},
+				{
+					"says": "The backing's film has an index of 1.32 and a thickness range of 120 to 480 nanometres",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "iridescenceIOR: 1.32,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "iridescenceThicknessRange: [120, 480],"
+						}
+					]
+				},
+				{
+					"says": "The raised mark uses 1.28 and 140 to 860",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "iridescenceIOR: 1.28,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "iridescenceThicknessRange: [140, 860],"
+						}
+					]
+				},
+				{
+					"says": "A 256 pixel noise texture roughens both surfaces slightly",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const size = 256;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const v = 150 + Math.floor(Math.random() * 105);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "roughnessMap: grain,"
+						}
+					]
+				},
+				{
+					"says": "That light is painted when the page loads, into a 1024 by 512 canvas",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "c.width = 1024;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "c.height = 512;"
+						}
+					]
+				},
+				{
+					"says": "soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "const BLOB_SEATS = \\[\\n\\t\\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\],\\n\\t\\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\], \\[[^\\n]*\\],\\n\\];"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "ctx.globalCompositeOperation = 'lighter';"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "for (const [y0, hgt, alpha] of [[0.18, 0.07, 1], [0.46, 0.045, 0.8], [0.72, 0.05, 0.7]]) {"
+						}
+					]
+				},
+				{
+					"says": "The canvas is then blurred ahead of time at several strengths, so rough surfaces reflect a softer version of it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "envCache.set(name, pmrem.fromEquirectangular(equirect).texture);"
+						}
+					]
+				},
+				{
+					"says": "The rainbow and neon foils run iridescence at full strength, gold at 0.35 and chrome at 0.18",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "label: 'Rainbow holo',[\\s\\S]*?iridescence: 1,[\\s\\S]*?label: 'Chrome',[\\s\\S]*?iridescence: 0\\.18,[\\s\\S]*?label: 'Gold foil',[\\s\\S]*?iridescence: 0\\.35,[\\s\\S]*?label: 'Neon',[\\s\\S]*?iridescence: 1,"
+						}
+					]
+				},
+				{
+					"says": "Switching foil swaps the light and the numbers and leaves the geometry alone",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"matches": "state\\.foil = btn\\.dataset\\.foil;\\n\\t\\trenderFoilChips\\(\\);\\n\\t\\tapplyFoil\\(state\\.foil\\);"
+						}
+					]
+				},
+				{
+					"says": "The blobs sit in fixed places, so a reload gives you the same sticker",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "// Blob placement is fixed, not random, so a reload gives the same sticker."
+						}
+					]
+				},
+				{
+					"says": "Before the material compiles, the page injects a few lines into its vertex shader",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "material.onBeforeCompile = (shader) => {"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "shader.vertexShader = shader.vertexShader"
+						}
+					]
+				},
+				{
+					"says": "A fold line runs at 45 degrees across one corner, and each vertex past it is wrapped around a virtual cylinder",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "uFoldN: { value: new THREE.Vector2(Math.SQRT1_2, Math.SQRT1_2) },"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "float tP = dot(transformed.xy, uFoldN) - uFoldT;"
+						}
+					]
+				},
+				{
+					"says": "the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "float phi = min(tP / uRadius, uMaxPhi);"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "uMaxPhi: { value: Math.PI * 1.22 },"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "float rest = max(tP - uRadius * uMaxPhi, 0.0);"
+						}
+					]
+				},
+				{
+					"says": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "peelUniforms.uRadius.value = 0.17 + amount * 0.18;"
+						}
+					]
+				},
+				{
+					"says": "The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "objectNormal.z = nn * s + objectNormal.z * c;"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "so the light on the curled lip is real"
+						}
+					]
+				},
+				{
+					"says": "The corner rests at 30% and breathes by 2.8% either way",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "peel: 0.3,"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const breathe = reducedMotion ? 0 : Math.sin(t * 0.8) * 0.028;"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "Corner peel 30%"
+						}
+					]
+				},
+				{
+					"says": "unless your system asks for reduced motion, in which case both stop",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const wobble = reducedMotion ? 0 : 1;"
+						}
+					]
+				},
+				{
+					"says": "Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "current.x += (target.x - current.x) * 0.09;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "target.y = dragBase.ry + (nx - dragBase.nx) * 2.4;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "ArrowLeft: () => (target.y -= step),"
+						},
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "data-hint=\"on\" tabindex=\"0\" role=\"img\""
+						}
+					]
+				},
+				{
+					"says": "One line of text, up to 16 characters",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "maxlength=\"16\""
+						}
+					]
+				},
+				{
+					"says": "Download PNG saves the frame you are looking at",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "Download PNG"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "a.download = 'holo-sticker.png';"
+						}
+					]
+				},
+				{
+					"says": "Without it the page says so instead of drawing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/holo.html",
+							"contains": "This page needs WebGL and your browser did not provide a context."
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "stage.dataset.state = 'error';"
+						}
+					]
+				},
+				{
+					"says": "The sticker is at three.ws/holo",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/holo",
+							"contains": "Holo Sticker"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the holo sticker page is up",
+					"url": "https://three.ws/holo",
+					"expect": {
+						"contains": "Holo Sticker"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the sticker renders and the foil controls answer",
+					"steps": [
+						{
+							"goto": "https://three.ws/holo"
+						},
+						{
+							"expect": "drag to tilt"
+						},
+						{
+							"click": "Gold foil"
+						},
+						{
+							"click": "Your text"
+						},
+						{
+							"expect": "Text to die-cut (up to 16 characters)"
+						}
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel."
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "mcp-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/docs/mcp-studio"
+			],
+			"article": {
+				"title": "Eleven free 3D tools for Claude Code and any MCP client, from one address",
+				"body": "data/x-content/articles/mcp-article.md",
+				"cover": {
+					"path": "public/x-media/mcp-article/cover.png",
+					"alt": "A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; the model is the one the look_at_model tool inspected in the session described in the article"
+				}
+			},
+			"posts": [
+				{
+					"text": "Add one address to Claude Code or any MCP client and the assistant gets eleven free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+				}
+			],
+			"claims": [
+				{
+					"says": "Eleven free 3D tools",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "All eleven are free and keyless."
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`tools/list` returns exactly **eleven** tools"
+						}
+					]
+				},
+				{
+					"says": "with no account or key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
+						},
+						{
+							"type": "file",
+							"path": "docs/prompts.md",
+							"contains": "No account, no key"
+						}
+					]
+				},
+				{
+					"says": "renders a model so the assistant can check its own work",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "generated a 3D asset had no way to check its own work, because a .glb is"
+						}
+					]
+				},
+				{
+					"says": "runs an MCP server that needs no account and no API key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/mcp-studio",
+							"contains": "All eleven are free and keyless."
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
+						}
+					]
+				},
+				{
+					"says": "the tools are there the next time a session starts",
+					"evidence": [
+						{
+							"type": "file",
+							"path": ".agents/skills/connect-three-ws-mcp/SKILL.md",
+							"contains": "`.mcp.json` is read at startup"
+						},
+						{
+							"type": "file",
+							"path": ".agents/skills/connect-three-ws-mcp/SKILL.md",
+							"contains": "Project scope, in `.mcp.json` at the repo root (Claude Code auto-discovers it):"
+						}
+					]
+				},
+				{
+					"says": "the address goes in as a custom connector with authentication set to None",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/prompts.md",
+							"contains": "or add that URL as a custom connector in the Claude apps with authentication set to None"
+						}
+					]
+				},
+				{
+					"says": "Any other client only needs to know that the server speaks MCP over Streamable HTTP, protocol version 2025-06-18, and answers every request synchronously over POST",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Transport** | Streamable HTTP (JSON-RPC over `POST`) |"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Protocol** | MCP `2025-06-18` |"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "answers every request synchronously over `POST`."
+						}
+					]
+				},
+				{
+					"says": "forge_free turns a text prompt into a textured GLB",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `forge_free` | Generate a 3D model from text | `prompt`, `tier?` | GLB model |"
+						}
+					]
+				},
+				{
+					"says": "It takes a draft, standard or high tier, and standard is what you get when you leave the tier out",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`forge_free` takes an optional `tier` of `draft`, `standard`, or `high`."
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "**`standard` is the default**, and it is what you get when you omit the"
+						}
+					]
+				},
+				{
+					"says": "text_to_avatar and mesh_forge generate an avatar or an art-directed mesh from text or from a reference image",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `text_to_avatar` | Generate a 3D avatar | `prompt?` / `image_url?` | GLB avatar |"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `mesh_forge` | Generate a 3D mesh (art-directed) | `prompt?` / `image_url?` | GLB mesh |"
+						}
+					]
+				},
+				{
+					"says": "rig_mesh adds a skeleton to a model you already have, so it can be animated",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `rig_mesh` | Rig a 3D model for animation | `glb_url` | rigged GLB |"
+						}
+					]
+				},
+				{
+					"says": "forge_avatar generates a rigged, animation-ready avatar in one call",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `forge_avatar` | Generate a rigged, animation-ready avatar |"
+						}
+					]
+				},
+				{
+					"says": "returns the refined model with its version lineage",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "refined GLB + version lineage"
+						}
+					]
+				},
+				{
+					"says": "check_job collects a generation that outlived the tool call that started it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `check_job` | Check a pending 3D generation and collect it |"
+						}
+					]
+				},
+				{
+					"says": "save a rigged model as a persistent agent body, reload it by id in a later session, and speak a reply through it with lip-sync, emotion and gesture",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Save a rigged model as a living, persistent agent body"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Reload a persona by id (continuity across sessions)"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Speak a reply through a persona: lip-sync + emotion + gesture"
+						}
+					]
+				},
+				{
+					"says": "We used the official MCP TypeScript SDK to connect with no credentials at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "package.json",
+							"contains": "\"@modelcontextprotocol/sdk\""
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
+						}
+					]
+				},
+				{
+					"says": "a CC0 film camera from the platform's free asset catalog",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/catalog?id=object:vintage_video_camera",
+							"contains": "\"license\":\"CC0\""
+						}
+					]
+				},
+				{
+					"says": "The server marks look_at_model as read-only, alongside get_agent_persona",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "readOnlyHint: true, // renders a picture; changes nothing"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "const READ_ANNOTATIONS = { readOnlyHint: true"
+						}
+					]
+				},
+				{
+					"says": "Rendered this model from 4 angle(s): three-quarter, front, side, back",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "`Rendered this model from ${turntable.frames.length} angle(s): ${shown}."
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "default three-quarter, front, side, back"
+						}
+					]
+				},
+				{
+					"says": "Geometry: 18,682 triangles",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/3d/inspect?url=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fvintage_video_camera.glb",
+							"contains": "\"triangles\":18682"
+						}
+					]
+				},
+				{
+					"says": "Before this tool, an assistant that generated a model could hand you a link and had no way to check its own work",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "generated a 3D asset had no way to check its own work, because a .glb is"
+						}
+					]
+				},
+				{
+					"says": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "is the subject complete and recognisable, "
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "is the far side finished, is anything melted, fused, or missing?"
+						}
+					]
+				},
+				{
+					"says": "The text that comes back ends by telling the model to generate again with a prompt that names the specific fault",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "again with a prompt that names the specific fault."
+						}
+					]
+				},
+				{
+					"says": "which turns one-shot generation into a loop",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "one-shot generation into a loop."
+						}
+					]
+				},
+				{
+					"says": "By default it renders four views at 512 pixels",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Frames are capped at 512 px and four views by default"
+						}
+					]
+				},
+				{
+					"says": "A caller can ask for up to six angles and frames up to 1024 pixels",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "maxItems: 6,"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "maximum: 1024,"
+						}
+					]
+				},
+				{
+					"says": "It works on any public GLB over https, not only on models made by the platform",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Works on any public https .glb, not only ones made here."
+						}
+					]
+				},
+				{
+					"says": "its structured result carries a link that opens the same model in the browser viewer",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "viewer_url: viewerUrl(base, glbUrl),"
+						}
+					]
+				},
+				{
+					"says": "four generations a minute and 30 an hour",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/rate-limit.js",
+							"contains": "getLimiter('studio:gen:burst', { limit: 4, window: '1 m' })"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/rate-limit.js",
+							"contains": "getLimiter('studio:gen:hourly', { limit: 30, window: '1 h' })"
+						}
+					]
+				},
+				{
+					"says": "look_at_model rides the same quota, because it renders frames on the server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/dispatch.js",
+							"contains": "look_at_model renders frames server-side, so"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "but it renders frames server-side, so it rides the same per-IP generation"
+						}
+					]
+				},
+				{
+					"says": "check_job never counts against it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "It still never counts against the generation quota."
+						}
+					]
+				},
+				{
+					"says": "the call returns a pending job, and check_job collects it later rather than letting it be lost",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "it returns a success result"
+						}
+					]
+				},
+				{
+					"says": "runs on a self-hosted GPU worker that scales to zero",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "That worker is"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "scale-to-zero"
+						}
+					]
+				},
+				{
+					"says": "the call degrades to standard rather than failing the conversation",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "the call degrades to standard rather than"
+						}
+					]
+				},
+				{
+					"says": "The catalog search tools live on the platform's main MCP server, which asks a full MCP client to sign in when it connects",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp/dispatch.js",
+							"contains": "'search_catalog',"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp/auth.js",
+							"contains": "an OAuth-capable MCP client must still receive the 401 on"
+						}
+					]
+				},
+				{
+					"says": "A plain JSON-RPC call to that search answers without a key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp/dispatch.js",
+							"contains": "Discovery has to work before a client signs in, or"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the free server still lists eleven tools to a keyless client",
+					"url": "https://three.ws/api/mcp-studio",
+					"method": "POST",
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 1,
+						"method": "tools/list"
+					},
+					"expect": {
+						"json": {
+							"path": "result.tools.length",
+							"equals": 11
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the free server completes the MCP handshake with no credentials",
+					"url": "https://three.ws/api/mcp-studio",
+					"method": "POST",
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 1,
+						"method": "initialize",
+						"params": {
+							"protocolVersion": "2025-06-18",
+							"capabilities": {},
+							"clientInfo": {
+								"name": "x-content-probe",
+								"version": "1.0.0"
+							}
+						}
+					},
+					"expect": {
+						"json": {
+							"path": "result.serverInfo.name",
+							"equals": "three-ws-3d-studio-free"
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the camera the article inspected still reads 18,682 triangles",
+					"url": "https://three.ws/api/3d/inspect?url=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fvintage_video_camera.glb",
+					"expect": {
+						"json": {
+							"path": "stats.triangles",
+							"equals": 18682
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the camera model is still served",
+					"url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/vintage_video_camera.glb",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "browser",
+					"name": "the docs page says all eleven tools are free",
+					"steps": [
+						{
+							"goto": "https://three.ws/docs/mcp-studio"
+						},
+						{
+							"expect": "All eleven are free and keyless."
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "proof-reels-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [],
+			"article": {
+				"title": "How our feature reels are filmed: a scripted test run against the live site",
+				"body": "data/x-content/articles/proof-reels-article.md",
+				"cover": {
+					"path": "public/x-media/proof-reels-article/cover.png",
+					"alt": "Six crops from filmed reels in a grid on black: a blue robot portrait, a nine-cylinder radial engine, a holographic foil sticker, an avatar with headphones and red sunglasses, a steam locomotive on its track, and a splat-rendered head bust, each a frame from a scripted run against the live three.ws site"
+				}
+			},
+			"claims": [
+				{
+					"says": "If any step fails, there is no video and the feature is not announced",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (run.passed && film) {"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "the last run failed"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/queue.js",
+							"contains": "problems.push(...proofProblems(item, root, now)"
+						}
+					]
+				},
+				{
+					"says": "The page clock is stepped one frame at a time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "await this.page.clock.runFor(this.frameMs);"
+						}
+					]
+				},
+				{
+					"says": "1/30 of a second each",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const DEFAULT_FPS = 30;"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "this.frameMs = 1000 / fps;"
+						}
+					]
+				},
+				{
+					"says": "on a machine with no GPU",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "WebGL is rendered in software, because the machines that make reels have no"
+						}
+					]
+				},
+				{
+					"says": "what it refuses to film",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "does not fit the bar in this format; shorten it"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "the browser draws emoji as empty boxes on this machine, so reels would show the product broken"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const MIN_MOTION = 0.15;"
+						}
+					]
+				},
+				{
+					"says": "Each one is a scripted test run against the live site, filmed while it runs",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "Proof reels: a post's video is a filmed, passing end-to-end run of the"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const response = await take.page.goto(step.goto, { waitUntil: 'domcontentloaded', timeout: 60_000 });"
+						}
+					]
+				},
+				{
+					"says": "If any step of the run fails, no video is made, and the feature is not announced",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (run.passed && film) {"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "the last run failed"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/queue.js",
+							"contains": "problems.push(...proofProblems(item, root, now)"
+						}
+					]
+				},
+				{
+					"says": "A step can goto a page, click a control by its visible text, type into a field, press a key, drag across the scene, expect a text to appear, or read a fact off the screen with a pattern",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const STEP_KINDS = ['goto', 'click', 'hover', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'hold', 'caption'];"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const match = new RegExp(step.match, 'i').exec(scope);"
+						}
+					]
+				},
+				{
+					"says": "These are five of the steps behind the Machine Atlas reel",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/queue.json",
+							"contains": "\"selector\": \"#ma-p-cylinders-out\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/queue.json",
+							"contains": "\"expect\": \"16.5 L\""
+						}
+					]
+				},
+				{
+					"says": "On the filmed run it read 9, then 5, and it waited for the new displacement before it went on",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"cylinders\": \"9\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"cylindersAfter\": \"5\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/machine-atlas.json",
+							"contains": "\"target\": \"16.5 L\""
+						}
+					]
+				},
+				{
+					"says": "When the Drive reel types a question to an agent, the run waits for the chat request to answer, and an error fails the run",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "POST /api/chat answered 200"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (hit.status >= 400) throw new Error(`${hit.method} ${hit.path} answered HTTP ${hit.status}`);"
+						}
+					]
+				},
+				{
+					"says": "The machine that films has no GPU",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "WebGL is rendered in software, because the machines that make reels have no"
+						}
+					]
+				},
+				{
+					"says": "A headless browser renders WebGL in software at one to three frames a second, and a screen recorder pads that out by repeating frames",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "software at one to three frames a second, and a recorder pads that to 25 by"
+						}
+					]
+				},
+				{
+					"says": "It advances the clock by one frame, a thirtieth of a second, takes a picture, and repeats",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "await this.page.clock.runFor(this.frameMs);"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const DEFAULT_FPS = 30;"
+						}
+					]
+				},
+				{
+					"says": "Every frame of a reel is a distinct frame at 1/30 s of page time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"matches": "Every frame of the reel\\n// is a real, distinct frame at exactly 1/fps of page time"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const DEFAULT_FPS = 30;"
+						}
+					]
+				},
+				{
+					"says": "On the galaxy page, recording in real time gave 1.3 distinct frames a second; stepping gave 30",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/x-content-pipeline.md",
+							"matches": "Galaxy measured 1\\.3 distinct frames a\\s+second recorded in real time and 30 stepped"
+						}
+					]
+				},
+				{
+					"says": "one frame of a plain list page measured 3.5 to 15 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "one frame of a plain list page measured 3.5 to 15 seconds"
+						}
+					]
+				},
+				{
+					"says": "the 3D scene still renders in software exactly as before",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "'--disable-gpu-compositing', '--disable-gpu-rasterization'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "still runs on SwiftShader exactly as before"
+						}
+					]
+				},
+				{
+					"says": "The holographic sticker reel is 18.13 seconds and 544 frames long",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/holo-sticker.json",
+							"contains": "\"durationSec\": 18.13,"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/holo-sticker.json",
+							"contains": "\"frames\": 544,"
+						}
+					]
+				},
+				{
+					"says": "One drag in it is 84 frames, 2.8 seconds of reel, and took 90 seconds to film",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/holo-sticker.json",
+							"matches": "\"kind\": \"drag\",[\\s\\S]{0,200}\"ms\": 90167,\\s*\"frames\": 84"
+						}
+					]
+				},
+				{
+					"says": "Nothing is drawn over the product except the pointer",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "Only the pointer is drawn on the page, because a viewer"
+						}
+					]
+				},
+				{
+					"says": "The stamp names the site, the production commit that answered, read from the site's own version endpoint, and the day the reel was filmed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const response = await fetch(`${origin}/api/version`, { signal: AbortSignal.timeout(10_000) });"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const stamp = item.scenario.stamp === false ? '' : `live on ${host}${version?.commit ? ` @ ${version.commit}` : ''}, ${day}`;"
+						}
+					]
+				},
+				{
+					"says": "Anything that waits on the network runs on the real clock while the camera is off",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "// Anything that waits on the world runs on the real clock and is not filmed."
+						}
+					]
+				},
+				{
+					"says": "If a wait lasts two seconds or more",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const CUT_BADGE_AFTER_SEC = 2;"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (seconds >= CUT_BADGE_AFTER_SEC && this.count > 0) {"
+						}
+					]
+				},
+				{
+					"says": "a badge such as cut 6 s appears in the bar for the next second and a half",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "const CUT_BADGE_FRAMES = 45;"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "await this.bar.set({ badge: `cut ${formatCut(seconds)}` });"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/proofs/drive-copilot.json",
+							"contains": "\"seconds\": 6.3"
+						}
+					]
+				},
+				{
+					"says": "each caption is set in the real bar, beside the longest stamp and the longest badge it could share the line with, and a caption that would be cut off is refused by name",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const WIDEST_STAMP = 'live on three.ws @ 000000000, 2026-12-31';"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "throw new Error(`caption(s) too long for the ${item.scenario.format || 'landscape'} bar, shorten:"
+						}
+					]
+				},
+				{
+					"says": "We added that check after reels were filmed with captions that ended mid-sentence",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/x-story-findings-2026-09-30.md",
+							"contains": "shipped captions cut off mid-sentence"
+						}
+					]
+				},
+				{
+					"says": "together with a hash of the scenario and of the video",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "scenarioHash: scenarioHash(item.scenario),"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "proof.video = { path, sha256: sha256File(resolve(root, path)), frames: run.frames, motion, ...probe };"
+						}
+					]
+				},
+				{
+					"says": "Change a step or swap the file and the post no longer validates",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "the scenario changed after it was filmed; prove it again"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "is not the file the proof filmed"
+						}
+					]
+				},
+				{
+					"says": "A record also expires after 14 days",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const PROOF_MAX_AGE_DAYS = 14;"
+						}
+					]
+				},
+				{
+					"says": "When a post is reviewed, the scenario runs again without the camera",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "const run = await runScenario(item.scenario, { film: false });"
+						}
+					]
+				},
+				{
+					"says": "A fact the post states exactly has to read the same as the reel shows. A fact stated as a floor has to stay at or above it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "if (rule.exact && live !== filmed)"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "under the floor of ${rule.min} the post claims"
+						}
+					]
+				},
+				{
+					"says": "A post that states a count can also carry a check that runs again seconds before it is sent",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "if (where === 'publish' && probe.type !== 'api') continue;"
+						}
+					]
+				},
+				{
+					"says": "it is given four frames from the reel, the captions in order, and the record of the run, and asked whether each caption is true of the frame under it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export function reelFrames({ root, path, count = 4 }) {"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/editor.js",
+							"contains": "whether each caption is true of the frame it sits under"
+						}
+					]
+				},
+				{
+					"says": "The camera saves a picture of the page at the moment the step failed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (failureShot) await page.screenshot({ path: failureShot, timeout: 30_000 }).catch(() => {});"
+						}
+					]
+				},
+				{
+					"says": "If fewer than 15% of its frames change, the reel does not validate",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "export const MIN_MOTION = 0.15;"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "if (proof.video && proof.video.motion < MIN_MOTION) {"
+						}
+					]
+				},
+				{
+					"says": "the camera draws a waving hand emoji into a small canvas and counts the coloured pixels",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "export async function emojiRendersInColor(page, text = '\\u{1F44B}') {"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "canvas.width = canvas.height = 64;"
+						}
+					]
+				},
+				{
+					"says": "So it refuses, and says which font to install",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "the browser draws emoji as empty boxes on this machine, so reels would show the product broken; ${EMOJI_FONT_FIX}"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/verify.js",
+							"contains": "export const EMOJI_FONT_FIX = 'install the COLRv1 build of Noto Color Emoji"
+						}
+					]
+				},
+				{
+					"says": "Some features did not pass when we used them. They are not in this feed",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/ops/x-story-findings-2026-09-30.md",
+							"contains": "Features that could not be announced because they do not work"
+						}
+					]
+				},
+				{
+					"says": "reels are made where posts are reviewed, not in production, which reads the record and does not film",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "A browser and ffmpeg are needed, so reels are made where posts are reviewed"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/x-content/reel.js",
+							"contains": "and never in production. Production checks the record (proofProblems)."
+						}
+					]
+				},
+				{
+					"says": "The engine above is at three.ws/assembly",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/assembly",
+							"contains": "Radial Nine"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the version endpoint the reel stamp reads still names the production commit",
+					"url": "https://three.ws/api/version",
+					"expect": {
+						"json": {
+							"path": "commitShort",
+							"exists": true
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Machine Atlas page the article links is live",
+					"url": "https://three.ws/assembly",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "command",
+					"name": "scenario validation, the proof binding and proof evidence still behave as the article says",
+					"argv": [
+						"npx",
+						"vitest",
+						"run",
+						"tests/x-content-reel.test.js"
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
+				}
+			],
+			"mentions": {}
 		}
 	]
 }
