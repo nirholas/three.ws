@@ -122,11 +122,12 @@ async function refreshOutcomes({ outcomes, stored, collect, client, ledger, now 
 	const sample = (rows) => learnLifts(rows, { now }).sample;
 	if (!outcomes || !outcomesAreStale(stored, now)) return { refreshed: false, sample: sample(stored?.posts) };
 	try {
-		const fresh = await collect({ client, ledger, now });
+		const fresh = await collect({ client, ledger, now, previous: stored });
 		await outcomes.save(fresh);
-		return { refreshed: true, sample: sample(fresh.posts) };
+		return { refreshed: true, sample: sample(fresh.posts), readDays: fresh.readDays };
 	} catch (err) {
 		console.warn('[x-content] outcomes refresh failed', err?.message || err);
+		await outcomes.save({ ...(stored || { fetchedAt: null, posts: [] }), attemptedAt: new Date(now).toISOString(), attemptError: String(err?.message || err).slice(0, 200) }).catch(() => {});
 		return { refreshed: false, sample: sample(stored?.posts) };
 	}
 }

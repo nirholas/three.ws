@@ -20,6 +20,9 @@ import {
 	memoryOutcomesStore,
 	outcomeOf,
 	outcomesAreStale,
+	readDaysFor,
+	OUTCOMES_SETTLE_DAYS,
+	OUTCOMES_WINDOW_DAYS,
 } from '../api/_lib/x-content/outcomes.js';
 import { loadLifts, scoreItem } from '../api/_lib/x-content/priority.js';
 import { runTick } from '../api/_lib/x-content/runner.js';
@@ -273,6 +276,57 @@ describe('collectOutcomes', () => {
 		expect(outcomesAreStale(null, NOW)).toBe(true);
 		expect(outcomesAreStale({ fetchedAt: new Date(NOW - (OUTCOMES_REFRESH_HOURS + 1) * HOUR).toISOString() }, NOW)).toBe(true);
 		expect(outcomesAreStale({ fetchedAt: new Date(NOW - (OUTCOMES_REFRESH_HOURS - 1) * HOUR).toISOString() }, NOW)).toBe(false);
+	});
+});
+
+describe('incremental refresh', () => {
+	const stored = (fetchedDaysAgo, posts) => ({ fetchedAt: daysAgo(fetchedDaysAgo), posts });
+
+	it('reads the whole window the first time and after a long gap', () => {
+		expect(readDaysFor(null, { now: NOW })).toBe(OUTCOMES_WINDOW_DAYS);
+		expect(readDaysFor({ fetchedAt: null, posts: [] }, { now: NOW })).toBe(OUTCOMES_WINDOW_DAYS);
+		expect(readDaysFor(stored(1, []), { now: NOW })).toBe(OUTCOMES_WINDOW_DAYS);
+		expect(readDaysFor(stored(200, [row()]), { now: NOW })).toBe(OUTCOMES_WINDOW_DAYS);
+	});
+
+	it('otherwise reads back only as far as metrics can still move', () => {
+		expect(readDaysFor(stored(0.25, [row()]), { now: NOW })).toBeCloseTo(0.25 + OUTCOMES_SETTLE_DAYS);
+		expect(readDaysFor(stored(2, [row()]), { now: NOW })).toBeCloseTo(2 + OUTCOMES_SETTLE_DAYS);
+	});
+
+	it('keeps settled rows, takes moving rows from the read, and drops what was deleted or left the window', async () => {
+		const settled = row({ id: 's1', at: daysAgo(30), likes: 90 });
+		const outOfWindow = row({ id: 'old', at: daysAgo(OUTCOMES_WINDOW_DAYS + 5) });
+		const deleted = row({ id: 'gone', at: daysAgo(2) });
+		const remeasured = row({ id: '300', at: daysAgo(3), likes: 1 });
+		const calls = [];
+		const client = {
+			async me() {
+				return { data: { id: '42' } };
+			},
+			async userTimeline(id, options) {
+				calls.push(options.start_time);
+				return {
+					includes: { media: [] },
+					async *[Symbol.asyncIterator]() {
+						yield tweet('300', 'A post whose likes are still arriving', { created_at: daysAgo(3), public_metrics: metrics(40) });
+					},
+				};
+			},
+		};
+		const previous = stored(0.25, [remeasured, deleted, settled, outOfWindow]);
+		const outcomes = await collectOutcomes({ client, now: NOW, previous });
+
+		expect(outcomes.readDays).toBeCloseTo(0.25 + OUTCOMES_SETTLE_DAYS, 1);
+		expect(Date.parse(calls[0])).toBeGreaterThan(NOW - (OUTCOMES_SETTLE_DAYS + 1) * DAY);
+		expect(outcomes.posts.map((post) => post.id)).toEqual(['300', 's1']);
+		expect(outcomes.posts[0].likes).toBe(40);
+	});
+
+	it('paces a failed read like a read, so a refusal is not repeated every tick', () => {
+		const failed = { fetchedAt: daysAgo(2), attemptedAt: new Date(NOW - HOUR).toISOString(), posts: [] };
+		expect(outcomesAreStale(failed, NOW)).toBe(false);
+		expect(outcomesAreStale(failed, NOW + OUTCOMES_REFRESH_HOURS * HOUR)).toBe(true);
 	});
 });
 
@@ -543,7 +597,7 @@ describe('runTick and the outcomes loop', () => {
 		expect(result.published.slot).toBe('2026-09-17#1');
 		expect(events).toEqual(['tweet', 'collect after rigged']);
 		expect(collect).toHaveBeenCalledTimes(1);
-		expect(collect.mock.calls[0][0]).toMatchObject({ client, now: NOW });
+		expect(collect.mock.calls[0][0]).toMatchObject({ client, now: NOW, previous: await stale().load() });
 		expect(result.outcomes).toEqual({ refreshed: true, sample: 25 });
 		expect(await outcomes.load()).toEqual(fresh);
 	});
@@ -576,7 +630,11 @@ describe('runTick and the outcomes loop', () => {
 			expect(result.outcomes).toEqual({ refreshed: false, sample: 24 });
 			expect((await store.load()).published.map((entry) => entry.id)).toEqual(['rigged']);
 			expect(warn).toHaveBeenCalledWith('[x-content] outcomes refresh failed', 'Too Many Requests');
-			expect((await outcomes.load()).posts).toHaveLength(24);
+			const after = await outcomes.load();
+			expect(after.posts).toHaveLength(24);
+			expect(after.attemptedAt).toBe(new Date(NOW).toISOString());
+			expect(after.attemptError).toBe('Too Many Requests');
+			expect(outcomesAreStale(after, NOW + HOUR)).toBe(false);
 		} finally {
 			warn.mockRestore();
 		}

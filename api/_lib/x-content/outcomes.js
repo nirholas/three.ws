@@ -33,6 +33,12 @@ export const OUTCOMES_WINDOW_DAYS = 90;
 export const OUTCOMES_LIMIT = 800;
 // A stored record older than this is read again on the next publishing tick.
 export const OUTCOMES_REFRESH_HOURS = 6;
+// X bills every post a read returns, so a refresh only reads back as far as
+// metrics can still be moving. A post's likes and bookmarks settle within a few
+// days, so anything older than this is kept from the stored record instead of
+// being read, and paid for, again. The first read, or one after a long gap,
+// still reads the whole window.
+export const OUTCOMES_SETTLE_DAYS = 7;
 // X answers 503 on a timeline page often enough that one failed page should not
 // cost the whole read. The wait grows with each try.
 export const READ_ATTEMPTS = 3;
@@ -273,6 +279,15 @@ const isTransient = (err) => Number(err?.code ?? err?.status) >= 500;
 
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
+// How far back this refresh has to read: the whole window the first time, and
+// otherwise only from just before the last read, less the days a post's
+// metrics can still move.
+export function readDaysFor(previous, { now = Date.now(), days = OUTCOMES_WINDOW_DAYS, settleDays = OUTCOMES_SETTLE_DAYS } = {}) {
+	const fetched = Date.parse(previous?.fetchedAt || '');
+	if (!previous?.posts?.length || !Number.isFinite(fetched) || fetched > now) return days;
+	return Math.min(days, (now - fetched) / DAY + settleDays);
+}
+
 export async function collectOutcomes({
 	client,
 	ledger = null,
@@ -281,13 +296,16 @@ export async function collectOutcomes({
 	limit = OUTCOMES_LIMIT,
 	attempts = READ_ATTEMPTS,
 	retryDelayMs = READ_RETRY_MS,
+	previous = null,
+	settleDays = OUTCOMES_SETTLE_DAYS,
 }) {
+	const readDays = readDaysFor(previous, { now, days, settleDays });
 	// A read that fails part way is started again from the top: half a timeline
 	// would measure the recent posts against nothing.
 	let read = null;
 	for (let attempt = 1; !read; attempt++) {
 		try {
-			read = await readTimeline({ client, now, days, limit });
+			read = await readTimeline({ client, now, days: readDays, limit });
 		} catch (err) {
 			if (attempt >= attempts || !isTransient(err)) throw err;
 			await wait(retryDelayMs * attempt);
@@ -316,15 +334,28 @@ export async function collectOutcomes({
 		for (const id of [leadPostId(row), ...(row.postIds || [])]) if (id) pipelineById.set(String(id), row);
 	}
 
+	const fresh = heads.map((tweet) => describePost(tweet, { mediaByKey, threadSizes, pipelineById }));
+	// Settled rows come from the stored record. A stored row inside the window
+	// just read that the read did not return was deleted, so it is dropped.
+	const readFrom = now - readDays * DAY;
+	const windowFrom = now - days * DAY;
+	const kept = (previous?.posts || []).filter((row) => {
+		const at = Date.parse(row.at);
+		return at >= windowFrom && at < readFrom;
+	});
 	return {
 		fetchedAt: new Date(now).toISOString(),
-		posts: heads.map((tweet) => describePost(tweet, { mediaByKey, threadSizes, pipelineById })),
+		readDays: Math.round(readDays * 10) / 10,
+		posts: [...fresh, ...kept].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)),
 	};
 }
 
+// A failed read counts as a read for pacing: retrying every fifteen minutes
+// would only repeat the refusal (a 402 stays a 402 until the account is topped
+// up) and log it each time.
 export function outcomesAreStale(outcomes, now = Date.now(), hours = OUTCOMES_REFRESH_HOURS) {
-	const fetched = Date.parse(outcomes?.fetchedAt || '');
-	return !Number.isFinite(fetched) || now - fetched > hours * HOUR;
+	const last = Math.max(Date.parse(outcomes?.fetchedAt || '') || 0, Date.parse(outcomes?.attemptedAt || '') || 0);
+	return !last || now - last > hours * HOUR;
 }
 
 // ── Learning ────────────────────────────────────────────────────────────────
