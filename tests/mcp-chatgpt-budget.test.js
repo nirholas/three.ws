@@ -83,16 +83,29 @@ describe('gpt-forge client deadline', () => {
 		expect(Date.now() - started).toBeLessThan(1_500);
 	});
 
-	it('startForge does not spend a second submit once the budget is gone', async () => {
+	it('startForge hands back its submit ticket, not a second submit, once the budget is gone', async () => {
 		const { startForge } = await vi.importActual('../api/_mcp-studio/gpt-forge-client.js');
+		const { TICKET_HEADER, ticketHandle } = await vi.importActual('../api/_lib/forge-submit-ticket.js');
 		const timeout = Object.assign(new Error('timed out'), { name: 'TimeoutError' });
 		globalThis.fetch = vi.fn(async () => {
 			throw timeout;
 		});
-		await expect(
-			startForge('https://three.ws', { prompt: 'a lamp', tier: 'standard' }, { deadline: Date.now() + 1_000 }),
-		).rejects.toMatchObject({ code: 'timeout' });
+		const out = await startForge('https://three.ws', { prompt: 'a lamp', tier: 'standard' }, { deadline: Date.now() + 1_000 });
 		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		const sent = globalThis.fetch.mock.calls[0][1].headers[TICKET_HEADER];
+		expect(sent).toBeTruthy();
+		expect(out).toEqual({ status: 'submitting', job_id: ticketHandle(sent) });
+	});
+
+	it('startForge still reports a timeout when the call was not bounded, so no ticket was sent', async () => {
+		const { startForge } = await vi.importActual('../api/_mcp-studio/gpt-forge-client.js');
+		const { TICKET_HEADER } = await vi.importActual('../api/_lib/forge-submit-ticket.js');
+		const timeout = Object.assign(new Error('timed out'), { name: 'TimeoutError' });
+		globalThis.fetch = vi.fn(async () => {
+			throw timeout;
+		});
+		await expect(startForge('https://three.ws', { prompt: 'a lamp', tier: 'standard' })).rejects.toMatchObject({ code: 'timeout' });
+		expect(globalThis.fetch.mock.calls[0][1].headers[TICKET_HEADER]).toBeUndefined();
 	});
 });
 
