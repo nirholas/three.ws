@@ -18,8 +18,16 @@ export const esc = (s) =>
 export function fmtUsd(n) {
 	if (!(Number(n) > 0)) return '$0';
 	const v = Number(n);
-	if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
-	return `$${v.toFixed(v < 10 ? 2 : 0)}`;
+	const cents = Number(v.toFixed(2));
+	if (cents < 10) return `$${cents.toFixed(2)}`;
+
+	const whole = Math.round(v);
+	if (whole < 1000) return `$${whole}`;
+
+	const thousands = Number((v / 1000).toFixed(1));
+	if (thousands < 1000) return `$${thousands.toFixed(1)}k`;
+
+	return `$${(v / 1_000_000).toFixed(1)}M`;
 }
 
 export function fmtSol(n) {
@@ -37,8 +45,19 @@ export function fmtNum(n) {
 export function fmtThree(n) {
 	const v = Number(n) || 0;
 	if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
-	if (v >= 1000) return `${(v / 1000).toFixed(1)}k`;
-	if (v >= 100) return String(Math.round(v));
+
+	if (v >= 1000) {
+		const thousands = Number((v / 1000).toFixed(1));
+		if (thousands >= 1000) return `${(v / 1_000_000).toFixed(2)}M`;
+		return `${thousands.toFixed(1)}k`;
+	}
+
+	if (v >= 100) {
+		const whole = Math.round(v);
+		if (whole >= 1000) return `${(v / 1000).toFixed(1)}k`;
+		return String(whole);
+	}
+
 	return v.toFixed(v < 1 ? 3 : 1).replace(/\.0$/, '');
 }
 

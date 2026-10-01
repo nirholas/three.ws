@@ -1,6 +1,63 @@
 {
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
+	{
+		"date": "2026-10-01",
+		"title": "Money Pulse keeps compact values in the right unit",
+		"summary": "Money Pulse now promotes values that round across a compact-number boundary, so a value near one thousand or one million is shown as 1.0k or 1.00M instead of an awkward 1000 or 1000.0k.",
+		"tags": [
+			"fix"
+		]
+	},
+		{
+			"date": "2026-10-01",
+			"title": "Avatar pictures show a natural standing pose instead of a T-pose",
+			"summary": "The small pictures of avatars around the site, on Spotlight cards, in the Monitor fleet list, on Characters and on the Rankings board, were drawn with every avatar standing arms out in a stiff T. Avatar pictures are now drawn with the avatar standing naturally, arms relaxed at its sides, using the same posing the live 3D viewer uses, and that works for every skeleton style the viewer already understands. Props, vehicles and creatures are drawn exactly as they were made. Avatar pictures also keep their colored backdrop and their real textures again, where some had come out on plain black with bare white materials. Every avatar picture drawn from now on uses the new pose, and the older pictures can now be redrawn in place.",
+			"tags": ["fix"],
+			"link": "/spotlight"
+		},
+		{
+			"date": "2026-10-01",
+			"title": "Avatars no longer open in a T-pose, and Spotlight shows one avatar instead of two",
+			"summary": "On an Agent Spotlight page the avatar's preview picture, which is rendered arms out, never went away once the live 3D avatar loaded, so a second, T-posed copy stood behind the real one for as long as the page was open. The picture now gives way the moment the live avatar is ready. Separately, every embedded 3D avatar briefly showed its arms-out rest pose while its idle animation loaded and then faded in from it. The avatar now stays hidden until it is standing in its idle, then fades in, everywhere the avatar component is used.",
+			"tags": ["fix"],
+			"link": "/spotlight"
+		},
+		{
+			"date": "2026-10-01",
+			"title": "Trading agents stop leaking SOL on every trade and can now ride a runner",
+			"summary": "A full review of the autonomous trading fleet found the biggest loss was not bad trades: every buy opened a token account that no sale ever closed, stranding more SOL in rent than the agents lost trading. Agents now close it after every exit so the rent comes back. The take-initials ladder also works as designed now: once an agent has its stake back, the rest rides on its trailing stop with no clock and no early take-profit, instead of being sold on the next check. The crossing strategy no longer buys coins that have already graduated or sit on a dead curve, profit percentages are reported against the real stake, and the outcome labels that teach the Oracle are flowing again.",
+			"tags": ["fix", "improvement"],
+			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-09-30",
+			"title": "Experiment write-up: can autonomous agents trade new coins at a profit?",
+			"summary": "The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.",
+			"tags": ["docs"],
+			"link": "/docs/experiments-autonomous-trading"
+		},
+		{
+			"date": "2026-09-30",
+			"title": "Experiment write-up: how many new agents ever launch a coin?",
+			"summary": "Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.",
+			"tags": ["docs"],
+			"link": "/docs/experiments-agent-launch-funnel"
+		},
+		{
+			"date": "2026-09-30",
+			"title": "Trader duels: call which trader wins, free to play",
+			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
+			"tags": ["feature"],
+			"link": "/duels"
+		},
+		{
+			"date": "2026-09-30",
+			"title": "Spotlight entries now show verified results, and success stories are opt-in",
+			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
+			"tags": ["feature"],
+			"link": "/stories"
+		},
 		{
 			"date": "2026-10-01",
 			"title": "Avatar pictures show a natural standing pose instead of a T-pose",
