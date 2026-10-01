@@ -5,34 +5,245 @@
 	"tier": 2,
 	"lane": "community",
 	"pattern": "walkthrough",
-	"notBefore": "2026-10-01T00:00:00Z",
-	"covers": ["/voice", "api/tts/catalog", "api/tts/synthesize"],
+	"notBefore": "2026-10-02T00:00:00Z",
+	"covers": [
+		"/voice",
+		"/api/tts/catalog",
+		"/api/tts/synthesize"
+	],
 	"scenario": {
 		"format": "square",
 		"steps": [
-			{ "goto": "https://three.ws/voice", "settle": 7000, "caption": "Voice Lab: every voice your agent can speak in, one grid" },
-			{ "scroll": "Browse voices", "ms": 900 },
-			{ "read": "voices", "match": "(\\d+) voices across \\d+ providers" },
-			{ "read": "providers", "match": "\\d+ voices across (\\d+) providers" },
-			{ "hold": 2200 },
-			{ "type": "warm", "into": "Search by name, accent, or use case...", "caption": "Search by name, accent or use case" },
-			{ "wait": 1200 },
-			{ "read": "matches", "match": "(\\d+) voices across \\d+ providers" },
-			{ "hold": 1800 },
-			{ "click": "Use this voice", "caption": "Pick one and it drops into the playground" },
-			{ "hold": 1600 },
-			{ "click": "Speak", "awaits": "/api/tts/synthesize", "caption": "Type anything and it is spoken. Free lane, no account." },
-			{ "expect": "free lane" },
-			{ "hold": 3500 }
+			{
+				"goto": "https://three.ws/voice",
+				"settle": 7000,
+				"caption": "One grid of voices for your agent"
+			},
+			{
+				"scroll": "Browse voices",
+				"ms": 900
+			},
+			{
+				"read": "voices",
+				"match": "(\\d+) voices across \\d+ providers"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"type": "en-GB",
+				"into": "Search by name, accent, or use case...",
+				"caption": "Search by name, accent or use case"
+			},
+			{
+				"wait": 1200
+			},
+			{
+				"read": "matches",
+				"match": "(\\d+) voices? across \\d+ providers"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"click": "Use this voice",
+				"caption": "Pick one and it drops into the playground"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"click": "Speak",
+				"awaits": "/api/tts/synthesize",
+				"caption": "Type a line. It speaks, no sign-in."
+			},
+			{
+				"expect": "KB ·"
+			},
+			{
+				"hold": 3800
+			}
 		]
 	},
 	"probes": [
-		{ "type": "scenario" }
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the catalog still offers more than 300 voices, as the post says",
+			"url": "https://three.ws/api/tts/catalog?limit=1",
+			"expect": {
+				"json": {
+					"path": "total",
+					"min": 300
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "a free voice still speaks for a signed-out visitor",
+			"url": "https://three.ws/api/tts/catalog?limit=1",
+			"expect": {
+				"contains": "\"anonymous\":true"
+			}
+		}
 	],
 	"posts": [
-		{ "text": "placeholder head" },
-		{ "text": "placeholder reply" }
+		{
+			"text": "Your agent can speak in more than 300 voices, and three.ws/voice lets you hear them before you pick one, without signing in.\n\nThey sit in one grid you search by name, accent or use case: en-GB leaves 5. Press Use this voice, type a line, press Speak, and the playground reads it back. The Microsoft Edge and NVIDIA Magpie voices are free and need no account.",
+			"media": [
+				{
+					"path": "public/x-media/voice-lab/reel.mp4",
+					"probe": {
+						"durationSec": 12.57,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis.\n\nTo use your own voice instead, record 20 to 30 seconds on the same page and clone it. Cloning runs on ElevenLabs, on credits or your own key. Either way the voice works across your avatars and agents."
+		}
 	],
-	"claims": [],
+	"claims": [
+		{
+			"says": "more than 300 voices",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "voices",
+					"min": 300
+				}
+			]
+		},
+		{
+			"says": "lets you hear them before you pick one, without signing in",
+			"evidence": [
+				{
+					"type": "proof",
+					"responded": "/api/tts/synthesize"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "No key, no account, works signed out."
+				}
+			]
+		},
+		{
+			"says": "one grid you search by name, accent or use case",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/voice.html",
+					"contains": "placeholder=\"Search by name, accent, or use case...\""
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Browse every ready-made voice across five providers in one grid"
+				}
+			]
+		},
+		{
+			"says": "en-GB leaves 5",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "matches",
+					"equals": "5"
+				}
+			]
+		},
+		{
+			"says": "Press Use this voice, type a line, press Speak, and the playground reads it back",
+			"evidence": [
+				{
+					"type": "proof",
+					"responded": "/api/tts/synthesize"
+				},
+				{
+					"type": "proof",
+					"saw": "KB ·"
+				}
+			]
+		},
+		{
+			"says": "The Microsoft Edge and NVIDIA Magpie voices are free and need no account",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "\"label\":\"Microsoft Edge\",\"tagline\":\"Free"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "\"label\":\"NVIDIA Magpie\",\"tagline\":\"Free"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "| NVIDIA Magpie | 11 personas | Free |"
+				}
+			]
+		},
+		{
+			"says": "Each clip is cached against the whole request (voice, text and speed), so a line asked for twice is served from storage with no new synthesis",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Every clip is cached in R2 keyed on a hash of the full request"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "an identical request is served from storage with no upstream call and no charge"
+				}
+			]
+		},
+		{
+			"says": "record 20 to 30 seconds on the same page and clone it",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/voice",
+					"contains": "record 20-30 seconds of clear speech and clone your own"
+				}
+			]
+		},
+		{
+			"says": "Cloning runs on ElevenLabs, on credits or your own key",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "Credits or your own key · full library · voice cloning"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "The only lane that can clone your voice."
+				}
+			]
+		},
+		{
+			"says": "the voice works across your avatars and agents",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/voice",
+					"contains": "Either way it works across your avatars and agents."
+				}
+			]
+		}
+	],
 	"mentions": {}
 }

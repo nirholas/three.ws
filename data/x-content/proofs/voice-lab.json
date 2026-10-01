@@ -1,12 +1,12 @@
 {
 	"id": "voice-lab",
-	"scenarioHash": "b2bcd1f704e821de5dba1dc5b342e82b6a027543e141d82abb1e3a7c8423f54f",
-	"ranAt": "2026-09-30T08:36:17.110Z",
+	"scenarioHash": "c6f433ae17ecc0b2eb49a5084cb2cebd7af3caba6919e567e3ed4830fa3d52bd",
+	"ranAt": "2026-10-01T06:26:32.438Z",
 	"target": {
-		"commit": "07a1ab3b5",
-		"revision": "three-ws-api-00468-qbr"
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
 	},
-	"passed": false,
+	"passed": true,
 	"steps": [
 		{
 			"index": 1,
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/voice",
 			"detail": "loaded https://three.ws/voice",
 			"ok": true,
-			"ms": 8499,
+			"ms": 8333,
 			"frames": 0
 		},
 		{
@@ -23,8 +23,8 @@
 			"target": "Browse voices",
 			"detail": "scrolled 639 px",
 			"ok": true,
-			"ms": 1775,
-			"frames": 0
+			"ms": 5582,
+			"frames": 27
 		},
 		{
 			"index": 3,
@@ -32,98 +32,126 @@
 			"target": "voices",
 			"detail": "voices = \"357\"",
 			"ok": true,
-			"ms": 17,
+			"ms": 7,
 			"frames": 0
 		},
 		{
 			"index": 4,
-			"kind": "read",
-			"target": "providers",
-			"detail": "providers = \"3\"",
-			"ok": true,
-			"ms": 13,
-			"frames": 0
-		},
-		{
-			"index": 5,
 			"kind": "hold",
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 2038,
-			"frames": 0
+			"ms": 11866,
+			"frames": 66
+		},
+		{
+			"index": 5,
+			"kind": "type",
+			"target": "en-GB",
+			"detail": "typed 5 characters",
+			"ok": true,
+			"ms": 5095,
+			"frames": 26
 		},
 		{
 			"index": 6,
-			"kind": "type",
-			"target": "warm",
-			"detail": "typed 4 characters",
-			"ok": true,
-			"ms": 1491,
-			"frames": 0
-		},
-		{
-			"index": 7,
 			"kind": "wait",
 			"target": "1200",
 			"detail": "1200 ms, not filmed",
 			"ok": true,
-			"ms": 1223,
+			"ms": 1237,
 			"frames": 0
 		},
 		{
-			"index": 8,
+			"index": 7,
 			"kind": "read",
 			"target": "matches",
 			"detail": "matches = \"5\"",
 			"ok": true,
-			"ms": 10,
+			"ms": 6,
 			"frames": 0
 		},
 		{
-			"index": 9,
+			"index": 8,
 			"kind": "hold",
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 882,
-			"frames": 0
+			"ms": 9478,
+			"frames": 54
 		},
 		{
-			"index": 10,
+			"index": 9,
 			"kind": "click",
 			"target": "Use this voice",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 1369,
-			"frames": 0
+			"ms": 3988,
+			"frames": 21
 		},
 		{
-			"index": 11,
+			"index": 10,
 			"kind": "hold",
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 863,
-			"frames": 0
+			"ms": 8078,
+			"frames": 48
+		},
+		{
+			"index": 11,
+			"kind": "click",
+			"target": "Speak",
+			"detail": "clicked; POST /api/tts/synthesize answered 200 in 0.6 s",
+			"ok": true,
+			"ms": 4722,
+			"frames": 21
 		},
 		{
 			"index": 12,
-			"kind": "click",
-			"target": "Speak",
-			"ok": false,
-			"detail": "POST /api/tts/synthesize answered HTTP 502",
-			"ms": 3886,
+			"kind": "expect",
+			"target": "KB ·",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 36,
 			"frames": 0
+		},
+		{
+			"index": 13,
+			"kind": "hold",
+			"target": "3800",
+			"detail": "3800 ms",
+			"ok": true,
+			"ms": 20294,
+			"frames": 114
 		}
 	],
 	"facts": {
 		"voices": "357",
-		"providers": "3",
 		"matches": "5"
 	},
-	"saw": [],
-	"responses": [],
+	"saw": [
+		"KB ·"
+	],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/tts/synthesize",
+			"status": 200,
+			"seconds": 0.6
+		}
+	],
 	"cuts": [],
-	"video": null
+	"video": {
+		"path": "public/x-media/voice-lab/reel.mp4",
+		"sha256": "3191c26482410d33088c10cb823aa8da5edbb44ac067ab81f5490f626cc5f05b",
+		"frames": 377,
+		"motion": 0.287,
+		"durationSec": 12.57,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
 }

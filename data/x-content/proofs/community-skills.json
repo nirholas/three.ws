@@ -1,0 +1,167 @@
+{
+	"id": "community-skills",
+	"scenarioHash": "818a52cbff18e839304b50f5f51308da667dc48e19973ab01440913840118214",
+	"ranAt": "2026-10-01T06:24:07.488Z",
+	"target": {
+		"commit": "636265f41",
+		"revision": "three-ws-api-00470-2lr"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/skills/community",
+			"detail": "loaded https://three.ws/skills/community",
+			"ok": true,
+			"ms": 7165,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "skills",
+			"detail": "skills = \"12\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "scripts",
+			"detail": "scripts = \"5\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 12279,
+			"frames": 66
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "Browse the registry",
+			"detail": "scrolled 442 px",
+			"ok": true,
+			"ms": 5978,
+			"frames": 30
+		},
+		{
+			"index": 6,
+			"kind": "type",
+			"target": "risk",
+			"detail": "typed 4 characters",
+			"ok": true,
+			"ms": 5463,
+			"frames": 24
+		},
+		{
+			"index": 7,
+			"kind": "expect",
+			"target": "Risk Manager",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 60,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "scroll",
+			"target": "320",
+			"detail": "scrolled 320 px",
+			"ok": true,
+			"ms": 4895,
+			"frames": 21
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "1300",
+			"detail": "1300 ms",
+			"ok": true,
+			"ms": 10707,
+			"frames": 39
+		},
+		{
+			"index": 10,
+			"kind": "click",
+			"target": "Preview Risk Manager",
+			"detail": "clicked; GET /api/skills/community/risk-manager answered 200 in 0 s",
+			"ok": true,
+			"ms": 7942,
+			"frames": 21
+		},
+		{
+			"index": 11,
+			"kind": "expect",
+			"target": "RISK CHECK",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 69,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 24072,
+			"frames": 66
+		},
+		{
+			"index": 13,
+			"kind": "scroll",
+			"target": "The rules",
+			"detail": "scrolled 1004 px",
+			"ok": true,
+			"ms": 14736,
+			"frames": 42
+		},
+		{
+			"index": 14,
+			"kind": "hold",
+			"target": "3500",
+			"detail": "3500 ms",
+			"ok": true,
+			"ms": 38687,
+			"frames": 105
+		}
+	],
+	"facts": {
+		"skills": "12",
+		"scripts": "5"
+	},
+	"saw": [
+		"Risk Manager",
+		"RISK CHECK"
+	],
+	"responses": [
+		{
+			"method": "GET",
+			"path": "/api/skills/community/risk-manager",
+			"status": 200,
+			"seconds": 0
+		}
+	],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/community-skills/reel.mp4",
+		"sha256": "dee0cd0775b21a95885ef9283d465668833ac6de039319c7c1e95281c8076088",
+		"frames": 414,
+		"motion": 0.3,
+		"durationSec": 13.8,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

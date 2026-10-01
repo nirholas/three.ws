@@ -1,0 +1,263 @@
+{
+	"id": "community-skills",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-02T00:00:00Z",
+	"covers": [
+		"/skills/community"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/skills/community",
+				"settle": 6000,
+				"caption": "One markdown file teaches an agent a job"
+			},
+			{
+				"read": "skills",
+				"match": "skills\\s+(\\d+)\\s+tags"
+			},
+			{
+				"read": "scripts",
+				"match": "with runnable scripts\\s+(\\d+)"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": "Browse the registry",
+				"ms": 1000,
+				"caption": "Every skill is reviewed like code"
+			},
+			{
+				"type": "risk",
+				"into": "Search skills, tags, authors…",
+				"caption": "Search by what the agent should do"
+			},
+			{
+				"expect": "Risk Manager"
+			},
+			{
+				"scroll": 320,
+				"ms": 700
+			},
+			{
+				"hold": 1300
+			},
+			{
+				"click": "Preview Risk Manager",
+				"awaits": "/api/skills/community/risk-manager",
+				"caption": "Read the whole file before you import it"
+			},
+			{
+				"expect": "RISK CHECK"
+			},
+			{
+				"hold": 2200
+			},
+			{
+				"scroll": "The rules",
+				"ms": 1400,
+				"caption": "1% risk per trade, a stop on every one"
+			},
+			{
+				"hold": 3500
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the risk desk skill the reel opens is still in the registry",
+			"url": "https://three.ws/api/skills/community/risk-manager",
+			"expect": {
+				"json": {
+					"path": "skill.slug",
+					"equals": "risk-manager"
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "An agent learns a new job from one markdown file. Import a community skill onto your agent and it follows that file from its next reply.\n\nThe one in the reel is a risk desk. Every reply to a trade request opens with a risk check: the position sized from its stop at 1% of the portfolio, the loss if the stop is hit, and a verdict to go ahead, reduce the size, or not trade at all. It does not skip the check because the user is in a hurry.",
+			"media": [
+				{
+					"path": "public/x-media/community-skills/reel.mp4",
+					"probe": {
+						"durationSec": 13.8,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Anyone can contribute a skill by pull request, and every one is reviewed like code. Search the registry and open any skill to read the whole file before it touches your agent.\n\nthree.ws/skills/community"
+		},
+		{
+			"text": "Others in the registry run diligence before any buy and end in a verdict of pass, caution or fail, or draft an agent's posts about its own trades with losses shown alongside wins.\n\nSome carry a script beside the instructions, like the position-size calculator that ships with the risk desk."
+		}
+	],
+	"claims": [
+		{
+			"says": "one markdown file",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "A skill is one markdown file of instructions"
+				}
+			]
+		},
+		{
+			"says": "it follows that file from its next reply",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "the agent follows it from its next reply"
+				}
+			]
+		},
+		{
+			"says": "Every reply to a trade request opens with a risk check",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "community-skills/skills/risk-manager/SKILL.md",
+					"contains": "Every reply to a trade request"
+				},
+				{
+					"type": "proof",
+					"saw": "RISK CHECK"
+				}
+			]
+		},
+		{
+			"says": "the position sized from its stop at 1% of the portfolio",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "sizes every position from its stop at 1% portfolio risk"
+				}
+			]
+		},
+		{
+			"says": "the loss if the stop is hit",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "community-skills/skills/risk-manager/SKILL.md",
+					"contains": "Max loss at stop"
+				}
+			]
+		},
+		{
+			"says": "a verdict to go ahead, reduce the size, or not trade at all",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "a GO, REDUCE or NO-GO verdict"
+				}
+			]
+		},
+		{
+			"says": "It does not skip the check because the user is in a hurry",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "community-skills/skills/risk-manager/SKILL.md",
+					"contains": "You never skip the check because the user is excited, in a hurry"
+				}
+			]
+		},
+		{
+			"says": "Anyone can contribute a skill by pull request",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "Anyone can contribute one by pull request"
+				}
+			]
+		},
+		{
+			"says": "every one is reviewed like code",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "every skill is reviewed like code"
+				}
+			]
+		},
+		{
+			"says": "open any skill to read the whole file",
+			"evidence": [
+				{
+					"type": "proof",
+					"responded": "/api/skills/community/risk-manager"
+				},
+				{
+					"type": "proof",
+					"saw": "RISK CHECK"
+				}
+			]
+		},
+		{
+			"says": "end in a verdict of pass, caution or fail",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "ending in a PASS, CAUTION or FAIL verdict"
+				}
+			]
+		},
+		{
+			"says": "losses shown alongside wins",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "losses shown alongside wins"
+				}
+			]
+		},
+		{
+			"says": "Some carry a script beside the instructions",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/skills/community",
+					"contains": "with runnable scripts"
+				}
+			]
+		},
+		{
+			"says": "the position-size calculator that ships with the risk desk",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "community-skills/skills/risk-manager/SKILL.md",
+					"contains": "The bundled calculator applies rules 1, 3 and 5"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}
