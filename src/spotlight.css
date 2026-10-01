@@ -309,11 +309,22 @@
 	height: 100%;
 	min-height: 320px;
 	display: block;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--duration-base, 240ms) var(--ease-out, ease-out);
 }
 
-/* The still sits under the 3D viewer and is removed only once that viewer has
-   painted. A GLB that never loads therefore degrades to the avatar image
-   instead of an empty hero. */
+.sp-stage agent-3d.is-ready {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* The still sits under the 3D viewer and is removed only once that viewer
+   reports agent:ready, which is also when the viewer itself is shown. A GLB
+   that never loads therefore degrades to the avatar image instead of an empty
+   hero. The still leaves in one frame rather than fading: it is a bind-pose
+   render framed differently from the live viewer, so any overlap between the
+   two reads as a ghost of the avatar, arms out, behind the real one. */
 .sp-stage-still,
 .sp-stage .sp-mono {
 	position: absolute;
@@ -321,7 +332,6 @@
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	transition: opacity var(--duration-slow, var(--duration-slow)) var(--ease-out);
 }
 
 .sp-stage-still.is-hidden,

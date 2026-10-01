@@ -195,7 +195,12 @@ const BASE_STYLE = `
 		inset: 0;
 		width: 100%;
 		height: 100%;
+		transition: opacity 220ms ease-out;
 	}
+	/* Held while a freshly loaded body has no pose yet. The renderer paints the
+	   rig the moment the GLB lands, which is its bind pose (a T-pose), and the
+	   idle clip only takes over after it is fetched and retargeted. */
+	.stage.is-settling { opacity: 0; transition: none; }
 	.stage canvas { display: block; }
 	/* Pill tap target — shown when collapsed to pill on narrow viewports */
 	.pill-btn {
@@ -1629,6 +1634,9 @@ class Agent3DElement extends HTMLElement {
 			// Bare avatars run the viewer in kiosk mode: GUI closed, camera snapped
 			// (no fly-in), and a lower DPR cap — the right profile for a lightweight
 			// decoration avatar. Chat agents get the full interactive viewer.
+			// The stage stays hidden until the body holds its first pose; see
+			// _startInitialPlayback.
+			this._stageEl.classList.add('is-settling');
 			const viewer = new Viewer(this._stageEl, {
 				kiosk: !this._isChatMode(),
 				framing: this.getAttribute('framing') === 'portrait' ? 'portrait' : 'full',
@@ -1731,13 +1739,8 @@ class Agent3DElement extends HTMLElement {
 			// reached this line threw "bodyURI is not defined" and the element
 			// showed its error overlay instead of the avatar. eslint knew (no-undef),
 			// but it was a warning, so nothing stopped it shipping.
-			if (bodyCandidates.length) {
-				if (this._isChatMode()) {
-					this._scene.playClipByName('idle', { loop: true });
-				} else {
-					this._startDecorationPlayback();
-				}
-			}
+			if (bodyCandidates.length) await this._startInitialPlayback();
+			this._stageEl.classList.remove('is-settling');
 
 			// Memory
 			this._emit('agent:load-progress', { phase: 'memory', pct: 0.6 });
@@ -2133,6 +2136,7 @@ class Agent3DElement extends HTMLElement {
 				{ bubbles: true, composed: true },
 			);
 		} finally {
+			this._stageEl?.classList.remove('is-settling');
 			this._booting = false;
 		}
 	}
@@ -3284,16 +3288,44 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	/**
-	 * Start initial playback for a bare/decoration avatar: honor the `clip`
-	 * attribute (default idle), the clip's loop flag, and prefers-reduced-motion.
+	 * The first pose a freshly loaded body takes, held off-screen until it has
+	 * rendered. Nothing is playing yet, so the usual crossfade would blend the
+	 * clip in from the bind pose and every avatar would open on a T-pose with its
+	 * arms swinging down. The clip snaps in instead (fade 0), and the stage is
+	 * revealed two frames later: microtasks (the cached clip's lazy-load await)
+	 * always drain before a frame, the first frame ticks the mixer and paints the
+	 * pose, and the second is composited. A rig that cannot take the clip is
+	 * revealed all the same, on whatever pose the viewer gave it.
+	 *
+	 * @returns {Promise<void>}
 	 */
-	_startDecorationPlayback() {
+	async _startInitialPlayback() {
+		if (this._isChatMode()) {
+			this._scene.playClipByName('idle', { loop: true, fade_ms: 0 });
+		} else {
+			// idle and walk were fetched during the load; a `clip` attribute naming
+			// anything else is fetched here, so the reveal waits for it too.
+			const clip = this.getAttribute('clip');
+			if (clip) await this._viewer?.animationManager?.ensureLoaded(clip);
+			this._startDecorationPlayback({ fade_ms: 0 });
+		}
+		this._viewer?.invalidate();
+		await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+	}
+
+	/**
+	 * Start playback for a bare/decoration avatar: honor the `clip` attribute
+	 * (default idle), the clip's loop flag, and prefers-reduced-motion.
+	 * @param {{ fade_ms?: number }} [opts] fade into the clip; 0 snaps, which is
+	 *   what the first pose after a load needs (see _startInitialPlayback).
+	 */
+	_startDecorationPlayback({ fade_ms = 400 } = {}) {
 		if (!this._scene) return;
 		if (this._prefersReducedMotion()) {
 			this._playStaticIdle();
 			return;
 		}
-		this._playDecorationClip(this.getAttribute('clip') || 'idle', 400);
+		this._playDecorationClip(this.getAttribute('clip') || 'idle', fade_ms);
 	}
 
 	/**
@@ -3311,7 +3343,9 @@ class Agent3DElement extends HTMLElement {
 		if (loops) {
 			this._scene?.playClipByName(name, { loop: true, fade_ms });
 		} else if (am && typeof am.playOnce === 'function') {
-			am.playOnce(name, { settleTo: 'idle', fade: fade_ms / 1000 });
+			// A snapped start (fade_ms 0) still settles back into idle with a
+			// real crossfade rather than a hard cut.
+			am.playOnce(name, { settleTo: 'idle', fade: (fade_ms || 400) / 1000, fadeIn: fade_ms / 1000 });
 		} else {
 			this._scene?.playClipByName(name, { loop: false, fade_ms });
 		}

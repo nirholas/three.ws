@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-01",
+			"title": "Avatars no longer open in a T-pose, and Spotlight shows one avatar instead of two",
+			"summary": "On an Agent Spotlight page the avatar's preview picture, which is rendered arms out, never went away once the live 3D avatar loaded, so a second, T-posed copy stood behind the real one for as long as the page was open. The picture now gives way the moment the live avatar is ready. Separately, every embedded 3D avatar briefly showed its arms-out rest pose while its idle animation loaded and then faded in from it. The avatar now stays hidden until it is standing in its idle, then fades in, everywhere the avatar component is used.",
+			"tags": ["fix"],
+			"link": "/spotlight"
+		},
+		{
+			"date": "2026-10-01",
 			"title": "Trading agents stop leaking SOL on every trade and can now ride a runner",
 			"summary": "A full review of the autonomous trading fleet found the biggest loss was not bad trades: every buy opened a token account that no sale ever closed, stranding more SOL in rent than the agents lost trading. Agents now close it after every exit so the rent comes back. The take-initials ladder also works as designed now: once an agent has its stake back, the rest rides on its trailing stop with no clock and no early take-profit, instead of being sold on the next check. The crossing strategy no longer buys coins that have already graduated or sit on a dead curve, profit percentages are reported against the real stake, and the outcome labels that teach the Oracle are flowing again.",
 			"tags": ["fix", "improvement"],

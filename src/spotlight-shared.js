@@ -83,28 +83,37 @@ function loadAgent3d() {
 	document.head.appendChild(s);
 }
 
-// Hide the still only once <agent-3d> has painted a canvas of its own. There is
-// no documented ready event on the component, and a canvas in the DOM is the one
-// signal that means the model is genuinely on screen. Give up after a bounded
-// wait and leave the still in place, which is the correct outcome when the GLB
-// never arrives.
-function revealWhenPainted(viewer, still) {
-	let settled = false;
-	const painted = () =>
-		Boolean(viewer.querySelector('canvas') || viewer.shadowRoot?.querySelector('canvas'));
-	const done = () => {
-		if (settled) return;
-		settled = true;
-		observer.disconnect();
-		clearTimeout(timer);
-		still.classList.add('is-hidden');
-	};
-	const observer = new MutationObserver(() => {
-		if (painted()) done();
-	});
-	observer.observe(viewer, { childList: true, subtree: true });
-	const timer = setTimeout(() => observer.disconnect(), 15000);
-	if (painted()) done();
+// Swap the still for the viewer only when <agent-3d> reports `agent:ready`, the
+// component's one success signal: the GLB is loaded, framed and holding its
+// idle. Until then the viewer stays transparent (spotlight.css), and at that
+// moment the still goes and the viewer fades in, in the same frame. The still
+// is a bind-pose render and the viewer's canvas is transparent, so any moment
+// both are visible reads as a second, T-posed copy of the avatar standing
+// behind the live one. Watching for a canvas used to be the signal here, but the
+// component draws into its shadow root, which a MutationObserver on the host
+// never sees, so the still stayed up for the life of the page.
+//
+// On `agent:error` the viewer is removed instead, leaving the still as the only
+// thing on the stage: an image of the avatar beats an empty, draggable void.
+// When neither event fires (the loader script never arrived) the still simply
+// stays, which is also the right outcome.
+export function revealWhenReady(viewer, still) {
+	viewer.addEventListener(
+		'agent:ready',
+		() => {
+			still.classList.add('is-hidden');
+			still.setAttribute('aria-hidden', 'true');
+			viewer.classList.add('is-ready');
+		},
+		{ once: true },
+	);
+	viewer.addEventListener(
+		'agent:error',
+		() => {
+			if (!still.classList.contains('is-hidden')) viewer.remove();
+		},
+		{ once: true },
+	);
 }
 
 /**
@@ -142,8 +151,10 @@ export function stageFor(entry, { badge = null, eager = false } = {}) {
 			'camera-controls': 'true',
 			'aria-label': `${entry.agent.name} in 3D`,
 		});
+		// Listeners go on before the element is attached, so a model that is
+		// already cached cannot report ready before anyone is listening.
+		revealWhenReady(viewer, still);
 		stage.append(viewer);
-		revealWhenPainted(viewer, still);
 	};
 
 	if (eager || !('IntersectionObserver' in window)) {

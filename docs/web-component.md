@@ -497,7 +497,7 @@ All events bubble and are `composed: true`, meaning they cross shadow DOM bounda
 
 | Event | Detail | When |
 |-------|--------|------|
-| `agent:ready` | `{ agent, manifest }` | Fully booted — manifest loaded, skills installed, brain connected. |
+| `agent:ready` | `{ agent, manifest }` | Fully booted: manifest loaded, skills installed, brain connected. The body is already on screen holding its first clip (idle, or the `clip` attribute): the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown. This is the event to swap out your own placeholder image on. |
 | `agent:load-progress` | `{ phase, pct }` | Incremental boot progress. `phase` is one of `"manifest"`, `"body"`, `"memory"`, `"skills"`, `"brain"`. `pct` is 0–1. |
 | `agent:error` | `{ phase, error }` | A fatal error occurred during boot or at runtime. |
 

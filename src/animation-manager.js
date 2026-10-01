@@ -676,10 +676,15 @@ export class AnimationManager {
 	 * (`celebrate`, `wave`, …). Lazily loads both the one-shot and the settle clip.
 	 *
 	 * @param {string} name
-	 * @param {{ settleTo?: string|null, fade?: number }} [opts]
+	 * @param {{ settleTo?: string|null, fade?: number, fadeIn?: number }} [opts]
+	 *   `fade` is the settle crossfade back into `settleTo`; `fadeIn` (default
+	 *   `fade`) is the fade into the one-shot itself. A caller starting a freshly
+	 *   loaded body passes `fadeIn: 0`, since fading in from nothing is a fade
+	 *   from the bind pose.
 	 */
-	async playOnce(name, { settleTo = 'idle', fade = DEFAULT_CROSSFADE } = {}) {
+	async playOnce(name, { settleTo = 'idle', fade = DEFAULT_CROSSFADE, fadeIn = fade } = {}) {
 		fade = Math.max(0, Math.min(fade, 5));
+		fadeIn = Math.max(0, Math.min(fadeIn, 5));
 		const ready = await this.ensureLoaded(name);
 		const action = ready ? this.actions.get(name) : null;
 		// Reject a fallen-pose retarget the same way an unavailable clip is handled:
@@ -687,7 +692,7 @@ export class AnimationManager {
 		if (!action || !this._guardAgainstFallenPose(name, action)) {
 			// One-shot unavailable on this rig — fall back to the settle clip so
 			// the avatar is never left frozen in its bind pose.
-			if (settleTo) return this.crossfadeTo(settleTo, fade);
+			if (settleTo) return this.crossfadeTo(settleTo, fadeIn);
 			return;
 		}
 
@@ -698,9 +703,9 @@ export class AnimationManager {
 		action.clampWhenFinished = true;
 		action.play();
 		if (this.currentAction && this.currentAction !== action) {
-			this.currentAction.crossFadeTo(action, fade, true);
+			this.currentAction.crossFadeTo(action, fadeIn, true);
 		} else {
-			action.fadeIn(fade);
+			action.fadeIn(fadeIn);
 		}
 		this.currentAction = action;
 		this.currentName = name;

@@ -128,6 +128,27 @@ describe('AnimationManager.playOnce (one-shot → settle, no hard snap)', () => 
 		expect(crossfadeSpy).not.toHaveBeenCalled();
 	});
 
+	it('snaps a one-shot in with fadeIn 0 but still settles with the full fade', async () => {
+		// A freshly loaded body has nothing playing, so fading in means fading
+		// from the bind pose: <agent-3d> starts its first clip with fadeIn 0.
+		const mgr = seedManager(['celebrate', 'idle']);
+		const celebrate = mgr.actions.get('celebrate');
+		const fadeInSpy = vi.spyOn(celebrate, 'fadeIn');
+		const crossfadeSpy = vi.spyOn(mgr, 'crossfadeTo');
+		await mgr.playOnce('celebrate', { settleTo: 'idle', fade: 0.4, fadeIn: 0 });
+		expect(fadeInSpy).toHaveBeenCalledWith(0);
+
+		mgr.mixer.dispatchEvent({ type: 'finished', action: celebrate });
+		expect(crossfadeSpy).toHaveBeenCalledWith('idle', 0.4);
+	});
+
+	it('snaps straight into the settle clip when a snapped one-shot is unavailable', async () => {
+		const mgr = seedManager(['idle']);
+		const crossfadeSpy = vi.spyOn(mgr, 'crossfadeTo');
+		await mgr.playOnce('celebrate', { settleTo: 'idle', fade: 0.4, fadeIn: 0 });
+		expect(crossfadeSpy).toHaveBeenCalledWith('idle', 0);
+	});
+
 	it('settles into the fallback clip when the one-shot is unavailable on the rig', async () => {
 		const mgr = seedManager(['idle']); // celebrate not loaded / unsupported
 		const crossfadeSpy = vi.spyOn(mgr, 'crossfadeTo');
