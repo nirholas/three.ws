@@ -11,7 +11,8 @@ ever releases posts filmed against the live product
 ([Who approves a post](#who-approves-a-post)).
 
 To write a post, start with [Writing a story](./x-story-authoring.md). An author working one
-product area at a time is handed [the author brief](./x-story-author-brief.md).
+product area at a time is handed [the author brief](./x-story-author-brief.md), and an author
+writing a long-form X Article is handed [the article brief](./x-article-author-brief.md).
 
 ---
 
