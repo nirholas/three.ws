@@ -177,6 +177,7 @@ one with gaps:
 | `AvatarModel.load(source, options)` | Load a GLB into a posable model. |
 | `model.addClips(clips)` | Retarget clips onto this skeleton by bone name. |
 | `model.play(nameOrIndex)` / `model.setTime(s)` | Pose the model. |
+| `model.updateBounds()` | Re-measure the framing bounds after posing the skeleton yourself (bounds are otherwise taken once, in the bind pose). |
 | `renderFrame(model, options)` | One RGBA frame. |
 | `renderFrames(model, options)` | A frame list, with animation and turntable spin. |
 | `frameCamera(bounds, options)` | The camera used for a given focus mode. |

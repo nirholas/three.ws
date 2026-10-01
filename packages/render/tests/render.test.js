@@ -120,6 +120,19 @@ describe('renderFrame', () => {
 		expect(frame.data[corner]).toBeLessThan(frame.data[centre]);
 	});
 
+	it('reads hsl() and rgb() backdrop colours, not just hex', () => {
+		// The platform's per-avatar stages are written as hsl(); parsed as hex
+		// they collapsed to black and every poster lost its tinted backdrop.
+		const options = { width: 32, height: 32, supersample: 1 };
+		const hsl = renderFrame(model, { ...options, background: { inner: 'hsl(120, 60%, 40%)', outer: 'hsl(120, 60%, 40%)' } });
+		const rgb = renderFrame(model, { ...options, background: 'rgb(41, 163, 41)' });
+		const hex = renderFrame(model, { ...options, background: '#29a329' });
+		for (const frame of [hsl, rgb]) {
+			for (let c = 0; c < 3; c++) expect(Math.abs(frame.data[c] - hex.data[c])).toBeLessThanOrEqual(2);
+		}
+		expect(hex.data[1]).toBeGreaterThan(100);
+	});
+
 	it('exposes named lighting presets', () => {
 		expect(Object.keys(PRESETS)).toContain('studio');
 		for (const preset of Object.values(PRESETS)) {

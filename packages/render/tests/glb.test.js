@@ -129,3 +129,23 @@ describe('stripImages', () => {
 		expect(stripped.extensionsUsed).toEqual(['EXT_meshopt_compression']);
 	});
 });
+
+describe('stripImages with EXT_texture_webp', () => {
+	it('binds the WebP payload a texture declares in its extension', () => {
+		// The texture names its image only inside EXT_texture_webp, as every
+		// gltf-transform WebP export does; reading `source` alone left the
+		// material untextured (bare white) on the CPU lane.
+		const json = {
+			asset: { version: '2.0' },
+			images: [{ mimeType: 'image/png' }, { mimeType: 'image/webp' }],
+			textures: [{ source: 0, extensions: { EXT_texture_webp: { source: 1 } } }, { extensions: { EXT_texture_webp: { source: 1 } } }],
+			materials: [
+				{ pbrMetallicRoughness: { baseColorTexture: { index: 0 } } },
+				{ pbrMetallicRoughness: { baseColorTexture: { index: 1 } } },
+			],
+		};
+		const { bindings } = stripImages(json);
+		expect(bindings.get(0).baseColor.image).toBe(1);
+		expect(bindings.get(1).baseColor.image).toBe(1);
+	});
+});

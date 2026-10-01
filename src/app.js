@@ -1130,6 +1130,7 @@ class App {
 		this._currentUsdzUrl = null;
 		this._currentHalfbodyUrl = null;
 		this._currentAvatarId = null;
+		this._currentAvatarGlbUrl = null;
 		this._avatarNeedsThumbnail = false;
 		try {
 			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
@@ -1145,6 +1146,7 @@ class App {
 						this._currentUsdzUrl = avatar?.usdz_url || null;
 						this._currentHalfbodyUrl = avatar?.halfbody_url || null;
 						this._currentAvatarId = avatar?.id || null;
+						this._currentAvatarGlbUrl = avatar?.url || null;
 						thumbnailUrl = avatar?.thumbnail_url || null;
 						// Flag for the LOAD_END(success) listener to capture
 						// and upload a thumbnail once the avatar is rendered.
@@ -2357,35 +2359,22 @@ class App {
 	}
 
 	// ── Auto-thumbnail capture ──────────────────────────────────────────────
-	// Reads the WebGL canvas pixels, downsamples to a 512² PNG, and POSTs
-	// to /api/avatars/thumbnail. Fire-and-forget — the only consequence of
-	// failure is that the next page load runs through this path again.
+	// Renders the avatar's GLB offscreen to a 512² PNG in the thumbnail rest
+	// pose and POSTs it to /api/avatars/thumbnail. Reading the live viewer's
+	// canvas instead raced the idle clip (a capture before it started showed the
+	// bind-pose T-pose) and could read back a blank buffer, since the viewer's
+	// renderer does not preserve its drawing buffer. Fire-and-forget: the only
+	// consequence of failure is that the next page load runs through this again.
 
 	async _captureAndUploadThumbnail() {
 		const avatarId = this._currentAvatarId;
-		if (!avatarId || !this.viewer?.renderer) return;
+		const glbUrl = this._currentAvatarGlbUrl;
+		if (!avatarId || !glbUrl) return;
 
-		// Give the renderer one extra frame so the first idle pose is on
-		// screen, not the canonical T-pose / default expression.
-		await new Promise((r) => setTimeout(r, 800));
-
-		const src = this.viewer.renderer.domElement;
-		const out = document.createElement('canvas');
-		const size = 512;
-		out.width = out.height = size;
-		const ctx = out.getContext('2d');
-		if (!ctx) return;
-		// Fit-to-canvas, preserving aspect with letterboxing on a
-		// transparent background.
-		const ar = src.width / src.height || 1;
-		let dw = size,
-			dh = size;
-		if (ar > 1) dh = Math.round(size / ar);
-		else dw = Math.round(size * ar);
-		ctx.drawImage(src, (size - dw) / 2, (size - dh) / 2, dw, dh);
-
-		const blob = await new Promise((resolve) => out.toBlob(resolve, 'image/png'));
-		if (!blob) return;
+		const glbRes = await fetch(glbUrl);
+		if (!glbRes.ok) throw new Error(`thumbnail source fetch failed: ${glbRes.status}`);
+		const { glbFileToThumbnail } = await import('./erc8004/thumbnail.js');
+		const blob = await glbFileToThumbnail(await glbRes.blob(), { size: 512 });
 		const dataUrl = await _blobToBase64(blob);
 
 		const resp = await fetch('/api/avatars/thumbnail', {

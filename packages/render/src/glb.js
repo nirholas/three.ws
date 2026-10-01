@@ -134,9 +134,17 @@ function textureBinding(json, ref) {
 	if (!ref || typeof ref.index !== 'number') return null;
 	const tex = json.textures?.[ref.index];
 	if (!tex) return null;
+	// EXT_texture_webp / EXT_texture_avif move the image index into the
+	// extension and leave `source` unset (or pointing at a PNG fallback). The
+	// image decoder reads WebP and AVIF through sharp, so prefer those payloads;
+	// without this every WebP-textured avatar rendered as bare white material.
 	// KHR_texture_basisu points at a KTX2 payload we do not decode; the caller
 	// falls back to the material factor, which is a real colour, not a stand-in.
-	const source = tex.source ?? tex.extensions?.KHR_texture_basisu?.source;
+	const source =
+		tex.extensions?.EXT_texture_webp?.source ??
+		tex.extensions?.EXT_texture_avif?.source ??
+		tex.source ??
+		tex.extensions?.KHR_texture_basisu?.source;
 	if (typeof source !== 'number') return null;
 	const sampler = typeof tex.sampler === 'number' ? json.samplers?.[tex.sampler] : null;
 	return {

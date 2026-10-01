@@ -16,6 +16,7 @@
 
 import { AvatarModel, renderFrame, renderFrames, encodePng, encodeApng, parseClipJson } from '@three-ws/render';
 import { fetchModel } from './fetch-model.js';
+import { thumbnailPoseClip } from './pose-runtime.js';
 
 // Framing constants shared with the chromium lane so a CPU render and a
 // browser render of the same avatar compose identically.
@@ -51,6 +52,41 @@ function cachePut(key, model) {
 		const oldest = _models.keys().next().value;
 		_models.delete(oldest);
 	}
+}
+
+// A cached model is shared by every request for the same GLB, and posing it is
+// a mutation: a still poses the skeleton, renders, then puts it back, while an
+// animated render plays a clip across a frame loop. Interleaving two of those on
+// one model would render one request's pose in the other's frame, so each
+// render takes the model for its whole duration.
+const _modelQueues = new WeakMap();
+
+function withModel(model, work) {
+	const previous = _modelQueues.get(model) || Promise.resolve();
+	const run = previous.then(work);
+	_modelQueues.set(model, run.catch(() => {}));
+	return run;
+}
+
+/**
+ * Stand a cached model in the thumbnail rest pose (src/thumbnail-pose.js) and
+ * frame it around that pose. Returns the undo, which puts both the skeleton and
+ * the bind-pose framing back, since the model outlives this render in the cache.
+ */
+async function standInRestPose(model) {
+	const { applyThumbnailPose } = await import('../../src/thumbnail-pose.js');
+	const bindBounds = model.bounds;
+	const result = await applyThumbnailPose(model.scene, await thumbnailPoseClip());
+	if (result.posed) model.updateBounds();
+	return {
+		posed: result.posed,
+		mode: result.mode,
+		restore() {
+			result.restore();
+			model.scene.updateMatrixWorld(true);
+			model.bounds = bindBounds;
+		},
+	};
 }
 
 /** Drop every cached model. Exported for tests and for memory-pressure handlers. */
@@ -144,6 +180,11 @@ async function ensureClip(model, clipJson) {
  * @param {string} [opts.animationUrl] GLB of clips to retarget onto the rig
  * @param {string|number} [opts.clip] clip to pose, by name or index
  * @param {number} [opts.time=0] seconds into the clip
+ * @param {'rest'|'bind'} [opts.pose='rest'] with no clip, 'rest' stands a
+ *   humanoid in the thumbnail rest pose (never a T-pose); 'bind' renders the
+ *   skeleton exactly as authored. Non-humanoid models render as authored either way.
+ * @param {(r:{posed:boolean,mode:string}) => void} [opts.onPose] told how the
+ *   still was posed, so a caller can tell a posed humanoid from a prop
  * @returns {Promise<Buffer>} PNG buffer
  */
 export async function renderGlbToPngCpu({
@@ -162,17 +203,14 @@ export async function renderGlbToPngCpu({
 	clip = null,
 	clipJson = null,
 	time = 0,
+	pose = 'rest',
+	onPose = null,
 } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
-	const posed = clipJson ? await ensureClip(model, clipJson) : clip;
-	if (posed !== null && posed !== undefined) {
-		model.play(posed);
-		model.setTime(time);
-	}
-	const frame = renderFrame(model, {
+	const frameOptions = {
 		width,
 		height,
 		supersample,
@@ -182,8 +220,26 @@ export async function renderGlbToPngCpu({
 		pitch,
 		margin: FRAME_MARGIN,
 		background: backdropToBackground(background, backdrop),
+	};
+	return withModel(model, async () => {
+		const posed = clipJson ? await ensureClip(model, clipJson) : clip;
+		if (posed !== null && posed !== undefined) {
+			model.play(posed);
+			model.setTime(time);
+			return encodePng(renderFrame(model, frameOptions));
+		}
+		// No clip asked for: this is a poster. Drop whatever clip an earlier
+		// animated render left on the cached model, then stand it at rest.
+		model.play(null);
+		model.setTime(0);
+		const rest = pose === 'bind' ? null : await standInRestPose(model);
+		try {
+			onPose?.({ posed: Boolean(rest?.posed), mode: rest ? rest.mode : 'bind' });
+			return encodePng(renderFrame(model, frameOptions));
+		} finally {
+			rest?.restore();
+		}
 	});
-	return encodePng(frame);
 }
 
 /**
@@ -217,24 +273,26 @@ export async function renderGlbToApngCpu({
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
-	const playable = clipJson ? await ensureClip(model, clipJson) : clip;
-	const rendered = await renderFrames(model, {
-		width,
-		height,
-		supersample,
-		preset,
-		focus,
-		yaw,
-		pitch,
-		margin: FRAME_MARGIN,
-		background: backdropToBackground(background, backdrop),
-		frames,
-		fps,
-		startTime,
-		// A rig that cannot take the clip still animates: the turntable carries
-		// the loop, so the answer is a moving avatar rather than an error.
-		spin: playable ? spin : Math.max(spin, 360),
-		clip: playable,
+	return withModel(model, async () => {
+		const playable = clipJson ? await ensureClip(model, clipJson) : clip;
+		const rendered = await renderFrames(model, {
+			width,
+			height,
+			supersample,
+			preset,
+			focus,
+			yaw,
+			pitch,
+			margin: FRAME_MARGIN,
+			background: backdropToBackground(background, backdrop),
+			frames,
+			fps,
+			startTime,
+			// A rig that cannot take the clip still animates: the turntable carries
+			// the loop, so the answer is a moving avatar rather than an error.
+			spin: playable ? spin : Math.max(spin, 360),
+			clip: playable,
+		});
+		return encodeApng(rendered, { fps });
 	});
-	return encodeApng(rendered, { fps });
 }

@@ -87,8 +87,12 @@ via `adoptForgePreviews()` in the backfill.
 
 ### 2. Client capture (`POST /api/avatars/thumbnail`)
 
-The browser captures the live viewer's canvas and uploads a PNG. Stored at
-`thumb/<avatarId>.png` with `Content-Type: image/png`. Owner or admin only.
+The browser renders a PNG and uploads it. Stored at `thumb/<avatarId>.png` with
+`Content-Type: image/png`. Owner or admin only. The account save flow
+(`src/account.js`) and the `/app` agent editor (`src/app.js`) render that poster
+offscreen with `glbFileToThumbnail()` in
+[`src/erc8004/thumbnail.js`](../src/erc8004/thumbnail.js), which poses the
+avatar exactly like the server does (see [The rest pose](#the-rest-pose)).
 
 ### 3. Server render (CPU rasterizer, chromium failover)
 
@@ -108,6 +112,84 @@ always runs in bounded batches.
 
 All of this lives in [`api/_lib/avatar-thumbs.js`](../api/_lib/avatar-thumbs.js),
 the single owner of the invariant above.
+
+## The rest pose
+
+A thumbnail never shows an avatar in its raw bind pose (a T-pose or A-pose with
+the arms straight out). Every renderer that turns a GLB into a picture runs
+[`src/thumbnail-pose.js`](../src/thumbnail-pose.js) before framing the model:
+the CPU rasterizer (`api/_lib/render-cpu.js`), the chromium failover
+(`api/_lib/render-glb.js`, which ships the module into its render page as
+`data:` URL modules built by `thumbnailPoseModules()` in
+[`api/_lib/pose-runtime.js`](../api/_lib/pose-runtime.js)), and the browser's
+offscreen capture. That covers the OG card (`/api/avatar/:id/og`), the backfill
+and x402 regeneration crons, forge previews, and `/api/render/glb`.
+
+How it poses, in order:
+
+1. **Not a humanoid** (no skin, or fewer canonical bones than
+   `AnimationManager.supportsCanonicalClips()` accepts): left as authored. Props,
+   vehicles and creatures render exactly as before.
+2. **Arms already hanging** in the bind pose (`armsAlreadyHanging()`): left as
+   authored. Reposing a stylized rig that already stands naturally only risks
+   folding its arms.
+3. **Otherwise** the avatar takes one held frame of the motion library's
+   standing idle (`av-idle-male`, sampled once by `sampleClipPose()`) through
+   `AnimationManager`, the same retargeting path the live viewer animates with:
+   canonical bone names from `src/glb-canonicalize.js`, rest-frame correction from
+   `src/animation-retarget.js`, and the fallen-pose guard. Only joint rotations
+   are applied; the avatar keeps its own hip height.
+4. **The clip cannot drive the rig** (too few bones map, for example a rig with
+   no finger bones): the arms are swung down geometrically by
+   `relaxUndrivenArms()`, so the result is at worst an arms-down stance.
+
+Renderers report the outcome through an `onPose({ posed, mode })` callback, and
+`/api/render/glb` through its `x-render-pose` header. Pass `pose: 'bind'` to any
+of them to render the skeleton exactly as authored.
+
+A skeleton convention the canonicalizer does not recognise renders as authored.
+Add its bone names to `src/glb-canonicalize.js` (with a case in
+`tests/glb-canonicalize.test.js`) and every renderer picks it up; never add a
+bone table to a renderer.
+
+## Regenerating thumbnails after a pose change
+
+Posters rendered before the rest pose existed stay in the bucket until something
+re-renders them.
+[`scripts/regenerate-avatar-thumbnails.mjs`](../scripts/regenerate-avatar-thumbnails.mjs)
+does that for the keys the platform writes itself (`thumb/<uuid>.png`,
+`og/avatar/<uuid>.png`, `<storage key>_og.png`, `forge/thumb/<uuid>.png`); a
+creator's uploaded cover or an adopted forge reference image is never touched.
+Work is planned per distinct key, most-visible first, so an agent body cloned
+from a gallery avatar is fixed by the same single render as its source.
+
+It is a dry run unless `--apply` is passed. `--apply` overwrites each object in
+place under the same key, stamped `x-amz-meta-thumbnail-pose:
+<THUMBNAIL_POSE_VERSION>`, and changes no database row. A model that comes back
+unposed (a prop, or a rig already standing at rest) is skipped, and an object
+already carrying the current stamp is skipped, so a run can be stopped and
+resumed.
+
+```bash
+eval "$(node scripts/read-service-env.mjs '^S3_')"
+
+# What would be visited, in order. Renders nothing.
+node --env-file=.env.local scripts/regenerate-avatar-thumbnails.mjs --plan-only --limit=50
+
+# Render 25 locally and save <avatar>-before.png / <avatar>-after.png to review.
+node --env-file=.env.local scripts/regenerate-avatar-thumbnails.mjs --limit=25 --out=/tmp/thumbs
+
+# Overwrite the stale posters, 500 keys at a time, resuming with --offset.
+node --env-file=.env.local scripts/regenerate-avatar-thumbnails.mjs --apply --limit=500 --concurrency=3
+node --env-file=.env.local scripts/regenerate-avatar-thumbnails.mjs --apply --limit=500 --offset=500 --concurrency=3
+```
+
+Every surface derives the image URL from `thumbnail_key` at read time, so no
+URL changes. The public bucket domain sends no `Cache-Control` header for these
+objects, so a fresh request sees the new bytes as soon as the overwrite lands,
+and a browser holding a heuristically cached copy revalidates against the ETag,
+which the overwrite changes. When the pose itself changes, bump
+`THUMBNAIL_POSE_VERSION` in `src/thumbnail-pose.js` and run the script again.
 
 ## The three crons
 

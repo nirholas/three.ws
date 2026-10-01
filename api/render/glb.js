@@ -7,8 +7,14 @@
 //     glbUrl: "https://example.com/model.glb",   // required, http(s)
 //     width: 1024,                               // default 1024, max 2048
 //     height: 1024,                              // default 1024, max 2048
-//     background: "#0a0a0a" | "transparent"      // default #0a0a0a
+//     background: "#0a0a0a" | "transparent",     // default #0a0a0a
+//     pose: "rest" | "bind"                      // default rest
 //   }
+//
+// `pose: "rest"` stands a humanoid in the thumbnail rest pose (arms down,
+// src/thumbnail-pose.js) instead of its raw bind pose; `"bind"` renders the
+// skeleton exactly as authored. Non-humanoid models render as authored either
+// way. The x-render-pose response header says which one the PNG shows.
 //
 // GET /api/render/glb?glbUrl=…&width=…&height=…&background=… — the same
 // render addressable by URL, for consumers that can only follow a link:
@@ -60,6 +66,7 @@ export default wrap(async function handler(req, res) {
 			width: q.get('width'),
 			height: q.get('height'),
 			background: q.get('background') || undefined,
+			pose: q.get('pose') || undefined,
 		};
 	} else {
 		try {
@@ -97,9 +104,25 @@ export default wrap(async function handler(req, res) {
 		}
 	}
 
+	const pose = body.pose === undefined || body.pose === null || body.pose === '' ? 'rest' : body.pose;
+	if (pose !== 'rest' && pose !== 'bind') {
+		return error(res, 400, 'bad_request', 'pose must be "rest" or "bind"');
+	}
+
 	let png;
+	let posed = { posed: false, mode: pose };
 	try {
-		png = await renderGlbToPng({ glbUrl, width, height, background, maxBytes: MAX_GLB_BYTES });
+		png = await renderGlbToPng({
+			glbUrl,
+			width,
+			height,
+			background,
+			pose,
+			maxBytes: MAX_GLB_BYTES,
+			onPose: (r) => {
+				posed = r;
+			},
+		});
 	} catch (err) {
 		const status = err?.status || 502;
 		return error(res, status, err?.code || 'render_failed', err?.message || 'render failed');
@@ -112,5 +135,6 @@ export default wrap(async function handler(req, res) {
 	res.setHeader('x-render-width', String(width));
 	res.setHeader('x-render-height', String(height));
 	res.setHeader('x-render-background', background);
+	res.setHeader('x-render-pose', posed.posed ? 'rest' : posed.mode === 'bind' ? 'bind' : 'authored');
 	res.end(png);
 });

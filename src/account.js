@@ -245,7 +245,7 @@ export async function saveRemoteGlbToAccount(source, meta = {}, opts = {}) {
 	const avatar = created.avatar;
 
 	// Fire-and-forget thumbnail + auto-tag pipeline. Doesn't block the caller.
-	// Uses a hidden off-screen model-viewer to render the GLB, captures a JPEG
+	// Renders the GLB offscreen in the thumbnail rest pose, captures a JPEG
 	// poster, uploads to R2, and calls Claude Haiku for tags + description.
 	captureAndTagAvatar(avatar.id, storageKey).catch((err) => {
 		log.warn('[account] thumbnail/auto-tag pipeline failed silently', err?.message);
@@ -386,33 +386,19 @@ async function captureAndTagAvatar(avatarId, storageKey) {
 		if (!publicGlb) return;
 	} catch { return; }
 
-	// Render in a tiny off-screen model-viewer element.
-	const mv = document.createElement('model-viewer');
-	mv.setAttribute('src', publicGlb);
-	mv.setAttribute('camera-orbit', '0deg 75deg 105%');
-	mv.setAttribute('exposure', '1');
-	mv.setAttribute('shadow-intensity', '0.6');
-	mv.setAttribute('tone-mapping', 'aces');
-	mv.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:512px;height:512px;opacity:0;pointer-events:none;';
-	document.body.appendChild(mv);
-
-	await new Promise((resolve, reject) => {
-		const timeout = setTimeout(() => reject(new Error('model-viewer load timeout')), 25_000);
-		mv.addEventListener('load', () => { clearTimeout(timeout); resolve(); }, { once: true });
-		mv.addEventListener('error', () => { clearTimeout(timeout); reject(new Error('model-viewer load error')); }, { once: true });
+	// Render the poster offscreen with the shared three.js renderer, which stands
+	// a humanoid in the thumbnail rest pose first. The hidden <model-viewer> this
+	// replaced captured the raw bind pose, so every saved avatar's gallery card
+	// showed a T-pose, and being the slower of the two /create captures it usually
+	// landed last and overwrote the posed one.
+	const glbRes = await fetch(publicGlb);
+	if (!glbRes.ok) throw new Error(`thumbnail source fetch failed: ${glbRes.status}`);
+	const { glbFileToThumbnail } = await import('./erc8004/thumbnail.js');
+	const thumbBlob = await glbFileToThumbnail(await glbRes.blob(), {
+		size: 512,
+		mimeType: 'image/jpeg',
+		quality: 0.82,
 	});
-
-	// Give the renderer one frame to paint.
-	await new Promise((r) => requestAnimationFrame(r));
-	await new Promise((r) => requestAnimationFrame(r));
-
-	// Capture poster as JPEG blob.
-	let thumbBlob;
-	try {
-		thumbBlob = await mv.toBlob({ mimeType: 'image/jpeg', qualityArgument: 0.82 });
-	} finally {
-		document.body.removeChild(mv);
-	}
 	if (!thumbBlob || thumbBlob.size < 500) return;
 
 	// Get a presigned upload URL for the thumbnail.

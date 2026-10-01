@@ -129,6 +129,19 @@ export class AvatarModel {
 		return this.action?.getClip()?.duration || 0;
 	}
 
+	/**
+	 * Re-measure the framing bounds from the skeleton's current pose. Bounds are
+	 * taken once at load, in the bind pose, so a T-posed rig's outstretched arms
+	 * set the frame. Call this after posing the skeleton by hand (anything other
+	 * than play/setTime) when a still should be framed around the pose it shows.
+	 * @returns {{min:number[],max:number[],center:number[],size:number[]}}
+	 */
+	updateBounds() {
+		this.scene.updateMatrixWorld(true);
+		this.bounds = this._computeBounds();
+		return this.bounds;
+	}
+
 	_collect() {
 		this.scene.updateMatrixWorld(true);
 		this.scene.traverse((object) => {

@@ -16,6 +16,7 @@ import { env } from './env.js';
 import { fetchModel } from './fetch-model.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
 import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
+import { thumbnailPoseClip, thumbnailPoseModules, THUMBNAIL_POSE_SPECIFIER } from './pose-runtime.js';
 
 // Cap on GLB bytes pulled into the renderer. Anything larger risks OOM /
 // blowing the render budget; callers may tighten this via `maxBytes`.
@@ -33,8 +34,10 @@ const DEFAULT_CHROMIUM_PACK =
 const CHROMIUM_PACK = env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
 
 // Poster composition. A 26° yaw reads as a natural 3/4 portrait without hiding
-// the front of the model; 1.22 leaves enough margin that a T-pose's fingertips
-// stay inside even after the yaw shrinks the projected width.
+// the front of the model; 1.22 leaves enough margin that a wide silhouette (a
+// prop, or a rig that keeps its authored stance) stays inside even after the
+// yaw shrinks the projected width. Humanoids are stood in the thumbnail rest
+// pose first (src/thumbnail-pose.js), so their arms are down when framed.
 const CAMERA_YAW_DEG = 26;
 const FRAME_MARGIN = 1.22;
 
@@ -64,6 +67,24 @@ async function getBrowser() {
 		_browserPromise = null; // dead or failed — relaunch below
 	}
 	_browserPromise = (async () => {
+		// A workstation already has a chromium (the one Playwright installs for
+		// the test suite). Same env var and contract as render-clip.js: unset in
+		// production, where the serverless pack below stays the deployed path, and
+		// set locally to exercise this lane without downloading that pack.
+		const local = process.env.CHROMIUM_EXECUTABLE_PATH;
+		if (local) {
+			const { default: puppeteer } = await import('puppeteer-core');
+			const browser = await puppeteer.launch({
+				args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'],
+				defaultViewport: { width: 1200, height: 630, deviceScaleFactor: 1 },
+				executablePath: local,
+				headless: true,
+			});
+			browser.on('disconnected', () => {
+				if (_browserPromise) _browserPromise = null;
+			});
+			return browser;
+		}
 		const [{ default: puppeteer }, { default: chromium }] = await Promise.all([
 			import('puppeteer-core'),
 			import('@sparticuz/chromium-min'),
@@ -142,7 +163,7 @@ function releaseRenderSlot() {
 // extra static assets. three.js + GLTFLoader load from whichever CDN
 // resolveThreeCdn() found alive, pinned to THREE_VERSION.
 // window.__renderDone signals readiness to puppeteer.
-function viewerHtml({ glbBase64, width, height, background, backdrop, threeBase = DEFAULT_THREE_BASE }) {
+function viewerHtml({ glbBase64, width, height, background, backdrop, poseClip = null, threeBase = DEFAULT_THREE_BASE }) {
 	// A gradient backdrop renders as page CSS behind a transparent canvas: the
 	// screenshot composites the two, so the scene itself stays background-free.
 	// `background` reaches here straight from a public handler, and both slots
@@ -157,13 +178,19 @@ function viewerHtml({ glbBase64, width, height, background, backdrop, threeBase 
 	const bodyBg = useGradient
 		? `radial-gradient(ellipse 90% 70% at 50% 38%, ${inner}, ${outer})`
 		: 'transparent';
+	// The posing stack (src/thumbnail-pose.js and the AnimationManager it drives)
+	// rides into the page as data: URL modules beside three.js, so the browser
+	// lane poses with exactly the code the CPU lane and the live viewer run.
+	const importMap = poseClip
+		? { ...threeImportMap(threeBase), ...thumbnailPoseModules() }
+		: threeImportMap(threeBase);
 	return `<!doctype html>
 <html><head><meta charset="utf-8" />
 <style>html,body{margin:0;padding:0;background:${bodyBg};overflow:hidden}</style>
 </head><body>
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
 <script>window.__GLB_B64=${scriptJson(glbBase64)};</script>
-<script type="importmap">{ "imports": ${scriptJson(threeImportMap(threeBase))} }</script>
+<script type="importmap">{ "imports": ${scriptJson(importMap)} }</script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -174,6 +201,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 window.__renderDone = false;
 window.__renderError = null;
+window.__poseResult = null;
+const POSE_CLIP = ${poseClip ? scriptJson(poseClip) : 'null'};
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -220,18 +249,37 @@ loader.setDRACOLoader(dracoLoader);
 loader.setKTX2Loader(ktx2Loader);
 loader.setMeshoptDecoder(MeshoptDecoder);
 
+// Stand a humanoid in the thumbnail rest pose before framing it. Loaded on
+// demand so a posing fault costs the pose, never the poster: the model then
+// renders as authored and the fault is reported back with the result.
+async function standAtRest(root) {
+	if (!POSE_CLIP) return { posed: false, mode: 'bind' };
+	try {
+		const { applyThumbnailPose } = await import(${scriptJson(THUMBNAIL_POSE_SPECIFIER)});
+		const { posed, mode } = await applyThumbnailPose(root, POSE_CLIP);
+		return { posed, mode };
+	} catch (err) {
+		return { posed: false, mode: 'pose-error', error: String(err?.message || err) };
+	}
+}
+
 // The GLB bytes are fetched server-side through the SSRF-pinned fetchModel
 // path and embedded here as base64, so chromium never makes a network
 // request for the user-supplied URL (no DNS-rebinding / redirect SSRF).
-function onLoaded(gltf) {
+async function onLoaded(gltf) {
 	try {
 		const root = gltf.scene;
 		scene.add(root);
+		window.__poseResult = await standAtRest(root);
+		// Box3 measures a SkinnedMesh through its bone matrices, so bring them up
+		// to the pose being rendered before framing.
+		root.updateMatrixWorld(true);
+		root.traverse((o) => { if (o.isSkinnedMesh && o.skeleton) o.skeleton.update(); });
 		// Frame the model: compute bounds, center it, position camera so it
 		// fills the frame with a small margin. The camera sits at a gentle 3/4
-		// yaw instead of dead-on: a straight frontal shot flattens T-posed
-		// avatars into identical paper cutouts, while the quarter turn shows
-		// depth and silhouette. Distance honors both fov axes so tight margins
+		// yaw instead of dead-on: a straight frontal shot flattens avatars into
+		// identical paper cutouts, while the quarter turn shows depth and
+		// silhouette. Distance honors both fov axes so tight margins
 		// never crop on non-square frames.
 		const box = new THREE.Box3().setFromObject(root);
 		const size = new THREE.Vector3(); box.getSize(size);
@@ -284,6 +332,11 @@ function onLoaded(gltf) {
  * Callers see one function and one PNG either way. Set RENDER_CPU_LANE=off to
  * pin every render back onto chromium without a deploy.
  *
+ * Both lanes stand a humanoid in the thumbnail rest pose before framing it
+ * (src/thumbnail-pose.js), so a poster never shows a bind-pose T-pose. Pass
+ * `pose: 'bind'` for the skeleton exactly as authored, and `onPose` to learn
+ * whether the model was posed or rendered as authored (a prop, a creature).
+ *
  * @param {object} opts same shape as renderGlbToPngBrowser
  * @returns {Promise<Buffer>} PNG buffer
  */
@@ -321,9 +374,14 @@ export async function renderGlbToPng(opts = {}) {
  * @param {{inner: string, outer: string}} [opts.backdrop] - radial-gradient
  *   backdrop (center → edge). Takes precedence over `background`; used by the
  *   thumbnail pipeline to give every avatar its own tinted stage.
+ * @param {'rest'|'bind'} [opts.pose='rest'] - 'rest' stands a humanoid in the
+ *   thumbnail rest pose (src/thumbnail-pose.js); 'bind' renders the skeleton as
+ *   authored. Non-humanoid models render as authored either way.
+ * @param {(r:{posed:boolean,mode:string}) => void} [opts.onPose] - told how the
+ *   model was posed
  * @returns {Promise<Buffer>} PNG buffer
  */
-export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES } = {}) {
+export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES, pose = 'rest', onPose = null } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
@@ -341,10 +399,11 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 			code: err?.code || 'glb_fetch_failed',
 		});
 	}
+	const poseClip = pose === 'bind' ? null : await thumbnailPoseClip();
 	await acquireRenderSlot();
 	try {
 		try {
-			return await renderOnce({ glbBase64, width, height, background, backdrop });
+			return await renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose });
 		} catch (err) {
 			// The shared browser can die mid-render (an OOM-reaped chromium takes
 			// every in-flight page with it). That says nothing about this GLB: the
@@ -352,7 +411,7 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 			// a freshly launched browser instead of surfacing an infra blip as a
 			// render failure.
 			if (!isBrowserInfrastructureError(err)) throw err;
-			return await renderOnce({ glbBase64, width, height, background, backdrop });
+			return await renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose });
 		}
 	} finally {
 		releaseRenderSlot();
@@ -361,7 +420,7 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 
 // One page lifecycle on the shared browser: boot page, load the inline viewer,
 // wait for the first clean frame, screenshot.
-async function renderOnce({ glbBase64, width, height, background, backdrop }) {
+async function renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose }) {
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	try {
@@ -370,7 +429,7 @@ async function renderOnce({ glbBase64, width, height, background, backdrop }) {
 		// unpkg outage would otherwise hang the module import until the
 		// watchdog below fires and every poster comes back blank.
 		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
-		const html = viewerHtml({ glbBase64, width, height, background, backdrop, threeBase });
+		const html = viewerHtml({ glbBase64, width, height, background, backdrop, poseClip, threeBase });
 		// data: URL avoids needing a network fetch for the bootstrap page itself.
 		// importmap dependencies (three, GLTFLoader) still come from the CDN.
 		await page.setContent(html, { waitUntil: 'domcontentloaded' });
@@ -382,6 +441,9 @@ async function renderOnce({ glbBase64, width, height, background, backdrop }) {
 		if (err) {
 			throw Object.assign(new Error(`render failed: ${err}`), { status: 502, code: 'render_failed' });
 		}
+		const poseResult = (await page.evaluate(() => window.__poseResult)) || { posed: false, mode: 'bind' };
+		if (poseResult.mode === 'pose-error') console.warn('[render] chromium lane could not pose the model:', poseResult.error);
+		onPose?.({ posed: Boolean(poseResult.posed), mode: poseResult.mode });
 		return await page.screenshot({
 			type: 'png',
 			omitBackground: background === 'transparent',

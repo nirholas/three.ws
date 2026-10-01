@@ -62,13 +62,36 @@ function normalize(v) {
 	return [v[0] / len, v[1] / len, v[2] / len];
 }
 
+// sRGB 0..1 from hsl(): h in degrees, s and l in 0..1 (CSS Color 4 formula).
+function hslToSrgb(h, s, l) {
+	const k = (n) => (n + h / 30) % 12;
+	const a = s * Math.min(l, 1 - l);
+	return [0, 8, 4].map((n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)));
+}
+
+// Read a CSS colour as sRGB 0..1: #rgb, #rrggbb, rgb()/rgba() and hsl()/hsla(),
+// the forms the platform's stage backdrops are written in. Anything else is black.
+function parseSrgb(value) {
+	const text = value.trim().toLowerCase();
+	const fn = /^(rgba?|hsla?)\(([^)]*)\)$/.exec(text);
+	if (fn) {
+		const parts = fn[2].split(/[\s,/]+/).filter(Boolean).map((p) => Number.parseFloat(p));
+		if (parts.length < 3 || parts.slice(0, 3).some((p) => !Number.isFinite(p))) return null;
+		if (fn[1].startsWith('rgb')) return parts.slice(0, 3).map((c) => Math.max(0, Math.min(255, c)) / 255);
+		const [h, s, l] = parts;
+		return hslToSrgb(((h % 360) + 360) % 360, Math.max(0, Math.min(100, s)) / 100, Math.max(0, Math.min(100, l)) / 100);
+	}
+	const hex = text.replace('#', '');
+	const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+	if (!/^[0-9a-f]{6}/.test(full)) return null;
+	const n = Number.parseInt(full.slice(0, 6), 16);
+	return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
 function parseColor(value) {
 	if (typeof value !== 'string') return [0, 0, 0];
-	const hex = value.replace('#', '').trim();
-	const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
-	const n = Number.parseInt(full.slice(0, 6), 16);
-	if (!Number.isFinite(n)) return [0, 0, 0];
-	const srgb = [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+	const srgb = parseSrgb(value);
+	if (!srgb) return [0, 0, 0];
 	return srgb.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
 }
 

@@ -1900,8 +1900,8 @@ below).
 ### Model renderer — `GET|POST /api/render/glb`
 
 ```
-GET  /api/render/glb?glbUrl=<url>&width=1200&height=630&background=%230a0a0a
-POST /api/render/glb   { "glbUrl": "...", "width": 1024, "height": 1024, "background": "#0a0a0a" }
+GET  /api/render/glb?glbUrl=<url>&width=1200&height=630&background=%230a0a0a&pose=rest
+POST /api/render/glb   { "glbUrl": "...", "width": 1024, "height": 1024, "background": "#0a0a0a", "pose": "rest" }
 ```
 
 Public renderer: any public GLB URL in, a PNG out, the same pipeline the OG
@@ -1918,6 +1918,15 @@ browser boots; only public http(s) sources are fetched (SSRF-guarded);
 `rgb()`/`rgba()`, `hsl()`/`hsla()`, or a named color such as `midnightblue`).
 Anything else is `400 bad_request`: the value is composited into the render
 page, so it is validated rather than escaped.
+
+`pose` is `rest` (the default) or `bind`. With `rest`, a humanoid the platform's
+bone canonicalizer recognises (Mixamo, VRoid, Unreal, Blender and the rest of
+the naming conventions in `src/glb-canonicalize.js`) is stood in a natural standing
+pose with its arms at its sides before the render, instead of its raw T-pose or
+A-pose; a rig authored with its arms already down, and any non-humanoid model,
+renders as authored. `bind` skips posing. The `x-render-pose` response header
+reports what the image shows: `rest`, `authored` or `bind`. See
+[Avatar thumbnails](./avatar-thumbnails.md#the-rest-pose).
 
 ### Posed avatar renderer: `GET|POST /api/render/avatar-clip`
 
