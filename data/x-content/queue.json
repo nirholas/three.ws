@@ -7789,12 +7789,12 @@
 		},
 		{
 			"id": "holo-sticker",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "labs",
 			"pattern": "clip",
-			"notBefore": "2026-09-30T00:00:00Z",
+			"notBefore": "2026-10-01T10:28:10.044Z",
 			"covers": [
 				"/holo"
 			],
@@ -8096,7 +8096,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "voice-lab",

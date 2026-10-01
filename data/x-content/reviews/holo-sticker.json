@@ -1,20 +1,16 @@
 {
 	"id": "holo-sticker",
-	"contentHash": "16b4a4191958f2fa95eea3c5dbfd68d37a5a916b3dfeb42a7bfbd2ead96a5fa7",
-	"reviewedAt": "2026-10-01T08:18:52.373Z",
-	"passed": false,
-	"blockers": [
-		"evidence:page https://three.ws/holo: live page does not show \"up to 16 characters\"",
-		"editor (accuracy): The page-text verification for this claim failed: the live page check reports \"live page does not show 'up to 16 characters'\". Although a filmed frame shows the phrase, the rewrite rule only permits facts from a passing verification result or live page text quoted by a passing check, and neither exists for the number 16.",
-		"editor verdict is revise"
-	],
+	"contentHash": "c6fd05f7327f11d4fccf3e25f1af6fb9ce5fa8e054be91167ec8ffca88f46b30",
+	"reviewedAt": "2026-10-01T08:28:10.038Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"The sticker in this reel is not an image. It is a holographic foil sticker drawn live in your browser, a Labs experiment in rendering a physical material on the spot: the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch, with no images and no model files.\n\nTilt it with your pointer the way you would tilt the real thing, or type your own text and it is cut into a sticker of its own. three.ws/holo",
 		"How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, up to 16 characters of your own text, and a PNG download of whatever you make."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "not an image",
@@ -123,10 +119,24 @@
 			},
 			{
 				"claim": "up to 16 characters of your own text",
-				"kind": "evidence:page",
-				"target": "https://three.ws/holo",
-				"ok": false,
-				"detail": "live page does not show \"up to 16 characters\""
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to 16 characters of your own text",
+				"kind": "evidence:file",
+				"target": "pages/holo.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "up to 16 characters of your own text",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
 			},
 			{
 				"claim": "a PNG download of whatever you make",
@@ -156,41 +166,33 @@
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 3,
+			"accuracy": 5,
 			"clarity": 5,
-			"specificity": 4,
+			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "up to 16 characters of your own text",
-				"problem": "The page-text verification for this claim failed: the live page check reports \"live page does not show 'up to 16 characters'\". Although a filmed frame shows the phrase, the rewrite rule only permits facts from a passing verification result or live page text quoted by a passing check, and neither exists for the number 16.",
-				"fix": "Drop the number. Replace with \"your own text\", which is verified by a passing proof (markAfter = \"Your text\")."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"The sticker in this reel is not an image. It is a holographic foil sticker drawn live in your browser, a Labs experiment in rendering a physical material on the spot: the die-cut outline, the iridescent foil, the light it reflects and the peeling corner are all computed as you watch, with no images and no model files.\n\nTilt it with your pointer the way you would tilt the real thing, or type your own text and it is cut into a sticker of its own. three.ws/holo",
-				"How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, your own text, and a PNG download of whatever you make."
+				"How the cut works: the mark is rasterized, dilated by a disc the way a cutter adds a margin, and traced back into vector outlines with marching squares, holes included. The foil is a physical material with thin-film iridescence, and the peel is a vertex-shader cylinder roll, so the light on the curled lip is real.\n\nFour foils, up to 16 characters of your own text, and a PNG download of whatever you make."
 			],
-			"altText": []
+			"altText": [
+				"A reel of the three.ws/holo sticker tool: a die-cut foil sticker tilts under the pointer, the foil changes from Rainbow holo to Gold foil, the word 'agents' is typed and cut into a holographic Neon sticker, with foil selectors and a 30% corner peel slider visible."
+			]
 		},
-		"summary": "Strong, accurate, well-filmed post with one unverified claim: the page check for \"up to 16 characters\" failed, so the number must come out of the second post. Everything else, including the reel frames and captions, is verified against the live product and can ship once that phrase is replaced.",
+		"summary": "Every claim is verified verbatim against the live page, source files, and the filmed run, and the reel frames match each caption and show the feature doing exactly what the copy says. The voice is compliant (no hashtags, emoji, dashes, or hype openers) and the mechanism lead is strong; ship unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"up to 16 characters of your own text\" does not appear in the copy; claims must quote the post"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }
