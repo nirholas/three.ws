@@ -50,3 +50,36 @@ Third-party project names are left out on purpose; the pages named below carry t
 ## Surfaces judged not to be stories
 
 `/login`, `/register`, `/pricing`, `/sitemap`, `/features/scan` (a marketing page with a stock sample), `/companion` (marketing when signed out), `/smart-home` and its subpages (sign-in walls with no demo house), `/voice/home` (needs a microphone), `/irl` (camera and location gates by design), `/app` (the viewer with "Sign in to save").
+
+## Added 2026-10-01
+
+A second wave of authors covered labs, voice, restyle, agents and the marketplace. The same rule
+holds: a surface that did not pass is listed here instead of being posted.
+
+### Could not be announced
+
+| Surface | What happens |
+|---|---|
+| `/pocket` | Cartridge 01 stays in a T-pose and slides when steered; the A button reports a wave as played while the character stays idle; cartridge 03 renders with its arms locked straight overhead. Walking and turning with the D-pad work. |
+| `/agent-identities` | "View in 3D" spins on "Loading the rigged avatar" forever: the page loads only the decoder shim (`/model-viewer-meshopt.js`) and never the `model-viewer` library, so the element never starts (`ensureModelViewer` in `src/agent-identities.js`). |
+| `/create/video` | Signed-out visitors get the sign-in page, and `GET /api/avatar/video-generate` answers `"available": false, "reason": "worker_unconfigured"`: the talking-video renderer is not deployed, while `docs/talking-avatar-video.md` shows `"available": true`. |
+| `/motion-swap` | The only way in is a video upload, with no public sample and no finished job to reopen. |
+| `/playground` | The default model renders in a bind-pose T-pose. |
+| `/restyle` | Works, but the default sample avatar stands in a T-pose, so its reel shows one. The story is filmed and held as paused until the sample idles. The lower presets, seeded variants and Reset sit far below the 3D view, so using them scrolls the model away; "18 PBR material presets" on `/docs/restyle` is only in the meta description. |
+| `/globe` | Works, and the story is filmed, but held for the owner: it shows conflict and force-posture layers over military bases and nuclear sites, and the conflict layer misclassifies (a story about US House district maps tagged as conventional military force). The 30-day request takes 4 to 16 s. |
+| `/sonar` | Works and was filmed, then withdrawn: the stage avatar (`/avatars/cz.glb`, used by `src/animations-live-preview.js`) is the likeness of a figure tied to another crypto project. After a push zoom the head leaves the frame. |
+| `/labs` | `categorize()` in `src/labs.js` files every page it does not recognise as x402, so Animation Gallery and Character Library are badged and filtered as x402. A filter scrolls a heading naming another coin into view, and that heading contains an em-dash. Its live card previews slow the browser so badly that a 9 second scenario took 11 minutes. |
+| `/rankings` | The Creations board shows the public QA account and T-pose thumbnails; medal emoji render as empty boxes. |
+| `/walk-leaderboard`, `/daily-match`, `/reputation/market` | Effectively empty (one walker, one competitor, no stakes). |
+| `/search`, `/ledger`, `/showcase` | Results, decision rows and chain chips name third-party coins and chains. `/search` returns twelve generations all titled the same for one query. |
+| `/hydrate`, `/bundles` | A connect-wallet wall and a sign-in wall, with nothing to show signed out. |
+
+### Defects on surfaces that were announced
+
+- **Voice:** Gemini voices fail synthesis with 502 or 503 ("the provider rejected this deployment's credentials") while the catalog lists them as available, so the catalog moves between 357 and 327 voices. A cached clip's status line drops its billing note because the billing header is missing on cache hits.
+- **Drive:** the agent reached "Speaking" in every run on a quiet machine and timed out at 60 s twice under heavy load; worth watching, not yet a defect.
+- **Spelling gate:** rejects "metalness", "GDELT" and "chokepoints"; authors worded around them.
+
+### The X account
+
+On 2026-10-01 the X API answered `402 credits depleted` to every read and every post, so nothing could be published until the account's API credits are topped up in the X developer console. The credits belong to the app, and the app is shared by the content queue, the changelog's X lane, the Sentiment Scout's recent search (billed per returned post, guarded only by rate limits), and users' connected-X features (scheduled posts, triggers, and a metrics fetch every six hours). The console's usage breakdown says which of them spent it.
