@@ -29,20 +29,58 @@ async function viaVertex({ system, parts }) {
 	return { model: `vertex:${EDITOR_MODEL}`, text: body.content.filter((block) => block.type === 'text').map((block) => block.text).join('') };
 }
 
-async function viaChatCompletions({ system, parts }, { url, key, model, label, extraHeaders = {}, textOnly = false }) {
+// One rung, one model. A dropped connection, a 5xx, or a plain rate limit is
+// the provider having a bad minute, and while every paid rung is out of
+// billing the free one is the only editor left, so it is worth another try.
+// A refusal about billing or credentials would only repeat, so it falls
+// through to the next rung at once.
+export const RUNG_ATTEMPTS = 3;
+export const RUNG_RETRY_MS = 4000;
+
+export function isRetryable({ status = null, body = '', networkError = false } = {}) {
+	if (networkError) return true;
+	if (status >= 500) return true;
+	return status === 429 && !/billing|credit|quota|insufficient|not active/i.test(String(body));
+}
+
+const pause = (ms) => new Promise((done) => setTimeout(done, ms));
+
+async function viaChatCompletions({ system, parts }, { url, key, model, label, extraHeaders = {}, textOnly = false, fetchImpl = fetch, attempts = RUNG_ATTEMPTS, retryMs = RUNG_RETRY_MS }) {
 	if (!key) return null;
 	if (textOnly && parts.some((part) => part.type === 'image')) return null;
 	const content = parts.map((part) => (part.type === 'image' ? { type: 'image_url', image_url: { url: `data:${part.mime};base64,${part.data}` } } : { type: 'text', text: part.text }));
-	const response = await fetch(url, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json', ...extraHeaders },
-		body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content }] }),
-		signal: AbortSignal.timeout(600_000),
-	});
-	if (!response.ok) throw new Error(`${label} ${response.status}: ${(await response.text()).slice(0, 200)}`);
-	const body = await response.json();
-	return { model: `${label}:${model}`, text: body.choices?.[0]?.message?.content || '' };
+	const body = JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content }] });
+	for (let attempt = 1; ; attempt++) {
+		let response;
+		try {
+			response = await fetchImpl(url, {
+				method: 'POST',
+				headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json', ...extraHeaders },
+				body,
+				signal: AbortSignal.timeout(600_000),
+			});
+		} catch (err) {
+			if (attempt < attempts && isRetryable({ networkError: true })) {
+				await pause(retryMs * attempt);
+				continue;
+			}
+			throw new Error(`${label} ${err?.message || err}${attempt > 1 ? ` (after ${attempt} tries)` : ''}`);
+		}
+		if (response.ok) {
+			const parsed = await response.json();
+			return { model: `${label}:${model}`, text: parsed.choices?.[0]?.message?.content || '' };
+		}
+		const text = (await response.text()).slice(0, 200);
+		if (attempt < attempts && isRetryable({ status: response.status, body: text })) {
+			await pause(retryMs * attempt);
+			continue;
+		}
+		throw new Error(`${label} ${response.status}: ${text}${attempt > 1 ? ` (after ${attempt} tries)` : ''}`);
+	}
 }
+
+// Exported for tests: one chat-completions rung with an injected fetch.
+export const chatCompletionsRung = viaChatCompletions;
 
 export function modelRungs(request, env = process.env) {
 	return [
