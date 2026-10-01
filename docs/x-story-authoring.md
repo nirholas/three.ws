@@ -205,15 +205,18 @@ evidence:
 | Evidence | Passes when |
 |---|---|
 | `{ "type": "proof", "fact": "agents", "equals": "600" }` | the run read that fact off the screen (`contains` also works) |
+| `{ "type": "proof", "fact": "agents", "min": 500 }` | the run read a number at least that high; use it for a count that grows, written as "more than 500" |
 | `{ "type": "proof", "saw": "Closest to" }` | the run waited for that text and saw it |
 | `{ "type": "proof", "responded": "/api/galaxy" }` | an action in the run awaited that request and it answered without an error |
 | `{ "type": "page", "url": "https://three.ws/x", "contains": "..." }` | the live page contains the text |
 | `{ "type": "file", "path": "src/x.js", "contains": "..." }` | a file in the repo contains the text |
 | `{ "type": "module", "path": "src/x.js", "export": "LIST", "length": 15 }` | an export has that many entries |
 
-A count that can change (agents, entries, downloads) will change. When it does, the next review
-fails and says the reel is stale, and the fix is to film it again. Prefer facts that hold: a price
-set by a tier, a limit in the code, what a tool does.
+A count that can change (agents, entries, downloads) will change. A fact cited exactly (`equals`,
+`contains`, or bare) must read the same at every review, so when it moves the review fails and the
+fix is to film again. A count that only grows is better written as a floor: "more than 500 agents",
+cited with `min`, stays true and only fails if the live number drops below it. Prefer facts that
+hold: a price set by a tier, a limit in the code, what a tool does.
 
 When a post does state a count, give it a probe that runs seconds before the post goes out, so a
 count that moved after the review holds the post instead of publishing it wrong. An `api` probe is

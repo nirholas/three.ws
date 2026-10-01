@@ -335,3 +335,31 @@ describe('site chrome', () => {
 		expect(sheet).toMatch(/\{display:none !important\}$/);
 	});
 });
+
+describe('facts that move', () => {
+	it('reads a count however the page writes it', async () => {
+		const { factNumber } = await import('../api/_lib/x-content/reel.js');
+		expect(factNumber('2,549')).toBe(2549);
+		expect(factNumber('2,549 agents')).toBe(2549);
+		expect(factNumber('14000')).toBe(14000);
+		expect(factNumber('none')).toBeNaN();
+	});
+
+	it('holds a floor claim to its floor, not to the exact number filmed', () => {
+		const filmed = proof({ facts: { agents: '2,546' } });
+		expect(factCheck({ type: 'proof', fact: 'agents', min: 2500 }, filmed)).toEqual({ ok: true, detail: 'the run read agents = "2,546", at least 2500' });
+		expect(factCheck({ type: 'proof', fact: 'agents', min: 3000 }, filmed).ok).toBe(false);
+	});
+
+	it('lets a counted fact grow under a floor claim, and catches an exact one that moved', async () => {
+		const { factDrift } = await import('../api/_lib/x-content/verify.js');
+		const floor = item({ claims: [{ says: 'More than 2,500', evidence: [{ type: 'proof', fact: 'agents', min: 2500 }] }] });
+		const exact = item({ claims: [{ says: '600', evidence: [{ type: 'proof', fact: 'agents', equals: '600' }] }] });
+		const uncited = item({ claims: [] });
+		const filmed = proof({ facts: { agents: '2,546' } });
+		expect(factDrift(floor, filmed, { agents: '2,549' })).toEqual([]);
+		expect(factDrift(floor, filmed, { agents: '2,499' })).toEqual(['agents is now "2,499", under the floor of 2500 the post claims']);
+		expect(factDrift(exact, filmed, { agents: '2,549' })).toEqual(['agents is now "2,549", the reel shows "2,546"']);
+		expect(factDrift(uncited, filmed, { agents: '9' })).toEqual([]);
+	});
+});

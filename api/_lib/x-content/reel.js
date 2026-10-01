@@ -211,8 +211,34 @@ export function proofProblems(item, root, now = Date.now()) {
 	return problems;
 }
 
+// A fact as a number: "2,549 agents" and "2549" both read as 2549.
+export function factNumber(value) {
+	const match = /-?\d[\d,]*(?:\.\d+)?/.exec(String(value ?? ''));
+	return match ? Number(match[0].replace(/,/g, '')) : NaN;
+}
+
+// How each fact the run reads is held when the product is checked again. A
+// fact the copy states exactly (`equals`, `contains`, or a bare citation) must
+// still read the same, or the reel and the post are out of date. A fact the
+// copy states as a floor (`min`) only has to stay at or above it, so a count
+// that grows does not send a true post back to be filmed again. A fact no
+// claim cites may move freely: the reel is stamped with the day it was filmed.
+export function factRules(item) {
+	const rules = {};
+	for (const claim of item?.claims || []) {
+		for (const evidence of claim.evidence || []) {
+			if (evidence.type !== 'proof' || evidence.fact === undefined) continue;
+			const rule = (rules[evidence.fact] ||= { exact: false, min: -Infinity });
+			if (evidence.min !== undefined) rule.min = Math.max(rule.min, Number(evidence.min));
+			else rule.exact = true;
+		}
+	}
+	return rules;
+}
+
 // A claim may cite the run: a fact it read off the screen, or a text it waited
-// for. `equals` and `contains` compare against the fact as it was read.
+// for. `equals` and `contains` compare against the fact as it was read, and
+// `min` holds it to a floor.
 export function factCheck(evidence, proof) {
 	if (!proof) return { ok: false, detail: 'no proof on record' };
 	if (!proof.passed) return { ok: false, detail: 'the last run of the scenario failed' };
@@ -230,6 +256,11 @@ export function factCheck(evidence, proof) {
 	if (evidence.equals !== undefined) {
 		const ok = String(value) === String(evidence.equals);
 		return { ok, detail: `the run read ${evidence.fact} = "${value}"${ok ? '' : `; the claim needs "${evidence.equals}"`}` };
+	}
+	if (evidence.min !== undefined) {
+		const number = factNumber(value);
+		const ok = Number.isFinite(number) && number >= Number(evidence.min);
+		return { ok, detail: `the run read ${evidence.fact} = "${value}"${ok ? `, at least ${evidence.min}` : `; the claim needs at least ${evidence.min}`}` };
 	}
 	if (evidence.contains !== undefined) {
 		const ok = String(value).toLowerCase().includes(String(evidence.contains).toLowerCase());

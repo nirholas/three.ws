@@ -197,8 +197,10 @@ How it is filmed, and why:
 - **The proof is bound to the post.** `data/x-content/proofs/<id>.json` records the hash of the
   scenario and of the reel. Change a step, or swap the file, and the item no longer validates. A
   proof expires after 14 days.
-- **Reviews run it again.** The `scenario` probe runs the steps unfilmed and compares every fact
-  it reads with what the reel shows. A count that has moved is a stale reel: film it again.
+- **Reviews run it again.** The `scenario` probe runs the steps unfilmed. A fact the post states
+  exactly must still read what the reel shows; a fact it states as a floor (`min`) must stay at or
+  above it; a fact no claim cites may move. A fact that broke its rule is a stale post: film it
+  again.
 
 A scenario needs a browser and ffmpeg, so reels are made where posts are reviewed. Production
 only checks the record.
@@ -333,7 +335,7 @@ Evidence types:
 | `module` | A repo module's `export` has `length` entries, or equals `equals` |
 | `github-issue` | `repo#number` has the given `state` and `label` |
 | `github-issues` | `repo` has at least `min` issues with the given `state` and `label` |
-| `proof` | The item's filmed run read the `fact` off the screen (`equals`, `contains`), waited for the text in `saw`, or got an answer from the path in `responded` |
+| `proof` | The item's filmed run read the `fact` off the screen (`equals`, `contains`, or at least `min`), waited for the text in `saw`, or got an answer from the path in `responded` |
 
 Feature probes, in `probes`, run as part of every review, and the `api` ones run again seconds before a post goes out:
 

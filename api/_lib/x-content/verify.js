@@ -22,7 +22,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { mentionsIn } from './editorial.js';
 import { urlRe, urlsIn } from './quality.js';
-import { factCheck, loadProof, runScenario } from './reel.js';
+import { factCheck, factNumber, factRules, loadProof, runScenario } from './reel.js';
 
 const UA = 'three.ws editorial verifier (+https://three.ws)';
 const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -300,9 +300,21 @@ async function commandProbe(probe, root) {
 	return { ok: false, detail: `exit ${run.status ?? run.signal}: ${tail}` };
 }
 
-// The feature still works, and the reel still tells the truth about it: every
-// fact the run reads today has to be the fact the reel was filmed showing. A
-// count that has moved since is a stale reel, and the fix is to film it again.
+// The feature still works, and the post is still true of it. A fact the copy
+// states exactly has to read today what the reel was filmed showing; a fact it
+// states as a floor has to stay at or above it (factRules). A count that broke
+// either is a stale post, and the fix is to film it again.
+export function factDrift(item, proof, facts) {
+	const problems = [];
+	for (const [name, rule] of Object.entries(factRules(item))) {
+		const filmed = proof?.facts?.[name];
+		const live = facts[name];
+		if (rule.exact && live !== filmed) problems.push(`${name} is now "${live}", the reel shows "${filmed}"`);
+		if (Number.isFinite(rule.min) && !(factNumber(live) >= rule.min)) problems.push(`${name} is now "${live}", under the floor of ${rule.min} the post claims`);
+	}
+	return problems;
+}
+
 async function scenarioProbe(item, root) {
 	const proof = loadProof(root, item.id);
 	const run = await runScenario(item.scenario, { film: false });
@@ -310,11 +322,10 @@ async function scenarioProbe(item, root) {
 		const failed = run.steps.find((step) => !step.ok);
 		return { ok: false, detail: `step ${failed.index} (${failed.kind} ${failed.target}): ${failed.detail}` };
 	}
-	const drifted = Object.entries(proof?.facts || {}).filter(([name, value]) => run.facts[name] !== value);
-	if (drifted.length) {
-		return { ok: false, detail: `${drifted.map(([name, value]) => `${name} is now "${run.facts[name]}", the reel shows "${value}"`).join('; ')}; prove it again` };
-	}
-	return { ok: true, detail: `${run.steps.length} steps passed against the live product${Object.keys(run.facts).length ? `, facts unchanged (${Object.entries(run.facts).map(([name, value]) => `${name} ${value}`).join(', ')})` : ''}` };
+	const drift = factDrift(item, proof, run.facts);
+	if (drift.length) return { ok: false, detail: `${drift.join('; ')}; prove it again` };
+	const read = Object.entries(run.facts).map(([name, value]) => `${name} ${value}`).join(', ');
+	return { ok: true, detail: `${run.steps.length} steps passed against the live product${read ? `, every claimed fact still holds (${read})` : ''}` };
 }
 
 // `where` is 'review' (every probe) or 'publish' (api probes only).
