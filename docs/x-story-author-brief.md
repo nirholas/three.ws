@@ -43,6 +43,14 @@ production and has been filmed, so that `public/x-media/<id>/reel.mp4` and
   any factual sentence no claim covers.
 - `three.ws` anywhere in a post becomes a link. One link per item, so write the brand only as part
   of that link.
+- Never write a scoped package name such as `@three-ws/avatar-cli` in a post: X reads `@three` as a
+  tag of an unrelated account. Name the command (`the three-ws-avatar command`), or let the page
+  the post links show the install line.
+- A count that only grows is claimed as a floor ("more than 500 agents") with
+  `{ "type": "proof", "fact": "agents", "min": 500 }`, so the post stays true as the count moves.
+- Check the browser starts before you scout or prove:
+  `node -e "require('playwright').chromium.launch().then(b=>{console.log('ok');return b.close()})"`.
+  If it reports a missing library, run `npx playwright install-deps chromium` once.
 
 ## How to work
 
