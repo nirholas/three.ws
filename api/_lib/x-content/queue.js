@@ -200,7 +200,7 @@ export function validateItem(item, root, { quality = qualityAt(root), now = Date
 		for (const finding of languageProblems(text)) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
 	}
 	if (articleText) {
-		for (const finding of languageProblems(articleText)) if (finding.severity === 'blocking') problems.push(`article body ${finding.rule}: ${finding.message}`);
+		for (const finding of languageProblems(articleText, { body: true })) if (finding.severity === 'blocking') problems.push(`article body ${finding.rule}: ${finding.message}`);
 	}
 	for (const finding of claimProblems(item, { articleText })) if (finding.severity === 'blocking') problems.push(`${finding.rule}: ${finding.message}`);
 

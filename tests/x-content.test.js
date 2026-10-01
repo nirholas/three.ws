@@ -649,6 +649,13 @@ describe('editorial', () => {
 		expect(claimProblems(declared).map((row) => row.message).join('\n')).toMatch(/does not appear in the copy/);
 	});
 
+	it('lets an Article body link to several pages while a post links one', async () => {
+		const { languageProblems } = await import('../api/_lib/x-content/editorial.js');
+		const text = 'Try it at three.ws/holo and read the docs at three.ws/docs/holo.';
+		expect(languageProblems(text).map((row) => row.rule)).toContain('links');
+		expect(languageProblems(text, { body: true }).map((row) => row.rule)).not.toContain('links');
+	});
+
 	it('reads an Article body as prose, leaving code blocks out', async () => {
 		const { articleProse } = await import('../api/_lib/x-content/queue.js');
 		const dir = sandbox();

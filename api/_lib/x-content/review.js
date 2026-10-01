@@ -69,7 +69,7 @@ export function lintItem(item, { maximum, articleText = '' } = {}) {
 		for (const problem of languageProblems(item.article.title)) findings.push({ where: 'article title', ...problem });
 	}
 	if (item.kind === 'article' && articleText) {
-		for (const problem of languageProblems(articleText)) findings.push({ where: 'article body', ...problem });
+		for (const problem of languageProblems(articleText, { body: true })) findings.push({ where: 'article body', ...problem });
 	}
 	for (const problem of claimProblems(item, { articleText })) findings.push({ where: 'claims', ...problem });
 	return findings;

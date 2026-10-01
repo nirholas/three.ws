@@ -86,7 +86,9 @@ function termHits(text, terms) {
 	return terms.map((term) => text.match(term)?.[0]).filter(Boolean);
 }
 
-export function languageProblems(text) {
+// `body` marks an Article body: one long piece that links wherever the reader
+// needs to go, so the one-link rule (a post's reach) does not apply to it.
+export function languageProblems(text, { body = false } = {}) {
 	const problems = [];
 	const prose = withoutUrls(text);
 	for (const [wrong, right] of BRAND_RULES) {
@@ -114,7 +116,7 @@ export function languageProblems(text) {
 		problems.push({ rule: 'structure', severity: 'blocking', message: 'one-word-sentence drumbeat reads as ad copy' });
 	}
 	const links = urlsIn(text);
-	if (links.length > 1) problems.push({ rule: 'links', severity: 'blocking', message: `${links.length} links; one post links one surface` });
+	if (links.length > 1 && !body) problems.push({ rule: 'links', severity: 'blocking', message: `${links.length} links; one post links one surface` });
 	const mentions = prose.match(/(?<![\w@])@\w{1,15}/g) || [];
 	if (mentions.length > 2) problems.push({ rule: 'mentions', severity: 'major', message: `${mentions.length} mentions; more than two reads as tag-baiting` });
 	return problems;
