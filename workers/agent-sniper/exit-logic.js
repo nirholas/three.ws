@@ -225,11 +225,22 @@ export function decideLadderedExit(pos, value, peak, now = Date.now(), sentiment
 	}
 
 	if (reason == null) {
-		if (tp != null && value >= entry * (1 + tp / 100) && (recovered || mult == null)) {
-			// A take-profit ceiling. With a ladder armed it only applies after the
-			// initials are out, so the ceiling can never pre-empt the ladder.
+		// A take-profit ceiling. With a ladder armed it only applies after the
+		// initials are out, so the ceiling can never pre-empt the ladder, and it is
+		// measured from the price the ladder fired at, not from the original entry.
+		// After the initials leg `entry` is the moon bag's scaled-down basis, so
+		// value/entry is the price multiple (~2x at that moment): measuring the
+		// ceiling from entry meant any take_profit_pct <= 100 was already met and
+		// the very next sweep sold the bag the ladder had just set free. Measured
+		// from the ladder price, TP 60 means "the next +60% above 2x", i.e. 3.2x.
+		const tpBase = recovered && mult != null ? entry * mult : entry;
+		if (tp != null && value >= tpBase * (1 + tp / 100) && (recovered || mult == null)) {
 			reason = 'take_profit';
-		} else {
+		} else if (!recovered) {
+			// The clock only runs on money still at risk. A recovered bag is house
+			// money: runners peak a median 12-37 minutes after the entry band and the
+			// largest 4-41 hours later, so a 30-60 minute max hold sold exactly the
+			// tail the ladder exists to keep (one bag was timed out at 24.7x).
 			const heldS = (now - new Date(pos.opened_at).getTime()) / 1000;
 			if (pos.max_hold_seconds != null && heldS >= pos.max_hold_seconds) reason = 'timeout';
 		}

@@ -121,14 +121,35 @@ describe('the owner rule: never sell 100% of a position in profit', () => {
 		expect(d.keepsMoonbag).toBe(true);
 	});
 
-	it('keeps a moon bag on a timeout in profit', () => {
+	it('keeps a moon bag on a timeout in profit (stake still at risk)', () => {
 		const d = decideLadderedExit(
-			base({ initials_recovered: true, max_hold_seconds: 60 }),
+			base({ max_hold_seconds: 60 }),
 			1.5 * ENTRY, 1.6 * ENTRY,
 			new Date('2026-07-03T02:00:00Z').getTime(),
 		);
 		expect(d.reason).toBe('timeout');
-		expect(d.sellFraction).toBeCloseTo(0.85);
+		// Sells exactly the stake back (entry/value), the rest rides free.
+		expect(d.sellFraction).toBeCloseTo(1 / 1.5);
+		expect(d.keepsMoonbag).toBe(true);
+	});
+
+	it('never times out a recovered bag: house money has no clock', () => {
+		const d = decideLadderedExit(
+			base({ initials_recovered: true, max_hold_seconds: 60 }),
+			1.5 * ENTRY, 1.6 * ENTRY,
+			new Date('2026-07-03T09:00:00Z').getTime(),
+		);
+		expect(d).toBe(null);
+	});
+
+	it('does not fire take-profit at the ladder price right after initials', () => {
+		// The regression: entry is the bag's scaled basis after initials, so value/entry
+		// is ~2x the moment the ladder fires. TP 60 used to be "met" immediately.
+		const pos = base({ initials_recovered: true, take_profit_pct: 60 });
+		expect(decideLadderedExit(pos, 2.05 * ENTRY, 2.05 * ENTRY, NOW)).toBe(null);
+		expect(decideLadderedExit(pos, 3.1 * ENTRY, 3.1 * ENTRY, NOW)).toBe(null);
+		const d = decideLadderedExit(pos, 3.25 * ENTRY, 3.25 * ENTRY, NOW);
+		expect(d.reason).toBe('take_profit');
 		expect(d.keepsMoonbag).toBe(true);
 	});
 
@@ -166,8 +187,8 @@ describe('the owner rule: never sell 100% of a position in profit', () => {
 	it('never returns a full exit on any profitable reason', () => {
 		const cases = [
 			['trailing_stop', base({ initials_recovered: true }), 3.1 * ENTRY, 4 * ENTRY, NOW],
-			['take_profit', base({ initials_recovered: true, take_profit_pct: 50 }), 2 * ENTRY, 2 * ENTRY, NOW],
-			['timeout', base({ initials_recovered: true, max_hold_seconds: 1 }), 5 * ENTRY, 5 * ENTRY, new Date('2026-07-03T02:00:00Z').getTime()],
+			['take_profit', base({ initials_recovered: true, take_profit_pct: 50 }), 3.1 * ENTRY, 3.1 * ENTRY, NOW],
+			['timeout', base({ max_hold_seconds: 1 }), 1.5 * ENTRY, 1.5 * ENTRY, new Date('2026-07-03T02:00:00Z').getTime()],
 		];
 		for (const [expected, pos, value, peak, now] of cases) {
 			const d = decideLadderedExit(pos, value, peak, now);

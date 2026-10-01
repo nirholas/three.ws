@@ -69,10 +69,14 @@ export function cachedStrategies() {
 
 /** Count an agent's positions that still hold (or are mid-open) on this network. */
 export async function countOpenPositions(agentId, network) {
+	// A recovered moon bag is house money riding on its own exit rules; it holds
+	// no stake at risk, so it must not hold a concurrency slot. Counting it meant a
+	// bag kept open for a long run blocked the arm from taking any new entry.
 	const [r] = await sql`
 		SELECT count(*)::int AS n FROM agent_sniper_positions
 		WHERE agent_id = ${agentId} AND network = ${network}
 		  AND status IN ('opening','open','closing')
+		  AND initials_recovered IS NOT TRUE
 	`;
 	return r?.n ?? 0;
 }
@@ -80,7 +84,9 @@ export async function countOpenPositions(agentId, network) {
 /** Lamports committed by an agent today (UTC) — the daily-budget denominator. */
 export async function getDailySpend(agentId, network) {
 	const [r] = await sql`
-		SELECT coalesce(sum(entry_quote_lamports), 0)::text AS spent
+		-- The stake committed, not the post-ladder basis: take-initials scales
+		-- entry_quote_lamports down, which made a laddered trade under-count spend.
+		SELECT coalesce(sum(coalesce(stake_lamports, entry_quote_lamports)), 0)::text AS spent
 		FROM agent_sniper_positions
 		WHERE agent_id = ${agentId} AND network = ${network}
 		  AND opened_at >= date_trunc('day', now())

@@ -583,6 +583,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 					status = 'open', buy_sig = ${sig},
 					error = ${ammEntry ? 'graduated:amm_entry' : null},
 					entry_quote_lamports = ${entryCost.toString()},
+					stake_lamports = ${entryCost.toString()},
 					base_amount = ${baseAmount.toString()},
 					entry_price_lamports_per_token = ${pricePerToken},
 					entry_price_impact_pct = ${Number(quote.priceImpactPct)},
@@ -801,7 +802,11 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 			}
 
 			const pnl = legPnl;
-			const pnlPct = entryFull > 0n ? (Number(cumRealized) / Number(entryFull)) * 100 : 0;
+			// Divide by the ORIGINAL stake. After a take-initials leg entryFull is only
+			// the moon bag's scaled-down basis, and dividing by it roughly doubled the
+			// booked % of every laddered trade (fed straight into the optimizer).
+			const stake = position.stake_lamports != null ? BigInt(position.stake_lamports) : entryFull;
+			const pnlPct = stake > 0n ? (Number(cumRealized) / Number(stake)) * 100 : 0;
 			// Tokens kept back on a moon-bag close, and the cost basis still sitting in
 			// them. Once initials were recovered that basis is ~0, which is the whole
 			// point: the bag is free, so a bag that goes to zero costs nothing and a
