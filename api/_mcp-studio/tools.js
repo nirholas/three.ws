@@ -376,6 +376,11 @@ export function avatarFallbackBrief(prompt, subject) {
 
 // ── handlers ────────────────────────────────────────────────────────────────
 
+// The generating handlers below direct the prompt themselves, so each submit
+// carries `director: false`: /api/gpt-forge would otherwise run its own director
+// over the already-directed brief. refine_model is the exception; it composes
+// rather than directs, and keeps the server's pass.
+
 async function handleForgeFree(args, _auth, req, ctx = {}) {
 	const base = originFromReq(req);
 	const prompt = String(args.prompt || '').trim();
@@ -414,8 +419,8 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 		job = await generate(
 			base,
 			markImageUrls
-				? { prompt: effective, imageUrls: markImageUrls, tier, internal: true }
-				: { prompt: effective, path: 'image', tier, internal: true },
+				? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false }
+				: { prompt: effective, path: 'image', tier, internal: true, director: false },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
 		);
 	} catch (err) {
@@ -453,7 +458,7 @@ async function handleTextToAvatar(args, _auth, req, ctx = {}) {
 	try {
 		job = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
 		);
 	} catch (err) {
@@ -505,6 +510,7 @@ async function handleMeshForge(args, _auth, req, ctx = {}) {
 				aspect: '1:1',
 				tier: 'standard',
 				internal: true,
+				director: false,
 			},
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
 		);
@@ -566,7 +572,7 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 	try {
 		gen = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
 		);
 	} catch (err) {
