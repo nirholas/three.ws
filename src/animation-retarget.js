@@ -19,7 +19,12 @@
 
 import { AnimationClip, Box3, Quaternion, Vector3 } from 'three';
 import { canonicalizeBoneName, resolveArmShoulderCollisions } from './glb-canonicalize.js';
-import { CANONICAL_REST, CANONICAL_REST_WORLD } from './animation-canonical-rest.js';
+import {
+	CANONICAL_PARENT,
+	CANONICAL_REST,
+	CANONICAL_REST_POSITION,
+	CANONICAL_REST_WORLD,
+} from './animation-canonical-rest.js';
 
 // A clip retargets cleanly only when enough of its tracks find a home on the
 // target rig. Below this the motion would read as a few twitching joints rather
@@ -59,6 +64,65 @@ const SOURCE_WORLD_REST = new Map(
 // A quaternion within this of identity (|w| ≈ 1) is treated as no rotation, so a
 // rig that already matches the authoring convention round-trips bit-for-bit.
 const BIND_EPSILON = 1e-6;
+
+// Limb bones whose REST DIRECTION is re-aimed onto the authoring rig's before a
+// clip plays, keyed to the canonical child that defines the bone's direction.
+//
+// Preserving a bone's world delta from rest (see `bindCorrections`) is only
+// right when the target rests in the same stance as the authoring rig. cz rests
+// in a T-pose, and the idle swings its upper arm about 73° down from there. A
+// rig that rests in an A-pose with bent elbows (the MakeHuman-derived Parametric
+// base, the selfie-girl Avatar Studio body) received the same 73° on top of an
+// arm that already hung 50° down, which drove the arm through the torso and left
+// the hand floating in front of the chest. Splayed hips got the idle's stance
+// added to a stance that was already wide. So each listed bone first turns, in
+// the rig's own world frame, from its rest direction onto the authoring rig's,
+// and the clip's delta is replayed from there. A T-pose rig turns by a few
+// degrees at most; cz itself turns by nothing and still round-trips unchanged.
+//
+// Every other bone inherits its parent's turn, so a hand stays rigid with its
+// forearm and fingers with their hand. The spine, neck, head and clavicles are
+// left alone: their rest angles are anatomy, not a stance convention.
+const LIMB_DIRECTION_CHILD = Object.freeze({
+	LeftArm: 'LeftForeArm',
+	LeftForeArm: 'LeftHand',
+	RightArm: 'RightForeArm',
+	RightForeArm: 'RightHand',
+	LeftUpLeg: 'LeftLeg',
+	LeftLeg: 'LeftFoot',
+	RightUpLeg: 'RightLeg',
+	RightLeg: 'RightFoot',
+});
+
+// Feet keep their own world rest instead of inheriting the leg's turn: a sole
+// that is flat on the floor at rest has to stay flat, whatever angle the shin
+// was re-aimed by. Toes inherit from the foot, so they stay put too.
+const WORLD_REST_BONES = new Set(['LeftFoot', 'RightFoot']);
+
+// Below this dot product the two rest directions differ enough to turn the bone
+// (about 0.08°). Anything closer is measurement noise between two exports of the
+// same skeleton and is treated as already aligned.
+const ALIGN_DOT = 1 - 1e-6;
+
+// Authoring rig's rest direction for each re-aimed limb bone, in cz's model frame.
+const SOURCE_REST_DIRECTION = new Map();
+for (const [bone, child] of Object.entries(LIMB_DIRECTION_CHILD)) {
+	const a = CANONICAL_REST_POSITION[bone];
+	const b = CANONICAL_REST_POSITION[child];
+	if (!a || !b) continue;
+	const dir = new Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+	if (dir.lengthSq() > 1e-12) SOURCE_REST_DIRECTION.set(bone, dir.normalize());
+}
+
+// Canonical bones parents-first, so a bone's turn can build on its parent's.
+const CANONICAL_TOPO_ORDER = (() => {
+	const depth = (bone) => {
+		let d = 0;
+		for (let p = CANONICAL_PARENT[bone]; p; p = CANONICAL_PARENT[p]) d++;
+		return d;
+	};
+	return Object.keys(CANONICAL_REST).sort((a, b) => depth(a) - depth(b));
+})();
 
 // Track property prefix for a blendshape lane, e.g.
 // `Face.morphTargetInfluences[browInnerUp]`.
@@ -251,6 +315,93 @@ export function canonicalWorldRestMapFromRig(rig) {
 	return map;
 }
 
+// Unit direction from each re-aimed limb bone to its canonical child, given a
+// canonical → node map and a function that reads a node's position in the frame
+// the world rest rotations were measured in. Bones whose child is missing, or
+// sits on top of them, are left out and simply inherit their parent's turn.
+function restDirectionMap(nodes, positionOf) {
+	const map = new Map();
+	for (const [bone, child] of Object.entries(LIMB_DIRECTION_CHILD)) {
+		const a = nodes.get(bone);
+		const b = nodes.get(child);
+		if (!a || !b) continue;
+		const dir = positionOf(b).sub(positionOf(a));
+		if (dir.lengthSq() > 1e-12) map.set(bone, dir.normalize());
+	}
+	return map;
+}
+
+/**
+ * Rest direction of each limb bone (upper arm, forearm, thigh, shin) toward its
+ * canonical child, in the same within-model frame as
+ * {@link canonicalWorldRestMapFromObject}. The retargeter uses it to re-aim an
+ * A-posed or splay-legged rig onto the authoring rig's stance before replaying a
+ * clip (see LIMB_DIRECTION_CHILD). Call while the model is in its bind pose.
+ *
+ * @param {import('three').Object3D} root
+ * @returns {Map<string,import('three').Vector3>}
+ */
+export function canonicalRestDirectionMapFromObject(root) {
+	if (!root?.traverse) return new Map();
+	root.updateMatrixWorld(true);
+	const nodes = canonicalBoneNodesFromObject(root);
+	return restDirectionMap(nodes, (node) => root.worldToLocal(node.getWorldPosition(new Vector3())));
+}
+
+/**
+ * Rest-direction map from a GltfRig/MannequinRig, in world space to match
+ * {@link canonicalWorldRestMapFromRig}.
+ *
+ * @param {{ getBones: () => Array<{key:string,node:import('three').Object3D}> }} rig
+ * @returns {Map<string,import('three').Vector3>}
+ */
+export function canonicalRestDirectionMapFromRig(rig) {
+	const nodes = new Map();
+	for (const { key, node } of rig.getBones?.() || []) {
+		if (node && !nodes.has(key)) nodes.set(key, node);
+	}
+	for (const node of nodes.values()) node.updateWorldMatrix(true, false);
+	return restDirectionMap(nodes, (node) => node.getWorldPosition(new Vector3()));
+}
+
+/**
+ * The world-frame turn that re-aims each canonical bone of the target from its
+ * own rest stance onto the authoring rig's (see LIMB_DIRECTION_CHILD). A limb
+ * bone turns by the shortest arc from its rest direction, already carried by
+ * its parent's turn, onto the authoring direction, so the elbow and knee only
+ * add the bend their parent did not already remove and no bone picks up a
+ * spurious twist. Feet keep their world rest; every other bone inherits its
+ * parent's turn. Only non-identity turns are returned.
+ *
+ * @param {Map<string,import('three').Vector3>|null} targetDirections
+ * @returns {Map<string,import('three').Quaternion>}
+ */
+export function restAlignments(targetDirections) {
+	const out = new Map();
+	if (!(targetDirections instanceof Map) || targetDirections.size === 0) return out;
+	const turn = new Map();
+	const dir = new Vector3();
+	for (const bone of CANONICAL_TOPO_ORDER) {
+		const parentTurn = turn.get(CANONICAL_PARENT[bone]) || null;
+		if (WORLD_REST_BONES.has(bone)) continue; // identity: the foot keeps its own rest
+		const target = targetDirections.get(bone);
+		const source = SOURCE_REST_DIRECTION.get(bone);
+		if (!target || !source) {
+			if (parentTurn) turn.set(bone, parentTurn);
+			continue;
+		}
+		dir.copy(target);
+		if (parentTurn) dir.applyQuaternion(parentTurn);
+		const own = dir.dot(source) > ALIGN_DOT ? null : new Quaternion().setFromUnitVectors(dir, source);
+		if (own && parentTurn) turn.set(bone, own.multiply(parentTurn));
+		else if (own || parentTurn) turn.set(bone, own || parentTurn);
+	}
+	for (const [bone, q] of turn) {
+		if (1 - Math.abs(q.w) >= BIND_EPSILON) out.set(bone, q);
+	}
+	return out;
+}
+
 /**
  * Map every blendshape name the target carries to the mesh nodes that own it, so
  * a face lane authored once can be re-pointed at this avatar. Faces are commonly
@@ -288,6 +439,16 @@ export function morphTargetMapFromObject(root) {
  *   • the correct limb reframe for an A-pose clip on a T-pose rig, which a
  *     local-only `Rt·Rs⁻¹` premultiply skewed by ~30°.
  *
+ * That world delta is only the right thing to replay when both rigs rest in the
+ * same stance. When the caller supplies the target's limb rest directions, each
+ * bone is first re-aimed onto the authoring stance by a world turn C (see
+ * {@link restAlignments}), which generalizes the correction to
+ *
+ *   L = Rt · WT⁻¹ · Cp⁻¹ · WS · Rs⁻¹      R = WS⁻¹ · C · WT
+ *
+ * with Cp the turn of the bone's canonical parent. Without directions every C is
+ * identity and this is exactly the formula above.
+ *
  * When world rests are unavailable we fall back to the prior local-only premultiply
  * (`L = Rt·Rs⁻¹`, `R = I`) so callers that don't supply them still work. Bones whose
  * correction is identity are omitted, so a matching rig skips the work and
@@ -295,12 +456,14 @@ export function morphTargetMapFromObject(root) {
  *
  * @param {Map<string,import('three').Quaternion>|null} targetRest        target LOCAL bind
  * @param {Map<string,import('three').Quaternion>|null} [targetWorldRest] target WORLD bind
+ * @param {Map<string,import('three').Vector3>|null} [targetDirections]  target limb rest directions
  * @returns {Map<string,{L:import('three').Quaternion,R:import('three').Quaternion|null}>}
  */
-function bindCorrections(targetRest, targetWorldRest) {
+function bindCorrections(targetRest, targetWorldRest, targetDirections) {
 	const out = new Map();
 	if (!(targetRest instanceof Map)) return out;
 	const haveWorld = targetWorldRest instanceof Map;
+	const turns = haveWorld ? restAlignments(targetDirections) : new Map();
 	for (const [canonical, Rs] of SOURCE_REST) {
 		const Rt = targetRest.get(canonical);
 		if (!Rt) continue;
@@ -309,13 +472,16 @@ function bindCorrections(targetRest, targetWorldRest) {
 		let L;
 		let R = null;
 		if (WS && WT) {
-			// L = Rt · WT⁻¹ · WS · Rs⁻¹
-			L = Rt.clone()
-				.multiply(WT.clone().invert())
-				.multiply(WS)
-				.multiply(Rs.clone().invert());
-			// R = WS⁻¹ · WT
-			R = WS.clone().invert().multiply(WT);
+			const C = turns.get(canonical);
+			const Cp = turns.get(CANONICAL_PARENT[canonical]);
+			// L = Rt · WT⁻¹ · Cp⁻¹ · WS · Rs⁻¹
+			L = Rt.clone().multiply(WT.clone().invert());
+			if (Cp) L.multiply(Cp.clone().invert());
+			L.multiply(WS).multiply(Rs.clone().invert());
+			// R = WS⁻¹ · C · WT
+			R = WS.clone().invert();
+			if (C) R.multiply(C);
+			R.multiply(WT);
 			if (1 - Math.abs(R.w) < BIND_EPSILON) R = null; // identity post-factor
 		} else {
 			// Fallback: local-only premultiply (prior behaviour).
@@ -533,14 +699,18 @@ export function clipHipBaselineY(clip) {
  *
  * @param {AnimationClip} clip
  * @param {Map<string,string>} canonicalToNode
- * @param {{ hipScale?: number, hipOffsetY?: number, minCoverage?: number, morphTargets?: Map<string,string[]> }} [opts]
+ * @param {{ hipScale?: number, hipOffsetY?: number, minCoverage?: number, morphTargets?: Map<string,string[]>, targetRest?: Map<string,import('three').Quaternion>, targetWorldRest?: Map<string,import('three').Quaternion>, targetRestDirections?: Map<string,import('three').Vector3>, hipsParentWorldQuat?: import('three').Quaternion }} [opts]
  * @returns {RetargetResult}
  */
 export function retargetClip(clip, canonicalToNode, opts = {}) {
 	const hipScale = Number.isFinite(opts.hipScale) && opts.hipScale > 0 ? opts.hipScale : 1;
 	const hipOffsetY = Number.isFinite(opts.hipOffsetY) ? opts.hipOffsetY : 0;
 	const minCoverage = opts.minCoverage ?? MIN_COVERAGE;
-	const corrections = bindCorrections(opts.targetRest, opts.targetWorldRest);
+	const corrections = bindCorrections(
+		opts.targetRest,
+		opts.targetWorldRest,
+		opts.targetRestDirections,
+	);
 	const hipsPosCorrection = hipPositionCorrection(opts.hipsParentWorldQuat, corrections);
 	const dropped = [];
 	const tracks = [];
@@ -705,11 +875,14 @@ export function retargetClipToObject(clip, root, opts = {}) {
 	const map = canonicalNodeMapFromObject(root);
 	const targetRest = opts.targetRest || canonicalRestMapFromObject(root);
 	const targetWorldRest = opts.targetWorldRest || canonicalWorldRestMapFromObject(root);
+	const targetRestDirections =
+		opts.targetRestDirections || canonicalRestDirectionMapFromObject(root);
 	const hipsParentWorld = opts.hipsParentWorldQuat || hipsParentWorldQuat(root);
 	return retargetClip(clip, map, {
 		...opts,
 		targetRest,
 		targetWorldRest,
+		targetRestDirections,
 		hipsParentWorldQuat: hipsParentWorld,
 		morphTargets: opts.morphTargets ?? morphTargetMapFromObject(root),
 	});

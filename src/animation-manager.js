@@ -11,6 +11,7 @@ import {
 import { canonicalizeBoneName } from './glb-canonicalize.js';
 import {
 	canonicalNodeMapFromObject,
+	canonicalRestDirectionMapFromObject,
 	canonicalRestMapFromObject,
 	canonicalWorldRestMapFromObject,
 	clipHipBaselineY,
@@ -212,6 +213,11 @@ export class AnimationManager {
 		// skews an A-pose clip's limbs ~30° on a T-pose rig. Matches the server
 		// (retargetClipToObject) and rig (retargetClipToRig) paths.
 		this._canonicalWorldRest = canonicalWorldRestMapFromObject(model);
+		// Rest direction of each upper arm, forearm, thigh and shin. A rig that
+		// rests in an A-pose (or with splayed legs) is re-aimed onto the clips'
+		// T-pose stance before the motion replays, so the idle's arm drop lands
+		// the arms at the sides instead of through the torso.
+		this._canonicalRestDirections = canonicalRestDirectionMapFromObject(model);
 		// World rotation of the Hips' parent (within the model), so root motion is
 		// re-expressed in the rig's own frame and travels the right way on any rig.
 		this._hipsParentWorldQuat = hipsParentWorldQuat(model);
@@ -316,6 +322,7 @@ export class AnimationManager {
 		const { clip: out } = retargetClip(clip, this._canonicalToNode, {
 			targetRest: this._canonicalRest,
 			targetWorldRest: this._canonicalWorldRest,
+			targetRestDirections: this._canonicalRestDirections,
 			hipsParentWorldQuat: this._hipsParentWorldQuat,
 			morphTargets: this._morphTargets,
 			hipScale,
@@ -392,6 +399,7 @@ export class AnimationManager {
 		this._canonicalToNode = null;
 		this._canonicalRest = null;
 		this._canonicalWorldRest = null;
+		this._canonicalRestDirections = null;
 		this._hipsParentWorldQuat = null;
 		this._morphTargets = null;
 		this._hipTargetLocalY = 0;
