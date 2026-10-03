@@ -15,6 +15,7 @@ import { showAddFunds } from './shared/add-funds.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
 import { resolveTokenProgramId } from './shared/spl-token-program.js';
 import { apiFetch } from './api.js';
+import { isPageOrigin } from './shared/embed-api-origin.js';
 import { log } from './shared/log.js';
 
 const USDC_DECIMALS = 6;
@@ -60,6 +61,8 @@ const STYLE = `
 	transition: opacity .15s; letter-spacing: .02em;
 }
 .pay-chip-btn:hover:not(:disabled) { opacity: .85; }
+a.pay-chip-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.pay-chip-btn:active:not(:disabled) { transform: translateY(1px); }
 .pay-chip-btn:disabled { opacity: .4; cursor: default; }
 .pay-chip-btn-pay { background: linear-gradient(135deg, #059669, #047857); border: none; }
 .pay-chip-btn-cancel { flex: 0 0 auto; background: rgba(255,255,255,.08); color: rgba(255,255,255,.45); }
@@ -199,6 +202,13 @@ const STYLE = `
 	font-size: 12px; color: rgba(255,255,255,.4); text-decoration: none;
 }
 .skill-pay-open-link:hover { color: rgba(255,255,255,.7); text-decoration: underline; }
+.skill-pay-open-link.is-primary {
+	padding: 11px 14px; border-radius: 10px; font-size: 14px; font-weight: 600;
+	color: #fff; background: linear-gradient(135deg, #059669, #047857);
+	transition: opacity .15s, transform .15s;
+}
+.skill-pay-open-link.is-primary:hover { color: #fff; text-decoration: none; opacity: .9; }
+.skill-pay-open-link.is-primary:active { transform: translateY(1px); }
 .skill-pay-add-funds, .pay-chip-add-funds {
 	margin-left: 6px; padding: 3px 9px; border-radius: 7px; cursor: pointer;
 	font: inherit; font-size: 12px; font-weight: 600;
@@ -226,14 +236,29 @@ const STYLE = `
 }
 `;
 
+// An <agent-3d> on another site cannot buy in place: the purchase endpoints are
+// bound to the visitor's three.ws session, whose cookie is third-party there,
+// and a 401 would send the HOST page to its own /login. Off three.ws the card
+// hands the visitor to the agent's checkout on three.ws instead.
+function checkoutContext(apiOrigin, agentId, skill) {
+	const pageOrigin = typeof location !== 'undefined' ? location.origin : '';
+	return {
+		offsite: !isPageOrigin(apiOrigin, pageOrigin),
+		checkoutURL: `${apiOrigin || ''}/marketplace/agents/${encodeURIComponent(agentId)}?buy=${encodeURIComponent(skill)}`,
+	};
+}
+
 export class SkillPaymentModal {
 	/**
 	 * @param {ShadowRoot|Document} root  where to inject the modal element
 	 * @param {string} agentId            the seller agent's UUID
+	 * @param {{ apiOrigin?: string }} [opts]  three.ws origin for API calls and
+	 *   the checkout link; '' keeps them relative (three.ws's own pages)
 	 */
-	constructor(root, agentId) {
+	constructor(root, agentId, { apiOrigin = '' } = {}) {
 		this._root = root;
 		this._agentId = agentId;
+		this._apiOrigin = apiOrigin;
 		this._resolve = null;
 		this._wallet = null;
 		this._connection = null;
@@ -373,8 +398,17 @@ export class SkillPaymentModal {
 				if (eq) { usdEqEl.textContent = eq; usdEqEl.hidden = false; }
 				else { usdEqEl.hidden = true; }
 			});
-			this._el.querySelector('.skill-pay-open-link').href =
-				`/marketplace/agents/${this._agentId}?buy=${encodeURIComponent(skill)}`;
+			const { offsite, checkoutURL } = checkoutContext(this._apiOrigin, this._agentId, skill);
+			const openLink = this._el.querySelector('.skill-pay-open-link');
+			openLink.href = checkoutURL;
+			openLink.textContent = offsite ? 'Unlock on three.ws →' : 'Open in marketplace →';
+			openLink.classList.toggle('is-primary', offsite);
+			for (const sel of ['.skill-pay-steps', '.skill-pay-wallet-area', '.skill-pay-confirm']) {
+				this._el.querySelector(sel).hidden = offsite;
+			}
+			this._el.querySelector('.skill-pay-desc').textContent = offsite
+				? 'This skill requires a one-time payment. Unlock it on three.ws, then come back and ask again.'
+				: 'This skill requires a one-time payment to unlock.';
 
 			// Proof-phase promo: ask the server what the quote will actually charge.
 			// When a first-N rule is live, show the real price (list struck through)
@@ -384,7 +418,7 @@ export class SkillPaymentModal {
 			const promoEl = this._el.querySelector('.skill-pay-promo');
 			listEl.hidden = true;
 			promoEl.hidden = true;
-			fetch(`/api/marketplace/skill-promo?agent_id=${encodeURIComponent(this._agentId)}&skill=${encodeURIComponent(skill)}`)
+			fetch(`${this._apiOrigin}/api/marketplace/skill-promo?agent_id=${encodeURIComponent(this._agentId)}&skill=${encodeURIComponent(skill)}`)
 				.then((r) => (r.ok ? r.json() : null))
 				.then((j) => {
 					const state = j?.data;
@@ -602,7 +636,7 @@ export class SkillPaymentModal {
 		this._setStatus('Creating purchase…');
 		let purchase;
 		try {
-			const r = await apiFetch('/api/marketplace/purchase', {
+			const r = await apiFetch(`${this._apiOrigin}/api/marketplace/purchase`, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				credentials: 'include',
@@ -750,7 +784,7 @@ export class SkillPaymentModal {
 	async _pollConfirm(reference, maxMs = 60_000) {
 		const deadline = Date.now() + maxMs;
 		while (Date.now() < deadline) {
-			const r = await apiFetch(`/api/marketplace/purchase/${reference}/confirm`, {
+			const r = await apiFetch(`${this._apiOrigin}/api/marketplace/purchase/${reference}/confirm`, {
 				method: 'POST',
 				credentials: 'include',
 			});
@@ -781,9 +815,13 @@ export class SkillPaymentModal {
  * The agent narrates before/after; the chip handles wallet connection + SPL transfer.
  */
 export class PaymentChip {
-	/** @param {string} agentId  seller agent UUID */
-	constructor(agentId) {
+	/**
+	 * @param {string} agentId  seller agent UUID
+	 * @param {{ apiOrigin?: string }} [opts]  see SkillPaymentModal
+	 */
+	constructor(agentId, { apiOrigin = '' } = {}) {
 		this._agentId = agentId;
+		this._apiOrigin = apiOrigin;
 		this._wallet = null;
 		this._connection = null;
 	}
@@ -833,8 +871,19 @@ export class PaymentChip {
 				resolve(result);
 			};
 
+			const { offsite, checkoutURL } = checkoutContext(this._apiOrigin, this._agentId, skill);
+
 			const updateActions = () => {
 				const actions = wrapper.querySelector('.pay-chip-actions');
+				if (offsite) {
+					actions.innerHTML = `
+						<a class="pay-chip-btn pay-chip-btn-pay" href="${escHtml(checkoutURL)}" target="_blank" rel="noopener">Unlock on three.ws</a>
+						<button class="pay-chip-btn pay-chip-btn-cancel">Dismiss</button>
+					`;
+					setStatus('Unlock it on three.ws, then ask again.');
+					actions.querySelector('.pay-chip-btn-cancel').addEventListener('click', () => dismiss(false));
+					return;
+				}
 				const connected = this._wallet?.isConnected || window.solana?.isConnected;
 				if (connected) {
 					actions.innerHTML = `
@@ -885,7 +934,7 @@ export class PaymentChip {
 				setStatus('Creating purchase…');
 				let purch;
 				try {
-					const r = await apiFetch('/api/marketplace/purchase', {
+					const r = await apiFetch(`${this._apiOrigin}/api/marketplace/purchase`, {
 						method: 'POST',
 						headers: { 'content-type': 'application/json' },
 						credentials: 'include',
@@ -1054,7 +1103,7 @@ export class PaymentChip {
 	async _pollConfirm(reference, maxMs = 60_000) {
 		const deadline = Date.now() + maxMs;
 		while (Date.now() < deadline) {
-			const r = await apiFetch(`/api/marketplace/purchase/${reference}/confirm`, {
+			const r = await apiFetch(`${this._apiOrigin}/api/marketplace/purchase/${reference}/confirm`, {
 				method: 'POST',
 				credentials: 'include',
 			});

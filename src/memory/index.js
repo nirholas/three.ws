@@ -73,6 +73,8 @@ export class Memory {
 		// null for built-in modes. Drives _persist / recall / save delegation.
 		this._backend = backend;
 		this._dirty = false;
+		// Set by Memory.load; '' keeps API calls relative to the page.
+		this.apiOrigin = '';
 	}
 
 	/**
@@ -123,10 +125,19 @@ export class Memory {
 	 * @returns {Promise<Memory>}
 	 */
 	static async load(opts = {}) {
+		const mem = await Memory._loadForMode(opts);
+		// Remote and pinned modes call the three.ws API after boot. An embed on
+		// another site passes the API origin here so those calls leave the host
+		// page's origin alone; three.ws's own pages leave it empty (relative).
+		mem.apiOrigin = opts.apiOrigin || '';
+		return mem;
+	}
+
+	static async _loadForMode(opts) {
 		const { mode = 'local', namespace, manifestURI, fetchFn, deriveKey } = opts;
 		if (mode === 'none') return new Memory({ mode: 'none', namespace });
 		if (mode === 'local') return Memory._loadLocal(namespace);
-		if (mode === 'remote') return Memory._loadRemote({ namespace, fetchFn });
+		if (mode === 'remote') return Memory._loadRemote({ namespace, fetchFn, apiOrigin: opts.apiOrigin });
 		if (mode === 'ipfs' || mode === 'encrypted-ipfs') {
 			if (mode === 'encrypted-ipfs' && !deriveKey)
 				throw new Error('encrypted-ipfs mode requires a deriveKey function');
@@ -159,11 +170,11 @@ export class Memory {
 		return mem;
 	}
 
-	static async _loadRemote({ namespace, fetchFn }) {
+	static async _loadRemote({ namespace, fetchFn, apiOrigin = '' }) {
 		const f = fetchFn || fetch.bind(globalThis);
 		if (!namespace) return new Memory({ mode: 'remote', namespace });
 		try {
-			const resp = await f(`/api/agent-memory?agentId=${encodeURIComponent(namespace)}&limit=500`, {
+			const resp = await f(`${apiOrigin}/api/agent-memory?agentId=${encodeURIComponent(namespace)}&limit=500`, {
 				credentials: 'include',
 			});
 			if (!resp.ok) return new Memory({ mode: 'remote', namespace });
@@ -397,7 +408,7 @@ export class Memory {
 		try {
 			// allowAnonymous: this background sync swallows failures silently; a 401
 			// must stay a silent no-op, not a login redirect.
-			const resp = await apiFetch('/api/agent-memory', {
+			const resp = await apiFetch(`${this.apiOrigin}/api/agent-memory`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
@@ -442,7 +453,7 @@ export class Memory {
 			const plainBytes = new TextEncoder().encode(content);
 			const { nonce, ciphertext } = await encryptBlob(plainBytes, this.cryptoKey);
 			const data = bytesToBase64(pack({ nonce, ciphertext }));
-			const resp = await fetch(`/api/agents/${this.namespace}/memory/pin`, {
+			const resp = await fetch(`${this.apiOrigin}/api/agents/${this.namespace}/memory/pin`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
@@ -457,7 +468,7 @@ export class Memory {
 
 		// Pin the updated MEMORY.md index (plaintext — it only lists filenames and CIDs).
 		const indexData = bytesToBase64(new TextEncoder().encode(this.indexText));
-		const indexResp = await fetch(`/api/agents/${this.namespace}/memory/pin`, {
+		const indexResp = await fetch(`${this.apiOrigin}/api/agents/${this.namespace}/memory/pin`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			credentials: 'include',

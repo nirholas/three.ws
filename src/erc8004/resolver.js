@@ -176,7 +176,7 @@ function cacheKey(ref) {
  *   error?: string,
  * }>}
  */
-export async function resolveOnchainAgent(input, { ethProvider, fresh = false } = {}) {
+export async function resolveOnchainAgent(input, { ethProvider, fresh = false, origin } = {}) {
 	const parsed = parseAgentRef(input);
 	if (!parsed) throw new Error(`Unrecognised agent reference: ${input}`);
 
@@ -194,8 +194,12 @@ export async function resolveOnchainAgent(input, { ethProvider, fresh = false } 
 	const base = {
 		ref,
 		caip: toCAIP10(ref),
+		// `origin` is the three.ws API base when an embed on another site calls
+		// this; the page's own origin would link the visitor to that site.
 		publicUrl:
-			typeof location !== 'undefined' ? toPublicUrl(ref) : `/a/${ref.chainId}/${ref.agentId}`,
+			origin || typeof location !== 'undefined'
+				? toPublicUrl(ref, { origin })
+				: `/a/${ref.chainId}/${ref.agentId}`,
 		chain: chainMeta
 			? { name: chainMeta.name, testnet: !!chainMeta.testnet, explorer: chainMeta.explorer }
 			: null,
@@ -223,7 +227,7 @@ export async function resolveOnchainAgent(input, { ethProvider, fresh = false } 
 			return base;
 		}
 
-		const metaRes = await fetchAgentMetadata(uri);
+		const metaRes = await fetchAgentMetadata(uri, { apiOrigin: origin });
 		if (!metaRes.ok) {
 			base.error = metaRes.error;
 			base.metadataUrl = metaRes.resolvedUrl || null;

@@ -412,7 +412,6 @@ export class Viewer {
 		this._tabVisible = !document.hidden;
 		this._disposed = false;
 		this._loadedEnvironment = null;
-		this._guiWrap = null;
 		this._needsRender = true;
 		this._animating = false;
 
@@ -1974,8 +1973,13 @@ export class Viewer {
 		perfLi.classList.add('gui-stats');
 		perfFolder.__ul.appendChild(perfLi);
 
+		// `embed` (the <agent-3d> web component) keeps the GUI object, which the
+		// load path updates, but never mounts its DOM: its styles live in the
+		// site stylesheet, which a shadow root cannot see, so on a host page the
+		// panel spilled out below the element as thousands of unstyled controls.
+		const mountDebugUI = !this.options.embed;
 		const guiWrap = document.createElement('div');
-		this.el.appendChild(guiWrap);
+		if (mountDebugUI) this.el.appendChild(guiWrap);
 		guiWrap.classList.add('gui-wrap');
 		guiWrap.classList.add('gui-wrap--hidden');
 		guiWrap.appendChild(gui.domElement);
@@ -2000,7 +2004,7 @@ export class Viewer {
 			const shown = guiWrap.classList.toggle('gui-wrap--hidden');
 			toggle.classList.toggle('gui-toggle--active', !shown);
 		});
-		this.el.appendChild(toggle);
+		if (mountDebugUI) this.el.appendChild(toggle);
 		this._guiToggle = toggle;
 
 		// AR button — hidden until setARTarget() is called with a supported URL
@@ -2137,7 +2141,9 @@ export class Viewer {
 			this._animPanelEl = null;
 		}
 
-		if (this.options.kiosk) return;
+		// The clip panel is editor chrome. Kiosk views and the <agent-3d> embed
+		// (whose host page carries none of its styles) play clips on demand.
+		if (this.options.kiosk || this.options.embed) return;
 
 		const defs = this.animationManager.getAnimationDefs();
 		if (defs.length === 0) return;

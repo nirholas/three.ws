@@ -151,6 +151,25 @@ describe('_sub.js handleManifest', () => {
 		expect(res.headers['cache-control']).toContain('max-age');
 	});
 
+	it('carries the voice model and delivery settings an embed needs to speak in the owner-tuned voice', async () => {
+		agentRow = ownedAgent({
+			voice_provider: 'elevenlabs',
+			voice_id: 'voice-abc',
+			voice_model: 'eleven_turbo_v2_5',
+			voice_settings: { stability: 0.4, similarity_boost: 0.8 },
+		});
+		const { res, json } = await run(sub.handleManifest, {
+			url: `/api/agents/${AGENT_ID}/manifest`,
+		});
+		expect(res.statusCode).toBe(200);
+		expect(json.voice).toEqual({
+			provider: 'elevenlabs',
+			voice_id: 'voice-abc',
+			model: 'eleven_turbo_v2_5',
+			settings: { stability: 0.4, similarity_boost: 0.8 },
+		});
+	});
+
 	it('404s for an agent that does not exist rather than emitting a hollow manifest', async () => {
 		agentRow = null;
 		const { res, json } = await run(sub.handleManifest, {

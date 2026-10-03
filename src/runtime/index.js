@@ -35,6 +35,9 @@ export class Runtime extends EventTarget {
 		this.skills = skills;
 		this.stage = stage;
 		this.agentId = agentId;
+		// The three.ws origin skills call back to (an embed on another site
+		// passes it in providerConfig); '' keeps calls relative.
+		this.apiOrigin = providerConfig?.apiOrigin || '';
 		this.skillAccess = skillAccess || alwaysAllow();
 
 		this.provider = createProvider({
@@ -289,6 +292,7 @@ export class Runtime extends EventTarget {
 			call: async (toolName, args) => this._dispatchTool({ name: toolName, input: args }),
 			stage: this.stage,
 			agentId: this.agentId,
+			apiOrigin: this.apiOrigin,
 		};
 	}
 

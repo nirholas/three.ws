@@ -12,7 +12,6 @@ import { loadManifest, fetchRelative } from './manifest.js';
 import { uriCandidates } from './ipfs.js';
 import {
 	resolveAgentById,
-	resolveByAgentId,
 	resolveByAvatarId,
 	AgentResolveError,
 } from './agent-resolver.js';
@@ -25,6 +24,12 @@ import { AgentAvatar } from './agent-avatar.js';
 // END:EMBED_BRIDGES_IMPORT
 import { AgentNotifier } from './agent-notifier.js';
 import { log } from './shared/log.js';
+import {
+	apiOriginFromScriptURL,
+	resolveApiBase,
+	credentialsFor,
+	isPageOrigin,
+} from './shared/embed-api-origin.js';
 
 const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 
@@ -113,14 +118,10 @@ function _parsePx(val) {
 	return n > 0 && typeof val === 'string' && val.trim().endsWith('px') ? n : 0;
 }
 
-// Derive the origin of the script itself so cross-origin embeds hit the right API.
-const _scriptOrigin = (() => {
-	try {
-		return new URL(import.meta.url).origin;
-	} catch {
-		return '';
-	}
-})();
+// The three.ws origin this script was served from. Cross-origin embeds send
+// every API call here, never to the host page; see shared/embed-api-origin.js.
+const _scriptOrigin = apiOriginFromScriptURL(import.meta.url);
+const _pageOrigin = () => (typeof location !== 'undefined' ? location.origin : '');
 
 function originAllowed(originUrl, policy, firstParty = []) {
 	if (!originUrl) return false;
@@ -376,6 +377,68 @@ const BASE_STYLE = `
 	@keyframes blink-cursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 	/* Suggestion chips when the conversation is empty */
 	.suggest-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0 0; }
+	/* Composer: where a visitor types to the agent. Enter or the send button
+	   submits; the mic appears only where speech input can actually work. */
+	.input-row {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 8px;
+		background: var(--agent-surface);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 999px;
+		padding: 4px 4px 4px 14px;
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		flex: 0 0 auto;
+		transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+	}
+	.input-row:hover { border-color: rgba(255, 255, 255, 0.22); }
+	.input-row:focus-within {
+		border-color: var(--agent-accent);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--agent-accent) 30%, transparent);
+	}
+	.input-row[data-busy="true"] { opacity: 0.75; }
+	.input-row input {
+		flex: 1;
+		min-width: 0;
+		background: transparent;
+		border: 0;
+		color: var(--agent-on-surface);
+		font: 14px var(--agent-chat-font);
+		outline: none;
+		padding: 6px 0;
+	}
+	.input-row input::placeholder { color: color-mix(in srgb, var(--agent-on-surface) 55%, transparent); }
+	.input-row input:disabled { cursor: progress; }
+	.input-row input[data-state="thinking"] { opacity: 0.6; }
+	button.icon {
+		flex: 0 0 auto;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		border: 0;
+		background: var(--agent-accent);
+		color: #fff;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 0.12s, filter 0.12s, box-shadow 0.15s, opacity 0.15s;
+	}
+	button.icon svg { width: 18px; height: 18px; }
+	button.icon:hover:not(:disabled) { filter: brightness(1.12); }
+	button.icon:active:not(:disabled) { transform: scale(0.94); }
+	button.icon:focus-visible { outline: 2px solid var(--agent-on-surface); outline-offset: 2px; }
+	button.icon:disabled { opacity: 0.45; cursor: default; }
+	button.icon.mic { background: rgba(255, 255, 255, 0.12); }
+	button.icon.mic[data-listening="true"] { box-shadow: 0 0 0 4px var(--agent-mic-glow); }
+	button.icon.mic[data-voice-state="listening"] { box-shadow: 0 0 0 4px #22c55e; }
+	button.icon.mic[data-voice-state="thinking"]  { box-shadow: 0 0 0 4px #eab308; }
+	button.icon.mic[data-voice-state="speaking"]  { box-shadow: 0 0 0 4px #3b82f6; }
+	@media (prefers-reduced-motion: reduce) {
+		.input-row, button.icon { transition: none; }
+	}
 	/* A chip carries its own ground. It used to be a 6% white wash, which is only
 	   legible over something dark: on a host page with a light background the
 	   near-white label disappeared. */
@@ -490,6 +553,10 @@ const BASE_STYLE = `
 	}
 	.name-plate:empty,
 	:host([name-plate="off"]) .name-plate { display: none; }
+	/* Chat mode: the composer owns the bottom edge, so the plate reads as a
+	   header instead, and the conversation starts below it. */
+	:host(:not([data-bare])) .name-plate { top: 14px; bottom: auto; left: 16px; }
+	:host(:not([data-bare]):not([name-plate="off"])) .chat { padding-top: 26px; }
 	/* Background variants — set on :host so the canvas composites over them. */
 	:host([background="transparent"]) { background: transparent; }
 	:host([background="transparent"]) .thought-bubble {
@@ -607,6 +674,7 @@ const BASE_STYLE = `
 		gap: 8px;
 	}
 	:host([avatar-chat="off"]) .chat { flex: 1; max-height: 40%; }
+	:host([avatar-chat="off"]) .input-row { flex: 0 0 auto; }
 	:host([avatar-chat="off"]) .avatar-anchor { display: none; }
 	/* Floating mode layout fixes */
 	:host([mode="floating"]) .chrome {
@@ -618,6 +686,9 @@ const BASE_STYLE = `
 	}
 	/* Section mode — constrain chat width on wide containers */
 	:host([mode="section"]) .chat {
+		max-width: 600px;
+	}
+	:host([mode="section"]) .input-row {
 		max-width: 600px;
 	}
 	/* Fullscreen mode — centre the chrome column on large monitors */
@@ -680,8 +751,6 @@ class Agent3DElement extends HTMLElement {
 		this._mqNarrowHandler = null;
 		this._ro = null;
 		this._outsideTapHandler = null;
-		this._autoResolvedManifest = false;
-		this._suppressAttrChange = false;
 		this._detachTradeReactions = null;
 		this._livekitVoice = null;
 		this._voiceClient = null;
@@ -760,11 +829,49 @@ class Agent3DElement extends HTMLElement {
 		return /^agent:\/\//i.test(this.getAttribute('src') || '');
 	}
 
+	// The base every API request of this element is built on: the `api-base`
+	// attribute when set, else the three.ws origin this script came from. Never
+	// the host page's origin unless the page IS that origin. See
+	// shared/embed-api-origin.js for the full resolution order.
+	_apiBase() {
+		return resolveApiBase({
+			attr: this.getAttribute('api-base'),
+			scriptOrigin: _scriptOrigin,
+			pageOrigin: _pageOrigin(),
+		});
+	}
+
+	// True when this element's API base is the page's own origin, i.e. the
+	// visitor's three.ws session cookie belongs to its requests.
+	_apiIsPageOrigin() {
+		return isPageOrigin(this._apiBase(), _pageOrigin());
+	}
+
+	_apiCredentials() {
+		return credentialsFor(this._apiBase(), _pageOrigin());
+	}
+
 	// Reflect the resolved chrome mode onto the host as a read-only `data-bare`
 	// marker. CSS keys the debug-GUI/axes hiding off it, so the default bare
 	// avatar shows no controls even though it carries no `kiosk`/`viewer` attr.
 	_reflectChromeState() {
 		this.toggleAttribute('data-bare', !this._isChatMode());
+	}
+
+	// The memory mode for this boot. `remote` and `encrypted-ipfs` store through
+	// the owner's three.ws session; on another site that session cannot ride
+	// along, so they would read nothing and fail every write. Keep the
+	// conversation's memory in this browser instead, and say why once.
+	_memoryMode(manifest) {
+		const requested = this.getAttribute('memory') || manifest.memory?.mode || 'local';
+		if ((requested === 'remote' || requested === 'encrypted-ipfs') && !this._apiIsPageOrigin()) {
+			log.warn(
+				`[agent-3d] memory="${requested}" needs the owner's three.ws session, which is not ` +
+					'available on this site; using memory="local" for this embed.',
+			);
+			return 'local';
+		}
+		return requested;
 	}
 
 	// Tear down and rebuild the entire shadow shell, then reboot. Used when the
@@ -841,7 +948,6 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
-		if (this._suppressAttrChange) return;
 		// Source attribute set on a not-yet-booted (eager but no source) element
 		// — boot now instead of rebooting.
 		if (
@@ -862,7 +968,7 @@ class Agent3DElement extends HTMLElement {
 		if (name === 'tracked-mint') {
 			this._detachTradeReactions?.();
 			this._detachTradeReactions = newVal
-				? attachTradeReactions(this, { mint: newVal })
+				? attachTradeReactions(this, { mint: newVal, origin: this._apiBase() })
 				: null;
 		}
 		if (name === 'avatar-walk' && newVal === 'off') {
@@ -1007,6 +1113,7 @@ class Agent3DElement extends HTMLElement {
 
 			chat.appendChild(avatarAnchor);
 			chrome.appendChild(chat);
+			chrome.appendChild(this._buildComposer());
 			this.shadowRoot.appendChild(chrome);
 			this._chatEl = chat;
 			this._avatarAnchorEl = avatarAnchor;
@@ -1121,7 +1228,7 @@ class Agent3DElement extends HTMLElement {
 		this._walletHostEl = host;
 		this._walletAgentId = agentId;
 
-		const origin = this.getAttribute('api-base') || _scriptOrigin || window.location.origin;
+		const origin = this._apiBase();
 		const mode = (this.getAttribute('wallet') || '').trim().toLowerCase();
 		import('./shared/portable-wallet.js')
 			.then(({ mountPortableWallet }) => {
@@ -1137,6 +1244,77 @@ class Agent3DElement extends HTMLElement {
 			.catch(() => {
 				/* optional affordance, never break the viewer */
 			});
+	}
+
+	// The chat composer: a text field, a send button, and (where the browser can
+	// hear) a push-to-talk mic. Without it chat mode had no way to type to the
+	// agent at all; the only inputs were the canned suggestion chips.
+	_buildComposer() {
+		const row = document.createElement('form');
+		row.className = 'input-row';
+		row.part = 'input-row';
+		row.setAttribute('aria-label', 'Message the agent');
+
+		const input = document.createElement('input');
+		input.type = 'text';
+		input.placeholder = 'Say something...';
+		input.autocomplete = 'off';
+		input.enterKeyHint = 'send';
+		input.maxLength = 2000;
+		input.setAttribute('aria-label', 'Message to agent');
+		input.part = 'input';
+
+		const send = document.createElement('button');
+		send.type = 'submit';
+		send.className = 'icon send';
+		send.title = 'Send';
+		send.setAttribute('aria-label', 'Send message');
+		send.innerHTML =
+			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+			'<path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>';
+
+		row.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const text = input.value.trim();
+			if (!text || input.disabled) return;
+			input.value = '';
+			this._onStreamChunk(); // immediate visual feedback before the LLM responds
+			this.say(text);
+		});
+
+		row.appendChild(input);
+		if (this._speechInputAvailable()) {
+			const mic = document.createElement('button');
+			mic.type = 'button';
+			mic.className = 'icon mic';
+			mic.title = 'Push to talk';
+			mic.setAttribute('aria-label', 'Push to talk');
+			mic.innerHTML =
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+				'<rect x="9" y="3" width="6" height="11" rx="3"></rect>' +
+				'<path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>';
+			mic.addEventListener('click', () => this._toggleMic());
+			row.appendChild(mic);
+			this._micEl = mic;
+		}
+		row.appendChild(send);
+		this._inputEl = input;
+		return row;
+	}
+
+	// Names the agent once it is known, so the field reads as a conversation
+	// with someone rather than a generic text box.
+	_composerPlaceholder() {
+		const name = (this._manifest?.name || '').trim();
+		return name && name !== 'Agent' ? `Message ${name}…` : 'Say something...';
+	}
+
+	// Push-to-talk works through a voice server or the browser's own speech
+	// recognition. Where neither exists the mic would be a dead button.
+	_speechInputAvailable() {
+		if (this.getAttribute('voice-server')) return true;
+		if (typeof window === 'undefined') return false;
+		return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 	}
 
 	_renderSuggestions() {
@@ -1595,7 +1773,7 @@ class Agent3DElement extends HTMLElement {
 			this._mountWalletAffordance();
 			if (_backendId) {
 				try {
-					const _policyBase = _scriptOrigin || window.location.origin;
+					const _policyBase = this._apiBase();
 					const _pr = await fetch(
 						`${_policyBase}/api/agents/${_backendId}/embed-policy`,
 						{ credentials: 'omit' },
@@ -1638,6 +1816,9 @@ class Agent3DElement extends HTMLElement {
 			// _startInitialPlayback.
 			this._stageEl.classList.add('is-settling');
 			const viewer = new Viewer(this._stageEl, {
+				// Never mount the editor's debug GUI or clip panel inside the
+				// element: their styles live in the site stylesheet, not here.
+				embed: true,
 				kiosk: !this._isChatMode(),
 				framing: this.getAttribute('framing') === 'portrait' ? 'portrait' : 'full',
 			});
@@ -1649,10 +1830,11 @@ class Agent3DElement extends HTMLElement {
 			// A bare avatar carries no name-plate unless the embedder asks for one.
 			this._applyBackground();
 			this._setNamePlateText(this._isChatMode() ? manifest.name || '' : '');
+			if (this._inputEl) this._inputEl.placeholder = this._composerPlaceholder();
 			this._applyNamePlate();
 			// Fetch animation defs before viewer.load so _setupAnimationPanel
 			// can preload idle+walk during the model load.
-			const _animBase = _scriptOrigin || window.location.origin;
+			const _animBase = this._apiBase();
 			try {
 				const _animRes = await fetch(`${_animBase}/animations/manifest.json`);
 				if (_animRes.ok) {
@@ -1708,11 +1890,14 @@ class Agent3DElement extends HTMLElement {
 					await Promise.allSettled([_am.ensureLoaded('idle'), _am.ensureLoaded('walk')]);
 				}
 				// After the reveal tween completes, shift the orbital target upward
-				// so the avatar's upper body fills the avatar-anchor window rather
-				// than the full canvas height. Skipped under `framing="portrait"`,
-				// where setContent already places the head-to-mid-thigh crop and an
-				// extra nudge would fight it.
-				if (this.getAttribute('framing') !== 'portrait') {
+				// so the avatar's upper body fills the chat shell's avatar-anchor
+				// window rather than the full canvas height. Chat mode only: a bare
+				// avatar has no anchor window, and the nudge tilted its camera up by
+				// 12% of the body height, which in any frame wider than 3:4 (where
+				// the height fit is tight) pushed the feet out of the bottom edge.
+				// Also skipped under `framing="portrait"`, where setContent already
+				// places the head-to-mid-thigh crop and an extra nudge would fight it.
+				if (this._isChatMode() && this.getAttribute('framing') !== 'portrait') {
 					const _v = viewer;
 					const _nudge = () => {
 						if (_v._cameraTweenRaf) {
@@ -1747,17 +1932,24 @@ class Agent3DElement extends HTMLElement {
 			const memoryNamespace =
 				manifest.id?.agentId || this.getAttribute('memory-key') || manifest.name || 'anon';
 			this._memory = await Memory.load({
-				mode: this.getAttribute('memory') || manifest.memory?.mode || 'local',
+				mode: this._memoryMode(manifest),
 				namespace: memoryNamespace,
 				manifestURI: manifest._baseURI + 'manifest.json',
 				fetchFn: fetch.bind(globalThis),
+				apiOrigin: this._apiBase(),
 			});
 
 			// Pull backend memories into the shared AgentMemory localStorage store
 			// before the first LLM turn so cross-device memory is present on init.
-			if (_backendId) {
+			// Those memories are owner-only and read through the visitor's three.ws
+			// session, which only exists on three.ws itself: from any other site
+			// the request could only ever come back empty, so it is not made.
+			if (_backendId && this._apiIsPageOrigin()) {
 				const { AgentMemory } = await import('./agent-memory.js');
-				const syncMem = new AgentMemory(_backendId, { backendSync: true });
+				const syncMem = new AgentMemory(_backendId, {
+					backendSync: true,
+					apiOrigin: this._apiBase(),
+				});
 				await syncMem.pull(_backendId).catch(() => {});
 			}
 
@@ -1788,7 +1980,7 @@ class Agent3DElement extends HTMLElement {
 				apiKey: this.getAttribute('api-key') || undefined,
 				proxyURL: this.getAttribute('key-proxy') || undefined,
 				agentId: _backendId || undefined,
-				apiOrigin: _scriptOrigin || window.location.origin,
+				apiOrigin: this._apiBase(),
 			};
 
 			// Fetch skill prices + purchased state so the runtime can gate paid skills.
@@ -1796,11 +1988,10 @@ class Agent3DElement extends HTMLElement {
 			let _skillAccess;
 			if (_backendId) {
 				try {
-					const detailBase = _scriptOrigin || window.location.origin;
 					// On somebody else's site our cookies are third-party and the public
 					// answer is all an embed can use, so only send them on our own origin.
-					const r = await fetch(`${detailBase}/api/agents/${_backendId}/skill-access`, {
-						credentials: detailBase === window.location.origin ? 'include' : 'omit',
+					const r = await fetch(`${this._apiBase()}/api/agents/${_backendId}/skill-access`, {
+						credentials: this._apiCredentials(),
 					});
 					if (r.ok) {
 						const a = (await r.json())?.data;
@@ -2010,8 +2201,9 @@ class Agent3DElement extends HTMLElement {
 			// the agent protocol. Falls back to the full modal when there is no
 			// chat thread (e.g. avatar-only embed with avatar-chat="off").
 			if (_backendId && this.shadowRoot) {
-				this._paymentModal = new SkillPaymentModal(this.shadowRoot, _backendId);
-				this._paymentChip = new PaymentChip(_backendId);
+				const _payOpts = { apiOrigin: this._apiBase() };
+				this._paymentModal = new SkillPaymentModal(this.shadowRoot, _backendId, _payOpts);
+				this._paymentChip = new PaymentChip(_backendId, _payOpts);
 				let _paymentInFlight = false;
 
 				this._runtime.addEventListener('skill:payment-required', async (e) => {
@@ -2049,10 +2241,10 @@ class Agent3DElement extends HTMLElement {
 						});
 						// Refresh skillAccess so next call goes through without re-prompting.
 						try {
-							const base = _scriptOrigin || window.location.origin;
-							const r = await fetch(`${base}/api/agents/${_backendId}/skill-access`, {
-								credentials: base === window.location.origin ? 'include' : 'omit',
-							});
+							const r = await fetch(
+								`${this._apiBase()}/api/agents/${_backendId}/skill-access`,
+								{ credentials: this._apiCredentials() },
+							);
 							if (r.ok) {
 								const a = (await r.json())?.data;
 								if (a) {
@@ -2101,7 +2293,10 @@ class Agent3DElement extends HTMLElement {
 
 			const _trackedMint = this.getAttribute('tracked-mint');
 			if (_trackedMint) {
-				this._detachTradeReactions = attachTradeReactions(this, { mint: _trackedMint });
+				this._detachTradeReactions = attachTradeReactions(this, {
+					mint: _trackedMint,
+					origin: this._apiBase(),
+				});
 			}
 			// BEGIN:EMBED_BRIDGES
 			if (window !== window.parent) {
@@ -2175,7 +2370,7 @@ class Agent3DElement extends HTMLElement {
 		const agentIdAttr = this.getAttribute('agent-id');
 		const avatarIdAttr = this.getAttribute('avatar-id');
 		const chainIdAttr = this.getAttribute('chain-id');
-		const apiBase = this.getAttribute('api-base') || _scriptOrigin || window.location.origin;
+		const apiBase = this._apiBase();
 		if (avatarIdAttr && !src && !manifestAttr && !body && !agentIdAttr) {
 			try {
 				return await resolveByAvatarId(avatarIdAttr, { origin: apiBase });
@@ -2222,22 +2417,16 @@ class Agent3DElement extends HTMLElement {
 					: agentIdAttr;
 				const ref = parseAgentRef(caipInput);
 				if (ref) {
-					const resolved = await resolveOnchainAgent(ref);
+					const resolved = await resolveOnchainAgent(ref, { origin: apiBase });
 					if (resolved.error && !resolved.glbUrl)
 						throw new Error(`On-chain resolve failed: ${resolved.error}`);
 					return toManifest(resolved);
 				}
 				// Explicit manifest= wins over backend UUID resolution.
 				if (manifestAttr) return loadManifest(manifestAttr);
-				// Resolve agent-id → manifestUrl via backend, then load that manifest.
-				const manifestUrl = await resolveByAgentId(agentIdAttr);
-				if (manifestUrl) {
-					this._autoResolvedManifest = true;
-					this.setAttribute('manifest', manifestUrl);
-					return loadManifest(manifestUrl);
-				}
-				// No manifestUrl on agent record — build inline manifest from avatar data.
-				return await resolveAgentById(agentIdAttr);
+				// The agent's public manifest, read from the API origin this script
+				// came from (never the host page's origin).
+				return await resolveAgentById(agentIdAttr, { origin: apiBase });
 			} catch (err) {
 				// Never let avatar rendering error out — fall back to default avatar.
 				log.warn('[agent-3d] agent resolve failed, using default avatar:', err);
@@ -2454,7 +2643,7 @@ class Agent3DElement extends HTMLElement {
 		this._inputEl.dataset.state = busy ? 'thinking' : '';
 		const row = this._inputEl.closest('.input-row');
 		if (row) row.dataset.busy = busy ? 'true' : 'false';
-		this._inputEl.placeholder = busy ? 'Thinking…' : 'Say something...';
+		this._inputEl.placeholder = busy ? 'Thinking…' : this._composerPlaceholder();
 		if (!busy && this.shadowRoot?.activeElement == null) {
 			this._inputEl.focus();
 		}
@@ -2771,9 +2960,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	async _toggleMic() {
-		// The mic button lives in the (now removed) input row, so this is only
-		// reachable if a future voice flow calls it directly. Bail safely when
-		// there is no mic element to reflect listening state onto.
+		// The mic only exists in chat mode, and only where speech input works.
 		if (!this._micEl) return;
 		const voiceServer = this.getAttribute('voice-server');
 		if (voiceServer) {
@@ -2814,9 +3001,8 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	async _connectLiveKit(agentId) {
-		const base = _scriptOrigin || window.location.origin;
-		const resp = await fetch(`${base}/api/agents/${agentId}/livekit-token`, {
-			credentials: 'include',
+		const resp = await fetch(`${this._apiBase()}/api/agents/${agentId}/livekit-token`, {
+			credentials: this._apiCredentials(),
 		});
 		if (!resp.ok) {
 			const body = await resp.json().catch(() => ({}));
@@ -2831,17 +3017,6 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_teardown() {
-		// Clear manifest that was auto-resolved from agent-id so the next boot resolves fresh.
-		// Suppress attributeChangedCallback to avoid a reboot loop.
-		if (this._autoResolvedManifest) {
-			this._suppressAttrChange = true;
-			try {
-				this.removeAttribute('manifest');
-			} finally {
-				this._suppressAttrChange = false;
-			}
-			this._autoResolvedManifest = false;
-		}
 		// A torn-down element must not leave a microphone open or a tone playing.
 		this.stopSonar();
 		_untrackLiveViewer(this);

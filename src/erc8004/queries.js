@@ -207,10 +207,15 @@ export { findAvatar3D } from './avatar-meta.js';
  * back to the direct fetch if our proxy is the one that fails. Same-origin URIs
  * skip the proxy entirely: there is nothing to work around.
  *
+ * `apiOrigin` names the three.ws origin that hosts the proxy. An <agent-3d>
+ * embed on another site passes it; left empty, the proxy path stays relative,
+ * which is right on three.ws's own pages.
+ *
  * @param {string} uri
+ * @param {{ apiOrigin?: string }} [opts]
  * @returns {Promise<{ ok: boolean, data?: any, error?: string, resolvedUrl?: string, viaProxy?: boolean }>}
  */
-export async function fetchAgentMetadata(uri) {
+export async function fetchAgentMetadata(uri, { apiOrigin = '' } = {}) {
 	if (!uri) return { ok: false, error: 'empty uri' };
 
 	// data:application/json;base64,...  (inline)
@@ -231,7 +236,7 @@ export async function fetchAgentMetadata(uri) {
 
 	if (isSameOrigin(url)) return fetchAgentMetadataDirect(url);
 
-	const viaProxy = await fetchAgentMetadataViaProxy(uri, url);
+	const viaProxy = await fetchAgentMetadataViaProxy(uri, url, apiOrigin);
 	if (viaProxy.ok) return viaProxy;
 
 	const direct = await fetchAgentMetadataDirect(url);
@@ -260,9 +265,9 @@ async function fetchAgentMetadataDirect(url) {
 	}
 }
 
-async function fetchAgentMetadataViaProxy(uri, url) {
+async function fetchAgentMetadataViaProxy(uri, url, apiOrigin = '') {
 	try {
-		const res = await fetch(`/api/erc8004/metadata?uri=${encodeURIComponent(uri)}`);
+		const res = await fetch(`${apiOrigin}/api/erc8004/metadata?uri=${encodeURIComponent(uri)}`);
 		const body = await res.json().catch(() => null);
 		if (!res.ok) {
 			return {

@@ -374,7 +374,7 @@ export const handleManifest = wrap(async (req, res, id) => {
 		return error(res, 400, 'invalid_request', 'agent id required');
 
 	const [row] =
-		await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, a.persona_prompt_hash, a.persona_tone_tags, a.persona_extracted_at, a.persona_traits, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
+		await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, a.voice_model, a.voice_settings, a.persona_prompt_hash, a.persona_tone_tags, a.persona_extracted_at, a.persona_traits, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
 	// Live signal: whether the agent has claimed its activation grant (funded +
@@ -449,8 +449,18 @@ export const handleManifest = wrap(async (req, res, id) => {
 						},
 					]
 				: [],
+		// The model and delivery settings ride along with the voice id so an
+		// <agent-3d> embed, which resolves agents from this document, speaks with
+		// the delivery the owner tuned and not just the right timbre.
 		voice: row.voice_id
-			? { provider: row.voice_provider || 'elevenlabs', voice_id: row.voice_id }
+			? {
+					provider: row.voice_provider || 'elevenlabs',
+					voice_id: row.voice_id,
+					...(row.voice_model ? { model: row.voice_model } : {}),
+					...(row.voice_settings && typeof row.voice_settings === 'object'
+						? { settings: row.voice_settings }
+						: {}),
+				}
 			: { provider: 'browser' },
 		persona: {
 			has_persona: Boolean(row.persona_prompt_hash),

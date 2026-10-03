@@ -23,10 +23,17 @@ function p90(amounts) {
 
 /**
  * @param {object} agent — Agent3DElement with a playEmote(name, intensity) method
- * @param {{ mint: string, intensity?: number, _EventSource?: typeof EventSource }} opts
+ * `origin` is the three.ws origin serving the feed. An embed on another site
+ * must pass it: a bare path would open the stream on the host page's origin.
+ * The feed is public market data, so a cross-origin stream carries no cookies.
+ *
+ * @param {{ mint: string, intensity?: number, origin?: string, _EventSource?: typeof EventSource }} opts
  * @returns {() => void} detach
  */
-export function attachTradeReactions(agent, { mint, intensity = 1, _EventSource = globalThis.EventSource } = {}) {
+export function attachTradeReactions(
+	agent,
+	{ mint, intensity = 1, origin = '', _EventSource = globalThis.EventSource } = {},
+) {
 	if (!mint || !_EventSource) return () => {};
 
 	// Rolling buffer of { amount: number, ts: number }
@@ -64,7 +71,9 @@ export function attachTradeReactions(agent, { mint, intensity = 1, _EventSource 
 	}
 
 	const params = new URLSearchParams({ kind: 'trades', mint });
-	const es = new _EventSource(`${FEED_PATH}?${params}`, { withCredentials: true });
+	const pageOrigin = typeof location !== 'undefined' ? location.origin : '';
+	const sameOrigin = !origin || origin === pageOrigin;
+	const es = new _EventSource(`${origin}${FEED_PATH}?${params}`, { withCredentials: sameOrigin });
 	es.addEventListener('trade', onTrade);
 	es.addEventListener('graduation', onGraduation);
 

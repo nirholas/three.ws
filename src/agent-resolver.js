@@ -12,103 +12,6 @@ export class AgentResolveError extends Error {
 	}
 }
 
-async function fetchJSON(url, { fetchFn }) {
-	let res;
-	try {
-		res = await fetchFn(url, { credentials: 'include' });
-	} catch (err) {
-		throw new AgentResolveError(
-			'network',
-			`network error fetching ${url}: ${err.message || err}`,
-		);
-	}
-	if (res.status === 401 || res.status === 403) {
-		throw new AgentResolveError(
-			'unauthorized',
-			`unauthorized fetching ${url} (${res.status})`,
-			{ status: res.status },
-		);
-	}
-	if (res.status === 404) {
-		throw new AgentResolveError('not_found', `resource not found: ${url}`, { status: 404 });
-	}
-	if (!res.ok) {
-		throw new AgentResolveError('network', `request failed: ${url} (${res.status})`, {
-			status: res.status,
-		});
-	}
-	try {
-		return await res.json();
-	} catch (err) {
-		throw new AgentResolveError('network', `invalid JSON from ${url}: ${err.message || err}`);
-	}
-}
-
-const _resolveCache = new Map();
-const _CACHE_MAX = 100;
-
-/**
- * Resolve an agent ID to its manifest URL via GET /api/agents/:id.
- * Returns null if the agent record has no manifestUrl (caller may fall back to resolveAgentById).
- * Throws AgentResolveError('not_found') on 404.
- *
- * @param {string} agentId
- * @param {AbortSignal} [signal]
- * @returns {Promise<string|null>}
- */
-export async function resolveByAgentId(agentId, signal) {
-	if (!agentId) throw new AgentResolveError('not_found', 'agentId required');
-
-	if (_resolveCache.has(agentId)) return _resolveCache.get(agentId);
-
-	const origin = typeof location !== 'undefined' ? location.origin : '';
-	const endpoint = `${origin}/api/agents/${encodeURIComponent(agentId)}`;
-
-	let res;
-	try {
-		res = await fetch(endpoint, { credentials: 'include', signal });
-	} catch (err) {
-		if (err?.name === 'AbortError') throw err;
-		throw new AgentResolveError(
-			'network',
-			`network error fetching ${endpoint}: ${err.message || err}`,
-		);
-	}
-
-	if (res.status === 404)
-		throw new AgentResolveError('not_found', `agent ${agentId} not found`, { status: 404 });
-	if (res.status === 401 || res.status === 403)
-		throw new AgentResolveError('unauthorized', `unauthorized (${res.status})`, {
-			status: res.status,
-		});
-	if (!res.ok)
-		throw new AgentResolveError('network', `request failed (${res.status})`, {
-			status: res.status,
-		});
-
-	let data;
-	try {
-		data = await res.json();
-	} catch (err) {
-		throw new AgentResolveError('network', `invalid JSON from ${endpoint}`);
-	}
-
-	const raw = data?.agent?.manifestUrl ?? null;
-	let resolved = null;
-	if (raw) {
-		try {
-			resolved = new URL(raw, origin).href;
-		} catch {
-			resolved = raw;
-		}
-	}
-
-	if (_resolveCache.size >= _CACHE_MAX) _resolveCache.delete(_resolveCache.keys().next().value);
-	_resolveCache.set(agentId, resolved);
-
-	return resolved;
-}
-
 // Map a stored ElevenLabs voice_settings object (snake_case, as persisted by
 // PUT /api/agents/:id/voice) to the camelCase options ElevenLabsTTS accepts.
 // Omits absent fields so the TTS client falls back to its own defaults.
@@ -122,70 +25,109 @@ function voiceSettingsToConfig(vs) {
 	return out;
 }
 
+function ttsConfigFromManifestVoice(voice, { origin, agentId }) {
+	const provider = voice?.provider || 'browser';
+	if (provider !== 'elevenlabs' || !voice?.voice_id) return { provider: 'browser' };
+	return {
+		provider: 'elevenlabs',
+		voiceId: voice.voice_id,
+		proxyURL: `${origin}/api/tts/eleven`,
+		// Lets the proxy serve this clip on the owner's own ElevenLabs key, so an
+		// embed speaks for visitors too.
+		agentId,
+		...(voice.model ? { modelId: voice.model } : {}),
+		...voiceSettingsToConfig(voice.settings),
+	};
+}
+
+/**
+ * Resolve a hosted agent id to the in-memory manifest the element boots from.
+ *
+ * Reads the agent's public manifest, GET {origin}/api/agents/:id/manifest. That
+ * document is the embed contract: anonymous, CDN-cacheable, and served with
+ * `access-control-allow-origin: *`, so the same request works from three.ws and
+ * from any third-party page. It also carries the owner's gesture slots and
+ * routines, which the element applies at boot.
+ *
+ * `origin` must be the three.ws API base the element was loaded from, never the
+ * host page's origin: on example.com a site-absolute path asks example.com for
+ * the agent, 404s, and the embed falls back to a default body named "Agent".
+ *
+ * @param {string} agentId
+ * @param {{ origin?: string, fetchFn?: typeof fetch, signal?: AbortSignal }} [opts]
+ */
 export async function resolveAgentById(
 	agentId,
-	{ origin = typeof location !== 'undefined' ? location.origin : '', fetchFn = fetch } = {},
+	{
+		origin = typeof location !== 'undefined' ? location.origin : '',
+		fetchFn = fetch,
+		signal,
+	} = {},
 ) {
 	if (!agentId) throw new AgentResolveError('not_found', 'agentId required');
 
 	const boundFetch = fetchFn.bind(typeof globalThis !== 'undefined' ? globalThis : undefined);
+	const endpoint = `${origin}/api/agents/${encodeURIComponent(agentId)}/manifest`;
 
-	const agentRes = await fetchJSON(`${origin}/api/agents/${encodeURIComponent(agentId)}`, {
-		fetchFn: boundFetch,
-	});
-	const agent = agentRes?.agent;
-	if (!agent) throw new AgentResolveError('not_found', `agent ${agentId} not found`);
+	let res;
+	try {
+		// Public document: no cookies, so the wildcard CORS answer is usable
+		// from any origin and shared caches can serve it.
+		res = await boundFetch(endpoint, { credentials: 'omit', signal });
+	} catch (err) {
+		if (err?.name === 'AbortError') throw err;
+		throw new AgentResolveError(
+			'network',
+			`network error fetching ${endpoint}: ${err.message || err}`,
+		);
+	}
+	// 400 is the API's answer to an id that is not a uuid: no such agent.
+	if (res.status === 404 || res.status === 400)
+		throw new AgentResolveError('not_found', `agent ${agentId} not found`, {
+			status: res.status,
+		});
+	if (!res.ok)
+		throw new AgentResolveError('network', `request failed: ${endpoint} (${res.status})`, {
+			status: res.status,
+		});
 
-	if (!agent.avatar_id) {
-		throw new AgentResolveError('no_avatar', `agent ${agentId} has no avatar bound`);
+	let doc;
+	try {
+		doc = await res.json();
+	} catch (err) {
+		throw new AgentResolveError('network', `invalid JSON from ${endpoint}: ${err.message || err}`);
 	}
 
-	const avatarRes = await fetchJSON(
-		`${origin}/api/avatars/${encodeURIComponent(agent.avatar_id)}`,
-		{ fetchFn: boundFetch },
-	);
-	const avatar = avatarRes?.avatar;
-	if (!avatar || !avatar.url) {
-		throw new AgentResolveError('no_avatar', `avatar ${agent.avatar_id} has no url`);
-	}
+	const id = doc?.id || agentId;
+	const bodyUri = doc?.body?.uri;
+	if (!bodyUri) throw new AgentResolveError('no_avatar', `agent ${agentId} has no avatar bound`);
 
-	const skills = Array.isArray(agent.skills)
-		? agent.skills.map((s) => (typeof s === 'string' ? { name: s } : s)).filter(Boolean)
+	const skills = Array.isArray(doc.skills)
+		? doc.skills.map((s) => (typeof s === 'string' ? { name: s } : s)).filter(Boolean)
 		: [];
+	const registration = Array.isArray(doc.registrations) ? doc.registrations[0] : null;
+	const chainId = registration?.agentRegistry
+		? Number(String(registration.agentRegistry).split(':')[1]) || undefined
+		: undefined;
 
 	return {
 		spec: 'agent-manifest/0.1',
-		name: agent.name || 'Agent',
-		description: agent.description || '',
-		id: {
-			agentId: agent.id,
-			owner: agent.wallet_address,
-			chainId: agent.chain_id,
-			walletAddress: agent.wallet_address,
-		},
-		body: { uri: avatar.url, format: 'gltf-binary' },
+		name: doc.name || 'Agent',
+		description: doc.description || '',
+		id: { agentId: id, ...(chainId ? { chainId } : {}) },
+		body: { uri: bodyUri, format: 'gltf-binary' },
 		brain: {},
 		voice: {
-			tts:
-				agent.voice_id && agent.voice_provider === 'elevenlabs'
-					? {
-							provider: 'elevenlabs',
-							voiceId: agent.voice_id,
-							proxyURL: `${origin}/api/tts/eleven`,
-							// Lets the proxy serve this clip on the owner's own
-							// ElevenLabs key, so an embed speaks for visitors too.
-							agentId: agent.id,
-							...(agent.voice_model ? { modelId: agent.voice_model } : {}),
-							...voiceSettingsToConfig(agent.voice_settings),
-						}
-					: { provider: 'browser' },
+			tts: ttsConfigFromManifestVoice(doc.voice, { origin, agentId: id }),
 			stt: { provider: 'browser' },
 		},
 		skills,
-		memory: { mode: 'local', namespace: agent.id },
+		memory: { mode: 'local', namespace: id },
 		tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
+		...(doc.animationSlots ? { animationSlots: doc.animationSlots } : {}),
+		...(Array.isArray(doc.choreographies) ? { choreographies: doc.choreographies } : {}),
 		version: '0.1.0',
-		_baseURI: `${origin}/agent/${agent.id}/`,
+		_baseURI: `${origin}/agent/${id}/`,
 		_source: 'agent-id',
 	};
 }

@@ -50,11 +50,15 @@ export class AgentMemory {
 	/**
 	 * @param {string} agentId
 	 * @param {{ backendSync?: boolean,
+	 *           apiOrigin?: string,
 	 *           embedFn?: (text: string) => Promise<number[] | { vector: number[], model?: string|null }> }} [opts]
+	 *   `apiOrigin` is the three.ws origin the sync calls go to; '' keeps them
+	 *   relative, which is right on three.ws's own pages.
 	 */
-	constructor(agentId, { backendSync = false, embedFn = null } = {}) {
+	constructor(agentId, { backendSync = false, apiOrigin = '', embedFn = null } = {}) {
 		this.agentId = agentId;
 		this.backendSync = backendSync;
+		this.apiOrigin = apiOrigin;
 		this.embedFn = embedFn;
 		this._entries = [];
 		this._dirty = false;
@@ -201,7 +205,7 @@ export class AgentMemory {
 		if (!q) return null;
 		const params = new URLSearchParams({ agentId: this.agentId, q, topK: String(limit) });
 		if (type) params.set('type', type);
-		const resp = await fetch(`/api/memory/search?${params}`, { credentials: 'include' });
+		const resp = await fetch(`${this.apiOrigin}/api/memory/search?${params}`, { credentials: 'include' });
 		if (!resp.ok) return null;
 		const { results } = await resp.json();
 		if (!Array.isArray(results)) return null;
@@ -304,7 +308,7 @@ export class AgentMemory {
 	_scheduleSync(entry) {
 		this._persist();
 		if (!this.backendSync || !this.agentId) return;
-		fetch(`/api/agents/${this.agentId}/memories`, {
+		fetch(`${this.apiOrigin}/api/agents/${this.agentId}/memories`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			credentials: 'include',
@@ -332,7 +336,7 @@ export class AgentMemory {
 			const headers = {};
 			if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 			const resp = await fetch(
-				`/api/agent-memory?agentId=${encodeURIComponent(agentId)}`,
+				`${this.apiOrigin}/api/agent-memory?agentId=${encodeURIComponent(agentId)}`,
 				{ credentials: 'include', headers },
 			);
 			if (!resp.ok) return;
@@ -383,7 +387,7 @@ export class AgentMemory {
 
 	async _syncForget(id) {
 		try {
-			await fetch(`/api/agents/${this.agentId}/memories/${id}`, {
+			await fetch(`${this.apiOrigin}/api/agents/${this.agentId}/memories/${id}`, {
 				method: 'DELETE',
 				credentials: 'include',
 			});
@@ -392,7 +396,7 @@ export class AgentMemory {
 
 	async _hydrateFromBackend() {
 		try {
-			const resp = await fetch(`/api/agents/${this.agentId}/memories`, {
+			const resp = await fetch(`${this.apiOrigin}/api/agents/${this.agentId}/memories`, {
 				credentials: 'include',
 			});
 			if (!resp.ok) return;

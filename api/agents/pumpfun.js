@@ -17,7 +17,7 @@
  */
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { cors, json, method, error, wrap, rateLimited } from '../_lib/http.js';
+import { cors, embedReadCors, json, method, error, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { pumpfunMcp, pumpfunBotEnabled } from '../_lib/pumpfun-mcp.js';
 
@@ -98,7 +98,9 @@ import { connectPumpFunFeed, recentBuffered } from '../_lib/pumpfun-ws-feed.js';
 const TIER_RANK = { notable: 1, influencer: 2, mega: 3 };
 
 async function handleFeed(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	// Public market data with no session in it. `<agent-3d tracked-mint>` opens
+	// this stream from the embedding site, so an anonymous read answers any origin.
+	if (embedReadCors(req, res)) return;
 	if (!method(req, res, ['GET'])) return;
 	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many feed connections');

@@ -13,7 +13,7 @@ import {
 } from '../_lib/avatars.js';
 import { sql } from '../_lib/db.js';
 import { logAudit } from '../_lib/audit.js';
-import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
+import { cors, embedReadCors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { headObject } from '../_lib/r2.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -61,7 +61,10 @@ export default wrap(async (req, res) => {
 		return mod.dispatch(id, req, res);
 	}
 
-	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
+	// `<agent-3d avatar-id>` reads this from whatever site embeds it. An anonymous
+	// GET only ever sees a public avatar, so it is open to any origin; a request
+	// carrying a session, and every write, keeps the credentialed allowlist.
+	if (embedReadCors(req, res, { authedMethods: 'GET,PATCH,DELETE,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'PATCH', 'DELETE'])) return;
 
 	// Guard the DB call: an id that isn't a uuid would otherwise hit Postgres as

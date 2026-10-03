@@ -5,6 +5,7 @@ import { resolveURI } from '../ipfs.js';
 import { getHost } from './sandbox-host.js';
 import { startDataReactive } from '../runtime/data-reactive.js';
 import { log } from '../shared/log.js';
+import { credentialsFor } from '../shared/embed-api-origin.js';
 
 /** Injected into every skill handler ctx as ctx.dataReactive */
 const dataReactive = { start: startDataReactive };
@@ -46,7 +47,9 @@ export class Skill {
 	}
 
 	async invoke(toolName, args, ctx) {
-		const paymentProof = ctx?.agentId ? await checkPaymentGate(toolName, ctx.agentId) : null;
+		const paymentProof = ctx?.agentId
+			? await checkPaymentGate(toolName, ctx.agentId, ctx.apiOrigin || '')
+			: null;
 		const scoped = {
 			...ctx,
 			skillBaseURI: this.uri,
@@ -237,10 +240,16 @@ function mintSymbol(mint) {
 	return KNOWN_MINT_SYMBOLS[mint] || `${String(mint).slice(0, 4)}…${String(mint).slice(-4)}`;
 }
 
-async function fetchAgentSnippet(agentId) {
+// `apiOrigin` is the three.ws origin an <agent-3d> embed was loaded from; ''
+// keeps these reads relative on three.ws's own pages.
+function apiCredentials(apiOrigin) {
+	return credentialsFor(apiOrigin, typeof location !== 'undefined' ? location.origin : '');
+}
+
+async function fetchAgentSnippet(agentId, apiOrigin = '') {
 	try {
-		const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
-			credentials: 'include',
+		const r = await fetch(`${apiOrigin}/api/agents/${encodeURIComponent(agentId)}`, {
+			credentials: apiCredentials(apiOrigin),
 		});
 		if (!r.ok) return {};
 		const data = await r.json();
@@ -255,14 +264,14 @@ async function fetchAgentSnippet(agentId) {
  * Returns the intentId string if payment was collected, null if the skill is free.
  * Throws (with code=PAYMENT_CANCELLED) if the user dismisses the modal.
  */
-async function checkPaymentGate(toolName, agentId) {
+async function checkPaymentGate(toolName, agentId, apiOrigin = '') {
 	if (typeof document === 'undefined') return null;
 
 	let manifest;
 	try {
 		const r = await fetch(
-			`/api/agents/x402/manifest?agent_id=${encodeURIComponent(agentId)}&skill=${encodeURIComponent(toolName)}`,
-			{ credentials: 'include' },
+			`${apiOrigin}/api/agents/x402/manifest?agent_id=${encodeURIComponent(agentId)}&skill=${encodeURIComponent(toolName)}`,
+			{ credentials: apiCredentials(apiOrigin) },
 		);
 		if (r.status !== 200) return null;
 		manifest = await r.json();
@@ -298,7 +307,7 @@ async function checkPaymentGate(toolName, agentId) {
 					{ code: 'NO_PROVIDER' },
 				);
 			}
-			const agentSnippet = await fetchAgentSnippet(agentId);
+			const agentSnippet = await fetchAgentSnippet(agentId, apiOrigin);
 			const adapter = getPaymentsAdapter('pumpfun');
 			const paid = await adapter.payAgent({
 				agent: { id: agentId, ...agentSnippet },
