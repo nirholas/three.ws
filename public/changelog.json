@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-10-01T07:14:48.458Z",
+	"generated_at": "2026-10-01T09:43:06.614Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-01",
+			"type": "update",
+			"title": "Avatar pictures show a natural standing pose instead of a T-pose",
+			"summary": "The small pictures of avatars around the site, on Spotlight cards, in the Monitor fleet list, on Characters and on the Rankings board, were drawn with every avatar standing arms out in a stiff T. Avatar pictures are now drawn with the avatar standing naturally, arms relaxed at its sides, using the same posing the live 3D viewer uses, and that works for every skeleton style the viewer already understands. Props, vehicles and creatures are drawn exactly as they were made. Avatar pictures also keep their colored backdrop and their real textures again, where some had come out on plain black with bare white materials. Every avatar picture drawn from now on uses the new pose, and the older pictures can now be redrawn in place.",
+			"link": "/spotlight",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-01",
+			"type": "update",
+			"title": "Avatars no longer open in a T-pose, and Spotlight shows one avatar instead of two",
+			"summary": "On an Agent Spotlight page the avatar's preview picture, which is rendered arms out, never went away once the live 3D avatar loaded, so a second, T-posed copy stood behind the real one for as long as the page was open. The picture now gives way the moment the live avatar is ready. Separately, every embedded 3D avatar briefly showed its arms-out rest pose while its idle animation loaded and then faded in from it. The avatar now stays hidden until it is standing in its idle, then fades in, everywhere the avatar component is used.",
+			"link": "/spotlight",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-01",
 			"type": "update",

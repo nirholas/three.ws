@@ -14,6 +14,7 @@
 // cylinder, normals rotate with it, so the lighting on the curled lip is real.
 
 import * as THREE from 'three';
+import { extrudeBendable } from './holo-geometry.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -243,6 +244,14 @@ const WORLD_W = 3.1; // sticker width in world units
 const BASE_DEPTH = 0.028;
 const MARK_DEPTH = 0.05;
 
+// The peel rolls the sticker around a cylinder whose radius grows with the
+// peel amount. Faces need a vertex every few degrees of that roll to curl
+// instead of folding into facets, so their longest edge is pinned to the
+// tightest radius: about 14 degrees of arc per lattice edge, about 19 at the rim.
+const PEEL_RADIUS_MIN = 0.17;
+const PEEL_RADIUS_GAIN = 0.18;
+const FACE_EDGE = PEEL_RADIUS_MIN * 0.24;
+
 function buildStickerGeometry(markDraw) {
 	const markCanvas = makeCanvas(RASTER);
 	markDraw(markCanvas.getContext('2d'), RASTER);
@@ -270,21 +279,21 @@ function buildStickerGeometry(markDraw) {
 	const markShapes = contoursToShapes(markContours, transform);
 	if (!baseShapes.length) return null;
 
-	const base = new THREE.ExtrudeGeometry(baseShapes, {
+	const base = extrudeBendable(baseShapes, {
 		depth: BASE_DEPTH,
 		bevelEnabled: true,
 		bevelThickness: 0.016,
 		bevelSize: 0.016,
 		bevelSegments: 3,
-	});
+	}, FACE_EDGE);
 	const mark = markShapes.length
-		? new THREE.ExtrudeGeometry(markShapes, {
+		? extrudeBendable(markShapes, {
 			depth: MARK_DEPTH,
 			bevelEnabled: true,
 			bevelThickness: 0.02,
 			bevelSize: 0.02,
 			bevelSegments: 4,
-		})
+		}, FACE_EDGE)
 		: null;
 	if (mark) mark.translate(0, 0, BASE_DEPTH + 0.002);
 
@@ -585,7 +594,7 @@ function init(renderer) {
 		peelUniforms.uFoldT.value = amount <= 0.001
 			? cornerT + 1
 			: cornerT - amount * reach;
-		peelUniforms.uRadius.value = 0.17 + amount * 0.18;
+		peelUniforms.uRadius.value = PEEL_RADIUS_MIN + amount * PEEL_RADIUS_GAIN;
 	}
 
 	/* interaction: pointer tilt with spring, drag for full control */
