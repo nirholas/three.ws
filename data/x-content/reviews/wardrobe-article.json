@@ -1,10 +1,9 @@
 {
 	"id": "wardrobe-article",
-	"contentHash": "23d43cc2802248845ae62a042fb368d4ddc0588161d7e9b74b24b55fa1f5510b",
-	"reviewedAt": "2026-10-01T19:29:24.184Z",
+	"contentHash": "693ba7cbae45608e4e247702ab492412af94d94f8d68ff703d44c44f9036e80a",
+	"reviewedAt": "2026-10-01T19:31:32.401Z",
 	"passed": false,
 	"blockers": [
-		"spelling mixamorig: did you mean mixamo?",
 		"spelling canonicalizer: did you mean canonicalize, canonicalized, canonicalizes?"
 	],
 	"texts": [
@@ -378,12 +377,6 @@
 			},
 			{
 				"kind": "spelling",
-				"target": "mixamorig",
-				"ok": false,
-				"detail": "did you mean mixamo?"
-			},
-			{
-				"kind": "spelling",
 				"target": "canonicalizer",
 				"ok": false,
 				"detail": "did you mean canonicalize, canonicalized, canonicalizes?"
@@ -400,31 +393,16 @@
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "voice",
-				"quote": "the arm bones it actually sits on",
-				"problem": "Mechanical check flags \"actually\" as filler in the article body; the sentence carries the fact without it.",
-				"fix": "Change to \"from the arm bones it sits on\". Same for \"bones a body really has\" (\"bones a body has\") and \"very different proportions\" (state the tolerance or say \"different proportions\")."
-			},
-			{
-				"severity": "minor",
-				"area": "accuracy",
-				"quote": "the live 3D viewer",
-				"problem": "The cover alt text and body caption present static renders as garments \"turned in its live 3D viewer\"; the stills cannot show interactivity, and the cover image shows three renders on a dark background with no viewer chrome. This is defensible but the wording slightly overstates what a still depicts.",
-				"fix": "In the cover alt text, drop \"in their live viewers\" or recapture with the visible viewer UI (3D button or orbit controls) so the image supports the caption."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"A shirt has no skeleton, so our garment forge rigs each piece while a reference body is wearing it, then removes the body and keeps the weights the cloth picked up from the joints underneath. The write-up covers the seven stages, the gates a piece has to pass, and what binding to a skeleton does not fix yet: three.ws/wardrobe"
 			],
 			"altText": [
-				"Three generated 3D garments from the three.ws wardrobe catalog side by side on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
+				"Three generated 3D garments from the three.ws wardrobe catalog shown side by side in their live viewers on a dark background: a yellow rain slicker with the hood up, a black leather biker jacket with silver zippers, and a charcoal grey hooded sweatshirt with a front pocket."
 			]
 		},
-		"summary": "Every claim in the post and article traces to passing verification against the repo and the live wardrobe page, and the X post itself is clean: mechanism lead, one link, no banned structure. The only notes are polish: three filler words in the article body flagged by the mechanical check, and tightening the cover alt text so a still image is not described as a live viewer interaction.",
+		"summary": "Every claim in the post and its article is backed by a passing verification against the repository files or the live wardrobe page, and the cover image matches the alt text and supports the copy. The text follows the house voice exactly, leads with the mechanism, and links the surface once; ship it as is.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

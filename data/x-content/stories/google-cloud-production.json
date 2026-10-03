@@ -1,0 +1,64 @@
+{
+	"id": "google-cloud-production",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-02T00:00:00Z",
+	"covers": [
+		"/pose",
+		"/api/forge-motion",
+		"workers/model-text2motion"
+	],
+	"scenario": {
+		"format": "landscape",
+		"steps": [
+			{
+				"goto": "https://three.ws/pose?src=/avatars/michelle.glb&title=Michelle&anim=idle",
+				"settle": 9000
+			},
+			{
+				"expect": "Playing",
+				"within": 30000
+			},
+			{
+				"hold": 1800,
+				"caption": "An avatar in the Animation Studio"
+			},
+			{
+				"type": "a person does jumping jacks",
+				"into": "Generate an animation from a text description",
+				"caption": "Describe a movement in plain words"
+			},
+			{
+				"click": "Generate",
+				"awaits": "/api/forge-motion",
+				"caption": "A motion model on our GPU worker writes it"
+			},
+			{
+				"expect": "Playing “a person does jumping jacks",
+				"within": 120000
+			},
+			{
+				"hold": 6000,
+				"caption": "The new clip plays on her own skeleton"
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "Placeholder head."
+		},
+		{
+			"text": "Placeholder reply three.ws/pose"
+		}
+	],
+	"claims": [],
+	"mentions": {}
+}

@@ -1,0 +1,210 @@
+{
+	"id": "agents-board-article",
+	"scenarioHash": "fe3688911035e1d9df2a219a91478f35c057596d1814c010d7ab77a0a085b2ff",
+	"ranAt": "2026-10-01T19:31:19.725Z",
+	"target": {
+		"commit": "68c8ec4db",
+		"revision": "three-ws-api-00475-lq6"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/monitor",
+			"detail": "loaded https://three.ws/monitor",
+			"ok": true,
+			"ms": 24075,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "fleet",
+			"detail": "fleet = \"2,557\"",
+			"ok": true,
+			"ms": 96,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "active",
+			"detail": "active = \"648\"",
+			"ok": true,
+			"ms": 11,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "type",
+			"target": "writing",
+			"detail": "typed 7 characters; GET /api/agents/public answered 200 in 10.3 s",
+			"ok": true,
+			"ms": 24868,
+			"frames": 30
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 37544,
+			"frames": 54
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "Simply Sage",
+			"detail": "clicked; GET /api/agents/42534db3-f8f8-48ae-a4cb-ad8b9b42b2d7 answered 200 in 0.3 s",
+			"ok": true,
+			"ms": 17288,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "expect",
+			"target": "creative writing guide",
+			"detail": "appeared after 0.2 s",
+			"ok": true,
+			"ms": 187,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "wait",
+			"target": "6000",
+			"detail": "6000 ms, not filmed",
+			"ok": true,
+			"ms": 6185,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 32968,
+			"frames": 66
+		},
+		{
+			"index": 10,
+			"kind": "goto",
+			"target": "https://three.ws/spotlight",
+			"detail": "loaded https://three.ws/spotlight",
+			"ok": true,
+			"ms": 9192,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "read",
+			"target": "showcased",
+			"detail": "showcased = \"15\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "read",
+			"target": "upvotes",
+			"detail": "upvotes = \"0\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 13,
+			"kind": "goto",
+			"target": "https://three.ws/spotlight/8fecd65a-4ab9-484a-9714-691d4040e9e5",
+			"detail": "loaded https://three.ws/spotlight/8fecd65a-4ab9-484a-9714-691d4040e9e5",
+			"ok": true,
+			"ms": 11328,
+			"frames": 0
+		},
+		{
+			"index": 14,
+			"kind": "expect",
+			"target": "Machine translation solved meaning years ago",
+			"detail": "appeared after 0.2 s",
+			"ok": true,
+			"ms": 247,
+			"frames": 0
+		},
+		{
+			"index": 15,
+			"kind": "wait",
+			"target": "4000",
+			"detail": "4000 ms, not filmed",
+			"ok": true,
+			"ms": 4303,
+			"frames": 0
+		},
+		{
+			"index": 16,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 36754,
+			"frames": 78
+		}
+	],
+	"facts": {
+		"fleet": "2,557",
+		"active": "648",
+		"showcased": "15",
+		"upvotes": "0"
+	},
+	"saw": [
+		"creative writing guide",
+		"Machine translation solved meaning years ago"
+	],
+	"responses": [
+		{
+			"method": "GET",
+			"path": "/api/agents/public",
+			"status": 200,
+			"seconds": 10.3
+		},
+		{
+			"method": "GET",
+			"path": "/api/agents/42534db3-f8f8-48ae-a4cb-ad8b9b42b2d7",
+			"status": 200,
+			"seconds": 0.3
+		}
+	],
+	"cuts": [
+		{
+			"afterStep": 8,
+			"seconds": 6
+		},
+		{
+			"afterStep": 10,
+			"seconds": 9.1
+		},
+		{
+			"afterStep": 13,
+			"seconds": 11.1
+		},
+		{
+			"afterStep": 15,
+			"seconds": 4
+		}
+	],
+	"video": {
+		"path": "public/x-media/agents-board-article/reel.mp4",
+		"sha256": "8a6032a715df2d546e71cc7ea3e1277c13457606c29222cf1b283e848b5a931d",
+		"frames": 249,
+		"motion": 1,
+		"durationSec": 8.3,
+		"width": 1280,
+		"height": 720,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

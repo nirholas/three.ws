@@ -1,0 +1,740 @@
+{
+	"id": "voice-article",
+	"status": "draft",
+	"kind": "article",
+	"tier": 1,
+	"lane": "article",
+	"pattern": "longform",
+	"notBefore": "2026-10-02T00:00:00Z",
+	"covers": [
+		"/voice",
+		"/drive",
+		"/api/tts/catalog",
+		"/api/tts/synthesize"
+	],
+	"article": {
+		"title": "Picking an agent's voice by ear, and the car page that handles its own commands",
+		"body": "data/x-content/articles/voice-article.md",
+		"cover": {
+			"path": "public/x-media/voice-article/cover.png",
+			"alt": "Michelle, a stylised 3D agent with puffed black hair, red headphones and round red sunglasses, standing at idle on the dark night palette of the three.ws Drive car screen"
+		}
+	},
+	"scenario": {
+		"format": "landscape",
+		"steps": [
+			{
+				"goto": "https://three.ws/voice",
+				"settle": 7000
+			},
+			{
+				"scroll": "Browse voices",
+				"ms": 900
+			},
+			{
+				"read": "voices",
+				"match": "(\\d+) voices across \\d+ providers"
+			},
+			{
+				"hold": 1600,
+				"caption": "Hundreds of voices in one grid, signed out"
+			},
+			{
+				"type": "Andrew",
+				"into": "Search by name, accent, or use case...",
+				"caption": "Search by name, accent or use case"
+			},
+			{
+				"wait": 1200
+			},
+			{
+				"hold": 1200
+			},
+			{
+				"click": "Use this voice",
+				"caption": "Pick one and press Speak"
+			},
+			{
+				"click": "Speak",
+				"awaits": "/api/tts/synthesize",
+				"caption": "Hear it before you choose it"
+			},
+			{
+				"expect": "KB ·"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"click": "Speak",
+				"awaits": "/api/tts/synthesize",
+				"caption": "The same line twice comes back from the cache"
+			},
+			{
+				"expect": "cached"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"goto": "https://three.ws/drive?avatar=13f259c7-7024-4d68-b1f0-dbbf52c06209",
+				"settle": 8000
+			},
+			{
+				"expect": "Ready"
+			},
+			{
+				"hold": 1500,
+				"caption": "Drive: the agent on a car screen"
+			},
+			{
+				"click": "Driving",
+				"caption": "Parked, the keyboard unlocks"
+			},
+			{
+				"expect": "Parked"
+			},
+			{
+				"click": "Type"
+			},
+			{
+				"type": "Day mode, please",
+				"into": "Ask your agent something"
+			},
+			{
+				"press": "Enter",
+				"caption": "A command is answered by the page itself"
+			},
+			{
+				"wait": 1000
+			},
+			{
+				"read": "light",
+				"selector": "#dr-light",
+				"match": "(Day|Night)"
+			},
+			{
+				"hold": 2600
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the catalog still offers more than 300 voices",
+			"url": "https://three.ws/api/tts/catalog?limit=1",
+			"expect": {
+				"json": {
+					"path": "total",
+					"min": 300
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "a free lane still speaks for a signed-out visitor",
+			"url": "https://three.ws/api/tts/catalog?limit=1",
+			"expect": {
+				"contains": "\"anonymous\":true"
+			}
+		},
+		{
+			"type": "api",
+			"name": "the Drive page is up",
+			"url": "https://three.ws/drive",
+			"expect": {
+				"contains": "three.ws Drive"
+			}
+		},
+		{
+			"type": "command",
+			"name": "the command matcher answers the phrases and refuses what it must not swallow",
+			"argv": [
+				"npx",
+				"vitest",
+				"run",
+				"tests/drive-surface.test.js"
+			]
+		}
+	],
+	"posts": [
+		{
+			"text": "Some things a driver says are control, not conversation. On Drive, \"repeat that\", \"stop talking\", \"louder\" and \"night mode\" are matched on the page before anything reaches a server, while \"stop at the next charger\" still goes to the agent. The article also covers hearing more than 300 voices in the Voice Lab before you pick one.",
+			"media": [
+				{
+					"path": "public/x-media/voice-article/reel.mp4",
+					"probe": {
+						"durationSec": 22.43,
+						"width": 1280,
+						"height": 720,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		}
+	],
+	"claims": [
+		{
+			"says": "more than 300 voices",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "voices",
+					"min": 300
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "`GET /api/tts/catalog` reports the exact `total`"
+				}
+			]
+		},
+		{
+			"says": "you can hear any of them before you choose, without signing in",
+			"evidence": [
+				{
+					"type": "proof",
+					"responded": "/api/tts/synthesize"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Edge, Gemini, and NVIDIA all work **signed out**"
+				}
+			]
+		},
+		{
+			"says": "are answered by the page itself before anything is sent to a server",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "so the page answers them itself, before\n// the network is touched"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "['repeat', ['repeat', 'repeat that'"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "['hush', ['stop', 'stop talking'"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "['louder', ['louder'"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "['night', ['night mode'"
+				}
+			]
+		},
+		{
+			"says": "are matched on the page before anything reaches a server, while \"stop at the next charger\" still goes to the agent",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "so the page answers them itself, before\n// the network is touched"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "\"Stop\" is a command; \"stop at the next\n// charger\" is a question for the agent"
+				}
+			]
+		},
+		{
+			"says": "three synthesis lanes that work signed out: Microsoft Edge, Google Gemini and NVIDIA Magpie",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "\"label\":\"Microsoft Edge\""
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "\"label\":\"NVIDIA Magpie\""
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "\"label\":\"Google Gemini\""
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Edge, Gemini, and NVIDIA all work **signed out**"
+				}
+			]
+		},
+		{
+			"says": "The Edge list is fetched live from Microsoft and cached for six hours, so it is not a hardcoded snapshot, and it covers more than 100 locales",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "The Edge catalog is fetched live from Microsoft and cached 6 hours per instance"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Nothing is a hardcoded snapshot"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "every Microsoft neural voice · 100+ locales"
+				}
+			]
+		},
+		{
+			"says": "Gemini adds 30 prebuilt voices that take a written direction",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "30 voices · style-directable"
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "| Google Gemini | 30 prebuilt |"
+				}
+			]
+		},
+		{
+			"says": "Magpie adds 11 personas built for the real-time avatar lane",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "| NVIDIA Magpie | 11 personas | Free | The real-time avatar lane, 9 languages. |"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/api/tts/catalog?limit=1",
+					"contains": "the avatar real-time lane"
+				}
+			]
+		},
+		{
+			"says": "Two more lanes, OpenAI and ElevenLabs, appear in the same grid and need an account",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "The metered lanes (OpenAI, ElevenLabs), cloning, and the Voice Library return `401 unauthorized` without a session or bearer token."
+				}
+			]
+		},
+		{
+			"says": "Search matches a voice's name, id, locale and labels, and the language filter is built from the locales actually in the list",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Search matches name, id, locale, and every label; the language filter is built from the locales actually present."
+				}
+			]
+		},
+		{
+			"says": "Preview plays a voice's own sample clip when it has one, and otherwise renders one short line through the synthesis endpoint",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "\"Preview\" plays a shared voice's own sample clip when it has one (free, no synthesis) and otherwise renders one short line through `/api/tts/synthesize`."
+				}
+			]
+		},
+		{
+			"says": "Use this voice moves the pick into the playground, where you type up to 1,000 characters, set the speed and press Speak",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "\"Use this voice\" pushes the pick into the playground."
+				},
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "up to 1,000 characters of text"
+				},
+				{
+					"type": "proof",
+					"saw": "KB ·"
+				}
+			]
+		},
+		{
+			"says": "Each clip is cached against a hash of the whole request: lane, voice, text, model, direction, speed and settings",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Every clip is cached in R2 keyed on a hash of the full request (provider, voice, text, model, direction, speed, and settings)"
+				}
+			]
+		},
+		{
+			"says": "Ask for the same line twice and the second answer comes back from storage with no new synthesis",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "so an identical request is served from storage with no upstream call"
+				},
+				{
+					"type": "proof",
+					"saw": "cached"
+				}
+			]
+		},
+		{
+			"says": "In the capture below the line had already been spoken once, so Speak returned it from the cache",
+			"evidence": [
+				{
+					"type": "proof",
+					"saw": "cached"
+				}
+			]
+		},
+		{
+			"says": "starts in Driving mode with the keyboard hidden and four controls: Hands free, Repeat, Stop and Type",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "The page starts in Driving and hides text entry"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "Four controls, no more. Hands free, Repeat, Stop, Type."
+				},
+				{
+					"type": "proof",
+					"saw": "Ready"
+				}
+			]
+		},
+		{
+			"says": "Hold Talk and speak",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "pages/drive.html",
+					"contains": "data-placeholder=\"Hold Talk and speak.\""
+				}
+			]
+		},
+		{
+			"says": "The agent is told to reply in one or two short sentences that sound right out loud, and never to ask the driver to read anything, tap through a list or look at the screen",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "Reply in one or two short sentences that sound right out loud."
+				},
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "Never ask them to read anything, tap through a list, or look at the screen."
+				}
+			]
+		},
+		{
+			"says": "The reply is clamped to two lines on screen and spoken in full",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "The reply is clamped to two lines and spoken in full"
+				}
+			]
+		},
+		{
+			"says": "Night is the default palette, because a bright panel at speed is glare",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "Night is the default because a bright panel at speed is glare"
+				}
+			]
+		},
+		{
+			"says": "If the browser reports a real ground speed, moving above walking pace locks the keyboard again, and the Parked switch will not unlock it while the wheels are turning",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "If the browser reports a real ground speed, moving above walking pace locks it back"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "// A live speed signal outranks the button: the driver cannot declare\n\t\t// themselves parked while the wheels are turning."
+				}
+			]
+		},
+		{
+			"says": "microphone into speech recognition on NVIDIA Riva, with the browser recognizer as the fallback lane, transcript into the chat model, the reply into speech, and the audio into lip sync on a rigged avatar",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "The loop is the platform's existing one, unchanged"
+				},
+				{
+					"type": "file",
+					"path": "docs/carplay.md",
+					"contains": "microphone into `/api/asr` (NVIDIA Riva,\nwith the browser recognizer as the fallback lane)"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "audio into the lipsync driver and onto a real rigged avatar"
+				}
+			]
+		},
+		{
+			"says": "There are eight commands, each with its own set of phrasings: repeat, stop, louder, quieter, night, day, parked and driving",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": " * @returns {'repeat'|'hush'|'louder'|'quieter'|'night'|'day'|'parked'|'driving'|null}"
+				}
+			]
+		},
+		{
+			"says": "checks each final transcript against it before the network is touched",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": " * Build the interceptor TalkController calls with every final transcript."
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "so the page answers them itself, before\n// the network is touched"
+				}
+			]
+		},
+		{
+			"says": "gives up on anything longer than 40 characters",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "if (!phrase || phrase.length > 40) return null;"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": ".replace(/^(hey |ok |okay |please |can you |could you |would you )+/g, '')"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": ".replace(/( please| now| for me)+$/g, '')"
+				}
+			]
+		},
+		{
+			"says": "That is how \"stop\" ends a reply while \"stop at the next charger\" still reaches the agent",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "The matcher deliberately compares the WHOLE utterance against a phrase set"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "\"Stop\" is a command; \"stop at the next\n// charger\" is a question for the agent"
+				}
+			]
+		},
+		{
+			"says": "\"Louder\" and \"quieter\" move the volume by 20%",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "louder: () => nudgeVolume(0.2),"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "quieter: () => nudgeVolume(-0.2),"
+				}
+			]
+		},
+		{
+			"says": "A handled command never reaches the chat model",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/voice/talk-controller.js",
+					"contains": "A handled command never reaches the chat model"
+				}
+			]
+		},
+		{
+			"says": "Typed text takes the same path as speech",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "src/voice/talk-controller.js",
+					"contains": "Force a turn from text (e.g. typed message). Same downstream path as"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "controller.say(text).catch(onTalkError);"
+				}
+			]
+		},
+		{
+			"says": "typing \"Day mode, please\" switches the palette to day on the spot, with no request to a server",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "light",
+					"equals": "Day"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/index.js",
+					"contains": "day: () => applyLight(true),"
+				},
+				{
+					"type": "file",
+					"path": "src/drive/commands.js",
+					"contains": "['day', ['day mode', 'light mode', 'brighten the screen']]"
+				}
+			]
+		},
+		{
+			"says": "the provider is refusing this deployment's credentials, so a Gemini preview answers with an error that names the lanes still working",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/ops/x-story-findings-2026-09-30.md",
+					"contains": "Gemini voices fail synthesis with 502 or 503 (\"the provider rejected this deployment's credentials\")"
+				}
+			]
+		},
+		{
+			"says": "A lane the provider refuses is then marked unavailable for a few minutes and its voices leave the picker",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "is reported `available: false` with the reason for a few minutes, its voices drop out of the picker"
+				}
+			]
+		},
+		{
+			"says": "the grid's count moves between 327 and 357",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/ops/x-story-findings-2026-09-30.md",
+					"contains": "so the catalog moves between 357 and 327 voices"
+				}
+			]
+		},
+		{
+			"says": "A voice picked in the Voice Lab reaches an agent once it is assigned in the agent editor",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "To give the voice to an agent, open that agent in the agent editor and assign the saved voice there."
+				}
+			]
+		},
+		{
+			"says": "Drive answers on a head unit browser or a phone in a cradle today",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/carplay",
+					"contains": "on a head unit browser, on a phone in a cradle"
+				}
+			]
+		},
+		{
+			"says": "The native CarPlay version is written and waits on Apple's entitlement grant",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/carplay.md",
+					"contains": "It cannot ship until Apple grants\n`com.apple.developer.carplay-voice-based-conversation`"
+				},
+				{
+					"type": "file",
+					"path": "docs/carplay.md",
+					"contains": "Written, wired, and documented in"
+				}
+			]
+		},
+		{
+			"says": "there is no wake word, by design, because Apple's voice category does not allow one",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/carplay.md",
+					"contains": "there is **no wake word**"
+				},
+				{
+					"type": "file",
+					"path": "docs/carplay.md",
+					"contains": "**A wake word.** Apple's category forbids it"
+				}
+			]
+		},
+		{
+			"says": "under heavy load that wait has run long enough to time out",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/ops/x-story-findings-2026-09-30.md",
+					"contains": "timed out at 60 s twice under heavy load"
+				}
+			]
+		},
+		{
+			"says": "Both work without an account",
+			"evidence": [
+				{
+					"type": "file",
+					"path": "docs/voice-lab.md",
+					"contains": "Browsing and the free lanes work signed out"
+				},
+				{
+					"type": "file",
+					"path": "docs/carplay.md",
+					"contains": "when nobody is signed in (401, no error shown to the user)"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

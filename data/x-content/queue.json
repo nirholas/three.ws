@@ -12461,6 +12461,1004 @@
 				}
 			],
 			"mentions": {}
+		},
+		{
+			"id": "forge-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/forge",
+				"workers/model-trellis",
+				"workers/model-hunyuan3d",
+				"workers/model-triposg"
+			],
+			"article": {
+				"title": "How a sentence becomes a textured 3D model, and where the job goes when a GPU fails",
+				"body": "data/x-content/articles/forge-article.md",
+				"cover": {
+					"path": "public/x-media/forge-article/cover.png",
+					"alt": "A 3D model generated on the Forge from a text prompt, shown in its viewer on a dark background: a Greek hoplite in a polished bronze cuirass and crested helmet, with a red tunic, bronze greaves, sandals and a round shield held at his side"
+				}
+			},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the self-hosted TRELLIS lane reports healthy",
+					"url": "https://three.ws/api/forge?health=1",
+					"expect": {
+						"status": 200,
+						"contains": "The TRELLIS (self-host) worker is reachable."
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Hunyuan3D worker is loaded and ready on its Blackwell GPU",
+					"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+					"expect": {
+						"status": 200,
+						"contains": "\"ready\":true"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Forge page is served",
+					"url": "https://three.ws/forge",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "A text prompt on the Forge runs through two chains: one paints a reference picture, the other rebuilds it as a textured 3D model on our own NVIDIA GPUs on Cloud Run. When a worker fails mid-job, the job moves to the next engine under the same id. The write-up covers the lanes, the rescue order and the limits: three.ws/forge"
+				}
+			],
+			"claims": [
+				{
+					"says": "one paints a reference picture, the other rebuilds it as a textured 3D model",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "renders a preview image, then builds 3D"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "The text→3D pipeline is: user prompt → prompt director rewrite → a reference\n// IMAGE is generated → TRELLIS/Hunyuan3D reconstructs a textured GLB from that\n// image."
+						}
+					]
+				},
+				{
+					"says": "on our own NVIDIA GPUs on Cloud Run",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA L4\""
+						},
+						{
+							"type": "page",
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\""
+						}
+					]
+				},
+				{
+					"says": "When a worker fails mid-job, the job moves to the next engine under the same id",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "// configured lane: the client keeps polling this id and sees\n\t\t// status:\"running\" with a new backend instead of a dead end."
+						}
+					]
+				},
+				{
+					"says": "when an engine fails partway through a job, the job moves to the next engine under the same job id and the progress bar keeps going",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "You keep watching the same progress bar; you never find out it happened."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "The client\n//      keeps polling the SAME job id and simply sees status:\"running\" with a\n//      new `backend`"
+						}
+					]
+				},
+				{
+					"says": "a Draft or Standard model costs nothing and needs no account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "Free · no sign-up · yours to download"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "Draft and standard usually cost us nothing to produce, because they run on free lanes and our own GPUs."
+						}
+					]
+				},
+				{
+					"says": "The realism of the final mesh is set almost entirely by the realism of that one reference image",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "The realism of the final mesh is set almost entirely by the realism of\n// that one reference image"
+						}
+					]
+				},
+				{
+					"says": "painted as one centered subject on a plain seamless background, under soft even light, with real-world materials",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "//   - a single centered subject on a plain seamless studio background,\n//   - soft even shadowless lighting,\n//   - real-world materials and surface micro-detail (the photoreal look),"
+						}
+					]
+				},
+				{
+					"says": "A Gemini image model on Vertex AI leads, because it draws the most photoreal reference",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp3d/text-to-image.js",
+							"contains": "// Quality-first ordering: the Vertex Gemini image model outdraws 4-step\n\t// distilled FLUX for photoreal reference images"
+						}
+					]
+				},
+				{
+					"says": "falls through to FLUX on NVIDIA's hosted inference, then to further providers, ending in a keyless rung, so no single provider's failure is ever the terminal error",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp3d/text-to-image.js",
+							"contains": "keyed rungs: no single provider's failure is ever the terminal error."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "if the Vertex lane is unconfigured or fails\n// for any reason, it falls through to the existing reference-image provider"
+						}
+					]
+				},
+				{
+					"says": "Photos skip this step: your photo is the reference. A sketch skips it too",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "If you uploaded photos instead, this step is skipped: your photos are the reference. Sketches skip it too and drive the geometry directly."
+						}
+					]
+				},
+				{
+					"says": "Draft and Standard go to TRELLIS on our own worker. High goes to Hunyuan3D 2.1 on our own worker",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "\tdraft: Object.freeze({ image: 'trellis_selfhost' }),\n\tstandard: Object.freeze({ image: 'trellis_selfhost' }),"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "\thigh: Object.freeze({ image: 'hunyuan3d' }),"
+						},
+						{
+							"type": "page",
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"model\":\"hunyuan3d-2.1\""
+						}
+					]
+				},
+				{
+					"says": "paints a full PBR material set (colour, roughness and normal maps) rather than one baked colour map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture."
+						}
+					]
+				},
+				{
+					"says": "a prompt that clearly reads as a hard-surface object (a robot, a vehicle, a piece of furniture) swaps TRELLIS ahead of Hunyuan3D",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "Only an unambiguously hard-surface subject reorders the lanes."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "const HARDSURFACE_SUBJECT_RE = /\\b(robot|mech|mecha|drone|vehicle|"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "is crisp on hard-surface / mechanical / geometric subjects"
+						}
+					]
+				},
+				{
+					"says": "Hugging Face Spaces for photos, and NVIDIA's hosted TRELLIS for text, which keeps a text prompt answerable even when every one of our GPU workers is cold",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "returns a model when every GPU worker (and HuggingFace) is cold or down"
+						}
+					]
+				},
+				{
+					"says": "Engines that need your own API key run only when you pick them",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "BYOK lanes are excluded (never auto-selected)."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/forge",
+							"contains": "your own key"
+						},
+						{
+							"type": "file",
+							"path": "src/forge.js",
+							"contains": "// Flip the engine picker to a backend by id"
+						}
+					]
+				},
+				{
+					"says": "It takes the first lane in its order that is healthy or simply unknown; if none is clean, it takes the first that is not confirmed down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "//   1. The first lane that is healthy OR simply unknown."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "//   2. Otherwise the first lane not confirmed 'down'"
+						}
+					]
+				},
+				{
+					"says": "about 12,000 at Draft, about 30,000 at Standard, and up to 200,000 at High",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "Draft: about 12,000 polygons, fast."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "Standard (the default): about 30,000 polygons"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/inside-the-forge",
+							"contains": "High: up to 200,000 polygons"
+						}
+					]
+				},
+				{
+					"says": "The poll handler marks the failed lane unhealthy for 90 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-lane-health.js",
+							"contains": "const LANE_COOLDOWN_SECONDS = 90;"
+						},
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "if (platformLaneFailed) await markLaneUnhealthy(failedBackend);"
+						}
+					]
+				},
+				{
+					"says": "recovers the original prompt and the stored reference picture from the job's record, resubmits them to the next lane, and binds the old job id to the new one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "The failed poll recovers the original inputs\n//      (prompt + reference image) from the creation row, resubmits to the next\n//      configured lane, and binds old-handle → new-handle in Redis."
+						}
+					]
+				},
+				{
+					"says": "our TRELLIS worker, then our Hunyuan3D worker, then a hosted TRELLIS lane where one is configured, then TripoSG",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];"
+						}
+					]
+				},
+				{
+					"says": "A job gets its first lane plus up to three backups",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "so a request tries at most 1 primary + 3 backup lanes."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "export const MAX_FAILOVER_HOPS = 3;"
+						}
+					]
+				},
+				{
+					"says": "TripoSG closes the chain because it returns an untextured mesh, so it runs only once every textured lane has failed or is marked down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "// TripoSG closes the chain. It returns an untextured mesh, so it only runs\n// once every textured lane has failed or is marked down."
+						}
+					]
+				},
+				{
+					"says": "a worker outage from 18 to 28 September that took Hunyuan3D and TRELLIS down together: without it, roughly 400 photo jobs a day ended in a hard failure while the TripoSG worker sat healthy",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "// 2026-09-18..28 worker outage, which took Hunyuan3D and TRELLIS self-host\n// down together, ended roughly 400 photo jobs a day in a hard failure while\n// the TripoSG worker sat healthy."
+						}
+					]
+				},
+				{
+					"says": "The response names the lanes that can serve a fresh retry",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),"
+						}
+					]
+				},
+				{
+					"says": "TRELLIS runs on an L4. Hunyuan3D 2.1 runs on an RTX PRO 6000 Blackwell, held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-trellis-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA L4\""
+						},
+						{
+							"type": "page",
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\""
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Our RTX service runs with min instances and max instances both set to 1, held warm."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "a cold start means loading 14 GiB before the first token of work"
+						}
+					]
+				},
+				{
+					"says": "Every worker speaks the same contract",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "every image-to-3D worker speaks the same wire contract."
+						}
+					]
+				},
+				{
+					"says": "The health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-health.js",
+							"contains": "is up but still loading its model; a generation will queue until it is ready."
+						}
+					]
+				},
+				{
+					"says": "Task state lives in object storage rather than in the instance",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Task state lives in object storage, not in the instance."
+						}
+					]
+				},
+				{
+					"says": "18 GiB staged plus 14 GiB loaded is a 32 GiB peak against the L4 tier's 32 GiB ceiling, and the container was killed on every cold start",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "So the peak is not 14 GiB and it is not 18 GiB. It is both at once, against the L4 tier's ceiling of 32 GiB:"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Every single cold start ended the same way:"
+						}
+					]
+				},
+				{
+					"says": "The RTX PRO 6000 tier's floor of 80 GiB clears it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "The platform minimums for nvidia-rtx-pro-6000 on Cloud Run are 20 CPU and 80 GiB, which clears a 32 GiB peak with room to spare"
+						}
+					]
+				},
+				{
+					"says": "Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit. The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Blackwell is sm_120 and needs cu128 wheels; no flag substitutes for the rebuild."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "We compile the custom CUDA extensions for both architectures, not just the one we deploy to:"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "That turns \"which card is available in this region today\" from a rebuild into a deploy flag"
+						}
+					]
+				},
+				{
+					"says": "Hugging Face Spaces block for the whole generation and NVIDIA's hosted lane takes text only, so neither can pick up a job that failed on a poll; both appear only in the retry suggestions",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "HuggingFace Spaces cannot be auto-redispatched from a poll (its\n// provider blocks through the whole generation), so it appears only in the\n// retry_backends suggestions"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "NVIDIA is excluded\n// (text-only, and a poll-time redispatch always reconstructs from a stored\n// reference image)."
+						}
+					]
+				},
+				{
+					"says": "a job that started from several photos continues from one of them, and says so",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/forge.js",
+							"contains": "multi-view original degrades visibly (views_used: 1), never silently."
+						}
+					]
+				},
+				{
+					"says": "Each check waits 4 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-health.js",
+							"contains": "const PROBE_TIMEOUT_MS = 4_000;"
+						}
+					]
+				}
+			],
+			"mentions": {}
+		},
+		{
+			"id": "quality-gate-article",
+			"status": "review",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-02T00:00:00Z",
+			"covers": [
+				"/inspect",
+				"/diff",
+				"@three-ws/glb-diff"
+			],
+			"article": {
+				"title": "Two checks before a 3D model ships: the catalog gate, and a diff that names what broke",
+				"body": "data/x-content/articles/quality-gate-article.md",
+				"cover": {
+					"path": "public/x-media/quality-gate-article/cover.png",
+					"alt": "Two 3D characters overlaid in the Model Diff viewer on a black background: a translucent pink jointed mannequin, the X Bot sample highlighted as the model before the change, standing beside Michelle, a green-skinned character with leafy green hair and yellow trousers, caught mid-dance as her clip plays"
+				}
+			},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the free diff endpoint reports the X Bot to Michelle change as breaking",
+					"url": "https://three.ws/api/3d/diff?a=https://three.ws/avatars/xbot.glb&b=https://three.ws/avatars/michelle.glb",
+					"expect": {
+						"status": 200,
+						"contains": "\"severity\":\"breaking\""
+					}
+				},
+				{
+					"type": "api",
+					"name": "the inspector page is served",
+					"url": "https://three.ws/inspect",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Our catalog turns away a character that arrives as more than 8 meshes, and you can run that exact check on your own .glb without uploading it. The write-up covers the five structural checks, how Model Diff names the joints and clips a change removed, the exit codes for CI, and where its rename detection still guesses wrong: three.ws/inspect"
+				}
+			],
+			"claims": [
+				{
+					"says": "more than 8 meshes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "if (category === 'avatar' && m.meshCount > 8) reasons.push('too_many_meshes_for_a_character');"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "This runs the exact quality gate three.ws applies to its own catalog entries against any .glb you give it."
+						}
+					]
+				},
+				{
+					"says": "you can run that exact check on your own .glb without uploading it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "It runs entirely in your browser: nothing is uploaded, and the verdict is instant."
+						},
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "import { gateMesh, explainMeshGate, SEED_GATE_VERSION } from '../api/_lib/seed-mesh-gate.js';"
+						}
+					]
+				},
+				{
+					"says": "the five structural checks",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "These checks measure whether a model is built well enough to publish: density, weight, texture, bounds, assembly."
+						}
+					]
+				},
+				{
+					"says": "how Model Diff names the joints and clips a change removed",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "lost 2 joint(s): mixamorig:LeftEye, mixamorig:RightEye. Clips that target them will not play."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "5 animations were removed (\"agree\", \"idle\", \"run\" and 2 more)."
+						}
+					]
+				},
+				{
+					"says": "the exit codes for CI",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "Exit codes are the contract a CI job depends on, so they are deliberate:"
+						}
+					]
+				},
+				{
+					"says": "where its rename detection still guesses wrong",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "headShake to SambaDance"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/diff.js",
+							"contains": "similarity: (x, y) => 0.65 * jaccard(x.targets, y.targets) + 0.35 * ratio(x.duration, y.duration),"
+						}
+					]
+				},
+				{
+					"says": "has to clear a structural gate before anyone sees it, and the Model Inspector runs that same gate, the same module with the same thresholds",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Same module, same thresholds, same decision."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-quality.js",
+							"contains": "Rejects are never published."
+						}
+					]
+				},
+				{
+					"says": "The seeding job that fills the catalog imports it, and so does the inspector page",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "The page imports the same module the seeding cron runs, so the rules here cannot drift from the rules in production."
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-quality.js",
+							"contains": "} from './seed-mesh-gate.js';"
+						},
+						{
+							"type": "file",
+							"path": "api/cron/forge-seed-cron.js",
+							"contains": "import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';"
+						}
+					]
+				},
+				{
+					"says": "A threshold change lands in both places at once because there is only one place",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "threshold change lands in both places at once because there is only one place."
+						}
+					]
+				},
+				{
+					"says": "the gate reads nothing but the glTF JSON chunk",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "reads nothing but\n// the glTF JSON chunk, so it can run anywhere"
+						}
+					]
+				},
+				{
+					"says": "A build check walks the real bundler graph from the page and fails the moment a Node built-in becomes reachable",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "`npm run check:browser-graph` (it walks the real bundler graph from the HTML\n// entries and fails the build the moment a `node:` built-in becomes reachable)"
+						}
+					]
+				},
+				{
+					"says": "Every verdict carries a gate version, because an accept rate is only comparable within one version of the rules",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "// Bumped whenever a threshold changes, and stored on every verdict"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "rate is only comparable within one gate version."
+						}
+					]
+				},
+				{
+					"says": "Geometry density: between 1,500 and 1,500,000 vertices",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "minVertices: numEnv('SEED_GATE_MIN_VERTICES', 1_500),"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "maxVertices: numEnv('SEED_GATE_MAX_VERTICES', 1_500_000),"
+						}
+					]
+				},
+				{
+					"says": "File weight: between 20 KB and 80 MB",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "minBytes: numEnv('SEED_GATE_MIN_BYTES', 20_000),"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "maxBytes: numEnv('SEED_GATE_MAX_BYTES', 80 * 1024 * 1024),"
+						}
+					]
+				},
+				{
+					"says": "a collapsed mesh passes every triangle count and still draws as a speck",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "The bounding box has no extent, so the mesh draws as a single speck no matter how the camera is framed. It passes triangle counts, which is exactly why it needs its own check."
+						}
+					]
+				},
+				{
+					"says": "a character may arrive as at most 8 meshes. A prop is exempt",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "bound: category === 'avatar' ? 'at most 8' : 'props exempt',"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Props skip the character-only checks."
+						}
+					]
+				},
+				{
+					"says": "A failed check comes with the fix, written next to the rule it explains, so the guidance cannot drift from the rule",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "It lives beside the gate rather than in the page so the guidance\n// cannot drift from the rule it describes"
+						}
+					]
+				},
+				{
+					"says": "The texture rule is deliberately stricter than the interactive Forge",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-mesh-gate.js",
+							"contains": "This bound is stricter than the interactive forge on purpose: a catalog entry is the platform vouching for itself."
+						}
+					]
+				},
+				{
+					"says": "It clears the density floor of 1,500 with 1,728 vertices",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Ffox.glb",
+							"contains": "1,728 vertices"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect?url=https%3A%2F%2Fthree.ws%2Favatars%2Ffox.glb",
+							"contains": "Clears the catalog bar"
+						}
+					]
+				},
+				{
+					"says": "Fox is the sample labelled \"Passes, barely\"",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/inspect-page.js",
+							"contains": "{ id: 'fox', label: 'Fox', url: '/avatars/fox.glb', note: 'Passes, barely' },"
+						}
+					]
+				},
+				{
+					"says": "The gate is the first of two stages. On the catalog path a vision model then renders the mesh",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/seed-quality.js",
+							"contains": "2. VISION JUDGE (Vertex Gemini). Renders the mesh and asks the judge two"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/inspect",
+							"contains": "Whether it looks good is judged separately by a vision model on the catalog path."
+						}
+					]
+				},
+				{
+					"says": "pairs objects across the two the way git pairs renamed files: by name first, then by a hash of the content, then by similarity",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Objects are matched by name, then by content hash, then by similarity, the same three-tier strategy git uses for file renames."
+						}
+					]
+				},
+				{
+					"says": "Vertex data is compared at a quantum of 1e-4 units, so the float drift of a re-export does not register while a genuine edit does",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "Vertex data is compared at a quantum of 1e-4 units, so the float drift a re-export or a Draco round trip introduces does not register while a genuine edit does."
+						}
+					]
+				},
+				{
+					"says": "Every change set carries one severity: none, cosmetic, minor, major or breaking",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "Every change set carries one severity, the worst of everything it found:"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/severity.js",
+							"contains": "export const SEVERITIES = ['none', 'cosmetic', 'minor', 'major', 'breaking'];"
+						}
+					]
+				},
+				{
+					"says": "A texture swap is minor because everything still loads and plays",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/severity.js",
+							"contains": "A 40 MB texture swap is `minor` because everything still"
+						}
+					]
+				},
+				{
+					"says": "That is the failure that renders fine and never moves",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "That is the failure that renders fine and never moves."
+						}
+					]
+				},
+				{
+					"says": "The skeleton section names the two eye joints that are gone and says clips addressing them will not play. The animation section lists the five clips that no longer exist",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "lost 2 joint(s): mixamorig:LeftEye, mixamorig:RightEye. Clips that target them will not play."
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/diff?a=/avatars/xbot.glb&b=/avatars/michelle.glb",
+							"contains": "5 animations were removed (\"agree\", \"idle\", \"run\" and 2 more)."
+						}
+					]
+				},
+				{
+					"says": "The page, a command line tool and a free HTTP endpoint all run the same published package",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/diff",
+							"contains": "so a verdict in CI can never disagree with what you see here."
+						},
+						{
+							"type": "file",
+							"path": "api/3d/diff.js",
+							"contains": "import { describeModel, diffDescriptions, formatMarkdown, formatText } from '@three-ws/glb-diff';"
+						},
+						{
+							"type": "file",
+							"path": "src/model-diff.js",
+							"contains": "from '@three-ws/glb-diff';"
+						}
+					]
+				},
+				{
+					"says": "Zero means the diff ran and stayed below the threshold",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "| `0` | The diff ran and stayed below `--fail-on` |"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/README.md",
+							"contains": "| `2` | The tool could not run: bad arguments, unreadable input, unparseable model |"
+						}
+					]
+				},
+				{
+					"says": "caps each side at 32 MB",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/3d/diff.js",
+							"contains": "const MAX_BYTES = 32 * 1024 * 1024;"
+						}
+					]
+				},
+				{
+					"says": "The similarity pass is skipped when two models would need more than 40,000 comparisons, and the result says so",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/match.js",
+							"contains": "When it trips, the result\n// says so rather than quietly downgrading renames into add/remove noise."
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/match.js",
+							"contains": "const MAX_SIMILARITY_PAIRS = 40_000;"
+						}
+					]
+				},
+				{
+					"says": "Most avatars on the platform ship with compressed geometry",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "CLAUDE.md",
+							"contains": "Most three.ws avatars ship with `EXT_meshopt_compression`"
+						}
+					]
+				},
+				{
+					"says": "the command line tool needs the optional meshoptimizer package installed next to it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "packages/glb-diff/src/document.js",
+							"contains": "decoderPromise = import('meshoptimizer')"
+						},
+						{
+							"type": "file",
+							"path": "packages/glb-diff/package.json",
+							"contains": "\"peerDependenciesMeta\": {\n    \"meshoptimizer\": {\n      \"optional\": true"
+						}
+					]
+				}
+			],
+			"mentions": {}
 		}
 	]
 }

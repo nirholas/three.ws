@@ -1,10 +1,9 @@
 {
 	"id": "any-skeleton-article",
 	"contentHash": "73bc79be1907627aabf54f54c24d06d6ebbcda35dabf5bee98fc943c3c16914b",
-	"reviewedAt": "2026-10-01T19:28:44.631Z",
+	"reviewedAt": "2026-10-01T19:32:29.398Z",
 	"passed": false,
 	"blockers": [
-		"spelling retargeter: did you mean retargeted, retarget, retargets?",
 		"spelling lowerarm: did you mean lower, lowers, lowery?",
 		"spelling canonicalizer: did you mean canonicalize, canonicalized, canonicalizes?",
 		"spelling Miku: did you mean mike, Mike, maik?",
@@ -426,12 +425,6 @@
 			},
 			{
 				"kind": "spelling",
-				"target": "retargeter",
-				"ok": false,
-				"detail": "did you mean retargeted, retarget, retargets?"
-			},
-			{
-				"kind": "spelling",
 				"target": "lowerarm",
 				"ok": false,
 				"detail": "did you mean lower, lowers, lowery?"
@@ -470,17 +463,9 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "Article cover: public/x-media/any-skeleton-article/cover.png",
-				"problem": "The cover shows one avatar on one skeleton, while the post's claim is that the same clips play across Mixamo, VRoid, Unreal and Daz rigs. It is real product, sharp, and does not contradict the copy, so it ships, but a multi-avatar frame (like the article's own one-idle-four-bodies.png) would support the claim more directly.",
-				"fix": "Optional: use the four-avatar frame /x-media/any-skeleton-article/one-idle-four-bodies.png as the cover instead; not required to ship."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"Our animation clips were made once, on one reference skeleton, and they play on Mixamo, VRoid, Unreal and Daz avatars built later by other tools. The write-up covers how bone names are matched, why a matching name is not enough, and where the retargeter stops on purpose: three.ws/avatar-artifact"
@@ -489,7 +474,7 @@
 				"A generated 3D circus ringmaster in a red tailcoat, top hat and tall boots standing at rest with his hands open in front of him, lit in red and violet on a dark stage under a starfield. He is idling on the shared animation library in the three.ws Avatar Artifact viewer."
 			]
 		},
-		"summary": "Every claim in the post and article passed verification against live pages and source files, and the voice is clean: no hashtags, no emoji, no dashes, mechanism first. The only note is that the cover shows a single avatar rather than the cross-skeleton claim, but it is real product and accurate, so this is ready to publish.",
+		"summary": "Every claim in the post is backed by a passing verification against the live pages and source files, and the copy states mechanisms (one canonical skeleton, bone-name matching, deliberate stop conditions) rather than adjectives. Voice, links, and the cover image with its alt text all conform, so it ships unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
