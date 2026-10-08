@@ -289,3 +289,31 @@ describe('api/img ?url= metadata follow', () => {
 		expect([...res.body]).toEqual([3]);
 	});
 });
+
+describe('api/img same-origin document safety', () => {
+	const SVG = 'https://evil.example/art.svg';
+
+	it('serves a proxied SVG under a sandboxed, script-free policy', async () => {
+		fetchModel.mockImplementation(async (url) => ({
+			bytes: new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(document.domain)</script></svg>'),
+			url,
+			contentType: 'image/svg+xml',
+			filename: 'art.svg',
+		}));
+
+		const res = mockRes();
+		await handler(mockReq(`?url=${encodeURIComponent(SVG)}&seed=SVG`), res);
+
+		expect(res.headers['content-type']).toBe('image/svg+xml');
+		const csp = res.headers['content-security-policy'];
+		expect(csp).toContain('sandbox');
+		expect(csp).toContain("default-src 'none'");
+		expect(csp).not.toContain('script-src');
+	});
+
+	it('applies the same policy to the placeholder', async () => {
+		const res = mockRes();
+		await handler(mockReq('?seed=PLACEHOLDER'), res);
+		expect(res.headers['content-security-policy']).toContain('sandbox');
+	});
+});

@@ -282,9 +282,18 @@ async function resolveImageFromMeta(metaUri, timeoutMs = META_TIMEOUT_MS) {
 	}
 }
 
+// Whatever this endpoint returns is a remote party's bytes served from the
+// three.ws origin. Token art is routinely SVG, and an SVG opened as a top-level
+// document runs its own <script> under this origin, so `?url=` pointed at a
+// hostile SVG was script execution on three.ws. As an <img> or a texture the
+// bytes render exactly as before; opened directly, `sandbox` puts the document
+// in an opaque origin with scripts disabled.
+const PROXIED_CSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; sandbox";
+
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
 	if (!method(req, res, ['GET'])) return;
+	res.setHeader('content-security-policy', PROXIED_CSP);
 
 	const ip = clientIp(req);
 	const rl = await limits.imgProxyIp(ip);
