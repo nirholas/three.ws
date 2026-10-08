@@ -2,7 +2,7 @@
 venue: Hugging Face community article (huggingface.co/blog/three-ws/...)
 account: three-ws (organization)
 suggested_title: "Generate, look, grade, iterate: closing the feedback loop for agentic 3D"
-description: "Third three.ws article for the Hugging Face community. Text-to-3D has been one-shot since it existed, because the model that generates an asset cannot perceive it. This is the loop we built to fix that: rendering results back into the model's own modality, a mechanical physics-readiness grade, structural diffing between iterations, and universal retargeting, all on open models running on our own GPUs."
+description: "Third three.ws article for the Hugging Face community. This is the loop we built so an agent can judge and improve its own 3D output: rendering results back into the model's own modality, a mechanical physics-readiness grade, structural diffing between iterations, versioned refinement, and universal retargeting, all on open models running on our own GPUs."
 tags: [3d, agents, mcp, open-models, evaluation]
 house_rules: |
   Hugging Face blog rules as applied to our previous two articles: keep it AI-focused.
@@ -13,26 +13,37 @@ status: draft, owner approval required before posting (external-channel gate in 
 
 # Generate, look, grade, iterate: closing the feedback loop for agentic 3D
 
-This is the third piece we have published here. The [first](https://huggingface.co/blog/three-ws/giving-ai-agents-bodies-and-wallets) argued that agents need bodies. The [second](https://huggingface.co/blog/three-ws/building-3d-ai-agents-end-to-end) walked the whole stack end to end. This one is about a single missing primitive that we think holds back every agentic 3D pipeline, ours included, and what happened when we built it.
+Hello again, Hugging Face community! This is the third piece we have published here. The [first](https://huggingface.co/blog/three-ws/giving-ai-agents-bodies-and-wallets) argued that agents deserve bodies. The [second](https://huggingface.co/blog/three-ws/building-3d-ai-agents-end-to-end) walked the whole stack end to end. This one is about a single building block that we think every agentic 3D pipeline can benefit from, and what it unlocked for ours.
 
-**The problem in one sentence: every text-to-3D API in existence answers with a URL to a binary file, and a language model cannot read a binary file.**
+**The idea in one sentence: render every 3D result back into a modality the model can perceive, and the agent can judge its own work.**
 
-That is why agentic 3D has been stuck at one shot since it began. The agent spends GPU time, receives a link, and has no way to tell a clean mesh from a melted one. It hands the link to a human and hopes. There is no error signal, so there is no loop, so there is no agency: just a very expensive random draw.
+Here is why that matters, in plain terms. When an agent asks a text-to-3D model for "a ceramic robot", the answer is a `.glb` file: a compact binary of vertices, materials, and bones. People open it in a viewer. A language model reads text and images, so the natural next step is to show it the model as images. Once the agent can see what it made, it can say "the far side is unfinished, try again", and a single generation becomes a loop: generate, look, judge, refine, look again.
 
 Everything below is Apache-2.0 at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws), and every endpoint marked free is keyless.
 
+## The loop at a glance
+
+| Step | Question it answers | Tool |
+|---|---|---|
+| Generate | Make me a model | `forge_free`, `forge_avatar`, `text_to_avatar` |
+| Look | What does it look like? | `look_at_model`, `@three-ws/see`, `POST /api/3d/look` |
+| Grade | Can a physics engine use it? | `grade_sim_readiness`, `GET /api/sim-readiness` |
+| Refine | Change it, and keep the history | `refine_model` with version lineage |
+| Diff | Did that change actually do anything? | `@three-ws/glb-diff` |
+| Animate | Make it move, whatever its rig | `@three-ws/retarget` |
+
 ## 1. Let the model look at what it made
 
-The fix is embarrassingly simple once you say it out loud: render the result back into a modality the model actually perceives.
+The step that changes everything is beautifully simple: render the result into a modality the model perceives.
 
-Our `look_at_model` tool renders a GLB from several angles and returns the frames as **MCP image content blocks**, so a multimodal client renders them straight into the conversation. Alongside the frames it returns the geometry facts (triangle count, bounds, material count, whether it is skinned) and a plain-language reading of them.
+Our `look_at_model` tool renders a GLB from several angles and returns the frames as **MCP image content blocks**, so a multimodal client renders them straight into the conversation. Alongside the frames it returns the geometry facts (triangle count, bounds, material count, whether it is skinned) and a plain-language reading of them, such as "12,400 triangles, a normal real-time budget for a hero prop or character". You can ask for up to six views (front, three-quarter, side, back, top, bottom) at sizes from 128 to 1024 pixels; the default is three-quarter, front, side, and back.
 
 Three ways in, because different consumers want different shapes:
 
 | You are | Use | You get |
 |---|---|---|
 | An MCP client | `look_at_model` on `https://three.ws/api/mcp-studio` | frames as image blocks, rendered inline |
-| A Node program | `@three-ws/see` | `see(url)` returns views, stats, notes |
+| A Node program | `@three-ws/see` | `see(url)` returns views, stats, notes, a viewer link, and an AR link |
 | Anything with HTTP | `POST https://three.ws/api/3d/look` | JSON with a frame URL per angle |
 
 ```bash
@@ -41,81 +52,101 @@ curl -s -X POST https://three.ws/api/3d/look \
   -d '{"glb_url":"https://three.ws/avatars/cesium-man.glb"}'
 ```
 
-What changes is not the quality of any single generation. What changes is that the agent can now **judge** one, which means it can decide to refine, and every refinement is its own version with its own artifacts. Generate, look, judge, refine, look again.
+In Node, `toMessageContent(look)` shapes a look into multimodal chat content (one labelled text block per angle, followed by the image), so the frames go straight into any vision-capable model's message. Pass `{ fetchImages: true }` to inline base64 for APIs that prefer bytes to URLs.
 
-The generalisation is the part worth taking away, and it is not about 3D at all: **any tool that hands an agent a binary is a tool that needs a companion that renders it into the agent's own modality.** Ours was a mesh. Yours might be a PDF, a spreadsheet, an audio file, a CAD assembly, a compiled binary. If your agent cannot perceive its own output, it is not iterating, it is guessing.
+What this changes is the agent's role: it can now **judge** a generation, which means it can decide to refine, and every refinement is its own version with its own artifacts.
+
+The broader lesson is not about 3D at all: **any tool that hands an agent a binary benefits from a companion that renders it into the agent's own modality.** Ours was a mesh. Yours might be a PDF, a spreadsheet, an audio file, a CAD assembly, or a compiled artifact. Give your agent a way to perceive its own output and it moves from guessing to iterating.
 
 ## 2. A grade, so "good" means something mechanical
 
-Perception gets you taste. It does not get you a specification.
+Perception gives an agent taste. A grade gives it a specification.
 
-A renderer forgives almost everything; a rigid-body solver forgives nothing. A mesh that looks perfect on screen can sink through the floor in MuJoCo, behave as if hollow in Bullet, or turn out to be a metre tall because the generator fitted it to a unit box and nothing in the file says so. Every robotics, game-physics and world-model pipeline rediscovers those defects by hand, one asset at a time.
-
-So we published the claim, mechanically, free, and CC0:
+A physics engine asks a stricter question than a renderer: is the surface closed, is the winding consistent, is the volume positive, and are the dimensions real-world metres? A GLB has no field that says, so robotics, game-physics, and world-model pipelines each answer that question with their own checks. We published one mechanical answer, free, and CC0:
 
 ```bash
 curl "https://three.ws/api/sim-readiness?src=https://three.ws/avatars/cesium-man.glb"
 ```
 
+Cesium Man grades `simulation_ready`: 4,672 triangles, 1.51 m tall, about 0.054 cubic metres of volume, returned with its centroid and an inertia tensor at unit density.
+
 Four verdicts:
 
 | Verdict | Meaning |
 |---|---|
-| `simulation_ready` | Closed surface, consistent winding, positive volume, real-world extents. The only verdict that licenses trusting the reported mass. |
-| `needs_scale` | Geometry is sound, only the units are missing. Multiply; mass properties scale with it. |
-| `needs_repair` | Open, non-manifold, or inconsistently wound. Mass is reported but unreliable. |
-| `unusable` | No triangles, or zero volume. |
+| `simulation_ready` | Closed surface, consistent winding, positive volume, real-world extents. The verdict that licenses trusting the reported mass. |
+| `needs_scale` | Geometry is sound, and only the units need setting. Multiply; mass properties scale with it. |
+| `needs_repair` | Open, non-manifold, or inconsistently wound. Mass is reported as provisional. |
+| `unusable` | Nothing to simulate: no triangles, or zero volume. |
 
-A fifth value, `unreadable`, covers bytes that are not binary glTF 2.0 at all, kept deliberately distinct: one is a broken file, the other is a valid file with nothing to simulate. Verdicts are content-addressed by the file's SHA-256, so identical bytes always get an identical grade and caching is trivially correct.
+A fifth value, `unreadable`, covers bytes that are not binary glTF 2.0 at all, kept deliberately distinct: one is a file that could not be read, the other is a valid file with nothing to simulate. Verdicts are content-addressed by the file's SHA-256, so identical bytes always get an identical grade and caching is trivially correct.
 
-Two design decisions I would defend to anyone building evaluation infrastructure:
+Three design decisions we would happily defend to anyone building evaluation infrastructure:
 
-**Free, permanently.** It is also exposed as a free tool on our *paid* MCP server, which is a deliberate exception to that server's pricing. An assurance check that costs money is a check nobody runs, and a check nobody runs prevents nothing.
+**Free, permanently.** It is also a free, read-only, idempotent tool on our *paid* MCP server, a deliberate exception to that server's pricing. A free check runs on every asset, and that is where it does the most good. The practical pattern is order of operations: an agent shopping for a prop can grade ten candidates for nothing and spend only on the one a solver can use.
 
-**A spec, not a service.** [`specs/SIM_READINESS.md`](https://github.com/nirholas/three.ws/blob/main/specs/SIM_READINESS.md) is CC0 and the grader is a pure function you can vendor. If this becomes a standard that other people implement and we never see the traffic, that is the successful outcome, not a lost one. The glTF ecosystem has no machine-readable claim about physical usability, and that hole gets filled either by a shared spec or by fifty incompatible internal scripts.
+**A spec, not a service.** [`specs/SIM_READINESS.md`](https://github.com/nirholas/three.ws/blob/main/specs/SIM_READINESS.md) is CC0, and the grader is a pure function you can vendor. If other people implement it and we never see the traffic, that is the outcome we are hoping for. A shared, machine-readable claim about physical usability is a great fit for the glTF ecosystem.
 
-## 3. Diff, so "changed" means something structural
+**Signed and versioned.** When a model is credentialed, a compact subset of its grade (the verdict, blockers, volume, longest axis, inertia, and convexity ratio) rides inside its signed content credential together with the grader version, `threews.sim.readiness.v1`. A signed grade is a durable claim about what that grader version measured, and a newer grader reports alongside it rather than overwriting it.
 
-Between iterations, "did that actually change anything" gets asked constantly, and comparing two viewers by eye is a bad instrument at any scale.
+## 3. Refine, with a history you can branch
 
-`@three-ws/glb-diff` answers structurally: node graph, meshes, primitives, materials, textures, skins, animations, and what moved. It began as an internal debugging tool for the refine loop, and it is now the thing we reach for whenever a model is subtly wrong. If your pipeline mutates glTF anywhere (optimisation, retexturing, decimation, rigging), it is worth wiring in.
+`refine_model` takes a model and a change described in words ("make it metallic", "bigger helmet", "add wings") and runs a real anchored regeneration: the prior prompt is carried forward and folded together with the change, and an optional reference image of the current model anchors it as image to 3D.
 
-Together with the grade, this is what turns a refine loop into something you can actually evaluate: perception says whether it looks right, the grade says whether it is usable, and the diff says whether the last change did anything at all.
+Every refinement is appended to an immutable **version lineage** returned with the result. The client passes that array back on the next call to extend the thread, or targets an earlier version with `parent_index` to **branch**. Reverting is a pointer move over the array, and the inline viewer shows the lineage as a version strip you can click to cross-fade between versions. For an agent, that means exploring two directions from the same parent is as easy as exploring one.
 
-## 4. Retargeting, because the rig is never yours
+## 4. Diff, so "changed" means something structural
 
-The other half of "agentic 3D" is that the asset has to *do* something, and animation is where pipelines quietly fail.
+Between iterations, "did that actually change anything?" comes up constantly, and a structural answer scales far better than comparing two viewers by eye.
 
-Our constraint is that we never see the model first. It might come from our own lanes, from Mixamo, VRoid, Daz, Unreal, or a Blender export from 2019. So instead of a curated allowlist of supported rigs, we canonicalise bone names, then retarget onto the canonical set. The mapping covers Mixamo, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R` and simple `shoulderL` conventions, and a new convention is one mapping entry plus a test, not a new code path. A model that genuinely cannot be skeleton-driven falls back to a default rig rather than a bind-pose T-pose, because a T-pose reads as a bug to every user and as "unsupported" to none of them.
+`@three-ws/glb-diff` compares node graph, meshes, primitives, materials, textures, skins, and animations, with git-style rename and move detection. Its CLI emits JSON or a Markdown report sized for a pull-request comment, and `--fail-on <level>` turns it into a CI gate. It began as a debugging tool for the refine loop, and it is now what we reach for whenever a model deserves a closer look. If your pipeline mutates glTF anywhere (optimisation, retexturing, decimation, rigging), it is well worth wiring in.
 
-It is published on its own as `@three-ws/retarget`.
+Together they make a refine loop you can evaluate: perception says whether it looks right, the grade says whether it is usable, the lineage says where it came from, and the diff says what the last change did.
 
-## 5. The models underneath, and the fleet that serves them
+## 5. Retargeting, because every rig is welcome
 
-None of this is interesting without generation that works, and all of ours is open models on hardware we run:
+The other half of agentic 3D is that the asset should *do* something, and animation is where a universal approach pays off most.
 
-- **TRELLIS** for native single-hop image to 3D, taking both user photos and the synthesized view our text lane produces.
+We never see a model before it arrives. It might come from our own lanes, from Mixamo, VRoid, Daz, Unreal, or a Blender export from years ago. So instead of a curated allowlist of supported rigs, we canonicalise bone names, then retarget onto the canonical set. The mapping covers Mixamo, Avaturn, VRM 0.x and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, the Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R`, and simple `shoulderL` conventions. A new convention is one mapping entry plus a test. Rest-pose skew and hip up-axis differences are corrected automatically, every result reports its bone coverage, and a model that cannot be skeleton-driven falls back to a default rig, so every user sees a character in motion.
+
+It is published on its own as `@three-ws/retarget`, with a crossfading runtime that layers one-shot gestures over a base loop.
+
+## 6. The models underneath, and the fleet that serves them
+
+All of this rests on generation, and ours is open models on hardware we run:
+
+- **TRELLIS** for native single-hop image to 3D, taking both user photos and the view our text lane synthesizes.
 - **Hunyuan3D** for high-poly image-conditioned reconstruction, poly-budget aware.
 - **TripoSG** for sketch to 3D, and **TripoSR** in the family around it.
 - Plus the pipeline workers: rigging, remeshing, texturing, segmentation, stylization, background removal, avatar reconstruction from a photo, text to motion, video to motion, video to scene, and sign-language synthesis.
 
-Thirty-two workers, most published as Docker images. They run as individual GPU services (NVIDIA L4s, plus one RTX PRO 6000 Blackwell for the heaviest lane), each speaking the same task shape, each with a failover chain so an unavailable model degrades quality rather than failing the request.
+More than thirty workers, most published as Docker images. They run as individual GPU services (NVIDIA L4s, plus one RTX PRO 6000 Blackwell for the heaviest lane), each speaking the same task shape, each with a failover chain so a busy model hands the request to the next lane and the request still completes. Each lane also carries an explicit cold-start budget (45 seconds for TripoSG, 60 for TRELLIS, 75 for Hunyuan3D), which feeds the time estimate a user sees.
 
-Three production notes that will save someone a day:
+Three production principles we rely on:
 
-**Decode meshopt before anything reads geometry.** Most of our avatars ship with `EXT_meshopt_compression`. Every server-side consumer that reads geometry (ours are Python and use trimesh) must decode first, and the failure is confusing because the file loads perfectly in every browser viewer you test with.
+**Decode meshopt once, at the front.** Most of our avatars ship with `EXT_meshopt_compression`, which every browser viewer handles well. Our Python workers read geometry with trimesh, so every worker that loads a caller's mesh decodes it at the entrance with a pinned `gltfpack`, and everything downstream reads plain geometry.
 
-**Model end-of-life is a silent outage.** When an upstream family reached end of life on one of our free rungs, the rung answered `410`. The chain fell through correctly, but the real lesson was that a scheduled job should diff your hardcoded model ids against the live catalogues so you learn before users do.
+**Audit pinned model ids on a schedule.** A job runs every six hours, checks every hardcoded model id against the live provider catalogues, and confirms with a live one-token call before flagging anything, so the team hears about a catalogue change well before any user does.
 
-**Never let a failover chain have an empty rung.** Two rungs in our text chain are keyless on purpose, so the bottom of the chain always exists even when every keyed provider is unset or throttled.
+**Give every failover chain a keyless foundation.** Two rungs in our text chain need no key at all, so the chain always has somewhere to land whatever keys are configured.
 
-## 6. What we would like the community to take, argue with, or fork
+## 7. Partners who make the loop possible
 
-- **`look_at_model` is the pattern, not the product.** Render your agent's output into your agent's modality. This costs a weekend and changes what your pipeline can do.
-- **The readiness spec is CC0 and we want implementations, not traffic.** If you ship assets into a simulator, tell us where the four verdicts are wrong.
-- **Retargeting without an allowlist is achievable**, and the mapping table wants conventions we have not hit.
-- **Publish the negative results.** We evaluated approaches that did not survive contact (including exposing our agent as a smart-home device) and published the reasoning, and every time we have done that somebody has arrived with a better argument.
+three.ws takes part in eight partner programmes. The ones technically relevant to this loop:
 
-Free to try, no account and no key: [three.ws/forge](https://three.ws/forge) for generation, `https://three.ws/api/mcp-studio` for the eleven-tool MCP server, and the [three-ws organization](https://huggingface.co/three-ws) here for the avatar model repo and the viewer Space.
+- **NVIDIA Inception.** three.ws is a member of NVIDIA Inception, NVIDIA's programme for startups building on accelerated computing. Every 3D generation lane above runs on NVIDIA GPUs, and NVIDIA-hosted models serve our chat, vision, embeddings, and speech lanes.
+- **OpenAI Select Partner.** three.ws is an OpenAI Select Partner. The keyless 3D Studio connector brings this whole loop into ChatGPT, including `look_at_model` and `refine_model`, with models rendered interactively inline. Our open, CC0 Spatial MCP response shape makes a 3D scene a native MCP result, with three.ws as the reference implementation.
+- **IBM Business Partner.** Agents can think on IBM Granite models through IBM watsonx.ai with their own IBM Cloud credentials, and our Granite-backed surfaces (vision, the Guardian trust layer, time-series forecasting) are independent developer tools built on IBM's publicly available Granite models.
+- **Google Cloud.** three.ws is a member of Google Cloud for Web3 Startups. Production and the GPU fleet run on Cloud Run, and Vertex AI provides the Gemini and image lanes.
+- **Alibaba Cloud.** Qwen models are first-class lanes in our multi-provider model router, so an agent can be pointed at a Qwen model as easily as any other.
 
-three.ws is an NVIDIA Inception member and an IBM Business Partner; both are programme designations rather than endorsements, and neither company has reviewed this article.
+These are programme designations, stated here for technical context. None of these companies has reviewed this article.
+
+## 8. What we would love the community to take, build on, or fork
+
+- **`look_at_model` is the pattern, not the product.** Render your agent's output into your agent's modality. It is a weekend of work, and it changes what your pipeline can do.
+- **The readiness spec is CC0, and we would love implementations.** If you ship assets into a simulator, we would love your view on the four verdicts.
+- **Retargeting without an allowlist works today**, and the mapping table welcomes conventions we have not met yet.
+- **Publish your reasoning.** We publish the reasoning behind each design decision, including directions we explored and documented, and every time we have, somebody has arrived with a sharper idea.
+
+Free to try, no account and no key: [three.ws/forge](https://three.ws/forge) for generation, `https://three.ws/api/mcp-studio` for the fourteen-tool MCP server (the 3D tools, the asset catalog, and the persona tools), and the [three-ws organization](https://huggingface.co/three-ws) here for the avatar model repo and the viewer Space.

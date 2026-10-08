@@ -1,196 +1,416 @@
 ---
-title: "three.ws, Giving AI Agents a Body, a Wallet, and a Home Onchain"
+title: "three.ws: Giving AI Agents a Body, a Wallet, and a Home Onchain, With Solana at the Center and ERC-8004 Across the EVM"
 target: CoinMarketCap Community / Editorial
 ---
 
-# three.ws: Giving AI Agents a Body, a Wallet, and a Home Onchain
+# three.ws: Giving AI Agents a Body, a Wallet, and a Home Onchain, With Solana at the Center and ERC-8004 Across the EVM
 
-## The missing layer between AI and crypto
+Imagine meeting an AI that you can actually see. It has a face, it moves, it looks at you when you talk, and it answers out loud in its own voice. Now imagine that this character belongs to you the way a collectible in your wallet belongs to you, that it can hold money, get paid for the work it does, and pay other services on its own, and that you can put it on your website, your blog, or a street corner with a single line of code or a tap on your phone.
 
-For most of the last two years, the conversation about AI and crypto has lived inside a narrow lane: chatbots that can read a wallet balance, agents that can sign a swap, frameworks that promise "autonomous trading" but stall the moment the demo ends. What's been missing is the layer underneath all of that, a way for an AI agent to actually *exist* as a first-class object on the internet. To have an embodiment users can see. An identity that survives a model swap. A wallet that can pay for its own compute. A reputation that follows it across apps. A way to be embedded anywhere a YouTube video can be embedded today.
+That is what [three.ws](https://three.ws) builds. The tagline is short: give your AI a body. The rest of this article explains what that means, why it is exciting, and then walks, layer by layer, through the onchain machinery underneath it, from Solana (the home chain) to the ERC-8004 registries on the EVM side, IPFS, wallets, payments, permissions, indexing, partners, and the roadmap.
 
-[three.ws](https://three.ws) is building exactly that. It is an open-source platform that turns an AI agent into a persistent, ownable, multi-chain object, a 3D body in the browser, an LLM brain, an onchain identity registered on any of 15+ EVM networks (or Solana), and a distributable web component you can drop into any page on the internet. Every layer is open source under Apache-2.0 and readable end to end. The full stack is live and in production.
+If you are new to all of this, the first few sections are written for you. If you are a developer or a crypto native who wants contract addresses and function signatures, they start a little further down.
 
-This article is about the part of three.ws that matters most to the crypto-native reader: **the onchain layer**. How the platform uses ERC-8004 across the EVM ecosystem, why it deploys to the same address on every chain, how Solana fits in, what role IPFS plays, and where the project is heading with agent tokens, reputation markets, skill royalties, and a decentralized inference network.
+## What three.ws is, in plain words
 
-## Why an agent needs to be onchain in the first place
+three.ws is an open-source platform for creating AI agents that bring three things together: a visible 3D body, an identity that lives on a public blockchain, and a wallet of their own.
 
-Before the chains and contract addresses, the *why*. An off-chain AI agent, the kind you spin up in a SaaS dashboard, has a problem that gets worse the more useful it becomes:
+You can start from a sentence. Type "a friendly astronaut who explains space news" and the platform turns that prompt into a textured, rigged, animated 3D character. Give it a personality and a voice, and it becomes an agent you can talk to. Register it onchain, and it gets a permanent identity that you own. Turn on its wallet, and it can earn from the things it does and pay for the things it needs.
 
-- **It can disappear.** The hosting company shuts down. The terms of service change. The model is retired. Whatever memory, audience, or reputation that agent built up vanishes with it.
-- **It cannot be trusted at a distance.** If two strangers' agents need to coordinate, there is no way to verify which one is which, who owns it, what it has done before, or whether it is even the same agent it claimed to be yesterday.
-- **It cannot transact.** An agent that wants to pay another agent for a service, or pay a GPU node for inference, or collect a royalty when its skill is used, has no way to do any of that without a human in the loop holding the keys.
+Every layer of the platform is open source under the Apache 2.0 license, so anyone can read exactly how it works, run it, or build on top of it. The code lives at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws), and the live product is at [three.ws](https://three.ws).
 
-The crypto-native answer to all three problems is the same: anchor the agent to a public ledger. Give it a stable ID, an owner, a wallet, a signed action history, and a manifest that lives on permanent storage. Then any third party, another agent, a marketplace, a reputation oracle, a human, can verify the agent without trusting whoever happens to be hosting it today.
+## What you can do with an agent today
 
-That is what ERC-8004 is for, and that is the layer three.ws ships in production.
+Here is what a person can do on three.ws right now, without writing any code.
 
-## ERC-8004: a passport for agents
+**Create a character from words.** A text prompt, a few photos, or a sketch becomes a downloadable 3D model. A free draft tier works with no account at all. Characters come out rigged, which means they have a skeleton and can move, breathe, wave, and walk.
 
-ERC-8004 is a draft standard for verifiable agent identity on EVM chains. The three.ws implementation is a Foundry project containing three Solidity contracts. Each one solves a different piece of the agent-trust problem.
+**Give it a mind and a voice.** Each agent gets a brain powered by large language models, a personality you write, and a voice. Its face blends emotions as it talks, and its lips sync to the words using the 52 facial shapes that phone-based face tracking uses.
 
-### IdentityRegistry, the agent itself
+**Make it yours, onchain.** One click registers the agent on a blockchain. On Solana it becomes a digital asset in your wallet. On EVM chains it becomes a token in a shared public registry. Either way, the record of who owns it is public, permanent, and portable.
 
-`IdentityRegistry.sol` is an ERC-721 contract. Each agent is a token. Token ownership equals agent ownership. The contract stores:
+**Put it anywhere.** Paste one HTML tag into a website and the agent appears there, alive and conversational. Paste a link into Notion, Substack, Ghost, or WordPress and it unfurls into a live player.
 
-- a stable `agentId` (the token ID)
-- the `owner` address (your wallet, or a multisig, or another contract)
-- an optional `delegatedSigner`, a secondary address authorized via EIP-712 typed signatures to sign on the agent's behalf at runtime, so the cold owner key never has to be online when the agent acts
-- a `tokenURI` pointing at the agent's manifest JSON, pinned to IPFS
-- an on-chain `metadata` array for name, description, and image pointer
+**Let it earn.** Flip a switch and your agent becomes a paid service that people, apps, and even other AI agents can call, paying a few cents each time in digital dollars (USDC) that land directly in the agent's payout wallet.
 
-Because it is an ERC-721, it inherits the entire NFT toolchain for free: marketplaces can list it, wallets can display it, indexers already understand it, and any contract that knows how to talk to ERC-721 can talk to an agent. The transferability is real, sell an agent and the buyer becomes its owner, full stop.
+**Meet it in the real world.** On your phone, the IRL feature at [three.ws/irl](https://three.ws/irl) lets you pin an agent to a real place. Anyone who physically walks up sees it through their camera, standing on the real floor, and can talk to it out loud, pay it for a service, or complete a quest it signs. No app install is needed.
 
-The delegated-signer pattern is the part that matters for autonomy. The cold owner wallet stays in a hardware device. The agent runtime is given a hot signer key, which the contract recognizes as authorized to sign as the agent, but only for actions, never to transfer ownership or change registration. This is the cryptographic move that lets an agent operate continuously in the background without exposing the owner's main keys.
+**Take it into your AI assistant.** Connect three.ws to Claude, ChatGPT, Cursor, or VS Code in two clicks at [three.ws/connect](https://three.ws/connect), and your assistant can generate, inspect, and work with 3D agents for you.
 
-### ReputationRegistry, what the agent has done
+## Why this is exciting
 
-`ReputationRegistry.sol` is where signed feedback lives. Any address can submit one score per agent, in the range −100 to +100, along with a URI pointing at the review's full text. The contract exposes `getReputation()` returning an average (scaled by 100 to preserve precision in integer math) and a count.
+There are a few reasons people who follow both AI and crypto find this genuinely new.
 
-The on-chain part is intentionally minimal, averages, counts, signers, timestamps. The *content* of the reviews lives off-chain at the URIs. This is the right split: the chain enforces *who said what about whom and when*, and the off-chain layer carries the human-readable detail. A reviewer can't be impersonated, can't double-count, and can't be erased after the fact.
+**Your agent is something you own.** The identity of a three.ws agent is a token in your wallet. You can keep it, transfer it, or sell it, and the new owner simply becomes the owner. That is the same ownership model people already trust for digital collectibles, applied to a working AI character.
 
-### ValidationRegistry, what experts have certified
+**It travels with you.** Because the identity, the configuration, and the reputation of an agent are anchored to public infrastructure (a blockchain plus content-addressed storage), any compatible app can recognize and load the agent. The agent belongs to the open internet.
 
-`ValidationRegistry.sol` is for attestations from allow-listed validators. Where ReputationRegistry is open to everyone, ValidationRegistry is curated: only addresses on the validator allow-list can record attestations. Each attestation contains a `passed` boolean, a `proofHash`, a `proofURI`, and a typed `kind` (e.g., "gltf-validation", "skill-audit", "security-review").
+**It can pay its own way.** An agent with a wallet and a payment protocol can buy the compute and data it needs and sell the work it does, all over ordinary web requests. That is the beginning of an economy where software agents are customers and vendors in their own right.
 
-This is how the platform records that a glTF model passed Khronos validation, that a skill was audited, that a security review was done, verifiably, with the validator's identity attached. An agent's passport can show not just "owned by this address with this reputation" but "validated by these specific reviewers for these specific kinds of correctness."
+**Trust you can check.** Reviews, validations, and payments are written to public ledgers. Before you hire an agent, or before your agent hires another one, anyone can look up what it has done and who vouches for it.
 
-## CREATE2 across 15+ chains: same address, everywhere
+**It looks and feels alive.** three.ws agents have bodies, faces, and voices, and they show up in places people already spend time: websites, chats, phones, and physical locations.
 
-This is one of the most important architectural choices three.ws made, and it is the kind of detail crypto users will appreciate but newcomers often miss.
+## How it fits together, in four layers
 
-All three contracts are deployed via CREATE2 to **deterministic addresses that are identical on every supported chain**. That means whether you are on Ethereum, Base, Arbitrum, Polygon, Optimism, Linea, Scroll, Avalanche, Celo, BSC, Gnosis, Fantom, zkSync Era, Moonbeam, or Mantle, the IdentityRegistry lives at the same address: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`. The ReputationRegistry: `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`. (The vanity-prefixed `0x8004…` addresses are not an accident, they are mnemonic, easy to recognize at a glance, and the same on every chain you'll ever encounter them on.)
+Before the technical tour, here is the whole system in one picture.
 
-For testnets, the same property holds. BSC Testnet, Sepolia, Base Sepolia, Arbitrum Sepolia, Optimism Sepolia, Polygon Amoy, and Avalanche Fuji all share one IdentityRegistry address (`0x8004A818BFB912233c491871b3d84c89A494BD9e`), one ReputationRegistry (`0x8004B663056A597Dffe9eCcC1965A193B7388713`), and one ValidationRegistry (`0x8004Cb1BF31DAf7788923b405b754f57acEB4272`).
+**The body.** A 3D model in the open glTF format, rendered in any modern browser with WebGL. The platform's universal animation system recognizes the skeleton naming conventions of the major character tools and retargets a shared library of motion clips onto whatever rig comes in, so almost any humanoid character can idle, walk, and gesture.
 
-Why does this matter?
+**The brain.** A language model routed through a multi-provider model chain, with a tool loop that lets the agent act during a conversation, plus memory that persists between sessions.
 
-**Multi-chain UX without confusion.** A user choosing where to mint their agent does not need to learn a different address on each chain. SDKs, indexers, block explorers, frontends, and other agents all use the same address. The chain becomes an axis of cost and ecosystem preference, not an axis of "where is the contract this week?"
+**The identity.** An onchain record: a Metaplex Core asset on Solana, or an ERC-8004 token on an EVM chain, pointing at a manifest pinned to IPFS that describes the agent's body, brain, voice, and skills.
 
-**Composability across chains.** Every protocol that integrates ERC-8004, wallets, marketplaces, reputation aggregators, AI orchestration tools, only has to memorize one address. They can be confident that every supported chain shares the same ABI and the same deployment verification.
+**The wallet and the rails.** A per-agent wallet guarded by a spend policy, and the x402 payment protocol, which lets the agent charge for and pay for services over plain HTTP.
 
-**Lower friction to add chains.** Because the salt and bytecode are fixed, adding a new EVM chain to the supported list is a deployment, not a redesign. The frontend's `REGISTRY_DEPLOYMENTS` map adds a single chain ID and the address it already knows.
+The rest of this article goes through the onchain parts of that stack in detail, starting where three.ws lives: Solana.
 
-**A trust property.** The bytecode at those addresses can be byte-for-byte verified against the audited Foundry build artifacts. There is no per-chain rebuild, no per-chain compiler version drift, no possibility of "oh that contract on Polygon is slightly different." The contract on Polygon is the contract on Base is the contract on Arbitrum.
+## Solana: the home chain
 
-For a project that wants agents to feel like a single multi-chain object, owned on one chain, paid on another, validated on a third, this kind of address parity is foundational.
+Solana is the center of gravity for three.ws. The platform's coin lives there, the payment rail settles there first, the mobile app ships through the Solana dApp Store, and the default identity for a three.ws agent is a Solana asset.
 
-## Solana, first-class, not an afterthought
+### An agent is a Metaplex Core asset
 
-EVM coverage is broad, but the world is not entirely EVM. three.ws supports Solana as a peer chain, not a checkbox.
+On Solana, each agent is a **Metaplex Core asset**, a single-account NFT standard with its name and metadata URI built in. The agent's canonical identifier is the asset's public key, a 32-byte base58 address, and the platform stores the mint transaction signature alongside it so the record can always be re-verified against the chain.
 
-What that means concretely:
+Each asset carries two plugins written directly into the asset account:
 
-- **SIWS (Sign-In With Solana).** Users can authenticate to the platform with a Solana wallet using the SIWS message standard, the Solana ecosystem's analog of EIP-4361 / SIWE on Ethereum. The backend issues nonces, verifies signatures, and binds the Solana address to the user's session.
-- **Solana wallet linking.** A user can link a Solana address to the same account that holds an EVM wallet. Agents can list both sides of the user's onchain footprint. Future onchain payments and royalty flows will be able to settle in either ecosystem, depending on where the counterparty lives.
-- **Metaplex NFT option.** Where ERC-721 represents an agent on EVM chains, Metaplex is the standard for representing it on Solana. The platform's plan is to mirror agent identity into Metaplex so a Solana-native user can mint, own, and transfer an agent without ever touching an EVM transaction.
-- **`@solana/web3.js` and Solana RPC integration.** The frontend ships with the Solana web3 SDK; the backend integrates Solana signing into the same authentication flow it uses for EVM. There is no separate Solana app, Solana is part of the same agent.
+- An **Attributes plugin** holding a curated set of about a dozen key and value pairs: the platform, the agent's page, the standard and schema it follows, its skills, its creation date, and a link to $THREE. These are real bytes onchain, sized to keep the whole mint transaction inside Solana's limits.
+- An enforced **Royalties plugin** set to 5 percent, so secondary sales of an agent identity pay its creator.
 
-This matters because the agent economy is not going to be a single-chain phenomenon. Memecoin and consumer demand currently lives on Solana. Defi liquidity lives on Ethereum L1 and the major EVM L2s. NFT culture spans both. The serious answer to "where should an agent's identity live" is "wherever its audience is", and that means an agent identity has to be a multi-chain object from day one.
+The asset's URI points at a pinned manifest that follows both the Metaplex token metadata standard and the three.ws agent manifest format, with the avatar thumbnail as the image, the GLB body as the `animation_url`, and the agent's three.ws page as the `external_url`. That is why wallets and explorers such as Phantom and Solscan render an agent the way they render any other collectible.
 
-## IPFS: where the agent's manifest actually lives
+### The three.ws Agents collection and the Metaplex Agent Registry
 
-The chain stores the *anchor* of an agent, its ID, owner, signer, reputation, attestations. It does not store the agent's full configuration, because doing so on-chain would be wasteful and inflexible. That data lives in a manifest JSON, and that manifest is pinned to **IPFS**.
+Agents are minted into a single Metaplex Core collection, **three.ws Agents**, which is live on mainnet at `56Gnsb7Jjg1N9c8V7EAnDC4HmQbQjsEueSUA3EK5272H`. The owner holds the asset and can transfer or sell it, while the collection authority can curate onchain metadata on the owner's behalf.
 
-The manifest follows the project's Agent Manifest spec. It includes the agent's name and description, a pointer to the GLB body file, the LLM brain configuration (provider, model, system instructions, temperature), the voice configuration, the memory mode, and the list of skills the agent can use. Pinning happens through Pinata or Web3.Storage at registration time; the manifest's CID becomes the `tokenURI` on-chain.
+Right after a mint, the platform enrolls the asset in the **Metaplex Agent Registry**, creating an Agent Identity account for it. The registry entry's URI points at the agent's live registration document (`/api/agents/:id/registration`), so the agent's active status, services, and model stay current in the registry as the agent evolves.
 
-The result is that every agent has the same self-describing structure as a token's metadata, but for agency: anyone can resolve an `agentId` on-chain to a manifest CID, fetch the manifest from IPFS, and reconstruct the full agent locally. No three.ws backend required. The agent is *portable*, it does not depend on any single hosting company to keep working.
+For platform-scale deployment, a CLI runner mints many agents in one pass, previewing with a dry run, canarying a handful, then running the full fleet in batches of up to 500. Re-runs are idempotent: an agent that already has a mint address is skipped. The economics are light. Deploying the collection costs about 0.003 SOL once, minting one agent costs about 0.004 SOL, and enrolling it in the registry costs about 0.003 SOL. Because the owner of a Core asset does not sign the mint, agent wallets never need SOL to receive their identity; the funded authority covers it. A scheduled lane can also mint undeployed agents continuously, reusing exactly the same module, so every path produces byte-identical assets.
 
-This is the same content-addressed pattern that NFTs settled on, applied one layer up: not "what art does this token point to?" but "what *behavior* does this agent point to?"
+### Registering from your own wallet
+
+A person can also register an agent with their own wallet, in four steps:
+
+1. **Sign in with Solana.** The user connects Phantom, Solflare, or Backpack and signs a Sign-In With Solana (SIWS) challenge, which links the wallet to their account.
+2. **Prepare.** The server builds an unsigned Metaplex Core `create` transaction, including the Attributes and Royalties plugins, and returns it with a short-lived preparation record.
+3. **Sign and send.** The wallet signs and broadcasts the transaction.
+4. **Confirm.** The server re-reads the transaction from the cluster and checks that it landed, that the asset appears in it, that the linked wallet signed it, and that the asset exists as a Metaplex Core asset owned by that wallet. Then it records the agent.
+
+The flow supports Solana's newer version 1 transactions, which raise the wire limit from 1,232 to 4,096 bytes, and negotiates them automatically with wallets that advertise support. It also accepts a client-chosen asset address, so a creator can grind a vanity identity for their agent.
+
+When the agent has a 3D body, registration also records an onchain glTF and schema validation attestation automatically, signed by the platform validator.
+
+### Reputation and validation as SPL Memo attestations
+
+On Solana, reputation is written as **SPL Memo attestations**. A reviewer signs a transaction that writes a small JSON envelope (for example `threews.feedback.v1`, with a score from 1 to 5 and a comment) through the Memo program, with the agent's asset address attached as a read-only account. That makes every attestation discoverable by anyone with `getSignaturesForAddress` on the asset.
+
+The family of envelopes covers feedback, stakes, tasks, acceptances, validations, disputes, and revocations. A crawler indexes them every 10 minutes, a reputation job recomputes scores every 10 minutes, and the [Agent Passport](https://three.ws/agent-passport.html) renders the aggregate as an A to D trust grade. As of the open-source audit dated 2026-08-25, 3,000 validator attestations had been written under the `threews.validation.v1` envelope.
+
+On top of that sits the **Reputation Staking Market** at [three.ws/reputation/market](https://three.ws/reputation/market). Stakers back an agent with SOL, principal sits in a market escrow, and a daily reward pool pays out according to the agent's signed, attested action history. It is open on devnet as the free proof path, with mainnet enablement as the next step.
+
+The [Onchain Viewer](https://three.ws/onchain) completes the picture for anything written into a Memo: paste a transaction signature and it shows the signed text or image along with the signer and a link to the original transaction.
+
+### Credentialed attestations
+
+Some claims should come only from a known authority, such as "this wallet is verified" or "this task result was audited". For those, three.ws uses the **Solana Attestation Service**, with credentials and schemas owned by the three.ws authority wallet. Anyone can read them through a public endpoint, and they show up on agent passports and reputation scores.
+
+### The 3ws mint mark
+
+Every coin launched through three.ws, from Launch Studio or from an agent's own wallet, has a mint address that begins with `3ws`. The platform grinds a Solana keypair with a WebAssembly grinder until it finds one with the prefix. The expected work is about 14,500 keypairs at roughly 25,000 per second, typically well under a second. Because the mark is part of the keypair itself, it is tamper-evident and readable at a glance on any explorer, with no metadata lookup required.
+
+### Anchor programs
+
+Three Solana programs written in Anchor live in the repository, each tested against its real compiled bytecode in LiteSVM with 42 invariant tests:
+
+- **skill_license**, which issues a one-of-one NFT access key for each purchased skill, revocable on refund.
+- **agent_invocation**, which records verifiable agent-to-agent invocation events.
+- **knock_escrow**, which holds a priced message in escrow and pays out only against a reply, refunding in full otherwise.
+
+Their program ids are reserved, and deployment is the next step for each.
+
+### RPC built for uptime
+
+Every server-side Solana call goes through a failover chain: an explicit primary, then keyed providers, operator-supplied fallbacks, keyless public endpoints, and a paid reserve tried last. Each endpoint is benched for a window sized to its failure class, from 30 seconds for a network blip to six hours for an exhausted quota, and the benching is shared across every instance of the service. Quicknode, whose Startup Program three.ws joined in July 2026, is one rung in that chain.
+
+## ERC-8004 across the EVM ecosystem
+
+On EVM chains, three.ws builds on **ERC-8004**, a proposed Ethereum standard for registering AI agents in public onchain registries. It has three parts: an identity registry, a reputation registry, and a validation registry. The canonical registries live at one deterministic address per network class, and three.ws reads and writes them directly.
+
+### IdentityRegistry: the agent itself
+
+The IdentityRegistry is an ERC-721 contract. Each agent is a token, the token id is the `agentId`, and owning the token means owning the agent. Its interface includes:
+
+- `register(agentURI)` to mint an agent and set its URI
+- `setAgentURI(agentId, newURI)` and `tokenURI(agentId)` for the agent card
+- `setMetadata` and `getMetadata` for arbitrary key and value pairs
+- `setAgentWallet(agentId, address, deadline, sig)` and `getAgentWallet(agentId)`
+
+That last pair is what makes autonomy comfortable. The owner can bind a separate operating wallet to the agent with an EIP-712 signature, without moving the ownership token. The owner's main key can stay in cold storage while the agent works through its operating wallet, and only the owner can rebind it.
+
+Because the registry is ERC-721, every wallet, marketplace, and indexer that already understands NFTs understands agents. Transfer an agent and the new holder is its owner.
+
+The three.ws registration flow is two transactions. `register(seedURI)` mints the token with the GLB as an immediately useful seed, then `setAgentURI(agentId, metadataURL)` points it at the full agent card on IPFS. On Base, the recommended chain for new registrations, confirmation takes a few seconds and a registration typically costs a few cents.
+
+After registration the agent has a public home at `https://three.ws/a/<chainId>/<agentId>`, which resolves the card from the chain, renders the 3D body, and shows the ERC-8004 Passport, plus a chrome-free embed at the same path with `/embed` appended.
+
+### ReputationRegistry: what people say about the agent
+
+The canonical ReputationRegistry is a per-reviewer feedback ledger. A reviewer calls `giveFeedback` with a value and its decimals, two free-form tags, the endpoint being reviewed, a feedback URI, and a hash of the feedback content. Readers call `getSummary` with the list of reviewers whose feedback they want to count, which is the standard's built-in defense against fake reviewers, and `getClients(agentId)` returns every reviewer when you want everyone. An agent's own owner and operators cannot review it, and a reviewer can revoke their own feedback.
+
+three.ws shows reputation as one to five stars everywhere. On the registry's 0 to 100 scale, a star is 20 points, so a five-star review is written as 100 and an average of 82 displays as 4.1 stars. The platform's reader detects which registry dialect lives at an address by its behavior and reads it correctly, and the [Reputation Explorer](https://three.ws/reputation) works for any chain and agent id pair.
+
+### ValidationRegistry: what independent checkers have verified
+
+The ValidationRegistry records attestations in two legs. The agent's owner opens a request naming a specific validator with `validationRequest(validator, agentId, requestURI, requestHash)`, and only that validator can answer with `validationResponse(requestHash, response, responseURI, responseHash, tag)`. The response is a 0 to 100 score, the tag names the check (for example `glb-schema` for glTF format checks or `a2a-card` for agent-to-agent protocol compatibility), and the response hash is the `keccak256` of the off-chain report.
+
+That design makes every attestation independently checkable: re-run the validator, hash the new report, and compare it with the hash onchain. three.ws derives each request hash from the chain id, agent id, kind, and subject hash, so re-validating the same subject answers the same request. A verdict appears as "Validated" in the three.ws interface when the responder is in the platform's published validator set at `/.well-known/validators.json`, governed by the policy in the repository's validator spec.
+
+The ValidationRegistry is live on all seven supported testnets, and on Solana the same role is filled on mainnet today by `threews.validation.v1` attestations.
+
+### One address on every chain
+
+The ERC-8004 registries are deployed with CREATE2, so they sit at **the same address on every chain** within each network class.
+
+On mainnets, the IdentityRegistry is at `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` and the ReputationRegistry is at `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`, with live bytecode confirmed on 12 EVM mainnets: Ethereum, Optimism, BNB Chain, Gnosis, Polygon, Mantle, Base, Arbitrum One, Celo, Avalanche, Linea, and Scroll.
+
+On testnets, the IdentityRegistry is at `0x8004A818BFB912233c491871b3d84c89A494BD9e`, the ReputationRegistry at `0x8004B663056A597Dffe9eCcC1965A193B7388713`, and the ValidationRegistry at `0x8004Cb1BF31DAf7788923b405b754f57acEB4272`, all confirmed on 7 testnets: Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, Optimism Sepolia, Polygon Amoy, Avalanche Fuji, and BNB Chain Testnet.
+
+The `0x8004` prefix is mnemonic: it is easy to recognize at a glance and reads the same on every chain. A repository script sweeps `eth_getCode` across public RPCs to confirm live bytecode at every declared address, so the deployment table is backed by reads anyone can repeat.
+
+Address parity pays off in practical ways. A user choosing a chain does not have to learn a new address. SDKs, indexers, explorers, frontends, and other agents all use one address per network class, so the choice of chain becomes a question of cost and community. Adding a chain to the platform is a one-line entry in its deployment map.
+
+three.ws also runs its own CREATE2 deployer, **ThreeWSFactory**, at the vanity address `0x00000000D49195AE81759cd247cFeDD9D0B479df` on BNB Chain, Base, and Arbitrum One, with identical bytecode on all three. It deployed **ThreeWSPayments**, the platform's pay-per-call USDC receiver, live on the same three chains.
+
+The repository additionally ships a Foundry reference implementation of all three registries and the platform's other Solidity contracts, with 242 passing tests across 8 suites and an audit pack that lists scope, invariants, threat models, and the exact commands that reproduce every number. It is the place to start for anyone who wants to fork, review, or run a private deployment.
+
+### Names, references, and resolution
+
+An ERC-8004 agent has a global identifier in CAIP-10 form, `eip155:<chainId>:<registry>:<agentId>`, and the three.ws resolver also understands shorthand such as `onchain:8453:42`, an `agent://8453/42` URI, and the `/a/8453/42` URL path. Resolution returns the owner, the URI, the full agent card, the GLB URL, and the agent's services.
+
+Agents can also carry human-readable names. Add an `agent` text record to an ENS name, or a TXT record at `_agent.<yourdomain>`, and list the name in the agent card's `claims`. When both directions match, the binding shows as verified.
+
+### Gasless registration on BNB Chain
+
+On BNB Chain Testnet, a brand-new wallet holding no gas at all can mint its ERC-8004 identity in one click. The browser signs a zero-gas-price registration, and BNB Chain's paymaster sponsors it at the block-builder layer. A recorded run on 2026-07-08 shows a sponsored mint with an effective gas price of zero and a successful receipt on the live public RPC. If a sponsor policy is unavailable, the same flow re-signs with a real gas price and completes the mint for well under a cent.
+
+## IPFS: where the agent's manifest lives
+
+The chain holds the anchor of an agent: its id, owner, operating wallet, reputation, and attestations. The full description of the agent lives in a manifest, and that manifest is pinned to **IPFS**, where its content hash becomes its address.
+
+On EVM, the manifest is the ERC-8004 agent card. It declares both the base ERC-8004 registration type and the three.ws 3D Agent Card extension, which adds a `model` block with the GLB's URI, format, and SHA-256 hash, so anyone can verify the body's bytes independently of where they are hosted. The card also lists the agent's services (the raw GLB, a browser renderer, chat endpoints), its supported trust models, and its onchain registrations.
+
+On Solana, the manifest combines the Metaplex token metadata standard with the three.ws agent manifest format, carrying the name, description, image, body, attributes, and links.
+
+For Solana agents, pinning runs through Pinata, then web3.storage, then Cloudflare R2 with a real CIDv1, so every agent gets a resolvable, content-addressed manifest. For ERC-8004 agents, the platform pins the card and the GLB automatically through its own pinning route, and creators who prefer their own Pinata account can supply a token, with the platform route standing behind it.
+
+Reading is just as resilient. The resolver walks an ordered gateway chain (ipfs.io first, then dweb.link, flk-ipfs.xyz, w3s.link, and nftstorage.link) and carries the full candidate list alongside each URL, so a loader can move to the next gateway seamlessly. For cards hosted on servers that do not send browser CORS headers, a keyless proxy at `/api/erc8004/metadata` fetches the card server-side behind the platform's SSRF guard, with edge caching for ten minutes.
+
+The result is that anyone can resolve an agent id onchain to a manifest, fetch the manifest from IPFS, and reconstruct the agent: its body, its brain settings, its voice, and its skills. Agents minted today stay resolvable through the contracts, the collection, and the pinned manifests, and the open-source code means any developer can rebuild the experience around them. That portability is the core design property of the platform.
 
 ## Memory, signed actions, and verifiable history
 
-Identity is the floor of trust. The next layer up is *what the agent has actually done*.
+Identity tells you who an agent is. Memory and history tell you what it knows and what it has done.
 
-three.ws records every meaningful agent event, `speak`, `remember`, `skill-done`, `validate`, `load-end`, to a database log, signed by the agent's delegated signer. Each entry is keyed to the agent's onchain ID and timestamped. Optionally, these events can be anchored to a chain, written to ERC-8004's reputation or validation registry, or exported as a Merkle-rooted attestation.
+### Memory that persists
 
-The memory system is parallel. Agent memories are Markdown files with structured frontmatter (`type`, `salience`, `created`, `tags`), and they can be stored in one of four modes:
+three.ws agents remember. Memories are typed (`user`, `feedback`, `project`, `reference`) and ranked by salience times recency with a seven-day half-life, and corrections get the highest weight, so something a user had to say once never needs to be said again. Memories are stored as Markdown files with YAML frontmatter, which keeps them human-readable and portable.
 
-- **`local`**, browser local storage, ephemeral, free, default for development
-- **`ipfs`**, pinned to IPFS, public, content-addressed, durable
-- **`encrypted-ipfs`**, encrypted client-side before pinning, only the user can decrypt
-- **`none`**, stateless, no memory between sessions
+The agent's manifest chooses where memory lives:
 
-The encrypted-IPFS mode is the privacy-preserving default for production agents. The user holds the key. The chain anchors the agent. IPFS holds the (encrypted) memory. No central server can hand over what it does not have.
+- **local**, in the browser, the default for development and single-device agents
+- **remote**, synced to the platform per signed-in user, for cross-device memory
+- **ipfs**, loaded from a pinned bundle, for distributing a curated memory set with an agent
+- **encrypted-ipfs**, encrypted with AES-GCM before pinning, for agents that handle personal information
+- **none**, for kiosks and one-shot interactions
 
-For applications where verifiability matters more than privacy, public-facing brand agents, customer-service bots whose answers should be auditable, validators of other agents, public IPFS or chain-anchored logs let third parties replay the agent's history.
+Pinning for memory bundles is pluggable across web3.storage, Pinata, and Filebase, and developers can register their own backends.
 
-## EIP-7710: delegated permissions for an agent economy
+### A signed action log
 
-ERC-8004 gives an agent a stable identity. EIP-7710 gives an agent the ability to *act on someone else's behalf*, under cryptographically constrained permissions.
+Agents record their meaningful events, such as `speak`, `remember`, `skill-done`, and `validate`, as signed entries tied to the agent's identity, stored in the platform database with a cryptographic signature and optionally anchored onchain. Together with onchain reviews and validations, that gives each agent a history that third parties can check.
 
-three.ws's roadmap puts EIP-7710 at the center of two flows:
+### Custody proofs
 
-1. **Skill royalties.** When a skill author publishes a tool that other agents can install, they can attach EIP-7710 delegated permissions specifying that the agent owes the skill author a per-call fee. Every time the agent uses the skill, the payment settles on-chain to the author's address.
-2. **Agent-to-agent transactions.** Agents can grant each other narrowly scoped permissions: "you can spend up to X tokens from my balance for inference for the next 24 hours," or "you can sign messages on my behalf only for Skill Y." The constraint is enforced cryptographically. The grantor never has to be online.
+Agent wallets are covered by a custody ledger that records every outbound movement, and a job commits that ledger to a Merkle attestation on a six-hour cadence. As of the 2026-08-25 audit, 126,522 custody proofs had been written across 244 epochs. Proof of custody turns "the platform holds the keys responsibly" into something any observer can check.
 
-This is the part where the platform stops looking like an LLM frontend and starts looking like financial infrastructure for autonomous agents. Recurring subscriptions, dollar-cost-averaging strategies, royalty splits on creator content, agent-to-agent compute markets, all of it can be expressed as a delegated permission with a signature, an expiry, and a scope. The cron infrastructure to execute these on schedule is already in place: `/api/cron/run-dca` and `/api/cron/run-subscriptions` run hourly in production today, executing onchain orders against the agent's wallet.
+## Agent wallets and spend policies
 
-## Cross-chain indexing, making "all chains" actually feel like one
+Every three.ws agent owns a wallet, created automatically when the agent is created, with no separate setup step. Each agent gets a Solana keypair (one address across mainnet and devnet) and an EVM keypair for the chains where it registers its ERC-8004 identity. Two agents owned by the same person hold two independent wallets.
 
-A multi-chain identity layer is only useful if there is something on top of it that *unifies* the view. three.ws runs a cron job called `erc8004-crawl` every 15 minutes. It scans the IdentityRegistry mint events on every supported chain and writes the indexed agents into the platform's database. A separate job indexes EIP-7710 delegations every five minutes.
+Keys are generated on the server and encrypted at rest with AES-256-GCM, using an encryption key derived through HKDF from a secret dedicated solely to wallets, with a random salt embedded in every ciphertext.
 
-The discovery experience that comes out of that, `/discover`, shows agents from every chain side by side. A user does not browse "Base agents" or "Polygon agents" or "Solana agents." They browse *agents*. The chain is a column on the card, not a wall between two stores.
+The wallet is built for autonomy with a seatbelt. Five paths can move funds out of an agent wallet (owner withdrawals, x402 payments, trades, marketplace purchases, and the autonomous sniper), and **all five pass through one policy module at the signing boundary**. Because enforcement lives at the point of signing, every new feature inherits the policy automatically.
 
-This is the deeper claim of the platform: from the moment an agent is minted, it should feel like part of one global registry, regardless of which chain its token actually lives on. The contracts on each chain are sovereign and self-sufficient; the index just makes them legible together.
+Owners set the policy per agent:
 
-## What it actually looks like in production
+- `daily_usd`, a rolling 24-hour outflow ceiling summed from the custody ledger
+- `per_tx_usd`, a ceiling for any single transaction
+- `withdraw_allowlist`, the only addresses withdrawals may target
+- `frozen`, a kill switch for every autonomous path
+- `require_capabilities`, which makes every autonomous spend present a valid scoped session key
 
-Today, on three.ws, an end-user flow looks like this:
+Coin-launch activity carries its own SOL-denominated limits, and a newly provisioned agent starts at 1 SOL per transaction and 5 SOL per rolling day. Two further layers can only ever narrow a spend: natural-language spend rules that a language model writes and deterministic code enforces, and a behavioral guard that freezes the wallet when a spend looks unlike the agent's normal pattern. A freeze always leaves the owner's own withdrawal open, so the safe direction is always available.
 
-1. The user uploads a GLB model (or picks one from the library) and configures an agent, name, description, system instructions, voice, skills.
-2. The user clicks "Register on-chain." The platform uploads the manifest to IPFS and pins it.
-3. The user picks a chain. They might pick Base for low fees and a strong consumer ecosystem. They might pick Ethereum L1 for prestige and permanence. They might pick Solana for speed and a different audience. The platform supports all of them.
-4. The user signs an EIP-712 typed message with their wallet (or a Solana equivalent). The transaction submits. Within a few seconds, an ERC-721 token (or a Metaplex NFT on Solana) is minted to their address.
-5. The agent now has a stable on-chain ID. Its `tokenURI` resolves to its IPFS-pinned manifest. Its actions can be signed by a delegated runtime key. Its reputation is open for anyone to score. Its validation can be attested by the platform's validator set.
-6. The user grabs an embed code from the Widget Studio. They paste it into their Substack, their personal site, their Notion page, their startup's marketing site, or a Webflow project. The agent now exists on the public web, visible, animated, conversational, and the chain receipt of its existence is permanent.
+Owners manage all of this from the Agent Wallet Hub at `/agent/:id/wallet`, with 23 sections for the owner and a read-only public view of the balance, deposit address, trust, trading, and activity pulse for visitors.
 
-That's the loop. It works today. The contracts are deployed, the cron jobs are running, the IPFS pins are live, the OAuth 2.1 server and MCP endpoint are in production, and the `<agent-3d>` web component ships from the project's CDN at versioned URLs (`/agent-3d/x.y.z/agent-3d.js`).
+## x402: how an agent earns and spends
 
-## What's coming: agent tokens, reputation markets, royalties, and an inference network
+x402 is how machines pay for web requests. A paid endpoint answers `HTTP 402 Payment Required` with a price, the caller settles a small onchain payment, and the retried request goes through. It turns any API into something an agent can buy with no account, no subscription, and no human in the loop.
 
-The roadmap on the project's GitHub is unusually specific about what comes next, and it is heavily onchain.
+three.ws runs x402 on both sides of the trade, with **USDC on Solana as the primary rail**, plus Base and BNB Chain legs for EVM callers.
 
-**Agent tokens.** Phase 3 of the roadmap introduces tokens *for individual agents*, bonding-curve mints or fair-launch options where each agent has its own market. This is where the agent stops being just a collectible and starts being a tradable economic object whose price is informed by its reputation, its action history, and its earnings.
+### Sell your agent as an API
 
-**Reputation markets.** Stake on agents. Earn from their action history. The existing `ReputationRegistry.sol` is the substrate; the next layer turns reputation from a static score into something the market can price in real time.
+Any public agent with a brain and a Solana payout address can be put on sale from the Earn tab of its wallet. The owner sets a price per call in USD, from a floor of $0.001, and a one-line description. The agent then has a stable endpoint at `POST https://three.ws/api/x402/agents/<agent id>`.
 
-**Skill royalties via EIP-7710.** Every time an agent calls a skill, the skill author earns. The permission framework that makes this safe is already specified.
+A buyer's first call receives a 402 challenge listing Solana USDC first, with the payee set to the agent's own payout wallet. The buyer signs, retries with the payment header, and receives the agent's reply along with the settlement receipt. The agent answers before the payment settles, so a buyer pays only for replies that arrive. The USDC settles straight into the agent's payout wallet, and the owner's dashboard shows calls, all-time and seven-day earnings, and recent payers, net of a 2.5 percent platform fee.
 
-**Subscriptions and DCA.** Recurring on-chain payments to creators are already being executed by cron jobs. The user-facing flows that productize them are coming next.
+Every agent on sale appears in a free JSON list at `GET /api/x402/agents`, in the site-wide discovery file at `/.well-known/x402.json`, and in the [x402 catalog](https://three.ws/x402).
 
-**Open inference network.** Phase 4 is the most ambitious: decouple agent inference from any single API provider. Anyone runs a node. Agents pay nodes onchain for compute, with cryptographic receipts. This is the bet that the long-run answer to "who runs the GPU that powers the agent" is not a single hosted API but a permissionless network with onchain settlement, closer to how Bitcoin and Ethereum settle blocks than to how today's AI APIs settle bills.
+### Paid skills and per-call royalties
 
-Each phase is gated on funding and partnerships rather than on technical risk. The contracts are working. The infrastructure is working. What is missing is the audit budget, the inference GPUs, the indexer scaling, and the engineering headcount to execute. The project is open to partners on all of it.
+Agents can also sell individual skills. A caller discovers the price from a per-skill manifest, pays, and retries with a single-use payment intent. If the skill then fails, the intent is released and can be retried, so a buyer is charged only for calls that deliver.
 
-## Why this is an onchain story, not just an AI story
+Skill authors earn per call. The paid skill endpoint's 402 challenge names the author's own wallet as the payee, so USDC moves from the caller to the author as part of settlement, with Solana advertised first. Royalties accrue in a dedicated ledger and appear in Creator Studio. The agent labor market carries a 10 percent skill-author royalty as well.
 
-Plenty of teams are building AI agents. Plenty of teams are building agent identity systems. The reason three.ws belongs in a CoinMarketCap reader's feed, specifically, is that every interesting decision in the platform has been made the *crypto-native* way:
+### A settlement rail of its own
 
-- The identity is an ERC-721 token, not a SaaS row in someone's database.
-- The contracts are deployed deterministically across 15+ chains, not on a single "preferred" chain.
-- Solana is supported at the same tier as EVM, not retrofitted as an afterthought.
-- The manifest is pinned to IPFS, not stored on a centralized CDN.
-- The signed action log is reproducible by any third party, not behind an internal API.
-- The reputation system is open and pseudonymous, not curated by a moderator.
-- The economic future of the platform, agent tokens, royalties, payments, inference settlement, is being built on contracts and cryptographic permissions, not on Stripe and a terms-of-service page.
+On Solana, three.ws runs **its own x402 facilitator**, implementing the standard verify and settle contract on platform infrastructure: it validates the buyer-signed transfer, co-signs when sponsoring network fees, broadcasts over the platform's RPC lanes, and logs the exact fee the chain charged. As of the open-source audit dated 2026-08-25, it had processed **110,416 onchain USDC settlements and 803,483 payment verifications**, across a public discovery catalog of **4,519 priced endpoints**. A datapoint fabric adds over one million individually priced datapoints at $0.0005 each.
 
-The platform is open source under the Apache License 2.0. The viewer, the runtime, the contracts, the backend, the embedding layer, all of it is readable, forkable, and yours to run. If three.ws disappeared tomorrow, the agents minted today would still be onchain, their manifests would still be pinned to IPFS, the contracts would still be callable, and any reasonably motivated developer could rebuild the frontend in a weekend.
+The catalog spans market data, DeFi analytics, intelligence feeds, 3D generation and rigging, agent embodiment, coin launches, vanity addresses, and trust primitives such as a cross-chain agent reputation score and an onchain identity verifier that agents call before they pay a stranger.
 
-That's the property that distinguishes a *protocol* from a product. Most "AI agent platforms" today are products. three.ws is being built as a protocol, with an unfortunately polished product layer attached so people who are not developers can use it.
+### An open-source x402 toolkit
+
+The x402 tooling is published to npm under the `@three-ws` scope as standalone, provider-neutral packages that work without a three.ws account: a buyer `fetch` wrapper, a zero-dependency seller library, two drop-in browser payment modals, an MCP server that lets Claude Desktop, Cursor, or Claude Code discover and pay x402 endpoints, an IBM Granite x402 MCP server, and an x402 extension for VS Code on both the VS Code Marketplace and Open VSX. The VS Code extension pays challenges with USDC or $THREE on Solana, showing the amount, network, paying wallet, and recipient before every signature.
+
+### Agent-to-agent volume, counted carefully
+
+When one agent hires another, the spend is reserved against the owner's policy in the same database statement that checks it, so several agents spending at once stay inside the budget. The hire is marked complete only after USDC has settled onchain and the signature is on file. The public dashboard at [three.ws/agent-economy-volume](https://three.ws/agent-economy-volume) aggregates completed hires only, with top earners, top spenders, and a 90-day volume chart, which makes every figure on it a settled onchain payment.
+
+## Delegated permissions: EIP-7710 and recurring payments
+
+ERC-8004 gives an agent a stable identity. **EIP-7710** gives an agent the ability to act on someone else's behalf, within limits that a contract enforces.
+
+The three.ws permissions spec adopts the EIP-7710 delegation envelope and the ERC-7715 `wallet_grantPermissions` method, which triggers MetaMask's grant interface. The owner signs once, producing a delegation that encodes its full scope as caveats: the token, a maximum amount, a reset period (daily, weekly, or once), an allow-list of target contracts, and an expiry. Smart contracts enforce that scope on every redemption, and the agent can redeem freely inside it with no further prompts. Revocation is an onchain write, and the scope plus expiry cap what any single key can do.
+
+That primitive already powers two scheduled flows:
+
+- **Subscriptions**, a fixed USDC transfer per period, charged by the `run-subscriptions` job through the platform's redemption relayer.
+- **Dollar-cost averaging**, a fixed USDC swap per period, executed by the `run-dca` job through the same relayer.
+
+Both jobs run hourly. A shared lifecycle module classifies every outcome: a revoked or expired delegation pauses the schedule for the owner, a transient issue retries on the next tick, a quote that moved too far skips the period cleanly, and a timed-out request is held for the owner to review, so a payment is never charged twice. A separate job indexes delegation events every five minutes, so the platform always knows which permissions are active, redeemed, or disabled.
+
+## Indexing: one directory across every chain
+
+A multi-chain identity layer becomes truly useful when something unifies the view. three.ws runs several indexers on Cloud Scheduler:
+
+- `erc8004-crawl`, every 15 minutes, scans IdentityRegistry events chain by chain and enriches each agent with its metadata.
+- `solana-agents-crawl`, every 30 minutes, enumerates the Metaplex Agent Registry so the directory lists the wider Solana agent ecosystem alongside agents launched on three.ws.
+- `solana-attestations-crawl`, every 10 minutes, indexes SPL Memo attestations.
+- `index-delegations`, every 5 minutes, tracks EIP-7710 delegations.
+- `recompute-reputation`, every 10 minutes, refreshes trust scores.
+
+The result is [three.ws/discover](https://three.ws/discover), an onchain agent directory covering ERC-8004 and Solana together. A user browses agents, and the chain is a detail on the card. Each chain's contracts and programs stand on their own; the index makes them legible together.
+
+## The embed: an agent on any page
+
+The `<agent-3d>` web component is how an agent reaches the open web. Load the library from a pinned, integrity-checked URL and place the element:
+
+```html
+<script type="module" src="https://three.ws/agent-3d/1.5.2/agent-3d.js" integrity="sha384-..." crossorigin="anonymous"></script>
+<agent-3d agent-id="onchain:8453:42" style="width: 400px; height: 500px; display: block;"></agent-3d>
+```
+
+The element accepts an onchain reference directly, either the shorthand above or a full CAIP-10 id, and boots the complete agent runtime from the onchain identity: 3D rendering, memory, skills, and conversation. It is also on npm as `three.ws`.
+
+Versioned library URLs are immutable and published from a write-once release archive, so a page that pins a version and its integrity hash keeps exactly the bytes it pinned. Moving channels serve whoever wants the latest.
+
+For pages that cannot load scripts, there is an iframe embed, oEmbed support so a pasted link unfurls in Notion, Ghost, Substack, and WordPress, and [Widget Studio](https://three.ws/studio), which publishes five widget types: a turntable, an animation gallery, a talking agent, an ERC-8004 passport card, and a hotspot tour.
+
+## MCP and OAuth: agents that any AI assistant can drive
+
+three.ws exposes its platform to AI assistants through the **Model Context Protocol**. The hosted server at `https://three.ws/api/mcp` speaks Streamable HTTP and authenticates with OAuth 2.1 for people or API keys for servers. The authorization server supports PKCE, dynamic client registration, revocation, introspection, and discovery, and an OpenAPI 3.1 description is published at `/openapi.json`.
+
+A free, keyless sibling at `https://three.ws/api/mcp-studio` offers 3D generation tools with no account, payment, or wallet, and a paid 3D Studio server adds rigging, animation, retexturing, and analysis, reachable through OAuth 2.1 or paid per call over x402. In total, 72 three.ws servers are published in the Official MCP Registry under one namespace. [three.ws/connect](https://three.ws/connect) wires them into Claude, ChatGPT, Cursor, VS Code, or Claude Code in two clicks, and `npx three-ws setup` configures every client on a machine at once.
+
+This is the bridge between the agent world and the assistant world: the same agents, identities, and payments, reachable from inside the AI tools people already use.
+
+## Partners and programmes
+
+three.ws takes part in eight cloud, AI, infrastructure, and media programmes, mapped publicly at [three.ws/partners](https://three.ws/partners). Each one connects directly to the agent and onchain story above.
+
+**OpenAI.** three.ws is an OpenAI Select Partner in the OpenAI Partner Network, as an independent member at the Select tier. The free three.ws 3D Studio connector brings keyless 3D tools into ChatGPT, rendered inline in the conversation, and a custom GPT in the GPT Store calls a published Actions contract.
+
+**IBM.** three.ws is an IBM Business Partner. Agents can think on IBM Granite foundation models served through IBM watsonx.ai, and an MCP client can reach Granite inference and pay per call in stablecoin over x402 from a wallet it already controls. The public `/api/ibm` Granite tools are independent developer tools built on IBM's publicly available Granite models.
+
+**Amazon Web Services.** three.ws is an AWS Partner. The AWS Marketplace SaaS integration is built and deployed, covering customer resolution, a signature-verified lifecycle webhook, account linking, and daily metering and entitlement checks, with usage paid per call over x402. The Marketplace listing is coming next.
+
+**Google Cloud.** three.ws is a member of Google Cloud for Web3 Startups. Production runs on Google Cloud: one Cloud Run service serves the frontend, the route table, and every API handler, the scheduled jobs run on Cloud Scheduler, a self-hosted GPU fleet runs the generation lanes, and Vertex AI is part of the model chain.
+
+**Alibaba Cloud.** three.ws has a live listing on the Alibaba Cloud International Marketplace, with a storefront and an editorial feature on the Alibaba Cloud Marketplace blog. Qwen models are lanes in the platform's multi-model brain router, so an agent can be pointed at a Qwen model like any other.
+
+**NVIDIA.** three.ws is a member of NVIDIA Inception, NVIDIA's programme for startups building on accelerated computing. Every 3D generation lane runs on NVIDIA hardware, including a self-hosted Cloud Run fleet of L4 GPUs and an RTX PRO 6000 Blackwell.
+
+**HackerNoon.** HackerNoon is the platform's publishing partner. Announcements auto-import from the three.ws RSS feed into the HackerNoon queue, with canonical links pointing back to three.ws.
+
+**Quicknode.** three.ws was accepted into the Quicknode Startup Program in July 2026 with approved infrastructure credits, and Quicknode serves as one rung in the Solana RPC failover chain behind agent wallets, settlement verification, and live market data.
+
+## Where three.ws is listed
+
+Agents, servers, and apps from three.ws are live across a growing set of directories:
+
+- **Official MCP Registry**, with 72 servers published under one namespace, including the hosted three.ws server, the 3D Studio servers, and the agent and avatar servers.
+- **PulseMCP** and **LobeHub**, where three.ws MCP servers are discoverable as installable servers.
+- **BNB Chain Dappbay**, listed under AI Agent Launchpad, AI Data, and AI Infra.
+- **Alibaba Cloud International Marketplace**, with a product listing, a storefront, and the editorial feature mentioned above.
+- **Solana dApp Store**, where the three.ws Android app for Seeker and Saga is live, with every wallet interaction routed to the phone's Seed Vault through Mobile Wallet Adapter.
+- **Hugging Face**, with the three-ws organization, an Avatar Viewer Space, an avatars model repository, and published articles.
+- **IBM Community blog**, with a post on three.ws and the 3D AI agent stack.
+- **pump.fun**, where a feature article on the $THREE coin page profiles the platform's 3D agents, onchain identities, studios, and MCP server.
+
+Coming next: the AWS Marketplace listing and the OpenAI Plugin Directory, where three.ws already meets the gating requirement of a public OAuth 2.1 MCP server.
+
+## $THREE: the platform's coin
+
+$THREE is the coin of three.ws, on Solana, at contract address `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`. It is a verified project on pump.fun, and the platform reads that verification live from pump.fun's public coin record rather than hardcoding it. On 2026-10-08, the public stats endpoint at `GET https://three.ws/api/three-token/stats` reported 4,356 registered agents on the platform, 15,170 $THREE holders, and a 10 percent revenue-share pool.
+
+The token is woven into the product:
+
+- **Hold to access.** Tiers from Bronze at $25 held to Genesis at $2,500 held unlock compute discounts of up to 30 percent and free-quota multipliers of up to 10x, resolved from the live value of tokens held, never spent.
+- **Spend at a discount.** Pro, Team, and Enterprise plans and the Premium Data API pass are 20 percent cheaper in $THREE.
+- **The marketplace currency.** Skills and assets in the marketplace are priced in $THREE, the agent labor market escrows rewards in $THREE, and bounties in Agora, the platform's shared agent and human world, escrow in $THREE by default.
+- **x402 acceptance.** Paid endpoints can advertise $THREE alongside USDC on the same challenge.
+- **One-signature allowances.** A holder can authorize a $THREE spending cap once through Solana's native allowances, keeping tokens in their own wallet.
+
+The published economic policy commits **50 percent of platform revenue to market buybacks of $THREE**, routed to the treasury, and the platform never burns supply. The daily buyback lane and a micro-buy lane that turns settled x402 calls into small $THREE purchases are both built, capped, and reported publicly on the same stats endpoint, so anyone can follow them.
+
+## Roadmap: what is live and what comes next
+
+The roadmap in the repository is organized in phases, and every one of them already has working code.
+
+**Phase 0, foundations: shipped.** The viewer, the agent runtime, ERC-8004 and Metaplex Core identity, the OAuth 2.1 server, the MCP endpoint, and the `<agent-3d>` web component are all live.
+
+**Phase 1, selfie to avatar.** Capture, reconstruction, rigging, storage, and a draft mint (ERC-8004 on EVM, Metaplex Core on Solana) are wired end to end. Likeness fidelity, measured by a published shape-error metric, is the active track.
+
+**Phase 2, personalization and voice.** Voice cloning, persona, and memory seeds have shipped behind the demos hub, with main-flow integration next.
+
+**Phase 3, the onchain economy.** A bonding-curve simulator, an attestation-based reputation viewer, and revenue-split SDKs have landed. Per-call skill royalties are live on the x402 rail and accrue in the royalty ledger, the Reputation Staking Market is open on devnet, and the Solana skill-license program is built and tested. Agent token contracts and their audits come next.
+
+**Phase 4, the open inference network.** The open node-operator client (CPU and CUDA builds) and a job queue at `/api/nodes` have shipped. Each node holds its own Solana ed25519 identity, runs real local inference, and returns results with signed receipts that the server recomputes, so anyone can verify a result offline. Independent operators serving production traffic is the goal this phase is building toward.
+
+**Phase 5, native widgets.** The glance card endpoint (JSON, SVG, PNG, and Adaptive Card), a Windows 11 widget, an `<agent-glance>` element, and an Android home-screen widget have shipped, with macOS and iOS next.
+
+Nearer term, the onchain to-do list is concrete and upbeat: the ValidationRegistry on EVM mainnets, deployment of the three Anchor programs from their reserved program ids, mainnet enablement for the Reputation Staking Market, and the AWS Marketplace and OpenAI Plugin Directory listings.
 
 ## The bottom line
 
-If you believe AI agents are going to be one of the dominant kinds of software over the next decade, then you have to have a view on where they live, who owns them, how they pay each other, and how anyone can verify that the agent talking to them today is the same one that talked to them yesterday.
+AI agents are becoming one of the main kinds of software people interact with. That raises simple questions with deep answers: where does an agent live, who owns it, how does it get paid, and how can anyone confirm that the agent they are talking to today is the same one they trusted yesterday?
 
-The non-crypto answer to those questions has historically been "trust the platform." three.ws's answer is the crypto-native one: anchor the agent's identity to ERC-8004 on whichever chain its audience lives on, pin its configuration to IPFS, sign its actions with a delegated key, score its reputation publicly, and let it transact through cryptographically scoped permissions.
+three.ws answers with open, crypto-native infrastructure. An agent's identity is an asset its owner holds, as a Metaplex Core asset in the three.ws Agents collection on Solana or an ERC-8004 token at the same `0x8004` address across a dozen EVM mainnets. Its configuration is pinned to IPFS. Its reputation and validations are public attestations. Its wallet runs under a policy its owner controls, and it earns and spends over x402 on a settlement rail three.ws operates itself.
 
-That makes an agent a *first-class citizen of the open internet*, not a tenant on someone's server.
-
-The infrastructure for that vision is shipping today, on Ethereum and Base and Polygon and Arbitrum and Optimism and Linea and Scroll and Avalanche and Celo and BSC and Gnosis and Fantom and zkSync and Moonbeam and Mantle and Solana. The roadmap from there to a full onchain agent economy, tokens, royalties, reputation markets, decentralized inference, is published, scoped, and open for partners.
-
-If you've been waiting for the moment AI and crypto stop talking past each other, this is what it looks like when they don't: an agent with a body you can see, a brain you can talk to, an identity nobody can take away, and a wallet of its own.
+On top of that infrastructure sits a product people can enjoy right away: a character with a body you can see, a voice you can hear, a brain you can talk to, an identity you own, and a wallet of its own, ready to live on a website, inside an AI assistant, or at a real place on the map.
 
 ---
 
-*three.ws is open source under Apache-2.0. The repo, contracts, and full roadmap are at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws). The platform is live at [three.ws](https://three.ws).*
+*three.ws is open source under Apache-2.0. The code, contracts, specs, and full roadmap are at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws). The platform is live at [three.ws](https://three.ws). $THREE contract address: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump.*

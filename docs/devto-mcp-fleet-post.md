@@ -1,88 +1,119 @@
 ---
 venue: dev.to (cross-post to Hashnode and Medium with canonical back to three.ws)
 account: three.ws / nichxbt
-suggested_title: "We published 72 MCP servers. Here is what I would do differently."
-description: "A practical post-mortem on running a large MCP fleet: why we ended up with 72 servers, the four traps that cost us the most (annotation blindness, stdio consent, OAuth discovery 404s, and free/paid entanglement), and the four rules we now build to."
+suggested_title: "We published 72 MCP servers. Here are the principles we build them to."
+description: "A practical guide from running a large MCP fleet: how we came to publish 72 servers, the four design principles that keep them safe and clear (enforcement on the server, consent where a person can see it, discovery metadata verified from outside, and free tools kept free by construction), how we organise the fleet for people and agents, and the one pattern that mattered most."
 tags: [mcp, ai, agents, opensource]
 canonical: https://three.ws/docs/mcp
 status: draft, owner approval required before posting (external-channel gate in CLAUDE.md)
 ---
 
-# We published 72 MCP servers. Here is what I would do differently.
+# We published 72 MCP servers. Here are the principles we build them to.
 
-Not a brag. A confession, and then four rules.
+Hi DEV! I work on [three.ws](https://three.ws), an open-source platform where AI agents get 3D bodies: you describe a character, and you get a rigged, animated avatar that can talk, act, and live on any web page.
 
-I work on [three.ws](https://three.ws), an open-source platform where AI agents get 3D bodies. Along the way we ended up publishing **72 MCP servers in the official Model Context Protocol registry** under one namespace, and **91 npm packages**, 39 of them MCP servers in the main repo. That happened over months, one reasonable decision at a time, and the sum of those reasonable decisions is a discovery problem.
+If you have not met MCP yet, here is the one-line version. The Model Context Protocol is a standard way to hand an AI assistant a set of tools. You run (or connect to) an MCP server, and Claude, ChatGPT, Cursor, or your own agent can call its tools: "generate a 3D model", "rig this mesh", "turn on the kitchen light".
 
-If you are about to publish your second, fifth, or fiftieth MCP server, this is what I know now that I did not know then.
+Along the way we published **72 MCP servers in the official Model Context Protocol registry** under one namespace, and **91 npm packages**, 39 of them MCP servers in the main repo. Avatars, 3D generation, scenes, voice, vision, market data, notifications, billing, naming, provenance, home control, and more: every capability that felt independently useful became its own server, because publishing a server is quick and MCP lets each one stand alone.
 
-## How you get to 72 without ever deciding to
+Running a fleet that size taught us a lot about making servers safe, clear, and easy to find. This post is everything I would hand to someone publishing their second, fifth, or fiftieth server.
 
-Every capability that felt independently useful became its own server, because publishing a server is cheap and MCP has no first-class notion of a bundle or a namespace. Avatars, 3D generation, scenes, voice, vision, market data, notifications, billing, naming, provenance, home control, and so on. Each one was defensible. None of them was the result of a plan.
+## The short version
 
-The failure is not technical. All 72 work. The failure is that **a user cannot find the right one**, and neither can an agent, and the registry alone does not fix that.
+1. **Enforce on the server.** Tool annotations describe; a server-side check decides.
+2. **Ask for consent where a person can see it.** Keep the most consequential verbs on surfaces with a real human prompt.
+3. **Verify your discovery metadata from outside, after every deploy.** It takes one curl.
+4. **Keep free tools free by construction.** Different origin, different code, no payment imports.
 
-## Trap 1: tool annotations describe, they do not enforce
+Then organise the fleet by audience, share one typed tool layer across every server, and publish everywhere clients look.
 
-MCP gives you `readOnlyHint`, `destructiveHint`, `openWorldHint`. Set them accurately; reviewers check, and inaccurate annotations are a listed rejection reason on the platforms with directories.
+## Principle 1: annotations describe, the server decides
 
-But understand what they are: **metadata for the client's UI, not a control.** They do not stop a tool. And the vocabulary has a real gap: `destructiveHint` covers "this deletes something", and does not distinguish between "this spends forty dollars" and "this unlocks a door in a house where a child is asleep".
+MCP gives you `readOnlyHint`, `destructiveHint`, and `openWorldHint`. Set them accurately on every tool: reviewers check them, directory platforms rely on them, and clients use them to shape their UI.
 
-We now write the server-side refusal first and the interface second. If a guard exists only in prompt text or in a hidden button, it is not a guard. An assistant can be argued out of a sentence; it cannot be argued out of a 403.
+They are **metadata for the client's interface**, and they shine at that job. Enforcement is a separate job, and it belongs on the server. That matters most for actions with real-world weight: "this spends forty dollars" and "this unlocks a door" each deserve their own explicit, server-side rule.
 
-## Trap 2: a stdio server cannot obtain consent, and should stop pretending
+So we write the server-side check first and the interface second. A guard that lives in code holds whatever the conversation says. An assistant can be persuaded by a sentence; a 403 stays a 403.
 
-We publish a server that gives any assistant control of a real Home Assistant house: read the house, list entities, list scenes, run one, call a service.
+## Principle 2: consent belongs where a person can see it
 
-The dangerous calls (locks, primarily) pass through a physical-action gate, and **over stdio that gate refuses outright**. Not "prompts the user". Refuses.
+We publish a server that gives any assistant control of a real Home Assistant house: read the house, list entities, list scenes, run one, and call a service.
 
-The reasoning took us a while to arrive at and now seems obvious. A local stdio MCP server has no user-visible surface of its own, no session, and no way to prove that a human saw a request and approved it. Any "confirm?" it emits is a string the model can read, generate, and answer by itself. That is not consent, it is theatre. So the dangerous verbs are only available on a surface where a real person can be shown a real prompt, and the local server says plainly that it will not do it and why.
+The most consequential calls (locks, primarily) pass through one physical-action gate, and **over stdio, that gate keeps door-opening for surfaces where a person can approve it.** A local stdio MCP server has no screen of its own and no session, so a meaningful approval belongs on a surface where a real person is shown a real prompt. The local server explains this clearly when asked, and owners who want their own assistant to open one specific door can grant that single entity explicitly through an environment variable.
 
-The pattern generalises past homes to any stdio server that can spend money, send messages as a user, or move something physical.
+We tested it the way an attacker would: spawned the server as a child process, spoke MCP to it, and tried to smuggle `{confirmed: true}` into the service data three different ways. The door stayed locked each time, and the explicit per-entity allowance opened exactly the door it named.
 
-## Trap 3: the OAuth discovery document nobody checks
+The pattern applies far beyond homes, to any stdio server that can spend money, send messages as a user, or move something physical.
 
-Our hosted server sits behind OAuth 2.1. The single most common reason a technically-correct MCP server fails a client's auth handshake is that `/.well-known/oauth-protected-resource` (or its neighbours) is not actually routed and answers 404, usually because the route table and the file layout disagree in production but not locally.
+## Principle 3: verify discovery metadata from outside
 
-Test it from outside your network, in production, with curl, after every deploy. It is a one-line check and it saves a week of "works on my machine" bug reports from users you cannot debug.
+Our hosted server at `https://three.ws/api/mcp` sits behind OAuth 2.1, and a client's auth handshake starts by fetching `/.well-known/oauth-protected-resource` and its neighbours. Those documents are what make a correct server *discoverable* as a correct server.
 
-## Trap 4: free and paid entangled in one server
+So we check them from outside our network, in production, with curl, after every deploy:
 
-We ship a free 3D server and a paid one. The free one has **no payment code in it at all.** Not disabled, not feature-flagged: absent. Different origin, different codebase, different deploy.
+```bash
+curl -s https://three.ws/.well-known/oauth-protected-resource
+```
 
-This started as a review-friendliness decision (the directories reject anything that looks like it might charge under false pretences, and "we present a call as free and then charge" is a listed rejection reason). It turned out to be an engineering win too: a claim you can verify by reading an import list is a claim that stays true, and a flag that gates payment is a flag somebody will flip in the wrong environment eventually.
+It is a one-line check, it confirms the route table and the file layout agree in production exactly as they do locally, and it gives every client a smooth first connection.
 
-The one exception we allow runs the other way, and it is deliberate: a couple of tools on the **paid** server are permanently free, because they are assurance checks. An asset-grading tool that costs money is a tool nobody calls, and a tool nobody calls prevents nothing.
+## Principle 4: keep free tools free by construction
 
-## The four rules we build to now
+We ship a free 3D server and a paid one. The free one contains **no payment code at all**: different origin, different codebase, different deploy. Its claim to be free is something anyone can verify by reading its import list, which makes it a claim that stays true over time and makes directory review straightforward.
 
-**1. One tightly scoped server per audience, not per capability.** Our ChatGPT-facing server is exactly the 3D tools and nothing else: eleven of them, keyless, no wallet, no account. The directories reward tightly scoped apps and reject generic ones, and thirty-seven separately submitted servers read as directory spam even when each one is good. Submit one, document the rest as direct connections.
+We allow one deliberate crossover, and it runs in the generous direction: a few assurance tools on the **paid** server are permanently free. The physics-readiness grade (`grade_sim_readiness`) is free, read-only, and idempotent on every track, because a free check gets run on every asset, which is exactly where it does the most good.
 
-**2. One hosted server for clients that want everything**, behind real auth, with working discovery metadata.
+## How we organise the fleet
 
-**3. Typed tool authoring, shared across servers.** We publish `@three-ws/tool-sdk` (`defineTool`, `defineExec`) so annotations, schemas, and error shapes cannot drift from server to server. Fifty hand-written servers will disagree about error shape by the third one, and an agent handling five different error conventions handles none of them well.
+**1. One tightly scoped server per audience.** Our ChatGPT-facing server (`https://three.ws/api/mcp-chatgpt`) is exactly eight 3D tools and the model viewer, nothing else: keyless, no wallet, no account. Directories reward tightly scoped apps, so we submit one focused server per directory and document the rest as direct connections.
 
-**4. Publish where clients actually look.** The official registry is necessary and not sufficient. Ours are also indexed on PulseMCP and Glama, exposed through a LobeHub plugin manifest served from our own domain, and shipped as plugins in an editor plugin marketplace. Discovery is distribution, and distribution is not automatic.
+**2. One free studio server for every MCP client.** `https://three.ws/api/mcp-studio` carries fourteen keyless tools: the 3D tools, a ready-made asset catalog, and persona tools that turn a rigged model into a living agent body that speaks with lip-sync, emotion, and gesture.
 
-## The one thing that mattered more than all of it
+**3. One hosted server for clients that want everything**, behind real OAuth 2.1, with discovery metadata verified on every deploy (Principle 3).
 
-If you take a single idea from this post, take this one instead of anything about fleets.
+**4. Typed tool authoring, shared across servers.** We publish `@three-ws/tool-sdk`: `defineTool` declares a tool's identity, Zod schemas, and permission manifest once (JSON Schema is derived automatically), `defineExecutor` routes every call through one entry point that validates params, enforces the declared rate limit, and normalises success and failure into one result shape, and `toMcpTools` adapts the result into the registration shape our servers use. One error shape across every server means an agent learns it once and handles all of them well.
 
-Every text-to-3D API, ours included, answered tool calls with a **URL to a binary file**. A human clicks it. An agent cannot read it. So we shipped a tool that renders a model into frames returned as MCP image content blocks, and the agent can finally look at what it made, judge it, and iterate.
+**5. Publish where clients look.** The official registry is the foundation: our servers live under `io.github.nirholas/*`. From there they are indexed on PulseMCP, Glama, and the LobeHub MCP marketplace, and installable as Claude Code plugins from our own plugin marketplace. Each surface brings a different audience, so we treat distribution as part of shipping.
 
-It was a weekend of work and it changed what the pipeline can do, because a loop needs an error signal and a binary URL is not one.
+## The one pattern that mattered most
 
-**Any tool that hands an agent a binary needs a companion that renders it into the agent's own modality.** PDFs, spreadsheets, audio, CAD, compiled artifacts. If your agent cannot perceive its own output, it is guessing, and no amount of prompt engineering fixes that.
+If you take a single idea from this post, take this one.
+
+A text-to-3D tool naturally answers with a **URL to a binary file**. A human clicks it and sees a model. An agent reads text and images, so we shipped a tool that renders a model into frames returned as MCP image content blocks. Now the agent can look at what it made, judge it, and iterate.
+
+```bash
+curl -s -X POST https://three.ws/api/3d/look \
+  -H 'content-type: application/json' \
+  -d '{"glb_url":"https://three.ws/avatars/cesium-man.glb"}'
+```
+
+It was a weekend of work and it transformed what the pipeline can do, because a loop thrives on a signal the agent can perceive. Pair it with `refine_model` (describe a change in words, get a new version with a branchable lineage) and you have a full generate, look, judge, refine cycle inside any MCP client.
+
+**Any tool that hands an agent a binary benefits from a companion that renders it into the agent's own modality.** PDFs, spreadsheets, audio, CAD, compiled artifacts. Give your agent a way to perceive its own output and it moves from guessing to iterating.
+
+## Partners across the fleet
+
+three.ws takes part in eight partner programmes, and several of them meet the MCP fleet directly:
+
+- **OpenAI (Select Partner).** The keyless 3D Studio connector brings three.ws 3D tools into ChatGPT, rendered interactively inline, and our custom GPT calls the same capabilities through an Actions contract. We also publish Spatial MCP, an open, CC0 response shape that makes a 3D scene a native MCP result, with three.ws as the reference implementation.
+- **IBM (Business Partner).** The IBM Granite x402 MCP lets an MCP client reach Granite inference and settle per call from a wallet it already controls. Our Granite tools are independent developer tools built on IBM's publicly available Granite models.
+- **Alibaba Cloud.** Our community-built `@three-ws/alibaba-cloud-mcp` exposes Qwen chat, embeddings, and model discovery on your own DashScope account to any MCP client, and Qwen models are first-class lanes in the platform's model router. three.ws is live on the Alibaba Cloud International Marketplace.
+- **NVIDIA (Inception).** Every 3D generation tool in the fleet runs on NVIDIA GPUs, and NVIDIA-hosted models serve chat, vision, embeddings, and speech behind the scenes.
+- **Google Cloud.** three.ws is a member of Google Cloud for Web3 Startups. Every hosted MCP server in this post is served from Cloud Run.
+- **AWS (Partner), HackerNoon (Media), and Quicknode (Infrastructure)** complete the eight. HackerNoon syndicates our engineering posts, and Quicknode adds capacity to the Solana RPC chain behind agent wallets.
+
+These are programme designations; the views here are our own. The full map is at [three.ws/partners](https://three.ws/partners).
 
 ## Try any of it
 
 ```bash
-# 11 keyless 3D tools, no account
+# 14 keyless tools, no account
 curl -s https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
 Everything is Apache-2.0 at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws). The MCP docs are at [three.ws/docs/mcp](https://three.ws/docs/mcp).
 
-If you publish MCP servers at any scale, I would like to hear how you handle namespacing and discovery. I do not think our answer is right; it is only the one that worked.
+If you publish MCP servers at any scale, I would love to hear how you handle namespacing and discovery. This approach works well for us, and I am always keen to compare notes.
