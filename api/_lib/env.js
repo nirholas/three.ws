@@ -596,8 +596,8 @@ export const env = {
 		return opt('GROQ_API_KEY');
 	},
 
-	// xAI Grok API key (console.x.ai): paid OpenAI-compatible inference
-	// (grok-4.5 flagship, grok-4.3 long-context, grok-4.1-fast budget).
+	// xAI Grok API key (console.x.ai): paid OpenAI-compatible inference.
+	// Model ids live in GROK_MODELS (api/_lib/chat-models.js).
 	// Used by brain/chat, viewer chat, the shared LLM chain, and the embed
 	// we-pay proxy. Accepts XAI_API_KEY as an alias. Optional: when unset,
 	// Grok rungs are skipped and only BYOK Grok keys work.

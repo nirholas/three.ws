@@ -55,7 +55,16 @@ import {
 	toVertexBody,
 } from './vertex-claude.js';
 import { vertexGeminiBudget } from './vertex-gemini.js';
-import { DEFAULT_FREE_MODEL, promptCacheMinChars, isPaidModel } from './chat-models.js';
+import {
+	DEFAULT_FREE_MODEL,
+	promptCacheMinChars,
+	isPaidModel,
+	XAI_CHAT_COMPLETIONS_URL,
+	GROK_DEFAULT_MODEL,
+	GROK_BUDGET_MODEL,
+	GROK_BUDGET_EXTRA_BODY,
+	routableGrokModelId,
+} from './chat-models.js';
 
 // Llama 3.x left Groq's catalog in 2026-08 (404 on every call); qwen3.8-27b is
 // the fastest non-reasoning model there and returns clean content.
@@ -310,11 +319,9 @@ const OPENAI_MODEL = 'gpt-5.4-nano';
 // xAI Grok, OpenAI-compatible (api.x.ai). Paid, so it rides in the paid tail
 // when the server GROK_API_KEY is set; a caller-supplied BYOK `grokKey` leads
 // the chain instead (the caller's explicit model choice on their own billing).
-// The budget 4.1-fast tier keeps the server backstop cheap; BYOK callers get
-// the flagship via `grokModel`.
-const GROK_URL = 'https://api.x.ai/v1/chat/completions';
-const GROK_MODEL = 'grok-4.1-fast';
-const GROK_BYOK_MODEL = 'grok-4.5';
+// The server backstop runs the budget Grok with reasoning off; BYOK callers
+// get the flagship, or the `grokModel` they name (a retired slug maps to its
+// successor). Every id comes from GROK_MODELS in chat-models.js.
 
 // Per-user daily LLM spend cap, in micro-USD. Callers on the host's paid keys
 // (ANTHROPIC_API_KEY / OPENAI_API_KEY) are metered; BYOK callers and free-tier
@@ -635,8 +642,8 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 		chain.push(openaiCompatProvider({
 			name: 'grok',
 			key: grokKey,
-			url: GROK_URL,
-			model: grokModel || GROK_BYOK_MODEL,
+			url: XAI_CHAT_COMPLETIONS_URL,
+			model: routableGrokModelId(grokModel, GROK_DEFAULT_MODEL),
 		}));
 	}
 	// VERTEX_CLAUDE_PRIMARY: real Claude on GCP credits leads the chain, before
@@ -911,8 +918,9 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 		chain.push(openaiCompatProvider({
 			name: 'grok',
 			key: env.GROK_API_KEY,
-			url: GROK_URL,
-			model: grokModel || GROK_MODEL,
+			url: XAI_CHAT_COMPLETIONS_URL,
+			model: routableGrokModelId(grokModel, GROK_BUDGET_MODEL),
+			extraBody: grokModel ? null : GROK_BUDGET_EXTRA_BODY,
 		}));
 	}
 	return chain;

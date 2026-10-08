@@ -24,7 +24,9 @@ const GATED = 'claude-mythos-5';
 const DEAD_ROUTES = [
 	'mistralai/mistral-7b-instruct:free',
 	'meta-llama/llama-3.2-3b-instruct:free',
-	'openai/gpt-oss-120b', // non-free variant, never catalogued
+	// The OpenRouter non-free 'openai/gpt-oss-120b' used to sit here, but the
+	// same string is Groq's live id for GPT-OSS 120B (catalogued under groq since
+	// Groq retired Llama), so it is a real route now, not a dead one.
 	// Retired by OpenRouter in July 2026. Every one of these was live in the
 	// catalog when its endpoint disappeared, which silently killed the whole
 	// OpenRouter free lane and took the /chat app down with it.

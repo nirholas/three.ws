@@ -25,7 +25,14 @@ import {
 	defaultEmbedPolicy,
 } from '../_lib/embed-policy.js';
 import { getAvatar } from '../_lib/avatars.js';
-import { modelRejectsSampling, modelThinksByDefault, promptCacheMinChars } from '../_lib/chat-models.js';
+import {
+	modelRejectsSampling,
+	modelThinksByDefault,
+	promptCacheMinChars,
+	GROK_CHAT_MODELS,
+	XAI_CHAT_COMPLETIONS_URL,
+	resolveGrokModelId,
+} from '../_lib/chat-models.js';
 import {
 	vertexClaudeEnabled,
 	vertexMessagesUrl,
@@ -116,9 +123,10 @@ const MODELS = {
 
 	// xAI Grok (paid, host's key). OpenAI-compatible and tool-call capable, so
 	// it shares the 'openai' branch. Selectable only; never a free fallback.
-	'grok-4.5': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
-	'grok-4.3': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
-	'grok-4.1-fast': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
+	// Every chat-completions Grok in GROK_MODELS (chat-models.js).
+	...Object.fromEntries(
+		GROK_CHAT_MODELS.map((m) => [m.id, { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' }]),
+	),
 };
 
 // Request-shape guards for the current Anthropic generation. Opus 4.7+ and the
@@ -173,7 +181,7 @@ const UPSTREAM_URL = {
 	sambanova: 'https://api.sambanova.ai/v1/chat/completions',
 	mistral: 'https://api.mistral.ai/v1/chat/completions',
 	zai: 'https://api.z.ai/api/paas/v4/chat/completions',
-	grok: 'https://api.x.ai/v1/chat/completions',
+	grok: XAI_CHAT_COMPLETIONS_URL,
 };
 
 // Resolve a model id to its upstream route. Static allowlist first; the Vertex
@@ -299,8 +307,12 @@ const FREE_DEFAULT_MODEL = 'google/gemma-4-31b-it:free';
 // Resolve the model to run: the caller's choice when it costs the host nothing
 // or matches what the owner configured, otherwise the policy's own model. The
 // response echoes the model actually used, so a clamped caller sees what it got.
-function resolveRequestedModel(requested, policyModel) {
-	const configured = policyModel || FREE_DEFAULT_MODEL;
+// A Grok id xAI has retired (saved in a policy or sent by an embed) resolves to
+// its successor first, so it neither 404s upstream nor falls out of the
+// allowlist.
+function resolveRequestedModel(rawRequested, policyModel) {
+	const configured = resolveGrokModelId(policyModel || FREE_DEFAULT_MODEL);
+	const requested = rawRequested && resolveGrokModelId(rawRequested);
 	if (!requested || requested === configured) return configured;
 	if (PAID_HOST_KEY_MODELS.has(requested)) return configured;
 	return requested;

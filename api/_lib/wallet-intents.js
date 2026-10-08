@@ -41,6 +41,7 @@ import {
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from './agent-trade-guards.js';
 import { THREE_MINT } from './networth-model.js';
+import { XAI_CHAT_COMPLETIONS_URL, GROK_BUDGET_MODEL, GROK_BUDGET_EXTRA_BODY } from './chat-models.js';
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { recentPumpLaunches, enrichCreatorStats } from './pump-launch-feed.js';
 import { logAudit } from './audit.js';
@@ -621,14 +622,15 @@ async function callOpenRouterCompile({ apiKey, system, messages }) {
 }
 
 async function callGrokCompile({ apiKey, system, messages }) {
-	const resp = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
+	const resp = await fetchWithTimeout(XAI_CHAT_COMPLETIONS_URL, {
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
 			'content-type': 'application/json',
 		},
 		body: JSON.stringify({
-			model: 'grok-4.1-fast',
+			model: GROK_BUDGET_MODEL,
+			...GROK_BUDGET_EXTRA_BODY,
 			max_tokens: 700,
 			messages: [{ role: 'system', content: system }, ...messages],
 			tools: [OPENAI_COMPILE_TOOL],

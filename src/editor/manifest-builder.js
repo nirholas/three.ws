@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { renderMarkdown } from '../shared/markdown.js';
 import '../element.js';
 import { PersonaInterview } from './persona-interview.js';
+import { GROK_MENU_MODELS, grokMenuModelId } from '../../api/_lib/chat-models.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -28,11 +29,12 @@ const ANTHROPIC_MODELS = [
 ];
 // xAI Grok, routed through the same we-pay proxy (OpenAI-compatible upstream;
 // the proxy translates shapes server-side). Paid on the host's GROK_API_KEY.
-const GROK_MODELS = [
-	{ id: 'grok-4.5', label: 'Grok 4.5 (xAI)' },
-	{ id: 'grok-4.3', label: 'Grok 4.3 (xAI · 1M context)' },
-	{ id: 'grok-4.1-fast', label: 'Grok 4.1 Fast (xAI · budget)' },
-];
+// Rows come from GROK_MENU_MODELS (api/_lib/chat-models.js), never typed here.
+const contextLabel = (tokens) => (tokens >= 1_000_000 ? `${tokens / 1_000_000}M` : `${Math.round(tokens / 1000)}K`);
+const GROK_OPTIONS = GROK_MENU_MODELS.map((m) => ({
+	id: m.id,
+	label: `${m.label} (xAI · ${contextLabel(m.contextWindow)} context)`,
+}));
 const OPENAI_MODELS = [
 	{ id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
 	{ id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
@@ -50,6 +52,12 @@ const OPENAI_MODELS = [
 const BRAIN_PROVIDERS = ['anthropic', 'openai', 'local', 'none'];
 const TTS_PROVIDERS = ['browser', 'neural', 'elevenlabs', 'openai', 'none'];
 const STT_PROVIDERS = ['browser', 'whisper', 'none'];
+// What each STT choice means to a visitor, shown in the picker.
+const STT_PROVIDER_LABELS = {
+	browser: 'browser (built-in recognizer, Chrome and Edge)',
+	whisper: 'whisper (on-device, every browser, audio stays local)',
+	none: 'none',
+};
 const MEMORY_MODES = ['local', 'ipfs', 'encrypted-ipfs', 'none'];
 const RIG_TYPES = ['mixamo', 'vrm', 'custom'];
 const BODY_FORMATS = ['gltf-binary', 'gltf', 'vrm'];
@@ -615,7 +623,7 @@ export function mountManifestBuilder(rootEl, options = {}) {
 				<div class="field" style="margin-top:10px">
 					<label>STT Provider</label>
 					<select id="f-stt-provider">
-						${STT_PROVIDERS.map((p) => `<option value="${p}">${p}</option>`).join('')}
+						${STT_PROVIDERS.map((p) => `<option value="${p}">${STT_PROVIDER_LABELS[p]}</option>`).join('')}
 					</select>
 				</div>
 				<div id="stt-secondary">
@@ -999,11 +1007,11 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			models = OPENAI_MODELS;
 			sel.innerHTML = models.map(optHtml).join('');
 		} else {
-			models = [...FREE_MODELS, ...ANTHROPIC_MODELS, ...GROK_MODELS];
+			models = [...FREE_MODELS, ...ANTHROPIC_MODELS, ...GROK_OPTIONS];
 			sel.innerHTML = `
 				<optgroup label="Free — host-paid (recommended)">${FREE_MODELS.map(optHtml).join('')}</optgroup>
 				<optgroup label="Paid Claude (host's Anthropic key)">${ANTHROPIC_MODELS.map(optHtml).join('')}</optgroup>
-				<optgroup label="Paid Grok (host's xAI key)">${GROK_MODELS.map(optHtml).join('')}</optgroup>
+				<optgroup label="Paid Grok (host's xAI key)">${GROK_OPTIONS.map(optHtml).join('')}</optgroup>
 			`;
 		}
 		if (models.find((m) => m.id === state.brainModel)) {
@@ -1431,7 +1439,8 @@ export function mountManifestBuilder(rootEl, options = {}) {
 		}
 		if (m.brain) {
 			if (m.brain.provider) state.brainProvider = m.brain.provider;
-			if (m.brain.model) state.brainModel = m.brain.model;
+			// A Grok id xAI retired (or the menu dropped) opens on its successor.
+			if (m.brain.model) state.brainModel = grokMenuModelId(m.brain.model);
 			if (typeof m.brain.temperature === 'number') state.temperature = m.brain.temperature;
 			if (typeof m.brain.maxTokens === 'number') state.maxTokens = m.brain.maxTokens;
 			if (m.brain.thinking) state.thinking = m.brain.thinking;

@@ -26,8 +26,8 @@
 //     record null (usage_events.cost_micro_usd is nullable) and raise, so the
 //     gap is visible instead of masquerading as free traffic.
 
-import { isPaidModel } from './chat-models.js';
-import { ROSTER, isVertexRoute } from './model-roster.js';
+import { isPaidModel, GROK_MODELS, GROK_RETIRED_PRICES } from './chat-models.js';
+import { ROSTER, isVertexRoute, rosterModel } from './model-roster.js';
 
 // USD per 1,000,000 tokens, [input, output]. Keys are matched by prefix so a
 // dated alias (claude-haiku-4-5-20251001) resolves to its family price.
@@ -56,10 +56,11 @@ const PRICE_PER_MTOK = {
 	'gpt-5.3-codex': [1.75, 14],
 	'o3-pro': [20, 80],
 	'o3': [2, 8],
-	// xAI Grok list prices (docs.x.ai, July 2026). 4.1-fast is the budget tier.
-	'grok-4.5': [2, 6],
-	'grok-4.3': [1.25, 2.5],
-	'grok-4.1-fast': [0.2, 0.5],
+	// xAI Grok list prices live with the ids in GROK_MODELS (chat-models.js),
+	// which `npm run check:xai-models` holds to xAI's own list. Retired slugs
+	// keep the price they billed at so historical usage rows still price.
+	...Object.fromEntries(GROK_MODELS.map((m) => [m.id, [...m.price]])),
+	...Object.fromEntries(Object.entries(GROK_RETIRED_PRICES).map(([id, p]) => [id, [...p]])),
 	// Deprecated OpenAI family — kept so historical usage_events still price.
 	'gpt-4o-mini': [0.15, 0.6],
 	'gpt-4o': [2.5, 10],
@@ -145,7 +146,11 @@ export function isOpenRouterFreeModel(model) {
  * metering audit to tell "served free" apart from "we failed to price it".
  */
 export function isFreeLane(provider, model) {
-	if (model && isPaidModel(model)) return false;
+	// The paid override is for a paid model riding an otherwise-free transport.
+	// A paid open-model roster row is paid only on its Vertex route; served on a
+	// platform free tier (Groq, NIM, AI Studio Gemini) it costs us nothing, and
+	// its id is often the very id that free lane serves.
+	if (model && isPaidModel(model) && !rosterModel(model)) return false;
 	if (baseProvider(provider) === 'openrouter') return isOpenRouterFreeModel(model);
 	return FREE_PROVIDERS.has(baseProvider(provider));
 }

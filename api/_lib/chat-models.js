@@ -36,6 +36,251 @@
 
 import { ROSTER } from './model-roster.js';
 
+// ── xAI Grok: the one place a Grok model id is written down ─────────────────
+//
+// xAI ships new ids often and retires old ones in batches (eight slugs on
+// 2026-05-15, including the grok-4-1-fast pair this file used to default to).
+// A retired id turns the Grok rung of every failover chain into a guaranteed
+// error, so every surface that names a Grok model (the shared LLM chain, the
+// /brain menu and the model picker it feeds, the embed proxy, the intent
+// compilers, the static pickers in src/) reads it from here, and
+// tests/grok-model-literals.test.js fails the build if a Grok id is typed as a
+// string literal anywhere else.
+//
+// Source of truth upstream: GET https://api.x.ai/v1/models (key required),
+// else https://docs.x.ai/developers/models.md and the per-model pages under
+// /developers/models/<id>.md. `npm run check:xai-models` diffs this list
+// against it and exits non-zero on drift. Last verified against the docs on
+// 2026-10-08 (no xAI key was configured anywhere to read the API).
+//
+// Fields per model:
+//   id               the slug sent to api.x.ai
+//   label, tier, description   what a model menu shows
+//   contextWindow    tokens
+//   tools            function calling
+//   vision           accepts image input
+//   reasoning        thinks before answering
+//   reasoningEfforts accepted `reasoning_effort` values ([] when not settable)
+//   price            [input, output] USD per 1M tokens below the 200k
+//                    long-context threshold (metered by llm-pricing.js)
+//   openrouterModel  the OpenRouter mirror id, or null when there is none
+//   chatCompletions  false when the model only works through the Responses API
+//   menu             offered in model menus; a live model left out of menus
+//                    names the `supersededBy` model a menu shows instead
+
+export const XAI_API_BASE = 'https://api.x.ai/v1';
+export const XAI_CHAT_COMPLETIONS_URL = `${XAI_API_BASE}/chat/completions`;
+
+const EFFORTS_FLAGSHIP = Object.freeze(['low', 'medium', 'high', 'xhigh']);
+
+export const GROK_MODELS = Object.freeze([
+	{
+		id: 'grok-4.7',
+		label: 'Grok 4.7',
+		tier: 'flagship',
+		description: 'xAI flagship for coding, agentic tasks and knowledge work. Reasons before it answers.',
+		contextWindow: 500_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: EFFORTS_FLAGSHIP,
+		price: [2, 6],
+		openrouterModel: 'x-ai/grok-4.7',
+		chatCompletions: true,
+		menu: true,
+	},
+	{
+		id: 'grok-4.6',
+		label: 'Grok 4.6',
+		tier: 'flagship',
+		description: 'Previous xAI flagship, same price as Grok 4.7.',
+		contextWindow: 500_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: EFFORTS_FLAGSHIP,
+		price: [2, 6],
+		openrouterModel: 'x-ai/grok-4.6',
+		chatCompletions: true,
+		menu: false,
+		supersededBy: 'grok-4.7',
+	},
+	{
+		id: 'grok-4.5',
+		label: 'Grok 4.5',
+		tier: 'flagship',
+		description: 'Earlier xAI flagship, same price as Grok 4.7.',
+		contextWindow: 500_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: EFFORTS_FLAGSHIP,
+		price: [2, 6],
+		openrouterModel: 'x-ai/grok-4.5',
+		chatCompletions: true,
+		menu: false,
+		supersededBy: 'grok-4.7',
+	},
+	{
+		id: 'grok-4.3',
+		label: 'Grok 4.3',
+		tier: 'balanced',
+		description: 'Lowest-priced Grok: 1M-token context and strong tool calling at a third of the flagship price.',
+		contextWindow: 1_000_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: Object.freeze(['none', 'low', 'medium', 'high', 'xhigh']),
+		price: [1.25, 2.5],
+		openrouterModel: 'x-ai/grok-4.3',
+		chatCompletions: true,
+		menu: true,
+	},
+	{
+		id: 'grok-4.20-0309-non-reasoning',
+		label: 'Grok 4.20 Fast',
+		tier: 'fast',
+		description: 'Grok with no thinking pass and a 1M-token context. The quickest first token.',
+		contextWindow: 1_000_000,
+		tools: true,
+		vision: true,
+		reasoning: false,
+		reasoningEfforts: Object.freeze([]),
+		price: [1.25, 2.5],
+		openrouterModel: null,
+		chatCompletions: true,
+		menu: true,
+	},
+	{
+		id: 'grok-4.20-0309-reasoning',
+		label: 'Grok 4.20',
+		tier: 'reasoning',
+		description: 'Reasoning Grok 4.20 with a 1M-token context.',
+		contextWindow: 1_000_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: Object.freeze([]),
+		price: [1.25, 2.5],
+		openrouterModel: 'x-ai/grok-4.20',
+		chatCompletions: true,
+		menu: false,
+		supersededBy: 'grok-4.3',
+	},
+	{
+		id: 'grok-build-0.1',
+		label: 'Grok Build 0.1',
+		tier: 'coding',
+		description: 'xAI agentic coding and web-dev model, 256K context.',
+		contextWindow: 256_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: Object.freeze([]),
+		price: [1, 2],
+		openrouterModel: 'x-ai/grok-build-0.1',
+		chatCompletions: true,
+		menu: true,
+	},
+	{
+		// Leader plus sub-agents; xAI serves it through the Responses API only
+		// (Chat Completions is refused), so no chat-completions surface routes it.
+		// Catalogued so the drift check knows it is accounted for.
+		id: 'grok-4.20-multi-agent-0309',
+		label: 'Grok 4.20 Multi-Agent',
+		tier: 'reasoning',
+		description: 'Several Grok agents collaborating on one request. Responses API only.',
+		contextWindow: 1_000_000,
+		tools: true,
+		vision: true,
+		reasoning: true,
+		reasoningEfforts: Object.freeze([]),
+		price: [1.25, 2.5],
+		openrouterModel: null,
+		chatCompletions: false,
+		menu: false,
+	},
+].map((m) => Object.freeze(m)));
+
+const GROK_BY_ID = new Map(GROK_MODELS.map((m) => [m.id, m]));
+
+/**
+ * Grok slugs xAI retired, mapped to the successor xAI itself redirects them to
+ * (docs.x.ai/developers/migration/may-15-retirement). `grok-4.1-fast` is the
+ * short slug this platform stored as its budget default before the
+ * retirement; agents, embeds and BYOK users saved it, so it maps forward too.
+ */
+export const GROK_RETIRED_ALIASES = Object.freeze({
+	'grok-4.1-fast': 'grok-4.3',
+	'grok-4-1-fast-reasoning': 'grok-4.3',
+	'grok-4-1-fast-non-reasoning': 'grok-4.3',
+	'grok-4-fast-reasoning': 'grok-4.3',
+	'grok-4-fast-non-reasoning': 'grok-4.3',
+	'grok-4-0709': 'grok-4.3',
+	'grok-3': 'grok-4.3',
+	'grok-code-fast-1': 'grok-build-0.1',
+});
+
+/**
+ * List prices of retired Grok slugs while they were live, so usage rows
+ * recorded under them still price. New traffic never carries these ids: it is
+ * resolved to the successor before the call.
+ */
+export const GROK_RETIRED_PRICES = Object.freeze({
+	'grok-4.1-fast': Object.freeze([0.2, 0.5]),
+});
+
+/** Default Grok for a caller who brought their own xAI key: the flagship. */
+export const GROK_DEFAULT_MODEL = 'grok-4.7';
+
+/**
+ * The platform's budget Grok (server key backstop, previews, intent
+ * compilers): the cheapest text model, run with reasoning off, which is
+ * exactly what xAI redirects the retired non-reasoning fast slugs to.
+ */
+export const GROK_BUDGET_MODEL = 'grok-4.3';
+export const GROK_BUDGET_EXTRA_BODY = Object.freeze({ reasoning_effort: 'none' });
+
+/** Grok models a chat-completions transport can route, in catalog order. */
+export const GROK_CHAT_MODELS = Object.freeze(GROK_MODELS.filter((m) => m.chatCompletions));
+
+/** Grok models offered in model menus, in catalog order. */
+export const GROK_MENU_MODELS = Object.freeze(GROK_MODELS.filter((m) => m.menu));
+
+/** Catalog entry for a Grok id (retired ids resolve to their successor), or null. */
+export function grokModel(id) {
+	return GROK_BY_ID.get(resolveGrokModelId(id)) || null;
+}
+
+/** The live Grok id for a stored one: retired slugs map to their successor. */
+export function resolveGrokModelId(id) {
+	return GROK_RETIRED_ALIASES[id] || id;
+}
+
+/**
+ * The Grok id a model menu should show for a stored one: retired slugs and
+ * live models left out of menus resolve to the menu model that replaces them.
+ */
+export function grokMenuModelId(id) {
+	const live = grokModel(id);
+	if (!live) return id;
+	return live.menu ? live.id : live.supersededBy;
+}
+
+/**
+ * The Grok model a chat-completions call should send for a requested id:
+ * retired ids map forward, a Responses-only id or no id falls back to
+ * `fallback`, and an id this catalog has not met yet passes through untouched,
+ * so a BYOK caller can use a model xAI shipped today before the drift check
+ * adds it here.
+ */
+export function routableGrokModelId(id, fallback = GROK_DEFAULT_MODEL) {
+	if (!id) return fallback;
+	const live = resolveGrokModelId(id);
+	const m = GROK_BY_ID.get(live);
+	return m && !m.chatCompletions ? fallback : live;
+}
+
 /**
  * Capability metadata per chat model id — the routing brain. Only models
  * listed here are auto-selectable; the router uses these flags to avoid
@@ -133,10 +378,9 @@ export const MODEL_CATALOG = {
 	// ── Z.AI (Zhipu): permanently free, rate-limited GLM Flash lane ───────────
 	'glm-4.7-flash':              { provider: 'zai', tools: true },
 
-	// ── xAI Grok (paid; host or BYOK key) — OpenAI-compatible at api.x.ai ─────
-	'grok-4.5':                   { provider: 'grok', tools: true },
-	'grok-4.3':                   { provider: 'grok', tools: true },
-	'grok-4.1-fast':              { provider: 'grok', tools: true },
+	// ── xAI Grok (paid; host or BYOK key), OpenAI-compatible at api.x.ai ──────
+	// Every chat-completions Grok in GROK_MODELS above; ids live only there.
+	...Object.fromEntries(GROK_CHAT_MODELS.map((m) => [m.id, { provider: 'grok', tools: m.tools }])),
 
 	// ── OpenAI (paid) — see operational note above; ranked last ───────────────
 	'gpt-5.6-sol':                { provider: 'openai', tools: true },
@@ -168,6 +412,7 @@ export const MODEL_CATALOG = {
 export const RETIRED_MODEL_ALIASES = {
 	'llama-3.3-70b-versatile': 'llama-3.3-70b',
 	'llama-3.1-8b-instant': 'qwen3.8-27b',
+	...GROK_RETIRED_ALIASES,
 };
 
 /** The live id for a model: a retired id maps to its successor. */
@@ -352,7 +597,7 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	mistral: 'mistral-small-latest',
 	zai: 'glm-4.7-flash',
 	openai: 'gpt-5.4-nano',
-	grok: 'grok-4.5',
+	grok: GROK_DEFAULT_MODEL,
 };
 
 /**

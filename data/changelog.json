@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Grok model menus now offer xAI's current models",
+			"summary": "Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/brain"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Coin pages keep their Markets table when the listing sources are busy",
 			"summary": "When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.",
 			"tags": [

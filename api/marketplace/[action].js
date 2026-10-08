@@ -31,7 +31,12 @@ import {
 	vertexGeminiChatUrl,
 	vertexGeminiHeaders,
 } from '../_lib/vertex-gemini.js';
-import { modelThinksByDefault } from '../_lib/chat-models.js';
+import {
+	modelThinksByDefault,
+	XAI_CHAT_COMPLETIONS_URL,
+	GROK_BUDGET_MODEL,
+	GROK_BUDGET_EXTRA_BODY,
+} from '../_lib/chat-models.js';
 import { getSkillPrices, skillPriceMap } from '../_lib/skill-price-cache.js';
 import { viewerNftGatedSkills } from '../_lib/nft-gate.js';
 import { z } from 'zod';
@@ -935,8 +940,10 @@ const PREVIEW_PROVIDERS = {
 	// xAI Grok: paid backstop, OpenAI-compatible. Budget tier keeps previews cheap.
 	grok: {
 		envKey: 'GROK_API_KEY',
-		url: 'https://api.x.ai/v1/chat/completions',
-		defaultModel: 'grok-4.1-fast',
+		url: XAI_CHAT_COMPLETIONS_URL,
+		defaultModel: GROK_BUDGET_MODEL,
+		// Reasoning off: a 512-token preview must not be spent thinking.
+		extraBody: GROK_BUDGET_EXTRA_BODY,
 		style: 'openai',
 	},
 };
@@ -1155,6 +1162,8 @@ export function buildPreviewRoutes() {
 					max_tokens: 512,
 					messages: [{ role: 'system', content: systemPrompt }, ...history],
 					stream: true,
+					// Provider-specific knobs tuned for the default model only.
+					...(model === cfg.defaultModel && cfg.extraBody ? cfg.extraBody : {}),
 				}),
 			});
 		}

@@ -43,7 +43,7 @@ production are routinely dead and a chain that depends on them fails:
 | 17 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
 | 18 | OpenRouter Claude mirror | `OPENROUTER_CLAUDE_MIRROR_MODEL` | paid | off by default (see below) |
 | 19 | OpenAI `gpt-5.4-nano` | `OPENAI_API_KEY` | paid | **dead**: 429 `billing_not_active` |
-| 20 | xAI Grok | `GROK_API_KEY` | paid | not configured in prod |
+| 20 | xAI Grok `grok-4.3`, reasoning off (`GROK_BUDGET_MODEL`) | `GROK_API_KEY` (or `XAI_API_KEY`) | paid | not configured in prod: no key in `.env`, `.env.local`, the `three-ws-api` service, or Secret Manager (checked 2026-10-08). A caller's own xAI key leads the chain instead, on `grok-4.7` unless they name a model. See [Grok model ids](#grok-model-ids). |
 
 The 2026-08-05 widening (SambaNova, Mistral, Z.AI, Cloudflare, LLM7,
 SiliconFlow) added six independent free quota pools; each is documented with
@@ -210,6 +210,73 @@ without writing fake rows into the production ledger.
 It is not wired into `npm run gate`: the gate is offline and this needs the
 database. Run it after any change to a provider chain or the price table.
 
+## Grok model ids
+
+xAI retires model ids in batches. On 2026-05-15 it retired eight at once,
+including the `grok-4-1-fast` pair behind the `grok-4.1-fast` slug this
+platform used as its budget Grok, and redirected them to `grok-4.3` at
+`grok-4.3` prices. Our ids were typed by hand in a dozen files, so the stale
+slug outlived the retirement everywhere.
+
+There is now one list: `GROK_MODELS` in `api/_lib/chat-models.js`. Each row
+carries the id, context window, function calling, image input, reasoning and
+the `reasoning_effort` values it accepts, list price, the OpenRouter mirror id,
+whether Chat Completions can serve it, and whether model menus show it.
+Everything reads from it:
+
+| Consumer | What it takes |
+|---|---|
+| `api/_lib/llm.js` | the BYOK default (`GROK_DEFAULT_MODEL`, the flagship) and the server backstop (`GROK_BUDGET_MODEL` with `GROK_BUDGET_EXTRA_BODY`) |
+| `api/brain/chat.js` | one `/brain` row per menu model, which also feeds `GET /api/v1/models` and the shared model picker |
+| `api/chat.js`, `api/llm/anthropic.js`, `api/v1/_providers.js` | the routable ids and the xAI URL |
+| `api/marketplace/[action].js`, `api/_lib/wallet-intents.js`, `api/agents/solana-intent.js` | the budget model for previews and intent compiling |
+| `api/_lib/llm-pricing.js` | every Grok price, including retired slugs for historical rows |
+| `src/avatar-page.js`, `src/nich-agent.js`, `src/editor/manifest-builder.js` | the menu rows |
+
+Current set (xAI docs, 2026-10-08): menus show `grok-4.7` (flagship),
+`grok-4.3` (cheapest, 1M context), `grok-4.20-0309-non-reasoning` (no thinking
+pass) and `grok-build-0.1` (coding). `grok-4.6`, `grok-4.5` and
+`grok-4.20-0309-reasoning` are still live and routable when a caller names
+them; menus show their `supersededBy` model instead. `grok-4.20-multi-agent-0309`
+is catalogued but never routed, because xAI serves it through the Responses
+API only.
+
+**Retired ids keep working.** `GROK_RETIRED_ALIASES` maps every retired slug to
+the successor xAI itself redirects it to (`grok-4.1-fast` → `grok-4.3`,
+`grok-code-fast-1` → `grok-build-0.1`, and so on). `resolveModelId()`,
+`routableGrokModelId()` and the `/brain` alias table all run through it, so an
+agent, embed policy, BYOK caller or saved menu pick that stored a retired id
+gets its successor instead of an upstream 404. An id the catalog has not met
+yet passes through untouched, so a BYOK caller can use a model xAI shipped
+today.
+
+**The guard.** `tests/grok-model-literals.test.js` fails `npm test` when a Grok
+id appears as a string literal anywhere in `api/`, `src/` or `server/` outside
+`chat-models.js`, and holds the catalog to its invariants (every alias target
+is live, the budget model accepts the reasoning knob we send, every Grok price
+comes from the catalog).
+
+**The drift check.** `npm run check:xai-models`
+(`scripts/check-xai-models.mjs`) compares `GROK_MODELS` with what xAI serves
+and exits 1 on drift, 2 when the source cannot be read:
+
+```sh
+npm run check:xai-models                 # API with a key, else the public docs
+npm run check:xai-models -- --source=docs
+npm run check:xai-models -- --json
+```
+
+With `GROK_API_KEY` or `XAI_API_KEY` set (environment, `.env` or `.env.local`)
+it reads `GET https://api.x.ai/v1/models` and `/v1/language-models`. Without
+one it reads https://docs.x.ai/developers/models.md and the per-model pages
+under `https://docs.x.ai/developers/models/<id>.md`, and says so in its first
+line. Drift is: a catalogued id xAI no longer lists (retire it into
+`GROK_RETIRED_ALIASES`), an id xAI now serves only as an alias of another, a
+new xAI text model we have not catalogued, or a changed context window, price,
+image input, function calling or reasoning-effort set. Fix it in
+`GROK_MODELS`; nothing else needs touching. Run it whenever xAI announces a
+model, and before turning on a server `GROK_API_KEY`.
+
 ---
 
 ## Probing a lane
@@ -257,6 +324,10 @@ them:
    `VERTEX_ANTHROPIC_MODELS`.
 4. **Supply an `ANTHROPIC_API_KEY`** if first-party Claude is wanted before
    Vertex entitlement lands. One command, above.
+5. **Supply a `GROK_API_KEY`** (xAI console) if a platform-paid Grok rung is
+   wanted. Without it Grok serves only callers who bring their own key. Once it
+   is set, run `npm run check:xai-models -- --source=api` to diff the catalog
+   against the account's live model list.
 
 ## Related
 
@@ -265,4 +336,5 @@ them:
 - [gcp-production.md](gcp-production.md): the full production runbook.
 - `api/_lib/llm.js`: the chain itself, with the policy comment at the top.
 - `api/_lib/chat-models.js`: the model catalog, capability flags, and
-  `isPaidModel()`.
+  `isPaidModel()`; `GROK_MODELS` is the only place a Grok id is written.
+- `scripts/check-xai-models.mjs`: the Grok drift check described above.

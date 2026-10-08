@@ -39,6 +39,7 @@ import { skillLabel } from './shared/skill-label.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
 import { mountEarningsCard } from './shared/agent-earnings-card.js';
 import { renderHomeConfirmation } from './home-confirm-card.js';
+import { GROK_MENU_MODELS, grokMenuModelId } from '../api/_lib/chat-models.js';
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -109,6 +110,21 @@ let attachedPlugins = new Set();
 let chatHistory = [];
 let selectedModelId = 'auto';
 
+// Grok rows come from GROK_MENU_MODELS (api/_lib/chat-models.js), the one place
+// a Grok id is written, so a retired xAI model never lingers in this menu.
+const GROK_OPTIONS = GROK_MENU_MODELS.map((m) => ({
+	id: `grok:${m.id}`,
+	label: `${m.label} (xAI)`,
+	provider: 'grok',
+	model: m.id,
+}));
+
+// A stored Grok pick whose model xAI retired, or a menu dropped, resumes on the
+// model that replaced it instead of silently resetting to the default.
+function currentModelChoice(id) {
+	return typeof id === 'string' && id.startsWith('grok:') ? `grok:${grokMenuModelId(id.slice(5))}` : id;
+}
+
 // Model choices surfaced in the chat dropdown. `auto` lets the server pick
 // based on which keys are configured (Anthropic → OpenRouter → Groq → OpenAI).
 const MODEL_OPTIONS = [
@@ -136,8 +152,7 @@ const MODEL_OPTIONS = [
 	{ id: 'openai:gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', model: 'gpt-5.6-sol' },
 	{ id: 'openai:gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', model: 'gpt-5.6-terra' },
 	{ id: 'openai:gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', model: 'gpt-5.6-luna' },
-	{ id: 'grok:grok-4.5', label: 'Grok 4.5 (xAI)', provider: 'grok', model: 'grok-4.5' },
-	{ id: 'grok:grok-4.1-fast', label: 'Grok 4.1 Fast (xAI)', provider: 'grok', model: 'grok-4.1-fast' },
+	...GROK_OPTIONS,
 	{ id: 'watsonx:granite', label: 'IBM Granite 3 (watsonx)', provider: 'watsonx', model: 'ibm/granite-3-8b-instruct' },
 	{ id: 'orchestrate:agent', label: 'watsonx Orchestrate', provider: 'orchestrate', model: 'orchestrate-agent' },
 ];
@@ -2272,7 +2287,7 @@ function bindChat() {
 	};
 	if (modelSelect) {
 		try {
-			const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+			const stored = currentModelChoice(localStorage.getItem(MODEL_STORAGE_KEY));
 			if (stored && MODEL_OPTIONS.some((o) => o.id === stored)) selectedModelId = stored;
 		} catch {}
 		modelSelect.value = selectedModelId;

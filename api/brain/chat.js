@@ -19,7 +19,15 @@ import { cors, method, readJson, error, wrap, rateLimited } from '../_lib/http.j
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { watsonxConfig, watsonxChatRequest } from '../_lib/watsonx.js';
-import { DEFAULT_FREE_MODEL, modelThinksByDefault } from '../_lib/chat-models.js';
+import {
+	DEFAULT_FREE_MODEL,
+	modelThinksByDefault,
+	XAI_API_BASE,
+	GROK_MODELS,
+	GROK_MENU_MODELS,
+	GROK_RETIRED_ALIASES,
+	grokMenuModelId,
+} from '../_lib/chat-models.js';
 import { ROSTER, rosterModel } from '../_lib/model-roster.js';
 import { rosterTransports, transportHeaders } from '../_lib/model-routes.js';
 import { createReasoningStripper } from '../_lib/strip-reasoning.js';
@@ -73,6 +81,24 @@ export const maxDuration = 120;
 // buildPrimary() prefers the native model and falls back to routing through
 // OpenRouter; buildFallback() reuses the OpenRouter id to route *around* a native
 // provider outage (quota/billing/rate-limit) at request time.
+// A /brain row for a Grok model. Ids, labels, context and mirrors all come from
+// GROK_MODELS, so a new or retired xAI model is a one-line change there.
+// Native on GROK_API_KEY; mirrored on OpenRouter when the catalog names a
+// mirror, which is also the route around an xAI outage.
+function grokSpec(m) {
+	return {
+		label: m.label,
+		network: 'xAI',
+		tier: m.tier,
+		maxOutput: m.tier === 'fast' ? 8192 : 16384,
+		context: m.contextWindow,
+		description: m.description,
+		native: () =>
+			env.GROK_API_KEY ? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: XAI_API_BASE }).chat(m.id) : null,
+		...(m.openrouterModel ? { openrouterModel: m.openrouterModel } : {}),
+	};
+}
+
 const PROVIDERS = {
 	// The key is historical (agents store it); the model behind it is whatever
 	// DEFAULT_FREE_MODEL names today. The label says what actually answers: it
@@ -256,43 +282,8 @@ const PROVIDERS = {
 		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('o3-pro') : null),
 		openrouterModel: 'openai/o3-pro',
 	},
-	'grok-4.5': {
-		label: 'Grok 4.5',
-		network: 'xAI',
-		tier: 'flagship',
-		maxOutput: 16384,
-		description: 'xAI flagship. Frontier reasoning with real-time X knowledge.',
-		native: () =>
-			env.GROK_API_KEY
-				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.5')
-				: null,
-		openrouterModel: 'x-ai/grok-4.5',
-	},
-	'grok-4.3': {
-		label: 'Grok 4.3',
-		network: 'xAI',
-		tier: 'balanced',
-		maxOutput: 16384,
-		description: 'Long-context Grok (1M tokens) at a lower price than 4.5.',
-		native: () =>
-			env.GROK_API_KEY
-				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.3')
-				: null,
-		openrouterModel: 'x-ai/grok-4.3',
-	},
-	'grok-4.1-fast': {
-		label: 'Grok 4.1 Fast',
-		network: 'xAI',
-		tier: 'fast',
-		maxOutput: 8192,
-		description: 'Budget Grok with a 2M-token context. Fast, cheap workhorse.',
-		native: () =>
-			env.GROK_API_KEY
-				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.1-fast')
-				: null,
-		// OpenRouter dropped x-ai/grok-4.1-fast from its catalog (verified
-		// 2026-07-22), so this tier is native xAI only, with no mirror route.
-	},
+	// xAI Grok: one row per menu model in GROK_MODELS (chat-models.js).
+	...Object.fromEntries(GROK_MENU_MODELS.map((m) => [m.id, grokSpec(m)])),
 	'qwen-plus': {
 		label: 'Qwen Plus',
 		network: 'DashScope',
@@ -913,6 +904,14 @@ const PROVIDER_ALIASES = {
 	'nvidia-deepseek-v4': 'deepseek-v4-flash',
 	'nvidia-kimi-k2': 'kimi-k2',
 	'nvidia-minimax-m2': 'gpt-oss-120b',
+	// Retired Grok slugs, and live Grok models a menu no longer lists, resolve to
+	// the menu model that replaces them (GROK_RETIRED_ALIASES, then each
+	// model's `supersededBy`), so a saved pick keeps answering on a current model.
+	...Object.fromEntries(
+		[...Object.keys(GROK_RETIRED_ALIASES), ...GROK_MODELS.filter((m) => !m.menu).map((m) => m.id)]
+			.map((id) => [id, grokMenuModelId(id)])
+			.filter(([, to]) => to),
+	),
 };
 
 /**

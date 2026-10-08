@@ -56,6 +56,10 @@ import {
 	MAX_FALLBACK_ATTEMPTS,
 	TOTAL_BUDGET_MS,
 	PER_CALL_TIMEOUT_MS,
+	XAI_CHAT_COMPLETIONS_URL,
+	GROK_DEFAULT_MODEL,
+	GROK_BUDGET_MODEL,
+	routableGrokModelId,
 } from './_lib/chat-models.js';
 import { computeContext, searchMemories } from './_lib/memory-store.js';
 import { HOME_TOOL_DEFS, isHomeTool, runHomeTool } from './_lib/home/tools.js';
@@ -194,7 +198,7 @@ const PROVIDERS = {
 	grok: {
 		envKey: 'GROK_API_KEY',
 		defaultModel: PROVIDER_MODEL_DEFAULTS.grok,
-		url: 'https://api.x.ai/v1/chat/completions',
+		url: XAI_CHAT_COMPLETIONS_URL,
 		style: 'openai',
 	},
 	// IBM watsonx.ai (Granite). URL + headers are derived in makeRoute from the
@@ -1561,8 +1565,13 @@ function pickProvider(requested, model, userKeys = {}, cooldown = new Map()) {
 			// actually serves that id (per MODEL_CATALOG) — with free providers
 			// leading the ladder, an Anthropic-style CHAT_MODEL leaking into a Groq
 			// or NVIDIA request would 400 every chat.
+			// A stored Grok id xAI has since retired maps to its successor here,
+			// before it can 404 the rung (chat-models.js GROK_RETIRED_ALIASES).
+			const requestedModel = requested === name && model
+				? (name === 'grok' ? routableGrokModelId(model, cfg.defaultModel) : model)
+				: null;
 			const chosenModel =
-				(requested === name && model) ||
+				requestedModel ||
 				(name === 'watsonx' || name === 'orchestrate' || KEYLESS_VERTEX.has(name)
 					? cfg.defaultModel
 					: envPinnedModelFor(name) || cfg.defaultModel);
@@ -1613,7 +1622,7 @@ const FALLBACK_SIBLINGS = {
 	zai: ['glm-4.7-flash'],
 	anthropic: ['claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
 	openai: ['gpt-5.4-nano'],
-	grok: ['grok-4.5', 'grok-4.1-fast'],
+	grok: [GROK_DEFAULT_MODEL, GROK_BUDGET_MODEL],
 };
 
 // A model is eligible for an *auto-built* fallback slot only when it can serve

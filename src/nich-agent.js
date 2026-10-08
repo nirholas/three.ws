@@ -11,6 +11,7 @@
 
 import { ACTION_TYPES } from './agent-protocol.js';
 import { log } from './shared/log.js';
+import { GROK_MENU_MODELS, grokMenuModelId } from '../api/_lib/chat-models.js';
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -671,7 +672,7 @@ export class NichAgent {
 	_loadModelChoice() {
 		this._modelChoice = 'auto';
 		try {
-			const stored = localStorage.getItem(this._modelKey);
+			const stored = currentModelChoice(localStorage.getItem(this._modelKey));
 			if (stored && MODEL_OPTIONS.some((o) => o.id === stored)) {
 				this._modelChoice = stored;
 			}
@@ -995,6 +996,21 @@ function _escapeHTML(s) {
 		.replace(/'/g, '&#39;');
 }
 
+// Grok rows come from GROK_MENU_MODELS (api/_lib/chat-models.js), the one place
+// a Grok id is written, so a retired xAI model never lingers in this menu.
+const GROK_OPTIONS = GROK_MENU_MODELS.map((m) => ({
+	id: `grok:${m.id}`,
+	label: `${m.label} (xAI)`,
+	provider: 'grok',
+	model: m.id,
+}));
+
+// A stored Grok pick whose model xAI retired, or a menu dropped, resumes on the
+// model that replaced it instead of silently resetting to the default.
+function currentModelChoice(id) {
+	return typeof id === 'string' && id.startsWith('grok:') ? `grok:${grokMenuModelId(id.slice(5))}` : id;
+}
+
 // Model choices surfaced in the header dropdown. `auto` lets the server pick —
 // which now resolves to GPT-OSS 120B on OpenRouter (the platform default, free),
 // then Groq, then any configured paid keys. See api/_lib/chat-models.js.
@@ -1030,8 +1046,7 @@ const MODEL_OPTIONS = [
 	{ id: 'openai:gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', model: 'gpt-5.6-sol' },
 	{ id: 'openai:gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', model: 'gpt-5.6-terra' },
 	{ id: 'openai:gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', model: 'gpt-5.6-luna' },
-	{ id: 'grok:grok-4.5', label: 'Grok 4.5 (xAI)', provider: 'grok', model: 'grok-4.5' },
-	{ id: 'grok:grok-4.1-fast', label: 'Grok 4.1 Fast (xAI)', provider: 'grok', model: 'grok-4.1-fast' },
+	...GROK_OPTIONS,
 	{
 		id: 'watsonx:granite',
 		label: 'IBM Granite 3 (watsonx)',

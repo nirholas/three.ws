@@ -40,6 +40,7 @@
 //     params    documented inputs for discovery
 
 import { env } from '../_lib/env.js';
+import { XAI_API_BASE, GROK_MENU_MODELS, GROK_DEFAULT_MODEL, resolveGrokModelId } from '../_lib/chat-models.js';
 
 function required(value, name) {
 	const v = value == null ? '' : String(value).trim();
@@ -751,7 +752,7 @@ export const PROVIDERS = [
 		id: 'grok',
 		name: 'Grok (xAI)',
 		category: 'ai-inference',
-		base: 'https://api.x.ai/v1',
+		base: XAI_API_BASE,
 		requiresKey: true,
 		envVar: 'GROK_API_KEY',
 		byokHeader: 'x-provider-key',
@@ -770,13 +771,14 @@ export const PROVIDERS = [
 						err.code = 'validation_error';
 						throw err;
 					}
-					return b;
+					// A retired Grok slug maps to its successor instead of 404ing.
+					return typeof b.model === 'string' ? { ...b, model: resolveGrokModelId(b.model) } : b;
 				},
 				priceAtomics: '5000',
 				scope: 'agents:write',
-				summary: 'Chat completions against xAI Grok models (grok-4.5, grok-4.3, grok-4.1-fast; BYOK supported).',
+				summary: `Chat completions against xAI Grok models (${GROK_MENU_MODELS.map((m) => m.id).join(', ')}; BYOK supported).`,
 				params: {
-					model: 'Grok model id, e.g. "grok-4.5" (required)',
+					model: `Grok model id, e.g. "${GROK_DEFAULT_MODEL}" (required)`,
 					messages: 'array of {role, content} (required)',
 					'…': 'any other OpenAI chat-completions parameter is forwarded',
 				},

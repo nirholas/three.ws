@@ -26,6 +26,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { loadUserProviderKeys } from '../_lib/provider-keys.js';
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { THREE_MINT } from '../_lib/networth-model.js';
+import { XAI_CHAT_COMPLETIONS_URL, GROK_BUDGET_MODEL, GROK_BUDGET_EXTRA_BODY } from '../_lib/chat-models.js';
 import { getSpendLimits, getTradeLimits } from '../_lib/agent-trade-guards.js';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
@@ -297,14 +298,15 @@ async function callOpenRouter({ apiKey, system, messages }) {
 }
 
 async function callGrok({ apiKey, system, messages }) {
-	const resp = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
+	const resp = await fetchWithTimeout(XAI_CHAT_COMPLETIONS_URL, {
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${apiKey}`,
 			'content-type': 'application/json',
 		},
 		body: JSON.stringify({
-			model: 'grok-4.1-fast',
+			model: GROK_BUDGET_MODEL,
+			...GROK_BUDGET_EXTRA_BODY,
 			max_tokens: 600,
 			messages: [{ role: 'system', content: system }, ...messages],
 			tools: [OPENAI_TOOL],

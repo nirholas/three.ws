@@ -138,11 +138,17 @@ Legacy ids keep working: `gpt-4o`, `gpt-4o-mini`, and `o3-mini` are accepted as 
 
 ### xAI (Grok) models
 
-**Grok 4.5** (`grok-4.5`) is the xAI flagship: $2 / $6, cheaper than Sonnet per token, with a 500K context window. Frontier reasoning and strong real-time knowledge of X. A good pick for agents that discuss current events or social sentiment.
+Grok ids come from one list, `GROK_MODELS` in `api/_lib/chat-models.js`, which `npm run check:xai-models` holds to xAI's own model list. The menus offer:
 
-**Grok 4.3** (`grok-4.3`) is the long-context option: $1.25 / $2.50, 1M-token window. Reach for it when the agent carries very large system prompts or memory.
+**Grok 4.7** (`grok-4.7`) is the xAI flagship and the default for anyone who brings their own xAI key: $2 / $6, 500K context, vision, reasoning by default. A good pick for agents that discuss current events or social sentiment.
 
-**Grok 4.1 Fast** (`grok-4.1-fast`) is the budget workhorse on paper ($0.20 / $0.50, 2M-token window), but check availability before you pin it: OpenRouter dropped it from its catalog, so it only runs when a first-party `GROK_API_KEY` is configured. `GET /api/brain/chat` reports it as unavailable otherwise.
+**Grok 4.3** (`grok-4.3`) is the cheapest Grok: $1.25 / $2.50 with a 1M-token window and strong tool calling. Reach for it when the agent carries very large system prompts or memory. It is also the platform's budget Grok, run with reasoning off.
+
+**Grok 4.20 Fast** (`grok-4.20-0309-non-reasoning`) skips the thinking pass entirely, for the quickest first token at the Grok 4.3 price.
+
+**Grok Build 0.1** (`grok-build-0.1`) is xAI's coding model: $1 / $2, 256K context.
+
+`grok-4.6`, `grok-4.5` and `grok-4.20-0309-reasoning` still route when an agent names them. Retired ids keep working too: `grok-4.1-fast` and the other slugs xAI retired on 2026-05-15 resolve to the successor xAI recommends (`grok-4.3`, or `grok-build-0.1` for `grok-code-fast-1`), so an agent that stored one answers on the replacement with no config change.
 
 ### Free lanes (no key, no bill)
 
