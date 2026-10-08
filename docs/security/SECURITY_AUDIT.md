@@ -269,6 +269,15 @@ Only HTML documents are rewritten by `server/csp-hashes.mjs`, so only they are
 held to the hash rewrite; `robots.txt`, `llms.txt`, `openapi.json` and the
 `.well-known` documents have to carry the declared policy untouched instead.
 
+Until 2026-10-08 that rewrite covered static files and the SSR paths only. An
+HTML or SVG document rendered by an `api/` handler (every share page, every OG
+card) inherited the route table's policy with `'unsafe-inline'` intact, so an
+attribute breakout in any of them ran unhindered. `hardenOnEnd()` in
+`server/csp-hashes.mjs` now applies the same rewrite to an API response's body
+when it is sent whole through `res.end()` and the handler kept the inherited
+policy; a handler that sets its own policy (`api/artifact.js`) keeps it.
+`tests/csp-hashes.test.js` pins both halves.
+
 Both of those earned their keep immediately, and the two things they caught are
 the reason neither is optional:
 
