@@ -15,7 +15,9 @@
 //    figures already standing.
 //
 // The crew data is live, so every assertion is about structure and behaviour
-// rather than a particular crew being present.
+// rather than a particular crew being present. The one exception is the clean
+// console check, which answers its two reads itself: an error printed because
+// production was briefly unwell would fail it for a reason that is not the page.
 
 import { test, expect } from '@playwright/test';
 
@@ -34,6 +36,20 @@ async function pollNow(page) {
 	await page.waitForTimeout(2500);
 }
 
+// One crew in the shape GET /api/crews/directory answers. Synthetic, so the
+// clean-console check measures the page and not whatever production's crew
+// service happens to be doing during the run.
+const DIRECTORY_CREW = {
+	tag: 'E2EQA',
+	name: 'Synthetic QA Crew',
+	createdAt: '2026-08-07T09:49:21.138Z',
+	memberCount: 2,
+	faces: [
+		{ id: 'e2e-face-1', name: 'QA One', username: 'qa-one', avatarUrl: null },
+		{ id: 'e2e-face-2', name: 'QA Two', username: 'qa-two', avatarUrl: null },
+	],
+};
+
 test('/crews serves a signed-out visitor the directory with a clean console', async ({ page }) => {
 	const errors = [];
 	page.on('console', (m) => {
@@ -41,6 +57,10 @@ test('/crews serves a signed-out visitor the directory with a clean console', as
 		// not forwarded; that is the harness, not the page.
 		if (m.type() === 'error' && !/websocket/i.test(m.text())) errors.push(m.text());
 	});
+	// The two reads a signed-out first paint makes, answered at the network seam
+	// the way production answers an anonymous visitor.
+	await page.route('**/api/auth/me', (r) => r.fulfill({ json: { user: null } }));
+	await page.route('**/api/crews/directory**', (r) => r.fulfill({ json: { data: { crews: [DIRECTORY_CREW] } } }));
 
 	await page.goto('/crews', { waitUntil: 'domcontentloaded', timeout: 60_000 });
 	await expect(page.locator('h1')).toHaveText('Crew HQ');
@@ -49,6 +69,7 @@ test('/crews serves a signed-out visitor the directory with a clean console', as
 	await expect(page.locator('#cw-found-panel')).toBeHidden();
 	await expect(page.locator('#cw-dir-panel')).toBeVisible();
 	await page.waitForFunction(() => !/Loading crews/.test(document.getElementById('cw-dir').textContent));
+	await expect(page.locator(`.cw-dir-card[href="/crews/${DIRECTORY_CREW.tag}"]`)).toContainText(DIRECTORY_CREW.name);
 
 	expect(errors, `console errors on a public page: ${errors.join(' | ')}`).toEqual([]);
 });
