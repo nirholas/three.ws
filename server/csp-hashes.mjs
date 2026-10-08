@@ -201,3 +201,45 @@ export function hardenHeaderBag(headers, html) {
 	}
 	return headers;
 }
+
+// Content types a browser runs script from when the response is opened as a
+// document. An API handler that renders a share page or an SVG card answers
+// with one of these.
+const ACTIVE_DOCUMENT = /^\s*(?:text\/html|image\/svg\+xml|application\/xhtml\+xml)\b/i;
+
+function bodyText(chunk) {
+	if (typeof chunk === 'string') return chunk;
+	if (chunk instanceof Uint8Array) return Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength).toString('utf8');
+	return null;
+}
+
+/**
+ * Harden the CSP of a response written by an API handler, the same way static
+ * HTML is hardened, once the handler hands over its body.
+ *
+ * API handlers inherit the route table's policy, which still lists
+ * `'unsafe-inline'` so the static pipeline has something to rewrite. Without
+ * this, every server-rendered share page and SVG card went out with that
+ * keyword intact, so an attribute breakout in any of them (`onerror=`, a
+ * `javascript:` href) ran with nothing behind the escaping to stop it.
+ *
+ * Only a body delivered whole through `res.end()` before headers are sent is
+ * rewritten; a streamed response keeps the policy it was given.
+ *
+ * @param {import('node:http').ServerResponse} res
+ * @returns {import('node:http').ServerResponse}
+ */
+export function hardenOnEnd(res) {
+	const end = res.end;
+	res.end = function hardenedEnd(chunk, ...rest) {
+		if (!res.headersSent && chunk != null && typeof chunk !== 'function') {
+			const csp = res.getHeader('content-security-policy');
+			if (typeof csp === 'string' && ACTIVE_DOCUMENT.test(String(res.getHeader('content-type') || ''))) {
+				const html = bodyText(chunk);
+				if (html !== null) res.setHeader('content-security-policy', hardenInlineScripts(csp, html));
+			}
+		}
+		return end.call(this, chunk, ...rest);
+	};
+	return res;
+}

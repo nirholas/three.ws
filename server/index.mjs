@@ -39,7 +39,7 @@ import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead, CANONICAL_ORIGIN } from './seo-head.mjs';
 import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
-import { hardenHeaderBag } from './csp-hashes.mjs';
+import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
@@ -209,6 +209,9 @@ async function dispatchApi(req, res, pathname, extraQuery) {
 			res.status(500).json({ error: 'internal_error', message: 'Handler misconfigured.' });
 			return true;
 		}
+		// A handler that renders HTML or SVG gets the same inline-script CSP
+		// hardening a static page gets (server/csp-hashes.mjs).
+		hardenOnEnd(res);
 		await handler(req, res);
 	} catch (err) {
 		console.error(`[api] ${req.method} ${pathname} failed:`, err);

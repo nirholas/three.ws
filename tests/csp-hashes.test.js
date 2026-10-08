@@ -11,6 +11,7 @@ import {
 	inlineScriptHashes,
 	hardenInlineScripts,
 	hardenHeaderBag,
+	hardenOnEnd,
 } from '../server/csp-hashes.mjs';
 
 const sha = (s) => `'sha256-${createHash('sha256').update(s, 'utf8').digest('base64')}'`;
@@ -222,5 +223,60 @@ describe('hardenHeaderBag', () => {
 		expect(hardenHeaderBag(bag, '<script>a()</script>')).toEqual({
 			'cache-control': 'public, max-age=60',
 		});
+	});
+});
+
+describe('hardenOnEnd', () => {
+	// The slice of a Node ServerResponse the hook touches, with header names
+	// case-insensitive the way the real one keeps them.
+	function fakeRes(headers) {
+		const bag = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]));
+		const res = {
+			headersSent: false,
+			sent: null,
+			getHeader: (k) => bag.get(k.toLowerCase()),
+			setHeader: (k, v) => bag.set(k.toLowerCase(), v),
+			end(chunk) {
+				res.headersSent = true;
+				res.sent = chunk;
+				return res;
+			},
+		};
+		return res;
+	}
+
+	it('drops unsafe-inline from an API-rendered HTML page and hashes its own scripts', () => {
+		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'text/html; charset=utf-8' }));
+		res.end('<p>hi</p><script>a()</script>');
+		const csp = res.getHeader('content-security-policy');
+		expect(csp).not.toContain("'unsafe-inline'");
+		expect(csp).toContain(sha('a()'));
+		expect(res.sent).toBe('<p>hi</p><script>a()</script>');
+	});
+
+	it('hardens an SVG card sent as a Buffer', () => {
+		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'image/svg+xml; charset=utf-8' }));
+		res.end(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><text>x</text></svg>'));
+		expect(res.getHeader('content-security-policy')).not.toContain("'unsafe-inline'");
+	});
+
+	it('leaves JSON responses alone', () => {
+		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'application/json' }));
+		res.end('{"ok":true}');
+		expect(res.getHeader('content-security-policy')).toBe(POLICY);
+	});
+
+	it('does not touch headers that have already gone out', () => {
+		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'text/html' }));
+		res.headersSent = true;
+		res.end('<script>a()</script>');
+		expect(res.getHeader('content-security-policy')).toBe(POLICY);
+	});
+
+	it('passes a bodiless end straight through', () => {
+		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'text/html' }));
+		res.end();
+		expect(res.getHeader('content-security-policy')).toBe(POLICY);
+		expect(res.headersSent).toBe(true);
 	});
 });
