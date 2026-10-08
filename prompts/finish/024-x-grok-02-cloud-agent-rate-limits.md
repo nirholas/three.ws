@@ -1,5 +1,7 @@
 # x-grok 02: rate limits that survive a shared cloud agent egress
 
+**Evolve status (2026-10-08):** built and verified except one Definition of done line. Shipped in `0e9635b52` (install tokens, token-keyed caps, JSON-RPC denials, tests) and `e92209633` (/connect generator, docs, probe script, changelog). Every line passes except "`npm test` passes": `vitest run` still ends 34 failed files / 72 failed tests, the same count measured before this order, 33 of them listed in order 401 and the 34th (`tests/asset-host-liveness.test.js`, tripped by `tests/agent-earnings-board.test.js` naming `cdn.three.ws`) unrelated to this change. Remaining: order 401 makes `npm test` green; then rerun `npm test` and retire this order. No owner action and no migration are needed.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate. Run after 023.
 
 ## Operating clause (binding)
