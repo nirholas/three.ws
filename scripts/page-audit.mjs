@@ -115,7 +115,42 @@ if (!ENGINE) {
 	console.error(`✗ unknown --engine "${ENGINE_NAME}". Use one of: ${Object.keys(ENGINES).join(', ')}`);
 	process.exit(2);
 }
+
+// The viewport a route is audited at, and the browser it claims to be. Mobile
+// borrows the iPhone 13 descriptor, which already announces real Safari. Bare
+// desktop Chromium announces "HeadlessChrome", and third-party embeds behind a
+// bot wall answer that with a 403 and X-Frame-Options: SAMEORIGIN: the DEXTools
+// chart on /three-token was reported as a refused frame on every sweep while
+// every real visitor got the chart. A human audit should see what a human sees,
+// so desktop Chromium presents Playwright's stock Desktop Chrome user agent.
+function viewportOptions(viewport) {
+	if (viewport === 'mobile') return devices['iPhone 13'];
+	return {
+		viewport: { width: 1440, height: 900 },
+		...(ENGINE_NAME === 'chromium' ? { userAgent: devices['Desktop Chrome'].userAgent } : {}),
+	};
+}
 const explicitRoutes = argv.filter((a) => a.startsWith('/'));
+
+// Console output a cross-origin iframe's own scripts emit: an embedded chart or
+// widget talking to its own backends (the DEXTools chart on /three-token logs
+// its websocket handshake and captcha config from inside its frame). That is the
+// embed's business, not a fault in our page, the same reasoning that already
+// ignores the DexScreener frame by name. A script our page itself loads from a
+// CDN runs in our frame and is still reported: only origins that belong to a
+// child frame, and not to the page, are dropped.
+function originOf(url) {
+	try {
+		return new URL(url).origin;
+	} catch {
+		return null;
+	}
+}
+function fromEmbeddedThirdPartyFrame(page, msg) {
+	const src = originOf(msg.location()?.url || '');
+	if (!src || src === originOf(page.url())) return false;
+	return page.frames().some((f) => f !== page.mainFrame() && originOf(f.url()) === src);
+}
 
 // ── Noise filter ────────────────────────────────────────────────────────────
 // Third-party chatter that is never our bug, regardless of target. Kept tight
@@ -427,6 +462,7 @@ async function auditRoute(ctx, route, viewport, { navTimeoutMs = NAV_TIMEOUT_MS 
 		if (text.startsWith('Failed to load resource')) return; // cascade, captured below
 		if (/^Cancelled load to .+ because it violates the Content Security Policy/.test(text)) return;
 		if (/^Cannot load .+ due to access control checks\.$/.test(text)) return;
+		if (fromEmbeddedThirdPartyFrame(page, m)) return;
 		push(t === 'error' ? 'console-error' : 'console-warn', t === 'error' ? 'error' : 'warn', text);
 	});
 	page.on('pageerror', (e) => push('exception', 'error', `${e.message}`));
@@ -628,7 +664,7 @@ async function reverify(browser, results, viewports, authed) {
 		let ctx;
 		try {
 			ctx = await browser.newContext({
-				...(viewport === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1440, height: 900 } }),
+				...viewportOptions(viewport),
 				...(authed ? { storageState: AUTH_STATE } : {}),
 				ignoreHTTPSErrors: true,
 			});
@@ -1013,7 +1049,7 @@ async function main() {
 	let firstViewport = true;
 	for (const viewport of viewports) {
 		const ctxOpts = {
-			...(viewport === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1440, height: 900 } }),
+			...viewportOptions(viewport),
 			...(authed ? { storageState: AUTH_STATE } : {}),
 			// Codespaces hostnames aren't in the R2 CORS allowlist; ignore HTTPS errors.
 			ignoreHTTPSErrors: true,

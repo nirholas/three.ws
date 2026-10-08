@@ -26,6 +26,22 @@ rather than page code, and no visitor on a real GPU sees them. The filter is
 scoped to the Performance category, so a driver message in the Error category
 is still reported.
 
+Two more rules keep the report about our pages rather than about the harness:
+
+- **It presents a real browser.** Desktop Chromium otherwise announces itself
+  as `HeadlessChrome`, and third-party embeds behind a bot wall answer that
+  with a 403 and `X-Frame-Options: SAMEORIGIN`. The DEXTools chart on
+  `/three-token` was reported as a refused frame on every sweep while every
+  real visitor got the chart. Desktop Chromium now sends Playwright's stock
+  Desktop Chrome user agent; the mobile pass already sends the iPhone 13
+  Safari one.
+- **An embed's own console is the embed's business.** Console output whose
+  source script lives on the origin of a cross-origin child frame (an
+  embedded chart talking to its own websocket, a widget's captcha config) is
+  not recorded. A script our page loads from a CDN runs in our frame and is
+  still reported, and the embed's network failures are still recorded by the
+  request handlers.
+
 ## Commands
 
 ```sh
