@@ -1362,6 +1362,15 @@ const CUSTODY_COLUMNS = [
 	'reason', 'status', 'idempotency_key', 'capability_id', 'meta',
 ];
 
+// The EVM leg names its chain in `network` ('base', 'robinhood'). The per-chain
+// spend ceilings sum rows by `chain`, so a row that left it at the 'solana'
+// default would never count against the EVM chain it actually spent on.
+const EVM_LEG_NETWORKS = new Set(['base', 'robinhood']);
+function custodyChain(e) {
+	if (e.chain) return e.chain;
+	return EVM_LEG_NETWORKS.has(e.network) ? e.network : 'solana';
+}
+
 /**
  * Write a row into the custody audit trail / spend ledger.
  * Returns the new row id. Callers in fire-and-forget contexts should `.catch()`.
@@ -1372,7 +1381,7 @@ const CUSTODY_COLUMNS = [
 export async function recordCustodyEvent(e) {
 	const [row] = await sql`
 		INSERT INTO agent_custody_events
-			(agent_id, user_id, event_type, category, network, asset,
+			(agent_id, user_id, event_type, category, chain, network, asset,
 			 amount_lamports, amount_raw, usd, destination, signature,
 			 reason, status, idempotency_key, capability_id, meta)
 		VALUES (
@@ -1380,6 +1389,7 @@ export async function recordCustodyEvent(e) {
 			${e.userId ?? null},
 			${e.eventType},
 			${e.category ?? null},
+			${custodyChain(e)},
 			${e.network ?? 'mainnet'},
 			${e.asset ?? null},
 			${e.amountLamports != null ? String(e.amountLamports) : null},
