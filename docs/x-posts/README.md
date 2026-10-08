@@ -41,6 +41,18 @@ explicit approval). Each file states what it's for and what has already been ver
 | [`proof-of-life-x-post.md`](proof-of-life-x-post.md) | A shipping-evidence post for the platform account: what landed this week, with public verification links. Names nothing about the personal account |
 | [`pumpfun-article-x-post.md`](pumpfun-article-x-post.md) | The pump.fun article |
 
+## Companion threads for the AWS Builder Center articles
+
+Long-form threads that stand on their own and pair with a draft in
+[`aws-builder-center.md`](../aws-builder-center.md). Each ends with a labeled reply to add once its
+article is live on the Builder Center, and each lists the preconditions that must hold before it posts.
+
+| File | What it covers |
+| --- | --- |
+| [`universal-retargeting-thread.md`](universal-retargeting-thread.md) | One clip library on any humanoid skeleton: name canonicalization, rest poses, the A-pose re-aim. Hold until the re-aim is deployed (the file has the check) |
+| [`immutable-embed-releases-thread.md`](immutable-embed-releases-thread.md) | Write-once versioned URLs and SRI pins for the `<agent-3d>` script, and the incident that taught us why |
+| [`claims-ledger-thread.md`](claims-ledger-thread.md) | The publishing pipeline that refuses a claim it cannot prove: evidence, probes, proof reels, content-hash reviews |
+
 ## Video and narration scripts
 
 | File | What it covers |

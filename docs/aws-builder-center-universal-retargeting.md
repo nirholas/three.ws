@@ -10,13 +10,13 @@ index: docs/aws-builder-center.md
 
 # Any skeleton, one clip library: how we animate every humanoid avatar in the browser without a rig allowlist
 
-There are 113 animation clips on three.ws: idles, walks, waves, dances, emotes. We baked each of them once, at build time, onto one reference skeleton. They then play, in the browser, on avatars that other tools exported years apart under other naming schemes: a Mixamo character, a VRoid model, an Unreal mannequin, a Daz figure, a Blender export, a hobby rig whose bones are called `shoulderL` and `kneeL`. Nobody re-authors a clip for any of them, and there is no list of approved rigs anywhere in the code.
+There are 113 animation clips on three.ws: idles, walks, waves, dances, emotes. We baked each of them once, at build time, onto one reference skeleton. They play, in the browser, on avatars other tools exported under other naming schemes: Mixamo, VRoid, an Unreal mannequin, Daz, Blender, a hobby rig whose bones are called `shoulderL` and `kneeL`. Nobody re-authors a clip per avatar, and the animation stack keeps no list of approved rigs.
 
-This article explains how that works, and where it stops. Mapping bone names is the part everybody expects, and it is the smaller half. The larger half is that two skeletons with identical names can rest in different poses and measure rotations in different frames, and a clip copied across verbatim will tip one avatar onto its back and drive another one's arms through its own chest. We shipped both of those bugs. The fixes, and the tests that keep them fixed, are the substance here.
+This is how that works, and where it stops. Mapping bone names is the part everybody expects, and the smaller half. The larger half: two skeletons with identical names can rest in different poses and measure rotations in different frames, and a clip copied verbatim tips one avatar onto its back and drives another's arms through its chest. We shipped both of those bugs. The fixes, and the tests that keep them fixed, are the substance here.
 
 Everything runs client-side in [three.js](https://threejs.org), and every code sample is an excerpt from [the repository](https://github.com/nirholas/three.ws) (Apache-2.0) with its file path, so you can check each claim in the same sitting.
 
-**Status, plainly, because AWS builders check.** three.ws is a verified AWS Partner. Nothing in this article runs on an AWS service: retargeting happens in the viewer's browser tab, and the platform's own runtime is on Google Cloud Run. We would rather say that than let a partner article imply a hosting story that is not ours. One more date matters: the A-pose limb re-aim described in section 7 merged on 3 October 2026. At the time of writing, production still runs the commit before it (`curl -s https://three.ws/api/version` shows which commit is live), and the published npm package `@three-ws/retarget` 0.1.2 predates it too. Everything else here is live.
+**Status, plainly, because AWS builders check.** three.ws is a verified AWS Partner. Nothing in this article runs on an AWS service: retargeting happens in the viewer's browser tab, and the platform's own runtime is on Google Cloud Run. We would rather say that than let a partner article imply a hosting story that is not ours. One more date matters: the A-pose limb re-aim described in section 7 merged on 3 October 2026. At the time of writing, production still runs an earlier commit (`curl -s https://three.ws/api/version` shows which commit is live), and the published npm package `@three-ws/retarget` 0.1.2 predates it too. Everything else described as shipped is live.
 
 **Contents**
 
@@ -157,7 +157,7 @@ After resolution, a canonical name is assigned at most once. When two joints sti
 
 ## 5. Why a name map is not enough
 
-Suppose every name maps. Copy the clip's rotations across and two things can still go badly wrong, because a rotation track stores **absolute local rotations** measured against one skeleton's rest pose and one skeleton's axes.
+Suppose every name maps. Two things can still go badly wrong, because a rotation track stores **absolute local rotations** measured against one skeleton's rest pose and axes.
 
 **Axis conventions.** Mixamo exports bake a +90 degree rotation about X into the armature node and a -90 degree rotation into the hips. The two cancel, so the avatar stands upright at rest. But the clip was authored on a rig whose hips rest at identity, so the first keyframe of the hip track overwrites the -90 and leaves the armature's +90 uncancelled. The avatar plays its idle lying on its back. Our upright-invariant test suite records how bad this was on a real Mixamo export (`public/avatars/michelle.glb`) before the fix: the hips sat 92 degrees off vertical during `idle`, 94 during `celebrate`, and 115 during `dance`.
 
@@ -236,11 +236,11 @@ The spine, neck, head and clavicles are deliberately absent, because their rest 
 - **Inheritance.** A bone without its own entry (a hand, a finger) inherits its parent's turn, so the hand stays rigid with the forearm and the fingers with the hand.
 - **Feet keep their world rest.** The foot is in `WORLD_REST_BONES` and turns by nothing, so a sole that is flat on the floor at rest stays flat whatever angle the shin was re-aimed by. Toes inherit from the foot.
 
-The threshold `ALIGN_DOT = 1 - 1e-6` corresponds to about 0.08 degrees, so two exports of the same skeleton that differ by measurement noise are treated as aligned, a T-pose rig turns by a few degrees at most, and the reference rig turns by nothing and still round-trips unchanged. The turn of the bone and of its parent (`C` and `Cp`) then slot into the correction from section 6, which is exactly the original formula when every turn is identity.
+The threshold `ALIGN_DOT = 1 - 1e-6` is about 0.08 degrees, so export noise counts as aligned, a T-pose rig turns by a few degrees at most, and the reference rig turns by nothing and still round-trips unchanged. The bone's turn and its parent's (`C` and `Cp`) then slot into the section 6 correction.
 
 ## 8. Hips, legs, and root motion
 
-Legs need nothing special in the naming layer; they are ordinary entries, and the dignity sweep in section 10 checks that they actually swing. They need care in two other places.
+Legs are ordinary entries in the naming layer (section 10's sweep checks they actually swing). They need care in two other places.
 
 **Only motion crosses over.** About a third of the clips (41 of 113) ship a position and a scale track for every bone, because that is how the build bakes them. A bone's local position is its offset from its parent, which is to say the reference rig's bone lengths. Copy those onto an avatar with different proportions and every bone "matches" while the skeleton folds into a heap. So the retargeter takes only what is genuinely motion:
 
@@ -262,7 +262,7 @@ Joint rotations, plus the root translation. Every rig keeps its own bone lengths
 		}
 ```
 
-(`src/animation-manager.js`.) The upper clamp is 200 rather than something modest because a Mixamo armature exported at `scale 0.01` puts its hips near 100 in local units; matching world heights instead would collapse the hip track to about a centimetre of motion and sink the avatar a metre into the floor. Height is measured from the model's bounding-box bottom rather than world zero, because viewers recenter models and many exports put their floor below the origin. The hip translation is also rotated into the target's hips-parent frame, so root motion travels the same world direction on a Mixamo armature as on the reference rig, and a floor offset lands the clip's ground on the rig's ground.
+(`src/animation-manager.js`.) The clamp reaches 200 because a Mixamo armature exported at `scale 0.01` puts its hips near 100 in local units; matching world heights instead would leave about a centimetre of hip motion and sink the avatar into the floor. Height is measured from the model's bounding-box bottom, not world zero, because many exports put their floor below the origin. The track is also rotated into the target's hips-parent frame, so root motion travels the same world direction on any armature.
 
 One more consequence: when a gesture plays over a walk as an additive overlay, every hip, leg and foot track is stripped from the overlay, so a wave never fights the walk cycle's root sway.
 
@@ -287,7 +287,7 @@ function _modelSupportsCanonicalClips(model) {
 }
 ```
 
-`supportsCanonicalClips()` returns that answer, and callers decide what a "no" means for them. A shared scene that needs a performer substitutes a known-good one: the theater stage tries the agent's own avatar, then an assigned fallback avatar, then the plain mannequin, and only an avatar that passes this gate (plus a proportion check that rejects anything far wider than it is tall) gets to perform. A personal view, like an agent's own screen, shows the model as authored. Non-humanoid skeletons (quadrupeds, prop rigs) fail this rung on purpose, because there is no safe automatic mapping for them.
+`supportsCanonicalClips()` returns that answer, and callers decide what "no" means. A shared scene substitutes a known-good performer: the theater stage tries the agent's own avatar, then an assigned fallback avatar, then the plain mannequin, and only one that passes this gate gets to perform. A personal view, like an agent's own screen, shows the model as authored. Non-humanoid skeletons fail this rung on purpose: there is no safe automatic mapping for them.
 
 **Rung 2: does this clip find enough of a home?** Coverage below `MIN_COVERAGE` returns `clip: null` with an honest breakdown of matched, total and dropped bones. No half-puppet plays.
 
@@ -317,7 +317,7 @@ Three layers of tests keep this honest, and each catches a failure the others ca
 		['hand_r',      'RightHand'],
 ```
 
-Around those tables sit the tests that encode decisions rather than spellings: the Unreal spine stays unaliased, `J_Bip_` names survive the `j_` prefix strip, side derivation never crosses sides, control-rig bones stay unmapped, metacarpals with no canonical home stay unmapped, a full Unreal mannequin hand maps all 15 joints per side, the Rigify and SMPL collisions split correctly whichever order the joints are listed in, and no canonical name is ever assigned twice. Real fixtures cover both ends: `cz.glb` is a no-op returned by reference, and `michelle.glb` is renamed, axis-folded, and asserted to keep every joint's world matrix, so the rewrite cannot change how the mesh looks. The file ran 477 tests green when we wrote this.
+Around them sit tests that encode decisions rather than spellings: the Unreal spine stays unaliased, side derivation never crosses sides, control-rig bones stay unmapped, a full Unreal mannequin hand maps all 15 joints per side, the Rigify and SMPL collisions split correctly in either joint order, and no canonical name is assigned twice. Real fixtures cover both ends: `cz.glb` is a no-op, and `michelle.glb` is renamed, axis-folded, and asserted to keep every joint's world matrix, so the mesh cannot change. The file ran 477 tests green when we wrote this.
 
 A new convention is always the same four parts: an alias entry, a table of its real spellings, a "never crosses sides" test, and a Rig Doctor fingerprint. That is what "no allowlist" means in practice: teach the canonicalizer once, and every surface that animates avatars learns it at the same moment.
 
@@ -332,19 +332,19 @@ A new convention is always the same four parts: an alias entry, a table of its r
 	});
 ```
 
-A regression test that passes with or without the fix tests nothing. Writing the "without" case first is the cheapest way we know to prove a test can fail.
+A regression test that passes with or without the fix tests nothing.
 
 **A motion sweep, because names passing is not limbs moving.** A rig can map its hips and animate as a torso with four frozen sticks attached, and every name test stays green. `scripts/animation-dignity-sweep.mjs` drives the real idle and walk clips onto ten differently named rigs, down both production paths (canonicalize at ingest, then retarget; and retarget straight onto raw names at runtime), and measures per-limb rotation swing plus hand and foot travel through space in hip-heights, by composing world matrices. We ran it for this article: 10 of 10 conventions animate both arms and both legs on both paths, with coverage from 94 percent (the `shoulderL` hobby rig, 49 bones mapped) to 100 percent. On that hobby rig, the walk swings the legs by 50.7 and 54.4 degrees.
 
-One honest caveat about that sweep: its ten rigs are one synthetic T-pose skeleton renamed ten ways. That is deliberate, so a difference in results is a difference in naming and never in proportions, but it also means the sweep says nothing about rest poses. Rest poses are covered by the upright suite, the byte-for-byte reference-rig test, and the real Mixamo fixture. The section 7 re-aim has no dedicated test yet; see the next section.
+One caveat: the ten rigs are one synthetic T-pose skeleton renamed ten ways, deliberately, so differences are about naming, never proportions. The sweep therefore says nothing about rest poses; the upright suite, the reference-rig test and the real Mixamo fixture cover those. The section 7 re-aim has no dedicated test yet.
 
 ## 11. What we would build differently
 
 **Derive descriptive claims from data.** Writing this article, we found our own comments disagreeing: one says the reference rig rests in an A-pose, the comment added by the October fix says T-pose, and the generated rest data settles it (T-pose). A comment cannot fail a test. Where a stance or a number can be computed from reference data, compute it or assert it.
 
-**Write the test in the same commit as the geometric fix.** The A-pose re-aim shipped with no unit test of its own. It deserves the same treatment as the upright suite: a synthetic A-pose rig, an assertion that the idle's hands end outside the torso's bounds, and the "without the fix" case that proves the assertion can fail.
+**Write the test in the same commit as the geometric fix.** The A-pose re-aim shipped with no unit test of its own, and the gap it left is exactly the kind a test would have caught on day one (see the next point). The test that finally came is a parity test, `tests/animation-retarget-rig-parity.test.js`: it loads the A-posed parametric base, retargets the idle and the walk through both entry points, and requires every limb track to agree. Run without the fix, it fails with the right upper arm about 50 degrees off.
 
-**One retarget entry point, not three.** The runtime manager, `retargetClipToObject` and `retargetClipToRig` each assemble their own inputs. The re-aim reached the first two. `retargetClipToRig`, used by the Animation Studio's preset gallery and its animated-GLB export, does not pass rest directions yet, although the helper it needs (`canonicalRestDirectionMapFromRig`) already exists. Entry points that assemble their own inputs drift.
+**One retarget entry point, not three.** The runtime manager, `retargetClipToObject` and `retargetClipToRig` each assemble their own inputs. The re-aim reached the first two and missed the third: `retargetClipToRig`, used by the Animation Studio's preset gallery and its animated-GLB export, did not pass rest directions for five days, although the helper it needed (`canonicalRestDirectionMapFromRig`) shipped in the same commit. An A-posed body animated correctly on its own page and put its arms through its torso in the studio. The fix was four lines; the lesson is that entry points which assemble their own inputs drift, and a parity test is the cheapest guard against it.
 
 **Make the gates agree.** The bone-count gate and the coverage gate answer different questions, which is how the Biped case slips between them. Gate on what the library will actually do (would any clip clear coverage?), not on a proxy. Likewise Rig Doctor uses the same canonicalizer but not the clavicle/upper-arm resolver, so on a Rigify rig it reports a collision the runtime resolves. A diagnostic that disagrees with the runtime teaches the wrong thing.
 
@@ -362,7 +362,7 @@ All Apache-2.0, none of it tied to our hosting:
 
 Everything below is public and keyless.
 
-- **Rig Doctor**, with a Mixamo rig preloaded: [three.ws/rig-doctor?sample=/avatars/michelle.glb](https://three.ws/rig-doctor?sample=/avatars/michelle.glb). It names the convention, scores torso, arms, hands and legs, lists every bone rewrite, and plays idle, walk, wave and dance on the rig through the same manager the platform uses. Drop your own `.glb` on [three.ws/rig-doctor](https://three.ws/rig-doctor): the file is read in your browser and never uploaded. The [Rig Doctor reference](https://three.ws/docs/rig-doctor) explains each verdict.
+- **Rig Doctor**, with a Mixamo rig preloaded: [three.ws/rig-doctor?sample=/avatars/michelle.glb](https://three.ws/rig-doctor?sample=/avatars/michelle.glb). It names the convention, scores each limb group, lists the bone rewrites, and plays idle, walk, wave and dance on the rig through the platform's own animation manager. Drop your own `.glb` on [three.ws/rig-doctor](https://three.ws/rig-doctor): the file is read in your browser and never uploaded. The [Rig Doctor reference](https://three.ws/docs/rig-doctor) explains each verdict.
 - **The Animation Studio** at [three.ws/pose](https://three.ws/pose) plays the rest of the library on a loaded avatar and exports an animated GLB.
 - **The clip library itself:**
 
