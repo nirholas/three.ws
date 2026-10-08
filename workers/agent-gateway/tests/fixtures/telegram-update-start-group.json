@@ -1,0 +1,11 @@
+{
+	"update_id": 731204119,
+	"message": {
+		"message_id": 77,
+		"from": { "id": 5550001002, "is_bot": false, "first_name": "Fixture", "username": "fixture_group_admin" },
+		"chat": { "id": -1005550002002, "title": "Fixture Traders", "type": "supergroup" },
+		"date": 1791446460,
+		"text": "/start@threewsbot",
+		"entities": [{ "offset": 0, "length": 17, "type": "bot_command" }]
+	}
+}

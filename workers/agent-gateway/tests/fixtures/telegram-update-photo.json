@@ -1,0 +1,14 @@
+{
+	"update_id": 731204122,
+	"message": {
+		"message_id": 4185,
+		"from": { "id": 5550001001, "is_bot": false, "first_name": "Fixture", "username": "fixture_owner" },
+		"chat": { "id": 5550001001, "first_name": "Fixture", "username": "fixture_owner", "type": "private" },
+		"date": 1791446640,
+		"photo": [
+			{ "file_id": "AgACAgEAAxkBAAIQ-fixture-small", "file_unique_id": "AQADs", "file_size": 1320, "width": 90, "height": 90 },
+			{ "file_id": "AgACAgEAAxkBAAIQ-fixture-large", "file_unique_id": "AQADl", "file_size": 61022, "width": 1280, "height": 1280 }
+		],
+		"caption": "is this chart bullish?"
+	}
+}

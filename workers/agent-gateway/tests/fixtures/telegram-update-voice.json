@@ -1,0 +1,10 @@
+{
+	"update_id": 731204121,
+	"message": {
+		"message_id": 4184,
+		"from": { "id": 5550001001, "is_bot": false, "first_name": "Fixture", "username": "fixture_owner" },
+		"chat": { "id": 5550001001, "first_name": "Fixture", "username": "fixture_owner", "type": "private" },
+		"date": 1791446580,
+		"voice": { "duration": 3, "mime_type": "audio/ogg", "file_id": "AwACAgEAAxkBAAIQ-fixture-voice", "file_unique_id": "AgADfixture", "file_size": 9214 }
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"update_id": 731204123,
+	"callback_query": {
+		"id": "4382910029381273001",
+		"from": { "id": 5550001001, "is_bot": false, "first_name": "Fixture", "username": "fixture_owner" },
+		"message": {
+			"message_id": 4190,
+			"from": { "id": 7000000001, "is_bot": true, "first_name": "three.ws", "username": "threewsbot" },
+			"chat": { "id": 5550001001, "first_name": "Fixture", "username": "fixture_owner", "type": "private" },
+			"date": 1791446700,
+			"text": "Buy preview on mainnet"
+		},
+		"chat_instance": "-6129381029381029381",
+		"data": "gw:cx:PREVIEW_ID"
+	}
+}

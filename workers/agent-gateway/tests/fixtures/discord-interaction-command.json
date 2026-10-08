@@ -1,0 +1,12 @@
+{
+	"id": "1300000000000000001",
+	"application_id": "1290000000000000001",
+	"type": 2,
+	"token": "aW50ZXJhY3Rpb246MTMwMDAwMDAwMDAwMDAwMDAwMTpmaXh0dXJl",
+	"version": 1,
+	"guild_id": "1280000000000000001",
+	"channel_id": "1280000000000000002",
+	"channel": { "id": "1280000000000000002", "name": "agent-desk", "type": 0 },
+	"member": { "user": { "id": "1270000000000000001", "username": "fixture_owner", "global_name": "Fixture" }, "roles": [], "permissions": "2248473465835073" },
+	"data": { "id": "1295000000000000001", "name": "three", "type": 1, "options": [{ "type": 1, "name": "use", "options": [{ "type": 3, "name": "agent", "value": "2" }] }] }
+}

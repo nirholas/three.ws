@@ -1,0 +1,13 @@
+{
+	"kind": "discord_message",
+	"botUserId": "1290000000000000001",
+	"channel_name": "agent-desk",
+	"message": {
+		"id": "1300000000000000003",
+		"channel_id": "1280000000000000002",
+		"guild_id": "1280000000000000001",
+		"content": "<@1290000000000000001> how is my portfolio doing?",
+		"author": { "id": "1270000000000000001", "username": "fixture_owner", "bot": false },
+		"attachments": []
+	}
+}

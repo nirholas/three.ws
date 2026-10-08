@@ -2,21 +2,22 @@
 	"name": "@three-ws/agent-gateway",
 	"version": "0.1.0",
 	"private": true,
-	"description": "One process that lets owners talk to their three.ws agents from Telegram, Discord, Slack, WhatsApp, Signal and SMS: drains the gateway inbox, runs each turn through the shared gateway core and delivers replies, previews and notifications.",
+	"description": "Drains the three.ws chat gateway inbox: runs every queued Telegram and Discord message, button press and notification through the shared gateway core and delivers the replies, previews and alerts. The adapter registry is where the next platform plugs in.",
 	"type": "module",
 	"main": "src/index.js",
 	"scripts": {
 		"start": "node src/index.js",
 		"dev": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local src/index.js",
+		"test": "vitest run --config vitest.config.js",
+		"setup": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local src/setup.js",
 		"register:discord": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local src/setup.js discord-commands",
-		"webhook:telegram": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local src/setup.js telegram-webhook"
+		"webhook:telegram": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local src/setup.js telegram-webhook",
+		"inbox": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local src/setup.js inbox"
 	},
 	"engines": {
 		"node": ">=22"
 	},
 	"dependencies": {
-		"@slack/socket-mode": "^3.0.1",
-		"@slack/web-api": "^8.1.1",
 		"discord.js": "^14.27.0",
 		"grammy": "^1.46.0"
 	}

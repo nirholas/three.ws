@@ -1,0 +1,11 @@
+{
+	"update_id": 731204118,
+	"message": {
+		"message_id": 4182,
+		"from": { "id": 5550001001, "is_bot": false, "first_name": "Fixture", "username": "fixture_owner", "language_code": "en" },
+		"chat": { "id": 5550001001, "first_name": "Fixture", "username": "fixture_owner", "type": "private" },
+		"date": 1791446400,
+		"text": "/help",
+		"entities": [{ "offset": 0, "length": 5, "type": "bot_command" }]
+	}
+}

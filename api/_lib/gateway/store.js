@@ -224,40 +224,93 @@ export async function enqueueInbox({ platform, dedupeKey, chatKey, payload }) {
  * Claim up to `limit` deliveries, at most one per chat, and only the oldest open
  * delivery of a chat whose previous delivery is not still being processed, so a
  * chat's replies always come back in the order its messages were sent.
+ *
+ * A queued delivery whose `locked_until` lies in the future is backing off after
+ * a failed attempt (failInbox with retryAfterSeconds) and is not ready yet; it
+ * still heads its chat, so nothing behind it overtakes it.
+ *
+ * `platforms` limits the claim to the platforms this worker has an adapter for,
+ * so a row for a platform it cannot deliver to waits for a worker that can.
+ * `chatKeys` limits it to specific chats (draining one chat while debugging).
  */
-export async function claimInbox({ limit = 8, leaseSeconds = 120 } = {}) {
+export async function claimInbox({ limit = 8, leaseSeconds = 120, platforms = null, chatKeys = null } = {}) {
+	const platformList = Array.isArray(platforms) ? platforms.map(String) : null;
+	const chatList = Array.isArray(chatKeys) ? chatKeys.map(String) : null;
 	return sql`
 		WITH heads AS (
 			SELECT DISTINCT ON (chat_key) id, status, locked_until
 			FROM gateway_inbox
 			WHERE status IN ('queued', 'processing')
+			  AND (${platformList}::text[] IS NULL OR platform = ANY(${platformList}::text[]))
+			  AND (${chatList}::text[] IS NULL OR chat_key = ANY(${chatList}::text[]))
 			ORDER BY chat_key, id
 		), ready AS (
 			SELECT id FROM heads
-			WHERE status = 'queued' OR locked_until < now()
+			WHERE (status = 'queued' AND (locked_until IS NULL OR locked_until <= now()))
+			   OR (status = 'processing' AND locked_until < now())
 			ORDER BY id
 			LIMIT ${limit}
 		)
 		UPDATE gateway_inbox g
 		SET status = 'processing', attempts = g.attempts + 1, locked_until = now() + make_interval(secs => ${leaseSeconds})
 		FROM ready
-		WHERE g.id = ready.id AND (g.status = 'queued' OR g.locked_until < now())
-		RETURNING g.id, g.platform, g.chat_key, g.payload, g.attempts`;
+		WHERE g.id = ready.id
+		  AND ((g.status = 'queued' AND (g.locked_until IS NULL OR g.locked_until <= now()))
+		    OR (g.status = 'processing' AND g.locked_until < now()))
+		RETURNING g.id, g.platform, g.chat_key, g.payload, g.attempts, g.created_at`;
+}
+
+/**
+ * Extend the lease on a delivery still being processed, so a long agent turn is
+ * never reclaimed (and answered twice) while it is still running. Returns false
+ * when the row is no longer this worker's to hold.
+ */
+export async function renewInboxLease(id, leaseSeconds = 120) {
+	const rows = await sql`
+		UPDATE gateway_inbox SET locked_until = now() + make_interval(secs => ${leaseSeconds})
+		WHERE id = ${id} AND status = 'processing'
+		RETURNING id`;
+	return rows.length > 0;
 }
 
 export async function completeInbox(id) {
 	await sql`UPDATE gateway_inbox SET status = 'done', finished_at = now(), locked_until = NULL WHERE id = ${id}`;
 }
 
-/** Requeue for another attempt, or park as failed after `maxAttempts`. */
-export async function failInbox(id, message, { attempts, maxAttempts = 3 } = {}) {
-	const giveUp = attempts >= maxAttempts;
+/**
+ * Requeue for another attempt, or park as failed (the dead letter) after
+ * `maxAttempts` or when `deadLetter` says a retry cannot help. A requeued row
+ * waits `retryAfterSeconds` before it can be claimed again.
+ */
+export async function failInbox(id, message, { attempts, maxAttempts = 3, retryAfterSeconds = 0, deadLetter = false } = {}) {
+	const giveUp = deadLetter || attempts >= maxAttempts;
+	const wait = giveUp ? 0 : Math.max(0, Math.ceil(Number(retryAfterSeconds) || 0));
 	await sql`
 		UPDATE gateway_inbox
 		SET status = ${giveUp ? 'failed' : 'queued'}, last_error = ${String(message || '').slice(0, 500)},
-		    locked_until = NULL, finished_at = ${giveUp ? new Date().toISOString() : null}
+		    locked_until = ${wait > 0 ? new Date(Date.now() + wait * 1000).toISOString() : null},
+		    finished_at = ${giveUp ? new Date().toISOString() : null}
 		WHERE id = ${id}`;
 	return giveUp;
+}
+
+/** The most recent dead letters, newest first, for the operator. */
+export async function listFailedInbox({ limit = 20 } = {}) {
+	return sql`
+		SELECT id, platform, chat_key, attempts, last_error, created_at, finished_at
+		FROM gateway_inbox WHERE status = 'failed'
+		ORDER BY finished_at DESC NULLS LAST, id DESC
+		LIMIT ${limit}`;
+}
+
+/** Put one dead letter back on the queue with a fresh attempt budget. */
+export async function requeueInbox(id) {
+	const [row] = await sql`
+		UPDATE gateway_inbox
+		SET status = 'queued', attempts = 0, locked_until = NULL, finished_at = NULL
+		WHERE id = ${id} AND status = 'failed'
+		RETURNING id, platform, chat_key`;
+	return row || null;
 }
 
 export async function pruneInbox({ keepDays = 7 } = {}) {

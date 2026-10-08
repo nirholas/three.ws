@@ -1,0 +1,11 @@
+{
+	"id": "1300000000000000002",
+	"application_id": "1290000000000000001",
+	"type": 3,
+	"token": "aW50ZXJhY3Rpb246MTMwMDAwMDAwMDAwMDAwMDAwMjpmaXh0dXJl",
+	"version": 1,
+	"channel_id": "1280000000000000003",
+	"user": { "id": "1270000000000000001", "username": "fixture_owner" },
+	"message": { "id": "1299000000000000009", "channel_id": "1280000000000000003", "content": "Sell preview on mainnet", "components": [] },
+	"data": { "component_type": 2, "custom_id": "gw:ap:4d5e6f70-1111-4222-8333-944455566677" }
+}
