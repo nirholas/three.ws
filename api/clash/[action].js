@@ -20,7 +20,7 @@
 
 import { cors, json, method, readJson, error, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { cc, toWorldCard, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
+import { cc, toWorldCard, trendingWorldCards, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
 import { getBalances, solanaMintUsdPrice } from '../_lib/balances.js';
 import { verifySiwsSignature } from '../_lib/siws.js';
 import {
@@ -53,6 +53,8 @@ import {
 	getPrice,
 	setPrice,
 	settleRound,
+	claimRoster,
+	getRoster,
 } from '../_lib/clash-store.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -78,18 +80,43 @@ export default wrap(async (req, res) => {
 
 // Load the active faction roster from CoinCommunities, ranked strongest-first by
 // member count so the bracket seeds deterministically. Returns the normalized
-// world-cards (token, symbol, image, members, social stats).
-async function loadFactions() {
-	const api = cc(); // throws UnconfiguredError → caller maps to 503
-	const { data, error: apiErr } = await api.getTopCommunities();
-	if (apiErr) {
-		throw Object.assign(new Error(apiErr.message || 'failed to load communities'), { status: 502, code: 'upstream_error' });
+// world-cards (token, symbol, image, members, social stats) and their source.
+//
+// Failover: when CoinCommunities is unconfigured (no CC_API_KEY) or its upstream
+// errors, the round is fought between the coins on the live trending feed, in
+// trending order, frozen for the whole round (see claimRoster). Those cards carry
+// `social: false`, so momentum rides on the market alone. The original error
+// surfaces only when the trending feed is down too.
+async function loadFactions(epoch) {
+	let api = null;
+	let upstreamErr = null;
+	try {
+		api = cc();
+	} catch (err) {
+		if (!(err instanceof UnconfiguredError)) throw err;
+		upstreamErr = err;
 	}
-	return (data?.communities ?? [])
-		.map(toWorldCard)
-		.filter((c) => isValidToken(c.token))
-		.sort((a, b) => (b.members || 0) - (a.members || 0))
-		.slice(0, MAX_FACTIONS);
+	if (api) {
+		const { data, error: apiErr } = await api.getTopCommunities();
+		if (!apiErr) {
+			const factions = (data?.communities ?? [])
+				.map(toWorldCard)
+				.filter((c) => isValidToken(c.token))
+				.sort((a, b) => (b.members || 0) - (a.members || 0))
+				.slice(0, MAX_FACTIONS);
+			return { factions, source: 'coincommunities' };
+		}
+		upstreamErr = Object.assign(new Error(apiErr.message || 'failed to load communities'), {
+			status: 502,
+			code: 'upstream_error',
+		});
+	}
+
+	const frozen = await getRoster(epoch);
+	if (frozen) return { factions: frozen, source: 'pump-trending' };
+	const cards = (await trendingWorldCards(MAX_FACTIONS).catch(() => null))?.filter((c) => isValidToken(c.token));
+	if (cards?.length) return { factions: await claimRoster(epoch, cards), source: 'pump-trending' };
+	throw upstreamErr;
 }
 
 /**
@@ -137,9 +164,13 @@ async function handleState(req, res) {
 	const rl = await limits.clashStateIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
+	const now = Date.now();
+	const epoch = epochAt(now);
+
 	let factions;
+	let source;
 	try {
-		factions = await loadFactions();
+		({ factions, source } = await loadFactions(epoch));
 	} catch (err) {
 		if (err instanceof UnconfiguredError) {
 			return error(res, 503, 'cc_unconfigured', 'CoinCommunities is not configured');
@@ -147,9 +178,6 @@ async function handleState(req, res) {
 		if (err.status === 502) return error(res, 502, err.code, err.message);
 		throw err;
 	}
-
-	const now = Date.now();
-	const epoch = epochAt(now);
 	const { msLeft, end } = epochWindow(epoch, now);
 
 	// Settle the previous round once (lazy, idempotent) so records stay current
@@ -175,6 +203,8 @@ async function handleState(req, res) {
 			image: f?.image || null,
 			members: f?.members || 0,
 			posts: f?.posts || 0,
+			social: f?.social !== false,
+			marketCapUsd: f?.marketCapUsd ?? null,
 			priceUsd: f?._priceUsd || 0,
 			momentum: f?._momentum || 1,
 			power,
@@ -206,6 +236,7 @@ async function handleState(req, res) {
 			arena,
 			bye: bye ? sideOf(bye) : null,
 			factionCount: factions.length,
+			source,
 		},
 	});
 }
@@ -350,8 +381,9 @@ async function handleLeaderboard(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	let factions;
+	let source;
 	try {
-		factions = await loadFactions();
+		({ factions, source } = await loadFactions(epochAt(Date.now())));
 	} catch (err) {
 		if (err instanceof UnconfiguredError) {
 			return error(res, 503, 'cc_unconfigured', 'CoinCommunities is not configured');
@@ -373,6 +405,8 @@ async function handleLeaderboard(req, res) {
 				symbol: f?.symbol || null,
 				image: f?.image || null,
 				members: f?.members || 0,
+				social: f?.social !== false,
+				marketCapUsd: f?.marketCapUsd ?? null,
 				...r,
 				winRate: decided > 0 ? Math.round((r.w / decided) * 100) : null,
 			};
@@ -387,5 +421,5 @@ async function handleLeaderboard(req, res) {
 	}
 
 	res.setHeader('cache-control', 'public, max-age=15, s-maxage=15, stale-while-revalidate=60');
-	return json(res, 200, { data: { board, soldiers } });
+	return json(res, 200, { data: { board, soldiers, source } });
 }

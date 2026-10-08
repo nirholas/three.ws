@@ -96,3 +96,37 @@ describe('the ladder reaches every rung in order', () => {
 		expect(persisted.calls).toBe(0);
 	});
 });
+
+// On 2026-10-08 NIM FLUX filtered a rocket-booster prompt: HTTP 200, a solid
+// black 1024x1024 JPEG, and the verdict only in finishReason. The black frame
+// became the reference image and TRELLIS, Hunyuan3D and TripoSG all crashed on
+// its empty subject mask. A withheld or blank frame must hand off, not ship.
+describe('a filtered NIM frame never becomes the reference image', () => {
+	const sharp = async () => (await import('sharp')).default;
+	const solid = async (rgb) =>
+		(await sharp())({ create: { width: 64, height: 64, channels: 3, background: rgb } }).jpeg().toBuffer();
+
+	it('falls through when NIM reports a content filter', async () => {
+		const black = await solid({ r: 0, g: 0, b: 0 });
+		lane.nim = () => json(200, { artifacts: [{ base64: black.toString('base64'), finishReason: 'CONTENT_FILTERED' }] });
+		const out = await textToImage('a fox', { budgetMs: 20_000 });
+		expect(out.model).toBe('pollinations/flux');
+	});
+
+	it('falls through on a blank frame even when finishReason claims success', async () => {
+		const black = await solid({ r: 0, g: 0, b: 0 });
+		lane.nim = () => json(200, { artifacts: [{ base64: black.toString('base64'), finishReason: 'SUCCESS' }] });
+		const out = await textToImage('a fox', { budgetMs: 20_000 });
+		expect(out.model).toBe('pollinations/flux');
+	});
+
+	it('still serves a real image from NIM', async () => {
+		const { isBlankFrame } = await import('../api/_mcp3d/text-to-image.js');
+		const s = await sharp();
+		const gradient = await s(Buffer.from(Array.from({ length: 64 * 64 * 3 }, (_, i) => (i * 7) % 256)), { raw: { width: 64, height: 64, channels: 3 } }).jpeg().toBuffer();
+		expect(await isBlankFrame(gradient)).toBe(false);
+		lane.nim = () => json(200, { artifacts: [{ base64: gradient.toString('base64'), finishReason: 'SUCCESS' }] });
+		const out = await textToImage('a fox', { budgetMs: 20_000 });
+		expect(out.model).toBe('black-forest-labs/flux.1-dev');
+	});
+});

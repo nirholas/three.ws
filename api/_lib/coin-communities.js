@@ -15,6 +15,7 @@
 
 import { configureApi, api } from '@coin-communities/sdk/node';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
+import { getTrendingSlim } from './pump-trending.js';
 
 // Solana mint addresses — base58, 32–44 chars. Communities are keyed by these.
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -252,6 +253,32 @@ export function toWorldCard(c) {
 		likes: c.totalLikes ?? 0,
 		latestPostAt: c.latestPostAt ?? null,
 	};
+}
+
+/**
+ * The live trending feed as world cards: the failover roster for every surface
+ * that ranks coin communities (the /temporary lobby, Coin Clash) when
+ * CoinCommunities is unconfigured or down. The cards carry `social: false`
+ * because there are no members, posts or likes to show, plus the coin's name
+ * and market cap so a client has a real number to render in their place.
+ * Resolves to null when the trending feed is unavailable too.
+ */
+export async function trendingWorldCards(limit) {
+	const { data } = await getTrendingSlim(limit);
+	if (!data) return null;
+	return data.map((t) => ({
+		token: t.mint,
+		symbol: t.symbol || null,
+		name: t.name || null,
+		image: t.logo || null,
+		chainId: null,
+		members: 0,
+		posts: 0,
+		likes: 0,
+		latestPostAt: null,
+		marketCapUsd: t.usd_market_cap ?? null,
+		social: false,
+	}));
 }
 
 /**

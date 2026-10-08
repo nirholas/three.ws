@@ -430,12 +430,39 @@ async function nimFluxImage(prompt, aspectRatio, seed = 0, { timeoutMs = NIM_TIM
 		}
 
 		const data = await res.json().catch(() => ({}));
-		const b64 = data?.artifacts?.[0]?.base64;
+		const artifact = data?.artifacts?.[0];
+		const b64 = artifact?.base64;
 		if (!b64) throw new Error('nim flux finished but produced no image');
+		// A content filter answers 200 with a solid black frame and says so only in
+		// finishReason. Persisting that frame as the reference sent every 3D backend
+		// an image with no subject in it, and all three crashed on the empty mask
+		// (TRELLIS, Hunyuan3D and TripoSG on 2026-10-08). Hand off to the next lane.
+		const finish = artifact.finishReason ?? artifact.finish_reason;
+		if (finish && finish !== 'SUCCESS') {
+			throw Object.assign(new Error(`nim flux withheld the image (${finish})`), { code: 'safety_blocked' });
+		}
+		if (await isBlankFrame(Buffer.from(b64, 'base64'))) {
+			throw Object.assign(new Error('nim flux returned a blank frame'), { code: 'safety_blocked' });
+		}
 		return { imageUrl: await persistImageBase64(b64), model: NIM_FLUX_MODEL };
 	}
 	// Exhausted retries on a transient status/blip without a terminal verdict.
 	throw lastErr || new Error('nim flux failed after retries');
+}
+
+// A frame with no subject in it: every channel flat to within a couple of
+// levels, which is what a filtered render looks like whatever color it is
+// filled with. No real reference photo comes close; even a plain-background
+// product shot varies by tens of levels across the subject. An image sharp
+// cannot read is not judged blank here; the 3D backend reports it properly.
+export async function isBlankFrame(bytes) {
+	try {
+		const { default: sharp } = await import('sharp');
+		const { channels } = await sharp(bytes).stats();
+		return channels.length > 0 && channels.every((c) => c.stdev < 2);
+	} catch {
+		return false;
+	}
 }
 
 // Background / lighting / composition cues that signal the caller already

@@ -11,27 +11,9 @@
 // the response is tagged with its `source` so clients can render accordingly.
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { cc, toWorldCard, UnconfiguredError } from '../_lib/coin-communities.js';
-import { getTrendingSlim } from '../_lib/pump-trending.js';
+import { cc, toWorldCard, trendingWorldCards, UnconfiguredError } from '../_lib/coin-communities.js';
 
 const TRENDING_WORLDS = 24;
-
-async function trendingWorlds() {
-	const { data } = await getTrendingSlim(TRENDING_WORLDS);
-	if (!data) return null;
-	return data.map((t) => ({
-		token: t.mint,
-		symbol: t.symbol || null,
-		name: t.name || null,
-		image: t.logo || null,
-		chainId: null,
-		members: 0,
-		posts: 0,
-		likes: 0,
-		latestPostAt: null,
-		social: false,
-	}));
-}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -57,7 +39,7 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	const worlds = await trendingWorlds();
+	const worlds = await trendingWorldCards(TRENDING_WORLDS);
 	if (worlds) {
 		res.setHeader('cache-control', 'public, max-age=20, s-maxage=20, stale-while-revalidate=60');
 		return json(res, 200, { data: { worlds, source: 'pump-trending' } });

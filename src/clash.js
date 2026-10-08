@@ -71,6 +71,13 @@ function fmtTime(ms) {
 	}
 	return `${m}:${String(r).padStart(2, '0')}`;
 }
+// A faction's headline stat. Community rosters carry member counts; a round
+// seeded from the trending feed (social: false) has none, so it shows the coin's
+// market cap instead of a misleading "0 members".
+function factionStat(f) {
+	if (f.social === false) return f.marketCapUsd ? `$${fmtNum(f.marketCapUsd)} mcap` : 'trending now';
+	return `${fmtNum(f.members)} members`;
+}
 function fmtUsd(n) {
 	n = Number(n) || 0;
 	if (n <= 0) return '';
@@ -127,6 +134,11 @@ function renderArena(data) {
 	const mine = game.enlist?.token || null;
 	const frag = document.createDocumentFragment();
 
+	if (data.source === 'pump-trending') {
+		frag.appendChild(
+			el('p', { class: 'cl-source', text: 'This round’s armies are the coins trending on Solana right now, in trending order.' }),
+		);
+	}
 	for (const bt of data.arena) {
 		frag.appendChild(battleCard(bt, mine));
 	}
@@ -146,7 +158,7 @@ function sideBlock(side, which, mine) {
 	return el('div', { class: `cl-side cl-side-${which}` }, [
 		avatar(side),
 		el('span', { class: 'cl-sym', text: side.symbol || short(side.token) }),
-		el('span', { class: 'cl-meta', text: `${fmtNum(side.members)} members${side.priceUsd ? ` · ${fmtUsd(side.priceUsd)}` : ''}` }),
+		el('span', { class: 'cl-meta', text: `${factionStat(side)}${side.priceUsd ? ` · ${fmtUsd(side.priceUsd)}` : ''}` }),
 		el('span', { class: 'cl-rec', html: `<b>${rec.w}W</b> · <i>${rec.l}L</i>` }),
 		el('button', {
 			class: `cl-fight${isMine ? ' is-mine' : ''}`,
@@ -282,7 +294,7 @@ async function renderStandings() {
 					avatar(f),
 					el('div', {}, [
 						el('span', { class: 'cl-sym', text: f.symbol || short(f.token) }),
-						el('small', { text: `${fmtNum(f.members)} members · ${fmtNum(f.power)} lifetime power` }),
+						el('small', { text: `${factionStat(f)} · ${fmtNum(f.power)} lifetime power` }),
 					]),
 				]),
 				el('span', { class: 'cl-wl', html: `<b>${f.w}W</b> · <i>${f.l}L</i>${f.d ? ` · ${f.d}D` : ''}` }),

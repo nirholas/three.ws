@@ -46,6 +46,7 @@ const K = {
 	momentum: (mint) => `clash:mom:${mint}`, // JSON cached factor
 	price: (mint) => `clash:px:${mint}`, // JSON { spot, at, base, baseAt }
 	settled: (epoch) => `clash:settled:${epoch}`, // marker
+	roster: (epoch) => `clash:roster:${epoch}`, // JSON fallback faction cards
 	record: 'clash:record', // HASH mint → JSON {w,l,battles,power}
 };
 
@@ -247,6 +248,56 @@ export async function setPrice(mint, snap, ttlS) {
 		}
 	}
 	mem.s.set(K.price(mint), { value, exp: Date.now() + ttlS * 1000 });
+}
+
+// ─── Fallback roster, frozen per round ───────────────────────────────────────
+// The CoinCommunities roster moves slowly, but the trending feed that stands in
+// for it reorders every few seconds. Re-reading it on every poll would re-pair
+// battles mid-round, so the first instance to need a fallback roster for a round
+// writes it (SET NX) and every instance serves that same roster until the round
+// ends.
+
+function parseRoster(v) {
+	if (v == null) return null;
+	try {
+		const cards = typeof v === 'string' ? JSON.parse(v) : v;
+		return Array.isArray(cards) && cards.length ? cards : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * The round's frozen fallback roster, claiming `cards` for it if no instance
+ * has yet. Resolves to whichever roster won.
+ */
+export async function claimRoster(epoch, cards) {
+	const value = JSON.stringify(cards);
+	if (redis) {
+		try {
+			const ok = await redis.set(K.roster(epoch), value, { nx: true, ex: ROUND_TTL_S });
+			if (ok === 'OK' || ok === true) return cards;
+			return parseRoster(await redis.get(K.roster(epoch))) || cards;
+		} catch (err) {
+			redisDegraded(err);
+		}
+	}
+	const held = parseRoster(memValid(K.roster(epoch)));
+	if (held) return held;
+	mem.s.set(K.roster(epoch), { value, exp: Date.now() + ROUND_TTL_S * 1000 });
+	return cards;
+}
+
+/** The round's frozen fallback roster, or null when none was claimed. */
+export async function getRoster(epoch) {
+	if (redis) {
+		try {
+			return parseRoster(await redis.get(K.roster(epoch)));
+		} catch (err) {
+			redisDegraded(err);
+		}
+	}
+	return parseRoster(memValid(K.roster(epoch)));
 }
 
 // ─── All-time war record + lazy settlement ───────────────────────────────────

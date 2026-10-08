@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "3D Studio results now hand every agent plain links to the model",
+			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down",
 			"summary": "When every free Hugging Face Space is out of GPU quota, the Forge now pauses that engine for a few minutes, greys it out in the engine picker with the reason, and moves a generation you started on it to a working engine, showing you the switch, instead of retrying the same dead Spaces with a countdown.",
 			"tags": [
@@ -29069,6 +29078,13 @@
 			"summary": "Every AI answer on three.ws, from chat to agent brains, the tutor and the fact-checker, now has five more free models to fall back on when the usual ones are busy. NVIDIA's largest open model, Nemotron 3 Ultra, now answers right behind Nemotron 3 Super, with the compact Nemotron 3.5 Lightning further down the line. A second, independent route to the same Nemotron models works with no account at all, and a Gemma 4 model is back in the mix as well. The free NVIDIA and gateway models are now checked against their providers every six hours too, so the team hears the moment one is switched off instead of finding out from a failed answer.",
 			"tags": ["improvement"],
 			"link": "/chat"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Fewer failed 3D generations when the concept image comes back blank",
+			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
+			"tags": ["fix"],
+			"link": "/forge"
 		}
 	]
 }

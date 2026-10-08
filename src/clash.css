@@ -291,6 +291,12 @@
 /* The "b" side accents flip to the cool color for clarity */
 .cl-side-b .cl-fight.is-mine { background: color-mix(in srgb, var(--accent) 22%, transparent); border-color: var(--accent); }
 
+.cl-source {
+	margin: 0;
+	text-align: center;
+	color: var(--ink-dim);
+	font: 500 var(--text-sm, 12px) / 1.4 var(--font-body);
+}
 .cl-bye {
 	text-align: center;
 	color: var(--ink-faint);
