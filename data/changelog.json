@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Agent earnings are updating again",
+			"summary": "pump.fun moved the service that reports creator fees, so the Earned figures on agent pages, agent profiles, coin pages and /analytics had stopped refreshing since the end of September. Earnings now read from pump.fun's current fees service, with a second source behind it if that one stumbles, and every agent coin is back on its 30-minute refresh.",
+			"tags": [
+				"fix"
+			],
+			"link": "/analytics"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "The coin visualizer and communities keep loading when pump.fun throttles us",
 			"summary": "The full coin board behind the pump.fun visualizer, the communities page and the home page's live coin now retries a rate-limited read once and falls back to the last board any server saw in the past 30 minutes, marked as slightly stale, instead of showing an error.",
 			"tags": [

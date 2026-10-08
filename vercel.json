@@ -2159,6 +2159,16 @@
 			"dest": "/embodiment/embed.html"
 		},
 		{
+			"src": "/embed/dextools-boost/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/dextools-boost-embed.html"
+		},
+		{
 			"src": "/embed/avatar",
 			"headers": {
 				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
@@ -2253,6 +2263,22 @@
 		{
 			"src": "/playground/",
 			"dest": "/playground.html"
+		},
+		{
+			"src": "/chart-companion",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/chart-companion.html"
+		},
+		{
+			"src": "/chart-companion/",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/chart-companion.html"
 		},
 		{
 			"src": "/coin3d",
@@ -3256,6 +3282,10 @@
 		{
 			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
 			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/pons/([^/]+)",
+			"dest": "/api/agents/pons/[action]?id=$1&action=$2"
 		},
 		{
 			"src": "/api/agents/([^/]+)/embed-policy",
@@ -5906,6 +5936,14 @@
 		{
 			"src": "/inspect/",
 			"dest": "/inspect.html"
+		},
+		{
+			"src": "/dextools",
+			"dest": "/dextools.html"
+		},
+		{
+			"src": "/dextools/",
+			"dest": "/dextools.html"
 		},
 		{
 			"src": "/embed-doctor",

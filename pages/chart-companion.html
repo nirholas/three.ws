@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<title>Chart Companion · three.ws</title>
+		<meta name="description" content="Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling new highs out loud. Embed it, or drop it into OBS as a stream overlay." />
+		<link rel="canonical" href="https://three.ws/chart-companion" />
+		<meta property="og:title" content="Chart Companion · three.ws" />
+		<meta property="og:description" content="A 3D agent that watches a live DEXTools chart and reacts to every real swap. Embed it or stream it." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/chart-companion" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Chart+Companion&amp;d=A+3D+agent+that+watches+a+live+DEXTools+chart+and+reacts+to+every+real+swap.&amp;p=%2Fchart-companion" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Chart Companion · three.ws" />
+		<meta name="twitter:description" content="A 3D agent that watches a live DEXTools chart and reacts to every real swap. Embed it or stream it." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Chart+Companion&amp;d=A+3D+agent+that+watches+a+live+DEXTools+chart+and+reacts+to+every+real+swap.&amp;p=%2Fchart-companion" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Chart Companion","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"A 3D agent that watches a live DEXTools chart and reacts to every real swap, embeddable and usable as an OBS stream overlay.","url":"https://three.ws/chart-companion","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<main class="cc-wrap">
+			<header class="cc-top">
+				<div class="cc-title">
+					<div>
+						<div class="cc-kicker">Chart Companion</div>
+						<h1 data-symbol>Loading market…</h1>
+						<p id="cc-sub">Resolving the pair</p>
+					</div>
+					<span class="cc-live" id="cc-live" role="status" aria-label="Live swap feed">LIVE</span>
+				</div>
+				<div class="cc-actions">
+					<a class="cc-btn is-primary cc-hide-embed" id="cc-dextools" href="https://www.dextools.io" target="_blank" rel="noopener">Open on DEXTools ↗</a>
+					<button class="cc-btn cc-hide-embed" id="cc-voice" type="button" aria-pressed="false">Voice off</button>
+					<label class="cc-hide-embed" for="cc-avatar" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Avatar</label>
+					<select class="cc-select cc-hide-embed" id="cc-avatar" aria-label="Choose the avatar"></select>
+					<a class="cc-btn cc-powered" id="cc-full" href="/chart-companion" target="_blank" rel="noopener">Chart Companion by three.ws ↗</a>
+				</div>
+			</header>
+
+			<form class="cc-form" id="cc-form" novalidate>
+				<label for="cc-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">DEXTools link, pair, or mint</label>
+				<input class="cc-input" id="cc-input" name="q" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Paste a DEXTools link, pair, or mint" />
+				<button class="cc-btn is-primary" type="submit">Watch it live</button>
+				<p class="cc-form-msg" id="cc-form-msg" role="alert"></p>
+			</form>
+
+			<section class="cc-fatal cc-card" id="cc-fatal" hidden>
+				<h2>Nothing to watch yet</h2>
+				<p id="cc-fatal-msg"></p>
+				<a class="cc-btn" href="/chart-companion">Watch $THREE instead</a>
+			</section>
+
+			<div class="cc-grid">
+				<dl class="cc-stats cc-card" aria-label="Session stats">
+					<div class="cc-stat"><dt>Price</dt><dd data-stat="price">-</dd></div>
+					<div class="cc-stat"><dt>24h</dt><dd data-stat="change">-</dd></div>
+					<div class="cc-stat"><dt>Buys / sells</dt><dd data-stat="trades">0 / 0</dd></div>
+					<div class="cc-stat"><dt>Net flow</dt><dd data-stat="net">-</dd></div>
+					<div class="cc-stat"><dt>Biggest swap</dt><dd data-stat="biggest">-</dd></div>
+				</dl>
+
+				<section class="cc-chart cc-card" id="cc-chart" aria-label="Live DEXTools chart">
+					<div class="cc-skel"></div>
+				</section>
+
+				<section class="cc-stage cc-card is-loading" id="cc-stage" aria-label="3D companion">
+					<div class="cc-bubble" id="cc-bubble" role="status" aria-live="polite"></div>
+					<div class="cc-stage-slot"></div>
+					<div class="cc-stage-loading" aria-hidden="true"><div class="cc-silhouette"></div>Waking up your companion…</div>
+					<div class="cc-stage-error">
+						<p class="cc-stage-error-msg"></p>
+						<button class="cc-btn" id="cc-stage-retry" type="button">Try again</button>
+					</div>
+					<div class="cc-ticker" aria-hidden="true">
+						<span data-symbol></span><span data-stat="price">-</span><span data-stat="change">-</span>
+					</div>
+				</section>
+
+				<section class="cc-feed-card cc-card" aria-label="Reactions">
+					<div class="cc-feed-head"><span>Reactions</span><span>every line is a real swap</span></div>
+					<ol class="cc-feed" id="cc-feed" reversed>
+						<li class="cc-feed-empty" id="cc-feed-empty">Waiting for the first swap. Big buys, dumps, streaks and new highs show up here, each linked to its transaction.</li>
+					</ol>
+				</section>
+			</div>
+
+			<section class="cc-share" aria-label="Share and stream">
+				<div class="cc-share-card cc-card">
+					<h2>Share this view</h2>
+					<p>A link straight to this coin with this companion. Anyone who opens it watches the same live chart.</p>
+					<button class="cc-btn" id="cc-copy-link" type="button">Copy link</button>
+				</div>
+				<div class="cc-share-card cc-card">
+					<h2>Stream it</h2>
+					<p>Add the overlay URL as an OBS <b>Browser Source</b> (about 500 × 700). The background is transparent, so the companion stands over your own chart capture.</p>
+					<button class="cc-btn" id="cc-copy-overlay" type="button">Copy OBS overlay URL</button>
+				</div>
+				<div class="cc-share-card cc-card">
+					<h2>Embed it</h2>
+					<p>Put the chart and companion on your coin's site with one iframe. Use <code>?agent=&lt;your agent id&gt;</code> to bring your own three.ws agent.</p>
+					<button class="cc-btn" id="cc-copy-embed" type="button">Copy embed code</button>
+				</div>
+			</section>
+		</main>
+		<script type="module" src="/src/chart-companion/main.js"></script>
+	</body>
+</html>

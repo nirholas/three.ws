@@ -2496,6 +2496,22 @@
 					"added": "2026-06-03"
 				},
 				{
+					"path": "/dextools",
+					"title": "three.ws x DEXTools",
+					"description": "Every way three.ws works with DEXTools: DEXTools charts in every coin chart, any DEXTools pair rendered as a live 3D scene, a Social Boost card any project can embed, and a public count of the visits three.ws sends to DEXTools pair pages. Paste a DEXTools link to get the embed snippet.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-08"
+				},
+				{
+					"path": "/chart-companion",
+					"title": "Chart Companion",
+					"description": "Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-08"
+				},
+				{
 					"path": "/coin3d",
 					"title": "Token in 3D",
 					"description": "Any pump.fun token as a live 3D scene: a spinning coin medallion with the token's logo, top holders as a galaxy sized by balance, and a graduation ring tracking bonding-curve progress. Address it by mint or by the pair address a chart terminal uses, and embed it on any site with one iframe.",

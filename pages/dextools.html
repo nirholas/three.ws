@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<style>[hidden]{display:none!important}</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>three.ws x DEXTools</title>
+	<meta name="description" content="Every way three.ws works with DEXTools: DEXTools charts in every coin chart, any DEXTools pair rendered as a live 3D scene, a Social Boost card any project can embed, and a public count of the visits three.ws sends to DEXTools pair pages." />
+	<link rel="canonical" href="https://three.ws/dextools" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws x DEXTools" />
+	<meta property="og:description" content="DEXTools charts inside three.ws, any DEXTools pair as a live 3D scene, an embeddable Social Boost card, and the public traffic three.ws sends to DEXTools pair pages." />
+	<meta property="og:url" content="https://three.ws/dextools" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=three.ws+x+DEXTools&amp;d=DEXTools+charts+in+every+coin+chart%2C+any+DEXTools+pair+as+a+live+3D+scene%2C+and+a+Social+Boost+card+any+project+can+embed.&amp;p=%2Fdextools" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws x DEXTools" />
+	<meta name="twitter:description" content="Paste any DEXTools pair link, get it as a live 3D scene and a Social Boost card you can embed anywhere." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=three.ws+x+DEXTools&amp;d=DEXTools+charts+in+every+coin+chart%2C+any+DEXTools+pair+as+a+live+3D+scene%2C+and+a+Social+Boost+card+any+project+can+embed.&amp;p=%2Fdextools" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"three.ws x DEXTools","description":"Every way three.ws works with DEXTools: DEXTools charts in every coin chart, any DEXTools pair rendered as a live 3D scene, a Social Boost card any project can embed, and a public count of the visits three.ws sends to DEXTools pair pages.","url":"https://three.ws/dextools","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.dx-wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 96px; }
+		.dx-wrap a { color: var(--ink-bright, var(--ink)); }
+		code, pre { font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace); }
+
+		.dx-hero { padding: 44px 0 10px; }
+		.dx-kicker {
+			display: inline-flex; align-items: center; gap: 7px; font-size: 0.72rem; letter-spacing: 0.09em;
+			text-transform: uppercase; color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: 999px;
+			padding: 5px 11px; margin-bottom: 14px; background: var(--surface-1);
+		}
+		.dx-kicker::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--success, #22c55e); }
+		.dx-hero h1 { font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.08; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright, var(--ink)); }
+		.dx-hero p { margin: 0; max-width: 68ch; color: var(--ink-dim); line-height: 1.65; font-size: 1.02rem; }
+
+		.dx-section { margin-top: 44px; }
+		.dx-section > h2 { font-size: 1.25rem; margin: 0 0 6px; letter-spacing: -0.01em; color: var(--ink-bright, var(--ink)); }
+		.dx-section > .dx-sub { margin: 0 0 18px; color: var(--ink-dim); max-width: 70ch; line-height: 1.6; }
+
+		.dx-card { border: 1px solid var(--stroke-strong, var(--stroke)); border-radius: var(--radius-lg, 14px); background: var(--surface-1); padding: 18px; min-width: 0; }
+		.dx-card h3 { margin: 0 0 6px; font-size: 0.98rem; color: var(--ink-bright, var(--ink)); }
+		.dx-card p { margin: 0; color: var(--ink-dim); line-height: 1.55; font-size: 0.92rem; }
+
+		.dx-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+		.dx-ways .dx-card { display: flex; flex-direction: column; gap: 8px; transition: border-color 140ms ease, transform 140ms ease; }
+		.dx-ways .dx-card:hover { border-color: color-mix(in srgb, var(--ink) 30%, transparent); transform: translateY(-1px); }
+		.dx-dir { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); }
+		.dx-ways .dx-card a { margin-top: auto; font-size: 0.88rem; }
+
+		.dx-live { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) 420px; }
+		@media (max-width: 900px) { .dx-live { grid-template-columns: 1fr; } }
+		.dx-frame-host { position: relative; border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); overflow: hidden; background: var(--surface-1); min-height: 560px; }
+		.dx-frame-host iframe { display: block; width: 100%; height: 560px; border: 0; }
+		.dx-frame-cap { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; color: var(--ink-dim); margin: 0 0 8px; }
+
+		.dx-stats-head { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; justify-content: space-between; margin-bottom: 12px; }
+		.dx-big { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); line-height: 1; }
+		.dx-big-label { color: var(--ink-dim); font-size: 0.88rem; margin-top: 6px; }
+		.dx-range { display: inline-flex; border: 1px solid var(--stroke); border-radius: 10px; overflow: hidden; }
+		.dx-range button { appearance: none; border: 0; background: transparent; color: var(--ink-dim); font: inherit; font-size: 0.84rem; padding: 7px 12px; cursor: pointer; transition: background 120ms ease, color 120ms ease; }
+		.dx-range button:hover { color: var(--ink); background: var(--surface-2, var(--surface-1)); }
+		.dx-range button[aria-pressed='true'] { color: var(--ink-bright, var(--ink)); background: var(--surface-2, var(--surface-1)); }
+		.dx-range button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+		.dx-bars { display: flex; align-items: flex-end; gap: 2px; height: 120px; padding-top: 8px; border-bottom: 1px solid var(--stroke); }
+		.dx-bar { flex: 1; min-width: 2px; background: color-mix(in srgb, var(--ink) 55%, transparent); border-radius: 2px 2px 0 0; transition: height 260ms ease, background 120ms ease; }
+		.dx-bar:hover { background: var(--ink-bright, var(--ink)); }
+		.dx-bar.is-zero { background: color-mix(in srgb, var(--ink) 12%, transparent); height: 2px !important; }
+		.dx-axis { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--ink-dim); margin-top: 6px; }
+		.dx-split { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 14px; }
+		.dx-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+		.dx-table th { text-align: left; color: var(--ink-dim); font-weight: 500; font-size: 0.78rem; padding: 0 0 8px; }
+		.dx-table td { padding: 7px 0; border-top: 1px solid var(--hairline, var(--stroke)); }
+		.dx-table td.num, .dx-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+		.dx-table td a { text-decoration: none; }
+		.dx-table td a:hover { text-decoration: underline; }
+		.dx-muted { color: var(--ink-dim); }
+
+		.dx-builder { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+		@media (max-width: 900px) { .dx-builder { grid-template-columns: 1fr; } }
+		.dx-row { display: flex; gap: 8px; flex-wrap: wrap; }
+		.dx-input {
+			flex: 1 1 260px; min-width: 0; font: inherit; font-size: 0.92rem; color: var(--ink); background: var(--bg-0);
+			border: 1px solid var(--stroke-strong, var(--stroke)); border-radius: 10px; padding: 10px 12px;
+			transition: border-color 120ms ease;
+		}
+		.dx-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+		.dx-btn {
+			display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-size: 0.88rem; font-weight: 550;
+			padding: 9px 14px; border-radius: 10px; border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2, var(--surface-1));
+			color: var(--ink-bright, var(--ink)); cursor: pointer; text-decoration: none;
+			transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+		}
+		.dx-btn:hover { border-color: color-mix(in srgb, var(--ink) 40%, transparent); }
+		.dx-btn:active { transform: translateY(1px); }
+		.dx-btn:disabled { opacity: 0.55; cursor: default; }
+		.dx-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.dx-btn.is-primary { background: var(--ink-bright, var(--ink)); color: var(--bg-0); border-color: transparent; }
+		.dx-btn.is-primary:hover { background: color-mix(in srgb, var(--ink-bright, var(--ink)) 86%, transparent); }
+		.dx-label { display: block; font-size: 0.82rem; color: var(--ink-dim); margin: 0 0 8px; }
+		.dx-tabs { display: flex; gap: 6px; margin: 16px 0 10px; flex-wrap: wrap; }
+		.dx-msg { margin: 10px 0 0; font-size: 0.88rem; color: var(--ink-dim); min-height: 1.3em; }
+		.dx-msg.is-error { color: var(--danger, #ef4444); }
+		.dx-code { position: relative; margin-top: 10px; }
+		.dx-code pre { margin: 0; padding: 14px; padding-right: 86px; background: var(--bg-0); border: 1px solid var(--stroke); border-radius: 10px; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; color: var(--ink); white-space: pre; }
+		.dx-code .dx-btn { position: absolute; top: 8px; right: 8px; padding: 6px 10px; font-size: 0.8rem; }
+		.dx-preview { border: 1px dashed var(--stroke-strong, var(--stroke)); border-radius: var(--radius-lg, 14px); min-height: 420px; display: grid; place-items: center; overflow: hidden; background: var(--surface-1); }
+		.dx-preview iframe { border: 0; max-width: 100%; display: block; }
+		.dx-preview-empty { text-align: center; padding: 24px; color: var(--ink-dim); max-width: 34ch; line-height: 1.55; font-size: 0.92rem; }
+		.dx-try { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; font-size: 0.82rem; color: var(--ink-dim); align-items: center; }
+		.dx-try button { appearance: none; background: none; border: 1px solid var(--stroke); color: var(--ink); border-radius: 999px; font: inherit; font-size: 0.8rem; padding: 3px 10px; cursor: pointer; }
+		.dx-try button:hover { border-color: color-mix(in srgb, var(--ink) 40%, transparent); }
+		.dx-try button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.dx-wins { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+		.dx-win b { display: block; font-size: 1.4rem; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+
+		.dx-skel { border-radius: 8px; background: linear-gradient(90deg, var(--surface-1) 0%, color-mix(in srgb, var(--ink) 8%, transparent) 50%, var(--surface-1) 100%); background-size: 200% 100%; animation: dx-shimmer 1.2s linear infinite; }
+		@keyframes dx-shimmer { to { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .dx-skel { animation: none; } .dx-bar, .dx-ways .dx-card { transition: none; } }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content" class="dx-wrap">
+		<section class="dx-hero">
+			<span class="dx-kicker">Partnership</span>
+			<h1>three.ws x DEXTools</h1>
+			<p>
+				DEXTools charts run inside every coin chart on three.ws. In the other direction, any DEXTools pair
+				can be rendered as a live 3D scene keyed by the pair address already in its URL, and any project can
+				embed a card that sends its community to its DEXTools pair page, where every visit counts toward
+				Social Boost. This page has all of it in one place, with live numbers.
+			</p>
+		</section>
+
+		<section class="dx-section" aria-labelledby="dx-ways-h">
+			<h2 id="dx-ways-h">How the two connect</h2>
+			<p class="dx-sub">Each integration below is live in production. None of them needs a key, an account or a data agreement.</p>
+			<div class="dx-grid dx-ways">
+				<article class="dx-card">
+					<span class="dx-dir">DEXTools in three.ws</span>
+					<h3>DEXTools charts in every coin chart</h3>
+					<p>The chart-source switcher on coin pages, launches, the terminal and Mission Control offers the DEXTools chart for the same market. On the $THREE page it is the chart.</p>
+					<a href="/three-token">See it on $THREE</a>
+				</article>
+				<article class="dx-card">
+					<span class="dx-dir">three.ws in DEXTools</span>
+					<h3>Any pair as a live 3D scene</h3>
+					<p><code>/coin3d?pair=</code> takes the pair address straight from a DEXTools URL: logo medallion, holder galaxy, graduation ring and live swaps, in one iframe.</p>
+					<a href="/docs/coin3d-embed">Embed notes</a>
+				</article>
+				<article class="dx-card">
+					<span class="dx-dir">Traffic to DEXTools</span>
+					<h3>A Social Boost card for every coin</h3>
+					<p>Launches, coin pages and any project's own site can mount a card that sends holders to the DEXTools pair page and hands them a rally post to share.</p>
+					<a href="#builder">Build one</a>
+				</article>
+				<article class="dx-card">
+					<span class="dx-dir">Public receipts</span>
+					<h3>Every visit counted, in the open</h3>
+					<p>DEXTools links across three.ws go through one redirect that counts the visit per coin and per surface. The totals are public, below and at <code>/api/coin/dextools-stats</code>.</p>
+					<a href="#traffic">See the numbers</a>
+				</article>
+			</div>
+		</section>
+
+		<section class="dx-section" aria-labelledby="dx-live-h">
+			<h2 id="dx-live-h">$THREE, both directions at once</h2>
+			<p class="dx-sub">Left: DEXTools' own chart widget for the three / SOL pair. Right: the same pair as a three.ws 3D scene, addressed by that pair and nothing else.</p>
+			<div class="dx-live">
+				<div>
+					<p class="dx-frame-cap"><span>DEXTools chart</span><a id="dx-pair-link" target="_blank" rel="noopener">Open on DEXTools ↗</a></p>
+					<div class="dx-frame-host" id="dx-chart"><div class="dx-skel" style="position:absolute;inset:0"></div></div>
+				</div>
+				<div>
+					<p class="dx-frame-cap"><span>3D by three.ws</span><a id="dx-scene-link" target="_blank" rel="noopener">Full scene ↗</a></p>
+					<div class="dx-frame-host" id="dx-scene"><div class="dx-skel" style="position:absolute;inset:0"></div></div>
+				</div>
+			</div>
+		</section>
+
+		<section class="dx-section" id="traffic" aria-labelledby="dx-traffic-h">
+			<h2 id="dx-traffic-h">Visits three.ws sends to DEXTools</h2>
+			<p class="dx-sub">Counted when someone follows a DEXTools link anywhere on three.ws or in a three.ws embed. Aggregate counts only: no IP, session or account is stored.</p>
+			<div class="dx-card" id="dx-stats" aria-busy="true">
+				<div class="dx-stats-head">
+					<div><div class="dx-skel" style="height:38px;width:120px"></div><div class="dx-skel" style="height:14px;width:200px;margin-top:8px"></div></div>
+				</div>
+				<div class="dx-skel" style="height:120px"></div>
+			</div>
+		</section>
+
+		<section class="dx-section" id="builder" aria-labelledby="dx-builder-h">
+			<h2 id="dx-builder-h">Embed any DEXTools pair</h2>
+			<p class="dx-sub">Paste a DEXTools pair link (or a DexScreener, GeckoTerminal, pump.fun or Birdeye link, or a bare address). You get a live preview and the snippet to paste into your own site.</p>
+			<div class="dx-builder">
+				<div class="dx-card">
+					<form id="dx-form" novalidate>
+						<label class="dx-label" for="dx-input">Link or address</label>
+						<div class="dx-row">
+							<input class="dx-input" id="dx-input" name="q" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://www.dextools.io/app/solana/pair-explorer/..." />
+							<button class="dx-btn is-primary" id="dx-go" type="submit">Build embed</button>
+						</div>
+					</form>
+					<div class="dx-try">Try:
+						<button type="button" data-try="dextools">$THREE on DEXTools</button>
+						<button type="button" data-try="mint">$THREE mint</button>
+					</div>
+					<p class="dx-msg" id="dx-msg" role="status" aria-live="polite"></p>
+					<div id="dx-out" hidden>
+						<div class="dx-tabs" role="group" aria-label="Embed type">
+							<button type="button" class="dx-btn" data-kind="scene" aria-pressed="true">3D scene</button>
+							<button type="button" class="dx-btn" data-kind="boost" aria-pressed="false">Boost card</button>
+							<button type="button" class="dx-btn" id="dx-theme" aria-pressed="false" title="Toggle the embed theme">Light theme</button>
+						</div>
+						<div class="dx-code"><pre id="dx-snippet"></pre><button type="button" class="dx-btn" id="dx-copy">Copy</button></div>
+						<p class="dx-msg" id="dx-resolved"></p>
+					</div>
+				</div>
+				<div class="dx-preview" id="dx-preview">
+					<p class="dx-preview-empty">Your preview renders here. Start with a DEXTools pair link, or tap one of the examples.</p>
+				</div>
+			</div>
+		</section>
+
+		<section class="dx-section" aria-labelledby="dx-wins-h">
+			<h2 id="dx-wins-h">Social Boost, already won</h2>
+			<p class="dx-sub">Social Boost ranks coins by visits to their DEXTools pair page and buys the winner on the open market. $THREE has won it more than once. Each win links to its receipt.</p>
+			<div class="dx-wins" id="dx-wins"></div>
+			<p class="dx-sub" style="margin-top:14px"><a href="/blog/three-ws-dextools-social-boost-buyback">How $THREE won it</a> · <a href="https://www.dextools.io/app/social-boost" target="_blank" rel="noopener">Social Boost leaderboard ↗</a></p>
+		</section>
+
+		<section class="dx-section" aria-labelledby="dx-dev-h">
+			<h2 id="dx-dev-h">For developers</h2>
+			<div class="dx-grid">
+				<article class="dx-card"><h3>Pair to token</h3><p><code>GET /api/coin/pair?address=&lt;pair&gt;</code> resolves a DEXTools pair to the token it trades.</p></article>
+				<article class="dx-card"><h3>Counted DEXTools link</h3><p><code>GET /api/coin/dextools?address=&lt;mint&gt;&amp;from=&lt;surface&gt;</code> lands on the top pair page and counts the visit.</p></article>
+				<article class="dx-card"><h3>Traffic totals</h3><p><code>GET /api/coin/dextools-stats?days=30[&amp;token=]</code> returns visits by day, by surface and by coin.</p></article>
+			</div>
+			<p class="dx-sub" style="margin-top:14px">Full reference: <a href="/docs/dextools">DEXTools integration docs</a>. Partnership contact: <a href="mailto:partners@three.ws">partners@three.ws</a>.</p>
+		</section>
+	</main>
+
+	<script type="module" src="/src/dextools-hub.js"></script>
+</body>
+</html>

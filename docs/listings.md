@@ -140,6 +140,8 @@ Social Boost ranks by visits to a pair page, so every surface that shows a coin 
 | `/coin3d` | A DEXTools link in the HUD. A scene embedded by `?pair=` links back to that exact pair ([coin3d embed](./coin3d-embed.md)) |
 | `/oracle/coin/<mint>` | A DEXTools button beside the other market links |
 | Agent profiles, character pages, `/gmgn`, `/pumpfun`, the token dashboard | A DEXTools chart link for every coin shown |
+| [/dextools](/dextools) | The hub: $THREE as a DEXTools chart and a 3D scene side by side, the live visit totals, an embed builder for any DEXTools pair, and the Social Boost wins ([DEXTools integration](./dextools.md)) |
+| `/embed/dextools-boost?mint=` | The Social Boost card as a framable embed any project can put on its own site, every link counted as `embed-boost` ([DEXTools integration](./dextools.md#boost-on-dextools-card-embeddextools-boost)) |
 
 **Which page a link opens.** DEXTools files a pump.fun mint as the coin's bonding-curve pair, so a raw-mint link sends a graduated coin to its dead curve page. Links that already know the pair use it. Every other link goes through [`GET /api/coin/dextools`](https://three.ws/api/coin/dextools?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&from=docs), which resolves the most-liquid pool, redirects to its pair page, and pins $THREE to the pair its Social Boost wins are credited to. The redirect counts each visit per UTC day, coin and sending surface (no visitor data), and [`GET /api/coin/dextools-stats`](https://three.ws/api/coin/dextools-stats) publishes those totals, so the traffic three.ws sends DEXTools can be checked rather than claimed.
 

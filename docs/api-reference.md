@@ -5435,6 +5435,52 @@ This is what lets `/coin3d` be addressed by pair as well as by mint. See
 
 ---
 
+### DEXTools visit totals
+
+```
+GET /api/coin/dextools-stats?days=<1-90>[&token=<token-address>]
+```
+
+How many visits three.ws has sent to DEXTools pair pages. Every DEXTools link on
+the platform goes through the counted `/api/coin/dextools` redirect, which adds
+one to a daily total per coin and per sending surface; this route reads those
+totals back. DEXTools Social Boost ranks coins by pair-page visits, so this is
+the number the DEXTools partnership is measured in, and it is public so anyone
+can check it.
+
+```bash
+curl -s 'https://three.ws/api/coin/dextools-stats?days=7'
+curl -s 'https://three.ws/api/coin/dextools-stats?token=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&days=30'
+```
+
+```json
+{
+  "days": 7,
+  "since": "2026-10-02",
+  "token": null,
+  "visits": 412,
+  "tokens": 37,
+  "lastVisitAt": "2026-10-08T04:51:10.000Z",
+  "byDay": [{ "day": "2026-10-02", "visits": 0 }, { "day": "2026-10-03", "visits": 18 }],
+  "bySurface": [{ "surface": "launch-success", "visits": 120 }],
+  "topTokens": [
+    { "network": "solana", "token": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump", "visits": 96, "name": "three.ws", "symbol": "THREE", "launchedOnThreeWs": false }
+  ]
+}
+```
+
+`days` defaults to 30 and is clamped to 1..90. `byDay` has one row per UTC day in
+the range, zeros included, so it charts without gap-filling. `topTokens` is the
+20 busiest coins, named from the three.ws launch record where the coin launched
+here (`launchedOnThreeWs: true`). `token` narrows every field to one coin and
+must be a valid Solana or EVM address (`400 bad_token` otherwise). Aggregate
+only: no IP, session or account is stored or returned. Keyless, CORS-open,
+cached 60s + 5min at the CDN. The figures above show the shape, not live values.
+Rendered on [/dextools](https://three.ws/dextools); see
+[DEXTools integration](./dextools.md).
+
+---
+
 ### Markets table / coin search
 
 ```
