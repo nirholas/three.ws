@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Connect Grok Bot and other cloud agents with OAuth, and revoke them instantly",
+			"summary": "Cloud agents such as Grok Bot can now sign in to your three.ws account over OAuth 2.1 from wherever they run, with a callback on any https address. The sign-in screen says plainly which app is asking, which site it belongs to, where it will send you back, and what it will be able to do, and it states that the app can never spend from your wallet. Spending is only granted if you tick a separate box. Settings, Connected apps lists every app with when it last called in, and Revoke now cuts an app off on its very next request instead of up to an hour later.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Topping up an agent's inference credits now asks for the real-funds agreements first",
 			"summary": "Moving USDC from an agent wallet into model credits is a real-funds action, so it now follows the same rule as withdrawals, trades and vaults. A one-off credit top-up, turning on the automatic top-up rule, and funding a new inference key from the command line all require the signed real-funds agreements (Terms of Service, Risk Disclosure and Agent Wallet Agreement). On the credits panel the signing dialog opens before the first top-up; from the CLI or an API key you get a link to sign once. Previews still work without signing, and switching the automatic top-up off never needs it.",
 			"tags": ["security"],

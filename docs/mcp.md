@@ -184,6 +184,36 @@ Each OAuth-protected hosted server is its own resource. On a `401`, the `WWW-Aut
 
 This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client with no account belongs on `https://three.ws/api/mcp-studio`, which never challenges and serves the free 3D generation and asset catalog tools.
 
+### Cloud connectors and revocation
+
+A cloud agent such as Grok Bot, or a claude.ai custom connector, signs in with the same OAuth 2.1 flow, from servers we have never seen. Choose OAuth 2.1 as the connector's authentication and give it a server URL such as `https://three.ws/api/mcp`. The client does the rest:
+
+- **Registration accepts any https callback.** `POST /oauth/register` (RFC 7591) needs no pre-arrangement. Any `https://` redirect URI is accepted, on whatever host the connector's cloud uses, as are plain-http loopback URIs (`http://localhost`, `http://127.0.0.1`, `http://[::1]`, any port) for desktop clients and private-use schemes such as `com.example.app:/callback` for native apps. Plain http on a public host, `ftp:`, `ws:`, `wss:`, `mailto:`, `javascript:`, `data:` and the like are refused with `invalid_redirect_uri`. The `client_name` and `client_uri` a client registers are stored and shown to the person who approves it.
+- **PKCE S256 is mandatory.** `/oauth/authorize` refuses a request without `code_challenge`, or with any method other than `S256`, and the token endpoint checks the verifier. Codes live 60 seconds and work once; a replayed code revokes everything issued from it.
+- **The consent screen says who is asking.** It shows the app's name, the host of its `client_uri`, the host the code will be sent back to, and an "unverified" note for self-registered apps (any app can call itself "Grok Bot", so the addresses are what to check). Every permission is listed in plain language.
+- **A connector can never spend unless you tick a box.** `wallet:write` is the one scope that moves money, and cloud agents tend to register for every scope the metadata lists. The consent screen never grants it on Authorize alone: it states that the app can never spend from your wallet and grants `wallet:read` in its place, so balances and caps stay visible. Spending is granted only when you tick "Also let ... spend USDC from your agent wallet", which swaps that statement for a warning. The routes and tools that pay, trade, withdraw, launch, place orders or issue a spending mandate all refuse a token without `wallet:write` (the shared gate is `api/_lib/spend-scope.js`).
+- **Tokens.** Access tokens are JWTs that live one hour. Refresh tokens live 30 days, rotate on every use, and a reused refresh token revokes the whole chain.
+- **See and revoke connected apps** in [Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps) (`/dashboard/connections` redirects there). Each app shows its name, site, permissions, when it last called in and when you authorized it, and a "Can spend" tag if you ticked the box. **Revoke takes effect on the app's very next request**: every access token issued to it before that moment is refused with `401` by every MCP server and API route, and its refresh tokens stop working, so it has to send you through consent again. The same immediate cut-off applies when the app revokes its own refresh token at `POST /oauth/revoke` (RFC 7009), and `POST /oauth/introspect` reports such a token as `{"active": false}`.
+
+The programmatic form of the list, for the signed-in browser session only (a bearer token cannot list or revoke apps, including itself):
+
+```
+GET    /api/oauth/grants                  # { grants: [{ client_id, name, client_host, scopes, can_spend, last_used_at, authorized_at }] }
+DELETE /api/oauth/grants?client_id=...    # revoke one app; needs the X-CSRF-Token header
+```
+
+The end-to-end proof is [`tests/e2e/oauth-cloud-connector.spec.js`](../tests/e2e/oauth-cloud-connector.spec.js): it registers "Grok Bot" with an external https callback, approves it as the QA account, exchanges the code with PKCE, calls `tools/list` on `/api/mcp`, then presses Revoke and sees the next call refused. To run it against your own code, start the API beside the dev server (see [Client compatibility](#client-compatibility)) and pass the QA login:
+
+```bash
+# Terminal 1: the API from this tree. JWT_SECRET can be any local value.
+PORT=3108 PUBLIC_APP_ORIGIN=http://localhost:3107 JWT_SECRET=$(openssl rand -hex 32) \
+  node --env-file=.env.local --env-file-if-exists=.env server/index.mjs
+
+# Terminal 2: the spec, on a dev server that proxies to it
+DEV_API_PROXY=http://localhost:3108 E2E_PORT=3107 \
+  node --env-file=.env ./node_modules/@playwright/test/cli.js test tests/e2e/oauth-cloud-connector.spec.js
+```
+
 ### API key (server-to-server)
 
 For scripts, CI, and server agents, generate a key at **[/dashboard/api](https://three.ws/dashboard/api)** and pass it as a bearer token:

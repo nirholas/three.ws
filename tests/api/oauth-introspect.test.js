@@ -33,6 +33,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 
 const authState = {
 	verifyResult: null, // set to a payload object → returns it; null → throws
+	grantRevoked: false, // the person revoked this app after the token was issued
 };
 
 vi.mock('../../api/_lib/auth.js', () => ({
@@ -44,6 +45,7 @@ vi.mock('../../api/_lib/auth.js', () => ({
 	issueRefreshToken: vi.fn(async () => ({ token: 'rt', id: 'rt-id' })),
 	rotateRefreshToken: vi.fn(async () => { throw Object.assign(new Error('invalid_grant'), { status: 400 }); }),
 	revokeRefreshToken: vi.fn(async () => {}),
+	oauthGrantRevoked: vi.fn(async () => authState.grantRevoked),
 	getSessionUser: vi.fn(async () => null),
 	csrfTokenFor: vi.fn(async () => null),
 	verifyCsrfToken: vi.fn(async () => false),
@@ -107,6 +109,7 @@ const PAST = new Date(Date.now() - 3_600_000).toISOString();
 
 beforeEach(() => {
 	sqlState.queue = [];
+	authState.grantRevoked = false;
 	sqlState.calls = [];
 	authState.verifyResult = null;
 });
@@ -151,6 +154,15 @@ describe('POST /api/oauth/introspect', () => {
 		expect(body.scope).toBe('avatars:read');
 		expect(body.client_id).toBe('mcp_pub');
 		expect(body.token_type).toBe('Bearer');
+	});
+
+	it('returns { active: false } for a JWT whose app the person has since revoked', async () => {
+		sqlState.queue.push([PUBLIC_CLIENT]);
+		authState.verifyResult = { sub: 'user-1', scope: 'avatars:read', client_id: 'mcp_pub', aud: 'https://app.test/api/mcp', iss: 'https://app.test', exp: Math.floor(Date.now() / 1000) + 3600, iat: Math.floor(Date.now() / 1000) };
+		authState.grantRevoked = true;
+		const { status, body } = await invoke({ formBody: { token: 'valid.jwt.token', client_id: 'mcp_pub' } });
+		expect(status).toBe(200);
+		expect(body).toEqual({ active: false });
 	});
 
 	it('returns { active: false } for an invalid/expired JWT (falls through to refresh token lookup which also misses)', async () => {

@@ -18,6 +18,8 @@
 // sides now read this array, and tests/api/oauth-scope-discovery.test.js
 // pins them together.
 
+import { SPEND_SCOPE } from './spend-scope.js';
+
 // Scopes a dynamically-registered client may request. Anything outside this set
 // (notably privileged scopes like `permissions:redeem`, which authorizes
 // gas-spending on-chain redemption) is silently dropped at registration so a
@@ -51,7 +53,8 @@ export const REGISTERABLE_SCOPES = Object.freeze([
 	'home:act',
 	// The wallet/services scopes gate the agent-wallet MCP server
 	// (api/mcp-agent). They are registerable because the user approves each one
-	// by name on the consent screen and every spend they authorize is still
+	// by name on the consent screen, `wallet:write` only by ticking a separate
+	// box (splitSpendScope below), and every spend they authorize is still
 	// bounded by the server-side caps and THREEWS_AGENT_PAY_ENABLED.
 	'wallet:read',
 	'wallet:write',
@@ -75,4 +78,20 @@ export function filterRegisterableScope(requested) {
 		.split(/\s+/)
 		.filter((s) => REGISTERABLE.has(s));
 	return kept.length ? kept.join(' ') : 'avatars:read';
+}
+
+// Design rule for connectors: an app a person signs in to three.ws can never
+// spend from their wallet unless they tick a box saying so on the consent
+// screen (api/oauth/[action].js). A
+// cloud agent such as Grok Bot registers for every scope the protected-resource
+// metadata lists, `wallet:write` included, and then holds the token unattended,
+// so spending is opt-in rather than something a person approves by clicking
+// Authorize. Left unticked, `wallet:write` is dropped and `wallet:read` kept,
+// so the app still sees balances and caps.
+export function splitSpendScope(scope) {
+	const scopes = String(scope || '').split(/\s+/).filter(Boolean);
+	const spend = scopes.includes(SPEND_SCOPE);
+	const base = scopes.filter((s) => s !== SPEND_SCOPE);
+	if (spend && !base.includes('wallet:read')) base.push('wallet:read');
+	return { base: base.join(' '), spend };
 }

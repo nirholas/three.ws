@@ -281,7 +281,7 @@ function renderConnectedApps(resp, onRetry) {
 		<div class="set-panel-head">
 			<div>
 				<div class="dn-panel-title">Connected apps</div>
-				<div class="dn-panel-sub" style="margin:2px 0 0">Apps you signed in with three.ws: the desktop app, the CLI, and coding clients using your MCP tools. Revoking stops an app within an hour, when its current access expires.</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Apps you signed in with three.ws: the desktop app, the CLI, coding clients, and cloud agents such as Grok Bot using your MCP tools. Revoking cuts an app off on its very next request.</div>
 			</div>
 		</div>
 		<div data-slot="grants-list"></div>
@@ -294,13 +294,13 @@ function renderConnectedApps(resp, onRetry) {
 	}
 	const render = (grants) => {
 		if (!grants.length) {
-			listHost.innerHTML = emptyStateHTML({ icon: '', title: 'No connected apps', body: 'When you sign in to three.ws Desktop, the CLI, or an editor over MCP, it appears here.', compact: true });
+			listHost.innerHTML = emptyStateHTML({ icon: '', title: 'No connected apps', body: 'When you connect three.ws Desktop, the CLI, an editor, or a cloud agent such as Grok Bot over MCP, it appears here with a Revoke button.', compact: true });
 			return;
 		}
 		listHost.innerHTML = grants.map((g) => `
 			<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--nxt-stroke);flex-wrap:wrap" data-client-id="${esc(g.client_id)}">
 				<div style="flex:1;min-width:200px">
-					<div style="font-size:13.5px;color:var(--nxt-ink);font-weight:500">${esc(g.name)}${g.software ? ` <span style="color:var(--nxt-ink-fade);font-weight:400;font-family:${MONO};font-size:11.5px">${esc(g.software)}</span>` : ''}</div>
+					<div style="font-size:13.5px;color:var(--nxt-ink);font-weight:500;overflow-wrap:anywhere">${esc(g.name)}${g.client_host ? ` <span style="color:var(--nxt-ink-fade);font-weight:400;font-family:${MONO};font-size:11.5px">${esc(g.client_host)}</span>` : ''}${g.software ? ` <span style="color:var(--nxt-ink-fade);font-weight:400;font-family:${MONO};font-size:11.5px">${esc(g.software)}</span>` : ''}${g.can_spend ? ` <span class="dn-tag warn" title="You ticked “spend from my agent wallet” when you connected it">Can spend</span>` : ''}</div>
 					<div style="font-size:12px;color:var(--nxt-ink-fade);margin-top:3px">
 						Can ${esc(g.scopes.map((sc) => SCOPE_WORDS[sc] || sc).join(', '))} · used ${esc(relTime(g.last_used_at))} · authorized ${esc(relTime(g.authorized_at))}
 					</div>
@@ -310,7 +310,7 @@ function renderConnectedApps(resp, onRetry) {
 		`).join('');
 		listHost.querySelectorAll('[data-action="revoke-grant"]').forEach((btn) => {
 			btn.addEventListener('click', async () => {
-				if (!confirm(`Revoke ${btn.dataset.name}? It will need to sign in again.`)) return;
+				if (!confirm(`Revoke ${btn.dataset.name}? It loses access on its next request and will need you to sign in again.`)) return;
 				btn.disabled = true;
 				btn.textContent = 'Revoking…';
 				try {

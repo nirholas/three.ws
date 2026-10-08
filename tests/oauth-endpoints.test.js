@@ -28,6 +28,9 @@ vi.mock('../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () =
 vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
 vi.mock('../api/_lib/streaks.js', () => ({ recordDailyActivity: vi.fn(async () => {}) }));
+// Connected apps (DELETE /oauth/grants) checks the dashboard's CSRF token, which
+// lives in its own table; that check has its own suite.
+vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		authIp: vi.fn(async () => ({ success: true })),
@@ -55,7 +58,7 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	if (text.startsWith('insert into oauth_clients')) {
 		const [client_id, client_secret_hash, client_type, name, logo_uri, client_uri, redirect_uris, grant_types, response_types, token_endpoint_auth, scope] = values;
-		db.clients.push({ client_id, client_secret_hash, client_type, name, logo_uri, client_uri, redirect_uris, grant_types, response_types, token_endpoint_auth, scope });
+		db.clients.push({ client_id, client_secret_hash, client_type, name, logo_uri, client_uri, redirect_uris, grant_types, response_types, token_endpoint_auth, scope, dynamically_registered: true });
 		return [];
 	}
 	if (text.startsWith('insert into oauth_auth_codes')) {
@@ -76,7 +79,7 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	if (text.startsWith('insert into oauth_refresh_tokens')) {
 		const [token_hash, client_id, user_id, scope, resource] = values;
-		const row = { id: `rt-${db.refresh.length + 1}`, token_hash, client_id, user_id, scope, resource, revoked_at: null, replaced_by: null, expires_at: future(2_592_000) };
+		const row = { id: `rt-${db.refresh.length + 1}`, token_hash, client_id, user_id, scope, resource, revoked_at: null, replaced_by: null, last_used_at: null, created_at: new Date().toISOString(), expires_at: future(2_592_000) };
 		db.refresh.push(row);
 		return [{ id: row.id }];
 	}
@@ -103,10 +106,39 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	if (text.startsWith('update oauth_refresh_tokens set revoked_at = now() where user_id')) {
 		const [userId, clientId] = values;
+		const revoked = [];
 		for (const r of db.refresh) {
-			if (r.user_id === userId && r.client_id === clientId && !r.revoked_at) r.revoked_at = new Date().toISOString();
+			if (r.user_id === userId && r.client_id === clientId && !r.revoked_at) {
+				r.revoked_at = new Date().toISOString();
+				revoked.push({ id: r.id });
+			}
 		}
-		return [];
+		return revoked;
+	}
+	// oauthGrantRevoked (api/_lib/auth.js): stamp last use on the live row, then
+	// ask whether the grant was ended at or after the token was issued.
+	if (text.startsWith('with touched as ( update oauth_refresh_tokens set last_used_at')) {
+		const [liveUser, liveClient, userId, clientId, issuedAt] = values;
+		for (const r of db.refresh) {
+			if (r.user_id === liveUser && r.client_id === liveClient && !r.revoked_at) r.last_used_at = new Date().toISOString();
+		}
+		const revoked = db.refresh.some((r) => r.user_id === userId && r.client_id === clientId && !r.replaced_by
+			&& r.revoked_at && Date.parse(r.revoked_at) >= issuedAt * 1000);
+		return [{ revoked }];
+	}
+	// handleGrants GET: one row per client holding a live refresh token.
+	if (text.startsWith('select c.client_id, c.name, c.client_uri')) {
+		const [userId] = values;
+		const live = db.refresh.filter((r) => r.user_id === userId && !r.revoked_at);
+		return [...new Set(live.map((r) => r.client_id))].map((clientId) => {
+			const c = db.clients.find((x) => x.client_id === clientId);
+			const rows = live.filter((r) => r.client_id === clientId);
+			return {
+				client_id: clientId, name: c.name, client_uri: c.client_uri ?? null, logo_uri: null, software_id: null, software_version: null,
+				authorized_at: rows[0].created_at ?? null, last_used_at: rows.map((r) => r.last_used_at).filter(Boolean).sort().pop() ?? null,
+				scopes: rows.map((r) => r.scope).join(' '),
+			};
+		});
 	}
 	throw new Error(`unmodeled query: ${text}`);
 });
@@ -127,7 +159,7 @@ vi.mock('../api/_lib/auth.js', async () => {
 });
 
 const { default: handler } = await import('../api/oauth/[action].js');
-const { csrfTokenFor, verifyAccessToken } = await import('../api/_lib/auth.js');
+const { csrfTokenFor, verifyAccessToken, authenticateBearer } = await import('../api/_lib/auth.js');
 const { sha256, sha256Base64Url } = await import('../api/_lib/crypto.js');
 
 // ── request/response doubles ─────────────────────────────────────────────────
@@ -248,9 +280,9 @@ describe('GET /oauth/authorize', () => {
 		const res = await call('authorize', { query: authorizeQuery({ scope: 'memory:write' }) });
 		expect(res.statusCode).toBe(200);
 		expect(res.getHeader('content-type')).toContain('text/html');
-		expect(res.body).toContain('Read your avatars');
+		expect(res.body).toContain('See your avatars');
 		expect(res.body).toContain('See your name and email');
-		expect(res.body).not.toContain('Store and forget');
+		expect(res.body).not.toContain('Save and erase');
 	});
 
 	it('allows the client origin in form-action so the post-consent 302 is not blocked', async () => {
@@ -556,6 +588,206 @@ describe('POST /oauth/register', () => {
 		const res = await call('register', { method: 'POST', jsonBody: { redirect_uris: [] } });
 		expect(res.statusCode).toBe(400);
 		expect(res.json().error).toBe('validation_error');
+	});
+});
+
+// A cloud connector (Grok Bot, claude.ai) registers from a cloud we have never
+// seen, with a callback on a host nobody could list in advance. Any https URI
+// has to work for it, and nothing that would carry the code in plain text or
+// off to a non-browser handler may.
+describe('POST /oauth/register for a cloud connector', () => {
+	const GROK = { client_name: 'Grok Bot', client_uri: 'https://grok.com', redirect_uris: ['https://connectors.grok-cloud.example/oauth/callback/3f9a'], scope: 'avatars:read avatars:write profile offline_access wallet:read wallet:write' };
+
+	it('registers Grok Bot with an https callback on an unpredictable host and keeps its name and site for consent', async () => {
+		const res = await call('register', { method: 'POST', jsonBody: GROK });
+		expect(res.statusCode).toBe(201);
+		const body = res.json();
+		expect(body.client_name).toBe('Grok Bot');
+		expect(body.client_uri).toBe('https://grok.com');
+		expect(body.redirect_uris).toEqual(GROK.redirect_uris);
+		expect(db.clients[0]).toMatchObject({ name: 'Grok Bot', client_uri: 'https://grok.com', client_type: 'public' });
+
+		const consent = await call('authorize', { query: { ...authorizeQuery({ client_id: body.client_id, redirect_uri: GROK.redirect_uris[0] }) } });
+		expect(consent.statusCode).toBe(200);
+		expect(consent.body).toContain('<b>Grok Bot</b> wants to connect to your three.ws account');
+	});
+
+	it.each([
+		['plain http on a public host', 'http://connectors.grok-cloud.example/oauth/callback'],
+		['ftp', 'ftp://connectors.grok-cloud.example/oauth/callback'],
+		['an unencrypted websocket', 'ws://connectors.grok-cloud.example/oauth/callback'],
+		['an encrypted websocket', 'wss://connectors.grok-cloud.example/oauth/callback'],
+		['mailto', 'mailto:/attacker@example.com'],
+		['javascript', 'javascript:alert(1)'],
+	])('rejects %s, which is neither https nor loopback', async (_label, uri) => {
+		const res = await call('register', { method: 'POST', jsonBody: { ...GROK, redirect_uris: [uri] } });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error).toBe('invalid_redirect_uri');
+		expect(db.clients).toHaveLength(0);
+	});
+
+	it.each([
+		['localhost', 'http://localhost:6274/oauth/callback'],
+		['127.0.0.1', 'http://127.0.0.1:33418/callback'],
+		['IPv6 loopback', 'http://[::1]:8080/cb'],
+	])('accepts plain http on %s for a desktop client', async (_label, uri) => {
+		const res = await call('register', { method: 'POST', jsonBody: { ...GROK, redirect_uris: [uri] } });
+		expect(res.statusCode).toBe(201);
+	});
+});
+
+describe('consent screen for a cloud connector', () => {
+	const grok = (overrides = {}) => seedClient({
+		name: 'Grok Bot',
+		client_uri: 'https://grok.com',
+		redirect_uris: ['https://client.example/cb'],
+		scope: 'avatars:read profile wallet:write',
+		dynamically_registered: true,
+		...overrides,
+	});
+
+	it('names the client, its site host and where the code goes, and says it can never spend', async () => {
+		grok();
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('<b>Grok Bot</b> wants to connect');
+		expect(res.body).toContain('<dd data-fact="client-host">grok.com</dd>');
+		expect(res.body).toContain('<dd data-fact="return-host">client.example</dd>');
+		expect(res.body).toContain('three.ws has not verified this app');
+		expect(res.body).toContain('It can never spend from your wallet.');
+		expect(res.body).toContain('<li>See your avatars</li>');
+		expect(res.body).toContain('<li>See your name and email address</li>');
+	});
+
+	it('keeps the spend scope out of the list and behind an unticked box', async () => {
+		grok();
+		const res = await call('authorize', { query: authorizeQuery() });
+		const list = res.body.match(/<ul data-scopes>(.*?)<\/ul>/)[1];
+		expect(list).not.toContain('Spend USDC');
+		expect(list).toContain('See your agent wallet balance and spending caps');
+		expect(res.body).toMatch(/<input type="checkbox" id="allow-spend" name="allow_spend" value="yes">/);
+		expect(res.body).not.toMatch(/id="allow-spend"[^>]*checked/);
+	});
+
+	it('shows no spend box when the client never asked to spend', async () => {
+		grok({ scope: 'avatars:read profile' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('allow_spend');
+		expect(res.body).toContain('It can never spend from your wallet.');
+	});
+
+	it('escapes a hostile client name everywhere it appears', async () => {
+		grok({ name: '<img src=x onerror=alert(1)>' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('<img src=x');
+		expect(res.body).toContain('&lt;img src=x onerror=alert(1)&gt;');
+	});
+
+	it('grants wallet:read, not wallet:write, when the person leaves the box unticked', async () => {
+		grok();
+		await approve({ scope: 'avatars:read profile wallet:write' });
+		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'profile', 'wallet:read']);
+	});
+
+	it('grants wallet:write only when the person ticks the box', async () => {
+		grok();
+		await approve({ scope: 'avatars:read profile wallet:write', allow_spend: 'yes' });
+		expect(db.codes[0].scope.split(' ')).toContain('wallet:write');
+	});
+});
+
+// Revoking an app has to stop it on its next call. Access tokens are JWTs,
+// so before this the app kept working for up to an hour after Revoke.
+describe('revocation is effective within one request', () => {
+	const mcpAudience = { audience: RESOURCE };
+
+	async function revokeInConnectedApps(clientId = 'mcp_test_client') {
+		return call('grants', { method: 'DELETE', query: { client_id: clientId } });
+	}
+
+	it('rejects the access token on the very next request after Revoke in Connected apps', async () => {
+		seedClient();
+		const { access_token } = await issueTokens();
+		expect(await authenticateBearer(access_token, mcpAudience)).toMatchObject({ userId: 'user-1', clientId: 'mcp_test_client', source: 'oauth' });
+
+		const revoked = await revokeInConnectedApps();
+		expect(revoked.statusCode).toBe(200);
+		expect(revoked.json()).toEqual({ client_id: 'mcp_test_client', revoked: 1 });
+
+		expect(await authenticateBearer(access_token, mcpAudience)).toBeNull();
+		const introspected = await call('introspect', { method: 'POST', form: { token: access_token, client_id: 'mcp_test_client' } });
+		expect(introspected.json()).toEqual({ active: false });
+	});
+
+	it('also refuses the revoked refresh token, so the app cannot mint a fresh access token', async () => {
+		seedClient();
+		const { refresh_token } = await issueTokens();
+		await revokeInConnectedApps();
+		const res = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_test_client', refresh_token } });
+		expect(res.statusCode).toBe(400);
+	});
+
+	it('ends the access token when the client revokes its own refresh token (RFC 7009)', async () => {
+		seedClient();
+		const { access_token, refresh_token } = await issueTokens();
+		await call('revoke', { method: 'POST', form: { token: refresh_token, client_id: 'mcp_test_client' } });
+		expect(await authenticateBearer(access_token, mcpAudience)).toBeNull();
+	});
+
+	it('does not cut off the access token a normal refresh replaced', async () => {
+		seedClient();
+		const { access_token, refresh_token } = await issueTokens();
+		const refreshed = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_test_client', refresh_token } });
+		expect(refreshed.statusCode).toBe(200);
+		expect(await authenticateBearer(access_token, mcpAudience)).not.toBeNull();
+		expect(await authenticateBearer(refreshed.json().access_token, mcpAudience)).not.toBeNull();
+	});
+
+	it('leaves another app the same person connected untouched', async () => {
+		seedClient();
+		seedClient({ client_id: 'mcp_other_client', name: 'Other App' });
+		const mine = await issueTokens();
+		const authorized = await approve({ client_id: 'mcp_other_client' });
+		const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+		const other = (await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: 'mcp_other_client', code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER } })).json();
+
+		await revokeInConnectedApps('mcp_test_client');
+		expect(await authenticateBearer(mine.access_token, mcpAudience)).toBeNull();
+		expect(await authenticateBearer(other.access_token, mcpAudience)).toMatchObject({ clientId: 'mcp_other_client' });
+	});
+
+	it('lets the person connect the app again after revoking it', async () => {
+		seedClient();
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			await issueTokens();
+			await revokeInConnectedApps();
+			vi.setSystemTime(Date.now() + 2_000);
+			db.codes.length = 0;
+			const again = await issueTokens();
+			expect(await authenticateBearer(again.access_token, mcpAudience)).toMatchObject({ clientId: 'mcp_test_client' });
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('lists the connected app with its site host and last use, then drops it after Revoke', async () => {
+		seedClient({ name: 'Grok Bot', client_uri: 'https://grok.com' });
+		const { access_token } = await issueTokens();
+		await authenticateBearer(access_token, mcpAudience);
+		const listed = (await call('grants')).json().grants;
+		expect(listed).toHaveLength(1);
+		expect(listed[0]).toMatchObject({ client_id: 'mcp_test_client', name: 'Grok Bot', client_host: 'grok.com', can_spend: false });
+		expect(listed[0].last_used_at).toBeTruthy();
+
+		await revokeInConnectedApps();
+		expect((await call('grants')).json().grants).toEqual([]);
+	});
+
+	it('refuses to list or revoke apps without a signed-in session', async () => {
+		getSessionUser.mockResolvedValue(null);
+		expect((await call('grants')).statusCode).toBe(401);
+		expect((await revokeInConnectedApps()).statusCode).toBe(401);
 	});
 });
 

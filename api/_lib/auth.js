@@ -120,6 +120,39 @@ export async function revokeRefreshToken(secret, clientId) {
 	}
 }
 
+// ── grant liveness (revocation that takes effect on the next request) ───────
+// Access tokens are stateless JWTs, so on their own a revoked app kept working
+// until its current token expired, up to an hour. Revocation now ends every
+// access token minted for that person and client before the moment it
+// happened: the person pressing Revoke in Connected apps, the client revoking
+// its own refresh token (RFC 7009 §2.1 asks the server to drop the access
+// tokens of the same grant too), refresh-token reuse, and a replayed code.
+// All four leave a refresh row with `revoked_at` set and no `replaced_by`;
+// normal rotation always sets `replaced_by`, so a refresh never cuts off the
+// token it replaces. A grant authorized again later mints tokens issued after
+// the revocation, which pass.
+//
+// The same statement stamps `last_used_at` on the live refresh row, at most
+// every five minutes, so Connected apps shows when an app last called in
+// rather than when it last refreshed.
+export async function oauthGrantRevoked({ userId, clientId, issuedAt }) {
+	if (!userId || !clientId || !issuedAt) return false;
+	const [row] = await sql`
+		with touched as (
+			update oauth_refresh_tokens set last_used_at = now()
+			where user_id = ${userId} and client_id = ${clientId} and revoked_at is null and expires_at > now()
+				and (last_used_at is null or last_used_at < now() - interval '5 minutes')
+			returning id
+		)
+		select exists (
+			select 1 from oauth_refresh_tokens
+			where user_id = ${userId} and client_id = ${clientId} and replaced_by is null
+				and revoked_at >= to_timestamp(${issuedAt})
+		) as revoked
+	`;
+	return !!row?.revoked;
+}
+
 // ── browser sessions (cookie auth for the site itself) ──────────────────────
 // __Host- prefix requires Path=/; Secure; no Domain — browser enforces cookie
 // can't be set by any subdomain, eliminating subdomain cookie injection.
@@ -302,22 +335,27 @@ export async function authenticateBearer(token, { audience } = {}) {
 		return { userId: row.user_id, scope: row.scope, source: 'apikey', apiKeyId: row.id };
 	}
 	// Otherwise treat as JWT access token.
+	let payload;
 	try {
-		const payload = await verifyAccessToken(token, { audience });
-		// Only ACCESS tokens authorize API calls. Refresh tokens are opaque (never
-		// JWTs) so this is belt-and-suspenders, but rejecting any non-'access'
-		// token_use prevents a future token type (e.g. an id/refresh JWT) from
-		// being replayed against resource endpoints.
-		if (payload.token_use !== 'access') return null;
-		return {
-			userId: payload.sub,
-			scope: payload.scope || '',
-			source: 'oauth',
-			clientId: payload.client_id,
-		};
+		payload = await verifyAccessToken(token, { audience });
 	} catch {
 		return null;
 	}
+	// Only ACCESS tokens authorize API calls. Refresh tokens are opaque (never
+	// JWTs) so this is belt-and-suspenders, but rejecting any non-'access'
+	// token_use prevents a future token type (e.g. an id/refresh JWT) from
+	// being replayed against resource endpoints.
+	if (payload.token_use !== 'access') return null;
+	// Outside the try on purpose: a database error here surfaces as a 503 from
+	// wrap() instead of a 401, which would send every connected client back
+	// through sign-in during an outage.
+	if (await oauthGrantRevoked({ userId: payload.sub, clientId: payload.client_id, issuedAt: payload.iat })) return null;
+	return {
+		userId: payload.sub,
+		scope: payload.scope || '',
+		source: 'oauth',
+		clientId: payload.client_id,
+	};
 }
 
 // Resolve the request's user from a session cookie OR a bearer credential

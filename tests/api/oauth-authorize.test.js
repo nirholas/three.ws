@@ -292,7 +292,7 @@ describe('GET /api/oauth/authorize — consent page render', () => {
 		const { res, status, body } = await invoke({ url: `/api/oauth/authorize?${VALID_QS}` });
 		expect(status).toBe(200);
 		expect(res.headers['content-type']).toMatch(/text\/html/);
-		expect(body).toContain('Authorize <b>Test Client</b>');
+		expect(body).toContain('<b>Test Client</b> wants to connect to your three.ws account');
 		expect(body).toContain('name="csrf"');
 		// Original PKCE params are preserved as hidden inputs for POST submit.
 		expect(body).toContain('name="code_challenge"');

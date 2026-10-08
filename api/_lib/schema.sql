@@ -321,6 +321,7 @@ create table if not exists oauth_refresh_tokens (
 );
 
 create index if not exists oauth_refresh_user on oauth_refresh_tokens(user_id) where revoked_at is null;
+create index if not exists oauth_refresh_user_client on oauth_refresh_tokens(user_id, client_id);
 create index if not exists oauth_refresh_expiry on oauth_refresh_tokens(expires_at);
 
 -- ── Developer API keys (for server-to-server MCP usage) ─────────────────────
