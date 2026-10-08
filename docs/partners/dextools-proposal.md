@@ -5,6 +5,8 @@
 **TL;DR**
 The integration usually announced as a partnership, DEXTools charts live inside a partner product, is already shipped on three.ws and has been for months. What is not shipped anywhere is the other direction. three.ws renders any market as a live 3D scene, and as of today that scene is embeddable with one iframe keyed by the **pair address**, which is the identifier a DEXTools pair page already has in its URL. That is a visual layer no other chart terminal can put next to a chart, built on a relationship that already has public receipts on both sides.
 
+**Status, 2026-10-08.** Pillars 3 and 4 below are now built on our side. Every coin launched through three.ws gets a DEXTools button and a Social Boost card on its success screen and its coin page. DEXTools leads the trading-terminal row on every coin surface. Every DEXTools link we render goes through a counted redirect whose per-day totals are public at `/api/coin/dextools-stats`, so the traffic we send DEXTools is something you can check rather than take on faith. Full surface map: [listings, DEXTools](../listings.md#dextools). Pillar 1 still needs DEXTools; pillar 2 is ready whenever you are.
+
 ---
 
 ## What already exists between us

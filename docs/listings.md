@@ -126,6 +126,39 @@ DEXTools also runs [Social Boost](https://www.dextools.io/app/social-boost), whi
 
 The same list renders on [/three-token](/three-token#tk-social-boost) from one record, [src/pump/dextools-social-boost.js](../src/pump/dextools-social-boost.js). DEXTools publishes no API for past winners, so a new win is added there by hand (newest first, with its receipt) and mirrored in this table. Story: [three.ws Wins DEXTools Social Boost](/blog/three-ws-dextools-social-boost-buyback).
 
+#### Where DEXTools appears on three.ws
+
+Social Boost ranks by visits to a pair page, so every surface that shows a coin also sends people to that coin's DEXTools page:
+
+| Surface | What it shows |
+|---|---|
+| [/three-token](/three-token) | The DEXTools chart widget as the $THREE chart, the Social Boost wins, and the pair page link |
+| Every coin chart (`/launches/<mint>`, `/coin/:id`, `/trades`, Mission Control, the Oracle, `/pump-dashboard`) | DEXTools as a chart source in the switcher ([coin pages](./coin-pages.md)) |
+| Trading terminal rows (coin pages, the $THREE dashboard, the pump.fun feed widget, Oracle share pages) | DEXTools leads the row ([src/shared/trading-terminals.js](../src/shared/trading-terminals.js)) |
+| [/launch](/launch) success screen | A DEXTools button and the "Rally on DEXTools" Social Boost card, right after a coin goes live |
+| `/launches/<mint>` Take action | The same Social Boost card for any coin |
+| `/coin3d` | A DEXTools link in the HUD. A scene embedded by `?pair=` links back to that exact pair ([coin3d embed](./coin3d-embed.md)) |
+| `/oracle/coin/<mint>` | A DEXTools button beside the other market links |
+| Agent profiles, character pages, `/gmgn`, `/pumpfun`, the token dashboard | A DEXTools chart link for every coin shown |
+
+**Which page a link opens.** DEXTools files a pump.fun mint as the coin's bonding-curve pair, so a raw-mint link sends a graduated coin to its dead curve page. Links that already know the pair use it. Every other link goes through [`GET /api/coin/dextools`](https://three.ws/api/coin/dextools?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&from=docs), which resolves the most-liquid pool, redirects to its pair page, and pins $THREE to the pair its Social Boost wins are credited to. The redirect counts each visit per UTC day, coin and sending surface (no visitor data), and [`GET /api/coin/dextools-stats`](https://three.ws/api/coin/dextools-stats) publishes those totals, so the traffic three.ws sends DEXTools can be checked rather than claimed.
+
+**The Social Boost card** is one component, `socialBoostCard()` in [src/shared/dextools-boost.js](../src/shared/dextools-boost.js). It explains the ranking, cites the $THREE wins from the record above, and gives three actions: open the DEXTools page, post a ready-made rally to X, and copy the link. It takes the host page's button classes and an optional `href`, so a surface can route it through the counted redirect with its own `from` tag:
+
+```js
+import { socialBoostCard } from './shared/dextools-boost.js';
+import { dextoolsTokenUrl } from './shared/trading-terminals.js';
+
+const card = socialBoostCard({
+	mint,
+	symbol: 'THREE',
+	href: dextoolsTokenUrl(mint, { from: 'my-surface' }),
+	buttonClass: 'btn',
+	primaryClass: 'btn primary',
+});
+if (card) host.append(card); // null for an address it cannot link
+```
+
 ---
 
 ## Open Source
