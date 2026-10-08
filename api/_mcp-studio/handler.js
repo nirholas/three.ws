@@ -7,7 +7,8 @@
 // Parameterized by the tool surface it serves (SURFACES in ./dispatch.js):
 //   api/mcp-studio.js   surface 'full'     every tool, both widgets
 //   api/mcp-chatgpt.js  surface 'chatgpt'  generation tools, model viewer only
-// Both front doors share one transport cap, one per-IP generation quota and one
+//   api/mcp-grok.js     surface 'grok'     every tool, for Grok Bot and the xAI API
+// Every front door shares one transport cap, one per-IP generation quota and one
 // platform-wide circuit breaker, so a second door never doubles the free GPU
 // budget.
 //
@@ -19,6 +20,7 @@
 // generation caps fail OPEN on a Redis outage, so a Redis blip never dead-ends a
 // free feature; real paid spend stays fail-closed one layer down in /api/forge.
 
+import { randomUUID } from 'node:crypto';
 import { cors, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { dispatch, PROTOCOL_VERSION } from './dispatch.js';
@@ -62,6 +64,33 @@ export function chatgptSubject(body) {
 	return null;
 }
 
+// Grok Bot and the xAI Responses API also reach us from one shared egress pool,
+// and send no per-user id of their own. MCP Streamable HTTP has one: a server
+// may assign an Mcp-Session-Id on initialize, and a conforming client echoes it
+// on every later request of that connection. The grok surface issues one and
+// keys the per-caller caps on it. Minting is free, so a forged or rotated id
+// buys nothing past the per-IP pool cap that bounds the ChatGPT subject too.
+const SESSION_RE = /^grk_[0-9a-f-]{36}$/;
+export function grokSession(req) {
+	const sid = req?.headers?.['mcp-session-id'];
+	return typeof sid === 'string' && SESSION_RE.test(sid) ? sid : null;
+}
+
+function initializes(body) {
+	const batch = Array.isArray(body) ? body : [body];
+	return batch.some((m) => m && m.method === 'initialize');
+}
+
+/** The per-user identity a shared-egress surface carries, or null for per-IP keying. */
+export function callerSubject(surface, body, req) {
+	if (surface === 'chatgpt') {
+		const sub = chatgptSubject(body);
+		return sub ? `oai:${sub}` : null;
+	}
+	if (surface === 'grok') return grokSession(req);
+	return null;
+}
+
 export function studioHandler({ surface = 'full' } = {}) {
 	return wrap(async (req, res) => {
 		if (cors(req, res, { methods: 'GET,HEAD,POST,OPTIONS', origins: '*', payments: false })) return;
@@ -95,12 +124,12 @@ export function studioHandler({ surface = 'full' } = {}) {
 		// Generation quota, burst then hourly, per IP. Applied only when the request
 		// actually calls a generation tool, so discovery is never throttled by it.
 		if (callsGenerationTool(body)) {
-			const subject = surface === 'chatgpt' ? chatgptSubject(body) : null;
+			const subject = callerSubject(surface, body, req);
 			if (subject) {
 				const pool = await limits.studioGenPoolHourly(ip);
 				if (!pool.success) return rateLimited(res, pool, 'the free 3D studio is at capacity right now, please try again later');
 			}
-			const caller = subject ? `oai:${subject}` : ip;
+			const caller = subject || ip;
 			const burst = await limits.studioGenBurst(caller);
 			if (!burst.success) return rateLimited(res, burst, 'generation rate limit, slow down and try again shortly');
 			const hourly = await limits.studioGenHourly(caller);
@@ -124,6 +153,12 @@ export function studioHandler({ surface = 'full' } = {}) {
 		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+		if (surface === 'grok' && initializes(body)) {
+			res.setHeader('mcp-session-id', `grk_${randomUUID()}`);
+			// A browser MCP client cannot echo a header it is not allowed to read.
+			const exposed = res.getHeader('access-control-expose-headers');
+			res.setHeader('access-control-expose-headers', exposed ? `${exposed}, mcp-session-id` : 'mcp-session-id');
+		}
 		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
 	});
 }

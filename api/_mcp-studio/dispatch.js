@@ -53,6 +53,24 @@ const CHATGPT_INSTRUCTIONS = [
 // response's own trip back through ChatGPT.
 export const CHATGPT_CALL_BUDGET_MS = 40_000;
 
+// Grok Bot and the xAI Responses API call MCP tools from xAI's cloud, render no
+// widget, and give no published tool-call timeout. Grok Bot runs tasks
+// unattended for as long as they take, so on that surface a slow render comes
+// back as a pending job inside GROK_CALL_BUDGET_MS and the model is told to keep
+// collecting it, then hand the user links, since nothing renders inline.
+const GROK_INSTRUCTIONS = [
+	'Nothing renders inline in Grok, so always give the user the viewerUrl (an interactive 3D viewer that opens in any',
+	'browser) and the glbUrl (the downloadable model). A pending result is normal: wait the suggested seconds, then call',
+	'check_job(job_id) again until it is done, and keep going without asking the user; a Grok Bot task should finish',
+	'with the finished model, not the pending handle. To give yourself a body, forge_avatar a character, then',
+	'create_agent_persona(glb_url, name) and share its embed_url; persona_say makes that body speak your reply and',
+	'returns an embed_url that plays it.',
+];
+
+// The same headroom as ChatGPT: a call that outlives an unpublished host
+// timeout is lost work, while a pending handle costs one check_job round trip.
+export const GROK_CALL_BUDGET_MS = 40_000;
+
 const CATALOG_INSTRUCTIONS = [
 	'Before generating a prop, character or animation, search_catalog(q) checks the thousands of ready-made CC0 props,',
 	'rigged characters and motion clips three.ws already publishes; get_item_source(id) returns paste-ready code for a',
@@ -80,6 +98,11 @@ const PERSONA_INSTRUCTIONS = [
 //            for broad distribution". Framing our own page is not that case, so
 //            the plugin listing leaves the persona tools out rather than ask
 //            review for an exception.
+//   grok     /api/mcp-grok: every tool of the full surface for Grok Bot and the
+//            xAI Responses API, with a per-call budget and instructions that
+//            hand out links in place of the widgets Grok does not render.
+//            ./handler.js keys its generation caps on the MCP session, because
+//            every Grok user reaches us from xAI's shared egress.
 // check_job and the persona tools stay out of the generation quota on both; see
 // ./handler.js callsGenerationTool. look_at_model renders frames server-side, so
 // it rides that quota.
@@ -98,6 +121,14 @@ const SURFACES = {
 		personas: false,
 		instructions: [...BASE_INSTRUCTIONS, ...CHATGPT_INSTRUCTIONS].join(' '),
 		callBudgetMs: CHATGPT_CALL_BUDGET_MS,
+	},
+	grok: {
+		server: 'mcp-grok',
+		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		personas: true,
+		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS, ...GROK_INSTRUCTIONS].join(' '),
+		callBudgetMs: GROK_CALL_BUDGET_MS,
 	},
 };
 
