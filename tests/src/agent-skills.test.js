@@ -122,7 +122,7 @@ describe('SkillRegistry.install – trust modes', () => {
 	});
 });
 
-describe('SkillRegistry.install – main-thread opt-out', () => {
+describe('SkillRegistry.install: main-thread opt-out', () => {
 	const mainThreadManifest = () => fixtureManifest({ sandboxPolicy: 'trusted-main-thread' });
 
 	it('sandboxes a trusted-main-thread bundle served from an untrusted origin', async () => {
