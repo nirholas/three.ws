@@ -32,7 +32,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | --- | --- | --- | --- |
 | **Text → 3D** | `microsoft/trellis` | `api/_providers/nvidia.js`, `api/_lib/forge-tiers.js` | ✅ |
 | **Text → image** | `black-forest-labs/flux.1-dev` | `api/_mcp3d/text-to-image.js` | ✅ |
-| **LLM (default lane)** | `nvidia/nemotron-3-super-120b-a12b` (compact rung: `nvidia/nemotron-3.5-lightning-30b-a3b`) | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
+| **LLM (default lane)** | `nvidia/nemotron-3-super-120b-a12b`, then `nvidia/nemotron-3-ultra-550b-a55b` (step-down rung: `nvidia/nemotron-3.5-lightning-30b-a3b`) | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
 | **LLM (model garden)** | Nemotron 3 Super 120B / Ultra 550B / 3.5 Lightning 30B, DeepSeek V4 Pro, Kimi K2.6, MiniMax M2.7 | `api/brain/chat.js` | ✅ |
 | **Vision / VLM** | `meta/llama-3.2-11b-vision-instruct`, then free OpenRouter `:free` VLM rungs | `api/_lib/vision.js` | ✅ |
 | **Embeddings** | `nvidia/nemotron-3-embed-1b` | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
@@ -86,10 +86,12 @@ NVIDIA NIM hosts 100+ open-weight chat models behind the one key, all OpenAI-com
 
 ### 3a. The default production lane
 
-**Model:** `nvidia/nemotron-3-super-120b-a12b` (with `nvidia/nemotron-3.5-lightning-30b-a3b` as the compact Nemotron rung)
+**Models:** `nvidia/nemotron-3-super-120b-a12b`, then `nvidia/nemotron-3-ultra-550b-a55b`, with `nvidia/nemotron-3.5-lightning-30b-a3b` as the compact step-down rung
 **Source:** [api/_lib/llm.js](../api/_lib/llm.js), [api/_lib/chat-models.js](../api/_lib/chat-models.js).
 
 The platform's general LLM helper runs a **free-first ladder: Groq → Cerebras → OpenRouter → NVIDIA NIM**, followed by further keyless free rungs (OVH, Gemini, Pollinations) and only at the very end a paid backstop (Anthropic/OpenAI). Every free rung was re-pointed on 2026-08-27, and every NVIDIA-routed id again on 2026-09-10 after a sweep of `GET /v1/models` on the live account found most of them answering `410 Gone`. A dead id is worse than a missing one: a fallback chain treats a 410 like a rate limit and moves on, so nothing logged an outage while each dead entry burned one of the chain's few retry slots. The rungs the providers still serve: Groq now runs `qwen/qwen3.8-27b` (instant tier `openai/gpt-oss-20b`), Cerebras keeps `llama-3.3-70b`, and the NVIDIA rung runs Nemotron 3 Super 120B, an NVIDIA MoE on an independent provider (the opt-in compact rung moved off `nemotron-3-nano-30b-a3b`, which NIM stopped serving, to `nemotron-3.5-lightning-30b-a3b`), so an outage on the other free lanes still answers here. Both NVIDIA rungs are called with thinking disabled (`chat_template_kwargs: { enable_thinking: false }`) so a chat turn answers instead of reasoning out loud. Both are tool/function-calling capable, so they are eligible for tool-required requests.
+
+Since 2026-10-08 the shared chain runs all three Nemotron models on the one key, as separate rungs: Super 120B, then Ultra 550B right behind it, then Lightning 30B in the step-down group near the tail. Each NIM model is its own function with its own queue and its own retirement date, and NVIDIA sizes the free rate limit by model, so one model throttling, queueing, or answering 410 no longer takes the NVIDIA lane down with it. The third-party models the same key lists (DeepSeek V4.1 Flash, Kimi K3, GLM 5.3, Gemma 4) were probed the same day and each queued past 60 seconds on the free tier, so none of them is a chain rung. The same Nemotron Ultra and Super models are also reachable keylessly through the Kilo Code gateway, which the chain uses as a separate rung on Kilo's own capacity. `/api/cron/free-model-audit` checks every pinned NIM id against the live catalog every 6 hours and pages ops when one is retired. Full chain: [free-llm-providers.md](free-llm-providers.md).
 
 This lane powers the platform's built-in AI surfaces — chat, embedded site widgets, the tutor, the fact-checker, persona tools, agent-to-agent talk, the transaction explainer — all of which lead with the free providers and only fall through to a paid model if every free lane fails.
 

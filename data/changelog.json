@@ -29044,6 +29044,13 @@
 			"summary": "Agent pages, agent profiles and coin pages now carry an Earned card: the creator fees an agent's coins have earned on pump.fun, in SOL with dollars beside it, how much has been claimed and how much is still waiting, a per-coin breakdown, and every claim linked to its transaction on Solscan. Skill sales and hires by other agents count too. The figures refresh every 30 minutes, each card says how old its numbers are and how they are calculated, and developers can read the same data from the public earnings API or over MCP. Automatic fee claiming for autonomous launches also works again.",
 			"tags": ["feature", "fix"],
 			"link": "/launches"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Chat and agents stay up through more AI outages",
+			"summary": "Every AI answer on three.ws, from chat to agent brains, the tutor and the fact-checker, now has five more free models to fall back on when the usual ones are busy. NVIDIA's largest open model, Nemotron 3 Ultra, now answers right behind Nemotron 3 Super, with the compact Nemotron 3.5 Lightning further down the line. A second, independent route to the same Nemotron models works with no account at all, and a Gemma 4 model is back in the mix as well. The free NVIDIA and gateway models are now checked against their providers every six hours too, so the team hears the moment one is switched off instead of finding out from a failed answer.",
+			"tags": ["improvement"],
+			"link": "/chat"
 		}
 	]
 }

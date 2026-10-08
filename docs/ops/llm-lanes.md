@@ -24,16 +24,20 @@ production are routinely dead and a chain that depends on them fails:
 | 2 | Cerebras `llama-3.3-70b` | `CEREBRAS_API_KEY` | free | not configured in prod |
 | 3 | OpenRouter `:free` routes, one rung per key | `OPENROUTER_API_KEY`, `OPENROUTER_FALLBACK_KEYS` | free | **model id was dead 2026-09-04**: `openai/gpt-oss-20b:free` was retired and 404'd all five rungs at once (fixed, now `google/gemma-4-31b-it:free`). The account is separately capped at 1,000 free-model requests/DAY across every key (they share one owner), and was at 0 remaining when measured. |
 | 4 | NVIDIA NIM `nvidia/nemotron-3-super-120b-a12b` | `NVIDIA_API_KEY` | free | **serving** (200, 1.8s-10.5s on a full-size prompt, 2026-09-04). Carried the whole platform on 2026-09-04 when Groq was token-capped, OpenRouter was dead, and both paid anchors were on billing holds. |
+| 4b | NVIDIA NIM `nvidia/nemotron-3-ultra-550b-a55b` | `NVIDIA_API_KEY` | free | **serving** (200, 1.8s through `llmComplete`, 2026-10-08). Added 2026-10-08. A separate NIM function on the same key, so it survives the Super function being throttled, queued, or retired. |
 | 5 | SambaNova `Meta-Llama-3.3-70B-Instruct` | `SAMBANOVA_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 6 | Mistral `mistral-small-latest` (Experiment tier) | `MISTRAL_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 7 | Z.AI `glm-4.7-flash` | `ZAI_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 8 | Cloudflare Workers AI `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_API_TOKEN` | free | added 2026-08-05; skipped when either is unset |
+| 8b | Hugging Face Inference Providers `meta-llama/Llama-3.3-70B-Instruct` | `HF_TOKEN` (+ `HF_FALLBACK_TOKENS`) | free (monthly included credit) | configured in prod; 402s in ~100ms once a token's credit is spent |
+| 8c | Kilo Code `nvidia/nemotron-3-ultra-550b-a55b:free`, then `nvidia/nemotron-3-super-120b-a12b:free` | none (keyless) | free | **serving** (200, Ultra 2.0s and Super 0.6s through `llmComplete`, 2026-10-08). Added 2026-10-08. About 200 req/hr anonymously, on Kilo's own NVIDIA capacity. Sends `reasoning: {enabled: false}`. |
 | 9 | OVH AI Endpoints `Meta-Llama-3_3-70B-Instruct` | none (keyless) | free | **serving** (200, ~1.2s, 2026-08-02) |
 | 10 | Gemini Flash-Lite (AI Studio) | `GEMINI_API_KEY` | free | not configured in prod |
 | 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **dead**: 403 `Lightning dunning decision is deny for project` since 2026-08-27, re-measured 2026-09-04. A billing hold on the whole GCP project, not IAM. This is the chain's designed anchor, so while it is down the free rungs above it are load-bearing rather than best-effort. |
 | 12 | Pollinations `openai-fast` | none (keyless) | free | **serving** (200, ~3.7s, 2026-08-02) |
-| 13 | LLM7.io `gemini-3.1-flash-lite` | `LLM7_API_KEY` | free | **dead without a key**: llm7.io retired the anonymous tier it was added on, and every unauthenticated call answers 401 `invalid_api_key` (measured 2026-09-02, the `unused` token its docs used to accept included). Key-gated since, so a deployment without the key skips it. Free key at https://dash.llm7.io/#/api-keys |
+| 13 | LLM7.io `gemma4:31b` | none (keyless); `LLM7_API_KEY` optional | free | **serving keyless** (200, 1.1s through `llmComplete`, 2026-10-08). The anonymous tier answered 401 on 2026-09-02 and reopened for LLM7's `turbo` models; the old pin `gemini-3.1-flash-lite` moved to the paid `pro` tier. Keyless again since 2026-10-08. |
 | 14 | SiliconFlow `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
+| 14b | NVIDIA NIM `nvidia/nemotron-3.5-lightning-30b-a3b` | `NVIDIA_API_KEY` | free | **serving** (200, 0.7s through `llmComplete`, 2026-10-08). Added 2026-10-08 as a step-down: a third NIM function on the primary key. |
 | 15 | Groq `openai/gpt-oss-20b` | `GROQ_API_KEY` | free | serving (a third separate per-model quota) |
 | 16 | Vertex Claude | GCP service account + `VERTEX_CLAUDE_ENABLED=1` | GCP credits | **off and unentitled** (see below) |
 | 17 | Anthropic first-party | `ANTHROPIC_API_KEY` | paid | **absent** (no key anywhere) |
@@ -43,11 +47,14 @@ production are routinely dead and a chain that depends on them fails:
 
 The 2026-08-05 widening (SambaNova, Mistral, Z.AI, Cloudflare, LLM7,
 SiliconFlow) added six independent free quota pools; each is documented with
-its tier limits in `docs/free-llm-providers.md`. LLM7 joined that round as a
-keyless rung and is no longer one (row 13), so the keyless floor a zero-env
-deployment falls to is OVH and Pollinations, two rungs rather than three. Both
-answered 429 from this workspace's shared egress IP on 2026-09-02, so treat the
-keyless floor as best-effort: it is a real lane, not a substitute for a key.
+its tier limits in `docs/free-llm-providers.md`. The 2026-10-08 round added
+the Nemotron Ultra and Lightning rungs on the existing NIM key, the keyless
+Kilo Code gateway, and made LLM7 keyless again, so the keyless floor a
+zero-env deployment falls to is now five rungs across four providers: Kilo
+(Ultra, then Super), OVH, Pollinations, and LLM7. OVH and Pollinations both
+answered 429 from this workspace's shared egress IP on 2026-09-02, so treat any
+single keyless rung as best-effort: the floor is real because it is wide, not
+because any one rung is a substitute for a key.
 
 Rungs 1 to 15 are not a degradation path any more. They are production. Every
 one of them is covered by a transport-level failover test
