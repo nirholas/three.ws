@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Topping up an agent's inference credits now asks for the real-funds agreements first",
+			"summary": "Moving USDC from an agent wallet into model credits is a real-funds action, so it now follows the same rule as withdrawals, trades and vaults. A one-off credit top-up, turning on the automatic top-up rule, and funding a new inference key from the command line all require the signed real-funds agreements (Terms of Service, Risk Disclosure and Agent Wallet Agreement). On the credits panel the signing dialog opens before the first top-up; from the CLI or an API key you get a link to sign once. Previews still work without signing, and switching the automatic top-up off never needs it.",
+			"tags": ["security"],
+			"link": "/legal/agreements"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Agent Wallet MCP: quote an x402 service before your assistant pays it",
 			"summary": "The Agent Wallet MCP server has a new pay_quote tool. It reads what a paid x402 endpoint charges (price, network and the address that gets paid) without spending anything. pay_and_call now works end to end once you turn it on for a connection: your assistant quotes first, shows you the price, and pays only after you say yes, using that quote. Paying a different endpoint than the one quoted, or paying with an expired quote, is refused before any USDC moves.",
 			"tags": ["feature", "security"],

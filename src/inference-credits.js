@@ -17,6 +17,7 @@
  */
 
 import { consumeCsrfToken } from './api.js';
+import { ensureRiskAck } from './shared/risk-ack.js';
 
 const STYLE_ID = 'ic-style';
 const AMOUNTS = [1, 5, 20];
@@ -466,6 +467,9 @@ export function mountInferenceCredits(root, { agentId, compact = false, walletHr
 		const amount = Number(field('auto-amount')?.value);
 		if (!(threshold > 0)) return set({ flash: 'Set a floor above $0 for the automatic top-up.' });
 		if (!(amount >= 0.1)) return set({ flash: 'The automatic top-up must be at least 0.1 USDC.' });
+		// An enabled rule spends real USDC on its own; the server refuses it
+		// until the real-funds agreements are signed, so ask for them first.
+		if (enabled && !(await ensureRiskAck({ context: 'inference-auto-fund' }))) return undefined;
 		set({ busy: true, flash: null });
 		const r = await call(`${base}/credits/auto-fund`, {
 			method: 'PUT',
@@ -525,6 +529,7 @@ export function mountInferenceCredits(root, { agentId, compact = false, walletHr
 				return set({ busy: false, preview: r.data });
 			}
 			case 'confirm': {
+				if (!(await ensureRiskAck({ context: 'inference-topup' }))) return undefined;
 				set({ busy: true });
 				const r = await call(`${base}/credits/topup`, {
 					method: 'POST',

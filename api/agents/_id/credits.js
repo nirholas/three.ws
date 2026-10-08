@@ -22,6 +22,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../
 import { sql } from '../../_lib/db.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
+import { requireRealFundsAgreement } from '../../_lib/real-funds-agreement.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { inferenceUsage, autoFundIntent } from '../../_lib/inference-billing.js';
 import { previewTopup, executeTopup, reconcilePendingTopups } from '../../_lib/inference-topup.js';
@@ -85,6 +86,9 @@ export const handleCredits = wrap(async (req, res, agentId, action, sub) => {
 	if (!scopeOk(caller, 'wallet:write')) {
 		return error(res, 403, 'insufficient_scope', 'moving funds from an agent wallet needs the wallet:write scope');
 	}
+	// The top-up sends mainnet USDC out of the agent wallet; the preview moves
+	// nothing. Checked before CSRF so a refusal does not burn the single-use token.
+	if (sub !== 'preview' && !(await requireRealFundsAgreement(req, res, { userId: caller.userId, context: 'inference-topup' }))) return;
 	if (!(await requireCsrf(req, res, caller.userId))) return;
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -125,13 +129,17 @@ async function handleAutoFund(req, res, caller, agent) {
 	if (!scopeOk(caller, 'wallet:write')) {
 		return error(res, 403, 'insufficient_scope', 'changing the auto-fund rule needs the wallet:write scope');
 	}
+	const body = (await readJson(req).catch(() => null)) || {};
+	const enabled = body.enabled !== false;
+	// An enabled rule arms autonomous USDC top-ups from the agent wallet;
+	// switching it off never needs the agreement. Checked before CSRF so a
+	// refusal does not burn the single-use token.
+	if (enabled && !(await requireRealFundsAgreement(req, res, { userId: caller.userId, context: 'inference-auto-fund' }))) return;
 	if (!(await requireCsrf(req, res, caller.userId))) return;
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const body = (await readJson(req).catch(() => null)) || {};
 	const current = await autoFundIntent(agent.id);
-	const enabled = body.enabled !== false;
 
 	// Turning an absent rule off is a no-op, not an error.
 	if (!current && !enabled) return json(res, 200, { auto_fund: null });

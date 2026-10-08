@@ -98,6 +98,15 @@ redeeming from, owner-trading and fee-claiming a [USDC vault](./vaults.md)
 (`a2a-hire`). Pausing an order, like every other way of turning spending off,
 is not gated.
 
+Self-funded inference moves USDC out of the agent wallet into model credits, so
+it is gated at both ends: a credit top-up (`inference-topup`, `POST
+/api/agents/:id/credits/topup`), enabling the automatic top-up rule
+(`inference-auto-fund`, `PUT /api/agents/:id/credits/auto-fund`), and funding a
+new inference key (`inference-provision`, `POST /api/me/inference/provision`).
+The credits panel opens the signing dialog before the first two; the CLI prints
+the server's refusal with the signing link. Their previews, and switching the
+automatic rule off, are not gated.
+
 Positive lookups are cached in-process for 10 minutes (signatures are append-only
 and the required version only changes on deploy); negative results are never
 cached, so a fresh signature takes effect on the next request.
