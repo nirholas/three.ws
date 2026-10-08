@@ -1,5 +1,7 @@
 # 401. Restore a green `npm run test:core`: 37 failing files, 74 failing tests on `main`
 
+**Evolve status (2026-10-08, from the order 024 retry):** the suite is green on the evolve working tree. `E2E_PORT=3107 npm test` exits 0: vitest 2194 files / 31,910 tests, 0 failed (from 34 files / 72 tests), and Playwright 262 passed, 5 skipped. The fixes landed one commit per class: D/E `821771220`, A `025a9474c` and `2cc2908d7` (`pay_quote`, because pay_and_call could never run), B `4da09d565`, C `f8af368cb` `3c21bc70e` `0cf94cb6b` `6c546e91b` `219ad4534`. Playwright: `cc84796d6` `fcbf15d47` `3ae6db5ff` `a6113184d` `958b10969` `83e77b691`; webkit system deps were installed with `sudo npx playwright install-deps webkit`. The audits pass: `audit:mcp-catalog`, `check:mcp-catalog`, `audit:guards` (85 OK). No skips were added, and there are no `/workspaces` paths left. One line is still open: at HEAD, `tests/mcp-schema.test.js` fails 3 tests until the coin-gated regenerated `public/mcp-catalog.json` is committed (OWNER-ACTIONS row 26). After that, verify `npm run test:core` at HEAD and retire this order.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate. Written by the evolve scout lane on 2026-10-08 from the measurements below.
 
 ## Operating clause (binding)
