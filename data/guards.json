@@ -1252,6 +1252,27 @@
 			}
 		},
 		{
+			"id": "check-ios-app",
+			"script": "scripts/check-ios-app.mjs",
+			"npm": "check:ios-app",
+			"title": "The iOS app's native half still agrees with the web half",
+			"protects": "The iOS share extension is a real, embedded target with every file it needs, every target ships one MARKETING_VERSION, the app and the extension join the same App Group, the .glb type the activation rule names is the one the app imports, and the Swift plugin, quick actions and scene delegate still match the routes and calls the site makes.",
+			"why": "Nothing on a Linux build machine can compile Swift, and the iOS app is two halves that only meet on a phone. Every failure this catches is a name that changed on one side and not the other, and every one is silent on device: a quick action that opens nothing, a share extension that never appears in the share sheet, a plugin call that rejects. App Store Connect also refuses an upload whose extension version differs from the app's. Green means the halves agree; it does not mean the Swift compiles.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The share extension loses the Swift file that hands a shared model to the app.",
+				"violation": {
+					"delete": [
+						"ios/native/App/ShareExtension/ShareViewController.swift"
+					]
+				},
+				"expect": "ShareViewController.swift is missing"
+			}
+		},
+		{
 			"id": "check-ios-icons",
 			"script": "ios/scripts/make-icons.mjs",
 			"npm": "check:ios-icons",
@@ -1291,6 +1312,28 @@
 					}
 				},
 				"expect": "DRIFT"
+			}
+		},
+		{
+			"id": "check-mcp-catalog",
+			"script": "scripts/check-mcp-catalog.mjs",
+			"npm": "check:mcp-catalog",
+			"title": "The connectable MCP server catalog is valid",
+			"protects": "data/mcp-catalog.json, the vetted list of external MCP servers an agent owner can connect on /integrations/mcp, parses and passes the same validateCatalog() the API runs at request time, with no tier glob listed under two tiers of one entry.",
+			"why": "The API validates the catalog when /api/integrations/mcp is called, so a malformed entry is not a build error, it is a 500 on the integrations page for every owner. A glob listed under two tiers is quieter still: first match wins, so the second tier silently never applies. Running the runtime validator offline moves both failures to build time.",
+			"stages": [
+				"prebuild",
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A catalog file that is no longer valid JSON.",
+				"violation": {
+					"write": {
+						"data/mcp-catalog.json": "{ \"servers\": [ guard proof\n"
+					}
+				},
+				"expect": "is not valid JSON"
 			}
 		},
 		{
@@ -1472,6 +1515,27 @@
 					}
 				},
 				"expect": "id_ed25519"
+			}
+		},
+		{
+			"id": "check-sri-pins",
+			"script": "scripts/check-sri-pins.mjs",
+			"npm": "check:sri-pins",
+			"title": "Documented embed SRI pins match the release ledger",
+			"protects": "Every <agent-3d> script tag in the docs, specs, blog, examples, skills and package READMEs that pins a released version with an integrity hash carries the hash data/agent-3d-releases.json recorded for that release, and pins only versions that were actually released. `--fix` rewrites stale hashes from the ledger.",
+			"why": "An embedder copies the snippet from our docs. A pin whose hash disagrees with the bytes we serve makes the browser refuse the script, so the avatar never appears on their page and nothing on our side errors. On 2026-10-01 rebuilding a released version on every deploy broke every published pin at once. check-dist runs the same check on every deploy build; this entry point is the one to run while editing docs, and the one that repairs them.",
+			"stages": [
+				"manual"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A doc snippet pinning a released version to a hash that is not the released one.",
+				"violation": {
+					"write": {
+						"docs/guard-proof-sri-pin.md": "# Proof fixture\n\n<script type=\"module\" src=\"https://three.ws/agent-3d/1.5.2/agent-3d.js\" integrity=\"sha384-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\" crossorigin=\"anonymous\"></script>\n"
+					}
+				},
+				"expect": "browsers will refuse it"
 			}
 		},
 		{

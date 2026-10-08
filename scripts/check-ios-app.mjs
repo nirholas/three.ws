@@ -24,10 +24,20 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (rel) => readFileSync(join(REPO, rel), 'utf8');
 
 const problems = [];
-const fail = (msg) => problems.push(msg);
+const fail = (msg) => {
+	if (!problems.includes(msg)) problems.push(msg);
+};
+// A missing file is a finding, not a crash: report it and let every other
+// check still run, so one deletion does not hide the rest of the report.
+const read = (rel) => {
+	if (!existsSync(join(REPO, rel))) {
+		fail(`${rel} is missing`);
+		return '';
+	}
+	return readFileSync(join(REPO, rel), 'utf8');
+};
 let checks = 0;
 const pass = (msg) => {
 	checks++;
