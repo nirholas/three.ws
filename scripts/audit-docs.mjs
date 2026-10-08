@@ -298,6 +298,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['aws-builder-center-claims-ledger', 'internal: draft prepared for the AWS Builder Center'],
 	['aws-builder-center-immutable-embed-releases', 'internal: draft prepared for the AWS Builder Center'],
 	['aws-builder-center-universal-retargeting', 'internal: draft prepared for the AWS Builder Center'],
+	['aws-builder-center-open-weight-3d-forge', 'internal: draft prepared for the AWS Builder Center'],
 	['big-tech-recognition-week', 'internal: outreach dispatch board naming unsent asks and unclaimed program benefits'],
 	['bnb-babt-findings', 'owner-gated: names a crypto project other than $THREE'],
 	['bnb-vault', 'owner-gated: names a crypto project other than $THREE'],

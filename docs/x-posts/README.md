@@ -52,6 +52,7 @@ article is live on the Builder Center, and each lists the preconditions that mus
 | [`universal-retargeting-thread.md`](universal-retargeting-thread.md) | One clip library on any humanoid skeleton: name canonicalization, rest poses, the A-pose re-aim. Hold until the re-aim is deployed (the file has the check) |
 | [`immutable-embed-releases-thread.md`](immutable-embed-releases-thread.md) | Write-once versioned URLs and SRI pins for the `<agent-3d>` script, and the incident that taught us why |
 | [`claims-ledger-thread.md`](claims-ledger-thread.md) | The publishing pipeline that refuses a claim it cannot prove: evidence, probes, proof reels, content-hash reviews |
+| [`open-weight-3d-forge-thread.md`](open-weight-3d-forge-thread.md) | How a prompt becomes a textured GLB on open-weight models: the lane router, the failover ladder, cold starts, and what the generation log says |
 
 ## Video and narration scripts
 
