@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-01T09:43:06.601Z",
+	"generated_at": "2026-10-08T04:39:10.556Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3072,6 +3072,26 @@
 					"title": "Agent Economy: Live",
 					"description": "Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D.",
 					"added": "2026-06-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/dextools",
+					"title": "three.ws x DEXTools",
+					"description": "Every way three.ws works with DEXTools: DEXTools charts in every coin chart, any DEXTools pair rendered as a live 3D scene, a Social Boost card any project can embed, and a public count of the visits three.ws sends to DEXTools pair pages. Paste a DEXTools link to get the embed snippet.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/chart-companion",
+					"title": "Chart Companion",
+					"description": "Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.",
+					"added": "2026-10-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
