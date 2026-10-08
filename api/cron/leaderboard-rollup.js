@@ -16,6 +16,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { unlockBadge, BADGES } from '../_lib/streaks.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { launchCountsByUser } from '../_lib/launch-counts.js';
 
 const METRICS = ['creations', 'remixes_received', 'launches', 'followers', 'walk_distance'];
 
@@ -60,15 +61,7 @@ async function top10UserIds(metric) {
 		return rows.map((r) => r.user_id);
 	}
 	if (metric === 'launches') {
-		const rows = await sql`
-			select user_id, count(*)::bigint as value
-			from agent_identities
-			where user_id is not null and is_public = true and deleted_at is null
-			  and meta->'token'->>'mint' is not null
-			group by user_id
-			order by value desc
-			limit 10
-		`;
+		const rows = await launchCountsByUser({ limit: 10 });
 		return rows.map((r) => r.user_id);
 	}
 	if (metric === 'followers') {

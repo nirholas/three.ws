@@ -15,8 +15,8 @@
 //                          finished creations. Both sides must be status='done',
 //                          and a creator's own refines of their own model never
 //                          count (a real derivative count, not a view/like one).
-//   · launches          — pump.fun coins minted from this user's agents
-//                          (agent_identities.meta->'token'->>'mint').
+//   · launches:           mainnet coins this user launched, from the
+//                          platform's launch records (api/_lib/launch-counts.js).
 //   · followers          — user_follows platform-wide follower count.
 //   · walk_distance      — total metres walked while signed in (walk_metrics,
 //                          all-time, signed-in walkers only — the anonymous
@@ -41,6 +41,7 @@ import { sql } from '../_lib/db.js';
 import { getSessionUser, extractBearer, authenticateBearer } from '../_lib/auth.js';
 import { thumbnailUrl } from '../_lib/r2.js';
 import { getStreak, listBadges } from '../_lib/streaks.js';
+import { launchCountsByUser } from '../_lib/launch-counts.js';
 
 export const maxDuration = 10;
 
@@ -96,17 +97,7 @@ async function rankingRows(metric) {
 			group by m.user_id
 		`;
 	}
-	if (metric === 'launches') {
-		return sql`
-			select user_id, count(*)::bigint as value
-			from agent_identities
-			where user_id is not null
-			  and is_public = true
-			  and deleted_at is null
-			  and meta->'token'->>'mint' is not null
-			group by user_id
-		`;
-	}
+	if (metric === 'launches') return launchCountsByUser();
 	if (metric === 'followers') {
 		return sql`
 			select following_id as user_id, count(*)::bigint as value
