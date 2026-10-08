@@ -71,7 +71,7 @@
     "@solana/web3.js": "^1.98.0",
     "agent0-sdk": "^1.7.1",
     "bn.js": "^5.2.5",
-    "colyseus": "0.17.10",
+    "colyseus": "0.18.9",
     "ethers": "^6.16.0",
     "livepeer": "3.5.0",
     "short-uuid": "6.0.3",
