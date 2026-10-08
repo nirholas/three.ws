@@ -2393,6 +2393,18 @@ URL: https://three.ws/docs/swarms
 
 How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.
 
+### Docs · DEXTools integration
+
+URL: https://three.ws/docs/dextools
+
+How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.
+
+### Docs · Chart Companion
+
+URL: https://three.ws/docs/chart-companion
+
+How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.
+
 ### Docs · Token in 3D, as an embed
 
 URL: https://three.ws/docs/coin3d-embed
@@ -3016,6 +3028,12 @@ Connect Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CL
 URL: https://three.ws/docs/mcp
 
 Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
+
+### Docs · three.ws for Grok
+
+URL: https://three.ws/docs/grok
+
+Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.
 
 ### Docs · Solana Memo Media MCP
 
@@ -4421,11 +4439,11 @@ URL: https://three.ws/docs/mcp-safety
 
 What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.
 
-### Connect three.ws to Claude, ChatGPT, Cursor & VS Code
+### Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code
 
 URL: https://three.ws/connect
 
-Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
 
 ### MCP Tool Catalog
 
@@ -5229,6 +5247,13 @@ URL: https://three.ws/skill.md
 Indexable: no (excluded from sitemap)
 
 The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
+
+### grok-skill.md
+
+URL: https://three.ws/grok-skill.md
+Indexable: no (excluded from sitemap)
+
+The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.
 
 ### robots.txt
 

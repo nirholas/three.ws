@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-08T04:39:10.556Z",
+	"generated_at": "2026-10-08T23:47:51.082Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3979,6 +3979,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/dextools",
+					"title": "Docs · DEXTools integration",
+					"description": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/chart-companion",
+					"title": "Docs · Chart Companion",
+					"description": "How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/coin3d-embed",
 					"title": "Docs · Token in 3D, as an embed",
 					"description": "Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.",
@@ -5013,6 +5033,16 @@
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/grok",
+					"title": "Docs · three.ws for Grok",
+					"description": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.",
+					"added": "2026-10-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7360,8 +7390,8 @@
 				},
 				{
 					"path": "/connect",
-					"title": "Connect three.ws to Claude, ChatGPT, Cursor & VS Code",
-					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
+					"title": "Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code",
+					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
 					"added": "2026-09-29",
 					"auth": null,
 					"indexable": true,
@@ -8694,6 +8724,16 @@
 					"title": "skill.md",
 					"description": "The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.",
 					"added": "2026-09-29",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/grok-skill.md",
+					"title": "grok-skill.md",
+					"description": "The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.",
+					"added": "2026-10-08",
 					"auth": null,
 					"indexable": false,
 					"tags": [],
