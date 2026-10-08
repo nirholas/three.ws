@@ -20,7 +20,7 @@ When you launch a coin on three.ws (via Studio or the agent wallet path), the pl
 
 ### How does it work?
 
-The server runs a fast WASM-based keypair grinder until it finds a match, then uses that keypair as the coin mint. The expected work is ~49 000 keypairs at ~25 000/s single-threaded, typically about a second on the Cloud Run server's CPU.
+The server runs a fast WASM-based keypair grinder until it finds a match, then uses that keypair as the coin mint. The expected work is about 14 500 keypairs (the exact Base58 model in `src/solana/vanity/base58-distribution.js` puts a case-insensitive `3ws` prefix at roughly 1 in 14 490, far easier than the naive 58³/4 because `3` is a common leading character of a 32-byte key) at ~25 000/s single-threaded, typically well under a second on the Cloud Run server's CPU.
 
 ### Is it on every coin?
 
@@ -61,7 +61,7 @@ const enforceMark = env.THREE_WS_MARK_ENFORCE !== '0' && env.THREE_WS_MARK_ENFOR
 When enforcement is **on** (default):
 - A client-supplied `mint_address` is validated with `hasThreeWsMark`; unbranded mints return `400 unbranded_mint`.
 - When no mint is supplied, the server grinds one with `grindVanityNode({ ...THREE_WS_VANITY })`.
-- Grind cost is logged at info level: `{ publicKey, attempts, durationMs }` — expect ~49 000 attempts, < 1 000 ms on the Cloud Run server's CPU.
+- Grind cost is logged at info level: `{ publicKey, attempts, durationMs }`. Expect about 14 500 attempts on average (a long tail past 40 000 is normal), under 1 000 ms on the Cloud Run server's CPU.
 
 When enforcement is **off**: a random `Keypair.generate()` is used (pure-legacy fallback). No brand constraint.
 
@@ -101,7 +101,7 @@ Every server-side grind emits a structured log line via `logger('pump.launch')`:
   "publicKey": "3wsXrT4Gy...", "attempts": 49213, "durationMs": 892 }
 ```
 
-Watch this in the Cloud Run logs (Cloud Logging) to confirm the ~49 000-attempt / sub-second expectation holds. A sharp increase in `attempts` or `durationMs` signals WASM performance degradation.
+Watch this in the Cloud Run logs (Cloud Logging) to confirm the roughly 14 500-attempt average and sub-second expectation hold. A sharp increase in `attempts` or `durationMs` signals WASM performance degradation.
 
 ### The generic x402 launcher exemption
 
