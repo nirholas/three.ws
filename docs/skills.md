@@ -366,7 +366,7 @@ Owner-signed skills that require direct Three.js access, `window.*` APIs, or per
 }
 ```
 
-When this flag is present, `handlers.js` is loaded via a direct `import()` in the main thread. This opt-out only applies to skills that pass the `owned-only` or `whitelist` trust check — `any`-trust skills remain sandboxed regardless.
+When this flag is honored, `handlers.js` is loaded via a direct `import()` in the main thread. It is honored only for bundles served from the embedding page's own origin or from the origin that served the `<agent-3d>` library, and never under `any` trust. A bundle from any other origin that sets the flag still installs and runs, inside the worker sandbox.
 
 ---
 

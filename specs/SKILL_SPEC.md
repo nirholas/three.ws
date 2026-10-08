@@ -280,7 +280,7 @@ Owner-signed skills that require main-thread capabilities (Three.js direct acces
 }
 ```
 
-When this flag is present, `handlers.js` is loaded via a direct `import()` in the main thread and called synchronously — the same as the pre-sandbox behavior. This opt-out is only meaningful for skills that pass the `owned-only` or `whitelist` trust check; `any`-trust skills should remain sandboxed.
+When this flag is honored, `handlers.js` is loaded via a direct `import()` in the main thread and called synchronously, the same as the pre-sandbox behavior. The flag is a request, not a grant: the manifest is written by whoever hosts the bundle. The registry honors it only when the bundle is served from an origin the host trusts (for `<agent-3d>`, the page's own origin or the origin that served the library) and the trust mode is not `any`. Any other bundle that sets it still installs, but runs in the worker sandbox.
 
 Rationale for the name: it describes where the code runs (`main-thread`) and the precondition (`trusted`), making the security trade-off explicit to manifest authors.
 
