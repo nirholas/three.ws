@@ -37,6 +37,12 @@ in any task, or attach the server with `@three-ws`:
 Grok Bot works on its own cloud computer, so it can save the GLB to its files,
 hand it to another tool in the same task, or run the request on a schedule.
 
+Prefer the connector form to chat? [three.ws/connect?client=grok](/connect?client=grok)
+lists the exact fields (name, transport Streamable HTTP, URL, authentication)
+for whichever hosted server you pick, with a copy button for each URL. The URL
+must be public: Grok Bot connects from xAI's cloud, so a `localhost` server
+never works.
+
 ## Your account on the same URL
 
 The free studio needs no account. To let Grok Bot also work with **your**

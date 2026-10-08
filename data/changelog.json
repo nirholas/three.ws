@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Use three.ws from Grok Bot",
+			"summary": "The connect page now has a Grok Bot tab. Grok Bot adds three.ws as a custom MCP connector, so the tab shows the exact fields to type in: the name, transport Streamable HTTP, the URL with a copy button, and whether authentication is None (the free 3D servers) or OAuth (servers that work with your account). Pick a different server above and every field follows it, and there is a ready-made sentence to send Grok Bot instead of filling in the form. Opening three.ws/connect?client=grok starts on the Grok server, which is free with no sign-in and adds your own agents when you sign in. The page also reminds you that a localhost URL never works, because Grok Bot connects from xAI's cloud.",
+			"tags": [
+				"feature"
+			],
+			"link": "/connect?client=grok"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "A skill file that teaches Grok to use three.ws",
 			"summary": "three.ws/grok-skill.md is one Markdown file you can upload to Grok's Skills or hand to Grok Bot. It tells Grok exactly which connector URL to add for a free 3D studio, how to sign it in to work with your agents, and, when no connector is set up, how to search the 3D catalog, generate a model and look at it with plain curl calls that run as written. It also spells out the links every model comes back with, what needs an account, and that Grok never spends money on your behalf. It is built from the same facts as three.ws/skill.md, so the two always agree. The Grok page has a button to download it.",
 			"tags": [

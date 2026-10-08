@@ -5694,8 +5694,8 @@
 				},
 				{
 					"path": "/connect",
-					"title": "Connect three.ws to Claude, ChatGPT, Cursor & VS Code",
-					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
+					"title": "Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code",
+					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-09-29"
