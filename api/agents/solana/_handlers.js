@@ -169,7 +169,7 @@ export const handleAttestEvent = wrap(async (req, res) => {
 
 // ── solana-validate (write: glTF/schema validation attestation) ────────────────
 
-import { attestValidationSolana, SolanaAttestError } from '../../_lib/solana-validation-attest.js';
+import { attestValidationSolana, platformValidatorAddress, SolanaAttestError } from '../../_lib/solana-validation-attest.js';
 import { SUBKIND_GLB_SCHEMA } from '../../_lib/solana-attestations.js';
 
 const SOLANA_ATTEST_ERROR_STATUS = {
@@ -281,16 +281,23 @@ export const handleValidation = wrap(async (req, res) => {
 		[cursor] = await sql`select last_indexed_at from solana_attestations_cursor where agent_asset = ${asset} limit 1`;
 	}
 
-	const rows = await sql`
-		select signature, slot, block_time, attester, payload, verified, revoked, disputed
-		from solana_attestations
-		where agent_asset = ${asset} and network = ${network}
-		  and kind = 'threews.validation.v1'
-		  and payload->>'subkind' = ${SUBKIND_GLB_SCHEMA}
-		  and revoked = false
-		order by slot desc nulls first, block_time desc
-		limit ${limit}
-	`;
+	// Only the platform attester's memos are model validations; anyone can post a
+	// memo with the same shape, so an unfiltered read would let any wallet award
+	// any agent the badge. No configured attester means no rows, never all rows.
+	const validator = platformValidatorAddress();
+	const rows = validator
+		? await sql`
+			select signature, slot, block_time, attester, payload, verified, revoked, disputed
+			from solana_attestations
+			where agent_asset = ${asset} and network = ${network}
+			  and kind = 'threews.validation.v1'
+			  and payload->>'subkind' = ${SUBKIND_GLB_SCHEMA}
+			  and attester = ${validator}
+			  and revoked = false
+			order by slot desc nulls first, block_time desc
+			limit ${limit}
+		`
+		: [];
 
 	const history = rows.map((r) => ({
 		signature: r.signature,
@@ -429,7 +436,11 @@ export const handleCard = wrap(async (req, res) => {
 
 	let validation = null;
 	try {
-		const [v] = await sql`select signature, attester, payload, block_time from solana_attestations where agent_asset = ${asset} and network = ${network} and kind = 'threews.validation.v1' and payload->>'subkind' = ${SUBKIND_GLB_SCHEMA} and revoked = false order by slot desc nulls first, block_time desc limit 1`;
+		// Platform-signed only, for the same reason as handleValidation above.
+		const validator = platformValidatorAddress();
+		const [v] = validator
+			? await sql`select signature, attester, payload, block_time from solana_attestations where agent_asset = ${asset} and network = ${network} and kind = 'threews.validation.v1' and payload->>'subkind' = ${SUBKIND_GLB_SCHEMA} and attester = ${validator} and revoked = false order by slot desc nulls first, block_time desc limit 1`
+			: [];
 		if (v) validation = { passed: v.payload?.passed === true, proof_hash: v.payload?.proof_hash || null, proof_uri: v.payload?.proof_uri || null, validator: v.attester, signature: v.signature, validated_at: v.block_time };
 	} catch (err) {
 		degraded.push('validation');

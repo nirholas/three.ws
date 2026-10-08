@@ -819,7 +819,10 @@
 				const explorer = v.signature
 					? `https://explorer.solana.com/tx/${v.signature}${network === 'devnet' ? '?cluster=devnet' : ''}`
 					: null;
-				const proof = v.proof_uri || explorer || '#';
+				// proof_uri rides in an on-chain memo any signer can write, so only an
+				// http(s) URL is ever linked; anything else falls back to the explorer.
+				const proofUri = typeof v.proof_uri === 'string' && /^https?:\/\//i.test(v.proof_uri) ? v.proof_uri : null;
+				const proof = proofUri || explorer || '#';
 				const label = v.passed ? '✓ model verified' : '✗ model failed';
 				const cls = v.passed ? 'ok' : 'warn';
 				const title = `glTF/schema validation by platform validator${v.proof_hash ? ` · proof ${String(v.proof_hash).slice(0, 12)}…` : ''}`;

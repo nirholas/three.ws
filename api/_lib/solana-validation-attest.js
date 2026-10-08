@@ -97,6 +97,22 @@ async function pinReport(report, network, agentAsset, proofHash) {
  *   network: string, agentAsset: string, validator: string, report: object,
  * }>}
  */
+/**
+ * The base58 address of the platform attester, or null when the key is not
+ * configured or undecodable. A glb-schema validation is a "model verified"
+ * badge only when THIS key signed it: the memo program accepts a memo from any
+ * wallet, so a read that does not filter on the attester hands the badge to
+ * anyone who posts `{ subkind: 'glb-schema', passed: true }` for an agent.
+ * Fails closed: with no key there is no badge, never everyone's.
+ */
+export function platformValidatorAddress() {
+	try {
+		return loadAttesterKeypair().publicKey.toBase58();
+	} catch {
+		return null;
+	}
+}
+
 export async function attestValidationSolana({ network, agentAsset, glbUrl, validatedAt }) {
 	if (network !== 'mainnet' && network !== 'devnet') {
 		throw new SolanaAttestError('unsupported_network', `unsupported network ${network}`);
@@ -131,6 +147,7 @@ export async function attestValidationSolana({ network, agentAsset, glbUrl, vali
 		  and kind = ${VALIDATION_KIND}
 		  and payload->>'subkind' = ${SUBKIND_GLB_SCHEMA}
 		  and payload->>'proof_hash' = ${proofHash}
+		  and attester = ${validator}
 		limit 1
 	`;
 	if (existing) {
