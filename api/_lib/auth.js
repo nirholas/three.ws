@@ -8,6 +8,7 @@ import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 import { recordDailyActivity } from './streaks.js';
 import { clientIp } from './rate-limit.js';
+import { capConnectorScope } from './spend-scope.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -332,7 +333,9 @@ export async function authenticateBearer(token, { audience } = {}) {
 		if (!row || row.revoked_at) return null;
 		if (row.expires_at && new Date(row.expires_at) < new Date()) return null;
 		await sql`update api_keys set last_used_at = now() where id = ${row.id}`;
-		return { userId: row.user_id, scope: row.scope, source: 'apikey', apiKeyId: row.id };
+		// A connector key's power is capped here, on every request, rather than
+		// trusted from the stored string (api/_lib/spend-scope.js).
+		return { userId: row.user_id, scope: capConnectorScope(row.scope), source: 'apikey', apiKeyId: row.id };
 	}
 	// Otherwise treat as JWT access token.
 	let payload;

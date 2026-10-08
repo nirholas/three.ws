@@ -40,6 +40,13 @@ const SCOPES = [
 	{ value: 'inference',      label: 'inference',      note: 'Call the OpenAI-compatible /api/v1 endpoint, billed to your credits' },
 ];
 
+// The "For an AI agent" preset: match KEY_PRESETS.connector in
+// api/_lib/api-keys.js. The server fixes the scope set from the preset name, so
+// this list only explains it; nothing the page sends can widen it.
+const CONNECTOR_MARKER = 'connector';
+const CONNECTOR_SCOPES = ['avatars:read', 'avatars:write', 'agents:read', 'agents:write', 'memory:read', 'memory:write'];
+const CONNECTOR_NEVER = ['wallet:write', 'services:write', 'inference', 'profile'];
+
 const EXPIRY_OPTIONS = [
 	{ label: 'Never',   days: null },
 	{ label: '30 days', days: 30 },
@@ -539,7 +546,7 @@ export function renderKeysTable(keys) {
 							</td>
 							<td>
 								<div class="dn-chip-row">
-									${(k.scope || '').split(/\s+/).filter(Boolean).map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('')}
+									${renderScopeChips(k.scope)}
 								</div>
 							</td>
 							<td><span class="dn-dim">${esc(relTime(k.created_at))}</span></td>
@@ -558,6 +565,21 @@ export function renderKeysTable(keys) {
 	`;
 }
 
+// A connector key's marker renders as one badge, not a scope chip: it is the
+// key's kind, and the page should say what that kind can never do.
+export function isConnectorKey(k) {
+	return String(k?.scope || '').split(/\s+/).includes(CONNECTOR_MARKER);
+}
+
+export function renderScopeChips(scope) {
+	const list = String(scope || '').split(/\s+/).filter(Boolean);
+	const connector = list.includes(CONNECTOR_MARKER);
+	const badge = connector
+		? '<span class="dn-tag dn-tag-agent" title="Made for an AI agent that holds it unattended. It reads, generates and edits agent data and can never spend.">AI agent · cannot spend</span>'
+		: '';
+	return badge + list.filter((s) => s !== CONNECTOR_MARKER).map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('');
+}
+
 function openNewKeyModal(state) {
 	const { close, el } = openModal(`
 		<form data-form="new-key">
@@ -570,6 +592,32 @@ function openNewKeyModal(state) {
 				<input data-autofocus name="name" type="text" placeholder="e.g. Production server" required maxlength="80" />
 			</label>
 			<fieldset class="dn-field">
+				<legend>What is this key for?</legend>
+				<div class="dn-presets" role="radiogroup">
+					<label class="dn-preset">
+						<input type="radio" name="preset" value="custom" checked />
+						<span class="dn-preset-body">
+							<span class="dn-preset-title">Custom scopes</span>
+							<span class="dn-preset-note">Your own server or script. Pick exactly what it may do.</span>
+						</span>
+					</label>
+					<label class="dn-preset">
+						<input type="radio" name="preset" value="connector" />
+						<span class="dn-preset-body">
+							<span class="dn-preset-title">For an AI agent <span class="dn-preset-eg">Grok Bot, schedules, CI</span></span>
+							<span class="dn-preset-note">Reads, generates and edits agent data. Can never spend.</span>
+						</span>
+					</label>
+				</div>
+			</fieldset>
+			<div class="dn-field" data-slot="connector-scopes" hidden>
+				<span>Scopes</span>
+				<div class="dn-scopes dn-scopes-locked">
+					<div class="dn-chip-row">${CONNECTOR_SCOPES.map((s) => `<span class="dn-tag">${esc(s)}</span>`).join('')}</div>
+					<p class="dn-scope-note">Never included, and a key made this way can never gain them: ${CONNECTOR_NEVER.map((s) => `<code>${esc(s)}</code>`).join(', ')}. Paying, sending, trading and launching stay in your browser session on three.ws, where you confirm each one. <a class="dn-link" href="/docs/mcp#api-key-scopes" target="_blank" rel="noopener">How scopes work</a></p>
+				</div>
+			</div>
+			<fieldset class="dn-field" data-slot="custom-scopes">
 				<legend>Scopes</legend>
 				<div class="dn-scopes">
 					${SCOPES.map((s) => `
@@ -600,6 +648,21 @@ function openNewKeyModal(state) {
 	const form = el.querySelector('form');
 	const errSlot = form.querySelector('[data-slot="error"]');
 	const submitBtn = form.querySelector('[data-submit]');
+	const nameInput = form.querySelector('input[name="name"]');
+	const customSlot = form.querySelector('[data-slot="custom-scopes"]');
+	const connectorSlot = form.querySelector('[data-slot="connector-scopes"]');
+
+	const presetOf = () => (form.querySelector('input[name="preset"]:checked')?.value === 'connector' ? 'connector' : 'custom');
+	const syncPreset = () => {
+		const connector = presetOf() === 'connector';
+		customSlot.hidden = connector;
+		connectorSlot.hidden = !connector;
+		// Hidden checkboxes still submit; disabling them keeps the form honest.
+		customSlot.querySelectorAll('input').forEach((i) => { i.disabled = connector; });
+		nameInput.placeholder = connector ? 'e.g. Grok Bot' : 'e.g. Production server';
+		errSlot.hidden = true;
+	};
+	form.querySelectorAll('input[name="preset"]').forEach((r) => r.addEventListener('change', syncPreset));
 
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -607,15 +670,18 @@ function openNewKeyModal(state) {
 		errSlot.textContent = '';
 		const fd = new FormData(form);
 		const name = String(fd.get('name') || '').trim();
+		const preset = presetOf();
 		const scopes = fd.getAll('scope');
 		const expiryIdx = parseInt(String(fd.get('expiry') ?? '0'), 10);
 		if (!name) { errSlot.textContent = 'Name is required.'; errSlot.hidden = false; return; }
-		if (!scopes.length) { errSlot.textContent = 'Pick at least one scope.'; errSlot.hidden = false; return; }
+		if (preset === 'custom' && !scopes.length) { errSlot.textContent = 'Pick at least one scope.'; errSlot.hidden = false; return; }
 
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Creating…';
 		try {
-			const payload = { name, scope: scopes.join(' '), environment: 'live' };
+			const payload = preset === 'connector'
+				? { name, preset: 'connector', environment: 'live' }
+				: { name, scope: scopes.join(' '), environment: 'live' };
 			const days = EXPIRY_OPTIONS[expiryIdx]?.days;
 			if (days) payload.expires_in_days = days;
 			const resp = await post('/api/keys', payload);
@@ -650,12 +716,17 @@ function openKeyRevealModal(key) {
 		</div>
 		<div class="dn-warn-banner">
 			<strong>This is the only time you'll see this key.</strong>
-			Store it somewhere safe — we hash and discard the plaintext after this page closes.
+			Store it somewhere safe. We hash and discard the plaintext after this page closes.
 		</div>
 		<div class="dn-code-block">
 			<pre><code data-secret>${esc(key.secret)}</code></pre>
 			<button type="button" class="dn-code-copy" data-copy aria-label="Copy secret API key">Copy</button>
 		</div>
+		${isConnectorKey(key) ? `
+		<div class="dn-modal-block dn-agent-next">
+			<div class="dn-modal-block-label">Give it to your agent</div>
+			<p class="dn-modal-hint">Add a custom MCP server at <code>${esc(origin())}/api/mcp</code> and store this key as its API key (in Grok Bot, a Bot secret). The agent can then work with your avatars, agents and their memory on a schedule. Anything that moves funds answers with a link back to three.ws, where you approve it yourself. <a class="dn-link" href="/docs/grok#your-account-with-a-connector-key" target="_blank" rel="noopener">Grok Bot setup</a></p>
+		</div>` : ''}
 		<div class="dn-modal-foot">
 			<button type="button" class="dn-btn primary" data-modal-close data-autofocus>I've saved it</button>
 		</div>
@@ -1462,8 +1533,8 @@ function injectStyles() {
 		.dn-policy-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
 
 		/* Modal */
-		.dn-modal-backdrop { position: fixed; inset: 0; background: rgba(5,6,12,0.7); backdrop-filter: blur(6px); display: grid; place-items: center; z-index: 200; padding: 24px; }
-		.dn-modal { background: linear-gradient(180deg, rgba(20,21,28,0.95), rgba(14,15,22,0.95)); border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius); padding: 22px; width: 520px; max-width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+		.dn-modal-backdrop { position: fixed; inset: 0; background: rgba(5,6,12,0.7); backdrop-filter: blur(6px); display: grid; place-items: center; grid-template-columns: minmax(0, 520px); justify-content: center; z-index: 200; padding: 24px 16px; }
+		.dn-modal { background: linear-gradient(180deg, rgba(20,21,28,0.95), rgba(14,15,22,0.95)); border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius); padding: 22px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
 		.dn-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
 		.dn-modal-head h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 		.dn-modal-body { font-size: 13.5px; color: var(--nxt-ink-dim); line-height: 1.6; }
@@ -1474,12 +1545,31 @@ function injectStyles() {
 		.dn-field > span, .dn-field > legend { font-weight: 500; }
 		.dn-field input, .dn-field select { background: rgba(255,255,255,0.04); border: 1px solid var(--nxt-stroke); color: var(--nxt-ink); padding: 9px 11px; border-radius: var(--nxt-radius-sm); font-size: 13.5px; font-family: inherit; }
 		.dn-field input:focus, .dn-field select:focus { outline: none; border-color: var(--nxt-accent); }
+		fieldset.dn-field { border: 0; padding: 0; margin-inline: 0; min-width: 0; }
+		fieldset.dn-field > legend { padding: 0; margin-bottom: 6px; }
 		.dn-scopes { display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); background: rgba(255,255,255,0.02); }
 		.dn-scope-row { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
 		.dn-scope-row input { margin-top: 3px; }
 		.dn-scope-label { font-size: 13px; color: var(--nxt-ink); }
 		.dn-scope-label code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; }
 		.dn-scope-note { font-size: 12px; color: var(--nxt-ink-fade); }
+		.dn-scopes-locked { gap: 8px; }
+		.dn-scopes-locked .dn-scope-note { margin: 0; line-height: 1.55; }
+		.dn-scopes-locked code, .dn-agent-next code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11.5px; padding: 1px 5px; background: rgba(255,255,255,0.06); border-radius: 4px; }
+		.dn-presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+		.dn-preset { display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); background: rgba(255,255,255,0.02); cursor: pointer; transition: border-color 0.12s ease, background 0.12s ease; }
+		.dn-preset:hover { border-color: rgba(255,255,255,0.22); }
+		.dn-preset:has(input:checked) { border-color: var(--nxt-accent); background: var(--nxt-accent-soft, rgba(255,255,255,0.06)); }
+		.dn-preset:active { transform: translateY(1px); }
+		.dn-field .dn-preset input, .dn-field .dn-scope-row input { padding: 0; background: none; border: 0; border-radius: 50%; margin: 3px 0 0; flex: none; accent-color: var(--nxt-accent); }
+		.dn-field .dn-scope-row input { border-radius: 3px; }
+		.dn-preset input:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
+		.dn-preset-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+		.dn-preset-title { font-size: 13px; font-weight: 500; color: var(--nxt-ink); }
+		.dn-preset-eg { font-weight: 400; font-size: 11.5px; color: var(--nxt-ink-fade); white-space: nowrap; }
+		.dn-preset-note { font-size: 12px; line-height: 1.45; color: var(--nxt-ink-fade); }
+		.dn-tag-agent { border-color: var(--nxt-accent); color: var(--nxt-ink); }
+		.dn-agent-next { margin-top: 14px; }
 		.dn-warn-banner { padding: 12px 14px; border-radius: var(--nxt-radius-sm); background: rgba(168,173,181,0.08); border: 1px solid rgba(168,173,181,0.25); color: var(--nxt-warn); font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
 		.dn-warn-banner strong { color: var(--nxt-ink); display: block; margin-bottom: 4px; }
 		.dn-error { padding: 10px 12px; border-radius: var(--nxt-radius-sm); background: rgba(150,155,163,0.1); border: 1px solid rgba(150,155,163,0.25); color: var(--nxt-danger); font-size: 13px; margin-bottom: 12px; }
@@ -1508,7 +1598,8 @@ function injectStyles() {
 		/* Honor reduced-motion: drop transforms and transitions, keep state changes instant */
 		@media (prefers-reduced-motion: reduce) {
 			.dn-toolkit-card, .dn-tab, .dn-code-copy, .dn-toolkit-cmd-copy,
-			.dn-toolkit-card-doc, .dn-toast { transition: none; }
+			.dn-toolkit-card-doc, .dn-toast, .dn-preset { transition: none; }
+			.dn-preset:active { transform: none; }
 			.dn-toolkit-card:hover { transform: none; }
 		}
 	`;

@@ -22,9 +22,11 @@ Authorization: Bearer sk_live_xxxxx
 
 Session cookies (set after SIWE or Privy login) are accepted on all endpoints that support Bearer auth.
 
-**API keys.** Create one at [Dashboard → API](https://three.ws/dashboard/api). A key starts with `sk_live_` and is shown exactly once: three.ws stores only its SHA-256 hash plus the first 14 characters as a visible prefix, so a lost key cannot be recovered, only replaced. Each key carries the scopes you chose when you made it, and a call outside them fails with `insufficient_scope`. Revoking a key takes effect on the next request, because keys are checked against the database on every call. Keep keys server-side; never ship one in a browser or mobile bundle.
+**API keys.** Create one at [Dashboard → API](https://three.ws/dashboard/api). A key starts with `sk_live_` and is shown exactly once: three.ws stores only its SHA-256 hash plus the first 14 characters as a visible prefix, so a lost key cannot be recovered, only replaced. Each key carries the scopes you chose when you made it ([the scope table](#scopes)), and a call outside them fails with `insufficient_scope`. Revoking a key takes effect on the next request, because keys are checked against the database on every call. Keep keys server-side; never ship one in a browser or mobile bundle.
 
-**OAuth tokens.** MCP clients and the [CLI](/docs/cli) sign in with OAuth instead of a key. Access tokens last one hour and refresh automatically. Revoking a client under [Dashboard → Settings → Connected apps](https://three.ws/dashboard/settings) stops its refresh token at once, so the client loses access when its current access token expires, within the hour.
+**OAuth tokens.** MCP clients and the [CLI](/docs/cli) sign in with OAuth instead of a key. Access tokens last one hour and refresh automatically. Revoking a client under [Dashboard → Settings → Connected apps](https://three.ws/dashboard/settings) takes effect on its next request: its access and refresh tokens are refused from that moment.
+
+**Keys for AI agents.** A key an agent holds unattended should be a connector key, which reads, generates and edits agent data and can never spend. See [Keys for AI agents](#keys-for-ai-agents-the-connector-preset).
 
 ### Response format
 
@@ -4251,82 +4253,118 @@ Authentication is covered in detail in the [Authentication documentation](authen
 
 ## API Keys API
 
+Two routes manage keys. `/api/keys` is what [Dashboard → API](https://three.ws/dashboard/api) uses and accepts only a signed-in browser session. `/api/api-keys` also accepts a bearer credential that holds the `profile` scope, and such a bearer can only mint a key at or below its own grant. Both store the SHA-256 of the secret, never the secret itself.
+
+### Scopes
+
+Each key carries a space-separated scope string. A call outside it fails with `insufficient_scope`.
+
+| Scope | What it allows |
+| --- | --- |
+| `avatars:read` | List, fetch and stream your avatars |
+| `avatars:write` | Create, generate and modify avatars |
+| `avatars:delete` | Permanently remove avatars |
+| `profile` | Read the signed-in user record, and manage keys through `/api/api-keys` |
+| `memory:read` | Recall your agents' stored memories |
+| `memory:write` | Store and forget agent memories |
+| `agents:read` | Read your agents and their identities |
+| `agents:write` | Create, update and register agents |
+| `herald:announce` | Post announcements through the Herald |
+| `wallet:read` | See agent wallet balances, history and spending caps |
+| `wallet:write` | **Spend.** Pay, send, trade, withdraw, launch, bid and buy from an agent wallet, within your caps |
+| `services:write` | Publish paid services whose earnings go to your agent wallet |
+| `inference` | Call the OpenAI-compatible `/api/v1/chat/completions`, billed to your credits |
+
+`wallet:write` is the one scope that moves money. Every route and MCP tool that pays, sends, trades, withdraws, launches, places an order, issues a spending mandate or changes where funds go refuses a bearer without it with `403 insufficient_scope` (MCP: JSON-RPC error `-32003`). A browser session is the account holder and needs no scope.
+
+### Keys for AI agents (the connector preset)
+
+An agent that holds a key unattended (Grok Bot storing it as a Bot secret, a schedule, a CI job) should get a **connector key**: in the dashboard choose **For an AI agent (Grok Bot, schedules, CI)**, or send `preset: "connector"`. The server fixes its scopes:
+
+```
+avatars:read avatars:write agents:read agents:write memory:read memory:write connector
+```
+
+The trailing `connector` marks the key's kind. It is not something you can request as a raw scope, and it caps the key every time it authenticates: whatever its stored scope string says, a connector key only ever acts with the six scopes above, so it can read, generate and edit agent data and can never spend. A connector key that calls a value-moving route or tool gets an answer that says so and links back to three.ws, where a person approves the action in a browser:
+
+```json
+{ "error": "insufficient_scope", "error_description": "This action moves or routes funds, so it needs a browser session on three.ws. Connector keys read, generate and edit agent data and can never spend. Sign in at https://three.ws/dashboard to do it yourself." }
+```
+
+Keys made before the preset existed are unchanged: they keep exactly the scopes they were minted with.
+
 ### List API keys
 
 ```
-GET /api/api-keys
+GET /api/keys
 ```
 
-Requires auth. Returns all API keys for the current user. Plaintext key values are never returned after creation.
-
-**Response**
+Browser session only. Returns every key the account has made, revoked and expired ones included, so the dashboard can label them. No secret material is ever returned.
 
 ```json
 {
 	"keys": [
 		{
-			"id": "key_abc",
-			"name": "My Integration",
-			"scopes": ["avatars:read", "avatars:write"],
-			"created_at": "2025-01-15T10:00:00Z",
-			"last_used_at": "2025-01-20T08:30:00Z"
+			"id": "2c25ec0c-f1a3-475d-9a9f-fe926c832db5",
+			"name": "Grok Bot",
+			"prefix": "sk_live_Xb3Q",
+			"scope": "avatars:read avatars:write agents:read agents:write memory:read memory:write connector",
+			"last_used_at": "2026-10-08T08:30:00.000Z",
+			"expires_at": null,
+			"revoked_at": null,
+			"created_at": "2026-10-08T07:00:00.000Z"
 		}
 	]
 }
 ```
+
+`GET /api/api-keys` returns the live keys only, as `{ "data": [...] }`, to a session or a `profile` bearer.
 
 ---
 
 ### Create API key
 
 ```
-POST /api/api-keys
+POST /api/keys
 ```
 
-Requires auth.
-
-**Request body**
+Browser session only, with the `X-CSRF-Token` header.
 
 ```json
-{
-	"name": "My Integration",
-	"scopes": ["avatars:read", "avatars:write"]
-}
+{ "name": "Production server", "scope": "avatars:read avatars:write", "expires_in_days": 90, "environment": "live" }
 ```
 
-**Available scopes**
-
-| Scope            | Description                          |
-| ---------------- | ------------------------------------ |
-| `avatars:read`   | Read agents and avatars              |
-| `avatars:write`  | Create and update agents and avatars |
-| `avatars:delete` | Delete agents and avatars            |
-| `profile`        | Read user profile data               |
-
-**Response**
+or, for an AI agent:
 
 ```json
-{
-	"id": "key_abc",
-	"key": "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-}
+{ "name": "Grok Bot", "preset": "connector" }
 ```
 
-The plaintext `key` is returned **only once** at creation time. Store it immediately — it cannot be retrieved again.
+| Field | Notes |
+| --- | --- |
+| `name` | Required, 1 to 80 characters |
+| `scope` | Space-separated scopes from the table above. Defaults to `avatars:read avatars:write`. Ignored when `preset` is sent |
+| `preset` | `connector` issues the AI-agent key described above |
+| `expires_in_days` | Optional, 1 to 3650 |
+| `environment` | `live` (default) or `test`, which sets the `sk_live_` / `sk_test_` prefix |
 
-Keys use the format `sk_live_` + 32 random characters.
+**Response** `201`
+
+```json
+{ "key": { "id": "2c25ec0c-…", "name": "Grok Bot", "prefix": "sk_live_Xb3Q", "scope": "avatars:read … connector", "expires_at": null, "created_at": "…", "secret": "sk_live_…" } }
+```
+
+The `secret` is returned **only once**. Store it immediately; it cannot be retrieved, only replaced. `POST /api/api-keys` takes `{ name, scope, expires_at }` and answers `{ "data": { ..., "token": "sk_live_…" } }`.
 
 ---
 
 ### Revoke API key
 
 ```
-DELETE /api/api-keys/:id
+DELETE /api/keys/:id
 ```
 
-Requires auth. Permanently revokes the key.
-
-**Response:** `{ "ok": true }`
+Browser session only, with the `X-CSRF-Token` header. Revocation takes effect on the key's next request. **Response:** `{ "ok": true }`. `DELETE /api/api-keys/:id` does the same for a session or a `profile` bearer and answers `{ "data": { "id": "…", "revoked": true } }`.
 
 ---
 

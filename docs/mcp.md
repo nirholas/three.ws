@@ -227,6 +227,35 @@ curl -X POST https://three.ws/api/mcp \
 
 Keys are tied to a single user account and inherit that user's plan quotas.
 
+### API key scopes
+
+A key acts only within the scopes it was minted with ([the full table](./api-reference.md#scopes)). Generation, avatars and agent data need `avatars:*`, `agents:*` and `memory:*`. `wallet:write` is the one scope that moves money, and `services:write` publishes a paid endpoint whose earnings go to your agent wallet.
+
+**For an AI agent, make a connector key.** At [/dashboard/api](https://three.ws/dashboard/api) choose **New key**, then **For an AI agent (Grok Bot, schedules, CI)**. The key gets `avatars:read avatars:write agents:read agents:write memory:read memory:write` and is marked as a connector, which caps it on every request: it can read, generate and edit agent data and can never spend, and no later change to its stored scopes can give it `wallet:write`. Use it wherever a key is held unattended: a Grok Bot secret, a cron job, CI. The same key over the API: `POST /api/keys` with `{"name": "Grok Bot", "preset": "connector"}` ([API reference](./api-reference.md#keys-for-ai-agents-the-connector-preset)).
+
+**What a key without the spend scope gets.** Every hosted server checks one table before a tool runs (`gateCall` in `api/_mcp/policy.js`). A tool that pays, sends, trades, bids, lists, launches, reveals a card, provisions a wallet or publishes a paid endpoint answers a key that lacks the scope with a JSON-RPC error, not a tool result, so a model cannot mistake it for a transient failure:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "error": {
+    "code": -32003,
+    "message": "pay_and_call moves or routes funds, so it needs a browser session on three.ws. Connector keys read, generate and edit agent data and can never spend. Sign in at https://three.ws/dashboard to do it yourself.",
+    "data": {
+      "reason": "connector_key_cannot_spend",
+      "tool": "pay_and_call",
+      "required_scope": "wallet:write",
+      "needs": "browser_session",
+      "url": "https://three.ws/dashboard",
+      "docs": "https://three.ws/docs/mcp#api-key-scopes"
+    }
+  }
+}
+```
+
+A standard key that simply was not given the scope gets `reason: "spend_scope_required"` and a message naming the scope it lacks. The check runs before tool enablement, so turning a financial tool on in [tool settings](https://three.ws/settings/mcp-tools) does not let a connector key reach it. The REST routes behind the same actions answer `403 insufficient_scope` with the same sentence. Keys minted before connector keys existed keep exactly the scopes they had.
+
 ---
 
 ## Connecting Claude Code
@@ -299,14 +328,14 @@ The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-k
 | Core | `https://three.ws/api/mcp` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp`. Authentication: API key or OAuth 2.1 |
 | 3D Studio | `https://three.ws/api/mcp-3d` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-3d`. Authentication: API key or OAuth 2.1 |
 | 3D Studio (free) | `https://three.ws/api/mcp-studio` | Streamable HTTP | None | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-studio`. Authentication: None |
-| Agent wallet | `https://three.ws/api/mcp-agent` | Streamable HTTP | API key (read-only scopes), OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-agent`. Authentication: API key without `wallet:write` |
+| Agent wallet | `https://three.ws/api/mcp-agent` | Streamable HTTP | API key (read-only scopes), OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-agent`. Authentication: connector key (browses and quotes; spending answers with a link to three.ws) |
 | x402 Bazaar | `https://three.ws/api/mcp-bazaar` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-bazaar`. Authentication: API key or OAuth 2.1 |
 | pump.fun | `https://three.ws/api/pump-fun-mcp` | Streamable HTTP | None (read-only tools), API key | Transport: Streamable HTTP. URL: `https://three.ws/api/pump-fun-mcp`. Authentication: None |
 | IBM x402 | `https://three.ws/api/ibm-mcp` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/ibm-mcp`. Authentication: API key or OAuth 2.1 |
 
 Notes for connector setup:
 
-- **API key.** Create one at [/dashboard/api](https://three.ws/dashboard/api) and store it as the connector's secret. It is sent as `Authorization: Bearer sk_live_…`; if the connector asks for a header name, use `Authorization` with the value `Bearer sk_live_…`. A cloud agent holds this key unattended, so give it only the scopes it needs (`avatars:read avatars:write profile agents:read memory:read` covers generation, avatars and agent data) and never `wallet:write`: spending stays a same-site action you confirm yourself.
+- **API key.** Create a connector key at [/dashboard/api](https://three.ws/dashboard/api) (**New key**, then **For an AI agent**) and store it as the connector's secret. It is sent as `Authorization: Bearer sk_live_…`; if the connector asks for a header name, use `Authorization` with the value `Bearer sk_live_…`. A cloud agent holds this key unattended, and a connector key covers generation, avatars and agent data while never being able to spend: anything that moves funds answers with a link back to three.ws, where you confirm it yourself ([API key scopes](#api-key-scopes)).
 - **OAuth 2.1.** The connector registers itself through dynamic client registration (RFC 7591), so there is no client ID to create; you approve the consent screen once and it refreshes the token on its own. PKCE S256 is required and advertised.
 - **x402 pay-per-call** is not an unattended connector mode: every paid call needs a signed payment, which a connector cannot make on your behalf.
 - **The URL must be public.** Grok Bot connects from xAI's cloud, so `localhost` never works; use the `https://three.ws` URLs above.

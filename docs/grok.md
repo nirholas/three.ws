@@ -35,6 +35,22 @@ in any task, or attach the server with `@three-ws`:
 Grok Bot works on its own cloud computer, so it can save the GLB to its files,
 hand it to another tool in the same task, or run the request on a schedule.
 
+## Your account with a connector key
+
+The free server above needs no account. To let Grok Bot work with **your**
+avatars, agents and their memory (on a schedule, say), connect it to the core
+server with a connector key:
+
+1. At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it shows once.
+2. Ask Grok Bot to add a custom MCP server at `https://three.ws/api/mcp` with API key authentication, and store the key as a Bot secret.
+
+A connector key reads, generates and edits agent data and can never spend.
+If a task reaches anything that pays, sends, trades or launches, the server
+answers with a JSON-RPC error that says the action needs a browser session on
+three.ws and links there, so Grok Bot can tell you instead of retrying. Revoke
+the key from the same page at any time; it stops on its next request. Scopes
+and the exact error: [API key scopes](./mcp.md#api-key-scopes).
+
 ## Grok connectors
 
 On paid Grok plans, custom connectors take a remote MCP URL (remote servers

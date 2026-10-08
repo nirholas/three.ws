@@ -185,6 +185,40 @@ describe('POST /api/keys', () => {
 		expect(sqlState.calls[0].values).toContain('avatars:read profile');
 	});
 
+	it('issues the AI-agent preset with its fixed scopes and no spend scope', async () => {
+		sqlState.queue.push([{ id: KEY_ID, name: 'Grok Bot', prefix: 'sk_live_abcd', scope: '', expires_at: null, created_at: '2026-10-08T01:04:36.801Z' }]);
+		const { status } = await invoke(keysHandler, {
+			method: 'POST',
+			url: '/api/keys',
+			body: { name: 'Grok Bot', preset: 'connector' },
+		});
+		expect(status).toBe(201);
+		expect(sqlState.calls[0].values).toContain('avatars:read avatars:write agents:read agents:write memory:read memory:write connector');
+		const audit = auditState.entries.find((e) => e.action === 'create_api_key');
+		expect(audit.meta.via).toBe('dashboard:connector');
+	});
+
+	it('ignores a scope sent alongside the preset, so a connector key cannot be asked into spending', async () => {
+		sqlState.queue.push([{ id: KEY_ID, name: 'sneaky', prefix: 'sk_live_abcd', scope: '', expires_at: null, created_at: '2026-10-08T01:04:36.801Z' }]);
+		await invoke(keysHandler, {
+			method: 'POST',
+			url: '/api/keys',
+			body: { name: 'sneaky', preset: 'connector', scope: 'wallet:write services:write' },
+		});
+		const stored = sqlState.calls[0].values.find((v) => typeof v === 'string' && v.includes('connector'));
+		expect(stored).not.toContain('wallet:write');
+		expect(stored).not.toContain('services:write');
+	});
+
+	it('refuses the connector marker as a raw scope and an unknown preset', async () => {
+		const raw = await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'raw', scope: 'avatars:read connector' } });
+		expect(raw.status).toBe(400);
+		expect(raw.body.error_description).toContain('connector');
+		const unknown = await invoke(keysHandler, { method: 'POST', url: '/api/keys', body: { name: 'x', preset: 'admin' } });
+		expect(unknown.status).toBe(400);
+		expect(sqlState.calls).toHaveLength(0);
+	});
+
 	it('rejects a missing name with a structured 400', async () => {
 		const { status, body } = await invoke(keysHandler, {
 			method: 'POST',

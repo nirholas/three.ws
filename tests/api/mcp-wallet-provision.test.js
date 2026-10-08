@@ -250,8 +250,8 @@ describe('agent-wallet MCP — provisioning + earning', () => {
 
 	it('enforces the wallet:write scope', async () => {
 		const r = await call('provision_wallet', { agent_id: AGENT_ID }, READONLY);
-		expect(r.result.isError).toBe(true);
-		expect(r.result.structuredContent).toMatchObject({ reason: 'insufficient_scope', required: 'wallet:write' });
+		expect(r.error.code).toBe(-32003);
+		expect(r.error.data).toMatchObject({ reason: 'spend_scope_required', required_scope: 'wallet:write' });
 	});
 
 	// ── monetize_endpoint ────────────────────────────────────────────────────────
@@ -379,7 +379,7 @@ describe('agent-wallet MCP — provisioning + earning', () => {
 			},
 			READONLY,
 		);
-		expect(r.result.isError).toBe(true);
-		expect(r.result.structuredContent).toMatchObject({ reason: 'insufficient_scope', required: 'services:write' });
+		expect(r.error.code).toBe(-32003);
+		expect(r.error.data).toMatchObject({ reason: 'spend_scope_required', required_scope: 'services:write' });
 	});
 });

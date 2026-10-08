@@ -320,21 +320,27 @@ describe('threews-agent MCP', () => {
 		expect(r.result.structuredContent.reason).toBe('no_solana_wallet');
 	});
 
+	// The spend gate in api/_mcp/policy.js refuses before the handler runs, so
+	// the answer is a JSON-RPC error naming the browser session, not a tool result.
 	it('refuses to spend for a read-only token, before any payment call', async () => {
 		const r = await quoteThenPay({ resource_url: 'https://paid.test/x' }, READONLY);
 		expect(payer.payExternalX402).not.toHaveBeenCalled();
-		expect(r.result.isError).toBe(true);
-		expect(r.result.structuredContent).toMatchObject({
-			reason: 'insufficient_scope',
-			required: 'wallet:write',
+		expect(r.result).toBeUndefined();
+		expect(r.error.code).toBe(-32003);
+		expect(r.error.data).toMatchObject({
+			reason: 'spend_scope_required',
+			required_scope: 'wallet:write',
+			needs: 'browser_session',
+			url: 'https://three.ws/dashboard',
 		});
 	});
 
-	it('still hands a read-only token the manual pay link when spend is off', async () => {
+	it('refuses a read-only token at the spend gate even when spend is off', async () => {
 		payerState.spendEnabled = false;
 		const r = await quoteThenPay({ resource_url: 'https://paid.test/x' }, READONLY);
-		expect(r.result.structuredContent).toMatchObject({ paid: false, reason: 'spend_disabled' });
-		expect(r.result.structuredContent.pay_link).toContain('https://three.ws/pay?resource=');
+		expect(payer.payExternalX402).not.toHaveBeenCalled();
+		expect(r.error.code).toBe(-32003);
+		expect(r.error.message).toContain('https://three.ws/dashboard');
 	});
 
 	it('rejects an out-of-range max_price_usdc as invalid params, not an internal error', async () => {

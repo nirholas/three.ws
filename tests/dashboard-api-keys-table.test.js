@@ -12,7 +12,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-const { keyStatus, renderKeysTable } = await import('../src/dashboard-next/pages/api.js');
+const { keyStatus, renderKeysTable, isConnectorKey } = await import('../src/dashboard-next/pages/api.js');
 
 const DAY = 86_400_000;
 const base = {
@@ -82,6 +82,15 @@ describe('renderKeysTable', () => {
 		const row = rowFor({ ...base, name: '<img src=x onerror=alert(1)>' });
 		expect(row.querySelector('img')).toBeNull();
 		expect(row.textContent).toContain('<img src=x onerror=alert(1)>');
+	});
+
+	it('shows a connector key as an AI agent key that cannot spend, not as a bare marker chip', () => {
+		const key = { ...base, scope: 'avatars:read agents:write connector' };
+		const row = rowFor(key);
+		const chips = [...row.querySelectorAll('.dn-chip-row .dn-tag')].map((el) => el.textContent);
+		expect(chips).toEqual(['AI agent · cannot spend', 'avatars:read', 'agents:write']);
+		expect(isConnectorKey(key)).toBe(true);
+		expect(isConnectorKey(base)).toBe(false);
 	});
 
 	it('renders one chip per granted scope', () => {

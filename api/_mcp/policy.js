@@ -16,11 +16,12 @@
 // Every dispatcher calls the same three functions: listForRequest on
 // tools/list, gateCall before a handler runs, finishCall after it returns.
 
-import { createPolicy, resolveEnablement, describeEnablement } from '@three-ws/mcp-policy';
+import { createPolicy, resolveEnablement, describeEnablement, POLICY } from '@three-ws/mcp-policy';
 
 import { cacheDel, cacheGetFresh, cacheSet } from '../_lib/cache.js';
 import { sql } from '../_lib/db.js';
 import { logger } from '../_lib/usage.js';
+import { SCOPES_DOCS_URL, SPEND_BROWSER_URL, SPEND_SCOPE, isConnectorScope, spendRefusalMessage } from '../_lib/spend-scope.js';
 
 const log = logger('mcp-policy');
 const PREVIEW_KEY = (id) => `mcp:preview:${id}`;
@@ -139,12 +140,107 @@ export async function listForRequest(serverId, catalog, auth, req) {
 	return policyFor(serverId).listTools(catalog, await enablementFor(req, auth));
 }
 
+// ── The spend gate ──────────────────────────────────────────────────────────
+//
+// Design rule for cloud connectors: a key or token an agent holds unattended
+// can read, generate and edit agent data, and never move funds. Every hosted
+// server passes through gateCall, so the rule is enforced once, here, keyed by
+// the policy table rather than by each handler remembering its own check.
+//
+// A tool is value-moving when the table puts it in the financial tier behind a
+// confirm flag that names a money consequence (deletes and `confirm_run` acts
+// on a house move no money and are left to their own scopes), or when it is a
+// write-tier tool that commits or routes funds (SPEND_WRITE_TOOLS).
+// tests/mcp-spend-gate.test.js walks every hosted catalog and fails when a tool
+// that declares a spend scope is not classified here.
+
+const VALUE_FLAGS = new Set([
+	'confirm_swap',
+	'confirm_transfer',
+	'confirm_launch',
+	'confirm_spend',
+	'confirm_payment',
+	'confirm_deposit',
+	'confirm_withdraw',
+	'confirm_bid',
+	'confirm_send',
+	'confirm_listing',
+	'confirm_delist',
+	'confirm_accept',
+	'confirm_trade',
+	'confirm_reveal',
+	'confirm_cancel',
+]);
+
+// Write-tier tools that need a spend grant: card quotes and secrets, wallet
+// provisioning (the custodial address funds are routed to, and a devnet
+// airdrop), and publishing a paid endpoint, which decides where its earnings
+// go. Value: the scope the tool requires. A write tool that moves nothing
+// (predictions_watch) keeps its own handler check and stays out of this list.
+export const SPEND_WRITE_TOOLS = Object.freeze({
+	'three.ws': Object.freeze({
+		agent_card_quote: SPEND_SCOPE,
+		agent_card_data: SPEND_SCOPE,
+		agent_card_connect_link: SPEND_SCOPE,
+	}),
+	'threews-agent': Object.freeze({
+		provision_wallet: SPEND_SCOPE,
+		monetize_endpoint: 'services:write',
+	}),
+});
+
+/**
+ * The scope a hosted tool needs because it moves value, or null when it moves
+ * none. Financial value-moving tools need `wallet:write`.
+ */
+export function spendScopeFor(serverId, name) {
+	const extra = SPEND_WRITE_TOOLS[serverId];
+	if (extra && Object.hasOwn(extra, name)) return extra[name];
+	const entry = POLICY[serverId]?.[name];
+	if (entry?.tier === 'financial' && VALUE_FLAGS.has(entry.confirmFlag)) return SPEND_SCOPE;
+	return null;
+}
+
+function holds(scope, required) {
+	return String(scope || '').split(/\s+/).includes(required);
+}
+
+/** JSON-RPC error code for "this credential may not move funds". */
+export const SPEND_REFUSED_CODE = -32003;
+
+/**
+ * Refuse a value-moving call from an account-bound bearer that lacks the
+ * spend scope, before enablement or previews are consulted: turning the tool
+ * on in settings cannot help a key that may never spend, so the caller is told
+ * the one thing that does. Anonymous principals (free, x402) hold no account
+ * funds and fall through to the handlers' own ownership checks.
+ * Throws a JSON-RPC error every dispatcher renders as-is.
+ */
+export function assertMaySpend(serverId, name, auth) {
+	const required = spendScopeFor(serverId, name);
+	if (!required || !auth?.userId || holds(auth.scope, required)) return;
+	const connector = isConnectorScope(auth.scope);
+	const err = new Error(spendRefusalMessage(auth.scope, { action: name, required }));
+	err.code = SPEND_REFUSED_CODE;
+	err.data = {
+		reason: connector ? 'connector_key_cannot_spend' : 'spend_scope_required',
+		tool: name,
+		required_scope: required,
+		needs: 'browser_session',
+		url: SPEND_BROWSER_URL,
+		docs: SCOPES_DOCS_URL,
+	};
+	throw err;
+}
+
 /**
  * Gate one tools/call. Returns { ok: false, result } with a designed refusal,
  * or { ok: true, args, preview } with the arguments to pass the handler.
+ * Throws the spend refusal (assertMaySpend) as a JSON-RPC error.
  * @param {string[]} ownArgs  argument names the tool's own schema declares
  */
 export async function gateCall(serverId, name, args, auth, req, ownArgs = []) {
+	assertMaySpend(serverId, name, auth);
 	const en = await enablementFor(req, auth);
 	return policyFor(serverId).beforeCall({ name, args, en, principal: principalOf(auth), ownArgs });
 }

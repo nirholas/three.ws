@@ -1,10 +1,12 @@
 // Developer API key management.
 //   GET  /api/keys        list caller's keys (hashed, no secret)
-//   POST /api/keys        create a new key; returns the plaintext secret ONCE
+//   POST /api/keys        create a new key; returns the plaintext secret ONCE.
+//                         `preset: "connector"` issues the AI-agent key that
+//                         can never spend (api/_lib/api-keys.js KEY_PRESETS).
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
-import { normalizeKeyScopes, mintApiKey } from '../_lib/api-keys.js';
+import { normalizeKeyScopes, mintApiKey, presetScopes } from '../_lib/api-keys.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -18,6 +20,8 @@ const createSchema = z.object({
 		.optional()
 		.default('avatars:read avatars:write')
 		.transform((s) => s.trim()),
+	// A named preset replaces `scope` entirely; see KEY_PRESETS.
+	preset: z.enum(['connector']).optional(),
 	expires_in_days: z.number().int().positive().max(3650).optional(),
 	environment: z.enum(['live', 'test']).default('live'),
 });
@@ -49,9 +53,12 @@ export default wrap(async (req, res) => {
 
 	const body = parse(createSchema, await readJson(req));
 
+	// A preset ignores `scope` rather than merging it, so a connector key can
+	// never be asked into carrying a spend scope.
+	const preset = body.preset ? presetScopes(body.preset) : null;
 	// Dedupe so "avatars:read avatars:read" stores one grant, not two: the stored
 	// string is rendered verbatim as scope chips in the dashboard key table.
-	const { scopes: requestedScopes, invalid } = normalizeKeyScopes(body.scope);
+	const { scopes: requestedScopes, invalid } = preset ? { scopes: preset, invalid: [] } : normalizeKeyScopes(body.scope);
 	if (invalid.length)
 		return error(res, 400, 'validation_error', `unknown scopes: ${invalid.join(', ')}`);
 	// zod's .default() only fires on an absent field, so an explicit "" or "   "
@@ -74,6 +81,7 @@ export default wrap(async (req, res) => {
 		expiresAt: expires,
 		environment: body.environment,
 		req,
+		via: body.preset ? `dashboard:${body.preset}` : 'dashboard',
 	});
 	return json(res, 201, { key: { ...row, secret } });
 });

@@ -6,6 +6,7 @@
 import { sql } from './db.js';
 import { randomToken, sha256 } from './crypto.js';
 import { logAudit } from './audit.js';
+import { CONNECTOR_KEY_SCOPES, CONNECTOR_MARKER } from './spend-scope.js';
 
 // The wallet and services scopes gate the agent-wallet MCP server
 // (api/mcp-agent). A key carrying them is bounded exactly like an OAuth token
@@ -40,6 +41,20 @@ const ALLOWED = new Set(API_KEY_SCOPES);
 export function normalizeKeyScopes(scope) {
 	const scopes = [...new Set(String(scope || '').split(/\s+/).filter(Boolean))];
 	return { scopes, invalid: scopes.filter((s) => !ALLOWED.has(s)) };
+}
+
+// Named presets a key can be created from. A preset fixes the scope set on
+// the server, so no request body can widen it. `connector` is the key for an
+// AI agent that holds it unattended (Grok Bot, schedules, CI): it reads,
+// generates and edits agent data and never spends, and its marker makes
+// authenticateBearer() cap it to that set for as long as it lives.
+export const KEY_PRESETS = Object.freeze({
+	connector: Object.freeze([...CONNECTOR_KEY_SCOPES, CONNECTOR_MARKER]),
+});
+
+/** The scope list for a named preset, or null for an unknown name. */
+export function presetScopes(preset) {
+	return Object.hasOwn(KEY_PRESETS, preset) ? [...KEY_PRESETS[preset]] : null;
 }
 
 /**
