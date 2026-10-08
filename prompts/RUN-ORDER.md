@@ -14,6 +14,7 @@ so you can open one, run it, and open the next without consulting anything. Ever
 | `100` to `248` | The route-audit swarm, ordered by measured defect class. Parallel-safe. | 149 |
 | `300` to `313` | The unbuilt Home campaign, in numeric order (04 gates 05 and 06, 11 gates 20). | 14 |
 | `400` to `499` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | varies |
+| `500` to `549` | The `integrate-` campaign, added 2026-10-08: bringing the owner's other GitHub repositories into three.ws (ports, failover rungs, consolidations, mirror hygiene). Runnable; gated steps are named per order. Run 500 and 501 before any mirror push, 505 before 506 and 507, 524 before 525, 529 before 530 and 531, and 015 before 510. Shared facts: [finish/_context/integrate-00-CONTEXT.md](finish/_context/integrate-00-CONTEXT.md). | 50 |
 | `900` and up | Blocked: the last step is an owner action or an outside party. Read before running. | 20 |
 
 The number is a position, not an identity. When an order retires its file is deleted and a gap
