@@ -28,6 +28,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { getSolanaAddressBalances } from '../_lib/agent-wallet.js';
 import { getSpendLimits, getTradeLimits } from '../_lib/agent-trade-guards.js';
@@ -52,8 +53,21 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
+	if (bearer) return { userId: bearer.userId, bearer };
 	return null;
+}
+
+// A live order trades from the agent wallet on its own when it fires, so a
+// bearer (API key, or an app the owner connected over OAuth) needs the spend
+// scope to create or edit one. Cancelling stays open to any owner credential.
+function bearerMaySpend(req, res, auth) {
+	try {
+		assertBearerMaySpend(auth.bearer, req);
+		return true;
+	} catch (e) {
+		error(res, e.status, e.code, e.message);
+		return false;
+	}
 }
 
 async function loadOwned(req, res, id) {
@@ -249,6 +263,7 @@ async function evmDcaUpdate(res, owned, order, body) {
 async function handleCreate(req, res, id, kind = null) {
 	const owned = await loadOwned(req, res, id);
 	if (owned.error) return;
+	if (!bearerMaySpend(req, res, owned.auth)) return;
 	// A live order trades from the agent wallet on its own when it fires.
 	if (!(await requireRealFundsAgreement(req, res, { userId: owned.auth.userId, network: netOf(req), context: 'order-create' }))) return;
 	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
@@ -438,6 +453,7 @@ function previewLimits(meta) {
 async function handleUpdate(req, res, id, orderId) {
 	const owned = await loadOwned(req, res, id);
 	if (owned.error) return;
+	if (!bearerMaySpend(req, res, owned.auth)) return;
 	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
 
 	let body;

@@ -12,7 +12,7 @@
  * orders, portfolio, or perk ladder.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const OWNER = 'user-owner';
 const AGENT = '11111111-2222-4333-8444-555555555555';
@@ -141,6 +141,7 @@ vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
 const ordersHandler = (await import('../api/agents/orders.js')).default;
 const portfolioHandler = (await import('../api/agents/portfolio.js')).default;
 const patronageHandler = (await import('../api/agents/patronage.js')).default;
+const { authenticateBearer, extractBearer } = await import('../api/_lib/auth.js');
 
 function mkReq(method = 'GET', url = `/api/agents/${AGENT}/orders`, body) {
 	return { method, url, headers: {}, body, on: () => {} };
@@ -201,6 +202,50 @@ describe('api/agents/orders.js dispatch', () => {
 	});
 
 	it('422s an order the engine cannot validate', async () => {
+		const res = mkRes();
+		await ordersHandler(mkReq('POST', `/api/agents/${AGENT}/orders`, { type: 'limit' }), res, AGENT, undefined);
+		expect(res._json.status).toBe(422);
+	});
+});
+
+// An app the owner connected over OAuth, or an API key, holds only the scopes
+// it was granted. Creating or editing a live order commits the agent wallet to
+// a trade, so without wallet:write it is refused; reading and cancelling are not.
+describe('api/agents/orders.js with a bearer credential', () => {
+	const asBearer = (scope) => {
+		sessionUser = null;
+		extractBearer.mockReturnValue('bearer-token');
+		authenticateBearer.mockResolvedValue({ userId: OWNER, scope, source: 'oauth', clientId: 'mcp_grok' });
+	};
+	afterEach(() => {
+		extractBearer.mockReturnValue(null);
+		authenticateBearer.mockResolvedValue(null);
+	});
+
+	it('refuses to create an order for a connector that cannot spend', async () => {
+		asBearer('avatars:read agents:write wallet:read');
+		const res = mkRes();
+		await ordersHandler(mkReq('POST', `/api/agents/${AGENT}/orders`, { type: 'limit' }), res, AGENT, undefined);
+		expect(res._json.status).toBe(403);
+		expect(res._json.body.error).toBe('insufficient_scope');
+	});
+
+	it('refuses to edit an order for a connector that cannot spend', async () => {
+		asBearer('avatars:read');
+		const res = mkRes();
+		await ordersHandler(mkReq('PUT', `/api/agents/${AGENT}/orders/${ORDER}`, { slippage_bps: 5000 }), res, AGENT, ORDER);
+		expect(res._json.status).toBe(403);
+	});
+
+	it('still lets that connector read the orders', async () => {
+		asBearer('wallet:read');
+		const res = mkRes();
+		await ordersHandler(mkReq('GET'), res, AGENT, undefined);
+		expect(res._json.status).toBe(200);
+	});
+
+	it('lets a credential holding wallet:write reach validation', async () => {
+		asBearer('wallet:read wallet:write');
 		const res = mkRes();
 		await ordersHandler(mkReq('POST', `/api/agents/${AGENT}/orders`, { type: 'limit' }), res, AGENT, undefined);
 		expect(res._json.status).toBe(422);
