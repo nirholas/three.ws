@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-08",
+			"title": "DEXTools is one click away on every coin, and every visit counts toward Social Boost",
+			"summary": "DEXTools Social Boost ranks tokens by visits to their DEXTools page, and $THREE has already won three buybacks from it. Every coin on three.ws now carries a DEXTools link: it leads the trading terminal row and appears on coin and launch pages, the 3D coin view, the Oracle, agent and character pages, the live pump.fun feeds and your token dashboard. Each link opens the coin's busiest pair on DEXTools, so the visit lands on the page Social Boost actually counts. Launch pages, and the success screen right after you launch a coin, also get a Social Boost card that explains how the ranking works and sends your community there in one click. Visits are counted in daily totals per coin and per page that sent them. No visitor data is stored.",
+			"tags": ["feature"],
+			"link": "/three-token"
+		},
+		{
 			"date": "2026-10-01",
 			"title": "Pinned agent-3d embeds keep working after every update",
 			"summary": "If you embedded the 3D avatar component with a pinned version and an integrity hash, as our docs recommend for production, the embed could stop loading after one of our updates: the file behind a version that is promised never to change was being rebuilt each time we shipped, so its fingerprint changed and browsers refused to run it. A released version is now frozen for good, every update serves exactly the same file under it, and the build fails if any hash in our docs, skills or code snippets ever disagrees with the file it points to. Version 1.5.2 is frozen as it is served today; if your page pins an older hash for 1.5.2, update it once from /agent-3d/1.5.2/integrity.json.",
