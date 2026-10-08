@@ -1782,7 +1782,7 @@ function paintWatch(btn) {
 function renderActions() {
 	const target = $('ld-actions');
 	const isDevnet = state.network === 'devnet';
-	const symbol = (state.coin?.symbol || state.detail.registry?.symbol || '').toUpperCase();
+	const symbol = (state.coin?.symbol || state.detail.registry?.symbol || state.detail.intel?.symbol || '').toUpperCase();
 	const mint = state.mint;
 
 	const watchBtn = el('button', { class: 'ld-btn ld-watch', type: 'button', 'aria-pressed': 'false' });
