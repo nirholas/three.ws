@@ -26,7 +26,7 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
-import { solanaConnection } from './solana/connection.js';
+import { solanaConnection, isTransientRpcError } from './solana/connection.js';
 import { signaturesSinceCursor } from './solana/cursor-recovery.js';
 import { RPC } from './solana-attestations.js';
 import { recordEvents } from './onchain-events.js';
@@ -533,22 +533,47 @@ export async function nextAgentBatch({ limit = 40 } = {}) {
 export const SOLANA_SWEEP_BUDGET_MS = 120_000;
 
 /**
- * Crawl one tick's worth of the Solana agent directory.
+ * Consecutive RPC-fabric failures after which the sweep ends its tick early.
  *
- * Drains the oldest-cursor-first batch through a small worker pool, stops on
- * the budget rather than on the batch, and stamps a failure onto every agent it
- * could not read so one unreadable account cannot hold the queue head forever.
+ * When every Solana lane is cooling at once (paid plans over quota, free lanes
+ * answering 429), no agent in the batch can be read, and draining the rest of it
+ * anyway does two kinds of damage. It stamps an error onto every remaining
+ * cursor, so the agents look broken when the provider was, and it spends a
+ * request per agent against lanes that are already benched, which is how a
+ * cooldown gets extended instead of served. Measured on 2026-10-08: the 04:00
+ * tick wrote the same exhausted-chain error onto 126 cursors, 7.6% of the
+ * directory in one pass, and that alone moved the sensor's error rate past its
+ * degraded line.
  *
- * `truncated` means the budget ran out with agents still queued: the cycle time
- * the freshness sensor derives from SOLANA_SWEEP_BATCH assumes a batch that
- * drains, so a truncated tick is the signal that the batch has outgrown the
- * budget and the sensor's cycle number is now optimistic.
- *
- * @param {{ budgetMs?: number, limit?: number, concurrency?: number, now?: () => number }} [opts]
- * @returns {Promise<{ agents: number, scanned: number, inserted: number, rejected: number,
- *   failed: number, truncated: boolean, batch: number, concurrency: number,
- *   elapsedMs: number, error?: string }>}
+ * Stopping leaves the undispatched agents untouched, which is exactly right for
+ * an oldest-first queue: they stay at its head and are the first ones the next
+ * tick reads. Any success resets the count, so a single flaky account or a
+ * one-lane blip never trips it. Errors that are about the agent (a ref that is
+ * not an account key, a malformed transaction) never count toward it.
  */
+export const SOLANA_SWEEP_RPC_BREAKER = 5;
+
+/**
+ * Consecutive-failure breaker over RPC-fabric errors, reset by any success.
+ * @param {number} [threshold]
+ */
+export function rpcBreaker(threshold = SOLANA_SWEEP_RPC_BREAKER) {
+	let streak = 0;
+	let last = null;
+	return {
+		success() {
+			streak = 0;
+		},
+		failure(err) {
+			if (!isTransientRpcError(err)) return;
+			streak += 1;
+			last = err?.message || String(err);
+		},
+		tripped: () => streak >= threshold,
+		lastError: () => last,
+	};
+}
+
 /**
  * Run `handle` over `items` through a small worker pool, stopping on a
  * wall-clock budget rather than on the list.
@@ -562,21 +587,34 @@ export const SOLANA_SWEEP_BUDGET_MS = 120_000;
  * BEFORE the clock on purpose, so a run that consumed its last item on the
  * final millisecond reports completion rather than phantom unfinished work.
  *
+ * `shouldStop` is checked before every dispatch, the same way, and `stopped`
+ * reports that it cut the run short. Items never dispatched are left exactly as
+ * they were, which for the sweep means still at the head of the queue.
+ *
  * @template T
  * @param {T[]} items
  * @param {(item: T, index: number) => Promise<void>} handle
- * @param {{ concurrency?: number, budgetMs?: number, now?: () => number }} [opts]
- * @returns {Promise<{ processed: number, truncated: boolean, workers: number, elapsedMs: number }>}
+ * @param {{ concurrency?: number, budgetMs?: number, now?: () => number, shouldStop?: () => boolean }} [opts]
+ * @returns {Promise<{ processed: number, truncated: boolean, stopped: boolean, workers: number, elapsedMs: number }>}
  */
-export async function drainWithBudget(items, handle, { concurrency = 1, budgetMs = Infinity, now = Date.now } = {}) {
+export async function drainWithBudget(
+	items,
+	handle,
+	{ concurrency = 1, budgetMs = Infinity, now = Date.now, shouldStop = () => false } = {},
+) {
 	const startedAt = now();
 	const workers = Math.max(1, Math.min(Math.trunc(concurrency) || 1, items.length || 1));
 	let next = 0;
 	let truncated = false;
+	let stopped = false;
 
 	const drain = async () => {
 		for (;;) {
 			if (next >= items.length) return;
+			if (stopped || shouldStop()) {
+				stopped = true;
+				return;
+			}
 			if (now() - startedAt > budgetMs) {
 				truncated = true;
 				return;
@@ -587,7 +625,7 @@ export async function drainWithBudget(items, handle, { concurrency = 1, budgetMs
 	};
 
 	await Promise.all(Array.from({ length: workers }, drain));
-	return { processed: next, truncated, workers, elapsedMs: now() - startedAt };
+	return { processed: next, truncated, stopped, workers, elapsedMs: now() - startedAt };
 }
 
 /**
@@ -601,10 +639,13 @@ export async function drainWithBudget(items, handle, { concurrency = 1, budgetMs
  * cycle time the freshness sensor derives from SOLANA_SWEEP_BATCH assumes a
  * batch that drains, so from that point on the sensor's cycle is optimistic.
  *
+ * `stoppedOnRpc` means the RPC breaker ended the tick because every lane was
+ * failing (see SOLANA_SWEEP_RPC_BREAKER); `rpcError` carries the last error.
+ *
  * @param {{ budgetMs?: number, limit?: number, concurrency?: number, now?: () => number }} [opts]
  * @returns {Promise<{ agents: number, scanned: number, inserted: number, rejected: number,
- *   failed: number, truncated: boolean, batch: number, concurrency: number,
- *   elapsedMs: number, error?: string }>}
+ *   failed: number, truncated: boolean, stoppedOnRpc: boolean, rpcError?: string|null,
+ *   batch: number, concurrency: number, elapsedMs: number, error?: string }>}
  */
 export async function sweepAgentEvents({
 	budgetMs = SOLANA_SWEEP_BUDGET_MS,
@@ -620,6 +661,7 @@ export async function sweepAgentEvents({
 		rejected: 0,
 		failed: 0,
 		truncated: false,
+		stoppedOnRpc: false,
 		batch: 0,
 		concurrency: 0,
 		elapsedMs: 0,
@@ -633,16 +675,19 @@ export async function sweepAgentEvents({
 	}
 	summary.batch = batch.length;
 
+	const breaker = rpcBreaker();
 	const run = await drainWithBudget(
 		batch,
 		async (row) => {
 			try {
 				const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });
+				breaker.success();
 				summary.agents += 1;
 				summary.scanned += r.scanned;
 				summary.inserted += r.inserted;
 				summary.rejected += r.rejected;
 			} catch (err) {
+				breaker.failure(err);
 				summary.failed += 1;
 				await markAgentEventError({
 					agentRef: row.agent_ref,
@@ -651,10 +696,12 @@ export async function sweepAgentEvents({
 				}).catch(() => {});
 			}
 		},
-		{ concurrency, budgetMs, now },
+		{ concurrency, budgetMs, now, shouldStop: breaker.tripped },
 	);
 
 	summary.truncated = run.truncated;
+	summary.stoppedOnRpc = run.stopped;
+	if (run.stopped) summary.rpcError = breaker.lastError();
 	summary.concurrency = run.workers;
 	summary.elapsedMs = run.elapsedMs;
 	return summary;

@@ -453,7 +453,12 @@ const ERC8004_MIN_BLOCK_CHUNK = 100;
 // smaller range fixes: matching it made the crawl read a plan limit as a range
 // ceiling and shrink to the floor forever instead of surfacing the real fault.
 // Every entry below names a range or a result volume, which shrinking does fix.
-const RANGE_REJECTED = /block range|range is too large|too wide|too many blocks|query returned more than|exceed maximum block range|limited to|response size|logs matched/i;
+//
+// `ranges? over N blocks` is dRPC's free tier, and its number is wrong: on
+// 2026-10-08 a testnet's dRPC lane answered "ranges over 10000 blocks are not
+// supported on free plan" to every window from 8,000 down to 200 and served 101.
+// It is still a range ceiling that shrinking reaches, which is all this asks.
+const RANGE_REJECTED = /block range|range is too large|too wide|too many blocks|ranges? over \d+ blocks|query returned more than|exceed maximum block range|limited to|response size|logs matched/i;
 
 /**
  * Is this RPC failure the provider refusing the width of the requested range?
@@ -609,8 +614,14 @@ async function erc8004CrawlChain(chain) {
 				}
 			}
 			// Any RPC failure that is not the provider refusing the range is a genuine
-			// error and propagates to the per-chain handler above.
-			if (!isRangeRejection(err?.message || err)) throw err;
+			// error and propagates to the per-chain handler above. The head is already
+			// known here, so bank the real backlog first: blocks_behind is otherwise
+			// written only on success, and a chain that errors every tick keeps the 0
+			// its last good crawl left behind and reads as caught up forever.
+			if (!isRangeRejection(err?.message || err)) {
+				await erc8004RecordBacklog(chain.id, latestBlock, fromBlock).catch(() => {});
+				throw err;
+			}
 			const reduced = backoffChunkSize(chunkSize);
 			if (reduced >= chunkSize) {
 				// Already at the floor: the provider will not serve even the smallest
@@ -842,6 +853,29 @@ async function erc8004CrawlChain(chain) {
 		...(prunedSkip ? { prunedSkip } : {}),
 		chunkSize,
 	};
+}
+
+/**
+ * Record how far behind head a chain is on a tick that failed to advance it.
+ *
+ * Deliberately leaves updated_at and last_block alone: the cursor did not move,
+ * and the lag monitor reads updated_at as "last time this chain advanced". Only
+ * the backlog is refreshed, so a chain stuck on a dead lane shows the blocks it
+ * is missing instead of the 0 from its last successful crawl. Measured on
+ * 2026-10-08: one testnet had not advanced in 26 days (its first lane's
+ * hostname no longer resolves) and still reported 0 blocks behind against a
+ * head 2.3 million blocks past its cursor.
+ * @param {number} chainId
+ * @param {number} headBlock
+ * @param {number} fromBlock the first block the failed tick tried to read
+ */
+async function erc8004RecordBacklog(chainId, headBlock, fromBlock) {
+	await sql`
+		UPDATE erc8004_crawl_cursor
+		SET head_block    = ${headBlock},
+		    blocks_behind = ${Math.max(0, headBlock - fromBlock + 1)}
+		WHERE chain_id = ${chainId}
+	`;
 }
 
 /**

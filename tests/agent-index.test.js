@@ -17,7 +17,9 @@ import {
 	SOLANA_SWEEP_BATCH,
 	SOLANA_SWEEP_PERIOD_MIN,
 	SOLANA_SWEEP_CONCURRENCY,
+	SOLANA_SWEEP_RPC_BREAKER,
 	drainWithBudget,
+	rpcBreaker,
 } from '../api/_lib/solana-agent-events.js';
 import {
 	normalizeEvent,
@@ -481,6 +483,17 @@ describe('isRangeRejection', () => {
 		expect(isRangeRejection('eth_getLogs is limited to a 10000 block range')).toBe(true);
 	});
 
+	it("reads dRPC's free-tier wording as a range ceiling even though its number is wrong", () => {
+		// Verbatim from erc8004_crawl_cursor.last_error on a stalled testnet, 2026-10-08.
+		// dRPC said this to every window from 8,000 down to 200 and served 101, so
+		// treating it as a genuine fault froze the cursor for 26 days instead of
+		// letting the shrink loop find the real ceiling.
+		expect(isRangeRejection('RPC 35: ranges over 10000 blocks are not supported on free plan')).toBe(true);
+		// Same provider, different refusal: no window size fixes a chain the plan
+		// does not carry, so it must stay a real fault.
+		expect(isRangeRejection('RPC 35: chain is not available on free plan, please upgrade to paid plan')).toBe(false);
+	});
+
 	it('does NOT treat a plan or rate limit as a range the crawl can shrink into', () => {
 		// bnbchain's data-seed nodes answer every eth_getLogs with this, at any
 		// width. Reading it as a range ceiling shrank BSC Testnet to the 100-block
@@ -605,11 +618,81 @@ describe('drainWithBudget', () => {
 		expect(run.truncated).toBe(false);
 	});
 
+	it('stops dispatching the moment shouldStop says so and leaves the rest untouched', async () => {
+		const seen = [];
+		const run = await drainWithBudget([1, 2, 3, 4, 5, 6], async (n) => void seen.push(n), {
+			concurrency: 1,
+			shouldStop: () => seen.length >= 2,
+		});
+		expect(seen).toEqual([1, 2]);
+		expect(run.stopped).toBe(true);
+		expect(run.truncated).toBe(false);
+		expect(run.processed).toBe(2);
+	});
+
+	it('does not report a stop for a run that drained before the predicate fired', async () => {
+		const run = await drainWithBudget([1, 2], async () => {}, { concurrency: 2, shouldStop: () => false });
+		expect(run.stopped).toBe(false);
+		expect(run.processed).toBe(2);
+	});
+
 	it('keeps the shipped concurrency low enough not to outrun the RPC lanes', () => {
 		// The lane router parks a cooling provider; a wide fan-out earns 429s
 		// faster than it earns signatures. This is a ceiling, not a target.
 		expect(SOLANA_SWEEP_CONCURRENCY).toBeGreaterThan(1);
 		expect(SOLANA_SWEEP_CONCURRENCY).toBeLessThanOrEqual(8);
+	});
+});
+
+describe('rpcBreaker', () => {
+	// The 2026-10-08 04:00 tick: every lane cooling at once, and the sweep wrote
+	// the same exhausted-chain error onto 126 cursors in one pass.
+	const exhausted = new Error(
+		'fetch failed (ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR) @ https://example.solana-mainnet.quiknode.pro',
+	);
+
+	it('trips after the configured run of RPC-fabric failures', () => {
+		const b = rpcBreaker(3);
+		b.failure(exhausted);
+		b.failure(new Error('all solana rpc endpoints failed'));
+		expect(b.tripped()).toBe(false);
+		b.failure(new Error('solana rpc 429 @ https://lane'));
+		expect(b.tripped()).toBe(true);
+		expect(b.lastError()).toContain('429');
+	});
+
+	it('resets on any success, so a passing blip never ends the tick', () => {
+		const b = rpcBreaker(2);
+		b.failure(exhausted);
+		b.success();
+		b.failure(exhausted);
+		expect(b.tripped()).toBe(false);
+	});
+
+	it('ignores failures that are about the agent rather than the RPC', () => {
+		const b = rpcBreaker(2);
+		b.failure(new Error('agent_ref is not a Solana account key'));
+		b.failure(new Error('duplicate key value violates unique constraint'));
+		b.failure(new TypeError("Cannot read properties of undefined (reading 'meta')"));
+		expect(b.tripped()).toBe(false);
+	});
+
+	it('ends a sweep through drainWithBudget, leaving undispatched agents queued', async () => {
+		const b = rpcBreaker();
+		const agents = Array.from({ length: 240 }, (_, i) => i);
+		let attempted = 0;
+		const run = await drainWithBudget(
+			agents,
+			async () => {
+				attempted += 1;
+				b.failure(exhausted);
+			},
+			{ concurrency: 4, shouldStop: b.tripped },
+		);
+		expect(run.stopped).toBe(true);
+		// At most the threshold plus the workers already in flight when it tripped.
+		expect(attempted).toBeLessThanOrEqual(SOLANA_SWEEP_RPC_BREAKER + 4);
+		expect(attempted).toBeGreaterThanOrEqual(SOLANA_SWEEP_RPC_BREAKER);
 	});
 });
 
@@ -809,6 +892,8 @@ function lagFixture({ solana = {}, evm = {} } = {}) {
 			worstBlocksBehind: 0,
 			worstChainId: null,
 			worstChainName: null,
+			stalestChainId: null,
+			stalestChainName: null,
 			historyGapChains: 0,
 			historyGapBlocks: 0,
 			events: 107296,
@@ -881,6 +966,34 @@ describe('indexLagVerdict', () => {
 		expect(
 			indexLagVerdict(lagFixture({ evm: { historyGapChains: 3, historyGapBlocks: 25_000_000 } })).status,
 		).toBe('ok');
+	});
+
+	it('names the stale chain beside the cursor age, not a chain that won a tie at zero backlog', () => {
+		// The production detail on 2026-10-08 named a healthy chain beside a
+		// 639-hour cursor age that belonged to a different, stalled one.
+		const verdict = indexLagVerdict(
+			lagFixture({
+				evm: {
+					lagMin: 38_386,
+					staleChains: 1,
+					worstBlocksBehind: 0,
+					worstChainId: 2,
+					worstChainName: 'Healthy Testnet',
+					stalestChainId: 1,
+					stalestChainName: 'Stalled Testnet',
+				},
+			}),
+		);
+		expect(verdict.detail).toContain('639h46m worst cursor age (Stalled Testnet)');
+		expect(verdict.detail).not.toContain('Healthy Testnet');
+		expect(verdict.hint).toContain('last_error');
+	});
+
+	it('still names the chain carrying a real backlog', () => {
+		const verdict = indexLagVerdict(
+			lagFixture({ evm: { worstBlocksBehind: 2_303_000, behindChains: 1, worstChainName: 'Stalled Testnet' } }),
+		);
+		expect(verdict.detail).toContain('worst backlog 2,303,000 blocks (Stalled Testnet)');
 	});
 
 	it('reports a never-crawled index as warming up rather than broken', () => {

@@ -79,6 +79,7 @@ function withTimeout(promise, ms) {
  *   evm: { lagMin: number|null, chains: number, configuredChains: number,
  *          uncrawledChains: number, staleChains: number, worstBlocksBehind: number,
  *          behindChains: number, worstChainId: number|null, worstChainName: string|null,
+ *          stalestChainId: number|null, stalestChainName: string|null,
  *          historyGapChains: number, historyGapBlocks: number, events: number },
  *   lastEventAt: string|null,
  *   lastIndexedAt: string|null,
@@ -115,8 +116,12 @@ export async function readIndexLag() {
 					coalesce(sum(history_gap_blocks), 0)::bigint AS gap_blocks,
 					(
 						SELECT chain_id FROM erc8004_crawl_cursor
-						ORDER BY blocks_behind DESC LIMIT 1
-					)::int AS worst_chain_id
+						ORDER BY blocks_behind DESC, updated_at ASC LIMIT 1
+					)::int AS worst_chain_id,
+					(
+						SELECT chain_id FROM erc8004_crawl_cursor
+						ORDER BY updated_at ASC LIMIT 1
+					)::int AS stalest_chain_id
 				FROM erc8004_crawl_cursor
 			`,
 			QUERY_TIMEOUT_MS,
@@ -139,6 +144,8 @@ export async function readIndexLag() {
 	const t = totals[0] || {};
 
 	const worstChainId = e.worst_chain_id ?? null;
+	const stalestChainId = e.stalest_chain_id ?? null;
+	const chainName = (id) => CHAINS.find((c) => c.id === id)?.name ?? null;
 
 	return {
 		solana: {
@@ -163,7 +170,14 @@ export async function readIndexLag() {
 			behindChains: e.behind_chains ?? 0,
 			worstBlocksBehind: Number(e.worst_blocks_behind ?? 0),
 			worstChainId,
-			worstChainName: CHAINS.find((c) => c.id === worstChainId)?.name ?? null,
+			worstChainName: chainName(worstChainId),
+			// The chain whose cursor is oldest, which is the one the worst cursor age
+			// belongs to. Distinct from the worst backlog on purpose: on 2026-10-08
+			// the detail paired a 639-hour cursor age with "worst backlog 0 blocks"
+			// and the name of a healthy chain that merely won a tie at zero, while
+			// the testnet actually stuck went unnamed.
+			stalestChainId,
+			stalestChainName: chainName(stalestChainId),
 			// Blocks the crawl skipped past a provider that no longer serves them.
 			// Reported, never scored: the gap is history that is already lost, so
 			// letting it drive the verdict would keep the subsystem red forever
@@ -265,9 +279,11 @@ export function indexLagVerdict(lag) {
 	const evmPart =
 		lag.evm.chains === 0
 			? 'EVM: no chain cursors'
-			: `EVM: ${fmt(lag.evm.lagMin)} worst cursor age across ${lag.evm.chains}/${lag.evm.configuredChains} chains` +
+			: `EVM: ${fmt(lag.evm.lagMin)} worst cursor age` +
+				(lag.evm.staleChains && lag.evm.stalestChainName ? ` (${lag.evm.stalestChainName})` : '') +
+				` across ${lag.evm.chains}/${lag.evm.configuredChains} chains` +
 				`, worst backlog ${lag.evm.worstBlocksBehind.toLocaleString('en-US')} blocks` +
-				(lag.evm.worstChainName ? ` (${lag.evm.worstChainName})` : '') +
+				(lag.evm.worstBlocksBehind > 0 && lag.evm.worstChainName ? ` (${lag.evm.worstChainName})` : '') +
 				(lag.evm.behindChains ? `, ${lag.evm.behindChains} behind` : '') +
 				(lag.evm.staleChains ? `, ${lag.evm.staleChains} stale` : '') +
 				(lag.evm.uncrawledChains ? `, ${lag.evm.uncrawledChains} never crawled` : '') +
@@ -289,7 +305,7 @@ export function indexLagVerdict(lag) {
 					? 'Solana cursors are erroring, not just lagging, and the sweep stamps last_indexed_at on the failure path so they still look fresh. Group them: select error, count(*) from agent_event_cursor where error is not null group by 1 order by 2 desc. See docs/ops/agent-index.md.'
 					: lag.evm.worstBlocksBehind >= EVM_BLOCKS_BEHIND_DEGRADED
 						? 'An EVM chain is behind head, not just stale: the crawl grows its block window while behind, so a backlog that keeps rising means the RPC is rejecting ranges (erc8004_crawl_cursor.last_error) or the cron is being cut short by its budget.'
-						: 'Check the crawl crons: /api/cron/solana-attestations-crawl and /api/cron/erc8004-crawl. A stale cursor means the job is failing or no longer scheduled.';
+						: 'Check the crawl crons: /api/cron/solana-attestations-crawl and /api/cron/erc8004-crawl. A stale cursor means the job is failing or no longer scheduled; erc8004_crawl_cursor.last_error names the lane that refused a stale EVM chain.';
 
 	return { status, detail, ...(hint ? { hint } : {}) };
 }

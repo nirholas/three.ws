@@ -98,10 +98,12 @@ gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_
 | `solana rpc 429 @ <host>` | That lane is rate-limited. | Transient. The router cools the lane and retries; see [solana-rpc-lanes.md](solana-rpc-lanes.md) if it persists. |
 | `solana rpc provider error -16401 @ <host>` | The lane gates this method behind a paid tier. | Per-method capability routing in `api/_lib/solana/connection.js`. Add the method to that lane's blocked set. |
 | `fetch failed (…) @ <host>` | Transport fault on one lane. | Transient. Persistent means the lane is dead: drop it. |
+| `fetch failed (ERR_SSL_…) @ <host>` | The lane refused the TLS handshake. It was the last lane tried because every other lane was cooling. | The lane itself is dead (a disabled QuickNode endpoint does exactly this). Remove or replace it in `SOLANA_RPC_LAST_RESORT_URLS` / `SOLANA_RPC_FALLBACK_URLS`; the router now parks it for 30 minutes on its own. The error landing on many cursors in one tick means the paid lanes were over quota at the same moment. |
 | `agent_ref is not a Solana account key` | A directory row whose ref is not an account. | Never crawlable. It is recorded once rather than retried every tick. |
 | EVM `has been pruned` / `Archive requests require a personal token` | The provider will not serve the blocks the cursor points at, whether it dropped them or paywalled them. | Self-healing: the crawl resumes at the head, reports the skipped span as `prunedSkip`, and banks it in `history_gap_blocks`. That span is a permanent gap; only an archive node can backfill it. |
-| EVM `block range` / `response size` / `query returned more than` | The window was too wide. | Self-healing: `backoffChunkSize()` halves it in place and the width is persisted in `chunk_size`. |
+| EVM `block range` / `response size` / `query returned more than` / `ranges over N blocks` | The window was too wide. dRPC's free tier says `ranges over 10000 blocks` for any window above about 100 blocks, so its number is not the real ceiling. | Self-healing: `backoffChunkSize()` halves it in place and the width is persisted in `chunk_size`. |
 | EVM `limit exceeded` | A plan or compute limit, **not** a range ceiling. | Shrinking does not help. Deliberately excluded from `isRangeRejection`. |
+| EVM `ENOTFOUND` / `HTTP 401 … tenant disabled` / `chain is not available on free plan` | The lane is gone, not busy. | Replace it in that chain's `rpcUrls` with a lane probed to serve `eth_getLogs` at the chain's window. A failing tick still banks `head_block` and `blocks_behind`, so a chain stuck on dead lanes shows its real backlog instead of the 0 its last good crawl left. |
 | EVM `HTTP 403 from <host>` | A lane refused us with no readable JSON-RPC body. | The body is read first now, so a bare status here means the lane returned nothing to classify. The chain needs a lane that answers from a datacenter IP; see the `rpcUrls` note in `api/_lib/erc8004-chains.js`. |
 
 ## Recovery: drain a wedged backlog now
@@ -179,3 +181,21 @@ immediately in the sensor's error rate. The sweep reports `truncated: true` when
 the budget runs out mid-batch, which is the signal that the batch has finally
 outgrown the budget and the sensor's cycle number has become optimistic. Check
 that flag before raising the batch again.
+
+The sweep also carries a breaker. After `SOLANA_SWEEP_RPC_BREAKER` consecutive
+RPC-fabric failures (exhausted chain, 429, transport, TLS; never an agent-level
+error), it stops dispatching for the rest of the tick and reports
+`stoppedOnRpc: true` with the last `rpcError`. The undispatched agents keep their
+old cursors, which leaves them at the head of the oldest-first queue for the next
+tick. Without it, one tick during a full-fabric brownout (2026-10-08 04:00, every
+paid lane over quota and every free lane 429-cooling) stamped the same error onto
+126 cursors and moved the error rate past its degraded line on its own, while
+spending a request per agent against lanes that were already benched.
+
+Raising the batch is an RPC-budget decision as much as a wall-clock one. Ticks
+finish in 35 to 55 seconds of the 120-second budget, so time is not the limit,
+but every agent is at least one `getSignaturesForAddress`, and a larger batch
+spends that against the same paid plans whose quota the rest of the platform is
+already exhausting. Check `rpc_lanes` on `/api/healthz` first: while
+`paidCooling` equals `paidTotal`, a bigger batch buys more 429s, not fresher
+cursors.
