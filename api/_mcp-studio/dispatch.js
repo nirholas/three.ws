@@ -16,6 +16,7 @@ import { JOB_TOOL_CATALOG, JOB_TOOLS } from './job-tools.js';
 import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
 import { accountToolCatalog, callAccountTool, isAccountTool } from './account-tools.js';
 import { studioOrigin } from './install-token.js';
+import { handlePromptMethod, PROMPT_CAPABILITIES } from '../_mcp/prompts.js';
 
 // The @three-ws/mcp-policy server id for the free studio.
 const POLICY_SERVER = 'threews-3d-studio-free';
@@ -136,6 +137,11 @@ const PERSONA_INSTRUCTIONS = [
 //            value-moving one. ./handler.js keys its generation caps on the MCP
 //            session, because every Grok user reaches us from xAI's shared
 //            egress.
+// The full and Grok surfaces also serve the guided prompts written for an
+// unattended agent (api/_mcp/prompts.js, the `agent` ones), rendered against
+// the same tool list the caller gets from tools/list, so a prompt is listed
+// only when every tool it names is one this caller can call. The ChatGPT
+// listing serves none.
 // check_job, get_job and the persona tools stay out of the generation quota; see
 // ./handler.js callsGenerationTool. look_at_model renders frames server-side, so
 // it rides that quota.
@@ -157,6 +163,7 @@ const SURFACES = {
 		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		widgets: true,
 		personas: true,
+		prompts: true,
 		jobTool: 'get_job',
 		instructions: [...BASE_INSTRUCTIONS, ...JOB_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 	},
@@ -176,6 +183,7 @@ const SURFACES = {
 		widgets: false,
 		personas: true,
 		accounts: true,
+		prompts: true,
 		jobTool: 'get_job',
 		instructions: [
 			...BASE_INSTRUCTIONS,
@@ -306,6 +314,15 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 	}
 }
 
+// What tools/list shows this caller: the surface's studio tools after the tool
+// policy, plus the account tools when a signed-in caller reached a surface that
+// serves accounts.
+async function listedTools(surface, signedIn, account, auth, req) {
+	const studio = await listForRequest(POLICY_SERVER, surface.catalog, auth, req);
+	if (!signedIn) return studio;
+	return [...studio, ...(await accountToolCatalog(account, req))];
+}
+
 // `opts.account` is the signed-in principal on a surface that serves accounts
 // (./handler.js), or null. Studio tools always run as the anonymous `auth`, so
 // signing in never changes what a free tool does; only the account tools see
@@ -333,6 +350,7 @@ export async function dispatch(
 				capabilities: {
 					tools: { listChanged: false },
 					...(surface.widgets ? { resources: { listChanged: false, subscribe: false } } : {}),
+					...(surface.prompts ? { prompts: PROMPT_CAPABILITIES } : {}),
 					logging: {},
 				},
 				instructions: [surface.instructions, ...accountNote].join(' '),
@@ -340,11 +358,7 @@ export async function dispatch(
 		}
 		if (method === 'ping') return ok(id, {});
 		if (method === 'notifications/initialized') return null;
-		if (method === 'tools/list') {
-			const studio = await listForRequest(POLICY_SERVER, surface.catalog, auth, req);
-			if (!signedIn) return ok(id, { tools: studio });
-			return ok(id, { tools: [...studio, ...(await accountToolCatalog(account, req))] });
-		}
+		if (method === 'tools/list') return ok(id, { tools: await listedTools(surface, signedIn, account, auth, req) });
 		if (method === 'tools/call') {
 			const name = msg.params?.name;
 			if (surface.accounts && !Object.hasOwn(surface.tools, name) && isAccountTool(name)) {
@@ -377,6 +391,10 @@ export async function dispatch(
 			return ok(id, { contents: [{ uri: res.uri, mimeType: res.mimeType, text: res.text, _meta: res._meta }] });
 		}
 		if (method === 'resources/templates/list') return ok(id, { resourceTemplates: [] });
+		if (surface.prompts && (method === 'prompts/list' || method === 'prompts/get')) {
+			const catalog = await listedTools(surface, signedIn, account, auth, req);
+			return ok(id, handlePromptMethod(surface.server, catalog, method, msg.params));
+		}
 		if (method === 'prompts/list') return ok(id, { prompts: [] });
 		if (method === 'logging/setLevel') return ok(id, {});
 

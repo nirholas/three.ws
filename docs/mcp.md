@@ -1161,8 +1161,26 @@ Each server offers short guided workflows through `prompts/list` and `prompts/ge
 | `predictions` | `agentId` | mcp | Prediction-market research; confirmed positions when enabled |
 | `embed-avatar` | `agentId` | mcp | Paste-ready `<agent-3d>` embed code and a preview |
 | `generate-3d` | `prompt` | mcp-3d | Sharpen the prompt, generate, poll, optionally rig, save to your library |
+| `agent-get-started` | none | mcp, mcp-studio, mcp-grok | For an unattended agent: every call it can make here with its exact arguments, the links contract, the rules for scheduled runs |
+| `daily-3d-brief` | `topic` (or `trending`) | mcp-studio, mcp-grok | Pick a topic, generate a model, check it, return the viewer, GLB, poster PNG and embed |
+| `asset-pack` | `theme`, `count` | mcp-studio, mcp-grok | Catalog first, generate only the gaps, one row of links per asset |
+| `avatar-from-photo` | `image_url` | mcp-studio, mcp-grok | Rigged avatar from a photo, its links and a [pose studio](https://three.ws/pose) link |
+| `agent-report` | `agentId` | mcp, mcp-agent, mcp-grok (signed in) | Read-only status of every agent: activity, runs, cost, earnings, wallet state, what needs attention |
 
-`prompts/list` on a server is the authoritative list for that server; `/.well-known/mcp.json` and each `server*.json` manifest carry the same lists. Every prompt is written out step by step, as the exact tool and resource calls it drives, under [Use cases](#use-cases).
+### Prompts for an agent that runs on its own
+
+The last five prompts are written for an agent that works unattended, such as Grok Bot on a schedule, rather than for a person in a chat. They never pause for a yes (nothing in them spends), they spell out each call's exact argument object, and every generation call carries an `idempotency_key` built from the prompt, the task or schedule id and the date (`daily-3d-brief-<schedule id>-<YYYY-MM-DD>`), so a retried run collects the job the first attempt started instead of generating twice (see [Long jobs and safe retries](#long-jobs-and-safe-retries)). Each ends with the four links every model result carries: `viewer_url`, `glb_url`, `poster_png_url` and `embed_html`.
+
+The free studio (`/api/mcp-studio`) and the Grok connector (`/api/mcp-grok`) list only these. Grok lists `agent-report` once the connector is signed in, because the report reads the account through `read_resource`; the ChatGPT listing (`/api/mcp-chatgpt`) serves no prompts. A test renders every prompt against each surface's own `tools/list` and fails when a prompt names a tool, or passes an argument, that the surface does not publish, so renaming a tool or an argument breaks the build rather than the prompt.
+
+```bash
+curl -s https://three.ws/api/mcp-grok \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"prompts/get","params":{"name":"asset-pack","arguments":{"theme":"retro arcade","count":"4"}}}' \
+  | jq -r '.result.messages[0].content.text'
+```
+
+`prompts/list` on a server is the authoritative list for that server; `/.well-known/mcp.json` and each `server*.json` manifest carry the same lists (`npm run build:mcp-surfaces` regenerates them from the code, `npm run audit:mcp-surfaces` checks them). Every prompt is written out step by step, as the exact tool and resource calls it drives, under [Use cases](#use-cases).
 
 ### Worked example: get a prompt
 
@@ -1425,6 +1443,89 @@ On `mcp-3d`:
 3. `generation_status` with the job id until it returns a GLB and an inline viewer.
 4. **Spends money.** `auto_rig_model` if it is a character, so it can be animated. Priced per call over x402; operator-funded on a signed-in account.
 5. `save_avatar` with the GLB URL and a name, then the view link and `read_resource` on `three://assets/{id}` for the saved asset.
+
+### Get started as an autonomous agent (`agent-get-started`)
+
+Goal: brief an agent that runs on its own on every call it can make here, with exact arguments, then have it pick its first scheduled task.
+
+On `mcp`:
+
+1. `search_catalog` and `get_catalog_item`: check the ready-made CC0 catalog before making anything.
+2. Free generation lives on the studio server, so the prompt points there by URL.
+3. `create_agent`, `attach_avatar_to_agent`, `remember` and `recall`: the account's agents, their bodies and memory.
+4. `read_resource` on `three://agents`: list them.
+5. `getting_started`: the full tool list on this server, then a five-line summary and the first scheduled task.
+
+On `mcp-studio`:
+
+1. `search_catalog` and `get_catalog_item`: the catalog before generating.
+2. `forge_free`, `forge_avatar`, `rig_mesh` and `refine_model`, each with an idempotency_key: models, rigged characters, rigging and changes in words.
+3. `get_job`: follow a slow render; `look_at_model`: see what came out.
+4. `create_agent_persona` and `persona_say`: a body that speaks the agent's replies.
+5. Account tools are on the Grok connector or `/api/mcp`; the prompt says where, then asks for a summary and the first scheduled task.
+
+On `mcp-grok` (signed in):
+
+1. `search_catalog` and `get_catalog_item`: the catalog before generating.
+2. `forge_free`, `forge_avatar`, `rig_mesh` and `refine_model`, each with an idempotency_key.
+3. `get_job` and `look_at_model`: collect and check the result.
+4. `create_agent_persona` and `persona_say`: a speaking body.
+5. `create_agent`, `attach_avatar_to_agent`, `remember`, `recall`, and `read_resource` on `three://agents`: the account's agents. Anonymous, the prompt instead explains how to sign the same URL in.
+
+### Daily 3D brief (`daily-3d-brief`)
+
+Goal: on a schedule, turn a topic (or the day's top trending one) into a 3D model and a poster image, and return the links.
+
+On `mcp-studio` and `mcp-grok`:
+
+1. With the topic "trending" (the default), the agent searches X or the web itself and picks one topic that an object or character can stand for, keeping the source link. It skips topics that could only be shown by depicting a real person.
+2. `forge_free` with the model prompt, tier standard and idempotency_key "daily-3d-brief-<schedule id>-<YYYY-MM-DD>".
+3. `get_job` until the job is done.
+4. `look_at_model` from two angles; `refine_model` once, with its own key, if the subject is incomplete.
+5. The report: the topic and why, then viewer_url, glb_url, poster_png_url (the poster) and embed_html.
+
+### Themed asset pack (`asset-pack`)
+
+Goal: assemble a set of 3D assets for a theme, reusing catalog items and generating only what is missing.
+
+On `mcp-studio` and `mcp-grok`:
+
+1. Plan as many assets as the count argument asks (1 to 12, default 6) for the theme.
+2. `search_catalog` for each asset, then `get_catalog_item` for every fitting match and its links.
+3. `forge_free` for each gap, keyed "asset-pack-<theme slug>-<asset slug>-<YYYY-MM-DD>", all started before any is collected.
+4. `get_job` for each pending generation; `get_item_source` for page code when the pack is for a site.
+5. A table of every asset with its source (catalog id or generated) and links, then the embed snippets.
+
+### Avatar from a photo (`avatar-from-photo`)
+
+Goal: turn a photo into a rigged, animation-ready avatar and hand back its links and a pose studio link.
+
+On `mcp-studio` and `mcp-grok`:
+
+1. Use the photo only when it is a public https URL the requester may use.
+2. `forge_avatar` with image_url and an idempotency_key: the mesh, then a humanoid skeleton.
+3. `get_job` until it is done; `look_at_model` from the front, side and back.
+4. The pose studio link, `https://three.ws/pose?src=` plus the URL-encoded GLB.
+5. `create_agent_persona` only when the user asked for a talking body, then the four links and the pose link.
+
+### Agent status report (`agent-report`)
+
+Goal: a read-only report on the account's agents, safe to run on any schedule.
+
+On `mcp` and `mcp-grok` (signed in):
+
+1. `read_resource` on `three://me`: confirm the connection is signed in and note the quota left.
+2. `read_resource` on `three://agents`, then `three://agents/{agentId}` for each agent.
+3. `read_resource` on `three://agents/{agentId}/usage`, `three://agents/{agentId}/runs`, `three://agents/{agentId}/earnings` and `three://agents/{agentId}/wallet`: cost, runs, income and wallet state.
+4. `list_custom_skills` and `recall`: the agent's skills and what it is tracking.
+5. One block per agent and a "Needs attention" list. The report changes nothing; funding and limits stay in the dashboard.
+
+On `mcp-agent`:
+
+1. `read_resource` on `three://me`: confirm the connection is signed in.
+2. `read_resource` on `three://agents`, then `three://agents/{agentId}` for each agent.
+3. `read_resource` on `three://agents/{agentId}/usage`, `three://agents/{agentId}/runs`, `three://agents/{agentId}/earnings` and `three://agents/{agentId}/wallet`.
+4. One block per agent and a "Needs attention" list.
 
 ---
 

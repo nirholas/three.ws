@@ -21,5 +21,36 @@
 			"type": "streamable-http",
 			"url": "https://three.ws/api/mcp-grok"
 		}
-	]
+	],
+	"_meta": {
+		"io.modelcontextprotocol.registry/publisher-provided": {
+			"prompts": [
+				{
+					"name": "agent-get-started",
+					"title": "Get started as an autonomous agent",
+					"arguments": []
+				},
+				{
+					"name": "daily-3d-brief",
+					"title": "Daily 3D brief",
+					"arguments": ["topic"]
+				},
+				{
+					"name": "asset-pack",
+					"title": "Themed asset pack",
+					"arguments": ["theme", "count"]
+				},
+				{
+					"name": "avatar-from-photo",
+					"title": "Avatar from a photo",
+					"arguments": ["image_url"]
+				},
+				{
+					"name": "agent-report",
+					"title": "Agent status report",
+					"arguments": ["agentId"]
+				}
+			]
+		}
+	}
 }

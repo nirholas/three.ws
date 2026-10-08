@@ -29220,6 +29220,13 @@
 		},
 		{
 			"date": "2026-10-08",
+			"title": "Ready-made scheduled tasks for Grok Bot and other AI agents",
+			"summary": "The free 3D Studio and the Grok Bot connector now offer guided prompts written for an agent that runs on its own schedule. daily-3d-brief turns a topic, or the day's top trending one, into a 3D model and a poster image and hands back the links. asset-pack builds a themed set of 3D assets, using ready-made catalog items first and generating only what is missing. avatar-from-photo turns a photo into a rigged avatar with a pose studio link. agent-report, once the connector is signed in, writes a read-only status report on your agents. Every prompt names the exact calls to make and marks each generation so a retried run never makes the same model twice.",
+			"tags": ["feature"],
+			"link": "/docs/grok"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Every MCP server now knows which AI client is calling",
 			"summary": "The three.ws MCP servers now remember which AI app opened each connection, such as Claude, ChatGPT, Cursor or Grok Bot, using the name and version the app announces when it connects, and count which tools each one uses. Only those names and counts are kept, never what anyone asked for. Each connection gets a session id that MCP apps send back automatically, so nothing changes for anyone connecting. It tells us which apps people actually use three.ws from, so we know where to make the experience better next.",
 			"tags": [

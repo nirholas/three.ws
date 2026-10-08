@@ -18,14 +18,31 @@ import { readFileSync } from 'node:fs';
 
 import { describe, it, expect } from 'vitest';
 
-const { PROMPTS, promptsFor, renderPrompt } = await import('../api/_mcp/prompts.js');
+const { PROMPTS, promptsFor, renderPrompt, resourceHost } = await import('../api/_mcp/prompts.js');
 const { matchResource } = await import('../api/_mcp/resources.js');
 const { TOOL_CATALOG: mainCatalog } = await import('../api/_mcp/catalog.js');
 const { TOOL_CATALOG: agentCatalog } = await import('../api/_mcpagent/catalog.js');
 const { TOOL_CATALOG: studioCatalog } = await import('../api/_mcp3d/catalog.js');
 const { TOOL_CATALOG: bazaarCatalog } = await import('../api/_mcpbazaar/catalog.js');
 
-const SERVERS = { mcp: mainCatalog, 'mcp-agent': agentCatalog, 'mcp-3d': studioCatalog, 'mcp-bazaar': bazaarCatalog };
+const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
+const { isAccountTool } = await import('../api/_mcp-studio/account-tools.js');
+
+// The free studio and the Grok connector serve the prompts written for an
+// unattended agent. Grok is audited as a signed-in connector sees it (the studio
+// plus the account tools), the shape its use cases document.
+const SERVERS = {
+	mcp: mainCatalog,
+	'mcp-agent': agentCatalog,
+	'mcp-3d': studioCatalog,
+	'mcp-bazaar': bazaarCatalog,
+	'mcp-studio': toolCatalogFor('full'),
+	'mcp-grok': [...toolCatalogFor('grok'), ...mainCatalog.filter((t) => isAccountTool(t.name))],
+};
+
+// Single-word tool names (remember, recall) have no snake_case shape, so a
+// backticked word also counts as a tool when some server publishes it.
+const KNOWN_TOOLS = new Set(Object.values(SERVERS).flatMap((c) => c.map((t) => t.name)));
 
 const DOC = readFileSync(new URL('../docs/mcp.md', import.meta.url), 'utf8');
 
@@ -64,7 +81,7 @@ function parseUseCases(section) {
 				const ticks = [...step[1].matchAll(/`([^`]+)`/g)].map((m) => m[1]);
 				block.steps.push({
 					text: step[1],
-					tools: ticks.filter((t) => TOOL_RE.test(t)),
+					tools: ticks.filter((t) => TOOL_RE.test(t) || KNOWN_TOOLS.has(t)),
 					resources: ticks.filter((t) => t.startsWith('three://')),
 					spends: step[1].startsWith(SPEND_MARK),
 				});
@@ -137,7 +154,7 @@ function auditUseCases(cases, servers = SERVERS) {
 					if (!byName.has(tool)) problems.push(`${prompt.name} on ${server}: names tool ${tool}, which ${server} does not publish`);
 				}
 				for (const uri of namedResources) {
-					if (!matchResource(server, uri)) problems.push(`${prompt.name} on ${server}: names resource ${uri}, which ${server} does not serve`);
+					if (!matchResource(resourceHost(server), uri)) problems.push(`${prompt.name} on ${server}: names resource ${uri}, which ${server} does not serve`);
 				}
 				if (!offeredOn.includes(server)) {
 					problems.push(`${prompt.name}: documented on ${server}, which does not offer it`);

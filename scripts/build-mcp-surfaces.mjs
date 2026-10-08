@@ -10,6 +10,12 @@
 // manifests carry them under _meta["io.modelcontextprotocol.registry/publisher-provided"],
 // the slot the official server.json schema reserves for publisher metadata.
 //
+// The free studio and the Grok connector publish no three:// resources, only the
+// prompts written for an unattended agent. Grok's listing is what a signed-in
+// connector sees (the studio plus the account tools), since its directory entry
+// documents the URL with sign-in; anonymous callers get the subset whose tools
+// they hold, which tests/mcp-grok-accounts.test.js pins.
+//
 // Run: node scripts/build-mcp-surfaces.mjs          (write)
 //      node scripts/build-mcp-surfaces.mjs --check  (exit 1 if any file is stale)
 
@@ -27,15 +33,28 @@ const SERVERS = [
 	{ id: 'mcp-agent', manifest: 'server-agent.json', endpoint: 'https://three.ws/api/mcp-agent', catalog: '../api/_mcpagent/catalog.js' },
 	{ id: 'mcp-3d', manifest: 'server-3d.json', endpoint: 'https://three.ws/api/mcp-3d', catalog: '../api/_mcp3d/catalog.js' },
 	{ id: 'mcp-bazaar', manifest: 'server-bazaar.json', endpoint: 'https://three.ws/api/mcp-bazaar', catalog: '../api/_mcpbazaar/catalog.js' },
+	{ id: 'mcp-studio', manifest: 'server-studio.json', endpoint: 'https://three.ws/api/mcp-studio', studio: 'full' },
+	{ id: 'mcp-grok', manifest: 'server-grok.json', endpoint: 'https://three.ws/api/mcp-grok', studio: 'grok' },
 ];
 
 const { resourcesFor } = await import('../api/_mcp/resources.js');
 const { promptsFor } = await import('../api/_mcp/prompts.js');
 
+async function catalogFor(server) {
+	if (!server.studio) return (await import(server.catalog)).TOOL_CATALOG;
+	const { toolCatalogFor, surfaceServesAccounts } = await import('../api/_mcp-studio/dispatch.js');
+	const studio = toolCatalogFor(server.studio);
+	if (!surfaceServesAccounts(server.studio)) return studio;
+	const { isAccountTool } = await import('../api/_mcp-studio/account-tools.js');
+	const { TOOL_CATALOG: core } = await import('../api/_mcp/catalog.js');
+	return [...studio, ...core.filter((t) => isAccountTool(t.name))];
+}
+
 async function surfaceFor(server) {
-	const { TOOL_CATALOG } = await import(server.catalog);
-	const defs = resourcesFor(server.id);
+	const TOOL_CATALOG = await catalogFor(server);
+	const defs = server.studio ? [] : resourcesFor(server.id);
 	return {
+		studio: Boolean(server.studio),
 		resources: defs.filter((d) => d.uri).map((d) => ({ uri: d.uri, name: d.name, title: d.title, mimeType: 'application/json' })),
 		resourceTemplates: defs
 			.filter((d) => d.uriTemplate)
@@ -72,8 +91,7 @@ for (const server of SERVERS) {
 		...(manifest._meta || {}),
 		[PUBLISHER_KEY]: {
 			...(manifest._meta?.[PUBLISHER_KEY] || {}),
-			resources: surface.resources,
-			resourceTemplates: surface.resourceTemplates,
+			...(surface.studio ? {} : { resources: surface.resources, resourceTemplates: surface.resourceTemplates }),
 			prompts: surface.prompts,
 		},
 	};
@@ -85,8 +103,10 @@ const directory = JSON.parse(readFileSync(join(ROOT, dirPath), 'utf8'));
 for (const entry of directory.servers || []) {
 	const surface = surfaces.get(entry.endpoint);
 	if (!surface) continue;
-	entry.resources = surface.resources.map((r) => r.uri);
-	entry.resourceTemplates = surface.resourceTemplates.map((r) => r.uriTemplate);
+	if (!surface.studio) {
+		entry.resources = surface.resources.map((r) => r.uri);
+		entry.resourceTemplates = surface.resourceTemplates.map((r) => r.uriTemplate);
+	}
 	entry.prompts = surface.prompts.map((p) => p.name);
 }
 await emit(dirPath, directory);

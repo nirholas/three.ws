@@ -79,7 +79,7 @@ const { POLICY } = await import('@three-ws/mcp-policy');
 const { spendScopeFor } = await import('../api/_mcp/policy.js');
 const { dispatch: coreDispatch } = await import('../api/_mcp/dispatch.js');
 const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
-const { GROK_ACCOUNT_TOOLS } = await import('../api/_mcp-studio/account-tools.js');
+const { GROK_ACCOUNT_TOOLS, movesValue } = await import('../api/_mcp-studio/account-tools.js');
 const { parseWwwAuthenticate, authExpectations } = await import('../scripts/mcp-client-probe.mjs');
 const { hostedServers } = await import('../packages/three-ws-cli/src/servers.js');
 const { readFileSync } = await import('node:fs');
@@ -348,5 +348,46 @@ describe('the directory entry', () => {
 		const servers = hostedServers(directory, ORIGIN);
 		expect(servers.find((s) => s.path === '/api/mcp-grok').defaultSelected).toBe(false);
 		expect(servers.find((s) => s.path === '/api/mcp-studio').defaultSelected).toBe(true);
+	});
+});
+
+// x-grok order 031: the guided prompts for an unattended agent follow the same
+// sign-in line as the tools. Every prompt a caller can get names only tools that
+// caller's own tools/list shows.
+describe('guided prompts on /api/mcp-grok', () => {
+	const toolNamesIn = (text, catalogNames) =>
+		[...text.matchAll(/`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`/g)].map((m) => m[1]).filter((n) => catalogNames.has(n));
+	const EVERY_TOOL = new Set([...STUDIO_NAMES, ...GROK_ACCOUNT_TOOLS]);
+
+	async function promptsSeenBy(headers = {}) {
+		const tools = new Set((await listNames(headers)).map((t) => t.name));
+		const list = await post(grokHandler, rpc('prompts/list'), { headers });
+		const prompts = list.json.result.prompts;
+		for (const p of prompts) {
+			const args = Object.fromEntries(p.arguments.filter((a) => a.required).map((a) => [a.name, a.name === 'image_url' ? 'https://three.ws/og.png' : 'robots']));
+			const got = await post(grokHandler, rpc('prompts/get', { name: p.name, arguments: args }), { headers });
+			const text = got.json.result.messages[0].content.text;
+			for (const name of toolNamesIn(text, EVERY_TOOL)) expect(tools, `${p.name} names ${name}`).toContain(name);
+		}
+		return prompts.map((p) => p.name);
+	}
+
+	it('advertises prompts on initialize', async () => {
+		const init = await post(grokHandler, rpc('initialize', {}));
+		expect(init.json.result.capabilities.prompts).toEqual({ listChanged: false });
+	});
+
+	it('anonymous: the four studio prompts, and agent-report is refused', async () => {
+		expect(await promptsSeenBy()).toEqual(['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo']);
+		const r = await post(grokHandler, rpc('prompts/get', { name: 'agent-report', arguments: {} }));
+		expect(r.json.error.code).toBe(-32602);
+	});
+
+	it('signed in: agent-report joins them and reads through read_resource', async () => {
+		const headers = bearer(await oauthToken(CONNECTOR_SCOPE));
+		expect(await promptsSeenBy(headers)).toEqual(['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo', 'agent-report']);
+		const r = await post(grokHandler, rpc('prompts/get', { name: 'agent-report', arguments: {} }), { headers });
+		expect(r.json.result.messages[0].content.text).toContain('`read_resource`');
+		expect(movesValue('read_resource')).toBe(false);
 	});
 });

@@ -153,6 +153,11 @@
 					"name": "explore-x402",
 					"title": "Explore x402 services",
 					"arguments": ["capability"]
+				},
+				{
+					"name": "agent-report",
+					"title": "Agent status report",
+					"arguments": ["agentId"]
 				}
 			]
 		}

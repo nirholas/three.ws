@@ -200,6 +200,16 @@
 					"name": "embed-avatar",
 					"title": "Embed an agent on a website",
 					"arguments": ["agentId"]
+				},
+				{
+					"name": "agent-get-started",
+					"title": "Get started as an autonomous agent",
+					"arguments": []
+				},
+				{
+					"name": "agent-report",
+					"title": "Agent status report",
+					"arguments": ["agentId"]
 				}
 			]
 		}

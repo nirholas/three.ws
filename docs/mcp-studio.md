@@ -537,6 +537,16 @@ The same `refine_model` capability is available on the paid stdio MCP server
 (`3d-agent-local`, $0.25 USDC per call) via the shared lineage core, so iteration
 behaves identically on both tracks.
 
+## Guided prompts for agents
+
+The server also answers `prompts/list` and `prompts/get` with four prompts written
+for an agent that runs unattended (Grok Bot, a cron, a script): `agent-get-started`,
+`daily-3d-brief` (a topic or the day's trending one, to a model and a poster),
+`asset-pack` (catalog first, generate only the gaps) and `avatar-from-photo` (a rigged
+avatar and a pose studio link). Each names the exact argument objects to send and
+keys every generation with an `idempotency_key`. The ChatGPT listing serves none.
+See [Prompts for an agent that runs on its own](./mcp.md#prompts-for-an-agent-that-runs-on-its-own).
+
 ## Embodiment — a living agent body
 
 Three additional free tools turn a generated avatar into a **persistent, living

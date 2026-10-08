@@ -3,12 +3,12 @@
 //
 // Grok Bot holds its credential unattended (an OAuth 2.1 grant or a connector
 // API key stored as a Bot secret), so this surface lists only tools that read
-// or edit agent data: agents, their memory, their custom skills, and the
-// account's avatars. Nothing here moves value. A tool is admitted only when it
-// is on GROK_ACCOUNT_TOOLS AND the shared policy says it moves no funds and is
-// not in the financial tier AND the core server's own tools/list advertises no
-// price for it, so a later change to the policy or the prices can only shrink
-// this list, never widen it.
+// or edit agent data: agents, their memory, their custom skills, the account's
+// avatars, and read-only three:// views of the account. Nothing here moves
+// value. A tool is admitted only when it is on GROK_ACCOUNT_TOOLS AND the shared
+// policy says it moves no funds and is not in the financial tier AND the core
+// server's own tools/list advertises no price for it, so a later change to the
+// policy or the prices can only shrink this list, never widen it.
 //
 // tools/call runs only a tool this caller's tools/list would show, through the
 // core dispatcher unchanged: the same tool policy (enablement, the spend gate),
@@ -48,6 +48,10 @@ export const GROK_ACCOUNT_TOOLS = Object.freeze([
 	'get_avatar',
 	'get_embed_code',
 	'render_avatar_image',
+	// Read-only views of the account and its agents (three://me, three://agents
+	// and each agent's usage, runs, earnings and wallet state), which the
+	// agent-report prompt reads. Reading a wallet's balance moves nothing.
+	'read_resource',
 ]);
 
 /** Does the shared policy put this core tool among the value-moving ones? */

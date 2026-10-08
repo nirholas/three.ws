@@ -57,6 +57,7 @@ leave it on:
 | `remember`, `recall` | Your agents' long-term memory. |
 | `list_available_skills`, `import_community_skill`, `list_custom_skills`, `get_custom_skill`, `create_custom_skill`, `update_custom_skill` | Your agents' prompt-only skills. |
 | `list_my_avatars`, `get_avatar`, `get_embed_code`, `render_avatar_image` | Your avatars, their embed snippets and rendered images. |
+| `read_resource` | Read-only views of your account and agents (`three://me`, `three://agents`, and each agent's usage, runs, earnings and wallet state), which the `agent-report` prompt reads. Reading a balance moves nothing. |
 
 **It never spends.** No wallet, payment, card, trading, launch or delete tool is
 ever listed on this URL, whatever scopes the credential holds, and calling one by
@@ -141,6 +142,30 @@ opens in any browser), a `glb_url`, a `poster_png_url` and `embed_html`. Nothing
 renders inline in Grok, so this URL lists no widget templates and no `ui://`
 resources, and the server's instructions tell Grok to hand those links to the
 user. Signed in, Grok also gets the [account tools](#your-account-on-the-same-url).
+
+## Scheduled tasks: guided prompts
+
+Grok Bot runs tasks on a schedule with nobody watching, so this URL serves MCP
+prompts (`prompts/list`, `prompts/get`) written for exactly that: each one names
+the tools to call with their exact argument objects, keys every generation with
+an `idempotency_key` built from the prompt, the schedule id and the date, never
+stops to ask, and ends with the plain links Grok hands back.
+
+| Prompt | Arguments | What a run does |
+|---|---|---|
+| `agent-get-started` | none | Every call this connector can make, the links contract, and the first scheduled task to set up. |
+| `daily-3d-brief` | `topic` (default `trending`) | Picks the day's top topic (or yours), generates a model, checks it with `look_at_model`, and returns the viewer, GLB, poster PNG and embed. |
+| `asset-pack` | `theme`, `count` | Takes ready-made catalog items first, generates only the gaps, and returns one row of links per asset. |
+| `avatar-from-photo` | `image_url` | A rigged, animation-ready avatar from a photo, its links, and a [pose studio](/pose) link. |
+| `agent-report` | `agentId` (optional) | Signed in only: a read-only status of your agents (activity, runs, cost, earnings, wallet state) and what needs attention. |
+
+A schedule such as "every morning, run the `daily-3d-brief` prompt from
+three-ws and send me the links" is all it takes. Anonymous, the connector lists
+the first four; signed in, it adds `agent-report`. Each prompt is written out as
+its calls in [MCP use cases](./mcp.md#use-cases), and
+[`api/_mcp/prompts.js`](../api/_mcp/prompts.js) renders them against the
+caller's own `tools/list`, so a prompt never names a tool the connector cannot
+call.
 
 ## How it behaves under Grok
 
