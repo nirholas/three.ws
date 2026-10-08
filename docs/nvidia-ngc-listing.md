@@ -102,6 +102,18 @@ The build-only Cloud Build configuration is
 and pushes the `ngc-candidate` tag without deploying or changing the production
 Cloud Run service.
 
+**Current candidate (rebuilt 2026-10-08).** The first candidate (2026-09-14) predated
+the system-library fix in commit `35d798585`, the one behind the 2026-09-19 to 09-25
+TRELLIS outage, so it was rebuilt from commit `85372d38d` as Cloud Build
+`e336574a-7141-46bf-9514-b15c492d79c8`: `TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9;9.0+PTX`,
+image `us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/model-trellis/server:ngc-candidate`,
+digest `sha256:8c9d543dbc563bfd1bf80133ae9865e407bad9666d8724259872419d0fa45629`.
+The build-time gate passed inside that exact image: 25 request-policy and
+storage-backend tests, and the full served-contract test including the TRELLIS
+import chain, auth boundary, and dead-pipeline 503 behaviour. What is still not
+done is the GPU half of gate 2: an inference run on an Ampere or Hopper GPU, which
+Cloud Run does not offer, so it needs a short-lived GCE A100 or H100 VM.
+
 ```bash
 gcloud builds submit workers/model-trellis \
   --project aerial-vehicle-466722-p5 \
