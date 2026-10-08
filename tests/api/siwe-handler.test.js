@@ -202,6 +202,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		sqlState.queue.push([{ nonce: TEST_NONCE, expires_at: FUTURE, consumed_at: null }]);
 		sqlState.queue.push([{ nonce: TEST_NONCE }]); // burn RETURNING
 		sqlState.queue.push([]); // no wallet
+		sqlState.queue.push([]); // placeholder address not squatted by a password account
 		sqlState.queue.push([]); // no existing user
 		sqlState.queue.push([{ id: 'user-new', inserted: true }]); // insert user
 		sqlState.queue.push([]); // insert wallet
@@ -221,6 +222,32 @@ describe('POST /api/auth/siwe/verify', () => {
 		expect(body.wallet.address).toBe(WALLET_ADDR);
 		const cookie = res.headers['set-cookie'];
 		expect(cookie).toContain('__Host-sid=siwe-session-token');
+	});
+
+	it('never hands a wallet to a password account squatting its placeholder email', async () => {
+		sqlState.queue.push([{ nonce: TEST_NONCE, expires_at: FUTURE, consumed_at: null }]);
+		sqlState.queue.push([{ nonce: TEST_NONCE }]); // burn RETURNING
+		sqlState.queue.push([]); // no wallet
+		sqlState.queue.push([{ '?column?': 1 }]); // placeholder held by a password account
+		sqlState.queue.push([]); // no passwordless account at the fresh address
+		sqlState.queue.push([{ id: 'user-fresh', inserted: true }]); // insert user
+		sqlState.queue.push([]); // insert wallet
+		sqlState.queue.push([]); // seedDefaultAgent
+
+		const { status } = await invoke({
+			action: 'verify',
+			method: 'POST',
+			body: { message: SIWE_MESSAGE, signature: `0x${'ab'.repeat(65)}` },
+			headers: withCsrf(),
+		});
+
+		expect(status).toBe(200);
+		const lookup = sqlState.calls.find((c) => /where wallet_address = .* or \(email = .* and password_hash is null\)/is.test(c.query));
+		expect(lookup, 'the existing-user lookup must skip password accounts').toBeTruthy();
+		const insert = sqlState.calls.find((c) => /insert into users/i.test(c.query));
+		expect(insert).toBeTruthy();
+		const email = insert.values.find((v) => typeof v === 'string' && v.endsWith('@wallet.local'));
+		expect(email).toMatch(/^wallet-0x[0-9a-f]{40}\.[a-z0-9_-]+@wallet\.local$/);
 	});
 
 	it('returns 400 with nonce_reused when nonce was already consumed', async () => {
@@ -273,6 +300,7 @@ describe('POST /api/auth/siwe/verify', () => {
 		sqlState.queue.push([{ nonce: TEST_NONCE, expires_at: FUTURE, consumed_at: null }]);
 		sqlState.queue.push([{ nonce: TEST_NONCE }]); // burn RETURNING
 		sqlState.queue.push([]); // no user_wallets row
+		sqlState.queue.push([]); // placeholder address not squatted by a password account
 		sqlState.queue.push([{ id: 'user-gone', deleted_at: '2026-01-01T00:00:00.000Z' }]);
 
 		const { status, body, res } = await invoke({

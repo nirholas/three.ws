@@ -70,6 +70,7 @@ export default wrap(async (req, res) => {
 	// Privy login without spawning a duplicate). Stamp privy_did on link.
 	let userId;
 	let isNew = false;
+	let emailHeld = false;
 
 	const [byDid] = await sql`
 		select id from users where privy_did = ${privyDid} and deleted_at is null limit 1
@@ -79,19 +80,26 @@ export default wrap(async (req, res) => {
 		userId = byDid.id;
 	} else if (realEmail) {
 		const [byEmail] = await sql`
-			select id from users where email = ${realEmail} and deleted_at is null limit 1
+			select id, email_verified from users where email = ${realEmail} and deleted_at is null limit 1
 		`;
-		if (byEmail) {
+		// Link only to an account whose email this platform has itself verified.
+		// Registration does not prove the inbox, so an unverified row may be
+		// someone who registered a stranger's address in advance; linking it would
+		// sign the real owner into the squatter's account (the squatter keeps the
+		// password). Such a row is left alone and this identity gets its own account.
+		if (byEmail?.email_verified) {
 			userId = byEmail.id;
 			await sql`update users set privy_did = ${privyDid} where id = ${userId}`;
+		} else if (byEmail) {
+			emailHeld = true;
 		}
 	}
 
 	if (!userId) {
-		// New passwordless user. Use the real email when present, else a stable
-		// synthetic scoped to the DID (matches the SIWE/SIWS @*.local convention).
+		// New passwordless user. Use the real email when present and free, else a
+		// stable synthetic scoped to the DID (matches the SIWE/SIWS @*.local convention).
 		const effectiveEmail =
-			realEmail || `privy-${privyDid.replace('did:privy:', '')}@privy.local`;
+			(!emailHeld && realEmail) || `privy-${privyDid.replace('did:privy:', '')}@privy.local`;
 		// The conflict branch relinks the Privy identity but never clears
 		// deleted_at: the owner confirmed that deletion by hand, so a later Privy
 		// sign-in answers account_deleted (matching the SIWE, SIWS, and SAML

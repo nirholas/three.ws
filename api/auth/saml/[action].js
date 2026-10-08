@@ -159,9 +159,16 @@ async function findOrCreateUser({ issuer, nameID, email, name }) {
 		return bySaml.id;
 	}
 
+	let emailHeld = false;
 	if (email) {
-		const [byEmail] = await sql`select id, deleted_at from users where email = ${email} limit 1`;
-		if (byEmail) {
+		const [byEmail] = await sql`select id, deleted_at, email_verified from users where email = ${email} limit 1`;
+		// Link only to an account whose email this platform has verified. An
+		// unverified row may be somebody who registered the address first to have
+		// the real owner's SSO sign-in land in an account they hold the password
+		// to. It is left alone, and this identity gets its own account.
+		if (byEmail && !byEmail.deleted_at && !byEmail.email_verified) {
+			emailHeld = true;
+		} else if (byEmail) {
 			if (byEmail.deleted_at) {
 				throw Object.assign(new Error('account deleted'), { code: 'account_deleted' });
 			}
@@ -178,14 +185,14 @@ async function findOrCreateUser({ issuer, nameID, email, name }) {
 	// Synthetic, non-deliverable address when the IdP releases no email — mirrors
 	// the wallet-login convention (…@wallet.local) so downstream code that keys
 	// off email still works.
-	const userEmail = email || `saml-${await subjectHash(issuer, nameID)}@sso.three.ws.local`;
+	const userEmail = (!emailHeld && email) || `saml-${await subjectHash(issuer, nameID)}@sso.three.ws.local`;
 	const displayName = name || (email ? email.split('@')[0] : 'SSO User');
 	const userId = await insertSamlUser({
 		email: userEmail,
 		displayName,
 		issuer: issuerKey,
 		nameID,
-		emailVerified: Boolean(email),
+		emailVerified: Boolean(email) && !emailHeld,
 	});
 	queueMicrotask(() => seedDefaultAgent(userId));
 	return userId;

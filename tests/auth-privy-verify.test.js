@@ -145,3 +145,45 @@ describe('POST /api/auth/privy/verify: deleted accounts', () => {
 		expect(statements.some((t) => /deleted_at = null/i.test(t))).toBe(false);
 	});
 });
+
+describe('POST /api/auth/privy/verify: email linking', () => {
+	it('never links a Privy identity to an account whose email was never verified', async () => {
+		// Registration does not prove the inbox, so an unverified row holding the
+		// victim's address may be a squatter who keeps its password. The real
+		// owner's Privy sign-in must get its own account, not that one.
+		const { extractIdentity } = await import('../api/_lib/privy.js');
+		vi.mocked(extractIdentity).mockReturnValueOnce({ email: 'victim@example.com' });
+		const calls = [];
+		sqlMock.mockImplementation(async (strings, ...values) => {
+			const text = Array.isArray(strings) ? strings.join(' ') : String(strings);
+			calls.push({ text, values });
+			if (text.includes('select id, email_verified from users')) return [{ id: 'squatter', email_verified: false }];
+			if (text.includes('insert into users')) return [{ id: 'user-fresh', deleted_at: null, inserted: true }];
+			return [];
+		});
+
+		const res = makeRes();
+		await handler(makeReq({ origin: 'https://three.ws' }), res);
+		expect(res.statusCode).toBe(200);
+		expect(calls.some((c) => /update users set privy_did/.test(c.text))).toBe(false);
+		const insert = calls.find((c) => c.text.includes('insert into users'));
+		expect(insert.values[0]).toBe('privy-abc123@privy.local');
+	});
+
+	it('links to an existing account whose email is verified', async () => {
+		const { extractIdentity } = await import('../api/_lib/privy.js');
+		vi.mocked(extractIdentity).mockReturnValueOnce({ email: 'owner@example.com' });
+		const calls = [];
+		sqlMock.mockImplementation(async (strings, ...values) => {
+			const text = Array.isArray(strings) ? strings.join(' ') : String(strings);
+			calls.push({ text, values });
+			if (text.includes('select id, email_verified from users')) return [{ id: 'owner', email_verified: true }];
+			return [];
+		});
+
+		const res = makeRes();
+		await handler(makeReq({ origin: 'https://three.ws' }), res);
+		expect(calls.some((c) => /update users set privy_did/.test(c.text))).toBe(true);
+		expect(calls.some((c) => c.text.includes('insert into users'))).toBe(false);
+	});
+});
