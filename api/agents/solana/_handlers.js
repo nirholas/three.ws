@@ -1124,7 +1124,7 @@ export const handleReputation = wrap(async (req, res) => {
 				(f.payload->>'score')::int as score, f.payload->>'task_id' as task_id,
 				exists (select 1 from solana_attestations a where a.agent_asset = f.agent_asset and a.kind = 'threews.accept.v1' and a.payload->>'task_id' = f.payload->>'task_id' and a.verified = true and f.payload->>'task_id' is not null) as task_accepted,
 				exists (select 1 from solana_credentials c where c.subject = f.attester and c.network = f.network and c.kind = 'threews.verified-client.v1' and c.closed = false and (c.expiry is null or c.expiry > now())) as credentialed,
-				(f.payload->>'source' like 'pumpkit.%' or f.payload->>'source' like 'pumpfun.%') as event_attested
+				((f.payload->>'source' like 'pumpkit.%' or f.payload->>'source' like 'pumpfun.%') and exists (select 1 from solana_attest_event_claims ec where ec.signature = f.signature and ec.network = f.network)) as event_attested
 			from solana_attestations f where f.agent_asset = ${asset} and f.network = ${network} and f.kind = 'threews.feedback.v1' and f.revoked = false
 		),
 		per_attester as (select attester, avg(score)::float as score_avg, bool_or(task_accepted) as any_verified, bool_or(credentialed) as any_credentialed, bool_or(event_attested) as any_event_attested from feedback group by attester)
@@ -1226,7 +1226,7 @@ export const handleReputationHistory = wrap(async (req, res) => {
 			select date_trunc('day', f.block_time) as day, f.attester, (f.payload->>'score')::int as score,
 				exists (select 1 from solana_attestations a where a.agent_asset = f.agent_asset and a.kind = 'threews.accept.v1' and a.payload->>'task_id' = f.payload->>'task_id' and a.verified = true and f.payload->>'task_id' is not null) as task_accepted,
 				exists (select 1 from solana_credentials c where c.subject = f.attester and c.network = f.network and c.kind = 'threews.verified-client.v1' and c.closed = false and (c.expiry is null or c.expiry > f.block_time)) as credentialed,
-				(f.payload->>'source' like 'pumpkit.%') as event_attested
+				((f.payload->>'source' like 'pumpkit.%' or f.payload->>'source' like 'pumpfun.%') and exists (select 1 from solana_attest_event_claims ec where ec.signature = f.signature and ec.network = f.network)) as event_attested
 			from solana_attestations f where f.agent_asset = ${asset} and f.network = ${network} and f.kind = 'threews.feedback.v1' and f.revoked = false and f.block_time >= now() - (${days} || ' days')::interval
 		)
 		select day, count(*)::int as n,

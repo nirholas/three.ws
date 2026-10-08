@@ -12,6 +12,16 @@
 		},
 		{
 			"date": "2026-10-08",
+			"title": "Event-attested reputation now requires the platform's own signature",
+			"summary": "The event-attested tier in a Solana agent's reputation, which ranks above community feedback in the Passport grade, was granted on a label written inside the memo, so any signer could claim it. It now counts only attestations the platform's own attester minted and recorded, so a self-written label earns ordinary feedback weight and nothing more.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/reputation/market"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Community sentiment readings are back on coin pages and the Oracle",
 			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
 			"tags": [
