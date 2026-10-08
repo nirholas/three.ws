@@ -13466,6 +13466,1175 @@
 				}
 			],
 			"mentions": {}
+		},
+		{
+			"id": "keeper-article",
+			"status": "draft",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-10-08T00:00:00Z",
+			"covers": [
+				"/create/prompt",
+				"/rig-doctor",
+				"workers/rig",
+				"@three-ws/mcp-studio"
+			],
+			"article": {
+				"title": "One sentence to a rigged, talking 3D character in 197 seconds: each stage, as it ran",
+				"body": "data/x-content/articles/keeper-article.md",
+				"cover": {
+					"path": "public/x-media/keeper-article/cover.png",
+					"alt": "A 3D character generated from one sentence and auto-rigged on three.ws, standing in the live glTF viewer on a dark background: an old lighthouse keeper with a white beard and a navy knitted cap, in a long yellow oilskin coat with flap pockets and dark buttons, blue trousers and black rubber boots"
+				}
+			},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the keeper the article follows is still served",
+					"url": "https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the free 3D Studio server still offers forge_avatar to a keyless client",
+					"url": "https://three.ws/api/mcp-studio",
+					"method": "POST",
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 1,
+						"method": "tools/list"
+					},
+					"expect": {
+						"contains": "\"name\":\"forge_avatar\""
+					}
+				},
+				{
+					"type": "api",
+					"name": "the rigging worker is loaded on its GPU",
+					"url": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+					"expect": {
+						"status": 200,
+						"contains": "\"model_loaded\":true"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the Hunyuan3D worker is ready",
+					"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+					"expect": {
+						"status": 200,
+						"contains": "\"ready\":true"
+					}
+				},
+				{
+					"type": "browser",
+					"name": "Rig Doctor maps every canonical joint of the Mixamo sample",
+					"steps": [
+						{
+							"goto": "https://three.ws/rig-doctor"
+						},
+						{
+							"click": "Mixamo rig"
+						},
+						{
+							"expect": "52 of 52 canonical joints mapped"
+						}
+					]
+				}
+			],
+			"posts": [
+				{
+					"text": "We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage, including the two that failed that morning and the fallbacks that caught them."
+				}
+			],
+			"claims": [
+				{
+					"says": "in 197 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"durationMs\": 196799"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"forgeAvatarTotal\": 196.8"
+						}
+					]
+				},
+				{
+					"says": "On the morning of 8 October",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"startedAt\": \"2026-10-08T04:31:01"
+						}
+					]
+				},
+				{
+					"says": "No account, no key",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "Each call went to the free 3D Studio MCP server with no key."
+						}
+					]
+				},
+				{
+					"says": "22,500 triangles",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"triangles\": 22500"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "Geometry: 22,500 triangles"
+						}
+					]
+				},
+				{
+					"says": "a 52-joint skeleton with every finger",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"skinJoints\": 52"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"mixamorig:RightHandPinky3\""
+						},
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "52-bone Mixamo skeleton, fingers included"
+						}
+					]
+				},
+				{
+					"says": "52 facial expression shapes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"tongueOut\""
+						},
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "transfers the 52 ARKit expression shapes"
+						}
+					]
+				},
+				{
+					"says": "a full PBR material",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"name\": \"PBR_Material\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"occlusion\""
+						}
+					]
+				},
+				{
+					"says": "Four seconds after that he was a named persona with a stable id",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"durationMs\": 4114"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"persona_id\": \"persona_sdP_lX-PtvroqCZ40pz3\""
+						}
+					]
+				},
+				{
+					"says": "a third of a second after that he had spoken his opening line",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"durationMs\": 299"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"status\": \"spoken\""
+						}
+					]
+				},
+				{
+					"says": "Every call, every timing and the server's own record of each job are written down in a run file that ships with the platform",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "The jobs are the server's own forge_creations rows for each generation."
+						},
+						{
+							"type": "file",
+							"path": "docs/x-content-pipeline.md",
+							"contains": "Media must live under `public/` or `data/` so it ships inside the production image."
+						}
+					]
+				},
+				{
+					"says": "returns a rigged, animation-ready GLB in one call",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, "
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `forge_avatar` | Generate a rigged, animation-ready avatar |"
+						}
+					]
+				},
+				{
+					"says": "a sentence that clearly names an object (a chair, a dog, a sword) is turned away before any GPU time is spent, with a message pointing to the mesh generator instead",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "const NON_HUMANOID = /\\b(chair|sofa|couch|table|desk|lamp|car|truck|vehicle|building|house|tree|plant|sword|gun|bottle|cup|mug|phone|laptop|rock|stone|food|fruit|flower|dog|"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Auto-rigging needs a humanoid figure. Use the 3D mesh generator for objects"
+						}
+					]
+				},
+				{
+					"says": "A director model turns the sentence into a brief",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "const directed = await directPrompt(avatarDirectorFor(subject), prompt);"
+						}
+					]
+				},
+				{
+					"says": "the mesh stage took 100 seconds and the rig stage 12.6 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"mesh\": 100.4"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"rig\": 12.6"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"completed_at\": \"2026-10-08T04:33:32.414Z\""
+						}
+					]
+				},
+				{
+					"says": "rewriting the sentence, painting the picture, storing each intermediate file and polling the workers",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"created_at\": \"2026-10-08T04:31:19.083Z\""
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "// Stage 2"
+						}
+					]
+				},
+				{
+					"says": "a portrait-leaning model tends to answer a description of a person with a head and shoulders, and a bust cannot be rigged into anything that walks",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "// in silver plate armor\") go to a portrait-leaning lane that answers with a\n// head-and-shoulders bust: a model that cannot be rigged into anything posable."
+						}
+					]
+				},
+				{
+					"says": "The language models it calls were rate limiting at that moment",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "openrouter=http 429 (126ms)"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "the avatar director could not reach a language model, so the fallback brief was used"
+						}
+					]
+				},
+				{
+					"says": "a fixed fallback brief is appended to the raw words, stating the framing the director would have asked for",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "effective = directed || avatarFallbackBrief(prompt, subject);"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "// The fallback therefore still states the framing the director would have"
+						}
+					]
+				},
+				{
+					"says": "That is the fallback, word for word",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "full-body character standing in a neutral A-pose, arms slightly away from the body, legs slightly apart, the entire figure in frame head to toe, centered on a plain neutral background"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"prompt_sent_to_the_lane\": \"an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard, full-body character standing in a neutral A-pose"
+						}
+					]
+				},
+				{
+					"says": "costs polish, never the body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "// an outage on the LLM chain costs polish, never the body."
+						}
+					]
+				},
+				{
+					"says": "as one centered subject on a plain seamless background under soft even light",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "//   - a single centered subject on a plain seamless studio background,\n//   - soft even shadowless lighting,"
+						}
+					]
+				},
+				{
+					"says": "set almost entirely by the realism of that one reference picture",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "The realism of the final mesh is set almost entirely by the realism of\n// that one reference image"
+						}
+					]
+				},
+				{
+					"says": "A Gemini image model on Vertex AI leads it, because it draws the most photoreal reference",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp3d/text-to-image.js",
+							"contains": "// Quality-first ordering: the Vertex Gemini image model outdraws 4-step\n\t// distilled FLUX for photoreal reference images"
+						}
+					]
+				},
+				{
+					"says": "This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "Vertex reference image returned 403"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"text_to_image_model\": \"black-forest-labs/flux.1-dev\""
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-reference-image.js",
+							"contains": "if the Vertex lane is unconfigured or fails\n// for any reason, it falls through to the existing reference-image provider"
+						}
+					]
+				},
+				{
+					"says": "No single provider's failure is the end of a picture",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp3d/text-to-image.js",
+							"contains": "keyed rungs: no single provider's failure is ever the terminal error."
+						}
+					]
+				},
+				{
+					"says": "Avatars ask for the high tier, and at the high tier the router sends a job to Hunyuan3D 2.1 on our own worker",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "const AVATAR_TIER = 'high';"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "\thigh: Object.freeze({ image: 'hunyuan3d' }),"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"backend\": \"hunyuan3d\""
+						},
+						{
+							"type": "page",
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"model\":\"hunyuan3d-2.1\""
+						}
+					]
+				},
+				{
+					"says": "a Cloud Run service with an NVIDIA RTX PRO 6000 Blackwell attached",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-hunyuan3d-21-rtx-93741856042.us-central1.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA RTX PRO 6000 Blackwell Server Edition\""
+						}
+					]
+				},
+				{
+					"says": "builds the geometry, then runs a separate pass that paints a full PBR material set rather than one baked colour map",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Hunyuan3D 2.1 runs a shape DiT for geometry, then a separate PBR paint pass"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell",
+							"contains": "Hunyuan3D 2.0 gives you a mesh with a single baked diffuse texture."
+						}
+					]
+				},
+				{
+					"says": "one material carrying four maps: base colour, metallic and roughness, normal, and ambient occlusion",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"baseColor\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"metallicRoughness\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"normal\""
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"occlusion\""
+						}
+					]
+				},
+				{
+					"says": "22,500 triangles across 16,388 vertices",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"vertices\": 16388"
+						}
+					]
+				},
+				{
+					"says": "the job would have moved to the next engine under the same job id: our TRELLIS worker, a hosted TRELLIS lane, then TripoSG",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-failover.js",
+							"contains": "The client\n//      keeps polling the SAME job id"
+						}
+					]
+				},
+				{
+					"says": "That chain was not needed on this run",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"tool\": \"forge_avatar, mesh stage\""
+						}
+					]
+				},
+				{
+					"says": "at the high tier, with a longer sentence of our own. It returned a model in 108 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"durationMs\": 108446"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"tier\": \"high\""
+						}
+					]
+				},
+				{
+					"says": "That tool renders any public GLB on the server from several angles and returns the frames as images",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Renders the GLB from several angles and returns "
+						}
+					]
+				},
+				{
+					"says": "The geometry count agreed: 8,464 triangles",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "Geometry: 8,464 triangles"
+						}
+					]
+				},
+				{
+					"says": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "is the subject complete and recognisable, "
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "is the far side finished, is anything melted, fused, or missing?"
+						}
+					]
+				},
+				{
+					"says": "generate again with a prompt that names the specific fault",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "again with a prompt that names the specific fault."
+						}
+					]
+				},
+				{
+					"says": "turns one-shot generation into a loop",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "one-shot generation into a loop."
+						}
+					]
+				},
+				{
+					"says": "look_at_model is marked read-only",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "readOnlyHint: true, // renders a picture; changes nothing"
+						}
+					]
+				},
+				{
+					"says": "it works on any public GLB, wherever it was made",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "Works on any public https .glb, not only ones made here."
+						}
+					]
+				},
+				{
+					"says": "a Cloud Run service on an NVIDIA L4 running Make-It-Animatable",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"model\":\"make-it-animatable\""
+						},
+						{
+							"type": "page",
+							"url": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
+							"contains": "\"gpu_name\":\"NVIDIA L4\""
+						}
+					]
+				},
+				{
+					"says": "released under the MIT licence and published at CVPR 2025",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "(MIT, CVPR 2025)"
+						}
+					]
+				},
+				{
+					"says": "predicts joint positions, skinning weights and pose for a 52-bone Mixamo skeleton, fingers included, in under a second of GPU time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "52-bone Mixamo skeleton, fingers included, in under a second of GPU time"
+						}
+					]
+				},
+				{
+					"says": "It is used as a predictor and nothing more",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "MIA is used purely as a predictor"
+						}
+					]
+				},
+				{
+					"says": "writes the skeleton, the per-vertex joint indices and weights, and the inverse bind matrices straight into the original GLB bytes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "writes the skeleton, `JOINTS_0`/`WEIGHTS_0`, and\n   inverse bind matrices straight into the original GLB bytes"
+						}
+					]
+				},
+				{
+					"says": "its materials and PBR textures are preserved byte for byte",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "with the original materials and PBR textures preserved byte-for-byte."
+						}
+					]
+				},
+				{
+					"says": "transfers the 52 ARKit expression shapes from an open template head onto the avatar's face, written as glTF morph targets",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "transfers the 52 ARKit expression shapes"
+						},
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "written as glTF morph targets with `targetNames`"
+						}
+					]
+				},
+				{
+					"says": "diagnoses a GLB in the browser without uploading it",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Nothing is uploaded."
+						}
+					]
+				},
+				{
+					"says": "Every limb group mapped",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "so a freshly rigged avatar drives the\n   entire pre-baked clip library at 100% coverage."
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"mixamorig:RightToeBase\""
+						}
+					]
+				},
+				{
+					"says": "Every clip in it is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "Every clip in the three.ws library is authored against one canonical skeleton: Hips, LeftForeArm, RightUpLeg, 52 joints in total."
+						},
+						{
+							"type": "module",
+							"path": "src/glb-canonicalize.js",
+							"export": "CANONICAL_BONES",
+							"length": 52
+						}
+					]
+				},
+				{
+					"says": "a track that names LeftForeArm drives nothing on a rig that spells it differently",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/rig-doctor",
+							"contains": "A track that names LeftForeArm drives nothing on a rig that calls that joint lowerarm_l."
+						}
+					]
+				},
+				{
+					"says": "The keeper's bones are named the Mixamo way, mixamorig:LeftForeArm",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"mixamorig:LeftForeArm\""
+						}
+					]
+				},
+				{
+					"says": "strips vendor prefixes and namespaces, collapses separators and case, and looks what is left up in alias tables that cover more than twenty naming schemes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "// Strips vendor prefixes and separators; returns null on no match."
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "return LOOKUP.get(key) ?? UNREAL_ALIASES.get(key) ?? EXTRA_ALIASES.get(key) ?? null;"
+						},
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"matches": "Handled name variants:(?:[\\s\\S]*?\\n//   • ){21}"
+						}
+					]
+				},
+				{
+					"says": "map onto the canonical set one to one, so a freshly rigged avatar drives the clip library at 100% coverage",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "maps 1:1 onto the platform's canonical bone"
+						},
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "entire pre-baked clip library at 100% coverage."
+						}
+					]
+				},
+				{
+					"says": "fingers are 30 of the clip library's 53 tracks, and a rig whose hands do not map scores about 40% coverage and gets no animation at all",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "// Fingers are 30 of the clip library's 53 tracks, so a rig whose hands don't\n\t// name-map scores ~40% coverage and falls under animation-retarget.js's\n\t// MIN_COVERAGE gate: production then builds NO action for it"
+						}
+					]
+				},
+				{
+					"says": "The reference rig the clips were baked on rests in an A-pose, and Mixamo rigs rest in a T-pose",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "rests in an A-pose,\n// Mixamo in a T-pose"
+						}
+					]
+				},
+				{
+					"says": "replays the clip bone's motion as the same change in world space from that rest",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "replay the clip bone's motion as the same"
+						}
+					]
+				},
+				{
+					"says": "Joint rotations and the root translation cross over, the bone lengths baked into the clips do not, and the root is rescaled to the new rig's height",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "Only joint\n\t\t// rotations and the root (Hips) translation are true motion"
+						},
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "translation so root motion lands at the new rig's height"
+						}
+					]
+				},
+				{
+					"says": "keeps its own proportions",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "and skip the structural channels so every rig keeps its own proportions."
+						}
+					]
+				},
+				{
+					"says": "copied the model into durable storage so the body survives the source URL expiring, and registered it under a stable id",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "The model is copied into durable storage so the body survives the source "
+						}
+					]
+				},
+				{
+					"says": "It answered in 4.1 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"durationMs\": 4114"
+						}
+					]
+				},
+				{
+					"says": "Saved \"The Keeper\" as a living persona.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "Saved \\\"The Keeper\\\" as a living persona."
+						}
+					]
+				},
+				{
+					"says": "Rig: humanoid, full body animation + lip-sync.",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "Rig: humanoid, full body animation + lip-sync."
+						}
+					]
+				},
+				{
+					"says": "the same body and name come back, with the number of turns it has spoken so far",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "title: 'Reload a persona by id (continuity across sessions)'"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Turns spoken so far: ${persona.turn_count}."
+						}
+					]
+				},
+				{
+					"says": "lip-sync, a facial expression and a gesture, with the emotion detected from the text unless the caller sets one",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "title: 'Speak a reply through a persona: lip-sync + emotion + gesture'"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "detected from the text automatically (or set it explicitly)."
+						}
+					]
+				},
+				{
+					"says": "Every ship that saw it made it home",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"text\": \"Forty years I kept this light. Every ship that saw it made it home, and I am glad you found your way here too.\""
+						}
+					]
+				},
+				{
+					"says": "persona_say answered in 299 milliseconds and recorded the turn",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"durationMs\": 299"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"turn_count\": 1"
+						}
+					]
+				},
+				{
+					"says": "It read the line as neutral",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "The Keeper says it with a neutral expression."
+						}
+					]
+				},
+				{
+					"says": "There is no API key and no build step",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "renders a silent 3D viewer with no API key"
+						},
+						{
+							"type": "file",
+							"path": "docs/web-component.md",
+							"contains": "no build step, no framework required"
+						}
+					]
+				},
+				{
+					"says": "boots once it comes within 300 pixels of the viewport",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "{ rootMargin: '300px 0px' }"
+						}
+					]
+				},
+				{
+					"says": "loads the body and the idle and walk clips",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "_am.ensureLoaded('idle'), _am.ensureLoaded('walk')"
+						}
+					]
+				},
+				{
+					"says": "keeps its canvas hidden until that pose has rendered",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/web-component",
+							"contains": "the element keeps its canvas hidden until that pose has rendered, so a bind-pose T-pose is never shown"
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "The stage stays hidden until the body holds its first pose"
+						}
+					]
+				},
+				{
+					"says": "around 16 in Chrome",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Browsers cap the number of simultaneous WebGL contexts (~16 in Chrome)."
+						}
+					]
+				},
+				{
+					"says": "by default eight avatars are live at a time",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "We cap the number of *live* viewers instead."
+						},
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"matches": "return 8;\\n}\\)\\(\\);\\nconst _liveViewers = new Set\\(\\);"
+						}
+					]
+				},
+				{
+					"says": "one scrolled out of view hands its context back until it returns",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "re-boots automatically the moment it scrolls back into view."
+						}
+					]
+				},
+				{
+					"says": "gets a single held idle pose instead of a loop",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/element.js",
+							"contains": "Reduced-motion path: settle into a single clean idle pose and freeze it, so"
+						}
+					]
+				},
+				{
+					"says": "On the live site today, the keeper's idle drives his upper arms back through his coat",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/api/version",
+							"contains": "\"commitShort\":\"76081013b\""
+						},
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "which drove the arm through the torso"
+						}
+					]
+				},
+				{
+					"says": "a rig that rests in an A-pose with bent elbows received the idle's full swing down from a T-pose on top of an arm that already hung down",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "A\n// rig that rests in an A-pose with bent elbows"
+						}
+					]
+				},
+				{
+					"says": "The fix re-aims each limb from its own rest direction onto the authoring rig's before the clip plays",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "// Limb bones whose REST DIRECTION is re-aimed onto the authoring rig's before a\n// clip plays"
+						}
+					]
+				},
+				{
+					"says": "because its check looks for the 15 Oculus viseme names and no other set",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/rig-report.js",
+							"contains": "const OVR_VISEMES = ['viseme_sil', 'viseme_PP',"
+						},
+						{
+							"type": "file",
+							"path": "src/rig-report.js",
+							"contains": "No viseme blendshapes, so this avatar animates but cannot lip-sync."
+						}
+					]
+				},
+				{
+					"says": "The keeper carries the 52 ARKit shapes instead, which is the set the rig worker writes and the set the persona tools drive",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "This\n   powers emotions and lipsync"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/runs/keeper-article.json",
+							"contains": "\"browDownLeft\""
+						}
+					]
+				},
+				{
+					"says": "four generations a minute and 30 an hour",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/rate-limit.js",
+							"contains": "getLimiter('studio:gen:burst', { limit: 4, window: '1 m' })"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/rate-limit.js",
+							"contains": "getLimiter('studio:gen:hourly', { limit: 30, window: '1 h' })"
+						}
+					]
+				},
+				{
+					"says": "look_at_model counts against the same quota because it renders on the server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/dispatch.js",
+							"contains": "look_at_model renders frames server-side, so"
+						}
+					]
+				},
+				{
+					"says": "type a description and get a rigged avatar back",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/create/prompt",
+							"contains": "Type a description → rigged 3D avatar in about a minute"
+						}
+					]
+				}
+			],
+			"mentions": {}
 		}
 	]
 }

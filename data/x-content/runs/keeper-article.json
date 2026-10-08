@@ -1,0 +1,469 @@
+{
+	"about": "The run behind the X Article keeper-article, recorded as it happened on 2026-10-08 against production. Each call went to the free 3D Studio MCP server with no key. Image payloads are counted, not stored. The jobs are the server's own forge_creations rows for each generation. The GLB inspections were taken from the files the tools returned.",
+	"server": "https://three.ws/api/mcp-studio",
+	"calls": [
+		{
+			"startedAt": "2026-10-08T04:27:00.804Z",
+			"finishedAt": "2026-10-08T04:28:49.250Z",
+			"tool": "forge_free",
+			"arguments": {
+				"prompt": "an elderly lighthouse keeper in a yellow oilskin raincoat, a navy knitted cap and tall black rubber boots, white beard, standing upright with arms relaxed at his sides",
+				"tier": "high"
+			},
+			"durationMs": 108446,
+			"httpStatus": 200,
+			"text": [
+				"Generated a 3D model (GLB). View it: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fc97f63aa-f15a-4b9f-b845-64ebe023c70f.glb\nPlace it in your room (AR, open on a phone): https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fc97f63aa-f15a-4b9f-b845-64ebe023c70f.glb&title=an%20elderly%20lighthouse%20keeper%20in%20a%20yellow%20oilskin%20raincoat%2C%20a%20navy%20knitted%20cap%20an\nDownload: https://three.ws/cdn/forge/anon/c97f63aa-f15a-4b9f-b845-64ebe023c70f.glb\nConcept image it was sculpted from: https://three.ws/cdn/forge/refs/617d7fb6-8afe-4443-b76a-90da1c5f949b.jpg"
+			],
+			"imagesReturned": 0,
+			"structuredContent": {
+				"kind": "model",
+				"glbUrl": "https://three.ws/cdn/forge/anon/c97f63aa-f15a-4b9f-b845-64ebe023c70f.glb",
+				"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fc97f63aa-f15a-4b9f-b845-64ebe023c70f.glb",
+				"arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fc97f63aa-f15a-4b9f-b845-64ebe023c70f.glb&title=an%20elderly%20lighthouse%20keeper%20in%20a%20yellow%20oilskin%20raincoat%2C%20a%20navy%20knitted%20cap%20an",
+				"format": "glb",
+				"prompt": "an elderly lighthouse keeper in a yellow oilskin raincoat, a navy knitted cap and tall black rubber boots, white beard, standing upright with arms relaxed at his sides",
+				"referenceImageUrl": "https://three.ws/cdn/forge/refs/617d7fb6-8afe-4443-b76a-90da1c5f949b.jpg"
+			}
+		},
+		{
+			"startedAt": "2026-10-08T04:29:00.424Z",
+			"finishedAt": "2026-10-08T04:29:26.487Z",
+			"tool": "look_at_model",
+			"arguments": {
+				"glb_url": "https://three.ws/cdn/forge/anon/c97f63aa-f15a-4b9f-b845-64ebe023c70f.glb"
+			},
+			"durationMs": 26063,
+			"httpStatus": 200,
+			"text": [
+				"Rendered this model from 4 angle(s): three-quarter, front, side, back.\nGeometry: 8,464 triangles, a normal real-time budget for a hero prop or character.\nLook at the frames below and judge the model: is the subject complete and recognisable, is the far side finished, is anything melted, fused, or missing? If it needs work, generate again with a prompt that names the specific fault.",
+				"View: three-quarter (theta 35, phi 78)",
+				"View: front (theta 0, phi 80)",
+				"View: side (theta 90, phi 80)",
+				"View: back (theta 180, phi 80)"
+			],
+			"imagesReturned": 4,
+			"structuredContent": {
+				"ok": true,
+				"model_url": "https://three.ws/cdn/forge/anon/c97f63aa-f15a-4b9f-b845-64ebe023c70f.glb",
+				"size": 512,
+				"views": [
+					{
+						"view": "three-quarter",
+						"theta": 35,
+						"phi": 78
+					},
+					{
+						"view": "front",
+						"theta": 0,
+						"phi": 80
+					},
+					{
+						"view": "side",
+						"theta": 90,
+						"phi": 80
+					},
+					{
+						"view": "back",
+						"theta": 180,
+						"phi": 80
+					}
+				],
+				"stats": {
+					"vertices": 7612,
+					"triangles": 8464,
+					"materials": 1,
+					"textures": 4,
+					"animations": 0,
+					"extensions": [
+						"EXT_texture_webp"
+					],
+					"meshes": 1,
+					"nodes": 1,
+					"scenes": 1,
+					"skins": 0,
+					"joints": 0,
+					"indexedPrimitives": 1,
+					"nonIndexedPrimitives": 0,
+					"extensionsRequired": [],
+					"container": "glb",
+					"generator": "glTF-Transform v4.5.0"
+				},
+				"notes": [
+					"8,464 triangles, a normal real-time budget for a hero prop or character."
+				],
+				"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fc97f63aa-f15a-4b9f-b845-64ebe023c70f.glb",
+				"ar_url": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fc97f63aa-f15a-4b9f-b845-64ebe023c70f.glb"
+			}
+		},
+		{
+			"startedAt": "2026-10-08T04:31:01.878Z",
+			"finishedAt": "2026-10-08T04:34:18.677Z",
+			"tool": "forge_avatar",
+			"arguments": {
+				"prompt": "an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard"
+			},
+			"durationMs": 196799,
+			"httpStatus": 200,
+			"text": [
+				"Generated a rigged 3D model (GLB). View it: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb\nBring it to life in your real room (it moves and talks through the camera, open on a phone): https://three.ws/irl?avatar=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb\nPlace a static copy in AR: https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb&title=an%20elderly%20lighthouse%20keeper%20in%20a%20yellow%20oilskin%20raincoat%2C%20navy%20knitted%20cap%20and%20&kind=avatar\nDownload: https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb\nConcept image it was sculpted from: https://three.ws/cdn/forge/refs/85567c27-7119-468b-ab5d-573d38f07d30.jpg"
+			],
+			"imagesReturned": 0,
+			"structuredContent": {
+				"kind": "avatar",
+				"glbUrl": "https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb&title=an%20elderly%20lighthouse%20keeper%20in%20a%20yellow%20oilskin%20raincoat%2C%20navy%20knitted%20cap%20and%20&kind=avatar",
+				"format": "glb",
+				"prompt": "an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard",
+				"rigged": true,
+				"irlUrl": "https://three.ws/irl?avatar=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"referenceImageUrl": "https://three.ws/cdn/forge/refs/85567c27-7119-468b-ab5d-573d38f07d30.jpg"
+			}
+		},
+		{
+			"startedAt": "2026-10-08T04:34:27.205Z",
+			"finishedAt": "2026-10-08T04:35:01.560Z",
+			"tool": "look_at_model",
+			"arguments": {
+				"glb_url": "https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"views": [
+					"front",
+					"three-quarter",
+					"side",
+					"back"
+				],
+				"size": 768
+			},
+			"durationMs": 34355,
+			"httpStatus": 200,
+			"text": [
+				"Rendered this model from 4 angle(s): front, three-quarter, side, back.\nGeometry: 22,500 triangles, a normal real-time budget for a hero prop or character.\nLook at the frames below and judge the model: is the subject complete and recognisable, is the far side finished, is anything melted, fused, or missing? If it needs work, generate again with a prompt that names the specific fault.",
+				"View: front (theta 0, phi 80)",
+				"View: three-quarter (theta 35, phi 78)",
+				"View: side (theta 90, phi 80)",
+				"View: back (theta 180, phi 80)"
+			],
+			"imagesReturned": 4,
+			"structuredContent": {
+				"ok": true,
+				"model_url": "https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"size": 768,
+				"views": [
+					{
+						"view": "front",
+						"theta": 0,
+						"phi": 80
+					},
+					{
+						"view": "three-quarter",
+						"theta": 35,
+						"phi": 78
+					},
+					{
+						"view": "side",
+						"theta": 90,
+						"phi": 80
+					},
+					{
+						"view": "back",
+						"theta": 180,
+						"phi": 80
+					}
+				],
+				"stats": {
+					"vertices": 16388,
+					"triangles": 22500,
+					"materials": 1,
+					"textures": 4,
+					"animations": 0,
+					"extensions": [
+						"EXT_texture_webp"
+					],
+					"meshes": 1,
+					"nodes": 53,
+					"scenes": 1,
+					"skins": 1,
+					"joints": 52,
+					"indexedPrimitives": 1,
+					"nonIndexedPrimitives": 0,
+					"extensionsRequired": [],
+					"container": "glb",
+					"generator": "glTF-Transform v4.5.0"
+				},
+				"notes": [
+					"22,500 triangles, a normal real-time budget for a hero prop or character."
+				],
+				"viewer_url": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"ar_url": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb"
+			}
+		},
+		{
+			"startedAt": "2026-10-08T04:36:07.853Z",
+			"finishedAt": "2026-10-08T04:36:11.967Z",
+			"tool": "create_agent_persona",
+			"arguments": {
+				"glb_url": "https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb",
+				"name": "The Keeper",
+				"source_prompt": "an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard"
+			},
+			"durationMs": 4114,
+			"httpStatus": 200,
+			"text": [
+				"Saved \"The Keeper\" as a living persona.\nPersona ID: persona_sdP_lX-PtvroqCZ40pz3\nRig: humanoid, full body animation + lip-sync.\nShow the attached view to see the body. Call persona_say with this persona_id to make it speak a reply, or get_agent_persona to bring it back in a future session."
+			],
+			"imagesReturned": 0,
+			"structuredContent": {
+				"persona_id": "persona_sdP_lX-PtvroqCZ40pz3",
+				"name": "The Keeper",
+				"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/personas/persona_sdP_lX-PtvroqCZ40pz3.glb",
+				"thumbnail_url": null,
+				"voice": null,
+				"emotion_baseline": "neutral",
+				"look": {
+					"style": null,
+					"rigged": true,
+					"mesh_count": 1,
+					"has_visemes": null,
+					"animation_count": 0
+				},
+				"turn_count": 0,
+				"created_at": "2026-10-08T04:36:11.881Z",
+				"last_seen_at": "2026-10-08T04:36:11.881Z",
+				"status": "created",
+				"embed_url": "https://three.ws/embodiment/embed?persona=persona_sdP_lX-PtvroqCZ40pz3&glb=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fpersonas%2Fpersona_sdP_lX-PtvroqCZ40pz3.glb&name=The+Keeper&state=idle"
+			}
+		},
+		{
+			"startedAt": "2026-10-08T04:36:20.560Z",
+			"finishedAt": "2026-10-08T04:36:20.859Z",
+			"tool": "persona_say",
+			"arguments": {
+				"persona_id": "persona_sdP_lX-PtvroqCZ40pz3",
+				"text": "Forty years I kept this light. Every ship that saw it made it home, and I am glad you found your way here too."
+			},
+			"durationMs": 299,
+			"httpStatus": 200,
+			"text": [
+				"The Keeper says it with a neutral expression. Show the attached view: the body lip-syncs the reply and emotes."
+			],
+			"imagesReturned": 0,
+			"structuredContent": {
+				"persona_id": "persona_sdP_lX-PtvroqCZ40pz3",
+				"name": "The Keeper",
+				"glb_url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/personas/persona_sdP_lX-PtvroqCZ40pz3.glb",
+				"text": "Forty years I kept this light. Every ship that saw it made it home, and I am glad you found your way here too.",
+				"emotion": "neutral",
+				"intensity": 0,
+				"gesture": null,
+				"turn_count": 1,
+				"status": "spoken",
+				"embed_url": "https://three.ws/embodiment/embed?persona=persona_sdP_lX-PtvroqCZ40pz3&glb=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fpersonas%2Fpersona_sdP_lX-PtvroqCZ40pz3.glb&name=The+Keeper&state=speaking&text=Forty+years+I+kept+this+light.+Every+ship+that+saw+it+made+it+home%2C+and+I+am+glad+you+found+your+way+here+too.&emotion=neutral&intensity=0"
+			}
+		}
+	],
+	"jobs": [
+		{
+			"id": "c97f63aa-f15a-4b9f-b845-64ebe023c70f",
+			"tool": "forge_free",
+			"backend": "hunyuan3d",
+			"tier": "high",
+			"text_to_image_model": "black-forest-labs/flux.1-dev",
+			"created_at": "2026-10-08T04:27:12.491Z",
+			"completed_at": "2026-10-08T04:28:37.315Z",
+			"status": "done"
+		},
+		{
+			"id": "4c6804e7-e67b-48c2-b6e3-d020483b6151",
+			"tool": "forge_avatar, mesh stage",
+			"prompt_sent_to_the_lane": "an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard, full-body character standing in a neutral A-pose, arms slightly away from the body, legs slightly apart, the entire figure in frame head to toe, centered on a plain neutral background",
+			"backend": "hunyuan3d",
+			"tier": "high",
+			"text_to_image_model": "black-forest-labs/flux.1-dev",
+			"created_at": "2026-10-08T04:31:19.083Z",
+			"completed_at": "2026-10-08T04:32:59.445Z",
+			"status": "done"
+		},
+		{
+			"id": "a9694760-e134-4c5c-b334-59129a2d42c9",
+			"tool": "forge_avatar, rig stage",
+			"worker": "model-rig, make-it-animatable on an NVIDIA L4",
+			"created_at": "2026-10-08T04:33:19.818Z",
+			"completed_at": "2026-10-08T04:33:32.414Z",
+			"status": "done"
+		}
+	],
+	"stageSeconds": {
+		"mesh": 100.4,
+		"rig": 12.6,
+		"forgeAvatarTotal": 196.8
+	},
+	"glb": {
+		"firstAttempt": {
+			"url": "https://three.ws/cdn/forge/anon/c97f63aa-f15a-4b9f-b845-64ebe023c70f.glb",
+			"sha256": "f9e051e85c083b1a5592b2d1eee4a9b67b1fe3927a9a353dcbaeacb32a57d236",
+			"bytes": 2185624,
+			"triangles": 8464,
+			"vertices": 7612,
+			"skinJoints": 0,
+			"materials": [
+				{
+					"name": "PBR_Material",
+					"maps": [
+						"baseColor",
+						"metallicRoughness",
+						"normal",
+						"occlusion"
+					]
+				}
+			],
+			"textures": 4
+		},
+		"rigged": {
+			"url": "https://three.ws/cdn/forge/anon/a9694760-e134-4c5c-b334-59129a2d42c9.glb",
+			"sha256": "b86be2622ae956334c3d16b4b339d866b7e86e8439f273e1fda2539bd310a3f0",
+			"bytes": 14847940,
+			"triangles": 22500,
+			"vertices": 16388,
+			"skinJoints": 52,
+			"jointNames": [
+				"mixamorig:Hips",
+				"mixamorig:Spine",
+				"mixamorig:Spine1",
+				"mixamorig:Spine2",
+				"mixamorig:Neck",
+				"mixamorig:Head",
+				"mixamorig:LeftShoulder",
+				"mixamorig:LeftArm",
+				"mixamorig:LeftForeArm",
+				"mixamorig:LeftHand",
+				"mixamorig:LeftHandThumb1",
+				"mixamorig:LeftHandThumb2",
+				"mixamorig:LeftHandThumb3",
+				"mixamorig:LeftHandIndex1",
+				"mixamorig:LeftHandIndex2",
+				"mixamorig:LeftHandIndex3",
+				"mixamorig:LeftHandMiddle1",
+				"mixamorig:LeftHandMiddle2",
+				"mixamorig:LeftHandMiddle3",
+				"mixamorig:LeftHandRing1",
+				"mixamorig:LeftHandRing2",
+				"mixamorig:LeftHandRing3",
+				"mixamorig:LeftHandPinky1",
+				"mixamorig:LeftHandPinky2",
+				"mixamorig:LeftHandPinky3",
+				"mixamorig:RightShoulder",
+				"mixamorig:RightArm",
+				"mixamorig:RightForeArm",
+				"mixamorig:RightHand",
+				"mixamorig:RightHandThumb1",
+				"mixamorig:RightHandThumb2",
+				"mixamorig:RightHandThumb3",
+				"mixamorig:RightHandIndex1",
+				"mixamorig:RightHandIndex2",
+				"mixamorig:RightHandIndex3",
+				"mixamorig:RightHandMiddle1",
+				"mixamorig:RightHandMiddle2",
+				"mixamorig:RightHandMiddle3",
+				"mixamorig:RightHandRing1",
+				"mixamorig:RightHandRing2",
+				"mixamorig:RightHandRing3",
+				"mixamorig:RightHandPinky1",
+				"mixamorig:RightHandPinky2",
+				"mixamorig:RightHandPinky3",
+				"mixamorig:LeftUpLeg",
+				"mixamorig:LeftLeg",
+				"mixamorig:LeftFoot",
+				"mixamorig:LeftToeBase",
+				"mixamorig:RightUpLeg",
+				"mixamorig:RightLeg",
+				"mixamorig:RightFoot",
+				"mixamorig:RightToeBase"
+			],
+			"morphTargets": [
+				"browDownLeft",
+				"browDownRight",
+				"browInnerUp",
+				"browOuterUpLeft",
+				"browOuterUpRight",
+				"cheekPuff",
+				"cheekSquintLeft",
+				"cheekSquintRight",
+				"eyeBlinkLeft",
+				"eyeBlinkRight",
+				"eyeLookDownLeft",
+				"eyeLookDownRight",
+				"eyeLookInLeft",
+				"eyeLookInRight",
+				"eyeLookOutLeft",
+				"eyeLookOutRight",
+				"eyeLookUpLeft",
+				"eyeLookUpRight",
+				"eyeSquintLeft",
+				"eyeSquintRight",
+				"eyeWideLeft",
+				"eyeWideRight",
+				"jawForward",
+				"jawLeft",
+				"jawOpen",
+				"jawRight",
+				"mouthClose",
+				"mouthDimpleLeft",
+				"mouthDimpleRight",
+				"mouthFrownLeft",
+				"mouthFrownRight",
+				"mouthFunnel",
+				"mouthLeft",
+				"mouthLowerDownLeft",
+				"mouthLowerDownRight",
+				"mouthPressLeft",
+				"mouthPressRight",
+				"mouthPucker",
+				"mouthRight",
+				"mouthRollLower",
+				"mouthRollUpper",
+				"mouthShrugLower",
+				"mouthShrugUpper",
+				"mouthSmileLeft",
+				"mouthSmileRight",
+				"mouthStretchLeft",
+				"mouthStretchRight",
+				"mouthUpperUpLeft",
+				"mouthUpperUpRight",
+				"noseSneerLeft",
+				"noseSneerRight",
+				"tongueOut"
+			],
+			"materials": [
+				{
+					"name": "PBR_Material",
+					"maps": [
+						"baseColor",
+						"metallicRoughness",
+						"normal",
+						"occlusion"
+					]
+				}
+			],
+			"textures": 4
+		}
+	},
+	"serverLog": [
+		{
+			"at": "2026-10-08T04:31:14.006Z",
+			"line": "[llm] chain exhausted: groq=cooling | groq#120b=cooling | openrouter=http 429 (126ms) | openrouter#2=http 429 (137ms) | openrouter#3=http 429 (96ms) | openrouter#4=http 429 (99ms)",
+			"note": "the avatar director could not reach a language model, so the fallback brief was used"
+		},
+		{
+			"at": "2026-10-08T04:31:14.076Z",
+			"line": "[forge-reference-image] vertex lane failed, falling through: Vertex reference image returned 403",
+			"note": "the lead picture rung refused the request"
+		},
+		{
+			"at": "2026-10-08T04:31:18.935Z",
+			"line": "[text-to-image] served by black-forest-labs/flux.1-dev",
+			"note": "the reference picture came from this rung"
+		}
+	],
+	"deployedCommitDuringRun": "76081013b"
+}

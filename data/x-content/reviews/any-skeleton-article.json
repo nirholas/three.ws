@@ -1,7 +1,7 @@
 {
 	"id": "any-skeleton-article",
 	"contentHash": "73bc79be1907627aabf54f54c24d06d6ebbcda35dabf5bee98fc943c3c16914b",
-	"reviewedAt": "2026-10-01T19:32:29.398Z",
+	"reviewedAt": "2026-10-08T04:43:17.306Z",
 	"passed": false,
 	"blockers": [
 		"spelling lowerarm: did you mean lower, lowers, lowery?",
@@ -474,7 +474,7 @@
 				"A generated 3D circus ringmaster in a red tailcoat, top hat and tall boots standing at rest with his hands open in front of him, lit in red and violet on a dark stage under a starfield. He is idling on the shared animation library in the three.ws Avatar Artifact viewer."
 			]
 		},
-		"summary": "Every claim in the post is backed by a passing verification against the live pages and source files, and the copy states mechanisms (one canonical skeleton, bone-name matching, deliberate stop conditions) rather than adjectives. Voice, links, and the cover image with its alt text all conform, so it ships unchanged.",
+		"summary": "Every claim in the post is backed by a passing verification against live pages and source files, including the canonical skeleton and the four supported naming families. The voice matches the contract, the link resolves, and the cover image matches its alt text. Ship it unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
