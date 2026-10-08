@@ -245,8 +245,10 @@ slide. Screenshot the viewer page, not the raw GLB. For the next issue,
 1. Restore `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` on `three-ws-api` (owner-held IBM
    credentials), then confirm a green `granite_inference_health` check. Required for the IBM
    pitch.
-2. Rebuild `model-trellis` from `workers/model-trellis/cloudbuild.yaml` and send traffic to
-   latest, so the lane that produced most of the month's meshes is on a current image.
+2. ~~Rebuild `model-trellis` and send traffic to latest.~~ Done: revision `model-trellis-00029-697`
+   (built 2026-09-30) carries 100% of traffic. Checked 2026-10-08 against `forge_creations`: the
+   self-hosted TRELLIS lane finished 1,028 of 1,052 jobs on Oct 1 and 771 of 791 on Oct 7, and
+   has not had a day below 94% since the rebuild. The next issue's completion rate should show it.
 3. Re-run `npm run partners:proof` on the send date and update any number that moved.
 4. Pick three metrics per partner from the tables above: OpenAI (rows 11, 12, gallery),
    IBM (rows 11, 12, 1), NVIDIA (rows 7, 8, 10).
