@@ -10,6 +10,7 @@ import {
 import { sendX402Error } from './payments.js';
 import { streamSubscriptions, dropSubscriptions } from './resources.js';
 import { acceptedAudiences, mcpResourceFor, protectedResourceMetadataUrl } from '../_lib/mcp-resources.js';
+import { isIssuedSessionId } from '../_lib/mcp-client-analytics.js';
 
 function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
@@ -287,15 +288,15 @@ export async function handleTerminate(req, res, { resourceServer = null } = {}) 
 			);
 		}
 	}
-	// This server is stateless per request and never issues an Mcp-Session-Id, so
-	// any session id a caller presents names a session that does not exist here.
-	// The Streamable HTTP transport says a server MUST answer 404 for a session
-	// id it no longer holds, which is the client's signal to start a fresh
-	// session; answering 204 would tell the client we tore down a session we
-	// never had. A DELETE with no session id is the ordinary polite teardown:
-	// nothing to release, 204.
+	// This server serves every request statelessly. The only session ids it
+	// issues are the analytics ids handed out on initialize
+	// (api/_lib/mcp-client-analytics.js), which hold no server state, so ending
+	// one is the ordinary polite teardown: 204. Any other id names a session
+	// that does not exist here, and the Streamable HTTP transport says a server
+	// MUST answer 404 for a session id it does not hold, which is the client's
+	// signal to start a fresh session. A DELETE with no session id: 204.
 	const sessionId = req.headers?.['mcp-session-id'];
-	if (sessionId) {
+	if (sessionId && !isIssuedSessionId(sessionId)) {
 		res.statusCode = 404;
 		res.setHeader('content-type', 'application/json');
 		res.end(JSON.stringify({ error: 'unknown_session', message: 'no such MCP session; start a new one' }));

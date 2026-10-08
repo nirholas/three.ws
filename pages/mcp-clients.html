@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>MCP Clients · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		/* The ops boards render on one dark surface whatever the site theme, so the
+		   series take the palette's dark steps (validated against a dark surface). */
+		.mc-root {
+			--series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+			--series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
+			--series-other: #5c5c58;
+		}
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		/* style.css makes body a flex container: width + min-width:0 pin this wrapper
+		   to the viewport so a wide table scrolls inside .mc-table-wrap instead. */
+		.mc-wrap { width: 100%; min-width: 0; box-sizing: border-box; max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.mc-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 0.5rem; }
+		.mc-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.75rem; max-width: 74ch; line-height: 1.65; }
+
+		.mc-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; align-items: center; }
+		.mc-controls label { font-size: 12px; color: rgba(255,255,255,0.45); }
+		.mc-controls select, .mc-controls button, .mc-seg button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.mc-controls select:hover, .mc-controls button:hover, .mc-seg button:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.09); }
+		.mc-controls button:active, .mc-seg button:active { transform: translateY(1px); }
+		.mc-controls select:focus-visible, .mc-controls button:focus-visible, .mc-seg button:focus-visible, .mc-defs summary:focus-visible, .mc-col:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+		.mc-controls button[disabled] { opacity: 0.5; cursor: progress; }
+		.mc-stamp { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+		.mc-note { padding: 2.5rem 1.5rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); line-height: 1.75; }
+		.mc-note code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+		.mc-note.bad { background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.18); }
+		.mc-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
+		.mc-note a { color: var(--accent-violet-strong); }
+		.mc-banner { padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
+		.mc-banner code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; }
+
+		.mc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+		.mc-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
+		.mc-section { margin-bottom: 2.5rem; }
+
+		.mc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; }
+		.mc-cell { padding: 1rem 1.15rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.mc-cell:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.045); }
+		.mc-cell.lead { border-color: rgba(124,92,255,0.35); background: rgba(124,92,255,0.06); }
+		.mc-cell-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; }
+		.mc-cell-value { font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.15; }
+		.mc-cell-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 0.4rem; line-height: 1.5; }
+
+		.mc-chart-head { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
+		.mc-chart-head .mc-section-title { margin: 0; }
+		.mc-seg { display: inline-flex; gap: 0; margin-left: auto; }
+		.mc-seg button { border-radius: 0; padding: 6px 12px; font-size: 12px; }
+		.mc-seg button:first-child { border-radius: 8px 0 0 8px; }
+		.mc-seg button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
+		.mc-seg button[aria-pressed="true"] { background: rgba(124,92,255,0.18); border-color: rgba(124,92,255,0.45); }
+
+		.mc-chart { position: relative; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); padding: 1rem 1rem 0.75rem; }
+		.mc-plot { display: grid; grid-template-columns: auto 1fr; gap: 0.6rem; }
+		.mc-yaxis { display: flex; flex-direction: column; justify-content: space-between; height: 180px; font-size: 10.5px; color: rgba(255,255,255,0.35); text-align: right; font-variant-numeric: tabular-nums; }
+		.mc-cols { position: relative; display: flex; align-items: flex-end; gap: 2px; height: 180px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+		.mc-cols::before { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px) 0 0 / 100% 50%; pointer-events: none; }
+		.mc-col { position: relative; flex: 1 1 0; min-width: 1px; height: 100%; display: flex; flex-direction: column-reverse; gap: 2px; cursor: default; border-radius: 4px 4px 0 0; }
+		.mc-col.dense { gap: 0; }
+		.mc-col:hover, .mc-col:focus-visible { background: rgba(255,255,255,0.05); }
+		.mc-seg-fill { width: 100%; flex: none; }
+		.mc-col .mc-seg-fill:last-child { border-radius: 4px 4px 0 0; }
+		.mc-xaxis { display: flex; justify-content: space-between; font-size: 10.5px; color: rgba(255,255,255,0.35); margin: 0.4rem 0 0 calc(var(--mc-yw, 2.2rem) + 0.6rem); font-variant-numeric: tabular-nums; }
+		.mc-tip { position: absolute; z-index: 5; pointer-events: none; min-width: 160px; padding: 0.6rem 0.75rem; border-radius: 9px; background: #16161d; border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 8px 24px rgba(0,0,0,0.45); font-size: 12px; line-height: 1.55; opacity: 0; transform: translateY(4px); transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.mc-tip.on { opacity: 1; transform: none; }
+		.mc-tip b { display: block; margin-bottom: 0.25rem; color: #fff; }
+		.mc-tip-row { display: flex; gap: 0.5rem; align-items: center; color: rgba(255,255,255,0.7); }
+		.mc-tip-row span:last-child { margin-left: auto; font-variant-numeric: tabular-nums; color: #e2e8f0; }
+
+		.mc-legend { display: flex; gap: 0.5rem 1.1rem; font-size: 11.5px; color: rgba(255,255,255,0.55); margin-top: 0.85rem; flex-wrap: wrap; }
+		.mc-sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; vertical-align: -1px; flex: none; }
+
+		.mc-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		.mc-table th, .mc-table td { text-align: left; padding: 0.55rem 1rem 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; vertical-align: top; }
+		.mc-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
+		.mc-table tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
+		.mc-table tbody tr:hover { background: rgba(255,255,255,0.035); }
+		.mc-table td.num, .mc-table th.num { font-variant-numeric: tabular-nums; text-align: right; }
+		.mc-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+		.mc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+		.mc-small { font-size: 11.5px; color: rgba(255,255,255,0.45); white-space: normal; max-width: 34ch; line-height: 1.5; }
+		.muted { color: rgba(255,255,255,0.35); }
+		.mc-client { display: inline-flex; align-items: center; font-weight: 600; }
+
+		.mc-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+		.mc-bar-row { display: grid; grid-template-columns: minmax(110px, 190px) 1fr minmax(64px, 90px); gap: 0.85rem; align-items: center; font-size: 12.5px; }
+		.mc-bar-label { color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.mc-bar-track { position: relative; height: 18px; border-radius: 0 4px 4px 0; background: rgba(255,255,255,0.04); overflow: hidden; }
+		.mc-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; background: var(--series-1); transition: width var(--duration-slow) cubic-bezier(.4,0,.2,1); }
+		.mc-bar-count { text-align: right; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.7); }
+		.mc-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+
+		.mc-defs { border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); padding: 0.25rem 1.15rem; }
+		.mc-defs summary { cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); padding: 0.75rem 0; border-radius: 6px; transition: color var(--duration-fast) var(--ease-standard); }
+		.mc-defs summary:hover { color: #fff; }
+		.mc-defs dl { margin: 0 0 1rem; display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 0.6rem 1.25rem; font-size: 12.5px; line-height: 1.65; }
+		.mc-defs dt { color: rgba(255,255,255,0.8); font-weight: 600; }
+		.mc-defs dd { margin: 0; color: rgba(255,255,255,0.5); }
+		.mc-defs code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; }
+
+		.mc-skeleton { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.035) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.035) 75%); background-size: 200% 100%; animation: mc-shimmer 1.4s ease-in-out infinite; }
+		.mc-skeleton.cell { height: 96px; }
+		.mc-skeleton.chart { height: 220px; }
+		@keyframes mc-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (max-width: 560px) {
+			.mc-bar-row { grid-template-columns: 1fr; gap: 0.3rem; }
+			.mc-bar-count { text-align: left; }
+			.mc-defs dl { grid-template-columns: 1fr; gap: 0.15rem 0; }
+			.mc-defs dd { margin-bottom: 0.6rem; }
+			.mc-seg { margin-left: 0; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.mc-skeleton { animation: none; }
+			.mc-bar-fill, .mc-tip { transition: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="mc-wrap mc-root">
+		<h1 class="mc-title">MCP Clients</h1>
+		<p class="mc-sub">
+			Which AI clients connect to the hosted MCP servers, and what they do there. Every session
+			is counted by the <code>clientInfo</code> name it sent on <code>initialize</code>, and every
+			tool call by the session it echoed. Only names, versions and counts are kept, never a
+			request body. Internal tooling, not a public surface.
+		</p>
+
+		<div class="mc-controls">
+			<label for="mc-window">Window</label>
+			<select id="mc-window">
+				<option value="7">Last 7 days</option>
+				<option value="30" selected>Last 30 days</option>
+				<option value="90">Last 90 days</option>
+				<option value="365">Last 365 days</option>
+			</select>
+			<button id="mc-refresh" type="button">Refresh</button>
+			<span class="mc-stamp" id="mc-stamp"></span>
+		</div>
+
+		<div id="mc-content" aria-live="polite" aria-busy="true"></div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module">
+		const el = document.getElementById('mc-content');
+		const windowSelect = document.getElementById('mc-window');
+		const refreshBtn = document.getElementById('mc-refresh');
+		const stamp = document.getElementById('mc-stamp');
+
+		const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+		const num = (n, d = 0) => (typeof n === 'number' && Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : 'n/a');
+
+		// Color follows the client, never its rank: each known family owns one
+		// palette slot for good, so a window change never repaints a survivor.
+		// Every other name folds into Other.
+		const FAMILY_SLOT = { claude: 1, chatgpt: 2, grok: 3, cursor: 4, 'claude-code': 5, vscode: 6, probe: 7, windsurf: 8 };
+		const colorOf = (client) => (FAMILY_SLOT[client] ? `var(--series-${FAMILY_SLOT[client]})` : 'var(--series-other)');
+		const seriesOf = (client) => (FAMILY_SLOT[client] ? client : 'other');
+		const AUTH_LABEL = { anonymous: 'anonymous', install: 'install token', key: 'API key', oauth: 'OAuth', x402: 'x402' };
+
+		let metric = 'sessions';
+		let lastReport = null;
+
+		function cell(label, value, note, { lead = false } = {}) {
+			return `<div class="mc-cell${lead ? ' lead' : ''}">
+				<div class="mc-cell-label">${esc(label)}</div>
+				<div class="mc-cell-value">${esc(value)}</div>
+				<div class="mc-cell-note">${esc(note || '')}</div>
+			</div>`;
+		}
+
+		function headline(d) {
+			const t = d.totals;
+			const grok = d.clients.find((c) => c.client === 'grok');
+			const share = t.sessions > 0 && grok ? `${((grok.sessions / t.sessions) * 100).toFixed(1)}%` : '0%';
+			return `<section class="mc-section">
+				<div class="mc-section-title">Last ${num(d.window_days)} days <span>since ${esc(d.since)} (UTC)</span></div>
+				<div class="mc-grid">
+					${cell('Sessions', num(t.sessions), 'initialize handshakes that were served', { lead: true })}
+					${cell('Tool calls', num(t.calls), 'tools/call requests, every client')}
+					${cell('Clients', num(t.clients), 'distinct client families that opened a session')}
+					${cell('Calls per session', t.sessions > 0 ? num(t.calls / t.sessions, 1) : 'n/a', 'unattributed calls included')}
+					${cell('Grok share', share, 'of sessions, the client this work exists to grow')}
+					${cell('Unattributed calls', num(t.unattributed_calls), 'a call with no session id this server issued')}
+				</div>
+			</section>`;
+		}
+
+		// The series drawn: the families present in the window in fixed slot order,
+		// then Other. A family with nothing in the window takes no legend entry.
+		function seriesFor(d) {
+			const present = new Set(d.clients.map((c) => seriesOf(c.client)));
+			const ordered = Object.keys(FAMILY_SLOT).filter((f) => present.has(f));
+			if (present.has('other')) ordered.push('other');
+			return ordered;
+		}
+
+		function dayTotals(day, series) {
+			const out = Object.fromEntries(series.map((s) => [s, 0]));
+			for (const [client, v] of Object.entries(day.clients)) out[seriesOf(client)] += v[metric] || 0;
+			return out;
+		}
+
+		function niceMax(n) {
+			if (n <= 4) return 4;
+			const p = 10 ** Math.floor(Math.log10(n));
+			for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= n) return m * p;
+			return 10 * p;
+		}
+
+		function chart(d) {
+			const series = seriesFor(d);
+			const days = d.daily.map((day) => ({ day: day.day, values: dayTotals(day, series) }));
+			const peak = Math.max(0, ...days.map((x) => Object.values(x.values).reduce((a, b) => a + b, 0)));
+			const top = niceMax(peak);
+			const dense = days.length > 60;
+			const cols = days.map((x, i) => {
+				const total = Object.values(x.values).reduce((a, b) => a + b, 0);
+				const segs = series
+					.filter((s) => x.values[s] > 0)
+					.map((s) => `<div class="mc-seg-fill" style="height:${((x.values[s] / top) * 100).toFixed(2)}%;background:${s === 'other' ? 'var(--series-other)' : colorOf(s)}"></div>`)
+					.join('');
+				return `<div class="mc-col${dense ? ' dense' : ''}" tabindex="${dense ? -1 : 0}" data-i="${i}" role="img" aria-label="${esc(x.day)}: ${num(total)} ${metric}">${segs}</div>`;
+			}).join('');
+			const legend = series.map((s) => `<span><i class="mc-sw" style="background:${s === 'other' ? 'var(--series-other)' : colorOf(s)}"></i>${esc(s === 'other' ? 'Other' : s)}</span>`).join('');
+			return `<section class="mc-section">
+				<div class="mc-chart-head">
+					<div class="mc-section-title">${metric === 'sessions' ? 'Sessions' : 'Tool calls'} per day <span>by client, UTC days</span></div>
+					<div class="mc-seg" role="group" aria-label="Chart measure">
+						<button type="button" data-metric="sessions" aria-pressed="${metric === 'sessions'}">Sessions</button>
+						<button type="button" data-metric="calls" aria-pressed="${metric === 'calls'}">Tool calls</button>
+					</div>
+				</div>
+				<div class="mc-chart" id="mc-chart">
+					<div class="mc-plot">
+						<div class="mc-yaxis" aria-hidden="true"><span>${num(top)}</span><span>${num(top / 2)}</span><span>0</span></div>
+						<div class="mc-cols">${cols}</div>
+					</div>
+					<div class="mc-xaxis" aria-hidden="true"><span>${esc(days[0]?.day)}</span><span>${esc(days[days.length - 1]?.day)}</span></div>
+					<div class="mc-tip" id="mc-tip" role="tooltip"></div>
+				</div>
+				<div class="mc-legend">${legend}</div>
+			</section>`;
+		}
+
+		function wireChart(d) {
+			const box = document.getElementById('mc-chart');
+			const tip = document.getElementById('mc-tip');
+			if (!box || !tip) return;
+			const series = seriesFor(d);
+			const show = (col) => {
+				const day = d.daily[Number(col.dataset.i)];
+				const values = dayTotals(day, series);
+				const total = Object.values(values).reduce((a, b) => a + b, 0);
+				const rows = series.filter((s) => values[s] > 0).map((s) => `<div class="mc-tip-row"><i class="mc-sw" style="background:${s === 'other' ? 'var(--series-other)' : colorOf(s)}"></i><span>${esc(s === 'other' ? 'Other' : s)}</span><span>${num(values[s])}</span></div>`).join('');
+				tip.innerHTML = `<b>${esc(day.day)} · ${num(total)} ${metric === 'sessions' ? 'sessions' : 'calls'}</b>${rows || '<div class="mc-tip-row"><span>nothing this day</span></div>'}`;
+				const b = box.getBoundingClientRect();
+				const c = col.getBoundingClientRect();
+				const w = tip.offsetWidth || 180;
+				const left = Math.min(Math.max(c.left - b.left + c.width / 2 - w / 2, 4), b.width - w - 4);
+				tip.style.left = `${left}px`;
+				tip.style.top = '8px';
+				tip.classList.add('on');
+			};
+			const hide = () => tip.classList.remove('on');
+			box.querySelectorAll('.mc-col').forEach((col) => {
+				col.addEventListener('mouseenter', () => show(col));
+				col.addEventListener('focus', () => show(col));
+				col.addEventListener('mouseleave', hide);
+				col.addEventListener('blur', hide);
+			});
+			el.querySelectorAll('.mc-seg button').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					if (metric === btn.dataset.metric) return;
+					metric = btn.dataset.metric;
+					render(lastReport);
+				});
+			});
+		}
+
+		function authMix(auth) {
+			const total = Object.values(auth).reduce((a, b) => a + b, 0) || 1;
+			return Object.entries(auth)
+				.sort((a, b) => b[1] - a[1])
+				.map(([k, v]) => `${esc(AUTH_LABEL[k] || k)} ${Math.round((v / total) * 100)}%`)
+				.join(', ');
+		}
+
+		function clientTable(d) {
+			const body = d.clients.map((c) => `<tr>
+				<td><span class="mc-client"><i class="mc-sw" style="background:${colorOf(c.client)}"></i>${esc(c.client)}</span></td>
+				<td class="num">${num(c.sessions)}</td>
+				<td class="num">${num(c.calls)}</td>
+				<td class="num">${c.calls_per_session == null ? 'n/a' : num(c.calls_per_session, 1)}</td>
+				<td class="mc-small">${c.top_tools.length ? c.top_tools.map((t) => `<span class="mc-mono">${esc(t.tool)}</span> ${num(t.calls)}`).join('<br />') : '<span class="muted">no tool calls</span>'}</td>
+				<td class="mc-small">${authMix(c.auth)}</td>
+				<td class="mc-small">${c.names.map((n) => `<span class="mc-mono">${esc(n.name)}</span>`).join(', ')}${c.versions.length ? `<br />v ${c.versions.map((v) => esc(v.version)).join(', ')}` : ''}</td>
+				<td class="mc-small">${Object.keys(c.surfaces).map((s) => `<span class="mc-mono">${esc(s)}</span>`).join(', ')}</td>
+			</tr>`).join('');
+			return `<section class="mc-section">
+				<div class="mc-section-title">Per client <span>the same numbers as the chart, as a table</span></div>
+				<div class="mc-table-wrap"><table class="mc-table">
+					<thead><tr>
+						<th scope="col">Client</th><th scope="col" class="num">Sessions</th><th scope="col" class="num">Calls</th>
+						<th scope="col" class="num">Per session</th><th scope="col">Top tools</th><th scope="col">Auth</th>
+						<th scope="col">Sent as</th><th scope="col">Surfaces</th>
+					</tr></thead>
+					<tbody>${body}</tbody>
+				</table></div>
+			</section>`;
+		}
+
+		function bars(rows, label, value) {
+			const max = Math.max(1, ...rows.map(value));
+			return `<div class="mc-bars">${rows.map((r) => `<div class="mc-bar-row">
+				<div class="mc-bar-label mc-mono" title="${esc(label(r))}">${esc(label(r))}</div>
+				<div class="mc-bar-track" role="img" aria-label="${esc(label(r))}: ${num(value(r))}"><div class="mc-bar-fill" style="width:${((value(r) / max) * 100).toFixed(1)}%"></div></div>
+				<div class="mc-bar-count">${num(value(r))}</div>
+			</div>`).join('')}</div>`;
+		}
+
+		function toolsAndSurfaces(d) {
+			const tools = d.tools.length
+				? bars(d.tools, (t) => t.tool, (t) => t.calls)
+				: '<div class="mc-note" style="padding:1.25rem;text-align:left;font-size:13px">No tool calls in this window yet. Sessions opened, but nothing was called.</div>';
+			return `<section class="mc-section mc-two">
+				<div><div class="mc-section-title">Top tools <span>calls, every client</span></div>${tools}</div>
+				<div><div class="mc-section-title">Surfaces <span>sessions plus calls per server</span></div>${bars(d.surfaces, (s) => s.surface, (s) => s.sessions + s.calls)}</div>
+			</section>`;
+		}
+
+		function definitions(d) {
+			return `<details class="mc-defs">
+				<summary>How these numbers are defined</summary>
+				<dl>
+					<dt>Session</dt><dd>One <code>initialize</code> a server answered. It returns an <code>Mcp-Session-Id</code>; the client echoes it on later requests.</dd>
+					<dt>Client</dt><dd>The family of the <code>clientInfo.name</code> sent on initialize (claude, chatgpt, grok, cursor, probe, ...). A name that matches no known family is its own client. "Sent as" lists the raw names.</dd>
+					<dt>Tool call</dt><dd>One <code>tools/call</code> the server accepted, counted against the session id it carried, on the day it was made.</dd>
+					<dt>Unattributed</dt><dd>A call that carried no session id this platform issued: a client that skipped initialize, or did not echo the id. It still counts in totals, under <code>unknown</code>.</dd>
+					<dt>Retention</dt><dd>Daily aggregates are kept. The raw session rows behind them expire after 30 days idle.</dd>
+					<dt>Same numbers, no browser</dt><dd><code>GET /api/ops/mcp-clients?days=${num(d.window_days)}</code> with an admin session.</dd>
+				</dl>
+			</details>`;
+		}
+
+		function render(d) {
+			lastReport = d;
+			const missing = d.degraded?.find((g) => /does not exist/i.test(g.error));
+			if (d.degraded?.length) {
+				el.innerHTML = `<div class="mc-note bad">
+					<h2>${missing ? 'The analytics tables are not there yet' : 'Could not read the client aggregates'}</h2>
+					<code>${esc(d.degraded[0].error)}</code><br /><br />
+					${missing
+						? 'Migration <code>20261008200000_mcp_client_analytics.sql</code> has not been applied to this database. Preview it with <code>npm run db:status</code>, then apply with <code>npm run db:migrate</code>.'
+						: 'The read failed on the database side. Check <code>/api/healthz</code> and press Refresh.'}
+				</div>`;
+			} else if (d.totals.sessions === 0 && d.totals.calls === 0) {
+				el.innerHTML = `<div class="mc-note">
+					<h2>No MCP traffic in the last ${num(d.window_days)} days</h2>
+					Nothing has opened a session on a hosted MCP server in this window. Connect a client
+					(<a href="/connect">/connect</a> has every connector URL), or run
+					<code>npm run probe:mcp-clients</code>, which shows up here as client <code>probe</code>.
+					Then press Refresh, or pick a longer window above.
+				</div>`;
+			} else {
+				el.innerHTML = headline(d) + chart(d) + clientTable(d) + toolsAndSurfaces(d) + definitions(d);
+				wireChart(d);
+			}
+			stamp.textContent = d.generated_at ? `read ${new Date(d.generated_at).toLocaleTimeString()}` : '';
+		}
+
+		function skeleton() {
+			const cells = Array.from({ length: 6 }, () => '<div class="mc-skeleton cell"></div>').join('');
+			el.innerHTML = `
+				<section class="mc-section">
+					<div class="mc-section-title">Reading <span>the daily client aggregates</span></div>
+					<div class="mc-grid">${cells}</div>
+				</section>
+				<section class="mc-section">
+					<div class="mc-section-title">Per day <span>by client</span></div>
+					<div class="mc-skeleton chart"></div>
+				</section>`;
+		}
+
+		function denied(status) {
+			el.innerHTML = status === 401
+				? `<div class="mc-note">
+					<h2>Sign in to read this board</h2>
+					It names the AI clients that use the platform and how much, so it is admin only.
+					<a href="/login?next=/mcp-clients">Sign in</a> as a platform admin and it loads.
+				</div>`
+				: `<div class="mc-note">
+					<h2>This board is for platform admins</h2>
+					You are signed in, but this account is not an admin. Switch to an admin account
+					(<a href="/login?next=/mcp-clients">sign in again</a>) to read it.
+				</div>`;
+			stamp.textContent = '';
+		}
+
+		function failed(message) {
+			el.innerHTML = `<div class="mc-note bad">
+				<h2>Could not load the board</h2>
+				<code>${esc(message)}</code><br /><br />
+				The endpoint answers 207 with whatever it managed to read, so a total failure here is the
+				request itself. Check the service is up (<code>/api/healthz</code>) and press Refresh.
+			</div>`;
+			stamp.textContent = '';
+		}
+
+		let inFlight = null;
+
+		async function load() {
+			if (inFlight) return;
+			refreshBtn.disabled = true;
+			refreshBtn.textContent = 'Reading…';
+			el.setAttribute('aria-busy', 'true');
+			skeleton();
+			inFlight = (async () => {
+				try {
+					const res = await fetch(`/api/ops/mcp-clients?days=${encodeURIComponent(windowSelect.value)}`, {
+						credentials: 'include',
+						headers: { accept: 'application/json' },
+					});
+					if (res.status === 401 || res.status === 403) return denied(res.status);
+					if (res.status === 429) {
+						return failed(`rate limited, retry in ${res.headers.get('retry-after') || 'a moment'}s`);
+					}
+					// 207 is the designed partial: the body is valid and names what failed.
+					if (!res.ok && res.status !== 207) throw new Error(`status ${res.status}`);
+					render(await res.json());
+				} catch (err) {
+					failed(err?.message || String(err));
+				} finally {
+					refreshBtn.disabled = false;
+					refreshBtn.textContent = 'Refresh';
+					el.setAttribute('aria-busy', 'false');
+					inFlight = null;
+				}
+			})();
+			await inFlight;
+		}
+
+		windowSelect.addEventListener('change', load);
+		refreshBtn.addEventListener('click', load);
+		load();
+	</script>
+</body>
+</html>

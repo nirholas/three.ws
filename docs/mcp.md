@@ -297,7 +297,7 @@ This uses the standalone npm package, which handles OAuth locally. The `--url` f
 
 ### Any MCP-compatible client
 
-Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The server is stateless — no session setup needed beyond the `initialize` handshake.
+Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The server is stateless, so no session setup is needed beyond the `initialize` handshake. `initialize` returns an `Mcp-Session-Id` header; echo it on later requests, as the MCP SDKs do, so your calls are attributed to your client in the platform's [client analytics](./ops/mcp-clients.md). It holds no state, and a request without it is served the same way.
 
 ### Client compatibility
 

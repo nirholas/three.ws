@@ -201,6 +201,11 @@ function surfaceOf(name) {
 	return Object.hasOwn(SURFACES, name) ? SURFACES[name] : SURFACES.full;
 }
 
+/** The endpoint name a surface is served at (mcp-studio, mcp-chatgpt, mcp-grok). */
+export function surfaceServer(name) {
+	return surfaceOf(name).server;
+}
+
 /** The tool descriptors a surface advertises on tools/list. */
 export function toolCatalogFor(name = 'full') {
 	return surfaceOf(name).catalog;

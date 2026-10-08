@@ -29217,6 +29217,14 @@
 				"feature"
 			],
 			"link": "/leaderboard"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Every MCP server now knows which AI client is calling",
+			"summary": "The three.ws MCP servers now remember which AI app opened each connection, such as Claude, ChatGPT, Cursor or Grok Bot, using the name and version the app announces when it connects, and count which tools each one uses. Only those names and counts are kept, never what anyone asked for. Each connection gets a session id that MCP apps send back automatically, so nothing changes for anyone connecting. It tells us which apps people actually use three.ws from, so we know where to make the experience better next.",
+			"tags": [
+				"infra"
+			]
 		}
 	]
 }

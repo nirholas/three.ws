@@ -360,13 +360,16 @@ describe('Protocol layer', () => {
 		authState.extracted = 'valid-token';
 		authState.bearer = FULL_AUTH;
 
-		const { status, body } = await invoke(rpc('initialize', { protocolVersion: '2025-06-18' }));
+		const { status, body, res } = await invoke(rpc('initialize', { protocolVersion: '2025-06-18' }));
 
 		expect(status).toBe(200);
 		expect(body.jsonrpc).toBe('2.0');
 		expect(body.result.protocolVersion).toBe('2025-06-18');
 		expect(body.result.serverInfo.name).toBe('3d-agent-mcp');
 		expect(body.result.capabilities.tools).toBeDefined();
+		// The session id later calls echo, so they count against this client.
+		expect(res.headers['mcp-session-id']).toMatch(/^mcs_[0-9a-f-]{36}$/);
+		expect(res.headers['access-control-expose-headers']).toContain('mcp-session-id');
 	});
 
 	it('tools/list returns the full tool catalog', async () => {
@@ -441,10 +444,22 @@ describe('Protocol layer', () => {
 		expect(status).toBe(204);
 	});
 
-	it('DELETE with an Mcp-Session-Id returns 404 (no such session here)', async () => {
-		// This server never issues a session id, so any id a client presents came
-		// from somewhere else. The Streamable HTTP transport reads 404 as "start a
-		// new session"; 204 would claim we tore down a session we never held.
+	it('DELETE with the Mcp-Session-Id initialize issued returns 204', async () => {
+		// The only ids this server issues attribute calls to a client
+		// (api/_lib/mcp-client-analytics.js) and hold no state, so ending one is
+		// the polite teardown, not an unknown session.
+		const { status } = await invoke({
+			method: 'DELETE',
+			headers: { 'mcp-session-id': 'mcs_0b9f6a52-4c1e-4e8e-9a39-2f4f1d6c7e10' },
+		});
+
+		expect(status).toBe(204);
+	});
+
+	it('DELETE with a foreign Mcp-Session-Id returns 404 (no such session here)', async () => {
+		// An id this server did not issue came from somewhere else. The Streamable
+		// HTTP transport reads 404 as "start a new session"; 204 would claim we
+		// tore down a session we never held.
 		const { status, body } = await invoke({
 			method: 'DELETE',
 			headers: { 'mcp-session-id': 'sess-from-another-server' },

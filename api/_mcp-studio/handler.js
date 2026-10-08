@@ -31,16 +31,16 @@
 // generation caps fail OPEN on a Redis outage, so a Redis blip never dead-ends a
 // free feature; real paid spend stays fail-closed one layer down in /api/forge.
 
-import { randomUUID } from 'node:crypto';
 import { cors, wrap, readJson, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { limits, clientIp, STUDIO_LIMITS } from '../_lib/rate-limit.js';
-import { dispatch, PROTOCOL_VERSION, surfaceServesAccounts } from './dispatch.js';
+import { dispatch, PROTOCOL_VERSION, surfaceServer, surfaceServesAccounts } from './dispatch.js';
 import { authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { acceptedAudiences, mcpResourceFor } from '../_lib/mcp-resources.js';
 import { send401 } from '../_mcp/auth.js';
 import { TOOL_NAMES } from './tools.js';
 import { isIdempotentRepeat, progressReporter } from './jobs.js';
 import { installTokenFrom, studioOrigin, INSTALL_PARAM } from './install-token.js';
+import { trackMcpRequest, authKindOf } from '../_lib/mcp-client-analytics.js';
 
 // check_job collects a job that is already running rather than starting one: it
 // must never burn the caller's generation quota, or collecting a pending job
@@ -144,11 +144,6 @@ const SESSION_RE = /^grk_[0-9a-f-]{36}$/;
 export function grokSession(req) {
 	const sid = req?.headers?.['mcp-session-id'];
 	return typeof sid === 'string' && SESSION_RE.test(sid) ? sid : null;
-}
-
-function initializes(body) {
-	const batch = Array.isArray(body) ? body : [body];
-	return batch.some((m) => m && m.method === 'initialize');
 }
 
 /** The per-user identity a shared-egress surface carries, or null for per-IP keying. */
@@ -415,6 +410,18 @@ export function studioHandler({ surface = 'full' } = {}) {
 		// Anonymous principal, no auth, no scope. rateKey carries the IP for usage logs.
 		const auth = { userId: null, rateKey: ip, scope: '' };
 
+		// Issues the Mcp-Session-Id on initialize (grk_ on the grok surface, where
+		// the per-caller caps key on it) and records which client opened the
+		// session and what it calls (../_lib/mcp-client-analytics.js).
+		trackMcpRequest({
+			body,
+			req,
+			res,
+			surface: surfaceServer(surface),
+			authKind: install ? 'install' : account ? authKindOf(account) : 'anonymous',
+			sessionPrefix: surface === 'grok' ? 'grk' : 'mcs',
+		});
+
 		const token = progressTokenOf(body);
 		if (token !== null && acceptsEventStream(req)) {
 			return streamToolCall(res, body, auth, req, { surface, caller: caller.key, token, account });
@@ -429,12 +436,6 @@ export function studioHandler({ surface = 'full' } = {}) {
 		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
-		if (surface === 'grok' && initializes(body)) {
-			res.setHeader('mcp-session-id', `grk_${randomUUID()}`);
-			// A browser MCP client cannot echo a header it is not allowed to read.
-			const exposed = res.getHeader('access-control-expose-headers');
-			res.setHeader('access-control-expose-headers', exposed ? `${exposed}, mcp-session-id` : 'mcp-session-id');
-		}
 		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
 	});
 }

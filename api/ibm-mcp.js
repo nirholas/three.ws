@@ -28,6 +28,7 @@ import {
 	isMcpProtocolClient,
 } from './_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from './_mcp/payments.js';
+import { trackMcpRequest } from './_lib/mcp-client-analytics.js';
 
 const RESOURCE_PATH = '/api/ibm-mcp';
 
@@ -102,6 +103,9 @@ export default wrap(async (req, res) => {
 		}
 		releaseProof = guard.release;
 	}
+
+	// Which client opened this session and what it calls (api/_lib/mcp-client-analytics.js).
+	trackMcpRequest({ body, req, res, surface: 'ibm-mcp', auth });
 
 	try {
 		const responses = [];

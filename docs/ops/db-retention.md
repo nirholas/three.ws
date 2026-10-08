@@ -66,6 +66,10 @@ Bounded + idempotent. Each tick:
   `/api/x402-ring` aggregates it with no time filter for its `lifetime` totals;
   pruning it is a product decision about published revenue figures, not a
   retention one.
+- **MCP client sessions.** `mcp_client_sessions`, the raw join table behind the
+  [MCP clients board](mcp-clients.md), loses every session idle for 30 days. The
+  window is fixed and the valve never touches it; `mcp_client_daily`, the
+  aggregate the board reads, is kept.
 - **Avatar job hygiene** — deletes terminal jobs past 30 days and strips base64
   source images from terminal jobs past a day.
 - **VACUUM** (plain) of the pruned tables so freed pages become reusable by

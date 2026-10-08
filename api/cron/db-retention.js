@@ -160,6 +160,11 @@ const TIME_SERIES_TABLES = [
 	// One row per coin the Sentiment Scout ever put on its board. Trade receipts
 	// cite the first sighting, so it keeps the audit window, not the firehose one.
 	{ table: 'sentiment_scout_reads', tsColumn: 'first_scouted_at', windowKind: 'audit' },
+	// The raw MCP session join table (api/_lib/mcp-client-analytics.js). Only
+	// the daily aggregate in mcp_client_daily is kept, so a session idle for
+	// 30 days goes. Fixed, like `spent`: the window is a privacy promise in
+	// docs/ops/mcp-clients.md, not a storage valve.
+	{ table: 'mcp_client_sessions', tsColumn: 'last_seen_at', windowKind: 'mcpSessions' },
 ];
 
 // ── Autopilot run logs ────────────────────────────────────────────────────────
@@ -178,6 +183,9 @@ const RUN_LOG_TABLES = [
 	{ table: 'pump_buyback_runs', tsColumn: 'created_at' },
 	{ table: 'pump_distribute_runs', tsColumn: 'created_at' },
 ];
+
+// Raw MCP client sessions live 30 days; the daily aggregate stays.
+const MCP_SESSION_RETENTION_DAYS = 30;
 
 function clampInt(raw, min, max, dflt) {
 	const n = Number.parseInt(String(raw ?? ''), 10);
@@ -584,6 +592,7 @@ export default wrapCron(async (req, res) => {
 		firehose: cutoffDays,
 		audit: auditCutoffDays,
 		spent: spentDays,
+		mcpSessions: MCP_SESSION_RETENTION_DAYS,
 	});
 	const runLogs = await pruneRunLogs(cutoffDays);
 	const audit = await pruneAuditLog(auditCutoffDays);
