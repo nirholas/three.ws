@@ -28,6 +28,7 @@ import {
 	chainRegistration,
 	jsonDataUri,
 } from '@three-ws/metaplex-agent-mcp/lib/registration';
+import { proxiedImageURL } from './ipfs.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -625,17 +626,23 @@ async function loadLatest() {
 			strip.innerHTML = '<p class="do-latest-empty">Quiet on-chain right now. Yours could be next.</p>';
 			return;
 		}
+		// Registry thumbnails live on arbitrary third-party hosts that 404, drop
+		// CORS or trip the browser's Opaque Response Blocking. The same-origin
+		// proxy resizes them to the tile and answers a dead host with a seeded
+		// placeholder, the way /deployments renders this same feed.
 		strip.innerHTML = items
-			.map(
-				(d) =>
+			.map((d) => {
+				const thumb = d.image ? proxiedImageURL(String(d.image), `${d.chain_id}:${d.agent_id}`, { width: 192 }) : '';
+				return (
 					`<a class="do-agent-tile" href="https://www.metaplex.com/agents/${escapeHtml(d.agent_id)}" target="_blank" rel="noopener">` +
-					(d.image
-						? `<img class="do-agent-thumb" src="${escapeHtml(d.image)}" alt="" loading="lazy" />`
+					(thumb
+						? `<img class="do-agent-thumb" src="${escapeHtml(thumb)}" alt="" loading="lazy" decoding="async" />`
 						: '<span class="do-agent-thumb" aria-hidden="true"></span>') +
 					`<span class="do-agent-name">${escapeHtml(d.name || short(d.agent_id))}</span>` +
 					`<span class="do-agent-sub">${d.has_3d ? '3D · ' : ''}${d.x402_support ? 'x402 · ' : ''}${new Date(d.registered_at).toLocaleDateString()}</span>` +
-					'</a>',
-			)
+					'</a>'
+				);
+			})
 			.join('');
 		// A dead remote thumbnail leaves the tile's layout intact instead of a
 		// broken-image glyph. Bound here rather than as an inline onerror: the
