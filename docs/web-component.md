@@ -1036,9 +1036,11 @@ Three URL channels are available. Pick based on how strictly you need to control
 | Path | Cache | Use when |
 |------|-------|----------|
 | `/agent-3d/<MAJOR>.<MINOR>.<PATCH>/agent-3d.js` | `immutable` | **Production.** Pin exact bytes. Combine with SRI. |
-| `/agent-3d/<MAJOR>.<MINOR>/agent-3d.js` | 5 min | Follow the newest code on this minor line. |
-| `/agent-3d/<MAJOR>/agent-3d.js` | 5 min | Follow the newest code on this major line. |
-| `/agent-3d/latest/agent-3d.js` | 5 min | Demos and prototypes only. Never in production. |
+| `/agent-3d/<MAJOR>.<MINOR>/agent-3d.js` | 5 min at the CDN, up to 1 h in a browser | Follow the newest code on this minor line. |
+| `/agent-3d/<MAJOR>/agent-3d.js` | 5 min at the CDN, up to 1 h in a browser | Follow the newest code on this major line. |
+| `/agent-3d/latest/agent-3d.js` | 5 min at the CDN, up to 1 h in a browser | Demos and prototypes only. Never in production. |
+
+The moving channels send `max-age=3600, s-maxage=300`: the CDN revalidates every five minutes, but a browser that already holds the file may keep it for an hour, so a fix on a moving channel can take up to an hour to reach a returning visitor.
 
 ### What "immutable" guarantees
 
