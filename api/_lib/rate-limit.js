@@ -1389,6 +1389,9 @@ export const limits = {
 	// still stops a scripted flood. Page-load-critical clusters additionally get
 	// their own dedicated buckets below so one surface can never starve another.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// /api/avatar-stream with a remote ?src: one download (up to 64 MB) and one
+	// CPU-bound pack per distinct URL, so it is held well under publicIp.
+	avatarStreamRemoteIp: (ip) => getLimiter('avatar-stream:remote:ip', { limit: 20, window: '1 m' }).limit(ip),
 	// Fiat onramp checkout links (/api/onramp/link). Unlike the generic public read,
 	// each configured call mints a single-use session token against Coinbase's CDP
 	// API, so an unauthenticated flood here is upstream quota burn, not just our CPU.

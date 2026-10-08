@@ -4,6 +4,7 @@ import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { dasRpcUrl } from '../_lib/nft-gate.js';
 import { resolveGateway } from '../_lib/solana-agents-normalize.js';
 import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
+import { fetchSafePublicUrlPinned } from '../_lib/ssrf-guard.js';
 import {
 	evmFallbackProvider,
 	evmRpcEndpoints,
@@ -68,11 +69,14 @@ async function fetchMetadataDoc(uri) {
 	if (!url || !/^https?:\/\//i.test(url)) return null;
 	let resp;
 	try {
-		resp = await fetch(url, {
-			redirect: 'follow',
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-		});
+		// tokenURI is whatever the contract (anyone's contract) returns, so the
+		// document is read through the pinned SSRF guard: private and metadata
+		// addresses are refused on every redirect hop, bytes capped in-stream.
+		resp = await fetchSafePublicUrlPinned(
+			url,
+			{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) },
+			{ allowHttp: true, maxBytes: MAX_METADATA_BYTES },
+		);
 	} catch {
 		return null;
 	}

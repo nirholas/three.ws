@@ -29,7 +29,12 @@ import {
 	buildBazaarSchema,
 } from '../_lib/x402-spec.js';
 import { inspectModel, suggestOptimizations } from '../_lib/model-inspect.js';
-import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
+import {
+	assertSafePublicUrl,
+	fetchSafePublicUrlPinned,
+	MaxBytesExceededError,
+	SsrfBlockedError,
+} from '../_lib/ssrf-guard.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
@@ -197,14 +202,32 @@ async function fetchAndInspect(targetUrl) {
 		}
 		throw err;
 	}
+	// Pinned fetch: each redirect hop is re-validated and the socket connects to
+	// the checked address, so a public URL that 302s (or rebinds) to an
+	// internal host is refused instead of followed. Bytes are capped in-stream.
 	let upstream;
 	try {
-		upstream = await fetch(parsed.toString(), {
-			redirect: 'follow',
-			headers: { accept: 'model/gltf-binary,model/gltf+json,application/octet-stream' },
-			signal: AbortSignal.timeout(20_000),
-		});
+		upstream = await fetchSafePublicUrlPinned(
+			parsed.toString(),
+			{
+				headers: { accept: 'model/gltf-binary,model/gltf+json,application/octet-stream' },
+				signal: AbortSignal.timeout(20_000),
+			},
+			{ allowHttp: true, maxBytes: MAX_FETCH_BYTES },
+		);
 	} catch (err) {
+		if (err instanceof SsrfBlockedError) {
+			const e = new Error(err.message);
+			e.code = 'invalid_url';
+			e.status = 400;
+			throw e;
+		}
+		if (err instanceof MaxBytesExceededError) {
+			const e = new Error(`model is ${err.observed} bytes; max is ${MAX_FETCH_BYTES}`);
+			e.code = 'too_large';
+			e.status = 413;
+			throw e;
+		}
 		const e = new Error(`could not fetch model: ${err.message}`);
 		e.code = 'fetch_failed';
 		e.status = 502;

@@ -18,7 +18,9 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join, normalize } from 'node:path';
 
-import { cors, error, json, method, wrap } from './_lib/http.js';
+import { cors, error, json, method, rateLimited, wrap } from './_lib/http.js';
+import { clientIp, limits } from './_lib/rate-limit.js';
+import { fetchModel } from './_lib/fetch-model.js';
 import { pack } from '../packages/avatar-stream/src/pack.js';
 import { decodeHeader, decodePreamble } from '../packages/avatar-stream/src/format.js';
 
@@ -43,21 +45,33 @@ function cacheSet(key, value) {
 	while (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value);
 }
 
+// Remote sources are avatars, not archives: anything past this is refused
+// mid-stream rather than buffered.
+const MAX_REMOTE_BYTES = 64 * 1024 * 1024;
+const CALLER_FAULT_CODES = new Set(['invalid_url', 'scheme_not_allowed', 'private_address', 'host_pin_mismatch']);
+
 /**
  * Resolve `src` to GLB bytes.
  *
  * A site-relative path is read off disk, which keeps the platform's own avatars
- * off the network. An absolute URL is fetched, and is restricted to https so
- * this endpoint cannot be pointed at a private address by a caller.
+ * off the network. An absolute URL must be https and is fetched through the
+ * SSRF-guarded model fetcher (api/_lib/fetch-model.js).
  */
 async function loadSource(src) {
 	if (/^https:\/\//i.test(src)) {
-		// Caller-supplied source URL: bounded so a host that accepts the connection
-		// and then stalls cannot hold the frame request open until the platform
-		// kills it. SSRF validation happens above; this is the time budget.
-		const response = await fetch(src, { redirect: 'follow', signal: AbortSignal.timeout(20_000) });
-		if (!response.ok) throw Object.assign(new Error(`upstream ${response.status}`), { status: 502 });
-		return new Uint8Array(await response.arrayBuffer());
+		// Caller-supplied source URL, so it goes through fetchModel: the host is
+		// resolved on our side and refused if any address is private, loopback
+		// or metadata, the socket is pinned to the validated address, every
+		// redirect hop is re-checked, and the body is capped while streaming.
+		// The timeout keeps a stalled host from holding the request open.
+		try {
+			const { bytes } = await fetchModel(src, { maxBytes: MAX_REMOTE_BYTES, timeoutMs: 20_000 });
+			return bytes;
+		} catch (err) {
+			const code = err?.code || 'fetch_failed';
+			const status = code === 'file_too_large' ? 413 : CALLER_FAULT_CODES.has(code) ? 400 : 502;
+			throw Object.assign(new Error(err?.message || 'could not fetch src'), { status });
+		}
 	}
 	if (!src.startsWith('/')) {
 		throw Object.assign(new Error('src must be a site-relative path or an https URL'), { status: 400 });
@@ -128,6 +142,12 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const src = url.searchParams.get('src') || '';
 	if (!src) return error(res, 400, 'missing_src', 'pass ?src=<path or https url to a .glb>');
+	// A remote source costs a download plus a CPU-bound pack per distinct URL,
+	// and the cache holds only a dozen, so remote packs get their own budget.
+	if (/^https:\/\//i.test(src)) {
+		const rl = await limits.avatarStreamRemoteIp(clientIp(req));
+		if (!rl.success) return rateLimited(res, rl, 'too many remote avatar packs; try again shortly');
+	}
 
 	let entry;
 	try {
