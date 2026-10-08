@@ -7,7 +7,7 @@ status: draft, not yet posted
 meta_title: "Long-running MCP tools: job handles, check_job and call budgets"
 meta_description: "How to build MCP tools that outlive a host's tool-call timeout: job handles, a collector tool, call budgets, submit tickets and honest metadata, with live examples."
 slug: long-running-mcp-tools-outlive-the-tool-call
-featured_image: "https://three.ws/api/page-og?v=carbon&s=build&t=Long-running%20MCP%20tools%20that%20outlive%20the%20call&d=Job%20handles%2C%20check_job%2C%20call%20budgets%2C%20and%20honest%20metadata%20from%20the%20three.ws%203D%20Studio%20MCP%20server&p=%2Fdocs%2Fmcp-studio"
+featured_image: "https://three.ws/api/page-og?v=carbon&f=group&s=build&t=Long-running%20MCP%20tools%20that%20outlive%20the%20call&d=Job%20handles%2C%20check_job%2C%20call%20budgets%2C%20and%20honest%20metadata%20from%20the%20three.ws%203D%20Studio%20MCP%20server&p=%2Fdocs%2Fmcp-studio"
 framing_notes: |
   Every framing rule in docs/ibm.md applies to this draft and must survive any edit:
   three.ws is an IBM Business Partner; the /api/ibm/* surfaces and the open-source
@@ -23,9 +23,12 @@ framing_notes: |
   carries no payment surface, and the account resources and guided prompts in section
   11 are described only through their non-financial members. Keep it that way.
   Every response below was captured live on 2026-10-08 against production and trimmed
-  only where marked. Canonical URL blank (original post). The featured image card's
-  fixed footer reads "Built on IBM watsonx.ai"; the post itself makes no claim that the
-  3D Studio runs on watsonx.ai (section 9 states the prompt director's actual status).
+  only where marked. Canonical URL blank (original post). The featured image is
+  the carbon card with &f=group, whose footer reads "Three.ws User Group" rather than
+  "Built on IBM watsonx.ai" (api/page-og.js, CARBON_FOOTERS); confirm the live card shows
+  that footer before posting, since an older revision ignores the parameter. The post makes
+  no claim that the 3D Studio runs on watsonx.ai (section 9 states the prompt director's
+  actual status).
 ---
 
 # Long-running MCP tools: how to design a tool that outlives the tool call
@@ -252,7 +255,7 @@ That difference is the most instructive number here. The **first** check that fi
 The lessons:
 
 - **A collector may be slow exactly once.** Do the post-processing on the first collection; cache the terminal frame.
-- **Separate "the check failed" from "the job failed."** A check that failed while the job is fine (a timeout, a busy rate bucket, the slow first save-and-score) carries `retryable: true`.
+- **Separate "the check failed" from "the job failed."** A check that failed while the job is fine (a timeout, a busy rate bucket, the slow first save-and-score) carries `retryable: true`. We hit this live in a second run the same day: the first `check_job` on a brass desk lamp reached its 30-second bound and returned `isError` with `retryable: true`, and the next check returned the finished model.
 - **Make the one final error say what to do.** An unknown handle:
 
 ```bash
