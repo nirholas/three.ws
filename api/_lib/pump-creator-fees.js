@@ -11,11 +11,15 @@
 //                metadata `creator` field is NOT used: for a gasless launch it
 //                names the sponsor that paid the transaction, not the wallet
 //                that collects the fees.
-//   earned       pump.fun's creator-fee index, GET swap-api.pump.fun
-//                /v1/creators/<wallet>/fees/total (lifetime, lamports) and
-//                /v1/creators/<wallet>/fees?interval=1d|30m (bucketed). It is
-//                keyed by creator WALLET, so one wallet that created several
-//                coins reports one combined figure. The fee-sharing totals
+//   earned       pump.fun's creator-fee index, GET frontend-api-v3.pump.fun
+//                /fees/creator/<wallet>?interval=1d|30m&period=30d|7d: the
+//                lifetime figure per quote asset (`earned`) plus a bucketed
+//                series. When that read fails, the lifetime figure falls back to
+//                swap-api.pump.fun /v2/creators/<wallet>/fees/total. pump.fun
+//                retired the /v1/creators routes both used before (404 since
+//                early October 2026). The index is keyed by creator WALLET, so
+//                one wallet that created several coins reports one combined
+//                figure. The fee-sharing totals
 //                endpoint the coin page used before answers 0 for every coin
 //                that never set up a sharing config, which is every coin
 //                three.ws has launched, so the page never showed a real figure.
@@ -34,9 +38,11 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { withBreaker } from './resilience.js';
-import { pumpFetchJson, PUMP_SWAP_BASE } from './pump-feed-fetch.js';
+import { pumpFetchJson, PUMP_FRONTEND_BASE, PUMP_SWAP_BASE } from './pump-feed-fetch.js';
 
 export const CREATOR_FEES_BREAKER = 'pumpfun:creator-fees';
+// The fallback rung gets its own breaker so a sick primary cannot open it.
+export const CREATOR_FEES_FALLBACK_BREAKER = 'pumpfun:creator-fees-swap-v2';
 const BREAKER_OPTS = { threshold: 3, halfOpenAfterMs: 30_000 };
 const TIMEOUT_MS = 6000;
 
@@ -51,16 +57,21 @@ function toLamports(v) {
 	}
 }
 
+// pump.fun names the SOL quote by the wrapped-SOL mint on /fees/creator and by
+// the system program id on the swap-api totals.
+const SOL_QUOTES = new Set(['So11111111111111111111111111111111111111112', '11111111111111111111111111111111']);
+
 /**
- * Run one pump.fun read behind the shared breaker. `fn` throws on an unhealthy
- * upstream; the breaker turns that (or an open circuit) into `{ ok: false }`.
+ * Run one pump.fun read behind a breaker. `fn` throws on an unhealthy upstream;
+ * the breaker turns that (or an open circuit) into `{ ok: false }`.
  * @template T
  * @param {() => Promise<T>} fn
+ * @param {string} [breaker]
  * @returns {Promise<{ ok: true, value: T } | { ok: false, error: string }>}
  */
-async function guarded(fn) {
+async function guarded(fn, breaker = CREATOR_FEES_BREAKER) {
 	return withBreaker(
-		CREATOR_FEES_BREAKER,
+		breaker,
 		async () => ({ ok: /** @type {const} */ (true), value: await fn() }),
 		{
 			...BREAKER_OPTS,
@@ -73,48 +84,76 @@ async function guarded(fn) {
 }
 
 /**
+ * GET /fees/creator/<wallet>: lifetime earnings per quote plus one series.
+ * Throws on anything but a well-formed answer.
+ * @param {string} wallet
+ * @param {'1d'|'30m'} interval
+ */
+async function fetchCreatorEarnings(wallet, interval) {
+	const period = interval === '30m' ? '7d' : '30d';
+	const r = await pumpFetchJson(
+		`${PUMP_FRONTEND_BASE}/fees/creator/${encodeURIComponent(wallet)}?interval=${interval}&period=${period}`,
+		{ timeoutMs: TIMEOUT_MS },
+	);
+	if (!r.ok) throw new Error(`pump.fun creator fees ${r.status}`);
+	if (!Array.isArray(r.body?.earned) || !Array.isArray(r.body?.series)) {
+		throw new Error('pump.fun creator fees: no earned/series in response');
+	}
+	return r.body;
+}
+
+/**
+ * The SOL leg of a list of per-quote amounts, in lamports. No SOL leg means
+ * nothing was earned in SOL: zero, not unknown.
+ * @param {Array<{ quote?: { address?: string }, amount?: { raw?: string } }>} legs
+ */
+function solLamports(legs) {
+	const leg = legs.find((l) => SOL_QUOTES.has(String(l?.quote?.address || '')));
+	if (!leg) return 0n;
+	const lamports = toLamports(leg.amount?.raw);
+	if (lamports == null) throw new Error('pump.fun creator fees: SOL leg without an amount');
+	return lamports;
+}
+
+/**
  * Lifetime creator fees earned by one wallet, in lamports, across every coin
  * that wallet created.
  * @param {string} wallet
  */
 export async function fetchCreatorFeeTotal(wallet) {
-	return guarded(async () => {
+	const primary = await guarded(async () => solLamports((await fetchCreatorEarnings(wallet, '1d')).earned));
+	if (primary.ok) return primary;
+	const fallback = await guarded(async () => {
 		const r = await pumpFetchJson(
-			`${PUMP_SWAP_BASE}/v1/creators/${encodeURIComponent(wallet)}/fees/total`,
+			`${PUMP_SWAP_BASE}/v2/creators/${encodeURIComponent(wallet)}/fees/total`,
 			{ timeoutMs: TIMEOUT_MS },
 		);
-		if (!r.ok) throw new Error(`pump.fun creator fees ${r.status}`);
-		const lamports = toLamports(r.body?.totalFees);
-		if (lamports == null) throw new Error('pump.fun creator fees: no totalFees in response');
-		return lamports;
-	});
+		if (!r.ok) throw new Error(`pump.fun creator fee totals ${r.status}`);
+		const legs = r.body?.totalFeesByQuoteMint;
+		if (!Array.isArray(legs)) throw new Error('pump.fun creator fee totals: no totalFeesByQuoteMint');
+		return solLamports(legs.map((l) => ({ quote: { address: l?.quoteMintAddress }, amount: { raw: l?.totalFeesAtomic } })));
+	}, CREATOR_FEES_FALLBACK_BREAKER);
+	return fallback.ok ? fallback : { ok: false, error: `${primary.error}; fallback: ${fallback.error}` };
 }
 
 /**
- * Bucketed creator fees for one wallet. pump.fun answers the most recent ~100
- * buckets: `1d` spans about 100 days, `30m` about the last 50 hours. Zero
- * buckets are dropped; they add nothing to a windowed sum.
+ * Bucketed creator fees for one wallet, SOL leg only. pump.fun serves `1d`
+ * buckets for the last 30 days and `30m` buckets for the last 7. It no longer
+ * reports a trade count per bucket, so `num_trades` is null. Zero buckets are
+ * dropped; they add nothing to a windowed sum.
  * @param {string} wallet
  * @param {'1d'|'30m'} interval
  */
 export async function fetchCreatorFeeBuckets(wallet, interval) {
 	return guarded(async () => {
-		const r = await pumpFetchJson(
-			`${PUMP_SWAP_BASE}/v1/creators/${encodeURIComponent(wallet)}/fees?interval=${interval}`,
-			{ timeoutMs: TIMEOUT_MS },
-		);
-		if (!r.ok) throw new Error(`pump.fun creator fee buckets ${r.status}`);
-		if (!Array.isArray(r.body)) throw new Error('pump.fun creator fee buckets: not an array');
+		const body = await fetchCreatorEarnings(wallet, interval);
 		const out = [];
-		for (const b of r.body) {
-			const fee = toLamports(b?.creatorFee);
-			const at = Date.parse(b?.bucket);
-			if (fee == null || !Number.isFinite(at) || fee === 0n) continue;
-			out.push({
-				bucket_start: new Date(at).toISOString(),
-				fee_lamports: fee,
-				num_trades: Number.isFinite(Number(b?.numTrades)) ? Number(b.numTrades) : 0,
-			});
+		for (const b of body.series) {
+			const at = Number(b?.bucketStart);
+			if (!Number.isFinite(at) || !Array.isArray(b?.byQuote)) continue;
+			const fee = solLamports(b.byQuote);
+			if (fee === 0n) continue;
+			out.push({ bucket_start: new Date(at).toISOString(), fee_lamports: fee, num_trades: null });
 		}
 		return out;
 	});

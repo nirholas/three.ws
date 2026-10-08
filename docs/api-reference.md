@@ -6902,7 +6902,7 @@ Cached 5 minutes in the shared cache and at the CDN
 | `marketplace_volume_three` | three | price of those sales paid in $THREE, in whole tokens |
 | `marketplace_volume_usd` | usd | price of those sales paid in USDC |
 | `hire_volume_usd` | usd | completed `agent_hires`, read through the same helper as `/api/agent-economy/volume` |
-| `creator_fees` | sol | lifetime creator fees of agents' own custodial wallets from the `agent_coin_earnings` snapshot (same counting rule as `/api/agents/:id/earnings`); daily series from the fee index's daily buckets, about 100 days deep |
+| `creator_fees` | sol | lifetime creator fees of agents' own custodial wallets from the `agent_coin_earnings` snapshot (same counting rule as `/api/agents/:id/earnings`); daily series from the fee index's daily buckets, stored as each snapshot reads them (pump.fun serves the last 30 days per read, so older days come from earlier snapshots) |
 
 `total` is all time; `window_total` is the sum of `daily`; `daily` has one
 entry per UTC day from `from` to `to`, zeros included. For `window=all`,

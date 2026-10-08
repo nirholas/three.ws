@@ -94,10 +94,11 @@ async function storeBuckets(creator, interval, buckets) {
 	for (const b of buckets) {
 		await sql`
 			insert into creator_fee_buckets (creator, bucket_interval, bucket_start, fee_lamports, num_trades, refreshed_at)
-			values (${creator}, ${interval}, ${b.bucket_start}, ${big(b.fee_lamports)}, ${b.num_trades}, now())
+			values (${creator}, ${interval}, ${b.bucket_start}, ${big(b.fee_lamports)}, ${b.num_trades ?? 0}, now())
 			on conflict (creator, bucket_interval, bucket_start) do update set
 				fee_lamports = excluded.fee_lamports,
-				num_trades = excluded.num_trades,
+				-- pump.fun stopped reporting trade counts; keep a count it gave earlier.
+				num_trades = coalesce(${b.num_trades}, creator_fee_buckets.num_trades),
 				refreshed_at = now()
 		`;
 	}
