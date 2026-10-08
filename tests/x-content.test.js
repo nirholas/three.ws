@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { copyProblems, weightedLength } from '../api/_lib/x-content/quality.js';
 import { SPEED_OUTPUT_FPS, attachmentProblems, mediaProblems, parseFfmpegProbe, videoFilterChain } from '../api/_lib/x-content/media.js';
 import { markdownToContentState, attachArticleMedia } from '../api/_lib/x-content/articles.js';
-import { DEFAULT_SLOTS, currentSlot, inQuietHours, jitterMinutes, pickDue, slotOpenings, tierOrder } from '../api/_lib/x-content/schedule.js';
+import { DEFAULT_SLOTS, currentSlot, inQuietHours, jitterMinutes, pickDue, slotLabel, slotOpenings, tierOrder } from '../api/_lib/x-content/schedule.js';
 import { linkProbeUrl } from '../api/_lib/x-content/verify.js';
 import { engagementSignals, loadLifts, loadVolumeModel, rankItems, scoreItem, volumeScore } from '../api/_lib/x-content/priority.js';
 import { accountRefusal, activeHolds, inventory, isPostSpecific, placeHold, runTick } from '../api/_lib/x-content/runner.js';
@@ -208,6 +208,34 @@ describe('schedule', () => {
 		expect(pickDue({ items, state: {}, now: primeTime, cadence, exclude: new Set(['high', 'mid', 'low']) }).reason).toMatch(/held this tick/);
 	});
 
+	it('opens an Article slot every second day, keeps Articles for it, and leaves it outside the daily cap', () => {
+		const withArticles = { ...cadence, slots: [...cadence.slots, { kind: 'article', at: '02:00', everyDays: 2, from: '2026-09-17' }] };
+		const articleDays = (from, days) => Array.from({ length: days }, (_, i) => from + i * 24 * HOUR)
+			.filter((day) => slotOpenings(day, withArticles).some((slot) => slot.kind === 'article' && slot.key.startsWith(new Date(day).toISOString().slice(0, 10))))
+			.map((day) => new Date(day).toISOString().slice(0, 10));
+		expect(articleDays(Date.parse('2026-09-15T12:00:00Z'), 6)).toEqual(['2026-09-15', '2026-09-17', '2026-09-19']);
+		expect(slotLabel(slotOpenings(primeTime, withArticles).find((slot) => slot.kind))).toBe('article');
+
+		const article = item('longread', { kind: 'article', tier: 1, priority: 50, article: { title: 'How it works', body: 'x.md' } });
+		const feature = item('feature', { tier: 1 });
+		// The daily slot never spends the Article, however high it ranks.
+		expect(pickDue({ items: [article, feature], state: {}, now: primeTime, cadence: withArticles }).item.id).toBe('feature');
+		expect(pickDue({ items: [article], state: {}, now: primeTime, cadence: withArticles, quota: true }).item).toBeNull();
+		// Without an Article slot an Article is an ordinary tier 1 item.
+		expect(pickDue({ items: [article, feature], state: {}, now: primeTime, cadence }).item.id).toBe('longread');
+
+		// 02:50 on an Article day: the slot takes only Articles, past a full daily cap.
+		const night = Date.parse('2026-09-19T02:50:00Z');
+		const capped = { published: [5, 9, 13].map((h, i) => ({ id: `p${i}`, slot: `s${i}`, publishedAt: new Date(night - h * HOUR).toISOString() })) };
+		const pick = pickDue({ items: [article, feature], state: capped, now: night, cadence: withArticles, quota: true });
+		expect([pick.item.id, pick.slot.kind, pick.tier, pick.filledDown, pick.filledUp]).toEqual(['longread', 'article', 1, false, false]);
+		expect(pickDue({ items: [feature], state: capped, now: night, cadence: withArticles, quota: true }).reason).toMatch(/no approved unpublished article for slot 2026-09-19#3/);
+		// The Article it sent does not count toward the next morning's cap.
+		const sent = { published: [...capped.published.slice(1), { id: 'longread', slot: '2026-09-19#3', slotKind: 'article', publishedAt: new Date(night).toISOString() }] };
+		const morning = Date.parse('2026-09-19T08:50:00Z');
+		expect(pickDue({ items: [item('demo', { tier: 3 })], state: sent, now: morning, cadence: withArticles }).item.id).toBe('demo');
+	});
+
 	it('resumes a half-published item ahead of pacing and priority', () => {
 		const state = { published: [{ id: 'p', publishedAt: new Date(primeTime - 10 * 60_000).toISOString() }], inflight: { a: { media: {}, postIds: ['1'] } } };
 		expect(pickDue({ items: [item('a'), item('b', { priority: 50 })], state, now: primeTime, cadence }).resuming).toBe(true);
@@ -258,22 +286,28 @@ describe('priority', () => {
 		expect(scored.volumeChance).toBeNull();
 	});
 
-	it('spaces the three daily slots eight hours apart, far enough that all three can post', () => {
-		// Owner cadence (2026-09-20): three posts a day, eight hours apart, every
-		// day. That replaced the volume-study window (12:00 to 20:00 UTC), which
-		// could not hold three slots without crowding them.
+	it('keeps the three daily slots inside the volume window, and every slot far enough apart that all of them can post', () => {
+		// Owner cadence (2026-10-01): three posts a day inside 12:00 to 20:00 UTC,
+		// where the volume study found a post is most often followed by a volume
+		// response. Owner directive (2026-10-08): one X Article every second day,
+		// in its own slot after the last daily post.
 		const queue = loadQueue(root);
-		const slots = queue.cadence.slots;
-		expect(slots).toHaveLength(3);
-		const minutes = slots.map((slot) => Number(slot.at.slice(0, 2)) * 60 + Number(slot.at.slice(3))).sort((a, b) => a - b);
-		for (let index = 1; index < minutes.length; index++) expect(minutes[index] - minutes[index - 1]).toBe(8 * 60);
-		// Wrapping past midnight, the last slot to the first is also eight hours.
-		expect(minutes[0] + 24 * 60 - minutes[minutes.length - 1]).toBe(8 * 60);
+		const toMinutes = (at) => Number(at.slice(0, 2)) * 60 + Number(at.slice(3));
+		const daily = queue.cadence.slots.filter((slot) => !slot.kind);
+		expect(daily).toHaveLength(3);
+		for (const slot of daily) {
+			expect(toMinutes(slot.at)).toBeGreaterThanOrEqual(12 * 60);
+			expect(toMinutes(slot.at) + queue.cadence.windowMinutes).toBeLessThanOrEqual(20 * 60);
+		}
+		expect(queue.cadence.slots.filter((slot) => slot.kind)).toEqual([{ kind: 'article', at: '22:30', everyDays: 2, from: '2026-10-08' }]);
 
 		// The latest a slot can open, to the earliest the next one can: never closer
 		// than the minimum gap, or the later slot would be blocked by the earlier post.
-		for (let index = 1; index < minutes.length; index++) {
-			expect(minutes[index] - (minutes[index - 1] + queue.cadence.windowMinutes)).toBeGreaterThanOrEqual(queue.cadence.minimumMinutesApart);
+		// The Article evening is the tightest day, so measure every slot together.
+		const minutes = queue.cadence.slots.map((slot) => toMinutes(slot.at)).sort((a, b) => a - b);
+		for (let index = 1; index <= minutes.length; index++) {
+			const next = index < minutes.length ? minutes[index] : minutes[0] + 24 * 60;
+			expect(next - (minutes[index - 1] + queue.cadence.windowMinutes)).toBeGreaterThanOrEqual(queue.cadence.minimumMinutesApart);
 		}
 	});
 
@@ -285,8 +319,8 @@ describe('priority', () => {
 		const saturday = Date.parse('2026-09-19T16:20:00Z');
 		const sunday = Date.parse('2026-09-20T16:20:00Z');
 		const monday = Date.parse('2026-09-21T16:45:00Z');
-		const tiersOn = (day) => slotOpenings(day, cadence, 'seed').filter((slot) => slot.key.startsWith(new Date(day).toISOString().slice(0, 10))).map((slot) => slot.tier);
-		const everyDay = cadence.slots.map((slot) => Number(slot.tier));
+		const tiersOn = (day) => slotOpenings(day, cadence, 'seed').filter((slot) => !slot.kind && slot.key.startsWith(new Date(day).toISOString().slice(0, 10))).map((slot) => slot.tier);
+		const everyDay = cadence.slots.filter((slot) => !slot.kind).map((slot) => Number(slot.tier));
 		for (const day of [saturday, sunday, monday]) expect(tiersOn(day)).toEqual(everyDay);
 
 		// A weekend flagship slot goes to a flagship post, not down to a feature.
@@ -383,6 +417,16 @@ describe('holds and fall-through', () => {
 		];
 		const stock = inventory(items, { published: [{ id: 'a' }] }, dir);
 		expect(stock).toEqual([{ tier: 1, days: 0, low: true }, { tier: 2, days: 3, low: false }, { tier: 3, days: 0, low: true }]);
+
+		// An Article slot every two days: Articles are counted for it, not for their tier.
+		items.push({ id: 'f', status: 'approved', tier: 1, kind: 'article', article: { title: 'f' } });
+		const cadence = { slots: [{ tier: 1, at: '15:30' }, { kind: 'article', at: '22:30', everyDays: 2 }] };
+		expect(inventory(items, { published: [{ id: 'a' }] }, dir, Date.now(), cadence)).toEqual([
+			{ tier: 1, days: 0, low: true },
+			{ tier: 2, days: 3, low: false },
+			{ tier: 3, days: 0, low: true },
+			{ kind: 'article', count: 1, days: 2, low: true },
+		]);
 	});
 
 	it('never ends a tick on a failed post: it holds it and publishes the next best', async () => {

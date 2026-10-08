@@ -18,6 +18,12 @@
 			{
 				"tier": 3,
 				"at": "19:00"
+			},
+			{
+				"kind": "article",
+				"at": "22:30",
+				"everyDays": 2,
+				"from": "2026-10-08"
 			}
 		]
 	},
@@ -69,7 +75,8 @@
 			2,
 			3
 		],
-		"vetoHours": 2
+		"vetoHours": 2,
+		"articles": true
 	},
 	"items": [
 		{

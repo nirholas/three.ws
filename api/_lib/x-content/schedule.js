@@ -99,6 +99,28 @@ const atMinutes = (at) => {
 // that, and `isWeekend` still answers the question it asks.
 export const isWeekend = (timestamp) => [0, 6].includes(new Date(timestamp).getUTCDay());
 
+// ── Kind slots ──────────────────────────────────────────────────────────────
+// A slot may belong to a kind of item instead of a tier, and open every few
+// days instead of every day: `{ kind: 'article', at: '22:30', everyDays: 2,
+// from: '2026-10-08' }` is one X Article every second day (owner, 2026-10-08).
+// Items of a kind that owns a slot are kept for that slot, so the daily tiered
+// slots never spend an Article and the Article slot never spends a post. A kind
+// slot sits outside the daily cap: its own cadence already limits it, and a cap
+// shared with the three daily posts would let an Article evening hold the next
+// morning's slot shut. `from` is the first day the slot opens; it then opens on
+// every `everyDays`-th UTC day after it (and, by the same arithmetic, before).
+export const isKindSlot = (slot) => Boolean(slot?.kind);
+export const slotLabel = (slot) => (isKindSlot(slot) ? slot.kind : `T${slot.tier}`);
+export const reservedKinds = (cadence = {}) => new Set((cadence.slots || []).filter(isKindSlot).map((slot) => slot.kind));
+
+export function slotOpensOn(slot, day) {
+	const every = Math.max(1, Math.floor(Number(slot.everyDays) || 1));
+	if (every === 1) return true;
+	const from = slot.from ? Date.parse(`${slot.from}T00:00:00Z`) : 0;
+	const days = Math.round((Date.parse(`${dayKey(day)}T00:00:00Z`) - from) / DAY);
+	return ((days % every) + every) % every === 0;
+}
+
 // Every slot opening from yesterday through tomorrow, in time order, so the
 // slot spanning midnight (22:00 until the next morning) is found too.
 export function slotOpenings(now, cadence = DEFAULT_CADENCE, seed = null) {
@@ -110,8 +132,10 @@ export function slotOpenings(now, cadence = DEFAULT_CADENCE, seed = null) {
 		const day = today + offset * DAY;
 		slots.forEach((slot, index) => {
 			if (cadence.flagshipWeekdaysOnly && Number(slot.tier) === 1 && isWeekend(day)) return;
+			if (!slotOpensOn(slot, day)) return;
 			const key = `${dayKey(day)}#${index}`;
-			openings.push({ key, tier: Number(slot.tier), opensAt: day + (atMinutes(slot.at) + jitterMinutes(`slot:${key}`, window, seed)) * MINUTE });
+			const owner = isKindSlot(slot) ? { kind: String(slot.kind), tier: null } : { tier: Number(slot.tier) };
+			openings.push({ key, ...owner, opensAt: day + (atMinutes(slot.at) + jitterMinutes(`slot:${key}`, window, seed)) * MINUTE });
 		});
 	}
 	return openings.sort((a, b) => a.opensAt - b.opensAt);
@@ -186,7 +210,7 @@ export function pickDue({
 	const { slot, next } = currentSlot(now, cadence, seed);
 	const nextAt = next ? new Date(next.opensAt).toISOString() : 'tomorrow';
 	if (!slot) return { item: null, reason: `no slot is open; the next opens at ${nextAt}` };
-	if (published.some((row) => row.slot === slot.key)) return { item: null, reason: `slot ${slot.key} (T${slot.tier}) is used; the next opens at ${nextAt}` };
+	if (published.some((row) => row.slot === slot.key)) return { item: null, reason: `slot ${slot.key} (${slotLabel(slot)}) is used; the next opens at ${nextAt}` };
 
 	const last = published[published.length - 1];
 	if (last && now < Date.parse(last.publishedAt) + cadence.minimumMinutesApart * MINUTE) {
@@ -200,25 +224,31 @@ export function pickDue({
 	// the schedule to one post each, and the spacing check above still measures
 	// from the last post of any kind, so a hand-sent post can never be followed by
 	// a scheduled one minutes later.
-	const scheduledLastDay = published.filter((row) => row.slot && now - Date.parse(row.publishedAt) < DAY).length;
-	if (scheduledLastDay >= cadence.dailyCap) return { item: null, reason: `daily cap of ${cadence.dailyCap} scheduled posts reached` };
+	// A kind slot (see above) is outside the cap, and its posts are not counted.
+	const scheduledLastDay = published.filter((row) => row.slot && !row.slotKind && now - Date.parse(row.publishedAt) < DAY).length;
+	if (!isKindSlot(slot) && scheduledLastDay >= cadence.dailyCap) return { item: null, reason: `daily cap of ${cadence.dailyCap} scheduled posts reached` };
 
 	// On a weekend a flagship post waits for Monday instead of filling a lower slot.
 	const holdFlagship = Boolean(cadence.flagshipWeekdaysOnly) && isWeekend(slot.opensAt);
-	const candidates = unpublished.filter((item) => !exclude.has(item.id) && !(holdFlagship && tierOf(item) === 1));
+	// A kind slot takes only its kind; the tiered slots take everything a kind
+	// slot does not own.
+	const reserved = reservedKinds(cadence);
+	const fits = (item) => (isKindSlot(slot) ? item.kind === slot.kind : !reserved.has(item.kind));
+	const candidates = unpublished.filter((item) => fits(item) && !exclude.has(item.id) && !(holdFlagship && tierOf(item) === 1));
 	const ready = candidates.filter((item) => Date.parse(item.notBefore) <= now);
 	const context = { lifts, published, quality, reviews, now };
 	const choose = (pool, order, how) => {
-		for (const tier of order) {
-			const ranked = rankItems(pool.filter((item) => tierOf(item) === tier), context);
+		// A kind slot ranks its kind across every tier at once.
+		for (const tier of isKindSlot(slot) ? [null] : order) {
+			const ranked = rankItems(tier == null ? pool : pool.filter((item) => tierOf(item) === tier), context);
 			if (!ranked.length) continue;
 			const [top] = ranked;
 			return {
 				item: top.item,
 				slot,
-				tier,
-				filledDown: tier > slot.tier,
-				filledUp: tier < slot.tier,
+				tier: tier ?? tierOf(top.item),
+				filledDown: tier != null && tier > slot.tier,
+				filledUp: tier != null && tier < slot.tier,
 				vetoYielded: how === 'veto',
 				score: top.score,
 				parts: top.parts,
@@ -229,7 +259,7 @@ export function pickDue({
 	};
 	const countByTier = (pool) => new Map(TIERS.map((tier) => [tier, pool.filter((item) => tierOf(item) === tier).length]));
 
-	const usual = choose(ready, tierOrder(slot.tier, countByTier(ready)), 'usual');
+	const usual = choose(ready, isKindSlot(slot) ? [] : tierOrder(slot.tier, countByTier(ready)), 'usual');
 	if (usual || !quota) return usual || empty();
 	// Three a day is a quota, not a ceiling (owner, 2026-09-30), so a slot is
 	// never left empty while an approved post could fill it. First a higher
@@ -245,8 +275,9 @@ export function pickDue({
 	);
 
 	function empty() {
-		const embargoed = unpublished.filter((item) => !exclude.has(item.id) && Date.parse(item.notBefore) > now).sort((a, b) => a.notBefore.localeCompare(b.notBefore));
+		const embargoed = unpublished.filter((item) => fits(item) && !exclude.has(item.id) && Date.parse(item.notBefore) > now).sort((a, b) => a.notBefore.localeCompare(b.notBefore));
 		if (embargoed[0]) return { item: null, slot, reason: `nothing is ready for slot ${slot.key}; ${embargoed[0].id} is embargoed until ${embargoed[0].notBefore}` };
-		return { item: null, slot, reason: exclude.size ? `every ready post was held this tick; slot ${slot.key} stays open` : 'queue has no approved unpublished posts' };
+		const none = isKindSlot(slot) ? `queue has no approved unpublished ${slot.kind} for slot ${slot.key}` : 'queue has no approved unpublished posts';
+		return { item: null, slot, reason: exclude.size ? `every ready post was held this tick; slot ${slot.key} stays open` : none };
 	}
 }

@@ -14,7 +14,7 @@
 // reads the timeline again if the stored record has gone stale.
 
 import { loadQueue, validateQueue } from './queue.js';
-import { DEFAULT_CADENCE, SLOT_OPEN_MINUTES, TIERS, pickDue, slotOpenings, tierOf } from './schedule.js';
+import { DEFAULT_CADENCE, SLOT_OPEN_MINUTES, TIERS, isKindSlot, pickDue, reservedKinds, slotLabel, slotOpenings, tierOf } from './schedule.js';
 import { loadLifts } from './priority.js';
 import { loadReview, contentHash } from './review.js';
 import { previewClient, publishItem, xClientFromEnv } from './publisher.js';
@@ -74,29 +74,39 @@ async function preflight(item, root) {
 }
 
 // ── Inventory ───────────────────────────────────────────────────────────────
-// Days of approved, ready stock per tier (one slot per tier per day). Anything
-// under INVENTORY_WARN_DAYS is raised once a day through the platform's ops
-// alerts, so the queue asks for more posts before it goes quiet, instead of
-// after.
+// Days of approved, ready stock per tier (one slot per tier per day), and per
+// kind slot (one item every `everyDays`). Anything under INVENTORY_WARN_DAYS is
+// raised once a day through the platform's ops alerts, so the queue asks for
+// more posts before it goes quiet, instead of after.
 export const INVENTORY_WARN_DAYS = 3;
 
-export function inventory(items, state, root, now = Date.now()) {
+export function inventory(items, state, root, now = Date.now(), cadence = {}) {
 	const publishedIds = new Set((state.published || []).map((row) => row.id));
 	const held = activeHolds(state, items, root, now);
+	const reserved = reservedKinds(cadence);
 	const counts = new Map(TIERS.map((tier) => [tier, 0]));
+	const byKind = new Map([...reserved].map((kind) => [kind, 0]));
 	for (const item of items) {
 		if (item.status !== 'approved' || publishedIds.has(item.id) || held.has(item.id)) continue;
 		if (item.expiresAt && Date.parse(item.expiresAt) <= now) continue;
-		counts.set(tierOf(item), counts.get(tierOf(item)) + 1);
+		if (reserved.has(item.kind)) byKind.set(item.kind, byKind.get(item.kind) + 1);
+		else counts.set(tierOf(item), counts.get(tierOf(item)) + 1);
 	}
-	return TIERS.map((tier) => ({ tier, days: counts.get(tier), low: counts.get(tier) < INVENTORY_WARN_DAYS }));
+	const tiers = TIERS.map((tier) => ({ tier, days: counts.get(tier), low: counts.get(tier) < INVENTORY_WARN_DAYS }));
+	const kinds = (cadence.slots || []).filter(isKindSlot).map((slot) => {
+		const days = byKind.get(slot.kind) * Math.max(1, Math.floor(Number(slot.everyDays) || 1));
+		return { kind: slot.kind, count: byKind.get(slot.kind), days, low: days < INVENTORY_WARN_DAYS };
+	});
+	return [...tiers, ...kinds];
 }
+
+export const stockLabel = (row) => (row.kind ? `${row.kind}: ${row.count} (${row.days} day(s))` : `T${row.tier}: ${row.days} day(s)`);
 
 async function alertLowInventory(state, store, stock, now) {
 	const today = new Date(now).toISOString().slice(0, 10);
 	if (!stock.some((row) => row.low) || state.inventoryAlertedOn === today) return null;
 	const { sendOpsAlert } = await import('../alerts.js');
-	const summary = stock.map((row) => `T${row.tier}: ${row.days} day(s)`).join(', ');
+	const summary = stock.map(stockLabel).join(', ');
 	await sendOpsAlert('x-content: approved post stock is low', `${summary}. Draft, review, and approve more posts: npm run x:content -- plan`);
 	state.inventoryAlertedOn = today;
 	await store.save(state);
@@ -171,7 +181,7 @@ async function alertEmptySlot(state, store, slot, reason) {
 	state.emptySlotAlerted[slot.key] = new Date().toISOString();
 	await store.save(state);
 	const { sendOpsAlert } = await import('../alerts.js');
-	await sendOpsAlert(`x-content: slot ${slot.key} (T${slot.tier}) is open with nothing to post`, `${reason}. Approve or advance a post now: npm run x:content -- advance --ship`);
+	await sendOpsAlert(`x-content: slot ${slot.key} (${slotLabel(slot)}) is open with nothing to post`, `${reason}. Approve or advance a post now: npm run x:content -- advance --ship`);
 }
 
 export function missedSlots(state, cadence, seed, now = Date.now()) {
@@ -188,7 +198,7 @@ async function alertMissedSlots(state, store, cadence, seed, now) {
 	for (const slot of missed) state.missedSlots[slot.key] = new Date(now).toISOString();
 	await store.save(state);
 	const { sendOpsAlert } = await import('../alerts.js');
-	await sendOpsAlert(`x-content: ${missed.length} slot(s) closed with no post`, missed.map((slot) => `${slot.key} (T${slot.tier})`).join(', '));
+	await sendOpsAlert(`x-content: ${missed.length} slot(s) closed with no post`, missed.map((slot) => `${slot.key} (${slotLabel(slot)})`).join(', '));
 	return missed.map((slot) => slot.key);
 }
 
@@ -263,7 +273,7 @@ export async function runTick({
 }
 
 async function fillSlot({ queue, state, store, root, now, requestedId, client, checks, context, publishable, blocked }) {
-	const stock = inventory(publishable, state, root, now);
+	const stock = inventory(publishable, state, root, now, queue.cadence || {});
 	const lowStock = requestedId ? null : await alertLowInventory(state, store, stock, now).catch(() => null);
 
 	const exclude = requestedId ? new Set() : activeHolds(state, publishable, root, now);
@@ -278,7 +288,7 @@ async function fillSlot({ queue, state, store, root, now, requestedId, client, c
 		const item = decision.item;
 		if (decision.vetoYielded) {
 			const { sendOpsAlert } = await import('../alerts.js');
-			await sendOpsAlert(`x-content: ${item.id} goes out before its veto window ends`, `Slot ${decision.slot.key} (T${decision.slot.tier}) had nothing else ready. Its embargo ran until ${item.notBefore}.`, { severity: 'info' }).catch(() => {});
+			await sendOpsAlert(`x-content: ${item.id} goes out before its veto window ends`, `Slot ${decision.slot.key} (${slotLabel(decision.slot)}) had nothing else ready. Its embargo ran until ${item.notBefore}.`, { severity: 'info' }).catch(() => {});
 		}
 
 		// A resumed thread must finish what it started, so it skips pre-flight.
@@ -294,7 +304,7 @@ async function fillSlot({ queue, state, store, root, now, requestedId, client, c
 		}
 
 		try {
-			const meta = decision.slot ? { slot: decision.slot.key, tier: decision.tier, slotTier: decision.slot.tier } : {};
+			const meta = decision.slot ? { slot: decision.slot.key, tier: decision.tier, slotTier: decision.slot.tier, ...(decision.slot.kind ? { slotKind: decision.slot.kind } : {}) } : {};
 			const row = await publishItem({ item, client, root, state, store, account: queue.account, meta, now });
 			if (state.holds?.[item.id]) {
 				delete state.holds[item.id];

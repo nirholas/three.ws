@@ -16,6 +16,16 @@
 //                        decides that
 //   the review passed    on the editor's own verdict, not on an override
 //
+// An X Article has its own rule, `approval.articles` (owner, 2026-10-08: one
+// Article every two days, released without the owner). An Article is long-form
+// writing about how something works, so there is rarely a reel to film; what
+// stands in for the reel is the review itself, which re-ran every probe the
+// Article declares against production, resolved every link in it, and held
+// every sentence of its body to the claims ledger. With `articles` on, an
+// Article is not held back by its tier or by having no scenario, and every
+// other condition still applies, including a tag anywhere in the body. An
+// Article that does carry a scenario must still have a current proof.
+//
 // A release by policy is never immediate. The post is embargoed for
 // `vetoHours`, and the release is written to the ops alerts, so there is always
 // a window in which `npm run x:content -- pause <id>` takes it back.
@@ -23,9 +33,11 @@
 import { proofProblems } from './reel.js';
 import { tierOf } from './schedule.js';
 import { mentionsIn } from './editorial.js';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const HOUR = 3_600_000;
-export const DEFAULT_APPROVAL = { mode: 'owner', tiers: [2, 3], vetoHours: 24 };
+export const DEFAULT_APPROVAL = { mode: 'owner', tiers: [2, 3], vetoHours: 24, articles: false };
 export const MIN_VETO_HOURS = 1;
 
 export function approvalPolicy(queue) {
@@ -36,6 +48,7 @@ export function approvalPolicy(queue) {
 		mode: raw.mode === 'auto' ? 'auto' : 'owner',
 		tiers,
 		vetoHours: Number.isFinite(veto) && veto >= MIN_VETO_HOURS ? veto : DEFAULT_APPROVAL.vetoHours,
+		articles: raw.articles === true,
 	};
 }
 
@@ -43,14 +56,20 @@ export function approvalPolicy(queue) {
 export function policyBlockers(item, record, policy, root, now = Date.now()) {
 	if (policy.mode !== 'auto') return ['the queue leaves approval to the owner'];
 	const reasons = [];
-	if (!policy.tiers.includes(tierOf(item))) reasons.push(`tier ${tierOf(item)} posts are approved by the owner`);
-	if (!item.scenario) reasons.push('it was never filmed against the product');
-	else reasons.push(...proofProblems(item, root, now).map((problem) => `proof: ${problem}`));
-	const tagged = mentionsIn((item.posts || []).map((post) => post.text).join('\n'));
+	const article = item.kind === 'article' && policy.articles;
+	if (!article && !policy.tiers.includes(tierOf(item))) reasons.push(`tier ${tierOf(item)} posts are approved by the owner`);
+	if (item.scenario) reasons.push(...proofProblems(item, root, now).map((problem) => `proof: ${problem}`));
+	else if (!article) reasons.push('it was never filmed against the product');
+	const tagged = mentionsIn([...(item.posts || []).map((post) => post.text), ...(item.kind === 'article' ? [item.article?.title, articleBody(item, root)] : [])].filter(Boolean).join('\n'));
 	if (tagged.length) reasons.push(`it tags ${tagged.join(', ')}`);
 	if (!record?.passed) reasons.push('its review did not pass');
 	else if (record.editor?.verdict !== 'publish') reasons.push(`the editor's verdict was ${record.editor?.verdict || 'never given'}`);
 	return reasons;
+}
+
+function articleBody(item, root) {
+	const path = item.article?.body && join(root, item.article.body);
+	return path && existsSync(path) ? readFileSync(path, 'utf8') : '';
 }
 
 // The embargo a policy release carries: the later of the one the post already

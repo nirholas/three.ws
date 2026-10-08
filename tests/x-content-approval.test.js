@@ -62,7 +62,9 @@ describe('approval policy', () => {
 	it('leaves approval with the owner unless the queue says otherwise', () => {
 		expect(approvalPolicy({})).toEqual(DEFAULT_APPROVAL);
 		expect(approvalPolicy({ approval: { mode: 'automatic' } }).mode).toBe('owner');
-		expect(approvalPolicy({ approval: { mode: 'auto', tiers: [1, 2, 9, 'x'], vetoHours: 6 } })).toEqual({ mode: 'auto', tiers: [1, 2], vetoHours: 6 });
+		expect(approvalPolicy({ approval: { mode: 'auto', tiers: [1, 2, 9, 'x'], vetoHours: 6 } })).toEqual({ mode: 'auto', tiers: [1, 2], vetoHours: 6, articles: false });
+		expect(approvalPolicy({ approval: { mode: 'auto', articles: 'yes' } }).articles).toBe(false);
+		expect(approvalPolicy({ approval: { mode: 'auto', articles: true } }).articles).toBe(true);
 	});
 
 	it('never shortens the veto window to nothing', () => {
@@ -100,6 +102,23 @@ describe('approval policy', () => {
 		expect(policyBlockers(item(), { passed: true, editor: { verdict: 'revise' } }, AUTO, sandbox(), NOW)).toEqual(["the editor's verdict was revise"]);
 		expect(policyBlockers(item(), { passed: false, editor: { verdict: 'revise' } }, AUTO, sandbox(), NOW)).toEqual(['its review did not pass']);
 		expect(policyBlockers(item(), null, AUTO, sandbox(), NOW)).toEqual(['its review did not pass']);
+	});
+
+	it('releases an Article that passed review when the queue lets articles go by policy', () => {
+		const dir = sandbox();
+		mkdirSync(join(dir, 'data/x-content/articles'), { recursive: true });
+		writeFileSync(join(dir, 'data/x-content/articles/rig.md'), '## How it works\n\nThe retargeter maps every bone.\n');
+		const article = item({ kind: 'article', tier: 1, scenario: undefined, probes: [{ type: 'api', url: 'https://three.ws/api/healthz' }], article: { title: 'How three.ws retargets motion', body: 'data/x-content/articles/rig.md' }, posts: [{ text: 'The long version of how one clip library drives any humanoid skeleton.' }] });
+		const ARTICLES = { ...AUTO, articles: true };
+		expect(policyBlockers(article, PASSED, ARTICLES, dir, NOW)).toEqual([]);
+		// Without the switch an Article is a tier 1 item nobody filmed.
+		expect(policyBlockers(article, PASSED, AUTO, dir, NOW)).toEqual(['tier 1 posts are approved by the owner', 'it was never filmed against the product']);
+		// Every other condition still holds, including a tag deep in the body.
+		expect(policyBlockers(article, { passed: true, editor: { verdict: 'revise' } }, ARTICLES, dir, NOW)).toEqual(["the editor's verdict was revise"]);
+		writeFileSync(join(dir, 'data/x-content/articles/rig.md'), '## Credits\n\nThanks to @nvidia for the GPUs.\n');
+		expect(policyBlockers(article, PASSED, ARTICLES, dir, NOW)).toEqual(['it tags @nvidia']);
+		// A post is not an Article: the switch does not release it unfilmed.
+		expect(policyBlockers(item({ scenario: undefined }), PASSED, ARTICLES, dir, NOW)).toEqual(['it was never filmed against the product']);
 	});
 
 	it('embargoes a release for the veto window, or longer if the post already waited for more', () => {
