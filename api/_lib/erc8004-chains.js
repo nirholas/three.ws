@@ -157,11 +157,14 @@ export const CHAINS = [
 		explorer: 'https://polygonscan.com',
 		// High block rate + busy public RPCs; cap eth_getLogs ranges below default.
 		blockChunk: 500,
+		// polygon-rpc.com is gone: since 2026-10 it answers every call with 401
+		// "API key disabled, reason: tenant disabled". Tenderly serves keyless
+		// eth_getLogs at this chain's 500-block window (probed 2026-10-08).
 		rpcUrls: [
-			'https://polygon-rpc.com',
+			'https://polygon.gateway.tenderly.co',
+			'https://polygon-bor-rpc.publicnode.com',
 			'https://polygon.drpc.org',
 			'https://1rpc.io/matic',
-			'https://polygon-bor-rpc.publicnode.com',
 		],
 	},
 	{
@@ -288,10 +291,10 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://sepolia.etherscan.io',
-		// rpc2.sepolia.org is dead (no route). Lead with dRPC + ethPandaOps + Tenderly,
-		// all verified serving eth_getLogs keyless; publicnode last (Vercel-IP 403s).
+		// rpc2.sepolia.org is dead (no route), and dRPC dropped Sepolia from its free
+		// plan ("chain is not available on free plan", 2026-10-08). Lead with
+		// 1RPC + ethPandaOps + Tenderly; publicnode last (Vercel-IP 403s).
 		rpcUrls: [
-			'https://sepolia.drpc.org',
 			'https://1rpc.io/sepolia',
 			'https://rpc.sepolia.ethpandaops.io',
 			'https://sepolia.gateway.tenderly.co',
@@ -317,7 +320,16 @@ export const CHAINS = [
 		testnet: true,
 		registry: IDENTITY_REGISTRY_TESTNET,
 		explorer: 'https://amoy.polygonscan.com',
-		rpcUrls: ['https://rpc-amoy.polygon.technology', 'https://polygon-amoy.drpc.org'],
+		// rpc-amoy.polygon.technology no longer resolves (ENOTFOUND), and dRPC's free
+		// tier serves Amoy eth_getLogs only up to ~100 blocks, so with those two as
+		// the whole list this cursor sat 26 days and 2.3 million blocks behind head.
+		// PublicNode and Tenderly both serve the full 8,000-block window keyless,
+		// including history back past the stalled cursor (probed 2026-10-08).
+		rpcUrls: [
+			'https://polygon-amoy-bor-rpc.publicnode.com',
+			'https://polygon-amoy.gateway.tenderly.co',
+			'https://polygon-amoy.drpc.org',
+		],
 	},
 	{
 		id: 43113,
