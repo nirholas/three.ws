@@ -13,8 +13,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 const sqlMock = vi.fn(async () => []);
 const unlockBadge = vi.fn(async () => true);
 
+// A query helper may build a clause as a nested sql`` fragment (launch-counts.js
+// does, for its LIMIT). Only a statement that selects is a query that runs, so
+// fragments pass through without consuming a queued result.
+const isFragment = (strings) => !/\bselect\b/i.test(strings.join(''));
+
 vi.mock('../../api/_lib/db.js', () => ({
-	sql: sqlMock,
+	sql: (strings, ...values) => (isFragment(strings) ? { strings, values } : sqlMock(strings, ...values)),
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 	isStoragePressured: async () => ({ pressured: false }),
