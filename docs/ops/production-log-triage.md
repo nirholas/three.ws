@@ -655,6 +655,89 @@ HTTP 503 GET /health   (model-* service)   textPayload: The request failed becau
 
 ---
 
+## 🟡 `Container terminated on signal 9.` on `model-trellis` (gpu-worker-sigkill)
+
+```
+WARNING  [model-trellis] The request failed because either the HTTP response was malformed or connection to the instance had an error.
+WARNING  [model-trellis] Container terminated on signal 9.
+```
+
+- **Source:** an out-of-memory kill in the middle of a job. The L4 instance is
+  already at Cloud Run's 32 GiB ceiling for that GPU, and Cloud Run does not
+  print its usual "Memory limit of N MiB exceeded" line for these instances, so
+  the bare SIGKILL is the only trace (the generic `run-oom` signature never
+  fires). The 5xx just before it is whatever poll was in flight when the
+  container died; the caller treats a poll error as "still running".
+- **How it was proven (2026-10-08):** twelve kills in five days, every one on
+  the single warm instance. The revision's memory utilization climbed in steps
+  after heavy jobs and never came back (0.46, 0.56, 0.71, 0.81, 0.88, 0.91), and
+  each kill landed seconds after the job log printed
+  `After remove invisible faces`, i.e. inside the UV unwrap and texture bake.
+  Read the curve yourself:
+  ```sh
+  TOKEN=$(gcloud auth print-access-token)
+  curl -s -G -H "Authorization: Bearer $TOKEN" \
+    "https://monitoring.googleapis.com/v3/projects/aerial-vehicle-466722-p5/timeSeries" \
+    --data-urlencode 'filter=metric.type="run.googleapis.com/container/memory/utilizations" AND resource.labels.service_name="model-trellis" AND resource.labels.location="us-central1"' \
+    --data-urlencode "interval.startTime=$(date -u -d '-24 hours' +%FT%TZ)" \
+    --data-urlencode "interval.endTime=$(date -u +%FT%TZ)" \
+    --data-urlencode "aggregation.alignmentPeriod=1200s" \
+    --data-urlencode "aggregation.perSeriesAligner=ALIGN_PERCENTILE_50"
+  ```
+- **User impact before the fix:** the killed job and the one queued behind it
+  kept a durable `running` record for 30 minutes, long after the forge client
+  stopped polling, so lane failover never redispatched them
+  (`forge_creations` rows ended as `task orphaned` or stuck in `generating`).
+- **Fix (code, in `workers/model-trellis`):** `MALLOC_ARENA_MAX=2` plus
+  `malloc_trim` after every job stop glibc hoarding freed heap per executor
+  thread; the 3 GiB of staged weights in the in-memory `/tmp` are deleted once
+  the model is on the GPU; an instance that has still grown past 80% of its
+  limit drains and restarts between jobs ("recycling instance" in its log)
+  instead of dying inside one; and every live task heartbeats its record, so an
+  orphan now fails within ~3 minutes while the client is still polling and the
+  forge fails it over. See `workers/model-trellis/instance_health.py`.
+- **If it recurs after that deploy:** it is a regression or a new leak. Each job
+  now logs `memory after job: …`; find where the step happens.
+- **Monitor signature:** `gpu-worker-sigkill` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), scoped to
+  `model-trellis`, classified `investigate`.
+
+---
+
+## 🟡 Revision never Ready on a single-GPU service: "Startup probes timed out after 4m" with no container logs
+
+```
+Ready condition status changed to False for Revision model-hunyuan3d-21-rtx-000NN-xxx with message:
+Container failed to become healthy. Startup probes timed out after 4m (1 attempts with a period of 4m each).
+```
+
+- **Source:** not the probe budget and not the image. `model-hunyuan3d-21-rtx`
+  runs on the RTX PRO 6000 quota, which Cloud Run enforces at **one** GPU in
+  us-central1, and the serving revision holds that GPU with `min-instances=1`.
+  A rolling update needs a second GPU instance for the new revision before
+  traffic can move, so that instance never starts: its log shows only
+  `Starting new instance` once a minute, with no container output at all, until
+  the 4 minute startup window expires. Traffic stays on the old revision, so
+  users are unaffected, but the change never ships. The 2026-09-18 attempt
+  (revision 00002, adding `U2NET_HOME`) sat in this state for three weeks.
+- **Resolve (config-only, pre-approved; ~10 minutes without this lane while the
+  new instance loads, forge fails over meanwhile):** release the GPU, roll, then
+  restore autoscaling. Manual scaling is a service-level setting, so neither the
+  first nor the last step creates a revision:
+  ```sh
+  gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --scaling=0
+  gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --update-env-vars KEY=VALUE   # or deploy the new image
+  gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --scaling=auto --max=1
+  ```
+  `workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml` runs this same
+  sequence around its deploy, and restores autoscaling even when the deploy
+  fails. Applied 2026-10-08: revision `model-hunyuan3d-21-rtx-00003-jms` became
+  Ready in 35 s.
+- **Monitor:** the deep sweep's fleet readiness probe (`npm run triage:gcp:deep`)
+  reports the service as not Ready.
+
+---
+
 ## 🟡 `[x402-audit] insert failed … db query exceeded 3000ms deadline`
 
 - **Source:** [api/_lib/x402/audit-log.js](../../api/_lib/x402/audit-log.js) `logPaymentEvent`.

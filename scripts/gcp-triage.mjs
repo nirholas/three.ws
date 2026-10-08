@@ -86,6 +86,18 @@ const KNOWN_SIGNATURES = [
 		action: 'Container OOM. Raise the service memory: gcloud run services update <service> --region us-central1 --memory <2x-current> (config-only, pre-approved).',
 	},
 	{
+		// Scoped: Cloud Run never prints its "memory limit exceeded" line for
+		// these GPU instances, so a bare SIGKILL is the only trace an OOM leaves.
+		// It stays `investigate` because the code fix (heap trim, freed staged
+		// weights, recycle-between-jobs) should have ended it; a recurrence is a
+		// regression or a new leak, not noise.
+		id: 'gpu-worker-sigkill',
+		match: /Container terminated on signal 9/i,
+		services: ['model-trellis'],
+		class: 'investigate',
+		action: `model-trellis was SIGKILLed, almost always an out-of-memory kill mid-job: its L4 instance is already at Cloud Run's 32 GiB ceiling, so --memory cannot be raised. Confirm with the revision's memory utilization (a step ratchet toward 0.9 before the kill; query in the runbook) and the job log stopping inside mesh postprocess. The in-flight job's record goes orphaned and expires within ~3 min so forge fails it over. A clean "recycling instance" restart is the designed alternative and is not this signature. ${RUNBOOK} §gpu-worker-sigkill.`,
+	},
+	{
 		id: 'run-no-instance',
 		match: /no available instance|The request was aborted because there was no available instance/i,
 		class: 'env-action',

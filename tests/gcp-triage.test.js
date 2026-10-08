@@ -41,6 +41,15 @@ describe('gcp-triage classify', () => {
 		expect(classify(line, ['three-ws-api'])?.id).not.toBe('ccv-ai-providers-unavailable');
 	});
 
+	it('classifies a bare SIGKILL as the trellis OOM only on model-trellis', () => {
+		const line = 'Container terminated on signal 9.';
+		const onTrellis = classify(line, ['model-trellis']);
+		expect(onTrellis?.id).toBe('gpu-worker-sigkill');
+		expect(onTrellis?.class).toBe('investigate');
+		expect(classify(line, ['three-ws-api'])).toBeNull();
+		expect(classify(line, ['model-hunyuan3d-21-rtx'])).toBeNull();
+	});
+
 	it('returns null for an unknown message', () => {
 		expect(classify('some brand new failure nobody has seen', ['three-ws-api'])).toBeNull();
 	});
