@@ -80,6 +80,30 @@ const STUDIO_ALLOWED_KEYS = new Set([
 	'skills',
 ]);
 
+// The agent's home link is rendered as an `href` on other people's screens
+// (featured agent, agent picker, galaxy, IRL card), so it may only ever be an
+// http(s) URL or a same-origin path. Anything else (`javascript:`, `data:`, a
+// protocol-relative `//host`) is refused at the write boundary.
+// Returns { value } with the cleaned URL (null when absent) or { error }.
+export function normalizeHomeUrl(input) {
+	if (input == null || input === '') return { value: null };
+	if (typeof input !== 'string') return { error: 'home_url must be a string' };
+	const v = input.trim();
+	if (!v) return { value: null };
+	if (v.length > 2048) return { error: 'home_url is too long' };
+	if (v.startsWith('/') && !v.startsWith('//') && !v.startsWith('/\\')) return { value: v };
+	let u;
+	try {
+		u = new URL(v);
+	} catch {
+		return { error: 'home_url must be an http(s) URL or a path starting with /' };
+	}
+	if (u.protocol !== 'https:' && u.protocol !== 'http:') {
+		return { error: 'home_url must be an http(s) URL or a path starting with /' };
+	}
+	return { value: u.href };
+}
+
 // Returns an error message when the client-supplied meta.studio bag is malformed,
 // or null when it's absent (nothing to validate) / null (explicit clear) / valid.
 // Validates the CLIENT INPUT only — never re-validates already-stored data, so a
@@ -434,6 +458,8 @@ async function handleUpdate(req, res, id, auth) {
 	// studio_version) so the shared meta.studio contract stays clean for P1-P5.
 	const studioErr = validateStudioMeta(body.meta);
 	if (studioErr) return error(res, 400, 'validation_error', studioErr);
+	const homeUrl = normalizeHomeUrl(body.home_url);
+	if (homeUrl.error) return error(res, 400, 'validation_error', homeUrl.error);
 
 	// Server-side meta merge. GET strips encrypted_wallet_key /
 	// encrypted_solana_secret before returning meta, so a client read-modify-write
@@ -501,7 +527,7 @@ async function handleUpdate(req, res, id, auth) {
 			skills         = COALESCE(${body.skills || null}, skills),
 			meta           = COALESCE(${mergedMeta ? JSON.stringify(mergedMeta) : null}::jsonb, meta),
 			persona_prompt = COALESCE(${personaPrompt}, persona_prompt),
-			home_url       = COALESCE(${body.home_url || null}, home_url),
+			home_url       = COALESCE(${homeUrl.value}, home_url),
 			updated_at     = now()
 		WHERE id = ${id}
 		RETURNING *
