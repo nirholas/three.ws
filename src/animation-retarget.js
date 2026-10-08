@@ -834,6 +834,9 @@ export function retargetClipToRig(clip, rig, opts = {}) {
 	const map = canonicalNodeMapFromRig(rig);
 	const targetRest = canonicalRestMapFromRig(rig);
 	const targetWorldRest = canonicalWorldRestMapFromRig(rig);
+	// Same re-aim the viewer and server paths apply, so an A-posed rig previewed
+	// or exported from the Animation Studio keeps its arms out of the torso.
+	const targetRestDirections = canonicalRestDirectionMapFromRig(rig);
 	let hipScale = 1;
 	if (opts.scaleHips !== false) {
 		const targetY = hipRestHeight(rig);
@@ -857,6 +860,7 @@ export function retargetClipToRig(clip, rig, opts = {}) {
 		minCoverage: opts.minCoverage,
 		targetRest,
 		targetWorldRest,
+		targetRestDirections,
 		hipsParentWorldQuat: hipsParent,
 		morphTargets: opts.morphTargets ?? (rig.root ? morphTargetMapFromObject(rig.root) : undefined),
 	});

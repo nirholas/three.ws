@@ -79,7 +79,7 @@ The clip URLs above are real: three.ws serves its shared clip library with open 
 **Canonicalize** (`glb-canonicalize`):
 | Export | What it does |
 | --- | --- |
-| `CANONICAL_BONES` | The frozen 53-bone canonical humanoid set |
+| `CANONICAL_BONES` | The frozen 52-bone canonical humanoid set |
 | `canonicalizeBoneName(name)` | One bone name → canonical name (or passthrough) |
 | `canonicalizeJointNodes(json)` | Rename joints across a parsed glTF JSON tree |
 | `canonicalizeArmatureOrientation(json)` | Normalize armature up-axis quirks |
