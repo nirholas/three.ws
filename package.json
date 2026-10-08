@@ -699,7 +699,7 @@
 		"@x402/fetch": "^2.14.0",
 		"adaptive-expressions": "^4.23.3",
 		"adaptivecards-templating": "^2.3.1",
-		"cspell-lib": "^10.3.3",
+		"cspell-lib": "^10.3.6",
 		"dotenv": "^17.4.2",
 		"es-module-lexer": "^3.0.2",
 		"fbx2gltf": "^0.9.7-p1",
