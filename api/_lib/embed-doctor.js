@@ -33,6 +33,9 @@
 //      sends the developer to the wrong line).
 
 import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
+import { guardPageRequests } from './page-request-guard.js';
+
+export { guardPageRequests };
 
 /** The canonical custom element, used in every fix snippet the report writes. */
 export const EMBED_TAG = 'agent-3d';
@@ -1173,6 +1176,7 @@ export async function collectFromUrl({
 			'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 three.ws-EmbedDoctor/1.0 (+https://three.ws/embed-doctor)',
 		);
 		const recorders = instrument(page);
+		await guardPageRequests(page, { platformOrigin });
 		let response = null;
 		try {
 			response = await page.goto(url, {
@@ -1238,10 +1242,11 @@ export async function collectFromSnippet({
 		// Served from the platform origin so relative URLs and module imports
 		// resolve exactly as they would in a browser, which `data:` URLs break.
 		let response = null;
-		await page.setRequestInterception(true);
 		const sandboxUrl = `${platformOrigin}/__embed-doctor-sandbox`;
-		page.on('request', (req) => {
-			if (req.url() === sandboxUrl) {
+		await guardPageRequests(page, {
+			platformOrigin,
+			respond: (req) => {
+				if (req.url() !== sandboxUrl) return false;
 				req
 					.respond({
 						status: 200,
@@ -1249,9 +1254,8 @@ export async function collectFromSnippet({
 						body: snippetHostHtml(snippet),
 					})
 					.catch(() => {});
-				return;
-			}
-			req.continue().catch(() => {});
+				return true;
+			},
 		});
 		response = await page.goto(sandboxUrl, {
 			waitUntil: 'domcontentloaded',
