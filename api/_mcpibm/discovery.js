@@ -10,11 +10,11 @@ import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 
 export const RESOURCE_DESCRIPTION =
-	'three.ws x402 MCP — Streamable HTTP (MCP 2025-06-18) exposing IBM Granite foundation models as ' +
+	'three.ws x402 MCP: Streamable HTTP (MCP 2025-06-18) exposing IBM Granite foundation models as ' +
 	'pay-per-call tools: ibm_granite_chat (conversational AI), ibm_granite_code (generate/review/refactor/' +
 	'explain/test/document), ibm_granite_embed (multilingual embeddings), ibm_granite_analyze (structured ' +
 	'document analysis), and ibm_granite_forecast (zero-shot time-series). Pay per call in USDC on Base or ' +
-	'Solana mainnet — no IBM Cloud account required. Operated by three.ws.';
+	'Solana mainnet, no IBM Cloud account required. Operated by three.ws.';
 
 // Endpoint-level v2 bazaar discovery entry, shaped exactly like the validator
 // expects (see api/_lib/x402-spec.js → bazaarExtension). Describes how to POST a
@@ -65,7 +65,7 @@ function graniteBazaarExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names: ibm_granite_chat, ibm_granite_code, ibm_granite_embed, ibm_granite_analyze, ibm_granite_forecast — see tools/list.',
+					'For tools/call: { name, arguments }. Tool names: ibm_granite_chat, ibm_granite_code, ibm_granite_embed, ibm_granite_analyze, ibm_granite_forecast; see tools/list.',
 			},
 		},
 	};

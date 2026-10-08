@@ -12,7 +12,7 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 
 export const RESOURCE_DESCRIPTION =
 	'three.ws 3D Studio MCP: Streamable HTTP (MCP 2025-06-18) that turns text or images into ' +
-	'interactive, animation-ready 3D models: text_to_3d (prompt → GLB), image_to_3d (1–4 reference ' +
+	'interactive, animation-ready 3D models: text_to_3d (prompt → GLB), image_to_3d (1 to 4 reference ' +
 	'views → GLB), generation_status (poll a job for the finished model), auto_rig_model, plus mesh ' +
 	'editing (retexture, remesh, stylize, segment) and PBR material generation. Connect with a ' +
 	'three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no API key. ' +

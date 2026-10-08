@@ -18,8 +18,15 @@ export const RESOURCE_DESCRIPTION =
 	'wallet on the x402 network: wallet_status (address, USDC and SOL balance, spend caps), ' +
 	'find_services (search the live facilitator network for paid services), pay_and_call (call a ' +
 	'paid x402 endpoint and settle the USDC payment from the signed-in user own three.ws agent ' +
-	'wallet, bounded by their caps), provision_wallet, and monetize_endpoint (list your own paid ' +
-	'service). Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana ' +
+	'wallet, bounded by their caps), provision_wallet, monetize_endpoint (list your own paid ' +
+	'service), and read_resource (live three:// wallet, spend limit and service data). The agent ' +
+	'marketplace: browse_marketplace, browse_public_agents, get_listing, get_marketplace_history, ' +
+	'preview_marketplace_action, create_marketplace_listing, delist_marketplace_listing, place_bid, ' +
+	'buy_now, get_my_bids, get_received_bids, accept_marketplace_bid, reject_marketplace_bid, ' +
+	'withdraw_marketplace_bid, get_agent_transfer and resume_agent_transfer. Prediction markets: ' +
+	'predictions_events, predictions_event, predictions_positions, predictions_open_preview, ' +
+	'predictions_open, predictions_close_preview, predictions_close, predictions_redeem_preview, ' +
+	'predictions_redeem and predictions_watch. Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana ' +
 	'mainnet, no API key. Operated by three.ws.';
 
 // Endpoint-level v2 bazaar discovery entry, shaped exactly like the validator
