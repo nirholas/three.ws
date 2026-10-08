@@ -3243,6 +3243,14 @@
 					"added": "2026-10-08"
 				},
 				{
+					"path": "/docs/chart-companion",
+					"title": "Docs · Chart Companion",
+					"description": "How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-08"
+				},
+				{
 					"path": "/docs/coin3d-embed",
 					"title": "Docs · Token in 3D, as an embed",
 					"description": "Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.",
