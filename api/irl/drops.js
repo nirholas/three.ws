@@ -28,6 +28,7 @@ import { cors, json, wrap, error, rateLimited, readJson } from '../_lib/http.js'
 import { ataExists } from '../_lib/solana/read-guards.js';
 import { limits, clientIp, limitFailClosedRead } from '../_lib/rate-limit.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
 import { verifyFixToken, fixEnforced } from '../_lib/irl-presence.js';
@@ -226,6 +227,9 @@ async function handleCreate(req, res, { body, userId, deviceToken, session }) {
 
 // ── agent bounty (server-funded from the agent's custodial wallet) ─────────────
 async function handleAgentBounty(req, res, { body, userId, agentId }) {
+	// Cookie-authed spend from a custodial agent wallet: same CSRF bar as every
+	// other route that signs with an agent key (world-lines, wallet send).
+	if (!(await requireCsrf(req, res, userId))) return;
 	if (!(await requireRealFundsAgreement(req, res, { userId, context: 'irl-agent-bounty' }))) return;
 	const loaded = await loadAgentForSigning(agentId, userId, { reason: 'irl_bounty_fund' });
 	if (loaded.error) return error(res, loaded.error.status, loaded.error.code, loaded.error.msg);

@@ -346,8 +346,11 @@ export async function confirmFunding({ drop, signature, refundAddress = null }) 
 // ── claim (atomic reservation under advisory lock) ────────────────────────────
 /**
  * Atomically reserve a claim slot for a claimant. Serialized per drop by an
- * advisory lock; bounded by max_claims; idempotent per claimant (a live claim
- * blocks a second). Returns { ok, claimId, amount_atomics, asset } on success, or
+ * advisory lock; bounded by max_claims; idempotent per claimant AND per payout
+ * wallet (a live claim blocks a second). The wallet half matters because an
+ * anonymous claimant's identity is a self-chosen device token: without it one
+ * person rotating the x-irl-device header drains every slot of a multi-claim
+ * drop into a single wallet. Returns { ok, claimId, amount_atomics, asset } on success, or
  * { ok:false, reason } where reason ∈ inactive | expired | exhausted | already_claimed.
  */
 export async function reserveClaim({ dropId, claimantUserId = null, claimantDevice = null, claimantKey, claimWallet }) {
@@ -372,7 +375,8 @@ export async function reserveClaim({ dropId, claimantUserId = null, claimantDevi
 			  AND d.claims_count < d.max_claims
 			  AND NOT EXISTS (
 			      SELECT 1 FROM irl_drop_claims c
-			      WHERE c.drop_id = d.id AND c.claimant_key = ${claimantKey}
+			      WHERE c.drop_id = d.id
+			        AND (c.claimant_key = ${claimantKey} OR c.claim_wallet = ${claimWallet})
 			        AND c.status IN ('pending','confirmed')
 			  )
 			RETURNING id, amount_atomics, asset
@@ -394,7 +398,9 @@ export async function reserveClaim({ dropId, claimantUserId = null, claimantDevi
 			(SELECT (claims_count >= max_claims) FROM d) AS is_full,
 			(SELECT EXISTS (
 				SELECT 1 FROM irl_drop_claims c
-				WHERE c.drop_id = ${dropId} AND c.claimant_key = ${claimantKey} AND c.status IN ('pending','confirmed')
+				WHERE c.drop_id = ${dropId}
+				  AND (c.claimant_key = ${claimantKey} OR c.claim_wallet = ${claimWallet})
+				  AND c.status IN ('pending','confirmed')
 			)) AS already
 	`;
 	const r = rows[0] || {};

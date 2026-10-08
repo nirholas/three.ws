@@ -63,6 +63,18 @@ vi.mock('../../api/_lib/db.js', () => ({
 let sessionUser = null;
 vi.mock('../../api/_lib/auth.js', () => ({ getSessionUser: vi.fn(async () => sessionUser) }));
 
+// CSRF: refuse unless the header is present, the contract the real helper enforces
+// for a cookie-borne request.
+const requireCsrfMock = vi.fn(async (req, res) => {
+	if (req.headers['x-csrf-token']) return true;
+	res.statusCode = 403;
+	res.end(JSON.stringify({ error: 'csrf_missing' }));
+	return false;
+});
+vi.mock('../../api/_lib/csrf.js', () => ({ requireCsrf: (...a) => requireCsrfMock(...a) }));
+const realFundsMock = vi.fn(async () => true);
+vi.mock('../../api/_lib/real-funds-agreement.js', () => ({ requireRealFundsAgreement: (...a) => realFundsMock(...a) }));
+
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		publicIp: vi.fn(async () => ({ success: true })),
@@ -174,5 +186,19 @@ describe('write paths refuse before any custody work', () => {
 	it('405s an unsupported method', async () => {
 		const { res } = await call('PUT', '/api/irl/drops');
 		expect(res.statusCode).toBe(405);
+	});
+});
+
+describe('agent bounty spends a custodial wallet, so it requires CSRF', () => {
+	it('403s a signed-in agent-bounty create without an X-CSRF-Token, before any signing', async () => {
+		sessionUser = { id: 'user-1' };
+		realFundsMock.mockClear();
+		const { res, body } = await call('POST', '/api/irl/drops', {
+			body: { agentId: 'agent-1', amount: 1, maxClaims: 1, lat: 1, lng: 1 },
+		});
+		expect(res.statusCode).toBe(403);
+		expect(body.error).toBe('csrf_missing');
+		expect(realFundsMock).not.toHaveBeenCalled();
+		expect(createDropMock).not.toHaveBeenCalled();
 	});
 });
