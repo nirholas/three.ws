@@ -869,6 +869,23 @@ async function renderSubscriptionTiers(a) {
 		.join('');
 
 	bindTierDelegation();
+	openRequestedTier(a);
+}
+
+// The marketplace sends "Subscribe" here as /agents/:id?tier=<plan id>, because a
+// tier activates only through this page's verified checkout. Open that tier's
+// checkout once, if it is offered and the caller does not already hold it.
+let requestedTierOpened = false;
+function openRequestedTier(a) {
+	if (requestedTierOpened) return;
+	const tierId = new URLSearchParams(location.search).get('tier');
+	if (!tierId) return;
+	const btn = $('ad-tiers-body')?.querySelector(`.ad-subscribe-btn[data-tier-id="${CSS.escape(tierId)}"]`);
+	const tier = marketTiers.find((t) => t.id === tierId);
+	if (!btn || !tier) return;
+	requestedTierOpened = true;
+	$('ad-tiers-card')?.scrollIntoView({ block: 'start' });
+	openSubscribeFlow(a.id, tier).catch((err) => log.error('[agent-detail-market] subscribe', err));
 }
 
 // Active subscription plan_ids for the signed-in user (empty when anonymous).

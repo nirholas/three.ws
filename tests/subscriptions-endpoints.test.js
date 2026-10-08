@@ -218,6 +218,22 @@ describe('subscriptions: unchanged contract', () => {
 		expect(parse(res).error_description).toMatch(/your own plan/);
 	});
 
+	it('POST /api/subscriptions records the tier unpaid, never active, until a verified payment', async () => {
+		const SUBSCRIBER = '00000000-0000-4000-8000-0000000000aa';
+		getSessionUserMock.mockResolvedValue({ id: SUBSCRIBER });
+		sqlQueue = [
+			[{ id: PLAN, creator_id: OWNER, price_usd: '9.99', interval: 'monthly', active: true }],
+			[],
+			[{ id: 'sub-1', status: 'past_due' }],
+		];
+		const res = mkRes();
+		await subsHandler(jsonReq('POST', '/api/subscriptions', { plan_id: PLAN }), res);
+		expect(res.statusCode).toBe(201);
+		const insert = sqlMock.mock.calls.map((c) => c[0].join('?')).find((t) => /INSERT INTO creator_subscriptions/.test(t));
+		expect(insert).toMatch(/'past_due'/);
+		expect(insert).not.toMatch(/'active'/);
+	});
+
 	it('GET /api/subscriptions/plans still requires creator_id or agent_id', async () => {
 		const res = mkRes();
 		await plansHandler(mkReq({ url: '/api/subscriptions/plans' }), res);

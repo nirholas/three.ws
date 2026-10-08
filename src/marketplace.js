@@ -2033,68 +2033,14 @@ async function initiateSubscription(planId, btn) {
 	const agent = detailState.agent;
 	const tier = (agent.subscription_tiers || []).find((t) => t.id === planId);
 	if (!tier) return;
-
-	const intervalLabel = tier.interval === 'weekly' ? 'week' : 'month';
-	const price = Number(tier.price_usd || 0).toFixed(2);
-	const status = $('d-subs-status');
-
-	const confirmed = window.confirm(
-		`Subscribe to "${tier.name}" for $${price} per ${intervalLabel}? You'll pay in USDC each ${intervalLabel} and can cancel anytime.`,
-	);
-	if (!confirmed) return;
-
+	// A tier activates only once its first payment is verified on-chain, which the
+	// agent page's checkout does (quote, wallet signature, verify). The old
+	// one-click POST here activated the tier before anything was paid.
 	if (btn) {
 		btn.disabled = true;
-		btn.textContent = 'Subscribing…';
+		btn.textContent = 'Opening checkout…';
 	}
-	if (status) {
-		status.textContent = '';
-		status.className = 'd-subs-status';
-	}
-
-	try {
-		const r = await apiPostWithCsrf('/api/subscriptions', { plan_id: planId });
-		const j = await r.json().catch(() => ({}));
-		if (!r.ok) {
-			const msg = j.error_description || j.error || 'Could not start subscription. Try again.';
-			if (status) {
-				status.textContent = msg;
-				status.className = 'd-subs-status err';
-			}
-			if (btn) {
-				btn.disabled = false;
-				btn.textContent = 'Subscribe';
-			}
-			return;
-		}
-
-		const payUrl = j?.payment?.payUrl || null;
-		// Refresh detail so the tier flips to "Current plan" and the others lock.
-		await loadDetail(agent.id);
-
-		// Reuse the polished payment success card for the confirmation + the
-		// real first-payment link (server builds an x402 checkout intent).
-		const overlay = $('payment-modal-overlay');
-		if (overlay) overlay.hidden = false;
-		renderPaymentSuccess({
-			title: 'Subscription started',
-			message: payUrl
-				? `You're subscribed to ${tier.name}. Complete your first ${intervalLabel}'s payment to activate every perk.`
-				: `You're subscribed to ${tier.name}.`,
-			primaryHref: payUrl,
-			primaryLabel: payUrl ? 'Complete payment' : null,
-			secondaryLabel: 'Done',
-		});
-	} catch (err) {
-		if (status) {
-			status.textContent = err.message || 'Network error — try again.';
-			status.className = 'd-subs-status err';
-		}
-		if (btn) {
-			btn.disabled = false;
-			btn.textContent = 'Subscribe';
-		}
-	}
+	location.href = `/agents/${encodeURIComponent(agent.id)}?tier=${encodeURIComponent(tier.id)}#ad-tiers-card`;
 }
 
 async function manageSubscription(subId, btn) {

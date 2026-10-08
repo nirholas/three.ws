@@ -89,8 +89,6 @@ async function handleSubscribe(req, res) {
 	if (plan.creator_id === user.id)
 		return error(res, 409, 'conflict', 'cannot subscribe to your own plan');
 
-	const periodMs = plan.interval === 'weekly' ? 7 * 24 * 3600 * 1000 : 30 * 24 * 3600 * 1000;
-	const periodEnd = new Date(Date.now() + periodMs).toISOString();
 
 	// Upsert guard: reject if already subscribed and active.
 	const [existing] = await sql`
@@ -101,14 +99,18 @@ async function handleSubscribe(req, res) {
 		return error(res, 409, 'conflict', 'already subscribed to this plan');
 	}
 
+	// The row is recorded UNPAID (past_due, period already over): this route
+	// verifies no payment, and writing 'active' here unlocked every skill in the
+	// tier for free (the column even defaults to 'active'). A tier becomes active
+	// only through the verified checkout (POST /api/subscriptions/subscribe, then
+	// /verify), which re-activates this same row once the transfer is on-chain.
 	let sub;
 	if (existing) {
-		// Re-activate a cancelled subscription.
 		[sub] = await sql`
 			UPDATE creator_subscriptions
-			SET status = 'active',
+			SET status = 'past_due',
 			    current_period_start = now(),
-			    current_period_end = ${periodEnd},
+			    current_period_end = now(),
 			    wallet_address = ${body.wallet_address ?? null},
 			    cancelled_at = NULL
 			WHERE id = ${existing.id}
@@ -117,8 +119,8 @@ async function handleSubscribe(req, res) {
 	} else {
 		[sub] = await sql`
 			INSERT INTO creator_subscriptions
-				(plan_id, subscriber_user_id, current_period_end, wallet_address)
-			VALUES (${plan.id}, ${user.id}, ${periodEnd}, ${body.wallet_address ?? null})
+				(plan_id, subscriber_user_id, status, current_period_end, wallet_address)
+			VALUES (${plan.id}, ${user.id}, 'past_due', now(), ${body.wallet_address ?? null})
 			RETURNING *
 		`;
 	}
