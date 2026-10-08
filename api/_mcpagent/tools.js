@@ -1,9 +1,10 @@
 // threews-agent MCP: "add a wallet to Claude."
 //
-// Three tools turn a Claude (or any MCP client) into an autonomous economic
+// These tools turn a Claude (or any MCP client) into an autonomous economic
 // agent on the live x402 network:
 //   * wallet_status   what the agent's wallet holds and is allowed to spend
 //   * find_services   discover paid services it can call
+//   * pay_quote        read an endpoint's price and pay-to without paying
 //   * pay_and_call     pay an x402 endpoint in USDC from the user's own wallet
 //                       and return the result, bounded by spending caps
 //
@@ -33,6 +34,7 @@ import {
 	MonetizeError,
 } from '../_lib/agent-paid-services.js';
 import { currentSignatureFor, agreementRequirement } from '../_lib/real-funds-agreement.js';
+import { fetchSafePublicUrlPinned, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 import { readResourceToolResult } from '../_mcp/resources.js';
 
 function rpcError(code, message, data) {
@@ -99,6 +101,67 @@ async function agreementRequired(userId, resource) {
 			},
 		],
 		structuredContent: { paid: false, reason: 'risk_ack_required', resource, ...requirement },
+		isError: true,
+	};
+}
+
+// ── pay_quote: read an x402 challenge without paying ─────────────────────────
+// pay_and_call is a financial tool: the tool policy (@three-ws/mcp-policy) only
+// lets it run with a fresh pay_quote preview for the same resource_url. The
+// quote is one unpaid request to the endpoint; its 402 challenge names every
+// accepted network, asset, price and pay-to address, which is what the user
+// approves before any USDC moves. The probe is DNS-resolved, IP-pinned and
+// size-capped, so a caller cannot aim it at an internal address.
+const QUOTE_TIMEOUT_MS = 15_000;
+const QUOTE_MAX_BYTES = 256 * 1024;
+
+function parseJsonText(text) {
+	try {
+		return text ? JSON.parse(text) : null;
+	} catch {
+		return null;
+	}
+}
+
+// x402 v2 servers carry the challenge in a base64 `payment-required` header;
+// v1 servers put it in the 402 body. Read both.
+function readChallenge(headers, bodyText) {
+	const fromBody = parseJsonText(bodyText);
+	if (Array.isArray(fromBody?.accepts)) return fromBody;
+	const header = headers.get('payment-required');
+	if (!header) return null;
+	try {
+		const decoded = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
+		return Array.isArray(decoded?.accepts) ? decoded : null;
+	} catch {
+		return null;
+	}
+}
+
+// One accepts[] entry in the shape a person approves. v2 names the atomic charge
+// `amount`, v1 `maxAmountRequired`, and some servers a bare `price`.
+function describeAccept(a) {
+	const atomic = a.amount ?? a.maxAmountRequired ?? a.price ?? null;
+	const decimals = Number(a.extra?.decimals);
+	const assetName = String(a.extra?.name ?? '').trim();
+	const display =
+		atomic != null && Number.isFinite(decimals)
+			? `${Number(atomic) / 10 ** decimals}${assetName ? ` ${assetName}` : ''}`
+			: null;
+	return {
+		scheme: a.scheme ?? null,
+		network: a.network ?? null,
+		price_atomic: atomic != null ? String(atomic) : null,
+		price_display: display,
+		asset: a.asset ?? a.extra?.asset ?? null,
+		pay_to: a.payTo ?? null,
+	};
+}
+
+function quoteFailed(reason, text, resource) {
+	return {
+		content: [{ type: 'text', text }],
+		structuredContent: { ok: false, reason, resource },
 		isError: true,
 	};
 }
@@ -280,6 +343,116 @@ export const toolDefs = [
 			return {
 				content: [{ type: 'text', text }],
 				structuredContent: { query: args.query, count: services.length, services, errors },
+			};
+		},
+	},
+	{
+		name: 'pay_quote',
+		title: 'Quote an x402 service before paying',
+		// One unpaid request that reads the payment challenge: no funds move.
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: true,
+		},
+		description:
+			'Read what a paid x402 endpoint charges WITHOUT paying: every accepted network, asset, price and pay-to address from its 402 challenge. Show the user this quote and get a clear yes before pay_and_call; pay_and_call needs the quote_id this returns for the same resource_url.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				resource_url: {
+					type: 'string',
+					format: 'uri',
+					description: 'The x402 endpoint to quote.',
+				},
+				method: { type: 'string', enum: ['GET', 'POST'], default: 'GET' },
+				body: { type: 'object', description: 'JSON body for a POST endpoint.' },
+			},
+			required: ['resource_url'],
+			additionalProperties: false,
+		},
+		async handler(args, auth) {
+			await enforce(limits.mcpAgent, auth);
+			const resource = args.resource_url;
+			const method = args.method === 'POST' ? 'POST' : 'GET';
+
+			let res;
+			try {
+				res = await fetchSafePublicUrlPinned(
+					resource,
+					{
+						method,
+						headers: {
+							accept: 'application/json',
+							...(args.body != null ? { 'content-type': 'application/json' } : {}),
+						},
+						...(args.body != null ? { body: JSON.stringify(args.body) } : {}),
+						signal: AbortSignal.timeout(QUOTE_TIMEOUT_MS),
+					},
+					{ maxBytes: QUOTE_MAX_BYTES },
+				);
+			} catch (err) {
+				if (err instanceof SsrfBlockedError) {
+					return quoteFailed('blocked_url', 'That resource URL is not a permitted public https endpoint.', resource);
+				}
+				const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError';
+				return quoteFailed(
+					timedOut ? 'timeout' : 'unreachable',
+					timedOut
+						? `${resource} did not answer within ${QUOTE_TIMEOUT_MS / 1000} seconds.`
+						: `Could not reach ${resource}: ${err?.message || err}`,
+					resource,
+				);
+			}
+
+			const bodyText = await res.text();
+			if (res.status !== 402) {
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `${resource} answered ${res.status} without asking for payment, so pay_and_call would call it for free.`,
+						},
+					],
+					structuredContent: { ok: true, resource, method, paywalled: false, status: res.status, accepts: [] },
+				};
+			}
+
+			const challenge = readChallenge(res.headers, bodyText);
+			if (!challenge) {
+				return quoteFailed(
+					'invalid_challenge',
+					`${resource} answered 402 but sent no readable x402 payment requirements.`,
+					resource,
+				);
+			}
+			const accepts = challenge.accepts.map(describeAccept);
+			const payable = accepts.some((a) => String(a.network || '').startsWith('solana'));
+			const lines = accepts.map(
+				(a) => `- ${a.price_display ?? `${a.price_atomic ?? '?'} atomic`} on ${a.network ?? 'an unnamed network'} to ${a.pay_to ?? 'an unnamed address'}`,
+			);
+			return {
+				content: [
+					{
+						type: 'text',
+						text:
+							`${resource} asks for payment:\n${lines.join('\n')}\n` +
+							(payable
+								? 'Your three.ws agent wallet settles the Solana option.'
+								: 'None of these settle on Solana, so your three.ws agent wallet cannot pay this endpoint.'),
+					},
+				],
+				structuredContent: {
+					ok: true,
+					resource,
+					method,
+					paywalled: true,
+					x402_version: challenge.x402Version ?? null,
+					accepts,
+					payable_with_agent_wallet: payable,
+					pay_link: payLink(resource),
+				},
 			};
 		},
 	},

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Agent Wallet MCP: quote an x402 service before your assistant pays it",
+			"summary": "The Agent Wallet MCP server has a new pay_quote tool. It reads what a paid x402 endpoint charges (price, network and the address that gets paid) without spending anything. pay_and_call now works end to end once you turn it on for a connection: your assistant quotes first, shows you the price, and pays only after you say yes, using that quote. Paying a different endpoint than the one quoted, or paying with an expired quote, is refused before any USDC moves.",
+			"tags": ["feature", "security"],
+			"link": "/docs/mcp-agent"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Your own free 3D quota when you connect through Grok Bot or another cloud agent",
 			"summary": "Cloud agents like Grok Bot reach three.ws from one shared address, so every user of that agent used to share one free 3D quota. Now you can generate a free install token on the Connect page (pick 3D Studio (free), then Generate my connector URL) or with one POST to /api/mcp-studio/install, and add the connector with that URL. Your generations then count against a quota of your own: 4 a minute and 30 an hour. No account, no key, and the token works on every free studio URL, including the Grok one. When a limit is reached, the message now says which limit, exactly when it resets, and how to lift it.",
 			"tags": ["feature", "improvement"],

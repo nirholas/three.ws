@@ -18,9 +18,28 @@ Registered with the MCP Registry as **`io.github.nirholas/threews-agent`**.
 | `getting_started` | none (free, no sign-in) | Overview of the server and its tools. The one tool an unauthenticated client can call. |
 | `wallet_status` | `wallet:read` (or `wallet:write`) | Read-only: the user's agent wallet address, SOL + USDC balance, spending caps, and whether spend is enabled. Never moves funds. |
 | `find_services(query, type?, network?, max_price_usdc?, limit?)` | none beyond sign-in | Search the live x402 facilitator network for paid services to call. `max_price_usdc` accepts 0 to 1,000,000. |
-| `pay_and_call(resource_url, method?, body?, max_usd?)` | `wallet:write` | Call a paid x402 endpoint and auto-settle the USDC payment from the user's wallet, within caps. Returns the service response. |
+| `pay_quote(resource_url, method?, body?)` | none beyond sign-in | Read what a paid x402 endpoint charges without paying: every accepted network, asset, price and pay-to address from its 402 challenge. Returns the `quote_id` that `pay_and_call` needs. Never moves funds. |
+| `pay_and_call(resource_url, method?, body?, max_usd?, quote_id, confirm_payment)` | `wallet:write` | Call a paid x402 endpoint and auto-settle the USDC payment from the user's wallet, within caps. Returns the service response. Financial: off until the connection turns it on (see below). |
 | `provision_wallet(agent_id, cluster?, airdrop?)` | `wallet:write` | Create (or return) the custodial Solana wallet for one of your own agents. Idempotent. `airdrop` is devnet only and never fires on mainnet. |
 | `monetize_endpoint(agent_id, name, description, price_usdc, target_url, method?, input_schema?, network?)` | `services:write` | Publish an upstream API you already serve as a priced x402 endpoint. Buyers' USDC settles to your agent's own wallet. |
+
+## Turning on pay_and_call
+
+`pay_and_call` moves real USDC, so the tool policy ([`@three-ws/mcp-policy`](../packages/mcp-policy/README.md)) keeps it
+off for every connection until the user turns it on, and even then it runs only
+against a fresh quote the user approved:
+
+1. Turn it on for the connection: `npx three-ws tools`, the toggles on
+   [/settings/mcp-tools](https://three.ws/settings/mcp-tools), or the header
+   `X-Three-Tools: default,pay_and_call` (`default,x402` turns on the whole x402
+   group). Until then `tools/list` hides it and a call answers
+   `{ "reason": "tool_disabled" }` with those same instructions.
+2. Call `pay_quote(resource_url)`. Its result names the price, network and
+   pay-to address, and carries a `quote_id` valid for a few minutes.
+3. Show the user that quote. Only after a clear yes, call
+   `pay_and_call(resource_url, quote_id, confirm_payment: true)` with the same
+   `resource_url`. A missing flag, a stale or foreign `quote_id`, or a different
+   `resource_url` is refused before any payment is attempted.
 
 ## Scopes
 

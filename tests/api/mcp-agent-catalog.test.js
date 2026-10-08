@@ -10,15 +10,57 @@ import { describe, it, expect } from 'vitest';
 import { TOOL_CATALOG, TOOLS } from '../../api/_mcpagent/catalog.js';
 
 describe('agent-wallet MCP catalog', () => {
-	it('leads with the free getting_started tool, then the wallet toolset', () => {
+	it('leads with the free getting_started tool, then the wallet, marketplace and prediction toolsets', () => {
 		expect(TOOL_CATALOG.map((t) => t.name)).toEqual([
 			'getting_started',
+			// wallet + x402 (api/_mcpagent/tools.js)
 			'wallet_status',
 			'find_services',
+			'pay_quote',
 			'pay_and_call',
 			'provision_wallet',
 			'monetize_endpoint',
+			'read_resource',
+			// agent marketplace (api/_mcpagent/marketplace-tools.js)
+			'browse_marketplace',
+			'browse_public_agents',
+			'get_listing',
+			'get_marketplace_history',
+			'preview_marketplace_action',
+			'create_marketplace_listing',
+			'delist_marketplace_listing',
+			'place_bid',
+			'buy_now',
+			'get_my_bids',
+			'get_received_bids',
+			'accept_marketplace_bid',
+			'reject_marketplace_bid',
+			'withdraw_marketplace_bid',
+			'get_agent_transfer',
+			'resume_agent_transfer',
+			// prediction markets (api/_mcpagent/predictions-tools.js)
+			'predictions_events',
+			'predictions_event',
+			'predictions_positions',
+			'predictions_open_preview',
+			'predictions_open',
+			'predictions_close_preview',
+			'predictions_close',
+			'predictions_redeem_preview',
+			'predictions_redeem',
+			'predictions_watch',
 		]);
+	});
+
+	it('ships the preview tool every financial tool in the policy table names', async () => {
+		// A financial tool whose preview tool is missing can never be called: the
+		// policy refuses it for want of a preview no tool can issue.
+		const { POLICY } = await import('@three-ws/mcp-policy');
+		const names = new Set(TOOL_CATALOG.map((t) => t.name));
+		for (const name of names) {
+			const row = POLICY['threews-agent'][name];
+			if (row?.tier === 'financial' && row.previewTool) expect(names.has(row.previewTool), `${name} needs ${row.previewTool}`).toBe(true);
+		}
 	});
 
 	it('gives every catalog entry a handler in the dispatch map', () => {

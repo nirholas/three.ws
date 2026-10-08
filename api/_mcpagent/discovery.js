@@ -16,7 +16,8 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 export const RESOURCE_DESCRIPTION =
 	'three.ws Agent MCP: Streamable HTTP (MCP 2025-06-18) that gives an assistant a real on-chain ' +
 	'wallet on the x402 network: wallet_status (address, USDC and SOL balance, spend caps), ' +
-	'find_services (search the live facilitator network for paid services), pay_and_call (call a ' +
+	'find_services (search the live facilitator network for paid services), pay_quote (read what a ' +
+	'paid endpoint charges without paying), pay_and_call (call a ' +
 	'paid x402 endpoint and settle the USDC payment from the signed-in user own three.ws agent ' +
 	'wallet, bounded by their caps), provision_wallet, monetize_endpoint (list your own paid ' +
 	'service), and read_resource (live three:// wallet, spend limit and service data). The agent ' +
@@ -82,7 +83,7 @@ function agentBazaarExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names: getting_started (free), wallet_status, find_services, pay_and_call, provision_wallet, monetize_endpoint, see tools/list.',
+					'For tools/call: { name, arguments }. Tool names: getting_started (free), wallet_status, find_services, pay_quote, pay_and_call, provision_wallet, monetize_endpoint, see tools/list.',
 			},
 		},
 	};
