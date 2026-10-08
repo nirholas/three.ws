@@ -298,6 +298,9 @@ function boot() {
 	if (wrapper && wrapper.tagName === 'HEADER' && wrapper.childElementCount === 1) {
 		wrapper.setAttribute('role', 'presentation');
 	}
+	// Start the auth module now, beside the markup it will act on, instead of
+	// after it lands (see initAuthHint).
+	loadNavAuth();
 	Promise.all([
 		fetch('/nav.html').then((response) => response.text()),
 		import('/nav-data.js'),
@@ -320,6 +323,11 @@ function boot() {
 		})
 		.catch((err) => console.error('nav: failed to load shared navigation', err));
 }
+
+// The pending /nav-auth.js load (loadNavAuth). Declared above the bootstrap
+// below, which can call boot() synchronously: a `let` written by that call has
+// to be initialized before it runs.
+let navAuthReady = null;
 
 if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', boot);
@@ -791,27 +799,41 @@ function initActivePage(root) {
 // Swap "Sign in" for the dashboard entry points when the visitor is
 // authenticated. The behavior lives in the shared /nav-auth.js module — see that
 // file for the hint-then-reconcile-against-/api/auth/me strategy and its
-// data-auth markup contract. Loaded on demand and called once the nav markup is
-// injected.
+// data-auth markup contract. Called once the nav markup is injected.
+//
+// boot() starts the download in parallel with nav.html. Requesting it only once
+// the markup was injected put four round trips in series (page, nav.js,
+// nav.html, nav-auth.js) ahead of the session check, so a signed-in visitor with
+// no local hint watched "Sign in" for that whole waterfall on a slow link.
+function loadNavAuth() {
+	if (navAuthReady) return navAuthReady;
+	navAuthReady = new Promise((resolve) => {
+		if (typeof window.initNavAuth === 'function') {
+			resolve(window.initNavAuth);
+			return;
+		}
+		// A page may already carry the tag (or another caller added it); wait on
+		// that one rather than loading the module twice.
+		let script = document.querySelector('script[src="/nav-auth.js"]');
+		if (!script) {
+			script = document.createElement('script');
+			script.src = '/nav-auth.js';
+			document.head.appendChild(script);
+		}
+		script.addEventListener('load', () =>
+			resolve(typeof window.initNavAuth === 'function' ? window.initNavAuth : null),
+		);
+		// Without the module the nav keeps its authored signed-out view, which is
+		// the safe default nav-auth.js itself documents.
+		script.addEventListener('error', () => resolve(null));
+	});
+	return navAuthReady;
+}
+
 function initAuthHint(root) {
-	if (typeof window.initNavAuth === 'function') {
-		window.initNavAuth(root);
-		return;
-	}
-	if (!document.querySelector('script[src="/nav-auth.js"]')) {
-		const s = document.createElement('script');
-		s.src = '/nav-auth.js';
-		s.addEventListener('load', () => {
-			if (typeof window.initNavAuth === 'function') window.initNavAuth(root);
-		});
-		document.head.appendChild(s);
-	} else {
-		// Script tag exists but hasn't finished loading yet — run once it does.
-		const existing = document.querySelector('script[src="/nav-auth.js"]');
-		existing.addEventListener('load', () => {
-			if (typeof window.initNavAuth === 'function') window.initNavAuth(root);
-		});
-	}
+	loadNavAuth().then((initNavAuth) => {
+		if (initNavAuth) initNavAuth(root);
+	});
 }
 
 // ── Walk Companion toggle ─────────────────────────────────────────────────────
