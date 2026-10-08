@@ -16,6 +16,12 @@ describe('safeUrl', () => {
 		}
 	});
 
+	it('rejects relative paths a browser would normalize into a protocol-relative URL', () => {
+		for (const bad of ['/\\evil.example/x', '/\\/evil.example', '/\t/evil.example', '/\n/evil.example', './\\evil']) {
+			expect(safeUrl(bad)).toBe('#');
+		}
+	});
+
 	it('returns the caller fallback so a rejected link can be omitted entirely', () => {
 		expect(safeUrl('javascript:alert(1)', '')).toBe('');
 		expect(safeUrl(null, '')).toBe('');
