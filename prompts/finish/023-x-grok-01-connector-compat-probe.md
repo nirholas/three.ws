@@ -1,5 +1,7 @@
 # x-grok 01: prove every hosted MCP server works as a Grok Bot connector
 
+**Evolve status (2026-10-08).** Tasks 1 to 5 are shipped and verified: the probe, the npm script, the matrix in `docs/mcp.md`, both evidence captures, and the fixes with tests that fail without them (`7985f1cce`, `59bdf5707`, `be536043e`, `c3b56080f`, `e3009e6d3`, `c27821cb2`). Against local code the probe passes 7 of 7. Two Definition of done lines remain. (1) Production: `mcp-studio` and `pump-fun-mcp` exit 0 and every OAuth server answers 401 with `resource_metadata`, but the full `npm run probe:mcp-clients` still fails 4 of 7, because production (`fe2a8b24f`) predates the per-server OAuth resource fix. A deploy is owner-gated: row 25 of [production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md). (2) `npm test` is red with 72 failures in 34 files that this order does not touch. Order [401](401-auto-restore-green-vitest.md) owns them. Once both are done, rerun the probe against production, commit the capture, and retire this order.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate. Run this first in lane A: every later lane A order assumes its matrix.
 
 ## Operating clause (binding)
