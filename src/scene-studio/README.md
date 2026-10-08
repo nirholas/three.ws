@@ -35,6 +35,7 @@ src/scene-studio/
 │                    adds a parsed GLB through the undo-able AddObjectCommand path
 ├── actions.js       Layered action bar: Import from Forge, Export presets, Share
 ├── empty-state.js   First-run overlay over the empty grid, retires on first object
+├── remote-scene.js  Strips scripts and history from a scene opened by #file= link
 ├── toolbar-a11y.js  Accessible names for the icon-only controls: the transform
 │                    gizmos (plus pressed state) and the animation transport
 ├── studio.css       three.ws chrome overrides (vendor css/main.css is untouched)
@@ -79,7 +80,11 @@ the browser console.
   scene, and attaches a player script that drives an `AnimationMixer` so the
   clip plays in the timeline and records through Render, Video.
 - `/scene#file=<url>` (upstream behavior) loads a serialized editor JSON scene
-  after a confirmation prompt.
+  after a confirmation prompt. Unlike upstream, the linked scene's object
+  scripts and undo history are dropped ([remote-scene.js](remote-scene.js)):
+  scripts are compiled with `new Function` on Play, so keeping them would let
+  any link run code on the three.ws origin as the viewer. A scene you trust
+  keeps its scripts when opened through File, Import.
 
 ### Action bar
 

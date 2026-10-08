@@ -31,7 +31,8 @@ import { addGltfBufferToScene as sharedAddGltfBufferToScene } from './loader.js'
 import { mountStudioActions } from './actions.js';
 import { mountEmptyState } from './empty-state.js';
 import { enhanceAnimationA11y, enhanceToolbarA11y } from './toolbar-a11y.js';
-import { toastError } from '../shared/toast.js';
+import { toast, toastError } from '../shared/toast.js';
+import { sanitizeRemoteScene } from './remote-scene.js';
 
 window.URL = window.URL || window.webkitURL;
 window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
@@ -290,8 +291,15 @@ if (hash.slice(1, 6) === 'file=') {
 		const loader = new THREE.FileLoader();
 		loader.crossOrigin = '';
 		loader.load(file, function (text) {
+			const { scene, removedScripts } = sanitizeRemoteScene(JSON.parse(text));
 			editor.clear();
-			editor.fromJSON(JSON.parse(text));
+			editor.fromJSON(scene);
+			if (removedScripts > 0) {
+				toast(
+					`Opened the linked scene without its ${removedScripts} script${removedScripts === 1 ? '' : 's'}. Scripts in a linked scene could run as you on three.ws, so they only load from a file you import yourself (File, Import).`,
+					{ duration: 9000 },
+				);
+			}
 		});
 
 		isLoadingFromHash = true;
