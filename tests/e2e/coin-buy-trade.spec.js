@@ -168,7 +168,7 @@ async function installHarness(page, cfg) {
 }
 
 async function openTrade(page, coin) {
-	await page.goto('http://localhost:3000/__e2e/trade-harness');
+	await page.goto('/__e2e/trade-harness');
 	await page.addStyleTag({ path: CC_CSS });
 	await page.evaluate(async (c) => {
 		const mod = await import('/src/game/coin-buy.js');

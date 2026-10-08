@@ -33,6 +33,16 @@ function liveHomeSpecs() {
 		.sort();
 }
 
+// The dev server this run drives. :3000 is the default, and reuse of a server
+// already there is how a developer runs this beside their own `npm run dev`.
+// E2E_PORT moves the whole run (baseURL, the server it starts, the specs that
+// open a bare browser) to another port, so an unattended run never touches a
+// server someone else owns. Published back to the environment because the
+// workers inherit it and play-photo-mode opens pages outside the fixture.
+const E2E_PORT = Number(process.env.E2E_PORT) || 3000;
+const E2E_ORIGIN = `http://localhost:${E2E_PORT}`;
+process.env.E2E_ORIGIN = E2E_ORIGIN;
+
 export default defineConfig({
 	testDir: 'tests/e2e',
 	// The home lane's live journeys (the specs that import ./home-support.js)
@@ -50,15 +60,15 @@ export default defineConfig({
 	retries: 1,
 	fullyParallel: false,
 	use: {
-		baseURL: 'http://localhost:3000',
+		baseURL: E2E_ORIGIN,
 		headless: true,
 		screenshot: 'only-on-failure',
 		video: 'retain-on-failure',
 		trace: 'retain-on-failure',
 	},
 	webServer: {
-		command: 'npm run dev',
-		url: 'http://localhost:3000',
+		command: E2E_PORT === 3000 ? 'npm run dev' : `npx vite --port ${E2E_PORT} --strictPort`,
+		url: E2E_ORIGIN,
 		timeout: 180_000,
 		reuseExistingServer: !process.env.CI,
 		stdout: 'pipe',
