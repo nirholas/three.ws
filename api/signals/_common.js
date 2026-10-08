@@ -16,7 +16,7 @@ export async function requireUser(req, res) {
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) { error(res, 401, 'unauthorized', 'sign in required'); return null; }
-	return { userId: session?.id ?? bearer.userId, viaSession: !!session };
+	return { userId: session?.id ?? bearer.userId, viaSession: !!session, bearer };
 }
 
 /**

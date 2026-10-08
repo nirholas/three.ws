@@ -21,6 +21,7 @@
 
 import { sql } from './_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
+import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { requireRealFundsAgreement } from './_lib/real-funds-agreement.js';
@@ -159,6 +160,10 @@ export default wrap(async (req, res) => {
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
 	const userId = session?.id ?? bearer.userId;
+	// Creating a schedule arms a recurring on-chain charge (resume is gated
+	// below, once the body says which action it is). Pausing and cancelling
+	// stop money moving, so any bearer that owns the schedule may do them.
+	if (req.method === 'POST') assertBearerMaySpend(bearer, req);
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -365,6 +370,8 @@ export default wrap(async (req, res) => {
 		} catch (err) {
 			return error(res, err.status ?? 400, err.code ?? 'validation_error', err.message);
 		}
+
+		if (body.action === 'resume') assertBearerMaySpend(bearer, req);
 
 		// Only the payer controls the schedule: it spends their delegation.
 		const [current] = await sql`

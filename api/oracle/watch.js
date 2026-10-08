@@ -16,6 +16,7 @@
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
@@ -51,7 +52,8 @@ const WATCH_SCHEMA = z.object({
 async function resolveUserId(req) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
-	const bearer = await authenticateBearer(extractBearer(req));
+	// A live watch makes real buys from the agent's custodial wallet.
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return bearer.userId;
 	return null;
 }

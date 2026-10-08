@@ -25,6 +25,7 @@
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 import { sql } from '../_lib/db.js';
@@ -36,7 +37,8 @@ async function resolveUserId(req) {
 	if (session?.id) return session.id;
 	const bearer = extractBearer(req);
 	if (bearer) {
-		const auth = await authenticateBearer(bearer).catch(() => null);
+		// The launcher config carries the initial buy and can trigger a launch.
+		const auth = assertBearerMaySpend(await authenticateBearer(bearer).catch(() => null), req);
 		if (auth?.userId) return auth.userId;
 	}
 	return null;

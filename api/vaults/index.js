@@ -77,7 +77,8 @@ async function handleList(req, res) {
 }
 
 async function handleOpen(req, res) {
-	const who = await authWrite(req, res);
+	// Opening a vault sets the trading budgets and fee that spend backers' USDC.
+	const who = await authWrite(req, res, { spend: true });
 	if (!who) return;
 	const { userId } = who;
 

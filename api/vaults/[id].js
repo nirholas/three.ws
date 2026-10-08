@@ -9,6 +9,7 @@
 
 import { cors, json, method, error, readJson, wrap } from '../_lib/http.js';
 import { authWrite, resolveUserId, loadAgent, traderBadge } from '../_lib/vault-auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import {
 	getVault, getOpenPositions, getBacker, listBackers,
 	setVaultStatus, updateVaultTerms, recordVaultEvent,
@@ -115,6 +116,9 @@ async function handlePatch(req, res, id) {
 	let body;
 	try { body = (await readJson(req)) || {}; } catch (e) { return error(res, e?.status === 415 ? 415 : 400, 'bad_request', e?.message || 'invalid body'); }
 	const action = String(body.action || 'terms');
+	// Resume restarts trading with backers' funds and terms raises its budgets
+	// and fee; pause and close only stop trading, so they need no spend grant.
+	if (!who.session && action !== 'pause' && action !== 'close') assertBearerMaySpend({ scope: who.scope }, req);
 
 	if (action === 'pause') {
 		if (vault.status === 'closed') return error(res, 409, 'closed', 'vault is closed');

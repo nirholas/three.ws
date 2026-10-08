@@ -20,6 +20,7 @@
 // (agent_payout_wallets) when omitted; a paid listing needs at least one.
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -99,6 +100,11 @@ async function handleList(req, res, auth, raw) {
 
 	// Resolve payout addresses: explicit overrides win, else fall back to the
 	// seller's default payout wallets. A paid listing needs somewhere to settle.
+	// An explicit payout address decides who is paid for every sale; the
+	// account's own payout wallets (the default) need no extra grant.
+	if (auth.source !== 'session' && (input.payto_base || input.payto_solana || input.payto_bsc)) {
+		assertBearerMaySpend(auth, req);
+	}
 	const payto = await resolvePayto(auth.userId, input);
 	if (priced && !payto.base && !payto.solana) {
 		return error(
