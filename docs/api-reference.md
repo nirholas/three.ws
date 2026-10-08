@@ -70,6 +70,33 @@ If the body also has `"reason": "rate_limiter_unavailable"`, you did not hit a q
 
 Writes on the versioned agents API accept an `Idempotency-Key` header (up to 200 characters). The first request with a key runs; a retry with the same key and the same body within 24 hours gets the stored response back with `Idempotent-Replayed: true`, and nothing runs twice. Reusing a key with a different body is rejected with `422 idempotency_key_reused`, and a retry that arrives while the first is still running gets `409 idempotency_in_progress`. Other write endpoints are not idempotent unless their section says so, so guard retries on your side. Paid x402 endpoints are idempotent per payment: see [x402](/docs/x402).
 
+### Paid (x402) errors
+
+Errors from a paid endpoint add two fields that tell a buyer's client whether it was charged. Full status table and a buyer loop: [x402: paid endpoint failures and retries](/docs/x402#paid-endpoint-failures-and-retries).
+
+| Field | Values | What it means |
+|---|---|---|
+| `paid` | `true` / `false` | `true`: the payment settled on chain before the failure. `false`: nothing settled, you were not charged. |
+| `retry_safe` | `true` / `false` | `true`: repeat this exact request (same method, URL, body) with the same `X-PAYMENT` header and the work re-runs with no second charge. Never sign a new payment when `paid` is `true`. |
+| `settlement` | `{ transaction, network }` | Present when `paid` is `true`: the transaction you paid with. |
+| `retries_left`, `retry_until` | number, ISO time | The remaining paid retries (default 3) and when the window closes (default 24 hours). |
+| `message` | string | A plain sentence for a human, e.g. "You were charged; repeat this exact request with the same payment to get your result." |
+
+```json
+{
+	"error": "upstream_unavailable",
+	"error_description": "internal error, quote ref 3f9a… to support",
+	"paid": true,
+	"retry_safe": true,
+	"settlement": { "transaction": "5Xk…", "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" },
+	"retries_left": 3,
+	"retry_until": "2026-10-09T18:40:00.000Z",
+	"message": "You were charged; repeat this exact request with the same payment to get your result."
+}
+```
+
+A completed paid call replayed with the same payment still answers `409 payment_replayed`: the result was delivered, so buying it again needs a new payment. A paid payment whose retries are used up answers `409 payment_retries_exhausted` with `paid: true` and `retry_safe: false`; contact support with `settlement.transaction`.
+
 ---
 
 ## Solana Transaction Inspection API
