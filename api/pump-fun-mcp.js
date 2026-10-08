@@ -57,6 +57,8 @@ import { eventField } from './_lib/pump-onchain-trades.js';
 import { getSolPriceUsd } from '../src/shared/usd-price.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from './_lib/ipfs-pin.js';
+import { trackMcpRequest, authKindFromHeaders } from './_lib/mcp-client-analytics.js';
+
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
@@ -1906,6 +1908,10 @@ export default wrap(async (req, res) => {
 				return gateAuthPromise;
 			},
 		};
+
+		// Which client opened this session and what it calls. Auth resolves per
+		// gated tool here, so the kind is the credential the request presents.
+		trackMcpRequest({ body, req, res, surface: 'pump-fun-mcp', authKind: authKindFromHeaders(req) });
 
 		const responses = [];
 		for (const msg of messages) {
