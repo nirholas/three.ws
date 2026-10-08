@@ -18,7 +18,7 @@
 // compute endpoints.
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
-import { limits } from '../_lib/rate-limit.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { GuardChain, SpendGuard, TradeGuard, createX402Hook } from '@three-ws/agent-runtime';
 
@@ -81,11 +81,7 @@ export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'POST, OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const ip =
-		String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-		req.socket?.remoteAddress ||
-		'unknown';
-	const rl = await limits.agentGuardIp(ip);
+	const rl = await limits.agentGuardIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	let body;

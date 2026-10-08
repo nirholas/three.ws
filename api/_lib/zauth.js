@@ -26,6 +26,7 @@
 // bundling, so the main entry is the reliable one.
 
 import { env } from './env.js';
+import { clientIp } from './rate-limit.js';
 
 let cached;
 let _bootLogged = false;
@@ -348,11 +349,7 @@ function shimRequest(req) {
 	const path = qIdx >= 0 ? url.slice(0, qIdx) : url;
 	const xfProto = req.headers['x-forwarded-proto'];
 	const protocol = (Array.isArray(xfProto) ? xfProto[0] : xfProto) || 'https';
-	const xfFor = req.headers['x-forwarded-for'];
-	const ip =
-		(typeof xfFor === 'string' ? xfFor.split(',')[0].trim() : null) ||
-		req.socket?.remoteAddress ||
-		'';
+	const ip = clientIp(req);
 
 	if (!('path' in req)) Object.defineProperty(req, 'path', { value: path });
 	if (!('originalUrl' in req)) Object.defineProperty(req, 'originalUrl', { value: url });

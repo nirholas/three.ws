@@ -28,6 +28,7 @@
 
 import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { getAvatar } from '../_lib/avatars.js';
+import { clientIp } from '../_lib/rate-limit.js';
 import { inspectGlbCapabilities } from '../_lib/avatar-capabilities.js';
 import { ARKIT_52, ARKIT_VISEMES } from '../../src/runtime/arkit52.js';
 import { CANONICAL_BONES } from '../../src/glb-canonicalize.js';
@@ -117,8 +118,7 @@ export default wrap(async function handler(req, res) {
 		return error(res, 405, 'method_not_allowed', 'Use GET');
 	}
 
-	const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress;
-	const rl = rateCheck(ip);
+	const rl = rateCheck(clientIp(req));
 	if (!rl.success) {
 		return rateLimited(res, rl, `Limit: ${RATE_LIMIT_MAX} inspections per ${RATE_LIMIT_WINDOW_MS / 60000}m`);
 	}

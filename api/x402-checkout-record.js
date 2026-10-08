@@ -59,7 +59,7 @@ export default wrap(async (req, res) => {
 		if (existing) return json(res, 200, { ok: true, id: existing.id, paid_at: existing.paid_at, deduped: true });
 	}
 
-	const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').toString().split(',')[0].trim();
+	const ip = clientIp(req);
 	const ipHash = ip ? simpleHash(ip) : null;
 	const ua = (req.headers['user-agent'] || '').toString().slice(0, 240);
 

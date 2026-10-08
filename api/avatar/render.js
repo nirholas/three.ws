@@ -33,6 +33,7 @@
 
 import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { getAvatar } from '../_lib/avatars.js';
+import { clientIp } from '../_lib/rate-limit.js';
 import {
 	SCENE_PRESETS,
 	FORMAT_TYPES,
@@ -77,8 +78,7 @@ export default wrap(async function handler(req, res) {
 		return error(res, 405, 'method_not_allowed', 'Use GET');
 	}
 
-	const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress;
-	const rl = rateCheck(ip);
+	const rl = rateCheck(clientIp(req));
 	if (!rl.success) {
 		return rateLimited(res, rl, `Limit: ${RATE_LIMIT_MAX} renders per ${RATE_LIMIT_WINDOW_MS / 60000}m`);
 	}
