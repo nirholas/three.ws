@@ -294,6 +294,11 @@ function serveFile(req, res, file, headers, status) {
 	}
 	res.set(headers);
 	if (status) res.status(status);
+	// The mime table maps .cjs to application/node, and with nosniff a browser
+	// refuses to execute that from a <script> tag, so the documented UMD embed
+	// (/agent-3d/<v>/agent-3d.umd.cjs) silently never ran. send() keeps a
+	// content-type that is already set.
+	if (file.endsWith('.cjs')) res.type('text/javascript');
 	// Android Digital Asset Links (and the other RFC 8615 discovery files) are
 	// re-fetched by Google and by devices on a schedule; a day-long edge TTL
 	// means a rotated release key stays unverified for up to 24 hours after a
@@ -575,7 +580,13 @@ app.use(async (req, res) => {
 		}
 	}
 
-	// Post-filesystem rules (the 404.html fallback).
+	// Post-filesystem rules (the 404.html fallback). A cache policy collected in
+	// phase 1 described the file that rule expected to find, not this miss:
+	// /agent-3d/<unreleased version>/ inherited `max-age=31536000, immutable`,
+	// and the CDN then held that 404 for a year after the version was cut.
+	for (const key of Object.keys(collected)) {
+		if (key.toLowerCase() === 'cache-control') delete collected[key];
+	}
 	for (const route of postFsRoutes) {
 		const m = route.re.exec(currentPath);
 		if (!m) continue;
