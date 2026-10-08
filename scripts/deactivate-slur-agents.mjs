@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Withhold already-indexed ERC-8004 agents whose on-chain metadata carries a hate slur.
+ * Withhold already-indexed ERC-8004 and Solana registry agents whose on-chain
+ * metadata carries a hate slur.
  *
  * The crawler hydrates every registered agent's display name, description and image
  * from attacker-controlled on-chain metadata, and until the gate in
@@ -15,6 +16,10 @@
  *
  * Slurs only, never general profanity: every false positive silently delists a
  * legitimate agent. Run with --dry-run first; it prints counts, never the names.
+ *
+ * The Solana registry index (solana_agents_index: Metaplex, AgenC and the other
+ * crawled registries) is gated the same way at upsert in
+ * api/_lib/solana-agents-crawl.js since 2026-10-08, and is scanned here too.
  *
  * Usage:
  *   node --env-file=.env.local scripts/deactivate-slur-agents.mjs --dry-run
@@ -41,23 +46,36 @@ const rows = await sql`
 	   AND (name IS NOT NULL OR description IS NOT NULL)
 `;
 
-console.log(`[slur-scan] scanning ${rows.length} active indexed agents`);
+const solRows = await sql`
+	SELECT source, ref, name, description
+	  FROM solana_agents_index
+	 WHERE active = true
+	   AND (name IS NOT NULL OR description IS NOT NULL)
+`;
+
+console.log(`[slur-scan] scanning ${rows.length} active ERC-8004 and ${solRows.length} active Solana indexed agents`);
 
 const hits = [];
 for (const r of rows) {
 	const stem = matchedSlurStem(`${r.name || ''} ${r.description || ''}`);
 	if (stem) hits.push({ ...r, stem });
 }
+const solHits = [];
+for (const r of solRows) {
+	const stem = matchedSlurStem(`${r.name || ''} ${r.description || ''}`);
+	if (stem) solHits.push({ source: r.source, ref: r.ref, stem });
+}
 
-if (!hits.length) {
+if (!hits.length && !solHits.length) {
 	console.log('[slur-scan] clean — no active agent carries a slur');
 	process.exit(0);
 }
 
 // Report the stem and the chain/agent id, never the offending text itself.
-const byStem = hits.reduce((a, h) => ((a[h.stem] = (a[h.stem] || 0) + 1), a), {});
-console.log(`[slur-scan] ${hits.length} offending row(s):`, byStem);
+const byStem = [...hits, ...solHits].reduce((a, h) => ((a[h.stem] = (a[h.stem] || 0) + 1), a), {});
+console.log(`[slur-scan] ${hits.length + solHits.length} offending row(s):`, byStem);
 for (const h of hits) console.log(`  chain ${h.chain_id} agent ${h.agent_id} — matched "${h.stem}"`);
+for (const h of solHits) console.log(`  solana ${h.source} ${h.ref} matched "${h.stem}"`);
 
 if (DRY) {
 	console.log('[slur-scan] --dry-run: nothing written');
@@ -70,6 +88,14 @@ for (const h of hits) {
 		UPDATE erc8004_agents_index
 		   SET active = false
 		 WHERE chain_id = ${h.chain_id} AND agent_id = ${h.agent_id}
+	`;
+	n++;
+}
+for (const h of solHits) {
+	await sql`
+		UPDATE solana_agents_index
+		   SET active = false
+		 WHERE source = ${h.source} AND ref = ${h.ref}
 	`;
 	n++;
 }

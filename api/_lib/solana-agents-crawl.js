@@ -12,6 +12,7 @@
 // module only pulls them in when the crawl cron actually runs.
 
 import { sql } from './db.js';
+import { matchedSlurStem } from './display-name-safety.js';
 import { solanaConnection, solanaRpcEndpoints } from './solana/connection.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 import {
@@ -294,7 +295,21 @@ async function freshlyEnrichedRefs(source) {
 // Upsert one external Solana agent. registered_at is set to now() only on first
 // insert (a stable "first seen" proxy — these registries expose no cheap on-chain
 // creation timestamp) and preserved on every later sync.
-async function upsertAgent(row) {
+//
+// Names and descriptions come from attacker-controlled registry metadata, so the
+// same slur gate the ERC-8004 hydration applies decides `active` here too: every
+// public feed (/deployments, explore, discover) filters on it, and a re-sync
+// after an on-chain rename restores the row.
+export async function upsertAgent(row) {
+	const slur = matchedSlurStem(`${row.name || ''} ${row.description || ''}`);
+	if (slur) {
+		console.warn('[solana-crawl] withholding agent: slur in registry metadata', {
+			source: row.source,
+			ref: row.ref,
+			matched: slur,
+		});
+		row = { ...row, active: false };
+	}
 	await sql`
 		INSERT INTO solana_agents_index
 			(source, ref, network, owner, asset, agent_id, name, description, image,
@@ -323,7 +338,12 @@ async function upsertAgent(row) {
 			status       = COALESCE(excluded.status, solana_agents_index.status),
 			has_3d       = solana_agents_index.has_3d OR excluded.has_3d,
 			x402_support = solana_agents_index.x402_support OR excluded.x402_support,
-			active       = excluded.active,
+			-- A pass that carried no name or description judged nothing, so it keeps
+			-- the verdict an earlier metadata pass recorded (a withheld slur stays
+			-- withheld while the structural scan re-upserts the row every tick).
+			active       = CASE WHEN ${row.name == null && row.description == null}
+			                    THEN excluded.active AND solana_agents_index.active
+			                    ELSE excluded.active END,
 			last_metadata_at = CASE WHEN ${!!row.enriched} THEN now() ELSE solana_agents_index.last_metadata_at END,
 			metadata_error   = CASE WHEN ${!!row.preserveMetadataError}
 			                        THEN solana_agents_index.metadata_error
