@@ -110,6 +110,33 @@ describe('avatar-detail-og', () => {
 		expect(html).toContain('href="/gallery"');
 	});
 
+	it('describes the GLB, its render, creator, date and terms as parseable JSON-LD', async () => {
+		sqlState.rows = [
+			{
+				...AVATAR_ROW,
+				storage_key: 'https://three.ws/cdn/u/nova/scout.glb',
+				size_bytes: 4_096_000,
+				owner_display_name: 'Nir',
+			},
+		];
+		const { html } = await invokeHtml({ url: `/api/avatar-detail-og?id=${AVATAR_ID}` });
+		const ld = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+		const model = ld['@graph'].find((n) => n['@type'] === '3DModel');
+		expect(model.encodingFormat).toBe('model/gltf-binary');
+		expect(model.encoding[0]).toMatchObject({
+			'@type': 'MediaObject',
+			contentUrl: 'https://three.ws/cdn/u/nova/scout.glb',
+			encodingFormat: 'model/gltf-binary',
+		});
+		expect(model.thumbnailUrl).toContain('/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fu%2Fnova%2Fscout.glb');
+		// The card stays the named avatar card; the thumbnail is the bare render.
+		expect(model.image).toBe(`https://three.ws/api/avatars/${AVATAR_ID}/og`);
+		expect(model.creator).toMatchObject({ name: 'Nir', url: 'https://three.ws/u/nirholas' });
+		expect(model.dateCreated).toBe('2026-05-04');
+		expect(model.license).toBe('https://three.ws/legal/tos');
+		expect(model.keywords).toBe('scout, chrome');
+	});
+
 	it('renders a default-named, undescribed avatar noindex', async () => {
 		sqlState.rows = [{ ...AVATAR_ROW, name: 'Avatar', description: null, alt_text: null }];
 		const { status, html } = await invokeHtml({ url: `/api/avatar-detail-og?id=${AVATAR_ID}` });

@@ -96,6 +96,37 @@ describe('agent-detail-og', () => {
 		expect(html).not.toContain('<noscript>');
 	});
 
+	it('describes the agent body, render, creator and terms as parseable JSON-LD', async () => {
+		sqlState.rows = [
+			{
+				...AGENT_ROW,
+				body_storage_key: 'https://three.ws/cdn/u/atlas/body.glb',
+				body_size_bytes: 3_200_000,
+				owner_username: 'nirholas',
+				owner_display_name: 'Nir',
+			},
+		];
+		const { html } = await invokeHtml({ url: `/api/agent-detail-og?id=${AGENT_ID}` });
+		// Only a public body avatar is joined in, so its file can be named.
+		expect(sqlState.seen[0]).toMatch(/a\.visibility = 'public'/);
+		const ld = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+		const agent = ld['@graph'].find((n) => n['@type'] === 'SoftwareApplication');
+		expect(agent.encoding).toEqual([
+			{
+				'@type': 'MediaObject',
+				contentUrl: 'https://three.ws/cdn/u/atlas/body.glb',
+				encodingFormat: 'model/gltf-binary',
+				contentSize: '3200000 B',
+			},
+		]);
+		expect(agent.thumbnailUrl).toContain('/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fu%2Fatlas%2Fbody.glb');
+		expect(agent.creator).toMatchObject({ '@type': 'Person', url: 'https://three.ws/u/nirholas' });
+		expect(agent.license).toBe('https://three.ws/legal/tos');
+		expect(agent.featureList).toEqual(['research', 'trading']);
+		expect(agent.dateCreated).toBe('2026-05-04');
+		expect(html).toContain('<meta name="twitter:card" content="summary_large_image">');
+	});
+
 	it('marks the agent home link nofollow so a crawler does not pass authority out', async () => {
 		sqlState.rows = [AGENT_ROW];
 		const { html } = await invokeHtml({ url: `/api/agent-detail-og?id=${AGENT_ID}` });

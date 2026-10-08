@@ -15,6 +15,7 @@ import { extname, basename, dirname, relative, sep } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { rewriteHead } from './server/seo-head.mjs';
+import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 
 // Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
 // Shared-shell routes serve one template file for hundreds of paths (/docs/* and
@@ -151,6 +152,12 @@ const DEV_API_PROXY = process.env.DEV_API_PROXY || 'https://three.ws';
 // helper isn't running the proxy's error handler below returns a clean 502 (not a
 // crash). Set X402_PAY_DEV_URL='' to disable and fall back to the prod payer.
 const X402_PAY_DEV_URL = process.env.X402_PAY_DEV_URL ?? 'http://localhost:3032';
+
+// Dev parity for the per-creation <head> on /m/:id (server/creation-head.mjs):
+// same rewrite, with the creation read from GET /api/forge-creation upstream.
+const renderDevCreationHead = createCreationHeadRenderer({
+	loadCreation: apiCreationLoader(DEV_API_PROXY),
+});
 
 // Auto-discover dashboard-next sub-pages so each agent can add an HTML file
 // under pages/dashboard-next/ without touching this config. The Rollup input
@@ -2741,8 +2748,14 @@ const appConfig = {
 						const rel = filePath.slice(root.length + 1).replace(/\\/g, '/');
 						const fileUrl = '/' + rel;
 						const transformed = await server.transformIndexHtml(fileUrl, html);
+						// /m/:id gets its per-creation head in dev too (production
+						// does it in server/index.mjs), read from the same API upstream
+						// every other /api call in dev goes to.
+						const creationHtml = creationIdFromPath(path)
+							? await renderDevCreationHead(path, transformed)
+							: null;
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
-						res.end(rewriteSeoHead(path, transformed));
+						res.end(creationHtml || rewriteSeoHead(path, transformed));
 					} catch {
 						next();
 					}

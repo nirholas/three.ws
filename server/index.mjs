@@ -37,6 +37,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead, CANONICAL_ORIGIN } from './seo-head.mjs';
+import { createCreationHeadRenderer, creationIdFromPath, loadPublicCreation } from './creation-head.mjs';
 import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
@@ -57,6 +58,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const API_ROOT = path.join(ROOT, 'api');
 const DIST_ROOT = path.join(ROOT, 'dist');
+// Per-creation head for /m/:id, reading the creation straight from the
+// database with the same visibility rules as GET /api/forge-creation.
+const renderCreationHead = createCreationHeadRenderer({ loadCreation: loadPublicCreation, origin: CANONICAL_ORIGIN });
 const PORT = Number(process.env.PORT) || 8080;
 // 8 MB fits the 6 M-char base64 token image build-metadata's schema accepts
 // (base64 inflates raw bytes by 4/3, so the old Vercel-era 4.5 MB limit
@@ -551,6 +555,21 @@ app.use(async (req, res) => {
 					}
 				} catch (err) {
 					console.error(`[ssr] ${currentPath} fell back to the static shell:`, err.message);
+				}
+			}
+			// /m/:id is one shell for every forge creation. Give each its own
+			// title, canonical, summary_large_image card (the PNG render of the
+			// model) and 3DModel JSON-LD, for every User-Agent: see the header
+			// of server/creation-head.mjs. Any miss serves the plain shell.
+			if (req.method === 'GET' && file.endsWith('.html') && creationIdFromPath(url.pathname)) {
+				const html = await renderCreationHead(url.pathname, readFileSync(file, 'utf8'));
+				if (html) {
+					res.set(hardenHeaderBag(collected, html));
+					if (fileStatus) res.status(fileStatus);
+					res.set('content-type', 'text/html; charset=utf-8');
+					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.send(html);
+					return;
 				}
 			}
 			// Shared-shell routes (/docs/*, /tutorials/*) all resolve to one HTML

@@ -18,6 +18,8 @@ import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
 import { esc, isSearchCrawler, renderCrawlerPage, renderCrawlerNotFound } from './_lib/crawler-page.js';
 import { isIndexableAgent } from './_lib/indexable-entity.js';
+import { publicUrlOrNull } from './_lib/r2.js';
+import { creationJsonLd } from './_lib/creation-jsonld.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -42,8 +44,15 @@ export default wrap(async (req, res) => {
 	try {
 		[agent] = await sql`
 			SELECT i.id, i.name, i.description, i.skills, i.home_url,
-			       i.erc8004_agent_id, i.chain_id, i.created_at, i.updated_at
+			       i.erc8004_agent_id, i.chain_id, i.created_at, i.updated_at,
+			       a.storage_key AS body_storage_key, a.size_bytes AS body_size_bytes,
+			       u.username AS owner_username, u.display_name AS owner_display_name
 			FROM agent_identities i
+			-- The agent's 3D body, only when that avatar is itself public: a
+			-- private body's file must not surface through its agent's page.
+			LEFT JOIN avatars a
+			       ON a.id = i.avatar_id AND a.deleted_at IS NULL AND a.visibility = 'public'
+			LEFT JOIN users u ON u.id = i.user_id AND u.deleted_at IS NULL
 			WHERE i.id = ${agentId} AND i.deleted_at IS NULL AND i.is_public = true
 			LIMIT 1
 		`;
@@ -149,20 +158,30 @@ export default wrap(async (req, res) => {
 				{ label: 'Agent marketplace', href: '/marketplace' },
 				{ label: 'Avatar gallery', href: '/gallery' },
 			],
-			jsonLd: {
-				'@type': 'SoftwareApplication',
-				'@id': pageUrl,
+			// An agent is software, not a model, so it stays a
+			// SoftwareApplication (a CreativeWork subtype) and its 3D body rides
+			// along as the encoding, with the same render, creator and terms
+			// every creation page carries (api/_lib/creation-jsonld.js).
+			jsonLd: creationJsonLd({
+				origin,
+				pageUrl,
+				type: 'SoftwareApplication',
 				name: title,
 				description: desc,
-				url: pageUrl,
+				glbUrl: publicUrlOrNull(agent.body_storage_key),
+				glbSizeBytes: agent.body_size_bytes,
 				image: ogImage,
-				applicationCategory: 'AI agent',
-				operatingSystem: 'Web',
-				...(skills.length ? { featureList: skills.slice(0, 12) } : {}),
-				...(agent.created_at ? { dateCreated: isoDay(agent.created_at) } : {}),
-				...(agent.updated_at ? { dateModified: isoDay(agent.updated_at) } : {}),
-				publisher: { '@type': 'Organization', name: 'three.ws', url: origin },
-			},
+				creator: agent.owner_username
+					? { username: agent.owner_username, displayName: agent.owner_display_name }
+					: null,
+				dateCreated: agent.created_at,
+				dateModified: agent.updated_at,
+				extra: {
+					applicationCategory: 'AI agent',
+					operatingSystem: 'Web',
+					...(skills.length ? { featureList: skills.slice(0, 12) } : {}),
+				},
+			}),
 		}),
 	);
 });

@@ -19,6 +19,8 @@ import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
 import { esc, isSearchCrawler, renderCrawlerPage, renderCrawlerNotFound } from './_lib/crawler-page.js';
 import { isIndexableAvatar } from './_lib/indexable-entity.js';
+import { publicUrlOrNull } from './_lib/r2.js';
+import { creationJsonLd } from './_lib/creation-jsonld.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -47,8 +49,9 @@ export default wrap(async (req, res) => {
 		[avatar] = await sql`
 			SELECT a.id, a.name, a.description, a.alt_text, a.tags, a.model_category,
 			       a.view_count, a.fork_count, a.parent_avatar_id,
+			       a.storage_key, a.size_bytes,
 			       a.created_at, a.updated_at,
-			       u.username AS owner_username
+			       u.username AS owner_username, u.display_name AS owner_display_name
 			FROM avatars a
 			LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
 			WHERE a.id = ${avatarId} AND a.deleted_at IS NULL AND a.visibility = 'public'
@@ -156,29 +159,24 @@ export default wrap(async (req, res) => {
 				{ label: 'Build an embeddable widget', href: '/studio' },
 				{ label: 'Agent directory', href: '/agents' },
 			],
-			jsonLd: {
-				'@type': '3DModel',
-				'@id': pageUrl,
+			// The GLB, its rendered PNG, creator, date and terms, in the shape
+			// every creation page shares (api/_lib/creation-jsonld.js). The query
+			// above only returns public avatars, so the file URL is public too.
+			jsonLd: creationJsonLd({
+				origin,
+				pageUrl,
 				name: title,
 				description: desc,
-				url: pageUrl,
+				glbUrl: publicUrlOrNull(avatar.storage_key),
+				glbSizeBytes: avatar.size_bytes,
 				image: ogImage,
-				encodingFormat: 'model/gltf-binary',
-				isFamilyFriendly: true,
-				...(tags.length ? { keywords: tags.join(', ') } : {}),
-				...(avatar.created_at ? { dateCreated: isoDay(avatar.created_at) } : {}),
-				...(avatar.updated_at ? { dateModified: isoDay(avatar.updated_at) } : {}),
-				...(avatar.owner_username
-					? {
-							creator: {
-								'@type': 'Person',
-								name: `@${avatar.owner_username}`,
-								url: `${origin}/u/${avatar.owner_username}`,
-							},
-						}
-					: {}),
-				publisher: { '@type': 'Organization', name: 'three.ws', url: origin },
-			},
+				creator: avatar.owner_username
+					? { username: avatar.owner_username, displayName: avatar.owner_display_name }
+					: null,
+				dateCreated: avatar.created_at,
+				dateModified: avatar.updated_at,
+				keywords: tags,
+			}),
 		}),
 	);
 });

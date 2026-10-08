@@ -29103,6 +29103,15 @@
 			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
 			"tags": ["fix"],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Shared 3D models now explain themselves to X and Grok",
+			"summary": "Every 3D model page now tells whoever reads the link exactly what it is. A model shared from three.ws unfurls on X as a large card showing a render of the model itself instead of a stock image, with its own title and description. Model, avatar and agent pages also describe themselves in a machine-readable form that search engines and AI assistants like Grok can read: the 3D file, a picture of it, who made it, when, and the terms it is shared under. So when someone asks Grok what a three.ws link is, it can answer from the model rather than guess.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/creations"
 		}
 	]
 }

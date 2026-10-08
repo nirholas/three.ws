@@ -1,6 +1,10 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+# The PNG render of a 3D model. Creation pages name it as their og:image,
+# twitter:image and JSON-LD thumbnailUrl, so every reader that falls to this
+# group (X's card crawler, Grok, image search) has to be able to fetch it.
+Allow: /api/render/glb
 Disallow: /studio-deposit-harness*
 
 # /dashboard, /settings and /my-agents are signed-in surfaces and every one of
@@ -20,11 +24,18 @@ Disallow: /api/agent/*/og
 Disallow: /api/avatar/*/og
 
 # ----------------------------------------------------------------------
-# AI assistants fetching on behalf of a live user (ChatGPT, Claude, Grok,
-# Perplexity, Kimi, DuckDuckGo, Mistral) are welcome everywhere public,
+# AI assistants fetching on behalf of a live user (ChatGPT, Claude,
+# Perplexity, DuckDuckGo, Mistral) are welcome everywhere public,
 # INCLUDING the API: the x402 pay-per-call endpoints, the free 3D lanes,
 # and the MCP servers are the product. Only signed-in account surfaces
 # stay off limits.
+#
+# Grok is welcome too, but xAI documents no user-agent token for its
+# crawler or its live-user fetcher (checked against docs.x.ai on
+# 2026-10-08), and Grok Bot browses with an ordinary browser. Listing an
+# undocumented token here would match nothing real, so Grok falls to the
+# "User-agent: *" group above, which serves it every public page and the
+# model renders. When xAI publishes its tokens, add them to this group.
 # ----------------------------------------------------------------------
 User-agent: ChatGPT-User
 User-agent: OAI-SearchBot
@@ -39,8 +50,8 @@ Disallow: /dashboard
 Disallow: /settings
 Disallow: /studio-deposit-harness*
 
-# AI index and training crawlers (GPTBot, ClaudeBot, GrokBot, PerplexityBot,
-# Google-Extended, Bytespider, CCBot, and the rest) are equally welcome and
+# AI index and training crawlers (GPTBot, ClaudeBot, PerplexityBot,
+# Google-Extended, Bytespider, CCBot, xAI's, and the rest) are equally welcome and
 # already covered by the "User-agent: *" rules above; nothing here blocks
 # them. Start from the machine-readable index instead of scraping HTML:
 #

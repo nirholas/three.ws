@@ -16,6 +16,8 @@ import { sql } from './_lib/db.js';
 import { cors, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
+import { scriptJson } from './_lib/safe-text.js';
+import { creationJsonLd, renderPosterUrl, renderableGlb } from './_lib/creation-jsonld.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -30,10 +32,17 @@ export default wrap(async (req, res) => {
 
 	let row;
 	try {
+		// Private creations stay private: the same visibility rule as the
+		// public read (getPublicCreation in api/_lib/forge-store.js).
 		[row] = await sql`
-			SELECT id, prompt, preview_image_url, status
-			FROM forge_creations
-			WHERE id = ${id}
+			SELECT fc.id, fc.prompt, fc.preview_image_url, fc.status,
+			       fc.glb_url, fc.web_glb_url, fc.web_size_bytes, fc.size_bytes,
+			       fc.model_category, fc.created_at,
+			       u.username AS creator_username, u.display_name AS creator_display_name
+			FROM forge_creations fc
+			LEFT JOIN users u ON u.id = fc.user_id AND u.deleted_at IS NULL
+			WHERE fc.id = ${id}
+			  AND (fc.visibility IS NULL OR fc.visibility IN ('public', 'unlisted'))
 			LIMIT 1
 		`;
 	} catch {
@@ -46,7 +55,32 @@ export default wrap(async (req, res) => {
 	const desc = `3D model forged from text on three.ws: "${title}"`;
 	const pageUrl = `${origin}/forge/share/${id}`;
 	const forgeUrl = `${origin}/forge?share=${id}`;
-	const ogImage = row.preview_image_url || `${origin}/api/forge-og?id=${id}`;
+	const finished = row.status === 'done' && Boolean(row.glb_url);
+	const posterGlb = finished
+		? renderableGlb([
+				{ url: row.web_glb_url, sizeBytes: row.web_size_bytes },
+				{ url: row.glb_url, sizeBytes: row.size_bytes },
+			])
+		: null;
+	const poster = posterGlb ? renderPosterUrl(origin, posterGlb) : null;
+	const ogImage = row.preview_image_url || poster || `${origin}/api/forge-og?id=${id}`;
+	// Machine-readable description of the creation: the GLB, its render, the
+	// creator when signed in, the date and the terms (api/_lib/creation-jsonld.js).
+	const jsonLd = creationJsonLd({
+		origin,
+		pageUrl,
+		name: title,
+		description: desc,
+		glbUrl: finished ? row.glb_url : null,
+		glbSizeBytes: row.size_bytes,
+		thumbnailUrl: poster || row.preview_image_url || null,
+		image: ogImage,
+		creator: row.creator_username
+			? { username: row.creator_username, displayName: row.creator_display_name }
+			: null,
+		dateCreated: row.created_at,
+		extra: { sameAs: `${origin}/m/${id}` },
+	});
 	// oEmbed discovery — /api/oembed resolves this exact shareUrl (extractForgeId
 	// in api/agent-oembed.js) so Notion/Webflow/Discord auto-embed a live 3D
 	// viewer when this URL is pasted, no manual snippet needed.
@@ -55,7 +89,7 @@ export default wrap(async (req, res) => {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600');
-	res.end(renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembedJsonUrl }));
+	res.end(renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembedJsonUrl, jsonLd }));
 });
 
 function redirect(res, to) {
@@ -65,7 +99,7 @@ function redirect(res, to) {
 	res.end();
 }
 
-function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembedJsonUrl }) {
+function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembedJsonUrl, jsonLd }) {
 	const t = esc(title);
 	const d = esc(desc);
 	return `<!doctype html>
@@ -104,6 +138,7 @@ function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, origin, oembe
 	<link rel="canonical" href="${esc(pageUrl)}">
 	<link rel="alternate" type="application/json+oembed" href="${esc(oembedJsonUrl)}" title="${t} oEmbed">
 	<link rel="shortcut icon" href="/favicon.ico">
+	<script type="application/ld+json">${scriptJson({ '@context': 'https://schema.org', '@graph': [jsonLd] })}</script>
 
 	<style>
 		html,body{margin:0;padding:0;background:#0b0d10;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;height:100%}

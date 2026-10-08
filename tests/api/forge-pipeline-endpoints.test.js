@@ -605,6 +605,37 @@ describe('forge-share', () => {
 		expect(res.body).toContain(`/api/forge-og?id=${UUID}`);
 	});
 
+	it('describes a finished creation as parseable 3DModel JSON-LD, and never reads a private one', async () => {
+		sqlMock.mockResolvedValueOnce([
+			{
+				id: UUID,
+				prompt: 'a brass lantern',
+				preview_image_url: null,
+				status: 'done',
+				glb_url: MESH,
+				web_glb_url: null,
+				web_size_bytes: null,
+				size_bytes: 1_800_000,
+				model_category: 'prop',
+				created_at: new Date('2026-07-08T09:02:40Z'),
+				creator_username: 'nirholas',
+				creator_display_name: 'Nir',
+			},
+		]);
+		const res = await call(share, { url: `/api/forge-share?id=${UUID}` });
+		expect(sqlMock.mock.calls[0][0].join('?')).toMatch(/visibility IN \('public', 'unlisted'\)/);
+		const ld = JSON.parse(res.body.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+		const model = ld['@graph'][0];
+		expect(model['@type']).toBe('3DModel');
+		expect(model.encoding[0]).toMatchObject({ contentUrl: MESH, encodingFormat: 'model/gltf-binary' });
+		expect(model.thumbnailUrl).toContain(`/api/render/glb?glbUrl=${encodeURIComponent(MESH)}`);
+		expect(model.creator).toMatchObject({ url: 'https://three.ws/u/nirholas' });
+		expect(model.license).toBe('https://three.ws/legal/tos');
+		expect(model.sameAs).toBe(`https://three.ws/m/${UUID}`);
+		// No reference image, so the card is the render of the model itself.
+		expect(res.body).toContain(`name="twitter:image" content="https://three.ws/api/render/glb?glbUrl=`);
+	});
+
 	it('redirects to /forge on a malformed or unknown id', async () => {
 		const bad = await call(share, { url: '/api/forge-share?id=nope' });
 		expect(bad.statusCode).toBe(302);

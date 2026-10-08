@@ -120,8 +120,11 @@ async function boot() {
 	if (shell) shell.setAttribute('aria-busy', 'false');
 }
 
-// Client-side title/OG patch; the OG image is the server-rendered PNG of the
-// actual model (api/forge-og.js).
+// Client-side title/OG patch. The server already writes this creation's head
+// (server/creation-head.mjs: the PNG render of the model as the card image, plus
+// 3DModel JSON-LD), so the card image is only filled in here when the page came
+// back with the shell's brand default, i.e. the server lookup fell back.
+const SHELL_OG_IMAGE = 'https://three.ws/og-image.png';
 function patchMeta() {
 	const c = state.creation;
 	const title = `${titleFromPrompt(c.prompt)} · 3D Model · three.ws`;
@@ -130,8 +133,11 @@ function patchMeta() {
 	set('meta[property="og:title"]', title);
 	set('meta[name="twitter:title"]', title);
 	set('meta[property="og:url"]', `https://three.ws/m/${c.id}`);
-	set('meta[property="og:image"]', `https://three.ws/api/forge/${c.id}/og`);
-	set('meta[name="twitter:image"]', `https://three.ws/api/forge/${c.id}/og`);
+	const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+	if (!ogImage || ogImage === SHELL_OG_IMAGE) {
+		set('meta[property="og:image"]', `https://three.ws/api/forge/${c.id}/og`);
+		set('meta[name="twitter:image"]', `https://three.ws/api/forge/${c.id}/og`);
+	}
 	setCanonical(`/m/${c.id}`);
 }
 
