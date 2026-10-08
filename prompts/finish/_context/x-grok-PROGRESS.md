@@ -37,3 +37,10 @@ Cross-session handoff for the `x-grok-` orders ([x-grok-00-CONTEXT.md](x-grok-00
 ## 2026-10-08: order 048 closed (migration applied)
 
 - `20261008170000_x_mention_events.sql` applied alone with `node scripts/apply-migrations.mjs --apply --file 20261008170000_x_mention_events.sql` (output: `applying ... ok`). The unrelated pending `20261008150000_revenue_direct_settle_backfill.sql` was deliberately left for its owner; `db:check` still blocks deploys on it until that session applies it.
+
+## 2026-10-08: order 027 (agent-first tool results) done
+
+- Shipped `0ec1032cc`: `api/_mcp-studio/asset-links.js` (`assetLinks`, `assetLinksText`, `posterPngUrl`), wired into every asset-returning studio tool (the six generators, `check_job`, `look_at_model`, `create_agent_persona`, `get_agent_persona`, `persona_say`) and the three catalog tools in `api/_mcp/tools/library.js` (so `/api/mcp` gets them too). Results carry `viewer_url`, `glb_url`, `poster_png_url`, `embed_html` in `structuredContent` and as the first text lines; the widget's camelCase fields are unchanged. 21 tests in `tests/mcp-studio-asset-links.test.js`. Docs: `docs/mcp-studio.md` "Links for agents that render no widget", `docs/mcp.md` search_catalog.
+- Step 0 measured: generation text had viewer, AR and download links but no poster or embed; `structuredContent` had camelCase `glbUrl`/`viewerUrl` only. `search_catalog` text listed ids only (no links at all). Personas had `glb_url` and the embodiment `embed_url` but no viewer or poster. `look_at_model` had `viewer_url` and `ar_url` only.
+- Pending jobs (no GLB yet) now carry `viewer_url` = `/viewer?job=<id>`: `public/viewer.html` polls `/api/gpt-forge?job=` and swaps to `?src=` when the job lands. Verified in a real browser on a real job (queued to done in 117 s). Order 028 can return the same link from `get_job`.
+- For later orders: a catalog GLB over the renderer's 10 MB cap (every Mixamo character) gets its published PNG thumb as `poster_png_url`; a test pins that cap to `api/render/glb.js`. Reply media for the mention bot (051 to 054) can use `poster_png_url` directly.

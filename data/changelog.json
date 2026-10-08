@@ -39,15 +39,6 @@
 		},
 		{
 			"date": "2026-10-08",
-			"title": "3D Studio results now hand every agent plain links to the model",
-			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
-			"tags": [
-				"feature"
-			],
-			"link": "/docs/mcp-studio"
-		},
-		{
-			"date": "2026-10-08",
 			"title": "Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down",
 			"summary": "When every free Hugging Face Space is out of GPU quota, the Forge now pauses that engine for a few minutes, greys it out in the engine picker with the reason, and moves a generation you started on it to a working engine, showing you the switch, instead of retrying the same dead Spaces with a countdown.",
 			"tags": [
