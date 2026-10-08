@@ -55,32 +55,51 @@ steps:
       - --all-tags
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
 
+  # The deploy cannot be a plain rolling update. Cloud Run enforces the RTX PRO
+  # 6000 quota at ONE GPU here, and the serving revision holds it (min 1), so a
+  # new revision's instance can never start: it logs only "Starting new
+  # instance" once a minute until the 4 minute startup probe expires, and the
+  # revision is left not Ready (2026-09-18, revision 00002, stuck three weeks).
+  # So: release the GPU with service-level manual scaling at 0 (no revision is
+  # created), deploy, then restore autoscaling with the service-level cap of 1.
+  # The restore runs even when the deploy fails, which hands the GPU back to the
+  # previous revision. The lane is down for one model load (~10 min) while the
+  # new instance boots; forge fails over meanwhile. Shell variables are written
+  # $$name so Cloud Build passes them through instead of substituting them.
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - deploy
-      - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-$SHORT_SHA
-      - --region=${_REGION}
-      - --service-account=${_RUN_SA}
-      - --platform=managed
-      - --port=8080
-      - --gpu=1
-      - --gpu-type=nvidia-rtx-pro-6000
-      - --no-gpu-zonal-redundancy
-      - --no-cpu-throttling
-      - --cpu=20
-      - --memory=80Gi
-      - --min-instances=${_MIN_INSTANCES}
-      - --max-instances=${_MAX_INSTANCES}
-      - --timeout=900
-      - --allow-unauthenticated
-      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
-      - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=^;^GCS_BUCKET=${_GCS_BUCKET};HUNYUAN3D_MODEL=2.1;WEIGHTS_DIR=/weights/hunyuan3d-2.1;WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/hunyuan3d-2.1;WEIGHTS_LOCAL_DIR=/tmp/hunyuan3d-2.1;DINO_DIR=/weights/dinov2-giant;DINO_GCS_URI=gs://${_WEIGHTS_BUCKET}/dinov2-giant;DINO_LOCAL_DIR=/tmp/dinov2-giant;U2NET_HOME=/weights/u2net;MAX_CONCURRENT=1
-      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+      - -c
+      - |
+        set -u
+        gcloud run services update ${_SERVICE} --region=${_REGION} --scaling=0 --quiet || true
+        gcloud run deploy ${_SERVICE} \
+          --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-$SHORT_SHA \
+          --region=${_REGION} \
+          --service-account=${_RUN_SA} \
+          --platform=managed \
+          --port=8080 \
+          --gpu=1 \
+          --gpu-type=nvidia-rtx-pro-6000 \
+          --no-gpu-zonal-redundancy \
+          --no-cpu-throttling \
+          --cpu=20 \
+          --memory=80Gi \
+          --min-instances=${_MIN_INSTANCES} \
+          --max-instances=${_MAX_INSTANCES} \
+          --timeout=900 \
+          --allow-unauthenticated \
+          --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET} \
+          --add-volume-mount=volume=weights,mount-path=/weights \
+          '--set-env-vars=^;^GCS_BUCKET=${_GCS_BUCKET};HUNYUAN3D_MODEL=2.1;WEIGHTS_DIR=/weights/hunyuan3d-2.1;WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/hunyuan3d-2.1;WEIGHTS_LOCAL_DIR=/tmp/hunyuan3d-2.1;DINO_DIR=/weights/dinov2-giant;DINO_GCS_URI=gs://${_WEIGHTS_BUCKET}/dinov2-giant;DINO_LOCAL_DIR=/tmp/dinov2-giant;U2NET_HOME=/weights/u2net;MAX_CONCURRENT=1' \
+          --set-secrets=API_KEY=avatar-reconstruction-key:latest \
+          --quiet
+        deployed=$$?
+        gcloud run services update ${_SERVICE} --region=${_REGION} --scaling=auto --max=${_MAX_INSTANCES} --quiet
+        restored=$$?
+        if [ "$$deployed" -ne 0 ]; then exit "$$deployed"; fi
+        exit "$$restored"
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-$SHORT_SHA
