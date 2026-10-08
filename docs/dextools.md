@@ -102,4 +102,5 @@ The totals are public at [`GET /api/coin/dextools-stats`](./api-reference.md#dex
 - [Listings: DEXTools](./listings.md#dextools): every surface that links DEXTools, and the Social Boost record.
 - [Coin pages](./coin-pages.md): DEXTools as a chart source in the switcher.
 - [Token in 3D, as an embed](./coin3d-embed.md): the 3D scene, by mint or by pair.
+- [Chart Companion](https://three.ws/chart-companion): a 3D agent that reacts to every real swap beside a live DEXTools chart, embeddable and usable as an OBS overlay.
 - [The DEXTools partnership proposal](./partners/dextools-proposal.md).
