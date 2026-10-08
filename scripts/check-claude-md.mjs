@@ -145,17 +145,35 @@ if (migrateApplies !== docSaysApplies) {
 }
 
 // 4d. README coverage. CLAUDE.md holds packages/workers/services at 100%.
+// The claim is matched with or without "currently": a 2026-09-10 rewording
+// dropped that word and this check went silent for four weeks while gaps
+// landed. Only directories with committed files count, so an empty or wholly
+// untracked scratch directory in a shared worktree cannot fail it.
 const { readdirSync } = await import('node:fs');
+const { execFileSync: gitLs } = await import('node:child_process');
+const trackedDirs = new Set(
+	gitLs('git', ['ls-files', '--', 'packages', 'workers', 'services'], {
+		cwd: root,
+		encoding: 'utf8',
+		maxBuffer: 64 * 1024 * 1024,
+	})
+		.split('\n')
+		.filter(Boolean)
+		.map((f) => f.split('/').slice(0, 2).join('/')),
+);
 const coverageGaps = [];
 for (const base of ['packages', 'workers', 'services']) {
 	const dir = path.join(root, base);
 	if (!existsSync(dir)) continue;
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
+		if (!entry.isDirectory() || !trackedDirs.has(`${base}/${entry.name}`)) continue;
 		if (!existsSync(path.join(dir, entry.name, 'README.md'))) coverageGaps.push(`${base}/${entry.name}`);
 	}
 }
-if (coverageGaps.length && /Coverage under `packages\/`, `workers\/`, and `services\/` is currently 100%/.test(md)) {
+const claimsFullCoverage = /Coverage under `packages\/`, `workers\/`, and `services\/` is (?:currently )?100%/.test(md);
+if (!claimsFullCoverage) {
+	failures.push('CLAUDE.md no longer states the 100% README-coverage standard this check enforces; restore the sentence or update check 4d');
+} else if (coverageGaps.length) {
 	failures.push(
 		`CLAUDE.md claims 100% README coverage but ${coverageGaps.length} dir(s) have none: ${coverageGaps.join(', ')}. ` +
 			`Write the README (preferred) or correct the claim.`,
