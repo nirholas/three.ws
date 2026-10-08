@@ -289,7 +289,7 @@
 }
 .tr-flash--buy { background: #60a5fa; }
 .tr-flash--win { background: #34d399; }
-.tr-flash--loss { background: #f87171; }
+.tr-flash--loss { background: var(--danger); }
 .tr-flash--flat { background: #cbd5e1; }
 .tr-flash.is-on { animation: tr-flash 3.2s var(--ease-out) both; }
 @keyframes tr-flash {
@@ -352,7 +352,7 @@
 }
 .tr-badge--buy { background: #60a5fa; }
 .tr-badge--win { background: #34d399; }
-.tr-badge--loss { background: #f87171; }
+.tr-badge--loss { background: var(--danger); }
 .tr-badge--flat { background: #cbd5e1; }
 .tr-row-main { min-width: 0; }
 .tr-row-line { margin: 0; font-size: var(--text-sm); overflow-wrap: anywhere; }

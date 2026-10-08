@@ -580,7 +580,7 @@ function renderImageThumb() {
 	const box = $('#img-thumb');
 	if (!box) return;
 	const src = currentImage();
-	box.innerHTML = src ? `<img src="${esc(src)}" alt="Coin image" />` : '<span class="lx-stage-empty">No image yet</span>';
+	box.innerHTML = src ? `<img src="${esc(src)}" alt="Coin image" loading="eager" decoding="async" />` : '<span class="lx-stage-empty">No image yet</span>';
 	$('#img-reset').hidden = !state.form.imageDataUrl;
 }
 
@@ -712,10 +712,10 @@ function renderPreviewStage() {
 		stage.innerHTML = `<model-viewer src="${esc(a.model_url)}" ${a.thumbnail_url ? `poster="${esc(a.thumbnail_url)}"` : ''} alt="${esc(a.name || 'Agent')} in 3D" camera-controls auto-rotate rotation-per-second="18deg" interaction-prompt="none" shadow-intensity="0.8" exposure="1.05" environment-image="neutral"></model-viewer>${tag}`;
 		ensureModelViewer().catch(() => {
 			if (stageAgentId !== a.id) return;
-			stage.innerHTML = a.thumbnail_url ? `<img src="${esc(a.thumbnail_url)}" alt="${esc(a.name || 'Agent')}" />${tag}` : `<div class="lx-stage-empty">3D preview unavailable</div>${tag}`;
+			stage.innerHTML = a.thumbnail_url ? `<img src="${esc(a.thumbnail_url)}" alt="${esc(a.name || 'Agent')}" loading="eager" decoding="async" />${tag}` : `<div class="lx-stage-empty">3D preview unavailable</div>${tag}`;
 		});
 	} else {
-		stage.innerHTML = a.thumbnail_url ? `<img src="${esc(a.thumbnail_url)}" alt="${esc(a.name || 'Agent')}" />${tag}` : `<div class="lx-stage-empty">This agent has no body yet</div>${tag}`;
+		stage.innerHTML = a.thumbnail_url ? `<img src="${esc(a.thumbnail_url)}" alt="${esc(a.name || 'Agent')}" loading="eager" decoding="async" />${tag}` : `<div class="lx-stage-empty">This agent has no body yet</div>${tag}`;
 	}
 }
 
@@ -738,7 +738,7 @@ function updateDerived() {
 	const img = currentImage();
 	const coin = $('#lx-coin');
 	if (coin) {
-		coin.innerHTML = `${img ? `<img class="lx-coin-img" src="${esc(img)}" alt="" />` : `<span class="lx-coin-ph" aria-hidden="true">?</span>`}
+		coin.innerHTML = `${img ? `<img class="lx-coin-img" src="${esc(img)}" alt="" loading="lazy" decoding="async" />` : `<span class="lx-coin-ph" aria-hidden="true">?</span>`}
 			<div style="min-width:0"><p class="lx-coin-name">${esc(f.name.trim() || 'Your coin name')}</p><p class="lx-coin-sym">$${esc(f.symbol || 'TICKER')}</p></div>
 			${f.description.trim() ? `<p class="lx-coin-desc">${esc(f.description.trim())}</p>` : ''}
 			<span class="lx-coin-link">↗ ${a ? `three.ws/agents/${esc(a.agent_id || a.id).slice(0, 8)}…` : 'links to your agent'}</span>`;
@@ -1155,7 +1155,7 @@ function showSuccess({ mint, signature, agent, fee }) {
 		<h2 id="lx-dialog-title">$${esc(symbol)} is live</h2>
 		<p>Your coin is trading on pump.fun and listed on three.ws, linked to ${esc(agent?.name || 'your agent')}.</p>
 		<div class="lx-result-coin">
-			${img ? `<img class="lx-coin-img" src="${esc(img)}" alt="" />` : '<span class="lx-coin-ph">?</span>'}
+			${img ? `<img class="lx-coin-img" src="${esc(img)}" alt="" loading="lazy" decoding="async" />` : '<span class="lx-coin-ph">?</span>'}
 			<div style="min-width:0"><p class="lx-coin-name">${esc(f.name.trim())}</p><div class="lx-ca"><span>${esc(shortAddress(mint, 6, 6))}</span><button type="button" class="lx-btn is-small" id="ok-copy">Copy CA</button></div></div>
 		</div>
 		${feeNote}

@@ -214,7 +214,7 @@ function renderShell() {
 	root.innerHTML = `
 		<header class="ac-head">
 			<div class="ac-head-id">
-				${a.avatar_thumbnail_url ? `<img class="ac-head-av" src="${esc(a.avatar_thumbnail_url)}" alt="" />` : '<span class="ac-head-av" aria-hidden="true"></span>'}
+				${a.avatar_thumbnail_url ? `<img class="ac-head-av" src="${esc(a.avatar_thumbnail_url)}" alt="" loading="lazy" decoding="async" />` : '<span class="ac-head-av" aria-hidden="true"></span>'}
 				<div>
 					<h1 class="ac-h1">${esc(a.name || 'Agent')} cards</h1>
 					<p class="ac-sub">Gift cards and prepaid cards paid in USDC on Solana from this agent's wallet${p ? ` · via ${esc(p.label)}` : ''}.</p>
@@ -414,7 +414,7 @@ function renderPickerPanel() {
 	el.innerHTML = `
 		<div class="ac-pickp" role="region" aria-label="${esc(p.name)}">
 			<div class="ac-pickp-head">
-				<span class="ac-prod-img">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" />` : ''}</span>
+				<span class="ac-prod-img">${p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy" decoding="async" />` : ''}</span>
 				<div>
 					<h3 class="ac-h3">${esc(p.name)}</h3>
 					<p class="ac-sub">${p.kind === 'prepaid_card' ? 'Prepaid card' : 'Gift card'}${p.country_name ? ` · ${esc(p.country_name)}` : ''} · ${esc(p.currency)}${p.redemption_methods?.length ? ` · redeem ${esc(p.redemption_methods.join(', '))}` : ''}</p>
