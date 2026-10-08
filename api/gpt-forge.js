@@ -3191,16 +3191,18 @@ export default wrap(async (req, res) => {
 	if (req.method === 'POST') {
 		// ?action=rig auto-rigs an existing GLB; the default POST reconstructs a
 		// mesh from a prompt (text→3D) or a reference image (image→3D).
-		if ((url.searchParams.get('action') || '').trim() === 'rig') {
-			return startRigJob(req, res);
-		}
-		// A bounded caller (the ChatGPT surface) sends a ticket so a submit that
-		// outlives its call budget still yields a job it can collect. See
-		// _lib/forge-submit-ticket.js.
+		// A bounded caller (the ChatGPT surface) or one retrying under an
+		// idempotency key sends a ticket, so a submit that outlives its call
+		// budget still yields a job it can collect. Rig submits take one too: an
+		// idempotent rig_mesh holds the ticket's handle before the rig job
+		// exists. See _lib/forge-submit-ticket.js.
 		const ticket = ticketFromRequest(req);
 		if (ticket) {
 			await markTicketSubmitting(ticket).catch((err) => console.warn(`[forge] submit ticket mark failed: ${err?.message || err}`));
 			captureTicketOutcome(res, ticket);
+		}
+		if ((url.searchParams.get('action') || '').trim() === 'rig') {
+			return startRigJob(req, res);
 		}
 		return startJob(req, res);
 	}

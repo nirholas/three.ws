@@ -127,10 +127,12 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-`tools/list` returns exactly **fourteen** tools, and they split five ways:
+`tools/list` returns exactly **fifteen** tools, and they split six ways:
 
 - **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
-  `rig_mesh`, `forge_avatar`, `refine_model`), in the table below.
+  `rig_mesh`, `forge_avatar`, `refine_model`), in the table below. Each takes an
+  optional [`idempotency_key`](#retries-and-idempotency_key).
+- **One job status tool**, [`get_job`](#job-status-get_job), for agents.
 - **One collector**, `check_job`, also in the table below.
 - **One inspector**, `look_at_model`, also in the table below.
 - **Three asset catalog reads** (`search_catalog`, `get_catalog_item`,
@@ -138,7 +140,9 @@ launcher, living avatars, link unfurls) is documented end to end in
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All fourteen are free and keyless.
+All fifteen are free and keyless. `/api/mcp-chatgpt` lists eleven of them: the
+eight in the table below and the three persona tools, without `get_job` or the
+catalog reads.
 
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
@@ -156,13 +160,14 @@ quota as the six generators.
 
 | Tool | Title | Input | Returns |
 |---|---|---|---|
-| `forge_free` | Generate a 3D model from text | `prompt`, `tier?` | GLB model |
-| `text_to_avatar` | Generate a 3D avatar | `prompt?` / `image_url?` | GLB avatar |
-| `mesh_forge` | Generate a 3D mesh (art-directed) | `prompt?` / `image_url?` | GLB mesh |
-| `rig_mesh` | Rig a 3D model for animation | `glb_url` | rigged GLB |
-| `forge_avatar` | Generate a rigged, animation-ready avatar | `prompt?` / `image_url?`, `allow_non_humanoid?` | rigged GLB avatar |
-| `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?` | refined GLB + version lineage |
-| `check_job` | Check a pending 3D generation and collect it | `job_id` | GLB model, or an updated pending state |
+| `forge_free` | Generate a 3D model from text | `prompt`, `tier?`, `idempotency_key?` | GLB model |
+| `text_to_avatar` | Generate a 3D avatar | `prompt?` / `image_url?`, `idempotency_key?` | GLB avatar |
+| `mesh_forge` | Generate a 3D mesh (art-directed) | `prompt?` / `image_url?`, `idempotency_key?` | GLB mesh |
+| `rig_mesh` | Rig a 3D model for animation | `glb_url`, `idempotency_key?` | rigged GLB |
+| `forge_avatar` | Generate a rigged, animation-ready avatar | `prompt?` / `image_url?`, `allow_non_humanoid?`, `idempotency_key?` | rigged GLB avatar |
+| `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?`, `idempotency_key?` | refined GLB + version lineage |
+| `get_job` | Get a 3D generation job | `job_id`, `refine?` | `status`, `progress`, `eta_seconds`; the model and its links when done; reason and remedy when failed |
+| `check_job` | Check a pending 3D generation and collect it | `job_id`, `refine?` | GLB model, or an updated pending state |
 | `look_at_model` | Look at a 3D model | `glb_url`, `views?` (up to 6 of `front`, `three-quarter`, `side`, `back`, `top`, `bottom`; default three-quarter, front, side, back), `size?` (128 to 1024 px, default 512) | rendered frames as images, plus geometry stats (triangles, materials, textures) and a plain reading of them |
 
 ### Ready-made assets (`search_catalog`, `get_catalog_item`, `get_item_source`)
@@ -369,6 +374,132 @@ three minutes), because other MCP hosts wait for it.
 Any HTTP client can poll `pollUrl` directly instead; it is the same public,
 auth-free job handle the [3D API](/docs/3d-api) hands anonymous callers.
 
+### Job status (`get_job`)
+
+`get_job(job_id)` is the job status tool for agents that run unattended: Grok
+Bot, a scheduled task, a CI step. It answers from the same code as `check_job`,
+so the two always agree; `check_job` stays for the ChatGPT inline viewer, which
+calls it by name. Call `get_job` as often as you like. It never starts or
+repeats a generation, and it never counts against the generation quota.
+
+Every job result, from `get_job`, `check_job` or a generating tool that returned
+a pending job, carries the same fields:
+
+| Field | Meaning |
+|---|---|
+| `job_id` | The handle to pass back (`jobId` is the same value, kept for older clients). |
+| `status` | `pending`, `done` or `failed`. `unknown` means only the check failed (see below). |
+| `phase` | Finer detail: `submitting` (the request is still being accepted), `queued` (waiting for a GPU worker, often a container boot), `running`, `done` or `failed`. |
+| `progress` | 0 to 1. While a job runs it is an estimate, its elapsed time over its lane's typical duration, held at 0.95 until the job is actually done; `null` when the server reports neither number. `1` when done. |
+| `eta_seconds` | Seconds the server expects are left. Absent once a job runs past its estimate, rather than a countdown stuck at a few seconds. `0` when done. |
+| `elapsed_seconds` | Seconds since the job was submitted. |
+
+What each status adds:
+
+- **`pending`**: a `viewer_url` that opens the model by itself the moment it is
+  ready, and the sentence telling the agent when to call again.
+- **`done`**: the whole model result, including the four
+  [agent links](#links-for-agents-that-render-no-widget) (`viewer_url`,
+  `glb_url`, `poster_png_url`, `embed_html`), `progress: 1` and `eta_seconds: 0`.
+- **`failed`**: `isError: true` with `reason`, a plain `message` and a `remedy`
+  naming the one action that fixes it:
+
+```json
+{
+  "status": "failed",
+  "job_id": "f1.eyJwIjoiZ2NwIiw…",
+  "reason": "generation_failed",
+  "message": "Generation failed: The mesh came back empty for this prompt.",
+  "remedy": "Start a new generation (with a new idempotency_key if you used one); a retry is routed to a healthy engine."
+}
+```
+
+`reason` is `generation_failed` (the job failed; start a new one),
+`unknown_job` (the id is mistyped or expired; start a new one) or
+`check_failed` with `status: "unknown"`, `retryable: true` and `retry_after`
+(the status check itself timed out or was rate-limited; the job keeps running,
+so call again after `retry_after` seconds). A failed job is never marked
+`retryable`, so a client that loops on `retryable` never polls a dead job.
+
+### Retries and `idempotency_key`
+
+An agent that retries a timed-out call would otherwise start a second
+generation, spend a second slot of the shared free quota, and end up with two
+models and no way to tell which one was meant. Every generation tool takes an
+optional `idempotency_key`: any string up to 200 characters that names one
+generation (a task id, a schedule run id). The first call with a key runs; any
+later call **from the same caller with the same key within 24 hours** gets that
+first call's job back instead of starting another:
+
+- while the job is still running, its current state (one status probe, the
+  pending fields above),
+- once it is done, the finished result, served from the record without asking
+  the pipeline again,
+- if it failed, the same failure, so the agent knows to start over with a new key.
+
+A repeat carries `idempotent_replay: true` and opens its text with "this is that
+call's job, and nothing new was started"; the first call carries
+`idempotent_replay: false`. Both carry the `idempotency_key` they were sent and
+the same `job_id`. A repeat is not charged to the generation quota, so retrying
+cannot rate-limit a task.
+
+```json
+{
+  "jsonrpc": "2.0", "id": 7, "method": "tools/call",
+  "params": {
+    "name": "forge_free",
+    "arguments": { "prompt": "a brass desk lamp", "idempotency_key": "grok-task-2026-10-08-lamp" }
+  }
+}
+```
+
+The rules:
+
+- **The caller owns the key.** It is the identity the
+  [rate limits](#funding--limits) charge: an install token from the connector
+  URL, the ChatGPT user, the Grok MCP session, else the IP address. A different
+  caller using the same key gets its own job. An agent that reconnects (and so
+  gets a new Grok session) keeps its keys only on a
+  [connector URL with an install token](#connector-url-for-cloud-agents-install-tokens).
+- **A key names one request.** The same key with different arguments, or on a
+  different tool, is refused with `reason: "idempotency_key_reused"` and starts
+  nothing.
+- **A call that never got a job gives its key back.** A refused prompt or a busy
+  generator leaves no job behind, so retrying with the same key runs normally.
+  An expired job frees its key the same way.
+- **The handle exists before the job does.** The first call records a submit
+  ticket's handle before it submits, so a repeat that lands while the first
+  submit is still in flight follows that handle (`phase: "submitting"`) rather
+  than racing it.
+
+The record lives in the same store as the HTTP `Idempotency-Key` header on the
+[agents API](./api-reference.md#idempotency):
+[`api/_lib/idempotency.js`](../api/_lib/idempotency.js), with the MCP side in
+[`api/_mcp-studio/jobs.js`](../api/_mcp-studio/jobs.js).
+
+### Progress notifications
+
+A client that sends `_meta.progressToken` on a `tools/call`, and accepts
+`text/event-stream` (the Streamable HTTP transport requires clients to accept
+it), gets the call answered as a server-sent event stream: one
+`notifications/progress` message when the call starts, one for each status the
+job reports while the tool waits, then the JSON-RPC result as the last event.
+
+```
+event: message
+data: {"jsonrpc":"2.0","method":"notifications/progress","params":{"progressToken":"p1","progress":42.3,"total":132.3,"message":"Rendering the model (25%), about 90s left."}}
+
+event: message
+data: {"jsonrpc":"2.0","id":7,"result":{…}}
+```
+
+`progress` is the seconds the call has been running, so it only ever increases,
+even when a rigged avatar moves from its mesh job to its rig job. `total` is
+that plus the server's remaining estimate, present only while there is one.
+Without a `progressToken`, or from a client that does not accept an event
+stream, the call answers plain JSON exactly as before. A batch is always
+answered as one JSON array.
+
 ### Conversational refinement (`refine_model`)
 
 Iterate on a model by describing the change in words — *"make it metallic"*,
@@ -508,8 +639,9 @@ connector URL carries one, else the door's own per-user identity, else the IP:
   under the hourly cap, would collectively drain it
 
 The generation quota is charged only when a request actually calls a generation
-tool, so `initialize`, `tools/list`, `resources/list`, and `check_job` are never
-throttled by it.
+tool, so `initialize`, `tools/list`, `resources/list`, `get_job` and `check_job`
+are never throttled by it, and neither is a repeat of an `idempotency_key` the
+caller already used.
 
 A capped generation answers HTTP 200 with a JSON-RPC error, because MCP clients
 pass that message to the model while many drop a 429 body. `Retry-After` and the

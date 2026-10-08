@@ -235,6 +235,7 @@ export const POLICY = {
 		forge_avatar: w('assets'),
 		refine_model: w('assets'),
 		check_job: w('assets'),
+		get_job: w('assets'),
 		look_at_model: r('assets'),
 		search_catalog: r('assets'),
 		get_catalog_item: r('assets'),

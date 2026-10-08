@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Long 3D jobs and safe retries for AI agents",
+			"summary": "Agents that run on schedules can now generate 3D models without ever making the same model twice. Every generation tool on the free 3D Studio MCP server accepts an optional idempotency_key: retry a call that timed out with the same key and you get the first call's job back instead of a second generation, and the retry costs none of your quota. A new get_job tool reports any job's status, progress and time left, hands back the viewer, download, picture and embed links when it is done, and says what went wrong and what to do next when it fails. MCP clients that ask for progress updates now receive them live while the model renders.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "API keys for AI agents that can never spend",
 			"summary": "When you make an API key you can now choose \"For an AI agent (Grok Bot, schedules, CI)\". That key can read, generate and edit your avatars, agents and their memory, and it can never spend: it cannot pay, send, trade, bid, launch or change where your agents get paid, and nothing done to it later can change that. If an agent holding it reaches one of those actions, it gets a clear answer with a link back to three.ws, where you approve the action yourself. The same rule now covers every route that arms an autopilot, a market maker, a launcher or a recurring charge, or moves a payout address. Keys you already have keep exactly the permissions they were made with.",
 			"tags": [

@@ -18,7 +18,10 @@ import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
 const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'look_at_model'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
 const CATALOG = ['search_catalog', 'get_catalog_item', 'get_item_source'];
-const ALL = [...ALLOWED, ...CATALOG, ...PERSONA];
+// get_job, the agent-facing job status tool, rides beside the catalog tools on
+// the full surface and is not one of the eleven the ChatGPT listing carries.
+const JOB = ['get_job'];
+const ALL = [...ALLOWED, ...JOB, ...CATALOG, ...PERSONA];
 
 // Anything that would signal a crypto / payment surface. The whole point of the
 // free studio app is that NONE of this appears anywhere in its contract — the

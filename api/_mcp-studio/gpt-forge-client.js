@@ -124,9 +124,11 @@ function internalHeaders() {
 // ../_lib/forge-submit-ticket.js). If the submit is still running at the
 // deadline, it resolves to the ticket's handle, `{ status: 'submitting',
 // job_id: 't1.…' }`, instead of a timeout: the server records the job under the
-// ticket when it lands, and polling that handle collects it.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, strictTier = false }, { deadline } = {}) {
-	const ticket = deadline ? newTicket() : null;
+// ticket when it lands, and polling that handle collects it. A caller that
+// needs the handle before the submit leaves (an idempotent call records it
+// first) passes its own `ticket`; a ticketed submit is never sent twice.
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, director, strictTier = false }, { deadline, ticket: givenTicket } = {}) {
+	const ticket = givenTicket || (deadline ? newTicket() : null);
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
 			...(prompt ? { prompt } : {}),
@@ -190,16 +192,19 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 	return data;
 }
 
-export async function startRig(base, glbUrl, { deadline } = {}) {
+// `ticket` works as it does for startForge: a rig submit that outlives its
+// window resolves to the ticket's handle instead of a timeout.
+export async function startRig(base, glbUrl, { deadline, ticket } = {}) {
 	let res;
 	try {
 		res = await fetch(`${base}/api/gpt-forge?action=rig`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: { 'content-type': 'application/json', ...(ticket ? { [TICKET_HEADER]: ticket } : {}) },
 			body: JSON.stringify({ glb_url: glbUrl }),
-			signal: AbortSignal.timeout(submitWindow(deadline, RIG_SUBMIT_TIMEOUT_MS)),
+			signal: AbortSignal.timeout(submitWindow(deadline, RIG_SUBMIT_TIMEOUT_MS, ticket ? TICKET_SUBMIT_FLOOR_MS : SUBMIT_FLOOR_MS)),
 		});
 	} catch (err) {
+		if (ticket && (err?.name === 'TimeoutError' || err?.name === 'AbortError')) return { status: 'submitting', job_id: ticketHandle(ticket) };
 		if (err?.name === 'TimeoutError' || err?.name === 'AbortError')
 			throw failure('timeout', 'the rigger took too long to accept the job; try again');
 		throw failure('provider_error', `the rigger is unreachable: ${err?.message || err}`);
@@ -214,8 +219,9 @@ export async function startRig(base, glbUrl, { deadline } = {}) {
 // Poll a /api/gpt-forge job to a terminal state. Returns the done payload, throws a
 // coded failure on a failed job, or returns { _timedOut: true } at the deadline.
 // `deadline` (epoch ms) caps the wait below timeoutMs when the caller's own call
-// budget ends sooner; no probe or sleep is allowed to run past it.
-export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: callDeadline } = {}) {
+// budget ends sooner; no probe or sleep is allowed to run past it. `onFrame`
+// sees every status frame the server answers (progress notifications ride it).
+export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: callDeadline, onFrame } = {}) {
 	const tMs = timeoutMs || DEFAULT_TIMEOUT_MS;
 	const deadline = Math.min(Date.now() + tMs, callDeadline || Infinity);
 	const left = () => deadline - Date.now();
@@ -255,6 +261,7 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: ca
 		if (!res.ok) throw failure('provider_error', data?.message || `generation poll returned ${res.status}`);
 		softFails = 0;
 		last = data;
+		onFrame?.(data);
 		if (data.status === 'done' && data.glb_url) return data;
 		if (data.status === 'failed') {
 			throw failure('generation_failed', data.error || 'generation failed', {
@@ -302,25 +309,35 @@ export async function pollOnce(base, jobId) {
 // Run a submit→poll cycle end to end, returning the terminal job payload.
 // A timed-out payload keeps `job_id` so the caller can hand the (still
 // running) job back to the client as a pollable handle instead of an error.
-export async function generate(base, submitArgs, { timeoutEnv, deadline } = {}) {
-	const job = await startForge(base, submitArgs, { deadline });
+// `onSubmitted(jobId)` fires once the submit has a handle (an idempotent call
+// records it), and `onFrame` sees every status frame along the way.
+export async function generate(base, submitArgs, { timeoutEnv, deadline, ticket, onSubmitted, onFrame } = {}) {
+	const job = await startForge(base, submitArgs, { deadline, ticket });
+	if (job.job_id) await onSubmitted?.(job.job_id);
 	if (job.status === 'done' && job.glb_url) return job;
-	// The submit outlived the call budget: its ticket handle is the job id.
-	if (job.status === 'submitting') return { _timedOut: true, job_id: job.job_id };
+	// The submit outlived the call budget: its ticket handle is the job id, and
+	// the frame says the request is still being accepted.
+	if (job.status === 'submitting') return { _timedOut: true, job_id: job.job_id, status: 'queued', stage: 'submit' };
+	onFrame?.(job);
 	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
 		deadline,
+		onFrame,
 	});
 	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }
 
-export async function rig(base, glbUrl, { timeoutEnv, deadline } = {}) {
-	const job = await startRig(base, glbUrl, { deadline });
+export async function rig(base, glbUrl, { timeoutEnv, deadline, ticket, onSubmitted, onFrame } = {}) {
+	const job = await startRig(base, glbUrl, { deadline, ticket });
+	await onSubmitted?.(job.job_id);
+	if (job.status === 'submitting') return { _timedOut: true, job_id: job.job_id, status: 'queued', stage: 'submit' };
+	onFrame?.(job);
 	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
 		deadline,
+		onFrame,
 	});
 	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }

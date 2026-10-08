@@ -346,6 +346,23 @@ What every hosted server does on the wire, so a connector never fails silently:
 - A `GET` with `accept: text/event-stream` answers a `405` with an `Allow` header where there is no server-to-client stream, a `401` with the OAuth challenge when the caller is unauthenticated, or the event stream itself (resource subscriptions on an authenticated core, 3D Studio, wallet or Bazaar connection, and the pump.fun feed).
 - These servers are stateless and issue no `Mcp-Session-Id`, so a connector has no session to echo, resume or tear down; every request stands alone.
 - An unauthenticated or expired-token request on a protected server gets `401` with `WWW-Authenticate: Bearer resource_metadata="…", resource="…"` naming that server, so the connector can sign in again on its own.
+- On the free 3D Studio (`/api/mcp-studio` and `/api/mcp-grok`), a `tools/call` that carries `_meta.progressToken` from a client that accepts `text/event-stream` is answered as an event stream: `notifications/progress` while the job runs, then the result. Without a token it answers plain JSON.
+
+### Long jobs and safe retries
+
+A text-to-3D job can outlast one tool call, and an unattended agent retries a call that timed out. The free 3D Studio gives such an agent two tools for that ([full reference](./mcp-studio.md#job-status-get_job)):
+
+- **`get_job(job_id)`** reports any generation job in one shape: `status` (`pending`, `done` or `failed`), `phase`, `progress` (0 to 1), `eta_seconds` and `elapsed_seconds` while it runs; the model and its four links (`viewer_url`, `glb_url`, `poster_png_url`, `embed_html`) when it is done; and a `reason` with a plain `remedy` when it failed. It never starts a generation and never counts against the generation quota, so call it as often as needed.
+- **`idempotency_key`** is an optional argument on every generation tool (`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`). Calling again with the same key from the same caller within 24 hours returns the first call's job (`idempotent_replay: true`) instead of starting a second generation, and the repeat is not charged to the quota. A different caller with the same key gets its own job, and the same key with different arguments is refused with `idempotency_key_reused`.
+
+A scheduled Grok Bot task that generates a model:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"forge_free","arguments":{"prompt":"a brass desk lamp","idempotency_key":"nightly-lamp-2026-10-08"}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_job","arguments":{"job_id":"<job_id from the first result>"}}}
+```
+
+If the first call times out and the task retries it, the retry answers with the same `job_id`. Keys belong to the caller the studio's limits charge, so a cloud agent that reconnects keeps them only on a [connector URL with an install token](./mcp-studio.md#connector-url-for-cloud-agents-install-tokens). The store behind the key is the same one the agents API uses for its [`Idempotency-Key` header](./api-reference.md#idempotency).
 
 ---
 

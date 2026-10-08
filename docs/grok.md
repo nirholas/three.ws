@@ -13,7 +13,7 @@ It is free: no account, no payment, no API key.
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
 | **Auth** | None |
 | **Protocol** | MCP `2025-06-18` |
-| **Tools** | The full free studio: the same fourteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
+| **Tools** | The full free studio: the same fifteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
 
 ## Grok Bot
 
@@ -96,7 +96,7 @@ print(chat.sample().content)
 ```
 
 Add `allowed_tools` (`allowed_tool_names` in the Python SDK) to expose only the
-tools a task needs, for example `["search_catalog", "forge_free", "check_job"]`.
+tools a task needs, for example `["search_catalog", "forge_free", "get_job"]`.
 A complete, zero-dependency Node script that also collects slow renders lives in
 [examples/grok-remote-mcp](../examples/grok-remote-mcp/README.md).
 
@@ -109,7 +109,7 @@ A complete, zero-dependency Node script that also collects slow renders lives in
 | `forge_avatar` | Generate and rig a character in one step. |
 | `rig_mesh` | Add a humanoid skeleton to any static GLB. |
 | `refine_model` | Change a model in words ("make it metallic") with a version history. |
-| `check_job` | Collect a render that outlived one call. |
+| `get_job` | Status of a render that outlived one call: `status`, `progress`, `eta_seconds`, then the model and its links. `check_job` does the same and stays for older clients. |
 | `look_at_model` | Render a GLB from several angles so Grok can see what it made. |
 | `search_catalog`, `get_catalog_item`, `get_item_source` | Thousands of ready-made CC0 props, rigged characters and motion clips, plus paste-ready embed code. |
 | `create_agent_persona`, `get_agent_persona`, `persona_say` | Save a rigged model as a named body, bring it back later, and make it speak a reply with lip-sync and emotion. |
@@ -125,8 +125,16 @@ links to the user.
 scaled to zero boots first, and a render can take a few minutes. Grok calls MCP
 from xAI's cloud with no published timeout, so this surface answers every call
 within 40 seconds: with the model, or with a pending job and the seconds to
-wait. The server's instructions tell Grok to call `check_job(job_id)` until the
-model is done and keep going without asking the user. In the Responses API,
+wait. The server's instructions tell Grok to call `get_job(job_id)` until the
+model is done and keep going without asking the user.
+
+**Retries never generate twice.** Every generation tool takes an optional
+`idempotency_key`. A scheduled task that passes its task id as the key and
+retries after a timeout gets the first run's job back (`idempotent_replay:
+true`), not a second model, and the retry costs none of its quota. Keys belong to
+the caller, so a task that reconnects keeps them only on a connector URL with an
+install token (below). Details:
+[Retries and `idempotency_key`](./mcp-studio.md#retries-and-idempotency_key). In the Responses API,
 where Grok cannot wait between calls in one response, continue the conversation
 with `previous_response_id`, as the example does.
 

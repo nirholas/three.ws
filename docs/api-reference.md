@@ -70,7 +70,7 @@ If the body also has `"reason": "rate_limiter_unavailable"`, you did not hit a q
 
 ### Idempotency
 
-Writes on the versioned agents API accept an `Idempotency-Key` header (up to 200 characters). The first request with a key runs; a retry with the same key and the same body within 24 hours gets the stored response back with `Idempotent-Replayed: true`, and nothing runs twice. Reusing a key with a different body is rejected with `422 idempotency_key_reused`, and a retry that arrives while the first is still running gets `409 idempotency_in_progress`. Other write endpoints are not idempotent unless their section says so, so guard retries on your side. Paid x402 endpoints are idempotent per payment: see [x402](/docs/x402).
+Writes on the versioned agents API accept an `Idempotency-Key` header (up to 200 characters). The first request with a key runs; a retry with the same key and the same body within 24 hours gets the stored response back with `Idempotent-Replayed: true`, and nothing runs twice. Reusing a key with a different body is rejected with `422 idempotency_key_reused`, and a retry that arrives while the first is still running gets `409 idempotency_in_progress`. Other write endpoints are not idempotent unless their section says so, so guard retries on your side. Paid x402 endpoints are idempotent per payment: see [x402](/docs/x402). The free 3D Studio MCP server keeps its `idempotency_key` argument in the same 24-hour store ([MCP studio](./mcp-studio.md#retries-and-idempotency_key)).
 
 ### Paid (x402) errors
 

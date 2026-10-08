@@ -22,6 +22,9 @@
 // Every model-bearing result also carries the four agent-first links from
 // ./asset-links.js (viewer_url, glb_url, poster_png_url, embed_html), stated in
 // the first lines of its text too, for clients that render no widget.
+// Every generation tool also takes an optional idempotency_key, and every job
+// result carries the shared status fields (status, progress, eta_seconds); see
+// ./jobs.js. collectJob below is the status core check_job and get_job share.
 // Each tool links the Apps SDK widget via _meta["openai/outputTemplate"] and returns structuredContent
 // the widget renders. No coin, token, wallet, or payment surface anywhere.
 
@@ -49,6 +52,8 @@ import {
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
 import { assetLinks, assetLinksText } from './asset-links.js';
+import { IDEMPOTENCY_KEY_PROP, jobFields, withIdempotency } from './jobs.js';
+import { newTicket } from '../_lib/forge-submit-ticket.js';
 import { renderTurntable, describeGeometry, fetchGeometryStats } from '../_lib/3d-vision.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
 // The same pure cold-start core the browser surfaces render from
@@ -149,7 +154,7 @@ function ok({ glbUrl, base, kind, prompt, rigged, referenceImageUrl }) {
 
 // `extra` carries machine-readable facts about the failure, such as
 // `retryable: true` when the job is fine and only the check itself failed.
-function toolError(message, extra = {}) {
+export function toolError(message, extra = {}) {
 	return {
 		content: [{ type: 'text', text: message }],
 		structuredContent: { error: true, message, ...extra },
@@ -167,6 +172,7 @@ function pendingTiming(job) {
 		etaRemainingSeconds: job?.eta_remaining_seconds,
 		// null when the API is not reporting a boot on this frame.
 		cold: coldStartState(job || {}),
+		frame: job || {},
 	};
 }
 
@@ -187,7 +193,11 @@ function pendingTiming(job) {
 // model joins. A client hands it back to check_job, which appends the finished
 // version the same way refine_model would have, so the version strip survives
 // the wait.
-function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage = 'mesh', cold = null, next = null, refine = null }) {
+//
+// `frame` is the last status frame the job answered; it fills the shared job
+// fields (status, progress, eta_seconds) that get_job returns too. `jobTool`
+// names the status tool this surface lists.
+function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage = 'mesh', cold = null, next = null, refine = null, frame = {}, jobTool = 'check_job' }) {
 	// The ChatGPT pipeline's own endpoint, not /api/forge: the whole point of
 	// the clone is that this surface can evolve independently.
 	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
@@ -226,15 +236,21 @@ function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage =
 	const retryIn = cold?.remainingSeconds ?? eta;
 	const message =
 		`${head}. ` +
-		`It keeps running: call the check_job tool with this job_id${retryIn ? ` in ~${retryIn}s` : ' shortly'} to collect it, ` +
+		`It keeps running: call the ${jobTool} tool with this job_id${retryIn ? ` in ~${retryIn}s` : ' shortly'} to collect it, ` +
 		`or poll ${pollUrl} until status is "done", then use its glb_url ` +
 		`(view at ${base}/viewer?src=<glb_url>).\n` +
 		`Viewer (opens the model by itself the moment it is ready): ${watchUrl}`;
+	const fields = jobFields({ ...frame, status: frame?.status === 'queued' ? 'queued' : 'running' });
 	return {
 		content: [{ type: 'text', text: message }],
 		structuredContent: {
 			status: 'pending',
 			jobId,
+			job_id: jobId,
+			phase: fields.phase,
+			progress: fields.progress,
+			eta_seconds: eta,
+			elapsed_seconds: elapsed ?? fields.elapsed_seconds,
 			pollUrl,
 			viewer_url: watchUrl,
 			// Which half of the pipeline is still running. A client that collects
@@ -397,6 +413,18 @@ export function avatarFallbackBrief(prompt, subject) {
 // over the already-directed brief. refine_model is the exception; it composes
 // rather than directs, and keeps the server's pass.
 
+// What every submit passes besides its own arguments: an idempotent call's
+// submit ticket (first submit only; ./jobs.js holds its handle already) and job
+// tracking, and the progress stream when the client asked for one. `shape`
+// tells a later get_job how to render the finished job.
+function jobOpts(ctx, shape, { ticket = ctx.ticket } = {}) {
+	return {
+		...(ticket ? { ticket } : {}),
+		...(ctx.onJob ? { onSubmitted: (jobId) => ctx.onJob(jobId, shape) } : {}),
+		...(ctx.onProgress ? { onFrame: (frame) => ctx.onProgress(frame, shape.what) } : {}),
+	};
+}
+
 async function handleForgeFree(args, _auth, req, ctx = {}) {
 	const base = originFromReq(req);
 	const prompt = String(args.prompt || '').trim();
@@ -437,12 +465,12 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 			markImageUrls
 				? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false }
 				: { prompt: effective, path: 'image', tier, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, ...jobOpts(ctx, { kind: 'model', what: 'model', prompt }) },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt, ...pendingTiming(job) });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt, ...pendingTiming(job), jobTool: ctx.jobTool });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url });
 }
@@ -475,12 +503,12 @@ async function handleTextToAvatar(args, _auth, req, ctx = {}) {
 		job = await generate(
 			base,
 			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, ...jobOpts(ctx, { kind: 'avatar', what: 'avatar', prompt: prompt || undefined }) },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, ...pendingTiming(job) });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, ...pendingTiming(job), jobTool: ctx.jobTool });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -528,12 +556,12 @@ async function handleMeshForge(args, _auth, req, ctx = {}) {
 				internal: true,
 				director: false,
 			},
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, ...jobOpts(ctx, { kind: 'mesh', what: 'mesh', prompt: prompt || undefined }) },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, ...pendingTiming(job) });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, ...pendingTiming(job), jobTool: ctx.jobTool });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -549,11 +577,15 @@ async function handleRigMesh(args, _auth, req, ctx = {}) {
 	}
 	let job;
 	try {
-		job = await rig(base, glbUrl, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline });
+		job = await rig(base, glbUrl, {
+			timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS',
+			deadline: ctx.deadline,
+			...jobOpts(ctx, { kind: 'rigged model', what: 'rigged model', rigged: true, stage: 'rig' }),
+		});
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', ...pendingTiming(job), stage: 'rig' });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', ...pendingTiming(job), stage: 'rig', jobTool: ctx.jobTool });
 	if (job._timedOut || !job.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true });
 }
@@ -589,18 +621,32 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 		gen = await generate(
 			base,
 			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{
+				timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS',
+				deadline: ctx.deadline,
+				...jobOpts(ctx, { kind: 'mesh', what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, stage: 'mesh', next: 'rig' }),
+			},
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, ...pendingTiming(gen), stage: 'mesh', next: 'rig' });
+	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, ...pendingTiming(gen), stage: 'mesh', next: 'rig', jobTool: ctx.jobTool });
 	if (gen._timedOut || !gen.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 
 	// Stage 2 — auto-rig the generated mesh.
 	let rigged;
 	try {
-		rigged = await rig(base, gen.glb_url, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline });
+		// The rig is a second job, so an idempotent call gives it a ticket of its
+		// own and moves the key's record onto it.
+		rigged = await rig(base, gen.glb_url, {
+			timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS',
+			deadline: ctx.deadline,
+			...jobOpts(
+				ctx,
+				{ kind: 'avatar', what: 'avatar rig', prompt: prompt || undefined, rigged: true, stage: 'rig', next: null },
+				{ ticket: ctx.onJob ? newTicket() : undefined },
+			),
+		});
 	} catch (err) {
 		// Generation succeeded but rigging failed: hand back the (unrigged) mesh so
 		// the work isn't lost, and say so plainly.
@@ -623,7 +669,7 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 			],
 		};
 	}
-	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, ...pendingTiming(rigged), stage: 'rig' });
+	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, ...pendingTiming(rigged), stage: 'rig', jobTool: ctx.jobTool });
 	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
 }
@@ -700,6 +746,12 @@ async function handleRefineModel(args, _auth, req, ctx = {}) {
 		}
 	}
 
+	const refine = {
+		lineage: baseLineage,
+		instruction,
+		refKind: refImageUrl ? 'image' : 'text',
+		...(parentIndex !== undefined ? { parentIndex } : {}),
+	};
 	let job;
 	try {
 		job = await generate(
@@ -707,7 +759,11 @@ async function handleRefineModel(args, _auth, req, ctx = {}) {
 			refImageUrl
 				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
 				: { prompt: composed, tier: 'standard', internal: true },
-			{ timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS', deadline: ctx.deadline },
+			{
+				timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS',
+				deadline: ctx.deadline,
+				...jobOpts(ctx, { kind: 'refined model', what: 'refined model', prompt: composed || undefined, refine }),
+			},
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
@@ -719,12 +775,8 @@ async function handleRefineModel(args, _auth, req, ctx = {}) {
 			what: 'refined model',
 			prompt: composed || undefined,
 			...pendingTiming(job),
-			refine: {
-				lineage: baseLineage,
-				instruction,
-				refKind: refImageUrl ? 'image' : 'text',
-				...(parentIndex !== undefined ? { parentIndex } : {}),
-			},
+			refine,
+			jobTool: ctx.jobTool,
 		});
 	if (job._timedOut || !job.glb_url) return toolError('Refinement is taking longer than expected. Please try again.');
 
@@ -766,15 +818,41 @@ function finishRefinement(base, data, refine) {
 	return refineOk({ glbUrl: data.glb_url, base, prompt: prompt || undefined, instruction, lineage: next, activeIndex: next.length - 1 });
 }
 
-// Collect a generation that outlived a tool call's inline wait. One status
-// probe, no loop: done renders the full result envelope in the widget, still
-// running returns a fresh pending envelope with updated timing, failed returns
-// the same clean failure copy the generating tools use. Without this tool the
-// only way back to a pending job was browsing the raw poll URL.
-async function handleCheckJob(args, _auth, req) {
-	const base = originFromReq(req);
-	const jobId = String(args.job_id || '').trim();
-	if (!jobId) return toolError('Provide the job_id a pending generation returned.');
+// The failure envelope for a job: what went wrong in plain words, and the one
+// action that fixes it. `retryable` keeps its meaning across the studio: the
+// job is fine and only this check failed, so checking again works (the viewer
+// widget retries on it). A failed job is never `retryable`; its remedy says to
+// start a new generation.
+function jobFailure({ jobId, message, remedy, reason, status = 'failed', retryable = false, retryAfter = null }) {
+	return toolError(`${message} ${remedy}`, {
+		status,
+		job_id: jobId,
+		reason,
+		remedy,
+		...(retryable ? { retryable: true } : {}),
+		...(retryAfter ? { retry_after: retryAfter } : {}),
+	});
+}
+
+// A finished envelope stamped with the shared job fields.
+function doneJob(envelope, jobId, frame) {
+	const fields = jobFields({ ...frame, status: 'done' });
+	return {
+		...envelope,
+		structuredContent: { ...envelope.structuredContent, ...fields, job_id: jobId },
+	};
+}
+
+const START_AGAIN = 'Start a new generation (with a new idempotency_key if you used one); a retry is routed to a healthy engine.';
+
+/**
+ * One status probe of a job, rendered for an agent: done gives the full model
+ * result with its links, still running gives a fresh pending result with live
+ * timing, failed gives the reason and the remedy. No loop. `shape` is how the
+ * call that started the job described it (kind, prompt, rigged, the refine
+ * lineage it joins), so a finished job renders as that call would have.
+ */
+export async function collectJob(base, jobId, shape = {}, { jobTool = 'check_job' } = {}) {
 	let data;
 	try {
 		data = await pollOnce(base, jobId);
@@ -783,30 +861,96 @@ async function handleCheckJob(args, _auth, req) {
 		// an upstream blip leaves the job running, and the first check of a
 		// finished job does the slow save-and-score work, so checking again
 		// usually returns the model at once.
-		return toolError(failureMessage(err), err?.code === 'unknown_job' ? {} : { retryable: true });
+		if (err?.code === 'unknown_job') {
+			return jobFailure({
+				jobId,
+				message: 'That job id is not recognized (it may be mistyped or expired).',
+				remedy: 'Start a new generation to get a fresh one.',
+				reason: 'unknown_job',
+			});
+		}
+		const wait = Number(err?.retryAfter) > 0 ? Math.ceil(Number(err.retryAfter)) : 10;
+		return jobFailure({
+			jobId,
+			status: 'unknown',
+			message: `${failureMessage(err)}`,
+			remedy: `The job itself keeps running: call ${jobTool} again in about ${wait}s.`,
+			reason: 'check_failed',
+			retryable: true,
+			retryAfter: wait,
+		});
 	}
 	if (data.status === 'done' && data.glb_url) {
-		const refined = finishRefinement(base, data, args.refine);
-		if (refined) return refined;
-		return ok({
-			glbUrl: data.glb_url,
-			base,
-			kind: 'model',
-			prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
-			referenceImageUrl: data.preview_image_url,
-		});
+		const refined = shape.refine ? finishRefinement(base, data, shape.refine) : null;
+		const prompt = shape.prompt || (typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined);
+		const envelope =
+			refined ||
+			ok({
+				glbUrl: data.glb_url,
+				base,
+				kind: shape.kind && shape.kind !== 'refined model' ? shape.kind : 'model',
+				prompt,
+				rigged: Boolean(shape.rigged),
+				referenceImageUrl: data.preview_image_url,
+			});
+		return doneJob(envelope, jobId, data);
 	}
 	if (data.status === 'failed') {
 		// data.error is already sanitized server-side (sanitizeJobError): safe copy.
-		return toolError(data.error ? `Generation failed: ${data.error}` : failureMessage({ code: 'generation_failed' }));
+		return jobFailure({
+			jobId,
+			message: data.error ? `Generation failed: ${data.error}` : 'Generation failed for this prompt.',
+			remedy: START_AGAIN,
+			reason: 'generation_failed',
+		});
 	}
 	return pendingResult({
 		base,
 		jobId,
-		what: 'model',
-		prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
+		what: shape.what || 'model',
+		prompt: shape.prompt || (typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined),
 		...pendingTiming(data),
+		...(shape.stage ? { stage: shape.stage } : {}),
+		...(shape.next ? { next: shape.next } : {}),
+		...(shape.refine ? { refine: shape.refine } : {}),
+		jobTool,
 	});
+}
+
+// check_job: collect a generation that outlived a tool call's inline wait.
+// Without it the only way back to a pending job was browsing the raw poll URL.
+async function handleCheckJob(args, _auth, req, ctx = {}) {
+	const jobId = String(args.job_id || '').trim();
+	if (!jobId) return toolError('Provide the job_id a pending generation returned.');
+	return collectJob(originFromReq(req), jobId, args.refine ? { refine: args.refine } : {}, { jobTool: ctx.jobTool });
+}
+
+// A repeat of an idempotent generation (./jobs.js): render the first call's job
+// from its record instead of starting another. A finished or failed job answers
+// from the record; a running one gets one status probe, and a pending record
+// whose job has since finished keeps that result for the next repeat.
+async function replayJob(record, { save, release, req, ctx = {} }) {
+	if (record.state === 'done' && record.result) return record.result;
+	if (record.state === 'failed') {
+		return jobFailure({
+			jobId: record.job_id,
+			message: String(record.message || 'Generation failed.').replace(/\s*Start a new generation.*$/s, ''),
+			remedy: START_AGAIN,
+			reason: 'generation_failed',
+		});
+	}
+	const out = await collectJob(originFromReq(req), record.job_id, record.shape || {}, { jobTool: ctx.jobTool });
+	const sc = out.structuredContent || {};
+	// Only a call that already returned hands its key over to a repeat. While the
+	// first call is still running it writes its own outcome (forge_avatar goes on
+	// to rig a mesh that just finished).
+	if (record.state === 'pending') {
+		if (sc.status === 'done') await save({ state: 'done', result: out });
+		else if (sc.reason === 'generation_failed') await save({ state: 'failed', message: sc.message });
+	}
+	// A job too old to look up frees its key, so calling again starts fresh.
+	if (sc.reason === 'unknown_job') await release();
+	return out;
 }
 
 // ── definitions ─────────────────────────────────────────────────────────────
@@ -895,7 +1039,7 @@ async function handleLookAtModel(args, _auth, req) {
 	};
 }
 
-const DEFS = [
+const BASE_DEFS = [
 	{
 		name: 'forge_free',
 		title: 'Generate a 3D model from text',
@@ -1138,6 +1282,23 @@ const DEFS = [
 		handler: handleLookAtModel,
 	},
 ];
+
+// Every tool that starts a job takes an optional idempotency_key, and a repeat
+// with the same key returns that job instead of starting another (./jobs.js).
+export const JOB_STARTERS = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model'];
+
+const DEFS = BASE_DEFS.map((def) =>
+	JOB_STARTERS.includes(def.name)
+		? {
+				...def,
+				inputSchema: {
+					...def.inputSchema,
+					properties: { ...def.inputSchema.properties, idempotency_key: IDEMPOTENCY_KEY_PROP },
+				},
+				handler: withIdempotency(def.name, def.handler, { replay: replayJob }),
+			}
+		: def,
+);
 
 // Schemas for tools/list — strip the handler (and any server-only field).
 export const TOOL_CATALOG = DEFS.map(({ handler: _h, ...schema }) => schema);

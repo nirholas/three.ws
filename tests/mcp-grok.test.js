@@ -97,13 +97,15 @@ describe('grok surface catalog', () => {
 		expect(names('grok')).toEqual(names('full'));
 		expect(names('grok')).toContain('create_agent_persona');
 		expect(names('grok')).toContain('check_job');
+		expect(names('grok')).toContain('get_job');
 	});
 
 	it('tells Grok to share links and collect pending jobs on initialize', async () => {
 		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }, auth, req, { surface: 'grok' });
 		const text = r.result.instructions;
 		expect(text).toContain('viewerUrl');
-		expect(text).toContain('check_job(job_id)');
+		expect(text).toContain('get_job(job_id)');
+		expect(text).toContain('idempotency_key');
 		expect(text).toContain('embed_url');
 	});
 });
@@ -118,12 +120,13 @@ describe('grok call budget', () => {
 		expect(opts.deadline).toBeLessThanOrEqual(Date.now() + GROK_CALL_BUDGET_MS);
 	});
 
-	it('returns a pending job with a check_job hint when the render outlives the budget', async () => {
+	it('returns a pending job with a get_job hint when the render outlives the budget', async () => {
 		vi.mocked(generate).mockResolvedValue({ _timedOut: true, job_id: 'job-abc123', status: 'running' });
 		const r = await dispatch(callMsg('forge_free', { prompt: 'a reusable rocket booster' }), auth, req, { surface: 'grok' });
 		expect(r.result.structuredContent.status).toBe('pending');
 		expect(r.result.structuredContent.jobId).toBe('job-abc123');
-		expect(r.result.content[0].text).toContain('check_job');
+		expect(r.result.content[0].text).toContain('call the get_job tool');
+		expect(r.result.structuredContent).toMatchObject({ job_id: 'job-abc123', phase: 'running' });
 	});
 });
 

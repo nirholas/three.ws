@@ -12,6 +12,7 @@ import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
 import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from './catalog-tools.js';
+import { JOB_TOOL_CATALOG, JOB_TOOLS } from './job-tools.js';
 import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
 
 // The @three-ws/mcp-policy server id for the free studio.
@@ -64,8 +65,9 @@ const GROK_INSTRUCTIONS = [
 	'Nothing renders inline in Grok, so always give the user the viewerUrl (an interactive 3D viewer that opens in any',
 	'browser) and the glbUrl (the downloadable model); poster_png_url is a picture of it to attach or show, and',
 	'embed_html puts it on a web page. A pending result is normal: wait the suggested seconds, then call',
-	'check_job(job_id) again until it is done, and keep going without asking the user; a Grok Bot task should finish',
-	'with the finished model, not the pending handle. To give yourself a body, forge_avatar a character, then',
+	'get_job(job_id) again until it is done, and keep going without asking the user; a Grok Bot task should finish',
+	'with the finished model, not the pending handle. On a scheduled or retried task, pass the same idempotency_key',
+	'(the task id works) so a retry picks up the model the first run started. To give yourself a body, forge_avatar a character, then',
 	'create_agent_persona(glb_url, name) and share its embed_url; persona_say makes that body speak your reply and',
 	'returns an embed_url that plays it.',
 ];
@@ -78,6 +80,14 @@ const CATALOG_INSTRUCTIONS = [
 	'Before generating a prop, character or animation, search_catalog(q) checks the thousands of ready-made CC0 props,',
 	'rigged characters and motion clips three.ws already publishes; get_item_source(id) returns paste-ready code for a',
 	'match. Say whether you used an existing asset or generated a new one.',
+];
+
+// The full and Grok surfaces list get_job (./job-tools.js); the ChatGPT one
+// collects jobs through its inline viewer instead.
+const JOB_INSTRUCTIONS = [
+	'Every generation tool takes an optional idempotency_key: calling again with the same key within 24 hours returns',
+	'the first call\'s job instead of generating twice, so set one whenever a call might be retried. get_job(job_id)',
+	'reports status, progress and eta_seconds for a pending job, and the model links once it is done.',
 ];
 
 const PERSONA_INSTRUCTIONS = [
@@ -106,16 +116,17 @@ const PERSONA_INSTRUCTIONS = [
 //            hand out links in place of the widgets Grok does not render.
 //            ./handler.js keys its generation caps on the MCP session, because
 //            every Grok user reaches us from xAI's shared egress.
-// check_job and the persona tools stay out of the generation quota on both; see
+// check_job, get_job and the persona tools stay out of the generation quota; see
 // ./handler.js callsGenerationTool. look_at_model renders frames server-side, so
 // it rides that quota.
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
-		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
-		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		catalog: [...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		personas: true,
-		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
+		jobTool: 'get_job',
+		instructions: [...BASE_INSTRUCTIONS, ...JOB_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 	},
 	chatgpt: {
 		server: 'mcp-chatgpt',
@@ -127,10 +138,17 @@ const SURFACES = {
 	},
 	grok: {
 		server: 'mcp-grok',
-		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
-		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		catalog: [...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		personas: true,
-		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS, ...GROK_INSTRUCTIONS].join(' '),
+		jobTool: 'get_job',
+		instructions: [
+			...BASE_INSTRUCTIONS,
+			...JOB_INSTRUCTIONS,
+			...CATALOG_INSTRUCTIONS,
+			...PERSONA_INSTRUCTIONS,
+			...GROK_INSTRUCTIONS,
+		].join(' '),
 		callBudgetMs: GROK_CALL_BUDGET_MS,
 	},
 };
@@ -207,7 +225,10 @@ function summarize(args) {
 	return o;
 }
 
-async function onToolCall(params, auth, started, req, surface) {
+// `opts.caller` is who the studio's limits charge on this request (./handler.js
+// studioCaller), and an idempotency_key belongs to it; `opts.onProgress`
+// receives status frames when the client asked for progress notifications.
+async function onToolCall(params, auth, started, req, surface, opts = {}) {
 	const { name, arguments: args = {} } = params || {};
 	const tool = typeof name === 'string' && Object.hasOwn(surface.tools, name) ? surface.tools[name] : null;
 	if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
@@ -220,7 +241,12 @@ async function onToolCall(params, auth, started, req, surface) {
 		throw rpcError(-32602, `invalid params for ${name}: ${detail}`);
 	}
 	try {
-		const ctx = surface.callBudgetMs ? { deadline: started + surface.callBudgetMs } : {};
+		const ctx = {
+			...(surface.callBudgetMs ? { deadline: started + surface.callBudgetMs } : {}),
+			jobTool: surface.jobTool || 'check_job',
+			...(opts.caller ? { caller: opts.caller } : {}),
+			...(opts.onProgress ? { onProgress: opts.onProgress } : {}),
+		};
 		const result = await tool.handler(args, auth, req, ctx);
 		recordEvent({ kind: 'tool_call', tool: name, latencyMs: Date.now() - started, meta: { args_summary: summarize(args), server: surface.server } });
 		return await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview);
@@ -232,7 +258,7 @@ async function onToolCall(params, auth, started, req, surface) {
 	}
 }
 
-export async function dispatch(msg, auth, req, { surface: surfaceName = 'full' } = {}) {
+export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', caller = null, onProgress = null } = {}) {
 	const surface = surfaceOf(surfaceName);
 	const started = Date.now();
 	const id = msg.id;
@@ -252,7 +278,7 @@ export async function dispatch(msg, auth, req, { surface: surfaceName = 'full' }
 		if (method === 'ping') return ok(id, {});
 		if (method === 'notifications/initialized') return null;
 		if (method === 'tools/list') return ok(id, { tools: await listForRequest(POLICY_SERVER, surface.catalog, auth, req) });
-		if (method === 'tools/call') return ok(id, await onToolCall(msg.params, auth, started, req, surface));
+		if (method === 'tools/call') return ok(id, await onToolCall(msg.params, auth, started, req, surface, { caller, onProgress }));
 		if (method === 'resources/list') {
 			return ok(id, { resources: widgetResources(surface.personas).map(({ text: _t, ...r }) => r) });
 		}

@@ -1,6 +1,9 @@
 // Shared HTTP handler for the free three.ws 3D Studio MCP surfaces.
 //
-//   POST     JSON-RPC (initialize, tools/list, tools/call, resources/*)
+//   POST     JSON-RPC (initialize, tools/list, tools/call, resources/*). A single
+//            tools/call that carries `_meta.progressToken`, from a client that
+//            accepts text/event-stream, is answered as an SSE stream: progress
+//            notifications while the job runs, then the result.
 //   GET      not offered (no server-initiated stream), answers 405
 //   OPTIONS  CORS preflight
 //
@@ -29,6 +32,7 @@ import { cors, wrap, readJson, rateLimited, setRateLimitHeaders } from '../_lib/
 import { limits, clientIp, STUDIO_LIMITS } from '../_lib/rate-limit.js';
 import { dispatch, PROTOCOL_VERSION } from './dispatch.js';
 import { TOOL_NAMES } from './tools.js';
+import { isIdempotentRepeat, progressReporter } from './jobs.js';
 import { installTokenFrom, studioOrigin, INSTALL_PARAM } from './install-token.js';
 
 // check_job collects a job that is already running rather than starting one: it
@@ -48,11 +52,65 @@ function rpcError(res, status, code, message, extra = {}) {
 	res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code, message, ...(Object.keys(extra).length ? { data: extra } : {}) } }));
 }
 
+// The progress token a single tools/call asked to be updated on, or null. A
+// batch is answered as one JSON array, so it never streams.
+export function progressTokenOf(body) {
+	if (!body || Array.isArray(body) || body.method !== 'tools/call') return null;
+	const token = body.params?._meta?.progressToken;
+	return (typeof token === 'string' && token.length > 0 && token.length <= 256) || Number.isInteger(token) ? token : null;
+}
+
+function acceptsEventStream(req) {
+	return /\btext\/event-stream\b/i.test(String(req?.headers?.accept || ''));
+}
+
+// An idle proxy can close a quiet stream between status frames (a submit can run
+// 40 s before the first one), so a comment line goes out this often.
+const SSE_KEEPALIVE_MS = 15_000;
+
+// Answer one tools/call as a Streamable HTTP SSE response: each status frame of
+// the job becomes a notifications/progress message (./jobs.js
+// progressReporter), and the JSON-RPC result is the last event.
+async function streamToolCall(res, msg, auth, req, { surface, caller, token }) {
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+	res.setHeader('cache-control', 'no-cache, no-transform');
+	res.setHeader('x-accel-buffering', 'no');
+	res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+	res.flushHeaders?.();
+	const send = (message) => {
+		if (!res.writableEnded) res.write(`event: message\ndata: ${JSON.stringify(message)}\n\n`);
+	};
+	const keepAlive = setInterval(() => {
+		if (!res.writableEnded) res.write(': keep-alive\n\n');
+	}, SSE_KEEPALIVE_MS);
+	keepAlive.unref?.();
+	try {
+		const report = progressReporter(token, send);
+		report({ status: 'queued', stage: 'submit' }, 'request');
+		const response = await dispatch(msg, auth, req, { surface, caller, onProgress: report });
+		if (response !== null) send(response);
+	} finally {
+		clearInterval(keepAlive);
+		res.end();
+	}
+}
+
 // Does the (possibly batched) body invoke any generation tool? Used to apply the
 // cost-bearing generation quota only to calls that actually generate.
 function callsGenerationTool(body) {
 	const batch = Array.isArray(body) ? body : [body];
 	return batch.some((m) => m && m.method === 'tools/call' && isGenerationTool(m?.params?.name));
+}
+
+// Is every generation call in the body a repeat of an idempotency_key its
+// caller already used? Those return the first call's job and start nothing, so
+// a scheduled agent's retry never spends its generation quota.
+async function onlyRepeats(body, caller) {
+	const batch = Array.isArray(body) ? body : [body];
+	const calls = batch.filter((m) => m && m.method === 'tools/call' && isGenerationTool(m?.params?.name));
+	const repeats = await Promise.all(calls.map((m) => isIdempotentRepeat(m, caller)));
+	return repeats.every(Boolean);
 }
 
 // ChatGPT sends an anonymized, per-user `openai/subject` on every tool call and
@@ -258,12 +316,15 @@ export function studioHandler({ surface = 'full' } = {}) {
 		const batch = Array.isArray(body) ? body : [body];
 		if (batch.length > 16) return rpcError(res, 400, -32600, 'batch too large (max 16)');
 
+		// Who this request is: the key the per-caller caps charge, and the owner of
+		// any idempotency_key it sends (./jobs.js).
+		const caller = studioCaller(surface, body, req, ip, install);
+
 		// Generation quota, burst then hourly, per caller. Applied only when the
 		// request actually calls a generation tool, so discovery is never throttled
 		// by it. A denial is a JSON-RPC error on HTTP 200: an MCP client hands that
 		// message to the model, where a 429 body is often dropped by the transport.
-		if (callsGenerationTool(body)) {
-			const caller = studioCaller(surface, body, req, ip, install);
+		if (callsGenerationTool(body) && !(await onlyRepeats(body, caller.key))) {
 			const deny = (bucket, result) =>
 				rpcDenial(res, body, studioDenial({ bucket, kind: caller.kind, result, surfacePath }), result);
 			// Any caller key other than the IP is one the client chose, so one source
@@ -286,9 +347,14 @@ export function studioHandler({ surface = 'full' } = {}) {
 		// Anonymous principal, no auth, no scope. rateKey carries the IP for usage logs.
 		const auth = { userId: null, rateKey: ip, scope: '' };
 
+		const token = progressTokenOf(body);
+		if (token !== null && acceptsEventStream(req)) {
+			return streamToolCall(res, body, auth, req, { surface, caller: caller.key, token });
+		}
+
 		const responses = [];
 		for (const msg of batch) {
-			const r = await dispatch(msg, auth, req, { surface });
+			const r = await dispatch(msg, auth, req, { surface, caller: caller.key });
 			if (r !== null) responses.push(r);
 		}
 
