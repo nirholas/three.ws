@@ -17,8 +17,10 @@
 //     return;
 //   }
 //
-// The paywall page decodes the requirements from the `?req=` query param and
-// renders a branded payment UI with wallet options.
+// The paywall page re-fetches the live 402 challenge from the same-origin
+// `?return=` path and renders a branded payment UI from THAT response. It never
+// trusts terms carried in the URL: a crafted `?req=` would otherwise show a
+// three.ws-branded page that pays the link author's own address.
 
 /**
  * Determine whether the current request should receive the HTML paywall
@@ -45,18 +47,16 @@ export function shouldServePaywall(req) {
 /**
  * Build the redirect URL for the paywall page.
  *
- * Encodes the x402 PaymentRequirements array as base64url in the `?req=`
- * query param so the paywall page can render service name, price, network
- * options, etc. without an additional round-trip.
+ * Only the gated path travels in the URL. The page reads the payment terms
+ * from a fresh same-origin 402 for that path, so `requirements` is not encoded.
  *
- * @param {Array<object>} requirements   accepts[] from the 402 challenge
+ * @param {Array<object>} _requirements  accepts[] from the 402 challenge (unused)
  * @param {import('http').IncomingMessage} req
- * @returns {string}  Absolute-path URL, e.g. /paywall.html?req=…&return=%2Fapi%2F…
+ * @returns {string}  Absolute-path URL, e.g. /paywall.html?return=%2Fapi%2F...
  */
-export function buildPaywallRedirect(requirements, req) {
-	const encoded = Buffer.from(JSON.stringify(requirements)).toString('base64url');
+export function buildPaywallRedirect(_requirements, req) {
 	const returnUrl = encodeURIComponent(req.url || '/');
-	return `/paywall.html?req=${encoded}&return=${returnUrl}`;
+	return `/paywall.html?return=${returnUrl}`;
 }
 
 /**

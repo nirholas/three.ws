@@ -8,28 +8,55 @@
 	}
 
 	/**
-	 * Decode the base64url-encoded PaymentRequirements from ?req=
-	 * Handles both base64url (from Buffer.toString('base64url')) and
-	 * standard base64 (from btoa).
+	 * The gated resource this paywall is for, as a same-origin path, or null.
+	 * Only a path on this origin is accepted: the payment terms are re-read from
+	 * it, so a cross-origin or protocol-relative value would let a link pick
+	 * whose 402 the page trusts.
 	 *
-	 * @returns {Array|null}
+	 * @returns {string|null}
 	 */
-	function decodeRequirements() {
-		var params = getParams();
-		var raw = params.get('req');
-		if (!raw) return null;
+	function resourcePath() {
+		var ret = getReturnUrl();
+		if (typeof ret !== 'string' || ret.charAt(0) !== '/' || ret.charAt(1) === '/') return null;
+		if (ret.indexOf('\\') !== -1 || /[\u0000-\u001f]/.test(ret)) return null;
 		try {
-			// Normalise base64url → base64
-			var b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
-			// Pad to multiple of 4
-			while (b64.length % 4 !== 0) b64 += '=';
-			var json = decodeURIComponent(escape(atob(b64)));
-			var parsed = JSON.parse(json);
-			// Accept either a single object (one requirement) or an array
-			return Array.isArray(parsed) ? parsed : [parsed];
+			var u = new URL(ret, location.origin);
+			return u.origin === location.origin ? u.pathname + u.search : null;
 		} catch (e) {
 			return null;
 		}
+	}
+
+	/**
+	 * Fetch the live 402 challenge for the gated resource and return its
+	 * `accepts` list. The terms (payTo, amount, asset, network) come ONLY from
+	 * this same-origin response. The `?req=` query parameter is never read: a
+	 * crafted link could otherwise dress a payment to the link author's own
+	 * address in this origin's branding.
+	 *
+	 * @returns {Promise<Array|null>}
+	 */
+	function loadRequirements() {
+		var path = resourcePath();
+		if (!path) return Promise.resolve(null);
+		return fetch(path, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+			.then(function (res) {
+				if (res.status !== 402) return null;
+				return res.json().catch(function () { return null; }).then(function (body) {
+					var accepts = body && Array.isArray(body.accepts) ? body.accepts : null;
+					if (!accepts) {
+						try {
+							var hdr = res.headers.get('PAYMENT-REQUIRED');
+							var decoded = hdr ? JSON.parse(atob(hdr)) : null;
+							accepts = decoded && Array.isArray(decoded.accepts) ? decoded.accepts : null;
+						} catch (e) {
+							accepts = null;
+						}
+					}
+					return accepts && accepts.length ? accepts : null;
+				});
+			})
+			.catch(function () { return null; });
 	}
 
 	// safeNavUrl: inline copy of src/safe-next.js (tests/safe-next.test.js drift-guards it).
@@ -123,7 +150,7 @@ function safeNavUrl(raw, fallback = '/') {
 			setEl('service-name', 'Payment Required');
 			setEl('service-desc', 'This endpoint requires a micropayment.');
 			setEl('price-amount', '—');
-			setEl('raw-json', '(no payment requirements found in URL)');
+			setEl('raw-json', '(no live payment challenge was returned for this resource)');
 			return;
 		}
 
@@ -280,7 +307,14 @@ function safeNavUrl(raw, fallback = '/') {
 			return;
 		}
 
-		var resourceUrl = api.resolveResourceUrl(accept, getReturnUrl());
+		// Retry exactly the same-origin resource whose 402 supplied these terms,
+		// never a URL named inside the requirement.
+		var path = resourcePath();
+		if (!path) {
+			setWalletError(statusEl, 'This payment link does not name a three.ws resource.');
+			return;
+		}
+		var resourceUrl = new URL(path, location.origin).href;
 
 		paymentInFlight = true;
 		setButtonsDisabled(true);
@@ -379,8 +413,12 @@ function safeNavUrl(raw, fallback = '/') {
 	// ── Wire events ────────────────────────────────────────────────────────
 
 	document.addEventListener('DOMContentLoaded', function () {
-		var requirements = decodeRequirements();
-		render(requirements);
+		var requirements = null;
+		render(null);
+		loadRequirements().then(function (reqs) {
+			requirements = reqs;
+			render(reqs);
+		});
 
 		// Tab clicks
 		var tabRow = document.getElementById('tab-row');
