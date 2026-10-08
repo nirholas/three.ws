@@ -27,7 +27,7 @@
 import { cors, method, wrap, error, readJson, json } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { env } from './_lib/env.js';
-import { fetchSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
+import { fetchSafePublicUrl, fetchSafePublicUrlPinned, SsrfBlockedError } from './_lib/ssrf-guard.js';
 
 const INFER_PATH = '/v1/infer';
 const READY_PATH = '/v1/health/ready'; // NIM containers expose this by convention
@@ -38,6 +38,9 @@ const STYLE_SUFFIX = ', studio lighting';
 const STYLE_WORDS = ['studio', 'light', 'bright', 'backlit', 'colorful', 'vibrant', 'cartoon', 'stylized'];
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB decoded reference image ceiling
 const MAX_BODY_BYTES = 16 * 1024 * 1024; // base64 inflates ~33%, plus JSON envelope
+// Ceiling on a caller-pointed NIM's response, enforced while streaming. A GLB
+// inlined as base64 in JSON stays well under it.
+const MAX_CALLER_NIM_RESPONSE_BYTES = 96 * 1024 * 1024;
 
 function trellisSteps(tier) {
 	return tier === 'high' ? { ss: 50, slat: 50 } : { ss: 15, slat: 15 };
@@ -121,8 +124,16 @@ function configuredNimUrl() {
 	return env.NIM_TRELLIS_URL || process.env.NIM_TRELLIS_URL || '';
 }
 
-function resolveBaseUrl(requested) {
-	if (requested) return assertSafeBaseUrl(requested);
+// Resolve the NIM for this request as { baseUrl, trusted }. `trusted` is true
+// only for the operator-configured NIM_TRELLIS_URL; a caller-supplied baseUrl is
+// never trusted, so it never receives the platform's NVIDIA credential and is
+// reached only through the pinned SSRF guard (see nimFetch).
+function resolveNim(requested) {
+	if (requested) return { baseUrl: assertSafeBaseUrl(requested), trusted: false };
+	return { baseUrl: resolveConfiguredBaseUrl(), trusted: true };
+}
+
+function resolveConfiguredBaseUrl() {
 	const configured = configuredNimUrl();
 	if (!configured) {
 		throw Object.assign(
@@ -135,6 +146,25 @@ function resolveBaseUrl(requested) {
 		);
 	}
 	return configured.replace(/\/$/, '');
+}
+
+// One outbound call to the resolved NIM. The operator's NIM gets the platform
+// key and a plain fetch (it may legitimately live on an internal address). A
+// caller's NIM gets no credential at all: the key used to ride along to any
+// https host a caller named, which handed NIM_TRELLIS_KEY / NVIDIA_API_KEY to
+// whoever asked. Caller hosts are also DNS-resolved, pinned, and re-validated
+// on every redirect, so a public name that resolves or redirects inward is
+// refused.
+function nimFetch(nim, path, init) {
+	const url = `${nim.baseUrl}${path}`;
+	if (nim.trusted) {
+		const key = env.NIM_TRELLIS_KEY || process.env.NIM_TRELLIS_KEY || env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
+		return fetch(url, {
+			...init,
+			headers: { ...(key ? { authorization: `Bearer ${key}` } : {}), ...(init.headers || {}) },
+		});
+	}
+	return fetchSafePublicUrlPinned(url, init, { maxBytes: MAX_CALLER_NIM_RESPONSE_BYTES });
 }
 
 // Pull a real reference image into a data-uri the NIM accepts. Accept a data-uri
@@ -239,9 +269,9 @@ async function extractGlb(res) {
 // GET ?action=health — surface whether a NIM is wired up and reachable so the
 // page can show an honest status pill before the user spends a generation.
 async function health(req, res) {
-	let baseUrl;
+	let nim;
 	try {
-		baseUrl = resolveBaseUrl((new URL(req.url, 'http://x').searchParams.get('baseUrl') || '').trim());
+		nim = resolveNim((new URL(req.url, 'http://x').searchParams.get('baseUrl') || '').trim());
 	} catch (err) {
 		// `configured` describes the DEPLOYMENT, not the request. A caller-supplied
 		// baseUrl that fails the SSRF guard is the caller's mistake and says nothing
@@ -257,16 +287,18 @@ async function health(req, res) {
 	let reachable = false;
 	let detail = null;
 	try {
-		const key = env.NIM_TRELLIS_KEY || process.env.NIM_TRELLIS_KEY || env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
-		const r = await fetch(`${baseUrl}${READY_PATH}`, {
-			headers: key ? { authorization: `Bearer ${key}` } : {},
-			signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
-		});
+		const r = await nimFetch(nim, READY_PATH, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
 		reachable = r.ok;
 		if (!r.ok) detail = `ready check returned ${r.status}`;
 	} catch (err) {
-		detail = err?.name === 'TimeoutError' ? 'ready check timed out' : `unreachable: ${err?.message || err}`;
+		detail =
+			err instanceof SsrfBlockedError
+				? 'baseUrl host is not allowed'
+				: err?.name === 'TimeoutError'
+					? 'ready check timed out'
+					: `unreachable: ${err?.message || err}`;
 	}
+	const { baseUrl } = nim;
 	return json(res, 200, {
 		configured: true,
 		reachable,
@@ -312,7 +344,8 @@ async function infer(req, res) {
 		return error(res, 400, 'no_image', 'image is required for image mode.');
 	}
 
-	const baseUrl = resolveBaseUrl(typeof body?.baseUrl === 'string' ? body.baseUrl.trim() : '');
+	const nim = resolveNim(typeof body?.baseUrl === 'string' ? body.baseUrl.trim() : '');
+	const { baseUrl } = nim;
 
 	let payload;
 	if (mode === 'text') {
@@ -340,14 +373,12 @@ async function infer(req, res) {
 	}
 	if (seed !== null) payload.seed = seed;
 
-	const key = env.NIM_TRELLIS_KEY || process.env.NIM_TRELLIS_KEY || env.NVIDIA_API_KEY || process.env.NVIDIA_API_KEY;
 	const t0 = Date.now();
 	let upstream;
 	try {
-		upstream = await fetch(`${baseUrl}${INFER_PATH}`, {
+		upstream = await nimFetch(nim, INFER_PATH, {
 			method: 'POST',
 			headers: {
-				...(key ? { authorization: `Bearer ${key}` } : {}),
 				accept: 'application/json',
 				'content-type': 'application/json',
 			},
@@ -355,6 +386,9 @@ async function infer(req, res) {
 			signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
 		});
 	} catch (err) {
+		if (err instanceof SsrfBlockedError) {
+			return error(res, 400, 'bad_base_url', 'baseUrl host is not allowed');
+		}
 		const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError';
 		return error(
 			res,
