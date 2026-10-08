@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 48 examples: 12 web component demos, 10 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 49 examples: 12 web component demos, 11 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -745,6 +745,7 @@ The repo ships 48 examples: 12 web component demos, 10 end-to-end projects, and 
 | [`examples/agent-native-3d`](../examples/agent-native-3d) | An agent given a goal ("get yourself a body") generates the 3D assets it needs and uses them - no browser, no mocks, no human in the loop. | `node examples/agent-native-3d/run.mjs` |
 | [`examples/coach-leo`](../examples/coach-leo) | A complete, minimal example of a three.ws agent defined entirely as files: a manifest pointing at a 3D body, a brain, a voice, a memory policy, and one installed skill. | Reference files, nothing to execute |
 | [`examples/skills`](../examples/skills) | Six installable skill bundles for the three.ws agent runtime. | Reference files, nothing to execute |
+| [`examples/grok-remote-mcp`](../examples/grok-remote-mcp) | Grok generates a real 3D model through the free three.ws MCP server, using xAI's Responses API remote MCP tools. Zero dependencies. | `cd examples/grok-remote-mcp && npm install && npm run start` |
 | [`examples/metamask-agent-wallet`](../examples/metamask-agent-wallet) | A single-page demo that gives a three.ws agent a real server-side wallet through the MetaMask Agentic CLI (mm). | `node examples/metamask-agent-wallet/server.mjs` |
 | [`examples/monicas-apartment`](../examples/monicas-apartment) | A single, self-contained HTML file that rebuilds the iconic Monica Geller apartment set from Friends as a walkable first-person 3D scene: purple walls, the purple front door with the yellow peephole frame, teal kitchen cabinets, the mismatched dining chairs, | `npm run dev, then open /examples/monicas-apartment/index.html` |
 | [`examples/paid-mcp-server`](../examples/paid-mcp-server) | A complete, runnable MCP server whose tools charge per call in USDC on Solana over x402. It ships two tools on purpose: | `cd examples/paid-mcp-server && npm install && npm run start` |

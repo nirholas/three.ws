@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>three.ws for Grok Bot: a free 3D studio and a body for Grok · three.ws</title>
+	<meta name="description" content="One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key." />
+	<link rel="canonical" href="https://three.ws/grok" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Give Grok a 3D studio, and a body" />
+	<meta property="og:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free, no key." />
+	<meta property="og:url" content="https://three.ws/grok" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Give+Grok+a+3D+studio%2C+and+a+body&amp;d=One+sentence+adds+three.ws+to+Grok+Bot%3A+text+to+3D+models%2C+rigged+avatars%2C+and+a+talking+3D+body.+Free%2C+no+key.&amp;p=%2Fgrok" />
+	<meta property="og:image:alt" content="Give Grok a 3D studio, and a body" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Give Grok a 3D studio, and a body" />
+	<meta name="twitter:description" content="One sentence adds three.ws to Grok Bot: text to 3D models, rigged avatars, and a talking 3D body. Free, no key." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Give+Grok+a+3D+studio%2C+and+a+body&amp;d=One+sentence+adds+three.ws+to+Grok+Bot%3A+text+to+3D+models%2C+rigged+avatars%2C+and+a+talking+3D+body.+Free%2C+no+key.&amp;p=%2Fgrok" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<style>
+		:root { --gk-maxw: 1080px; }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		a { color: inherit; }
+		code, pre, kbd { font-family: var(--font-mono, ui-monospace, monospace); }
+		.gk-wrap { max-width: var(--gk-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+		/* ── hero ───────────────────────────────────────────────────────── */
+		.gk-hero { padding: 44px 0 6px; }
+		.gk-eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 650; margin: 0 0 10px; }
+		.gk-hero h1 { font-size: clamp(2rem, 5.4vw, 3.3rem); line-height: 1.05; margin: 0 0 14px; letter-spacing: -0.03em; color: var(--ink-bright, var(--ink)); max-width: 18ch; }
+		.gk-hero p { margin: 0; max-width: 62ch; color: var(--ink-dim); line-height: 1.6; font-size: 1.04rem; }
+		.gk-hero p strong { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+
+		/* ── the one sentence ───────────────────────────────────────────── */
+		.gk-say { margin-top: 24px; border: 1px solid var(--stroke-strong); border-radius: var(--radius-lg, 14px); background: var(--surface-2, rgba(255,255,255,0.05)); overflow: hidden; }
+		.gk-say-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); border-bottom: 1px solid var(--stroke); }
+		.gk-say-row { display: flex; align-items: stretch; }
+		.gk-say-text { flex: 1; min-width: 0; margin: 0; padding: 16px 16px; font-size: 1.02rem; line-height: 1.5; color: var(--ink-bright, var(--ink)); word-break: break-word; }
+		.gk-say-text code { color: var(--accent); font-size: 0.96rem; }
+		.gk-say-row .gk-btn { border-radius: 0; border-width: 0 0 0 1px; }
+
+		/* ── buttons ────────────────────────────────────────────────────── */
+		.gk-btn {
+			display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+			font: inherit; font-size: 0.88rem; font-weight: 650; padding: 10px 16px; cursor: pointer;
+			color: var(--btn-secondary-fg, var(--ink)); background: var(--btn-secondary-bg, var(--surface-3));
+			border: 1px solid var(--btn-secondary-border, var(--stroke-strong)); border-radius: var(--radius-md, 10px);
+			transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant, 80ms) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+		}
+		.gk-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
+		.gk-btn:active { transform: translateY(1px); }
+		.gk-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-btn[disabled] { opacity: 0.55; cursor: not-allowed; transform: none; }
+		.gk-btn[data-variant="primary"] { color: var(--btn-primary-fg, #fff); background: var(--btn-primary-bg, var(--accent)); border-color: var(--btn-primary-border, transparent); }
+		.gk-btn[data-variant="primary"]:hover { background: var(--btn-primary-bg-hover, var(--accent)); }
+		.gk-btn[data-variant="primary"]:active { background: var(--btn-primary-bg-active, var(--accent)); }
+		.gk-btn[data-copied="true"] { color: var(--success); }
+		.gk-btn svg { width: 16px; height: 16px; flex: none; }
+		.gk-btn-sm { font-size: 0.76rem; padding: 4px 10px; }
+
+		/* ── ask chips ──────────────────────────────────────────────────── */
+		.gk-then { margin: 18px 0 0; font-size: 0.86rem; color: var(--ink-dim); }
+		.gk-asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; margin-top: 10px; }
+		.gk-ask {
+			display: flex; flex-direction: column; gap: 6px; text-align: left; font: inherit; cursor: pointer;
+			padding: 12px 14px; color: var(--ink); background: var(--surface-1, rgba(255,255,255,0.03));
+			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant, 80ms) var(--ease-standard);
+		}
+		.gk-ask:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.06)); }
+		.gk-ask:active { transform: translateY(1px); }
+		.gk-ask:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-ask-kind { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); display: flex; justify-content: space-between; gap: 8px; }
+		.gk-ask-kind span:last-child { color: var(--ink-faint, var(--ink-dim)); font-weight: 600; text-transform: none; letter-spacing: 0; }
+		.gk-ask[data-copied="true"] .gk-ask-kind span:last-child { color: var(--success); }
+		.gk-ask-text { font-size: 0.88rem; line-height: 1.5; color: var(--ink-bright, var(--ink)); }
+
+		/* ── section chrome ─────────────────────────────────────────────── */
+		.gk-sec { margin-top: 52px; }
+		.gk-sec-head { margin: 0 0 14px; }
+		.gk-sec-head h2 { margin: 0 0 4px; font-size: 1.3rem; letter-spacing: -0.015em; color: var(--ink-bright, var(--ink)); }
+		.gk-sec-head p { margin: 0; font-size: 0.92rem; color: var(--ink-dim); line-height: 1.55; max-width: 72ch; }
+		.gk-sec-head p code { font-size: 0.84rem; }
+
+		/* ── live demo ──────────────────────────────────────────────────── */
+		.gk-demo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 14px; }
+		.gk-card { border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); background: linear-gradient(180deg, var(--surface-2, rgba(255,255,255,0.05)), transparent 70%); padding: 16px; min-width: 0; }
+		.gk-form label { display: block; font-size: 0.8rem; font-weight: 650; color: var(--ink-dim); margin: 0 0 6px; }
+		.gk-form textarea {
+			width: 100%; min-height: 76px; resize: vertical; font: inherit; font-size: 0.95rem; line-height: 1.5; padding: 11px 12px;
+			color: var(--ink-bright, var(--ink)); background: var(--bg-1, rgba(0,0,0,0.25)); border: 1px solid var(--stroke-strong); border-radius: var(--radius-md, 10px);
+			transition: border-color var(--duration-fast) var(--ease-standard);
+		}
+		.gk-form textarea:hover { border-color: var(--ink-faint, var(--stroke-strong)); }
+		.gk-form textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+		.gk-form-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+		.gk-form-hint { font-size: 0.78rem; color: var(--ink-faint, var(--ink-dim)); margin-left: auto; }
+		.gk-log {
+			margin: 14px 0 0; padding: 10px 0; list-style: none; max-height: 290px; overflow-y: auto;
+			font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.76rem; line-height: 1.5;
+			background: var(--bg-1, rgba(0,0,0,0.3)); border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+		}
+		.gk-log li { display: grid; grid-template-columns: 52px 18px minmax(0, 1fr); gap: 4px; padding: 2px 12px; animation: gk-in var(--duration-base, 180ms) var(--ease-standard) both; }
+		.gk-log .t { color: var(--ink-faint, var(--ink-dim)); font-variant-numeric: tabular-nums; }
+		.gk-log .d { color: var(--ink-dim); }
+		.gk-log .m { color: var(--ink); overflow-wrap: anywhere; }
+		.gk-log li[data-dir="out"] .d { color: var(--accent); }
+		.gk-log li[data-tone="ok"] .m { color: var(--success); }
+		.gk-log li[data-tone="error"] .m { color: var(--danger); }
+		.gk-log-empty { padding: 6px 12px !important; display: block !important; color: var(--ink-faint, var(--ink-dim)); font-family: var(--font-body, system-ui, sans-serif); font-size: 0.82rem; }
+		@keyframes gk-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+		.gk-stage { position: relative; display: flex; flex-direction: column; min-height: 420px; padding: 0; overflow: hidden; }
+		.gk-stage model-viewer { flex: 1; width: 100%; min-height: 360px; background: transparent; --poster-color: transparent; }
+		.gk-stage-empty, .gk-stage-wait, .gk-stage-error { flex: 1; display: grid; place-items: center; text-align: center; padding: 28px; }
+		.gk-stage-empty p, .gk-stage-wait p, .gk-stage-error p { margin: 6px auto 0; max-width: 40ch; font-size: 0.88rem; line-height: 1.55; color: var(--ink-dim); }
+		.gk-stage h3 { margin: 0; font-size: 1rem; color: var(--ink-bright, var(--ink)); }
+		.gk-stage-error h3 { color: var(--danger); }
+		.gk-orb { width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ink-bright, #fff) 92%, transparent), color-mix(in srgb, var(--ink-dim) 40%, transparent) 62%, transparent 72%); position: relative; }
+		.gk-orb::before, .gk-orb::after { content: ''; position: absolute; top: 30px; width: 9px; height: 22px; border-radius: 6px; background: var(--bg-0); transform: rotate(-14deg); }
+		.gk-orb::before { left: 30px; }
+		.gk-orb::after { left: 46px; }
+		.gk-stage-wait .gk-orb { animation: gk-breathe 2.4s var(--ease-standard) infinite; }
+		@keyframes gk-breathe { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.06); opacity: 1; } }
+		.gk-progress { width: min(260px, 80%); height: 4px; margin: 16px auto 0; border-radius: 999px; background: var(--surface-3, rgba(255,255,255,0.08)); overflow: hidden; }
+		.gk-progress span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width 600ms var(--ease-standard); }
+		.gk-stage-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--stroke); }
+		.gk-stage-bar .gk-src { margin-left: auto; font-size: 0.76rem; color: var(--ink-faint, var(--ink-dim)); }
+		.gk-stage [hidden] { display: none !important; }
+
+		/* ── live strip ─────────────────────────────────────────────────── */
+		.gk-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+		.gk-made { display: flex; flex-direction: column; text-decoration: none; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); overflow: hidden; background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.gk-made:hover { border-color: var(--stroke-strong); transform: translateY(-2px); }
+		.gk-made:active { transform: translateY(0); }
+		.gk-made:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-made img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--surface-2, rgba(255,255,255,0.05)); }
+		.gk-made span { padding: 7px 9px 8px; font-size: 0.74rem; line-height: 1.35; color: var(--ink-dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+		.gk-strip .gk-skel { height: auto; aspect-ratio: 0.8; }
+		@media (max-width: 860px) { .gk-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+		/* ── tools ──────────────────────────────────────────────────────── */
+		.gk-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+		.gk-tool { padding: 12px 14px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color var(--duration-fast) var(--ease-standard); }
+		.gk-tool:hover { border-color: var(--stroke-strong); }
+		.gk-tool code { font-size: 0.84rem; font-weight: 650; color: var(--ink-bright, var(--ink)); }
+		.gk-tool p { margin: 5px 0 0; font-size: 0.8rem; line-height: 1.5; color: var(--ink-dim); }
+		.gk-skel { height: 86px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke); background: linear-gradient(90deg, var(--surface-1, rgba(255,255,255,0.03)) 0%, var(--surface-2, rgba(255,255,255,0.07)) 50%, var(--surface-1, rgba(255,255,255,0.03)) 100%); background-size: 200% 100%; animation: gk-shimmer 1.4s linear infinite; }
+		@keyframes gk-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+		.gk-note { margin: 10px 0 0; font-size: 0.84rem; color: var(--ink-dim); line-height: 1.55; }
+		.gk-note[data-tone="error"] { color: var(--danger); }
+		.gk-note button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+		.gk-note button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+		/* ── setup tabs ─────────────────────────────────────────────────── */
+		.gk-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+		.gk-tab {
+			font: inherit; font-size: 0.86rem; font-weight: 600; padding: 7px 14px; cursor: pointer; color: var(--ink-dim);
+			background: transparent; border: 1px solid var(--stroke); border-radius: 999px;
+			transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+		}
+		.gk-tab:hover { color: var(--ink); border-color: var(--stroke-strong); background: var(--surface-1, rgba(255,255,255,0.04)); }
+		.gk-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.gk-tab[aria-selected="true"] { color: var(--ink-bright, var(--ink)); border-color: var(--accent); background: var(--accent-soft, var(--surface-3)); }
+		.gk-panel { border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 20px 20px 22px; background: linear-gradient(180deg, var(--surface-2, rgba(255,255,255,0.05)), transparent 70%); animation: gk-in var(--duration-base, 180ms) var(--ease-standard) both; }
+		.gk-panel[hidden] { display: none; }
+		.gk-panel-lede { margin: 0 0 14px; font-size: 0.92rem; line-height: 1.6; color: var(--ink-dim); max-width: 72ch; }
+		.gk-panel-lede strong { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+		.gk-list { margin: 0 0 14px; padding: 0 0 0 20px; display: grid; gap: 8px; font-size: 0.9rem; line-height: 1.55; max-width: 72ch; }
+		.gk-list li::marker { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+		.gk-list code { font-size: 0.84rem; padding: 1px 5px; border-radius: 5px; background: var(--surface-1, rgba(255,255,255,0.05)); }
+		.gk-snippet { margin: 0 0 14px; }
+		.gk-snippet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 6px; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); }
+		.gk-snippet-head .gk-btn { text-transform: none; letter-spacing: 0; }
+		.gk-snippet pre { margin: 0; padding: 13px 14px; font-size: 0.82rem; line-height: 1.55; overflow-x: auto; color: var(--ink-bright, var(--ink)); background: var(--bg-1, rgba(0,0,0,0.3)); border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); }
+		.gk-src-note { margin: 12px 0 0; font-size: 0.78rem; color: var(--ink-faint, var(--ink-dim)); }
+		.gk-src-note a, .gk-panel-lede a { text-decoration: underline; text-underline-offset: 3px; }
+		.gk-src-note a:hover, .gk-panel-lede a:hover { color: var(--ink); }
+
+		/* ── facts ──────────────────────────────────────────────────────── */
+		.gk-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+		.gk-fact { padding: 15px 16px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); }
+		.gk-fact h3 { margin: 0 0 6px; font-size: 0.94rem; color: var(--ink-bright, var(--ink)); }
+		.gk-fact p { margin: 0; font-size: 0.84rem; line-height: 1.55; color: var(--ink-dim); }
+		.gk-fact a { text-decoration: underline; text-underline-offset: 3px; }
+		.gk-fact a:hover { color: var(--ink); }
+		.gk-next { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+
+		@media (max-width: 860px) {
+			.gk-demo { grid-template-columns: minmax(0, 1fr); }
+			.gk-stage { min-height: 360px; }
+		}
+		@media (max-width: 640px) {
+			.gk-hero { padding-top: 28px; }
+			.gk-say-row { flex-direction: column; }
+			.gk-say-row .gk-btn { border-width: 1px 0 0 0; padding: 12px; }
+			.gk-panel { padding: 16px 14px 18px; }
+			.gk-form-hint { margin-left: 0; flex-basis: 100%; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.gk-skel, .gk-panel, .gk-log li, .gk-stage-wait .gk-orb { animation: none; }
+			.gk-made { transition: none; }
+			.gk-btn, .gk-tab, .gk-ask, .gk-progress span { transition: none; }
+		}
+	</style>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Add three.ws to Grok Bot","description":"Give Grok Bot a free 3D studio: text and images to textured 3D models, rigged avatars and a talking 3D body, through one custom MCP server.","url":"https://three.ws/grok","step":[{"@type":"HowToStep","name":"Add the server","text":"Tell Grok Bot: Add a custom MCP server called three-ws at https://three.ws/api/mcp-grok"},{"@type":"HowToStep","name":"Confirm","text":"Grok Bot shows the name and URL. Accept. There is no sign-in and no key."},{"@type":"HowToStep","name":"Ask for 3D","text":"Ask for a model, an avatar, or a body. Grok returns a viewer link and a downloadable GLB."}]}</script>
+</head>
+<body>
+	<script src="/nav.js"></script>
+	<main class="gk-wrap" id="main">
+		<section class="gk-hero">
+			<p class="gk-eyebrow">For Grok Bot, Grok and the xAI API</p>
+			<h1>Give Grok a 3D studio, and a body.</h1>
+			<p>
+				Grok Bot routes every task to the best tool for it. For 3D, that is one sentence away:
+				<strong>text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.</strong>
+				Free, no account, no key.
+			</p>
+
+			<div class="gk-say" role="group" aria-labelledby="gk-say-label">
+				<div class="gk-say-label"><span id="gk-say-label">Say this to Grok Bot</span><span>No sign-in, no key</span></div>
+				<div class="gk-say-row">
+					<p class="gk-say-text" id="gk-say-text">Add a custom MCP server called three-ws at <code>https://three.ws/api/mcp-grok</code></p>
+					<button type="button" class="gk-btn" data-variant="primary" data-copy-target="gk-say-text" aria-label="Copy the sentence for Grok Bot">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+						<span>Copy</span>
+					</button>
+				</div>
+			</div>
+
+			<p class="gk-then">Then ask for something. Click one to copy it.</p>
+			<div class="gk-asks" id="gk-asks">
+				<button type="button" class="gk-ask" data-ask="Use three-ws to make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB.">
+					<span class="gk-ask-kind"><span>Model</span><span>Copy</span></span>
+					<span class="gk-ask-text">Make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB.</span>
+				</button>
+				<button type="button" class="gk-ask" data-ask="Use three-ws to give yourself a body: forge_avatar a friendly white robot, save it as your persona named Grok, and say hello to me with it.">
+					<span class="gk-ask-kind"><span>Body</span><span>Copy</span></span>
+					<span class="gk-ask-text">Give yourself a body: forge a friendly white robot, save it as your persona, and say hello to me with it.</span>
+				</button>
+				<button type="button" class="gk-ask" data-ask="Use three-ws to turn this photo into a rigged, animation-ready 3D avatar and save the GLB to my files.">
+					<span class="gk-ask-kind"><span>Avatar</span><span>Copy</span></span>
+					<span class="gk-ask-text">Turn this photo into a rigged, animation-ready 3D avatar and save the GLB to my files.</span>
+				</button>
+			</div>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-demo-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-demo-h">Run exactly what Grok runs</h2>
+				<p>This box is an MCP client talking to <code>/api/mcp-grok</code>, the same server and the same calls Grok Bot makes. Every request and answer is logged as it happens. A cold GPU can take a few minutes; the job keeps running and the page collects it.</p>
+			</div>
+			<div class="gk-demo">
+				<div class="gk-card">
+					<form class="gk-form" id="gk-form" novalidate>
+						<label for="gk-prompt">Describe one object or character</label>
+						<textarea id="gk-prompt" name="prompt" maxlength="600" required placeholder="a small reusable rocket booster with grid fins"></textarea>
+						<div class="gk-form-row">
+							<button type="submit" class="gk-btn" data-variant="primary" id="gk-go">Generate in 3D</button>
+							<button type="button" class="gk-btn" id="gk-stop" hidden>Stop collecting</button>
+							<span class="gk-form-hint">Free. Counts toward this session's hourly quota.</span>
+						</div>
+					</form>
+					<ol class="gk-log" id="gk-log" aria-live="polite" aria-label="MCP transcript">
+						<li class="gk-log-empty">The JSON-RPC transcript appears here: initialize, tools/call, then check_job until the model lands.</li>
+					</ol>
+				</div>
+				<div class="gk-card gk-stage" id="gk-stage" aria-live="polite">
+					<div class="gk-stage-empty" id="gk-empty">
+						<div>
+							<div class="gk-orb" aria-hidden="true"></div>
+							<h3>Your model lands here</h3>
+							<p>Write a prompt and press Generate. You get an interactive model you can spin, plus the same viewer link and GLB Grok hands back.</p>
+						</div>
+					</div>
+					<div class="gk-stage-wait" id="gk-wait" hidden>
+						<div>
+							<div class="gk-orb" aria-hidden="true"></div>
+							<h3 id="gk-wait-h">Submitting the job</h3>
+							<p id="gk-wait-p">Asking the studio to start rendering.</p>
+							<div class="gk-progress" role="progressbar" aria-label="Elapsed against the estimate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="gk-bar"></span></div>
+						</div>
+					</div>
+					<div class="gk-stage-error" id="gk-error" hidden>
+						<div>
+							<h3 id="gk-error-h">That did not work</h3>
+							<p id="gk-error-p"></p>
+							<p><button type="button" class="gk-btn gk-btn-sm" id="gk-retry">Try again</button></p>
+						</div>
+					</div>
+					<model-viewer id="gk-mv" hidden camera-controls auto-rotate touch-action="pan-y" shadow-intensity="0.8" exposure="1.05" alt="The generated 3D model"></model-viewer>
+					<div class="gk-stage-bar" id="gk-bar-actions" hidden>
+						<a class="gk-btn gk-btn-sm" id="gk-open" href="/viewer" target="_blank" rel="noopener">Open viewer</a>
+						<a class="gk-btn gk-btn-sm" id="gk-dl" href="/viewer" download>Download GLB</a>
+						<button type="button" class="gk-btn gk-btn-sm" id="gk-embed" hidden><span>Copy embed code</span></button>
+						<span class="gk-src" id="gk-took"></span>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-made-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-made-h">Made on three.ws, just now</h2>
+				<p>The latest models anyone generated on the free studio, the same pipeline Grok calls. Open one to spin it, download it, or put it on a page.</p>
+			</div>
+			<div class="gk-strip" id="gk-strip" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+			</div>
+			<p class="gk-note" id="gk-strip-note" hidden></p>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-tools-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-tools-h">What Grok gets</h2>
+				<p>Read live from the server's <code>tools/list</code>, so this is always the real catalog.</p>
+			</div>
+			<div class="gk-tools" id="gk-tools" aria-busy="true">
+				<div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div><div class="gk-skel"></div>
+			</div>
+			<p class="gk-note" id="gk-tools-note" hidden></p>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-setup-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-setup-h">Set it up anywhere Grok runs</h2>
+				<p>One URL, <code>https://three.ws/api/mcp-grok</code>. Streamable HTTP, authentication none.</p>
+			</div>
+			<div class="gk-tabs" role="tablist" aria-label="Where you use Grok">
+				<button type="button" class="gk-tab" role="tab" id="tab-bot" aria-controls="panel-bot" aria-selected="true" data-tab="bot">Grok Bot</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-app" aria-controls="panel-app" aria-selected="false" tabindex="-1" data-tab="app">Grok connectors</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-api" aria-controls="panel-api" aria-selected="false" tabindex="-1" data-tab="api">xAI API</button>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="panel-bot" aria-labelledby="tab-bot">
+				<p class="gk-panel-lede">Grok Bot adds a custom MCP server from chat. Say <strong>custom server</strong>, or it may go looking for a marketplace plugin instead.</p>
+				<ol class="gk-list">
+					<li>Send: <code>Add a custom MCP server called three-ws at https://three.ws/api/mcp-grok</code></li>
+					<li>Grok Bot shows the name and URL. Check the URL and accept. No sign-in card appears, because there is nothing to sign in to.</li>
+					<li>Ask for 3D in any task, or attach the server with <code>@three-ws</code>. Scheduled tasks can use it too.</li>
+				</ol>
+				<p class="gk-src-note">Grok Bot runs on its own cloud computer, so it can also save the GLB to its files or hand it to another tool in the same task.</p>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="panel-app" aria-labelledby="tab-app" hidden>
+				<p class="gk-panel-lede">On paid Grok plans, custom connectors take a remote MCP URL. Only remote servers work there, which is exactly what this is.</p>
+				<ol class="gk-list">
+					<li>In Grok, open <strong>Connectors</strong> and add a <strong>custom</strong> connector.</li>
+					<li>Paste <code>https://three.ws/api/mcp-grok</code> and leave authentication off.</li>
+					<li>Ask Grok for a 3D model in any chat. It answers with a viewer link and a GLB.</li>
+				</ol>
+				<p class="gk-src-note">Business and Enterprise workspaces may need an admin to allow custom connectors first.</p>
+			</div>
+
+			<div class="gk-panel" role="tabpanel" id="panel-api" aria-labelledby="tab-api" hidden>
+				<p class="gk-panel-lede">The xAI Responses API connects remote MCP servers for you: pass the URL as a tool and Grok calls it server side. Set <code>XAI_API_KEY</code> and run.</p>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>curl</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-curl">Copy</button></div>
+					<pre id="gk-curl">curl https://api.x.ai/v1/responses \
+  -H "Authorization: Bearer $XAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "grok-4.7",
+    "input": [{"role": "user", "content": "Make a 3D model of a lunar lander and give me the viewer link."}],
+    "tools": [{
+      "type": "mcp",
+      "server_url": "https://three.ws/api/mcp-grok",
+      "server_label": "three-ws"
+    }]
+  }'</pre>
+				</div>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>Python (xai-sdk)</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-py">Copy</button></div>
+					<pre id="gk-py">import os
+from xai_sdk import Client
+from xai_sdk.chat import user
+from xai_sdk.tools import mcp
+
+client = Client(api_key=os.environ["XAI_API_KEY"])
+chat = client.chat.create(
+    model="grok-4.7",
+    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws")],
+)
+chat.append(user("Make a 3D model of a lunar lander and give me the viewer link."))
+print(chat.sample().content)</pre>
+				</div>
+				<p class="gk-src-note">A full Node example, with the pending-job loop and an <code>allowed_tools</code> list, lives in <a href="https://github.com/nirholas/three.ws/tree/main/examples/grok-remote-mcp" target="_blank" rel="noopener">examples/grok-remote-mcp</a>. Request shape from <a href="https://docs.x.ai/developers/tools/remote-mcp" target="_blank" rel="noopener">xAI's Remote MCP docs</a>.</p>
+			</div>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-facts-h">
+			<div class="gk-sec-head"><h2 id="gk-facts-h">Built for an agent that works while you sleep</h2></div>
+			<div class="gk-facts">
+				<div class="gk-fact">
+					<h3>Never hangs a task</h3>
+					<p>A render can take minutes on a cold GPU. Every call answers within 40 seconds, with the model or a job id, and Grok collects it with <code>check_job</code>. Nothing times out half-done.</p>
+				</div>
+				<div class="gk-fact">
+					<h3>Your own quota</h3>
+					<p>Every Grok user reaches us from xAI's cloud. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.</p>
+				</div>
+				<div class="gk-fact">
+					<h3>A body, not just a file</h3>
+					<p><code>create_agent_persona</code> turns a rigged model into a named body that lip-syncs and emotes. Grok can bring the same body back in any later task.</p>
+				</div>
+				<div class="gk-fact">
+					<h3>Check the catalog first</h3>
+					<p>Thousands of ready-made CC0 props, rigged characters and motion clips. Grok searches them before generating, so common asks come back instantly.</p>
+				</div>
+			</div>
+			<div class="gk-next">
+				<a class="gk-btn" href="/docs/grok">Read the Grok guide</a>
+				<a class="gk-btn" href="/connect">Connect other AI clients</a>
+				<a class="gk-btn" href="/forge">Open the 3D studio</a>
+			</div>
+		</section>
+	</main>
+
+	<script src="/brand.js" defer></script>
+	<script src="/model-viewer-meshopt.js"></script>
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+	<script type="module" src="/src/grok-page.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

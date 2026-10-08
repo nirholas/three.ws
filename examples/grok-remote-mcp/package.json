@@ -1,0 +1,15 @@
+{
+	"name": "@three-ws/example-grok-remote-mcp",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Grok generates a real 3D model through the free three.ws MCP server, using xAI's Responses API remote MCP tools. Zero dependencies.",
+	"scripts": {
+		"start": "node index.mjs",
+		"check": "node index.mjs --check",
+		"dry-run": "node index.mjs --dry-run"
+	},
+	"engines": {
+		"node": ">=20"
+	}
+}
