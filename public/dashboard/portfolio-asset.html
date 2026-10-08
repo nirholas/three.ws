@@ -373,7 +373,7 @@
 				const name = m.name || asset.symbol || asset.id;
 				const isAddr = !asset.is_native;
 				const explorerHref = isAddr
-					? (asset.chain === 'solana' ? `https://solscan.io/token/${asset.id}` : `https://etherscan.io/token/${asset.id}`)
+					? (asset.chain === 'solana' ? `https://solscan.io/token/${encodeURIComponent(asset.id)}` : `https://etherscan.io/token/${encodeURIComponent(asset.id)}`)
 					: null;
 
 				$$('root').innerHTML = `
@@ -402,7 +402,7 @@
 						<section>
 							<div class="panel">
 								<div class="head-row">
-									<h2>Price · ${asset.symbol}/USD</h2>
+									<h2>Price · ${escapeHtml(asset.symbol)}/USD</h2>
 									<div id="chart-change" class="muted" style="font-size:12px"></div>
 								</div>
 								<div class="chart-wrap">
@@ -426,7 +426,7 @@
 								<div class="panel" style="margin-top:14px">
 									<h2>About ${escapeHtml(name)}</h2>
 									<div class="desc">${escapeHtml(m.description)}</div>
-									${m.homepage ? `<p style="margin-top:10px"><a href="${escapeHtml(m.homepage)}" target="_blank" rel="noopener noreferrer">${escapeHtml(m.homepage)} ↗</a></p>` : ''}
+									${m.homepage && /^https?:\/\//i.test(m.homepage) ? `<p style="margin-top:10px"><a href="${escapeHtml(m.homepage)}" target="_blank" rel="noopener noreferrer">${escapeHtml(m.homepage)} ↗</a></p>` : ''}
 									${isAddr ? `
 										<div class="address">
 											<span>${escapeHtml(asset.id)}</span>

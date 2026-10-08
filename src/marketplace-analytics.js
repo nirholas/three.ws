@@ -80,8 +80,8 @@ function rankRow(num, name, sub, primary, secondary) {
 		<div class="rank-row">
 			<span class="rank-num">${num}</span>
 			<div class="rank-meta">
-				<div class="rank-name">${name}</div>
-				${sub ? `<div class="rank-sub">${sub}</div>` : ''}
+				<div class="rank-name">${esc(name)}</div>
+				${sub ? `<div class="rank-sub">${esc(sub)}</div>` : ''}
 			</div>
 			<div class="rank-val">
 				<div class="rank-primary">${primary}</div>

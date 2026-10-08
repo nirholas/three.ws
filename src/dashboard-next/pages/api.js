@@ -1080,7 +1080,7 @@ function buildSnippet(state) {
 			'overflow:hidden',
 		];
 		if (background === 'transparent') styleParts.push('background:transparent');
-		return `<iframe src="${src}" allow="camera; microphone; autoplay" style="${styleParts.join(';')}" title="${sel.label}"></iframe>`;
+		return `<iframe src="${src}" allow="camera; microphone; autoplay" style="${styleParts.join(';')}" title="${esc(sel.label)}"></iframe>`;
 	}
 
 	if (tab === 'component') {

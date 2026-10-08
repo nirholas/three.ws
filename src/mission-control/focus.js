@@ -217,7 +217,7 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 			(row.twitter || coin.twitter) && { href: row.twitter || coin.twitter, label: 'X' },
 			(row.telegram || coin.telegram) && { href: row.telegram || coin.telegram, label: 'TG' },
 			(row.website || coin.website) && { href: row.website || coin.website, label: 'Web' },
-		].filter(Boolean);
+		].filter((s) => s && typeof s.href === 'string' && /^https?:\/\//i.test(s.href.trim()));
 
 		head.innerHTML = `
 			${img ? `<img class="mc-focus-img" src="${escapeHtml(img)}" alt="" loading="lazy" decoding="async" />` : '<div class="mc-focus-img" aria-hidden="true"></div>'}

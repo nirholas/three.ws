@@ -268,7 +268,7 @@ function jobError(raw) {
 // ceiling. Name the two places that actually clear it and drop the retry.
 function planLimitError(description) {
 	const lead = description && /\S/.test(description)
-		? description.replace(/\s*(Delete an avatar or upgrade[^.]*\.|Delete an avatar[^.]*\.)\s*$/i, '').trim()
+		? escapeHtml(description).replace(/\s*(Delete an avatar or upgrade[^.]*\.|Delete an avatar[^.]*\.)\s*$/i, '').trim()
 		: 'Your avatar library is full on this plan.';
 	return new ApiError(
 		`${lead} <a href="/dashboard">Delete one from your dashboard</a> or ` +
@@ -325,7 +325,7 @@ function submitError(status, data) {
 		return new ApiError(
 			'The avatar engines are all busy right now. Try again in a moment, or use the <a href="/create/selfie">selfie scanner</a> instead.',
 		);
-	return new ApiError(description || `The avatar engine returned ${status}. Try again.`);
+	return new ApiError(description ? escapeHtml(description) : `The avatar engine returned ${status}. Try again.`);
 }
 
 async function pollUntilDone(jobId, run) {
@@ -558,7 +558,7 @@ function failBuild(err) {
 	const retryable = !(err instanceof ApiError) || err.retryable !== false;
 	setError(
 		buildError,
-		`<span>${escapeHtml(message)}</span>` +
+		`<span>${message}</span>` +
 			(retryable
 				? ` <button type="button" id="build-retry-now" class="cancel-build" style="margin-left:10px">Try again</button>`
 				: '') +

@@ -13,6 +13,8 @@ import './ui-juice.css';
 import { countUp } from './ui-juice.js';
 import { fetchFirstOrNull } from './shared/failover-fetch.js';
 import { gmgnTokenUrl, dextoolsTokenUrl } from './shared/trading-terminals.js';
+import { escapeHtml } from './shared/coin-format.js';
+import { safeUrl } from './safe-url.js';
 
 let chNetWorthAura = null;
 
@@ -243,13 +245,13 @@ function buildTokenHtml(symbol, mint, marketCapUsd, priceUsd, change24h, holders
 	const metaHtml = metaItems.map(m =>
 		`<div class="ch-token-meta-item">
 			<span class="ch-token-meta-label">${m.label}</span>
-			<span class="ch-token-meta-val">${m.val}</span>
+			<span class="ch-token-meta-val">${escapeHtml(m.val)}</span>
 		</div>`
 	).join('');
 
 	return `
 		<div class="ch-token-header">
-			<span class="ch-token-name">${symbol}</span>
+			<span class="ch-token-name">${escapeHtml(symbol)}</span>
 			<span class="ch-token-dot"></span>
 		</div>
 		<div class="ch-token-price">
@@ -289,37 +291,6 @@ async function renderToken(agent) {
 	let holders = token.holders ?? 0;
 	let volume24h = token.volume_24h_usd ?? token.volume24hUsd ?? null;
 
-	const displayPrice = marketCapUsd != null
-		? formatUsd(marketCapUsd)
-		: priceUsd != null
-		? formatUsd(priceUsd)
-		: '—';
-
-	const priceLabel = marketCapUsd != null ? 'MCAP' : 'PRICE';
-
-	let changeHtml = '';
-	if (change24h != null) {
-		const sign = change24h >= 0 ? '+' : '';
-		const cls = change24h >= 0 ? 'up' : 'down';
-		const arrow = change24h >= 0 ? '▲' : '▼';
-		changeHtml = `<span class="ch-price-change ${cls}">${arrow} ${sign}${Number(change24h).toFixed(2)}%</span>`;
-	}
-
-	const tradeUrl = mint ? gmgnTokenUrl(mint) : '#';
-	const chartUrl = mint ? dextoolsTokenUrl(mint, { from: 'character' }) : '#';
-
-	const metaItems = [];
-	if (holders) metaItems.push({ label: 'Holders', val: formatNum(holders) });
-	if (volume24h) metaItems.push({ label: '24h Vol', val: formatUsd(volume24h) });
-	if (symbol) metaItems.push({ label: 'Symbol', val: '$' + symbol });
-
-	const metaHtml = metaItems.map(m =>
-		`<div class="ch-token-meta-item">
-			<span class="ch-token-meta-label">${m.label}</span>
-			<span class="ch-token-meta-val">${m.val}</span>
-		</div>`
-	).join('');
-
 	tokenSection.innerHTML = buildTokenHtml(symbol, mint, marketCapUsd, priceUsd, change24h, holders, volume24h);
 
 	// Fetch live market data from DexScreener and update card
@@ -340,14 +311,14 @@ async function renderToken(agent) {
 
 function renderMemes(agent) {
 	const grid = $('ch-memes-grid');
-	const memes = agent.meta?.memes || [];
+	const memes = Array.isArray(agent.meta?.memes) ? agent.meta.memes : [];
 
 	const createCard = `
-		<a class="ch-meme-create" href="/agents/${agent.id}?meme=1" title="Create meme">
+		<a class="ch-meme-create" href="/agents/${encodeURIComponent(agent.id)}?meme=1" title="Create meme">
 			<div class="ch-meme-create-icon">
-				<img loading="lazy" decoding="async" src="${agent.meta?.profile_image_url || agent.avatar_thumbnail_url || ''}"
+				<img loading="lazy" decoding="async" src="${escapeHtml(safeUrl(agent.meta?.profile_image_url || agent.avatar_thumbnail_url, ''))}"
 				     data-fallback="hide"
-				     alt="${agent.name}" />
+				     alt="${escapeHtml(agent.name)}" />
 			</div>
 			<span class="ch-meme-create-label">Create Meme</span>
 		</a>
@@ -360,8 +331,8 @@ function renderMemes(agent) {
 
 	const memeCards = memes.slice(0, 5).map(m => `
 		<div class="ch-meme-item">
-			<img src="${m.image_url}" alt="meme" loading="lazy" />
-			${m.creator ? `<div class="ch-meme-author">${m.creator}</div>` : ''}
+			<img src="${escapeHtml(safeUrl(m?.image_url, ''))}" alt="meme" loading="lazy" />
+			${m?.creator ? `<div class="ch-meme-author">${escapeHtml(m.creator)}</div>` : ''}
 		</div>
 	`).join('');
 

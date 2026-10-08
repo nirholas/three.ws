@@ -312,7 +312,7 @@ function renderPartsPanel() {
 		row.setAttribute('role', 'listitem');
 
 		row.innerHTML = `
-			<button class="part-main" type="button" data-act="select" aria-label="Select ${p.name}">
+			<button class="part-main" type="button" data-act="select" aria-label="Select ${escapeHtml(p.name)}">
 				<span class="swatch" style="background:${p.color}"></span>
 				<span class="part-text">
 					<span class="part-name">${escapeHtml(p.name)}</span>
@@ -320,9 +320,9 @@ function renderPartsPanel() {
 				</span>
 			</button>
 			<span class="part-actions">
-				<button class="icon-btn" type="button" data-act="isolate" title="Isolate this part" aria-label="Isolate ${p.name}">⤢</button>
-				<button class="icon-btn" type="button" data-act="visibility" title="Toggle visibility" aria-label="Toggle visibility of ${p.name}" aria-pressed="true">👁</button>
-				<button class="icon-btn" type="button" data-act="download" title="Download this part as GLB" aria-label="Download ${p.name}">⭳</button>
+				<button class="icon-btn" type="button" data-act="isolate" title="Isolate this part" aria-label="Isolate ${escapeHtml(p.name)}">⤢</button>
+				<button class="icon-btn" type="button" data-act="visibility" title="Toggle visibility" aria-label="Toggle visibility of ${escapeHtml(p.name)}" aria-pressed="true">👁</button>
+				<button class="icon-btn" type="button" data-act="download" title="Download this part as GLB" aria-label="Download ${escapeHtml(p.name)}">⭳</button>
 			</span>`;
 
 		row.addEventListener('mouseenter', () => setHover(p.id));

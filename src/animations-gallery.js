@@ -963,7 +963,7 @@ els.modalCopyEmbed?.addEventListener('click', async () => {
 	const clip = state.filtered[state.modalIndex];
 	if (!clip) return;
 	const src = `${location.origin}/embed/avatar?anim=${encodeURIComponent(clip.id)}`;
-	const snippet = `<iframe src="${src}" width="360" height="480" style="border:0;border-radius:12px" allow="autoplay" title="${clip.name} on three.ws"></iframe>`;
+	const snippet = `<iframe src="${src}" width="360" height="480" style="border:0;border-radius:12px" allow="autoplay" title="${escHtml(clip.name)} on three.ws"></iframe>`;
 	await navigator.clipboard.writeText(snippet).catch(() => {});
 	flashButton(els.modalCopyEmbed, 'Copied!');
 });

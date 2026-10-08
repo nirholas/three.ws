@@ -428,7 +428,7 @@ async function verifyProof(sig) {
 			${explorerHref(v.explorer) ? `<a href="${escapeHtml(explorerHref(v.explorer))}" target="_blank" rel="noopener">View on Solscan ↗</a>` : ''}
 		</div>`;
 	} catch (e) {
-		out.innerHTML = `<div class="notice warn">Verification failed: ${e?.message || e}</div>`;
+		out.innerHTML = `<div class="notice warn">Verification failed: ${escapeHtml(e?.message || e)}</div>`;
 	}
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -539,6 +539,6 @@ window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTi
 		renderPicker();
 		select(state.pools[0].address || state.pools[0].pool);
 	} catch (e) {
-		$('picker').innerHTML = `<div class="notice warn" style="flex:1">Could not load trending tokens (${e?.message || e}). In local dev, /api/* proxies to production; this resolves once the endpoint is deployed, or run <code>node scripts/dev-ibm-proof.mjs</code>.</div>`;
+		$('picker').innerHTML = `<div class="notice warn" style="flex:1">Could not load trending tokens (${escapeHtml(e?.message || e)}). In local dev, /api/* proxies to production; this resolves once the endpoint is deployed, or run <code>node scripts/dev-ibm-proof.mjs</code>.</div>`;
 	}
 })();

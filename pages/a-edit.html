@@ -287,7 +287,10 @@
 				document.title = `Edit Agent #${agentId} — three.ws`;
 
 				mountChainEdit(root, chainId, agentId).catch((err) => {
-					root.innerHTML = `<div class="ce-error">${err.message}</div>`;
+					const box = document.createElement('div');
+					box.className = 'ce-error';
+					box.textContent = err.message;
+					root.replaceChildren(box);
 				});
 			}
 		</script>

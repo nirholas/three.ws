@@ -122,6 +122,29 @@ describe('/create/prompt failure states', () => {
 		expect(document.getElementById('build-retry-now')).not.toBeNull();
 	});
 
+	it('renders a server error description as text, never as markup', async () => {
+		await mount(async () =>
+			jsonResponse(500, { error: 'upstream_error', error_description: 'bad <iframe id="inj"></iframe> reply' }),
+		);
+		await generate();
+
+		const box = document.getElementById('build-error');
+		expect(box.querySelector('#inj')).toBeNull();
+		expect(box.textContent).toContain('bad <iframe id="inj"></iframe> reply');
+	});
+
+	it('keeps a full-library description as text while still linking the exits', async () => {
+		await mount(async () =>
+			jsonResponse(402, { error: 'plan_limit', error_description: 'Full <img id="inj"> library.' }),
+		);
+		await generate();
+
+		const box = document.getElementById('build-error');
+		expect(box.querySelector('#inj')).toBeNull();
+		expect(box.textContent).toContain('Full <img id="inj"> library.');
+		expect([...box.querySelectorAll('a')].map((a) => a.getAttribute('href'))).toEqual(['/dashboard', '/pricing']);
+	});
+
 	it('clears the failed look when the user goes back to edit the prompt', async () => {
 		await mount(async () => jsonResponse(503, { error: 'regen_provider_error' }));
 		await generate();

@@ -697,8 +697,9 @@ registerWalletTab({
 			const META = {
 				key_recover: { ic: '🔑', label: 'Key recovered to sign' },
 				limit_change: { ic: '⚙', label: 'Limits updated' },
+				receive: { ic: '↓', label: 'Fees claimed' },
 			};
-			const CAT = { trade: 'Trade', snipe: 'Snipe', x402: 'x402 payment', withdraw: 'Withdrawal' };
+			const CAT = { trade: 'Trade', snipe: 'Snipe', x402: 'x402 payment', withdraw: 'Withdrawal', launch: 'Coin launch' };
 			// A spend row marked failed by a policy rule (reason policy_*) is a payment
 			// the natural-language policy STOPPED — surfaced inline so the owner sees
 			// exactly which rule fired. A limit_change with a policy reason is a

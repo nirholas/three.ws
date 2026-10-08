@@ -340,7 +340,9 @@
 
 			async function pickFile(file) {
 				currentFile = file;
-				dropTitle.innerHTML = `<strong>${file.name}</strong>`;
+				const nameEl = document.createElement('strong');
+				nameEl.textContent = file.name;
+				dropTitle.replaceChildren(nameEl);
 				dropSub.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
 				runBtn.disabled = false;
 				dlBtn.classList.remove('visible');

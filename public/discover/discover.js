@@ -777,7 +777,7 @@ function openEmbedModal({ chainId, agentId, name }) {
 
 	const snippets = {
 		webComponent: `<script type="module" src="${LIB_CDN_URL}"></script>\n<agent-3d src="${agentUri}" mode="inline" width="480px" responsive></agent-3d>`,
-		iframe: `<iframe src="${embedUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${displayName}"></iframe>`,
+		iframe: `<iframe src="${embedUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${escapeAttr(displayName)}"></iframe>`,
 		link: pageUrl,
 		markdown: `[![${displayName}](${origin}/api/a-og?chain=${chainId}&id=${agentId})](${pageUrl})`,
 		farcaster: pageUrl,
@@ -906,7 +906,7 @@ function openAvatarEmbedModal({ avatarId, glbUrl, name }) {
 
 	const snippets = {
 		webComponent: `<script type="module" src="${LIB_CDN_URL}"></script>\n<agent-3d src="${apiUrl}" mode="inline" width="480px" responsive></agent-3d>`,
-		iframe: `<iframe src="${viewerUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${displayName}"></iframe>`,
+		iframe: `<iframe src="${viewerUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${escapeAttr(displayName)}"></iframe>`,
 		link: viewerUrl,
 		markdown: `[${displayName}](${viewerUrl})`,
 	};

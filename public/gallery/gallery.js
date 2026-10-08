@@ -681,9 +681,9 @@ function openAvatarEmbedModal({ avatarId, glbUrl, name }) {
 
 	const snippets = {
 		webComponent: `<script type="module" src="${LIB_CDN_URL}"><\/script>\n<agent-3d src="${apiUrl}" mode="inline" width="480px" responsive></agent-3d>`,
-		iframe: `<iframe src="${viewerUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${displayName}"></iframe>`,
+		iframe: `<iframe src="${viewerUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${escapeAttr(displayName)}"></iframe>`,
 		link: viewerUrl,
-		markdown: `[${displayName}](${viewerUrl})`,
+		markdown: `[${displayName.replace(/[[\]\\]/g, '\\$&')}](${viewerUrl})`,
 	};
 
 	const modal = document.createElement('div');
