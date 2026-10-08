@@ -89,7 +89,7 @@ X Articles require the posting account to be on X Premium.
 	"notBefore": "2026-09-20T15:00:00Z",
 	"posts": [
 		{
-			"text": "Drop a .glb on Rig Doctor and it names which of 15 rig conventions the skeleton follows, with nothing uploaded: three.ws/rig-doctor",
+			"text": "Rig Doctor reads a .glb and names which of 15 rig conventions the skeleton follows, with nothing uploaded: three.ws/rig-doctor",
 			"media": [{ "path": "public/x-media/rig-doctor-clip/clip.mp4", "probe": { "durationSec": 18.2, "width": 1920, "height": 1080, "fps": 60, "videoCodec": "h264", "pixFmt": "yuv420p", "audioCodec": "aac" } }]
 		},
 		{ "text": "Every clip in the library is authored against one canonical skeleton, so a rig that maps cleanly animates on arrival." }
@@ -242,7 +242,7 @@ npm run x:outcomes -- --compare   # the pipeline's posts against the hand-writte
 `approval` in the queue file:
 
 ```json
-"approval": { "mode": "auto", "tiers": [2, 3], "vetoHours": 24 }
+"approval": { "mode": "auto", "tiers": [2, 3], "vetoHours": 2, "articles": true }
 ```
 
 `mode` is `owner` (every post waits for `approve`) or `auto`. Under `auto` a post is released
