@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Your own free 3D quota when you connect through Grok Bot or another cloud agent",
+			"summary": "Cloud agents like Grok Bot reach three.ws from one shared address, so every user of that agent used to share one free 3D quota. Now you can generate a free install token on the Connect page (pick 3D Studio (free), then Generate my connector URL) or with one POST to /api/mcp-studio/install, and add the connector with that URL. Your generations then count against a quota of your own: 4 a minute and 30 an hour. No account, no key, and the token works on every free studio URL, including the Grok one. When a limit is reached, the message now says which limit, exactly when it resets, and how to lift it.",
+			"tags": ["feature", "improvement"],
+			"link": "/connect?server=three-ws-studio"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "A paid call that fails after you were charged never asks you to pay again",
 			"summary": "If a paid three.ws endpoint takes your payment and the work then fails, the error now says so plainly: it carries paid: true, retry_safe: true, the settlement transaction, and the sentence \"You were charged; repeat this exact request with the same payment to get your result.\" Repeating the request with the same payment re-runs the work with no second charge, up to three times within 24 hours. Before, a download or stream that failed after payment answered with a generic error and the retry was refused as a reused payment. Errors before any charge now say paid: false, so a client always knows which case it is in. Separately, paid POST requests are now matched on their body too, so two different requests under one payment identifier can no longer receive the same cached answer.",
 			"tags": [

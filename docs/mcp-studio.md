@@ -59,6 +59,56 @@ curl -s https://three.ws/api/mcp-studio \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
+### Connector URL for cloud agents (install tokens)
+
+Grok Bot, the xAI Responses API and other hosted agents call MCP from their
+vendor's cloud, so every user of one agent reaches three.ws from the same few
+IPs. Keyed per IP, they would all share one free quota. An **install token**
+gives one installation its own quota, free and anonymous: no account, no key.
+
+1. Mint a token (or click **Generate my connector URL** on
+   [/connect](/connect?server=three-ws-studio) with the free studio selected):
+
+   ```bash
+   curl -s -X POST https://three.ws/api/mcp-studio/install
+   ```
+
+   ```json
+   {
+     "token": "tws_tmlst1_a2b4b...",
+     "created_at": "2026-10-08T19:29:13.000Z",
+     "connector_url": "https://three.ws/api/mcp-studio?install=tws_tmlst1_a2b4b...",
+     "connector_urls": {
+       "studio": "https://three.ws/api/mcp-studio?install=tws_tmlst1_a2b4b...",
+       "grok": "https://three.ws/api/mcp-grok?install=tws_tmlst1_a2b4b...",
+       "chatgpt": "https://three.ws/api/mcp-chatgpt?install=tws_tmlst1_a2b4b..."
+     },
+     "limits": { "generations_per_minute": 4, "generations_per_hour": 30, "requests_per_minute": 300 },
+     "note": "Keep this URL private: anyone holding the token spends its budget. It never expires and unlocks no account or payment."
+   }
+   ```
+
+2. Add the connector with that URL and **No authentication**. The same token
+   works on every studio door; Grok Bot users want the `grok` URL.
+
+How it behaves:
+
+- The transport cap and the generation burst and hourly caps key on the token
+  instead of the IP. Two tokens from one IP have independent budgets.
+- A missing, malformed or forged token is ignored and the request keys exactly
+  as it would without one (per IP, or per ChatGPT user / MCP session on those
+  doors).
+- Minting is limited to 10 tokens an hour per IP, and every token-keyed caller
+  still shares the per-IP pool (300 generations an hour) and the platform-wide
+  breaker, so tokens add per-caller fairness, never extra total GPU budget.
+- A token is self-authenticating (an HMAC over its mint time and a random
+  nonce, keyed by `MCP_INSTALL_SECRET`, else `JWT_SECRET`), so nothing is stored
+  and verifying one costs no database round trip. It unlocks no tool, account
+  or payment; it is only a rate-limit identity, and request logs redact it.
+
+`node scripts/probe-mcp-install-tokens.mjs --base <origin>` mints two tokens,
+caps the first and shows the second still admitted, end to end.
+
 ### ChatGPT custom GPT (Actions)
 
 The same free lane also ships as a REST Actions surface for the **"three.ws 3D
@@ -434,15 +484,21 @@ rather than being excluded, so a free-lane outage degrades to a slower or
 costlier engine instead of failing the user's request. Either way the cost lands
 on the platform and never on the caller: no key, no account, no payment surface.
 
-The endpoint still enforces real per-IP abuse protection (`api/_lib/rate-limit.js`):
+The endpoint still enforces real per-caller abuse protection
+(`api/_lib/rate-limit.js`, numbers in its `STUDIO_LIMITS`). The caller is a
+verified [install token](#connector-url-for-cloud-agents-install-tokens) when the
+connector URL carries one, else the door's own per-user identity, else the IP:
 
-- **Burst:** 4 generations / minute / IP
-- **Hourly:** 30 generations / hour / IP
+- **Burst:** 4 generations / minute / caller
+- **Hourly:** 30 generations / hour / caller
+- **Install tokens:** on any door, `?install=<token>` keys the caps (and the
+  transport cap) on the token. Minting is capped at 10 / hour / IP.
 - **ChatGPT users:** every ChatGPT user reaches `/api/mcp-chatgpt` from OpenAI's
   shared egress IPs, so there the burst and hourly caps key on the anonymized
-  per-user `openai/subject` ChatGPT sends with each tool call, and one IP is
-  held to 300 generations / hour in total. Without the subject the caps key on
-  the IP as above.
+  per-user `openai/subject` ChatGPT sends with each tool call. On `/api/mcp-grok`
+  they key on the `Mcp-Session-Id` the server issues. Whenever the caller is not
+  the IP (token, subject or session), one IP is still held to 300 generations /
+  hour in total. Without any of them the caps key on the IP as above.
 - **Persona writes:** 20 / minute / IP (`create_agent_persona`, `persona_say`;
   `get_agent_persona` is a read and rides the transport cap)
 - **Transport:** 300 requests / minute / IP (discovery, never throttled by the
@@ -454,6 +510,44 @@ The endpoint still enforces real per-IP abuse protection (`api/_lib/rate-limit.j
 The generation quota is charged only when a request actually calls a generation
 tool, so `initialize`, `tools/list`, `resources/list`, and `check_job` are never
 throttled by it.
+
+A capped generation answers HTTP 200 with a JSON-RPC error, because MCP clients
+pass that message to the model while many drop a 429 body. `Retry-After` and the
+`RateLimit-*` headers are still set. The message names the limit, when it resets
+and how to lift it:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "error": {
+    "code": -32000,
+    "message": "Rate limited: the free 3D studio allows 4 generations per minute for your IP address, and that limit is used up. It resets at 2026-10-08T19:30:38.140Z (in 55 s). Lift it with a free install token: POST https://three.ws/api/mcp-studio/install (no account, no key) and reconnect at https://three.ws/api/mcp-studio?install=<token>, which gets its own budget. Or sign in at https://three.ws/api/mcp-3d (OAuth 2.1), metered per account.",
+    "data": {
+      "reason": "rate_limited",
+      "limit": "generation_burst",
+      "max": 4,
+      "window": "1 m",
+      "keyed_on": "ip",
+      "reset_at": "2026-10-08T19:30:38.140Z",
+      "retry_after": 55,
+      "remedy": {
+        "kind": "install_token",
+        "install_endpoint": "https://three.ws/api/mcp-studio/install",
+        "connector_url": "https://three.ws/api/mcp-studio?install=<token>"
+      }
+    }
+  }
+}
+```
+
+`data.limit` is one of `generation_burst`, `generation_hourly`,
+`generation_ip_pool` and `generation_global`; `data.keyed_on` is `install`,
+`session`, `chatgpt_user`, `ip` or `platform`. A caller that already holds a
+token, or hits the per-IP pool or the platform-wide breaker, gets
+`remedy.kind: "account"` with `oauth_server` instead, since a new token would
+not help. The transport cap (300 requests a minute) still answers HTTP 429 with
+the same `reset_at` and `remedy` fields.
 
 Because the lanes are zero-cost, the **per-IP** caps **fail open** if the
 rate-limiter backend has an outage: a Redis blip must never dead-end a free

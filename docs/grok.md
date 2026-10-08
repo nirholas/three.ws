@@ -123,8 +123,19 @@ session is free, so a per-IP pool cap and the platform-wide breaker still bound
 the total, the same design the ChatGPT surface uses with OpenAI's per-user
 subject. A client that never echoes the session falls back to per-IP limits.
 
-**When generation is refused.** A rate-limited request answers HTTP 429 with a
-`retry-after` header and a plain sentence Grok can relay.
+**A quota that survives reconnects.** A session lasts one connection. For a
+budget that stays yours across every Grok Bot task, add the connector with an
+install token: `curl -s -X POST https://three.ws/api/mcp-studio/install` (or
+**Generate my connector URL** on [/connect](/connect?server=three-ws-studio))
+returns a `connector_urls.grok` of the form
+`https://three.ws/api/mcp-grok?install=<token>`. The caps then key on the token,
+ahead of the session and the IP. It is free, anonymous and never expires; see
+[install tokens](./mcp-studio.md#connector-url-for-cloud-agents-install-tokens).
+
+**When generation is refused.** A capped generation answers a JSON-RPC error
+whose message Grok can relay as is: which limit was hit, when it resets, and the
+connector URL that lifts it (an install token, or the signed-in server for a
+caller that already has one).
 
 ## How it fits the platform
 

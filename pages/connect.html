@@ -36,7 +36,10 @@
 		a { color: inherit; }
 		code, pre, kbd { font-family: var(--font-mono, ui-monospace, monospace); }
 
-		.cn-wrap { max-width: var(--cn-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		/* body is a column flex container, where auto margins shrink-wrap an item
+		   to its content: width: 100% keeps a long connector URL scrolling inside
+		   its box instead of widening the page past the viewport. */
+		.cn-wrap { width: 100%; max-width: var(--cn-maxw); margin: 0 auto; padding: 0 18px 96px; }
 
 		/* ── hero ───────────────────────────────────────────────────────── */
 		.cn-hero { padding: 40px 0 10px; }
@@ -95,6 +98,20 @@
 		}
 		.cn-url-label { flex: none; display: grid; place-items: center; padding: 0 12px; font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); border-right: 1px solid var(--stroke); }
 		.cn-url code { flex: 1; min-width: 0; padding: 13px 14px; font-size: 0.95rem; color: var(--ink-bright, var(--ink)); overflow-x: auto; white-space: nowrap; }
+
+		/* ── cloud-agent connector URL (keyless studio servers) ──────────── */
+		.cn-cloud {
+			margin-top: 14px; padding: 16px 16px 14px; border: 1px dashed var(--stroke-strong); border-radius: var(--radius-md, 10px);
+			background: var(--surface-1, rgba(255,255,255,0.03)); animation: cn-in var(--duration-base, 180ms) var(--ease-standard) both;
+		}
+		.cn-cloud[hidden] { display: none; }
+		.cn-cloud h3 { margin: 0 0 4px; font-size: 0.95rem; color: var(--ink-bright, var(--ink)); }
+		.cn-cloud > p { margin: 0 0 12px; font-size: 0.86rem; line-height: 1.55; color: var(--ink-dim); max-width: 72ch; }
+		.cn-cloud .cn-url { margin-top: 10px; }
+		.cn-cloud .cn-url[hidden] { display: none; }
+		.cn-cloud .cn-url-label { min-width: 92px; }
+		.cn-btn[aria-busy="true"] { opacity: 0.7; cursor: progress; }
+		.cn-btn:disabled { cursor: not-allowed; }
 
 		/* ── buttons ────────────────────────────────────────────────────── */
 		.cn-btn {
@@ -167,6 +184,8 @@
 			.cn-url-label { display: none; }
 			.cn-url code { flex-basis: 100%; }
 			.cn-url .cn-btn { flex: 1; border-width: 1px 0 0 0; }
+			.cn-cloud .cn-url-label { display: block; flex-basis: 100%; padding: 9px 14px 0; border-right: 0; }
+			.cn-cloud .cn-url code { padding-top: 6px; }
 			.cn-panel { padding: 16px 14px 18px; }
 		}
 		@media (prefers-reduced-motion: reduce) {
@@ -215,6 +234,23 @@
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
 					<span data-i18n="connect.copy_url">Copy URL</span>
 				</button>
+			</div>
+
+			<div class="cn-cloud" id="cn-cloud" aria-labelledby="cn-cloud-title" hidden>
+				<h3 id="cn-cloud-title" data-i18n="connect.connector_url_for_cloud_agents">Connector URL for cloud agents</h3>
+				<p data-i18n-html="connect.cloud_agents_share_one_ip">Grok Bot and other hosted agents reach three.ws from one shared IP, so every user of that agent shares one free quota. A free <strong>install token</strong> gives your connector a quota of its own. No account, no key.</p>
+				<button type="button" class="cn-btn" data-variant="primary" id="cn-cloud-make">Generate my connector URL</button>
+				<div class="cn-url" id="cn-cloud-any-row" hidden>
+					<span class="cn-url-label" data-i18n="connect.any_client">Any client</span>
+					<code id="cn-cloud-any"></code>
+					<button type="button" class="cn-btn" data-copy-target="cn-cloud-any"><span data-i18n="connect.copy">Copy</span></button>
+				</div>
+				<div class="cn-url" id="cn-cloud-grok-row" hidden>
+					<span class="cn-url-label" data-i18n="connect.grok_bot">Grok Bot</span>
+					<code id="cn-cloud-grok"></code>
+					<button type="button" class="cn-btn" data-copy-target="cn-cloud-grok"><span data-i18n="connect.copy">Copy</span></button>
+				</div>
+				<p class="cn-note" id="cn-cloud-note" role="status" aria-live="polite"></p>
 			</div>
 		</section>
 
@@ -478,6 +514,84 @@
 			for (const el of document.querySelectorAll('.cn-name')) el.textContent = name;
 		}
 
+		// ── cloud-agent connector URL ───────────────────────────────────────
+		// Keyless studio servers accept ?install=<token>, which keys their free
+		// quota on the token instead of the caller's IP. The token comes from the
+		// real mint endpoint and is kept in this browser, so a revisit shows the
+		// same URL instead of minting another (minting is rate-limited per IP).
+		const INSTALL_PATHS = new Set(['/api/mcp-studio', '/api/mcp-grok', '/api/mcp-chatgpt']);
+		const INSTALL_STORE = 'twx_mcp_install';
+		const cloudEl = document.getElementById('cn-cloud');
+		const cloudBtn = document.getElementById('cn-cloud-make');
+		const cloudNote = document.getElementById('cn-cloud-note');
+
+		function readInstall() {
+			try {
+				const saved = JSON.parse(localStorage.getItem(INSTALL_STORE) || 'null');
+				return saved && typeof saved.token === 'string' && saved.connector_urls ? saved : null;
+			} catch {
+				return null;
+			}
+		}
+		function writeInstall(minted) {
+			try {
+				localStorage.setItem(INSTALL_STORE, JSON.stringify({ token: minted.token, created_at: minted.created_at, connector_urls: minted.connector_urls }));
+			} catch {
+				// Private mode: the URL is still shown, it just is not remembered.
+			}
+		}
+		function setCloudNote(text, tone) {
+			cloudNote.textContent = text;
+			if (tone) cloudNote.dataset.tone = tone; else delete cloudNote.dataset.tone;
+		}
+		function showInstall(minted) {
+			const urls = minted?.connector_urls;
+			document.getElementById('cn-cloud-any').textContent = urls?.studio || '';
+			document.getElementById('cn-cloud-grok').textContent = urls?.grok || '';
+			document.getElementById('cn-cloud-any-row').hidden = !urls?.studio;
+			document.getElementById('cn-cloud-grok-row').hidden = !urls?.grok;
+			cloudBtn.textContent = urls ? 'Replace with a new token' : 'Generate my connector URL';
+			if (urls) delete cloudBtn.dataset.variant; else cloudBtn.dataset.variant = 'primary';
+			if (urls) {
+				const since = minted.created_at ? new Date(minted.created_at).toLocaleDateString() : null;
+				setCloudNote(`Keep it private: anyone with this URL uses its quota.${since ? ` Token created ${since}.` : ''} The same token works on every free studio URL.`);
+			}
+		}
+		function updateCloud(server) {
+			const path = new URL(server.endpoint).pathname;
+			const keyless = INSTALL_PATHS.has(path) && authPill(server).tone === 'free';
+			cloudEl.hidden = !keyless;
+			if (keyless) showInstall(readInstall());
+		}
+		cloudBtn.addEventListener('click', async () => {
+			cloudBtn.disabled = true;
+			cloudBtn.setAttribute('aria-busy', 'true');
+			const label = cloudBtn.textContent;
+			cloudBtn.textContent = 'Generating...';
+			setCloudNote('');
+			try {
+				const res = await fetch('/api/mcp-studio/install', { method: 'POST', headers: { accept: 'application/json' } });
+				const body = await res.json().catch(() => null);
+				if (!res.ok || !body?.token) {
+					cloudBtn.textContent = label;
+					const wait = Number(res.headers.get('retry-after'));
+					const msg = res.status === 429
+						? `You've made several tokens from this network in the last hour.${wait > 0 ? ` Try again in ${Math.ceil(wait / 60)} min,` : ''} or reuse one you already have: it works on every free studio URL.`
+						: body?.error_description || `Couldn't create a token (HTTP ${res.status}). Try again in a moment.`;
+					setCloudNote(msg, 'error');
+					return;
+				}
+				writeInstall(body);
+				showInstall(body);
+			} catch {
+				cloudBtn.textContent = label;
+				setCloudNote("Couldn't reach three.ws. Check your connection and try again.", 'error');
+			} finally {
+				cloudBtn.disabled = false;
+				cloudBtn.removeAttribute('aria-busy');
+			}
+		});
+
 		function select(server, updateUrl) {
 			state.selected = server;
 			for (const btn of serversEl.querySelectorAll('.cn-server')) {
@@ -486,6 +600,7 @@
 				btn.tabIndex = on ? 0 : -1;
 			}
 			applyServer(server);
+			updateCloud(server);
 			if (updateUrl) writeQuery();
 		}
 
