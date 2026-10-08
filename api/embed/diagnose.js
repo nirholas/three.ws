@@ -36,6 +36,7 @@
 import { cors, error, json, method, readJson, rateLimited, wrap } from '../_lib/http.js';
 import { clientIp } from '../_lib/rate-limit.js';
 import { diagnose, SsrfBlockedError } from '../_lib/embed-doctor.js';
+import { selfOrigin } from '../_lib/self-origin.js';
 
 export const maxDuration = 60;
 
@@ -69,13 +70,14 @@ function rateCheck(ip) {
 	return { success: true, limit: RATE_MAX, remaining: RATE_MAX - hits.length, reset: now + RATE_WINDOW_MS };
 }
 
+// The origin the headless browser treats as "the platform": it hosts the
+// snippet sandbox page and answers the agent lookup. Configured, never taken
+// from `host` / `x-forwarded-host`, which the caller controls; a spoofed value
+// would run the caller's snippet on an origin of their choosing.
 function platformOrigin(req) {
 	const envOrigin = process.env.PUBLIC_ORIGIN || process.env.SITE_ORIGIN;
 	if (envOrigin) return String(envOrigin).replace(/\/$/, '');
-	const host = req.headers['x-forwarded-host'] || req.headers.host;
-	if (!host) return 'https://three.ws';
-	const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
-	return `${proto}://${host}`;
+	return selfOrigin(req);
 }
 
 export default wrap(async function handler(req, res) {

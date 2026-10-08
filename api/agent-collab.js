@@ -23,6 +23,7 @@ import { isUuid } from './_lib/validate.js';
 import { limits } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
 import { env } from './_lib/env.js';
+import { selfOrigin } from './_lib/self-origin.js';
 import { runAgentDelegation, AgentNotFoundError } from './_lib/agent-delegate.js';
 import { listOffersWithStats } from './_lib/agent-economy.js';
 import { writeScreenFrame } from './_lib/agent-screen-frame.js';
@@ -188,13 +189,9 @@ export default wrap(async (req, res) => {
 	return json(res, 200, { ok: true, taskId: tree.taskId, max_usd: maxUsd, hard_cap_usd: HARD_MAX_USD, tree });
 });
 
-// Build the same-origin base URL for the internal hire call from the inbound
-// request, so a server-to-server call hits THIS running instance (not a stale
-// PUBLIC_APP_ORIGIN). Falls back to the configured app origin when no host header.
+// Base URL for the internal hire call. Never a request header: the call
+// carries a freshly minted bearer token, and a caller-chosen
+// `x-forwarded-host` would POST it (and the hire body) to any host named.
 function internalBaseUrl(req) {
-	const host = req.headers['x-forwarded-host'] || req.headers.host;
-	if (!host) return env.APP_ORIGIN;
-	const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim()
-		|| (host.startsWith('localhost') || host.startsWith('127.') ? 'http' : 'https');
-	return `${proto}://${host}`;
+	return selfOrigin(req);
 }

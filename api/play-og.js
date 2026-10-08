@@ -13,6 +13,7 @@
 // ServerResponse, the same pattern proven in api/demo/coin/og.js.
 import { ImageResponse } from '@vercel/og';
 import { method } from './_lib/http.js';
+import { selfOrigin } from './_lib/self-origin.js';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -49,16 +50,12 @@ function formatMarketCap(mc) {
   return `$${n.toFixed(0)}`;
 }
 
+// The coin lookup is a server-side self-call, so its origin is the configured
+// one (api/_lib/self-origin.js), never the client-supplied `host` or
+// `x-forwarded-host`: trusting those let any caller point this fetch, and the
+// image URL it feeds into the renderer, at a host of their choosing.
 function originOf(req) {
-  const rawHost = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
-  // Host headers are client-supplied. A malformed value (spaces, control chars,
-  // multiple comma-joined hosts) makes the downstream `${origin}/api/pump/coin`
-  // an invalid URL and throws "Invalid URL". Keep only the first host and the
-  // characters legal in an authority; fall back to the canonical host otherwise.
-  const host = String(rawHost).split(',')[0].trim();
-  const safeHost = /^[a-zA-Z0-9.\-:]+$/.test(host) ? host : 'three.ws';
-  const proto = req.headers['x-forwarded-proto'] === 'http' ? 'http' : 'https';
-  return `${proto}://${safeHost}`;
+  return selfOrigin(req);
 }
 
 async function fetchCoin(origin, mint) {
