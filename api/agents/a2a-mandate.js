@@ -12,6 +12,7 @@
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, rateLimited, readJson, respondError, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { DEFAULT_NETWORK, issueIntentMandate, MandateError, MAX_TTL_SECONDS, SUPPORTED_NETWORKS } from '../_lib/a2a/mandate.js';
 
 export default wrap(async (req, res) => {
@@ -21,6 +22,9 @@ export default wrap(async (req, res) => {
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
+	// A mandate lets an agent pay peers with no human in the loop, so issuing
+	// one is a spend: a bearer needs wallet:write, exactly as paying does.
+	assertBearerMaySpend(bearer, req);
 	const userId = session?.id ?? bearer?.userId;
 
 	const rl = await limits.mcpAgent(userId || 'anon');
