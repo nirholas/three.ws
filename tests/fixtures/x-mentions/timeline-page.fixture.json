@@ -1,0 +1,173 @@
+{
+	"data": [
+		{
+			"id": "1800000000000000107",
+			"author_id": "1700000000000000001",
+			"conversation_id": "1800000000000000107",
+			"created_at": "2026-10-08T03:50:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000107"],
+			"entities": { "mentions": [{ "start": 26, "end": 37, "username": "trythreews", "id": "1700000000000000001" }] },
+			"lang": "en",
+			"text": "new forge lane is live on @trythreews"
+		},
+		{
+			"id": "1800000000000000106",
+			"author_id": "1700000000000000016",
+			"conversation_id": "1800000000000000090",
+			"created_at": "2026-10-08T03:40:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000106"],
+			"entities": {
+				"mentions": [
+					{ "start": 0, "end": 12, "username": "fixture_ann", "id": "1700000000000000015" },
+					{ "start": 13, "end": 24, "username": "trythreews", "id": "1700000000000000001" }
+				]
+			},
+			"in_reply_to_user_id": "1700000000000000015",
+			"lang": "en",
+			"referenced_tweets": [{ "type": "replied_to", "id": "1800000000000000091" }],
+			"text": "@fixture_ann @trythreews 3d this"
+		},
+		{
+			"id": "1800000000000000105",
+			"author_id": "1700000000000000014",
+			"conversation_id": "1800000000000000105",
+			"created_at": "2026-10-08T03:30:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000105"],
+			"lang": "en",
+			"referenced_tweets": [{ "type": "retweeted", "id": "1800000000000000107" }],
+			"text": "RT @trythreews: new forge lane is live on @trythreews",
+			"entities": { "mentions": [{ "start": 3, "end": 14, "username": "trythreews", "id": "1700000000000000001" }] }
+		},
+		{
+			"id": "1800000000000000104",
+			"author_id": "1700000000000000013",
+			"conversation_id": "1800000000000000104",
+			"created_at": "2026-10-08T03:20:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000104"],
+			"entities": { "mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }] },
+			"note_tweet": {
+				"text": "@trythreews make a weathered bronze lighthouse on a basalt cliff, spiral stair visible through arched windows, lantern room with a brass fresnel lens, gulls nesting on the gallery rail, moss in the mortar joints, a wooden door with iron studs, low tide pools at the base, and a small rowboat tied to an iron ring &amp; rope coiled on the rocks",
+				"entities": { "mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }] }
+			},
+			"lang": "en",
+			"text": "@trythreews make a weathered bronze lighthouse on a basalt cliff, spiral stair visible through arched windows, lantern room with a brass fresnel lens, gulls nesting on the gallery rail, moss in the mortar joints, a wooden door with iron studs, low tide pools at the base, and a small… https://t.co/fixtureNote"
+		},
+		{
+			"id": "1800000000000000103",
+			"author_id": "1700000000000000012",
+			"conversation_id": "1800000000000000080",
+			"created_at": "2026-10-08T03:10:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000103"],
+			"entities": {
+				"mentions": [
+					{ "start": 0, "end": 12, "username": "fixture_bob", "id": "1700000000000000011" },
+					{ "start": 13, "end": 24, "username": "trythreews", "id": "1700000000000000001" }
+				]
+			},
+			"in_reply_to_user_id": "1700000000000000011",
+			"lang": "en",
+			"referenced_tweets": [{ "type": "replied_to", "id": "1800000000000000081" }],
+			"text": "@fixture_bob @trythreews agreed, this chat needs more mods"
+		},
+		{
+			"id": "1800000000000000102",
+			"author_id": "1700000000000000010",
+			"attachments": { "media_keys": [] },
+			"conversation_id": "1800000000000000102",
+			"created_at": "2026-10-08T03:00:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000102"],
+			"entities": {
+				"mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }],
+				"urls": [
+					{ "start": 21, "end": 44, "url": "https://t.co/fixtureQt1", "expanded_url": "https://x.com/fixture_cat/status/1800000000000000070", "display_url": "x.com/fixture_cat/st…" }
+				]
+			},
+			"lang": "en",
+			"referenced_tweets": [{ "type": "quoted", "id": "1800000000000000070" }],
+			"text": "@trythreews 3d this https://t.co/fixtureQt1"
+		},
+		{
+			"id": "1800000000000000101",
+			"author_id": "1700000000000000020",
+			"attachments": { "media_keys": ["3_1800000000000000501"] },
+			"conversation_id": "1800000000000000101",
+			"created_at": "2026-10-08T02:50:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000101"],
+			"entities": {
+				"mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }],
+				"urls": [
+					{ "start": 30, "end": 53, "url": "https://t.co/fixtureImg1", "expanded_url": "https://x.com/fixture_dee/status/1800000000000000101/photo/1", "display_url": "pic.x.com/fixtureImg1", "media_key": "3_1800000000000000501" }
+				]
+			},
+			"lang": "en",
+			"text": "@trythreews turn my cat into 3d https://t.co/fixtureImg1"
+		}
+	],
+	"includes": {
+		"users": [
+			{ "id": "1700000000000000001", "name": "three.ws", "username": "trythreews", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000001/fixture_normal.jpg" },
+			{ "id": "1700000000000000010", "name": "Fixture Eve", "username": "fixture_eve", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000010/fixture_normal.jpg" },
+			{ "id": "1700000000000000011", "name": "Fixture Bob", "username": "fixture_bob", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000011/fixture_normal.jpg" },
+			{ "id": "1700000000000000012", "name": "Fixture Cid &amp; Co", "username": "fixture_cid", "verified": true, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000012/fixture_normal.jpg" },
+			{ "id": "1700000000000000013", "name": "Fixture Lighthouse", "username": "fixture_lh", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000013/fixture_normal.jpg" },
+			{ "id": "1700000000000000014", "name": "Fixture Retweeter", "username": "fixture_rt", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000014/fixture_normal.jpg" },
+			{ "id": "1700000000000000015", "name": "Fixture Ann", "username": "fixture_ann", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000015/fixture_normal.jpg" },
+			{ "id": "1700000000000000016", "name": "Fixture Gus", "username": "fixture_gus", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000016/fixture_normal.jpg" },
+			{ "id": "1700000000000000020", "name": "Fixture Dee", "username": "fixture_dee", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000020/fixture_normal.jpg" },
+			{ "id": "1700000000000000021", "name": "Fixture Cat", "username": "fixture_cat", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000021/fixture_normal.jpg" }
+		],
+		"tweets": [
+			{
+				"id": "1800000000000000070",
+				"author_id": "1700000000000000021",
+				"attachments": { "media_keys": ["3_1800000000000000502"] },
+				"conversation_id": "1800000000000000070",
+				"created_at": "2026-10-07T20:00:00.000Z",
+				"edit_history_tweet_ids": ["1800000000000000070"],
+				"lang": "en",
+				"text": "my clay dragon finally finished https://t.co/fixtureImg2"
+			},
+			{
+				"id": "1800000000000000081",
+				"author_id": "1700000000000000011",
+				"conversation_id": "1800000000000000080",
+				"created_at": "2026-10-07T22:00:00.000Z",
+				"edit_history_tweet_ids": ["1800000000000000081"],
+				"in_reply_to_user_id": "1700000000000000001",
+				"entities": { "mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }] },
+				"lang": "en",
+				"referenced_tweets": [{ "type": "replied_to", "id": "1800000000000000080" }],
+				"text": "@trythreews the group chat is busy tonight"
+			},
+			{
+				"id": "1800000000000000107",
+				"author_id": "1700000000000000001",
+				"conversation_id": "1800000000000000107",
+				"created_at": "2026-10-08T03:50:00.000Z",
+				"edit_history_tweet_ids": ["1800000000000000107"],
+				"lang": "en",
+				"text": "new forge lane is live on @trythreews"
+			}
+		],
+		"media": [
+			{ "media_key": "3_1800000000000000501", "type": "photo", "url": "https://pbs.twimg.com/media/FixtureCatPhoto.jpg", "width": 1200, "height": 1600, "alt_text": "a grey cat on a windowsill" },
+			{ "media_key": "3_1800000000000000502", "type": "photo", "url": "https://pbs.twimg.com/media/FixtureDragonPhoto.jpg", "width": 2048, "height": 1536 }
+		]
+	},
+	"errors": [
+		{
+			"value": "1800000000000000091",
+			"detail": "Could not find tweet with referenced_tweets.id: [1800000000000000091].",
+			"title": "Not Found Error",
+			"resource_type": "tweet",
+			"parameter": "referenced_tweets.id",
+			"resource_id": "1800000000000000091",
+			"type": "https://api.twitter.com/2/problems/resource-not-found"
+		}
+	],
+	"meta": {
+		"newest_id": "1800000000000000107",
+		"oldest_id": "1800000000000000101",
+		"result_count": 7
+	}
+}

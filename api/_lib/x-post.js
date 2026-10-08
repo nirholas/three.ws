@@ -51,7 +51,7 @@ export async function getUserTier(userId) {
 	};
 }
 
-async function refreshIfNeeded(conn) {
+export async function refreshIfNeeded(conn) {
 	const expiresAt = conn.expires_at ? new Date(conn.expires_at).getTime() : 0;
 	if (expiresAt - Date.now() > 60_000) return decryptToken(conn.access_token);
 	if (!conn.refresh_token) throw new XPostError('reauth_required', 'refresh_token missing, reconnect X account', 401);

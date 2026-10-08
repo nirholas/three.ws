@@ -1,0 +1,36 @@
+{
+	"data": [
+		{
+			"id": "1800000000000000204",
+			"author_id": "1700000000000000030",
+			"conversation_id": "1800000000000000204",
+			"created_at": "2026-10-08T05:20:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000204"],
+			"entities": { "mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }] },
+			"lang": "en",
+			"text": "@trythreews make a red vintage scooter"
+		},
+		{
+			"id": "1800000000000000203",
+			"author_id": "1700000000000000031",
+			"conversation_id": "1800000000000000203",
+			"created_at": "2026-10-08T05:10:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000203"],
+			"entities": { "mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }] },
+			"lang": "en",
+			"text": "@trythreews help"
+		}
+	],
+	"includes": {
+		"users": [
+			{ "id": "1700000000000000030", "name": "Fixture Hal", "username": "fixture_hal", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000030/fixture_normal.jpg" },
+			{ "id": "1700000000000000031", "name": "Fixture Ivy", "username": "fixture_ivy", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000031/fixture_normal.jpg" }
+		]
+	},
+	"meta": {
+		"newest_id": "1800000000000000204",
+		"oldest_id": "1800000000000000203",
+		"result_count": 2,
+		"next_token": "fixturenexttoken2"
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"status": 402,
+	"headers": {},
+	"body": {
+		"title": "CreditsDepleted",
+		"detail": "Your enrolled account does not have any credits to fulfill this request.",
+		"type": "https://api.twitter.com/2/problems/credits"
+	}
+}

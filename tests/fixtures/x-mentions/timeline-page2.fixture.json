@@ -1,0 +1,24 @@
+{
+	"data": [
+		{
+			"id": "1800000000000000202",
+			"author_id": "1700000000000000032",
+			"conversation_id": "1800000000000000202",
+			"created_at": "2026-10-08T05:00:00.000Z",
+			"edit_history_tweet_ids": ["1800000000000000202"],
+			"entities": { "mentions": [{ "start": 0, "end": 11, "username": "trythreews", "id": "1700000000000000001" }] },
+			"lang": "es",
+			"text": "@trythreews haz un castillo de arena"
+		}
+	],
+	"includes": {
+		"users": [
+			{ "id": "1700000000000000032", "name": "Fixture Jo", "username": "fixture_jo", "verified": false, "profile_image_url": "https://pbs.twimg.com/profile_images/1700000000000000032/fixture_normal.jpg" }
+		]
+	},
+	"meta": {
+		"newest_id": "1800000000000000202",
+		"oldest_id": "1800000000000000202",
+		"result_count": 1
+	}
+}

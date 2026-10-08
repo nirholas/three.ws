@@ -1,0 +1,10 @@
+{
+	"status": 401,
+	"headers": {},
+	"body": {
+		"title": "Unauthorized",
+		"type": "about:blank",
+		"status": 401,
+		"detail": "Unauthorized"
+	}
+}
