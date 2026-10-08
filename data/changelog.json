@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "A paid call that fails after you were charged never asks you to pay again",
+			"summary": "If a paid three.ws endpoint takes your payment and the work then fails, the error now says so plainly: it carries paid: true, retry_safe: true, the settlement transaction, and the sentence \"You were charged; repeat this exact request with the same payment to get your result.\" Repeating the request with the same payment re-runs the work with no second charge, up to three times within 24 hours. Before, a download or stream that failed after payment answered with a generic error and the retry was refused as a reused payment. Errors before any charge now say paid: false, so a client always knows which case it is in. Separately, paid POST requests are now matched on their body too, so two different requests under one payment identifier can no longer receive the same cached answer.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/x402"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "MCP docs now show every guided workflow as the exact calls an agent makes",
+			"summary": "The MCP guide has a new Use cases section: each of the 17 guided prompts (create an agent, set up a wallet, hire an agent, generate a 3D model and the rest) written out as the ordered tool and resource calls it drives on each server, with every step that spends money marked. A test renders every prompt against each server's live tool list and fails if the section names a tool that no longer exists or misses one a prompt now calls, so the page stays accurate as tools change.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Grok model menus now offer xAI's current models",
 			"summary": "Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.",
 			"tags": [
