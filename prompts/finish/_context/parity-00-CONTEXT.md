@@ -48,7 +48,7 @@ Verify in a real browser: `npm run dev` (port 3000; reuse it if another agent is
 |---|---|---|
 | [015](../015-parity-01-creator-earnings.md) | Public per-agent creator earnings (API, agent page, coin page) | none |
 | [016](../016-parity-02-analytics.md) | `/analytics`: one page of live platform totals and growth | none |
-| [017](../017-parity-03-earnings-leaderboard.md) | Agents ranked by SOL earned on `/leaderboard` | needs 015 |
+| 017 (retired 2026-10-08) | Agents ranked by SOL earned on `/leaderboard` | needs 015 |
 | [018](../018-parity-04-agent-as-paid-api.md) | Sell a whole agent as a paid x402 endpoint | none (buyers pay; test with the spend gate) |
 | [019](../019-parity-05-experiments.md) | `/experiments`: public write-ups of what we tried and what the numbers said | none |
 | [020](../020-parity-06-success-stories.md) | `/stories`: opt-in case studies with verifiable on-chain metrics | none |
