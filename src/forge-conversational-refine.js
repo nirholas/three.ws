@@ -19,6 +19,8 @@
 // forwards the same x-forge-client identity forge.js uses so an iteration
 // lands in the same anonymous gallery/lineage as its parent.
 
+import { escapeHtml } from './shared/coin-format.js';
+
 const POLL_INTERVAL_MS = 2500;
 const MAX_POLL_MS = 5 * 60 * 1000;
 
@@ -127,7 +129,7 @@ if (actions && resultBar && viewer) {
 		lineageHost.innerHTML = lineage
 			.map((v, i) => {
 				const label = i === 0 ? 'Original' : v.instruction || `v${i + 1}`;
-				return `<button type="button" class="iterate-version${i === activeIndex ? ' is-active' : ''}" data-index="${i}" title="${label}">${i === 0 ? 'v0' : `v${i}`}</button>`;
+				return `<button type="button" class="iterate-version${i === activeIndex ? ' is-active' : ''}" data-index="${i}" title="${escapeHtml(label)}">${i === 0 ? 'v0' : `v${i}`}</button>`;
 			})
 			.join('');
 		lineageHost.querySelectorAll('.iterate-version').forEach((b) => {

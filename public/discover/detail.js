@@ -300,7 +300,7 @@ function buildEmbedPanel(item, $) {
 			{
 				label: 'iframe',
 				key: 'iframe',
-				value: `<iframe src="${embedUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${name}"></iframe>`,
+				value: `<iframe src="${embedUrl}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${escapeHtml(name)}"></iframe>`,
 				rows: 3,
 			},
 			{ label: 'Link', key: 'link', value: pageUrl, rows: 1 },
@@ -325,7 +325,7 @@ function buildEmbedPanel(item, $) {
 			{
 				label: 'iframe',
 				key: 'iframe',
-				value: `<iframe src="${origin}/app#model=${encodeURIComponent(item.glbUrl)}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" title="${name}"></iframe>`,
+				value: `<iframe src="${origin}/app#model=${encodeURIComponent(item.glbUrl)}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" title="${escapeHtml(name)}"></iframe>`,
 				rows: 3,
 			},
 			{ label: 'Link', key: 'link', value: detailUrl, rows: 1 },

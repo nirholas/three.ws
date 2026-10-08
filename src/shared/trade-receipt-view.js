@@ -12,6 +12,7 @@
  */
 
 import { escapeHtml as esc } from '../trader-format.js';
+import { safeUrl } from '../safe-url.js';
 
 const TIMING_LABEL = {
 	before_entry: 'before entry',
@@ -82,8 +83,11 @@ function statusTone(status) {
 }
 
 function link(href, label) {
-	if (!href) return '';
-	return `<a class="rc-link" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)} <span aria-hidden="true">&#8599;</span></a>`;
+	// Evidence links can carry a third-party feed's URL (a scout's news source),
+	// so only http(s) and site paths ever become a clickable href.
+	const safe = safeUrl(href, '');
+	if (!safe) return '';
+	return `<a class="rc-link" href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${esc(label)} <span aria-hidden="true">&#8599;</span></a>`;
 }
 
 function card(title, whenHtml, body) {

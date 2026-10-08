@@ -3599,7 +3599,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 
 		const PIL_COLOR = { pedigree: '#5fe3ff', structure: '#34d399', narrative: '#a07bff', momentum: '#fbbf24' };
 		const TIER_LABEL = { prime: 'PRIME', strong: 'STRONG', lean: 'LEAN', watch: 'WATCH', avoid: 'AVOID' };
-		const tc = (t) => `t-${t || 'watch'}`;
+		const tc = (t) => `t-${TIER_LABEL[t] ? t : 'watch'}`;
+		const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 		function miniCard(it) {
 			const tier = it.tier || 'watch';
@@ -3618,11 +3619,11 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 			a.innerHTML = `
 				<div class="hoc-score ${tc(tier)}">${score}</div>
 				<div class="hoc-info">
-					<div class="hoc-sym">$${sym}</div>
-					<div class="hoc-name">${name}</div>
+					<div class="hoc-sym">$${esc(sym)}</div>
+					<div class="hoc-name">${esc(name)}</div>
 					<div class="hoc-pillars">${bars}</div>
 				</div>
-				<span class="hoc-tier ${tc(tier)}">${TIER_LABEL[tier] || tier.toUpperCase()}</span>`;
+				<span class="hoc-tier ${tc(tier)}">${esc(TIER_LABEL[tier] || String(tier).toUpperCase())}</span>`;
 			return a;
 		}
 

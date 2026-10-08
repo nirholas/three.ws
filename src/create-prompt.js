@@ -15,6 +15,7 @@
  */
 
 import { log } from './shared/log.js';
+import { escapeHtml } from './shared/coin-format.js';
 import { injectFestivePresets } from './shared/festive-presets.js';
 import { mountPromptDictation } from './voice/prompt-dictation.js';
 import { captureWizardReturn, pendingWizardReturn, clearWizardReturn, wizardReturnUrl } from './shared/wizard-return.js';
@@ -557,7 +558,7 @@ function failBuild(err) {
 	const retryable = !(err instanceof ApiError) || err.retryable !== false;
 	setError(
 		buildError,
-		`<span>${message}</span>` +
+		`<span>${escapeHtml(message)}</span>` +
 			(retryable
 				? ` <button type="button" id="build-retry-now" class="cancel-build" style="margin-left:10px">Try again</button>`
 				: '') +
