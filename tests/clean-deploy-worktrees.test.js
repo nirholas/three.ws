@@ -8,7 +8,7 @@
 // worktree that cannot be regenerated.
 
 import { describe, it, expect } from 'vitest';
-import { parseWorktrees, dirtyCount } from '../scripts/clean-deploy-worktrees.mjs';
+import { parseWorktrees, dirtyCount, isAgentWorktreeBranch } from '../scripts/clean-deploy-worktrees.mjs';
 
 describe('parseWorktrees', () => {
 	it('separates the main worktree from detached deploy scratch trees', () => {
@@ -113,5 +113,19 @@ describe('dirtyCount', () => {
 
 	it('reads empty porcelain as clean', () => {
 		expect(dirtyCount('')).toBe(0);
+	});
+});
+
+describe('isAgentWorktreeBranch', () => {
+	it('recognizes the branch an isolated subagent worktree is created on', () => {
+		expect(isAgentWorktreeBranch('refs/heads/worktree-agent-a06be27a4734bc811')).toBe(true);
+	});
+
+	it('never treats feature work as a subagent scratch tree', () => {
+		expect(isAgentWorktreeBranch('refs/heads/main')).toBe(false);
+		expect(isAgentWorktreeBranch('refs/heads/pr-landing')).toBe(false);
+		expect(isAgentWorktreeBranch('refs/heads/codex/i18n-lint')).toBe(false);
+		expect(isAgentWorktreeBranch('refs/heads/worktree-agent-x/nested')).toBe(false);
+		expect(isAgentWorktreeBranch(null)).toBe(false);
 	});
 });

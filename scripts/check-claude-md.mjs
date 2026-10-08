@@ -66,17 +66,23 @@ const artifactPaths = new Set([
 	// pointing at the main checkout, so this never resolves there.
 	'.git/hooks',
 ]);
-const candidates = new Set();
-for (const m of md.matchAll(/`([^`\n]+)`/g)) candidates.add(m[1]);
-for (const m of md.matchAll(/\]\(([^)\s]+)\)/g)) candidates.add(m[1]);
-for (const raw of [...candidates].sort()) {
-	if (!raw.includes('/')) continue;
-	if (!/^[A-Za-z0-9_./-]+$/.test(raw)) continue; // placeholders, globs, braces, spaces, @scopes
-	if (raw.startsWith('/') || raw.startsWith('-') || raw.includes('://')) continue; // routes, flags, URLs
-	if (raw.startsWith('three.ws/') || raw.startsWith('pump.fun/')) continue; // domains in prose
-	if (artifactPaths.has(raw)) continue;
-	if (!existsSync(path.join(root, raw))) failures.push(`path \`${raw}\` is referenced but does not exist`);
+/** Repo paths a markdown body names that do not exist on disk. */
+function missingPaths(body) {
+	const candidates = new Set();
+	for (const m of body.matchAll(/`([^`\n]+)`/g)) candidates.add(m[1]);
+	for (const m of body.matchAll(/\]\(([^)\s]+)\)/g)) candidates.add(m[1]);
+	const missing = [];
+	for (const raw of [...candidates].sort()) {
+		if (!raw.includes('/')) continue;
+		if (!/^[A-Za-z0-9_./-]+$/.test(raw)) continue; // placeholders, globs, braces, spaces, @scopes
+		if (raw.startsWith('/') || raw.startsWith('-') || raw.includes('://')) continue; // routes, flags, URLs
+		if (raw.startsWith('three.ws/') || raw.startsWith('pump.fun/')) continue; // domains in prose
+		if (artifactPaths.has(raw)) continue;
+		if (!existsSync(path.join(root, raw))) missing.push(raw);
+	}
+	return missing;
 }
+for (const raw of missingPaths(md)) failures.push(`path \`${raw}\` is referenced but does not exist`);
 
 // 3. Typography: the ban applies to the file that declares it. Only the lines
 // that name the banned characters may contain them.
@@ -258,7 +264,8 @@ if (existsSync(cronHandler)) {
 
 // 5. The subagent definitions in .claude/agents/ are operating rules too: an
 // agent executes them verbatim the same way it executes this file. Hold them
-// to the same two mechanical standards (real scripts, banned typography).
+// to the same mechanical standards: real scripts, real paths, banned
+// typography, and no dependence on state that lives on one machine only.
 const agentsDir = path.join(root, '.claude/agents');
 if (existsSync(agentsDir)) {
 	const { readdirSync: readAgents } = await import('node:fs');
@@ -269,6 +276,20 @@ if (existsSync(agentsDir)) {
 		}
 		for (const m of body.matchAll(/npm run ([a-z0-9:._-]+)/g)) {
 			if (!scripts[m[1]]) failures.push(`.claude/agents/${file} tells the agent to run \`npm run ${m[1]}\`, which does not exist`);
+		}
+		for (const raw of missingPaths(body)) {
+			failures.push(`.claude/agents/${file} points the agent at \`${raw}\`, which does not exist`);
+		}
+		// Auto-memory lives under ~/.claude on one machine and is invisible to a
+		// fresh clone, a cloud session, or another developer. An agent told to
+		// read "the memory file X" finds nothing and guesses (2026-10-08: the
+		// x402 triage agent cited two that existed nowhere). Point at docs/.
+		if (/memory file `/.test(body)) {
+			failures.push(`.claude/agents/${file} cites a per-machine memory file; move that knowledge into docs/ and link it`);
+		}
+		// DATABASE_URL lives in .env.local; .env holds only the QA login.
+		if (/`DATABASE_URL` in `\.env`/.test(body)) {
+			failures.push(`.claude/agents/${file} says DATABASE_URL is in .env; it is in .env.local`);
 		}
 	}
 }

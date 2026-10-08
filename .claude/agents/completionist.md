@@ -23,7 +23,9 @@ Audit every changed file for:
 Verification you can run cheaply, and should. Run these before reading anything by hand; they turn categories 1, 2, 7, and 8 into a mechanical answer:
 
 - `npm run check:rules -- --paths <changed files>` catches em-dashes, TODOs, not-implemented throws, commented-out code, and sample-data arrays in the added lines. Always scope with `--paths`: concurrent agents share this worktree, so an unscoped run reports their in-flight work as if it were this change.
-- `npm run check:claude` confirms CLAUDE.md and the agent definitions have not drifted from the repo.
+- `npm run check:claude` confirms CLAUDE.md and the agent definitions have not drifted from the repo. Run it whenever the change touched CLAUDE.md, `.claude/agents/`, `package.json` scripts, or a path either of them names.
+- `npm run audit:docs` when the change added, moved, or deleted a doc, page, script, or package: it catches dead links, routes that match nothing, and commands naming a script that no longer exists.
+- `npx vitest run <test files covering the changed modules>` for a fast signal on the code you are judging; a full `npm test` is the implementer's job, not yours.
 - `git diff` on the changed paths, for everything a regex cannot judge.
 
 If the change touched a page, note whether `npm run check:pages` would still pass.

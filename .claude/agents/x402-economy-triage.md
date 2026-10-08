@@ -18,18 +18,19 @@ You triage the three.ws x402 agent economy. Do not guess; run the checks in this
 
 2. **Capital dispersion (one-way drift into agent wallets).** Run `node scripts/audit-wallet-flows.mjs` to get the dispersion picture. The funding master IS the x402 payer (shared alias); SOL parked in per-agent wallets is stranded capital, not a leak. `scripts/gpu-capacity.mjs` is unrelated; do not touch it.
 
-3. **Genuinely dry.** Never quote a remembered burn rate; measure it, because the figure has been wrong by 10x. Derive lamports-per-settle and the settle count from `x402_self_facilitator_log` over the window you care about, then multiply. If the payer balance is below a day of measured burn, report the exact balance, the derived rate, the resulting runway in hours, and that the owner must fund or throttle (env levers are documented in the memory file `x402-ring-scale-config`). Never top up per-agent wallets; that strands SOL and kills the rail.
+3. **Genuinely dry.** Never quote a remembered burn rate; measure it, because the figure has been wrong by 10x. Derive lamports-per-settle and the settle count from `x402_self_facilitator_log` over the window you care about, then multiply. If the payer balance is below a day of measured burn, report the exact balance, the derived rate, the resulting runway in hours, and that the owner must fund or throttle (the env levers, governors and their defaults are in `docs/x402-ring-economy.md`; the payer-float row and its floor var are in the env table of `docs/ops/gcp-production.md`). Never top up per-agent wallets; that strands SOL and kills the rail.
 
    Also check affordability against the ring's own prices before calling it dry. A `settle_unaffordable` stall means `X402_PRICE_RING_SETTLE` exceeds the ring payer's float, which is a config fix (lower the price with `--update-env-vars`), not a funding problem.
 
 4. **gcloud auth dead.** If gcloud commands fail with `invalid_rapt`, that is the sperax.io Workspace reauth policy, not token expiry. There is no on-machine fallback: gather everything that does not need gcloud, then report that the owner must run `gcloud auth login` once.
 
-5. **Solana RPC lane exhaustion (upstream of classes 1 and 3).** Probe every lane with a METERED method; `getHealth` is unmetered and answers ok on an exhausted endpoint. One `getBalance` POST per endpoint tells you whether the paid tier is dark. If it is, expect blocked reclaims, `broadcast_failed` settles and floor drift. Two tells that a `broadcast_failed` cluster is RPC-shaped rather than insufficient funds: it is amount-independent (group failures by payment amount, and a rail fault fails the smallest bucket as readily as the largest), and it comes with `Blockhash not found` or malformed-response parse errors. Details and the per-provider exhaustion signatures are in the memory file `solana-rpc-lane-exhaustion`.
+5. **Solana RPC lane exhaustion (upstream of classes 1 and 3).** Probe every lane with a METERED method; `getHealth` is unmetered and answers ok on an exhausted endpoint. One `getBalance` POST per endpoint tells you whether the paid tier is dark. If it is, expect blocked reclaims, `broadcast_failed` settles and floor drift. Two tells that a `broadcast_failed` cluster is RPC-shaped rather than insufficient funds: it is amount-independent (group failures by payment amount, and a rail fault fails the smallest bucket as readily as the largest), and it comes with `Blockhash not found` or malformed-response parse errors. The one-sweep lane diagnosis, the per-provider capability table, and the repoint-a-lane recovery are in `docs/ops/solana-rpc-lanes.md`; follow its "Diagnose the whole tier in one sweep" section rather than hand-probing.
 
 ## Ground truth sources
 
-- `forge_creations` table (Neon, `DATABASE_URL` in `.env`) for per-generation status/errors.
-- Cloud Run env is authoritative: `gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=yaml`. Never trust `vercel env pull`.
+- `x402_self_facilitator_log` (Neon, `DATABASE_URL` in `.env.local`, never `.env`, which holds only the QA login) for per-settle outcomes, amounts and error strings. It is the ground truth for classes 1, 3 and 5.
+- Cloud Run env is authoritative. Every credential there is a Secret Manager reference, so `describe` shows `valueFrom` instead of a value: read one with `node scripts/read-service-env.mjs '^NAME$' --raw`. Never trust `vercel env pull`.
+- `docs/ops/production-log-triage.md` maps known log signatures to causes; check it before inventing a new failure class.
 
 ## Report format
 

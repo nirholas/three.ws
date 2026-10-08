@@ -27,6 +27,16 @@
 // Everything it removes is regenerable in one command, which is what makes this
 // safe to run unattended. Anything it cannot prove safe, it reports and skips.
 //
+// Subagent worktrees are the second source of the same leak. Every Agent call
+// made with `isolation: "worktree"` leaves `.claude/worktrees/agent-<id>` on a
+// `worktree-agent-<id>` branch, and nothing removes those either: on 2026-10-08
+// twenty-one of them held 32 GB. They sit on a branch, so condition 2 alone
+// would keep them forever. A worktree on a `worktree-agent-*` branch is
+// reclaimed under conditions 1, 3 and the age floor, plus one more that stands
+// in for 2: the branch tip must already be an ancestor of the main worktree's
+// HEAD, so every commit the subagent made is in history. The branch is then
+// deleted with `git branch -d`, which git itself refuses for unmerged work.
+//
 //   node scripts/clean-deploy-worktrees.mjs          plan only, writes nothing
 //   node scripts/clean-deploy-worktrees.mjs --apply  remove the reclaimable ones
 //   node scripts/clean-deploy-worktrees.mjs --apply --min-age-hours 6
@@ -82,6 +92,16 @@ export function parseWorktrees(porcelain) {
 	}
 	if (cur) out.push(cur);
 	return out;
+}
+
+/**
+ * True for the branch the harness creates for an isolated subagent worktree.
+ * Anything else on a branch is somebody's feature work and is never touched.
+ *
+ * @param {string|null} branch full ref from `git worktree list --porcelain`
+ */
+export function isAgentWorktreeBranch(branch) {
+	return typeof branch === 'string' && /^refs\/heads\/worktree-agent-[A-Za-z0-9]+$/.test(branch);
 }
 
 /**
@@ -162,6 +182,17 @@ function ageHours(dir) {
 	}
 }
 
+/** Whether every commit at `head` is already reachable from the main worktree's HEAD. */
+function isMerged(head, main) {
+	if (!head) return false;
+	try {
+		git(['merge-base', '--is-ancestor', head, 'HEAD'], main);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 function diskFree() {
 	try {
 		const out = execFileSync('df', ['-h', ROOT], { encoding: 'utf8', timeout: 30_000 });
@@ -189,8 +220,13 @@ for (const wt of worktrees) {
 		reclaimable.push({ ...wt, reason: 'registered but missing on disk', bytes: 0, stale: true });
 		continue;
 	}
-	if (!wt.detached) {
-		kept.push({ ...wt, why: `on branch ${wt.branch || '(unknown)'}, not a deploy scratch tree` });
+	const agentTree = !wt.detached && isAgentWorktreeBranch(wt.branch);
+	if (!wt.detached && !agentTree) {
+		kept.push({ ...wt, why: `on branch ${wt.branch || '(unknown)'}, not a deploy or subagent scratch tree` });
+		continue;
+	}
+	if (agentTree && !isMerged(wt.head, main)) {
+		kept.push({ ...wt, why: `subagent branch ${wt.branch.replace('refs/heads/', '')} holds commits not yet in HEAD` });
 		continue;
 	}
 	const hours = ageHours(wt.path);
@@ -209,7 +245,8 @@ for (const wt of worktrees) {
 		kept.push({ ...wt, why: `${dirty} uncommitted file(s), which cannot be regenerated` });
 		continue;
 	}
-	reclaimable.push({ ...wt, reason: `detached at ${(wt.head || '').slice(0, 9)}, clean, idle ${hours.toFixed(0)}h`, bytes: sizeBytes(wt.path) });
+	const where = agentTree ? `subagent branch merged at ${(wt.head || '').slice(0, 9)}` : `detached at ${(wt.head || '').slice(0, 9)}`;
+	reclaimable.push({ ...wt, agentTree, reason: `${where}, clean, idle ${hours.toFixed(0)}h`, bytes: sizeBytes(wt.path) });
 }
 
 const before = diskFree();
@@ -246,6 +283,16 @@ for (const r of reclaimable) {
 		git(['worktree', 'remove', '--force', r.path], ROOT, 600_000);
 		removed++;
 		console.log(`removed ${r.path}`);
+		if (r.agentTree) {
+			// -d, never -D: git re-checks the merge and refuses if anything is unmerged.
+			const name = r.branch.replace('refs/heads/', '');
+			try {
+				git(['branch', '-d', name]);
+				console.log(`deleted merged branch ${name}`);
+			} catch (err) {
+				console.error(`kept branch ${name}: ${String(err.message).slice(0, 120)}`);
+			}
+		}
 	} catch (err) {
 		console.error(`FAILED to remove ${r.path}: ${String(err.message).slice(0, 120)}`);
 	}
