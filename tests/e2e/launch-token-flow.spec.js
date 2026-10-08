@@ -27,6 +27,7 @@ import { test, expect } from '@playwright/test';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { Transaction, SystemProgram, Keypair } from '@solana/web3.js';
+import { RISK_ACK_STORAGE_KEY, RISK_ACK_VERSION } from '../../public/risk-ack.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
@@ -66,16 +67,31 @@ async function installHarness(page, { quote = QUOTE_PAYLOAD } = {}) {
 	const calls = { prep: null, confirm: null, broadcast: 0 };
 	const txBase64 = buildPrepTxBase64();
 
-	// Pre-accept the Risk Disclosure (public/risk-ack.js gates the sign step of
-	// every money flow since 2026-07-03). This spec's subject is the launch flow,
-	// not the disclosure dialog — seed the returning-user acceptance record the
-	// module reads from localStorage.
-	await page.addInitScript(() => {
-		window.localStorage.setItem(
-			'threews:risk-ack',
-			JSON.stringify({ version: 1, acceptedAt: new Date().toISOString(), context: 'e2e' }),
-		);
-	});
+	// Pre-sign the real-funds agreements (public/risk-ack.js gates the sign step
+	// of every money flow). This spec's subject is the launch flow, not the
+	// agreement dialog, so seed a returning signer: the local record at the
+	// CURRENT bundle version (read from the module, so a version bump re-signs
+	// here exactly as it re-signs every real user) and the account's server
+	// record that the gate double-checks for a signed-in visitor.
+	await page.addInitScript(
+		({ key, version }) => {
+			window.localStorage.setItem(
+				key,
+				JSON.stringify({ version, acceptedAt: new Date().toISOString(), context: 'e2e' }),
+			);
+		},
+		{ key: RISK_ACK_STORAGE_KEY, version: RISK_ACK_VERSION },
+	);
+	await page.route('**/api/legal/risk-ack', (route) =>
+		route.fulfill({
+			json: {
+				authenticated: true,
+				signed: true,
+				version: RISK_ACK_VERSION,
+				signedAt: new Date().toISOString(),
+			},
+		}),
+	);
 
 	// Wallet extension stub — the one acceptable mock (external browser code).
 	await page.addInitScript((addr) => {
@@ -156,7 +172,7 @@ async function installHarness(page, { quote = QUOTE_PAYLOAD } = {}) {
 
 // Open the real modal on the harness page and return once step 1 is painted.
 async function openModal(page) {
-	await page.goto('http://localhost:3000/__e2e/launch-harness');
+	await page.goto('/__e2e/launch-harness');
 	await page.addStyleTag({ path: LTM_CSS });
 	await page.evaluate(async () => {
 		const mod = await import('/src/pump/launch-token-modal.js');
