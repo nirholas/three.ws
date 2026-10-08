@@ -168,8 +168,12 @@
 		try { return new URL(origin).host; } catch (_) { return origin; }
 	}
 
+	function esc(s) {
+		return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+	}
+
 	function renderError(msg) {
-		$content.innerHTML = `<div class="error">${msg}</div>`;
+		$content.innerHTML = `<div class="error">${esc(msg)}</div>`;
 	}
 
 	function renderEmpty() {
@@ -184,20 +188,20 @@
 
 	function renderConsent({ avatars, tenantOrigin }) {
 		const host = tenantHostLabel(tenantOrigin);
-		$title.innerHTML = `Authorize <span class="tenant">${host}</span>`;
+		$title.innerHTML = `Authorize <span class="tenant">${esc(host)}</span>`;
 		$lede.textContent = `Choose the avatar to share. ${host} will receive its URL and thumbnail. Your other avatars stay private.`;
 
 		const cards = avatars.map((a, i) => `
-			<div class="avatar-card ${i === 0 ? 'selected' : ''}" data-id="${a.id}">
-				${a.thumbnail_url ? `<img src="${a.thumbnail_url}" alt="">` : `<img alt="">`}
-				<div class="name">${a.name || 'Untitled'}</div>
+			<div class="avatar-card ${i === 0 ? 'selected' : ''}" data-id="${esc(a.id)}">
+				${a.thumbnail_url ? `<img src="${esc(a.thumbnail_url)}" alt="">` : `<img alt="">`}
+				<div class="name">${esc(a.name || 'Untitled')}</div>
 			</div>
 		`).join('');
 
 		$content.innerHTML = `
 			<div class="avatars">${cards}</div>
 			<div class="scopes">
-				${host} will be granted:
+				${esc(host)} will be granted:
 				<ul>
 					<li>persona:read — your three.ws user id</li>
 					<li>avatar:read — selected avatar URL + thumbnail</li>

@@ -8,6 +8,7 @@
 
 import { mountWatchPanel } from '../../shared/agent-watch-panel.js';
 import { mountShell as mountDashboardShell } from '../shell.js';
+import { esc } from '../api.js';
 
 const params  = new URLSearchParams(location.search);
 const agentId = params.get('agentId');
@@ -45,11 +46,11 @@ async function init() {
 	content.innerHTML = `
 <div class="watch-header">
   ${avatarImg
-		? `<img loading="lazy" decoding="async" class="watch-header-avatar" src="${avatarImg}" alt="${agent.name || 'Agent'}">`
+		? `<img loading="lazy" decoding="async" class="watch-header-avatar" src="${esc(avatarImg)}" alt="${esc(agent.name || 'Agent')}">`
 		: `<div class="watch-header-avatar"></div>`}
   <div>
-    <div class="watch-header-name">${agent.name || 'Agent'}</div>
-    <div class="watch-header-sub">Live screen · ${agentId.slice(0, 8)}…</div>
+    <div class="watch-header-name">${esc(agent.name || 'Agent')}</div>
+    <div class="watch-header-sub">Live screen · ${esc(agentId.slice(0, 8))}…</div>
   </div>
   <a class="watch-header-back" href="${backHref}">← Agent profile</a>
 </div>

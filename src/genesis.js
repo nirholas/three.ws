@@ -256,13 +256,21 @@ async function loadRemixGallery() {
 		}
 		grid.innerHTML = '';
 		for (const a of avatars) {
-			const thumb = a.thumbnail_url || a.thumbnail || a.poster_url;
+			const thumb = a.thumb_url || a.thumbnail_url || a.thumbnail || a.poster_url;
 			if (!thumb) continue;
 			const tile = document.createElement('button');
 			tile.type = 'button';
 			tile.className = 'gx-remix-tile';
 			tile.setAttribute('aria-pressed', 'false');
-			tile.innerHTML = `<img loading="lazy" src="${thumb}" alt="${(a.name || 'Avatar').replace(/"/g, '')}" /><span>${a.name || 'Avatar'}</span>`;
+			// Avatar names are written by other users, so the tile is built as DOM
+			// nodes rather than an HTML string.
+			const img = document.createElement('img');
+			img.loading = 'lazy';
+			img.src = thumb;
+			img.alt = a.name || 'Avatar';
+			const label = document.createElement('span');
+			label.textContent = a.name || 'Avatar';
+			tile.append(img, label);
 			tile.addEventListener('click', () => {
 				state.remixAvatarId = a.id;
 				$$('.gx-remix-tile').forEach((t) => t.setAttribute('aria-pressed', 'false'));

@@ -4,6 +4,8 @@
 //   const picker = createAvatarPicker({ onSelect: ({ id, url, name }) => { ... } });
 //   picker.open(currentAvatarId);
 
+import { escapeHtml } from './shared/coin-format.js';
+
 const DEFAULT_AVATAR = {
 	id: null,
 	url: '/avatars/default.glb',
@@ -316,10 +318,10 @@ export function createAvatarPicker({ onSelect } = {}) {
 			card.innerHTML = `
 				<div class="avp-thumb">
 					${av.thumbnailUrl
-						? `<img src="${av.thumbnailUrl}" alt="${av.name}" loading="lazy">`
+						? `<img src="${escapeHtml(av.thumbnailUrl)}" alt="${escapeHtml(av.name)}" loading="lazy">`
 						: thumbPlaceholderSvg()}
 				</div>
-				<div class="avp-label">${av.name}</div>`;
+				<div class="avp-label">${escapeHtml(av.name)}</div>`;
 
 			if (!av.thumbnailUrl && av.url) {
 				setupThumb3d(card.querySelector('.avp-thumb'), av.url);

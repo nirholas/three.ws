@@ -192,6 +192,24 @@ describe('/api/creations publish and remix lineage', () => {
 	});
 });
 
+describe('/api/creations license vocabulary', () => {
+	it('treats an inherited Object key as no license and falls back to the default', async () => {
+		const res = await call({
+			method: 'POST',
+			body: {
+				op: 'publish',
+				prompt: 'a cute voxel lamp',
+				glbUrl: GLB('license-proto'),
+				author: 'audit-license',
+				license: 'constructor',
+			},
+		});
+		expect(res.statusCode).toBe(201);
+		expect(res.json.creation.license).toBe('remix-cc');
+		expect(res.json.creation.licenseInfo).toMatchObject({ label: 'Remix freely' });
+	});
+});
+
 describe('/api/creations failure paths', () => {
 	it('rejects an unknown GET op', async () => {
 		const res = await call({ url: '/api/creations?op=bogus' });
