@@ -546,7 +546,7 @@ function ridgeSvg(ridge) {
 				1,
 			)}" height="${(frontBase - padT).toFixed(1)}" data-bin="${i}"><title>${count} token${
 				count === 1 ? '' : 's'
-			} at ${b.from.toFixed(2)}% to ${b.to.toFixed(2)}%${symbols ? `: ${symbols}` : ''}</title></rect>`;
+			} at ${b.from.toFixed(2)}% to ${b.to.toFixed(2)}%${symbols ? `: ${esc(symbols)}` : ''}</title></rect>`;
 		})
 		.join('');
 

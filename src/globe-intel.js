@@ -45,6 +45,7 @@ import {
 	WebGLRenderer,
 } from 'three';
 import { escapeHtml } from './shared/coin-format.js';
+import { safeUrl } from './safe-url.js';
 import {
 	GLOBE_RADIUS,
 	LAYERS,
@@ -853,6 +854,10 @@ function renderDetail() {
 		['Source', event.source || data?.source || 'Unattributed'],
 	].filter(Boolean);
 
+	// Source links come from third-party feeds (GDELT, EONET, GDACS), so only an
+	// http(s) or site-relative link is ever rendered as a clickable anchor.
+	const sourceHref = safeUrl(event.url, '');
+
 	dom.detailBody.innerHTML = `
 		<span class="gi-detail-kind">${escapeHtml(layer?.label || layerId || 'Event')}</span>
 		<h3>${escapeHtml(event.title)}</h3>
@@ -861,7 +866,7 @@ function renderDetail() {
 		<dl>${rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(String(v))}</dd>`).join('')}</dl>
 		<div class="gi-detail-actions">
 			<button type="button" data-action="focus">Focus on globe</button>
-			${event.url ? `<a href="${escapeHtml(event.url)}" target="_blank" rel="noopener noreferrer">Open source</a>` : ''}
+			${sourceHref ? `<a href="${escapeHtml(sourceHref)}" target="_blank" rel="noopener noreferrer">Open source</a>` : ''}
 		</div>
 	`;
 	dom.detail.hidden = false;

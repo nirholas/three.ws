@@ -66,6 +66,9 @@ const LICENSES = {
 	'all-rights': { label: 'All rights reserved', remixable: false, commercial: false, note: 'Display only, no remixing.' },
 };
 const DEFAULT_LICENSE = 'remix-cc';
+// Own keys only: a plain lookup let `constructor`, `__proto__` or `toString`
+// through as a "license", which then rendered as a function instead of terms.
+const isLicense = (id) => typeof id === 'string' && Object.hasOwn(LICENSES, id);
 
 // Style + type vocabularies power the discovery filters. Free-text tags still
 // flow through search; these are the curated facets.
@@ -326,8 +329,8 @@ async function enrich(creation, { withChildren = false, overlay = null } = {}) {
 		type: meta?.type || inferred.type,
 		style: meta?.style || inferred.style,
 		tags: meta?.tags || inferred.tags,
-		license: meta?.license || DEFAULT_LICENSE,
-		licenseInfo: LICENSES[meta?.license || DEFAULT_LICENSE],
+		license: isLicense(meta?.license) ? meta.license : DEFAULT_LICENSE,
+		licenseInfo: LICENSES[isLicense(meta?.license) ? meta.license : DEFAULT_LICENSE],
 		parentId: meta?.parentId || null,
 		royalty: meta?.royalty || null,
 		createdAt: Number(creation.createdAt) || meta?.publishedAt || 0,
@@ -399,7 +402,7 @@ async function handleFeed(req, res, url) {
 		type: TYPES.includes(url.searchParams.get('type')) ? url.searchParams.get('type') : null,
 		style: STYLES.includes(url.searchParams.get('style')) ? url.searchParams.get('style') : null,
 		creator: sanitizeOptionalString(url.searchParams.get('creator'), 64),
-		license: LICENSES[url.searchParams.get('license')] ? url.searchParams.get('license') : null,
+		license: isLicense(url.searchParams.get('license')) ? url.searchParams.get('license') : null,
 	};
 
 	// Pull a deep slice of the canonical Loom feed, enrich, filter, then rank.
@@ -625,7 +628,7 @@ async function handlePublish(req, res, body) {
 	const tags = sanitizeTags(body?.tags);
 	const type = TYPES.includes(body?.type) ? body.type : null;
 	const style = STYLES.includes(body?.style) ? body.style : null;
-	const license = LICENSES[body?.license] ? body.license : DEFAULT_LICENSE;
+	const license = isLicense(body?.license) ? body.license : DEFAULT_LICENSE;
 	const royalty = sanitizeRoyalty(body?.royalty);
 	const parentId = sanitizeOptionalString(body?.parentId, 64);
 	const previewImageUrl = sanitizeOptionalString(body?.previewImageUrl, 600);

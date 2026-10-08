@@ -232,9 +232,11 @@ function timeAgo(iso) {
 	if (h < 24) return `${h}h ago`;
 	return `${Math.floor(h / 24)}d ago`;
 }
+// Addresses come from pump.fun's feed, so the result is escaped for innerHTML.
 function shortAddr(a) {
 	if (!a) return 'anon';
-	return a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a;
+	const s = String(a);
+	return esc(s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s);
 }
 
 init();

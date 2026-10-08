@@ -321,8 +321,8 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 		const signals = capturedSignals();
 		const sha = await buildSha();
 		const steps = capturedSteps();
-		const bits = [`<b>Page</b> <code>${location.pathname}</code>`];
-		if (sha) bits.push(`<b>Build</b> <code>${sha}</code>`);
+		const bits = [`<b>Page</b> <code>${escapeHtml(location.pathname)}</code>`];
+		if (sha) bits.push(`<b>Build</b> <code>${escapeHtml(sha)}</code>`);
 		if (signals.errors.length) bits.push(`<b>${signals.errors.length}</b> console error${signals.errors.length > 1 ? 's' : ''}`);
 		if (signals.failures.length) bits.push(`<b>${signals.failures.length}</b> failed request${signals.failures.length > 1 ? 's' : ''}`);
 		// Naming the step count is what makes the recorder feel like help rather

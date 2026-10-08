@@ -107,7 +107,14 @@ function cardFor(drop) {
 
 	const meta = document.createElement('div');
 	meta.className = 'dr-card-meta';
-	meta.innerHTML = `<span>${drop.symbol}</span><span aria-hidden="true">·</span><span>${supply.toLocaleString()} supply</span>`;
+	const symbolEl = document.createElement('span');
+	symbolEl.textContent = drop.symbol;
+	const dot = document.createElement('span');
+	dot.setAttribute('aria-hidden', 'true');
+	dot.textContent = '·';
+	const supplyEl = document.createElement('span');
+	supplyEl.textContent = `${supply.toLocaleString()} supply`;
+	meta.append(symbolEl, dot, supplyEl);
 	if (drop.status !== 'live') {
 		const status = document.createElement('span');
 		status.className = 'dr-status';

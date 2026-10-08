@@ -380,9 +380,11 @@ function timeLeft(iso) {
 	const m = Math.floor((ms % 3600000) / 60000);
 	return `${h}h ${m}m`;
 }
+// Addresses come from pump.fun's feed, so the result is escaped for innerHTML.
 function shortAddr(a) {
 	if (!a) return 'anon';
-	return a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a;
+	const s = String(a);
+	return esc(s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s);
 }
 function iconUser() {
 	return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg>`;
