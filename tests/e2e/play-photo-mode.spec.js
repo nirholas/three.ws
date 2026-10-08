@@ -18,7 +18,8 @@ import { test, expect, chromium, webkit } from '@playwright/test';
 import { serveHarness, collectPageErrors } from './_support.js';
 
 const HARNESS = '**/e2e/photo-mode';
-const URL = 'http://localhost:3000/e2e/photo-mode';
+const ORIGIN = process.env.E2E_ORIGIN || 'http://localhost:3000';
+const URL = `${ORIGIN}/e2e/photo-mode`;
 
 // The synthetic world's clear colour, distinctive enough that finding it in the
 // PNG proves the shot is the scene and not an empty buffer. Set from a hex
@@ -168,7 +169,7 @@ for (const engine of ENGINES) {
 			browser = await engine.type.launch();
 			// Pay the cold Vite transform of the three.js graph once, outside the
 			// tests, so the first assertion is not racing the build server.
-			const warm = await browser.newPage({ baseURL: 'http://localhost:3000' });
+			const warm = await browser.newPage({ baseURL: ORIGIN });
 			await serveHarness(warm, HARNESS, { title: 'warm-up' });
 			await warm.addInitScript(RETRYING_IMPORT);
 			await warm.goto(URL);
@@ -181,7 +182,7 @@ for (const engine of ENGINES) {
 		test.afterAll(async () => { await browser?.close(); });
 
 		test.beforeEach(async () => {
-			page = await browser.newPage({ baseURL: 'http://localhost:3000' });
+			page = await browser.newPage({ baseURL: ORIGIN });
 			errors = collectPageErrors(page);
 			await serveHarness(page, HARNESS, { title: 'photo mode harness' });
 			await page.addInitScript(RETRYING_IMPORT);
