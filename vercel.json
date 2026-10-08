@@ -5990,6 +5990,10 @@
 			"dest": "/connect.html"
 		},
 		{
+			"src": "/grok/?",
+			"dest": "/grok.html"
+		},
+		{
 			"src": "/render-lab",
 			"dest": "/render-lab.html"
 		},
