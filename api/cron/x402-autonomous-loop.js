@@ -46,6 +46,7 @@ import {
 	expectedFeeLamports,
 	nextAutoNonce,
 	currentBlockhash,
+	skipReasonFor,
 } from '../_lib/x402/pay.js';
 import { assessFeeAdmission } from '../_lib/x402/wallet-fee-meter.js';
 import {
@@ -463,7 +464,7 @@ export default wrapCron(async (req, res) => {
 			amountAtomic = Number(outcome.amountAtomic) || 0;
 			txSig = outcome.txSig || null;
 			success = outcome.success ?? false;
-			errorMsg = outcome.errorMsg || errorMsg;
+			errorMsg = skipReasonFor(outcome, payerUsdcAtomic) || errorMsg;
 			responseBody = outcome.responseData ?? null;
 			signalData = outcome.signalData ?? null;
 

@@ -58,6 +58,31 @@ export function warnCapExceeded(url, priceAtomic, capAtomic) {
 	);
 }
 
+/**
+ * Does a payment of `amountAtomic` exceed the payer's known USDC float? A null
+ * or unreadable float is unknown, never a shortfall.
+ */
+export function isFloatShortfall(amountAtomic, payerUsdcAtomic) {
+	if (payerUsdcAtomic === null || payerUsdcAtomic === undefined) return false;
+	const held = Number(payerUsdcAtomic);
+	return Number.isFinite(held) && Number(amountAtomic) > held;
+}
+
+/**
+ * The error token a skipped payment should be recorded under. A caller that
+ * folds the payer's float into `remainingCap` without passing it on gets
+ * `cap_would_exceed` back for what is really an empty wallet; this restores the
+ * funding signal so the ring dashboard and settle sensor stop filing it as a
+ * benign budget skip.
+ */
+export function skipReasonFor(outcome, payerUsdcAtomic) {
+	const reason = outcome?.errorMsg ?? null;
+	if (reason === 'cap_would_exceed' && isFloatShortfall(outcome?.amountAtomic, payerUsdcAtomic)) {
+		return 'insufficient_payer_usdc';
+	}
+	return reason;
+}
+
 // ── Fee floor ─────────────────────────────────────────────────────────────────
 // The ring's operating rule is "lowest fees always": 1-signature self-pay
 // settlement (5,000 lamports base) with the priority fee pinned at the floor.
@@ -367,6 +392,11 @@ export async function payX402({
 	url, method = 'POST', body = null,
 	buyer, conn, blockhash, mintInfo,
 	remainingCap = Infinity,
+	// The buyer's USDC float in atomics, when the caller has read it. Callers
+	// that bound `remainingCap` by the float pass it too, so an empty payer is
+	// reported as `insufficient_payer_usdc` (a funding problem) rather than
+	// `cap_would_exceed` with advice to raise cap env vars that are not the limit.
+	payerUsdcAtomic = null,
 	userAgent = 'threews-x402-autonomous/1.0',
 	// Batch pipelines pass their own position; everyone else gets a distinct
 	// per-process nonce below so same-amount payments sharing a tick blockhash
@@ -454,6 +484,9 @@ export async function payX402({
 		}
 
 		const attemptAmount = Number(currentAccept.amount || 0);
+		if (isFloatShortfall(attemptAmount, payerUsdcAtomic)) {
+			return { skip: { success: false, paid: false, free: false, skipped: true, amountAtomic: attemptAmount, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'insufficient_payer_usdc' } };
+		}
 		if (attemptAmount > remainingCap) {
 			warnCapExceeded(url, attemptAmount, Number.isFinite(remainingCap) ? remainingCap : 0);
 			return { skip: { success: false, paid: false, free: false, skipped: true, amountAtomic: attemptAmount, txSig: null, status: 402, responseBody: probe.body, errorMsg: 'cap_would_exceed' } };

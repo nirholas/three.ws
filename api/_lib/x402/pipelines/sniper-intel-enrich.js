@@ -250,6 +250,9 @@ export async function run(ctx = {}) {
 	const origin = ctx.origin || env.APP_ORIGIN || 'https://three.ws';
 	const endpointUrl = `${origin}${ENDPOINT_PATH}`;
 	let remainingCap = ctx.remainingCap ?? Number.POSITIVE_INFINITY;
+	// The payer's float as the loop read it, so an empty wallet is reported as
+	// insufficient_payer_usdc rather than as a cap that needs raising.
+	let payerUsdc = ctx.payerUsdcAtomic == null ? null : Number(ctx.payerUsdcAtomic);
 
 	// ── Schema first: without the sentiment sink there's nothing to extract, so don't pay.
 	try {
@@ -313,6 +316,7 @@ export async function run(ctx = {}) {
 					body: { topic, mint },
 					buyer, conn, blockhash, mintInfo,
 					remainingCap,
+					payerUsdcAtomic: payerUsdc,
 					userAgent: 'threews-x402-sniper-intel/1.0',
 				});
 			} catch (err) {
@@ -329,6 +333,7 @@ export async function run(ctx = {}) {
 			if (result.paid) {
 				spentAtomic += result.amountAtomic;
 				remainingCap -= result.amountAtomic;
+				if (payerUsdc !== null) payerUsdc -= result.amountAtomic;
 				paid += 1;
 				if (result.txSig) lastTxSig = result.txSig;
 			}
