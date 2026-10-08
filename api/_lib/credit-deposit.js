@@ -113,7 +113,12 @@ function lamportsCreditedTo(tx, owner) {
  * @param {{ user: object, asset: 'SOL'|'THREE', txSignature: string, network?: string }} args
  * @returns {Promise<object>} credit result for the API response
  */
-export async function verifyAndCreditDeposit({ user, asset, txSignature, network = 'mainnet' }) {
+export async function verifyAndCreditDeposit({ user, asset, txSignature, network: requestedNetwork = 'mainnet' }) {
+	// Devnet only outside production. Credits are priced at the mainnet SOL and
+	// $THREE price and spend as real USDC through /api/pay/execute, so accepting a
+	// faucet-funded devnet transfer minted real money from nothing. Same rule as
+	// api/payments/solana/[action].js.
+	const network = requestedNetwork === 'devnet' && process.env.NODE_ENV !== 'production' ? 'devnet' : 'mainnet';
 	const sink = depositWallet();
 	if (!sink)
 		throw depositError('the deposit wallet is not configured', 503, 'deposit_unavailable');
