@@ -2,7 +2,9 @@
 
 export { LiveKitVoice } from './livekit-voice.js';
 export { NeuralTTS } from './neural-tts.js';
+export { WhisperSTT } from './whisper-stt.js';
 import { NeuralTTS } from './neural-tts.js';
+import { WhisperSTT, onDeviceSupported } from './whisper-stt.js';
 import { startLipsync } from './lipsync.js';
 import { ACTION_TYPES } from '../agent-protocol.js';
 
@@ -528,6 +530,9 @@ const TTS_FACTORIES = {
 const STT_FACTORIES = {
 	none: () => null,
 	browser: (cfg) => new BrowserSTT(cfg),
+	// On-device recognition (src/runtime/whisper-stt.js). Where the browser cannot
+	// capture audio or run WebAssembly, its own recognizer is the honest fallback.
+	whisper: (cfg) => (onDeviceSupported() ? new WhisperSTT(cfg) : new BrowserSTT(cfg)),
 };
 
 export function createTTS(config = {}) {

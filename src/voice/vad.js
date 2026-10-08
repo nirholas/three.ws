@@ -93,6 +93,9 @@ export class VoiceActivityDetector {
 	 *        The finished utterance, pre-roll included, at 16 kHz.
 	 * @param {() => void} [opts.onMisfire]      Speech started but was too short.
 	 * @param {number} [opts.redemptionMs]       Trailing silence before end-of-speech.
+	 * @param {string} [opts.assetPath]          Where the model and worklet are served.
+	 *        Root-relative by default; an embed on someone else's page passes the
+	 *        absolute three.ws path, since the host page does not serve these files.
 	 */
 	constructor({
 		stream,
@@ -103,6 +106,7 @@ export class VoiceActivityDetector {
 		onSpeechEnd,
 		onMisfire,
 		redemptionMs = DEFAULT_REDEMPTION_MS,
+		assetPath = VAD_ASSET_PATH,
 	} = {}) {
 		if (!stream) throw new Error('VoiceActivityDetector requires a MediaStream');
 		if (!audioContext) throw new Error('VoiceActivityDetector requires an AudioContext');
@@ -114,6 +118,7 @@ export class VoiceActivityDetector {
 		this.onSpeechEnd = onSpeechEnd || (() => {});
 		this.onMisfire = onMisfire || (() => {});
 		this.redemptionMs = redemptionMs;
+		this.assetPath = assetPath;
 		this._vad = null;
 		this._running = false;
 		this._destroyed = false;
@@ -138,8 +143,8 @@ export class VoiceActivityDetector {
 
 		this._vad = await MicVAD.new({
 			model: 'v5',
-			baseAssetPath: VAD_ASSET_PATH,
-			onnxWASMBasePath: VAD_ASSET_PATH,
+			baseAssetPath: this.assetPath,
+			onnxWASMBasePath: this.assetPath,
 			// The caller owns the mic. Handing MicVAD the existing stream and
 			// context is what keeps this to one getUserMedia for the whole loop.
 			getStream: async () => this.stream,

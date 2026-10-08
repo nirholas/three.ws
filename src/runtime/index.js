@@ -53,7 +53,11 @@ export class Runtime extends EventTarget {
 			...this.manifest.voice?.tts,
 			...voiceConfig.tts,
 		});
-		this.stt = createSTT({ ...this.manifest.voice?.stt, ...voiceConfig.stt });
+		this.stt = createSTT({
+			...(this.apiOrigin ? { apiOrigin: this.apiOrigin } : {}),
+			...this.manifest.voice?.stt,
+			...voiceConfig.stt,
+		});
 
 		this.messages = [];
 		this._busy = false;
@@ -296,10 +300,16 @@ export class Runtime extends EventTarget {
 		};
 	}
 
-	async listen({ onInterim, onFinal } = {}) {
+	async listen({ onInterim, onFinal, onStatus } = {}) {
 		if (!this.stt) throw new Error('STT not configured');
 		this.dispatchEvent(new CustomEvent('voice:listen-start', {}));
 		const text = await this.stt.listen({
+			// Recognizers that do real work before text exists (an on-device model
+			// downloading, an utterance decoding) report it, so the UI can say so.
+			onStatus: (status) => {
+				this.dispatchEvent(new CustomEvent('voice:stt-status', { detail: status }));
+				onStatus?.(status);
+			},
 			onInterim: (t) => {
 				this.dispatchEvent(
 					new CustomEvent('voice:transcript', { detail: { text: t, final: false } }),

@@ -1283,20 +1283,7 @@ class Agent3DElement extends HTMLElement {
 		});
 
 		row.appendChild(input);
-		if (this._speechInputAvailable()) {
-			const mic = document.createElement('button');
-			mic.type = 'button';
-			mic.className = 'icon mic';
-			mic.title = 'Push to talk';
-			mic.setAttribute('aria-label', 'Push to talk');
-			mic.innerHTML =
-				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-				'<rect x="9" y="3" width="6" height="11" rx="3"></rect>' +
-				'<path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>';
-			mic.addEventListener('click', () => this._toggleMic());
-			row.appendChild(mic);
-			this._micEl = mic;
-		}
+		if (this._speechInputAvailable()) row.appendChild(this._createMicButton());
 		row.appendChild(send);
 		this._inputEl = input;
 		return row;
@@ -1307,6 +1294,57 @@ class Agent3DElement extends HTMLElement {
 	_composerPlaceholder() {
 		const name = (this._manifest?.name || '').trim();
 		return name && name !== 'Agent' ? `Message ${name}…` : 'Say something...';
+	}
+
+	_createMicButton() {
+		const mic = document.createElement('button');
+		mic.type = 'button';
+		mic.className = 'icon mic';
+		mic.title = 'Push to talk';
+		mic.setAttribute('aria-label', 'Push to talk');
+		mic.innerHTML =
+			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+			'<rect x="9" y="3" width="6" height="11" rx="3"></rect>' +
+			'<path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>';
+		mic.addEventListener('click', () => this._toggleMic());
+		this._micEl = mic;
+		return mic;
+	}
+
+	// The composer is built before the manifest is known, so an agent whose STT
+	// runs on-device (manifest voice.stt.provider "whisper") gets its mic here,
+	// once the runtime exists. That is what gives Firefox and Safari visitors push
+	// to talk: they have no browser recognizer for _speechInputAvailable to find.
+	_ensureOnDeviceMic() {
+		if (this._micEl || !this._inputEl?.parentElement) return;
+		if (typeof this._runtime?.stt?.warm !== 'function') return;
+		this._inputEl.after(this._createMicButton());
+	}
+
+	// Reflect what the recognizer is doing on the mic, so a first-use model
+	// download or a slow decode reads as progress instead of a frozen button.
+	_renderSttStatus(status) {
+		const mic = this._micEl;
+		if (!mic) return;
+		const phase = status?.phase;
+		if (phase === 'loading-model') {
+			const pct = Number.isFinite(status.progress) ? ` ${Math.round(status.progress * 100)}%` : '';
+			mic.dataset.voiceState = 'thinking';
+			mic.title = `Loading the on-device speech model${pct}`;
+		} else if (phase === 'transcribing') {
+			mic.dataset.voiceState = 'thinking';
+			mic.title = 'Transcribing';
+		} else if (phase === 'listening') {
+			mic.dataset.voiceState = 'listening';
+			const dl = Number.isFinite(status.modelProgress)
+				? `, speech model ${Math.round(status.modelProgress * 100)}% downloaded`
+				: '';
+			mic.title = `Listening${dl}. Click to stop`;
+		} else {
+			delete mic.dataset.voiceState;
+			mic.title = 'Push to talk';
+		}
+		mic.setAttribute('aria-label', mic.title);
 	}
 
 	// Push-to-talk works through a voice server or the browser's own speech
@@ -2016,6 +2054,7 @@ class Agent3DElement extends HTMLElement {
 				agentId: _backendId || undefined,
 				skillAccess: _skillAccess,
 			});
+			this._ensureOnDeviceMic();
 
 			// ── Empathy + lipsync layer ───────────────────────────────────────
 			// AgentAvatar subscribes to the agent-protocol bus, runs the emotion
@@ -2088,6 +2127,7 @@ class Agent3DElement extends HTMLElement {
 				'voice:speech-end',
 				'voice:transcript',
 				'voice:listen-start',
+				'voice:stt-status',
 				'memory:write',
 			]) {
 				this._runtime.addEventListener(ev, (e) => {
@@ -2981,13 +3021,14 @@ class Agent3DElement extends HTMLElement {
 		this._listening = true;
 		this._micEl.dataset.listening = 'true';
 		try {
-			const text = await this._runtime.listen();
+			const text = await this._runtime.listen({ onStatus: (s) => this._renderSttStatus(s) });
 			if (text) this.say(text, { voice: true });
 		} catch (e) {
 			log.warn('[agent-3d] listen failed', e);
 		} finally {
 			this._listening = false;
 			this._micEl.dataset.listening = 'false';
+			this._renderSttStatus(null);
 		}
 	}
 
