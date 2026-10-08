@@ -561,6 +561,17 @@ function fallbackLimiter(name, opts) {
 }
 
 // Preset limiters. Tune once viral traffic shape is known.
+// The free 3D Studio's buckets, exported so its denials can name the limit a
+// caller hit (api/_mcp-studio/handler.js) from the same numbers that enforce it.
+export const STUDIO_LIMITS = Object.freeze({
+	genBurst: { limit: 4, window: '1 m' },
+	genHourly: { limit: 30, window: '1 h' },
+	genPoolHourly: { limit: 300, window: '1 h' },
+	genGlobal: { limit: FORGE_PAID_GLOBAL_HOURLY, window: '1 h' },
+	transport: { limit: 300, window: '1 m' },
+	installMint: { limit: 10, window: '1 h' },
+});
+
 export const limits = {
 	// One-click "Surprise me" avatar composition. Each call composes a rigged GLB
 	// (~1s CPU + a few base-body fetches), so the ceiling stops a script from
@@ -861,21 +872,27 @@ export const limits = {
 	// denial of a free feature for no spend saved. Spend is still protected in
 	// depth: /api/forge underneath fail-CLOSES its own paid-lane global breaker
 	// (mcp3dGenerateGlobal), so even a misrouted paid call can't drain budget.
-	studioGenBurst: (ip) =>
-		getLimiter('studio:gen:burst', { limit: 4, window: '1 m' }).limit(ip),
-	studioGenHourly: (ip) =>
-		getLimiter('studio:gen:hourly', { limit: 30, window: '1 h' }).limit(ip),
+	studioGenBurst: (ip) => getLimiter('studio:gen:burst', STUDIO_LIMITS.genBurst).limit(ip),
+	studioGenHourly: (ip) => getLimiter('studio:gen:hourly', STUDIO_LIMITS.genHourly).limit(ip),
 	// Ceiling on one source IP when the burst/hourly caps above are keyed per
 	// ChatGPT user (openai/subject) instead of per IP. Every ChatGPT user reaches
 	// us from OpenAI's shared egress pool, so a per-IP 30/h would ration the whole
 	// directory as one caller; the subject is client-supplied, so this pool cap is
 	// what stops a forged subject per call from escaping the limits entirely.
+	// Install-token callers (api/_mcp-studio/install-token.js) ride this pool too.
 	studioGenPoolHourly: (ip) =>
-		getLimiter('studio:gen:pool:hourly', { limit: 300, window: '1 h' }).limit(ip),
+		getLimiter('studio:gen:pool:hourly', STUDIO_LIMITS.genPoolHourly).limit(ip),
 	// Cheap per-IP cap on studio transport/discovery (initialize, tools/list,
 	// ping, resources). Bounds discovery floods without touching the generation
 	// budget. Non-critical: a missing-Redis misconfig degrades gracefully.
-	studioIp: (ip) => getLimiter('studio:ip', { limit: 300, window: '1 m' }).limit(ip),
+	studioIp: (ip) => getLimiter('studio:ip', STUDIO_LIMITS.transport).limit(ip),
+	// Minting a free-studio install token (POST /api/mcp-studio/install). Each
+	// token is one more caller-sized generation budget, so minting is what bounds
+	// how many budgets one source can hold. Ten an hour covers a person setting up
+	// several agents; the page caches its token so a revisit never mints again.
+	// Non-critical like the caps it feeds: the per-IP pool and the global breaker
+	// still bound what any number of tokens can generate.
+	studioInstallMint: (ip) => getLimiter('studio:install:mint', STUDIO_LIMITS.installMint).limit(ip),
 	// Free-studio persona writes (create_agent_persona / persona_say): each fetches
 	// or restores a bounded GLB and writes a small identity record — cheap, but not
 	// free, so a per-IP burst cap stops a scripted flood from filling storage. The
@@ -1003,10 +1020,7 @@ export const limits = {
 	// breaker only backstops. (studioIp / studioGenBurst / studioGenHourly are
 	// defined above next to the other mcp buckets.)
 	studioGenerateGlobal: () =>
-		getLimiter('studio:generate:global', {
-			limit: FORGE_PAID_GLOBAL_HOURLY,
-			window: '1 h',
-		}).limit('global'),
+		getLimiter('studio:generate:global', STUDIO_LIMITS.genGlobal).limit('global'),
 	// Forge prompt enhancer — one free-tier LLM rewrite per call. Cheap text
 	// completion, but each one hits an upstream provider, so cap per principal to
 	// keep that egress bounded. Non-critical: a Redis outage must never block a

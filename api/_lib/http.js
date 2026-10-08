@@ -87,6 +87,9 @@ const SENSITIVE_QUERY_KEYS = new Set([
 	'token', 'devicetoken', 'accesstoken', 'refreshtoken', 'idtoken',
 	'authorization', 'auth', 'bearer', 'session', 'sessionid', 'sid',
 	'password', 'passwd', 'pwd', 'pin', 'otp',
+	// free-studio install token (api/_mcp-studio/install-token.js): a stolen one
+	// spends its owner's generation budget
+	'install',
 	// API keys / signing secrets
 	'apikey', 'key', 'accesskey', 'secret', 'clientsecret', 'signature', 'sig',
 	// wallet secrets
