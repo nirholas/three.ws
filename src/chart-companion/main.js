@@ -470,16 +470,17 @@ async function run() {
 	const seen = new Set();
 	let primed = false;
 
+	// Feed order is newest on top: callers hand reactions oldest first.
+	const list = (reactions) => {
+		if (!feed || !reactions.length) return;
+		$('#cc-feed-empty')?.remove();
+		for (const r of reactions) feed.prepend(feedItem(r));
+		while (feed.children.length > FEED_MAX) feed.lastElementChild.remove();
+	};
+	// A frame's reactions arrive highest priority first; the top one is performed.
 	const post = (reactions) => {
-		for (const r of reactions) {
-			if (feed) {
-				$('#cc-feed-empty')?.remove();
-				feed.prepend(feedItem(r));
-				while (feed.children.length > FEED_MAX) feed.lastElementChild.remove();
-			}
-		}
-		const top = reactions[0];
-		if (top) performer.perform(top);
+		list([...reactions].reverse());
+		if (reactions[0]) performer.perform(reactions[0]);
 	};
 
 	try {
@@ -505,9 +506,9 @@ async function run() {
 				keep.forEach((s) => seen.add(s));
 			}
 			if (!primed) {
-				// The backlog sizes the tape; it does not get cheered.
-				reactor.prime(trades);
+				// The backlog fills the stats and the feed; only the greeting is performed.
 				primed = true;
+				list(reactor.prime(trades));
 				post([reactor.greeting()]);
 			} else if (trades.length) {
 				post(reactor.ingestTrades(trades));

@@ -235,15 +235,19 @@ export function createReactor({ symbol = '', now = () => Date.now() } = {}) {
 		return react('quiet');
 	}
 
-	/** Prime the size window with history without reacting to it. */
+	/**
+	 * Take in the backlog a page sees on load. It counts toward the stats and
+	 * the size window like any swap, and its notable trades come back as
+	 * reactions stamped with their own trade time, oldest first, so the feed
+	 * opens on what already happened. The caller lists them; it does not
+	 * perform them, because cheering a swap from ten minutes ago is noise.
+	 */
 	function prime(trades) {
-		for (const t of (Array.isArray(trades) ? trades : []).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))) {
-			sizes.push(Number(t.sol_value_usd) || 0);
-			if (sizes.length > WINDOW) sizes.shift();
-			const p = tradePrice(t);
-			if (p != null) stats.lastPrice = p;
-		}
+		const out = ingestTrades(trades)
+			.map((r) => (r.trade?.timestamp ? { ...r, at: r.trade.timestamp * 1000 } : r))
+			.sort((a, b) => a.at - b.at);
 		lastTradeAt = now();
+		return out;
 	}
 
 	return { ingestCandles, ingestTrades, tick, prime, greeting, stats, get symbol() { return sym; } };

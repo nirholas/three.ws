@@ -55,7 +55,7 @@ A small framable card that sends a token's community to its DEXTools pair page. 
 
 ```html
 <iframe src="https://three.ws/embed/dextools-boost?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
-        width="380" height="400" style="border:0" loading="lazy"
+        width="380" height="460" style="border:0" loading="lazy"
         title="Boost on DEXTools"></iframe>
 ```
 

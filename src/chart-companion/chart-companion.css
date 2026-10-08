@@ -148,7 +148,8 @@ body[data-mode='overlay'] {
 }
 .cc-input:hover { border-color: var(--cc-accent); }
 .cc-input[aria-invalid='true'] { border-color: var(--cc-down); }
-.cc-form-msg { flex-basis: 100%; margin: 0; min-height: 1em; font-size: 13px; color: var(--cc-down); }
+.cc-form-msg { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--cc-down); }
+.cc-form-msg:empty { display: none; }
 
 /* ── layout ─────────────────────────────────────────────────────────────── */
 

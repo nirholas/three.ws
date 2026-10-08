@@ -86,7 +86,8 @@ async function tokenMeta(mint) {
 		const p = pairs[0];
 		return {
 			name: p.baseToken.name || null,
-			symbol: p.baseToken.symbol || null,
+			// Tickers read in capitals everywhere else on three.ws ($THREE), whatever case the mint carries.
+			symbol: p.baseToken.symbol ? p.baseToken.symbol.toUpperCase() : null,
 			image: p.info?.imageUrl || null,
 			priceUsd: Number(p.priceUsd),
 			change24: Number(p.priceChange?.h24),

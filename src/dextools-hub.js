@@ -238,7 +238,7 @@ function renderBuilder() {
 	frame.src = scene ? local.scene : local.boost;
 	frame.title = scene ? 'Preview: token in 3D' : 'Preview: Boost on DEXTools card';
 	frame.width = scene ? '420' : '380';
-	frame.height = scene ? '560' : '400';
+	frame.height = scene ? '560' : '460';
 	frame.loading = 'lazy';
 	$('dx-preview').replaceChildren(frame);
 	$('dx-out').hidden = false;

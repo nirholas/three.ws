@@ -98,6 +98,6 @@ export function embedSnippets({ mint, pair = null, theme = 'dark', origin = 'htt
 		scene,
 		boost,
 		sceneHtml: `<iframe src="${amp(scene)}"\n        width="420" height="560" style="border:0" loading="lazy"\n        title="Token in 3D by three.ws"></iframe>`,
-		boostHtml: `<iframe src="${amp(boost)}"\n        width="380" height="400" style="border:0" loading="lazy"\n        title="Boost on DEXTools"></iframe>`,
+		boostHtml: `<iframe src="${amp(boost)}"\n        width="380" height="460" style="border:0" loading="lazy"\n        title="Boost on DEXTools"></iframe>`,
 	};
 }

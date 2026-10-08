@@ -130,6 +130,17 @@ describe('streaks and highs', () => {
 });
 
 describe('stats, greeting and quiet', () => {
+	it('counts the load backlog and returns its notable swaps oldest first, at their own trade time', () => {
+		const r = createReactor();
+		const old = { ...trade(5000), timestamp: 1_800_000_100 };
+		const older = { ...trade(400, false), timestamp: 1_800_000_050 };
+		const out = r.prime([old, older, trade(5)]);
+		expect(out.map((x) => x.kind)).toEqual(['bigSell', 'whaleBuy']);
+		expect(out[0].at).toBe(1_800_000_050_000);
+		expect(r.stats.buys).toBe(2);
+		expect(r.stats.sells).toBe(1);
+	});
+
 	it('tallies the session', () => {
 		const r = createReactor();
 		r.ingestTrades([trade(100), trade(50, false), trade(900)]);

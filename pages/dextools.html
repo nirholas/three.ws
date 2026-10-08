@@ -113,9 +113,10 @@
 		.dx-tabs { display: flex; gap: 6px; margin: 16px 0 10px; flex-wrap: wrap; }
 		.dx-msg { margin: 10px 0 0; font-size: 0.88rem; color: var(--ink-dim); min-height: 1.3em; }
 		.dx-msg.is-error { color: var(--danger, #ef4444); }
-		.dx-code { position: relative; margin-top: 10px; }
-		.dx-code pre { margin: 0; padding: 14px; padding-right: 86px; background: var(--bg-0); border: 1px solid var(--stroke); border-radius: 10px; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; color: var(--ink); white-space: pre; }
-		.dx-code .dx-btn { position: absolute; top: 8px; right: 8px; padding: 6px 10px; font-size: 0.8rem; }
+		.dx-code { margin-top: 10px; border: 1px solid var(--stroke); border-radius: 10px; overflow: hidden; background: var(--bg-0); }
+		.dx-code-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; border-bottom: 1px solid var(--stroke); font-size: 0.78rem; color: var(--ink-dim); }
+		.dx-code pre { margin: 0; padding: 14px; background: var(--bg-0); overflow-x: auto; font-size: 0.8rem; line-height: 1.55; color: var(--ink); white-space: pre; }
+		.dx-code .dx-btn { padding: 5px 10px; font-size: 0.8rem; }
 		.dx-preview { border: 1px dashed var(--stroke-strong, var(--stroke)); border-radius: var(--radius-lg, 14px); min-height: 420px; display: grid; place-items: center; overflow: hidden; background: var(--surface-1); }
 		.dx-preview iframe { border: 0; max-width: 100%; display: block; }
 		.dx-preview-empty { text-align: center; padding: 24px; color: var(--ink-dim); max-width: 34ch; line-height: 1.55; font-size: 0.92rem; }
@@ -228,7 +229,7 @@
 							<button type="button" class="dx-btn" data-kind="boost" aria-pressed="false">Boost card</button>
 							<button type="button" class="dx-btn" id="dx-theme" aria-pressed="false" title="Toggle the embed theme">Light theme</button>
 						</div>
-						<div class="dx-code"><pre id="dx-snippet"></pre><button type="button" class="dx-btn" id="dx-copy">Copy</button></div>
+						<div class="dx-code"><div class="dx-code-head"><span>HTML</span><button type="button" class="dx-btn" id="dx-copy">Copy</button></div><pre id="dx-snippet"></pre></div>
 						<p class="dx-msg" id="dx-resolved"></p>
 					</div>
 				</div>
