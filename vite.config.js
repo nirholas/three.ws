@@ -700,6 +700,7 @@ const appConfig = {
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
 				connect: resolve(__dirname, 'pages/connect.html'),
+				grok: resolve(__dirname, 'pages/grok.html'),
 				awesome: resolve(__dirname, 'pages/awesome.html'),
 				prompts: resolve(__dirname, 'pages/prompts.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
