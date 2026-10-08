@@ -38,6 +38,13 @@ const ENDPOINTS = [
 		type: 'free',
 		requireTools: ['mesh_forge', 'rig_mesh', 'forge_avatar', 'text_to_avatar', 'check_job'],
 	},
+	{
+		// The same free studio behind the door Grok Bot and the xAI API connect to.
+		// Catalog only, like /api/mcp-studio, so the probe never spends a generation.
+		path: '/api/mcp-grok',
+		type: 'free',
+		requireTools: ['forge_free', 'forge_avatar', 'check_job', 'create_agent_persona', 'persona_say'],
+	},
 	{ path: '/api/mcp', type: 'paid' },
 	{ path: '/api/mcp-3d', type: 'paid' },
 	{ path: '/api/mcp-agent', type: 'paid' },
