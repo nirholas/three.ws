@@ -30,6 +30,18 @@ npm run dev            # leave running on :3000 in another shell
 npx playwright test    # reuses the running server
 ```
 
+### Run on another port
+
+`:3000` is often someone else's dev server, and a run that reuses it tests their
+working tree, not yours. `E2E_PORT` moves the whole run: the base URL, the server
+Playwright starts (`npx vite --port <port> --strictPort`) and the specs that open
+a browser outside the fixture.
+
+```bash
+E2E_PORT=3107 npx playwright test          # starts and owns its own server on :3107
+E2E_PORT=3107 npm test                     # vitest, then this same run
+```
+
 Do not wait on `networkidle` in specs — the app holds long-lived connections
 (HMR socket, live feeds). Wait on concrete DOM/state instead.
 
