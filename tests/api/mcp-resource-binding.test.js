@@ -15,6 +15,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { checkResourceAllowed } from '@modelcontextprotocol/sdk/shared/auth-utils.js';
+import { loadRouteTable, resolvePhase1 } from '../../server/route-resolve.mjs';
 
 process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
@@ -66,12 +67,18 @@ function mkRes() {
 	};
 }
 
-// What the server route table does with a path-inserted metadata URL.
+// The production route table (vercel.json, through the resolver the server
+// itself runs), so a metadata URL with no rewrite behind it fails here exactly
+// as it 404s in production.
+const { phase1Routes } = loadRouteTable(resolve(import.meta.dirname, '../../vercel.json'));
+
 async function fetchMetadata(url) {
 	const u = new URL(url);
-	const m = /^\/\.well-known\/oauth-protected-resource(\/.*)?$/.exec(u.pathname);
-	expect(m, `metadata URL ${url} is not an oauth-protected-resource document`).toBeTruthy();
-	const query = { name: 'oauth-protected-resource', ...(m[1] ? { path: m[1] } : {}) };
+	const routed = resolvePhase1(phase1Routes, { headers: {} }, u);
+	expect(routed.path, `metadata URL ${url} is not routed to api/wk`).toBe('/api/wk');
+	const query = Object.fromEntries(u.searchParams);
+	Object.assign(query, routed.extraQuery);
+	expect(query.name).toBe('oauth-protected-resource');
 	const res = mkRes();
 	await wkHandler({ method: 'GET', url: `/api/wk?${new URLSearchParams(query)}`, headers: {}, query }, res);
 	return { status: res.statusCode, doc: res.body ? JSON.parse(res.body) : null };
