@@ -19,7 +19,7 @@
 // SNIPER_MODE=simulate or { simulate: true } runs the full real-quote path but
 // skips the broadcast (paper mode) — an ops/test toggle, never the default.
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
@@ -55,18 +55,21 @@ function normNetwork(n) {
 	return n === 'devnet' ? 'devnet' : 'mainnet';
 }
 
-async function resolveAuth(req) {
+// A bearer must hold wallet:write to trade; the read-only quote passes
+// `spendCheck: false` because a preview moves nothing.
+async function resolveAuth(req, { spendCheck = true } = {}) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
-	return null;
+	if (!bearer) return null;
+	if (spendCheck) assertBearerMaySpend(bearer, req);
+	return { userId: bearer.userId };
 }
 
 // Owner gate shared by every route here. On any failure it writes the response
 // and returns { error: true }; on success returns the owner + agent row + meta.
-async function loadOwnedAgent(req, res, id) {
-	const auth = await resolveAuth(req);
+async function loadOwnedAgent(req, res, id, authOpts) {
+	const auth = await resolveAuth(req, authOpts);
 	if (!auth) { error(res, 401, 'unauthorized', 'sign in required'); return { error: true }; }
 
 	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
@@ -724,7 +727,7 @@ async function handleQuote(req, res, id) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	const owned = await loadOwnedAgent(req, res, id);
+	const owned = await loadOwnedAgent(req, res, id, { spendCheck: false });
 	if (owned.error) return;
 	const { auth, meta } = owned;
 

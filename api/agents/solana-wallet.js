@@ -1,7 +1,7 @@
 // /api/agents/:id/solana — wallet, activity, and airdrop handlers.
 // Dispatched from api/agents/[id].js with the `action` sub-path.
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { confirmOrThrow, pollConfirmation } from '../_lib/solana/confirm.js';
@@ -171,12 +171,16 @@ async function _reverseSnsCached(address) {
 // salt); recoverSolanaAgentKeypair still reads those legacy records.
 const _encryptSecret = (plaintext) => encryptSecret(plaintext);
 
-async function resolveAuth(req) {
+// A bearer needs wallet:write for any write here (import/wipe a key, withdraw,
+// policy edits). `spendCheck: false` defers that to a handler that first learns
+// whether the request is a no-funds simulation (the withdraw preview).
+async function resolveAuth(req, { spendCheck = true } = {}) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
-	return null;
+	if (!bearer) return null;
+	if (spendCheck) assertBearerMaySpend(bearer, req);
+	return { userId: bearer.userId, bearer };
 }
 
 // A deposit address is safe to advertise only when the stored custodial key can
@@ -543,8 +547,8 @@ async function handleWallet(req, res, id) {
 // Shared loader for the owner-only custody handlers: auth → load agent → verify
 // ownership → return the custodial wallet's address + encrypted secret + meta.
 // Returns { error } (already-shaped) on any failure so callers can early-return.
-async function loadOwnedWallet(req, res, id) {
-	const auth = await resolveAuth(req);
+async function loadOwnedWallet(req, res, id, authOpts) {
+	const auth = await resolveAuth(req, authOpts);
 	if (!auth) { error(res, 401, 'unauthorized', 'sign in required'); return { error: true }; }
 
 	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${id} AND deleted_at IS NULL`;
@@ -564,7 +568,7 @@ async function handleWithdraw(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const owned = await loadOwnedWallet(req, res, id);
+	const owned = await loadOwnedWallet(req, res, id, { spendCheck: false });
 	if (owned.error) return;
 	const { auth, meta, address: fromAddress, encryptedSecret } = owned;
 
@@ -615,6 +619,7 @@ async function handleWithdraw(req, res, id) {
 	// Real funds leave a custodial wallet only for an account that has signed
 	// the real-funds agreements. Checked before CSRF so a refusal does not burn
 	// the owner's single-use token.
+	if (!simulate) assertBearerMaySpend(auth.bearer, req);
 	if (!simulate && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, network, context: 'withdraw' }))) return;
 	if (!simulate && !(await requireCsrf(req, res, auth.userId))) return;
 

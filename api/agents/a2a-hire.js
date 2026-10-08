@@ -23,7 +23,7 @@
 //   6. Finalize the hire + custody ledger so both wallets show the income/outlay and
 //      the marketplace's completion stats update from real data only.
 
-import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser, assertBearerMaySpend } from '../_lib/auth.js';
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
@@ -77,7 +77,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	const bearer = session ? null : assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required to hire an agent');
 	const userId = session?.id ?? bearer?.userId;
 

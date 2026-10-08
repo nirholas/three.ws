@@ -30,7 +30,7 @@ import {
 } from '@solana/spl-token';
 
 import { sql } from '../_lib/db.js';
-import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser, assertBearerMaySpend } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited, respondError } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
@@ -52,7 +52,7 @@ const bodySchema = z.object({
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, fromSession: true };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId, fromSession: false };
 	return null;
 }

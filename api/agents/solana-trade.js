@@ -18,7 +18,7 @@
 // state. $THREE is the only coin three.ws promotes; this surface is coin-agnostic
 // plumbing that trades whatever mint the owner supplies at runtime.
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
@@ -64,7 +64,7 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
+	if (bearer) return { userId: bearer.userId, bearer };
 	return null;
 }
 
@@ -274,6 +274,9 @@ export async function handleTrade(req, res, id) {
 
 	// CSRF on the state-changing path only: a live preview/quote moves no funds and
 	// would otherwise burn a single-use token on every keystroke. Bearer callers exempt.
+	// A bearer may quote with any owner grant, but executing spends the wallet and
+	// needs wallet:write (a quote moves nothing, so v1 /swap/quote stays agents:read).
+	if (!parsed.preview) assertBearerMaySpend(auth.bearer, req);
 	if (!parsed.preview && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, network: parsed.network, context: 'trade' }))) return;
 	if (!parsed.preview && !(await requireCsrf(req, res, auth.userId))) return;
 

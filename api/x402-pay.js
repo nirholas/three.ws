@@ -47,7 +47,7 @@ import { getRedis as _getSharedRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
 import { thumbnailUrl } from './_lib/r2.js';
 import { logger } from './_lib/usage.js';
-import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from './_lib/auth.js';
 import { recoverSolanaAgentKeypair } from './_lib/agent-wallet.js';
 import { requireRealFundsAgreement } from './_lib/real-funds-agreement.js';
 import { SpendLimitError, reserveSpendUsd, updateCustodyEvent, releaseSpendReservation } from './_lib/agent-trade-guards.js';
@@ -175,15 +175,17 @@ async function readCall(tx) {
 // ---- User auth + agent wallet loading ----------------------------------
 
 async function requireAuth(req) {
+	let bearer = null;
 	try {
 		const session = await getSessionUser(req);
 		if (session) return { userId: session.id };
-		const bearer = await authenticateBearer(extractBearer(req));
-		if (bearer) return { userId: bearer.userId };
+		bearer = await authenticateBearer(extractBearer(req));
 	} catch (err) {
 		log.warn('require_auth_failed', { message: err?.message });
 	}
-	return null;
+	if (!bearer) return null;
+	assertBearerMaySpend(bearer, req);
+	return { userId: bearer.userId };
 }
 
 // Decide which wallet signs an x402 payment. An agent context — an `agentId`

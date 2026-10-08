@@ -35,7 +35,7 @@ import {
 	createAssociatedTokenAccountIdempotentInstruction,
 } from '@solana/spl-token';
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
@@ -176,7 +176,7 @@ async function handlePaidNameResolve(req, res, body) {
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

@@ -12,7 +12,7 @@
  * One bundle so Vercel doesn't re-bundle @solana/web3.js + @pump-fun/* per file.
  */
 
-import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin, assertBearerMaySpend } from '../../_lib/auth.js';
 import {
 	cors,
 	json,
@@ -53,7 +53,7 @@ async function resolveAuth(req) {
 		}
 		return { userId: session.id };
 	}
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

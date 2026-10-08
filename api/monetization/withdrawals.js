@@ -8,7 +8,7 @@
 
 import { z } from 'zod';
 import { sql } from '../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { parse, isUuid } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -60,7 +60,7 @@ function pickPayoutWallet(wallets, network) {
 async function resolveUser(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, source: 'session' };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId, source: 'bearer' };
 	return null;
 }
