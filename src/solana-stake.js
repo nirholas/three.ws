@@ -13,6 +13,8 @@ import {
 	Transaction,
 	TransactionInstruction,
 } from '@solana/web3.js';
+import bs58 from 'bs58';
+import { unstakeProofMessage } from './shared/reputation-staking.js';
 
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 export const MIN_STAKE_LAMPORTS = 1_000_000n; // 0.001 SOL
@@ -163,4 +165,26 @@ export async function stakeOnMarket({ agentAsset, escrow, lamports, score, netwo
 	const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
 	await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
 	return sig;
+}
+
+/**
+ * Prove to /api/reputation/market-withdraw that the connected wallet is the
+ * staker of a position: sign the shared unstake message (no transaction, no
+ * fee) and return the `proof` body field the endpoint verifies.
+ *
+ * @param {object} opts
+ * @param {object} opts.wallet           Solana wallet adapter (publicKey + signMessage)
+ * @param {'mainnet'|'devnet'} opts.network
+ * @param {string} opts.stakeSignature   the position id (its stake transaction signature)
+ * @returns {Promise<{ issued_at: number, signature: string }>}
+ */
+export async function signUnstakeProof({ wallet, network, stakeSignature }) {
+	if (!wallet?.publicKey || typeof wallet.signMessage !== 'function') {
+		throw new Error('This wallet cannot sign messages. Use Phantom, Backpack, or Solflare.');
+	}
+	const issuedAt = Date.now();
+	const message = unstakeProofMessage({ network, stakeSignature, issuedAt });
+	const out = await wallet.signMessage(new TextEncoder().encode(message), 'utf8');
+	const bytes = out?.signature ?? out;
+	return { issued_at: issuedAt, signature: bs58.encode(bytes) };
 }

@@ -20,6 +20,8 @@
  */
 
 import { Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { ed25519 } from '@noble/curves/ed25519.js';
+import bs58 from 'bs58';
 
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
@@ -39,6 +41,7 @@ import {
 	realizedApr,
 	clampSettlement,
 	toBigInt,
+	unstakeProofMessage,
 } from '../../src/shared/reputation-staking.js';
 
 export { MARKET_TAG, MIN_STAKE_LAMPORTS };
@@ -478,6 +481,44 @@ export async function escrowSurplus({ network, env = process.env }) {
 	return { balance, principal, rentFloor, surplus: surplus > 0n ? surplus : 0n };
 }
 
+/** How long a signed unstake proof stays valid, either side of the server clock. */
+export const UNSTAKE_PROOF_TTL_MS = 5 * 60_000;
+
+export { unstakeProofMessage };
+
+/**
+ * Spec rule 1: only the staker who opened a position may withdraw it. The
+ * payout always goes to the staker, but an open endpoint still let anyone
+ * force-close every position backing a rival agent (collapsing its rank and
+ * ending the stakers' accrual), or time a close for when the surplus is thin.
+ *
+ * @param {{ position: { network: string, signature: string, staker: string }, proof: { issued_at?: number|string, signature?: string }|null, now?: number }} args
+ * @throws {MarketError}
+ */
+export function verifyUnstakeProof({ position, proof, now = Date.now() }) {
+	const issuedAt = Number(proof?.issued_at);
+	if (!proof?.signature || !Number.isSafeInteger(issuedAt)) {
+		throw new MarketError('proof_required', 'Sign the unstake message with the wallet that opened this position.', 401);
+	}
+	if (Math.abs(now - issuedAt) > UNSTAKE_PROOF_TTL_MS) {
+		throw new MarketError('proof_expired', 'The signed unstake message is too old. Sign it again.', 401);
+	}
+	const message = unstakeProofMessage({ network: position.network, stakeSignature: position.signature, issuedAt });
+	let ok = false;
+	try {
+		ok = ed25519.verify(
+			bs58.decode(String(proof.signature)),
+			new TextEncoder().encode(message),
+			new PublicKey(position.staker).toBytes(),
+		);
+	} catch {
+		ok = false;
+	}
+	if (!ok) {
+		throw new MarketError('not_staker', 'Only the wallet that opened this position can withdraw it.', 403);
+	}
+}
+
 /**
  * Settle a position: pay principal plus accrued earnings back to the staker
  * recorded on-chain, write a `threews.unstake.v1` memo in the same transaction,
@@ -487,12 +528,13 @@ export async function escrowSurplus({ network, env = process.env }) {
  * paying twice; a `settling` position is claimed by whichever caller flipped it,
  * so a crashed withdrawal is retried rather than double-paid.
  */
-export async function withdrawPosition({ signature, network, env = process.env }) {
+export async function withdrawPosition({ signature, network, proof, env = process.env }) {
 	const cfg = marketConfig(network, env);
 	assertWritable(cfg);
 
 	const position = await getPosition({ signature, network: cfg.network });
 	if (!position) throw new MarketError('unknown_position', `No indexed position for ${signature}.`, 404);
+	verifyUnstakeProof({ position, proof });
 
 	if (position.status === 'closed') {
 		const settlement = await getSettlement(position.signature);

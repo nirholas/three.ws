@@ -40,6 +40,18 @@ export const MIN_STAKE_LAMPORTS = 1_000_000n;
 /** The market envelope tag that separates a market stake from a bare conviction memo. */
 export const MARKET_TAG = 'rsm.v1';
 
+/**
+ * The exact text a staker signs with their wallet to withdraw a position.
+ * Bound to the network and the stake signature so one proof cannot settle a
+ * different position, and to a millisecond timestamp the server holds to a
+ * few minutes, so a captured proof goes stale. Shared so the page that signs
+ * and the server that verifies can never drift apart.
+ */
+export function unstakeProofMessage({ network, stakeSignature, issuedAt }) {
+	const net = network === 'mainnet' ? 'mainnet' : 'devnet';
+	return `threews.unstake.v1:${net}:${stakeSignature}:${issuedAt}`;
+}
+
 /** Weight each attested action contributes to an agent's epoch `work`. */
 export const WORK_WEIGHTS = Object.freeze({
 	taskAccepted: 1.0,

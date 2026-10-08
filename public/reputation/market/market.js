@@ -434,12 +434,18 @@ async function submitRecord(event) {
 async function withdraw(signature, button) {
 	button.disabled = true;
 	const original = button.textContent;
-	button.textContent = 'Settling…';
+	button.textContent = 'Sign in wallet…';
 	try {
+		// Only the staker may withdraw (spec rule 1): the wallet that opened the
+		// position signs a short, fee-free message proving it.
+		const wallet = await connectWallet();
+		const { signUnstakeProof } = await import('../../src/solana-stake.js');
+		const proof = await signUnstakeProof({ wallet, network: state.network, stakeSignature: signature });
+		button.textContent = 'Settling…';
 		const body = await api('/api/reputation/market-withdraw', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ signature, network: state.network }),
+			body: JSON.stringify({ signature, network: state.network, proof }),
 		});
 		const s = body.settlement;
 		const paid = BigInt(s.principal_lamports) + BigInt(s.earnings_lamports);

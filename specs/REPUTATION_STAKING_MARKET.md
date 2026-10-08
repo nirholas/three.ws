@@ -288,7 +288,7 @@ against `getTransaction(signature)` alone.
 | `/api/reputation/market` | GET | none | Agents ranked by net staked conviction, with epoch weight and realized yield. |
 | `/api/reputation/market-positions` | GET | none (`staker` query param) | Every position a wallet holds, with pending earnings. |
 | `/api/reputation/market-stake` | POST | none | Record a stake transaction the staker already broadcast. Body: `{ signature, network }`. Verification is a chain read; the caller cannot assert a principal. |
-| `/api/reputation/market-withdraw` | POST | none | Settle a position. Body: `{ signature, network }`. The payout goes to the staker recorded on-chain, so an attacker calling this for someone else's position only causes that person to be paid. |
+| `/api/reputation/market-withdraw` | POST | staker signature | Settle a position. Body: `{ signature, network, proof: { issued_at, signature } }`. `proof.signature` is the staker wallet's base58 ed25519 signature over `threews.unstake.v1:<network>:<stake signature>:<issued_at>` (`issued_at` in milliseconds, accepted within 5 minutes of the server clock), which enforces rule 1. The payout still goes only to the staker recorded on-chain. |
 
 Every write refuses on `mainnet` unless the owner gate in §1 is open, with
 `code: "mainnet_gated"`.
@@ -303,6 +303,9 @@ Every write refuses on `mainnet` unless the owner gate in §1 is open, with
 | `not_a_market_stake` | 400 | Memo missing, wrong kind, wrong `market`, or wrong `escrow`. |
 | `stake_below_minimum` | 400 | Escrow delta below `MIN_STAKE_LAMPORTS`. |
 | `unknown_position` | 404 | No indexed position for that signature. |
+| `proof_required` | 401 | Withdrawal sent without a staker `proof`. |
+| `proof_expired` | 401 | The proof's `issued_at` is more than 5 minutes from the server clock. |
+| `not_staker` | 403 | The proof is not a valid signature by the position's staker. |
 | `already_closed` | 200 | Idempotent: returns the original settlement. |
 | `escrow_unsigned` | 503 | Escrow secret key not configured, so no payout can be signed. |
 

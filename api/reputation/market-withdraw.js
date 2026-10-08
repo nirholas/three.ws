@@ -1,5 +1,5 @@
 /**
- * POST /api/reputation/market-withdraw  { signature, network }
+ * POST /api/reputation/market-withdraw  { signature, network, proof: { issued_at, signature } }
  *
  * Settle a reputation-market position: return the staker's principal in full
  * plus whatever their conviction earned from the agent's attested action
@@ -7,9 +7,11 @@
  * on-chain.
  *
  * The payout always goes to the staker recorded in the stake transaction, never
- * to the caller, so this endpoint is safe to leave open: the worst an attacker
- * can do by calling it for someone else's position is pay that person their own
- * money. Mainnet stays owner-gated (specs/REPUTATION_STAKING_MARKET.md §1).
+ * to the caller. That alone is not enough: an open endpoint let anyone close
+ * every position backing a rival agent. So the caller proves they ARE the
+ * staker by signing `threews.unstake.v1:<network>:<stake sig>:<issued_at ms>`
+ * with that wallet (`proof: { issued_at, signature }`, base58 signature), the
+ * spec's rule 1. Mainnet stays owner-gated (specs/REPUTATION_STAKING_MARKET.md §1).
  */
 
 import { cors, json, method, wrap, rateLimited, error, readJson } from '../_lib/http.js';
@@ -35,7 +37,8 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const result = await withdrawPosition({ signature, network });
+		const proof = body?.proof && typeof body.proof === 'object' ? body.proof : null;
+		const result = await withdrawPosition({ signature, network, proof });
 		return json(res, 200, {
 			ok: true,
 			status: result.status,

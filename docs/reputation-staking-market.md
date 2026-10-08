@@ -113,12 +113,18 @@ quotes is auditable against the spec, epoch by epoch.
 
 ## Withdraw
 
-There is no lockup. Withdraw any time:
+There is no lockup. Withdraw any time. Only the wallet that opened a position
+can withdraw it: sign the text
+`threews.unstake.v1:<network>:<stake signature>:<issued_at>` with that wallet
+(`issued_at` is the current time in milliseconds; the server accepts it for 5
+minutes) and send the base58 signature as `proof`. The
+[/reputation/market](/reputation/market) page does this for you with one
+wallet prompt and no fee.
 
 ```bash
 curl -X POST https://three.ws/api/reputation/market-withdraw \
   -H 'content-type: application/json' \
-  -d '{"signature": "<stake signature>", "network": "devnet"}'
+  -d '{"signature": "<stake signature>", "network": "devnet", "proof": {"issued_at": 1760000000000, "signature": "<base58 wallet signature>"}}'
 ```
 
 The market escrow signs one settlement transaction paying principal plus
@@ -213,11 +219,12 @@ proof confirms over HTTP polling and works untouched.
 | `/api/reputation/market?network=devnet` | GET | Agents ranked by net staked conviction, epoch weight, realized yield. |
 | `/api/reputation/market-positions?staker=<wallet>&network=devnet` | GET | Every position a wallet holds, with pending earnings. |
 | `/api/reputation/market-stake` | POST | Index a stake transaction. Body: `{ signature, network }`. |
-| `/api/reputation/market-withdraw` | POST | Settle a position. Body: `{ signature, network }`. |
+| `/api/reputation/market-withdraw` | POST | Settle a position. Body: `{ signature, network, proof }`, where `proof` is the staker's signed unstake message. |
 
 Failure codes (`market_not_configured`, `mainnet_gated`, `tx_not_found`,
 `not_a_market_stake`, `stake_below_minimum`, `unknown_position`,
-`already_closed`, `escrow_unsigned`) are pinned in spec §9.
+`already_closed`, `escrow_unsigned`, `proof_required`, `proof_expired`,
+`not_staker`) are pinned in spec §9.
 
 ## Related
 
