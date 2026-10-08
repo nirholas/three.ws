@@ -113,7 +113,9 @@ test('/crews/<TAG> offers a free tag only to someone who can take it', async ({ 
 	await page.goto('/crews/ZZQQZ', { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
 	const error = page.locator('#cw-error');
-	await expect(error).toContainText('No crew flies the tag ZZQQZ');
+	// The first assertion waits out the page module's cold dev transform, which
+	// under a full parallel run (a11y-top-pages beside it) outlasts the 5s default.
+	await expect(error).toContainText('No crew flies the tag ZZQQZ', { timeout: 60_000 });
 	await expect(error.locator('#cw-retry')).toBeVisible();
 	// Signed out: the founding form would only 401, so the way in is offered.
 	await expect(page.locator('#cw-found-panel')).toBeHidden();
@@ -127,8 +129,9 @@ test('/crews says what happened when the crew service is unreachable', async ({ 
 	await page.goto(`/crews/${tag}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
 	const error = page.locator('#cw-error');
-	// The browser's own "Failed to fetch" tells a visitor nothing.
-	await expect(error).toContainText('could not be reached');
+	// The browser's own "Failed to fetch" tells a visitor nothing. The 60s budget
+	// is the cold dev transform again, not the error being slow.
+	await expect(error).toContainText('could not be reached', { timeout: 60_000 });
 	await expect(error).not.toContainText('Failed to fetch');
 	await expect(error.locator('#cw-retry')).toBeVisible();
 	// And the loading skeleton is gone: it promises something that is not coming.
