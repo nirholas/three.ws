@@ -29,7 +29,8 @@
 // rail — USDC SPL TransferChecked, partially signed by the platform payer and
 // co-signed by the peer's facilitator fee payer — with EVM EIP-3009 as fallback.
 
-import { authenticateBearer, extractBearer, getSessionUser, assertBearerMaySpend } from '../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, rateLimited, readJson, respondError, serverError, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';

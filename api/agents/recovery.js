@@ -14,7 +14,8 @@
 //   POST   /recovery/requests/:rid/complete       finalize a ready recovery → transfer ownership
 //   POST   /recovery/inheritance/arm              beneficiary/guardian: arm the dead-man once eligible
 
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';

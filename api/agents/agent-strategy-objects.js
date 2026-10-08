@@ -12,7 +12,8 @@
 //   POST   /api/agents/:id/strategies/sweep      evaluate this agent's equips now (owner "Run now")
 //   POST   /api/agents/:id/strategies/close      force-close ONE open position now { position_id } (owner "Sell now")
 
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';

@@ -19,7 +19,8 @@
 // SNIPER_MODE=simulate or { simulate: true } runs the full real-quote path but
 // skips the broadcast (paper mode) — an ops/test toggle, never the default.
 
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';

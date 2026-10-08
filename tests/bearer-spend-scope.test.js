@@ -8,14 +8,12 @@
 // autopilot, or launch coins. assertBearerMaySpend is the single gate; this suite
 // pins its semantics and that every spending route still calls it.
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-vi.mock('../api/_lib/db.js', () => ({ sql: vi.fn(async () => []) }));
-
-const { assertBearerMaySpend, SPEND_SCOPE } = await import('../api/_lib/auth.js');
+import { assertBearerMaySpend, SPEND_SCOPE } from '../api/_lib/spend-scope.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -93,7 +91,7 @@ describe('every bearer-accepting spend route calls the gate', () => {
 	for (const rel of ROUTES) {
 		it(rel, () => {
 			const src = readFileSync(path.join(ROOT, rel), 'utf8');
-			expect(src).toMatch(/import \{[^}]*\bassertBearerMaySpend\b[^}]*\} from '[./]*_lib\/auth\.js'/);
+			expect(src).toMatch(/import \{ assertBearerMaySpend \} from '[./]*_lib\/spend-scope\.js'/);
 			expect(src.match(/assertBearerMaySpend\(/g)?.length || 0).toBeGreaterThanOrEqual(1);
 		});
 	}

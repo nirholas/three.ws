@@ -5,7 +5,8 @@
 
 import { z } from 'zod';
 import { sql } from '../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { parse, isValidSolanaAddress, isValidEvmAddress, isUuid } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';

@@ -23,7 +23,8 @@
 //   6. Finalize the hire + custody ledger so both wallets show the income/outlay and
 //      the marketplace's completion stats update from real data only.
 
-import { authenticateBearer, extractBearer, getSessionUser, assertBearerMaySpend } from '../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';

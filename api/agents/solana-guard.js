@@ -11,7 +11,8 @@
 // PUT   → update config (sensitivity | enabled | safe_address | clear_learned)   [CSRF]
 // POST  → adjudicate { event_id, action: approve|deny|mark_swept } | { action: unfreeze }  [CSRF]
 
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';

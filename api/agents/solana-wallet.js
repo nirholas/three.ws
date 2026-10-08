@@ -1,7 +1,8 @@
 // /api/agents/:id/solana — wallet, activity, and airdrop handlers.
 // Dispatched from api/agents/[id].js with the `action` sub-path.
 
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { confirmOrThrow, pollConfirmation } from '../_lib/solana/confirm.js';

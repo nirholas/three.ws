@@ -9,7 +9,8 @@
 // without a scope the owner granted here. $THREE is the only coin referenced.
 
 import { sql } from '../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';

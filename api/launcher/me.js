@@ -28,7 +28,8 @@
  */
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { rankNarratives } from '../_lib/launcher-trends.js';

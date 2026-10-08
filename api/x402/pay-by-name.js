@@ -35,7 +35,8 @@ import {
 	createAssociatedTokenAccountIdempotentInstruction,
 } from '@solana/spl-token';
 
-import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';

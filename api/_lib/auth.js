@@ -407,23 +407,6 @@ export function requestUserHasScope(user, required) {
 	return hasScope(user.scope, required);
 }
 
-// The scope a bearer principal must hold to move, commit, or redirect funds.
-export const SPEND_SCOPE = 'wallet:write';
-
-// Gate for a route that spends from a custodial wallet (withdraw, trade, pay,
-// hire, launch, arm an autonomous spender) or changes where its money goes. The
-// MCP tools behind these actions already demand `wallet:write`, but the REST
-// routes accepted ANY bearer, so an `inference`-only key or an OAuth client the
-// user approved for "Read your avatars" could withdraw an agent wallet to its
-// own address. A cookie session never reaches here (pass the bearer only).
-// Safe methods pass so a `wallet:read` key still reads balances and history.
-export function assertBearerMaySpend(bearer, req) {
-	if (!bearer) return bearer;
-	const verb = String(req?.method || 'POST').toUpperCase();
-	if (verb === 'GET' || verb === 'HEAD' || verb === 'OPTIONS') return bearer;
-	if (hasScope(bearer.scope, SPEND_SCOPE)) return bearer;
-	throw Object.assign(
-		new Error(`this credential lacks the ${SPEND_SCOPE} scope required to move funds`),
-		{ status: 403, code: 'insufficient_scope', expose: true },
-	);
-}
+// Re-exported for callers that import every auth helper from here; the gate
+// itself lives in spend-scope.js so a mocked auth.js cannot remove it.
+export { SPEND_SCOPE, assertBearerMaySpend } from './spend-scope.js';

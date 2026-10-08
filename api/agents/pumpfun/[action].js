@@ -12,7 +12,8 @@
  * One bundle so Vercel doesn't re-bundle @solana/web3.js + @pump-fun/* per file.
  */
 
-import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin, assertBearerMaySpend } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
+import { assertBearerMaySpend } from '../../_lib/spend-scope.js';
 import {
 	cors,
 	json,

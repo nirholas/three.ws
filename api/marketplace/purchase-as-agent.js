@@ -30,7 +30,8 @@ import {
 } from '@solana/spl-token';
 
 import { sql } from '../_lib/db.js';
-import { authenticateBearer, extractBearer, getSessionUser, assertBearerMaySpend } from '../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, readJson, wrap, rateLimited, respondError } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
