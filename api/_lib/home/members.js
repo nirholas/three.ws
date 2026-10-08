@@ -526,18 +526,29 @@ export async function acceptInvite({ token, userId }) {
 		return { ok: true, alreadyMember: true, membership: existing, homeLabel: inspected.homeLabel };
 	}
 
-	const [claimed, member] = await sql.transaction([
-		sql`UPDATE home_invites SET accepted_at = now(), accepted_by = ${userId} WHERE id = ${invite.id} AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > now() RETURNING id`,
-		sql`
+	// One statement, and the membership row is selected FROM the claim. A
+	// two-statement batch ran the INSERT even when the UPDATE matched nothing,
+	// so N concurrent redemptions of one link (or a just-revoked one) all became
+	// members, past the seat cap, while being told the invite was spent.
+	const [row] = await sql`
+		WITH claimed AS (
+			UPDATE home_invites SET accepted_at = now(), accepted_by = ${userId}
+			WHERE id = ${invite.id} AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > now()
+			RETURNING id
+		), added AS (
 			INSERT INTO home_members (home_id, user_id, role, entity_scope, invited_by)
-			VALUES (${invite.homeId}, ${userId}, ${invite.role}, ${JSON.stringify(invite.scope)}::jsonb, ${invite.invitedBy})
+			SELECT ${invite.homeId}::uuid, ${userId}::uuid, ${invite.role}::text, ${JSON.stringify(invite.scope)}::jsonb, ${invite.invitedBy}::uuid
+			FROM claimed
 			ON CONFLICT (home_id, user_id) DO NOTHING
 			RETURNING home_id, user_id, role, entity_scope, invited_by, created_at, updated_at
-		`,
-	]);
+		)
+		SELECT (SELECT id FROM claimed) AS claimed_id, added.*
+		FROM (SELECT 1) AS one LEFT JOIN added ON true
+	`;
 
-	if (!claimed?.[0]) return { ok: false, code: 'invite_spent', reason: 'this invitation has already been used' };
-	return { ok: true, alreadyMember: false, membership: shapeMembership(member?.[0]), homeLabel: inspected.homeLabel };
+	if (!row?.claimed_id) return { ok: false, code: 'invite_spent', reason: 'this invitation has already been used' };
+	const { claimed_id: _claimed, ...member } = row;
+	return { ok: true, alreadyMember: false, membership: shapeMembership(member.home_id ? member : null), homeLabel: inspected.homeLabel };
 }
 
 /**

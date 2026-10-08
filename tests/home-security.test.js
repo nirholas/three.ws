@@ -386,6 +386,36 @@ describe('home security 3: only a session with CSRF can redeem a confirmation', 
 		expect(writes).toBeGreaterThan(-1);
 		expect(asked, 'the session check must run before any grant is written').toBeLessThan(writes);
 	});
+
+	it('an invite admits a member only through the row its own claim matched', () => {
+		// A batch of UPDATE-then-INSERT runs the INSERT even when the UPDATE
+		// matched nothing, so concurrent redemptions of one link all got in.
+		const src = stripComments(read(join(REPO, 'api', '_lib', 'home', 'members.js')));
+		const body = src.slice(src.indexOf('export async function acceptInvite'));
+		const fn = body.slice(0, body.indexOf('\n}\n'));
+		expect(fn).toMatch(/WITH claimed AS \(\s*UPDATE home_invites/);
+		expect(fn).toMatch(/INSERT INTO home_members[\s\S]*FROM claimed/);
+		expect(fn).not.toMatch(/sql\.transaction\(/);
+	});
+
+	it('scoped members read only in-scope rows of the action log, redacted', () => {
+		const code = stripComments(read(join(REPO, 'api', 'home', '[id]', 'log.js')));
+		expect(code).toMatch(/scoped\s*\?\s*page\.filter/);
+		expect(code).toMatch(/confirmed_by:\s*null,\s*detail:\s*null/);
+	});
+
+	it('account-level home routes check the home scope for a bearer', () => {
+		for (const name of ['index.js', 'pair.js', 'plan.js']) {
+			const code = stripComments(read(join(REPO, 'api', 'home', name)));
+			expect(code, `api/home/${name} must gate a bearer on its home scope`).toMatch(/homeScopeRefusal\s*\(/);
+		}
+	});
+
+	it('the household invite link is built from the configured origin, never a request header', () => {
+		const code = stripComments(read(join(REPO, 'api', 'home', '[id]', 'members.js')));
+		expect(code).not.toMatch(/x-forwarded-host/);
+		expect(code).toMatch(/env\.APP_ORIGIN\}\/smart-home\/join/);
+	});
 });
 
 // ---------------------------------------------------------------------------
