@@ -33,6 +33,8 @@ import {
 import { expressionForText, expressionFor } from '../../src/embodiment/emotion.js';
 import { embodimentArtifact, buildEmbedUrl } from '../_lib/embodiment-artifact.js';
 import { PERSONA_COMPONENT_URI } from './component.js';
+import { assetLinks, assetLinksText } from './asset-links.js';
+import { originFromReq } from './gpt-forge-client.js';
 
 const MAX_GLB_BYTES = 64 * 1024 * 1024;
 const GLB_FETCH_TIMEOUT_MS = 30_000;
@@ -91,6 +93,19 @@ async function guardWrite(req) {
 	return rl.success;
 }
 
+// The persona's body as the four agent-first links (asset-links.js): a persona
+// embeds as <agent-3d>, the element that animates and speaks.
+function personaLinks(persona, req) {
+	return assetLinks({
+		base: originFromReq(req),
+		glbUrl: persona.glb_url,
+		kind: 'persona',
+		id: persona.persona_id,
+		title: persona.name,
+		thumb: persona.thumbnail_url,
+	});
+}
+
 // ── handlers ──────────────────────────────────────────────────────────────────
 
 async function handleCreatePersona(args, _auth, req) {
@@ -124,6 +139,7 @@ async function handleCreatePersona(args, _auth, req) {
 		return toolError('Could not save this persona right now. Please try again.');
 	}
 	const persona = personaPublicView(record);
+	const links = personaLinks(persona, req);
 
 	return {
 		content: [
@@ -132,6 +148,7 @@ async function handleCreatePersona(args, _auth, req) {
 				text:
 					`Saved "${persona.name}" as a living persona.\n` +
 					`Persona ID: ${persona.persona_id}\n` +
+					`${assetLinksText(links)}\n` +
 					(persona.look?.rigged
 						? 'Rig: humanoid, full body animation + lip-sync.\n'
 						: 'Rig: static/non-humanoid, falls back to a gentle idle gracefully.\n') +
@@ -140,16 +157,17 @@ async function handleCreatePersona(args, _auth, req) {
 			},
 			embodimentArtifact({ persona, state: 'idle' }),
 		],
-		structuredContent: { ...persona, status: 'created', embed_url: buildEmbedUrl({ persona, state: 'idle' }) },
+		structuredContent: { ...persona, ...links, status: 'created', embed_url: buildEmbedUrl({ persona, state: 'idle' }) },
 	};
 }
 
-async function handleGetPersona(args) {
+async function handleGetPersona(args, _auth, req) {
 	const id = String(args.persona_id || '').trim();
 	if (!isPersonaId(id)) return toolError('That is not a valid persona id.');
 	const record = await getPersona(id);
 	if (!record) return toolError('No persona found for that id. Create one with create_agent_persona.');
 	const persona = personaPublicView(record);
+	const links = personaLinks(persona, req);
 	return {
 		content: [
 			{
@@ -157,12 +175,13 @@ async function handleGetPersona(args) {
 				text:
 					`Welcome back, ${persona.name}.\n` +
 					`Persona ID: ${persona.persona_id}\n` +
+					`${assetLinksText(links)}\n` +
 					`Turns spoken so far: ${persona.turn_count}.\n` +
 					'Show the attached view to see the body; call persona_say to make it speak.',
 			},
 			embodimentArtifact({ persona, state: 'idle' }),
 		],
-		structuredContent: { ...persona, status: 'loaded', embed_url: buildEmbedUrl({ persona, state: 'idle' }) },
+		structuredContent: { ...persona, ...links, status: 'loaded', embed_url: buildEmbedUrl({ persona, state: 'idle' }) },
 	};
 }
 
@@ -181,12 +200,14 @@ async function handlePersonaSay(args, _auth, req) {
 		: expressionForText(text);
 	const updated = await touchPersona(id).catch(() => null);
 	const persona = personaPublicView(updated || record);
+	const links = personaLinks(persona, req);
 
 	return {
 		content: [
 			{
 				type: 'text',
 				text:
+					`${assetLinksText(links)}\n` +
 					`${persona.name} says it with a ${expr.emotion} expression` +
 					(expr.gesture ? ` and a ${expr.gesture} gesture` : '') +
 					'. Show the attached view: the body lip-syncs the reply and emotes.',
@@ -204,6 +225,7 @@ async function handlePersonaSay(args, _auth, req) {
 			persona_id: persona.persona_id,
 			name: persona.name,
 			glb_url: persona.glb_url,
+			...links,
 			text,
 			emotion: expr.emotion,
 			intensity: expr.intensity,

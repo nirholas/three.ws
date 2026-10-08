@@ -35,6 +35,8 @@ const BASE_INSTRUCTIONS = [
 	'forge_free(prompt) generates a model from text; text_to_avatar and mesh_forge generate an avatar or art-directed',
 	'mesh from text or a reference image; rig_mesh(glb_url) makes a static model animation-ready; forge_avatar does',
 	'generate + rig in one step. Each result includes a glbUrl and a viewerUrl and renders inline in a 3D viewer widget.',
+	'Every model result also carries four plain links, stated in its first text lines:',
+	'viewer_url (opens in any browser), glb_url (the file), poster_png_url (a rendered PNG) and embed_html (paste-ready).',
 	'refine_model(glb_url, instruction) iterates on a generated model in plain language ("make it metallic") and keeps',
 	'a version lineage you can branch or revert. If a result comes back with status "pending", the model is still',
 	'rendering: call check_job(job_id) after the suggested wait to collect it.',
@@ -60,7 +62,8 @@ export const CHATGPT_CALL_BUDGET_MS = 40_000;
 // collecting it, then hand the user links, since nothing renders inline.
 const GROK_INSTRUCTIONS = [
 	'Nothing renders inline in Grok, so always give the user the viewerUrl (an interactive 3D viewer that opens in any',
-	'browser) and the glbUrl (the downloadable model). A pending result is normal: wait the suggested seconds, then call',
+	'browser) and the glbUrl (the downloadable model); poster_png_url is a picture of it to attach or show, and',
+	'embed_html puts it on a web page. A pending result is normal: wait the suggested seconds, then call',
 	'check_job(job_id) again until it is done, and keep going without asking the user; a Grok Bot task should finish',
 	'with the finished model, not the pending handle. To give yourself a body, forge_avatar a character, then',
 	'create_agent_persona(glb_url, name) and share its embed_url; persona_say makes that body speak your reply and',

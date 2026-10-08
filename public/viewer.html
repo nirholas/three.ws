@@ -195,7 +195,8 @@
     <div id="loading" class="overlay">
       <div class="spinner" aria-hidden="true"></div>
       <h2 class="h"><span data-i18n="viewer.loading_model">Loading model</span><span id="load-pct"></span></h2>
-      <div class="muted" data-i18n="viewer.fetching_and_rendering_the_glb">Fetching and rendering the GLB. Large or high-detail models take a few seconds.</div>
+      <div id="load-note" class="muted" data-i18n="viewer.fetching_and_rendering_the_glb">Fetching and rendering the GLB. Large or high-detail models take a few seconds.</div>
+      <div id="job-status" class="muted hidden" role="status" aria-live="polite"></div>
     </div>
 
     <div id="empty" class="overlay hidden">
@@ -320,6 +321,14 @@
     syncDocTitle();
   }
 
+  // ?job=<id>: a generation that is still rendering. A studio MCP tool hands this
+  // link to agents that render no widget (Grok Bot and other browser agents), so
+  // opening it has to finish the wait by itself: poll the public job endpoint and
+  // swap to the ordinary ?src= view the moment the GLB lands, which also leaves a
+  // shareable model link in the address bar.
+  var job = params.get('job') || '';
+  if (!src && job) { watchJob(job); return; }
+
   if (!src) { mv.classList.add('hidden'); foot.classList.add('hidden'); show(empty); return; }
   if (!isHttps(src)) {
     // Nothing to download either: never leave a dead Download button behind.
@@ -327,6 +336,72 @@
     fail('That model link is not a valid https URL. Open a viewer link whose ?src= points at an https .glb file.');
     foot.classList.remove('hidden');
     return;
+  }
+
+  function watchJob(jobId) {
+    var note = document.getElementById('load-note');
+    var jobStatus = document.getElementById('job-status');
+    var started = Date.now();
+    var misses = 0;
+    // Generous: a cold GPU worker plus a high-tier render runs well past ten
+    // minutes on a bad day, and giving up early strands a model that will land.
+    var MAX_WAIT_MS = 30 * 60 * 1000;
+    var POLL_MS = 4000;
+    if (note) note.classList.add('hidden');
+    jobStatus.classList.remove('hidden');
+    jobStatus.textContent = 'Checking on your model.';
+    show(loading);
+
+    function jobFail(msg) {
+      // No GLB exists, so offer the next step instead of a dead Download button.
+      downloadEl.classList.add('hidden');
+      foot.classList.remove('hidden');
+      fail(msg);
+    }
+    function next(ms) { setTimeout(tick, ms); }
+    function tick() {
+      if (Date.now() - started > MAX_WAIT_MS) {
+        jobFail('This model is taking far longer than usual. Open this link again later, or make a new one at three.ws/forge.');
+        return;
+      }
+      fetch('/api/gpt-forge?job=' + encodeURIComponent(jobId), { headers: { accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, ok: r.ok, d: d || {} }; });
+        })
+        .then(function (res) {
+          var d = res.d;
+          if (res.status === 400 || res.status === 404) {
+            jobFail('That job link is not recognized. It may be mistyped or expired. Make a new model at three.ws/forge.');
+            return;
+          }
+          if (res.status === 429) {
+            jobStatus.textContent = 'Still rendering. Checking again shortly.';
+            next(Math.max(5, Number(d.retry_after) || 10) * 1000);
+            return;
+          }
+          if (!res.ok) throw new Error('status ' + res.status);
+          misses = 0;
+          if (d.status === 'done' && isHttps(d.glb_url)) {
+            var name = title || (typeof d.prompt === 'string' ? d.prompt.trim().slice(0, 80) : '');
+            location.replace('/viewer?src=' + encodeURIComponent(d.glb_url) + (name ? '&title=' + encodeURIComponent(name) : ''));
+            return;
+          }
+          if (d.status === 'failed') {
+            jobFail(d.error ? 'Generation failed: ' + d.error : 'Generation failed. Try again at three.ws/forge.');
+            return;
+          }
+          var eta = Number(d.eta_remaining_seconds);
+          jobStatus.textContent = (eta > 0 ? 'Still rendering, about ' + Math.round(eta) + 's to go.' : 'Still rendering.')
+            + ' This page opens the model the moment it is ready.';
+          next(POLL_MS);
+        })
+        .catch(function () {
+          misses++;
+          jobStatus.textContent = 'Lost the connection for a moment. Retrying.';
+          next(Math.min(30000, POLL_MS * Math.pow(2, misses)));
+        });
+    }
+    tick();
   }
 
   downloadEl.href = src;

@@ -278,6 +278,16 @@ Each result carries a stable `id` of the form `<kind>:<name>`, plus `title`, `ta
 also carries `facets` (kind counts and the most common categories and tags in the result
 set) to narrow the next call, and `next_offset` for paging.
 
+Every prop and character also carries four plain, absolute links an agent can use without
+rendering anything: `viewer_url` (the interactive viewer page), `glb_url` (the model file),
+`poster_png_url` (a 1024 px PNG render from `/api/render/glb`, or the published thumbnail for
+a GLB over the renderer's 10 MB ceiling) and `embed_html` (`<model-viewer>` for a prop,
+`<agent-3d>` for a character, script tag pinned with its integrity hash). The text content
+states the same four under each item's line. Motion clips are animation JSON and carry
+none. `get_catalog_item` and `get_item_source` return the four at the top level of
+`structuredContent` and in the first lines of their text. The shape is shared with the
+free studio's generation and persona tools ([docs/mcp-studio.md](./mcp-studio.md#links-for-agents-that-render-no-widget)).
+
 ```jsonc
 // search_catalog { "q": "wooden chair", "kind": "object", "limit": 2 }
 {
@@ -295,7 +305,11 @@ set) to narrow the next call, and `next_offset` for paging.
       "format": "glb",
       "url": "https://.../objects/polyhaven/glb/painted_wooden_chair_01.glb",
       "thumb": "https://.../objects/polyhaven/thumbs/painted_wooden_chair_01.png",
-      "bytes": 1483264
+      "bytes": 1483264,
+      "viewer_url": "https://three.ws/viewer?src=https%3A%2F%2F...%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001",
+      "glb_url": "https://.../objects/polyhaven/glb/painted_wooden_chair_01.glb",
+      "poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2F...%2Fpainted_wooden_chair_01.glb&width=1024&height=1024",
+      "embed_html": "<script type=\"module\" src=\"https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js\" ...></script>\n\n<model-viewer src=\"...\" ...></model-viewer>"
     }
   ],
   "facets": { "kinds": { "object": 10 }, "categories": [{ "value": "furniture", "count": 8 }] },

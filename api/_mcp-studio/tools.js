@@ -18,8 +18,11 @@
 // stripped, per OpenAI's data-minimization policy. One deliberate exception:
 // a job that outlives the inline wait budget returns its PUBLIC poll handle
 // (the same job token the auth-free /api/forge REST lane hands any anonymous
-// caller) — without it the still-running work would be unreachable. Each tool links the
-// Apps SDK widget via _meta["openai/outputTemplate"] and returns structuredContent
+// caller); without it the still-running work would be unreachable.
+// Every model-bearing result also carries the four agent-first links from
+// ./asset-links.js (viewer_url, glb_url, poster_png_url, embed_html), stated in
+// the first lines of its text too, for clients that render no widget.
+// Each tool links the Apps SDK widget via _meta["openai/outputTemplate"] and returns structuredContent
 // the widget renders. No coin, token, wallet, or payment surface anywhere.
 
 import Ajv from 'ajv';
@@ -45,6 +48,7 @@ import {
 	directPrompt,
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
+import { assetLinks, assetLinksText } from './asset-links.js';
 import { renderTurntable, describeGeometry, fetchGeometryStats } from '../_lib/3d-vision.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
 // The same pure cold-start core the browser surfaces render from
@@ -97,12 +101,16 @@ function ok({ glbUrl, base, kind, prompt, rigged, referenceImageUrl }) {
 		typeof referenceImageUrl === 'string' && /^https:\/\//.test(referenceImageUrl)
 			? firstPartyGlbUrl(referenceImageUrl, base)
 			: '';
+	// The four plain links a widget-less agent needs (asset-links.js). Additive:
+	// the widget keeps reading the camelCase fields below.
+	const links = assetLinks({ base, glbUrl, kind, title: prompt, rigged });
 	const structured = {
 		kind,
 		glbUrl,
 		viewerUrl: vUrl,
 		arUrl: aUrl,
 		format: 'glb',
+		...links,
 		...(prompt ? { prompt } : {}),
 		...(rigged ? { rigged: true } : {}),
 		...(iUrl ? { irlUrl: iUrl } : {}),
@@ -121,18 +129,18 @@ function ok({ glbUrl, base, kind, prompt, rigged, referenceImageUrl }) {
 	};
 	const label = rigged ? 'rigged 3D model' : '3D model';
 	const refLine = refImg ? `\nConcept image it was sculpted from: ${refImg}` : '';
+	// Links lead, so a text-only client reads them before any narration.
 	return {
 		content: [
 			{
 				type: 'text',
-				text: iUrl
-					? `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
-						`Bring it to life in your real room (it moves and talks through the camera, open on a phone): ${iUrl}\n` +
-						`Place a static copy in AR: ${aUrl}\nDownload: ${glbUrl}` +
-						refLine
-					: `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
-						`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}` +
-						refLine,
+				text:
+					`Generated a ${label} (GLB).\n${assetLinksText(links)}\n` +
+					(iUrl
+						? `Bring it to life in your real room (it moves and talks through the camera, open on a phone): ${iUrl}\n` +
+							`Place a static copy in AR: ${aUrl}`
+						: `Place it in your room (AR, open on a phone): ${aUrl}`) +
+					refLine,
 			},
 		],
 		structuredContent: structured,
@@ -183,6 +191,10 @@ function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage =
 	// The ChatGPT pipeline's own endpoint, not /api/forge: the whole point of
 	// the clone is that this surface can evolve independently.
 	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
+	// No GLB exists yet, so there is no file, poster or embed to hand over. What a
+	// widget-less agent CAN use is a page that finishes the wait itself: the viewer
+	// polls this job and opens the model the moment it lands (public/viewer.html).
+	const watchUrl = `${base}/viewer?job=${encodeURIComponent(jobId)}`;
 	const eta = Number.isFinite(Number(etaRemainingSeconds)) && Number(etaRemainingSeconds) > 0
 		? Math.round(Number(etaRemainingSeconds))
 		: null;
@@ -216,13 +228,15 @@ function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage =
 		`${head}. ` +
 		`It keeps running: call the check_job tool with this job_id${retryIn ? ` in ~${retryIn}s` : ' shortly'} to collect it, ` +
 		`or poll ${pollUrl} until status is "done", then use its glb_url ` +
-		`(view at ${base}/viewer?src=<glb_url>).`;
+		`(view at ${base}/viewer?src=<glb_url>).\n` +
+		`Viewer (opens the model by itself the moment it is ready): ${watchUrl}`;
 	return {
 		content: [{ type: 'text', text: message }],
 		structuredContent: {
 			status: 'pending',
 			jobId,
 			pollUrl,
+			viewer_url: watchUrl,
 			// Which half of the pipeline is still running. A client that collects
 			// the job needs this to know whether the GLB it gets back is a bare
 			// mesh (rig it) or the finished rig (use it). Identifier-free, so it
@@ -255,12 +269,14 @@ function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
 	glbUrl = firstPartyGlbUrl(glbUrl, base);
 	const vUrl = viewerUrl(base, glbUrl);
 	const aUrl = arLaunchUrl(base, glbUrl, instruction || prompt);
+	const links = assetLinks({ base, glbUrl, kind: 'refined model', title: instruction || prompt });
 	const structured = {
 		kind: 'refined model',
 		glbUrl,
 		viewerUrl: vUrl,
 		arUrl: aUrl,
 		format: 'glb',
+		...links,
 		...(prompt ? { prompt } : {}),
 		...(instruction ? { instruction } : {}),
 		// Version chips swap GLBs inside the same sandboxed iframe, so every
@@ -287,8 +303,8 @@ function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
 			{
 				type: 'text',
 				text:
-					`Refined the model (v${versionNo}: "${instruction}"). View it: ${structured.viewerUrl}\n` +
-					`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}`,
+					`Refined the model (v${versionNo}: "${instruction}").\n${assetLinksText(links)}\n` +
+					`Place it in your room (AR, open on a phone): ${aUrl}`,
 			},
 		],
 		structuredContent: structured,
@@ -841,6 +857,7 @@ async function handleLookAtModel(args, _auth, req) {
 	const stats = await fetchGeometryStats(base, glbUrl);
 	const notes = describeGeometry(stats);
 	const shown = turntable.frames.map((f) => f.view).join(', ');
+	const links = assetLinks({ base, glbUrl, kind: 'model' });
 	const missing = turntable.failed.length ? ` Could not render: ${turntable.failed.map((f) => f.view).join(', ')}.` : '';
 
 	// The text block frames what the model is about to look at, then every frame
@@ -851,6 +868,7 @@ async function handleLookAtModel(args, _auth, req) {
 			type: 'text',
 			text:
 				`Rendered this model from ${turntable.frames.length} angle(s): ${shown}.${missing}\n` +
+				`${assetLinksText(links)}\n` +
 				(notes.length ? `Geometry: ${notes.join(' ')}\n` : '') +
 				'Look at the frames below and judge the model: is the subject complete and recognisable, ' +
 				'is the far side finished, is anything melted, fused, or missing? If it needs work, generate ' +
@@ -871,7 +889,7 @@ async function handleLookAtModel(args, _auth, req) {
 			views: turntable.frames.map((f) => ({ view: f.view, theta: f.theta, phi: f.phi })),
 			...(turntable.failed.length ? { missing_views: turntable.failed } : {}),
 			...(stats ? { stats, notes } : {}),
-			viewer_url: viewerUrl(base, glbUrl),
+			...links,
 			ar_url: arLaunchUrl(base, glbUrl),
 		},
 	};

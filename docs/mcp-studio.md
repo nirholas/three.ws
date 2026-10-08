@@ -188,6 +188,58 @@ Rigged avatars additionally carry `irlUrl`, the living-agent handoff into
 Every result also includes a `spatial` field, the open Spatial MCP artifact
 (`specs/SPATIAL_MCP.md`) so any Spatial-MCP renderer can display the model.
 
+### Links for agents that render no widget
+
+ChatGPT and Claude draw the viewer widget from the camelCase fields above. An
+agent with a browser and a file system instead (Grok Bot, the xAI Responses API,
+a scripted MCP client) sees only the JSON and the text, so every result that
+carries a model also carries four plain, absolute links under fixed snake_case
+names:
+
+| Field | What it is | Use it to |
+|---|---|---|
+| `viewer_url` | `https://three.ws/viewer?src=<glb>&title=<title>`, the interactive viewer | open the model in any browser, or hand the user a link |
+| `glb_url` | the model file itself | download it, re-host it, feed it to `rig_mesh` or `look_at_model` |
+| `poster_png_url` | `https://three.ws/api/render/glb?glbUrl=<glb>&width=1024&height=1024`, a rendered 1024 px PNG (CDN-cached for a day) | attach a picture to a reply, a card or a markdown image |
+| `embed_html` | the paste-ready snippet from the [embedding guide](./embedding.md): `<agent-3d>` for an avatar, rigged model or persona, `<model-viewer>` for a prop, each with its script tag pinned to a version and integrity hash | put the model on a web page |
+
+The same four lines open the text content, so a client that ignores
+`structuredContent` reads them first:
+
+```text
+Generated a 3D model (GLB).
+Viewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fcreations%2F…%2Fmodel.glb&title=a%20red%20ceramic%20teapot
+GLB: https://three.ws/cdn/creations/…/model.glb
+Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fcreations%2F…%2Fmodel.glb&width=1024&height=1024
+Embed HTML: <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-…" crossorigin="anonymous" ></script> <model-viewer src="https://three.ws/cdn/creations/…/model.glb" alt="a red ceramic teapot" camera-controls auto-rotate ar shadow-intensity="1" style="width:100%;height:420px" ></model-viewer>
+Place it in your room (AR, open on a phone): https://three.ws/api/ar?src=…
+```
+
+Which tools carry them:
+
+- **Generation**: `forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`,
+  `forge_avatar`, `refine_model`, and `check_job` once the job is done.
+- **Inspection**: `look_at_model`, for the model it rendered.
+- **Catalog**: `search_catalog` puts the four on every prop and character in
+  `items` (and under each item's line in the text); `get_catalog_item` and
+  `get_item_source` put them at the top level of `structuredContent`. Motion clips
+  are JSON animation data, not models, so they carry none.
+- **Personas**: `create_agent_persona`, `get_agent_persona` and `persona_say`,
+  for the persona's body (alongside its `embed_url`, the living-body embed).
+
+A catalog character larger than the renderer's 10 MB ceiling gets its published
+PNG thumbnail as `poster_png_url`, so the link always answers with an image. The
+links are built by [`api/_mcp-studio/asset-links.js`](../api/_mcp-studio/asset-links.js),
+and the embed markup is the same code `get_item_source` emits
+([`api/_lib/asset-snippets.js`](../api/_lib/asset-snippets.js)).
+
+A job that is still rendering has no GLB yet, so a pending result carries no
+`glb_url`, `poster_png_url` or `embed_html`. It carries a `viewer_url` of the form
+`https://three.ws/viewer?job=<jobId>` instead: that page polls the job itself,
+shows how long is left, and opens the model the moment it lands (the address bar
+then holds the ordinary `?src=` link). An agent can hand that link to its user
+straight away rather than waiting.
+
 ### Pending generations (`check_job`)
 
 A detailed model can take longer than a single tool call should block for. When
@@ -199,6 +251,7 @@ carrying a pollable handle, and the job keeps running server-side.
   "status": "pending",
   "jobId": "f1.eyJwIjoiZ2NwIiw…",
   "pollUrl": "https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiw…",
+  "viewer_url": "https://three.ws/viewer?job=f1.eyJwIjoiZ2NwIiw…",
   "stage": "mesh",
   "etaRemainingSeconds": 42,
   "prompt": "a friendly round robot mascot, glossy white plastic"
@@ -216,8 +269,9 @@ long to wait rather than retrying blind. Call `check_job` with that `jobId` to
 collect the result:
 
 - **done**: returns the ordinary success envelope (`glbUrl`, `viewerUrl`,
-  `arUrl`, …) and the model renders inline in the widget, exactly as if the
-  original call had finished in time.
+  `arUrl`, the four [agent links](#links-for-agents-that-render-no-widget), …)
+  and the model renders inline in the widget, exactly as if the original call had
+  finished in time.
 - **still rendering**: returns a fresh `pending` envelope with updated
   `etaRemainingSeconds`. Call again after the suggested wait.
 - **failed**: returns a clean, actionable error.

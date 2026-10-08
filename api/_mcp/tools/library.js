@@ -16,6 +16,7 @@
 import { KINDS, searchCatalog, getCatalogItem, relatedItems } from '../../_lib/asset-catalog.js';
 import { sourceFor, snippetFor, frameworksFor } from '../../_lib/asset-snippets.js';
 import { resolveOrigin } from '../origin.js';
+import { assetLinks, assetLinksText } from '../../_mcp-studio/asset-links.js';
 
 const READ_ANNOTATIONS = {
 	readOnlyHint: true,
@@ -37,6 +38,22 @@ function kindLabel(kind) {
 	return 'motion clip';
 }
 
+// The four agent-first links (viewer, GLB, rendered poster, embed snippet) for a
+// GLB item, so a client that renders nothing still leaves with links it can
+// open and paste. Motion clips are JSON, not models, and carry none.
+function agentLinks(item, origin) {
+	if (item.kind === 'animation' || !item.url) return null;
+	return assetLinks({
+		base: origin,
+		glbUrl: item.url,
+		kind: item.kind,
+		id: item.id,
+		title: item.title,
+		bytes: item.bytes,
+		thumb: item.thumb,
+	});
+}
+
 function itemLine(item) {
 	const bits = [`\`${item.id}\``, item.title];
 	if (item.license) bits.push(item.license);
@@ -47,7 +64,7 @@ function itemLine(item) {
 	return `- ${bits.join(' | ')}${tags ? ` | ${tags}` : ''}`;
 }
 
-function renderResults(result, query) {
+function renderResults(result, query, origin) {
 	if (!result.items.length) {
 		return [
 			`No catalog items match ${query ? `"${query}"` : 'that filter'}.`,
@@ -59,7 +76,10 @@ function renderResults(result, query) {
 			? `Nothing matches every word of "${query}". Showing the ${result.matched} items that match part of it, best first (${result.items.length} from offset ${result.offset}):`
 			: `${result.matched} match${result.matched === 1 ? '' : 'es'}${query ? ` for "${query}"` : ''} (showing ${result.items.length} from offset ${result.offset}):`,
 		'',
-		...result.items.map(itemLine),
+		...result.items.map((item) => {
+			const links = assetLinksText(agentLinks(item, origin), '  ');
+			return links ? `${itemLine(item)}\n${links}` : itemLine(item);
+		}),
 	];
 	const kinds = Object.entries(result.facets.kinds)
 		.map(([k, n]) => `${k} ${n}`)
@@ -72,12 +92,10 @@ function renderResults(result, query) {
 	return lines.join('\n');
 }
 
-function renderItem(item, related, links) {
-	const lines = [
-		`# ${item.title}`,
-		'',
-		`\`${item.id}\`: a ${kindLabel(item.kind)}${item.license ? `, ${item.license}` : ''}.`,
-	];
+function renderItem(item, related, links, agent) {
+	const lines = [`# ${item.title}`, ''];
+	if (agent) lines.push(assetLinksText(agent), '');
+	lines.push(`\`${item.id}\`: a ${kindLabel(item.kind)}${item.license ? `, ${item.license}` : ''}.`);
 	if (item.categories.length) lines.push(`Categories: ${item.categories.join(', ')}`);
 	if (item.tags.length) lines.push(`Tags: ${item.tags.join(', ')}`);
 	if (item.kind === 'animation') {
@@ -129,7 +147,8 @@ export const toolDefs = [
 				offset: { type: 'integer', minimum: 0, default: 0, description: 'Page offset. Use next_offset from the previous response.' },
 			},
 		},
-		async handler(args = {}) {
+		async handler(args = {}, _auth, req) {
+			const origin = resolveOrigin(req);
 			const result = await searchCatalog({
 				q: args.q,
 				kind: args.kind,
@@ -138,9 +157,12 @@ export const toolDefs = [
 				limit: args.limit || 12,
 				offset: args.offset || 0,
 			});
+			// New objects, never the cached catalog rows: the links depend on the
+			// request origin and must not leak into the next caller's result.
+			const items = result.items.map((item) => ({ ...item, ...agentLinks(item, origin) }));
 			return {
-				content: [{ type: 'text', text: renderResults(result, args.q) }],
-				structuredContent: { ok: true, ...result },
+				content: [{ type: 'text', text: renderResults(result, args.q, origin) }],
+				structuredContent: { ok: true, ...result, items },
 			};
 		},
 	},
@@ -172,10 +194,12 @@ export const toolDefs = [
 			const origin = resolveOrigin(req);
 			const { links } = sourceFor(item, origin);
 			const related = await relatedItems(item, 6);
+			const agent = agentLinks(item, origin);
 			return {
-				content: [{ type: 'text', text: renderItem(item, related, links) }],
+				content: [{ type: 'text', text: renderItem(item, related, links, agent) }],
 				structuredContent: {
 					ok: true,
+					...agent,
 					item,
 					links,
 					related,
@@ -213,6 +237,8 @@ export const toolDefs = [
 				});
 			}
 			const origin = resolveOrigin(req);
+			const agent = agentLinks(item, origin);
+			const agentText = agent ? `${assetLinksText(agent)}\n\n` : '';
 
 			if (args.framework === 'all') {
 				const { snippets, links, frameworks } = sourceFor(item, origin);
@@ -220,8 +246,8 @@ export const toolDefs = [
 					.map((f) => `## ${f}\n\n\`\`\`${snippets[f].language}\n${snippets[f].code}\n\`\`\``)
 					.join('\n\n');
 				return {
-					content: [{ type: 'text', text: `# ${item.title}\n\n${text}` }],
-					structuredContent: { ok: true, item, frameworks, snippets, links },
+					content: [{ type: 'text', text: `# ${item.title}\n\n${agentText}${text}` }],
+					structuredContent: { ok: true, ...agent, item, frameworks, snippets, links },
 				};
 			}
 
@@ -236,6 +262,7 @@ export const toolDefs = [
 			const text = [
 				`# ${item.title} (${snippet.framework})`,
 				'',
+				...(agent ? [assetLinksText(agent), ''] : []),
 				`\`\`\`${snippet.language}`,
 				snippet.code,
 				'```',
@@ -248,7 +275,7 @@ export const toolDefs = [
 			].join('\n');
 			return {
 				content: [{ type: 'text', text }],
-				structuredContent: { ok: true, item, ...snippet },
+				structuredContent: { ok: true, ...agent, item, ...snippet },
 			};
 		},
 	},
