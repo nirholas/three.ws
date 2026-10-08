@@ -32,6 +32,9 @@ import {
 	fetchLlamaChart,
 	fetchFallbackTickers,
 	fetchFallbackCoinDetail,
+	fetchDexTickers,
+	normalizeDexPair,
+	isDexLookupAddress,
 } from '../api/_lib/coin-fallbacks.js';
 import { isPaprikaBenched, resetPaprikaHealth } from '../api/_lib/coinpaprika.js';
 
@@ -500,5 +503,71 @@ describe('DefiLlama chart fallback', () => {
 		expect(await fetchLlamaChart('solana', 42)).toBeNull();
 		expect(await fetchLlamaChart('solana', 30)).toBeNull();
 		expect(await fetchLlamaChart('', 30)).toBeNull();
+	});
+});
+
+// The last ticker rung: a coin's DEX pairs by contract address. Fixtures use
+// $THREE and synthetic venue ids only.
+describe('DEX ticker rung', () => {
+	const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+	const pair = (over = {}) => ({
+		chainId: 'solana',
+		dexId: 'example-dex-v2',
+		url: 'https://dexscreener.com/solana/examplepair',
+		baseToken: { address: MINT, symbol: 'three' },
+		quoteToken: { address: 'So11111111111111111111111111111111111111112', symbol: 'sol' },
+		priceUsd: '0.0004',
+		volume: { h24: 1000 },
+		...over,
+	});
+
+	afterEach(() => vi.unstubAllGlobals());
+
+	it('accepts EVM and base58 contracts and rejects anything else', () => {
+		expect(isDexLookupAddress(MINT)).toBe(true);
+		expect(isDexLookupAddress('0x' + 'ab'.repeat(20))).toBe(true);
+		expect(isDexLookupAddress('0x123')).toBe(false);
+		expect(isDexLookupAddress('three-synthetic')).toBe(false);
+	});
+
+	it('maps a pair onto the Markets table row with venue and chain named', () => {
+		const row = normalizeDexPair(pair());
+		expect(row).toMatchObject({
+			exchange: { id: 'example-dex-v2', name: 'Example Dex V2 (Solana)', logo: null },
+			pair: 'THREE/SOL',
+			price_usd: 0.0004,
+			volume_usd: 1000,
+			trust: null,
+			trade_url: 'https://dexscreener.com/solana/examplepair',
+		});
+		expect(normalizeDexPair(pair({ url: 'javascript:alert(1)' })).trade_url).toBeNull();
+	});
+
+	it('keeps only pairs where the coin is the base token, by volume, and caches the answer', async () => {
+		const fetchMock = vi.fn(async () =>
+			new Response(
+				JSON.stringify({
+					pairs: [
+						pair({ dexId: 'small-dex', volume: { h24: 10 } }),
+						pair({ dexId: 'big-dex', volume: { h24: 5000 } }),
+						// The coin as the QUOTE side: its priceUsd is another token's.
+						pair({ dexId: 'quote-side', baseToken: { address: 'THREEsynthetic1111111111111111111111111111', symbol: 'x' } }),
+					],
+				}),
+				{ status: 200 },
+			),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		const rows = await fetchDexTickers([MINT, 'bad'], { page: 1 });
+		expect(rows.map((r) => r.exchange.id)).toEqual(['big-dex', 'small-dex']);
+		expect(String(fetchMock.mock.calls[0][0])).toContain(`/latest/dex/tokens/${MINT}`);
+		expect(await fetchDexTickers([MINT], { page: 2 })).toEqual([]);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('answers null with no addresses, and when nothing trades', async () => {
+		expect(await fetchDexTickers([], { page: 1 })).toBeNull();
+		vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ pairs: [] }), { status: 200 })));
+		expect(await fetchDexTickers(['0x' + 'cd'.repeat(20)], { page: 1 })).toBeNull();
 	});
 });

@@ -26,9 +26,18 @@ vi.mock('../../api/_lib/coingecko.js', () => ({
 }));
 
 const fetchFallbackTickers = vi.fn();
-vi.mock('../../api/_lib/coin-fallbacks.js', () => ({
-	fetchFallbackTickers: (...a) => fetchFallbackTickers(...a),
-}));
+const fetchDexTickers = vi.fn();
+vi.mock('../../api/_lib/coin-fallbacks.js', async (importActual) => {
+	const actual = await importActual();
+	return {
+		fetchFallbackTickers: (...a) => fetchFallbackTickers(...a),
+		fetchDexTickers: (...a) => fetchDexTickers(...a),
+		isDexLookupAddress: actual.isDexLookupAddress,
+		DEX_TICKER_MAX_ADDRESSES: actual.DEX_TICKER_MAX_ADDRESSES,
+	};
+});
+
+const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 const tickers = (await import('../../api/coin/tickers.js')).default;
 
@@ -61,6 +70,7 @@ describe('/api/coin/tickers page contract', () => {
 	beforeEach(() => {
 		geckoFetch.mockReset();
 		fetchFallbackTickers.mockReset();
+		fetchDexTickers.mockReset();
 		geckoFetch.mockResolvedValue({ tickers: [upstreamTicker] });
 	});
 
@@ -152,10 +162,38 @@ describe('/api/coin/tickers page contract', () => {
 		expect(fetchFallbackTickers).toHaveBeenCalledWith('bitcoin', { page: 3 });
 	});
 
-	it('502s when both sources are down', async () => {
+	it('502s when both sources are down and the caller named no contracts', async () => {
 		geckoFetch.mockRejectedValue(new Error('gateway timeout'));
 		fetchFallbackTickers.mockResolvedValue(null);
 		const { res, body } = await call('id=bitcoin&page=1');
+		expect(res.statusCode).toBe(502);
+		expect(body.error).toBe('upstream_error');
+		expect(fetchDexTickers).not.toHaveBeenCalled();
+	});
+
+	// Production 2026-10-08: coins CoinPaprika does not list answered 502 on
+	// every CoinGecko throttle. Their DEX pairs are the last real source.
+	it('falls back to the coin\'s DEX pairs when CoinGecko and CoinPaprika both miss', async () => {
+		const err = new Error('CoinGecko 429');
+		err.status = 429;
+		geckoFetch.mockRejectedValue(err);
+		fetchFallbackTickers.mockResolvedValue(null);
+		fetchDexTickers.mockResolvedValue([{ pair: 'THREE/SOL', price_usd: 0.0004 }]);
+		const { res, body } = await call(
+			`id=three-synthetic&page=1&contracts=${THREE_MINT},not-an-address,${'0x' + 'ab'.repeat(20)}`,
+		);
+		expect(res.statusCode).toBe(200);
+		expect(body.source).toBe('dexscreener');
+		expect(body.tickers).toHaveLength(1);
+		// Malformed entries are dropped, valid ones passed through in order.
+		expect(fetchDexTickers).toHaveBeenCalledWith([THREE_MINT, '0x' + 'ab'.repeat(20)], { page: 1 });
+	});
+
+	it('still 502s when the DEX rung finds nothing either', async () => {
+		geckoFetch.mockRejectedValue(new Error('gateway timeout'));
+		fetchFallbackTickers.mockResolvedValue(null);
+		fetchDexTickers.mockResolvedValue(null);
+		const { res, body } = await call(`id=three-synthetic&page=1&contracts=${THREE_MINT}`);
 		expect(res.statusCode).toBe(502);
 		expect(body.error).toBe('upstream_error');
 	});

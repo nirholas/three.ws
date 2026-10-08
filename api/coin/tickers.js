@@ -11,11 +11,23 @@
 // so the Markets table falls back to CoinPaprika's per-coin markets feed
 // (api/_lib/coin-fallbacks.js) rather than 502ing the whole section. A 404 is
 // an answer about a real coin id and never falls back.
+//
+// CoinPaprika does not list every coin, and those Markets tables still 502'd
+// whenever CoinGecko was throttled. The last rung is the coin's DEX pairs from
+// DexScreener, looked up by the contract addresses the caller passes in
+// `contracts` (comma-separated; the coin page has them from /api/coin/detail).
+// Without addresses, or when nothing trades, the 502 stands: an honest outage
+// beats an invented listing.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId } from '../_lib/coingecko.js';
-import { fetchFallbackTickers } from '../_lib/coin-fallbacks.js';
+import {
+	fetchFallbackTickers,
+	fetchDexTickers,
+	isDexLookupAddress,
+	DEX_TICKER_MAX_ADDRESSES,
+} from '../_lib/coin-fallbacks.js';
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -81,6 +93,14 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_page', 'page must be an integer between 1 and 10');
 	}
 
+	// Optional DEX-rung hint. Malformed entries are dropped rather than
+	// rejected: the hint only matters on the fallback path.
+	const contracts = (params.get('contracts') || '')
+		.split(',')
+		.map((v) => v.trim())
+		.filter(isDexLookupAddress)
+		.slice(0, DEX_TICKER_MAX_ADDRESSES);
+
 	const cacheHeaders = {
 		'cache-control': 'public, max-age=60, s-maxage=120, stale-while-revalidate=600',
 	};
@@ -99,6 +119,11 @@ export default wrap(async (req, res) => {
 		if (tickers) {
 			console.warn(`[coin/tickers] ${id}: coingecko failed (${err?.status || err?.name}); served from coinpaprika`);
 			return json(res, 200, { tickers, page, count: tickers.length, source: 'coinpaprika' }, cacheHeaders);
+		}
+		const dexTickers = contracts.length ? await fetchDexTickers(contracts, { page }) : null;
+		if (dexTickers) {
+			console.warn(`[coin/tickers] ${id}: coingecko failed (${err?.status || err?.name}); served from dexscreener`);
+			return json(res, 200, { tickers: dexTickers, page, count: dexTickers.length, source: 'dexscreener' }, cacheHeaders);
 		}
 		return error(res, 502, 'upstream_error', 'exchange listings are unavailable right now — retry shortly');
 	}

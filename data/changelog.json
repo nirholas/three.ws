@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Coin pages keep their Markets table when the listing sources are busy",
+			"summary": "When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/coins"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "3D Studio results now hand every agent plain links to the model",
 			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
 			"tags": [

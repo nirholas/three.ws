@@ -1014,8 +1014,12 @@ async function loadMarkets(coin) {
 	renderMarkets(coin);
 	try {
 		const next = marketsState.page + 1;
+		// The coin's contracts let the server fall back to its DEX pairs when
+		// both listing sources are down; omitted for coins with none.
+		const contracts = Object.values(coin.platforms || {}).filter(Boolean).slice(0, 8).join(',');
 		const { tickers, count, source } = await getJson(
-			`/api/coin/tickers?id=${encodeURIComponent(coin.id)}&page=${next}`,
+			`/api/coin/tickers?id=${encodeURIComponent(coin.id)}&page=${next}` +
+				(contracts ? `&contracts=${encodeURIComponent(contracts)}` : ''),
 		);
 		marketsState.page = next;
 		// Only the primary source carries spread/depth. Once any page arrives

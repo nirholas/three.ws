@@ -28,10 +28,18 @@ vi.mock('../../api/_lib/coingecko.js', () => ({
 
 const fetchFallbackCoinDetail = vi.fn();
 const fetchFallbackTickers = vi.fn();
-vi.mock('../../api/_lib/coin-fallbacks.js', () => ({
-	fetchFallbackCoinDetail: (...args) => fetchFallbackCoinDetail(...args),
-	fetchFallbackTickers: (...args) => fetchFallbackTickers(...args),
-}));
+vi.mock('../../api/_lib/coin-fallbacks.js', async (importActual) => {
+	const actual = await importActual();
+	return {
+		fetchFallbackCoinDetail: (...args) => fetchFallbackCoinDetail(...args),
+		fetchFallbackTickers: (...args) => fetchFallbackTickers(...args),
+		// The DEX rung only runs when the caller names contracts; none of these
+		// requests do, so the real helpers stay inert.
+		fetchDexTickers: actual.fetchDexTickers,
+		isDexLookupAddress: actual.isDexLookupAddress,
+		DEX_TICKER_MAX_ADDRESSES: actual.DEX_TICKER_MAX_ADDRESSES,
+	};
+});
 
 const detail = (await import('../../api/coin/detail.js')).default;
 const tickers = (await import('../../api/coin/tickers.js')).default;

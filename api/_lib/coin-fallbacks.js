@@ -499,6 +499,110 @@ export async function fetchFallbackTickers(cgId, { page = 1, perPage = 100 } = {
 	return rows.slice(start, start + perPage);
 }
 
+// ── DEX listings: the last ticker rung ──────────────────────────────────────
+// CoinPaprika does not list every coin CoinGecko does (young DEX-only tokens
+// above all), so with CoinGecko throttled those Markets tables answered 502.
+// Every such coin that has a contract still trades somewhere DexScreener
+// indexes, and its keyless token endpoint returns the coin's pairs across all
+// chains in one call. The caller supplies the contract addresses (the coin page
+// already holds them from /api/coin/detail): looking them up here would mean
+// asking CoinGecko, the very source that just failed.
+
+const DEXSCREENER_TOKENS = 'https://api.dexscreener.com/latest/dex/tokens';
+// DexScreener answers at most 30 addresses per call; a coin page carries 8.
+export const DEX_TICKER_MAX_ADDRESSES = 8;
+const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+const BASE58_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/** True for a contract address the DEX rung can look up (EVM or base58). */
+export function isDexLookupAddress(v) {
+	return typeof v === 'string' && (EVM_ADDRESS_RE.test(v) || BASE58_ADDRESS_RE.test(v));
+}
+
+// "pancakeswap-v3" -> "Pancakeswap V3": readable without a per-venue table.
+function titleCase(id) {
+	return String(id || '')
+		.split(/[-_\s]+/)
+		.filter(Boolean)
+		.map((w) => w[0].toUpperCase() + w.slice(1))
+		.join(' ');
+}
+
+/**
+ * One DexScreener pair -> one /api/coin/tickers row. DexScreener carries no
+ * order-book depth, spread or trust score, so those stay null exactly like the
+ * CoinPaprika rows, and the table hides those columns for this source.
+ */
+export function normalizeDexPair(p) {
+	const base = str(p?.baseToken?.symbol)?.toUpperCase() ?? null;
+	const target = str(p?.quoteToken?.symbol)?.toUpperCase() ?? null;
+	const dex = str(p?.dexId);
+	const chain = str(p?.chainId);
+	const url = str(p?.url);
+	return {
+		exchange: {
+			id: dex,
+			name: dex ? (chain ? `${titleCase(dex)} (${titleCase(chain)})` : titleCase(dex)) : null,
+			logo: null,
+		},
+		base,
+		target,
+		pair: base && target ? `${base}/${target}` : null,
+		price_usd: pos(p?.priceUsd),
+		volume_usd: num(p?.volume?.h24),
+		spread_pct: null,
+		depth_up_usd: null,
+		depth_down_usd: null,
+		trust: null,
+		stale: false,
+		trade_url: url && /^https?:\/\//i.test(url) ? url : null,
+		coin_id: null,
+		target_coin_id: null,
+		last_traded: null,
+	};
+}
+
+/**
+ * DEX pairs for a coin's contract addresses, in the /api/coin/tickers shape,
+ * by 24h USD volume. Only pairs where the coin is the BASE token are kept, so
+ * every row's price is this coin's price. DexScreener has no pagination: page 1
+ * is the whole answer and later pages are empty.
+ * @param {string[]} addresses  contract addresses (validated by isDexLookupAddress)
+ * @param {{page?: number, perPage?: number}} [opts]
+ * @returns {Promise<object[]|null>} null when unavailable or nothing trades
+ */
+export async function fetchDexTickers(addresses, { page = 1, perPage = 100 } = {}) {
+	const addrs = [...new Set((addresses || []).filter(isDexLookupAddress))].slice(0, DEX_TICKER_MAX_ADDRESSES);
+	if (!addrs.length) return null;
+	const wanted = new Set(addrs.map((a) => (a.startsWith('0x') ? a.toLowerCase() : a)));
+	const rows = await cachedPayload(`dex-fallback:tickers:${[...addrs].sort().join(',')}`, () =>
+		fetchFirstOrNull(
+			[
+				{
+					name: 'dexscreener-tokens',
+					url: `${DEXSCREENER_TOKENS}/${addrs.map(encodeURIComponent).join(',')}`,
+					parse: async (r) => {
+						const data = await r.json();
+						const pairs = (Array.isArray(data?.pairs) ? data.pairs : []).filter((pair) => {
+							const a = str(pair?.baseToken?.address);
+							return a && wanted.has(a.startsWith('0x') ? a.toLowerCase() : a);
+						});
+						const out = pairs
+							.map(normalizeDexPair)
+							.filter((t) => t.exchange.name && t.price_usd != null)
+							.sort((a, b) => (b.volume_usd ?? 0) - (a.volume_usd ?? 0));
+						return out.length ? out : null;
+					},
+				},
+			],
+			{ timeoutMs: 8000, label: 'coin-dex-tickers' },
+		),
+	);
+	if (!rows) return null;
+	const start = (Math.max(1, page) - 1) * perPage;
+	return rows.slice(start, start + perPage);
+}
+
 // ── Price series ─────────────────────────────────────────────────────────────
 // DefiLlama's coins oracle is addressed by CoinGecko id (`coingecko:<id>`), so
 // this backs the chart for EVERY coin, not just the majors that
