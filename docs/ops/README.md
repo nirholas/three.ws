@@ -23,6 +23,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [agent-index.md](agent-index.md) | The agent index crawls end to end: the cursor stall both chain legs share, the error-class table, the recovery script, and how the freshness sensor scores each leg. |
 | [solana-rpc-lanes.md](solana-rpc-lanes.md) | The Solana RPC tier end to end: one-sweep diagnosis, per-lane method capability, what must rotate vs fail, config traps, recovery. |
 | [llm-lanes.md](llm-lanes.md) | The LLM provider chain end to end: which rungs serve, why the paid ones are dead, how spend is metered, the one-command Claude rollout, and per-lane probes. |
+| [evolve.md](evolve.md) | `npm run evolve:start`: the unattended loop that runs the work queue, refills it, and sweeps production on the signed-in Claude subscription, with every owner gate denied. |
 | [page-audit.md](page-audit.md) | `scripts/page-audit.mjs`: authed Chromium sweep of every public page, console-error gated. |
 | [x-story-findings-2026-09-30.md](x-story-findings-2026-09-30.md) | What filming every feature for the X queue found: features that could not be announced because they do not work, and the defects seen on the ones that do. |
 | [guard-wiring.md](guard-wiring.md) | Every `check:*` / `audit:*` script classified: what it checks, its measured exit code and runtime, and whether it runs in `gate`, on the deploy path, in the pre-push hook, or only by hand. |

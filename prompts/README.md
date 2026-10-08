@@ -10,8 +10,9 @@ paste it, run it. That folder is the whole queue; nothing outstanding is filed a
 **The filenames are the running order.** Since 2026-09-07 every order is numbered by priority,
 so sorting the folder by name gives you the sequence to work through: start at `001`, run it,
 open the next. `001` to `014` are runnable right now with no gate; `100` and up are the
-route-audit swarm; `300` and up are the Home campaign; `900` and up are blocked on an owner
-action, so read one before you start it. A retired order is deleted and its number left as a
+route-audit swarm; `300` and up are the Home campaign; `400` to `499` are written by the
+evolve scout lane ([../docs/ops/evolve.md](../docs/ops/evolve.md)), which also runs this
+queue unattended; `900` and up are blocked on an owner action, so read one before you start it. A retired order is deleted and its number left as a
 gap, so a link to a numbered order keeps pointing at the same work.
 
 **Why the order is what it is: [RUN-ORDER.md](RUN-ORDER.md).** It ranks the queue into tiers

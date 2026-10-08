@@ -13,6 +13,7 @@ so you can open one, run it, and open the next without consulting anything. Ever
 | `023` to `066` | The `x-grok-` campaign, added 2026-10-08: Grok Bot as an MCP client, xAI as a provider, and the X mention bot (dry run). Runnable; lane C ships nothing live. Run 023 first, 045 before 049, 046 to 049 before 050. | 44 |
 | `100` to `248` | The route-audit swarm, ordered by measured defect class. Parallel-safe. | 149 |
 | `300` to `313` | The unbuilt Home campaign, in numeric order (04 gates 05 and 06, 11 gates 20). | 14 |
+| `400` to `499` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | varies |
 | `900` and up | Blocked: the last step is an owner action or an outside party. Read before running. | 20 |
 
 The number is a position, not an identity. When an order retires its file is deleted and a gap
