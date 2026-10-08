@@ -568,14 +568,18 @@ async function finalizeSkillConfirmation(pur, txSignature, payoutAddress, platfo
 			referralAmt = (grossAmt * BigInt(referralBps())) / 10000n;
 		}
 		const netAmt = grossAmt - platformFee - referralAmt;
+		// settled_to_wallet: the buyer paid the seller's payout wallet (or its
+		// split contract) directly, so the seller already holds this money. Left
+		// false, the withdrawal ledger counted it as a treasury liability and the
+		// payout cron paid it a second time from the treasury.
 		await sql`
 			INSERT INTO agent_revenue_events
 				(agent_id, intent_id, skill, gross_amount, fee_amount, platform_fee_amount,
-				 net_amount, currency_mint, chain, payer_address)
+				 net_amount, currency_mint, chain, payer_address, settled_to_wallet)
 			VALUES
 				(${pur.agent_id}, ${intentId}, ${pur.skill},
 				 ${grossAmt.toString()}, ${referralAmt.toString()}, ${platformFee.toString()},
-				 ${netAmt.toString()}, ${pur.currency_mint}, ${pur.chain}, ${payoutAddress})
+				 ${netAmt.toString()}, ${pur.currency_mint}, ${pur.chain}, ${payoutAddress}, true)
 			ON CONFLICT (intent_id) DO NOTHING
 		`;
 

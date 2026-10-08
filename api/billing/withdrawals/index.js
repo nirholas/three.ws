@@ -9,6 +9,7 @@ import { parse, isValidSolanaAddress, isValidEvmAddress } from '../../_lib/valid
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parseLimit, parseOffset } from '../../_lib/http-params.js';
 import { requireCsrf } from '../../_lib/csrf.js';
+import { SOLANA_USDC_MINT, EVM_USDC } from '../../payments/_config.js';
 
 // Note: the payout destination is intentionally NOT accepted from the client.
 // It is resolved server-side from the user's saved `agent_payout_wallets` so a
@@ -86,6 +87,15 @@ export default wrap(async (req, res) => {
 
 	const body = parse(postBody, await readJson(req));
 	const { amount, currency_mint, chain, agent_id = null } = body;
+
+	// The treasury pays USDC on the requested chain, so the balance being drawn
+	// must be that chain's USDC. A free-form mint let a seller accrue revenue in
+	// a worthless token of their own and have the EVM payout leg (which always
+	// sends Base USDC) pay it out as real dollars.
+	const expectedMint = chain === 'solana' ? SOLANA_USDC_MINT : EVM_USDC[8453];
+	if (currency_mint.toLowerCase() !== expectedMint.toLowerCase()) {
+		return error(res, 422, 'unsupported_currency', `Withdrawals on ${chain} pay USDC; currency_mint must be ${expectedMint}`);
+	}
 
 	const MIN_WITHDRAWAL = 1_000_000;
 	if (amount < MIN_WITHDRAWAL) {

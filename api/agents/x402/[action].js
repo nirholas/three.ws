@@ -268,11 +268,13 @@ async function handleInvoke(req, res) {
 	// hard backstop against double-crediting.
 	const gross = parseInt(paid.amount, 10);
 	const { fee, net } = calculateFee(gross);
+	// settled_to_wallet: the intent paid the owner's payout wallet directly, so
+	// this is income already held, never a treasury-withdrawable balance.
 	await sql`
 		insert into agent_revenue_events
-			(agent_id, intent_id, skill, gross_amount, fee_amount, net_amount, currency_mint, chain, payer_address)
+			(agent_id, intent_id, skill, gross_amount, fee_amount, net_amount, currency_mint, chain, payer_address, settled_to_wallet)
 		values
-			(${agent.id}, ${paid.intentId}, ${body.skill}, ${gross}, ${fee}, ${net}, ${paid.currency}, ${price.chain ?? 'solana'}, ${paid.payerAddress})
+			(${agent.id}, ${paid.intentId}, ${body.skill}, ${gross}, ${fee}, ${net}, ${paid.currency}, ${price.chain ?? 'solana'}, ${paid.payerAddress}, true)
 		on conflict (intent_id) do nothing
 	`;
 	insertNotification(agent.user_id, 'payment_received', {

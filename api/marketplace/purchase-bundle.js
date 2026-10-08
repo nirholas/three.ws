@@ -227,14 +227,16 @@ async function handleConfirm(req, res, purchaseId) {
 	const gross = Number(purchase.price_amount);
 	const platformFee = Number(purchase.platform_fee_amount ?? 0);
 	const net = gross - platformFee;
+	// settled_to_wallet: the buyer paid the creator's payout wallet directly,
+	// so this is income already held, never a treasury-withdrawable balance.
 	await sql`
 		INSERT INTO agent_revenue_events
 			(agent_id, intent_id, skill, gross_amount, fee_amount, platform_fee_amount,
-			 net_amount, currency_mint, chain, payer_address)
+			 net_amount, currency_mint, chain, payer_address, settled_to_wallet)
 		VALUES
 			(${purchase.agent_id}, ${'bundle_' + purchase.id}, ${'bundle'},
 			 ${gross}, ${0}, ${platformFee}, ${net},
-			 ${purchase.currency_mint}, ${purchase.chain}, ${null})
+			 ${purchase.currency_mint}, ${purchase.chain}, ${null}, true)
 		ON CONFLICT (intent_id) DO NOTHING
 	`;
 

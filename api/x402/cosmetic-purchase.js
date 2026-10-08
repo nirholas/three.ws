@@ -290,7 +290,11 @@ export default async function handler(req, res) {
 					payerWallet: payer ?? null,
 					payerNetwork: requirement?.network ?? null,
 					asset: requirement?.asset ?? null,
-					priceAtomics: requirement?.amount ?? priceAtomics,
+					// The cut is a share of the item's USDC list price. requirement.amount
+					// is in the PAID asset's atomics: a 10 $THREE accept is 10,000,000,
+					// which the USDC payout read as $10 and paid half of to whoever
+					// launched the coin, on every purchase with a fresh account.
+					priceAtomics,
 					mint: coin,
 				});
 				if (result?.creatorWallet) {

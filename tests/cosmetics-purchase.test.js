@@ -218,3 +218,14 @@ describe('cosmetic-purchase endpoint boundary', () => {
 		expect(sol.asset).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
 	});
 });
+
+describe('creator split basis', () => {
+	it('computes the creator cut from the USDC list price, never the paid asset amount', async () => {
+		const { readFileSync } = await import('node:fs');
+		const src = readFileSync(new URL('../api/x402/cosmetic-purchase.js', import.meta.url), 'utf8');
+		// A $THREE accept carries 10,000,000 atomics; read as USDC that paid the coin
+		// creator $5 per purchase out of the treasury.
+		expect(src).not.toMatch(/priceAtomics:\s*requirement\?\.amount/);
+		expect(src).toMatch(/recordSaleAndSplit\(\{[\s\S]*?\n\s*priceAtomics,\n/);
+	});
+});

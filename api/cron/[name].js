@@ -64,7 +64,7 @@ import { mintAttestation, deriveEventId, loadAttesterKeypair } from '../_lib/att
 import { pumpfunMcp, pumpfunBotEnabled } from '../_lib/pumpfun-mcp.js';
 import { getMints, getWhales, getClaims } from '../_lib/channel-feed-sources.js';
 import { crawlAgentAttestations } from '../_lib/solana-attestations.js';
-import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET } from '../payments/_config.js';
+import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET, EVM_USDC } from '../payments/_config.js';
 import { chargeSubscription, failPayment } from '../_lib/subscription-billing.js';
 import { sendEmail } from '../_lib/email.js';
 import { fetchSafePublicUrl } from '../_lib/ssrf-guard.js';
@@ -4419,8 +4419,17 @@ async function handleProcessWithdrawals(req, res) {
 			continue;
 		}
 
+		const EVM_USDC_BASE_LC = EVM_USDC[8453].toLowerCase();
 		try {
 			let sig;
+			// Pay only the chain's USDC against a USDC balance. The EVM leg always
+			// sends Base USDC, so a row carrying any other mint would turn a balance
+			// in a worthless token into real dollars.
+			const solUsdc = w.chain === 'solana' && w.currency_mint === SOLANA_USDC_MINT;
+			const evmUsdc = w.chain !== 'solana' && String(w.currency_mint || '').toLowerCase() === EVM_USDC_BASE_LC;
+			if (!solUsdc && !evmUsdc) {
+				throw new Error(`withdrawal mint ${w.currency_mint} is not USDC on ${w.chain}`);
+			}
 			if (w.chain === 'solana') {
 				if (!treasuryKeypair) {
 					throw new Error('TREASURY_KEYPAIR not configured for solana withdrawal');

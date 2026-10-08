@@ -325,12 +325,29 @@ describe('GET /api/billing/withdrawals', () => {
 				method: 'POST',
 				url: '/api/billing/withdrawals',
 				headers: { 'content-type': 'application/json' },
-				body: { amount: 500000, currency_mint: 'THREEsynthetic1111', chain: 'solana' },
+				body: { amount: 500000, currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', chain: 'solana' },
 			}),
 			res,
 		);
 		expect(res.statusCode).toBe(422);
 		expect(parse(res).error).toBe('below_minimum');
+	});
+
+	it('refuses a mint that is not the chain\'s USDC, so a junk-token balance never pays out as dollars', async () => {
+		for (const [mint, chain] of [['THREEsynthetic1111', 'base'], ['THREEsynthetic1111', 'solana'], ['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', 'base']]) {
+			const res = mkRes();
+			await withdrawalsHandler(
+				mkReq({
+					method: 'POST',
+					url: '/api/billing/withdrawals',
+					headers: { 'content-type': 'application/json' },
+					body: { amount: 2000000, currency_mint: mint, chain },
+				}),
+				res,
+			);
+			expect(res.statusCode).toBe(422);
+			expect(parse(res).error).toBe('unsupported_currency');
+		}
 	});
 
 	it('refuses to queue a payout when no wallet is registered for the chain', async () => {
@@ -341,7 +358,7 @@ describe('GET /api/billing/withdrawals', () => {
 				method: 'POST',
 				url: '/api/billing/withdrawals',
 				headers: { 'content-type': 'application/json' },
-				body: { amount: 2000000, currency_mint: 'THREEsynthetic1111', chain: 'solana' },
+				body: { amount: 2000000, currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', chain: 'solana' },
 			}),
 			res,
 		);
