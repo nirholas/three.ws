@@ -15,6 +15,14 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
+// The reference-image fetch is SSRF-checked (DNS-resolved) before it goes out;
+// these fixtures use offline `.test` hosts, so the check is passed through here
+// and covered on its own in tests/ssrf-hardening-guards.test.js.
+vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	assertSafePublicUrl: async (u) => new URL(u),
+}));
+
 // R2 is mocked once for the whole file — only the Stability adapter reaches it.
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: vi.fn(async () => ({})),
