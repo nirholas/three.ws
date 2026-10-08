@@ -1,6 +1,8 @@
 #!/bin/sh
 # Restore the signal-cli state tree from the mounted state volume, keep it
-# snapshotted there, then hand PID 1 to the upstream s6 init.
+# snapshotted there, then hand PID 1 to the upstream entrypoint
+# (/entrypoint.sh in bbernhard/signal-cli-rest-api, which starts the json-rpc
+# daemon under supervisor and execs the REST API as the signal-api user).
 #
 # The snapshot is written to a temp name and renamed, so a restart mid-write
 # restores the previous complete tarball rather than a torn one. The loop only
@@ -43,4 +45,4 @@ snapshot() {
 	done
 ) &
 
-exec /init
+exec /entrypoint.sh
