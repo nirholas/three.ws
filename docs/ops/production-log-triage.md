@@ -451,6 +451,50 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
 
 ---
 
+## 🔴 HTTP 503 on cryptocurrency.cv AI routes: `ccv-ai-providers-unavailable` / `ccv-ai-providers-unavailable-503`
+
+```
+HTTP 503 GET https://cryptocurrency.cv/api/narratives
+AI provider groq unavailable (AIRateLimitError), trying next provider... rate-limited / out of quota (429)
+AI provider gemini unavailable (AIAuthError) ... [403 Forbidden] Lightning dunning decision is deny for project: projects/93741856042
+```
+
+- **Service:** `cryptocurrency-cv` (serves https://cryptocurrency.cv). Source
+  lives in its own repository, `nirholas/cryptocurrency.cv`, not in this one.
+  Its AI routes walk one provider chain in `src/lib/ai-provider.ts`.
+- **Root cause (2026-10-08 sweep): every provider is out at once, and each for
+  a billing reason, not a code one.**
+  - Groq: the free tier's 200k tokens/day budget is spent. Before the
+    2026-10-08 fix, `/api/sentiment` re-ran a ~7k-token prompt on every poll, so
+    one client polling a single asset (91 calls in 6h) spent the day's budget by
+    itself.
+  - Gemini and Vertex: refused with `Lightning dunning decision is deny`, a
+    billing hold on project `aerial-vehicle-466722-p5` (number 93741856042). It
+    reads like an IAM error and is not one; no key or role change clears it.
+  - OpenRouter: both `OPENROUTER_FALLBACK_KEYS` belong to one account whose
+    usage exceeds its credits. Revisions built before 2026-09-30 never even
+    read that variable.
+- **What users see after the 2026-10-08 fixes:** `/api/sentiment` answers 200
+  from a keyword reading of the headlines (`meta.method: "keyword"`,
+  `meta.degraded: true`), `/api/narratives` serves its last good analysis for
+  up to an hour, and every AI route caches one analysis for five minutes, so a
+  poller no longer drains the provider. A 503 now only appears on an AI route
+  with nothing cached, carries `Retry-After`, and no longer echoes the
+  provider's raw error (which used to include the Groq organization id).
+- **Resolve (owner, billing): restore any ONE provider.** The chain recovers on
+  the next request with no redeploy. Cheapest first: clear the GCP billing hold
+  on `aerial-vehicle-466722-p5` (restores Gemini and Vertex, and with them the
+  okx-chat-bot's Vertex lane), top up the OpenRouter account, or move
+  `GROQ_API_KEY` to a paid Groq tier.
+- **Confirm:** `curl -s https://cryptocurrency.cv/api/narratives` returns
+  narratives, and `curl -s 'https://cryptocurrency.cv/api/sentiment' | jq .meta.method`
+  prints `"ai"`.
+- **Monitor signatures:** `ccv-ai-providers-unavailable` (app log) and
+  `ccv-ai-providers-unavailable-503` (request log) in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), both classified `owner`.
+
+---
+
 ## 🟡 HTTP 502 on `/api/coin/*` — `coingecko-quota-exhausted-502`
 
 ```
@@ -844,8 +888,11 @@ HTTP 503 GET /api/community/worlds   body: {"error":"cc_unconfigured","error_des
     ("Holder check is offline") with a working one-click path into the coin's
     open world. Before 2026-08-08 this was the one dead end: the gate showed
     the raw upstream string with retry-only actions that could never succeed.
-  - `/clash/*` pins the battle tabs on a human message and stops the 5s poll
-    on the first `cc_unconfigured` answer.
+  - `/clash/state` and `/clash/leaderboard` fail over to the same trending
+    feed (since 2026-10-08), with the roster frozen per round, so the arena
+    stays playable. They answer `cc_unconfigured` only when trending is down
+    too, and the page then pins the battle tabs on a human message and stops
+    the 5s poll.
 - **Resolve (owner, credential):** provision a CoinCommunities API key
   (api.coin-communities.xyz), then:
   `gcloud run services update three-ws-api --region us-central1 --update-env-vars CC_API_KEY=<key>`.

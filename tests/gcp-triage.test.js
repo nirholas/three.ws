@@ -33,6 +33,14 @@ describe('gcp-triage classify', () => {
 		expect(sig?.id).toBe('db-storage-cap');
 	});
 
+	it('classifies the cryptocurrency-cv AI chain exhaustion as owner-gated only on that service', () => {
+		const line = 'AI provider groq unavailable (AIRateLimitError), trying next provider... rate-limited / out of quota (429)';
+		const onCcv = classify(line, ['cryptocurrency-cv']);
+		expect(onCcv?.id).toBe('ccv-ai-providers-unavailable');
+		expect(onCcv?.class).toBe('owner');
+		expect(classify(line, ['three-ws-api'])?.id).not.toBe('ccv-ai-providers-unavailable');
+	});
+
 	it('returns null for an unknown message', () => {
 		expect(classify('some brand new failure nobody has seen', ['three-ws-api'])).toBeNull();
 	});
@@ -54,6 +62,18 @@ describe('gcp-triage HTTP classification', () => {
 		const [finding] = buildFindings([request({ status: 503, path: '/api/forge-upload' })]);
 		expect(finding.signature).toBe('r2-upload-unavailable');
 		expect(finding.class).toBe('owner');
+	});
+
+	it('classifies a cryptocurrency-cv AI route 503 as owner-gated', () => {
+		const [finding] = buildFindings([request({ service: 'cryptocurrency-cv', status: 503, path: '/api/narratives' })]);
+		expect(finding.signature).toBe('ccv-ai-providers-unavailable-503');
+		expect(finding.class).toBe('owner');
+	});
+
+	it('leaves a cryptocurrency-cv 503 on a non-AI route for investigation', () => {
+		const [finding] = buildFindings([request({ service: 'cryptocurrency-cv', status: 503, path: '/api/news' })]);
+		expect(finding.signature).not.toBe('ccv-ai-providers-unavailable-503');
+		expect(finding.class).toBe('investigate');
 	});
 
 	it('classifies pump curve fallback exhaustion as self-healing', () => {

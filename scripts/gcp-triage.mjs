@@ -104,6 +104,15 @@ const KNOWN_SIGNATURES = [
 		action: `Cache circuit breaker riding out an Upstash blip; reads keep serving. Optional: same-region cache store. ${RUNBOOK} §cache.`,
 	},
 	{
+		// Service-scoped, so it sits ahead of the broad helius-backoff match
+		// ("rate-limited") that would otherwise claim these lines first.
+		id: 'ccv-ai-providers-unavailable',
+		match: /AI provider \w+ unavailable|\[ai\] every provider unavailable|\[sentiment\] AI analysis unavailable/i,
+		services: ['cryptocurrency-cv'],
+		class: 'owner',
+		action: `cryptocurrency.cv walked its whole AI chain and every provider refused: Groq's free tier spent its daily token budget, Gemini and Vertex answer "Lightning dunning decision is deny" (a billing hold on project aerial-vehicle-466722-p5, not an IAM or key problem), and the OpenRouter account behind OPENROUTER_FALLBACK_KEYS is out of credit. /api/sentiment degrades to a keyword reading and /api/narratives to its last good analysis, so this is noise until the owner restores one provider. ${RUNBOOK} §ccv-ai-providers-unavailable.`,
+	},
+	{
 		id: 'helius-backoff',
 		match: /helius quota|rate.?limited|refresh deferred \(transient upstream\)/i,
 		class: 'self-healing',
@@ -240,6 +249,17 @@ const KNOWN_HTTP_SIGNATURES = [
 		test: (g) => g.status === 503 && (g.path.startsWith('/api/community/') || g.path.startsWith('/api/clash')),
 		class: 'owner',
 		action: `/api/community/worlds returns its designed 503 cc_unconfigured: CC_API_KEY exists nowhere (Cloud Run env, .env, Secret Manager — swept 2026-07-26). The coin-worlds lobby stays empty until the owner provisions a CoinCommunities API key (api.coin-communities.xyz), then: gcloud run services update three-ws-api --region us-central1 --update-env-vars CC_API_KEY=<key>. Harmless noise until then. ${RUNBOOK} §cc-unconfigured.`,
+	},
+	{
+		id: 'ccv-ai-providers-unavailable-503',
+		// The AI routes on cryptocurrency.cv answer a designed 503 with
+		// Retry-After when no provider can serve and nothing is cached.
+		test: (g) =>
+			g.service === 'cryptocurrency-cv' &&
+			g.status === 503 &&
+			/^\/api\/(v1\/)?(sentiment|narratives|summarize|digest|entities|factcheck|clickbait|ask|signals|relationships|ai\/|analytics\/influencers|onchain\/events)/.test(g.path),
+		class: 'owner',
+		action: `A cryptocurrency.cv AI route found every provider out (Groq daily token budget spent, Gemini and Vertex refused by the GCP billing hold "Lightning dunning decision is deny", OpenRouter out of credit) with no cached analysis to serve. Nothing in code is broken and no redeploy fixes it: the owner restores ONE provider (clear the billing hold on aerial-vehicle-466722-p5, top up OpenRouter, or move GROQ_API_KEY to a paid tier) and the routes recover on the next request. Confirm with: curl -s https://cryptocurrency.cv/api/narratives. ${RUNBOOK} §ccv-ai-providers-unavailable.`,
 	},
 	{
 		id: 'watsonx-unconfigured-503',
