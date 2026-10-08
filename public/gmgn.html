@@ -347,7 +347,7 @@
 	</footer>
 
 	<script type="module">
-		import { gmgnTokenUrl } from '/src/shared/trading-terminals.js';
+		import { gmgnTokenUrl, dextoolsTokenUrl } from '/src/shared/trading-terminals.js';
 
 		const $ = (id) => document.getElementById(id);
 		const url = new URL(location.href);
@@ -518,6 +518,8 @@
 				? `https://dexscreener.com/${dexChains[chain] || 'solana'}/${escHtml(addr)}`
 				: escHtml(gmgnTokenUrl(addr, chain));
 			const linkLabel = isDex ? 'DexScreener' : 'GMGN';
+			const dtNetworks = { sol: 'solana', eth: 'eth', base: 'base', bsc: 'bsc' };
+			const dtLink = dtNetworks[chain] ? escHtml(dextoolsTokenUrl(addr, { network: dtNetworks[chain], from: 'gmgn-feed' })) : '';
 
 			const txnHtml = isDex && ev.txns_h1_buys != null
 				? `<div class="ev-stat"><span class="lbl">Buys 1h</span><span class="val up">${ev.txns_h1_buys}</span></div><div class="ev-stat"><span class="lbl">Sells 1h</span><span class="val dn">${ev.txns_h1_sells ?? 0}</span></div>`
@@ -544,6 +546,7 @@
 				<div class="ev-time">
 					${new Date(ev.timestamp * 1000).toLocaleTimeString()} ·
 					${addr ? `<a class="ev-link" href="${linkBase}" target="_blank" rel="noopener">View on ${linkLabel} ↗</a>` : ''}
+					${addr && dtLink ? `<a class="ev-link" href="${dtLink}" target="_blank" rel="noopener">DEXTools ↗</a>` : ''}
 				</div>`;
 			return div;
 		}

@@ -18,6 +18,8 @@
 import './launch-page.css';
 import { ensureRiskAck } from '../shared/risk-ack.js';
 import { ensureModelViewer } from '../shared/model-viewer-loader.js';
+import { dextoolsTokenUrl } from '../shared/trading-terminals.js';
+import { socialBoostCard } from '../shared/dextools-boost.js';
 import {
 	DESCRIPTION_MAX,
 	DEV_BUY_PRESETS,
@@ -1160,12 +1162,24 @@ function showSuccess({ mint, signature, agent, fee }) {
 		<div class="lx-actions">
 			<a class="lx-btn" href="/launches/${esc(mint)}">Coin page</a>
 			<a class="lx-btn" href="https://pump.fun/coin/${esc(mint)}" target="_blank" rel="noopener">pump.fun</a>
+			<a class="lx-btn" href="${esc(dextoolsTokenUrl(mint, { from: 'launch-success' }))}" target="_blank" rel="noopener">DEXTools</a>
 			<a class="lx-btn" href="/agents/${esc(agent?.agent_id || agent?.id || '')}">Agent page</a>
 			<a class="lx-btn" href="https://solscan.io/tx/${esc(signature || '')}" target="_blank" rel="noopener">Transaction</a>
 			<a class="lx-btn is-primary is-wide" href="https://x.com/intent/post?text=${encodeURIComponent(post)}" target="_blank" rel="noopener">Share on X</a>
 			<button type="button" class="lx-btn is-wide" id="ok-another">Launch another</button>
 		</div>
+		<div id="ok-boost"></div>
 		<p class="lx-hint" style="margin-top:14px;text-align:center">Creator rewards build up as people trade. Claim them any time under My coins.</p>`;
+	const boost = socialBoostCard({ mint, symbol, href: dextoolsTokenUrl(mint, { from: 'launch-success-boost' }), buttonClass: 'lx-btn', primaryClass: 'lx-btn is-primary' });
+	if (boost) {
+		boost.append(Object.assign(document.createElement('p'), {
+			className: 'dtb-lead',
+			textContent: 'A coin this new can take a few minutes to appear on DEXTools. The link works now and fills in once DEXTools indexes the first trades.',
+		}));
+		$('#ok-boost').replaceWith(boost);
+	} else {
+		$('#ok-boost').remove();
+	}
 	$('#ok-copy').addEventListener('click', (e) => copyText(mint, e.currentTarget));
 	$('#ok-another').addEventListener('click', () => {
 		$('#lx-dialog').close();

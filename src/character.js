@@ -12,7 +12,7 @@ import { hydrateAvatarWallet } from './shared/wallet-aura.js';
 import './ui-juice.css';
 import { countUp } from './ui-juice.js';
 import { fetchFirstOrNull } from './shared/failover-fetch.js';
-import { gmgnTokenUrl } from './shared/trading-terminals.js';
+import { gmgnTokenUrl, dextoolsTokenUrl } from './shared/trading-terminals.js';
 
 let chNetWorthAura = null;
 
@@ -233,7 +233,7 @@ function buildTokenHtml(symbol, mint, marketCapUsd, priceUsd, change24h, holders
 	}
 
 	const tradeUrl = mint ? gmgnTokenUrl(mint) : '#';
-	const chartUrl = mint ? `https://birdeye.so/token/${mint}?chain=solana` : '#';
+	const chartUrl = mint ? dextoolsTokenUrl(mint, { from: 'character' }) : '#';
 
 	const metaItems = [];
 	if (holders) metaItems.push({ label: 'Holders', val: formatNum(holders) });
@@ -259,7 +259,7 @@ function buildTokenHtml(symbol, mint, marketCapUsd, priceUsd, change24h, holders
 		</div>
 		<div class="ch-token-actions">
 			<a class="ch-trade-btn" href="${tradeUrl}" target="_blank" rel="noopener">Trade</a>
-			<a class="ch-chart-btn" href="${chartUrl}" target="_blank" rel="noopener" title="View chart">
+			<a class="ch-chart-btn" href="${chartUrl}" target="_blank" rel="noopener" title="View chart on DEXTools" aria-label="View chart on DEXTools">
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<path d="M3 3v18h18"/>
 					<path d="M18.5 8L13 13.5 8.5 10 3 15"/>
@@ -306,9 +306,7 @@ async function renderToken(agent) {
 	}
 
 	const tradeUrl = mint ? gmgnTokenUrl(mint) : '#';
-	const chartUrl = mint
-		? `https://birdeye.so/token/${mint}?chain=solana`
-		: '#';
+	const chartUrl = mint ? dextoolsTokenUrl(mint, { from: 'character' }) : '#';
 
 	const metaItems = [];
 	if (holders) metaItems.push({ label: 'Holders', val: formatNum(holders) });

@@ -11,7 +11,7 @@
 import { onchainBadgeEl } from './shared/onchain-badge.js';
 import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { mountMoneyPulse } from './shared/money-pulse.js';
-import { gmgnTokenUrl } from './shared/trading-terminals.js';
+import { gmgnTokenUrl, dextoolsTokenUrl } from './shared/trading-terminals.js';
 import { mountMirrorPanel } from './shared/agent-mirror-panel.js';
 import { mountStrategyPanel } from './shared/agent-strategy-panel.js';
 import { mountPatronagePanel } from './shared/agent-patronage.js';
@@ -3050,7 +3050,7 @@ export function normalize(rec, avatar) {
 		});
 		services.push({
 			type: 'chart',
-			url: `https://dexscreener.com/solana/${rec.token.mint}`,
+			url: dextoolsTokenUrl(rec.token.mint, { from: 'agent-detail' }),
 		});
 	}
 

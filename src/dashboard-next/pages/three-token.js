@@ -1158,7 +1158,7 @@ function renderTokenInfo() {
 		<div style="margin-top:12px">
 			<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--dn-dim,#8a8a9c);margin-bottom:6px">Trade $THREE on</div>
 			<div style="display:flex;gap:8px;flex-wrap:wrap">
-				${terminalLinks(THREE_MINT).map((t) => `
+				${terminalLinks(THREE_MINT, { from: 'dashboard-three' }).map((t) => `
 					<a class="dn-btn" href="${esc(t.url)}" target="_blank" rel="noopener" style="font-size:12.5px">
 						${esc(t.label)} &#8599;
 					</a>

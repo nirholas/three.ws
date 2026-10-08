@@ -58,6 +58,8 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { fetchFirstOrNull } from '../shared/failover-fetch.js';
+import { dextoolsUrl } from '../shared/dextools.js';
+import { dextoolsTokenUrl } from '../shared/trading-terminals.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
 import { resolveURI, IPFS_GATEWAYS } from '../ipfs.js';
 
@@ -90,6 +92,16 @@ const isPlausibleMint = (s) => BASE58_RE.test(String(s || '').trim());
 // attribution link and by every "open on three.ws" action in embed mode.
 function fullPageUrl() {
 	return mint ? `/coin3d?mint=${encodeURIComponent(mint)}` : '/coin3d';
+}
+
+// The coin's DEXTools pair page. A scene addressed by `pair` (how a DEX
+// terminal embeds it) links back to that exact pair, which is the page Social
+// Boost credits. A mint-addressed scene goes through the counted resolver: a
+// raw mint would land a graduated coin on its dead bonding-curve page.
+function dextoolsHudLink(mintAddr) {
+	if (network !== 'mainnet' || !isPlausibleMint(mintAddr)) return '';
+	const href = (pair && dextoolsUrl(pair)) || dextoolsTokenUrl(mintAddr, { from: embedded ? 'coin3d-embed' : 'coin3d' });
+	return `<a class="hud-link" href="${escapeHtml(href)}" target="_blank" rel="noopener">DEXTools ↗</a>`;
 }
 
 /**
@@ -1069,6 +1081,7 @@ function renderHud(s) {
 		<div class="hud-links">
 			${s.mint ? `<button id="c3d-watch" class="c3d-watch-btn" type="button" aria-pressed="${watching}">${watching ? '★ Watching' : '☆ Watch'}</button>` : ''}
 			<a class="hud-link" href="https://pump.fun/coin/${encodeURIComponent(s.mint)}" target="_blank" rel="noopener">pump.fun ↗</a>
+			${dextoolsHudLink(s.mint)}
 			<a class="hud-link" href="/launches">All launches →</a>
 			${s.mint ? `<a class="hud-link" href="/communities/${encodeURIComponent(s.mint)}">3D world →</a>` : ''}
 			<a class="hud-link" href="/launch">Launch your own →</a>

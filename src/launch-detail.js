@@ -41,8 +41,9 @@ import { walletChipEl } from './shared/agent-wallet-chip.js';
 import { proxiedImageURL } from './ipfs.js';
 import { agentAvatarGlb, hasCustomAvatar, seeInWorldHref } from './shared/agent-3d.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
-import { terminalLinks } from './shared/trading-terminals.js';
+import { terminalLinks, dextoolsTokenUrl } from './shared/trading-terminals.js';
 import { CHART_EMBEDS, chartEmbedUrls, resolveChartPool } from './shared/chart-embeds.js';
+import { socialBoostCard } from './shared/dextools-boost.js';
 import { watchEmbed, embedFallbackNode, DEFAULT_EMBED_TIMEOUT_MS } from './shared/embed-guard.js';
 import { mountPriceChart } from './mission-control/chart.js';
 import { flashValue, rippleOnce, liveDot, setLiveDot } from './ui-juice.js';
@@ -898,7 +899,7 @@ function terminalLinksEl() {
 	return el(
 		'div',
 		{ class: 'ld-chart-terminals' },
-		terminalLinks(state.mint).map((t) =>
+		terminalLinks(state.mint, { from: 'launch-detail' }).map((t) =>
 			el('a', {
 				class: 'ld-chart-terminal',
 				href: t.url,
@@ -1842,7 +1843,22 @@ function renderActions() {
 
 	const body = el('div', { class: 'ld-action-grid' }, buttons);
 	const foot = el('a', { class: 'ld-actions-foot', href: '/watchlist', text: 'View your watchlist →' });
-	section(target, 'Take action', el('div', {}, [body, foot]));
+	// Social Boost credits a specific pair page, so link the pool the DEXTools
+	// chart already resolved when there is one. Otherwise go through the counted
+	// /api/coin/dextools redirect, which resolves the top pool and attributes
+	// the visit to this page.
+	const dtPool = state.chartPools.dextools?.indexed ? state.chartPools.dextools.pool : null;
+	const boost = isDevnet
+		? null
+		: socialBoostCard({
+				mint,
+				pair: dtPool,
+				href: dtPool ? undefined : dextoolsTokenUrl(mint, { from: 'launch-detail-boost' }),
+				symbol,
+				buttonClass: 'ld-btn ld-btn-ghost',
+				primaryClass: 'ld-btn ld-btn-primary',
+			});
+	section(target, 'Take action', el('div', {}, [body, boost, foot]));
 }
 
 // ════════════════════════════════════════════════════════════════════════════

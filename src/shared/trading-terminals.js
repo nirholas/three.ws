@@ -7,6 +7,10 @@
 //
 // Which terminals accept a referral on a token deep link, per their own docs:
 //
+//   DEXTools  no code. Its deep link goes through three.ws' /api/coin/dextools
+//             resolver instead, which counts every visit we send (Social Boost
+//             ranks on pair-page visits). See dextoolsTokenUrl().
+//
 //   GMGN  yes. https://docs.gmgn.ai/index/referral-link documents
 //         `gmgn.ai/{chain}/token/{code}_{contract}` and
 //         `gmgn.ai/{chain}/address/{code}_{wallet}`, so the deep link and the
@@ -91,8 +95,26 @@ export function referralUrl(platform) {
 	return `https://fomo.family/r/${code}`;
 }
 
+/**
+ * DEXTools pair page for a token, through three.ws' own resolver. DEXTools keys
+ * a market by pool account and a token list has only mints, so the link goes to
+ * /api/coin/dextools, which resolves the top pool, redirects to its pair page,
+ * and counts the visit against `from` (the surface that sent it). DEXTools
+ * Social Boost ranks tokens by pair-page visits, so those counts are what the
+ * DEXTools partnership is measured in. Absolute, because the same link renders
+ * in embeds, widgets on other origins, bot messages and MCP tool output.
+ *
+ * @param {string} token
+ * @param {{ network?: string, from?: string }} [opts] network is a GeckoTerminal
+ *   network id ('solana', 'eth', 'base', 'bsc', ...), the same set /api/coin/pool takes.
+ */
+export function dextoolsTokenUrl(token, { network = 'solana', from = 'terminals' } = {}) {
+	return `https://three.ws/api/coin/dextools?${new URLSearchParams({ address: String(token), network, from })}`;
+}
+
 /** Display names, by terminal key. */
 export const TERMINAL_LABELS = {
+	dextools: 'DEXTools',
 	gmgn: 'GMGN',
 	axiom: 'Axiom',
 	padre: 'Padre',
@@ -119,11 +141,17 @@ export function referralOffers() {
 }
 
 /**
- * Token deep links for every terminal we link, in display order.
+ * Token deep links for every terminal we link, in display order. DEXTools leads:
+ * it is the chart terminal three.ws partners with, and its link carries the
+ * per-surface visit count (see dextoolsTokenUrl).
+ *
+ * @param {string} mint
+ * @param {{ from?: string }} [opts] the surface rendering the links, for DEXTools attribution
  * @returns {{ key: string, label: string, short: string, url: string }[]}
  */
-export function terminalLinks(mint) {
+export function terminalLinks(mint, { from = 'terminals' } = {}) {
 	return [
+		{ key: 'dextools', label: 'DEXTools', short: 'DXT', url: dextoolsTokenUrl(mint, { from }) },
 		{ key: 'axiom', label: 'Axiom', short: 'AXI', url: axiomTokenUrl(mint) },
 		{ key: 'gmgn', label: 'GMGN', short: 'GMG', url: gmgnTokenUrl(mint) },
 		{ key: 'padre', label: 'Padre', short: 'PDR', url: padreTokenUrl(mint) },

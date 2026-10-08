@@ -121,7 +121,7 @@ describe('referralOffers', () => {
 describe('terminalLinks', () => {
 	it('covers every terminal with a label, short code and url', () => {
 		const links = terminalLinks(MINT);
-		expect(links.map((t) => t.key)).toEqual(['axiom', 'gmgn', 'padre', 'fomo']);
+		expect(links.map((t) => t.key)).toEqual(['dextools', 'axiom', 'gmgn', 'padre', 'fomo']);
 		for (const t of links) {
 			expect(t.label).toBe(TERMINAL_LABELS[t.key]);
 			expect(t.short).toHaveLength(3);
@@ -132,6 +132,15 @@ describe('terminalLinks', () => {
 	it('routes only GMGN through the referral', () => {
 		const withCode = terminalLinks(MINT).filter((t) => t.url.includes('nichxbt'));
 		expect(withCode.map((t) => t.key)).toEqual(['gmgn']);
+	});
+
+	it('sends DEXTools through the counted three.ws resolver, attributed to the caller', () => {
+		const dt = terminalLinks(MINT, { from: 'launch-detail' }).find((t) => t.key === 'dextools');
+		const url = new URL(dt.url);
+		expect(url.origin + url.pathname).toBe('https://three.ws/api/coin/dextools');
+		expect(url.searchParams.get('address')).toBe(MINT);
+		expect(url.searchParams.get('network')).toBe('solana');
+		expect(url.searchParams.get('from')).toBe('launch-detail');
 	});
 
 	it('escapes a mint containing url-unsafe characters', () => {

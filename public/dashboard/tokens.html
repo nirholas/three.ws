@@ -107,6 +107,7 @@
 						<div class="dash-row">
 							${token.pumpfun_url ? `<a class="dash-btn primary" href="${escapeHtml(token.pumpfun_url)}" target="_blank" rel="noopener">Pump.fun ↗</a>` : ''}
 							${token.explorer_url ? `<a class="dash-btn" href="${escapeHtml(token.explorer_url)}" target="_blank" rel="noopener">Explorer ↗</a>` : ''}
+							<a class="dash-btn" href="https://three.ws/api/coin/dextools?address=${encodeURIComponent(token.mint)}&network=solana&from=dashboard-tokens" target="_blank" rel="noopener">DEXTools ↗</a>
 							<a class="dash-btn" href="https://dexscreener.com/solana/${encodeURIComponent(token.mint)}" target="_blank" rel="noopener">DEX Screener ↗</a>
 							<a class="dash-btn" href="https://birdeye.so/token/${encodeURIComponent(token.mint)}?chain=solana" target="_blank" rel="noopener">Birdeye ↗</a>
 						</div>

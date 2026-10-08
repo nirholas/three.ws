@@ -2349,6 +2349,7 @@ function renderMarket(m) {
 	const lk = m.links || {};
 	const linkBtns = [
 		lk.gmgn ? `<a class="dr-act" href="${esc(lk.gmgn)}" target="_blank" rel="noopener">GMGN ↗</a>` : '',
+		lk.dextools ? `<a class="dr-act" href="${esc(lk.dextools)}" target="_blank" rel="noopener">DEXTools ↗</a>` : '',
 		lk.dexscreener ? `<a class="dr-act" href="${esc(lk.dexscreener)}" target="_blank" rel="noopener">DexScreener ↗</a>` : '',
 		lk.geckoterminal ? `<a class="dr-act" href="${esc(lk.geckoterminal)}" target="_blank" rel="noopener">GeckoTerminal ↗</a>` : '',
 		lk.birdeye ? `<a class="dr-act" href="${esc(lk.birdeye)}" target="_blank" rel="noopener">Birdeye ↗</a>` : '',

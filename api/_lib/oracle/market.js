@@ -30,7 +30,8 @@ import { cacheGet, cacheSet } from '../cache.js';
 import { createCache } from '../mem-cache.js';
 import { fetchRugcheckSummary } from '../rugcheck.js';
 import { bondingProgressPct } from '../pump-bonding.js';
-import { gmgnTokenUrl } from '../../../src/shared/trading-terminals.js';
+import { gmgnTokenUrl, dextoolsTokenUrl } from '../../../src/shared/trading-terminals.js';
+import { dextoolsUrl } from '../../../src/shared/dextools.js';
 
 const DEXSCREENER = 'https://api.dexscreener.com/latest/dex/tokens';
 const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
@@ -372,6 +373,10 @@ export function mergeMarketSources(mint, network, p, fetchedAt) {
 		twitter: pick(linkOrder, 'links.twitter'),
 		telegram: pick(linkOrder, 'links.telegram'),
 		dexscreener: dex?.pairs?.[0]?.url || `https://dexscreener.com/solana/${mint}`,
+		// The most-liquid pair when DexScreener named one (Social Boost credits a
+		// specific pair page), else the counted resolver: a raw mint would land a
+		// graduated pump.fun coin on its dead bonding-curve page.
+		dextools: dextoolsUrl(dex?.pairs?.[0]?.pair_address) || dextoolsTokenUrl(mint, { from: 'oracle' }),
 		gmgn: gmgnTokenUrl(mint),
 		geckoterminal: `https://www.geckoterminal.com/solana/pools/${mint}`,
 		birdeye: `https://birdeye.so/token/${mint}?chain=solana`,
