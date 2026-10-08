@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Money Pulse keeps compact values in the right unit",
+			"summary": "Money Pulse now promotes values that round across a compact-number boundary, so a value just under one thousand or one million reads 1.0k or 1.00M instead of an awkward 1000 or 1000.0k. Fixed by community contributor @MarekPoskrobko.",
+			"tags": ["fix"],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "The coin visualizer and communities keep loading when pump.fun throttles us",
 			"summary": "The full coin board behind the pump.fun visualizer, the communities page and the home page's live coin now retries a rate-limited read once and falls back to the last board any server saw in the past 30 minutes, marked as slightly stale, instead of showing an error.",
 			"tags": [
