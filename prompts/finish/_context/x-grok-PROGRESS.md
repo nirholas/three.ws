@@ -59,3 +59,8 @@ Cross-session handoff for the `x-grok-` orders ([x-grok-00-CONTEXT.md](x-grok-00
 - Local probing needs the API server beside Vite. Plain `npm run dev` proxies `/api` and `/.well-known` to production, so `--base http://localhost:3000` silently measures production. The commands are now in `docs/mcp.md`.
 - Remaining: (1) a deploy, gated behind the pending `20261008150000_revenue_direct_settle_backfill.sql` (owner row 25), then a production rerun that must print `all 7 servers passed`; (2) a green `npm test`, owned by order 401 (72 failures in 34 files, none new from this order, one fewer after `c3b56080f`).
 
+
+## 2026-10-08: order 023 retry, no change possible (order file kept)
+
+- Re-measured at `cf3286879`: production still serves `fe2a8b24f`; `npm run probe:mcp-clients` fails 4 of 7, the same OAuth resource mismatch on the four protected servers, and API-key mode still works on all seven. `db:status` still shows `20261008150000_revenue_direct_settle_backfill.sql` pending, so the deploy gate in owner row 25 is unchanged. `vitest run`: 34 failed files, 72 failed tests, every file already listed in order 401. The order's own suites pass 97 of 97.
+- Remaining is unchanged: owner row 25 (apply the backfill, deploy, rerun the probe to `all 7 servers passed`, commit the capture) and order 401 (green `npm test`). Then retire this order.
