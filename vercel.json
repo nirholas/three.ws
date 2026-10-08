@@ -247,6 +247,15 @@
 			"continue": true
 		},
 		{
+			"src": "/models/voice/runtime/(.*)",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin",
+				"cache-control": "public, max-age=86400, stale-while-revalidate=604800"
+			},
+			"continue": true
+		},
+		{
 			"src": "/(x402|risk-ack|load-module|x402-discover|x402-pay-core|x402-paywall|i18n|atlas)\\.js",
 			"headers": {
 				"access-control-allow-origin": "*",
