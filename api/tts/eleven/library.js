@@ -176,7 +176,7 @@ export default wrap(async (req, res) => {
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
 	const userId = session?.id ?? bearer.userId;
 
-	const { apiKey } = resolveElevenKey(req);
+	const { apiKey, byok } = resolveElevenKey(req);
 	if (!apiKey)
 		return error(
 			res,
@@ -184,6 +184,15 @@ export default wrap(async (req, res) => {
 			'not_configured',
 			'ElevenLabs is not configured on this server. Send your own key in the x-eleven-key header to browse the library.',
 		);
+
+	// Adding a voice without BYOK writes to the platform's shared ElevenLabs
+	// account: it takes one of its finite voice slots and its name shows in every
+	// user's picker. That is the same platform resource a clone consumes, so it
+	// sits behind the same per-user voiceClone budget eleven-clone.js enforces.
+	if (req.method === 'POST' && !byok) {
+		const rl = await limits.voiceClone(userId);
+		if (!rl.success) return rateLimited(res, rl, 'Too many voices added to the shared library; add your own ElevenLabs key to keep going');
+	}
 
 	return req.method === 'POST'
 		? handlePost(req, res, apiKey, userId)
