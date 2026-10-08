@@ -2,8 +2,9 @@
  * Trader Leaderboard controller.
  *
  * Renders /api/sniper/leaderboard into a ranked, filterable, live-refreshing
- * board. State (window / sort / network / verified) is reflected into the URL so
- * any view is shareable. Every row deep-links to the trader's profile, where each
+ * board. State (tab / window / sort / network / verified) is reflected into the
+ * URL so any view is shareable. The Earned tab (?tab=earned) ranks agents by
+ * what they earned and lives in src/leaderboard-earned.js. Every row deep-links to the trader's profile, where each
  * number can be followed to its on-chain transaction.
  */
 
@@ -13,16 +14,20 @@ import {
 } from './trader-format.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { updateValue, flipReorder, setLiveDot } from './ui-juice.js';
+import { loadEarned, wireEarned } from './leaderboard-earned.js';
 
 const API = '/api/sniper/leaderboard';
 const REFRESH_MS = 20_000;
 const WINDOWS = new Set(['24h', '7d', '30d', 'all']);
 const SORTS = new Set(['score', 'pnl', 'winrate', 'roi']);
 const NETWORKS = new Set(['mainnet', 'devnet']);
+const TABS = new Set(['trading', 'earned']);
+// The earnings snapshot refreshes every 30 minutes, so the Earned tab polls slowly.
+const EARNED_REFRESH_MS = 60_000;
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
-const state = { network: 'mainnet', window: '30d', sort: 'score', verified: false };
+const state = { tab: 'trading', network: 'mainnet', window: '30d', sort: 'score', verified: false };
 let timer = null;
 let firstLoad = true;
 let staleBadgeEl = null;
@@ -57,6 +62,9 @@ function clearStale() {
 // --- URL <-> state -----------------------------------------------------------
 function readUrl() {
 	const p = new URL(location.href).searchParams;
+	if (TABS.has(p.get('tab'))) state.tab = p.get('tab');
+	// The Earned tab opens on this week, the window agent pages link its rank to.
+	if (state.tab === 'earned') state.window = '7d';
 	if (NETWORKS.has(p.get('network'))) state.network = p.get('network');
 	if (WINDOWS.has(p.get('window'))) state.window = p.get('window');
 	if (SORTS.has(p.get('sort'))) state.sort = p.get('sort');
@@ -64,6 +72,12 @@ function readUrl() {
 }
 function writeUrl() {
 	const p = new URLSearchParams();
+	if (state.tab === 'earned') {
+		p.set('tab', 'earned');
+		p.set('window', state.window);
+		history.replaceState(null, '', `${location.pathname}?${p}`);
+		return;
+	}
 	p.set('window', state.window);
 	p.set('sort', state.sort);
 	if (state.network !== 'mainnet') p.set('network', state.network);
@@ -391,6 +405,11 @@ function renderBoard(data) {
 
 // --- Fetch -------------------------------------------------------------------
 async function load() {
+	if (state.tab === 'earned') {
+		const ok = await loadEarned(state.window);
+		setLiveDot($('#lb-live'), ok ? 'live' : 'connecting', ok ? 'live' : 'reconnecting');
+		return;
+	}
 	const board = $('.lb-board');
 	if (firstLoad) { $('#lb-rows').innerHTML = skeletonRows(); board.setAttribute('aria-busy', 'true'); }
 
@@ -436,7 +455,42 @@ function setActive(group, attr, value) {
 	});
 }
 
+// --- Tabs --------------------------------------------------------------------
+// The <title> carries an i18n key for the trading board; the Earned board's
+// title is set here, with the key parked so a locale pass cannot overwrite it.
+const titleEl = document.querySelector('title');
+const titleKey = titleEl?.getAttribute('data-i18n') || null;
+const tradingTitle = document.title;
+function applyTab() {
+	document.body.dataset.lbTab = state.tab;
+	setActive($('#lb-tab'), 'tab', state.tab);
+	if (state.tab === 'earned') {
+		titleEl?.removeAttribute('data-i18n');
+		document.title = 'Earnings Leaderboard · three.ws';
+	} else {
+		if (titleKey) titleEl?.setAttribute('data-i18n', titleKey);
+		document.title = tradingTitle;
+	}
+}
+
 function wireControls() {
+	const tabGroup = $('#lb-tab');
+	tabGroup.addEventListener('click', (e) => {
+		const btn = e.target.closest('.lb-seg-btn');
+		if (!btn || btn.dataset.tab === state.tab) return;
+		state.tab = btn.dataset.tab;
+		applyTab();
+		firstLoad = true; writeUrl(); load(); startTimer();
+	});
+	// Arrow keys move between the two tabs, as a tablist should.
+	tabGroup.addEventListener('keydown', (e) => {
+		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+		const tabs = [...tabGroup.querySelectorAll('.lb-seg-btn')];
+		const next = tabs[(tabs.indexOf(document.activeElement) + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+		next?.focus();
+		next?.click();
+	});
+
 	const winGroup = $('#lb-window');
 	winGroup.addEventListener('click', (e) => {
 		const btn = e.target.closest('.lb-seg-btn');
@@ -474,6 +528,7 @@ function wireControls() {
 }
 
 function syncControlsToState() {
+	applyTab();
 	setActive($('#lb-window'), 'window', state.window);
 	setActive($('#lb-network'), 'network', state.network);
 	$('#lb-sort').value = state.sort;
@@ -483,7 +538,7 @@ function syncControlsToState() {
 // --- Live refresh ------------------------------------------------------------
 function startTimer() {
 	stopTimer();
-	timer = setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+	timer = setInterval(() => { if (!document.hidden) load(); }, state.tab === 'earned' ? EARNED_REFRESH_MS : REFRESH_MS);
 }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
@@ -592,6 +647,7 @@ async function loadOracleLeaderboard() {
 readUrl();
 syncControlsToState();
 wireControls();
+wireEarned();
 ambientField();
 load();
 startTimer();
