@@ -1380,15 +1380,29 @@ const appConfig = {
 					js: resolve(__dirname, 'dist-lib/agent-3d.js'),
 					'umd.cjs': resolve(__dirname, 'dist-lib/agent-3d.umd.cjs'),
 				};
+				let warnedMissing = false;
 				server.middlewares.use((req, res, next) => {
 					const path = (req.url || '').split('?')[0];
 					const m = /^\/agent-3d\/[^/]+\/agent-3d\.(js|umd\.cjs)$/.exec(path);
 					if (!m) return next();
 					const file = libFiles[m[1]];
 					if (!file || !existsSync(file)) {
-						res.statusCode = 503;
-						res.setHeader('content-type', 'text/plain; charset=utf-8');
-						return res.end('agent-3d dev bundle missing — run `npm run build:lib`');
+						// A fresh clone or worktree has no dist-lib/ until someone
+						// runs `npm run build:lib`. Answering 503 here left every
+						// page that embeds <agent-3d> without its figures (and a red
+						// console error) in dev. Fall back to the URL the page
+						// asked for in the first place: the published bundle, which
+						// is served with open CORS for exactly this cross-origin use.
+						if (!warnedMissing) {
+							warnedMissing = true;
+							server.config.logger.warn(
+								'[dev-local-agent-3d] dist-lib/ not built; serving <agent-3d> from https://three.ws. Run `npm run build:lib` to load local element changes.',
+							);
+						}
+						res.statusCode = 302;
+						res.setHeader('location', `https://three.ws${path}`);
+						res.setHeader('cache-control', 'no-store');
+						return res.end();
 					}
 					res.setHeader('content-type', 'text/javascript; charset=utf-8');
 					res.setHeader('cache-control', 'no-cache');
