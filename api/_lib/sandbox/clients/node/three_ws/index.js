@@ -17,6 +17,10 @@ const net = require('node:net');
 
 let nextId = 1;
 
+// fetchJson's deadline when the caller passes no signal of its own. The run's
+// wall-clock limit kills a stuck script eventually; this bounds one call.
+const FETCH_JSON_TIMEOUT_MS = 30_000;
+
 class BridgeError extends Error {
 	constructor(code, message, detail) {
 		super(`${code}: ${message}`);
@@ -26,13 +30,20 @@ class BridgeError extends Error {
 	}
 }
 
-function call(payload) {
+function call(payload, signal) {
 	const socketPath = process.env.THREE_WS_SOCKET;
 	if (!socketPath) {
 		return Promise.reject(new BridgeError('no_bridge', 'THREE_WS_SOCKET is not set: this is not running inside a three.ws sandbox'));
 	}
+	if (signal?.aborted) return Promise.reject(new BridgeError('aborted', 'the call was aborted before it was sent'));
 	return new Promise((resolve, reject) => {
 		const conn = net.createConnection(socketPath);
+		const onAbort = () => {
+			conn.destroy();
+			reject(new BridgeError('aborted', 'the call was aborted before the bridge answered'));
+		};
+		signal?.addEventListener('abort', onAbort, { once: true });
+		conn.on('close', () => signal?.removeEventListener('abort', onAbort));
 		let buf = '';
 		conn.setEncoding('utf8');
 		conn.on('connect', () => conn.write(`${JSON.stringify({ ...payload, id: nextId++ })}\n`));
@@ -70,7 +81,10 @@ function tools() {
 	return call({ op: 'tools' });
 }
 
-/** HTTP through the bridge. Only hosts on the run's allowlist are reachable. */
+/**
+ * HTTP through the bridge. Only hosts on the run's allowlist are reachable.
+ * `init.signal` aborts the call, e.g. `{ signal: AbortSignal.timeout(5000) }`.
+ */
 async function fetch(url, init) {
 	const opts = init || {};
 	let body = opts.body;
@@ -80,7 +94,7 @@ async function fetch(url, init) {
 		headers['content-type'] = 'application/json';
 	}
 	const bodyB64 = body == null ? null : Buffer.from(typeof body === 'string' ? body : body).toString('base64');
-	const raw = await call({ op: 'fetch', url, method: opts.method || 'GET', headers, body_base64: bodyB64 });
+	const raw = await call({ op: 'fetch', url, method: opts.method || 'GET', headers, body_base64: bodyB64 }, opts.signal);
 	const bytes = Buffer.from(raw.body_base64 || '', 'base64');
 	return {
 		status: raw.status,
@@ -93,9 +107,12 @@ async function fetch(url, init) {
 	};
 }
 
-/** fetch() that rejects on a non-2xx status and resolves to the parsed JSON body. */
+/**
+ * fetch() that rejects on a non-2xx status and resolves to the parsed JSON body.
+ * Bounded by FETCH_JSON_TIMEOUT_MS unless `init.signal` says otherwise.
+ */
 async function fetchJson(url, init) {
-	const r = await fetch(url, init);
+	const r = await fetch(url, { signal: AbortSignal.timeout(FETCH_JSON_TIMEOUT_MS), ...init });
 	if (!r.ok) throw new BridgeError('http_error', `${url} answered ${r.status}`, { status: r.status });
 	return r.json();
 }
