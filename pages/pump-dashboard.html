@@ -2870,7 +2870,7 @@
 				const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
 				div.innerHTML = `
 					<div class="pd-feed-time">${timeStr}</div>
-					<div class="pd-feed-tag-col"><span class="pd-tag ${tagInfo.cls}">${tagInfo.label}</span></div>
+					<div class="pd-feed-tag-col"><span class="pd-tag ${tagInfo.cls}">${escapeHtml(tagInfo.label)}</span></div>
 					<div class="pd-feed-body">
 						<div class="pd-feed-title">${escapeHtml(title)}</div>
 						<div class="pd-feed-detail">${escapeHtml(detail)}</div>

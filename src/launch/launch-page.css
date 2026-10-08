@@ -1218,3 +1218,18 @@
 		transition: none;
 	}
 }
+
+.lx-alt-venue {
+	margin-top: 6px;
+	font-size: 13px;
+}
+.lx-alt-venue a {
+	color: var(--lx-accent);
+	text-decoration: none;
+	text-underline-offset: 3px;
+	transition: opacity var(--duration-fast);
+}
+.lx-alt-venue a:hover,
+.lx-alt-venue a:focus-visible {
+	text-decoration: underline;
+}
