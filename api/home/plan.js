@@ -23,7 +23,7 @@
 
 import { requireAdmin } from '../_lib/admin.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { resolveCaller } from '../_lib/home/access.js';
+import { homeScopeRefusal, resolveCaller } from '../_lib/home/access.js';
 import {
 	applyDowngrade,
 	clearAccountOverride,
@@ -46,6 +46,10 @@ export default wrap(async (req, res) => {
 
 	const caller = await resolveCaller(req, res);
 	if (!caller) return error(res, 401, 'unauthorized', 'Sign in to see your home plan.');
+	// No single home to resolve here, so the OAuth scope is checked directly:
+	// listing is home:read, connecting, pairing and pausing are home:act.
+	const refused = homeScopeRefusal(caller, req.method === 'GET' ? 'read' : 'act');
+	if (refused) return error(res, refused.status, refused.code, refused.message);
 
 	if (req.method === 'GET') return handleGet(req, res, caller);
 	return handlePost(req, res, caller);

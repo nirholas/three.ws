@@ -65,6 +65,21 @@ const CAPABILITY_SCOPE = Object.freeze({
 });
 
 /**
+ * The scope refusal for an account-level home route (list, connect, pair, plan)
+ * that has no single home to resolve through `resolveHomeAccess`, or null when
+ * the caller may proceed. Same table, same rule: a session is unscoped, a
+ * bearer needs the scope its capability maps to.
+ *
+ * @param {{ via?: string, scope?: string|null }|null} caller
+ * @param {string} capability
+ */
+export function homeScopeRefusal(caller, capability) {
+	const required = CAPABILITY_SCOPE[capability] || CAPABILITY_SCOPE.act;
+	if (caller?.via !== 'bearer' || hasScope(caller.scope, required)) return null;
+	return { status: 403, code: 'insufficient_scope', message: `${required} required. This token was not granted it.` };
+}
+
+/**
  * Whether this caller may assert `confirmed: true`, the flag that stands for a
  * human saying yes to opening a building.
  *

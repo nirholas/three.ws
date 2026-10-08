@@ -14,7 +14,7 @@
 // this whole surface holds; an agent token that can act does not thereby get to
 // read the history of everything that ever acted.
 
-import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { outOfScopeEntities, resolveHomeAccess } from '../../_lib/home/access.js';
 import { listHomeActions } from '../../_lib/home/store.js';
 import { cors, error, json, method, rateLimited, wrap } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
@@ -28,7 +28,7 @@ export default wrap(async (req, res) => {
 
 	const access = await resolveHomeAccess(req, res, req.query?.id, 'read');
 	if (!access.ok) return error(res, access.status, access.code, access.message);
-	const { caller, home } = access;
+	const { caller, home, scope, scoped } = access;
 
 	if (caller.via !== 'session') {
 		return error(res, 403, 'forbidden', 'The action log is readable from a signed-in session only.');
@@ -56,11 +56,26 @@ export default wrap(async (req, res) => {
 	const hasMore = rows.length > limit;
 	const page = hasMore ? rows.slice(0, limit) : rows;
 
+	// A member scoped to some rooms (a guest given the kitchen) sees only the
+	// actions on devices in that scope, and never who confirmed them or why.
+	// The cursor still advances over the unfiltered page so paging terminates.
+	const visible = scoped ? page.filter((row) => inScope(scope, row)).map(redactForScoped) : page;
+
 	return json(res, 200, {
-		actions: page.map(shape),
+		actions: visible.map(shape),
 		next_before: hasMore ? new Date(page[page.length - 1].created_at).toISOString() : null,
 	});
 });
+
+/** A row is visible to a scoped member only when it names devices, all of them theirs. */
+function inScope(scope, row) {
+	const ids = row.entity_ids || [];
+	return ids.length > 0 && outOfScopeEntities(scope, ids).length === 0;
+}
+
+function redactForScoped(row) {
+	return { ...row, confirmed_by: null, detail: null };
+}
 
 function shape(row) {
 	return {

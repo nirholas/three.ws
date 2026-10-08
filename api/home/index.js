@@ -28,7 +28,7 @@ import { normalizeBaseUrl } from '@three-ws/home-bridge';
 
 import { logAudit } from '../_lib/audit.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { publicHome, resolveCaller } from '../_lib/home/access.js';
+import { homeScopeRefusal, publicHome, resolveCaller } from '../_lib/home/access.js';
 import { assertWithinLimit, HomeQuotaError, resolveHomeEntitlementsForUser } from '../_lib/home/entitlements.js';
 import { homeError, homeFailure, HOME_ERR } from '../_lib/home/errors.js';
 import { assertDialableHomeUrl, HomeUrlError } from '../_lib/home-url-guard.js';
@@ -48,6 +48,10 @@ export default wrap(async (req, res) => {
 
 	const caller = await resolveCaller(req, res);
 	if (!caller) return error(res, 401, 'unauthorized', 'Sign in to see your homes.');
+	// No single home to resolve here, so the OAuth scope is checked directly:
+	// listing is home:read, connecting, pairing and pausing are home:act.
+	const refused = homeScopeRefusal(caller, req.method === 'GET' ? 'read' : 'act');
+	if (refused) return error(res, refused.status, refused.code, refused.message);
 
 	if (req.method === 'GET') return handleList(req, res, caller);
 	return handleConnect(req, res, caller);

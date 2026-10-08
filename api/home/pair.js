@@ -15,7 +15,7 @@
 // no URL we could ever dial. Those houses dial us. See
 // docs/home-relay-threat-model.md for what that connection can and cannot do.
 
-import { publicHome, resolveCaller } from '../_lib/home/access.js';
+import { homeScopeRefusal, publicHome, resolveCaller } from '../_lib/home/access.js';
 import { can } from '../_lib/home/members.js';
 import { homeError, homeFailure, HOME_ERR } from '../_lib/home/errors.js';
 import {
@@ -40,6 +40,10 @@ export default wrap(async (req, res) => {
 
 	const caller = await resolveCaller(req, res);
 	if (!caller) return error(res, 401, 'unauthorized', 'Sign in to connect a home.');
+	// No single home to resolve here, so the OAuth scope is checked directly:
+	// listing is home:read, connecting, pairing and pausing are home:act.
+	const refused = homeScopeRefusal(caller, req.method === 'GET' ? 'read' : 'act');
+	if (refused) return error(res, refused.status, refused.code, refused.message);
 
 	if (!isRelayConfigured()) {
 		return homeError(

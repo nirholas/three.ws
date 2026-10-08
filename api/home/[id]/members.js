@@ -13,6 +13,7 @@
 // only one of them is safe to disclose.
 
 import { logAudit } from '../../_lib/audit.js';
+import { env } from '../../_lib/env.js';
 import { sendHouseholdInviteEmail } from '../../_lib/email.js';
 import { getConnection } from '../../_lib/home/store.js';
 import { getSessionUser } from '../../_lib/auth.js';
@@ -46,10 +47,11 @@ import { isUuid } from '../../_lib/validate.js';
  * before it asks them to sign in, and sends them through the existing register
  * and login flow and back to the same link if they need an account.
  */
-function inviteUrl(req, token) {
-	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
-	const proto = /^localhost|^127\./.test(String(host)) ? 'http' : 'https';
-	return `${proto}://${host}/smart-home/join?invite=${encodeURIComponent(token)}`;
+function inviteUrl(token) {
+	// The configured origin, never a request header: `x-forwarded-host` and
+	// `host` are caller-controlled, and an emailed link built from them is a
+	// platform-branded phishing link to whatever host the inviter named.
+	return `${env.APP_ORIGIN}/smart-home/join?invite=${encodeURIComponent(token)}`;
 }
 
 /** "an admin" / "a member": role names are user-facing copy, not identifiers. */
@@ -161,7 +163,7 @@ export default wrap(async (req, res) => {
 			invitedBy: user.id,
 		});
 
-		const url = inviteUrl(req, invite.token);
+		const url = inviteUrl(invite.token);
 
 		// Mail it, and say honestly whether that worked.
 		//
