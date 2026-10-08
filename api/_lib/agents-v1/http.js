@@ -22,13 +22,21 @@
 // 500 with a sanitized message; the stable error codes are listed in
 // docs/api-reference.md.
 
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { cors, readJson, setRateLimitHeaders } from '../http.js';
 import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../auth.js';
 import { checkCsrf } from '../csrf.js';
 import { limits, clientIp } from '../rate-limit.js';
 import { recordEvent } from '../usage.js';
-import { acquireLock, cacheGet, cacheSet, releaseLock } from '../cache.js';
+import { acquireLock, releaseLock } from '../cache.js';
+import {
+	IDEMPOTENCY_KEY_MAX,
+	idempotencyStoreKey,
+	normalizeIdempotencyKey,
+	readIdempotent,
+	sha256Hex,
+	writeIdempotent,
+} from '../idempotency.js';
 
 export class ApiError extends Error {
 	/**
@@ -204,7 +212,7 @@ export function defineRouter({ base, routes }) {
 
 			const idem = writes && principal ? idempotencyKey(req, principal, route, body) : null;
 			if (idem) {
-				const stored = await cacheGet(idem.key).catch(() => null);
+				const stored = await readIdempotent(idem.key);
 				if (stored) {
 					if (stored.bodyHash !== idem.bodyHash) {
 						throw apiError(422, 'idempotency_key_reused', 'This Idempotency-Key was already used with a different request body.');
@@ -230,7 +238,7 @@ export function defineRouter({ base, routes }) {
 			if (res.headersSent || res.writableEnded) return;
 			const out = shape(ctx, result);
 			if (ctx.idem) {
-				await cacheSet(ctx.idem.key, { ...out, bodyHash: ctx.idem.bodyHash }, IDEMPOTENCY_TTL_S).catch(() => {});
+				await writeIdempotent(ctx.idem.key, { ...out, bodyHash: ctx.idem.bodyHash }).catch(() => {});
 			}
 			return send(res, out.status, out.body);
 		} catch (err) {
@@ -252,8 +260,6 @@ export function defineRouter({ base, routes }) {
 	};
 }
 
-const IDEMPOTENCY_TTL_S = 24 * 60 * 60;
-
 function shape(ctx, result) {
 	if (result && result[CREATED]) return { status: 201, body: { data: result.data, meta: meta(ctx) } };
 	if (result && result.__page) {
@@ -265,14 +271,18 @@ function shape(ctx, result) {
 	return { status: 200, body: { data: result ?? null, meta: meta(ctx) } };
 }
 
+// The store is shared with the MCP studio's idempotency_key (../idempotency.js).
 function idempotencyKey(req, principal, route, body) {
-	const raw = req.headers['idempotency-key'];
-	if (typeof raw !== 'string' || !raw.trim()) return null;
-	if (raw.length > 200) throw apiError(400, 'invalid_idempotency_key', 'Idempotency-Key must be at most 200 characters.');
-	const digest = (v) => createHash('sha256').update(v).digest('hex');
+	let key;
+	try {
+		key = normalizeIdempotencyKey(req.headers['idempotency-key']);
+	} catch {
+		throw apiError(400, 'invalid_idempotency_key', `Idempotency-Key must be at most ${IDEMPOTENCY_KEY_MAX} characters.`);
+	}
+	if (!key) return null;
 	return {
-		key: `v1:idem:${principal.userId}:${route.name}:${digest(raw.trim())}`,
-		bodyHash: digest(`${req.url}\n${JSON.stringify(body)}`),
+		key: idempotencyStoreKey('v1', `${principal.userId}:${route.name}`, key),
+		bodyHash: sha256Hex(`${req.url}\n${JSON.stringify(body)}`),
 	};
 }
 

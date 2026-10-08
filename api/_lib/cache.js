@@ -514,6 +514,38 @@ export async function acquireLock(key, ttlSeconds) {
 }
 
 /**
+ * Store `value` under `key` only if nothing is there yet (Redis `SET NX EX`),
+ * and say whether this caller's write is the one that landed. Unlike
+ * acquireLock, the claim carries a real value, so whoever loses the race can
+ * read what the winner recorded (the idempotency store claims a key and its job
+ * handle in one command this way). With Redis unconfigured or unreachable it
+ * degrades to the same check against per-instance memory.
+ *
+ * @param {string} key
+ * @param {unknown} value
+ * @param {number} ttlSeconds
+ * @returns {Promise<boolean>}
+ */
+export async function cacheSetIfAbsent(key, value, ttlSeconds) {
+	const claimInMemory = () => {
+		if (memGet(key) !== null) return false;
+		memSet(key, value, ttlSeconds);
+		return true;
+	};
+	if (!redisConfigured()) return claimInMemory();
+	try {
+		const body = await encodeForWire(JSON.stringify(value));
+		const res = await redisCmd(['SET', key, body, 'NX', 'EX', String(ttlSeconds)]);
+		if (res !== 'OK') return false;
+		memoPut(key, value);
+		return true;
+	} catch (err) {
+		if (!err?.circuitOpen) warnThrottled('setIfAbsent', `[cache] SET NX failed, claiming in memory: ${err?.message}`);
+		return claimInMemory();
+	}
+}
+
+/**
  * Release a lock taken with acquireLock. Best-effort — a failed release just
  * leaves the lock to expire on its TTL.
  * @param {string} key
