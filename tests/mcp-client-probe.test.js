@@ -8,6 +8,7 @@ import {
 	parseRpcBody,
 	judgeGetStream,
 	judgeServer,
+	summarizeError,
 } from '../scripts/mcp-client-probe.mjs';
 
 describe('authExpectations', () => {
@@ -126,5 +127,36 @@ describe('judgeServer', () => {
 			modes: { anonymous: { ok: true, tools: 1 }, apiKey: { skipped: 'x' } },
 		};
 		expect(judgeServer(r)[0]).toMatch(/1999-01-01/);
+	});
+});
+
+describe('summarizeError', () => {
+	it('keeps the SDK prefix and the error fields of a JSON body, not the whole 402 envelope', () => {
+		const body = {
+			x402Version: 2,
+			error: 'X-PAYMENT header is required',
+			resource: { url: 'https://three.ws/api/mcp-3d', description: 'x'.repeat(2000) },
+			accepts: [{ scheme: 'exact' }, { scheme: 'exact' }],
+			extensions: { bazaar: { discoverable: true } },
+		};
+		const out = summarizeError(`Streamable HTTP error: Error POSTing to endpoint: ${JSON.stringify(body)}`);
+		expect(out).toBe(
+			'Streamable HTTP error: Error POSTing to endpoint: {x402Version=2, error="X-PAYMENT header is required", accepts=2}',
+		);
+	});
+
+	it('carries an OAuth-style error description through', () => {
+		const out = summarizeError(
+			'Streamable HTTP error: Error POSTing to endpoint: {"error":"service_unavailable","error_description":"database temporarily unavailable, retry shortly","ref":"48946bcef07d256a"}',
+		);
+		expect(out).toContain('error="service_unavailable"');
+		expect(out).toContain('error_description="database temporarily unavailable, retry shortly"');
+		expect(out).not.toContain('48946bcef07d256a');
+	});
+
+	it('cuts a plain message at the limit', () => {
+		expect(summarizeError('fetch failed')).toBe('fetch failed');
+		expect(summarizeError('a'.repeat(500)).length).toBe(400);
+		expect(summarizeError('SSE error: Non-200 status code (405) {not json')).toBe('SSE error: Non-200 status code (405) {not json');
 	});
 });

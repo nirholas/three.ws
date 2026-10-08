@@ -317,6 +317,31 @@ function errorStatus(err) {
 	return m ? Number(m[1]) : null;
 }
 
+// The SDK folds the whole response body into its error message, and a 402
+// body is several kilobytes of x402 requirements and bazaar schema. Keep the
+// SDK's own prefix and the body's error fields; the evidence file records what
+// went wrong, not a copy of the server's discovery metadata.
+export function summarizeError(message, max = 400) {
+	const text = String(message ?? '');
+	const brace = text.indexOf('{');
+	if (brace !== -1) {
+		try {
+			const body = JSON.parse(text.slice(brace));
+			if (body && typeof body === 'object') {
+				const fields = ['error', 'error_description', 'message', 'code']
+					.filter((k) => typeof body[k] === 'string' || typeof body[k] === 'number')
+					.map((k) => `${k}=${JSON.stringify(body[k])}`);
+				if (body.x402Version !== undefined) fields.unshift(`x402Version=${body.x402Version}`);
+				if (Array.isArray(body.accepts)) fields.push(`accepts=${body.accepts.length}`);
+				return `${text.slice(0, brace).trimEnd()} {${fields.join(', ')}}`.slice(0, max);
+			}
+		} catch {
+			// Not a JSON body after all; fall through to the plain cut.
+		}
+	}
+	return text.slice(0, max);
+}
+
 function isAuthError(err) {
 	return err?.name === 'UnauthorizedError' || errorStatus(err) === 401 || /unauthori[sz]ed/i.test(String(err?.message));
 }
@@ -327,7 +352,7 @@ async function runSdk(url, { headers = {}, transport: kind, timeout }) {
 	let closing = false;
 	// Closing aborts the open GET stream; that abort is the probe's own doing.
 	client.onerror = (e) => {
-		if (!closing) warnings.push(String(e?.message || e));
+		if (!closing) warnings.push(summarizeError(e?.message || e));
 	};
 	const requestInit = { headers };
 	const transport =
@@ -364,7 +389,7 @@ async function runSdk(url, { headers = {}, transport: kind, timeout }) {
 		}
 		out.ok = !out.call || out.call.ok;
 	} catch (err) {
-		out.error = String(err?.message || err).slice(0, 400);
+		out.error = summarizeError(err?.message || err);
 		out.status = errorStatus(err);
 		out.authRequired = isAuthError(err);
 	} finally {
