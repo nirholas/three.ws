@@ -53,7 +53,7 @@ Verify in a real browser: `npm run dev` (port 3000; reuse it if another agent is
 | 019 (retired 2026-10-08) | `/experiments`: public write-ups of what we tried and what the numbers said | none |
 | [020](../020-parity-06-success-stories.md) | `/stories`: opt-in case studies with verifiable on-chain metrics | none |
 | [021](../021-parity-07-three-fee-flow.md) | "Where every $100 goes" on `/three-token`, from the live split policies | none |
-| [022](../022-parity-08-mcp-use-cases-and-safe-retries.md) | MCP docs as tool-call sequences; `retry_safe` on every post-payment failure | none |
+| 022 (retired 2026-10-08) | MCP docs as tool-call sequences; `retry_safe` on every post-payment failure | none |
 | [919](../919-parity-09-ship-and-publish.md) | Push, deploy, publish the `three-ws` CLI to npm | owner: push, deploy, npm publish |
 | [920](../920-parity-10-community-skill-registry.md) | Pull community skills from external GitHub registries | owner: the source list names other projects |
 | [921](../921-parity-11-directory-listings.md) | List `skill.md` in the Solana Foundation's awesome-solana-ai | owner: external PR |
