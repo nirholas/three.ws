@@ -51,6 +51,24 @@ export async function markLaneUnhealthy(backendId, seconds = LANE_COOLDOWN_SECON
 	await markProviderCooldown(laneCooldownKey(backendId), seconds).catch(() => {});
 }
 
+// The free HuggingFace Spaces lane fails as a whole: every Space in its chain
+// sits GPU-quota-exhausted or errored for long stretches of the day, and each
+// attempt still costs the caller 3-15s of Space round trips before it gives up.
+// On 2026-10-08 a user who had picked that engine retried it four times in six
+// minutes, each one a 502, while our own TRELLIS worker finished jobs alongside.
+// One chain-wide failure therefore pauses the lane fleet-wide for this long:
+// the free-first path skips straight to the next lane, the health report reads
+// the lane as down so the engine picker stops offering it, and the first
+// request after the window re-tests the Spaces for real.
+export const HF_LANE_COOLDOWN_SECONDS = 300;
+
+/** True while a recent chain-wide HuggingFace failure has the lane paused. */
+export async function hfLaneCooling() {
+	const key = laneCooldownKey('huggingface');
+	const cooling = await providersInCooldown([key]).catch(() => new Map());
+	return cooling.has(key);
+}
+
 const PROBE_TIMEOUT_MS = 2_500;
 // A reachable worker that answers within this is warm; slower means it is most
 // likely a scale-to-zero container spinning up, so the lane is reported cold and

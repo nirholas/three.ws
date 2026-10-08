@@ -164,6 +164,26 @@ describe('forge-health — per-backend verdicts', () => {
 		expect((await probeForgeHealth()).backends.huggingface.status).toBe('degraded');
 	});
 
+	it('reports HuggingFace down while a chain-wide Space failure has the lane paused', async () => {
+		// whoami only proves the token; the Spaces fail on their own. The real
+		// generation path pauses the lane after every Space failed, and the report
+		// must say so, or the engine picker keeps offering a dead lane.
+		const { markLaneUnhealthy, laneCooldownKey } = await import('../../api/_lib/forge-lane-health.js');
+		const { clearProviderCooldown } = await import('../../api/_lib/provider-health.js');
+		process.env.HF_TOKEN = 'hf_test';
+		mockUpstreams([['huggingface.co', 200]]);
+		try {
+			await markLaneUnhealthy('huggingface', 300);
+			const health = await probeForgeHealth({ force: true });
+			expect(health.backends.huggingface.status).toBe('down');
+			expect(health.backends.huggingface.message).toMatch(/paused/);
+		} finally {
+			await clearProviderCooldown(laneCooldownKey('huggingface'));
+		}
+		const healed = await probeForgeHealth({ force: true });
+		expect(healed.backends.huggingface.status).toBe('ok');
+	});
+
 	it('never probes HuggingFace when HF_TOKEN is unset', async () => {
 		mockUpstreams([]);
 		const health = await probeForgeHealth();

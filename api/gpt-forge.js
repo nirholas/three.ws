@@ -87,7 +87,12 @@ import {
 	buildCatalog,
 	selfhostQualityForTier,
 } from './_lib/forge-tiers.js';
-import { laneHealthSnapshot, markLaneUnhealthy } from './_lib/forge-lane-health.js';
+import {
+	laneHealthSnapshot,
+	markLaneUnhealthy,
+	hfLaneCooling,
+	HF_LANE_COOLDOWN_SECONDS,
+} from './_lib/forge-lane-health.js';
 import { resolveProviderKey } from './_lib/forge-provider-key.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { encodeJobToken, decodeJobToken } from './_lib/forge-job-token.js';
@@ -827,6 +832,26 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 	return true;
 }
 
+// The caller explicitly picked the free HuggingFace engine and it could not
+// serve the request. The pick is honoured (never silently swapped), but this is
+// a temporary capacity state, not a gateway fault: answer 503 with Retry-After,
+// and name the configured engines that can take a fresh retry so the client can
+// hop to one visibly instead of looping its countdown on the same dead Spaces.
+// The lane always holds reference views by now (uploaded, or synthesized from
+// the prompt), so the suggestions are scoped to image-capable lanes.
+function hfLaneBusy(res) {
+	const retryBackends = retryBackendSuggestions({ attempted: ['huggingface'], hasImage: true });
+	res.setHeader('retry-after', '30');
+	return json(res, 503, {
+		error: 'provider_busy',
+		backend: 'huggingface',
+		message:
+			'The free Hugging Face Spaces are out of GPU quota or warming up right now. Switch engines, or try again in a moment.',
+		retry_after: 30,
+		...(retryBackends.length ? { retryable: true, retry_backends: retryBackends } : {}),
+	});
+}
+
 // Free Hugging Face Spaces image→3D lane (Hunyuan3D / TRELLIS / TripoSR on free
 // GPU Spaces: the same provider the avatar reconstruction pipeline runs). The
 // platform photo→3D default is the Replicate TRELLIS lane; when that account is
@@ -889,6 +914,11 @@ async function runHfImageLane({
 	// lane reports "not served" (false) and the caller degrades, to the paid
 	// reconstruct fallback on the free-first path, or a designed "free lane busy"
 	// error on an explicit free pick: instead of piling onto an exhausted pool.
+	// A chain-wide failure in the last few minutes paused the lane (see
+	// HF_LANE_COOLDOWN_SECONDS): report "not served" at once instead of making
+	// this caller wait out the same dead Spaces again.
+	if (await hfLaneCooling()) return false;
+
 	const slot = await acquireBlockingSlot('hf', {
 		max: SCALE_LIMITS.hfConcurrent,
 		ttlMs: SCALE_LIMITS.hfSlotTtlMs,
@@ -912,6 +942,7 @@ async function runHfImageLane({
 		if (!resultGlbUrl) throw new Error('HuggingFace returned no GLB');
 	} catch (err) {
 		console.warn(`[forge] free HuggingFace image lane failed: ${err?.message || err}`);
+		await markLaneUnhealthy('huggingface', HF_LANE_COOLDOWN_SECONDS);
 		return false;
 	} finally {
 		await slot.release();
@@ -2152,12 +2183,7 @@ async function startJob(req, res) {
 				if (await runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opts, cacheKey })) return;
 			}
 			if (backendId === 'huggingface') {
-				return json(res, 502, {
-					error: 'provider_busy',
-					backend: 'huggingface',
-					message:
-						'The free 3D Spaces are all busy or warming up right now. Try again in a moment, or pick another engine.',
-				});
+				return hfLaneBusy(res);
 			}
 		}
 

@@ -1379,6 +1379,23 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));
+	// An explicitly picked free engine that could not serve the request (503
+	// provider_busy). Checked before the generic 503 handling below, which would
+	// misfile it. When the server names configured engines that can take the
+	// request, hop to one visibly (the lane_failed path flips the picker and says
+	// so) rather than count down into the same dead lane; otherwise it is the
+	// recoverable high-demand countdown.
+	if (data.error === 'provider_busy') {
+		const e = new Error(data.message || 'The free 3D engines are at capacity right now.');
+		if (Array.isArray(data.retry_backends) && data.retry_backends.length) {
+			e.kind = 'lane_failed';
+			e.retryBackends = data.retry_backends;
+		} else {
+			e.kind = 'busy';
+			e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
+		}
+		throw e;
+	}
 	if (res.status === 503 || data.error === 'unconfigured') {
 		const e = new Error(data.message || 'unconfigured');
 		e.kind = 'unconfigured';

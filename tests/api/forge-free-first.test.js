@@ -255,9 +255,16 @@ describe('forge free-first reconstruct ordering', () => {
 		const res = makeRes();
 		await handler(req, res);
 
-		expect(res.statusCode).toBe(502);
+		// A temporary capacity state, not a gateway fault: 503 + Retry-After.
+		expect(res.statusCode).toBe(503);
+		expect(res.headers['retry-after']).toBe('30');
 		expect(res.body.error).toBe('provider_busy');
 		expect(res.body.backend).toBe('huggingface');
+		expect(res.body.retry_after).toBe(30);
+		// Names the configured engines a fresh retry could use, never HF itself.
+		expect(res.body.retryable).toBe(true);
+		expect(res.body.retry_backends).toContain('trellis');
+		expect(res.body.retry_backends).not.toContain('huggingface');
 		expect(replicateSubmit).not.toHaveBeenCalled();
 	});
 
@@ -288,4 +295,49 @@ describe('forge free-first reconstruct ordering', () => {
 			delete process.env.FORGE_PREFER_FREE;
 		}
 	});
+});
+
+// Production 2026-10-08: every HuggingFace Space sat GPU-quota-dead while a user
+// who had picked that engine retried it four times in six minutes, each one a
+// 3-15s wait ending in a 502. One chain-wide failure now pauses the lane
+// fleet-wide, so the next request answers at once (the health report side is
+// pinned in tests/api/forge-health.test.js).
+describe('forge HuggingFace lane pause after a chain-wide failure', () => {
+	const photoPick = () =>
+		makeReq({
+			image_urls: ['https://cdn.example/photo.png'],
+			backend: 'huggingface',
+			tier: 'standard',
+			path: 'image',
+			skip_validation: true,
+		});
+
+	it('pauses the lane so the next explicit pick skips the dead Spaces', async () => {
+		const { clearProviderCooldown } = await import('../../api/_lib/provider-health.js');
+		const { laneCooldownKey, hfLaneCooling } = await import('../../api/_lib/forge-lane-health.js');
+		process.env.HF_TOKEN = 'test-hf-token';
+		hfSubmit.mockClear();
+		hfSubmit.mockRejectedValueOnce(new Error('all 3 huggingface Space(s) failed: GPU quota exhausted'));
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		try {
+			const first = makeRes();
+			await handler(photoPick(), first);
+			expect(first.statusCode).toBe(503);
+			expect(first.body.error).toBe('provider_busy');
+			expect(hfSubmit).toHaveBeenCalledTimes(1);
+			expect(await hfLaneCooling()).toBe(true);
+
+			const second = makeRes();
+			await handler(photoPick(), second);
+			expect(second.statusCode).toBe(503);
+			expect(second.body.error).toBe('provider_busy');
+			// Paused: the Spaces were not called again.
+			expect(hfSubmit).toHaveBeenCalledTimes(1);
+		} finally {
+			warn.mockRestore();
+			await clearProviderCooldown(laneCooldownKey('huggingface'));
+			delete process.env.HF_TOKEN;
+		}
+	});
+
 });

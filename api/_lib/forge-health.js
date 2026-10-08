@@ -25,6 +25,7 @@ import { getRedisBurn } from './redis-usage.js';
 import { probeLlmHealth } from './llm-health.js';
 import { readGenerationMetrics } from './forge-events.js';
 import { providersInCooldown } from './provider-health.js';
+import { hfLaneCooling } from './forge-lane-health.js';
 
 const PROBE_TIMEOUT_MS = 4_000;
 const CACHE_TTL_MS = 60_000;
@@ -179,6 +180,19 @@ async function probeHuggingFace() {
 		return result(id, 'degraded', 'Hugging Face is rate-limiting — the free Spaces may queue.', { http_status: res.status, latency_ms: latency });
 	}
 	if (res.ok) {
+		// whoami only proves the token. The Spaces behind the lane fail on their
+		// own (GPU quota exhausted, Space errored) while the token stays valid, so
+		// cross-check the pause the real generation path sets after a chain-wide
+		// failure. Reported down, not degraded: the engine picker disables a down
+		// lane and moves the user to a working one, which is the point.
+		if (await hfLaneCooling()) {
+			return result(
+				id,
+				'down',
+				'Hugging Face accepted the token, but every free Space failed a real generation in the last few minutes; the lane is paused while they recover.',
+				{ latency_ms: latency },
+			);
+		}
 		return result(id, 'ok', 'Hugging Face accepted the token; the free Spaces lane is reachable (queue waits vary).', { latency_ms: latency });
 	}
 	return result(id, 'down', `Hugging Face returned an unexpected HTTP ${res.status}.`, { http_status: res.status, latency_ms: latency });

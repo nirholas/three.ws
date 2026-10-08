@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down",
+			"summary": "When every free Hugging Face Space is out of GPU quota, the Forge now pauses that engine for a few minutes, greys it out in the engine picker with the reason, and moves a generation you started on it to a working engine, showing you the switch, instead of retrying the same dead Spaces with a countdown.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Chart Companion: a 3D agent that watches the chart with you",
 			"summary": "Paste any DEXTools pair at /chart-companion and a 3D agent sits beside the live chart, reacting to every real swap as it lands: a superhero jump for a whale buy, a facepalm for a dump, a dance for a buy streak, applause for a new daily high. Each reaction comes with a line you can trace to its transaction, and it can read them aloud. Bring your own three.ws agent, embed it on your coin's site with one iframe, or add it to OBS as a transparent overlay for your stream.",
 			"tags": [

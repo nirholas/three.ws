@@ -125,6 +125,8 @@ Routing answers one question: given `(path, tier, userImages, prompt)`, which co
 
 **Circuit breakers.** A failing lane is sidelined, not retried in a loop: per-lane cooldowns (`forge-lane:<id>`, 90s) plus dedicated NIM cooldowns (120s model, 30s gateway) short-circuit routing away from a degraded upstream. Cooldowns are shared cross-instance via `api/_lib/provider-health.js` and expire on their own, so a recovered lane is retried promptly. Every entry is env-gated, so partial deployments degrade to a shorter list instead of erroring.
 
+**The HuggingFace Spaces pause.** The free HF lane fails as a whole (every Space in its chain GPU-quota-exhausted or errored), and each attempt still costs the caller 3-15 s of Space round trips. So one chain-wide failure records `forge-lane:huggingface` for `HF_LANE_COOLDOWN_SECONDS` (300 s, `api/_lib/forge-lane-health.js`). While it holds, `runHfImageLane` reports "not served" at once, the health-aware router reads the lane as down, and `GET /api/forge?health=1` reports `huggingface` as `down` (whoami alone only proves the token), so the engine picker disables it. A caller who explicitly picked the HF engine gets `503 provider_busy` with `Retry-After: 30` and `retry_backends` naming the configured image-capable engines; the pick is never swapped silently, and `/forge` hops to the first suggestion visibly through the same lane-failed path a mid-job failure uses. The first request after the window re-tests the Spaces for real.
+
 ## 5. Job lifecycle
 
 ### Submit
