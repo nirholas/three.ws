@@ -122,6 +122,63 @@ describe('SkillRegistry.install – trust modes', () => {
 	});
 });
 
+describe('SkillRegistry.install – main-thread opt-out', () => {
+	const mainThreadManifest = () => fixtureManifest({ sandboxPolicy: 'trusted-main-thread' });
+
+	it('sandboxes a trusted-main-thread bundle served from an untrusted origin', async () => {
+		const registry = new SkillRegistry({
+			fetchFn: makeFetch(fixtureRoutes(mainThreadManifest())),
+			trust: 'owned-only',
+			mainThreadOrigins: ['https://three.ws'],
+		});
+		const skill = await registry.install({ uri: 'https://cdn.jsdelivr.net/npm/evil@1.0.0/' });
+		expect(skill.mainThread).toBe(false);
+		expect(skill.handlersSrc).toBe('export default {}');
+	});
+
+	it('never grants the main thread under any trust, even from a trusted origin', async () => {
+		const registry = new SkillRegistry({
+			fetchFn: makeFetch(fixtureRoutes(mainThreadManifest())),
+			trust: 'any',
+			mainThreadOrigins: ['https://three.ws'],
+		});
+		const skill = await registry.install({ uri: 'https://three.ws/skills/tip-jar/' });
+		expect(skill.mainThread).toBe(false);
+	});
+
+	it('grants the main thread to a bundle from a trusted origin', () => {
+		const registry = new SkillRegistry({
+			fetchFn: makeFetch({}),
+			trust: 'owned-only',
+			mainThreadOrigins: ['https://three.ws'],
+		});
+		expect(registry.mayRunOnMainThread(mainThreadManifest(), 'https://three.ws/skills/tip-jar/')).toBe(true);
+		expect(registry.mayRunOnMainThread(fixtureManifest(), 'https://three.ws/skills/tip-jar/')).toBe(false);
+		expect(registry.mayRunOnMainThread(mainThreadManifest(), 'https://three.ws.evil.example/x/')).toBe(false);
+		expect(registry.mayRunOnMainThread(mainThreadManifest(), 'data:text/javascript,alert(1)')).toBe(false);
+	});
+
+	it('routes a downgraded skill through the sandbox host on invoke', async () => {
+		const { getHost } = await import('../../src/skills/sandbox-host.js');
+		const invoke = vi.fn(async () => ({ ok: true }));
+		getHost.mockReturnValue({ invoke });
+		const registry = new SkillRegistry({
+			fetchFn: makeFetch(fixtureRoutes(mainThreadManifest())),
+			trust: 'owned-only',
+			mainThreadOrigins: ['https://three.ws'],
+		});
+		const skill = await registry.install({ uri: 'https://attacker.example/skill/' });
+		await skill.invoke('do_it', {}, {});
+		expect(invoke).toHaveBeenCalledWith(
+			'https://attacker.example/skill/',
+			'do_it',
+			{},
+			'export default {}',
+			expect.any(Object),
+		);
+	});
+});
+
 describe('SkillRegistry.install – dependency loading', () => {
 	it('recursively installs each dependency URI listed in manifest.dependencies', async () => {
 		const depManifest = fixtureManifest({ name: 'dep-skill', dependencies: undefined });

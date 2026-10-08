@@ -1958,6 +1958,9 @@ class Agent3DElement extends HTMLElement {
 			this._skills = new SkillRegistry({
 				trust: this.getAttribute('skill-trust') || 'owned-only',
 				ownerAddress: manifest.id?.owner,
+				// Bundles from the page itself or from the origin that served this
+				// library may run on the main thread; any other origin is sandboxed.
+				mainThreadOrigins: [_pageOrigin(), _scriptOrigin].filter(Boolean),
 			});
 			const skillList = manifest.skills || [];
 			for (const spec of skillList) {

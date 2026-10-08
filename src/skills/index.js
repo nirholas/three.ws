@@ -27,6 +27,17 @@ function parseFrontmatter(text) {
 	return { meta, body: m[2] };
 }
 
+// The origin of an http(s) URL (a root-relative one resolves against the page),
+// or '' for anything else.
+function originOf(url) {
+	try {
+		const u = new URL(url, typeof location !== 'undefined' ? location.href : undefined);
+		return u.protocol === 'https:' || u.protocol === 'http:' ? u.origin : '';
+	} catch {
+		return '';
+	}
+}
+
 function joinURI(base, rel) {
 	if (/^([a-z]+:|\/)/i.test(rel)) return rel;
 	if (!base.endsWith('/')) base += '/';
@@ -34,7 +45,7 @@ function joinURI(base, rel) {
 }
 
 export class Skill {
-	constructor({ uri, manifest, instructions, tools, handlers, handlersSrc }) {
+	constructor({ uri, manifest, instructions, tools, handlers, handlersSrc, mainThread = false }) {
 		this.uri = uri;
 		this.manifest = manifest;
 		this.name = manifest.name;
@@ -44,6 +55,9 @@ export class Skill {
 		// trusted-main-thread: populated from dynamic import; sandbox: populated from handlersSrc
 		this.handlers = handlers || {};
 		this.handlersSrc = handlersSrc || null;
+		// Decided by SkillRegistry, never read straight off the manifest: a
+		// manifest is authored by whoever hosts the bundle.
+		this.mainThread = Boolean(mainThread);
 	}
 
 	async invoke(toolName, args, ctx) {
@@ -57,8 +71,8 @@ export class Skill {
 			...(paymentProof && { paymentProof }),
 		};
 
-		// Owner-signed skills may opt out of the sandbox via sandboxPolicy: "trusted-main-thread"
-		if (this.manifest.sandboxPolicy === 'trusted-main-thread') {
+		// A skill the registry cleared for the main thread (see mayRunOnMainThread).
+		if (this.mainThread) {
 			const handler = this.handlers[toolName];
 			if (!handler) {
 				throw new Error(`Skill "${this.name}" has no handler for tool "${toolName}"`);
@@ -80,11 +94,39 @@ export class Skill {
 }
 
 export class SkillRegistry {
-	constructor({ fetchFn = fetch.bind(globalThis), trust = 'owned-only', ownerAddress } = {}) {
+	constructor({
+		fetchFn = fetch.bind(globalThis),
+		trust = 'owned-only',
+		ownerAddress,
+		mainThreadOrigins,
+	} = {}) {
 		this.fetchFn = fetchFn;
 		this.trust = trust;
 		this.ownerAddress = ownerAddress?.toLowerCase();
+		this.mainThreadOrigins = new Set(
+			(mainThreadOrigins ?? [typeof location !== 'undefined' ? location.origin : ''])
+				.map(originOf)
+				.filter(Boolean),
+		);
 		this.skills = new Map();
+	}
+
+	/**
+	 * Whether a bundle's handlers may be imported into the page instead of the
+	 * worker. `sandboxPolicy: "trusted-main-thread"` is only a request: the
+	 * manifest is written by whoever hosts the bundle, and an on-chain agent's
+	 * skill URIs are written by whoever minted it, so honoring the flag on its
+	 * own let any such bundle run arbitrary code in the embedding page. The
+	 * request is granted only for bundles served from an origin the host trusts
+	 * (by default the page's own) and never under `any` trust.
+	 * @param {object} manifest
+	 * @param {string} uri resolved bundle URI
+	 */
+	mayRunOnMainThread(manifest, uri) {
+		if (manifest?.sandboxPolicy !== 'trusted-main-thread') return false;
+		if (this.trust === 'any') return false;
+		const origin = originOf(uri);
+		return Boolean(origin) && this.mainThreadOrigins.has(origin);
 	}
 
 	async install(spec, { bundleBase } = {}) {
@@ -95,7 +137,12 @@ export class SkillRegistry {
 		const manifest = await this._fetchJSON(`${uri}manifest.json`);
 		this._enforceTrust(manifest);
 
-		const isTrusted = manifest.sandboxPolicy === 'trusted-main-thread';
+		const isTrusted = this.mayRunOnMainThread(manifest, uri);
+		if (manifest.sandboxPolicy === 'trusted-main-thread' && !isTrusted) {
+			log.warn(
+				`[skills] "${manifest.name}" asked for the main thread from an untrusted origin; running it in the sandbox`,
+			);
+		}
 
 		const [instructions, toolsJSON, handlersData] = await Promise.all([
 			this._fetchText(`${uri}SKILL.md`).catch(() => ''),
@@ -112,6 +159,7 @@ export class SkillRegistry {
 			tools: toolsJSON.tools || [],
 			handlers: isTrusted ? handlersData || {} : {},
 			handlersSrc: isTrusted ? null : handlersData,
+			mainThread: isTrusted,
 		});
 
 		// Recursively install skill dependencies
