@@ -67,6 +67,8 @@ import io
 import json
 import logging
 import os
+import shutil
+import signal
 import time
 import uuid
 
@@ -106,6 +108,14 @@ from worker_security import (
     safe_error,
 )
 from storage_backend import LocalStorage
+from instance_health import (
+    HEARTBEAT_SECS,
+    MemorySample,
+    read_memory,
+    should_recycle,
+    task_is_orphaned,
+    trim_heap,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -168,6 +178,22 @@ _dinov2_pinned = False
 # dict just avoids a GCS round-trip when a poll happens to hit the same warm
 # instance that ran the job.
 _tasks: dict[str, dict] = {}
+# One lock per task serializes its durable writes. The heartbeat and the status
+# transitions both persist the same record from different coroutines, and the
+# uploads finish on executor threads in any order, so without this a heartbeat
+# that started before a "done" write could land after it and resurrect the task
+# as "running".
+_task_locks: dict[str, asyncio.Lock] = {}
+# Tasks this instance has accepted and not yet finished (queued behind the
+# semaphore or running). The recycle guard only restarts an idle instance.
+_live_tasks: set[str] = set()
+# Memory held right after the model finished loading: the reference the recycle
+# guard measures growth against (see instance_health.should_recycle).
+_memory_baseline: Optional[MemorySample] = None
+# Set once this instance has decided to restart between jobs; /infer then refuses
+# new work with a 503 so the caller fails over instead of queueing behind it.
+_draining = False
+_restart_signalled = False
 
 
 def _stage_weights_local() -> Optional[str]:
@@ -253,7 +279,7 @@ def _pin_dinov2_to_local_checkout() -> bool:
 
 
 def _load_pipeline():
-    global _pipeline
+    global _pipeline, _memory_baseline
     from trellis.pipelines import TrellisImageTo3DPipeline
 
     weights_path = _stage_weights_local() or WEIGHTS_DIR
@@ -262,6 +288,24 @@ def _load_pipeline():
     # TRELLIS exposes .cuda() (not .to()) to move every sub-model to the GPU.
     _pipeline.cuda()
     log.info("TRELLIS pipeline loaded")
+    if weights_path == WEIGHTS_LOCAL_DIR:
+        _release_staged_weights()
+    trim_heap()
+    _memory_baseline = read_memory()
+    if _memory_baseline is not None:
+        log.info("memory after load: %s", _memory_baseline.describe())
+
+
+def _release_staged_weights() -> None:
+    """Delete the staged weight tree once every sub-model is on the GPU.
+
+    Cloud Run's writable filesystem lives in memory, so the 3 GiB staged copy in
+    WEIGHTS_LOCAL_DIR is charged against the same 32 GiB limit the jobs need for
+    as long as it exists. from_pretrained reads every file eagerly, so after the
+    load nothing touches it again, and a later load retry re-stages from GCS.
+    """
+    shutil.rmtree(WEIGHTS_LOCAL_DIR, ignore_errors=True)
+    log.info("released staged weights at %s", WEIGHTS_LOCAL_DIR)
 
 
 async def _load_pipeline_bg():
@@ -481,29 +525,52 @@ def _get_local_storage() -> LocalStorage:
 
 async def _update_task(task_id: str, **fields) -> dict:
     """Merge `fields` into the task, then persist to GCS as the source of truth
-    (see the comment on `_tasks`)."""
-    task = _tasks.setdefault(task_id, {"task_id": task_id})
-    task.update(fields)
-    task["updated_at"] = time.time()
-    loop = asyncio.get_event_loop()
-    if _using_gcs():
-        await loop.run_in_executor(
-            None,
-            lambda: _task_blob(task_id).upload_from_string(
-                json.dumps(task), content_type="application/json"
-            ),
-        )
-    else:
-        await loop.run_in_executor(None, _get_local_storage().write_task, task.copy())
+    (see the comment on `_tasks`). Called with no fields it is a heartbeat: it
+    only refreshes updated_at, which is what proves the runner is alive."""
+    lock = _task_locks.setdefault(task_id, asyncio.Lock())
+    async with lock:
+        task = _tasks.setdefault(task_id, {"task_id": task_id})
+        task.update(fields)
+        task["updated_at"] = time.time()
+        # Snapshot inside the lock: the upload runs later on an executor thread,
+        # and serializing the live dict there could capture a newer state than
+        # the one this write is ordered as.
+        snapshot = task.copy()
+        loop = asyncio.get_event_loop()
+        if _using_gcs():
+            payload = json.dumps(snapshot)
+            await loop.run_in_executor(
+                None,
+                lambda: _task_blob(task_id).upload_from_string(
+                    payload, content_type="application/json"
+                ),
+            )
+        else:
+            await loop.run_in_executor(None, _get_local_storage().write_task, snapshot)
     return task
 
 
-# A queued/running record with no state transition for this long is orphaned:
-# its runner instance died (or lost the background task) and nothing resumes
-# persisted tasks. The ceiling covers the 900s pipeline-ready wait plus the
-# longest real generation with margin; expiring it turns an endless client
-# poll into a designed failure the router's poll-time failover can act on.
-_PENDING_TTL_SECS = 1800
+async def _heartbeat(task_id: str) -> None:
+    """Refresh a live task's durable record until cancelled.
+
+    The poll side (_resolve_task) declares a queued/running record orphaned once
+    it stops moving, so this beat is the runner's proof of life. A failed beat
+    is logged and retried on the next tick; it never touches the job itself.
+    """
+    while True:
+        await asyncio.sleep(HEARTBEAT_SECS)
+        try:
+            await _update_task(task_id)
+        except Exception as exc:  # noqa: BLE001 - a missed beat must not kill the job
+            log.warning("[%s] heartbeat write failed: %s", task_id, exc)
+
+
+# A live runner refreshes its record every HEARTBEAT_SECS (see _heartbeat), so a
+# queued/running record that stops moving belongs to an instance that died
+# mid-job (an OOM kill, a crash, a scale-in) and nothing resumes persisted tasks.
+# instance_health.ORPHAN_AFTER_SECS bounds that silence; expiring the record
+# turns an endless client poll into a designed failure the router's poll-time
+# failover can redispatch while the client is still polling.
 _TERMINAL_STATUSES = frozenset({"done", "failed"})
 
 
@@ -537,20 +604,18 @@ async def _resolve_task(task_id: str) -> dict:
     if status in _TERMINAL_STATUSES:
         _tasks[task_id] = task
         return task
-    # Records written before updated_at existed can't prove liveness; after a
-    # deploy their runner instances are gone, so treat them as orphaned too.
-    updated_at = task.get("updated_at")
-    stale = (
-        not isinstance(updated_at, (int, float))
-        or time.time() - updated_at > _PENDING_TTL_SECS
-    )
-    if status in ("queued", "running") and stale:
-        return await _update_task(
+    if task_is_orphaned(status, task.get("updated_at"), time.time()):
+        # Adopt the durable copy so the failure write keeps its fields rather
+        # than whatever partial view this instance had cached.
+        _tasks[task_id] = task
+        failed = await _update_task(
             task_id,
             status="failed",
-            error="task orphaned: no progress within 30 minutes "
-            "(runner instance likely restarted mid-job); retry the request",
+            error="task orphaned: its runner instance stopped mid-job "
+            "(restart or out of memory); retry the request",
         )
+        _task_locks.pop(task_id, None)
+        return failed
     return task
 
 
@@ -559,7 +624,58 @@ async def _resolve_task(task_id: str) -> dict:
 # CUDA, or the TRELLIS source tree (see test_request_policy.py).
 
 
-async def _run_inference(
+async def _run_inference(task_id: str, *args, **kwargs) -> None:
+    """Run one accepted job with a heartbeat on its record, then decide whether
+    this instance should restart before it takes the next one."""
+    _live_tasks.add(task_id)
+    beat = asyncio.create_task(_heartbeat(task_id))
+    try:
+        await _run_job(task_id, *args, **kwargs)
+    finally:
+        beat.cancel()
+        _live_tasks.discard(task_id)
+        _task_locks.pop(task_id, None)
+        _recycle_if_bloated(task_id)
+
+
+def _recycle_if_bloated(task_id: str) -> None:
+    """Restart an idle instance whose memory has ratcheted toward its ceiling.
+
+    Even with the heap trimmed after every job, the native libraries in the
+    postprocess (xatlas, nvdiffrast, open3d) keep some of what they allocate,
+    and this instance can only ever have 32 GiB. Letting it run until a job
+    tips it over is what used to happen: the OOM kill took that job and the one
+    queued behind it. Restarting while idle costs one model load instead.
+
+    Once it decides, the instance drains: /infer refuses new work with a 503 so
+    the caller fails over, jobs already queued here still run, and the restart
+    happens when the last of them finishes. Runs on the event loop with no
+    await, so nothing can be accepted between the idle check and the signal.
+    uvicorn shuts down cleanly on SIGTERM, and Cloud Run starts a fresh instance
+    in its place to hold the warm minimum.
+    """
+    global _draining, _restart_signalled
+    sample = read_memory()
+    if sample is not None:
+        log.info("[%s] memory after job: %s", task_id, sample.describe())
+    if not _draining:
+        if not should_recycle(sample, _memory_baseline):
+            return
+        _draining = True
+        log.warning(
+            "recycling instance: memory %s, up from %s after load; draining %d queued job(s) first",
+            sample.describe(),
+            _memory_baseline.describe() if _memory_baseline else "unknown",
+            len(_live_tasks),
+        )
+    if _live_tasks or _restart_signalled:
+        return
+    _restart_signalled = True
+    log.warning("recycling instance: idle, restarting now")
+    signal.raise_signal(signal.SIGTERM)
+
+
+async def _run_job(
     task_id: str,
     images: list[str],
     body_type: str,
@@ -740,6 +856,10 @@ def _release_gpu_memory() -> None:
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
+    # The host side leaks the same way: each executor thread's glibc arena keeps
+    # the job's freed heap, which is how the instance ratcheted into OOM kills
+    # (see instance_health). Hand it back to the kernel.
+    trim_heap()
 
 
 class InferRequest(BaseModel):
@@ -783,6 +903,13 @@ async def infer(
         raise HTTPException(
             status_code=503,
             detail=f"pipeline unavailable: {_load_error}",
+        )
+    if _draining:
+        # Same failover signal: this instance is restarting to shed memory (see
+        # _recycle_if_bloated) and would kill a job accepted now.
+        raise HTTPException(
+            status_code=503,
+            detail="instance restarting to reclaim memory; retry shortly",
         )
     task_id = str(uuid.uuid4())
     # Persist the "queued" record before responding — a poll can reach a
@@ -874,6 +1001,7 @@ async def health(response: Response) -> dict:
         "ready": bool(_ready and _ready.is_set()),
         "load_error": _load_error,
         "load_attempts": _load_attempts,
+        "draining": _draining,
         "tiers": list(TIER_PRESETS),
         "default_quality": QUALITY_DEFAULTS,
         "rembg_matte": bool(REMBG_SERVICE_URL),

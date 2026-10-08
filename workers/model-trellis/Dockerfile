@@ -25,7 +25,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     ATTN_BACKEND=xformers \
     SPCONV_ALGO=native \
     # TRELLIS repo lives here and is imported off PYTHONPATH (not a pip package).
-    PYTHONPATH=/app/TRELLIS
+    PYTHONPATH=/app/TRELLIS \
+    # Cap glibc at two malloc arenas. Every job runs on executor threads, and by
+    # default each thread grows its own arena that keeps freed heap forever: the
+    # instance ratcheted from 46% to 91% of its 32 GiB across a day of jobs and
+    # was OOM-killed mid-job (see instance_health.py).
+    MALLOC_ARENA_MAX=2
 
 # libusb-1.0-0 and libegl1: open3d (imported by TRELLIS's pipelines package)
 # dlopens both at import time. Without them the model load dies with
@@ -125,17 +130,19 @@ WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY request_policy.py /app/request_policy.py
 COPY storage_backend.py /app/storage_backend.py
+COPY instance_health.py /app/instance_health.py
 COPY main.py /app/main.py
-COPY test_request_policy.py test_storage_backend.py test_app_contract.py /app/
+COPY test_request_policy.py test_storage_backend.py test_instance_health.py test_app_contract.py /app/
 
 # Build-time gate, neither half of which needs a GPU:
 #   1. The quality tiers, the clamps that keep a caller value from crashing the
-#      nvdiffrast bake, and the image-fetch retry policy are pure logic, proven
-#      here rather than in production.
+#      nvdiffrast bake, the image-fetch retry policy, and the memory-recycle and
+#      orphan-expiry decisions are pure logic, proven here rather than in
+#      production.
 #   2. The served contract, against the exact dependency set that will run: the
 #      TRELLIS import chain (FlexiCubes submodule included), the auth boundary,
 #      the probe surfaces, request validation, and the SSRF guard.
-RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py -q \
+RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py /app/test_instance_health.py -q \
     && python3 /app/test_app_contract.py
 
 EXPOSE 8080
