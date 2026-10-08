@@ -19,7 +19,7 @@
 import { bakeAppearance, appearanceHash, isBakeable } from './bake.js';
 import { putObject, publicUrl } from './r2.js';
 import { env } from './env.js';
-import { fetchUpstream } from './upstream-fetch.js';
+import { fetchUpstream, fetchUpstreamPublic } from './upstream-fetch.js';
 
 export { isBakeable };
 
@@ -29,14 +29,16 @@ const MAX_BASE_GLB_BYTES = 25 * 1024 * 1024;
 
 // Resolve the pin's base GLB to absolute bytes. Relative URLs (the common
 // `/api/avatars/:id/glb` form, or `/cdn/<key>`) resolve against the app origin —
-// the avatar lives on our own API/CDN. Absolute URLs were already SSRF-screened
-// by safeRemoteUrl() when the pin was created, so re-fetching them is safe.
+// the avatar lives on our own API/CDN. Absolute URLs are the pin owner's own
+// link: safeRemoteUrl() only screened it lexically when the pin was saved, so it
+// is fetched with DNS resolution and per-hop redirect checks here.
 async function fetchBaseGlb(baseUrl) {
 	if (!baseUrl) throw new Error('pin has no base avatar GLB to dress');
 	const abs = /^https?:\/\//i.test(baseUrl)
 		? baseUrl
 		: `${env.APP_ORIGIN}${baseUrl.startsWith('/') ? '' : '/'}${baseUrl}`;
-	const r = await fetchUpstream(abs, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
+	const fetcher = abs === baseUrl ? fetchUpstreamPublic : fetchUpstream;
+	const r = await fetcher(abs, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true, allowHttp: true });
 	if (!r.ok) throw new Error(`base GLB fetch failed: ${abs} → ${r.status}`);
 	const declared = Number(r.headers.get('content-length') || 0);
 	if (declared && declared > MAX_BASE_GLB_BYTES) {

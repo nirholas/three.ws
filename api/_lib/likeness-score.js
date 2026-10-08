@@ -24,7 +24,7 @@
 // different findings and a table that conflates them is worse than no table.
 
 import { renderAvatarScene, SCENE_PRESETS } from './avatar-render.js';
-import { fetchUpstream } from './upstream-fetch.js';
+import { fetchUpstreamPublic } from './upstream-fetch.js';
 import {
 	SCORER_VERSION,
 	SFACE_SAME_IDENTITY_COSINE,
@@ -80,7 +80,8 @@ export function cosineToScore5(cosine) {
 }
 
 async function fetchImage(url, { maxBytes = 12 * 1024 * 1024 } = {}) {
-	const res = await fetchUpstream(url, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
+	// Reference photos are user-supplied URLs, so every hop is SSRF-checked.
+	const res = await fetchUpstreamPublic(url, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true, allowHttp: true });
 	if (!res.ok) throw new Error(`capture fetch ${res.status}`);
 	const buf = Buffer.from(await res.arrayBuffer());
 	if (buf.length > maxBytes) throw new Error(`capture too large: ${buf.length} bytes`);

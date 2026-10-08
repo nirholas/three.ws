@@ -11,6 +11,8 @@
 // Multi-facilitator merging dedupes HTTP by `resource` and MCP by
 // `(resource, toolName)` per spec.
 
+import { fetchSafePublicUrlPinned } from '../ssrf-guard.js';
+
 const DEFAULT_FACILITATORS = (() => {
 	const list = [];
 	const base = process.env.X402_FACILITATOR_URL_BASE || 'https://facilitator.payai.network';
@@ -195,15 +197,26 @@ export function normalizeItem(item, facilitator) {
 	};
 }
 
-async function fetchJson(url, { timeoutMs = 15000 } = {}) {
+// Ceiling on one discovery page from a caller-named facilitator.
+const UNTRUSTED_PAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+async function fetchJson(url, { timeoutMs = 15000, untrusted = false } = {}) {
 	const ctrl = new AbortController();
 	const t = setTimeout(() => ctrl.abort(), timeoutMs);
 	try {
-		const r = await fetch(url, {
+		const init = {
 			method: 'GET',
 			headers: { accept: 'application/json' },
 			signal: ctrl.signal,
-		});
+		};
+		// A facilitator URL named by the caller (`?facilitators=` on the public
+		// bazaar routes) is fetched through the pinned SSRF guard: https only, no
+		// private or metadata address on any redirect hop, bytes capped. Without
+		// it the route was an unauthenticated proxy into internal hosts that
+		// echoed the response back in the error text.
+		const r = untrusted
+			? await fetchSafePublicUrlPinned(url, init, { maxBytes: UNTRUSTED_PAGE_MAX_BYTES })
+			: await fetch(url, init);
 		if (!r.ok) {
 			const body = await r.text().catch(() => '');
 			throw Object.assign(new Error(`facilitator ${r.status} ${r.statusText}: ${body.slice(0, 200)}`), {
@@ -231,7 +244,7 @@ function rawItemKey(item) {
 // Page through a facilitator's /discovery/resources. We stop at `maxItems`
 // (default 500) to keep responses bounded. Operators that need everything can
 // raise the cap explicitly.
-async function listOneFacilitator(facilitatorUrl, { type, limit, maxItems }) {
+async function listOneFacilitator(facilitatorUrl, { type, limit, maxItems, untrusted = false }) {
 	const items = [];
 	const seen = new Set();
 	const pageSize = Math.min(200, Math.max(1, limit || 200));
@@ -242,7 +255,7 @@ async function listOneFacilitator(facilitatorUrl, { type, limit, maxItems }) {
 		if (type) u.searchParams.set('type', type);
 		u.searchParams.set('limit', String(pageSize));
 		u.searchParams.set('offset', String(offset));
-		const body = await fetchJson(u.toString());
+		const body = await fetchJson(u.toString(), { untrusted });
 		const got = Array.isArray(body?.items) ? body.items : Array.isArray(body) ? body : [];
 		if (got.length === 0) break;
 		let fresh = 0;
@@ -291,15 +304,19 @@ export function clearCatalogCache() {
 
 // Bazaar client. Stateless aside from the configured facilitator list.
 export class Bazaar {
-	constructor({ facilitators } = {}) {
-		const urls = Array.isArray(facilitators) && facilitators.length ? facilitators : DEFAULT_FACILITATORS;
+	// `untrusted: true` marks a facilitator list that came from a request rather
+	// than from configuration; every fetch to it then goes through the SSRF guard.
+	constructor({ facilitators, untrusted = false } = {}) {
+		const custom = Array.isArray(facilitators) && facilitators.length;
+		const urls = custom ? facilitators : DEFAULT_FACILITATORS;
 		this.facilitators = urls.filter(Boolean);
+		this.untrusted = Boolean(custom && untrusted);
 	}
 
 	async list({ type = 'http', limit = 200, maxItems = 500 } = {}) {
 		const settled = await Promise.allSettled(
 			this.facilitators.map(async (f) => {
-				const items = await listOneFacilitator(f, { type, limit, maxItems });
+				const items = await listOneFacilitator(f, { type, limit, maxItems, untrusted: this.untrusted });
 				const normalized = items.map((it) => normalizeItem(it, f)).filter(Boolean);
 				// Some facilitators (PayAI) ignore the `type` query param and return
 				// HTTP items regardless. Apply the filter ourselves so callers get a

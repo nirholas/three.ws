@@ -27,7 +27,7 @@ import { compressGlb, deliveryCompressionOptions } from './glb-compress.js';
 import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
 import { derivePbrChannels } from './glb-pbr-derive.js';
-import { fetchUpstream } from './upstream-fetch.js';
+import { fetchUpstream, fetchUpstreamPublic } from './upstream-fetch.js';
 import { gradeSimReadiness } from './sim-readiness.js';
 import { putGrade } from './sim-readiness-store.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
@@ -425,12 +425,16 @@ function mediaTypeOr(header, fallback) {
 	return STORABLE_TYPE_RE.test(type) ? type : fallback;
 }
 
-async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, derivePbr = false, prompt = '', tier = '', materialClass = '', forceContentType = null }) {
+async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, derivePbr = false, prompt = '', tier = '', materialClass = '', forceContentType = null, untrustedSource = false }) {
 	// fetchUpstream retries network errors and 408/425/429/5xx with jittered
 	// backoff and gives up immediately on 404/410 (the ephemeral asset has
 	// already expired; no retry can recover it), rejecting with an error that
 	// carries `status` so callers keep classifying it the same way.
-	const resp = await fetchUpstream(sourceUrl, {}, { timeoutMs: COPY_TIMEOUT_MS, attempts: COPY_MAX_ATTEMPTS, label: 'forge asset copy' });
+	// An untrusted source (a reference image the caller named) is fetched with
+	// every redirect hop SSRF-checked: the bytes land in a public bucket, so an
+	// unchecked hop would publish whatever an internal host answered.
+	const fetcher = untrustedSource ? fetchUpstreamPublic : fetchUpstream;
+	const resp = await fetcher(sourceUrl, {}, { timeoutMs: COPY_TIMEOUT_MS, attempts: COPY_MAX_ATTEMPTS, label: 'forge asset copy' });
 	let buf = Buffer.from(await resp.arrayBuffer());
 	if (buf.length > maxBytes) throw new Error(`asset too large: ${buf.length} bytes`);
 	// forceContentType wins over the upstream header: providers (Replicate
@@ -626,6 +630,8 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 					fallbackContentType: 'image/webp',
 					forceContentType: imageContentTypeFor(ext),
 					maxBytes: MAX_IMAGE_BYTES,
+					// preview_image_url can be the caller's own reference image URL.
+					untrustedSource: true,
 				});
 				preview = { key: `${keyPrefix}.${ext}`, url: copied.publicUrl };
 			} catch (imgErr) {

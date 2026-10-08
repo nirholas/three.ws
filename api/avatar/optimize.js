@@ -115,6 +115,29 @@ function trustedOrigin(url) {
 	}
 }
 
+// Fetch a source that passed trustedOrigin, following redirects by hand so
+// every hop must stay on a trusted host. With the default redirect: 'follow',
+// any first-party route that 302s to a stored or on-chain URL (a thumbnail, an
+// agent registration URI) walked this server-side fetch to an arbitrary or
+// internal host.
+const MAX_SOURCE_REDIRECTS = 3;
+
+export async function fetchTrustedSource(sourceUrl, signal) {
+	let current = sourceUrl;
+	for (let hop = 0; ; hop++) {
+		const res = await fetch(current, { signal, redirect: 'manual' });
+		const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+		if (!location) return res;
+		const next = new URL(location, current).toString();
+		if (hop >= MAX_SOURCE_REDIRECTS || !/^https:/i.test(next) || !trustedOrigin(next)) {
+			throw Object.assign(new Error('src redirected to a host that is not allowed'), {
+				code: 'untrusted_redirect',
+			});
+		}
+		current = next;
+	}
+}
+
 async function resolveSource({ src, id }) {
 	if (src) {
 		if (!trustedOrigin(src)) {
@@ -409,8 +432,12 @@ export default wrap(async (req, res) => {
 	const fetchTimer = setTimeout(() => abort.abort(), SOURCE_FETCH_TIMEOUT_MS);
 	let upstream;
 	try {
-		upstream = await fetch(sourceUrl, { signal: abort.signal });
+		upstream = await fetchTrustedSource(sourceUrl, abort.signal);
 	} catch (err) {
+		if (err?.code === 'untrusted_redirect') {
+			clearTimeout(fetchTimer);
+			return error(res, 400, 'untrusted_src', err.message);
+		}
 		clearTimeout(fetchTimer);
 		if (err?.name === 'AbortError') {
 			return error(res, 504, 'source_timeout', `source did not respond within ${SOURCE_FETCH_TIMEOUT_MS} ms`);

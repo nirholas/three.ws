@@ -19,7 +19,7 @@
 // BYOK only: the caller supplies their own Rodin key. No platform key — when
 // absent, the forge endpoint never reaches this module.
 
-import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { fetchUpstream, fetchUpstreamPublic } from '../_lib/upstream-fetch.js';
 
 const RODIN_BASE = 'https://api.hyper3d.com/api/v2';
 
@@ -138,7 +138,8 @@ export function createRodinProvider(apiKey) {
 		async imageTo3d({ imageUrl, prompt, tier }) {
 			let imgRes;
 			try {
-				imgRes = await fetchUpstream(imageUrl, {}, { timeoutMs: 20_000, attempts: 2, okWhen: () => true });
+				// The reference image URL is caller-supplied: every hop is SSRF-checked.
+				imgRes = await fetchUpstreamPublic(imageUrl, {}, { timeoutMs: 20_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(new Error(`could not fetch reference image: ${err?.message}`), {
 					code: 'bad_image',

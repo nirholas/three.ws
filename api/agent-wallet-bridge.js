@@ -21,6 +21,7 @@
 
 import { cors, wrap, error, serverError, setRateLimitHeaders } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
+import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { createSolanaSigner } from './_lib/x402/a2a-client.js';
@@ -37,10 +38,14 @@ const PAYER_SECRET = env.A2A_PAYER_SOLANA_SECRET || '';
 const MAX_PER_CALL_MICROS = Number(process.env.AGENT_WALLET_MAX_USDC_MICROS || 100_000);
 const MAX_PER_DAY_MICROS = Number(process.env.AGENT_WALLET_DAILY_USDC_MICROS || 2_000_000);
 
-const ALLOWED_ENDPOINT_ORIGINS = (
-	process.env.AGENT_WALLET_ALLOWED_ORIGINS ||
-	'https://three.ws,http://localhost:3000,http://127.0.0.1:3000'
-)
+// Loopback origins are a development convenience only: in production the
+// container itself listens on loopback, so leaving them in the default let an
+// unauthenticated quote call reach the instance's own internal port.
+const DEFAULT_ENDPOINT_ORIGINS = env.isProduction
+	? 'https://three.ws'
+	: 'https://three.ws,http://localhost:3000,http://127.0.0.1:3000';
+
+const ALLOWED_ENDPOINT_ORIGINS = (process.env.AGENT_WALLET_ALLOWED_ORIGINS || DEFAULT_ENDPOINT_ORIGINS)
 	.split(',')
 	.map((s) => s.trim())
 	.filter(Boolean);
@@ -384,7 +389,8 @@ export default wrap(async (req, res) => {
 
 	// Real USDC leaves the shared platform wallet — require a signed-in caller.
 	const sessionUser = await getSessionUser(req).catch(() => null);
-	const bearerUser = sessionUser ? null : await authenticateBearer(extractBearer(req)).catch(() => null);
+	// Pays real USDC from the shared platform wallet: a bearer needs wallet:write.
+	const bearerUser = sessionUser ? null : assertBearerMaySpend(await authenticateBearer(extractBearer(req)).catch(() => null), req);
 	if (!sessionUser && !bearerUser) {
 		return error(res, 401, 'unauthorized', 'Sign in to let your agent wallet make a real payment.');
 	}

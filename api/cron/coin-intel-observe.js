@@ -22,6 +22,7 @@ import { finalizeObservation } from '../../workers/agent-sniper/intel/finalize.j
 import { pumpPortalWsUrl, handlePumpPortalAck } from '../_lib/pumpportal.js';
 import { subscribePumpOnchainTrades } from '../_lib/pump-onchain-trades.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { fetchSafePublicUrlPinned } from '../_lib/ssrf-guard.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const NETWORK = 'mainnet';
@@ -42,7 +43,13 @@ async function fetchMeta(uri) {
 	try {
 		const ctrl = new AbortController();
 		const tid = setTimeout(() => ctrl.abort(), META_TIMEOUT_MS);
-		const r = await fetch(uri, { signal: ctrl.signal });
+		// The uri is chosen by whoever launched the coin, so it is read through
+		// the pinned SSRF guard (no private or metadata address on any hop).
+		const r = await fetchSafePublicUrlPinned(
+			uri,
+			{ signal: ctrl.signal, headers: { accept: 'application/json' } },
+			{ allowHttp: true, maxBytes: 256 * 1024 },
+		);
 		clearTimeout(tid);
 		if (!r.ok) return null;
 		const d = await r.json();

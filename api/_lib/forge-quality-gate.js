@@ -56,8 +56,8 @@ import {
 	providersInCooldown,
 } from './provider-health.js';
 import { renderAvatarScene, SCENE_PRESETS } from './avatar-render.js';
-import { validatePublicUrl, isPrivateAddress, SsrfError } from './ssrf.js';
-import { isIP } from 'node:net';
+import { assertPublicHttpsUrl, SsrfError } from './ssrf.js';
+import { fetchSafePublicUrlPinned, MaxBytesExceededError, SsrfBlockedError } from './ssrf-guard.js';
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
@@ -190,32 +190,45 @@ function score100(v) {
 	return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-// SSRF guard for a caller-supplied render URL we fetch server-side. Mirrors the
-// guard in vision.js: require https (http only in dev) and reject private IP
-// literals + localhost. DNS-name hosts pass (we can't pin resolution here).
-function assertSafeUrl(rawUrl) {
-	let url;
+// SSRF guard for a caller-supplied render or GLB URL: https (http only in dev),
+// and the host is resolved on our side with every address checked against the
+// private/loopback/metadata blocklist. A literal-only check let any DNS name
+// that resolves inward straight through.
+async function assertSafeUrl(rawUrl) {
 	try {
-		url = validatePublicUrl(rawUrl);
+		return await assertPublicHttpsUrl(rawUrl);
 	} catch (e) {
-		if (e instanceof SsrfError) throw Object.assign(new Error('render URL is not a public https address'), { code: 'invalid_url' });
+		if (e instanceof SsrfError) {
+			throw Object.assign(new Error('render URL is not a public https address'), { code: 'invalid_url' });
+		}
 		throw e;
 	}
-	const host = url.hostname.replace(/^\[|\]$/g, '');
-	const fam = isIP(host);
-	const blocked = fam ? isPrivateAddress(host, fam) : host === 'localhost' || /\.(local|internal|localdomain)$/i.test(host);
-	if (blocked) throw Object.assign(new Error('render URL resolves to a non-public host'), { code: 'invalid_url' });
-	return url;
 }
 
-// Fetch an image URL and return { imageBase64, mimeType }. Guarded + size-capped.
+const MAX_RENDER_IMAGE_BYTES = 16 * 1024 * 1024;
+
+// Fetch an image URL and return { imageBase64, mimeType }. The pinned guard
+// connects only to the validated address, re-validates every redirect hop, and
+// caps the body while streaming.
 async function fetchImageBase64(rawUrl, timeoutMs) {
-	assertSafeUrl(rawUrl);
-	const res = await fetch(rawUrl, { signal: AbortSignal.timeout(timeoutMs) });
+	await assertSafeUrl(rawUrl);
+	let res;
+	try {
+		res = await fetchSafePublicUrlPinned(
+			rawUrl,
+			{ signal: AbortSignal.timeout(timeoutMs) },
+			{ allowHttp: process.env.NODE_ENV !== 'production', maxBytes: MAX_RENDER_IMAGE_BYTES },
+		);
+	} catch (e) {
+		if (e instanceof SsrfBlockedError) {
+			throw Object.assign(new Error('render URL is not a public https address'), { code: 'invalid_url' });
+		}
+		if (e instanceof MaxBytesExceededError) throw new Error('render image exceeds 16 MB');
+		throw e;
+	}
 	if (!res.ok) throw new Error(`render fetch ${res.status}`);
 	const ct = (res.headers.get('content-type') || 'image/png').split(';')[0].trim();
 	const buf = Buffer.from(await res.arrayBuffer());
-	if (buf.byteLength > 16 * 1024 * 1024) throw new Error('render image exceeds 16 MB');
 	return { imageBase64: buf.toString('base64'), mimeType: ct.startsWith('image/') ? ct : 'image/png' };
 }
 
@@ -227,7 +240,7 @@ async function fetchImageBase64(rawUrl, timeoutMs) {
 // pipeline's lighting is fixed, so the rubric explicitly tells the model to judge
 // the mesh, not the render's exposure.
 async function renderGlbBase64(glbUrl, size) {
-	assertSafeUrl(glbUrl);
+	await assertSafeUrl(glbUrl);
 	const { png } = await renderAvatarScene({
 		glbUrl,
 		width: size,

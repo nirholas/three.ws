@@ -37,6 +37,7 @@ import { withRetry, withBreaker, parseRetryAfter, isRetryableError } from './res
 import { createCache } from './mem-cache.js';
 import { recordSource } from './brownout/provenance.js';
 import { applyFault, faultFor } from './brownout/chaos.js';
+import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
 
 export const DEFAULT_TIMEOUT_MS = 8_000;
 const DEFAULT_ATTEMPTS = 3;
@@ -207,6 +208,37 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 	});
 	if (value) return noteOk(value);
 	return noteFail(failure instanceof Error ? failure : new UpstreamError(`${label || name}: circuit open`, { url: shown, status: 503 }));
+}
+
+const MAX_PUBLIC_REDIRECTS = 5;
+
+/**
+ * fetchUpstream for a URL a user, a caller, or on-chain data chose. Same retry,
+ * timeout and breaker behavior, but redirects are followed by hand and every
+ * hop is checked with assertSafePublicUrl first, so a public host cannot 302
+ * the server into a private, loopback or metadata address. Rejects with
+ * SsrfBlockedError (status 400) when a hop is refused.
+ *
+ * @param {string} url
+ * @param {RequestInit} [init]
+ * @param {object} [opts] fetchUpstream options, plus `allowHttp`
+ * @returns {Promise<Response>}
+ */
+export async function fetchUpstreamPublic(url, init = {}, opts = {}) {
+	const { allowHttp = false, okWhen = (res) => res.ok, ...rest } = opts;
+	const isRedirect = (res) => res.status >= 300 && res.status < 400 && res.headers.get('location');
+	let current = String(url);
+	for (let hop = 0; hop <= MAX_PUBLIC_REDIRECTS; hop++) {
+		await assertSafePublicUrl(current, { allowHttp });
+		const res = await fetchUpstream(
+			current,
+			{ ...init, redirect: 'manual' },
+			{ ...rest, okWhen: (r) => Boolean(isRedirect(r)) || okWhen(r) },
+		);
+		if (!isRedirect(res)) return res;
+		current = new URL(res.headers.get('location'), current).toString();
+	}
+	throw new SsrfBlockedError('too many redirects');
 }
 
 /**

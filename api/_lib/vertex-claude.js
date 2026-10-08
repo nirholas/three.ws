@@ -81,9 +81,25 @@ function vertexTarget() {
 
 // Build the Vertex Messages endpoint URL for a model. `:streamRawPredict` for
 // streaming SSE, `:rawPredict` for a single JSON response.
+//
+// The model id is spliced into the path of a request that carries the
+// platform's GCP bearer token, and on some routes it is caller-supplied (the
+// x402 LLM proxy forwards any non-alias model string). A value carrying `/`,
+// `..`, `?` or `#` would walk that authenticated POST onto a different Vertex
+// API path, so anything outside the model-id alphabet is refused here.
+const VERTEX_MODEL_ID = /^[a-z0-9][a-z0-9._-]{0,127}(@[0-9a-z._-]{1,32})?$/i;
+
+/** True when `modelId` is safe to place in a Vertex Messages URL path. */
+export function isVertexModelId(modelId) {
+	return VERTEX_MODEL_ID.test(String(toVertexModelId(modelId) || ''));
+}
+
 export function vertexMessagesUrl(modelId, { stream = false } = {}) {
 	const { project, location, host } = vertexTarget();
 	const vid = toVertexModelId(modelId);
+	if (!isVertexModelId(modelId)) {
+		throw Object.assign(new Error('invalid Vertex model id'), { code: 'invalid_model', status: 400 });
+	}
 	const verb = stream ? 'streamRawPredict' : 'rawPredict';
 	return `https://${host}/v1/projects/${project}/locations/${location}/publishers/anthropic/models/${vid}:${verb}`;
 }

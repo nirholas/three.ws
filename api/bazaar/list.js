@@ -52,7 +52,7 @@ async function handler(req, res) {
 		? facilitatorsCsv.split(',').map((s) => s.trim()).filter(Boolean)
 		: undefined;
 
-	const baz = new Bazaar({ facilitators });
+	const baz = new Bazaar({ facilitators, untrusted: true });
 	let result;
 	try {
 		result = await baz.listCached({ type, limit, maxItems });

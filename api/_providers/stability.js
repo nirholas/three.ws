@@ -12,7 +12,7 @@
 // supplies their own Stability key (sk-…); when absent the forge endpoint never
 // reaches this module.
 
-import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { fetchUpstream, fetchUpstreamPublic } from '../_lib/upstream-fetch.js';
 
 const STABILITY_BASE = 'https://api.stability.ai/v2beta/3d';
 const ENDPOINT = 'stable-fast-3d';
@@ -33,7 +33,8 @@ export function createStabilityProvider(apiKey) {
 		async imageTo3d({ imageUrl, tier }) {
 			let imgRes;
 			try {
-				imgRes = await fetchUpstream(imageUrl, {}, { timeoutMs: 20_000, attempts: 2, okWhen: () => true });
+				// The reference image URL is caller-supplied: every hop is SSRF-checked.
+				imgRes = await fetchUpstreamPublic(imageUrl, {}, { timeoutMs: 20_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(new Error(`could not fetch reference image: ${err?.message}`), {
 					code: 'bad_image',
