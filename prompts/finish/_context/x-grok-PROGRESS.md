@@ -33,3 +33,7 @@ Cross-session handoff for the `x-grok-` orders ([x-grok-00-CONTEXT.md](x-grok-00
 - Measured: xAI documents NO crawler or live-user user-agent token. Checked `docs.x.ai/llms.txt`, the full `llms-full.txt` (1.6 MB, zero `user-agent`/`robots` hits) and the Grok Bot security docs, which only say hosted computers egress through shared static IPs available from the account team. Third-party directories list `GrokBot`, `xAI-Grok`, `Grok-DeepSearch`, `xAI-SearchBot`, but none is xAI-published, so none was added. Grok falls to `User-agent: *`, which now allows `/api/render/glb`.
 - Measured: the production render endpoint returns a real 1200x630 PNG for a live forge GLB (195 KB), so every creation card and thumbnail points at a working image.
 - For later orders: Grok Bot browses with a stock browser UA, so the UA-routed crawler pages (`/avatars/:id`, `/agents/:id`, vercel.json `has` user-agent lists) never reach it; `/m/:id` is the only creation page whose structured data every reader gets. Extending the same head rewrite to the avatar and agent shells is the follow-up if Grok Bot reads those links.
+
+## 2026-10-08: order 048 closed (migration applied)
+
+- `20261008170000_x_mention_events.sql` applied alone with `node scripts/apply-migrations.mjs --apply --file 20261008170000_x_mention_events.sql` (output: `applying ... ok`). The unrelated pending `20261008150000_revenue_direct_settle_backfill.sql` was deliberately left for its owner; `db:check` still blocks deploys on it until that session applies it.
