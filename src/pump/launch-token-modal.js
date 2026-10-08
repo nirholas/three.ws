@@ -143,10 +143,19 @@ export class LaunchTokenModal {
 			return;
 		}
 		this._solPriceUsd = price;
-		// If modal is open on step 1, re-render to show price hints
-		if (this._overlay && this._step === 1) {
-			this._renderStep1();
-		}
+		// The price usually lands after step 1 is on screen. Fill in its one
+		// price-dependent hint in place: re-rendering the step here wiped
+		// whatever the visitor had already typed into the form.
+		if (this._overlay && this._step === 1) this._refreshBuyUsd();
+	}
+
+	/** Write the dev buy's USD equivalent next to its input, when a price is known. */
+	_refreshBuyUsd() {
+		const buyInput = this._overlay?.querySelector('#ltm-buy');
+		const buyUsd = this._overlay?.querySelector('#ltm-buy-usd');
+		if (!this._solPriceUsd || !buyInput || !buyUsd) return;
+		const sol = parseFloat(buyInput.value) || 0;
+		buyUsd.textContent = `~ $${(sol * this._solPriceUsd).toFixed(2)}`;
 	}
 
 	_injectCss() {
@@ -537,19 +546,11 @@ export class LaunchTokenModal {
 		const symInput = this._overlay.querySelector('#ltm-sym');
 		const symErr = this._overlay.querySelector('#ltm-sym-err');
 		const buyInput = this._overlay.querySelector('#ltm-buy');
-		const buyUsd = this._overlay.querySelector('#ltm-buy-usd');
 		let symTouched = d.symbol !== _nameToSymbol(d.name);
 
-		const updateBuyUsd = () => {
-			if (!this._solPriceUsd || !buyUsd) return;
-			const sol = parseFloat(buyInput.value) || 0;
-			const usd = (sol * this._solPriceUsd).toFixed(2);
-			buyUsd.textContent = `~ $${usd}`;
-		};
-
 		if (buyInput) {
-			buyInput.addEventListener('input', updateBuyUsd);
-			updateBuyUsd();
+			buyInput.addEventListener('input', () => this._refreshBuyUsd());
+			this._refreshBuyUsd();
 		}
 
 		const imgInput = this._overlay.querySelector('#ltm-img');
