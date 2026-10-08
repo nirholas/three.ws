@@ -50,6 +50,7 @@ import { sql } from './db.js';
 import {
 	vertexClaudeEnabled,
 	vertexClaudePrimary,
+	isVertexModelId,
 	vertexMessagesUrl,
 	vertexRequestHeaders,
 	toVertexBody,
@@ -651,7 +652,10 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 	// still sits behind a caller BYOK key (the caller's explicit billing choice)
 	// and degrades to the free chain below on any Vertex failure. Model follows
 	// the call site's Anthropic intent (anthropicModel), else the utility default.
-	if (vertexClaudePrimary()) chain.push(vertexAnthropicProvider(anthropicModel));
+	// A model id that cannot sit in a Vertex URL path (a caller-supplied value on
+	// the x402 proxy) skips the Vertex lane rather than failing the whole chain.
+	const vertexModelOk = isVertexModelId(anthropicModel || ANTHROPIC_MODEL);
+	if (vertexClaudePrimary() && vertexModelOk) chain.push(vertexAnthropicProvider(anthropicModel));
 	if (env.GROQ_API_KEY) {
 		chain.push(openaiCompatProvider({
 			name: 'groq',
@@ -887,7 +891,7 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 	// backstop, tried ahead of first-party Anthropic — GCP credits before a paid
 	// Anthropic key. Skipped when it already leads (primary) so it's not added
 	// twice, and when a BYOK key leads (the caller chose their own billing).
-	if (!anthropicKey && vertexClaudeEnabled() && !vertexClaudePrimary()) {
+	if (!anthropicKey && vertexClaudeEnabled() && !vertexClaudePrimary() && vertexModelOk) {
 		chain.push(vertexAnthropicProvider(anthropicModel));
 	}
 	// Paid backstops — always appended, never leading. Server Anthropic is
