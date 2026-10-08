@@ -237,20 +237,32 @@ export function assertAwsHttpsUrl(value, label) {
 	} catch {
 		throw new Error(`Untrusted ${label}: ${value}`);
 	}
-	if (parsed.protocol !== 'https:' || !parsed.hostname.endsWith('.amazonaws.com')) {
+	// The SNS service endpoint itself, never any `*.amazonaws.com` host: that
+	// suffix also covers S3 buckets and API Gateway stages anyone can create,
+	// which let a forger host their own signing certificate (and so sign any
+	// message they liked) or bounce this request through a redirect.
+	if (parsed.protocol !== 'https:' || !SNS_HOST_RE.test(parsed.hostname) || parsed.username || parsed.password) {
 		throw new Error(`Untrusted ${label}: ${value}`);
 	}
 	return parsed;
 }
 
+const SNS_HOST_RE = /^sns\.[a-z0-9-]+\.amazonaws\.com(\.cn)?$/;
+// AWS publishes every SNS signing certificate under this file name.
+const SNS_CERT_PATH_RE = /^\/SimpleNotificationService-[A-Za-z0-9]+\.pem$/;
+
 async function fetchCert(url) {
 	if (certCache.has(url)) return certCache.get(url);
 
-	// Only trust certs hosted on *.amazonaws.com over HTTPS.
-	assertAwsHttpsUrl(url, 'SNS signing cert URL');
+	// Only trust certificates served by the SNS endpoint itself, at AWS's
+	// certificate path, and never follow a redirect off it.
+	const parsed = assertAwsHttpsUrl(url, 'SNS signing cert URL');
+	if (!SNS_CERT_PATH_RE.test(parsed.pathname) || parsed.search) {
+		throw new Error(`Untrusted SNS signing cert URL: ${url}`);
+	}
 
 	// The PEM is cached per URL above, so this is paid once per cert rotation.
-	const res = await fetchUpstream(url, {}, { name: 'aws-sns-cert', timeoutMs: 8_000, attempts: 3, okWhen: () => true });
+	const res = await fetchUpstream(url, { redirect: 'error' }, { name: 'aws-sns-cert', timeoutMs: 8_000, attempts: 3, okWhen: () => true });
 	if (!res.ok) throw new Error(`Failed to fetch SNS cert: ${res.status}`);
 	const pem = await res.text();
 	certCache.set(url, pem);

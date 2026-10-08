@@ -184,7 +184,7 @@ async function handleSns(req, res, msg) {
 		}
 		try {
 			// Confirming is idempotent (the token is single-purpose), so one retry is safe.
-			await fetchUpstream(subscribeUrl, {}, { timeoutMs: 8_000, attempts: 2 });
+			await fetchUpstream(subscribeUrl, { redirect: 'error' }, { timeoutMs: 8_000, attempts: 2 });
 		} catch (err) {
 			console.error('[aws-marketplace/subscription] failed to confirm SNS subscription', err?.message);
 		}

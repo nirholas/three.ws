@@ -180,6 +180,15 @@ describe('assertAwsHttpsUrl', () => {
 			.toThrow(/untrusted/i);
 	});
 
+	it('refuses an attacker-creatable amazonaws.com host (S3 bucket, API Gateway)', () => {
+		for (const u of [
+			'https://attacker-bucket.s3.amazonaws.com/SimpleNotificationService-x.pem',
+			'https://abc123.execute-api.us-east-1.amazonaws.com/prod/c.pem',
+		]) {
+			expect(() => assertAwsHttpsUrl(u, 'SNS signing cert URL')).toThrow(/untrusted/i);
+		}
+	});
+
 	it('refuses a non-HTTPS scheme', () => {
 		expect(() => assertAwsHttpsUrl('http://sns.us-east-1.amazonaws.com/c.pem', 'SNS signing cert URL'))
 			.toThrow(/untrusted/i);
