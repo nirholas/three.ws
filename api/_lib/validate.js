@@ -113,8 +113,19 @@ export const httpUrl = z
 		message: 'must be an http(s) URL',
 	});
 
+// `.local` addresses are minted by the platform itself for accounts with no
+// real inbox: wallet sign-in (`@wallet.local`), Privy (`@privy.local`), SAML
+// (`@sso.three.ws.local`) and username sign-up (`@users.three.ws.local`). Those
+// flows find an existing account by that exact address, and comp access trusts
+// the local part of a `@users.three.ws.local` address as a handle, so letting a
+// person register one would let them pre-claim a stranger's wallet account or
+// someone else's comped handle. No real inbox lives under `.local` (RFC 6762).
+export const registrableEmail = email.refine((v) => !/\.local$/.test(v.slice(v.lastIndexOf('@') + 1)) && !v.endsWith('@local'), {
+	message: 'this email domain is reserved',
+});
+
 export const registerBody = z.object({
-	email,
+	email: registrableEmail,
 	password,
 	display_name: displayName.optional(),
 	referralCode: z.string().trim().min(3).max(30).optional(),

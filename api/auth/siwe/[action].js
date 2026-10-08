@@ -237,13 +237,21 @@ async function handleVerify(req, res) {
 		// Fall back to users.wallet_address — older rows may have been created
 		// before user_wallets existed, or by a different flow that only set the
 		// users column. Reconcile by backfilling user_wallets.
-		const placeholderEmail = `wallet-${addrLower}@wallet.local`;
+		let placeholderEmail = `wallet-${addrLower}@wallet.local`;
+		// A row at the placeholder address that carries a password was not made
+		// by wallet sign-in (which never sets one): somebody registered the
+		// derivable address to pre-claim this wallet. Never hand the wallet to
+		// it, and mint any new account under a second address it cannot hold.
+		const [squatted] = await sql`
+			select 1 from users where email = ${placeholderEmail} and password_hash is not null limit 1
+		`;
+		if (squatted) placeholderEmail = `wallet-${addrLower}.${randomToken(8).toLowerCase()}@wallet.local`;
 		// Include soft-deleted rows: the email unique index ignores deleted_at, so
 		// skipping them would turn a retired account into a duplicate-key 500 on
 		// the insert below. A soft-deleted hit is refused, never revived.
 		const [existingUser] = await sql`
 			select id, deleted_at from users
-			where wallet_address = ${addrLower} or email = ${placeholderEmail}
+			where wallet_address = ${addrLower} or (email = ${placeholderEmail} and password_hash is null)
 			limit 1
 		`;
 

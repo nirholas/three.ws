@@ -213,12 +213,21 @@ async function handleVerify(req, res) {
 		// addresses sharing a prefix into one account. Existing users are unaffected:
 		// returning wallets are matched by address in user_wallets above, never by
 		// this synthetic email (which is only used to create brand-new rows).
-		const placeholderEmail = `sol-${(await sha256(addr)).slice(0, 16)}@wallet.local`;
-		const [existingUser] = await sql`
-			select id, deleted_at from users
+		const addrHash = await sha256(addr);
+		let placeholderEmail = `sol-${addrHash.slice(0, 16)}@wallet.local`;
+		let [existingUser] = await sql`
+			select id, deleted_at, password_hash from users
 			where email = ${placeholderEmail}
 			limit 1
 		`;
+		// A row at this address that carries a password was not made by wallet
+		// sign-in (which never sets one): it is somebody who registered the
+		// derivable placeholder to pre-claim this wallet. Never hand the wallet
+		// to it; mint the account under a fresh address it cannot hold.
+		if (existingUser?.password_hash) {
+			placeholderEmail = `sol-${addrHash.slice(0, 16)}.${randomToken(8).toLowerCase()}@wallet.local`;
+			existingUser = null;
+		}
 
 		if (existingUser) {
 			if (existingUser.deleted_at) {

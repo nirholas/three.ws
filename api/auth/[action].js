@@ -427,6 +427,8 @@ const forgotSchema = z.object({ email });
 async function handleForgotPassword(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
+	const ipRl = await limits.forgotPasswordIp(clientIp(req));
+	if (!ipRl.success) return rateLimited(res, ipRl, 'too many reset requests; try again later');
 	const body = parse(forgotSchema, await readJson(req));
 	const rl = await limits.forgotPasswordEmail(body.email);
 	if (!rl.success) return json(res, 200, { success: true });
@@ -465,14 +467,22 @@ async function handleResetPassword(req, res) {
 
 const verifyEmailSchema = z.object({ code: z.string().trim().regex(/^\d{6}$/, '6-digit code required') });
 
+// The code is checked against the SIGNED-IN account's own pending codes only.
+// Matching it against every account's codes made the 6-digit space shared: an
+// anonymous caller holding k unverified sign-ups could verify one of them with
+// probability k/1e6 per guess, without ever reading a mailbox.
 async function handleVerifyEmail(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 	const rl = await limits.verifyEmailIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many attempts; try again later');
+	const session = await getSessionUser(req);
+	if (!session) return error(res, 401, 'unauthorized', 'sign in to verify your email');
+	const userRl = await limits.verifyEmailUser(session.id);
+	if (!userRl.success) return rateLimited(res, userRl, 'too many attempts; request a new code and try again later');
 	const body = parse(verifyEmailSchema, await readJson(req));
 	const codeHash = await sha256(body.code);
-	const rows = await sql`select v.id, v.user_id from email_verifications v join users u on u.id = v.user_id where v.code_hash = ${codeHash} and v.consumed_at is null and v.expires_at > now() and u.deleted_at is null limit 1`;
+	const rows = await sql`select v.id, v.user_id from email_verifications v join users u on u.id = v.user_id where v.user_id = ${session.id} and v.code_hash = ${codeHash} and v.consumed_at is null and v.expires_at > now() and u.deleted_at is null limit 1`;
 	if (!rows[0]) return error(res, 400, 'invalid_code', 'invalid or expired verification code');
 	await sql`update email_verifications set consumed_at = now() where id = ${rows[0].id}`;
 	await sql`update users set email_verified = true, updated_at = now() where id = ${rows[0].user_id}`;

@@ -1644,6 +1644,14 @@ export const limits = {
 	// codes / spamming reset+verify emails must fail closed when Redis is down.
 	verifyEmailIp: (ip) =>
 		getLimiter('verify-email:ip', { limit: 10, window: '15 m', critical: true }).limit(ip),
+	// Per account as well as per IP: a code lives 30 minutes, so this bounds
+	// the guesses any one pending code can take to ~20 however many IPs try.
+	verifyEmailUser: (userId) =>
+		getLimiter('verify-email:user', { limit: 10, window: '15 m', critical: true }).limit(userId),
+	// Reset mail goes only to registered addresses, but the per-email bucket
+	// alone lets one client walk a list of them; this caps the sender.
+	forgotPasswordIp: (ip) =>
+		getLimiter('forgot-password:ip', { limit: 10, window: '15 m', critical: true }).limit(ip),
 	forgotPasswordEmail: (email) =>
 		getLimiter('forgot-password:email', { limit: 3, window: '15 m', critical: true }).limit(
 			email,
