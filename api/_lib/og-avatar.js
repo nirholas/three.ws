@@ -24,6 +24,9 @@ export const MAX_OG_IMAGE_BYTES = 1_500_000;
 
 const DEFAULT_TIMEOUT_MS = 3000;
 
+/** A bare `image/<subtype>` token with nothing that can close a quoted attribute. */
+const IMAGE_MEDIA_TYPE = /^image\/[a-z0-9][a-z0-9.+-]{0,63}$/;
+
 /**
  * @param {string|null|undefined} url  remote image URL (user-supplied)
  * @param {{ timeoutMs?: number, maxBytes?: number }} [opts]
@@ -39,8 +42,12 @@ export async function fetchOgImage(url, opts = {}) {
 		const resp = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
 		if (!resp.ok) return null;
 
-		const ct = resp.headers.get('content-type') || '';
-		if (!/^image\//i.test(ct)) return null;
+		// The type lands inside an SVG `href="data:<ct>;base64,..."` attribute,
+		// so it must be a bare media-type token: a hostile host answering
+		// `image/png"/><script>...` would otherwise break out of the attribute
+		// and run script in the same-origin SVG card.
+		const ct = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+		if (!IMAGE_MEDIA_TYPE.test(ct)) return null;
 
 		const declared = Number(resp.headers.get('content-length') || 0);
 		if (declared > maxBytes) return null;
@@ -48,7 +55,7 @@ export async function fetchOgImage(url, opts = {}) {
 		const bytes = await readCapped(resp, maxBytes);
 		if (!bytes) return null;
 
-		return { ct: ct.split(';')[0].trim(), b64: Buffer.from(bytes).toString('base64') };
+		return { ct, b64: Buffer.from(bytes).toString('base64') };
 	} catch {
 		// A slow host, a DNS failure, or an aborted read is never worth a broken
 		// unfurl. The caller draws its monogram instead.

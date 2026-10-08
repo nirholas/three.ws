@@ -66,6 +66,15 @@ describe('og-avatar: fetchOgImage failure paths', () => {
 		expect(spy).toHaveBeenCalledOnce();
 	});
 
+	it('rejects a content type that would break out of the SVG data-URI attribute', async () => {
+		mockFetch(
+			imageResponse(Buffer.alloc(16, 1), {
+				ct: 'image/png"/><script>alert(document.domain)</script><x a="',
+			}),
+		);
+		expect(await fetchOgImage('https://cdn.example.test/evil.png')).toBeNull();
+	});
+
 	it('rejects a non-image response, so an HTML error page never lands in the card', async () => {
 		mockFetch(imageResponse(Buffer.from('<!doctype html>'), { ct: 'text/html' }));
 		expect(await fetchOgImage('https://cdn.example.test/oops')).toBeNull();
