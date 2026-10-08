@@ -169,8 +169,19 @@ describe('POST /api/social/sentiment-pulse', () => {
 		expect(out.breakdown.pumpfun.count).toBe(2);
 
 		const url = fetchMock.mock.calls[0][0];
-		expect(url).toContain(`/callout/top/${MINT}`);
-		expect(url).toContain('sortBy=TIMESTAMP');
+		expect(url).toContain(`/callout/coin/${MINT}`);
+		expect(url).not.toContain('/callout/top/');
+		expect(url).toContain('limit=50');
+	});
+
+	it('clamps a caller limit above pump.fun\'s 100-row page ceiling', async () => {
+		const fetchMock = vi
+			.spyOn(globalThis, 'fetch')
+			.mockResolvedValue(upstream(200, { callouts: [callout({ thesis: 'solid team' })] }));
+		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: MINT, limit: 200 });
+		expect(res.statusCode).toBe(200);
+		const url = new URL(fetchMock.mock.calls[0][0]);
+		expect(url.searchParams.get('limit')).toBe('100');
 	});
 
 	it('answers 502 when pump.fun fails and the caller supplied nothing to score', async () => {

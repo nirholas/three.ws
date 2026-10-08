@@ -1,7 +1,9 @@
 // pump.fun callouts: the live community commentary a coin page renders from
-// frontend-api-v3 `/callout/top/:mint` (the retired `/replies/:mint` route
-// 404s for every mint). Each entry carries the poster's thesis, handle and
-// timestamp. Shared by POST /api/social/sentiment-pulse (lexicon scoring) and
+// frontend-api-v3 `/callout/coin/:mint`. Both earlier routes are gone: the
+// `/replies/:mint` comments route and, since 2026-10, `/callout/top/:mint`,
+// which now answers "Cannot GET" for every mint (that removal is what turned
+// every sentiment pulse into a 502). Each entry carries the poster's thesis,
+// optional handle and timestamp. Shared by POST /api/social/sentiment-pulse (lexicon scoring) and
 // the Sentiment Scout (quoted as evidence), so both read the same feed through
 // the shared pump.fun fetch helper (identified user-agent, bounded timeout,
 // one retry on a rate limit or 5xx).
@@ -9,6 +11,10 @@
 import { PUMP_FRONTEND_BASE, pumpFetchJson } from './pump-feed-fetch.js';
 
 const FETCH_TIMEOUT_MS = 8000;
+
+// pump.fun rejects `limit` above 100 with a 400 ("limit must not be greater
+// than 100"), so a larger caller limit is clamped rather than failing the read.
+export const PUMP_CALLOUT_PAGE_MAX = 100;
 
 /**
  * Map raw pump.fun callout rows into the scorer's post shape, newest first.
@@ -44,9 +50,8 @@ export function calloutsToPosts(callouts, limit) {
  * failure is reported as `{ error, url }` for the handler to surface.
  */
 export async function fetchPumpFunCallouts(mint, limit, { timeoutMs = FETCH_TIMEOUT_MS } = {}) {
-	const url =
-		`${PUMP_FRONTEND_BASE}/callout/top/${encodeURIComponent(mint)}` +
-		`?limit=${limit}&sortBy=TIMESTAMP&sortOrder=DESC`;
+	const pageLimit = Math.max(1, Math.min(PUMP_CALLOUT_PAGE_MAX, Math.floor(limit) || 1));
+	const url = `${PUMP_FRONTEND_BASE}/callout/coin/${encodeURIComponent(mint)}?limit=${pageLimit}`;
 	const { ok, status, body } = await pumpFetchJson(url, { timeoutMs });
 	if (!ok) {
 		return { error: status ? `pump.fun returned ${status}` : 'pump.fun unreachable', url };

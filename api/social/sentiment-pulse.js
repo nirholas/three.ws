@@ -9,10 +9,11 @@
 // endpoint used to read (it now 404s for every mint, including $THREE), so
 // the pulse silently scored an empty set and reported a confident neutral
 // reading. Coin commentary lives in "callouts" now, the feed the coin page
-// renders via frontend-api-v3 `/callout/top/:mint`, where each entry carries
-// the poster's thesis, handle and timestamp. That is the source below, read
-// through the shared pump.fun fetch helper (identified user-agent, bounded
-// timeout, one retry on a rate limit or 5xx).
+// renders via frontend-api-v3 `/callout/coin/:mint` (the earlier
+// `/callout/top/:mint` route was removed upstream in 2026-10), where each
+// entry carries the poster's thesis and timestamp. That is the source below,
+// read through api/_lib/pump-callouts.js and the shared pump.fun fetch helper
+// (identified user-agent, bounded timeout, one retry on a rate limit or 5xx).
 //
 // This is the unauthenticated, no-key endpoint behind the paid
 // `sentiment_pulse` MCP tool. It does no caching of its own (callers should
@@ -21,7 +22,8 @@
 // Body:
 //   {
 //     token:           string,           // Solana SPL or pump.fun mint pubkey
-//     limit?:          number,           // max callouts to score (default 100, max 200)
+//     limit?:          number,           // max callouts to score (default 100, max 200;
+//                                         // pump.fun serves at most 100 per read)
 //     extraTexts?:     string[],         // additional snippets to score
 //   }
 //

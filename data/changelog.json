@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Community sentiment readings are back on coin pages and the Oracle",
+			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
+			"tags": [
+				"fix"
+			],
+			"link": "/oracle"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "DEXTools is one click away on every coin, and every visit counts toward Social Boost",
 			"summary": "DEXTools Social Boost ranks tokens by visits to their DEXTools page, and $THREE has already won three buybacks from it. Every coin on three.ws now carries a DEXTools link: it leads the trading terminal row and appears on coin and launch pages, the 3D coin view, the Oracle, agent and character pages, the live pump.fun feeds and your token dashboard. Each link opens the coin's busiest pair on DEXTools, so the visit lands on the page Social Boost actually counts. Launch pages, and the success screen right after you launch a coin, also get a Social Boost card that explains how the ranking works and sends your community there in one click. Visits are counted in daily totals per coin and per page that sent them. No visitor data is stored.",
 			"tags": ["feature"],
