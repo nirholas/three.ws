@@ -17,6 +17,7 @@ API (bearer auth via API_KEY, same secret family as the reconstruction lanes):
 from __future__ import annotations
 
 import asyncio
+import hmac
 import os
 import time
 from contextlib import asynccontextmanager
@@ -50,10 +51,12 @@ app = FastAPI(lifespan=lifespan)
 
 
 def _check_auth(request: Request) -> None:
-    if not API_KEY:
-        return
+    # Fails closed like every other worker: an unset API_KEY must not turn the
+    # public Cloud Run URL into an open inference endpoint. Constant-time
+    # compare so the key cannot be recovered byte by byte from response timing.
     header = request.headers.get("authorization", "")
-    if header != f"Bearer {API_KEY}":
+    expected = f"Bearer {API_KEY}"
+    if not API_KEY or not hmac.compare_digest(header.encode("utf-8"), expected.encode("utf-8")):
         raise HTTPException(status_code=401, detail="unauthorized")
 
 

@@ -63,8 +63,11 @@ video ever leaves the user's machine, only pose coordinates.
 cd workers/model-asl-recognition
 pip install -r requirements.txt
 gsutil cp gs://three-ws-model-weights/aslfr-1st-place/cfg_2-fold-1/model.tflite .
-MODEL_PATH=./model.tflite API_KEY= uvicorn main:app --port 8087
+MODEL_PATH=./model.tflite API_KEY=dev-local-key uvicorn main:app --port 8087
 ```
+
+The worker fails closed: with `API_KEY` unset every route but `/health` answers
+401, so pick any local value and send it as `Authorization: Bearer dev-local-key`.
 
 That is the platform's mirror of the same 40,946,288-byte file the image pulls
 from the release zip (sha256

@@ -39,11 +39,18 @@ def require_api_key(authorization: Optional[str], api_key: str) -> None:
     Raises ``PermissionError`` on any failure so callers can translate it into
     the framework's 401 (FastAPI workers map this to HTTPException(401)).
     """
+    # Fail closed on an empty configured key: with api_key == "" a bare
+    # "Bearer " header would otherwise strip to "" and compare equal.
+    if not api_key:
+        raise PermissionError("worker api key not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise PermissionError("missing bearer token")
     token = authorization[len("Bearer "):].strip()
-    # hmac.compare_digest is timing-safe and accepts str (ASCII) operands.
-    if not hmac.compare_digest(token, api_key):
+    if not token:
+        raise PermissionError("missing bearer token")
+    # Compare bytes: hmac.compare_digest is timing-safe, and on str operands it
+    # raises TypeError for non-ASCII input, which would surface as a 500.
+    if not hmac.compare_digest(token.encode("utf-8"), api_key.encode("utf-8")):
         raise PermissionError("invalid api key")
 
 
