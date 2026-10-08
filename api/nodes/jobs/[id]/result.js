@@ -66,10 +66,12 @@ export default wrap(async (req, res) => {
 
 	const prompt = typeof job.input === 'string' ? job.input : job.input?.text ?? '';
 	const model = output?.model || job.model;
-	const verified = await verifyResultReceipt(
-		{ jobId, model, prompt, output, startedAt, finishedAt },
-		receipt,
-	);
+	// The receipt must be signed by the claiming node's own key. `node` is only a
+	// claim in the body; without pinning the receipt key to it, anyone who knows a
+	// job id and its claimant could sign forged output with a key of their own.
+	const verified =
+		receipt?.publicKey === job.claimedBy &&
+		(await verifyResultReceipt({ jobId, model, prompt, output, startedAt, finishedAt }, receipt));
 	if (!verified) {
 		return error(res, 401, 'bad_receipt', 'result receipt does not verify against the claiming node');
 	}
