@@ -65,6 +65,15 @@ export default wrap(async (req, res) => {
 	if (!fresh) {
 		return json(res, 200, { ok: true, duplicate: true, applied: false });
 	}
+	// A provider-supplied delivery id is an unsigned header, so also claim the id
+	// derived from the signed body: a replayed body under a new header id is
+	// still the same delivery.
+	if (verdict.bodyDeliveryId && verdict.bodyDeliveryId !== verdict.deliveryId) {
+		const bodyClaim = await claimWebhookDelivery({ provider, deliveryId: verdict.bodyDeliveryId });
+		if (!bodyClaim.fresh) {
+			return json(res, 200, { ok: true, duplicate: true, applied: false });
+		}
+	}
 
 	let payload;
 	try {

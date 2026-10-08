@@ -251,6 +251,14 @@ export default async function handler(req, res) {
 		// the 402 advertises it so a caller learns the contract before paying.
 		paymentIdentifier: { required: true },
 		async handler({ payer }) {
+			// A quote priced at a declared wallet's holder tier is only good when
+			// that wallet pays. Thrown before settle, so the buyer is never charged.
+			if (quote.discountWallet && payer !== quote.discountWallet) {
+				throw Object.assign(
+					new Error(`this quote carries the $THREE holder discount of ${quote.discountWallet} and must be paid from that wallet. Re-quote without payerWallet, or pay from it.`),
+					{ status: 403, code: 'quote_wallet_mismatch', expose: true },
+				);
+			}
 			// The order is opened and quoted here, NOT paid. Settlement happens in
 			// the wrapper after this returns; promoting to paid before it settled
 			// would be how an unpaid job reaches the production floor.

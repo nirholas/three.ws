@@ -498,6 +498,10 @@ export function signQuote(quote, context) {
 		r: context.reportHash,
 		u: context.sourceUrl || null,
 		i: context.creationId || null,
+		// The wallet whose $THREE tier priced this quote, when that tier came from
+		// a self-declared payer wallet rather than a session. Checkout must then be
+		// paid FROM that wallet, or anyone could quote at a whale's discount.
+		pw: context.discountWallet || null,
 		exp: Math.floor(Date.now() / 1000) + ttl,
 	};
 	const payload = Buffer.from(JSON.stringify(body), 'utf8').toString('base64url');
@@ -535,6 +539,7 @@ export function verifyQuote(token, { now = Date.now() } = {}) {
 			reportHash: body.r,
 			sourceUrl: body.u,
 			creationId: body.i,
+			discountWallet: body.pw || null,
 			expiresAt: body.exp * 1000,
 		};
 	} catch {

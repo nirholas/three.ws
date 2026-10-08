@@ -207,7 +207,12 @@ export function verifyWebhook(rawBody, headers = {}) {
 		return { ok: false, deliveryId: '', reason: 'signature mismatch' };
 	}
 	const supplied = String(headers['x-print-delivery'] || '').trim().slice(0, 200);
-	return { ok: true, deliveryId: supplied || derivedDeliveryId(key, rawBody), reason: '' };
+	// The delivery header is NOT covered by the HMAC, so it cannot be the only
+	// dedupe key: a captured signed body replayed under a fresh x-print-delivery
+	// would read as a new event. bodyDeliveryId is derived from the signed bytes
+	// and the route claims it too.
+	const bodyDeliveryId = derivedDeliveryId(key, rawBody);
+	return { ok: true, deliveryId: supplied || bodyDeliveryId, bodyDeliveryId, reason: '' };
 }
 
 /** @param {any} payload */

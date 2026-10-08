@@ -271,6 +271,14 @@ describe('quote tokens', () => {
 		expect(verifyQuote(token, { now: Date.now() + 61_000 })).toBeNull();
 	});
 
+	it('binds a holder discount priced from a declared payer wallet to that wallet', () => {
+		const W = 'So11111111111111111111111111111111111111112';
+		const bound = verifyQuote(signQuote(quoteFor(), { reportHash: 'abc', discountWallet: W }));
+		expect(bound.discountWallet).toBe(W);
+		const unbound = verifyQuote(signQuote(quoteFor(), { reportHash: 'abc' }));
+		expect(unbound.discountWallet).toBeNull();
+	});
+
 	it('refuses anything that is not one of our tokens', () => {
 		expect(verifyQuote('')).toBeNull();
 		expect(verifyQuote('pq1.only-two-parts')).toBeNull();

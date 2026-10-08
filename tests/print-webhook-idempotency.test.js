@@ -147,6 +147,16 @@ describe('a replayed delivery is applied exactly once', () => {
 	});
 });
 
+describe('the unsigned delivery header cannot launder a replay', () => {
+	it('treats a signed body replayed under a fresh x-print-delivery as a duplicate', async () => {
+		const PAYLOAD = { id: 'p-42', state: 'shipped' };
+		await deliver(PAYLOAD, { headers: { 'x-print-delivery': 'dlv_1' } });
+		const replay = await deliver(PAYLOAD, { headers: { 'x-print-delivery': 'dlv_attacker_2' } });
+		expect(replay.json.duplicate).toBe(true);
+		expect(timeline).toHaveLength(1);
+	});
+});
+
 describe('authenticity is settled before anything else happens', () => {
 	it('refuses an unsigned delivery with 401', async () => {
 		const res = await deliver({ id: 'p-42', state: 'shipped' }, { signed: false });

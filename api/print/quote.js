@@ -217,9 +217,9 @@ export default wrap(async (req, res) => {
 	// tier is read from that wallet's own $THREE holdings. Without this the
 	// x402 lane could only ever quote list price, which would make the holder
 	// discount a humans-only perk on a platform whose buyers are half machines.
-	// Self-declared and harmless: the discount is derived from an on-chain
-	// balance we read ourselves, so naming someone else's wallet buys nothing
-	// except that wallet's own tier.
+	// Self-declared, so the discounted quote is bound to that wallet: the token
+	// carries it and checkout refuses a payment from any other wallet. Naming a
+	// whale's wallet would otherwise let anyone print at the top holder tier.
 	const payerWallet =
 		!user && typeof body.payerWallet === 'string' && SOLANA_ADDRESS_RE.test(body.payerWallet.trim())
 			? body.payerWallet.trim()
@@ -258,6 +258,7 @@ export default wrap(async (req, res) => {
 				reportHash: base.reportHash,
 				sourceUrl: source.url,
 				creationId: source.creationId,
+				discountWallet: !user && payerWallet && discountBps > 0 ? payerWallet : null,
 			});
 
 	return json(
