@@ -23,7 +23,7 @@ answers every request synchronously over `POST`. `OPTIONS` is handled for CORS.
 
 ### ChatGPT (Apps SDK)
 
-Two front doors serve the same tools over one handler
+Three front doors serve the same tools over one handler
 ([`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js)) and share one
 generation quota:
 
@@ -31,6 +31,7 @@ generation quota:
 |---|---|---|
 | `https://three.ws/api/mcp-studio` | all fourteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
 | `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | the ChatGPT plugin directory listing |
+| `https://three.ws/api/mcp-grok` | all fourteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 
 The ChatGPT surface leaves out the three catalog tools, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
 frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app

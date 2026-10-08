@@ -63,6 +63,8 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
+The free studio also has two client-tuned doors on the same tools and quota: `/api/mcp-chatgpt` for the ChatGPT plugin directory, and `/api/mcp-grok` for Grok Bot, Grok connectors and the xAI API, where no call hangs and the quota follows your MCP session. See [three.ws for Grok](./grok.md).
+
 **Forty-two install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
 ```bash
@@ -174,10 +176,11 @@ The access token carries scopes (`avatars:read`, `avatars:delete`, etc.) that ga
 
 ```
 GET /.well-known/oauth-authorization-server
-GET /.well-known/oauth-protected-resource
+GET /.well-known/oauth-protected-resource                  # /api/mcp
+GET /.well-known/oauth-protected-resource/api/mcp-3d       # one document per hosted server (RFC 9728 path insertion)
 ```
 
-On a `401`, the `WWW-Authenticate` header points clients at the protected-resource metadata URL so they can begin the flow.
+Each OAuth-protected hosted server is its own resource. On a `401`, the `WWW-Authenticate` header points the client at that server's own metadata document, whose `resource` is the server's URL, so a client connected to `/api/mcp-3d` signs in for `https://three.ws/api/mcp-3d` and receives a token bound to it. A token issued for `https://three.ws/api/mcp` (what `npx three-ws setup` and older connections hold) is accepted by every hosted server.
 
 This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client with no account belongs on `https://three.ws/api/mcp-studio`, which never challenges and serves the free 3D generation and asset catalog tools.
 
@@ -235,6 +238,42 @@ This uses the standalone npm package, which handles OAuth locally. The `--url` f
 ### Any MCP-compatible client
 
 Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The server is stateless — no session setup needed beyond the `initialize` handshake.
+
+### Client compatibility
+
+Every hosted server is checked the way a cloud MCP client (Grok Bot, claude.ai connectors, the xAI Responses API) connects: the official MCP SDK client over Streamable HTTP, with the legacy SSE transport as a fallback, run anonymously, with an API key, and against the OAuth challenge. Run it yourself:
+
+```bash
+npm run probe:mcp-clients                                   # production
+npm run probe:mcp-clients -- --base http://localhost:3000   # your dev server
+npm run probe:mcp-clients -- --only mcp-studio --json probe.json
+```
+
+The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-known/mcp.json), calls only free tools (`search_catalog`, `getting_started`), never sends a payment, and exits non-zero when any server fails. Set `THREE_WS_API_KEY` to include the API key mode. The latest production run is committed at [`prompts/x-grok/_generated/connector-probe.json`](../prompts/x-grok/_generated/connector-probe.json).
+
+| Server | URL | Transport | Works unattended with | Grok Bot custom MCP connector |
+|---|---|---|---|---|
+| Core | `https://three.ws/api/mcp` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp`. Authentication: API key or OAuth 2.1 |
+| 3D Studio | `https://three.ws/api/mcp-3d` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-3d`. Authentication: API key or OAuth 2.1 |
+| 3D Studio (free) | `https://three.ws/api/mcp-studio` | Streamable HTTP | None | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-studio`. Authentication: None |
+| Agent wallet | `https://three.ws/api/mcp-agent` | Streamable HTTP | API key (read-only scopes), OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-agent`. Authentication: API key without `wallet:write` |
+| x402 Bazaar | `https://three.ws/api/mcp-bazaar` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-bazaar`. Authentication: API key or OAuth 2.1 |
+| pump.fun | `https://three.ws/api/pump-fun-mcp` | Streamable HTTP | None (read-only tools), API key | Transport: Streamable HTTP. URL: `https://three.ws/api/pump-fun-mcp`. Authentication: None |
+| IBM x402 | `https://three.ws/api/ibm-mcp` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/ibm-mcp`. Authentication: API key or OAuth 2.1 |
+
+Notes for connector setup:
+
+- **API key.** Create one at [/dashboard/api](https://three.ws/dashboard/api) and store it as the connector's secret. It is sent as `Authorization: Bearer sk_live_…`; if the connector asks for a header name, use `Authorization` with the value `Bearer sk_live_…`. A cloud agent holds this key unattended, so give it only the scopes it needs (`avatars:read avatars:write profile agents:read memory:read` covers generation, avatars and agent data) and never `wallet:write`: spending stays a same-site action you confirm yourself.
+- **OAuth 2.1.** The connector registers itself through dynamic client registration (RFC 7591), so there is no client ID to create; you approve the consent screen once and it refreshes the token on its own. PKCE S256 is required and advertised.
+- **x402 pay-per-call** is not an unattended connector mode: every paid call needs a signed payment, which a connector cannot make on your behalf.
+- **The URL must be public.** Grok Bot connects from xAI's cloud, so `localhost` never works; use the `https://three.ws` URLs above.
+
+What every hosted server does on the wire, so a connector never fails silently:
+
+- `initialize` answers JSON (`application/json`) and negotiates protocol version `2025-06-18` whatever version the client opens with; every current MCP SDK accepts it.
+- A `GET` with `accept: text/event-stream` answers a `405` with an `Allow` header where there is no server-to-client stream, a `401` with the OAuth challenge when the caller is unauthenticated, or the event stream itself (resource subscriptions on an authenticated core, 3D Studio, wallet or Bazaar connection, and the pump.fun feed).
+- These servers are stateless and issue no `Mcp-Session-Id`, so a connector has no session to echo, resume or tear down; every request stands alone.
+- An unauthenticated or expired-token request on a protected server gets `401` with `WWW-Authenticate: Bearer resource_metadata="…", resource="…"` naming that server, so the connector can sign in again on its own.
 
 ---
 
