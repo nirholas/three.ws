@@ -114,10 +114,27 @@ async function handlePersonaIdentity(args, auth) {
 	};
 }
 
+// A persona created by a signed-in account moves funds only for that account.
+// The persona_id travels in every embodiment embed URL (it is how the hosted
+// body reloads), so for an owned persona it cannot also be the key to its
+// wallet: anyone shown a shared artifact could otherwise send its USDC to
+// themselves. A persona minted with no account keeps the bearer-capability
+// model it was created under.
+export function personaSpendForbidden(record, auth) {
+	if (!record?.owner_id) return false;
+	return !auth?.userId || String(auth.userId) !== String(record.owner_id);
+}
+
 async function handlePersonaValueOp(args, auth, { tool, verb }) {
 	await enforce(limits.mcp3dPersonaSpend, auth);
 	const { record, error } = await loadPersonaOrError(args.persona_id);
 	if (error) return error;
+	if (personaSpendForbidden(record, auth)) {
+		return toolError(
+			`${verb} blocked: this persona belongs to a three.ws account, and only that account can move its funds. Sign in as its owner.`,
+			{ status: 'blocked', code: 'not_owner' },
+		);
+	}
 	const persona = personaPublicView(record);
 
 	const usdc = Number(args.usdc);

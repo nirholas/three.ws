@@ -911,6 +911,15 @@ export const limits = {
 	// double an inspect and gets half the budget.
 	mcpDiff: (key) =>
 		getLimiter('mcp:diff', { limit: 15, window: '1 m', critical: true }).limit(key),
+	// mint_3d_asset calls that did not pay per call (an OAuth / API key caller,
+	// or an x402 subscription window). The platform authority pays the rent and
+	// fee of every mint, and a fresh recipient wallet defeats the idempotency
+	// key, so without this an account could loop mainnet mints off the treasury.
+	// Per-call x402 payments skip it: each of those already covered its own cost.
+	mcpMint3dUnpaidMainnet: (key) =>
+		getLimiter('mcp:mint3d:unpaid:mainnet', { limit: 5, window: '1 d', critical: true }).limit(key),
+	mcpMint3dUnpaidDevnet: (key) =>
+		getLimiter('mcp:mint3d:unpaid:devnet', { limit: 30, window: '1 h', critical: true }).limit(key),
 	// 3D Studio MCP. Generation submits a real GPU job on Replicate (text→image
 	// and/or image→3D reconstruction) that costs real money, so it gets a hard
 	// hourly ceiling per principal. Status polling is cheap and frequent.

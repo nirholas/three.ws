@@ -1,5 +1,6 @@
 import { mintTokenized3dAsset, readTokenized3dAsset, TOKENIZE_3D_ROYALTY_CAP_BPS } from '../../_lib/tokenize-3d.js';
 import { priceFor } from '../../_lib/pump-pricing.js';
+import { limits } from '../../_lib/rate-limit.js';
 
 // A handled boundary error carries a status + code; surface it as a clean MCP
 // tool error (isError) rather than letting an unexpected 500 bubble.
@@ -9,6 +10,22 @@ function isHandled(err) {
 
 function toolError(message) {
 	return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
+}
+
+// A mint nobody paid for per call still costs the platform authority its rent
+// and fee, so those callers get a small budget per account (or payer).
+export async function unpaidMintLimited(network, auth) {
+	const limiter = network === 'mainnet' ? limits.mcpMint3dUnpaidMainnet : limits.mcpMint3dUnpaidDevnet;
+	const rl = await limiter(String(auth?.userId || auth?.payer || auth?.rateKey || 'anon'));
+	if (rl.success) return null;
+	const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
+	return {
+		...toolError(
+			`Mint limit reached for this account on ${network === 'mainnet' ? 'mainnet' : 'devnet'}. ` +
+				`Retry in ${retryAfter}s, or pay per mint over x402 to mint without this limit.`,
+		),
+		structuredContent: { ok: false, reason: 'rate_limited', retry_after: retryAfter },
+	};
 }
 
 export const toolDefs = [
@@ -39,7 +56,7 @@ export const toolDefs = [
 			"routes the parent creator's royalty slice out of THIS mint's fee as a real on-chain USDC " +
 			'transfer. Returns the mint address, explorer + viewer links, royalty terms, the provenance ' +
 			'ledger reference, and (for a remix) the royalty settlement. Priced per call via x402 (USDC); ' +
-			'an OAuth bearer token bypasses payment.',
+			'an OAuth bearer token bypasses payment within a small per-account mint budget (5 mainnet mints a day).',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -97,10 +114,14 @@ export const toolDefs = [
 				// ACTUALLY collected for this exact call: a genuine per-call x402
 				// settlement (auth.x402Paid), never a subscription window or an OAuth
 				// bypass (both real access, but no fresh fee here to split).
-				const mintFeeAtomicsCollected =
-					auth?.source === 'x402' && auth?.x402Paid
-						? BigInt(Math.round((priceFor('mint_3d_asset')?.amount_usdc || 0) * 1_000_000))
-						: 0n;
+				const paidPerCall = auth?.source === 'x402' && Boolean(auth?.x402Paid);
+				const mintFeeAtomicsCollected = paidPerCall
+					? BigInt(Math.round((priceFor('mint_3d_asset')?.amount_usdc || 0) * 1_000_000))
+					: 0n;
+				if (!paidPerCall) {
+					const limited = await unpaidMintLimited(args.network, auth);
+					if (limited) return limited;
+				}
 				const result = await mintTokenized3dAsset({
 					avatarId: args.avatar_id,
 					glbUrl: args.glb_url,
