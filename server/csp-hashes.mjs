@@ -224,17 +224,25 @@ function bodyText(chunk) {
  * `javascript:` href) ran with nothing behind the escaping to stop it.
  *
  * Only a body delivered whole through `res.end()` before headers are sent is
- * rewritten; a streamed response keeps the policy it was given.
+ * rewritten; a streamed response keeps the policy it was given. So does a
+ * handler that sets a policy of its own (api/artifact.js deliberately answers
+ * with the policy its host sandbox expects): only the inherited route-table
+ * policy, the one in place when this is installed, is ever rewritten.
  *
  * @param {import('node:http').ServerResponse} res
  * @returns {import('node:http').ServerResponse}
  */
 export function hardenOnEnd(res) {
+	const inherited = res.getHeader('content-security-policy');
 	const end = res.end;
 	res.end = function hardenedEnd(chunk, ...rest) {
 		if (!res.headersSent && chunk != null && typeof chunk !== 'function') {
 			const csp = res.getHeader('content-security-policy');
-			if (typeof csp === 'string' && ACTIVE_DOCUMENT.test(String(res.getHeader('content-type') || ''))) {
+			if (
+				typeof csp === 'string' &&
+				csp === inherited &&
+				ACTIVE_DOCUMENT.test(String(res.getHeader('content-type') || ''))
+			) {
 				const html = bodyText(chunk);
 				if (html !== null) res.setHeader('content-security-policy', hardenInlineScripts(csp, html));
 			}

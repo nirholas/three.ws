@@ -159,9 +159,23 @@ export async function cronEdgeVerdict(req, { env = process.env, keys } = {}) {
 	return { allow: false, via: 'none', status: 401 };
 }
 
-/** Does this path route into api/cron/? */
+/**
+ * Does this path route into api/cron/? Judged on the same view of the path the
+ * API dispatcher uses (server/route-resolve.mjs apiSegments): empty segments
+ * dropped and each segment percent-decoded. Matching the raw string let
+ * `/api//cron/x` and `/api/%63ron/x` skip this gate while still dispatching to
+ * api/cron/x.js.
+ */
 export function isCronPath(pathname) {
-	return typeof pathname === 'string' && pathname.startsWith(CRON_PREFIX) && pathname.length > CRON_PREFIX.length;
+	if (typeof pathname !== 'string') return false;
+	let segments;
+	try {
+		segments = pathname.split('/').filter(Boolean).map(decodeURIComponent);
+	} catch {
+		// Undecodable: the dispatcher refuses it too, so treat it as gated.
+		return pathname.toLowerCase().includes('cron');
+	}
+	return segments.length > 2 && segments[0] === 'api' && segments[1] === 'cron';
 }
 
 /**

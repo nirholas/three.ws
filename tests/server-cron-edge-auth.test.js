@@ -91,6 +91,17 @@ describe('cron edge gate: path scoping', () => {
 		expect(isCronPath('/api/crontab')).toBe(false);
 		expect(isCronPath('/')).toBe(false);
 	});
+
+	it('sees through the path spellings the API dispatcher normalizes', () => {
+		// route-resolve drops empty segments and percent-decodes each one, so
+		// these all dispatch to api/cron/x.js and must be gated like it.
+		expect(isCronPath('/api//cron/economy-tick')).toBe(true);
+		expect(isCronPath('//api/cron/economy-tick')).toBe(true);
+		expect(isCronPath('/api/%63ron/economy-tick')).toBe(true);
+		expect(isCronPath('/api/cron//economy-tick')).toBe(true);
+		expect(isCronPath('/api/cron/%E0%A4%A')).toBe(true);
+		expect(isCronPath('/api/%63rontab')).toBe(false);
+	});
 });
 
 describe('cron edge gate: the secret path', () => {

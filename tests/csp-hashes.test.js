@@ -273,6 +273,14 @@ describe('hardenOnEnd', () => {
 		expect(res.getHeader('content-security-policy')).toBe(POLICY);
 	});
 
+	it('keeps a policy the handler set for itself', () => {
+		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'text/html' }));
+		const own = "default-src 'none'; script-src 'unsafe-inline'";
+		res.setHeader('content-security-policy', own);
+		res.end('<script>a()</script>');
+		expect(res.getHeader('content-security-policy')).toBe(own);
+	});
+
 	it('passes a bodiless end straight through', () => {
 		const res = hardenOnEnd(fakeRes({ 'content-security-policy': POLICY, 'content-type': 'text/html' }));
 		res.end();
