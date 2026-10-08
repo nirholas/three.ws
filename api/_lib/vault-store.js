@@ -301,6 +301,44 @@ export async function applyBackerDelta({ vaultId, userId, backerAgentId, sharesD
 	return row;
 }
 
+/**
+ * Burn `shares` from a backer's position atomically, only if the position still
+ * holds them. Returns the updated row, or null when another redemption already
+ * took them. Redemption burns BEFORE it pays: a read-then-pay let N concurrent
+ * redeems each pay the full position out of other backers' USDC.
+ */
+export async function reserveBackerShares(vaultId, userId, shares) {
+	const [row] = await sql`
+		UPDATE vault_backers SET shares = shares - ${String(shares)}, updated_at = now()
+		WHERE vault_id = ${vaultId} AND user_id = ${userId} AND shares >= ${String(shares)}
+		RETURNING shares
+	`;
+	return row || null;
+}
+
+/** Give back shares a reservation burned when its payout did not happen. */
+export async function releaseBackerShares(vaultId, userId, shares) {
+	await sql`
+		UPDATE vault_backers SET shares = shares + ${String(shares)}, updated_at = now()
+		WHERE vault_id = ${vaultId} AND user_id = ${userId}
+	`;
+}
+
+/**
+ * Take `atomics` out of the vault's accrued fee atomically, only if that much is
+ * still accrued. Returns the remaining accrual, or null when a concurrent claim
+ * already took it. The fee claim reserves BEFORE it pays for the same reason
+ * reserveBackerShares exists.
+ */
+export async function reserveAccruedFee(vaultId, atomics) {
+	const [row] = await sql`
+		UPDATE agent_vaults SET accrued_fee_atomics = accrued_fee_atomics - ${String(atomics)}, updated_at = now()
+		WHERE id = ${vaultId} AND accrued_fee_atomics >= ${String(atomics)}
+		RETURNING accrued_fee_atomics
+	`;
+	return row ? row.accrued_fee_atomics : null;
+}
+
 /** Move total_shares by a signed delta and ratchet the high-water share-price peak. */
 export async function applyVaultShareDelta(vaultId, sharesDelta, peakSharePriceE6 = null) {
 	const [row] = await sql`

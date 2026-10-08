@@ -28,6 +28,7 @@ import { explorerTxUrl } from './avatar-wallet.js';
 import {
 	getVaultWithSecret, getBacker, getOpenPositions,
 	recordVaultEvent, applyBackerDelta, applyVaultShareDelta, applyAccruedFee,
+	reserveBackerShares, releaseBackerShares, reserveAccruedFee,
 } from './vault-store.js';
 import { recoverVaultKeypair, computeVaultNav, readVaultUsdcAtomics } from './vault-wallet.js';
 import { USDC_MINT_BY_NETWORK, USDC_DECIMALS } from './vault-jupiter.js';
@@ -192,6 +193,12 @@ export async function redeemFromVault({ vaultId, userId, shares, idempotencyKey 
 	const toAddress = recipient?.addr;
 	if (!toAddress) return { status: 'failed', code: 'no_recipient', message: 'the funding wallet for this position is no longer available' };
 
+	// Burn the shares BEFORE paying. The position read above is a plain SELECT,
+	// so without this N concurrent redeems (each with its own idempotency key)
+	// all saw the same shares and each paid the full net out of the pool.
+	const burned = await reserveBackerShares(vault.id, userId, redeemNow);
+	if (!burned) return { status: 'failed', code: 'in_flight', message: 'another redemption already claimed these shares; check the ledger before retrying' };
+
 	// Claim a pending event keyed by the caller's idempotency key BEFORE paying —
 	// a retry/double-submit with the same key collides here and never pays twice.
 	const claimId = await recordVaultEvent({
@@ -201,7 +208,10 @@ export async function redeemFromVault({ vaultId, userId, shares, idempotencyKey 
 		status: 'pending', reason: 'redeem', idempotencyKey: idempotencyKey || `redeem:${vault.id}:${userId}:${redeemNow}`,
 		meta: { gross_atomics: String(settle.grossPayout), fee_atomics: String(settle.fee), net_atomics: String(settle.netPayout), gain_atomics: String(settle.gain), shares_burned: String(redeemNow) },
 	});
-	if (claimId == null) return { status: 'failed', code: 'in_flight', message: 'a redemption with this id is already in progress — check the ledger before retrying' };
+	if (claimId == null) {
+		await releaseBackerShares(vault.id, userId, redeemNow);
+		return { status: 'failed', code: 'in_flight', message: 'a redemption with this id is already in progress; check the ledger before retrying' };
+	}
 
 	let signature;
 	try {
@@ -209,6 +219,7 @@ export async function redeemFromVault({ vaultId, userId, shares, idempotencyKey 
 	} catch (e) {
 		const { updateVaultEvent } = await import('./vault-store.js');
 		await updateVaultEvent(claimId, { status: 'failed', meta: { error: e?.code || 'payout_failed' } });
+		await releaseBackerShares(vault.id, userId, redeemNow);
 		return { status: 'failed', code: e?.code || 'payout_failed', message: 'the redemption payout could not be confirmed — your shares were not burned' };
 	}
 
@@ -216,9 +227,10 @@ export async function redeemFromVault({ vaultId, userId, shares, idempotencyKey 
 	const { updateVaultEvent } = await import('./vault-store.js');
 	await updateVaultEvent(claimId, { status: 'ok', signature });
 
+	// The shares were already burned by reserveBackerShares; settle the rest.
 	await applyBackerDelta({
 		vaultId: vault.id, userId, backerAgentId: backer.backer_agent_id,
-		sharesDelta: -redeemNow, basisDelta: -settle.costPortion,
+		sharesDelta: 0n, basisDelta: -settle.costPortion,
 		redeemedDelta: settle.netPayout, realizedGainDelta: settle.gain, feesPaidDelta: settle.fee,
 	});
 	await applyVaultShareDelta(vault.id, -redeemNow);
@@ -260,19 +272,32 @@ export async function claimVaultFees({ vaultId, ownerUserId, toAgent, idempotenc
 	const claimable = accrued < free ? accrued : free;
 	if (claimable <= 0n) return { status: 'queued', code: 'insufficient_liquidity', message: 'fees are accrued but the vault has no liquid USDC to pay them right now', detail: { accrued_atomics: String(accrued) } };
 
+	// Take the fee out of the accrual BEFORE paying, then claim the ledger row.
+	// Paying first let N concurrent claims each pay the full accrual out of the
+	// pooled USDC, i.e. out of backers' principal.
+	if ((await reserveAccruedFee(vault.id, claimable)) == null) {
+		return { status: 'failed', code: 'in_flight', message: 'another fee claim already took these fees; check the ledger before retrying' };
+	}
+	const eventId = await recordVaultEvent({
+		vaultId: vault.id, type: 'fee_claim', userId: ownerUserId, backerAgentId: toAgent.id,
+		atomicsDelta: String(-claimable), status: 'pending', reason: 'fee_claim',
+		idempotencyKey: idempotencyKey || null, meta: { to: toAddress, claimed_atomics: String(claimable) },
+	});
+	if (eventId == null) {
+		await applyAccruedFee(vault.id, claimable);
+		return { status: 'replayed', code: 'in_flight', message: 'a fee claim with this id was already recorded' };
+	}
+
+	const { updateVaultEvent } = await import('./vault-store.js');
 	let signature;
 	try {
 		({ signature } = await payoutUsdc({ vault, toAddress, atomics: claimable, userId: ownerUserId, reason: 'vault_fee_claim' }));
 	} catch (e) {
+		await updateVaultEvent(eventId, { status: 'failed', meta: { error: e?.code || 'payout_failed' } });
+		await applyAccruedFee(vault.id, claimable);
 		return { status: 'failed', code: e?.code || 'payout_failed', message: 'the fee claim could not be confirmed' };
 	}
-	const eventId = await recordVaultEvent({
-		vaultId: vault.id, type: 'fee_claim', userId: ownerUserId, backerAgentId: toAgent.id,
-		atomicsDelta: String(-claimable), signature, status: 'ok', reason: 'fee_claim',
-		idempotencyKey: idempotencyKey || `fee_claim:${signature}`, meta: { to: toAddress, claimed_atomics: String(claimable) },
-	});
-	if (eventId == null) return { status: 'replayed', signature };
-	await applyAccruedFee(vault.id, -claimable);
+	await updateVaultEvent(eventId, { status: 'ok', signature });
 	logAudit({ userId: ownerUserId, action: 'vault.fee_claim', resourceId: vault.id, meta: { claimed_atomics: String(claimable), signature } });
 
 	return {
