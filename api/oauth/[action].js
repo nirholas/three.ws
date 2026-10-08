@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
 import { filterRegisterableScope } from '../_lib/oauth-scopes.js';
 import { requireCsrf } from '../_lib/csrf.js';
+import { canonicalMcpResource, allMcpAudiences } from '../_lib/mcp-resources.js';
 
 // ── authorize ─────────────────────────────────────────────────────────────────
 
@@ -50,18 +51,16 @@ function intersectScopes(requested, allowed) {
 }
 
 // RFC 8707 §2: an authorization server that does not recognize the requested
-// `resource` MUST reject the request with `invalid_target`. Every consumer of an
-// access token on this platform verifies `aud === env.MCP_RESOURCE`
-// (verifyAccessToken in api/_lib/auth.js defaults the audience to it), so
-// honoring an arbitrary resource minted a token that no endpoint here would ever
-// accept: the client got a 200 and a credential that failed everywhere, instead
-// of one clear error at the point the mistake was made.
+// `resource` MUST reject the request with `invalid_target`. Honoring an
+// arbitrary resource minted a token that no endpoint here would ever accept:
+// the client got a 200 and a credential that failed everywhere, instead of one
+// clear error at the point the mistake was made. The recognized resources are
+// the platform resource and each hosted MCP server's own URL (an MCP client
+// asks for the server it connected to; ../_lib/mcp-resources.js), and the
+// token's `aud` is whichever one was granted.
 // Returns the canonical resource, or null when the request names another one.
-function canonicalResource(requested) {
-	if (requested === undefined || requested === null || requested === '') return env.MCP_RESOURCE;
-	const strip = (s) => String(s).replace(/\/+$/, '');
-	return strip(requested) === strip(env.MCP_RESOURCE) ? env.MCP_RESOURCE : null;
-}
+const canonicalResource = canonicalMcpResource;
+const INVALID_TARGET = 'unknown resource, this server issues tokens only for the three.ws MCP servers listed at /.well-known/mcp.json';
 
 // The registerable scope set and the filter that enforces it live in
 // ../_lib/oauth-scopes.js, shared with api/wk.js so the scopes this endpoint
@@ -117,7 +116,7 @@ async function handleAuthorize(req, res) {
 	if (!code_challenge_method) return error(res, 400, 'invalid_request', 'code_challenge_method required (must be S256)');
 	if (code_challenge_method !== 'S256') return error(res, 400, 'invalid_request', 'code_challenge_method must be S256');
 	const targetResource = canonicalResource(resource);
-	if (!targetResource) return error(res, 400, 'invalid_target', `unknown resource, this server only issues tokens for ${env.MCP_RESOURCE}`);
+	if (!targetResource) return error(res, 400, 'invalid_target', INVALID_TARGET);
 	const rows = await sql`select * from oauth_clients where client_id = ${client_id} limit 1`;
 	const client = rows[0];
 	if (!client) return error(res, 400, 'invalid_client', 'unknown client');
@@ -228,7 +227,7 @@ async function handleToken(req, res) {
 	// Checked before the client lookup, exactly as authorize does it: the answer
 	// is the same for every caller and it is already public in the well-known
 	// metadata, so there is nothing to gain from spending a query first.
-	if (!canonicalResource(form.resource)) return error(res, 400, 'invalid_target', `unknown resource, this server only issues tokens for ${env.MCP_RESOURCE}`);
+	if (!canonicalResource(form.resource)) return error(res, 400, 'invalid_target', INVALID_TARGET);
 	const auth = await authenticateClient(req, form);
 	if (!auth.ok) {
 		if (auth.reason === 'unknown_client') return error(res, 400, 'invalid_client', 'unknown client');
@@ -430,7 +429,7 @@ async function handleIntrospect(req, res) {
 	}
 	const clientId = auth.clientId;
 	try {
-		const payload = await verifyAccessToken(token);
+		const payload = await verifyAccessToken(token, { audience: allMcpAudiences() });
 		if (payload.client_id && payload.client_id !== clientId) return json(res, 200, { active: false });
 		return json(res, 200, { active: true, scope: payload.scope, client_id: payload.client_id, sub: payload.sub, aud: payload.aud, iss: payload.iss, exp: payload.exp, iat: payload.iat, token_type: 'Bearer' });
 	} catch {

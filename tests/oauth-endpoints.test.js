@@ -441,6 +441,29 @@ describe('POST /oauth/token', () => {
 		expect((await verifyAccessToken(res.json().access_token)).aud).toBe(RESOURCE);
 	});
 
+	// An MCP client asks for the server it connected to (RFC 8707), so a connector
+	// on /api/mcp-3d requests resource=https://three.ws/api/mcp-3d. Refusing it
+	// stranded every OAuth connector on the four non-platform servers.
+	it('issues a token bound to a hosted MCP server that names itself as the resource', async () => {
+		seedClient();
+		const authorized = await approve({ resource: 'https://three.ws/api/mcp-3d' });
+		expect(db.codes[0].resource).toBe('https://three.ws/api/mcp-3d');
+		const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: 'mcp_test_client', code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER, resource: 'https://three.ws/api/mcp-3d' } });
+		expect(res.statusCode).toBe(200);
+		const payload = await verifyAccessToken(res.json().access_token, { audience: 'https://three.ws/api/mcp-3d' });
+		expect(payload.aud).toBe('https://three.ws/api/mcp-3d');
+		const introspected = await call('introspect', { method: 'POST', form: { token: res.json().access_token, client_id: 'mcp_test_client' } });
+		expect(introspected.json()).toMatchObject({ active: true, aud: 'https://three.ws/api/mcp-3d' });
+	});
+
+	it('still rejects a lookalike of a hosted MCP server on another origin', async () => {
+		seedClient();
+		const res = await call('authorize', { query: authorizeQuery({ resource: 'https://evil.example/api/mcp-3d' }) });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().error).toBe('invalid_target');
+	});
+
 	it('rejects a refresh exchange naming another resource', async () => {
 		seedClient();
 		const { refresh_token } = await issueTokens();

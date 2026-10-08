@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { cors, json, method, wrap, error } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { REGISTERABLE_SCOPES, SUPPORTED_SCOPES } from './_lib/oauth-scopes.js';
+import { hostedMcpPath, mcpResourceFor } from './_lib/mcp-resources.js';
 import {
 	paymentRequirements,
 	bazaarExtension,
@@ -177,12 +178,22 @@ function handleOauthAuthServer(req, res) {
 
 // ── oauth-protected-resource ──────────────────────────────────────────────────
 
+// The root document describes the platform resource (/api/mcp). RFC 9728 §3.1
+// path insertion (/.well-known/oauth-protected-resource/api/mcp-3d, routed here
+// with ?path=) describes one hosted MCP server, whose `resource` must be that
+// server's own URL: an MCP client refuses to sign in when the metadata names a
+// resource that does not cover the URL it connected to.
 function handleOauthProtectedResource(req, res) {
+	const requestedPath = req.query?.path ?? new URL(req.url, 'http://x').searchParams.get('path');
+	if (requestedPath && !hostedMcpPath(requestedPath)) {
+		return error(res, 404, 'not_found', `no protected resource at ${String(requestedPath).slice(0, 64)}`);
+	}
+	const resource = requestedPath ? mcpResourceFor(requestedPath) : env.MCP_RESOURCE;
 	return json(
 		res,
 		200,
 		{
-			resource: env.MCP_RESOURCE,
+			resource,
 			authorization_servers: [env.APP_ORIGIN],
 			bearer_methods_supported: ['header'],
 			resource_documentation: `${env.APP_ORIGIN}/docs/mcp`,

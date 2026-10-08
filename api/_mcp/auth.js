@@ -1,4 +1,3 @@
-import { env } from '../_lib/env.js';
 import { authenticateBearer, extractBearer } from '../_lib/auth.js';
 import {
 	paymentRequirements,
@@ -10,6 +9,7 @@ import {
 } from '../_lib/x402-spec.js';
 import { sendX402Error } from './payments.js';
 import { streamSubscriptions, dropSubscriptions } from './resources.js';
+import { acceptedAudiences, mcpResourceFor, protectedResourceMetadataUrl } from '../_lib/mcp-resources.js';
 
 function quoteString(s) {
 	return `"${String(s).replace(/[\\"]/g, '\\$&')}"`;
@@ -25,13 +25,25 @@ export const SETUP_HINT = Object.freeze({
 	docs: 'https://three.ws/docs/cli',
 });
 
-export function send401(res, msg) {
-	const resource = env.MCP_RESOURCE;
+// The protected resource a request is for: the endpoint's declared path when
+// it passes one, else the path it was reached on. See ../_lib/mcp-resources.js
+// for why each hosted server is its own resource.
+function requestResource(req, resourcePath) {
+	if (resourcePath) return mcpResourceFor(resourcePath);
+	const url = req?.url ? String(req.url) : '';
+	return mcpResourceFor(url.startsWith('/') ? url : '');
+}
+
+// RFC 9728 §5.1: the challenge names the metadata document for THIS resource,
+// whose `resource` an MCP client checks against the URL it connected to.
+export function bearerChallenge(resource) {
+	return `Bearer resource_metadata=${quoteString(protectedResourceMetadataUrl(resource))}, resource=${quoteString(resource)}`;
+}
+
+export function send401(res, msg, { req, resourcePath } = {}) {
+	const resource = requestResource(req || res?.req, resourcePath);
 	res.statusCode = 401;
-	res.setHeader(
-		'www-authenticate',
-		`Bearer resource_metadata=${quoteString(`${env.APP_ORIGIN}/.well-known/oauth-protected-resource`)}, resource=${quoteString(resource)}`,
-	);
+	res.setHeader('www-authenticate', bearerChallenge(resource));
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.end(JSON.stringify({ error: 'unauthorized', error_description: msg, setup: SETUP_HINT }));
 }
@@ -75,17 +87,11 @@ export function isMcpProtocolClient(req) {
 // ("if it is not 402, return the body directly"), so a real MCP client calling
 // a paid tool unpaid was handed a 401 it could not pay, and a reviewer probing
 // with one saw a service with no payment integration. curl never showed it.
-export async function sendAuthChallenge(res, { req, resourceUrl, requirements, challenge, paymentStatus = null }) {
-	const resource = env.MCP_RESOURCE;
+export async function sendAuthChallenge(res, { req, resourceUrl, resourcePath, requirements, challenge, paymentStatus = null }) {
 	const forced402 = paymentStatus === 402;
 	const isProtocolClient = !forced402 && isMcpProtocolClient(req);
 	res.statusCode = isProtocolClient ? 401 : 402;
-	if (isProtocolClient) {
-		res.setHeader(
-			'www-authenticate',
-			`Bearer resource_metadata=${quoteString(`${env.APP_ORIGIN}/.well-known/oauth-protected-resource`)}, resource=${quoteString(resource)}`,
-		);
-	}
+	if (isProtocolClient) res.setHeader('www-authenticate', bearerChallenge(requestResource(req, resourcePath)));
 	// `challenge` (optional) lets a dedicated MCP endpoint advertise its own
 	// service metadata + bazaar discovery in the 402 envelope (the Granite
 	// server at /api/ibm-mcp, the 3D Studio at /api/mcp-3d). Omitted →
@@ -148,9 +154,9 @@ export async function authenticateRequest(
 	const paymentHeader = req.headers['x-payment'] || req.headers['payment-signature'];
 
 	if (bearer) {
-		const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
+		const auth = await authenticateBearer(bearer, { audience: acceptedAudiences(mcpResourceFor(resourcePath)) });
 		if (!auth) {
-			send401(res, 'missing or invalid access token');
+			send401(res, 'missing or invalid access token', { req, resourcePath });
 			return null;
 		}
 		return { auth, x402Ctx: null };
@@ -220,7 +226,7 @@ export async function authenticateRequest(
 		}
 	}
 
-	await sendAuthChallenge(res, { req, resourceUrl, requirements, challenge, paymentStatus });
+	await sendAuthChallenge(res, { req, resourceUrl, resourcePath, requirements, challenge, paymentStatus });
 	return null;
 }
 
@@ -249,6 +255,7 @@ export async function handleSse(
 		return await sendAuthChallenge(res, {
 			req,
 			resourceUrl: sseResourceUrl,
+			resourcePath,
 			requirements: mergeAccepts(
 				extraAccepts,
 				paymentRequirements(sseResourceUrl, x402Amount != null ? { amount: x402Amount } : {}),
@@ -257,8 +264,8 @@ export async function handleSse(
 			paymentStatus,
 		});
 	}
-	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });
-	if (!auth) return send401(res, 'missing or invalid access token');
+	const auth = await authenticateBearer(bearer, { audience: acceptedAudiences(mcpResourceFor(resourcePath)) });
+	if (!auth) return send401(res, 'missing or invalid access token', { req, resourcePath });
 	const wantsStream = String(req.headers?.accept || '').includes('text/event-stream');
 	if (resourceServer && req.method === 'GET' && wantsStream) {
 		return streamSubscriptions(resourceServer, req, res, auth);
@@ -273,7 +280,7 @@ export async function handleSse(
 // tears down cleanly stops being polled for.
 export async function handleTerminate(req, res, { resourceServer = null } = {}) {
 	if (resourceServer) {
-		const auth = await authenticateBearer(extractBearer(req), { audience: env.MCP_RESOURCE });
+		const auth = await authenticateBearer(extractBearer(req), { audience: acceptedAudiences(mcpResourceFor(`/api/${resourceServer}`)) });
 		if (auth) {
 			await dropSubscriptions(resourceServer, auth, req).catch((err) =>
 				console.warn('[mcp] subscription cleanup failed', resourceServer, err?.message),
