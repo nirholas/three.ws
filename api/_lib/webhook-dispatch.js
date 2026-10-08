@@ -10,7 +10,7 @@
 
 import { sql } from './db.js';
 import { randomToken, hmacSha256 } from './crypto.js';
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from './ssrf.js';
+import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from './ssrf.js';
 
 const MAX_ATTEMPTS = 3;
 const BACKOFF_BASE_MS = 1000;
@@ -163,32 +163,30 @@ async function deliver(url, secret, eventId, timestamp, payload) {
 		return { statusCode: null, responseBody: null, error: reason };
 	}
 
+	// The body is read under the same delivery timeout as the request, and the
+	// agent is destroyed only once we are done with the response. Closing it
+	// before the read (as this used to) waited on a body nobody was reading, with
+	// the timeout already cleared, so an endpoint that stalls mid-response hung
+	// the dispatch indefinitely.
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
 	try {
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
+		const res = await fetch(target, {
+			method: 'POST',
+			redirect: 'manual',
+			dispatcher: agent,
+			headers: {
+				'content-type': 'application/json',
+				'webhook-id': eventId,
+				'webhook-timestamp': String(timestamp),
+				'webhook-signature': `v1,${signature}`,
+				'user-agent': 'three.ws-webhooks/1.0',
+			},
+			body: payload,
+			signal: controller.signal,
+		});
 
-		let res;
-		try {
-			res = await fetch(target, {
-				method: 'POST',
-				redirect: 'manual',
-				dispatcher: agent,
-				headers: {
-					'content-type': 'application/json',
-					'webhook-id': eventId,
-					'webhook-timestamp': String(timestamp),
-					'webhook-signature': `v1,${signature}`,
-					'user-agent': 'three.ws-webhooks/1.0',
-				},
-				body: payload,
-				signal: controller.signal,
-			});
-		} finally {
-			clearTimeout(timeout);
-			await agent.close().catch(() => {});
-		}
-
-		// A redirect is a misconfigured (or hostile) endpoint — record it as a
+		// A redirect is a misconfigured (or hostile) endpoint: record it as a
 		// failure instead of following it to a potentially internal target.
 		if (res.status >= 300 && res.status < 400) {
 			return { statusCode: res.status, responseBody: null, error: 'redirect_not_followed' };
@@ -205,6 +203,9 @@ async function deliver(url, secret, eventId, timestamp, payload) {
 		return { statusCode: res.status, responseBody, error: null };
 	} catch (err) {
 		return { statusCode: null, responseBody: null, error: err?.message || 'delivery_failed' };
+	} finally {
+		clearTimeout(timeout);
+		await disposeAgent(agent);
 	}
 }
 

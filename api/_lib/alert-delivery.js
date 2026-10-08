@@ -13,7 +13,7 @@
 
 import { sql } from './db.js';
 import { hmacSha256, randomToken } from './crypto.js';
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from './ssrf.js';
+import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from './ssrf.js';
 import { formatAlertSummary } from './pump-alert-eval.js';
 
 import { fetchUpstream } from './upstream-fetch.js';
@@ -110,7 +110,7 @@ async function deliverWebhook(rule, payload) {
 		return { attempted: true, ok: false, detail: errMsg(e) };
 	} finally {
 		clearTimeout(timer);
-		await agent.close().catch(() => {});
+		await disposeAgent(agent);
 	}
 }
 

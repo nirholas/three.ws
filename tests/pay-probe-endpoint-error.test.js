@@ -27,7 +27,7 @@ vi.mock('../api/_lib/ssrf.js', async (importOriginal) => {
 	return {
 		...actual,
 		resolvePublicHost: async () => ['203.0.113.10'],
-		pinnedAgent: () => ({ close: async () => {} }),
+		pinnedAgent: () => ({ destroy: async () => {} }),
 	};
 });
 
