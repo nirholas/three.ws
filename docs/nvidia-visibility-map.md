@@ -151,12 +151,21 @@ these dates are NVIDIA-stated yet. Nothing to submit to this week. Keep the
 weekly watch running; the abstracts in step 2 below are what should be written
 while the window is shut.
 
+**Re-checked 2026-10-08: the window is open.** NVIDIA now states the dates,
+**2027-03-15 to 03-18, San Jose**. The [poster call](https://www.nvidia.com/en-us/gtc/present/call-for-submissions/)
+closes **2026-11-10 at 5 p.m. PT** and the Content Interest Survey closes
+**2026-10-09 at 5 p.m. PT**. No open speaker call is posted. Both poster
+submissions and the survey answers are written in
+[nvidia-gtc-2027-poster.md](./nvidia-gtc-2027-poster.md); what remains is the
+owner submitting them as the presenting author.
+
 Actions, in order:
 
 1. **Put [nvidia.com/gtc/call-for-submissions](https://www.nvidia.com/gtc/call-for-submissions/)
    on a weekly watch.** Missing this window costs a full year. It is the one item
    on this page with a hard, externally-set deadline.
-2. **Write the poster and session abstracts before the form opens.** The strongest
+2. **Write the poster and session abstracts before the form opens.** Done
+   2026-10-08: [nvidia-gtc-2027-poster.md](./nvidia-gtc-2027-poster.md). The strongest
    submission we have is the browser-native digital human: Audio2Face-3D plus Riva
    plus Nemotron driving a rigged avatar in a tab with no install, on a fleet of
    L4s and one Blackwell. Second-strongest is the L4-and-Blackwell engineering

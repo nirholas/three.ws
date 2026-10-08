@@ -313,6 +313,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['threejs-forum-post', 'internal: forum post drafted for the three.js forum'],
 	['nvidia-forum-gpu-fleet-post', 'internal: forum post drafted for the NVIDIA developer forums'],
 	['nvidia-forum-model-retirement-post', 'internal: forum post drafted for the NVIDIA developer forums'],
+	['nvidia-gtc-2027-poster', 'internal: poster submissions drafted for the NVIDIA GTC 2027 call'],
 	['huggingface-agent-feedback-loop', 'internal: article drafted for the Hugging Face community blog'],
 	['devto-mcp-fleet-post', 'internal: article drafted for dev.to'],
 	['google-cloud-community-post', 'internal: article drafted for the Google Cloud community'],
