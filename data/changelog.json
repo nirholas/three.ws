@@ -29121,6 +29121,15 @@
 				"improvement"
 			],
 			"link": "/creations"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "The terminal 3D renderer animates live in every HTTP client",
+			"summary": "curl three.ws/tty streams an animated 3D character into your terminal frame by frame. Clients that ask for compressed responses, such as curl --compressed, scripts using fetch, and most HTTP libraries, used to get nothing for about ten seconds and then the whole animation at once as a wall of text. Live streams are no longer compressed, so every client now sees the character move from the first frame. Streaming agent and chat responses get the same fix.",
+			"tags": [
+				"fix"
+			],
+			"link": "/tty"
 		}
 	]
 }
