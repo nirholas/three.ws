@@ -29,6 +29,12 @@
 // work anyway: the payment already landed on chain, so the facilitator rejects
 // it. Only a proof whose work was delivered (`delivered`) answers 409.
 //
+// A streaming route settles BEFORE its handler runs, so its claim is taken with
+// outcome `running` (stored as `retrying`: work is in progress after
+// settlement) and flipped to `delivered` once the body ships. If the process
+// dies mid-handler the row would sit at `retrying` forever; a row that has not
+// moved for PAID_RUNNING_STALE_SECONDS is treated as failed and may be retried.
+//
 // Failure policy: FAIL OPEN, deliberately. The in-cache guard, the payment
 // identifier reservation and the on-chain settle-credit gate all remain in
 // force, so a Neon outage degrades this control to "cache-window replay
@@ -63,30 +69,43 @@ export const PAID_RETRY_WINDOW_SECONDS = Math.max(
 	60,
 	Number(process.env.X402_PAID_RETRY_WINDOW_SECONDS) || 24 * 3600,
 );
+/** A run after settlement that has not finished in this long is presumed dead. */
+export const PAID_RUNNING_STALE_SECONDS = Math.max(
+	60,
+	Number(process.env.X402_PAID_RUNNING_STALE_SECONDS) || 15 * 60,
+);
+
+function isStaleRun(row) {
+	if (row.outcome !== 'retrying' || !row.updated_at) return false;
+	return new Date(row.updated_at).getTime() < Date.now() - PAID_RUNNING_STALE_SECONDS * 1000;
+}
 
 /**
  * Has this payment proof already been honoured, and if it failed after the
  * buyer was charged, may it still be retried?
  *
  * @param {string|null|undefined} paymentHash Hash of the signed X-PAYMENT proof.
- * @returns {Promise<{ spent: boolean, unavailable: boolean, retryable: boolean, outcome: string|null, endpoint: string|null, settlement: object|null }>}
+ * @returns {Promise<{ spent: boolean, unavailable: boolean, retryable: boolean, running: boolean, retriesLeft?: number, outcome: string|null, endpoint: string|null, settlement: object|null }>}
  *   `spent` is true only on a positive, durable answer. `retryable` is true when
- *   the proof settled but its work failed, retries remain and the window is
- *   open. `unavailable` marks the fail-open path so the caller can log it rather
- *   than silently trusting a "not spent" that was never actually checked.
+ *   the proof settled but its work failed (or its run went stale), retries
+ *   remain and the window is open. `running` is true while another request is
+ *   doing the paid work for this proof right now. `unavailable` marks the
+ *   fail-open path so the caller can log it rather than silently trusting a
+ *   "not spent" that was never actually checked.
  */
 export async function isPaymentSpent(paymentHash) {
-	const none = { spent: false, retryable: false, outcome: null, endpoint: null, settlement: null };
+	const none = { spent: false, retryable: false, running: false, outcome: null, endpoint: null, settlement: null };
 	if (!paymentHash) return { ...none, unavailable: false };
 	try {
 		const rows = await sql`
-			SELECT endpoint, outcome, retry_count, retry_until, settlement
+			SELECT endpoint, outcome, retry_count, retry_until, settlement, updated_at
 			FROM x402_spent_payments WHERE payment_hash = ${paymentHash} LIMIT 1
 		`;
 		const row = rows?.[0];
 		if (!row) return { ...none, unavailable: false };
+		const stale = isStaleRun(row);
 		const retryable =
-			row.outcome === 'failed_after_settle' &&
+			(row.outcome === 'failed_after_settle' || stale) &&
 			Number(row.retry_count || 0) < PAID_RETRY_MAX &&
 			(!row.retry_until || new Date(row.retry_until).getTime() > Date.now());
 		const settlement = typeof row.settlement === 'string' ? JSON.parse(row.settlement) : row.settlement;
@@ -94,6 +113,8 @@ export async function isPaymentSpent(paymentHash) {
 			spent: true,
 			unavailable: false,
 			retryable,
+			running: row.outcome === 'retrying' && !stale,
+			retriesLeft: Math.max(0, PAID_RETRY_MAX - Number(row.retry_count || 0)),
 			outcome: row.outcome || 'delivered',
 			endpoint: row.endpoint ?? null,
 			settlement: settlement || null,
@@ -109,14 +130,16 @@ export async function isPaymentSpent(paymentHash) {
  * set of concurrent requests carrying one X-PAYMENT header exactly one claim
  * returns a row. Pass `outcome: 'failed_after_settle'` (with the settlement)
  * when the buyer was charged but the work did not complete, so the same header
- * can retry through claimPaidRetry.
+ * can retry through claimPaidRetry. Pass `outcome: 'running'` when the work
+ * runs AFTER this claim (settle-then-stream); finish it with markDelivered or
+ * markFailedAfterSettle.
  *
  * @param {object} args
  * @param {string|null|undefined} args.paymentHash
  * @param {string} args.endpoint Route the proof was spent on (audit context).
  * @param {string|number|null} [args.amountAtomics] Price paid, in asset atomics.
- * @param {'delivered'|'failed_after_settle'} [args.outcome]
- * @param {object|null} [args.settlement] { transaction, network, payer, asset, amount, header }
+ * @param {'delivered'|'failed_after_settle'|'running'} [args.outcome]
+ * @param {object|null} [args.settlement] { transaction, network, payer, asset, amount, status, header }
  * @param {string|null} [args.lastError]
  * @returns {Promise<{ granted: boolean, replay: boolean, unavailable: boolean }>}
  */
@@ -133,12 +156,13 @@ export async function claimSpentPayment({
 	// nothing that could double-deliver under this key either.
 	if (!paymentHash) return { granted: true, replay: false, unavailable: false };
 	const failed = outcome === 'failed_after_settle';
+	const stored = failed ? 'failed_after_settle' : outcome === 'running' ? 'retrying' : 'delivered';
 	try {
 		const rows = await sql`
 			INSERT INTO x402_spent_payments
 				(payment_hash, endpoint, amount_atomics, outcome, settlement, last_error, retry_until)
 			VALUES (${paymentHash}, ${endpoint}, ${amountAtomics == null ? null : String(amountAtomics)},
-				${failed ? 'failed_after_settle' : 'delivered'},
+				${stored},
 				${settlement ? JSON.stringify(settlement) : null}::jsonb,
 				${lastError ? String(lastError).slice(0, 500) : null},
 				${failed ? new Date(Date.now() + PAID_RETRY_WINDOW_SECONDS * 1000) : null})
@@ -157,10 +181,15 @@ export async function claimSpentPayment({
  * Record that a claimed proof's work failed after settlement. Opens (or keeps)
  * the retry window and stores the settlement the retry will re-emit.
  *
- * @returns {Promise<{ retriesLeft: number, retryUntil: string|null }>}
+ * `recorded` is false when no row could be updated (DB outage, or a fail-open
+ * claim that never wrote one): the same header then cannot be retried, and the
+ * buyer must be told so rather than promised a retry that will 402.
+ *
+ * @returns {Promise<{ retriesLeft: number, retryUntil: string|null, recorded: boolean }>}
  */
 export async function markFailedAfterSettle({ paymentHash, settlement = null, lastError = null }) {
-	if (!paymentHash) return { retriesLeft: 0, retryUntil: null };
+	const unrecorded = { retriesLeft: 0, retryUntil: null, recorded: false };
+	if (!paymentHash) return unrecorded;
 	try {
 		const rows = await sql`
 			UPDATE x402_spent_payments
@@ -173,21 +202,23 @@ export async function markFailedAfterSettle({ paymentHash, settlement = null, la
 			RETURNING retry_count, retry_until
 		`;
 		const row = rows?.[0];
-		if (!row) return { retriesLeft: 0, retryUntil: null };
+		if (!row) return unrecorded;
 		const open = !row.retry_until || new Date(row.retry_until).getTime() > Date.now();
 		return {
 			retriesLeft: open ? Math.max(0, PAID_RETRY_MAX - Number(row.retry_count || 0)) : 0,
 			retryUntil: row.retry_until ? new Date(row.retry_until).toISOString() : null,
+			recorded: true,
 		};
 	} catch (err) {
 		logDegraded('mark_failed', err);
-		return { retriesLeft: 0, retryUntil: null };
+		return unrecorded;
 	}
 }
 
 /**
- * Take one retry for a proof that failed after settlement. Atomic: two
- * concurrent retries of one header cannot both run. Returns the stored
+ * Take one retry for a proof that failed after settlement, or whose run went
+ * stale (the process died mid-handler). Atomic: two concurrent retries of one
+ * header cannot both run. Returns the stored
  * settlement so the retry can answer with the original x-payment-response.
  *
  * @returns {Promise<{ granted: boolean, settlement: object|null, attempt: number }>}
@@ -200,7 +231,8 @@ export async function claimPaidRetry({ paymentHash, endpoint }) {
 			SET outcome = 'retrying', retry_count = retry_count + 1, updated_at = now()
 			WHERE payment_hash = ${paymentHash}
 			  AND endpoint = ${endpoint}
-			  AND outcome = 'failed_after_settle'
+			  AND (outcome = 'failed_after_settle'
+			       OR (outcome = 'retrying' AND updated_at < now() - make_interval(secs => ${PAID_RUNNING_STALE_SECONDS})))
 			  AND retry_count < ${PAID_RETRY_MAX}
 			  AND (retry_until IS NULL OR retry_until > now())
 			RETURNING settlement, retry_count
@@ -233,15 +265,17 @@ export const PAID_RETRY_SENTENCE =
 	'You were charged; repeat this exact request with the same payment to get your result.';
 export const PAID_EXHAUSTED_SENTENCE =
 	'You were charged, and this payment has used up its retries. Contact support with the settlement transaction and it will be made right.';
+export const PAID_UNRECORDED_SENTENCE =
+	'You were charged, but the retry record could not be saved, so this payment cannot be retried. Contact support with the settlement transaction and it will be made right.';
 
 /**
  * The fields every failure after settlement carries, so a buyer's client can
  * tell "you paid, retry safely" from "you were not charged".
  *
- * @param {{ settlement: object|null, retriesLeft: number, retryUntil?: string|null }} ctx
+ * @param {{ settlement: object|null, retriesLeft: number, retryUntil?: string|null, recorded?: boolean }} ctx
  */
-export function paidFailureFields({ settlement, retriesLeft, retryUntil = null }) {
-	const retrySafe = retriesLeft > 0;
+export function paidFailureFields({ settlement, retriesLeft, retryUntil = null, recorded = true }) {
+	const retrySafe = recorded && retriesLeft > 0;
 	return {
 		paid: true,
 		retry_safe: retrySafe,
@@ -249,9 +283,9 @@ export function paidFailureFields({ settlement, retriesLeft, retryUntil = null }
 			transaction: settlement?.transaction ?? null,
 			network: settlement?.network ?? null,
 		},
-		retries_left: Math.max(0, retriesLeft),
+		retries_left: retrySafe ? retriesLeft : 0,
 		...(retryUntil ? { retry_until: retryUntil } : {}),
-		message: retrySafe ? PAID_RETRY_SENTENCE : PAID_EXHAUSTED_SENTENCE,
+		message: retrySafe ? PAID_RETRY_SENTENCE : recorded ? PAID_EXHAUSTED_SENTENCE : PAID_UNRECORDED_SENTENCE,
 	};
 }
 

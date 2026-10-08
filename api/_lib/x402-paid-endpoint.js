@@ -29,7 +29,7 @@
 // helper. Missing keys fall back to env (so a single override doesn't
 // disable the other networks).
 
-import { cors, error, respondError, rateLimited, wrap } from './http.js';
+import { cors, error, readBody, respondError, rateLimited, wrap } from './http.js';
 import { env } from './env.js';
 import { clientIp, limits } from './rate-limit.js';
 import { logPaymentEvent } from './x402/audit-log.js';
@@ -75,7 +75,15 @@ import { normalizeBazaarEntry } from './x402/bazaar-helpers.js';
 import { buildOffersExtension, buildReceiptExtension } from './x402/offer-receipt-server.js';
 import { signReceipt } from './x402-offer-receipt.js';
 import { recordReceipt } from './x402/receipt-storage.js';
-import { claimSpentPayment, isPaymentSpent, writeReplayed } from './x402/spent-payments.js';
+import {
+	claimPaidRetry,
+	claimSpentPayment,
+	isPaymentSpent,
+	markDelivered,
+	markFailedAfterSettle,
+	paidFailureFields,
+	writeReplayed,
+} from './x402/spent-payments.js';
 import {
 	authenticateAuthHintsRequest,
 	declareAuthHintsExtension,
@@ -102,6 +110,71 @@ function atomicsToUsd(atomics) {
 	if (atomics == null) return undefined;
 	const n = Number(atomics);
 	return Number.isFinite(n) ? n / 1e6 : undefined;
+}
+
+// Largest request body the wrapper buffers to key the idempotency hash. Above
+// the Cloud Run body-parser limit (8 MB) so every parsed body fits, with room
+// for the raw-audio routes that read their own stream.
+const PAID_BODY_HASH_LIMIT = 32 * 1024 * 1024;
+
+// The request bytes a paid call is FOR, so the payment-identifier hash keys a
+// cached response to the exact input. GET/HEAD carry no body. On Cloud Run the
+// server's body parsers have already buffered the bytes (req.rawBody / req.body)
+// and readBody returns them without touching the stream; anywhere the stream is
+// still unread, the bytes are kept on req.rawBody so the handler's own
+// readBody/readJson reads the same buffer instead of a drained stream.
+async function paidRequestBody(req) {
+	const m = String(req.method || 'GET').toUpperCase();
+	if (m === 'GET' || m === 'HEAD') return null;
+	const buffered = Buffer.isBuffer(req.rawBody) || req.body !== undefined;
+	const buf = await readBody(req, PAID_BODY_HASH_LIMIT);
+	if (!buffered) req.rawBody = buf;
+	return buf;
+}
+
+// What the durable spent-payment row stores about a settlement: enough for a
+// paid retry to answer with the original x-payment-response and rebuild the
+// handler's `settled` / `requirement` context without a second settle, plus
+// the request payload hash, so a retry can only re-run the request that was
+// paid for.
+function settlementRecord(settled, verified, paymentResponseHeader, payloadHash) {
+	return {
+		payload: payloadHash ?? null,
+		transaction: settled?.transaction ?? null,
+		network: settled?.network || verified?.requirement?.network || null,
+		payer: settled?.payer || verified?.payer || null,
+		asset: verified?.requirement?.asset ?? null,
+		amount: verified?.requirement?.amount ?? null,
+		status: settled?.status ?? null,
+		header: paymentResponseHeader ?? null,
+	};
+}
+
+function settledFromRecord(record) {
+	return {
+		success: true,
+		transaction: record?.transaction ?? null,
+		network: record?.network ?? null,
+		payer: record?.payer ?? null,
+		...(record?.status ? { status: record.status } : {}),
+	};
+}
+
+// A paid retry skips verify, so the requirement the buyer originally paid
+// against is recovered from this request's accepts by network and asset.
+function verifiedFromRecord(record, requirements) {
+	const requirement = requirements.find(
+		(r) => r.network === record?.network && (!record?.asset || r.asset === record.asset),
+	) || { network: record?.network ?? null, asset: record?.asset ?? null, amount: record?.amount ?? null };
+	return { requirement, payer: record?.payer ?? null, paymentPayload: null };
+}
+
+// Any failure once the buyer was charged answers with `paid: true`, whether a
+// retry with the same payment is safe, and the settlement transaction, so a
+// client never reads it as "pay again".
+function writePaidFailure(res, { status, code, err, record, state }) {
+	if (record?.header) res.setHeader('x-payment-response', record.header);
+	return respondError(res, status, code, err, paidFailureFields({ settlement: record, ...state }));
 }
 
 function buildAccept(network, priceAtomics, resourceUrl, payToOverride, selfPayOnly = false) {
@@ -872,15 +945,22 @@ export function paidEndpoint(spec) {
 			throw err;
 		}
 
-		// USE-15: deduplicate before /verify. Hashing the request URL is enough
-		// for our GET-only paid endpoints — none of them read request bodies.
-		// When/if a POST endpoint joins the family, the handler can buffer
-		// `req.body` and pass it in here.
+		// USE-15: deduplicate before /verify. The hash covers method, URL and,
+		// for every non-GET route, the request body: many paid routes are POST
+		// (service proxies, pipelines, launches), and hashing the URL alone let
+		// two different bodies under one payment identifier share a cached
+		// response.
 		const clientPaymentId = extractIdFromHeader(paymentHeader);
+		let requestBody;
+		try {
+			requestBody = await paidRequestBody(req);
+		} catch (err) {
+			return respondError(res, err.status || 400, err.status === 413 ? 'payload_too_large' : 'bad_request', err);
+		}
 		const payloadHash = hashRequestPayload({
 			method: req.method,
 			url: req.url,
-			body: null,
+			body: requestBody,
 		});
 		// Bind the idempotency cache to the signed payment proof so a stolen or
 		// guessed payment-identifier can't redeem a prior paid response for free.
@@ -952,11 +1032,74 @@ export function paidEndpoint(spec) {
 		// the concurrent-race window runs at the end of settlement below. Fails
 		// OPEN on a DB outage — see api/_lib/x402/spent-payments.js for why this
 		// control's failure policy is the inverse of settle-credit's.
+		//
+		// A proof that settled but whose work then failed is NOT a replay: the
+		// buyer was charged and got nothing. Such a proof takes the paid-retry
+		// lane instead: no second verify, no second settle, the stored
+		// settlement is re-emitted, and the work runs again.
+		// `spentKey` is the hash the durable row lives under (the canonical hash,
+		// or the legacy one for a row written before canonicalization).
+		let spentKey = paymentHash;
+		let paidRetry = null;
 		if (paymentHash) {
 			let spent = await isPaymentSpent(paymentHash);
 			const legacyHash = legacyPaymentProofHash(paymentHeader);
-			if (!spent.spent && legacyHash && legacyHash !== paymentHash) spent = await isPaymentSpent(legacyHash);
-			if (spent.spent) {
+			if (!spent.spent && legacyHash && legacyHash !== paymentHash) {
+				const legacy = await isPaymentSpent(legacyHash);
+				if (legacy.spent) {
+					spent = legacy;
+					spentKey = legacyHash;
+				}
+			}
+			if (
+				spent.spent &&
+				spent.retryable &&
+				spent.endpoint === route &&
+				spent.settlement?.payload &&
+				spent.settlement.payload !== payloadHash
+			) {
+				// A paid retry re-runs the request that was paid for, never a
+				// different one: same method, URL and body.
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				return error(res, 409, 'payment_retry_mismatch', 'a paid retry must repeat the original request exactly',
+					paidFailureFields({ settlement: spent.settlement, retriesLeft: spent.retriesLeft }));
+			}
+			if (spent.spent && spent.retryable && spent.endpoint === route) {
+				const retry = await claimPaidRetry({ paymentHash: spentKey, endpoint: route });
+				// Lost the claim to a concurrent retry of the same header: re-read,
+				// so the answer below is "in flight", not "exhausted".
+				if (!retry.granted) spent = await isPaymentSpent(spentKey);
+				if (retry.granted) {
+					paidRetry = { record: retry.settlement || spent.settlement || {}, attempt: retry.attempt };
+					logPaymentEvent({
+						eventType: 'payment_paid_retry',
+						route,
+						resourceUrl,
+						payer: paidRetry.record.payer || null,
+						network: paidRetry.record.network || null,
+						txHash: paidRetry.record.transaction || null,
+						ipAddress: clientIp(req),
+						userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+						metadata: { attempt: retry.attempt },
+					});
+				}
+			}
+			if (spent.spent && !paidRetry && spent.running) {
+				// The paid work for this proof is running right now on another
+				// request. Same answer as an in-flight idempotency slot.
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				return writeInflight(res);
+			}
+			if (spent.spent && !paidRetry && spent.outcome !== 'delivered' && spent.endpoint === route) {
+				// Charged, failed, and out of retries (or the window closed). Still
+				// a 409, but one that says the buyer paid, so a client escalates
+				// with the settlement instead of paying again.
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				res.setHeader('x-x402-idempotent', 'replayed');
+				return error(res, 409, 'payment_retries_exhausted', 'this payment settled but its retries are used up',
+					paidFailureFields({ settlement: spent.settlement, retriesLeft: 0 }));
+			}
+			if (spent.spent && !paidRetry) {
 				logPaymentEvent({
 					eventType: 'payment_replay_rejected',
 					route,
@@ -979,7 +1122,9 @@ export function paidEndpoint(spec) {
 
 		let verified;
 		try {
-			verified = await verifyPayment({ paymentHeader, requirements, builderCode });
+			verified = paidRetry
+				? verifiedFromRecord(paidRetry.record, requirements)
+				: await verifyPayment({ paymentHeader, requirements, builderCode });
 		} catch (err) {
 			// A failed verify is the amplification vector this family guards against: a
 			// junk X-PAYMENT header turns one cheap inbound request into one outbound
@@ -1027,47 +1172,65 @@ export function paidEndpoint(spec) {
 		}
 
 		// Settle the verified payment and build the x-payment-response header
-		// (SIWX grant + signed receipts). Invoked with the response NOT yet
+		// (signed receipts + SIWX grant). Invoked with the response NOT yet
 		// flushed in BOTH paths: settle-then-stream calls it before the handler
 		// runs; deliver-then-settle calls it after the handler returned a value.
 		// On any settle/SIWX fault it writes the error response and returns null,
 		// and the caller returns immediately.
-		async function settleAndBuildResponse() {
+		//
+		// On a paid retry the settlement already happened on the first attempt:
+		// nothing is settled again and no second receipt is issued; the stored
+		// settlement and its original x-payment-response are reused, and only the
+		// idempotent SIWX grant is re-run.
+		//
+		// `claimOutcome` is what the durable spent-payment claim records:
+		// 'delivered' when the good ships right after this returns (default
+		// path), 'running' when the handler still has to run (streaming path).
+		async function settleAndBuildResponse({ claimOutcome = 'delivered' } = {}) {
 			let settled;
-			try {
-				settled = await settlePayment({ verified });
-			} catch (err) {
-				logPaymentEvent({
-					eventType: 'payment_failed',
-					route,
-					resourceUrl,
-					payer: verified.payer || null,
-					network: verified.requirement?.network || null,
-					amountAtomics: verified.requirement?.amount || null,
-					asset: verified.requirement?.asset || null,
-					settlementStatus: 'failed',
-					durationMs: Date.now() - requestStartTime,
-					ipAddress: clientIp(req),
-					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
-					metadata: { error: err.message, code: err.code },
-				});
-				recordPaymentMetric({
-					kind: 'x402',
-					status: 'failed',
-					network: verified.requirement?.network,
-					amountUsd: atomicsToUsd(verified.requirement?.amount),
-					latencyMs: Date.now() - requestStartTime,
-					reason: err.code || 'settle_failed',
-				});
-				if (ownsReservation) await releaseSlot({ route, paymentId });
-				respondError(res, err.status || 502, err.code || 'settle_failed', err);
-				return null;
+			let paymentResponseHeader;
+			if (paidRetry) {
+				settled = settledFromRecord(paidRetry.record);
+				paymentResponseHeader = paidRetry.record.header || encodePaymentResponseHeader(settled);
+			} else {
+				try {
+					settled = await settlePayment({ verified });
+				} catch (err) {
+					logPaymentEvent({
+						eventType: 'payment_failed',
+						route,
+						resourceUrl,
+						payer: verified.payer || null,
+						network: verified.requirement?.network || null,
+						amountAtomics: verified.requirement?.amount || null,
+						asset: verified.requirement?.asset || null,
+						settlementStatus: 'failed',
+						durationMs: Date.now() - requestStartTime,
+						ipAddress: clientIp(req),
+						userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+						metadata: { error: err.message, code: err.code },
+					});
+					recordPaymentMetric({
+						kind: 'x402',
+						status: 'failed',
+						network: verified.requirement?.network,
+						amountUsd: atomicsToUsd(verified.requirement?.amount),
+						latencyMs: Date.now() - requestStartTime,
+						reason: err.code || 'settle_failed',
+					});
+					if (ownsReservation) await releaseSlot({ route, paymentId });
+					respondError(res, err.status || 502, err.code || 'settle_failed', err);
+					return null;
+				}
+				paymentResponseHeader = encodePaymentResponseHeader(settled, await buildResponseExtensions(settled));
 			}
+			const record = settlementRecord(settled, verified, paymentResponseHeader, payloadHash);
 
 			// Record the SIWX grant so the wallet can re-access via signature next
 			// time. siwx-storage.recordPayment is idempotent (upsert on PK), so a
-			// retried settle is safe. The on-chain payment is final; if Neon
-			// hiccups we surface 502 — the buyer can retry without paying twice.
+			// retried grant is safe. The on-chain payment is final; if Neon hiccups
+			// the buyer gets a paid failure that says to retry with the same
+			// payment, which re-runs this write without a second charge.
 			if (siwx && verified.payer) {
 				try {
 					await recordSiwxPayment({
@@ -1087,16 +1250,67 @@ export function paidEndpoint(spec) {
 						metadata: { ttlSeconds: siwx.ttlSeconds ?? null },
 					});
 				} catch (err) {
-					respondError(res, 502, 'siwx_record_failed', err);
+					if (ownsReservation) await releaseSlot({ route, paymentId });
+					await failAfterSettle({ status: 502, code: 'siwx_record_failed', err, record, claimed: Boolean(paidRetry) });
 					return null;
 				}
 			}
 
-			// USE-17: issue a signed receipt for the settled payment and stash it
-			// in the response extensions envelope. Persist asynchronously so the
-			// /api/x402/my-receipts buyer-lookup path can serve it later — the
-			// recordReceipt write is fire-and-forget so a Neon hiccup never
-			// surfaces as a 5xx on a payment that already settled on-chain.
+			// Durable spent-payment claim. Runs LAST, once settlement and every
+			// downstream step above succeeded. Atomic on the primary key: of any
+			// set of concurrent requests carrying one X-PAYMENT header exactly one
+			// claim wins, which closes the race the pre-handler lookup alone
+			// cannot. A losing claim is a replay that got past the lookup: refuse
+			// the response rather than deliver the good twice. Fails OPEN on a DB
+			// outage (the cache guard and settle-credit still apply). A paid retry
+			// already holds the row through claimPaidRetry.
+			if (!paidRetry) {
+				const claim = await claimSpentPayment({
+					paymentHash,
+					endpoint: route,
+					amountAtomics: verified.requirement?.amount ?? null,
+					outcome: claimOutcome,
+					settlement: record,
+				});
+				if (claim.replay) {
+					logPaymentEvent({
+						eventType: 'payment_replay_rejected',
+						route,
+						resourceUrl,
+						payer: settled.payer || verified.payer || null,
+						network: settled.network || verified.requirement?.network || null,
+						amountAtomics: verified.requirement?.amount || null,
+						asset: verified.requirement?.asset || null,
+						txHash: settled.transaction || null,
+						settlementStatus: 'failed',
+						durationMs: Date.now() - requestStartTime,
+						ipAddress: clientIp(req),
+						userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+						metadata: { stage: 'post_settle' },
+					});
+					recordPaymentMetric({
+						kind: 'x402',
+						status: 'failed',
+						network: verified.requirement?.network,
+						amountUsd: atomicsToUsd(verified.requirement?.amount),
+						latencyMs: Date.now() - requestStartTime,
+						reason: 'payment_replayed',
+					});
+					if (ownsReservation) await releaseSlot({ route, paymentId });
+					writeReplayed(res, { route });
+					return null;
+				}
+			}
+
+			return { settled, paymentResponseHeader, record };
+		}
+
+		// USE-17: issue a signed receipt for the settled payment and stash it in
+		// the response extensions envelope. Persist asynchronously so the
+		// /api/x402/my-receipts buyer-lookup path can serve it later: the
+		// recordReceipt write is fire-and-forget so a Neon hiccup never surfaces
+		// as a 5xx on a payment that already settled on-chain.
+		async function buildResponseExtensions(settled) {
 			let responseExtensions;
 			if (offerReceipt !== false) {
 				try {
@@ -1161,52 +1375,66 @@ export function paidEndpoint(spec) {
 			} catch (err) {
 				console.error('x402_receipt_sign_failed', err);
 			}
+			return responseExtensions;
+		}
 
-			// Durable spent-payment claim. Runs LAST, once settlement and every
-			// downstream step above succeeded, so a payment that settled but then
-			// failed (SIWX grant write, receipt sign) leaves no spent row and the
-			// payer's retry with the same header still works. Atomic on the primary
-			// key: of any set of concurrent requests carrying one X-PAYMENT header
-			// exactly one claim wins, which closes the race the pre-handler lookup
-			// alone cannot. A losing claim is a replay that got past the lookup —
-			// refuse the response rather than deliver the good twice. Fails OPEN on
-			// a DB outage (the cache guard and settle-credit still apply).
-			const claim = await claimSpentPayment({
-				paymentHash,
-				endpoint: route,
-				amountAtomics: verified.requirement?.amount ?? null,
-			});
-			if (claim.replay) {
-				logPaymentEvent({
-					eventType: 'payment_replay_rejected',
-					route,
-					resourceUrl,
-					payer: settled.payer || verified.payer || null,
-					network: settled.network || verified.requirement?.network || null,
-					amountAtomics: verified.requirement?.amount || null,
-					asset: verified.requirement?.asset || null,
-					txHash: settled.transaction || null,
-					settlementStatus: 'failed',
-					durationMs: Date.now() - requestStartTime,
-					ipAddress: clientIp(req),
-					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
-					metadata: { stage: 'post_settle' },
+		// The buyer was charged and the work did not complete. Record the failure
+		// against the spent payment (opening its retry window), log it, and answer
+		// with the paid-failure fields. `claimed` is false only on a first attempt
+		// that failed before its claim was taken (the SIWX grant write), which
+		// writes the row here.
+		async function failAfterSettle({ status, code, err, record, claimed }) {
+			if (!claimed) {
+				const claim = await claimSpentPayment({
+					paymentHash,
+					endpoint: route,
+					amountAtomics: verified.requirement?.amount ?? null,
+					outcome: 'failed_after_settle',
+					settlement: record,
+					lastError: err?.message || code,
 				});
-				recordPaymentMetric({
-					kind: 'x402',
-					status: 'failed',
-					network: verified.requirement?.network,
-					amountUsd: atomicsToUsd(verified.requirement?.amount),
-					latencyMs: Date.now() - requestStartTime,
-					reason: 'payment_replayed',
-				});
-				if (ownsReservation) await releaseSlot({ route, paymentId });
-				writeReplayed(res, { route });
-				return null;
+				// Another request already holds this proof's row; never overwrite
+				// its outcome from here.
+				if (claim.replay) {
+					writeReplayed(res, { route });
+					return;
+				}
 			}
-
-			const paymentResponseHeader = encodePaymentResponseHeader(settled, responseExtensions);
-			return { settled, paymentResponseHeader };
+			const state = await markFailedAfterSettle({
+				paymentHash: spentKey,
+				settlement: record,
+				lastError: err?.message || code,
+			});
+			logPaymentEvent({
+				eventType: 'payment_failed_after_settle',
+				route,
+				resourceUrl,
+				payer: record.payer,
+				network: record.network,
+				amountAtomics: record.amount,
+				asset: record.asset,
+				txHash: record.transaction,
+				settlementStatus: 'success',
+				durationMs: Date.now() - requestStartTime,
+				ipAddress: clientIp(req),
+				userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+				metadata: { code, error: String(err?.message || '').slice(0, 300), retries_left: state.retriesLeft, retry: paidRetry?.attempt ?? 0 },
+			});
+			recordPaymentMetric({
+				kind: 'x402',
+				status: 'failed',
+				network: record.network,
+				amountUsd: atomicsToUsd(record.amount),
+				latencyMs: Date.now() - requestStartTime,
+				reason: 'failed_after_settle',
+			});
+			if (res.headersSent) {
+				// A stream that already began cannot carry a JSON error; end it. The
+				// row says failed, so the same payment can still be retried.
+				if (!res.writableEnded) res.end();
+				return;
+			}
+			writePaidFailure(res, { status, code, err, record, state });
 		}
 
 		// Success telemetry for a settled payment — logged once the good has been
@@ -1274,9 +1502,9 @@ export function paidEndpoint(spec) {
 		// body isn't buffered, so no idempotency cache entry is stored; the
 		// reservation is released once the handler finishes.
 		if (streaming) {
-			const outcome = await settleAndBuildResponse();
+			const outcome = await settleAndBuildResponse({ claimOutcome: 'running' });
 			if (!outcome) return;
-			const { settled, paymentResponseHeader } = outcome;
+			const { settled, paymentResponseHeader, record } = outcome;
 
 			res.setHeader('x-payment-response', paymentResponseHeader);
 			res.setHeader('cache-control', 'no-store');
@@ -1292,17 +1520,21 @@ export function paidEndpoint(spec) {
 				});
 			} catch (err) {
 				if (ownsReservation) await releaseSlot({ route, paymentId });
-				// The payment already settled on-chain. If the handler already began
-				// streaming we can only record the settlement and stop; otherwise
-				// surface the fault so the buyer sees an actionable error.
+				// The handler finished its body and then threw: the good shipped, so
+				// the payment is spent like any delivered one.
 				if (res.writableEnded) {
+					await markDelivered(spentKey);
 					recordSettledSuccess(settled);
 					return;
 				}
-				if (err instanceof X402Error && err.status === 402) {
-					return await send402(res, { ...challenge, error: err.message });
-				}
-				return respondError(res, err.status || 500, err.code || 'internal_error', err);
+				// The payment already settled on-chain and the good did not ship.
+				// Never answer "pay again": record the failure against this proof
+				// and tell the buyer the same payment re-runs the work. A 402 thrown
+				// by the handler is reported as a 500 here, because a 402 now would
+				// prompt the client to pay a second time.
+				const status = err?.status && err.status !== 402 ? err.status : 500;
+				await failAfterSettle({ status, code: err?.code || 'internal_error', err, record, claimed: true });
+				return;
 			}
 
 			if (ownsReservation) await releaseSlot({ route, paymentId });
@@ -1313,6 +1545,7 @@ export function paidEndpoint(spec) {
 				res.setHeader('content-type', `${mimeType}; charset=utf-8`);
 				res.end(typeof result === 'string' ? result : JSON.stringify(result));
 			}
+			await markDelivered(spentKey);
 			recordSettledSuccess(settled);
 			return;
 		}
@@ -1327,10 +1560,21 @@ export function paidEndpoint(spec) {
 			});
 		} catch (err) {
 			if (ownsReservation) await releaseSlot({ route, paymentId });
+			// A paid retry is past settlement: the buyer paid on the first attempt,
+			// so this failure keeps the retry lane open rather than asking for a
+			// new payment.
+			if (paidRetry) {
+				const status = err?.status && err.status !== 402 ? err.status : 500;
+				const record = settlementRecord(settledFromRecord(paidRetry.record), verified, paidRetry.record.header, payloadHash);
+				await failAfterSettle({ status, code: err?.code || 'internal_error', err, record, claimed: true });
+				return;
+			}
 			if (err instanceof X402Error && err.status === 402) {
 				return await send402(res, { ...challenge, error: err.message });
 			}
-			return respondError(res, err.status || 500, err.code || 'internal_error', err);
+			// Deliver-then-settle: nothing was settled, so the buyer was not
+			// charged and the same payment can be sent again.
+			return respondError(res, err.status || 500, err.code || 'internal_error', err, { paid: false, retry_safe: true });
 		}
 
 		// Deliver-then-settle: the handler MUST return a value and leave the
@@ -1372,6 +1616,7 @@ export function paidEndpoint(spec) {
 		const outcome = await settleAndBuildResponse();
 		if (!outcome) return;
 		const { settled, paymentResponseHeader } = outcome;
+		if (paidRetry) await markDelivered(spentKey);
 
 		// Roadmap phase 4: per-job metering. The settlement already landed, so
 		// the hook can bind the payment facts (payer, amount, tx) to the exact

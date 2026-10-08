@@ -15,6 +15,8 @@ import { Readable } from 'node:stream';
 
 import { beforeAll, beforeEach, afterAll, describe, it, expect, vi } from 'vitest';
 
+import { readJson } from '../../api/_lib/http.js';
+
 // Mock only the facilitator-facing verify/settle; keep every other export real
 // so send402/build402Body/encodePaymentResponseHeader behave normally.
 const verifyPayment = vi.fn();
@@ -44,7 +46,10 @@ const HANDLER_BAZAAR = {
 	schema: { type: 'object' },
 };
 
-function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
+// `body` is pushed onto the request stream, as on a server with no body parser.
+// `rawBody` instead models the Cloud Run server, whose express.json() `verify`
+// hook leaves the exact bytes on req.rawBody and drains the stream.
+function mockReqRes({ method = 'GET', headers = {}, url = ROUTE, body, rawBody } = {}) {
 	const lowerHeaders = {};
 	for (const [k, v] of Object.entries(headers)) lowerHeaders[k.toLowerCase()] = v;
 	const req = Object.assign(new Readable({ read() {} }), {
@@ -54,6 +59,8 @@ function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
 		connection: { remoteAddress: '127.0.0.1' },
 		socket: { remoteAddress: '127.0.0.1' },
 	});
+	if (rawBody !== undefined) req.rawBody = Buffer.from(rawBody);
+	else if (body !== undefined) req.push(body);
 	req.push(null);
 	const chunks = [];
 	const resHeaders = {};
@@ -240,5 +247,70 @@ describe('paidEndpoint() always-on replay protection (no client payment-identifi
 		expect(s2.statusCode).toBe(200);
 		expect(s2.getHeader('x-x402-idempotent')).toBeUndefined();
 		expect(handlerCalls).toBe(2);
+	});
+});
+
+describe('paidEndpoint() idempotency hash covers POST bodies', () => {
+	const PID = 'pay_post_body_hash_0001';
+
+	// A POST route whose good depends on the body, like the service proxies and
+	// pipelines. The handler reads the body itself, after the wrapper hashed it.
+	function postEndpoint(calls) {
+		return makeEndpoint(
+			async ({ req }) => {
+				const input = await readJson(req);
+				calls.push(input);
+				return { ok: true, echo: input.prompt };
+			},
+			{ method: 'POST' },
+		);
+	}
+
+	for (const mode of ['stream', 'rawBody']) {
+		it(`two different bodies under one payment identifier do not share a cached response (${mode})`, async () => {
+			const calls = [];
+			const endpoint = postEndpoint(calls);
+			const header = paymentHeader({ withId: PID });
+			const send = async (prompt) => {
+				const bytes = JSON.stringify({ prompt });
+				const { req, res } = mockReqRes({
+					method: 'POST',
+					headers: { 'x-payment': header, 'content-type': 'application/json' },
+					...(mode === 'rawBody' ? { rawBody: bytes } : { body: bytes }),
+				});
+				await endpoint(req, res);
+				return res;
+			};
+
+			const first = await send('a red chair');
+			expect(first.statusCode).toBe(200);
+			// The handler still read the body after the wrapper hashed it.
+			expect(JSON.parse(first.body)).toMatchObject({ ok: true, echo: 'a red chair' });
+
+			// Same payment identifier, different body: a different good. Before the
+			// body was hashed this was a cache hit that served the red chair.
+			const second = await send('a blue lamp');
+			expect(second.statusCode).toBe(409);
+			expect(second.getHeader('x-x402-idempotent')).toBe('conflict');
+			expect(second.body).not.toContain('a red chair');
+
+			// Same identifier and the same body is a true replay: cached, not re-run.
+			const third = await send('a red chair');
+			expect(third.statusCode).toBe(200);
+			expect(third.getHeader('x-x402-idempotent')).toBe('replay');
+			expect(third.body).toBe(first.body);
+
+			expect(calls).toEqual([{ prompt: 'a red chair' }]);
+			expect(settlePayment).toHaveBeenCalledTimes(1);
+		});
+	}
+
+	it('hashes the body into the payload hash for non-GET methods only', () => {
+		const a = cacheMod.hashRequestPayload({ method: 'POST', url: ROUTE, body: Buffer.from('{"a":1}') });
+		const b = cacheMod.hashRequestPayload({ method: 'POST', url: ROUTE, body: Buffer.from('{"a":2}') });
+		expect(a).not.toBe(b);
+		expect(cacheMod.hashRequestPayload({ method: 'GET', url: ROUTE, body: null })).toBe(
+			cacheMod.hashRequestPayload({ method: 'GET', url: ROUTE }),
+		);
 	});
 });

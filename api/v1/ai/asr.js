@@ -181,6 +181,9 @@ export default wrap(async function handler(req, res) {
 		return error(res, 400, 'bad_request', e?.message || 'could not read request body');
 	}
 	req._aiSpeechBody = buf;
+	// The stream is drained now; leave the bytes where readBody looks first so
+	// the paid wrapper hashes the real clip into its idempotency key.
+	if (!Buffer.isBuffer(req.rawBody)) req.rawBody = buf;
 
 	// A payment header means the caller is on the paid rail already.
 	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
