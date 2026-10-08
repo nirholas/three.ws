@@ -18,6 +18,7 @@
  */
 
 import { createServer } from 'node:http';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { config } from './config.js';
 import { runScan, progress } from './scan.js';
 import * as store from './store.js';
@@ -25,6 +26,11 @@ import { dashboardPage, scanningPage } from './views/dashboard.js';
 import { repoPage, notFoundPage } from './views/repo.js';
 import { docsPage } from './views/docs.js';
 import { repoBadge, deploymentBadge, fleetBadge } from './badge.js';
+
+// Constant-time token check: hashing both sides first gives equal-length
+// buffers, so neither the content nor the length leaks through timing.
+const digest = (value) => createHash('sha256').update(String(value)).digest();
+const tokenMatches = (supplied, expected) => Boolean(supplied) && timingSafeEqual(digest(supplied), digest(expected));
 
 const send = (res, status, body, headers = {}) => {
 	res.writeHead(status, {
@@ -120,7 +126,7 @@ const handler = async (req, res) => {
 		if (req.method !== 'POST') return json(res, 405, { error: 'use POST' }, { maxAge: 0 });
 		if (!config.scanToken) return json(res, 403, { error: 'FLEET_SCAN_TOKEN is not configured, so on-demand scans are disabled' }, { maxAge: 0 });
 		const supplied = req.headers.authorization?.replace(/^Bearer\s+/i, '') || url.searchParams.get('token') || '';
-		if (supplied !== config.scanToken) return json(res, 401, { error: 'bad token' }, { maxAge: 0 });
+		if (!tokenMatches(supplied, config.scanToken)) return json(res, 401, { error: 'bad token' }, { maxAge: 0 });
 		if (progress.running) return json(res, 409, { error: 'a scan is already running', progress }, { maxAge: 0 });
 		triggerScan('on demand');
 		return json(res, 202, { started: true, progress }, { maxAge: 0 });
