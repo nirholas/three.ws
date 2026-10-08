@@ -14,12 +14,18 @@ import {
 // looked for it, but nothing on this page loaded it, so the Solana button
 // answered "No Solana wallet detected" inside the app.
 import '../solana-mobile/src/index.js';
+import { safeNext } from './safe-next.js';
 
-const next =
+// Every source here is something a link can set (`?next=` straight from the
+// address bar), so it is reduced to a same-origin path before any
+// `location.href = next`; an absolute or protocol-relative value would
+// otherwise send a freshly signed-in visitor to another site.
+const next = safeNext(
 	window.__loginNext ||
-	new URLSearchParams(location.search).get('next') ||
-	sessionStorage.getItem('login_redirect') ||
-	'/dashboard';
+		new URLSearchParams(location.search).get('next') ||
+		sessionStorage.getItem('login_redirect') ||
+		'/dashboard',
+);
 sessionStorage.removeItem('login_redirect');
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────

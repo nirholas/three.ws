@@ -404,3 +404,41 @@ describe('POST /api/auth/github/disconnect', () => {
 		expect(revokeGrantMock).toHaveBeenCalledTimes(1);
 	});
 });
+
+// ── OAuth callback: the state must come back to the browser that started it ──
+
+describe('GET /api/auth/github/callback', () => {
+	async function signedState(payload) {
+		const { hmacSha256 } = await import('../api/_lib/crypto.js');
+		const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+		return `${data}.${await hmacSha256(envMock.JWT_SECRET, data)}`;
+	}
+
+	async function callback(state) {
+		envMock.GITHUB_OAUTH_CLIENT_ID = 'client-id';
+		envMock.GITHUB_OAUTH_CLIENT_SECRET = 'client-secret';
+		const res = mkRes();
+		const req = mkReq({ method: 'GET', action: 'callback' });
+		req.url = `/api/auth/github/callback?action=callback&code=gh-code&state=${encodeURIComponent(state)}`;
+		await handler(req, res);
+		return res;
+	}
+
+	it("refuses a signed-out browser, so an attacker's state cannot bind a victim's GitHub", async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch');
+		getSessionUserMock.mockResolvedValue(null);
+		const res = await callback(await signedState({ userId: USER, agentId: '', ts: Date.now() }));
+		expect(res.statusCode).toBe(302);
+		expect(res.headers.location).toContain('github=error');
+		expect(fetchSpy).not.toHaveBeenCalled();
+		expect(sqlMock).not.toHaveBeenCalled();
+		fetchSpy.mockRestore();
+	});
+
+	it('refuses a different signed-in account', async () => {
+		getSessionUserMock.mockResolvedValue({ id: '66666666-6666-4666-8666-666666666666' });
+		const res = await callback(await signedState({ userId: USER, agentId: '', ts: Date.now() }));
+		expect(res.statusCode).toBe(403);
+		expect(sqlMock).not.toHaveBeenCalled();
+	});
+});

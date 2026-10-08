@@ -454,12 +454,24 @@ async function handleResetPassword(req, res) {
 	if (!rl.success) return rateLimited(res, rl, 'too many attempts; try again later');
 	const body = parse(resetSchema, await readJson(req));
 	const tokenHash = await sha256(body.token);
-	const rows = await sql`select r.id, r.user_id from password_resets r join users u on u.id = r.user_id where r.token_hash = ${tokenHash} and r.consumed_at is null and r.expires_at > now() and u.deleted_at is null limit 1`;
+	// Consume the token in the same statement that checks it, so two concurrent
+	// resets with one link cannot both win (a read-then-write let them).
+	const rows = await sql`
+		update password_resets r set consumed_at = now()
+		from users u
+		where u.id = r.user_id and r.token_hash = ${tokenHash} and r.consumed_at is null
+		  and r.expires_at > now() and u.deleted_at is null
+		returning r.id, r.user_id
+	`;
 	if (!rows[0]) return error(res, 400, 'invalid_token', 'reset link is invalid or has expired');
+	const userId = rows[0].user_id;
 	const hash = await hashPassword(body.password);
-	await sql`update users set password_hash = ${hash}, updated_at = now() where id = ${rows[0].user_id}`;
-	await sql`update password_resets set consumed_at = now() where id = ${rows[0].id}`;
-	await sql`update sessions set revoked_at = now() where user_id = ${rows[0].user_id} and revoked_at is null`;
+	await sql`update users set password_hash = ${hash}, updated_at = now() where id = ${userId}`;
+	// A reset is how an owner recovers a compromised account, so every credential
+	// the attacker could still hold goes: browser sessions and OAuth refresh
+	// tokens, exactly as logout-everywhere revokes them.
+	await sql`update sessions set revoked_at = now() where user_id = ${userId} and revoked_at is null`;
+	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${userId} and revoked_at is null`;
 	return json(res, 200, { success: true });
 }
 

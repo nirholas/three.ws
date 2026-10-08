@@ -119,10 +119,18 @@ async function handleCallback(req, res) {
 		return error(res, 400, 'state_expired', 'OAuth state has expired — please try again');
 	}
 
-	// Session-bind: if a session is active it must match the state's userId so a
-	// state token can't be replayed by a different user in their browser session.
+	// Session-bind, and require the session. The state is a signed token, not a
+	// browser-bound one, so without this an attacker could start a connect on
+	// their own account and hand the GitHub link to a signed-out victim who has
+	// authorized the app before: GitHub redirects silently, and the victim's
+	// token would land on the attacker's account. The flow starts from a signed-in
+	// page and returns as a top-level GET, so the SameSite=Lax cookie is present
+	// on every legitimate callback.
 	const callbackSession = await getSessionUser(req).catch(() => null);
-	if (callbackSession && callbackSession.id !== stateData.userId) {
+	if (!callbackSession) {
+		return redirect(res, `${env.APP_ORIGIN}/settings?tab=connected-accounts&github=error`);
+	}
+	if (callbackSession.id !== stateData.userId) {
 		return error(res, 403, 'session_mismatch', 'OAuth state does not match the current session');
 	}
 
