@@ -50,7 +50,7 @@ Verify in a real browser: `npm run dev` (port 3000; reuse it if another agent is
 | [016](../016-parity-02-analytics.md) | `/analytics`: one page of live platform totals and growth | none |
 | 017 (retired 2026-10-08) | Agents ranked by SOL earned on `/leaderboard` | needs 015 |
 | [018](../018-parity-04-agent-as-paid-api.md) | Sell a whole agent as a paid x402 endpoint | none (buyers pay; test with the spend gate) |
-| [019](../019-parity-05-experiments.md) | `/experiments`: public write-ups of what we tried and what the numbers said | none |
+| 019 (retired 2026-10-08) | `/experiments`: public write-ups of what we tried and what the numbers said | none |
 | [020](../020-parity-06-success-stories.md) | `/stories`: opt-in case studies with verifiable on-chain metrics | none |
 | [021](../021-parity-07-three-fee-flow.md) | "Where every $100 goes" on `/three-token`, from the live split policies | none |
 | [022](../022-parity-08-mcp-use-cases-and-safe-retries.md) | MCP docs as tool-call sequences; `retry_safe` on every post-payment failure | none |
