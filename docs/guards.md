@@ -160,6 +160,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | MCP safety annotations | `npm run audit:mcp-safety` | Declared `readOnlyHint` and `destructiveHint` match what handlers do. |
 | MCP tool catalog freshness | `npm run audit:mcp-catalog` | `public/mcp-catalog.json` matches what the MCP servers actually expose. |
 | MCP directory listing source | `npm run audit:mcp-listing` | The one file every third-party MCP directory listing is written from still matches the manifests, and no new server lands without listing copy. |
+| MCP resources and prompts | `npm run audit:mcp-surfaces` | Every hosted MCP server manifest and `public/.well-known/mcp.json` list exactly the resources, templates and guided prompts the servers serve, generated from `api/_mcp/resources.js` and `api/_mcp/prompts.js`. |
 | 3D Studio OpenAPI sync | `npm run check:studio-openapi` | The Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema the site serves. |
 | Live event window | `npm run check:event` | `public/event.json` describes an event that will actually happen, on every surface that reads it. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
@@ -199,6 +200,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Hands-free voice loop | `npm run check:home-voice` | Nothing about listening loads before opt-in, an ambient "yeah" never confirms a guarded action, and the agent does not wake itself. |
 | Delegation contract addresses | `npm run check:erc7710` | Every delegation-manager address is a deployed contract. |
 | Connector reviewer path | `npm run audit:mcp-reviewer` | Every paid tool on the published stdio server answers an unpaid call with a clean, priced x402 challenge, and the reviewer entitlement lifts the paywall only for the right secret. |
+| Grok model catalog | `npm run check:xai-models` | Every Grok id in `api/_lib/chat-models.js` is one xAI still serves, every chat model xAI serves is catalogued, and the context windows and prices match, so no failover rung calls a retired model and Grok spend is metered at the real price. Needs network. |
+| Earnings board agreement | `npm run check:earnings-board` | Every row of the live earnings leaderboard matches that agent's own Earned card over the same window: creator fees, service income, total and rank. Read-only; `--base <url>` points it at a local server. |
 
 ---
 

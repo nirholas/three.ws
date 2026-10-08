@@ -124,6 +124,8 @@ They belong to an operator, or to a post-deploy check.
 | `check:erc7710` | Every `DELEGATION_MANAGER_DEPLOYMENTS` address is a deployed contract | 0 | 3.0s | **manual.** `eth_getCode` against public RPCs; a third-party RPC outage would read as a red gate. |
 | `check:evm-rpc` | Every EVM RPC endpoint answers a keyless server-side POST, in priority order | 0 | 8.6s | **manual (ops).** Network by definition. |
 | `audit:deps` | The Python workers' pinned deps against the OSV vulnerability database | 1 | 16.6s | **manual (security sweep).** 285 advisories across 17 pinned versions, mostly `transformers` (two are RCE, fixed in 5.0.0 and 5.3.0). Each fix is a pin bump plus a worker image rebuild, which is its own piece of work, not a gate. |
+| `check:xai-models` | The Grok catalog (`GROK_MODELS` in `api/_lib/chat-models.js`) against the models xAI serves: ids, context windows and prices, from the xAI API with a key or its public model docs without one | 0 | 0.7s | **manual (ops).** Measured 2026-10-08 against the public docs (no key on this box): 8 of 8 ids in sync. xAI ships and retires models on its own schedule, so it can go red with no diff on our side. Run it when a Grok rung errors or before touching the catalog. |
+| `check:earnings-board` | Every row of `/api/leaderboard/earnings`, in all four windows, against the agent's own `/api/agents/:id/earnings` (creator fees, service income, total, rank) | 2 | 0.2s | **manual (post-deploy).** Measured 2026-10-08 against `https://three.ws`: the board answers 404 because the endpoint landed after the running image (`fe2a8b24f`), so exit 2 is a deploy lag, not a mismatch. Re-run after the next deploy, or point it at a local server with `--base http://localhost:<port>`. The offline half of the same comparison runs in `npm test` as [tests/agent-earnings-board.test.js](../../tests/agent-earnings-board.test.js). |
 | `audit:upstreams:map` | Not a guard: `--map` regenerates `docs/resilience.md` | 0 | 38.6s | **manual (generator).** The guard half, `audit:upstreams`, is already in `gate`. |
 
 ### Needs a credential this box does not hold
@@ -169,6 +171,8 @@ viewports. They are pre-event, pre-release and incident tools.
 |---|---|
 | `check:rules` | The pre-push hook, as `--base <remote sha> --head <local sha>` per pushed ref (`scripts/setup-git-hooks.mjs:66`). Push-scoped is the point: it judges the commits leaving the machine, never the shared working tree, and it also lints each pushed commit subject. The bare npm script (17.5s) scans the whole worktree and would fail on other agents' in-flight work. |
 | `check:secrets` | The same hook, the same push-scoped mode, one line later, so no credential material leaves the machine. |
+| `check:community-skills` | `prebuild`, by path: `node scripts/build-community-registry.mjs --check` runs in the parallel group of every `npm run build`, and `build:pages` runs the same script in write mode. Measured 2026-10-08: exit 0 in 0.5s, 12 skills valid and `community-skills/registry.json` up to date. The npm entry point is the one a contributor runs before opening a pull request. |
+| `check:sri-pins` | `build:gcp`, through `check:dist`, which imports the same `checkPins()` from `scripts/lib/agent-3d-releases.mjs` and fails the deploy build on a stale pin. Measured 2026-10-08: exit 0 in 0.4s, 6 documented pins match `data/agent-3d-releases.json`. The npm entry point is the one to run while editing docs, and `-- --fix` rewrites stale hashes from the ledger. |
 
 ## Nothing was deleted
 

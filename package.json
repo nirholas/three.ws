@@ -282,6 +282,7 @@
 		"check:cron-drift": "node scripts/check-cron-drift.mjs",
 		"check:cron-syntax": "node scripts/check-cron-drift.mjs --offline",
 		"check:xai-models": "node scripts/check-xai-models.mjs",
+		"check:earnings-board": "node scripts/check-earnings-board.mjs",
 		"audit:custodial-keys": "node scripts/audit-custodial-key-health.mjs",
 		"audit:home-credentials": "node scripts/audit-home-credential-health.mjs",
 		"audit:cron-liveness": "node scripts/audit-cron-liveness.mjs",

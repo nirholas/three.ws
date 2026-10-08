@@ -501,6 +501,32 @@
 			}
 		},
 		{
+			"id": "audit-mcp-surfaces",
+			"script": "scripts/build-mcp-surfaces.mjs",
+			"npm": "audit:mcp-surfaces",
+			"title": "MCP resources and prompts are published",
+			"protects": "Every hosted MCP server manifest (server.json, server-agent.json, server-3d.json, server-bazaar.json) and the public directory at public/.well-known/mcp.json list exactly the resources, resource templates and guided prompts the servers actually serve, read from api/_mcp/resources.js and api/_mcp/prompts.js.",
+			"why": "Registries and MCP clients discover what a server offers from these files before they ever connect. A resource added in code but not published is invisible to every directory listing, and one removed in code but still published is a promise the server breaks on first read. The lists are generated from the serving code, so the only way they drift is a change that skipped the regeneration, which is exactly what this catches.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A resource listed in the public MCP directory that the server does not serve.",
+				"violation": {
+					"json": [
+						{
+							"file": "public/.well-known/mcp.json",
+							"pointer": "servers.0.resources",
+							"at": 0,
+							"insert": "three://guard-proof/never-served"
+						}
+					]
+				},
+				"expect": "MCP resource/prompt listings are stale"
+			}
+		},
+		{
 			"id": "audit-motion-drift",
 			"script": "scripts/audit-motion-drift.mjs",
 			"npm": "audit:motion-tokens",
@@ -1131,6 +1157,22 @@
 			}
 		},
 		{
+			"id": "check-earnings-board",
+			"script": "scripts/check-earnings-board.mjs",
+			"npm": "check:earnings-board",
+			"title": "Earnings leaderboard agrees with every agent page",
+			"protects": "Every row of GET /api/leaderboard/earnings, in all four windows, matches what GET /api/agents/:id/earnings reports for that agent over the same window: creator fees to the lamport, service income, the total, and the rank. Every total equals its parts and the board is sorted by total.",
+			"why": "The promise to users is that a row on /leaderboard?tab=earned and the Earned card on that agent's page never disagree. Both read one model, and tests/agent-earnings-board.test.js holds that on a seeded database, but only real data exercises the real mix of coins, windows and rounding. A board that ranks an agent on numbers its own page does not show is the fastest way to lose trust in both.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Pages through the live board and asks each ranked agent for its own earnings over public GET requests, so the rows it compares only exist in a running deployment. It is read-only. The offline half of the same comparison is tests/agent-earnings-board.test.js."
+			}
+		},
+		{
 			"id": "check-erc7710-addresses",
 			"script": "scripts/check-erc7710-addresses.js",
 			"npm": "check:erc7710",
@@ -1605,6 +1647,22 @@
 					]
 				},
 				"expect": "is declared but"
+			}
+		},
+		{
+			"id": "check-xai-models",
+			"script": "scripts/check-xai-models.mjs",
+			"npm": "check:xai-models",
+			"title": "Grok model catalog matches what xAI serves",
+			"protects": "GROK_MODELS in api/_lib/chat-models.js lists every chat model xAI currently serves, no retired id, and the context window and prices xAI publishes for each. It reads the xAI API with a key, or the public xAI model docs without one.",
+			"why": "A retired id in the catalog turns the Grok rung of every failover chain into a guaranteed error, an uncatalogued id is a better or cheaper model nobody can pick, and llm-pricing.js meters Grok spend from the catalog prices, so a stale price is a wrong spend ledger. xAI changes all three on its own schedule, with no diff on our side to review.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Compares the catalog against the live xAI model list or the published xAI model pages, so the answer changes when xAI ships or retires a model and there is no offline copy to mutate. The key, when set, is only ever sent to api.x.ai."
 			}
 		},
 		{
