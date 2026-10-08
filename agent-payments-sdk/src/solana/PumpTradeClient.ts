@@ -438,7 +438,7 @@ export class PumpTradeClient {
 
     const program = getPumpProgram(this.connection);
     const buyExactIx = await program.methods
-      .buyExactQuoteInV2(spendableQuoteIn, minBaseOut)
+      .buyExactQuoteInV2(spendableQuoteIn, minBaseOut, { 0: false })
       .accountsPartial({
         global: GLOBAL_PDA,
         baseMint: mint,
