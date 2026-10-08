@@ -1,5 +1,11 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 
+// The SSRF guard resolves DNS before fetching; route it straight to the stubbed
+// global fetch so these cases stay offline. The guard is tested on its own.
+vi.mock('../api/_lib/ssrf-guard.js', () => ({
+	fetchSafePublicUrlPinned: (url, init) => globalThis.fetch(url, init),
+}));
+
 import { fetchOgImage, MAX_OG_IMAGE_BYTES } from '../api/_lib/og-avatar.js';
 import { parseLimit } from '../api/trending.js';
 

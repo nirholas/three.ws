@@ -17,7 +17,15 @@
  *
  * It never throws. A dead host, a timeout, an HTML error page, or an oversized
  * body all return null, which every caller already renders as a monogram.
+ *
+ * The fetch goes through the pinned SSRF guard (api/_lib/ssrf-guard.js): a URL
+ * that resolves to a private, loopback or metadata address, or redirects to one,
+ * is refused, because the bytes come back to whoever requested the card. Coin
+ * logos on the OG cards route through here too, and those URLs are chosen by
+ * whoever launched the coin.
  */
+
+import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 
 /** A portrait that does not fit in 1.5 MB is not a portrait we want to inline. */
 export const MAX_OG_IMAGE_BYTES = 1_500_000;
@@ -39,7 +47,14 @@ export async function fetchOgImage(url, opts = {}) {
 	if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return null;
 
 	try {
-		const resp = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+		// Pinned: the socket connects to the address that was validated, so a
+		// rebinding DNS answer cannot swap in an internal host between check and
+		// connect. maxBytes caps the stream inside the guard as well.
+		const resp = await fetchSafePublicUrlPinned(
+			url,
+			{ signal: AbortSignal.timeout(timeoutMs) },
+			{ allowHttp: true, maxBytes },
+		);
 		if (!resp.ok) return null;
 
 		// The type lands inside an SVG `href="data:<ct>;base64,..."` attribute,
