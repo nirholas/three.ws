@@ -862,14 +862,6 @@
 					"added": "2026-08-28"
 				},
 				{
-					"path": "/docs/dextools",
-					"title": "DEXTools integration guide",
-					"description": "How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.",
-					"priority": 0.5,
-					"changefreq": "monthly",
-					"added": "2026-10-08"
-				},
-				{
 					"path": "/docs/portal",
 					"title": "How Portal builds a 3D world from a URL",
 					"description": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
