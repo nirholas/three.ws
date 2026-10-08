@@ -2,8 +2,9 @@
 
 An author is given one or two topics and this page. An X Article is the long form of @trythreews:
 a full piece with a title, a cover, headings and images, published natively on X and quoted by a
-short post. Articles fill the T1 (flagship) slot, one a day at most, and are released by the owner
-after they pass review. Everything a post needs (the voice contract, claims with evidence, live
+short post. Articles have their own slot, one every second evening at 22:30 UTC, and are released
+by the queue's policy once they pass review on the editor's own verdict, so an article must be
+right without anyone reading it before it goes out. It must tag no one anywhere in its body. Everything a post needs (the voice contract, claims with evidence, live
 verification) applies to an article too, across every sentence of its body.
 
 Several authors work at once, each in their own files, and an integrator adopts and reviews what

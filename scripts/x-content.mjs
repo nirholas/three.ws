@@ -33,9 +33,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { QUEUE_PATH, loadQueue, validateItem, validateQueue } from '../api/_lib/x-content/queue.js';
-import { DEFAULT_CADENCE, TIERS, currentSlot, pickDue, slotOpenings, tierOf } from '../api/_lib/x-content/schedule.js';
+import { DEFAULT_CADENCE, TIERS, currentSlot, pickDue, reservedKinds, slotLabel, slotOpenings, tierOf } from '../api/_lib/x-content/schedule.js';
 import { loadLifts, rankItems } from '../api/_lib/x-content/priority.js';
-import { activeHolds, inventory } from '../api/_lib/x-content/runner.js';
+import { activeHolds, inventory, stockLabel } from '../api/_lib/x-content/runner.js';
 import { runTick } from '../api/_lib/x-content/runner.js';
 import { dbStore, memoryStore } from '../api/_lib/x-content/state.js';
 import { MAX_SPEED, VIDEO_LIMITS, mediaType, parseFfmpegProbe, videoFilterChain } from '../api/_lib/x-content/media.js';
@@ -119,22 +119,28 @@ async function plan() {
 	const holds = activeHolds(state, queue.items, root, now);
 	console.log(`ledger: ${s.label}${seed ? '' : '   (slot minutes are placeholders here: X_CONTENT_SCHEDULE_SEED only exists in production)'}\n`);
 
-	console.log('Slots (T1 flagship, T2 features, T3 proof of work):');
+	console.log('Slots (T1 flagship, T2 features, T3 proof of work, article every few days):');
 	const openings = slotOpenings(now, cadence, seed).filter((slot) => slot.opensAt > now - DAY && slot.opensAt < now + DAY);
 	const openKey = currentSlot(now, cadence, seed).slot?.key;
 	for (const slot of openings) {
 		const used = [...published.values()].find((row) => row.slot === slot.key);
 		const state_ = used ? `used by ${used.id}` : slot.key === openKey ? 'OPEN NOW' : slot.opensAt <= now ? 'passed' : 'upcoming';
-		console.log(`  ${new Date(slot.opensAt).toISOString().slice(0, 16)}Z  T${slot.tier}  ${state_}`);
+		console.log(`  ${new Date(slot.opensAt).toISOString().slice(0, 16)}Z  ${slotLabel(slot)}  ${state_}`);
 	}
 
 	console.log('\nStock (approved, ready, not held), one slot per tier per day:');
-	for (const row of inventory(queue.items.filter((item) => !problems[item.id].length), state, root, now)) console.log(`  T${row.tier}: ${row.days} day(s)${row.low ? '   LOW' : ''}`);
+	for (const row of inventory(queue.items.filter((item) => !problems[item.id].length), state, root, now, cadence)) console.log(`  ${stockLabel(row)}${row.low ? '   LOW' : ''}`);
 
-	for (const tier of TIERS) {
-		const waiting = queue.items.filter((item) => tierOf(item) === tier && !published.has(item.id));
+	// Items a kind slot owns are ranked for that slot, not for their tier.
+	const reserved = reservedKinds(cadence);
+	const groups = [
+		...TIERS.map((tier) => ({ label: `T${tier}`, match: (item) => !reserved.has(item.kind) && tierOf(item) === tier })),
+		...[...reserved].map((kind) => ({ label: `${kind} slot`, match: (item) => item.kind === kind })),
+	];
+	for (const group of groups) {
+		const waiting = queue.items.filter((item) => group.match(item) && !published.has(item.id));
 		if (!waiting.length) continue;
-		console.log(`\nT${tier} by priority:`);
+		console.log(`\n${group.label} by priority:`);
 		const ranked = rankItems(waiting, { lifts, published: state.published || [], quality: queue.quality, reviews, now });
 		for (const row of ranked) {
 			const item = row.item;
@@ -160,7 +166,7 @@ async function plan() {
 
 	const publishable = queue.items.filter((item) => !problems[item.id].length);
 	const next = pickDue({ items: publishable, state, now, cadence: queue.cadence, quality: queue.quality, seed, lifts, reviews, exclude: holds });
-	console.log(`\nnow: ${next.item ? `${next.item.id} would fill slot ${next.slot.key} (T${next.tier}${next.filledDown ? `, filling a T${next.slot.tier} slot` : ''}, score ${next.score})` : next.reason}`);
+	console.log(`\nnow: ${next.item ? `${next.item.id} would fill slot ${next.slot.key} (${next.slot.kind ? `${next.slot.kind}, T${next.tier}` : `T${next.tier}`}${next.filledDown ? `, filling a T${next.slot.tier} slot` : ''}, score ${next.score})` : next.reason}`);
 }
 
 async function run() {
@@ -532,7 +538,7 @@ async function advance() {
 	const quality = queue.quality || {};
 	const items = queue.items.filter((item) => (id ? item.id === id : ['draft', 'review'].includes(item.status)));
 	if (!items.length) fail(id ? `${id} is not in the queue` : 'nothing to advance: no draft or review items');
-	console.log(`approval: ${policy.mode === 'auto' ? `by policy for tier ${policy.tiers.join(', ')}, embargoed ${policy.vetoHours} h` : 'by the owner'}`);
+	console.log(`approval: ${policy.mode === 'auto' ? `by policy for tier ${policy.tiers.join(', ')}${policy.articles ? ' and for articles' : ''}, embargoed ${policy.vetoHours} h` : 'by the owner'}`);
 	if (!dryRun) hydrateReviewEnv();
 
 	const rows = [];

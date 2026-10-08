@@ -34,7 +34,7 @@ pipeline, enforced before anything is sent:
 | Silent autoplay | `prepare-video` burns captions into the clip, because most of the feed watches muted. |
 | Hype copy | [api/_lib/x-content/quality.js](../api/_lib/x-content/quality.js) rejects launch openers ("Introducing", "We're excited"), hype vocabulary, hashtags, emoji, stacked exclamation marks, all-caps shouting, and en or em dashes. |
 | Repeats | A head that reads too much like another queued item, or like anything @trythreews already posted (the scraped archive in `data/archives/` plus everything this pipeline published), is rejected. |
-| Clockwork timing | Three slots a day inside US hours, every day, each opening at a jittered minute, with a minimum gap and a daily cap. |
+| Clockwork timing | Three slots a day inside US hours, every day, plus an X Article every second evening, each opening at a jittered minute, with a minimum gap and a daily cap. |
 | A schedule anyone can read off the repository | The slot jitter is an HMAC under `X_CONTENT_SCHEDULE_SEED` (production only), and which post fills a slot is decided at the moment it opens. Unset, the jitter falls back to a public hash, and `plan` says its minutes are placeholders. |
 | A link that cannot be checked | Every link is resolved before a post can be approved, and again seconds before it is sent. npm answers 403 to any non-browser client, so a package page is resolved against `registry.npmjs.org`, which is the authoritative record of whether that package exists and answers any client. |
 | A broken post stalling the feed | A post that cannot go out (a link is down, a feature probe fails, X rejects the content) is held with the reason and a backoff, and the slot goes to the next-best post in the same run. |
@@ -125,13 +125,22 @@ X Articles require the posting account to be on X Premium.
 - `textFrom` is optional. When set, `check` fails if the inline text differs from that announcement-pack file, so the copy that was reviewed is the copy that ships.
 - An `article` item carries `"article": { "title", "body", "cover": { "path" } }`, and its optional `posts` quote the published Article. The body is copy like any post: its prose (headings, paragraphs, lists and quotes; code blocks and tables are literal samples and exempt) goes through the same language lint and claims ledger, so a number in the fourth section needs evidence like one in the title, its links are resolved at review, and its words are spell-checked. Replacing an inline image makes the review stale, the same as editing the Markdown.
 
-Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC), `windowMinutes` (how far a slot's opening may be jittered), `minimumMinutesApart`, `dailyCap`, and `quietHoursUtc` (a `["HH:MM", "HH:MM"]` pair, which may wrap midnight). `quality` sets the similarity limits, the maximum same-lane and same-pattern runs, and `maximumLength`: the longest a post may be, in weighted characters. @trythreews is on X Premium, so the queue sets it above the standard 280; a value under 280 is ignored. `approval` is the policy described below.
+Cadence lives at the top of the file: `slots` (each `{ tier, at }` in UTC, or a kind slot `{ kind, at, everyDays, from }`, below), `windowMinutes` (how far a slot's opening may be jittered), `minimumMinutesApart`, `dailyCap`, and `quietHoursUtc` (a `["HH:MM", "HH:MM"]` pair, which may wrap midnight). `quality` sets the similarity limits, the maximum same-lane and same-pattern runs, and `maximumLength`: the longest a post may be, in weighted characters. @trythreews is on X Premium, so the queue sets it above the standard 280; a value under 280 is ignored. `approval` is the policy described below.
 
 **What the cap counts:** `dailyCap` limits scheduled posts in the last 24 hours, and a scheduled post is one the scheduler placed in a slot. A post an operator sends by hand (`run --id`) carries no slot and does not count toward it, because counting those let four owner-requested posts on one afternoon hold every slot shut the following morning. Hand-sent posts do still count toward `minimumMinutesApart`, which measures from the last post of any kind, so the schedule never fires minutes after a manual post. To fill an open slot by hand and keep the schedule's bookkeeping right, run a scheduler tick (`npm run x:content -- run`, no `--id`): it takes the same lock as the cron, picks the post the cron would, and records the slot so the cron sees it as used.
 
 ## How the next post is chosen
 
 **When:** three slots a day, one per tier, every day of the week, all inside 12:00 to 20:00 UTC: T2 at 12:00, T1 at 15:30, T3 at 19:00 (8:00, 11:30 and 15:00 in New York). The volume study measured every original post against the $THREE pool's candles and found a post in that window was followed by a volume response about 1.7 times as often as one outside it, one of the two strongest effects in the model. The owner's 2026-09-20 cadence spread the three slots eight hours apart (04:00, 12:00, 20:00), which put two of them outside the window; on 2026-10-01 the owner made pool volume the goal, so all three moved inside it, three and a half hours apart. Each slot opens at a minute only the production seed can reproduce (up to `windowMinutes` late), and stays open for three hours (`slotOpenMinutes`), so a missed run or a deploy still posts, but no slot is ever spent twice. Slots are at least `minimumMinutesApart` apart even at their latest opening, so an earlier post never blocks a later slot. There are no quiet hours: the fixed slots already say when the account posts. `flagshipWeekdaysOnly` would withhold the T1 slot on Saturday and Sunday and keep T1 posts out of the lower slots too; the queue no longer sets it, and it is the one lever that would return the account to weekdays-only flagships.
+
+**One X Article every two days** (owner, 2026-10-08) has its own slot: `{ "kind": "article", "at": "22:30", "everyDays": 2, "from": "2026-10-08" }`, which opens at 22:30 UTC (18:30 in New York) on 2026-10-08 and every second day after it. 22:30 is the earliest time that is still `minimumMinutesApart` after the latest the T3 slot can open, so an Article never blocks a daily post or waits on one. A kind slot works like this:
+
+- It takes only items of its kind, ranked across every tier at once. The daily slots never take an item whose kind owns a slot, so an Article is never spent on a daily slot and the Article slot never spends a post.
+- It sits outside `dailyCap`, and the Article it sends (recorded with `slotKind` in the ledger) is not counted toward the cap either. Its own cadence limits it, and a cap shared with the three daily posts would let an Article evening hold the next morning's slot shut.
+- It obeys `minimumMinutesApart`, the veto-yield rule below, the missed-slot alerts, and the stock alert. Stock counts approved Articles as `everyDays` days each, so one Article in stock is two days and raises the low-stock alert.
+- With no Article ready, the slot stays empty and alerts. It does not fall back to a post, because that would make a fourth post that day.
+
+Drop the slot from `slots` and Articles go back to being ordinary tier 1 items.
 
 **Three a day is a quota** (owner, 2026-09-30), so a slot is never left empty while an approved post
 could fill it. When the usual order finds nothing, the slot takes, in turn:
@@ -246,6 +255,15 @@ says which one stopped it:
 | It was filmed, and the proof covers it | A post never proven against the product is never released by policy. |
 | It tags no one | A tag puts a partner's name next to ours. A person decides that. |
 | The review passed on the editor's own verdict | An `editorOverride` is a person's judgment, so it needs a person. |
+
+X Articles have their own switch, `"articles": true` (set since 2026-10-08, so the Article slot
+fills without the owner). An Article is long-form writing about how something works and rarely
+has a reel to film, so the review stands in for the reel: it re-ran every probe the Article
+declares against production, resolved every link, and held every sentence of the body to the
+claims ledger. With the switch on, an Article is not held back by its tier or by having no
+scenario; it must still tag no one (title, quote posts, and the whole body are checked), pass on
+the editor's own verdict, carry a current proof if it does have a scenario, and wait out
+`vetoHours`. The switch does nothing for a post.
 
 `npm run x:content -- advance --ship` is the whole line in one command: it films what needs
 filming, reviews it, releases what the policy allows, and publishes every approved post as a
