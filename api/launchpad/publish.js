@@ -30,6 +30,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
@@ -112,9 +113,26 @@ async function resolveAuth(req) {
 	} catch {}
 	try {
 		const bearer = await authenticateBearer(extractBearer(req));
-		if (bearer) return { userId: bearer.userId };
+		if (bearer) return { userId: bearer.userId, bearer };
 	} catch {}
 	return null;
+}
+
+function sameJson(a, b) {
+	return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
+
+// An edit by a bearer may change the page's copy, scene and skills, but moving
+// its payout wallet or pricing redirects what visitors pay, which needs the
+// spend scope (api/_lib/spend-scope.js). A session or the owner secret is the
+// owner and passes.
+async function assertPayoutEditAllowed(auth, data, req) {
+	if (!auth?.bearer) return;
+	const [row] = await sql`SELECT owner_wallet, config FROM launchpad_pages WHERE slug = ${data.slug}`;
+	if (!row) return;
+	if (row.owner_wallet !== data.identity.wallet || !sameJson(row.config?.monetize, data.monetize)) {
+		assertBearerMaySpend(auth.bearer, req);
+	}
 }
 
 export default wrap(async (req, res) => {
@@ -187,6 +205,8 @@ export default wrap(async (req, res) => {
 		out.ownerSecret = freshSecret;
 		return json(res, 200, out);
 	}
+
+	if (!providedHash) await assertPayoutEditAllowed(auth, data, req);
 
 	// Edit auth, re-asserted inside the statement so it cannot go stale between a
 	// read and the write: (a) matching secret, or (b) same session user. The row's

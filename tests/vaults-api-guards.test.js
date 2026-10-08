@@ -121,7 +121,8 @@ const OPEN_VAULT = {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	authWriteMock.mockResolvedValue({ userId: USER, session: false });
+	// A bearer that holds the spend grant; the connector case below holds none.
+	authWriteMock.mockResolvedValue({ userId: USER, session: false, scope: 'wallet:read wallet:write' });
 	resolveUserIdMock.mockResolvedValue({ userId: USER, session: false });
 	loadOwnedAgentMock.mockResolvedValue({
 		id: AGENT, user_id: USER, name: 'Anchor',
@@ -218,6 +219,17 @@ describe('caller-supplied amounts are parsed at the boundary', () => {
 
 describe('PATCH /api/vaults/:id terms', () => {
 	const patchReq = (body) => mkReq({ method: 'PATCH', url: `/api/vaults/${VAULT}`, body });
+
+	it('refuses a terms change from a bearer without wallet:write, and still lets it pause', async () => {
+		authWriteMock.mockResolvedValue({ userId: USER, session: false, scope: 'avatars:read agents:write connector' });
+		const { res, out } = await call(vaultDetailHandler, patchReq({ action: 'terms', maxPerTradeUsdc: 10 }));
+		expect(res.statusCode).toBe(403);
+		expect(out.error).toBe('insufficient_scope');
+		expect(out.error_description).toContain('needs a browser session on three.ws');
+		expect(updateVaultTermsMock).not.toHaveBeenCalled();
+		const paused = await call(vaultDetailHandler, patchReq({ action: 'pause' }));
+		expect(paused.res.statusCode).not.toBe(403);
+	});
 
 	it('refuses a non-numeric bps term instead of writing NaN into an integer column', async () => {
 		const a = await call(vaultDetailHandler, patchReq({ action: 'terms', performanceFeeBps: 'abc' }));

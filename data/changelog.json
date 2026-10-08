@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "API keys for AI agents that can never spend",
+			"summary": "When you make an API key you can now choose \"For an AI agent (Grok Bot, schedules, CI)\". That key can read, generate and edit your avatars, agents and their memory, and it can never spend: it cannot pay, send, trade, bid, launch or change where your agents get paid, and nothing done to it later can change that. If an agent holding it reaches one of those actions, it gets a clear answer with a link back to three.ws, where you approve the action yourself. The same rule now covers every route that arms an autopilot, a market maker, a launcher or a recurring charge, or moves a payout address. Keys you already have keep exactly the permissions they were made with.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Connect Grok Bot and other cloud agents with OAuth, and revoke them instantly",
 			"summary": "Cloud agents such as Grok Bot can now sign in to your three.ws account over OAuth 2.1 from wherever they run, with a callback on any https address. The sign-in screen says plainly which app is asking, which site it belongs to, where it will send you back, and what it will be able to do, and it states that the app can never spend from your wallet. Spending is only granted if you tick a separate box. Settings, Connected apps lists every app with when it last called in, and Revoke now cuts an app off on its very next request instead of up to an hour later.",
 			"tags": [

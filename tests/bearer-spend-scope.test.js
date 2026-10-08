@@ -96,6 +96,21 @@ describe('every bearer-accepting spend route calls the gate', () => {
 		'api/marketplace/buy-asset.js',
 		'api/tournaments/[id].js',
 		'api/agent-wallet-bridge.js',
+		// Closed by x-grok order 026: arming autonomous spenders, recurring
+		// charges and paid hires, and redirecting where an agent is paid.
+		'api/agents/autopilot.js',
+		'api/agent/launcher.js',
+		'api/agent/market-maker.js',
+		'api/oracle/watch.js',
+		'api/pump/autopilot.js',
+		'api/agent-subscriptions.js',
+		'api/marketplace/set-skill-price.js',
+		'api/agent-collab.js',
+		'api/signals/subscribe.js',
+		'api/launchpad/publish.js',
+		'api/animations/sell.js',
+		'api/agents.js',
+		'api/vaults/[id].js',
 	];
 
 	for (const rel of ROUTES) {
@@ -108,10 +123,17 @@ describe('every bearer-accepting spend route calls the gate', () => {
 
 	it('labor, Agora and vault money writes ask authWrite for the spend gate', () => {
 		for (const rel of ['api/labor/post.js', 'api/labor/award.js', 'api/labor/policy.js', 'api/agora/act.js',
-			'api/vaults/deposit.js', 'api/vaults/redeem.js', 'api/vaults/trade.js', 'api/vaults/claim-fees.js']) {
+			'api/vaults/deposit.js', 'api/vaults/redeem.js', 'api/vaults/trade.js', 'api/vaults/claim-fees.js',
+			'api/vaults/index.js']) {
 			const src = readFileSync(path.join(ROOT, rel), 'utf8');
 			expect(src, rel).toMatch(/authWrite\(req, res, \{ spend: true \}\)/);
 		}
+	});
+
+	it('agent edits need the spend scope only to change a money key, and wallet edits always', () => {
+		const agents = readFileSync(path.join(ROOT, 'api/agents.js'), 'utf8');
+		expect(agents).toMatch(/if \(auth\.source === 'bearer' && changesMoneyMeta\(existingMeta, clientMeta\)\)/);
+		expect(agents).toMatch(/if \(auth\.source === 'bearer'\) assertBearerMaySpend\(\{ scope: auth\.scope \}, req\)/);
 	});
 
 	it('the trade and withdraw executors check scope only once the request is known to spend', () => {

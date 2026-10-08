@@ -10,6 +10,7 @@
 
 import { cors, error, json, method, readJson, rateLimited, wrap } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 import { sql } from '../_lib/db.js';
@@ -19,7 +20,8 @@ import { sql } from '../_lib/db.js';
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	// Arming the market maker commits SOL from the agent wallet.
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

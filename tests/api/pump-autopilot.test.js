@@ -110,7 +110,7 @@ describe('/api/pump/autopilot', () => {
 	});
 
 	it('does not gate bearer-authed writes', async () => {
-		authState.bearer = { userId: 'user-1' };
+		authState.bearer = { userId: 'user-1', scope: 'wallet:write' };
 		const { res } = await invoke({
 			method: 'POST',
 			headers: { origin: 'https://evil.example' },
@@ -119,6 +119,12 @@ describe('/api/pump/autopilot', () => {
 		// Past the gate: the coin lookup returns nothing, so this 404s on data,
 		// never on the CSRF gate.
 		expect(res.statusCode).toBe(404);
+	});
+
+	it('refuses a bearer without wallet:write, since the policy drives buyback swaps', async () => {
+		authState.bearer = { userId: 'user-1', scope: 'avatars:read agents:write connector' };
+		const { res } = await invoke({ method: 'POST', body: { mint: MINT } });
+		expect(res.statusCode).toBe(403);
 	});
 
 	it('leaves reads open to a cookie session with no Origin', async () => {

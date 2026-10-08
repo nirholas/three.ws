@@ -21,6 +21,7 @@ import {
 	isSameSiteOrigin,
 } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { z } from 'zod';
 
@@ -36,7 +37,8 @@ import { z } from 'zod';
 async function resolveCaller(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, viaCookie: true };
-	const bearer = await authenticateBearer(extractBearer(req));
+	// The policy drives buyback swaps and distributions from the creator wallet.
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId, viaCookie: false };
 	return null;
 }

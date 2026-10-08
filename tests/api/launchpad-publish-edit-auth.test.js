@@ -29,8 +29,9 @@ import { invoke } from '../_helpers/monetization.js';
 let insertClaims = true;
 let updateReturns = null; // null = no authorized row matched
 let calls = [];
+let storedPage = null; // what the payout check reads for an existing slug
 
-const sqlMock = vi.fn((strings, ...values) => {
+const baseSql = (strings, ...values) => {
 	const q = Array.isArray(strings) ? strings.join(' ') : String(strings);
 	calls.push({ q, values });
 	if (/INSERT INTO launchpad_pages/i.test(q)) {
@@ -39,8 +40,12 @@ const sqlMock = vi.fn((strings, ...values) => {
 	if (/UPDATE launchpad_pages/i.test(q)) {
 		return Promise.resolve(updateReturns ? [updateReturns] : []);
 	}
+	if (/SELECT owner_wallet, config FROM launchpad_pages/i.test(q)) {
+		return Promise.resolve(storedPage ? [storedPage] : []);
+	}
 	return Promise.resolve([]);
-});
+};
+const sqlMock = vi.fn(baseSql);
 sqlMock.transaction = (queries) => Promise.all(queries);
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: sqlMock,
@@ -49,10 +54,11 @@ vi.mock('../../api/_lib/db.js', () => ({
 }));
 
 let sessionUser = null;
+let bearerUser = null;
 vi.mock('../../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => sessionUser),
-	authenticateBearer: vi.fn(async () => null),
-	extractBearer: vi.fn(() => null),
+	authenticateBearer: vi.fn(async () => bearerUser),
+	extractBearer: vi.fn(() => (bearerUser ? 'sk_live_test' : null)),
 }));
 
 vi.mock('../../api/_lib/rate-limit.js', () => ({
@@ -94,6 +100,8 @@ beforeEach(() => {
 	insertClaims = true;
 	updateReturns = null;
 	sessionUser = null;
+	bearerUser = null;
+	storedPage = null;
 });
 
 describe('POST /api/launchpad/publish: claiming a slug', () => {
@@ -221,5 +229,50 @@ describe('POST /api/launchpad/publish: input boundary', () => {
 		expect(status).toBe(400);
 		expect(body.error_description).toMatch(/solana address/);
 		expect(calls).toHaveLength(0);
+	});
+});
+
+// A connector key (x-grok order 026) may edit a page it owns, but moving where
+// visitors' payments land needs the spend scope.
+describe('POST /api/launchpad/publish: payout edits by an API key', () => {
+	const CONNECTOR = { userId: USER_ID, scope: 'avatars:read avatars:write agents:read agents:write connector' };
+
+	beforeEach(() => {
+		// An earlier case swaps the implementation to race two publishes.
+		sqlMock.mockImplementation(baseSql);
+		insertClaims = false;
+		updateReturns = { owner_secret_hash: 'h' };
+		const page = draft();
+		storedPage = { owner_wallet: page.identity.wallet, config: { monetize: page.monetize } };
+	});
+
+	it('lets a connector key edit the copy while the payout stays put', async () => {
+		bearerUser = CONNECTOR;
+		const { status } = await post(draft({ copy: { headline: 'New', tagline: 'Copy', cta: 'Go' } }));
+		expect(status).toBe(200);
+		expect(findCall(/UPDATE launchpad_pages/i)).toBeTruthy();
+	});
+
+	it('refuses a connector key that moves the payout wallet, before any write', async () => {
+		bearerUser = CONNECTOR;
+		const page = draft();
+		const { status, body } = await post({ ...page, identity: { ...page.identity, wallet: '0x00000000000000000000000000000000000000bb' } });
+		expect(status).toBe(403);
+		expect(body.error).toBe('insufficient_scope');
+		expect(body.error_description).toContain('needs a browser session on three.ws');
+		expect(findCall(/UPDATE launchpad_pages/i)).toBeUndefined();
+	});
+
+	it('refuses a connector key that changes the price', async () => {
+		bearerUser = CONNECTOR;
+		const { status } = await post(draft({ monetize: { kind: 'per-question', price: 9, currency: 'USDC', chain: 'base' } }));
+		expect(status).toBe(403);
+	});
+
+	it('lets a key that holds wallet:write move the payout', async () => {
+		bearerUser = { userId: USER_ID, scope: 'avatars:write wallet:write' };
+		const page = draft();
+		const { status } = await post({ ...page, identity: { ...page.identity, wallet: '0x00000000000000000000000000000000000000bb' } });
+		expect(status).toBe(200);
 	});
 });

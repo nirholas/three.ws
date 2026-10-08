@@ -22,6 +22,7 @@ import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { deliverSubscription } from '../_lib/signal-engine.js';
 import { requireUser, loadOwnedAgent, normNetwork, parseRowId } from './_common.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 
 // A live subscription pays x402 USDC and mirrors trades from the subscriber
 // agent's custodial wallet. Turning one on (or delivering it now) needs the
@@ -95,6 +96,9 @@ export default wrap(async (req, res) => {
 	const auth = await requireUser(req, res);
 	if (!auth) return;
 	const { userId } = auth;
+	// Subscribing (or a sync) pays x402 USDC and mirrors trades. Unsubscribing
+	// stops both, so any owning bearer may do it.
+	if (req.method === 'POST') assertBearerMaySpend(auth.bearer, req);
 
 	if (req.method === 'GET') {
 		return json(res, 200, { subscriptions: await listForUser(userId) });

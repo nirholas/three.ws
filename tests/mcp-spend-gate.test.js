@@ -240,3 +240,20 @@ describe('existing keys keep working', () => {
 		expect(() => assertMaySpend('threews-agent', 'pay_and_call', null)).not.toThrow();
 	});
 });
+
+describe('PUT /api/agents/:id: money keys in meta need the spend scope', async () => {
+	const { changesMoneyMeta } = await import('../api/agents.js');
+	const stored = { autopilot: { armed: false, max_usd: 5 }, payments: { receiver: 'THREEsynthetic1111' }, studio: { v: 1 } };
+
+	it('lets a read-modify-write send the money keys back unchanged, in any key order', () => {
+		expect(changesMoneyMeta(stored, { ...stored, studio: { v: 2 } })).toBe(false);
+		expect(changesMoneyMeta(stored, { autopilot: { max_usd: 5, armed: false } })).toBe(false);
+	});
+
+	it('flags arming the autopilot, raising limits, and moving the payout', () => {
+		expect(changesMoneyMeta(stored, { autopilot: { armed: true, max_usd: 5 } })).toBe(true);
+		expect(changesMoneyMeta(stored, { spend_limits: { daily_usd: 1000 } })).toBe(true);
+		expect(changesMoneyMeta(stored, { payments: { receiver: 'THREEsynthetic2222' } })).toBe(true);
+		expect(changesMoneyMeta(stored, { solana_address: 'THREEsynthetic3333' })).toBe(true);
+	});
+});

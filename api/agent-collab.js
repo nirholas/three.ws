@@ -17,6 +17,7 @@
 //     every spend guard (owner gate, spend policy, kill switch) still runs there.
 
 import { authenticateBearer, extractBearer, getSessionUser, mintAccessToken } from './_lib/auth.js';
+import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { cors, error, json, method, rateLimited, readJson, wrap } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
 import { isUuid } from './_lib/validate.js';
@@ -70,7 +71,8 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const session = await getSessionUser(req);
-	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	// A team task hires and pays teammate agents over x402.
+	const bearer = session ? null : assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in to run a team task');
 	const userId = session?.id ?? bearer?.userId;
 

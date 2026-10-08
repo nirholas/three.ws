@@ -13,6 +13,7 @@
  */
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from './_lib/auth.js';
+import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error, serverError, rateLimited } from './_lib/http.js';
 import { requireCsrf } from './_lib/csrf.js';
@@ -471,6 +472,12 @@ async function handleUpdate(req, res, id, auth) {
 		const clientMeta = { ...body.meta };
 		delete clientMeta.encrypted_wallet_key;
 		delete clientMeta.encrypted_solana_secret;
+		// The money keys arm autonomous spending, raise its limits, or say where
+		// the agent is paid. A bearer may send them back unchanged (a client's
+		// read-modify-write does), but changing one needs the spend scope.
+		if (auth.source === 'bearer' && changesMoneyMeta(existingMeta, clientMeta)) {
+			assertBearerMaySpend({ scope: auth.scope }, req);
+		}
 		mergedMeta = { ...existingMeta, ...clientMeta };
 		if ('encrypted_wallet_key' in existingMeta) {
 			mergedMeta.encrypted_wallet_key = existingMeta.encrypted_wallet_key;
@@ -571,6 +578,9 @@ export async function handleWallet(req, res, id, action = null) {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	// Provisioning, setting or clearing the wallet decides where the agent's
+	// payouts land (api/_lib/payout.js falls back to wallet_address).
+	if (auth.source === 'bearer') assertBearerMaySpend({ scope: auth.scope }, req);
 
 	// CSRF check before any DB lookups for state-mutating methods.
 	if (req.method !== 'GET') {
@@ -701,6 +711,21 @@ async function resolveAuth(req) {
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (bearer) return { userId: bearer.userId, source: 'bearer', scope: bearer.scope || '' };
 	return null;
+}
+
+// meta keys that move or route money: the treasury autopilot (the cron arms on
+// meta.autopilot.armed), spend and trade limits, policy rules, and the deposit
+// and payTo fallbacks.
+const MONEY_META_KEYS = ['autopilot', 'spend_limits', 'trade_limits', 'policy_rules', 'solana_address', 'payments'];
+
+function stableJson(v) {
+	if (Array.isArray(v)) return `[${v.map(stableJson).join(',')}]`;
+	if (v && typeof v === 'object') return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stableJson(v[k])}`).join(',')}}`;
+	return JSON.stringify(v ?? null);
+}
+
+export function changesMoneyMeta(existingMeta, clientMeta) {
+	return MONEY_META_KEYS.some((k) => k in clientMeta && stableJson(clientMeta[k]) !== stableJson(existingMeta?.[k]));
 }
 
 // Bearer-token callers must hold the matching avatars:* scope before they can
