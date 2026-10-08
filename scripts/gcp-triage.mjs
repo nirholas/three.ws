@@ -125,6 +125,15 @@ const KNOWN_SIGNATURES = [
 		action: `cryptocurrency.cv walked its whole AI chain and every provider refused: Groq's free tier spent its daily token budget, Gemini and Vertex answer "Lightning dunning decision is deny" (a billing hold on project aerial-vehicle-466722-p5, not an IAM or key problem), and the OpenRouter account behind OPENROUTER_FALLBACK_KEYS is out of credit. /api/sentiment degrades to a keyword reading and /api/narratives to its last good analysis, so this is noise until the owner restores one provider. ${RUNBOOK} §ccv-ai-providers-unavailable.`,
 	},
 	{
+		// Service-scoped: Cloud Run writes this line for ANY response it cut
+		// short, so on every other service it stays `investigate`.
+		id: 'ccv-sse-stream-timeout',
+		match: /Truncated response body\. Usually implies that the request timed out/i,
+		services: ['cryptocurrency-cv'],
+		class: 'self-healing',
+		action: `cryptocurrency.cv's /api/news/stream is a Server-Sent Events feed that stays open until Cloud Run's 300 s request timeout closes it; Cloud Run then logs the cut body. Every sampled line on 2026-10-08 (12 of 12) traced to that route at 300.99-301.00 s, and EventSource clients reconnect on their own. Investigate only if a trace lands on a non-streaming route: gcloud logging read 'trace="<trace>" httpRequest:*' --freshness=24h. ${RUNBOOK} §ccv-sse-stream-timeout.`,
+	},
+	{
 		id: 'helius-backoff',
 		match: /helius quota|rate.?limited|refresh deferred \(transient upstream\)/i,
 		class: 'self-healing',

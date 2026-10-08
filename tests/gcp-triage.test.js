@@ -41,6 +41,15 @@ describe('gcp-triage classify', () => {
 		expect(classify(line, ['three-ws-api'])?.id).not.toBe('ccv-ai-providers-unavailable');
 	});
 
+	it('classifies a truncated body as the SSE stream timeout only on cryptocurrency-cv', () => {
+		const line = 'Truncated response body. Usually implies that the request timed out or the application exited before the response was finished.';
+		const onCcv = classify(line, ['cryptocurrency-cv']);
+		expect(onCcv?.id).toBe('ccv-sse-stream-timeout');
+		expect(onCcv?.class).toBe('self-healing');
+		expect(classify(line, ['three-ws-api'])).toBeNull();
+		expect(classify(line, [])).toBeNull();
+	});
+
 	it('classifies a bare SIGKILL as the trellis OOM only on model-trellis', () => {
 		const line = 'Container terminated on signal 9.';
 		const onTrellis = classify(line, ['model-trellis']);
