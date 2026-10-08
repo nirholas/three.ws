@@ -25,13 +25,15 @@
 //  - req.body is pre-parsed for JSON / urlencoded / text / octet-stream at
 //    an 8 MB limit (Cloud Run's ceiling is 32 MB); multipart and other types
 //    stay unconsumed so upload handlers can read the raw stream.
-//  - SSE works: compression skips text/event-stream, and the HTTP server's
+//  - SSE and other live streams work: compression skips text/event-stream and
+//    any response marked `x-accel-buffering: no`, and the HTTP server's
 //    idle timeouts are lifted (Cloud Run enforces the real deadline).
 //
 // Run locally:  node server/index.mjs   (PORT defaults to 8080)
 
 import express from 'express';
 import compression from 'compression';
+import { shouldCompress } from './compression-filter.mjs';
 import { statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -343,9 +345,10 @@ const app = express();
 app.set('trust proxy', true); // Cloud Run sits behind Google front ends
 app.disable('x-powered-by');
 
-// Default filter already skips non-compressible types (text/event-stream,
-// images, GLB), so SSE and binary assets pass through untouched.
-app.use(compression());
+// The default filter skips non-compressible types (text/event-stream, images,
+// GLB); shouldCompress also passes through any response that marked itself
+// `x-accel-buffering: no`, so a live text stream is not held until it ends.
+app.use(compression({ filter: shouldCompress }));
 
 // Canonical host. `www.three.ws` resolves to the same load balancer as the apex
 // and serves the identical app, but the apex is the only origin the platform
