@@ -1,16 +1,19 @@
 {
 	"id": "embed-article",
 	"contentHash": "afd2885a04c5fa5fdcf572c533309f3e76a4657eee862a3e54b54e6a2721da8b",
-	"reviewedAt": "2026-10-01T19:22:29.309Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-08T04:31:53.197Z",
+	"passed": false,
+	"blockers": [
+		"evidence:file scripts/publish-lib.mjs: file does not contain \"[major]: { tracks: `>=${major}.0.0 <${Number(major) + 1}.0.0` }\"",
+		"editor verdict is revise"
+	],
 	"texts": [
 		"One HTML tag puts a live 3D avatar on any page, already idling when it appears",
 		"A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a body. The element stays hidden until the idle has rendered, so the avatar appears standing naturally, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "One HTML tag puts a live 3D avatar on any page",
@@ -114,8 +117,8 @@
 				"claim": "The 1 in the script path tracks the 1.x line of the element",
 				"kind": "evidence:file",
 				"target": "scripts/publish-lib.mjs",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"[major]: { tracks: `>=${major}.0.0 <${Number(major) + 1}.0.0` }\""
 			},
 			{
 				"claim": "boots it once it comes within 300 pixels of the viewport",
@@ -461,25 +464,40 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
+			"accuracy": 4,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "The `1` in the script path tracks the 1.x line of the element, so fixes reach your page without you editing it.",
+				"problem": "One of the two evidence items for this claim failed verification: scripts/publish-lib.mjs does not contain the cited tracking code. The live versions.json check did pass and shows \">=1.0.0 <2.0.0\", so the claim itself is supported by the live product, but the pack must not carry a failed check. Either the file evidence is stale or the mechanism changed.",
+				"fix": "Confirm scripts/publish-lib.mjs and re-run the check. If the file no longer contains the version-range logic, revise the article sentence to state only what the passing live check shows, e.g. \"The `1` in the script path is the 1.x channel, and the served manifest pins it to >=1.0.0 <2.0.0, so fixes reach your page without you editing it.\""
+			},
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "each rendered live by its own agent-3d element in the same relaxed idle pose",
+				"problem": "The still image cannot show that the avatars are live element renders idling; it shows three static characters. Alt text should describe what is visible rather than assert the capture method.",
+				"fix": "Alt text: \"Three 3D avatars side by side on a dark background in the same relaxed standing pose: a woman in a dark top and purple leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers\""
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"A live 3D avatar on any web page takes one script line and one <agent-3d> tag pointed at a body. The element stays hidden until the idle has rendered, so the avatar appears standing naturally, on Mixamo, VRM and other rigs alike. The write-up walks through each step between the tag and that frame, and what reduced motion does to it."
 			],
 			"altText": [
-				"Three 3D avatars standing side by side on a dark blue background, each rendered live by its own agent-3d element in the same relaxed idle pose: a woman in a purple top and leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
+				"Three 3D avatars side by side on a dark background in the same relaxed standing pose: a woman in a dark top and purple leggings, a character in a cropped top, yellow trousers and round pink glasses, and a man in a white T-shirt, light jeans and green trainers"
 			]
 		},
-		"summary": "Every claim in the post and article is backed by a passing verification against the live docs page, source files, or API probes, and the cover image matches its alt text and the article's description of the three rigs running one idle clip. Voice, length, and linking all conform to the contract; ship as is.",
+		"summary": "The post text itself is fully verified, specific, and on voice. The flagged problems sit in the article body and alt text: the publish-lib.mjs evidence for the version-tracking claim failed its check (the live versions.json supports the claim, so fix the evidence or reword), and the cover alt text asserts live rendering the still cannot show.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

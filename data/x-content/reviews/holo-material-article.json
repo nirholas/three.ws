@@ -1,11 +1,10 @@
 {
 	"id": "holo-material-article",
 	"contentHash": "82add87cfae43ed4c3b5cca79f504b5bd5782659c78b964208569d2501469a54",
-	"reviewedAt": "2026-10-01T19:24:15.580Z",
+	"reviewedAt": "2026-10-08T04:34:09.953Z",
 	"passed": false,
 	"blockers": [
 		"evidence:file src/holo.js: file does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\"",
-		"editor (accuracy): This sentence is in the published article body and its only verification check failed: src/holo.js does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\". The numbers 0.17 and 0.18 are unverified and must not publish.",
 		"editor verdict is revise"
 	],
 	"texts": [
@@ -732,31 +731,38 @@
 	"editor": {
 		"verdict": "revise",
 		"scores": {
-			"accuracy": 4,
-			"clarity": 5,
+			"accuracy": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
 		"issues": [
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel.",
-				"problem": "This sentence is in the published article body and its only verification check failed: src/holo.js does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\". The numbers 0.17 and 0.18 are unverified and must not publish.",
-				"fix": "Delete the sentence from the \"The peel happens in the vertex shader\" section of the article. The post text itself does not contain it, so only the article body changes. No replacement claim is possible because no passing check verifies any radius value."
+				"severity": "major",
+				"area": "voice",
+				"quote": "Each step, with the code's own numbers, from the cut to the vertex-shader peel.",
+				"problem": "The post carries no link. The house contract requires one link to the surface the post is about, and for an article-format post the head must still let a reader reach the thing. The verified URL https://three.ws/holo is absent from the post text.",
+				"fix": "Append the link as its own sentence: 'The full piece and the live sticker: https://three.ws/holo'"
+			},
+			{
+				"severity": "minor",
+				"area": "clarity",
+				"quote": "A die-cut foil sticker with no image behind it",
+				"problem": "The opening is a fragment and says 'no image behind it', which is accurate but abstract; a first-time reader may not grasp that 'no image behind it' means the whole sticker is computed in the browser rather than rendered from an image file. The live page wording supports saying this directly.",
+				"fix": "Recast the first line to state the mechanism plainly: the sticker's outline, foil, light and peeling corner are all computed in the browser with no image or model files, per the live page text already verified."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel."
+				"A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel. The full piece and the live sticker: https://three.ws/holo"
 			],
 			"altText": [
 				"A die-cut holographic foil sticker of three slanted bars floating on black, tilted toward the viewer, its rim shifting from green to violet and its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
 			]
 		},
-		"summary": "The post text, cover image, and alt text are all verified, specific, and on voice. One blocking issue sits in the article body: the peel-radius sentence (0.17 at rest, 0.18 at full peel) failed verification against src/holo.js and must be cut before publishing.",
+		"summary": "The copy is accurate, specific, and in voice: every number in the post text (640, 28, marching squares, 120 to 480) passed verification against the code and the live page. The one fix needed is the missing link to three.ws/holo, which the house contract requires; the failed radius verification affects only an article-body sentence, not this post.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

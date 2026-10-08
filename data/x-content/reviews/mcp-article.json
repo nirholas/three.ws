@@ -1,10 +1,17 @@
 {
 	"id": "mcp-article",
 	"contentHash": "d09851ce31b2f4af94bd01e55b5b5f5d95c6a3dd86a1811f0e2ef8f1b86e3f2f",
-	"reviewedAt": "2026-10-01T19:25:10.639Z",
+	"reviewedAt": "2026-10-08T04:36:54.710Z",
 	"passed": false,
 	"blockers": [
-		"evidence:file docs/mcp-studio.md: file does not contain \"`tools/list` returns exactly **eleven** tools\""
+		"evidence:page https://three.ws/docs/mcp-studio: live page does not show \"All eleven are free and keyless.\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"`tools/list` returns exactly **eleven** tools\"",
+		"evidence:page https://three.ws/docs/mcp-studio: live page does not show \"All eleven are free and keyless.\"",
+		"probe:api the free server still lists eleven tools to a keyless client: result.tools.length is 14",
+		"probe:browser the docs page says all eleven tools are free: locator.waitFor: Timeout 45000ms exceeded.",
+		"editor (accuracy): The count failed verification three ways: the live docs page does not show \"All eleven are free and keyless.\", docs/mcp-studio.md no longer contains \"`tools/list` returns exactly **eleven** tools\", and the live probe of the MCP server returned result.tools.length is 14, not 11. The product has changed and the copy is stale. Every article section built on \"eleven\" (the title, \"What the eleven tools do\", \"not one of these eleven tools\") and the session screenshot alt text (\"lists all eleven tools\") is wrong against the live server.",
+		"editor (visual): The session image (session.png) shows a tools/list of eleven; the live server now returns fourteen. Per the source-of-truth rule the screenshot is stale, and the fix is to recapture, not to edit the copy to match.",
+		"editor verdict is revise"
 	],
 	"texts": [
 		"Eleven free 3D tools for Claude Code and any MCP client, from one address",
@@ -18,8 +25,8 @@
 				"claim": "Eleven free 3D tools",
 				"kind": "evidence:page",
 				"target": "https://three.ws/docs/mcp-studio",
-				"ok": true,
-				"detail": "live page shows \"All eleven are free and keyless.\""
+				"ok": false,
+				"detail": "live page does not show \"All eleven are free and keyless.\""
 			},
 			{
 				"claim": "Eleven free 3D tools",
@@ -53,8 +60,8 @@
 				"claim": "runs an MCP server that needs no account and no API key",
 				"kind": "evidence:page",
 				"target": "https://three.ws/docs/mcp-studio",
-				"ok": true,
-				"detail": "live page shows \"All eleven are free and keyless.\""
+				"ok": false,
+				"detail": "live page does not show \"All eleven are free and keyless.\""
 			},
 			{
 				"claim": "runs an MCP server that needs no account and no API key",
@@ -402,8 +409,8 @@
 			{
 				"kind": "probe:api",
 				"target": "the free server still lists eleven tools to a keyless client",
-				"ok": true,
-				"detail": "HTTP 200, expectations met"
+				"ok": false,
+				"detail": "result.tools.length is 14"
 			},
 			{
 				"kind": "probe:api",
@@ -426,8 +433,8 @@
 			{
 				"kind": "probe:browser",
 				"target": "the docs page says all eleven tools are free",
-				"ok": true,
-				"detail": "2 steps passed"
+				"ok": false,
+				"detail": "locator.waitFor: Timeout 45000ms exceeded."
 			},
 			{
 				"kind": "link",
@@ -456,25 +463,47 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
+			"accuracy": 2,
 			"clarity": 4,
-			"specificity": 5,
+			"specificity": 4,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 3
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "eleven free 3D tools",
+				"problem": "The count failed verification three ways: the live docs page does not show \"All eleven are free and keyless.\", docs/mcp-studio.md no longer contains \"`tools/list` returns exactly **eleven** tools\", and the live probe of the MCP server returned result.tools.length is 14, not 11. The product has changed and the copy is stale. Every article section built on \"eleven\" (the title, \"What the eleven tools do\", \"not one of these eleven tools\") and the session screenshot alt text (\"lists all eleven tools\") is wrong against the live server.",
+				"fix": "Do not publish any count until the docs and article are re-verified against the live server. Recapture the session screenshot so it shows the current tools/list response, update docs/mcp-studio.md and the docs page to the true count, and re-run the probe. In the X post, drop the number entirely and say \"free 3D tools\", which is supported by the passing keyless-handshake probe and the passing per-tool evidence. The article needs the same treatment before it ships: its headline and tool-list section claim eleven."
+			},
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "lists all eleven tools with the two read-only ones marked",
+				"problem": "The session image (session.png) shows a tools/list of eleven; the live server now returns fourteen. Per the source-of-truth rule the screenshot is stale, and the fix is to recapture, not to edit the copy to match.",
+				"fix": "Re-run the documented session against https://three.ws/api/mcp-studio with no credentials and recapture session.png so the tool list matches the live response; update its alt text to match what the new frame actually shows."
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "one address",
+				"problem": "Harmless in itself, but it rides on the same claims block whose headline number failed; confirm the connector instructions in docs/prompts.md still reflect the current server after the tool-count fix lands.",
+				"fix": "Re-verify docs/prompts.md against the live server after the docs are corrected; no text change needed in the post."
+			}
+		],
 		"rewrite": {
 			"posts": [
-				"Add one address to Claude Code or any MCP client and the assistant gets eleven free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+				"Add one address to Claude Code or any MCP client and the assistant gets a set of free 3D tools, with no account or key: text or an image to a textured GLB, rigged and animation-ready avatars, rigging a model you already have, refinement by describing the change, and look_at_model, which renders up to six angles of any public GLB so the assistant can check its own work and regenerate with the fault named. The write-up includes a real session run against the server with no credentials."
 			],
 			"altText": [
 				"A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; the model is the one the look_at_model tool inspected in the session described in the article"
 			]
 		},
-		"summary": "The one failed evidence check is a stale doc quote, but the load-bearing claim (eleven free keyless tools) is corroborated by the live docs page and two passing API probes, so nothing in the post is unsupported. The cover image matches the article's described camera and the alt text is accurate; copy is in voice, specific, and partner-safe.",
+		"summary": "The post's central number is wrong against the live product: the server now lists fourteen tools, the docs no longer say eleven, and the session screenshot is stale. Everything else verified; strip the count from the post, then update the docs, recapture the session image, and re-verify before the article ships.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -482,6 +511,7 @@
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
 		"rewriteFindings": [
+			"claims: claim \"renders a model so the assistant can check its own work\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"runs an MCP server that needs no account and no API key\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the tools are there the next time a session starts\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"the address goes in as a custom connector with authentication set to None\" does not appear in the copy; claims must quote the post",
