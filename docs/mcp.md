@@ -245,11 +245,24 @@ Every hosted server is checked the way a cloud MCP client (Grok Bot, claude.ai c
 
 ```bash
 npm run probe:mcp-clients                                   # production
-npm run probe:mcp-clients -- --base http://localhost:3000   # your dev server
+npm run probe:mcp-clients -- --base http://localhost:3000   # your dev server (see below)
 npm run probe:mcp-clients -- --only mcp-studio --json probe.json
 ```
 
-The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-known/mcp.json), calls only free tools (`search_catalog`, `getting_started`), never sends a payment, and exits non-zero when any server fails. Set `THREE_WS_API_KEY` to include the API key mode. The latest production run is committed at [`prompts/x-grok/_generated/connector-probe.json`](../prompts/x-grok/_generated/connector-probe.json).
+To probe your own code rather than production, run the API beside the dev server. A plain `npm run dev` proxies every `/api/*` and `/.well-known/*` request to `https://three.ws`, so without this the probe measures production through localhost. Set `PUBLIC_APP_ORIGIN` to the dev origin so every 401 and every protected-resource document names the URL the probe connects to:
+
+```bash
+# Terminal 1: the same server production runs, reading your api/ handlers
+PORT=8080 PUBLIC_APP_ORIGIN=http://localhost:3000 node --env-file=.env.local --env-file-if-exists=.env server/index.mjs
+
+# Terminal 2: the dev server, pointed at it
+DEV_API_PROXY=http://localhost:8080 npm run dev
+
+# Terminal 3
+npm run probe:mcp-clients -- --base http://localhost:3000
+```
+
+The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-known/mcp.json), calls only free tools (`search_catalog`, `getting_started`), never sends a payment, and exits non-zero when any server fails. Set `THREE_WS_API_KEY` to include the API key mode. The latest production run is committed at [`prompts/x-grok/_generated/connector-probe.json`](../prompts/x-grok/_generated/connector-probe.json), and the latest run against local code at [`prompts/x-grok/_generated/connector-probe-dev.json`](../prompts/x-grok/_generated/connector-probe-dev.json).
 
 | Server | URL | Transport | Works unattended with | Grok Bot custom MCP connector |
 |---|---|---|---|---|
