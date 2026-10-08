@@ -14,8 +14,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { getTrendingSlim } from '../_lib/pump-trending.js';
-
-const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
+import { fetchPumpBoard } from '../_lib/pump-feed-fetch.js';
 
 // Separate cache slot for the rich (full-coin) payload — it carries far more per
 // token than the thin projection api/_lib/pump-trending.js caches, so it must
@@ -30,10 +29,12 @@ const STALE_MAX_MS = 10 * 60_000;
 const UPSTREAM_TIMEOUT_MS = 5000;
 
 // Serve a cached feed past its TTL when live upstreams are down. Returns the
-// sliced value if the slot holds enough items and is within the stale window,
-// else null. Keyed by the same `limit >=` rule as the fresh-cache check.
+// sliced value while it is within the stale window, else null. A slot holding
+// fewer rows than asked still serves: the visualizer's 48-row request used to
+// 502 while this instance held a perfectly good 24-row board, and a shorter
+// list of real coins beats an outage envelope.
 function serveStale(slot, limit, now) {
-	if (!slot.value || slot.limit < limit) return null;
+	if (!slot.value) return null;
 	if (now - slot.storedAt > STALE_MAX_MS) return null;
 	return slot.value.slice(0, limit);
 }
@@ -54,27 +55,22 @@ function repairCoinImages(coins) {
 	return coins;
 }
 
+// Read through the shared pump.fun board reader (api/_lib/pump-feed-fetch.js)
+// rather than a bare fetch. pump.fun sits behind Cloudflare, which answers a
+// burst from the shared Cloud Run egress with a fast 429; the bare fetch here
+// had no retry, no identified user-agent and only this instance's memory to
+// fall back on, so a cold instance turned every rate-limit blip into a 502
+// within ~100ms. The shared reader retries once honouring Retry-After and
+// keeps a cross-instance last-known-good board for 30 minutes.
+//
+// Returns { data, stale } or null when the board failed with nothing to serve.
 async function fetchPumpFunRich(limit) {
-	const url = new URL('/coins', PUMP_FRONTEND_BASE);
-	url.searchParams.set('offset', '0');
-	url.searchParams.set('limit', String(limit));
-	url.searchParams.set('sort', 'market_cap');
-	url.searchParams.set('order', 'DESC');
-	url.searchParams.set('includeNsfw', 'false');
-	let upstream;
-	try {
-		upstream = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
-	} catch {
-		return null;
-	}
-	if (!upstream.ok) return null;
-	const body = await upstream.json().catch(() => null);
-	const coins = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : null;
-	if (!Array.isArray(coins)) return null;
-	const data = repairCoinImages(
-		coins.filter((c) => c && typeof c.mint === 'string' && c.mint.length >= 32),
-	);
-	return data.length ? data : null;
+	const board = await fetchPumpBoard({ limit, timeoutMs: UPSTREAM_TIMEOUT_MS });
+	if (!board?.rows?.length) return null;
+	// The board rows are shared with other readers through the cache, so repair
+	// images on copies rather than mutating rows another caller may hold.
+	const data = repairCoinImages(board.rows.map((c) => ({ ...c })));
+	return { data, stale: board.stale };
 }
 
 export default wrap(async (req, res) => {
@@ -100,8 +96,15 @@ export default wrap(async (req, res) => {
 				'cache-control': 'public, max-age=15, s-maxage=30',
 			});
 		}
-		const richData = await fetchPumpFunRich(limit);
-		if (!richData) {
+		const board = await fetchPumpFunRich(limit);
+		if (board?.stale) {
+			// Live board failed but the shared last-known-good copy answered. Say
+			// so, and keep the edge cache short so the live source is retried soon.
+			return json(res, 200, { data: board.data.slice(0, limit), stale: true }, {
+				'cache-control': 'public, max-age=10, s-maxage=20',
+			});
+		}
+		if (!board) {
 			// Upstream down — serve the last good payload as stale rather than blanking
 			// the visualizer. Shorter edge cache so we retry the live source soon.
 			const stale = serveStale(_richCache, limit, now);
@@ -110,10 +113,11 @@ export default wrap(async (req, res) => {
 					'cache-control': 'public, max-age=10, s-maxage=20',
 				});
 			}
+			console.warn('[pump/trending] rich board unavailable (pump.fun live + last-known-good) and no stale cache');
 			return error(res, 502, 'upstream_error', 'Trending market data is temporarily unavailable');
 		}
-		_richCache = { value: richData, storedAt: now, expiresAt: now + TTL_MS, limit };
-		return json(res, 200, { data: richData }, { 'cache-control': 'public, max-age=15, s-maxage=30' });
+		_richCache = { value: board.data, storedAt: now, expiresAt: now + TTL_MS, limit };
+		return json(res, 200, { data: board.data.slice(0, limit) }, { 'cache-control': 'public, max-age=15, s-maxage=30' });
 	}
 
 	// Thin projection: fetch+cache+fallback lives in api/_lib/pump-trending.js,

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "The coin visualizer and communities keep loading when pump.fun throttles us",
+			"summary": "The full coin board behind the pump.fun visualizer, the communities page and the home page's live coin now retries a rate-limited read once and falls back to the last board any server saw in the past 30 minutes, marked as slightly stale, instead of showing an error.",
+			"tags": [
+				"fix"
+			],
+			"link": "/communities"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Community sentiment readings are back on coin pages and the Oracle",
 			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
 			"tags": [

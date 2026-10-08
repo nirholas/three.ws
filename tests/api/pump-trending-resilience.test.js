@@ -155,3 +155,94 @@ describe('pump/trending resilience', () => {
 		expect(res.body.error).toBe('upstream_error');
 	});
 });
+
+// The ?rich=1 lane (the 3D visualizer and the coin wall) reads the full pump.fun
+// coin board through the shared reader in api/_lib/pump-feed-fetch.js. Before
+// that it used a bare fetch with no retry and an instance-local stale cache, so
+// a Cloudflare 429 on a cold instance answered 502 in under 100ms.
+function richBoard(count, tag = 'R') {
+	return JSON.stringify(
+		Array.from({ length: count }, (_, i) => ({
+			mint: `${tag}${String(i).padStart(3, '0')}`.padEnd(44, 'x'),
+			symbol: `${tag}${i}`,
+			name: `Rich ${i}`,
+			usd_market_cap: 1_000_000 - i,
+			image_uri: '',
+		})),
+	);
+}
+
+describe('pump/trending rich board resilience', () => {
+	it('retries a pump.fun rate limit once and serves the live board', async () => {
+		const handler = await freshHandler();
+		let calls = 0;
+		global.fetch = vi.fn(async (url) => {
+			expect(String(url)).toContain('frontend-api-v3.pump.fun/coins');
+			calls += 1;
+			if (calls === 1) return new Response('error code: 1015', { status: 429, headers: { 'retry-after': '0' } });
+			return new Response(richBoard(48), { status: 200 });
+		});
+		const res = makeRes();
+		await handler(makeReq('/api/pump/trending?limit=48&rich=1'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.body.stale).toBeUndefined();
+		expect(res.body.data).toHaveLength(48);
+		expect(res.body.data[0].usd_market_cap).toBe(1_000_000);
+		expect(calls).toBe(2);
+		const init = global.fetch.mock.calls[0][1];
+		expect(init.headers['user-agent']).toMatch(/three\.ws/);
+	});
+
+	it('serves the last-known-good board as stale once the live board fails', async () => {
+		// Fake only the clock: the shared reader's retry backoff is a real timer.
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2026-10-08T00:00:00Z'));
+		const handler = await freshHandler();
+		global.fetch = vi.fn(async () => new Response(richBoard(48), { status: 200 }));
+		const primed = makeRes();
+		await handler(makeReq('/api/pump/trending?limit=48&rich=1'), primed);
+		expect(primed.statusCode).toBe(200);
+
+		// Past both the handler TTL and the shared board TTL, inside the 30 min
+		// last-known-good window, with pump.fun hard down.
+		vi.setSystemTime(new Date('2026-10-08T00:12:00Z'));
+		global.fetch = vi.fn(async () => new Response('x', { status: 503, headers: { 'retry-after': '0' } }));
+		const res = makeRes();
+		await handler(makeReq('/api/pump/trending?limit=48&rich=1'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.body.stale).toBe(true);
+		expect(res.body.data).toHaveLength(48);
+	});
+
+	it('serves a shorter cached board instead of a 502 when a larger limit misses', async () => {
+		// Fake only the clock: the shared reader's retry backoff is a real timer.
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2026-10-08T00:00:00Z'));
+		const handler = await freshHandler();
+		global.fetch = vi.fn(async () => new Response(richBoard(24), { status: 200 }));
+		await handler(makeReq('/api/pump/trending?limit=24&rich=1'), makeRes());
+
+		vi.setSystemTime(new Date('2026-10-08T00:01:00Z'));
+		global.fetch = vi.fn(async () => new Response('x', { status: 429, headers: { 'retry-after': '0' } }));
+		const res = makeRes();
+		await handler(makeReq('/api/pump/trending?limit=48&rich=1'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.body.stale).toBe(true);
+		expect(res.body.data).toHaveLength(24);
+	});
+
+	it('502s only when the board is down and nothing was ever cached', async () => {
+		const handler = await freshHandler();
+		global.fetch = vi.fn(async () => new Response('x', { status: 500, headers: { 'retry-after': '0' } }));
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const res = makeRes();
+		await handler(makeReq('/api/pump/trending?limit=48&rich=1'), res);
+		warn.mockRestore();
+
+		expect(res.statusCode).toBe(502);
+		expect(res.body.error).toBe('upstream_error');
+	});
+});
