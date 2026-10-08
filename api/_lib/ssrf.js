@@ -99,6 +99,18 @@ export function pinnedAgent(expectedHost, addrs) {
 	});
 }
 
+// Release a single-use pinned agent. Always destroy(), never close(): close()
+// waits for every in-flight request on the agent to finish, and a response whose
+// body was never read (a non-2xx we throw on, an oversized content-length, a
+// redirect hop) never finishes while the upstream holds its socket open. That is
+// how /api/news/image sat at the 900 s Cloud Run limit on publishers that answer
+// 403 and then stall. Every caller is done with the agent by the time it
+// disposes it, so aborting what is left on it loses nothing.
+export async function disposeAgent(agent) {
+	if (!agent) return;
+	await agent.destroy().catch(() => {});
+}
+
 // Parse + scheme-check a URL. https only (http allowed in dev). Returns the URL.
 export function validatePublicUrl(rawUrl, { allowHttp = IS_DEV } = {}) {
 	let url;
@@ -137,7 +149,7 @@ export async function safeFetchJson(
 	try {
 		while (true) {
 			const addrs = await resolvePublicHost(currentUrl.hostname);
-			if (agent) await agent.close().catch(() => {});
+			await disposeAgent(agent);
 			agent = pinnedAgent(currentUrl.hostname, addrs);
 
 			const res = await fetch(currentUrl, {
@@ -183,6 +195,6 @@ export async function safeFetchJson(
 		}
 	} finally {
 		clearTimeout(timer);
-		if (agent) await agent.close().catch(() => {});
+		await disposeAgent(agent);
 	}
 }

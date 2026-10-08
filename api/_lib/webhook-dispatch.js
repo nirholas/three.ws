@@ -30,7 +30,7 @@
 import { sql } from './db.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { randomToken, hmacSha256 } from './crypto.js';
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from './ssrf.js';
+import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from './ssrf.js';
 
 const DELIVERY_TIMEOUT_MS = 10_000;
 const LEASE_SECONDS = 30;
@@ -439,30 +439,27 @@ async function deliver(url, secret, eventId, body) {
 		return { statusCode: null, responseBody: null, error: reason };
 	}
 
+	// The body is read under the same delivery timeout as the request, and the
+	// agent is destroyed only once we are done with the response. Closing it
+	// before the read waited on a body nobody was reading, with the timeout
+	// already cleared, so an endpoint that stalls mid-response hung the dispatch.
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
 	try {
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
-
-		let res;
-		try {
-			res = await fetch(target, {
-				method: 'POST',
-				redirect: 'manual',
-				...(agent ? { dispatcher: agent } : {}),
-				headers: {
-					'content-type': 'application/json',
-					'webhook-id': eventId,
-					'webhook-timestamp': String(timestamp),
-					'webhook-signature': signature,
-					'user-agent': 'three.ws-webhooks/1.0',
-				},
-				body,
-				signal: controller.signal,
-			});
-		} finally {
-			clearTimeout(timeout);
-			if (agent) await agent.close().catch(() => {});
-		}
+		const res = await fetch(target, {
+			method: 'POST',
+			redirect: 'manual',
+			...(agent ? { dispatcher: agent } : {}),
+			headers: {
+				'content-type': 'application/json',
+				'webhook-id': eventId,
+				'webhook-timestamp': String(timestamp),
+				'webhook-signature': signature,
+				'user-agent': 'three.ws-webhooks/1.0',
+			},
+			body,
+			signal: controller.signal,
+		});
 
 		// A redirect is a misconfigured (or hostile) endpoint: record it as a
 		// failure instead of following it to a potentially internal target.
@@ -482,5 +479,8 @@ async function deliver(url, secret, eventId, body) {
 	} catch (err) {
 		const error = err?.name === 'AbortError' ? 'timeout' : err?.cause?.code || err?.message || 'delivery_failed';
 		return { statusCode: null, responseBody: null, error };
+	} finally {
+		clearTimeout(timeout);
+		await disposeAgent(agent);
 	}
 }

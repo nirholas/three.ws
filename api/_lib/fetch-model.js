@@ -9,7 +9,7 @@
 // proxy. This fetcher adds the model-specific concerns on top: a byte size cap
 // and a total request/streaming timeout.
 
-import { SsrfError, pinnedAgent, resolvePublicHost, validatePublicUrl } from './ssrf.js';
+import { SsrfError, disposeAgent, pinnedAgent, resolvePublicHost, validatePublicUrl } from './ssrf.js';
 
 const DEFAULT_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 const DEFAULT_TIMEOUT_MS = 20_000;
@@ -73,7 +73,7 @@ export async function fetchModel(rawUrl, opts = {}) {
 			// those addresses. Re-done every redirect so a redirect target that
 			// rebinds to a private IP is caught and refused.
 			const addrs = await resolvePublicHost(currentUrl.hostname);
-			if (agent) await agent.close().catch(() => {});
+			await disposeAgent(agent);
 			agent = pinnedAgent(currentUrl.hostname, addrs);
 
 			const res = await fetch(currentUrl, {
@@ -154,6 +154,6 @@ export async function fetchModel(rawUrl, opts = {}) {
 		throw asFetchModelError(err);
 	} finally {
 		clearTimeout(timer);
-		if (agent) await agent.close().catch(() => {});
+		await disposeAgent(agent);
 	}
 }

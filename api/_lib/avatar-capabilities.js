@@ -24,7 +24,7 @@
 // and wonder why nothing changed.
 
 import { getObjectRange } from './r2.js';
-import { resolvePublicHost, pinnedAgent, validatePublicUrl } from './ssrf.js';
+import { disposeAgent, resolvePublicHost, pinnedAgent, validatePublicUrl } from './ssrf.js';
 import { inspectGlb, glbJsonChunkEnd } from './glb-inspect.js';
 import { conformanceFromNames, ARKIT_52 } from '../../src/runtime/arkit52.js';
 import { canonicalizeBoneName, CANONICAL_BONES } from '../../src/glb-canonicalize.js';
@@ -107,7 +107,7 @@ async function readUntrustedGlbPrefix(rawUrl, length) {
 		return buf.length > length ? buf.subarray(0, length) : buf;
 	} finally {
 		clearTimeout(timer);
-		await agent.close().catch(() => {});
+		await disposeAgent(agent);
 	}
 }
 
