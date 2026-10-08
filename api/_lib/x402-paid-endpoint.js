@@ -59,6 +59,7 @@ import {
 	enforceRequired,
 	extractIdFromHeader,
 	hashPaymentProof,
+	legacyPaymentProofHash,
 	hashRequestPayload,
 	paymentIdentifierExtension,
 	reserveSlot,
@@ -952,7 +953,9 @@ export function paidEndpoint(spec) {
 		// OPEN on a DB outage — see api/_lib/x402/spent-payments.js for why this
 		// control's failure policy is the inverse of settle-credit's.
 		if (paymentHash) {
-			const spent = await isPaymentSpent(paymentHash);
+			let spent = await isPaymentSpent(paymentHash);
+			const legacyHash = legacyPaymentProofHash(paymentHeader);
+			if (!spent.spent && legacyHash && legacyHash !== paymentHash) spent = await isPaymentSpent(legacyHash);
 			if (spent.spent) {
 				logPaymentEvent({
 					eventType: 'payment_replay_rejected',

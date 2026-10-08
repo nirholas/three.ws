@@ -23,6 +23,7 @@
 // drained".
 
 import bs58 from 'bs58';
+import { ed25519 } from '@noble/curves/ed25519.js';
 import { PublicKey, Keypair, VersionedTransaction } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddressSync,
@@ -447,6 +448,67 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 	};
 }
 
+// Check every buyer signature on a decoded ring transaction against its message.
+//
+// validateRingTransaction proves the authority is LISTED as a signer and the
+// settleability simulation runs with sigVerify:false (the sponsor has not
+// co-signed yet), so nothing on the verify path ever checked a signature. A
+// transfer naming any funded wallet as authority, carrying garbage signatures,
+// therefore verified as valid and the paid handler ran (a coin launch on the
+// platform's SOL, a cosmetic grant and creator payout, a GPU job) before settle
+// failed. In sponsor mode the fee-payer slot is skipped: the sponsor signs only
+// at settle.
+export function verifyBuyerSignatures({ tx, feePayer, selfPay }) {
+	const msg = tx.message;
+	const required = msg.header.numRequiredSignatures;
+	let bytes;
+	try {
+		bytes = msg.serialize();
+	} catch (err) {
+		return { ok: false, reason: `message_unserializable:${err?.message || err}` };
+	}
+	for (let i = 0; i < required; i += 1) {
+		const key = msg.staticAccountKeys[i];
+		if (!key) return { ok: false, reason: 'missing_signer_key' };
+		const b58 = key.toBase58();
+		if (!selfPay && b58 === feePayer) continue;
+		const sig = tx.signatures?.[i];
+		if (!sig || sig.length !== 64 || sig.every((b) => b === 0)) {
+			return { ok: false, reason: `missing_signature:${b58}` };
+		}
+		let ok = false;
+		try {
+			ok = ed25519.verify(sig, bytes, key.toBytes());
+		} catch {
+			ok = false;
+		}
+		if (!ok) return { ok: false, reason: `invalid_signature:${b58}` };
+	}
+	return { ok: true };
+}
+
+// Is the transaction's recent blockhash still live? Returns true, false, or null
+// when the RPC cannot say. A node a few slots behind the buyer's may not know a
+// brand-new hash yet, so a `false` is re-asked once after a short pause before it
+// is believed. A dead or made-up blockhash can never land, and the settle path
+// would otherwise answer it `pending`, which the resource server delivers on.
+export async function blockhashIsLive(connection, blockhash, { recheckMs = 1500 } = {}) {
+	if (typeof connection?.isBlockhashValid !== 'function' || !blockhash) return null;
+	const ask = async () => {
+		try {
+			const r = await connection.isBlockhashValid(blockhash, { commitment: 'processed' });
+			const v = r && typeof r === 'object' && 'value' in r ? r.value : r;
+			return typeof v === 'boolean' ? v : null;
+		} catch {
+			return null;
+		}
+	};
+	const first = await ask();
+	if (first !== false) return first;
+	if (recheckMs > 0) await new Promise((r) => setTimeout(r, recheckMs));
+	return ask();
+}
+
 // Extract the base64 signed transaction from an x402 payment payload.
 export function txBase64FromPayload(paymentPayload) {
 	return (
@@ -768,6 +830,8 @@ export async function settleRingPayment({
 	if (!validation.ok) return { success: false, reason: validation.reason };
 	const decoded = validation.decoded;
 	const { tx, payer, estFeeLamports, selfPay } = decoded;
+	const sigCheck = verifyBuyerSignatures(decoded);
+	if (!sigCheck.ok) return { success: false, reason: sigCheck.reason };
 
 	// Metadata every pending record and reconcile pass needs, assembled once.
 	const pendingKey = pendingSettlementKey(txBase64);
@@ -916,6 +980,7 @@ export async function settleRingPayment({
 	// the reported reason distinguishes "our read node was stale" from "the payment
 	// was genuinely unsendable".
 	let preflightRetryNote = '';
+	let preflightBlockhashRejected = false;
 	try {
 		signature = await connection.sendRawTransaction(tx.serialize(), {
 			skipPreflight: false,
@@ -995,6 +1060,7 @@ export async function settleRingPayment({
 		// only cost is the confirm wait below. Resending the identical signed bytes is
 		// idempotent (Solana dedupes by signature), so this cannot double-settle.
 		if (provablyNeverLanded) {
+			preflightBlockhashRejected = true;
 			try {
 				signature = await connection.sendRawTransaction(tx.serialize(), {
 					skipPreflight: true,
@@ -1061,6 +1127,17 @@ export async function settleRingPayment({
 		if (conf.terminal) {
 			if (pendingStore && pendingKey) await pendingStore.delete(pendingKey);
 			return { success: false, reason: `not_confirmed:${conf.err}`, transaction: signature };
+		}
+		// A send our node rejected as "blockhash not found" and that still has not
+		// landed is pending only if that blockhash can still be included. A dead
+		// or made-up hash never lands, and answering pending would deliver the paid
+		// good for a payment that can never settle, as often as the buyer likes.
+		if (preflightBlockhashRejected) {
+			const live = await blockhashIsLive(connection, tx.message.recentBlockhash, { recheckMs: 0 });
+			if (live === false) {
+				if (pendingStore && pendingKey) await pendingStore.delete(pendingKey);
+				return { success: false, reason: 'blockhash_expired', transaction: signature };
+			}
 		}
 		// Outcome unknown. The transaction is broadcast and may land at any moment,
 		// so reporting failure here would tell a buyer who is about to be charged
@@ -1229,6 +1306,14 @@ export async function verifyRingPayment({ paymentPayload, requirement, feePayerP
 		tokenProgramId: program.tokenProgramId,
 	});
 	if (!validation.ok) return { isValid: false, invalidReason: validation.reason };
+
+	const sigCheck = verifyBuyerSignatures(validation.decoded);
+	if (!sigCheck.ok) return { isValid: false, invalidReason: sigCheck.reason };
+	// The settleability simulation swaps in a fresh blockhash, so it cannot see a
+	// dead one. Refuse it here, before the paid handler runs.
+	if ((await blockhashIsLive(connection, validation.decoded.tx.message.recentBlockhash)) === false) {
+		return { isValid: false, invalidReason: 'blockhash_expired' };
+	}
 
 	const settleable = await assertSettleable({
 		tx: validation.decoded.tx,

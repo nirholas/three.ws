@@ -31,6 +31,20 @@ import {
 
 const API_KEY_HEADER = 'x-api-key';
 
+// Routes a self-serve Premium pass key covers (docs/premium.md: the Data API).
+// A pass is sold for archive search; before this list its key bypassed payment
+// on EVERY paid route, so a $19.99 pass launched coins on the platform's SOL,
+// burned GPU pipelines and vanity grinds for free. Partner and marketplace keys
+// are issued by an operator for whatever they were sold and keep full scope.
+// Extend this list when a new surface joins the pass.
+export const PREMIUM_PASS_ROUTES = Object.freeze(['/api/news/archive']);
+
+export function subscriptionCoversRoute(sub, route) {
+	if (sub?.meta?.source !== 'premium-pass') return true;
+	const path = String(route || '').split('?')[0];
+	return PREMIUM_PASS_ROUTES.includes(path);
+}
+
 /**
  * Build an `accessControl` hook for `paidEndpoint(spec)`. Returns an async
  * function `(req, routeConfig) => result` matching the v2 `onProtectedRequest`
@@ -146,6 +160,17 @@ export function installAccessControl({ requiredScope, resolveCaller } = {}) {
 					meta,
 				});
 				return { abort: true, status: 403, reason: 'AWS Marketplace subscription inactive' };
+			}
+			if (!subscriptionCoversRoute(sub, route)) {
+				logAccess({
+					callerId: `abort:pass_scope:${sub.id}`,
+					route,
+					reason: 'Premium pass does not cover this route',
+					granted: false,
+					meta,
+				});
+				// Not an auth failure: fall through to the 402 so the caller can pay.
+				return null;
 			}
 			const rl = await checkRateLimit(sub, route);
 			if (!rl.allowed) {

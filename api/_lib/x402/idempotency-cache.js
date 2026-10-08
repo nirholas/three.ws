@@ -88,9 +88,63 @@ export function hashRequestPayload({ method, url, body }) {
 // merely learned or guessed the id, but holds a different/forged payment,
 // hashes differently and is denied the cached body. Returns null when there's
 // no header to hash.
+//
+// The hash is taken over the payment's CANONICAL identity, not the header's
+// bytes. Hashing the raw string let a replay strip the base64 padding, switch
+// to the URL-safe alphabet, or reflow the JSON: the decoded payment was
+// identical, the hash was not, and every replay guard keyed on it (this cache,
+// isPaymentSpent, claimSpentPayment) missed, so one settled payment unlocked the
+// good again and again.
 export function hashPaymentProof(paymentHeader) {
 	if (!paymentHeader) return null;
+	const canonical = canonicalPaymentIdentity(paymentHeader);
+	return createHash('sha256').update(canonical ?? String(paymentHeader).trim()).digest('hex');
+}
+
+function decodeHeaderJson(header) {
+	const raw = String(header).trim();
+	if (raw.startsWith('{')) {
+		try { return JSON.parse(raw); } catch { return null; }
+	}
+	const b64 = raw.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+	try {
+		return JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+	} catch {
+		return null;
+	}
+}
+
+// Sorted-key JSON, so key order and whitespace never change the identity. A
+// signed Solana transaction is reduced to its bytes (hex), so re-encoding the
+// inner base64 does not either.
+function canonicalValue(value, key) {
+	if (key === 'transaction' && typeof value === 'string') {
+		const bytes = Buffer.from(value.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, ''), 'base64');
+		if (bytes.length) return `tx:${bytes.toString('hex')}`;
+	}
+	if (Array.isArray(value)) return value.map((v) => canonicalValue(v));
+	if (value && typeof value === 'object') {
+		const out = {};
+		for (const k of Object.keys(value).sort()) out[k] = canonicalValue(value[k], k);
+		return out;
+	}
+	if (typeof value === 'string' && /^0x[0-9a-fA-F]+$/.test(value)) return value.toLowerCase();
+	return value;
+}
+
+// The pre-canonical hash (raw header bytes). Payments recorded spent before the
+// canonical hash shipped are keyed on this, so the spent check reads both until
+// those rows age out.
+export function legacyPaymentProofHash(paymentHeader) {
+	if (!paymentHeader) return null;
 	return createHash('sha256').update(String(paymentHeader)).digest('hex');
+}
+
+export function canonicalPaymentIdentity(paymentHeader) {
+	const decoded = decodeHeaderJson(paymentHeader);
+	const payload = decoded && typeof decoded === 'object' ? decoded.payload : null;
+	if (!payload || typeof payload !== 'object') return null;
+	return JSON.stringify(canonicalValue(payload));
 }
 
 // Read a cached response by route + paymentId. Returns null if the key is

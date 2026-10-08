@@ -318,5 +318,5 @@ export function writeInflight(res) {
 	);
 }
 
-export { hashRequestPayload, hashPaymentProof } from './idempotency-cache.js';
+export { hashRequestPayload, hashPaymentProof, legacyPaymentProofHash } from './idempotency-cache.js';
 export const ttlSeconds = envTtl;
