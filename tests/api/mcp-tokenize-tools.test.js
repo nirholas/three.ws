@@ -172,3 +172,27 @@ describe('tokenize MCP tools: failure paths', () => {
 		expect(readMock).toHaveBeenCalledWith({ mint: MINT, network: 'devnet' });
 	});
 });
+
+describe('mint_3d_asset: unpaid mints are budgeted per account', () => {
+	it('stops an OAuth account looping mainnet mints off the platform authority', async () => {
+		const auth = { source: 'oauth', userId: 'mint-budget-user-mainnet' };
+		const args = { glb_url: 'https://three.ws/x.glb', network: 'mainnet' };
+		for (let i = 0; i < 5; i++) {
+			const r = await call('mint_3d_asset', { ...args, owner_wallet: MINT }, auth);
+			expect(r.isError).toBeUndefined();
+		}
+		const blocked = await call('mint_3d_asset', { ...args, owner_wallet: MINT }, auth);
+		expect(blocked.isError).toBe(true);
+		expect(blocked.structuredContent.reason).toBe('rate_limited');
+		expect(mintMock).toHaveBeenCalledTimes(5);
+	});
+
+	it('never budgets a mint that paid for itself per call over x402', async () => {
+		const auth = { source: 'x402', x402Paid: true, payer: 'mint-budget-payer', rateKey: 'mint-budget-payer' };
+		for (let i = 0; i < 7; i++) {
+			const r = await call('mint_3d_asset', { glb_url: 'https://three.ws/x.glb', network: 'mainnet', owner_wallet: MINT }, auth);
+			expect(r.isError).toBeUndefined();
+		}
+		expect(mintMock).toHaveBeenCalledTimes(7);
+	});
+});
