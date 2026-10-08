@@ -643,6 +643,10 @@
 			"dest": "/api/wk?name=oauth-protected-resource"
 		},
 		{
+			"src": "/\\.well-known/oauth-protected-resource(/api/[a-z0-9-]+)",
+			"dest": "/api/wk?name=oauth-protected-resource&path=$1"
+		},
+		{
 			"src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
 			"dest": "/api/agents/solana/[action]?action=card&asset=$1"
 		},
