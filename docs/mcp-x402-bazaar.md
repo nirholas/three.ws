@@ -18,6 +18,7 @@ client. Registered with the MCP Registry as
 | `browse_services(type?, network?, max_price_usdc?, limit?)` | List services without a query — "what can I pay for?". |
 | `get_service(resource_url, tool_name?)` | Full payment requirements (price, asset, network, recipient), input/output schema, and a ready pay link. |
 | `bazaar_service_details(resource_url, tool_name?)` | Live price only: cheapest across networks plus a per-network breakdown. Built for price tracking on a schedule. |
+| `read_resource(uri?, format?)` | Read a live three.ws resource by URI: `three://x402/services` (the x402 service catalog), `three://marketplace` (paid agent skills and services) and `three://me`. Omit `uri` to list every resource you can read; `format: "markdown"` renders it for reading. |
 | `getting_started(section?)` | Free, no auth or payment. An overview of the server, its tools, and how to connect. Call this first. |
 
 `type` is `http` (paid HTTP APIs) or `mcp` (paid MCP tools). `network` is a

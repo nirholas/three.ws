@@ -92,6 +92,7 @@ describe('x402 Bazaar MCP', () => {
 			'browse_services',
 			'get_service',
 			'bazaar_service_details',
+			'read_resource',
 		]);
 	});
 

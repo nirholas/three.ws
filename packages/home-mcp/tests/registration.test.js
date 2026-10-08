@@ -18,6 +18,7 @@ const EXPECTED = {
 	list_entities: { write: false },
 	list_macros: { write: false },
 	call_service: { write: true },
+	preview_macro: { write: false },
 	run_macro: { write: true },
 };
 

@@ -13,6 +13,7 @@ import {
 	deriveRuleLabel,
 	MINT_TARGETED_KINDS,
 	AGENT_TARGETED_KINDS,
+	MARKET_TARGETED_KINDS,
 	THRESHOLD_KINDS,
 } from '../api/_lib/pump-alert-eval.js';
 
@@ -205,6 +206,7 @@ describe('kind classification constants', () => {
 	it('partitions kinds correctly', () => {
 		expect(MINT_TARGETED_KINDS).toEqual(['price_above', 'price_below', 'whale_buy']);
 		expect(AGENT_TARGETED_KINDS).toEqual(['new_mint']);
-		expect(THRESHOLD_KINDS).toEqual(['price_above', 'price_below', 'whale_buy']);
+		expect(MARKET_TARGETED_KINDS).toEqual(['market_price']);
+		expect(THRESHOLD_KINDS).toEqual(['price_above', 'price_below', 'whale_buy', 'market_price']);
 	});
 });

@@ -15,7 +15,10 @@ import { TOOLS, buildServer } from '../src/index.js';
 
 const READ_TOOLS = ['agora_board', 'agora_pulse', 'agora_citizens', 'agora_passport', 'agora_professions'];
 const WRITE_TOOLS = ['agora_register', 'agora_claim_task', 'agora_complete_task', 'agora_post_task'];
-const EXPECTED_NAMES = [...READ_TOOLS, ...WRITE_TOOLS];
+// Spend previews: each one quotes its write tool (agora_register, agora_post_task)
+// and returns the quote_id that tool requires alongside confirm_spend: true.
+const QUOTE_TOOLS = ['agora_quote_register', 'agora_quote_task'];
+const EXPECTED_NAMES = [...READ_TOOLS, ...QUOTE_TOOLS, ...WRITE_TOOLS];
 
 const byName = (name) => TOOLS.find((t) => t.name === name);
 
@@ -47,6 +50,16 @@ test('read tools are read-only, live-data queries (openWorld, non-idempotent, no
 		assert.equal(tool.annotations.idempotentHint, false, `${name} reads live data, not idempotent`);
 		// Spec ignores destructiveHint when readOnlyHint is true — keep it omitted.
 		assert.equal(tool.annotations.destructiveHint, undefined, `${name} is read-only — destructiveHint should be omitted`);
+	}
+});
+
+test('quote tools are read-only previews of a live spend and never destructive', () => {
+	for (const name of QUOTE_TOOLS) {
+		const tool = byName(name);
+		assert.equal(tool.annotations.readOnlyHint, true, `${name} signs nothing and moves no funds`);
+		assert.equal(tool.annotations.openWorldHint, true, `${name} reads live chain state and balances`);
+		assert.notEqual(tool.annotations.destructiveHint, true, `${name} is a preview, never destructive`);
+		assert.match(tool.description, /confirm_spend: true/, `${name} must tell the model how to commit`);
 	}
 });
 

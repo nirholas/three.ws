@@ -145,6 +145,7 @@ describe('POST /api/mcp-bazaar: free discovery for plain clients', () => {
 			'browse_services',
 			'get_service',
 			'bazaar_service_details',
+			'read_resource',
 		]);
 	});
 

@@ -3,8 +3,8 @@
 **Give any MCP assistant safe control of a real house.**
 
 An [MCP](https://modelcontextprotocol.io) server that connects straight to a
-[Home Assistant](https://www.home-assistant.io) instance and hands your assistant five tools:
-read the house, list what is in it, list the scenes the household already built, run one, and
+[Home Assistant](https://www.home-assistant.io) instance and hands your assistant six tools:
+read the house, list what is in it, list the scenes the household already built, preview which one a phrase would run, run one, and
 call a service. Everything that opens the house goes through a physical-action gate, and over
 stdio that gate **refuses**. Read [The gate, over stdio](#the-gate-over-stdio) before you install
 this: it is the part that decides whether your front door is safe.
@@ -73,6 +73,7 @@ timing out into a shrug.
 | `list_entities` | read | The addressable entities, filtered by `domain`, `area` or `query`, each flagged `guarded` or not. |
 | `list_macros` | read | Every scene and script the household already built. |
 | `call_service` | write | One Home Assistant service call, through the gate. |
+| `preview_macro` | read | The scene or script a phrase would resolve to, with confidence and a reason, and nothing runs. Show it to the person before `run_macro`. |
 | `run_macro` | write | A phrase like "good night" resolved to this house's own scene, then run. `dry_run` to resolve only. |
 
 `home_overview` first, always: it gives the assistant the room names the household actually uses,

@@ -7,6 +7,7 @@
 //   • list_entities: the addressable entities, filtered
 //   • list_macros: the scenes and scripts the household already built
 //   • call_service: act on the house, through the physical-action gate
+//   • preview_macro: which scene a phrase would run, without running it
 //   • run_macro: "good night" to this house's own scene, then run it
 //
 // It writes NO device code. Zigbee, Z-Wave, Matter, Thread, BLE and the long

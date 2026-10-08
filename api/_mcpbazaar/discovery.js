@@ -16,7 +16,8 @@ export const RESOURCE_DESCRIPTION =
 	'three.ws x402 Bazaar MCP: Streamable HTTP (MCP 2025-06-18) that discovers and prices paid ' +
 	'agent services across the live x402 facilitator network: search_services (ranked search), ' +
 	'browse_services (list what is payable), get_service (exact price, networks, recipient, input ' +
-	'schema, and a ready pay link), and bazaar_service_details (live per-network price for cost ' +
+	'schema, and a ready pay link), read_resource (the same catalogs as three:// resources), and ' +
+	'bazaar_service_details (live per-network price for cost ' +
 	'tracking). Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana ' +
 	'mainnet, no API key. Operated by three.ws.';
 
@@ -75,7 +76,7 @@ function bazaarServerExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names: getting_started (free), search_services, browse_services, get_service, bazaar_service_details, see tools/list.',
+					'For tools/call: { name, arguments }. Tool names: getting_started (free), search_services, browse_services, get_service, bazaar_service_details, read_resource, see tools/list.',
 			},
 		},
 	};
