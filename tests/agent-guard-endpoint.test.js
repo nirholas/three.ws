@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // The endpoint is pure policy evaluation over the request body; the only
 // impure edges are the rate limiter and the env-backed http helpers.
 const agentGuardIp = vi.fn();
-vi.mock('../api/_lib/rate-limit.js', () => ({
+vi.mock('../api/_lib/rate-limit.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	limits: { agentGuardIp: (...a) => agentGuardIp(...a) },
 }));
 vi.mock('../api/_lib/env.js', () => ({

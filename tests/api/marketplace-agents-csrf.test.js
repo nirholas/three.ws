@@ -15,7 +15,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
 
 const authState = { session: { id: 'aaaa0000-0000-0000-0000-000000000001' }, bearer: null };
-vi.mock('../../api/_lib/auth.js', () => ({
+vi.mock('../../api/_lib/auth.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	getSessionUser: vi.fn(async () => authState.session),
 	authenticateBearer: vi.fn(async () => authState.bearer),
 	extractBearer: vi.fn((req) => {

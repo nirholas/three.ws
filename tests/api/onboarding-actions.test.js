@@ -18,7 +18,8 @@ const csrfState = { rows: [] };
 const dbState = { avatars: [], agents: [], updates: [] };
 const rlState = { upload: true, authIp: true, avatarLink: true };
 
-vi.mock('../../api/_lib/auth.js', () => ({
+vi.mock('../../api/_lib/auth.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	getSessionUser: vi.fn(async () => authState.session),
 	authenticateBearer: vi.fn(async () => authState.bearer),
 	extractBearer: vi.fn((req) => {

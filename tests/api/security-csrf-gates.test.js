@@ -160,9 +160,19 @@ vi.mock('../../api/_lib/validate.js', async (importOriginal) => ({
 	parse: vi.fn((schema, data) => schema.parse(data)),
 }));
 
-vi.mock('../../api/_lib/env.js', () => ({
-	env: { APP_ORIGIN: 'http://localhost:3000', ADMIN_ADDRESSES: new Set() },
-}));
+// Pin only the fields these gates read; every other getter (the $THREE mint and
+// decimals the token layer reads at module scope, among others) keeps its real
+// default, so a newly imported module never meets an `undefined` config value.
+vi.mock('../../api/_lib/env.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return {
+		...actual,
+		env: Object.create(actual.env, {
+			APP_ORIGIN: { value: 'http://localhost:3000' },
+			ADMIN_ADDRESSES: { value: new Set() },
+		}),
+	};
+});
 
 vi.mock('../../api/_lib/sentry.js', () => ({
 	captureException: vi.fn(),

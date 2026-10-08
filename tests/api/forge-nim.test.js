@@ -16,6 +16,21 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '127.0.0.1',
 }));
 
+// A caller-supplied NIM is reached through the DNS-resolving, IP-pinned fetch,
+// which opens its own socket and so never sees the fetch double below. The
+// fixtures use offline `.example.com` hosts, so the pinned transport delegates to
+// globalThis.fetch here; DNS pinning and redirect re-validation are covered on
+// their own in tests/ssrf-hardening-guards.test.js. The handler's own baseUrl
+// guard (https only, no private or metadata hosts) still runs for real.
+const pinnedCalls = [];
+vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	fetchSafePublicUrlPinned: async (url, init = {}, opts = {}) => {
+		pinnedCalls.push({ url, init, opts });
+		return globalThis.fetch(url, init);
+	},
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 // MODEL_TRELLIS_URL is cleared too, and never set: it points at our own async
 // Cloud Run TRELLIS worker, and api/forge-nim.js deliberately does not read it.
@@ -25,6 +40,7 @@ const ENV_KEYS = ['NIM_TRELLIS_URL', 'MODEL_TRELLIS_URL', 'NVIDIA_API_KEY'];
 const saved = {};
 
 beforeEach(() => {
+	pinnedCalls.length = 0;
 	for (const k of ENV_KEYS) {
 		saved[k] = process.env[k];
 		delete process.env[k];
@@ -274,7 +290,8 @@ describe('POST /api/forge-nim — configuration & SSRF', () => {
 		expect(calls.length).toBe(0); // never reached the network
 	});
 
-	it('accepts a public https baseUrl override', async () => {
+	it('accepts a public https baseUrl override through the pinned fetch, without the platform key', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-platform-secret';
 		const glb = fakeGlb(16);
 		const fetchMock = vi.fn(async () => jsonResponse({ artifacts: [{ base64: glb.toString('base64') }] }));
 		globalThis.fetch = fetchMock;
@@ -285,7 +302,12 @@ describe('POST /api/forge-nim — configuration & SSRF', () => {
 			makeRes(),
 		);
 		expect(body.ok).toBe(true);
+		expect(pinnedCalls.length).toBe(1);
+		expect(pinnedCalls[0].url).toBe('https://my-nim.example.com/v1/infer');
+		expect(Number.isFinite(pinnedCalls[0].opts.maxBytes)).toBe(true);
 		expect(fetchMock.mock.calls[0][0]).toBe('https://my-nim.example.com/v1/infer');
+		const headers = fetchMock.mock.calls[0][1].headers || {};
+		expect(Object.keys(headers).map((k) => k.toLowerCase())).not.toContain('authorization');
 	});
 });
 
