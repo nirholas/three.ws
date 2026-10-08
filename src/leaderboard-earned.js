@@ -122,8 +122,12 @@ function renderMeta(data) {
 	if (!meta) return;
 	const stale = data.refreshed_at && Date.now() - new Date(data.refreshed_at).getTime() > STALE_MS;
 	meta.classList.toggle('is-stale', !!stale);
+	// An empty window has no snapshot rows behind it, so there is no refresh time to state.
+	const freshness = !data.refreshed_at
+		? ''
+		: `${stale ? 'These figures are older than usual: the fee index last answered ' : 'Figures refreshed '}${escapeHtml(relTime(data.refreshed_at))}. `;
 	meta.innerHTML = `
-		<span class="lbe-meta-line">${stale ? 'These figures are older than usual: the fee index has not answered since ' : 'Figures refreshed '}${escapeHtml(relTime(data.refreshed_at) || 'recently')}. SOL and USD at ${data.sol_price_usd ? `$${Math.round(data.sol_price_usd)}` : 'the live price'} per SOL.</span>
+		<span class="lbe-meta-line">${freshness}SOL and USD at ${data.sol_price_usd ? `$${Math.round(data.sol_price_usd)}` : 'the live price'} per SOL.</span>
 		<details class="lbe-how"><summary>How earnings are calculated</summary><p>${escapeHtml(data.method || '')}</p></details>`;
 }
 
