@@ -26,13 +26,15 @@
 //     casting:  ["<agentId>", ...]   // has a non-expired agent:screen:*:frame
 //   }
 //
-// Public read: agent activity is already public on every agent profile, so no
-// auth is required. Unknown ids are simply absent from `activity`.
+// Public read for public agents: their activity is already on every agent
+// profile, so no auth is required. A private agent's activity is returned only
+// to its signed-in owner. Unknown and private ids are simply absent.
 
 import { cors, json, error, method, wrap, rateLimited, readBody } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getRedis } from '../_lib/redis.js';
 import { sql } from '../_lib/db.js';
+import { getSessionUser } from '../_lib/auth.js';
 import { isUuid } from '../_lib/validate.js';
 import { rowToEntry } from '../_lib/agent-activity.js';
 
@@ -98,9 +100,15 @@ export default wrap(async function handleAgentsActivity(req, res) {
 	// One LATERAL join over the id array: Postgres runs the per-agent index scan
 	// once per id and stops at PER_AGENT rows, instead of the N separate queries a
 	// per-card stream would have issued.
+	// Public agents only, plus the caller's own: a private agent's actions are
+	// owner-only on /api/agents/:id/actions, and a known id must not read them here.
+	const viewer = (await getSessionUser(req).catch(() => null))?.id ?? null;
 	const rows = await sql`
 		SELECT a.agent_id, a.type, a.payload, a.created_at
 		FROM unnest(${ids}::uuid[]) AS t(id)
+		JOIN agent_identities ai
+		  ON ai.id = t.id AND ai.deleted_at IS NULL
+		 AND (ai.is_public IS DISTINCT FROM false OR ai.user_id = ${viewer})
 		JOIN LATERAL (
 			SELECT agent_id, type, payload, created_at
 			FROM agent_actions

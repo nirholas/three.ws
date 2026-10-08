@@ -29,6 +29,7 @@ import crypto from 'node:crypto';
 
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
@@ -87,7 +88,7 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
+	if (bearer) return { userId: bearer.userId, bearer };
 	return null;
 }
 
@@ -183,6 +184,8 @@ async function handleCreate(req, res) {
 	// autonomous spend rate).
 	let buyerAgent = null;
 	if (agentId) {
+		// Paying from the agent's custodial wallet: a bearer needs wallet:write.
+		assertBearerMaySpend(auth?.bearer, req);
 		const rlAgent = await limits.agentBuy(agentId);
 		if (!rlAgent.success) {
 			return rateLimited(res, rlAgent, 'too many autonomous purchases — try again later');

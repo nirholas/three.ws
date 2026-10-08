@@ -6,6 +6,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer } from './auth.js';
 import { requireCsrf } from './csrf.js';
+import { assertBearerMaySpend } from './spend-scope.js';
 import { error } from './http.js';
 import { sql } from './db.js';
 import { getTraderStats } from './trader-stats.js';
@@ -15,7 +16,7 @@ export async function resolveUserId(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, session: true };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId, session: false };
+	if (bearer) return { userId: bearer.userId, session: false, scope: bearer.scope || '' };
 	return null;
 }
 
@@ -23,10 +24,21 @@ export async function resolveUserId(req) {
  * Authenticate a write. Returns { userId, session } or null (having already sent a
  * 401/403). CSRF is enforced for session callers; bearer/API-key callers are exempt
  * inside requireCsrf, like every other write path in the app.
+ *
+ * `spend: true` marks a write that moves vault or agent USDC (deposit, redeem,
+ * trade, claim fees): a bearer must then hold wallet:write.
  */
-export async function authWrite(req, res) {
+export async function authWrite(req, res, { spend = false } = {}) {
 	const who = await resolveUserId(req);
 	if (!who) { error(res, 401, 'unauthorized', 'sign in required'); return null; }
+	if (spend && !who.session) {
+		try {
+			assertBearerMaySpend({ scope: who.scope }, req);
+		} catch (e) {
+			error(res, e.status, e.code, e.message);
+			return null;
+		}
+	}
 	if (who.session && !(await requireCsrf(req, res, who.userId))) return null;
 	return who;
 }

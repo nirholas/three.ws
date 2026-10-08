@@ -13,6 +13,7 @@
 // GET    /api/pay/session                     list all sessions for the caller
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import {
@@ -29,7 +30,9 @@ import { isSessionId } from '../_lib/pay/spend-governor.js';
 async function resolveUser(req, res) {
 	const session = await getSessionUser(req, res);
 	if (session) return session;
-	const bearer = await authenticateBearer(extractBearer(req));
+	// Creating or widening a session moves credits into a spend envelope that
+	// pays arbitrary x402 hosts, so a bearer needs wallet:write to write here.
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { id: bearer.userId };
 	return null;
 }

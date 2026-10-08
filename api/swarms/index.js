@@ -19,6 +19,7 @@
 import { cors, method, json, error, wrap, readJson, rateLimited } from '../_lib/http.js';
 import { parseLimit, parseOffset } from '../_lib/http-params.js';
 import { resolveAccount } from '../_lib/account-auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -81,6 +82,8 @@ export default wrap(async (req, res) => {
 	const body = await readJson(req);
 	const action = String(body?.action || '');
 	if (REAL_FUNDS_ACTIONS.has(action)) {
+		// A bearer moving swarm SOL (contribute, exit, trade) needs wallet:write.
+		if (auth.source !== 'session') assertBearerMaySpend({ scope: auth.scope }, req);
 		const network = await swarmNetworkFor(body, action);
 		if (!(await requireRealFundsAgreement(req, res, { userId: auth.userId, network, context: `swarm-${action}` }))) return;
 	}

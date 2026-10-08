@@ -22,7 +22,7 @@ export default wrap(async (req, res) => {
 
 	if (!method(req, res, ['GET', 'PUT'])) return;
 
-	const auth = await authWrite(req, res);
+	const auth = await authWrite(req, res, { spend: true });
 	if (!auth) return;
 	const { userId } = auth;
 

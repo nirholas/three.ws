@@ -9,6 +9,6 @@ export async function resolveAccount(req, res) {
 	const session = await getSessionUser(req, res);
 	if (session) return { userId: session.id, source: 'session' };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId, source: bearer.source };
+	if (bearer) return { userId: bearer.userId, source: bearer.source, scope: bearer.scope || '' };
 	return null;
 }

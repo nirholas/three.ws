@@ -4,6 +4,7 @@
 
 import { authenticateBearer, extractBearer, getSessionUser } from './auth.js';
 import { requireCsrf } from './csrf.js';
+import { assertBearerMaySpend } from './spend-scope.js';
 import { error } from './http.js';
 import { sql } from './db.js';
 import { isUuid } from './validate.js';
@@ -12,10 +13,22 @@ import { isUuid } from './validate.js';
  * Authenticate a write. Returns { userId, session } or null. When it returns
  * null it has ALREADY written the 401/403 response (CSRF failures included), so
  * the caller must simply `return`.
+ *
+ * `spend: true` marks a write that moves or commits the caller's funds (post a
+ * bounty into escrow, award it, set auto-award autonomy, an Agora escrow): a
+ * bearer must then hold wallet:write, not just any grant on the account.
  */
-export async function authWrite(req, res) {
+export async function authWrite(req, res, { spend = false } = {}) {
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
+	if (bearer && spend) {
+		try {
+			assertBearerMaySpend(bearer, req);
+		} catch (e) {
+			error(res, e.status, e.code, e.message);
+			return null;
+		}
+	}
 	if (!session && !bearer) {
 		error(res, 401, 'unauthorized', 'sign in required');
 		return null;

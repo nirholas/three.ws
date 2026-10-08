@@ -16,6 +16,7 @@
 //   GET    /api/agents/:id/mirror/fills          recent mirror fills feed (owner)
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -33,7 +34,7 @@ const netOf = (v) => (NETWORKS.has(v) ? v : 'mainnet');
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

@@ -24,6 +24,7 @@ vi.mock('../api/_lib/auth.js', () => ({
 	getSessionUser: (...a) => getSessionUserMock(...a),
 	authenticateBearer: (...a) => authenticateBearerMock(...a),
 	extractBearer: (...a) => extractBearerMock(...a),
+	hasScope: (granted, required) => required.split(/\s+/).every((x) => String(granted || '').split(/\s+/).includes(x)),
 }));
 
 const requireCsrfMock = vi.fn();
@@ -137,6 +138,21 @@ function connected() {
 		return Promise.resolve([]);
 	});
 }
+
+describe('bearer scope on the seeding mutations', () => {
+	it('refuses a bearer without memory:write before reading GitHub or touching memories', async () => {
+		connected();
+		getSessionUserMock.mockResolvedValue(null);
+		extractBearerMock.mockReturnValue('sk_live_x');
+		authenticateBearerMock.mockResolvedValue({ userId: USER, scope: 'inference', source: 'apikey' });
+		const res = mkRes();
+		await handler(post({ include_profile: true, repos: [], readmes: [] }), res);
+		expect(res.statusCode).toBe(403);
+		expect(parse(res).error).toBe('insufficient_scope');
+		expect(fetchProfileMock).not.toHaveBeenCalled();
+		expect(sqlMock.transaction).not.toHaveBeenCalled();
+	});
+});
 
 describe('CSRF on the seeding mutations', () => {
 	it('POST is refused when the CSRF gate fails, before GitHub is read', async () => {

@@ -18,6 +18,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { computeTraderMetrics, fetchTraderPositions } from '../_lib/trader-stats.js';
 import {
 	getTournament,
@@ -38,7 +39,7 @@ const SSE_POLL_MS = 3_000;
 async function resolveUser(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

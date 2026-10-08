@@ -6,6 +6,7 @@ import { Wallet } from 'ethers';
 import { z } from 'zod';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { assertBearerMaySpend } from '../../_lib/spend-scope.js';
 import { cors, json, method, readJson, wrap, error, rateLimited, embedReadCors } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
@@ -27,7 +28,7 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
+	if (bearer) return { userId: bearer.userId, bearer };
 	return null;
 }
 
@@ -572,6 +573,9 @@ export const handleSign = wrap(async (req, res, id) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	// A signature from the agent's custodial key can authorize off-platform value
+	// (a login, an order), so a bearer needs the same wallet:write as a spend.
+	assertBearerMaySpend(auth.bearer, req);
 
 	// CSRF on state-changing session-cookie requests; bearer tokens are exempt.
 	if (!(await requireCsrf(req, res, auth.userId))) return;

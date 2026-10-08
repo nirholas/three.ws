@@ -86,15 +86,33 @@ describe('every bearer-accepting spend route calls the gate', () => {
 		'api/autopilot/proposals.js',
 		'api/autopilot/config.js',
 		'api/pump/[action].js',
+		'api/pay/session.js',
+		'api/agents/_id/_sub.js',
+		'api/agents/agent-mirror.js',
+		'api/agents/capabilities.js',
+		'api/swarms/index.js',
+		'api/_lib/labor-auth.js',
+		'api/_lib/vault-auth.js',
+		'api/marketplace/buy-asset.js',
+		'api/tournaments/[id].js',
+		'api/agent-wallet-bridge.js',
 	];
 
 	for (const rel of ROUTES) {
 		it(rel, () => {
 			const src = readFileSync(path.join(ROOT, rel), 'utf8');
-			expect(src).toMatch(/import \{ assertBearerMaySpend \} from '[./]*_lib\/spend-scope\.js'/);
+			expect(src).toMatch(/import \{ assertBearerMaySpend \} from '[./]*(_lib\/)?spend-scope\.js'/);
 			expect(src.match(/assertBearerMaySpend\(/g)?.length || 0).toBeGreaterThanOrEqual(1);
 		});
 	}
+
+	it('labor, Agora and vault money writes ask authWrite for the spend gate', () => {
+		for (const rel of ['api/labor/post.js', 'api/labor/award.js', 'api/labor/policy.js', 'api/agora/act.js',
+			'api/vaults/deposit.js', 'api/vaults/redeem.js', 'api/vaults/trade.js', 'api/vaults/claim-fees.js']) {
+			const src = readFileSync(path.join(ROOT, rel), 'utf8');
+			expect(src, rel).toMatch(/authWrite\(req, res, \{ spend: true \}\)/);
+		}
+	});
 
 	it('the trade and withdraw executors check scope only once the request is known to spend', () => {
 		const trade = readFileSync(path.join(ROOT, 'api/agents/solana-trade.js'), 'utf8');

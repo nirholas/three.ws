@@ -14,7 +14,7 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await authWrite(req, res);
+	const auth = await authWrite(req, res, { spend: true });
 	if (!auth) return;
 	const { userId } = auth;
 

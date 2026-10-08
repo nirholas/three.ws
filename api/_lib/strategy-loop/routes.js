@@ -12,6 +12,7 @@
 //   POST   /agents/:id/stop                 lifecycle: stopped (an open tick cancels before its next step)
 
 import { sql } from '../db.js';
+import { hasScope } from '../auth.js';
 import { apiError, intParam, page, requireUuid } from '../agents-v1/http.js';
 import { loadOwnedAgent, setAgentStatus } from '../agents-v1/agents.js';
 import { LoopSettingsError, parseLoopPatch, saveLoopSettings } from './settings.js';
@@ -46,6 +47,13 @@ async function patchLoop({ params, principal, body }) {
 	const patch = parsePatch(body);
 	if (!Object.keys(patch).length) {
 		throw apiError(400, 'empty_patch', 'Send at least one of enabled, goal, intervalSeconds, tools, maxSteps, caps or financialEnabled.');
+	}
+	// Turning the financial tier on or moving the USDC cap lets loop ticks spend
+	// from the agent wallet, so a bearer needs wallet:write for it, the same bar
+	// every other v1 money route sets. agents:write alone tunes the loop only.
+	const touchesMoney = patch.financialEnabled === true || patch.dailyUsdcCapUsd != null;
+	if (touchesMoney && principal.source !== 'session' && !hasScope(principal.scope, 'wallet:write')) {
+		throw apiError(403, 'insufficient_scope', 'Enabling the financial tier or changing the USDC cap needs the wallet:write scope.');
 	}
 	if (patch.financialEnabled === true) await requireAgreement(principal.userId);
 	await saveLoopSettings(agent, patch);

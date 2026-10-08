@@ -8,7 +8,7 @@
 // description } on meta.api_service. Activation is refused, with the reason,
 // when the agent is private, has no brain, or has no Solana payout address.
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { cors, error, json, readJson, respondError, wrap } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { isUuid } from '../../_lib/validate.js';
@@ -33,7 +33,10 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
+	// Selling the agent as a paid API (and its price) is an agents:write change;
+	// reading the config is agents:read. A narrower key gets neither.
+	const needed = req.method === 'GET' ? 'agents:read' : 'agents:write';
+	if (bearer) return hasScope(bearer.scope, needed) ? { userId: bearer.userId } : { userId: null, scopeNeeded: needed };
 	return null;
 }
 
@@ -70,6 +73,7 @@ export default wrap(async (req, res) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	if (auth.scopeNeeded) return error(res, 403, 'insufficient_scope', `this token needs the ${auth.scopeNeeded} scope`);
 	if (!isUuid(id)) return error(res, 404, 'not_found', 'agent not found');
 	if (req.method === 'PUT' && !(await requireCsrf(req, res, auth.userId))) return;
 

@@ -10,7 +10,7 @@
 // social_connection. Rate limit: 1 seed per agent per 6 hours.
 
 import { sql } from '../../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
@@ -38,6 +38,12 @@ async function requireOwnedAgent(req, agentId) {
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	const userId = session?.id ?? bearer?.userId;
 	if (!userId) throw Object.assign(new Error('sign in required'), { status: 401, code: 'unauthorized' });
+	// Seeding rewrites and deletes the agent's memories, so a bearer needs the
+	// memory scope that matches the verb, exactly as the memory MCP tools do.
+	const needed = req.method === 'GET' ? 'memory:read' : 'memory:write';
+	if (bearer && !hasScope(bearer.scope, needed)) {
+		throw Object.assign(new Error(`this token needs the ${needed} scope`), { status: 403, code: 'insufficient_scope' });
+	}
 
 	const [agent] = await sql`
 		SELECT id FROM agent_identities
