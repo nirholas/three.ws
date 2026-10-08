@@ -64,7 +64,8 @@ def _is_blocked_ip(ip: ipaddress._BaseAddress) -> bool:
 
     Covers loopback, RFC1918 private ranges, link-local (incl. the cloud
     metadata server at 169.254.169.254), unique-local IPv6 (fc00::/7),
-    multicast, reserved, and unspecified addresses. IPv4-mapped IPv6 addresses
+    multicast, reserved, unspecified, and any other non-global address (CGNAT
+    100.64.0.0/10 included). IPv4-mapped IPv6 addresses
     are unwrapped first so a mapped private v4 can't slip through.
     """
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
@@ -76,6 +77,9 @@ def _is_blocked_ip(ip: ipaddress._BaseAddress) -> bool:
         or ip.is_multicast
         or ip.is_reserved
         or ip.is_unspecified
+        # Anything not globally routable, which also covers the CGNAT shared
+        # space 100.64.0.0/10 that is_private does not flag.
+        or not ip.is_global
     )
 
 

@@ -15,6 +15,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { isValidGlbHeader } from '../_lib/glb-inspect.js';
+import { isPrivateIPv4, isPrivateIPv6 } from '../_lib/ip-classify.js';
 import { getRegenProviderCandidates, getRegenProviderByName, getRegenProviderForJob, BYOK_REGEN_PROVIDERS } from '../_lib/regen-provider.js';
 import { resolveProviderKey } from '../_lib/forge-provider-key.js';
 import { finalizeReconstructStage, pollRiggingStage } from '../_lib/reconstruct-finalize.js';
@@ -335,26 +336,12 @@ async function assertPublicHost(hostname) {
 	}
 }
 
+// Shared classifier (api/_lib/ip-classify.js): a hand-rolled copy here only
+// recognised the dotted `::ffff:a.b.c.d` spelling, so `[::ffff:7f00:1]` (the
+// same loopback address, in the form the URL parser itself normalizes to)
+// sailed through to the fetch.
 function isPrivateAddress(ip) {
-	if (ip.includes(':')) {
-		const v6 = ip.toLowerCase();
-		if (v6 === '::1' || v6 === '::') return true;
-		if (v6.startsWith('fe80') || v6.startsWith('fc') || v6.startsWith('fd')) return true;
-		// IPv4-mapped IPv6 (::ffff:a.b.c.d) — unwrap and re-check.
-		const mapped = v6.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-		if (mapped) return isPrivateAddress(mapped[1]);
-		return false;
-	}
-	const p = ip.split('.').map(Number);
-	if (p.length !== 4 || p.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return true;
-	const [a, b] = p;
-	if (a === 0 || a === 10 || a === 127) return true;
-	if (a === 169 && b === 254) return true; // link-local incl. 169.254.169.254 metadata
-	if (a === 172 && b >= 16 && b <= 31) return true;
-	if (a === 192 && b === 168) return true;
-	if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-	if (a >= 224) return true; // multicast / reserved
-	return false;
+	return ip.includes(':') ? isPrivateIPv6(ip) : isPrivateIPv4(ip);
 }
 
 function readRawBody(req, limit) {

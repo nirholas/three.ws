@@ -14,6 +14,9 @@
 
 import { lookup } from 'node:dns/promises';
 import { Agent } from 'undici';
+import { isPrivateIPv4, isPrivateIPv6 } from './ip-classify.js';
+
+export { isPrivateIPv4, isPrivateIPv6, parseIPv6Groups } from './ip-classify.js';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
@@ -23,45 +26,6 @@ export class SsrfError extends Error {
 		this.name = 'SsrfError';
 		this.code = code;
 	}
-}
-
-export function isPrivateIPv4(ip) {
-	const p = ip.split('.').map(Number);
-	if (p.length !== 4 || p.some((n) => Number.isNaN(n))) return true;
-	if (p[0] === 10) return true;
-	if (p[0] === 127) return true;
-	if (p[0] === 0) return true;
-	if (p[0] === 169 && p[1] === 254) return true; // link-local, cloud metadata
-	if (p[0] === 100 && p[1] >= 64 && p[1] <= 127) return true; // CGNAT 100.64.0.0/10 (incl. Alibaba metadata 100.100.100.200)
-	if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true;
-	if (p[0] === 192 && p[1] === 168) return true;
-	if (p[0] === 192 && p[1] === 0 && p[2] === 0) return true; // IETF
-	if (p[0] === 192 && p[1] === 0 && p[2] === 2) return true; // docs
-	if (p[0] === 198 && (p[1] === 18 || p[1] === 19)) return true; // benchmark
-	if (p[0] === 198 && p[1] === 51 && p[2] === 100) return true; // docs
-	if (p[0] === 203 && p[1] === 0 && p[2] === 113) return true; // docs
-	if (p[0] >= 224) return true; // multicast + reserved
-	return false;
-}
-
-export function isPrivateIPv6(ip) {
-	const lower = ip.toLowerCase();
-	if (lower === '::' || lower === '::1' || lower === '0:0:0:0:0:0:0:1') return true;
-	if (
-		lower.startsWith('fe8') ||
-		lower.startsWith('fe9') ||
-		lower.startsWith('fea') ||
-		lower.startsWith('feb')
-	)
-		return true; // link-local fe80::/10
-	if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // ULA fc00::/7
-	if (lower.startsWith('ff')) return true; // multicast ff00::/8
-	if (lower.startsWith('::ffff:')) {
-		const mapped = lower.replace(/^::ffff:/, '');
-		if (/^\d+\.\d+\.\d+\.\d+$/.test(mapped)) return isPrivateIPv4(mapped);
-	}
-	if (lower.startsWith('2001:db8:')) return true; // docs
-	return false;
 }
 
 export function isPrivateAddress(address, family) {

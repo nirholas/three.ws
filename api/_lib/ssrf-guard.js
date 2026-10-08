@@ -17,6 +17,7 @@ import { promises as dns } from 'node:dns';
 import net from 'node:net';
 import https from 'node:https';
 import http from 'node:http';
+import { isPrivateIPv6 as isPrivateIPv6Shared } from './ip-classify.js';
 
 // Cloud metadata services we never want a server-side fetch to reach.
 const METADATA_IPS = new Set([
@@ -40,18 +41,12 @@ function isPrivateIPv4(ip) {
 	return false;
 }
 
+// IPv6 classification is shared with api/_lib/ssrf.js via api/_lib/ip-classify.js,
+// which parses the address into numeric groups so every spelling of an
+// IPv4-mapped, NAT64, 6to4 or IPv4-compatible address is judged by the IPv4 it
+// actually reaches.
 function isPrivateIPv6(ip) {
-	const lower = ip.toLowerCase();
-	if (lower === '::1' || lower === '::' || lower === '0:0:0:0:0:0:0:1') return true; // loopback / unspecified
-	if (lower.startsWith('fe80:') || lower.startsWith('fe8') || lower.startsWith('fe9') ||
-		lower.startsWith('fea') || lower.startsWith('feb')) return true;               // link-local fe80::/10
-	if (lower.startsWith('fc') || lower.startsWith('fd')) return true;                 // unique-local fc00::/7
-	if (lower.startsWith('ff')) return true;                                           // multicast ff00::/8
-	if (lower.startsWith('::ffff:')) {
-		const v4 = lower.slice(7);
-		return isPrivateIPv4(v4);
-	}
-	return false;
+	return isPrivateIPv6Shared(ip);
 }
 
 function isBlockedAddress(ip) {
