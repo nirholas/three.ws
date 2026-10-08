@@ -232,8 +232,16 @@ function card({ title, desc, section, route, accent }) {
 // ecosystem (IBM Community posts, watsonx content). IBM Plex type, IBM blue
 // (#0f62fe), Carbon gray text ramp, sharp geometry — deliberately NO IBM logo
 // or trademark: the only IBM reference is the factual "Built on IBM
-// watsonx.ai" line, the framing docs/ibm.md permits.
-function carbonCard({ title, desc, section, route }) {
+// watsonx.ai" line, the framing docs/ibm.md permits. That line is only true
+// for watsonx content, so a post about something else picks an allowlisted
+// footer with ?f= (never free text, so the card cannot be made to claim
+// anything we did not write here).
+const CARBON_FOOTERS = {
+  watsonx: 'Built on IBM watsonx.ai',
+  group: 'Three.ws User Group',
+};
+
+function carbonCard({ title, desc, section, route, footer }) {
   const blue = '#0f62fe';
   return {
     type: 'div',
@@ -364,7 +372,7 @@ function carbonCard({ title, desc, section, route }) {
             ],
           },
         },
-        // bottom: route + factual watsonx line
+        // bottom: route + factual footer line
         {
           type: 'div',
           props: {
@@ -390,7 +398,7 @@ function carbonCard({ title, desc, section, route }) {
                 type: 'div',
                 props: {
                   style: { fontSize: 23, fontWeight: 600, color: blue },
-                  children: 'Built on IBM watsonx.ai',
+                  children: footer,
                 },
               },
             ],
@@ -444,7 +452,8 @@ export default async function handler(req, res) {
 
   try {
     if (variant === 'carbon') {
-      await sendImage(res, imageResponse(carbonCard({ title, desc, section, route }), loadPlexFonts()));
+      const footer = CARBON_FOOTERS[String(url.searchParams.get('f') || '').toLowerCase()] || CARBON_FOOTERS.watsonx;
+      await sendImage(res, imageResponse(carbonCard({ title, desc, section, route, footer }), loadPlexFonts()));
     } else {
       await sendImage(res, imageResponse(card({ title, desc, section, route, accent })));
     }
