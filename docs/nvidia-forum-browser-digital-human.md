@@ -57,7 +57,7 @@ Our avatars come from a text prompt, a photo, or a GLB the visitor uploaded from
 
 We had already solved the same shape of problem for skeletons: src/glb-canonicalize.js maps Mixamo, Avaturn, Unreal, VRM, Daz, MakeHuman and plain `.L` bone conventions onto one canonical rig so the animation library retargets onto anything humanoid. The face version lives in src/voice/arkit-blendshapes.js and src/voice/a2f-player.js, and it runs in two modes per mesh:
 
-**Direct.** The morph name canonicalizes to an ARKit shape (`jawOpen`, `JawOpen`, `jaw_open`, and the Ready Player Me, Avaturn, and MetaHuman spellings all land on the same canonical name). The A2F weight is written straight to it.
+**Direct.** The morph name canonicalizes to an ARKit shape (`jawOpen`, `JawOpen`, `jaw_open`, and the web-avatar, photo-avatar, and MetaHuman spellings all land on the same canonical name). The A2F weight is written straight to it.
 
 **Derived.** The mesh only has monolithic expressions: VRM's `Aa`, `Ih`, `Ou`, `Ee`, `Oh`, or Oculus's `viseme_PP`, `viseme_FF`, `viseme_CH`. We hold a forward map from each of those to its ARKit components (`VRM_TO_ARKIT`, `OCULUS_TO_ARKIT`), and at playback we run that map **backwards**: an expression's activation is the normalized sum of the ARKit weights it is made of, taken from the A2F frame. A rig that only knows five vowels still lip-syncs, because the vowel is reconstructed out of the ARKit frame rather than looked up from a phoneme we never received.
 

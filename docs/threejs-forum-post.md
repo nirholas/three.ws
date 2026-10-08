@@ -30,7 +30,7 @@ Making that work produced five small, focused tools. We published each one on it
 
 **Package: `@three-ws/retarget`**
 
-Rather than keeping a curated list of supported rigs, we canonicalise bone names first, then retarget onto the canonical set. The mapping understands Mixamo (`mixamorig:LeftArm`), Avaturn, VRM 0.x and VRoid (`J_Bip_L_UpperArm`), VRM 1.0, Daz/Genesis, MakeHuman, the Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R` suffixes, and simple `shoulderL` style names. Adding a new convention is one mapping entry plus a test case, never a new code path.
+Rather than keeping a curated list of supported rigs, we canonicalise bone names first, then retarget onto the canonical set. The mapping understands Mixamo (`mixamorig:LeftArm`), photo-avatar rigs, VRM 0.x and VRoid (`J_Bip_L_UpperArm`), VRM 1.0, Daz/Genesis, MakeHuman, the Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R` suffixes, and simple `shoulderL` style names. Adding a new convention is one mapping entry plus a test case, never a new code path.
 
 ```bash
 npm install @three-ws/retarget three
