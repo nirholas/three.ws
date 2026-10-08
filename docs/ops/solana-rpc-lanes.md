@@ -331,6 +331,17 @@ answers, cheapest first:
 - **One jittered re-sweep.** When the first sweep was transport-only, every lane
   is tried once more after a 250-700 ms pause. An HTTP 429 or a quota body is a
   verdict about the lane, not the wire, and never triggers it.
+- **A TLS refusal is a lane verdict too.** A handshake alert or an untrusted
+  certificate (`ERR_SSL_*`, `ERR_TLS_*`, `CERT_*`, see `isTlsLaneFault`) means the
+  connection reached the provider and the provider's own TLS terminator said no;
+  every retry gets the same answer. Those lanes cool for 30 minutes (published to
+  the fleet) and never arm the re-sweep. On 2026-10-08 a disabled QuickNode
+  endpoint in `SOLANA_RPC_LAST_RESORT_URLS` answered every handshake with
+  `ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR`; read as a 30-second blip it re-qualified
+  twice a minute, was the last lane standing whenever the rest were cooling, and
+  re-hammered the 429-cooling free lanes on every request through the re-sweep.
+  If `curl -v` against a lane ends in `TLS alert, internal error`, the endpoint is
+  dead: remove or replace it in the service env.
 - **Last-good reads instead of a 502.** Idempotent read methods (`getBalance`,
   `getAccountInfo`, `getMultipleAccounts`, `getTokenAccountsByOwner`,
   `getTokenLargestAccounts`, `getProgramAccounts`, `getSignaturesForAddress`,

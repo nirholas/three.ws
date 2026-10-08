@@ -5,6 +5,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
 	makeRotatingFetch,
 	transportCause,
+	isTlsLaneFault,
+	isEndpointCooling,
 	lastGoodKey,
 	_resetLastGoodMemo,
 } from '../api/_lib/solana/connection.js';
@@ -146,5 +148,57 @@ describe('makeRotatingFetch whole-chain transport fallbacks', () => {
 		down = true;
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await expect(rotate(eps[0], { method: 'POST', body: body('getLatestBlockhash') })).rejects.toThrow(/ECONNRESET/);
+	});
+});
+
+describe('TLS refusals are a verdict about the lane, not egress weather', () => {
+	// Measured 2026-10-08: the operator's QuickNode last-resort lane failed every
+	// handshake with ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR. As a 30-second blip it
+	// re-qualified twice a minute and armed the whole-chain re-sweep each time.
+	it('classifies handshake and certificate failures, and nothing else', () => {
+		expect(isTlsLaneFault('ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR')).toBe(true);
+		expect(isTlsLaneFault('ERR_SSL_SSL/TLS_ALERT_HANDSHAKE_FAILURE')).toBe(true);
+		expect(isTlsLaneFault('CERT_HAS_EXPIRED')).toBe(true);
+		expect(isTlsLaneFault('UNABLE_TO_VERIFY_LEAF_SIGNATURE')).toBe(true);
+		expect(isTlsLaneFault('ERR_TLS_CERT_ALTNAME_INVALID')).toBe(true);
+		for (const code of ['ECONNRESET', 'EAI_AGAIN', 'ECONNREFUSED', 'ETIMEDOUT', 'transport', '', null]) {
+			expect(isTlsLaneFault(code)).toBe(false);
+		}
+	});
+
+	it('parks the lane for the long window and does not re-sweep the chain', async () => {
+		const eps = ['https://tls-dead.test/', 'https://tls-busy.test/'];
+		let calls = 0;
+		global.fetch = vi.fn(async (url) => {
+			calls += 1;
+			if (String(url).includes('tls-dead')) throw netFail('ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR');
+			return new Response('slow down', { status: 429 });
+		});
+		vi.spyOn(console, 'log').mockImplementation(() => {});
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		await expect(
+			makeRotatingFetch(eps)(eps[0], { method: 'POST', body: body('getSlot') }),
+		).rejects.toThrow();
+		// One attempt per lane, no transport re-sweep on top.
+		expect(calls).toBe(2);
+		// Still parked well past the 30-second network-blip window.
+		const realNow = Date.now();
+		vi.spyOn(Date, 'now').mockReturnValue(realNow + 20 * 60_000);
+		expect(isEndpointCooling(eps[0])).toBe(true);
+	});
+
+	it('still names the TLS cause on the exhausted-chain error', async () => {
+		const eps = ['https://tls-only.test/'];
+		let calls = 0;
+		global.fetch = vi.fn(async () => {
+			calls += 1;
+			throw netFail('ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR');
+		});
+		vi.spyOn(console, 'log').mockImplementation(() => {});
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		await expect(
+			makeRotatingFetch(eps)(eps[0], { method: 'POST', body: body('getSlot') }),
+		).rejects.toThrow(/ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR\) @ https:\/\/tls-only\.test/);
+		expect(calls).toBe(1);
 	});
 });

@@ -201,6 +201,7 @@ const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m, transient 429
 const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m: bad/expired key on this provider only
 const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m: provider 5xx
 const NETWORK_COOLDOWN_MS = 30_000; // 30s: fetch threw (DNS/connection blip)
+const TLS_FAULT_COOLDOWN_MS = AUTH_COOLDOWN_MS; // 30m: the lane's own TLS terminator refused us
 
 // ---------------------------------------------------------------------------
 // Whole-chain transport failure: re-sweep, then serve last-good
@@ -268,6 +269,32 @@ export function transportCause(err) {
 		return 'transport';
 	}
 	return '';
+}
+
+// TLS handshake and certificate failures, by the undici/OpenSSL cause code.
+// These are NOT wire weather. The TCP connection reached the provider and the
+// provider's own TLS terminator refused us (an alert) or presented a certificate
+// nobody should trust. Every retry gets the identical answer until someone fixes
+// the endpoint: a QuickNode endpoint that has been disabled, deleted or suspended
+// answers every handshake with `tlsv1 alert internal error`.
+const TLS_LANE_FAULT =
+	/^(?:ERR_SSL_|ERR_TLS_|CERT_|UNABLE_TO_(?:GET|VERIFY)_|DEPTH_ZERO_SELF_SIGNED_CERT|SELF_SIGNED_CERT_IN_CHAIN|HOSTNAME_MISMATCH)/;
+
+/**
+ * Is this transport cause (from transportCause) a TLS refusal by the lane itself?
+ *
+ * Measured on 2026-10-08: the operator's last-resort QuickNode endpoint failed
+ * every handshake with ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR. Treated as a 30-second
+ * network blip it re-qualified twice a minute, so whenever the other lanes were
+ * cooling it was the only candidate left, and because its failure read as
+ * "transport only" it triggered the whole-chain re-sweep, which re-hammered the
+ * 429-cooling free lanes on every request. That one dead endpoint is why 126 of
+ * the Solana agent index's cursors carried its error after a single tick.
+ * @param {string} cause
+ * @returns {boolean}
+ */
+export function isTlsLaneFault(cause) {
+	return TLS_LANE_FAULT.test(String(cause || ''));
 }
 
 /** djb2 over a string. Keys the last-good cache; collisions are made harmless by including the method and length in the key. */
@@ -1596,8 +1623,22 @@ export function makeRotatingFetch(endpoints) {
 					attemptTimedOut: attemptSignal.aborted,
 					hasMethods: methods.length > 0,
 				});
+				const cause = disposition === 'cool-lane' ? transportCause(err) : '';
+				const tlsFault = isTlsLaneFault(cause);
 				if (disposition === 'demote-method') {
 					penalise(url, 504, '', true, `no answer within ${Math.round(ATTEMPT_TIMEOUT_MS / 1000)}s`);
+				} else if (tlsFault) {
+					// The lane refused the handshake itself: park it like a rejected key,
+					// and tell the fleet, so it stops being the last candidate standing.
+					const alreadyCooling = isEndpointCooling(url);
+					const now = Date.now();
+					_endpointCooldown.set(url, now + TLS_FAULT_COOLDOWN_MS);
+					publishCooldowns(now);
+					if (!alreadyCooling) {
+						console.log(
+							`[solana-rpc] ${maskUrl(url)} refused the TLS handshake (${cause}), cooling ${formatCooldown(TLS_FAULT_COOLDOWN_MS)}, failing over`,
+						);
+					}
 				} else if (disposition === 'cool-lane') {
 					_endpointCooldown.set(url, Date.now() + NETWORK_COOLDOWN_MS);
 				}
@@ -1606,10 +1647,13 @@ export function makeRotatingFetch(endpoints) {
 				// (EAI_AGAIN is a resolver problem, ECONNRESET a socket one) instead of
 				// undici's bare "fetch failed". The original stays on `cause`.
 				noteRpc(url, 'fail', Date.now() - attemptStartedAt, 'live', err?.name === 'TimeoutError' ? 'timeout' : 'network');
-				const cause = disposition === 'cool-lane' ? transportCause(err) : '';
 				if (cause) {
 					const tagged = new Error(`${err?.message || 'fetch failed'} (${cause}) @ ${maskUrl(url)}`, { cause: err });
-					return { error: tagged, transport: true };
+					// A TLS refusal is a verdict about the lane, not about our egress, so
+					// it must not arm the whole-chain re-sweep: re-asking every lane in
+					// the same request cannot change the peer's answer, and on a tick
+					// where the other lanes are 429-cooling it only extends their bench.
+					return { error: tagged, transport: !tlsFault };
 				}
 				return { error: err };
 			}

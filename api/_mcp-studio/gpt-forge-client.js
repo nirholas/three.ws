@@ -11,11 +11,11 @@
 // payment, or API key is ever involved. This module is the SAME submit/poll
 // logic the npm MCP tools use, factored once — not a fork and not a mock.
 //
-// All work runs against the deployment's own origin (resolved from the incoming
-// request, falling back to PUBLIC_APP_ORIGIN / https://three.ws), so the studio
+// All work runs against the deployment's own origin (STUDIO_API_BASE, else the
+// configured PUBLIC_APP_ORIGIN; see api/_lib/self-origin.js), so the studio
 // front door and the generation pipeline are always the same deployment.
 
-import { env } from '../_lib/env.js';
+import { selfOrigin } from '../_lib/self-origin.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { llmComplete } from '../_lib/llm.js';
 import { TICKET_HEADER, newTicket, ticketHandle } from '../_lib/forge-submit-ticket.js';
@@ -45,18 +45,14 @@ function envNum(key, def) {
 	return Number.isFinite(v) && v > 0 ? v : def;
 }
 
-// Resolve the origin to call /api/gpt-forge on. Prefer the request's own host so the
-// studio endpoint is self-referential on any deployment (preview, prod, local
-// dev), then PUBLIC_APP_ORIGIN, then the canonical fallback.
+// Resolve the origin to call /api/gpt-forge on: STUDIO_API_BASE when set, otherwise
+// the configured app origin (selfOrigin). Never a request header: the forge
+// self-call can carry the internal seed credential, and a caller-chosen
+// `x-forwarded-host` would send it, and the request, to any host they name.
 export function originFromReq(req) {
 	const explicit = process.env.STUDIO_API_BASE && String(process.env.STUDIO_API_BASE).trim();
 	if (explicit) return explicit.replace(/\/$/, '');
-	const host = req?.headers?.['x-forwarded-host'] || req?.headers?.host;
-	if (host) {
-		const proto = req.headers['x-forwarded-proto'] || (/^localhost|127\.0\.0\.1/.test(host) ? 'http' : 'https');
-		return `${proto}://${host}`.replace(/\/$/, '');
-	}
-	return env.APP_ORIGIN.replace(/\/$/, '');
+	return selfOrigin(req);
 }
 
 export function viewerUrl(base, glbUrl) {
