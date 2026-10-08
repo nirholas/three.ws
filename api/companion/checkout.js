@@ -36,7 +36,7 @@ import { z } from 'zod';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
-import { getRequestUser } from '../_lib/auth.js';
+import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { loadUserProviderKeys } from '../_lib/provider-keys.js';
 import { userForIngestToken } from '../_lib/companion/store.js';
@@ -98,7 +98,10 @@ async function callerFor(req, res) {
 		const user = await userForIngestToken(bearer);
 		if (user) return user;
 	}
-	return getRequestUser(req, res);
+	// A narrow bearer (an inference-only key, an avatars-only OAuth client)
+	// must not spend the account's own model key; it needs profile.
+	const user = await getRequestUser(req, res);
+	return user && requestUserHasScope(user, 'profile') ? user : null;
 }
 
 export default wrap(async function handler(req, res) {

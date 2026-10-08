@@ -373,6 +373,19 @@ describe('home security 3: only a session with CSRF can redeem a confirmation', 
 			expect(mapped.has(capability), `capability "${capability}" maps to no OAuth scope`).toBe(true);
 		}
 	});
+
+	it('a standing grant can only be written by a session, never a bearer', () => {
+		// A grant is a standing yes: the bridge and the MCP gate both skip the
+		// confirmation for a granted entity. requireCsrf exempts bearer callers,
+		// so without an explicit session check a token holding home:act could
+		// grant itself lock.front_door and then unlock it with nobody present.
+		const code = stripComments(read(join(REPO, 'api', 'home', '[id]', 'grants.js')));
+		const asked = code.search(/canAssertConfirmation\s*\(/);
+		expect(asked, 'grants.js must refuse a non-session principal on writes').toBeGreaterThan(-1);
+		const writes = code.search(/handleGrant\s*\(\s*req/);
+		expect(writes).toBeGreaterThan(-1);
+		expect(asked, 'the session check must run before any grant is written').toBeLessThan(writes);
+	});
 });
 
 // ---------------------------------------------------------------------------

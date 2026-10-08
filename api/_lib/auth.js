@@ -7,6 +7,7 @@ import { sql } from './db.js';
 import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 import { recordDailyActivity } from './streaks.js';
+import { clientIp } from './rate-limit.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -226,11 +227,7 @@ export async function getSessionUser(req, res) {
 		const nowMs = Date.now();
 		if (nowMs - seenMs > 86_400_000 && expiresMs - nowMs < SESSION_REFRESH_WINDOW_SEC * 1000) {
 			const ua = req.headers['user-agent'] || null;
-			const ip =
-				req.headers['x-vercel-forwarded-for']?.split(',')[0]?.trim() ||
-				req.headers['x-real-ip'] ||
-				req.socket?.remoteAddress ||
-				null;
+			const ip = clientIp(req);
 			rotateSession({ currentSid: userFields.sid, userId: userFields.id, userAgent: ua, ip })
 				.then((newToken) => {
 					try {
@@ -396,4 +393,37 @@ export async function authenticatePrivy(req) {
 export function hasScope(granted, required) {
 	const g = new Set((granted || '').split(/\s+/).filter(Boolean));
 	return required.split(/\s+/).every((s) => g.has(s));
+}
+
+// Scope check for a principal returned by getRequestUser(). A cookie session is
+// the person, present, and carries every scope. A bearer principal (API key or
+// OAuth access token) holds only what it was granted, so a route that accepts a
+// bearer must name the scope its action needs; otherwise a narrow key (an
+// `inference`-only key, an MCP client granted `avatars:read`) acts with the
+// account's full authority.
+export function requestUserHasScope(user, required) {
+	if (!user) return false;
+	if (user.source !== 'bearer') return true;
+	return hasScope(user.scope, required);
+}
+
+// The scope a bearer principal must hold to move, commit, or redirect funds.
+export const SPEND_SCOPE = 'wallet:write';
+
+// Gate for a route that spends from a custodial wallet (withdraw, trade, pay,
+// hire, launch, arm an autonomous spender) or changes where its money goes. The
+// MCP tools behind these actions already demand `wallet:write`, but the REST
+// routes accepted ANY bearer, so an `inference`-only key or an OAuth client the
+// user approved for "Read your avatars" could withdraw an agent wallet to its
+// own address. A cookie session never reaches here (pass the bearer only).
+// Safe methods pass so a `wallet:read` key still reads balances and history.
+export function assertBearerMaySpend(bearer, req) {
+	if (!bearer) return bearer;
+	const verb = String(req?.method || 'POST').toUpperCase();
+	if (verb === 'GET' || verb === 'HEAD' || verb === 'OPTIONS') return bearer;
+	if (hasScope(bearer.scope, SPEND_SCOPE)) return bearer;
+	throw Object.assign(
+		new Error(`this credential lacks the ${SPEND_SCOPE} scope required to move funds`),
+		{ status: 403, code: 'insufficient_scope', expose: true },
+	);
 }

@@ -6,7 +6,7 @@
 // or a Mac script posts with, so the setup page has to be able to show it.
 
 import { z } from 'zod';
-import { getRequestUser } from '../_lib/auth.js';
+import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -66,6 +66,9 @@ export default wrap(async (req, res) => {
 
 	const user = await getRequestUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	// Private messages and the bridge token live behind this surface, so a
+	// bearer needs the account-level profile scope, not just any grant.
+	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
 
 	if (req.method === 'GET') {
 		const rl = await limits.companionRead(user.id);

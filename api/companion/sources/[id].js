@@ -3,7 +3,7 @@
 // POST   /api/companion/sources/:id  → poll it right now ("check now").
 
 import { z } from 'zod';
-import { getRequestUser } from '../../_lib/auth.js';
+import { getRequestUser, requestUserHasScope } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../../_lib/http.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { limits } from '../../_lib/rate-limit.js';
@@ -22,6 +22,9 @@ export default wrap(async (req, res) => {
 
 	const user = await getRequestUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	// Private messages and the bridge token live behind this surface, so a
+	// bearer needs the account-level profile scope, not just any grant.
+	if (!requestUserHasScope(user, 'profile')) return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
 	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const id = String(req.query?.id || '').trim();

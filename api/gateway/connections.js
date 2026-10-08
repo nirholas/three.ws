@@ -9,12 +9,13 @@
 //   PATCH  { id, notify?, default_agent_id? }  → { link }
 //   DELETE ?id=                                → { revoked: true }
 //
-// Session or bearer auth; writes are CSRF-gated (bearer exempt) and share the
-// gatewaySiteWrite budget. docs/chat-gateways.md describes the whole flow.
+// Session or bearer auth (a bearer needs agents:read to list and agents:write
+// plus wallet:write to change anything); writes are CSRF-gated (bearer exempt)
+// and share the gatewaySiteWrite budget. docs/chat-gateways.md describes the whole flow.
 
 import { z } from 'zod';
 import { sql } from '../_lib/db.js';
-import { getRequestUser } from '../_lib/auth.js';
+import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -60,6 +61,13 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST', 'PATCH', 'DELETE'])) return;
 	const user = await getRequestUser(req, res);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in to manage chat connections');
+	// A paired chat can approve the agent's trades and lift its risk limits, so
+	// pairing, editing or revoking one is a wallet-level grant. A bearer must
+	// hold agents:write and wallet:write; reading the list needs agents:read.
+	const needed = req.method === 'GET' ? 'agents:read' : 'agents:write wallet:write';
+	if (!requestUserHasScope(user, needed)) {
+		return error(res, 403, 'insufficient_scope', `this token needs the ${needed} scope`);
+	}
 
 	if (req.method === 'GET') {
 		const [links, agents, bots] = await Promise.all([

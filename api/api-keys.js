@@ -57,6 +57,22 @@ export default wrap(async (req, res) => {
 	if (invalid.length)
 		return error(res, 400, 'validation_error', `unknown scopes: ${invalid.join(', ')}`);
 
+	// A bearer caller can only mint a key at or below its own grant. `profile`
+	// is the gate to reach this endpoint, not a license to escalate: without
+	// this, an OAuth token a third-party client was granted for `profile` alone
+	// (or a narrow API key) could mint a non-expiring `wallet:write agents:write`
+	// key and walk out of the consent the user actually gave.
+	if (bearer) {
+		const beyond = requestedScopes.filter((s) => !hasScope(bearer.scope, s));
+		if (beyond.length)
+			return error(
+				res,
+				403,
+				'insufficient_scope',
+				`a bearer credential cannot mint scopes it does not hold: ${beyond.join(', ')}`,
+			);
+	}
+
 	const token = `sk_live_${randomToken(32)}`;
 	const prefix = token.slice(0, 14); // "sk_live_" + 6 chars
 	const tokenHash = await sha256(token);

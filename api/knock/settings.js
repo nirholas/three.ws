@@ -7,7 +7,7 @@
 // door.
 
 import { z } from 'zod';
-import { getRequestUser } from '../_lib/auth.js';
+import { getRequestUser, requestUserHasScope } from '../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -47,6 +47,9 @@ export default wrap(async (req, res) => {
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	if (req.method === 'GET') {
+		if (!requestUserHasScope(user, 'profile')) {
+			return error(res, 403, 'insufficient_scope', 'this token needs the profile scope');
+		}
 		const rl = await limits.knockRead(user.id);
 		if (!rl.success) return rateLimited(res, rl);
 		return json(res, 200, await ownerView(user));
@@ -57,6 +60,14 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = parse(patchBody, await readJson(req));
+
+	// Pointing the payout at another wallet redirects every future paid knock,
+	// so a bearer needs wallet:write for that; the rest of the door is profile.
+	const movesPayout = body.pay_to_solana !== undefined || body.pay_to_base !== undefined;
+	const needed = movesPayout ? 'profile wallet:write' : 'profile';
+	if (!requestUserHasScope(user, needed)) {
+		return error(res, 403, 'insufficient_scope', `this token needs the ${needed} scope`);
+	}
 
 	if (body.block) await addBlock(user.id, body.block);
 	if (body.unblock) await removeBlock(user.id, body.unblock);

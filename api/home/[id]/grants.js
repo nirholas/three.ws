@@ -15,7 +15,7 @@
 
 import { logAudit } from '../../_lib/audit.js';
 import { requireCsrf } from '../../_lib/csrf.js';
-import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { canAssertConfirmation, CONFIRMATION_REQUIRES_SESSION, resolveHomeAccess } from '../../_lib/home/access.js';
 import { homeError, homeFailure, HOME_ERR } from '../../_lib/home/errors.js';
 import { grantEntity, listGrants, logHomeAction, revokeGrant } from '../../_lib/home/store.js';
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../../_lib/http.js';
@@ -45,7 +45,13 @@ export default wrap(async (req, res) => {
 	}
 
 	// Both writes change what the agent may do unattended, so both need a real
-	// person behind them.
+	// person behind them. requireCsrf alone does not get there: it exempts every
+	// bearer caller by design, so a token holding `home:act` could otherwise
+	// grant itself `lock.front_door` and then unlock it with no confirmation.
+	// A grant is a standing yes, and only a session can say yes.
+	if (!canAssertConfirmation(caller)) {
+		return error(res, CONFIRMATION_REQUIRES_SESSION.status, CONFIRMATION_REQUIRES_SESSION.code, CONFIRMATION_REQUIRES_SESSION.message);
+	}
 	if (!(await requireCsrf(req, res, caller.userId))) return;
 	const rl = await limits.homeAct(caller.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many permission changes, slow down');

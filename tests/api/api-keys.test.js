@@ -200,6 +200,29 @@ describe('POST /api/api-keys — create', () => {
 		expect(status).toBe(400);
 		expect(body.error).toBe('validation_error');
 	});
+
+	it('refuses a bearer minting scopes beyond its own grant (no escalation)', async () => {
+		authState.bearer = { userId: 'user-4', scope: 'profile', source: 'oauth' };
+		const { status, body } = await invoke({
+			method: 'POST',
+			body: { name: 'Escalate', scope: 'profile wallet:write agents:write' },
+		});
+		expect(status).toBe(403);
+		expect(body.error).toBe('insufficient_scope');
+		expect(sqlState.calls.some((c) => /insert into api_keys/i.test(c.query))).toBe(false);
+	});
+
+	it('lets a bearer mint a key within its own grant', async () => {
+		authState.bearer = { userId: 'user-5', scope: 'profile avatars:read', source: 'apikey' };
+		sqlState.queue.push([
+			{ id: 'k5', name: 'Narrow', prefix: 'sk_live_xxxxxx', scope: 'avatars:read', expires_at: null, created_at: '2024-01-01T00:00:00Z' },
+		]);
+		const { status } = await invoke({
+			method: 'POST',
+			body: { name: 'Narrow', scope: 'avatars:read' },
+		});
+		expect(status).toBe(201);
+	});
 });
 
 describe('method routing', () => {
