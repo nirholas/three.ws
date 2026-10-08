@@ -252,6 +252,7 @@
 .pm-panel + .pm-panel { margin-top: 14px; }
 .pm-switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; }
 .pm-switch input { width: 40px; height: 22px; accent-color: var(--pm-line); cursor: pointer; }
+.pm-switch input:hover { filter: brightness(1.15); }
 .pm-pos-title { font-weight: 600; font-size: 13px; }
 .pm-pos-sub { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
 .pm-badge { display: inline-block; font: 11px/1 var(--font-mono); padding: 3px 7px; border-radius: 999px; border: 1px solid var(--stroke); color: var(--ink-dim); text-transform: uppercase; letter-spacing: .04em; }

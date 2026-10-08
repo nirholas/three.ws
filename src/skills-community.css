@@ -376,6 +376,10 @@
 	cursor: pointer;
 }
 
+.sc-card-hit:hover {
+	box-shadow: inset 0 0 0 1px var(--stroke-strong, rgba(255, 255, 255, 0.2));
+}
+
 .sc-card-head {
 	display: flex;
 	align-items: baseline;
@@ -928,6 +932,14 @@
 	border-radius: 50%;
 	background: var(--ink-bright, #fff);
 	transition: transform var(--dur-fast, 140ms) var(--ease-out, ease);
+}
+
+.sc-switch:hover span {
+	background: var(--stroke-strong, rgba(255, 255, 255, 0.22));
+}
+
+.sc-switch:hover input:checked + span {
+	filter: brightness(1.1);
 }
 
 .sc-switch input:checked + span {

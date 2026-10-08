@@ -433,6 +433,7 @@
 .sn-toggles label:has(input:checked) { color: inherit; }
 .sn-toggles label:has(input:focus-visible) { outline: 2px solid var(--sn-accent); outline-offset: 1px; }
 .sn-toggles input { accent-color: var(--sn-accent); cursor: pointer; }
+.sn-toggles input:hover { filter: brightness(1.15); }
 .sn-control-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .sn-control-actions .sn-btn { padding: 8px 12px; font-size: 13px; }
 

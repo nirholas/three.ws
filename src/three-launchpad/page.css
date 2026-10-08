@@ -424,6 +424,10 @@
 	cursor: pointer;
 	transition: background 0.15s ease, color 0.15s ease;
 }
+.tl-seg button:not([aria-selected='true']):hover {
+	background: var(--surface-2);
+	color: var(--ink);
+}
 .tl-seg button[aria-selected='true'] {
 	background: var(--surface-1, var(--bg));
 	color: var(--ink);

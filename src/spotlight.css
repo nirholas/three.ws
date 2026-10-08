@@ -1284,6 +1284,19 @@
 	cursor: pointer;
 }
 
+.sp-check:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2));
+}
+
+.sp-check label:hover,
+.sp-check-input:hover + label {
+	color: var(--ink-bright, #fff);
+}
+
+.sp-check-input:hover {
+	filter: brightness(1.15);
+}
+
 .sp-check-input:focus-visible {
 	outline: 2px solid var(--focus-ring, var(--ink-bright, #fff));
 	outline-offset: 2px;

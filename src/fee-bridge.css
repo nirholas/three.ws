@@ -168,6 +168,10 @@ body {
 	text-decoration: underline;
 	cursor: pointer;
 }
+.fb-link:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}
 
 /* ── Stats ────────────────────────────────────────────────────────────────── */
 

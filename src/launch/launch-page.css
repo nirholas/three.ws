@@ -655,6 +655,9 @@
 	transform: translateX(18px);
 	background: var(--lx-accent-ink);
 }
+.lx-switch:not(:disabled):hover {
+	border-color: var(--lx-accent);
+}
 .lx-switch:disabled {
 	opacity: 0.45;
 	cursor: not-allowed;

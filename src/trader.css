@@ -212,6 +212,7 @@
 .tp-proof-share:hover, .tp-proof-share:focus-visible { color: var(--accent); border-bottom-color: var(--accent); }
 /* "why" opens the trade receipt: a button styled as a proof link. */
 button.tp-proof-link { background: none; border-top: 0; border-left: 0; border-right: 0; padding: 0; font: inherit; font-size: var(--text-2xs); cursor: pointer; }
+button.tp-proof-link:hover { color: var(--ink-bright); border-bottom-color: var(--ink-dim); }
 .tp-why-btn { color: var(--accent); border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .tp-why-btn:hover { color: var(--ink-bright); }
 .tp-why-btn:active { transform: translateY(1px); }

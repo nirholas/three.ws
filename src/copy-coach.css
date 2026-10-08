@@ -97,6 +97,7 @@ body { background: var(--bg, #0a0a0b); }
 .cc-verdict-warn { background: color-mix(in srgb, var(--cc-warn) 10%, transparent); border: 1px solid color-mix(in srgb, var(--cc-warn) 30%, transparent); }
 .cc-receipt { margin-top: 12px; }
 .cc-receipt summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--cc-ink); padding: 8px 0; }
+.cc-receipt summary:hover { color: var(--cc-violet); }
 .cc-receipt summary:focus-visible { outline: 2px solid var(--cc-violet); outline-offset: 2px; border-radius: 4px; }
 
 /* ── step 2: leaders and the ghost run ───────────── */
@@ -148,6 +149,7 @@ body { background: var(--bg, #0a0a0b); }
 .cc-confirm dd small { display: block; color: var(--cc-dim); font-weight: 500; }
 .cc-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 14px; line-height: 1.45; cursor: pointer; }
 .cc-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--cc-violet); flex: none; }
+.cc-check:hover { color: var(--cc-ink); }
 .cc-err { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; background: color-mix(in srgb, var(--cc-bad) 10%, transparent); border: 1px solid color-mix(in srgb, var(--cc-bad) 30%, transparent); }
 .cc-done { text-align: left; }
 .cc-done-icon { font-size: 30px; }
