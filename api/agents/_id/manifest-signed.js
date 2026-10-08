@@ -10,7 +10,7 @@
 // /api/manifest-verify. Spec: specs/AGENT_MANIFEST.md (§ Signed envelope).
 
 import { sql } from '../../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope, isSameSiteOrigin } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { publishAgentManifest, IPFS_GATEWAYS } from '../../_lib/agent-manifest-publish.js';
@@ -33,6 +33,11 @@ async function ownerOf(req, agentId) {
 	}
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return { error: [401, 'unauthorized', 'sign in required'] };
+	// Publishing pins the agent's configuration, system prompt included, to IPFS
+	// for good. That is an agents:write act, never one a narrow key may take.
+	if (!hasScope(bearer.scope, 'agents:write')) {
+		return { error: [403, 'insufficient_scope', 'publishing a manifest needs the agents:write scope'] };
+	}
 	const [row] = await sql`SELECT user_id FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
 	if (!row) return { error: [404, 'not_found', 'agent not found'] };
 	if (row.user_id !== bearer.userId) return { error: [403, 'forbidden', 'not your agent'] };
