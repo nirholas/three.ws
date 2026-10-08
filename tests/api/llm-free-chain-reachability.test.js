@@ -29,6 +29,7 @@ const HOSTS = {
 	zai: 'api.z.ai',
 	cloudflare: 'api.cloudflare.com',
 	huggingface: 'router.huggingface.co',
+	kilo: 'api.kilo.ai',
 	ovh: 'oai.endpoints.kepler.ai.cloud.ovh.net',
 	gemini: 'generativelanguage.googleapis.com',
 	vertex: 'aiplatform.googleapis.com',
@@ -55,6 +56,10 @@ const FREE_CHAIN = [
 	// One NIM rung per nvapi key; same host and model, told apart by the key.
 	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-super-120b-a12b', auth: 'nvapi-x' },
 	{ provider: 'nvidia#2', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-super-120b-a12b', auth: 'nvapi-y' },
+	// Then Ultra on each key: a separate NIM function, so it answers while the
+	// Super function is throttled or retired.
+	{ provider: 'nvidia:ultra', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-x' },
+	{ provider: 'nvidia#2:ultra', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-y' },
 	{ provider: 'sambanova', host: HOSTS.sambanova, model: 'Meta-Llama-3.3-70B-Instruct' },
 	{ provider: 'mistral', host: HOSTS.mistral, model: 'mistral-small-latest' },
 	{ provider: 'zai', host: HOSTS.zai, model: 'glm-4.7-flash' },
@@ -62,12 +67,16 @@ const FREE_CHAIN = [
 	// Hugging Face Inference Providers, one rung per token's monthly credit.
 	{ provider: 'huggingface', host: HOSTS.huggingface, model: 'meta-llama/Llama-3.3-70B-Instruct', auth: 'hf-a' },
 	{ provider: 'huggingface#2', host: HOSTS.huggingface, model: 'meta-llama/Llama-3.3-70B-Instruct', auth: 'hf-b' },
+	// Kilo Code's keyless free pool, Nemotron on Kilo's own NVIDIA capacity.
+	{ provider: 'kilo', host: HOSTS.kilo, model: 'nvidia/nemotron-3-ultra-550b-a55b:free' },
+	{ provider: 'kilo:super', host: HOSTS.kilo, model: 'nvidia/nemotron-3-super-120b-a12b:free' },
 	{ provider: 'ovh', host: HOSTS.ovh, model: 'Meta-Llama-3_3-70B-Instruct' },
 	{ provider: 'gemini', host: HOSTS.gemini, model: 'gemini-2.5-flash-lite' },
 	{ provider: 'vertex-gemini', host: HOSTS.vertex, model: 'google/gemini-2.5-flash' },
 	{ provider: 'pollinations', host: HOSTS.pollinations, model: 'openai-fast' },
-	{ provider: 'llm7', host: HOSTS.llm7, model: 'gemini-3.1-flash-lite' },
+	{ provider: 'llm7', host: HOSTS.llm7, model: 'gemma4:31b' },
 	{ provider: 'siliconflow', host: HOSTS.siliconflow, model: 'Qwen/Qwen3-8B' },
+	{ provider: 'nvidia:lightning', host: HOSTS.nvidia, model: 'nvidia/nemotron-3.5-lightning-30b-a3b', auth: 'nvapi-x' },
 	{ provider: 'groq#instant', host: HOSTS.groq, model: 'openai/gpt-oss-20b' },
 ];
 
@@ -87,6 +96,7 @@ const ENV_KEYS = [
 	'CLOUDFLARE_AI_API_TOKEN',
 	'SILICONFLOW_API_KEY',
 	'LLM7_API_KEY',
+	'KILO_API_KEY',
 	'GEMINI_API_KEY',
 	'GOOGLE_CLOUD_PROJECT',
 	'GOOGLE_CLOUD_LOCATION_GEMINI',
@@ -227,50 +237,59 @@ describe('free chain: every rung is reachable through a transport-level failure'
 	}, 30_000);
 
 	// The keyless rungs are the floor of the platform: with zero env vars set the
-	// chain must still answer, and a transport failure on the first keyless rung
-	// must reach the second.
-	it('serves from Pollinations when OVH dies at the transport level and nothing is configured', async () => {
-		globalThis.fetch = vi.fn(async (url) => {
+	// chain must still answer, and a transport failure on each keyless rung must
+	// reach the next. Kilo (two models), OVH, Pollinations, then LLM7.
+	it('walks every keyless rung in order when each dies at the transport level and nothing is configured', async () => {
+		const order = [];
+		globalThis.fetch = vi.fn(async (url, opts) => {
 			const u = String(url);
-			if (u.includes(HOSTS.ovh)) throw transportFailure('reset');
-			if (u.includes(HOSTS.pollinations)) return okOpenAiShape('keyless floor', 'openai-fast');
-			throw new Error(`unexpected fetch: ${u}`);
-		});
-		const out = await llm.llmComplete({ user: 'u', timeoutMs: 20_000 });
-		expect(out.provider).toBe('pollinations');
-		expect(out.text).toBe('keyless floor');
-	}, 20_000);
-
-	// LLM7 was the third keyless rung until llm7.io retired its anonymous tier
-	// (401 invalid_api_key on every unauthenticated call, measured 2026-09-02),
-	// so it is key-gated now: with nothing configured it must NOT be dialled,
-	// because the answer cannot arrive and the round trip is pure latency on a
-	// chain that has already exhausted itself.
-	it('does not dial LLM7 with nothing configured, and reports the two keyless rungs it did try', async () => {
-		globalThis.fetch = vi.fn(async (url) => {
-			const u = String(url);
-			if (u.includes(HOSTS.llm7)) throw new Error('llm7 must not be dialled without a key');
-			throw transportFailure('reset');
-		});
-		await expect(llm.llmComplete({ user: 'u', timeoutMs: 20_000 })).rejects.toThrow(/ovh|pollinations/);
-		const dialled = globalThis.fetch.mock.calls.map(([u]) => String(u));
-		expect(dialled.some((u) => u.includes(HOSTS.ovh))).toBe(true);
-		expect(dialled.some((u) => u.includes(HOSTS.pollinations))).toBe(true);
-		expect(dialled.some((u) => u.includes(HOSTS.llm7))).toBe(false);
-	}, 20_000);
-
-	// With the key present it is a normal rung again, behind the other two.
-	it('serves from LLM7 when OVH and Pollinations both die and the key is set', async () => {
-		process.env.LLM7_API_KEY = 'l7';
-		globalThis.fetch = vi.fn(async (url) => {
-			const u = String(url);
-			if (u.includes(HOSTS.ovh)) throw transportFailure('reset');
-			if (u.includes(HOSTS.pollinations)) throw transportFailure('abort');
-			if (u.includes(HOSTS.llm7)) return okOpenAiShape('keyed step-down', 'gemini-3.1-flash-lite');
+			expect(opts.headers.authorization, `keyless rung sent auth: ${u}`).toBeUndefined();
+			if (u.includes(HOSTS.kilo)) {
+				order.push(`kilo:${JSON.parse(opts.body).model}`);
+				throw transportFailure('reset');
+			}
+			if (u.includes(HOSTS.ovh)) { order.push('ovh'); throw transportFailure('reset'); }
+			if (u.includes(HOSTS.pollinations)) { order.push('pollinations'); throw transportFailure('abort'); }
+			if (u.includes(HOSTS.llm7)) { order.push('llm7'); return okOpenAiShape('keyless floor', 'gemma4:31b'); }
 			throw new Error(`unexpected fetch: ${u}`);
 		});
 		const out = await llm.llmComplete({ user: 'u', timeoutMs: 20_000 });
 		expect(out.provider).toBe('llm7');
-		expect(out.text).toBe('keyed step-down');
+		expect(out.text).toBe('keyless floor');
+		expect(order).toEqual([
+			'kilo:nvidia/nemotron-3-ultra-550b-a55b:free',
+			'kilo:nvidia/nemotron-3-super-120b-a12b:free',
+			'ovh',
+			'pollinations',
+			'llm7',
+		]);
 	}, 20_000);
+
+	// LLM7 answered 401 to every keyless call on 2026-09-02 and serves keyless
+	// again since 2026-10-08. The key is optional: when set it rides along as a
+	// bearer token (higher rate limit), when unset no auth header is sent.
+	it('sends the LLM7 key as a bearer token when one is configured', async () => {
+		process.env.LLM7_API_KEY = 'l7';
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			const u = String(url);
+			if (u.includes(HOSTS.llm7)) {
+				expect(opts.headers.authorization).toBe('Bearer l7');
+				return okOpenAiShape('keyed llm7', 'gemma4:31b');
+			}
+			throw transportFailure('reset');
+		});
+		const out = await llm.llmComplete({ user: 'u', timeoutMs: 20_000 });
+		expect(out.provider).toBe('llm7');
+		expect(out.text).toBe('keyed llm7');
+	}, 20_000);
+
+	// A preferNvidia caller that leads with Lightning must not meet the same
+	// model again as the step-down rung.
+	it('does not repeat the Lightning rung when a preferNvidia caller already led with it', () => {
+		configureFreeLanes();
+		const led = llm.providerChain({ preferNvidia: true }).map((p) => `${p.name}|${p.model}`);
+		expect(led.filter((r) => r.endsWith('nemotron-3.5-lightning-30b-a3b'))).toHaveLength(1);
+		const other = llm.providerChain({ preferNvidia: true, nvidiaModel: 'nvidia/nemotron-3-ultra-550b-a55b' }).map((p) => p.name);
+		expect(other).toContain('nvidia:lightning');
+	});
 });

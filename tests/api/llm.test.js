@@ -48,6 +48,7 @@ const OPENAI_HOST = 'api.openai.com';
 const OVH_HOST = 'oai.endpoints.kepler.ai.cloud.ovh.net';
 const POLLINATIONS_HOST = 'text.pollinations.ai';
 const LLM7_HOST = 'api.llm7.io';
+const KILO_HOST = 'api.kilo.ai';
 
 const openaiShape = (content) => okJson({
 	choices: [{ message: { content } }],
@@ -158,25 +159,60 @@ describe('llmComplete — free platform providers', () => {
 		expect(calls[0].url).toContain(NVIDIA_HOST);
 	});
 
-	it('serves from OVH (keyless, no Authorization header) when no provider keys are configured at all', async () => {
-		const calls = installFetch({ [OVH_HOST]: openaiShape('from ovh anonymous') });
+	it('serves from Kilo (keyless, no Authorization header, :free only, reasoning off) when no provider keys are configured at all', async () => {
+		const calls = installFetch({ [KILO_HOST]: openaiShape('from kilo anonymous') });
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
-		expect(out.provider).toBe('ovh');
-		expect(out.text).toBe('from ovh anonymous');
+		expect(out.provider).toBe('kilo');
+		expect(out.text).toBe('from kilo anonymous');
 		// No key configured anywhere → no Authorization header sent at all, not
 		// "Bearer undefined" — the keyless tiers reject a bogus auth header.
 		expect(calls[0].headers.authorization).toBeUndefined();
+		// A keyless gateway must only ever be asked for a ':free' model, and
+		// with reasoning off, or the answer lands in the reasoning field.
+		expect(calls[0].body.model).toMatch(/:free$/);
+		expect(calls[0].body.reasoning).toEqual({ enabled: false });
+	});
+
+	it('serves from OVH (keyless) when both Kilo rungs are throttled and nothing is configured', async () => {
+		const calls = installFetch({
+			[KILO_HOST]: errResp(429, 'rate limited'),
+			[OVH_HOST]: openaiShape('from ovh anonymous'),
+		});
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('ovh');
+		expect(out.text).toBe('from ovh anonymous');
+		expect(calls.map((c) => c.body.model)).toEqual([
+			'nvidia/nemotron-3-ultra-550b-a55b:free',
+			'nvidia/nemotron-3-super-120b-a12b:free',
+			'Meta-Llama-3_3-70B-Instruct',
+		]);
+		expect(calls.at(-1).headers.authorization).toBeUndefined();
 	});
 
 	it('falls back to Pollinations (also keyless) when OVH errors and nothing else is configured', async () => {
 		const calls = installFetch({
+			[KILO_HOST]: errResp(429, 'rate limited'),
 			[OVH_HOST]: errResp(429, 'API rate limit exceeded'),
 			[POLLINATIONS_HOST]: openaiShape('from pollinations'),
 		});
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.provider).toBe('pollinations');
 		expect(out.text).toBe('from pollinations');
-		expect(calls.map((c) => (c.url.includes(OVH_HOST) ? 'ovh' : 'pollinations'))).toEqual(['ovh', 'pollinations']);
+		const host = (u) => [KILO_HOST, OVH_HOST, POLLINATIONS_HOST].find((h) => u.includes(h));
+		expect(calls.map((c) => host(c.url))).toEqual([KILO_HOST, KILO_HOST, OVH_HOST, POLLINATIONS_HOST]);
+	});
+
+	it('falls back to LLM7 keylessly when every other keyless rung is throttled', async () => {
+		const calls = installFetch({
+			[KILO_HOST]: errResp(429, 'rate limited'),
+			[OVH_HOST]: errResp(429, 'API rate limit exceeded'),
+			[POLLINATIONS_HOST]: errResp(429, 'queue full'),
+			[LLM7_HOST]: openaiShape('from llm7 anonymous'),
+		});
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('llm7');
+		expect(out.model).toBe('gemma4:31b');
+		expect(calls.at(-1).headers.authorization).toBeUndefined();
 	});
 });
 
@@ -605,8 +641,8 @@ describe('llmComplete — failure modes', () => {
 			},
 			text: async () => 'not json',
 		};
-		// Every reachable lane (groq + the two keyless rungs) returns garbage.
-		installFetch({ [GROQ_HOST]: badBody, [OVH_HOST]: badBody, [POLLINATIONS_HOST]: badBody, [LLM7_HOST]: badBody });
+		// Every reachable lane (groq + the keyless rungs) returns garbage.
+		installFetch({ [GROQ_HOST]: badBody, [KILO_HOST]: badBody, [OVH_HOST]: badBody, [POLLINATIONS_HOST]: badBody, [LLM7_HOST]: badBody });
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({
 			status: 502,
 			code: 'upstream_bad_body',
@@ -638,6 +674,7 @@ describe('llmComplete — failure modes', () => {
 		installFetch({
 			[GROQ_HOST]: openaiShape(''),
 			[OPENROUTER_HOST]: openaiShape(''),
+			[KILO_HOST]: openaiShape(''),
 			[OVH_HOST]: openaiShape(''),
 			[POLLINATIONS_HOST]: openaiShape(''),
 			[LLM7_HOST]: openaiShape(''),

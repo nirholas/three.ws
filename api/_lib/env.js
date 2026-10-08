@@ -651,15 +651,19 @@ export const env = {
 		return opt('SILICONFLOW_API_KEY');
 	},
 
-	// LLM7.io key (dash.llm7.io). This rung was added 2026-08-05 as a KEYLESS
-	// anonymous tier; llm7.io retired that tier and the endpoint now answers
-	// every unauthenticated request with 401 invalid_api_key (measured
-	// 2026-09-02, including the "unused" token its docs used to accept). The
-	// rung is therefore key-gated like every other optional one, so a
-	// deployment without the key skips it instead of spending a guaranteed
-	// round trip on it at the tail of the free chain.
+	// LLM7.io key (dash.llm7.io), optional. The rung is keyless: anonymous
+	// access reaches LLM7's `turbo` models (it was briefly closed with 401s on
+	// 2026-09-02 and answered keyless again on 2026-10-08). A free key only
+	// raises the rate limit.
 	get LLM7_API_KEY() {
 		return opt('LLM7_API_KEY');
+	},
+
+	// Kilo Code gateway key (app.kilo.ai/profile), optional. The Kilo rungs
+	// are keyless and only ever request ':free' models; a key only raises the
+	// anonymous ~200 req/hr limit.
+	get KILO_API_KEY() {
+		return opt('KILO_API_KEY');
 	},
 
 	// Cloudflare account id for Workers AI (dash.cloudflare.com). The Workers

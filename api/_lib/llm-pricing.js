@@ -104,6 +104,8 @@ const FREE_PROVIDERS = new Set([
 	'cloudflare',
 	'siliconflow',
 	'llm7',
+	// Kilo Code gateway: keyless, and the chain only ever sends ':free' ids.
+	'kilo',
 	// Inference Providers on each token's monthly included credit: the chain
 	// never buys pre-paid credit, so an exhausted token 402s and fails over.
 	'huggingface',

@@ -5,8 +5,9 @@
 //   • FREE PROVIDERS FIRST, ALWAYS. Groq, Cerebras, OpenRouter (paid model,
 //     then the :free variant on the same key), Gemini AI Studio, and NVIDIA
 //     NIM are platform-funded free tiers — the server holds those keys and
-//     callers use them at zero marginal cost. OVH AI Endpoints and Pollinations
-//     need no key at all (anonymous/keyless tiers) and are always in the chain,
+//     callers use them at zero marginal cost. Kilo Code's free pool, OVH AI
+//     Endpoints, Pollinations, and LLM7.io need no key at all
+//     (anonymous/keyless tiers) and are always in the chain,
 //     so llmConfigured() is never false even with zero env vars set. They form
 //     the default chain, tried in order, 70B-class models before any capability
 //     step-down, and every flow must survive on them alone: the paid keys in
@@ -15,8 +16,10 @@
 //
 //   • THE FREE TIER KEEPS GROWING. SambaNova, Mistral (Experiment tier),
 //     Z.AI GLM Flash, Cloudflare Workers AI, and SiliconFlow are optional
-//     keyed rungs (each skipped when its env var is unset), and LLM7.io is a
-//     second keyless anonymous rung alongside OVH and Pollinations. Every new
+//     keyed rungs (each skipped when its env var is unset). NVIDIA NIM runs
+//     three Nemotron models (Super, Ultra, Lightning) on one key, each its
+//     own NIM function, so one model's throttle or retirement is not the
+//     lane's. Every new
 //     free provider is an independent quota pool, so adding one raises the
 //     ceiling of traffic the platform serves at zero marginal cost.
 //
@@ -130,6 +133,30 @@ const NVIDIA_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
 // twice as NVIDIA retired catalog entries, and each time a test restating it by
 // hand went red for a reason that had nothing to do with the code.
 export const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3.5-lightning-30b-a3b';
+// Nemotron 3 Ultra 550B on the same nvapi key: the largest free model in the
+// chain (1.6s, clean content with thinking off, measured 2026-10-08). Every NIM
+// model is its own NVCF function with its own queue and retirement date, and
+// NVIDIA sizes the free rate limit by model, so a second model id behind the
+// Super rung survives the Super function 429ing, 410ing, or queueing. The
+// third-party models NIM also lists (DeepSeek, Kimi, GLM, Gemma) queued past
+// 60s on the free tier the same day, so they are deliberately not rungs.
+export const NVIDIA_ULTRA_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
+// Every NIM id the free chain pins, for /api/cron/free-model-audit.
+export const NVIDIA_PINNED_MODELS = Object.freeze([NVIDIA_MODEL, NVIDIA_ULTRA_MODEL, NVIDIA_NEMOTRON_MODEL]);
+// Kilo Code's gateway (api.kilo.ai) serves a free model pool with NO key and no
+// signup, about 200 req/hr. Its free Nemotron routes run on Kilo's own NVIDIA
+// capacity, so they are a quota pool independent of our nvapi key. Only
+// ':free' ids are used, so the lane cannot bill even when KILO_API_KEY is set.
+// Kilo routes these through reasoning by default and the answer then lands in
+// the reasoning field; `reasoning.enabled: false` keeps it in `content`
+// (Ultra 2.2s, Super 0.7s, both clean, measured 2026-10-08).
+const KILO_URL = 'https://api.kilo.ai/api/gateway/chat/completions';
+const KILO_RUNGS = Object.freeze([
+	{ name: 'kilo', model: 'nvidia/nemotron-3-ultra-550b-a55b:free' },
+	{ name: 'kilo:super', model: 'nvidia/nemotron-3-super-120b-a12b:free' },
+]);
+export const KILO_FREE_MODELS = Object.freeze(KILO_RUNGS.map((r) => r.model));
+const KILO_NO_REASONING = Object.freeze({ reasoning: { enabled: false } });
 // nemotron-3 puts its reasoning in a separate field only when thinking is off;
 // with it on, the chain of thought leaks into `content` (verified 2026-08-27).
 const NVIDIA_NO_THINK = Object.freeze({ chat_template_kwargs: { enable_thinking: false } });
@@ -164,14 +191,14 @@ const CLOUDFLARE_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 // of the free section; enable_thinking:false (extraBody below) keeps Qwen3's
 // reasoning mode off so message.content carries the actual answer.
 const SILICONFLOW_MODEL = 'Qwen/Qwen3-8B';
-// LLM7.io (api.llm7.io): community-run gateway, about 30 req/min per IP. Free
-// catalog probed live 2026-08-05; gemini-3.1-flash-lite returned real content
-// there, while the gpt-oss route spends its token budget on reasoning and can
-// hand back an empty content field, so it is deliberately not used. Added as a
-// KEYLESS rung; llm7.io has since retired its anonymous tier and answers every
-// unauthenticated request with 401 invalid_api_key (measured 2026-09-02), so
-// the rung is now gated on LLM7_API_KEY and skipped without one.
-const LLM7_MODEL = 'gemini-3.1-flash-lite';
+// LLM7.io (api.llm7.io): community-run gateway with tiered models. Anonymous
+// access is back for its `turbo` tier (it answered 401 to every keyless call on
+// 2026-09-02, then 200 again on 2026-10-08), so the rung is keyless once more;
+// LLM7_API_KEY only raises the rate limit. gemini-3.1-flash-lite, the old pin,
+// moved to the paid `pro` tier. gemma4:31b is turbo and answered clean content
+// in 0.9s; the gpt-oss route spends its budget on reasoning and returns empty
+// content, so it is deliberately not used.
+const LLM7_MODEL = 'gemma4:31b';
 // Pollinations' keyless anonymous tier: also no key, routes to a hosted
 // gpt-oss-20b. Smaller than the 70B rungs above it, so it sits in the
 // capability-step-down group alongside Groq's instant lane — an always-on
@@ -331,6 +358,7 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey, grokKey } = {
 				-- Multi-key rungs (nvidia#2, huggingface#2) meter like their base lane.
 				AND provider NOT LIKE 'nvidia%'
 				AND provider NOT LIKE 'huggingface%'
+				AND provider NOT LIKE 'kilo%'
 				AND provider NOT IN ('cerebras', 'gemini', 'ovh', 'pollinations', 'sambanova', 'mistral', 'zai', 'cloudflare', 'siliconflow', 'llm7')
 				AND created_at > NOW() - INTERVAL '24 hours'
 		`;
@@ -690,6 +718,18 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	});
+	// Then Ultra on each key: a different NIM function, so it still answers when
+	// the Super function above is throttled or retired.
+	nvidiaKeys.forEach((key, i) => {
+		chain.push(openaiCompatProvider({
+			name: `${i === 0 ? 'nvidia' : `nvidia#${i + 1}`}:ultra`,
+			key,
+			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+			model: NVIDIA_ULTRA_MODEL,
+			extraBody: NVIDIA_NO_THINK,
+			timeoutMs: nvidiaLaneTimeoutMs(),
+		}));
+	});
 	// SambaNova's free tier: the same Llama 3.3 70B on a fourth independent
 	// quota pool, so a day that exhausts Groq, Cerebras, and NVIDIA at once
 	// still has a 70B-class free rung with budget left.
@@ -745,6 +785,18 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			model: HF_MODEL,
 		}));
 	});
+	// Kilo Code's keyless free pool: Nemotron Ultra then Super on Kilo's own
+	// NVIDIA capacity. Always present (no key needed), and ahead of OVH because
+	// its 200 req/hr dwarfs OVH's 2 req/min.
+	KILO_RUNGS.forEach(({ name, model }) => {
+		chain.push(openaiCompatProvider({
+			name,
+			key: env.KILO_API_KEY,
+			url: KILO_URL,
+			model,
+			extraBody: KILO_NO_REASONING,
+		}));
+	});
 	// OVH AI Endpoints anonymous tier — no key required, always available.
 	// Last of the 70B-class free rungs because its per-model anonymous quota
 	// (2 req/min/IP) is the tightest in the chain; everything with a real key
@@ -778,18 +830,15 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 		url: 'https://text.pollinations.ai/openai',
 		model: POLLINATIONS_MODEL,
 	}));
-	// LLM7.io: sits with the step-down group (flash-lite class) right after
-	// Pollinations. Skipped without a key, because an unauthenticated call here
-	// is now a guaranteed 401: leaving it in the chain unconditionally spends a
-	// round trip per exhaustion for an answer that cannot arrive.
-	if (env.LLM7_API_KEY) {
-		chain.push(openaiCompatProvider({
-			name: 'llm7',
-			key: env.LLM7_API_KEY,
-			url: 'https://api.llm7.io/v1/chat/completions',
-			model: LLM7_MODEL,
-		}));
-	}
+	// LLM7.io: keyless step-down right after Pollinations, so a zero-config
+	// deployment still has a third anonymous rung. The key, when set, only
+	// raises the rate limit.
+	chain.push(openaiCompatProvider({
+		name: 'llm7',
+		key: env.LLM7_API_KEY,
+		url: 'https://api.llm7.io/v1/chat/completions',
+		model: LLM7_MODEL,
+	}));
 	// SiliconFlow free tier: keyed 8B step-down on its own quota pool.
 	// enable_thinking:false forces Qwen3 out of reasoning mode so the answer
 	// lands in message.content instead of a reasoning field.
@@ -800,6 +849,20 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			url: 'https://api.siliconflow.com/v1/chat/completions',
 			model: SILICONFLOW_MODEL,
 			extraBody: { enable_thinking: false },
+		}));
+	}
+	// NIM's compact Lightning model on the primary key: a third NIM function,
+	// in the step-down group because it is a 30B. Skipped when a preferNvidia
+	// caller already led the chain with this exact model.
+	const nvidiaLedWithLightning = preferNvidia && (nvidiaModel || NVIDIA_NEMOTRON_MODEL) === NVIDIA_NEMOTRON_MODEL;
+	if (env.NVIDIA_API_KEY && !nvidiaLedWithLightning) {
+		chain.push(openaiCompatProvider({
+			name: 'nvidia:lightning',
+			key: env.NVIDIA_API_KEY,
+			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+			model: NVIDIA_NEMOTRON_MODEL,
+			extraBody: NVIDIA_NO_THINK,
+			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	}
 	// Last free rung: Groq's instant lane. Smaller model (a capability
