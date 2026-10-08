@@ -22,6 +22,7 @@ import {
 	cronSecretFromService,
 	selectCrons,
 	credentialFlags,
+	missingCrons,
 } from '../scripts/create-gcp-scheduler.mjs';
 
 describe('runStateAction', () => {
@@ -280,5 +281,25 @@ describe('credentialFlags', () => {
 			.find((f) => f.startsWith('--oidc-service-account-email='))
 			.split('=')[1];
 		expect(deployed).toContain(email);
+	});
+});
+
+describe('missingCrons', () => {
+	const crons = [
+		{ path: '/api/cron/economy-tick', schedule: '* * * * *' },
+		{ path: '/api/cron/duels-tick', schedule: '*/15 * * * *' },
+	];
+
+	it('keeps only the declared crons with no live job', () => {
+		const live = ['projects/p/locations/us-central1/jobs/cron--api-cron-economy-tick'];
+		expect(missingCrons(crons, live)).toEqual([crons[1]]);
+	});
+
+	it('accepts bare job ids as well as full resource names', () => {
+		expect(missingCrons(crons, ['cron--api-cron-economy-tick', 'cron--api-cron-duels-tick'])).toEqual([]);
+	});
+
+	it('reports every cron missing when nothing is live', () => {
+		expect(missingCrons(crons, [])).toEqual(crons);
 	});
 });

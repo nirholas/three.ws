@@ -134,8 +134,11 @@ npm run build:gcp
 
 # Build image on Cloud Build (32-vCPU + BuildKit layer cache) + push + deploy.
 # Gated on check:dist, check:pages AND db:check so an incomplete dist/, an
-# unreachable page, or an out-of-date database can no longer ship. Ends with a
-# CDN purge and then smoke:prod against the live site.
+# unreachable page, or an out-of-date database can no longer ship. After the
+# submit it runs deploy:gcp:sync-crons, which creates a Cloud Scheduler job for
+# any cron declared in vercel.json that has none yet (existing jobs are never
+# touched), so a new cron starts firing with the code that serves it. Ends with
+# a CDN purge and then smoke:prod against the live site.
 npm run deploy:gcp
 
 # Or do build + submit + CDN purge in one (from a clean worktree):

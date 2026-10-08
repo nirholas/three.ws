@@ -38,6 +38,10 @@
 //
 //   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --only garment-job-sweep
 //
+// `--missing-only` creates just the declared crons that have no live job and
+// touches nothing else. `npm run deploy:gcp:sync-crons` runs it after every
+// deploy so a newly declared cron starts firing with the code that serves it.
+//
 // Auth: each job sends `Authorization: Bearer $CRON_SECRET`, exactly what the
 // api/cron/* handlers already validate. The secret is read from --env-file, then
 // process.env, then the live three-ws-api Cloud Run service (production's
@@ -145,6 +149,20 @@ export function selectCrons(crons, argv) {
 		throw new Error(`--only ${raw} matched none of the ${crons.length} crons declared in vercel.json.`);
 	}
 	return picked;
+}
+
+/**
+ * Narrow a sync to the declared crons that have no live job, for
+ * `--missing-only`. `deploy:gcp` runs that mode after every submit, because a
+ * cron added to vercel.json otherwise never fires until someone remembers to
+ * sync by hand: four handlers (x402-settlement-reconcile among them) shipped
+ * with no Scheduler job and sat dead for up to three weeks before 2026-10-08.
+ * Existing jobs are never touched in this mode, so it cannot rewrite a
+ * schedule, a credential, or a deliberate incident pause.
+ */
+export function missingCrons(crons, liveJobNames) {
+	const live = new Set([...liveJobNames].map((name) => String(name).split('/').pop()));
+	return crons.filter((c) => !live.has(jobId(c.path)));
 }
 
 /** Read CRON_SECRET out of a `--env-file <path>` argument, if one was given. */
@@ -316,6 +334,12 @@ async function main() {
 	}
 	if (selected.length !== crons.length) {
 		console.log(`--only: syncing ${selected.length} of ${crons.length} declared crons.`);
+	}
+	if (argv.includes('--missing-only')) {
+		const { stdout } = await gcloud(['list', '--format=value(name)']);
+		selected = missingCrons(selected, stdout.split('\n').filter(Boolean));
+		console.log(`--missing-only: ${selected.length} declared cron(s) have no live job.`);
+		if (!selected.length) return;
 	}
 
 	const queue = [...selected];
