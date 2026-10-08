@@ -55,7 +55,7 @@ export const def = {
 			.array(z.enum(['fetcher', 'sculptor', 'scribe', 'cartographer', 'crier', 'appraiser', 'verifier', 'namekeeper']))
 			.min(1)
 			.default(['fetcher'])
-			.describe('The professions you can work — OR-ed into your AgenC capability bitmap (default ["fetcher"]).'),
+			.describe('The professions you can work, OR-ed into your AgenC capability bitmap (default ["fetcher"]).'),
 		endpoint: z
 			.string()
 			.url()
