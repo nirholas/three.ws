@@ -26,6 +26,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { fetchBirdeyeOhlcv, birdeyeConfigured } from '../_lib/birdeye.js';
+import { topPoolForToken } from '../_lib/market/ohlcv.js';
 
 const VALID_INTERVALS = new Set([
 	'1m',
@@ -197,31 +198,35 @@ async function geckoFetch(url, { timeoutMs }) {
 // state, not an upstream outage, so it must never be retried or served stale.
 class NoPoolError extends Error {}
 
+// The pool lookup goes through the shared resolver in api/_lib/market/ohlcv.js
+// (GeckoTerminal, then DexScreener's deepest pair, then Birdeye markets, with a
+// shared last-good copy) rather than a second GeckoTerminal call of our own.
+// The Birdeye rung above already ran that same resolver for this mint, and its
+// GeckoTerminal reads are memoized per URL, so this lookup normally costs no
+// request at all. It used to re-ask GeckoTerminal for the identical pools URL a
+// few milliseconds later; on the shared Cloud Run egress that second call drew
+// 429s, the throttle read as an outage, and a coin with no market anywhere got
+// a 502 instead of the honest no_market answer (reproduced 2026-10-08).
 async function fetchGeckoPoolAddress(mint) {
 	const hit = _poolCache.get(mint);
 	if (hit && hit.expiresAt > Date.now()) return hit.address;
 
-	const url = `${GECKO_API}/networks/solana/tokens/${mint}/pools?page=1`;
-	const resp = await geckoFetch(url, { timeoutMs: 7000 });
-	// 404 = GeckoTerminal has never indexed this token: it has no market, which is
-	// an answer, not an outage. Any other non-OK status is a real upstream fault
-	// and must bubble so the caller can fall back to stale data.
-	if (resp.status === 404) {
-		_poolCache.set(mint, { address: null, expiresAt: Date.now() + POOL_TTL_MS });
-		return null;
+	let address;
+	try {
+		address = await withGeckoSlot(() => topPoolForToken(mint, 'solana'));
+	} catch (err) {
+		// 404 = no source indexes a market for this token: an answer, not an
+		// outage. Any other status is a real upstream fault and must bubble so the
+		// caller can fall back to the next rung or to stale data.
+		if (err?.status === 404) {
+			_poolCache.set(mint, { address: null, expiresAt: Date.now() + POOL_TTL_MS });
+			return null;
+		}
+		throw err;
 	}
-	if (!resp.ok) throw new Error(`GeckoTerminal pools ${resp.status}`);
-	const body = await resp.json().catch(() => null);
-	const pools = body?.data;
-	if (!Array.isArray(pools) || !pools.length) {
-		_poolCache.set(mint, { address: null, expiresAt: Date.now() + POOL_TTL_MS });
-		return null;
-	}
-	// Prefer the pool with the most volume (first = highest by GeckoTerminal default ranking).
-	const address = pools[0]?.attributes?.address ?? null;
-	_poolCache.set(mint, { address, expiresAt: Date.now() + POOL_TTL_MS });
+	_poolCache.set(mint, { address: address || null, expiresAt: Date.now() + POOL_TTL_MS });
 	if (_poolCache.size > 512) _poolCache.delete(_poolCache.keys().next().value);
-	return address;
+	return address || null;
 }
 
 async function fetchGeckoOhlcv({ mint, interval, from, to }) {

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "Coin charts say plainly when a coin has no market yet",
+			"summary": "A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.",
+			"tags": [
+				"fix"
+			],
+			"link": "/terminal"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "3D Studio results now hand every agent plain links to the model",
 			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
 			"tags": [

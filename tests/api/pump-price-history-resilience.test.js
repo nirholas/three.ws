@@ -46,15 +46,19 @@ function makeRes() {
 }
 function getJson(res) { return JSON.parse(res._body); }
 
+// Real Response objects: the pool lookup runs through the shared market
+// resolver (api/_lib/market/ohlcv.js), which reads bodies and headers the way
+// fetch hands them back.
+function jsonResponse(status, body) {
+	return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+}
 function poolResponse() {
-	return { ok: true, status: 200, json: async () => ({ data: [{ attributes: { address: POOL } }] }) };
+	return jsonResponse(200, { data: [{ attributes: { address: POOL } }] });
 }
 function ohlcvResponse() {
-	return {
-		ok: true,
-		status: 200,
-		json: async () => ({ data: { attributes: { ohlcv_list: [[Math.floor(Date.now() / 1000) - 60, 1, 1.1, 0.9, 1.05, 100]] } } }),
-	};
+	return jsonResponse(200, {
+		data: { attributes: { ohlcv_list: [[Math.floor(Date.now() / 1000) - 60, 1, 1.1, 0.9, 1.05, 100]] } },
+	});
 }
 
 // Base58 alphabet (no 0/O/I/l) so a generated test mint always passes
@@ -91,7 +95,7 @@ describe('geckoFetch retry (via the handler)', () => {
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 			call += 1;
 			if (call === 1) return poolResponse();
-			if (call === 2) return { ok: false, status: 429, json: async () => ({}) };
+			if (call === 2) return jsonResponse(429, {});
 			return ohlcvResponse();
 		});
 		const res = makeRes();
@@ -105,7 +109,7 @@ describe('geckoFetch retry (via the handler)', () => {
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 			call += 1;
 			if (call === 1) return poolResponse();
-			if (call === 2) return { ok: false, status: 502, json: async () => ({}) };
+			if (call === 2) return jsonResponse(502, {});
 			return ohlcvResponse();
 		});
 		const res = makeRes();
@@ -128,7 +132,7 @@ describe('geckoFetch retry (via the handler)', () => {
 	});
 
 	it('still 502s honestly when every attempt fails and there is no stale fallback', async () => {
-		vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
+		vi.spyOn(globalThis, 'fetch').mockImplementation(async () => jsonResponse(500, {}));
 		const res = makeRes();
 		await handler(makeReq(freshQuery()), res);
 		expect(res.statusCode).toBe(502);
@@ -138,8 +142,8 @@ describe('geckoFetch retry (via the handler)', () => {
 	it('serves the honest no_market 404 when neither GeckoTerminal nor pump.fun has a market, without retrying', async () => {
 		let poolCalls = 0;
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
-			if (String(url).includes('/pools?')) { poolCalls += 1; return { ok: false, status: 404, json: async () => ({}) }; }
-			if (String(url).includes('swap-api.pump.fun')) return { ok: false, status: 404, json: async () => ({}) };
+			if (String(url).includes('/pools?')) { poolCalls += 1; return jsonResponse(404, {}); }
+			if (String(url).includes('swap-api.pump.fun')) return jsonResponse(404, {});
 			throw new Error('should never reach the ohlcv endpoint');
 		});
 		const res = makeRes();
@@ -154,7 +158,7 @@ describe('pump.fun candle rung', () => {
 	it('charts a young pump.fun coin GeckoTerminal has not indexed yet', async () => {
 		const now = Math.floor(Date.now() / 1000);
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
-			if (String(url).includes('/pools?')) return { ok: false, status: 404, json: async () => ({}) };
+			if (String(url).includes('/pools?')) return jsonResponse(404, {});
 			if (String(url).includes('swap-api.pump.fun')) {
 				return {
 					ok: true,
@@ -252,5 +256,37 @@ describe('in-flight de-duplication', () => {
 		// one ohlcv fetch — not five independent chains.
 		expect(poolCalls).toBe(1);
 		expect(ohlcvCalls).toBe(1);
+	});
+});
+
+// Production 2026-10-08: the Birdeye rung's own fallback (api/_lib/birdeye.js)
+// had already asked GeckoTerminal for the mint's pools and been told "none".
+// This handler then re-asked the identical URL milliseconds later, the shared
+// Cloud Run egress drew 429s on it, the throttle read as an outage, and a coin
+// with no market anywhere answered 502 instead of no_market.
+describe('pool lookup shares the market resolver', () => {
+	it('reuses the earlier "no pools" answer instead of re-asking a throttled GeckoTerminal', async () => {
+		const { topPoolForToken } = await import('../../api/_lib/market/ohlcv.js');
+		const mint = `${MINT.slice(0, 34)}${safeSuffix(77_001)}pump`;
+		let poolCalls = 0;
+		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+			const u = String(url);
+			if (u.includes('/pools?')) {
+				poolCalls += 1;
+				return poolCalls === 1 ? jsonResponse(200, { data: [] }) : jsonResponse(429, {});
+			}
+			if (u.includes('api.dexscreener.com')) return jsonResponse(200, { pairs: [] });
+			if (u.includes('swap-api.pump.fun')) return jsonResponse(200, []);
+			throw new Error(`unexpected upstream ${u}`);
+		});
+
+		// What the Birdeye rung's GeckoTerminal fallback does first in production.
+		await expect(topPoolForToken(mint, 'solana')).rejects.toMatchObject({ status: 404 });
+
+		const res = makeRes();
+		await handler(makeReq(freshQuery(mint)), res);
+		expect(res.statusCode).toBe(404);
+		expect(getJson(res).error).toBe('no_market');
+		expect(poolCalls).toBe(1);
 	});
 });
