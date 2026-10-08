@@ -28,7 +28,7 @@
  */
 
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { rankNarratives } from '../_lib/launcher-trends.js';
@@ -44,7 +44,7 @@ async function resolveUserId(req) {
 	if (session?.id) return session.id;
 	const bearer = extractBearer(req);
 	if (bearer) {
-		const auth = await authenticateBearer(bearer).catch(() => null);
+		const auth = assertBearerMaySpend(await authenticateBearer(bearer).catch(() => null), req);
 		if (auth?.userId) return auth.userId;
 	}
 	return null;

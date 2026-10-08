@@ -56,7 +56,7 @@ import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { sql } from '../_lib/db.js';
 import { resolveSocialReward } from '../_lib/github-reward.js';
 import { submitProtected } from '../_lib/execution-engine.js';
-import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, isSameSiteOrigin, assertBearerMaySpend } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited, respondError } from '../_lib/http.js';
 import { putObject, publicUrl as r2PublicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { env } from '../_lib/env.js';
@@ -168,7 +168,9 @@ function readLimit(url, fallback, max) {
 	return Math.min(Math.max(1, n), max);
 }
 
-async function resolveAuth(req) {
+// `spend: true` marks a handler that signs with an agent's custodial key; a
+// bearer must then hold wallet:write, not just any grant on the account.
+async function resolveAuth(req, { spend = false } = {}) {
 	const session = await getSessionUser(req);
 	if (session) {
 		// CSRF defense-in-depth for the cookie path: these handlers sign real
@@ -183,8 +185,9 @@ async function resolveAuth(req) {
 		return { userId: session.id };
 	}
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId };
-	return null;
+	if (!bearer) return null;
+	if (spend) assertBearerMaySpend(bearer, req);
+	return { userId: bearer.userId };
 }
 
 /**
@@ -3657,7 +3660,7 @@ async function handleStrategyCloseAll(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req);
+	const auth = await resolveAuth(req, { spend: true });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
@@ -3759,7 +3762,14 @@ async function handleStrategyRun(req, res) {
 		walletAddress = null,
 		agentMeta = null;
 	if (mode === 'live') {
-		const auth = await resolveAuth(req);
+		// This handler is not behind wrap(), so a refusal thrown by resolveAuth
+		// (cross-site cookie, bearer without wallet:write) is answered here.
+		let auth;
+		try {
+			auth = await resolveAuth(req, { spend: true });
+		} catch (e) {
+			return error(res, e.status || 403, e.code || 'forbidden', e.message);
+		}
 		if (!auth) return error(res, 401, 'unauthorized', 'sign in required for live mode');
 		if (!body.agentId)
 			return error(res, 400, 'validation_error', 'agentId required for live mode');

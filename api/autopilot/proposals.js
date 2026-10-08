@@ -16,7 +16,7 @@
 //   action = 'adjust'    → { proposalId, params } edit a pending proposal's params.
 
 import { sql } from '../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
@@ -33,7 +33,7 @@ export const maxDuration = 60;
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

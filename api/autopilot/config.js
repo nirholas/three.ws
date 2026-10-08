@@ -9,7 +9,7 @@
 // without a scope the owner granted here. $THREE is the only coin referenced.
 
 import { sql } from '../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
@@ -19,7 +19,7 @@ import { isUuid } from '../_lib/validate.js';
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

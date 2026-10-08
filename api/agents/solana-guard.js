@@ -11,7 +11,7 @@
 // PUT   → update config (sensitivity | enabled | safe_address | clear_learned)   [CSRF]
 // POST  → adjudicate { event_id, action: approve|deny|mark_swept } | { action: unfreeze }  [CSRF]
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -26,7 +26,7 @@ import {
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }

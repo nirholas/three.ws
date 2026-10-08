@@ -23,7 +23,7 @@
  */
 
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, assertBearerMaySpend } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
@@ -45,7 +45,7 @@ const BODY = z.object({
 async function resolveUserId(req) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return bearer.userId;
 	return null;
 }
@@ -54,7 +54,13 @@ export default async function handler(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const userId = await resolveUserId(req);
+	// Not behind wrap(): answer a bearer without wallet:write here.
+	let userId;
+	try {
+		userId = await resolveUserId(req);
+	} catch (e) {
+		return error(res, e.status || 403, e.code || 'forbidden', e.message);
+	}
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in to manage the sniper');
 
 	const rlUser = await limits.tradePerUser(userId);
