@@ -1,7 +1,7 @@
 {
 	"id": "ai-3d-skills",
-	"contentHash": "aa6e3ef6a34a5650a638dc0a5edcdbf2289c74b7894e0bcfcb15096d7ff7f7de",
-	"reviewedAt": "2026-09-18T17:43:24.161Z",
+	"contentHash": "fd4e2ce28b18656c5dbaf27f2faac52affde51ecaf75b6e0670d50523c4e89aa",
+	"reviewedAt": "2026-10-08T20:01:41.774Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -16,7 +16,7 @@
 				"kind": "evidence:page",
 				"target": "https://three.ws/api/catalog?limit=1",
 				"ok": true,
-				"detail": "live page shows \"\"total\":3531\""
+				"detail": "live page shows \"\"total\":3961\""
 			},
 			{
 				"claim": "free 3D skills for Claude",
@@ -74,6 +74,12 @@
 			},
 			{
 				"kind": "probe:api",
+				"target": "the free catalog still holds 3,500+ assets",
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
+			},
+			{
+				"kind": "probe:api",
 				"target": "the skills doc is live",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
@@ -92,19 +98,11 @@
 			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
-			"voice": 4,
+			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "voice",
-				"quote": "No account. No API key.",
-				"problem": "Two clipped fragments back to back drift toward the banned one-word-sentence drumbeat pattern, though both statements are verified in the skill files and the effect here is mild.",
-				"fix": "Optional merge: 'No account or API key needed.' Not required to ship."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"Your AI can make 3D now.\n\nInstall our free 3D skills for Claude, then ask it for a chair.\n\nIt checks 3,500+ free 3D assets first. If nothing fits, it makes a new model from your words.\n\nNo account. No API key.\n\nthree.ws/docs/agent-skills"
@@ -113,10 +111,10 @@
 				"A three.ws card reading 'Your AI can make 3D now.' beside a browser window showing the free three.ws object library: a grid of CC0 3D models including an alarm clock, a ceramic vase, an American football and an arm chair, each with Preview, AR and Download buttons"
 			]
 		},
-		"summary": "Every claim passes verification against live pages and skill files, the image shows the real catalog and matches the copy, and the post fits the length band with a mechanism-led opener. The only note is a minor stylistic drumbeat in the final short lines, which does not block publication.",
+		"summary": "Every claim passed verification against live pages and skill files, including the 3,500+ catalog figure backed by the live total of 3,961. The card image matches the copy, the alt text is accurate, and the post follows the voice contract exactly. Ship it.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
-			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],

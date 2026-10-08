@@ -22,6 +22,14 @@ const INPUT_DIRS = [...vite.matchAll(/resolve\(__dirname,\s*'(pages\/[a-z0-9-]+)
 // the blog, news, events and demo pages are generated into dist/ by their own
 // builders, and a capture-group destination ($1) names no single file.
 const GENERATED = /^(docs|blog|news|events|demos)\/|\$\d/;
+// Separate Vite apps whose output is a gitignored build artifact under public/,
+// so the page exists only after its builder has run. Each one is accepted only
+// while that builder still writes there and still runs in the deploy build
+// ahead of the frontend build, which is what the second test pins.
+const SUB_APPS = {
+	'chat/': { builder: 'build:chat', config: 'chat/vite.config.js', outDir: '../public/chat' },
+};
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
 function unbuiltDestinations() {
 	const missing = new Set();
@@ -29,6 +37,7 @@ function unbuiltDestinations() {
 		if (!route.dest || !/\.html(\?|$)/.test(route.dest)) continue;
 		const dest = route.dest.replace(/^\//, '').replace(/\?.*$/, '');
 		if (GENERATED.test(dest)) continue;
+		if (Object.keys(SUB_APPS).some((dir) => dest.startsWith(dir))) continue; // built by its own app
 		if (existsSync(resolve(root, 'public', dest))) continue; // copied verbatim
 		const source = `pages/${dest}`;
 		if (INPUTS.has(source)) continue;
@@ -45,5 +54,14 @@ describe('vercel.json routes and the production build', () => {
 
 	it('every routed static page is emitted by the build', () => {
 		expect(unbuiltDestinations()).toEqual([]);
+	});
+
+	it.each(Object.entries(SUB_APPS))('the %s sub-app is built into public/ before the frontend build', (dir, app) => {
+		const config = readFileSync(resolve(root, app.config), 'utf8');
+		expect(config, `${app.config} no longer writes to ${app.outDir}`).toContain(`outDir: '${app.outDir}'`);
+		const chain = (pkg.scripts['build:gcp'] || '').split(/\s*&&\s*/);
+		const builder = chain.indexOf(`npm run ${app.builder}`);
+		expect(builder, `build:gcp never runs ${app.builder}, so /${dir} would 404 in production`).toBeGreaterThanOrEqual(0);
+		expect(builder).toBeLessThan(chain.indexOf('npm run build'));
 	});
 });

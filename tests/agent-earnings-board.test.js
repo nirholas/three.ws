@@ -29,7 +29,7 @@ vi.mock('../api/_lib/rate-limit.js', async (importActual) => {
 	return { ...actual, limits: new Proxy({}, { get: () => ok }) };
 });
 vi.mock('../api/_lib/sol-price.js', () => ({ solPriceUsd: async () => 100 }));
-vi.mock('../api/_lib/r2.js', () => ({ publicUrl: (k) => `https://cdn.three.ws.test/${k}` }));
+vi.mock('../api/_lib/r2.js', () => ({ publicUrl: (k) => `https://three.ws/cdn/${k}` }));
 
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 

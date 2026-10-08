@@ -1,9 +1,12 @@
 {
 	"id": "galaxy",
 	"contentHash": "baa1b95fe120e328eee1b2f2312d14182c0eafd8e3c31da69e14f72daa68e896",
-	"reviewedAt": "2026-09-20T07:15:37.315Z",
-	"passed": true,
-	"blockers": [],
+	"reviewedAt": "2026-10-08T20:03:47.569Z",
+	"passed": false,
+	"blockers": [
+		"editor (visual): The pack states the embedding provider is deliberately not named because the live map is currently built by the fallback lane, not the preferred one. The attached frame displays an IBM Granite on watsonx.ai badge, which contradicts that note. Per policy, when the screenshot disagrees with the live product state the screenshot is stale: it must be recaptured, and the copy must never be adjusted to match a stale image.",
+		"editor verdict is revise"
+	],
 	"texts": [
 		"Agent Galaxy is a 3D star-map of every published agent, placed by meaning. Type what you want in plain language and the map flies to the closest ones. three.ws/galaxy",
 		"Proximity is similarity: agents that do similar things sit near each other, so browsing the map is browsing by meaning rather than by keyword.",
@@ -62,34 +65,58 @@
 		]
 	},
 	"editor": {
-		"verdict": "publish",
+		"verdict": "revise",
 		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
+			"accuracy": 4,
+			"clarity": 4,
+			"specificity": 4,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 2
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "visual",
+				"quote": "Positioned by IBM Granite embeddings on watsonx.ai (badge visible in the screenshot)",
+				"problem": "The pack states the embedding provider is deliberately not named because the live map is currently built by the fallback lane, not the preferred one. The attached frame displays an IBM Granite on watsonx.ai badge, which contradicts that note. Per policy, when the screenshot disagrees with the live product state the screenshot is stale: it must be recaptured, and the copy must never be adjusted to match a stale image.",
+				"fix": "Re-run npm run announce:media -- --only galaxy-hero against the live route and replace the attachment with a frame that reflects the current build. If the live page still shows the IBM Granite badge, then the pack note is outdated and the badge claim must be verified with a passing check before shipping."
+			},
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "Alt text: \"hundreds of labelled agent stars\"",
+				"problem": "The frame shows 600 agents and 8 constellations per the in-image counters, and most stars are unlabelled; only constellation names and one agent card carry labels. The alt text overstates labelling.",
+				"fix": "Use: A dark 3D star map on the Agent Galaxy page with colored clusters of agent stars, a search-by-meaning box on the left, and a constellations panel listing eight groups on the right."
+			},
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones.",
+				"problem": "Post 3 restates post 1's mechanism almost verbatim (plain language, closest agents), so the thread's final beat adds little new information. The verified docs also support the stronger, more specific framing already used in post 2.",
+				"fix": "Keep post 3 but differentiate it, e.g.: The same embedding model that placed the stars also ranks your query, so search and layout agree on what closest means."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"Agent Galaxy is a 3D star-map of every published agent, placed by meaning. Type what you want in plain language and the map flies to the closest ones. three.ws/galaxy",
 				"Proximity is similarity: agents that do similar things sit near each other, so browsing the map is browsing by meaning rather than by keyword.",
-				"Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones."
+				"The same embedding model that placed the stars also ranks your query, so search and the layout agree on what closest means."
 			],
 			"altText": [
-				"The Agent Galaxy page with hundreds of labelled agent stars clustered in 3D space and the natural-language search box over them."
+				"A dark 3D star map on the Agent Galaxy page with colored clusters of agent stars, a search-by-meaning box on the left, and a constellations panel listing eight groups on the right."
 			]
 		},
-		"summary": "All four claims are verified word-for-word against docs/galaxy.md, both API probes pass, the link returns 200, and the screenshot matches the copy (600 agents, no contradicted numbers). Voice, length, alt text, and visual all comply with the house contract; ship as is.",
+		"summary": "All copy claims pass verification and the voice is clean. The blocker is the attachment: it shows an IBM Granite on watsonx.ai badge that the pack explicitly says is not the current live build, so the frame must be recaptured before this ships.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
-			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": []
+		"rewriteFindings": [
+			"claims: claim \"Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones.\" does not appear in the copy; claims must quote the post"
+		]
 	},
 	"editorError": null
 }

@@ -802,7 +802,7 @@
 						{
 							"type": "page",
 							"url": "https://three.ws/api/catalog?limit=1",
-							"contains": "\"total\":3531"
+							"contains": "\"total\":3961"
 						}
 					]
 				},
@@ -872,6 +872,17 @@
 					"url": "https://three.ws/api/catalog?q=chair&limit=3",
 					"expect": {
 						"contains": "ArmChair_01"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the free catalog still holds 3,500+ assets",
+					"url": "https://three.ws/api/catalog?limit=1",
+					"expect": {
+						"json": {
+							"path": "total",
+							"min": 3500
+						}
 					}
 				},
 				{
@@ -1667,7 +1678,8 @@
 		},
 		{
 			"id": "galaxy",
-			"status": "approved",
+			"status": "review",
+			"note": "Returned to review 2026-10-08: the 2026-09-20 review expired, and the re-review (data/x-content/reviews/galaxy.json) blocks on the attached frame, which shows the /galaxy badge 'Positioned by IBM Granite embeddings on watsonx.ai' while the live map reports model nvidia/nemotron-3-embed-1b, the fallback lane. The badge in pages/galaxy.html is static. Make it follow the live model, deploy, recapture galaxy-hero with npm run announce:media -- --only galaxy-hero, then review and approve again.",
 			"kind": "post",
 			"tier": 1,
 			"lane": "labs",
