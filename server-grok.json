@@ -1,0 +1,25 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/threews-grok",
+	"title": "three.ws for Grok",
+	"websiteUrl": "https://three.ws/docs/grok",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": ["any"]
+		}
+	],
+	"description": "Free text/image to 3D for Grok Bot, plus your three.ws agents once signed in. Never spends.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://three.ws/api/mcp-grok"
+		}
+	]
+}

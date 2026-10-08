@@ -79,6 +79,15 @@
 			"documentation": "https://three.ws/docs/mcp-studio"
 		},
 		{
+			"name": "Grok",
+			"endpoint": "https://three.ws/api/mcp-grok",
+			"transport": "streamable-http",
+			"auth": "none for the free 3D tools; OAuth 2.1 or a connector API key adds the account's agent tools",
+			"signIn": "https://three.ws/api/mcp-grok?auth=oauth",
+			"description": "One connector URL for Grok Bot and the xAI API: the free 3D studio with agent-ready links and no widgets, plus your agents, their memory and skills once signed in. Never lists a wallet or payment tool.",
+			"documentation": "https://three.ws/docs/grok"
+		},
+		{
 			"name": "Agent wallet",
 			"endpoint": "https://three.ws/api/mcp-agent",
 			"transport": "streamable-http",

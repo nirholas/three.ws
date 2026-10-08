@@ -21,7 +21,14 @@ import { env } from './env.js';
 // Paths, not URLs: the origin is env.APP_ORIGIN at call time. Keep in step
 // with the servers in public/.well-known/mcp.json whose auth names OAuth or a
 // bearer (tests/mcp-resources.test.js fails when they drift).
-export const OAUTH_MCP_PATHS = Object.freeze(['/api/mcp', '/api/mcp-3d', '/api/mcp-agent', '/api/mcp-bazaar', '/api/ibm-mcp']);
+export const OAUTH_MCP_PATHS = Object.freeze([
+	'/api/mcp',
+	'/api/mcp-3d',
+	'/api/mcp-agent',
+	'/api/mcp-bazaar',
+	'/api/ibm-mcp',
+	'/api/mcp-grok',
+]);
 
 const PLATFORM_PATH = '/api/mcp';
 const PRM_ROOT = '/.well-known/oauth-protected-resource';

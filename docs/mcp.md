@@ -51,19 +51,20 @@ The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.
 
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 
-**Seven hosted remote servers** (Streamable HTTP, no install):
+**Eight hosted remote servers** (Streamable HTTP, no install):
 
 | Server | Endpoint | What it does |
 |--------|----------|--------------|
 | three.ws | `/api/mcp` | Avatars, glTF/GLB validation, agent data, memory, copy-trading, a connected home (this page) |
 | 3D Studio | `/api/mcp-3d` | Paid text/image→3D, rigging, retexture, optimization |
 | 3D Studio (free) | `/api/mcp-studio` | Free text/image→3D and rigged avatars — no auth, no payment |
+| Grok | `/api/mcp-grok` | One connector URL for Grok Bot and the xAI API: the free studio with no widgets, plus your agents, memory and skills once signed in (OAuth 2.1 or a connector key). Never lists a value-moving tool. See [three.ws for Grok](./grok.md) |
 | Agent wallet | `/api/mcp-agent` | The agent's custodial wallet: balance, find + pay services, and `monetize_endpoint` |
 | x402 Bazaar | `/api/mcp-bazaar` | Discover and price paid agent services across the facilitator network |
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-The free studio also has two client-tuned doors on the same tools and quota: `/api/mcp-chatgpt` for the ChatGPT plugin directory, and `/api/mcp-grok` for Grok Bot, Grok connectors and the xAI API, where no call hangs and the quota follows your MCP session. See [three.ws for Grok](./grok.md).
+The free studio also has two client-tuned doors on the same tools and quota: `/api/mcp-chatgpt` for the ChatGPT plugin directory, and `/api/mcp-grok` for Grok Bot, Grok connectors and the xAI API, where no call hangs, the quota follows your MCP session, and a signed-in connector also gets the account's agent tools (never a wallet tool). See [three.ws for Grok](./grok.md).
 
 **Forty-two install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
@@ -328,6 +329,7 @@ The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-k
 | Core | `https://three.ws/api/mcp` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp`. Authentication: API key or OAuth 2.1 |
 | 3D Studio | `https://three.ws/api/mcp-3d` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-3d`. Authentication: API key or OAuth 2.1 |
 | 3D Studio (free) | `https://three.ws/api/mcp-studio` | Streamable HTTP | None | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-studio`. Authentication: None |
+| Grok | `https://three.ws/api/mcp-grok` | Streamable HTTP | None, API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-grok`. Authentication: None for the free studio; API key (connector key) adds your agent tools; for OAuth 2.1 use `https://three.ws/api/mcp-grok?auth=oauth` |
 | Agent wallet | `https://three.ws/api/mcp-agent` | Streamable HTTP | API key (read-only scopes), OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-agent`. Authentication: connector key (browses and quotes; spending answers with a link to three.ws) |
 | x402 Bazaar | `https://three.ws/api/mcp-bazaar` | Streamable HTTP | API key, OAuth 2.1 | Transport: Streamable HTTP. URL: `https://three.ws/api/mcp-bazaar`. Authentication: API key or OAuth 2.1 |
 | pump.fun | `https://three.ws/api/pump-fun-mcp` | Streamable HTTP | None (read-only tools), API key | Transport: Streamable HTTP. URL: `https://three.ws/api/pump-fun-mcp`. Authentication: None |

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "One Grok Bot connector for 3D and your agents",
+			"summary": "https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Give the same URL a connector API key, or sign it in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading, launch or delete tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/grok"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "Long 3D jobs and safe retries for AI agents",
 			"summary": "Agents that run on schedules can now generate 3D models without ever making the same model twice. Every generation tool on the free 3D Studio MCP server accepts an optional idempotency_key: retry a call that timed out with the same key and you get the first call's job back instead of a second generation, and the retry costs none of your quota. A new get_job tool reports any job's status, progress and time left, hands back the viewer, download, picture and embed links when it is done, and says what went wrong and what to do next when it fails. MCP clients that ask for progress updates now receive them live while the model renders.",
 			"tags": [

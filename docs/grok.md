@@ -3,7 +3,9 @@
 Give Grok a 3D studio and a body. One remote MCP server lets Grok Bot, Grok
 connectors and the xAI API turn text or an image into a textured 3D model, a
 rigged animation-ready avatar, or a named 3D persona that lip-syncs its replies.
-It is free: no account, no payment, no API key.
+It is free: no account, no payment, no API key. Sign the same URL in to your
+three.ws account and it also manages your agents, their memory and skills,
+without ever being able to spend.
 
 **Live page and demo:** [three.ws/grok](/grok)
 
@@ -11,9 +13,9 @@ It is free: no account, no payment, no API key.
 |---|---|
 | **URL** | `https://three.ws/api/mcp-grok` |
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
-| **Auth** | None |
+| **Auth** | None. Optional: a connector API key, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` |
 | **Protocol** | MCP `2025-06-18` |
-| **Tools** | The full free studio: the same fifteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
+| **Tools** | The full free studio: the same fifteen tools as [`/api/mcp-studio`](./mcp-studio.md). Signed in, also your [account's agent tools](#your-account-on-the-same-url) |
 
 ## Grok Bot
 
@@ -35,21 +37,41 @@ in any task, or attach the server with `@three-ws`:
 Grok Bot works on its own cloud computer, so it can save the GLB to its files,
 hand it to another tool in the same task, or run the request on a schedule.
 
-## Your account with a connector key
+## Your account on the same URL
 
-The free server above needs no account. To let Grok Bot work with **your**
-avatars, agents and their memory (on a schedule, say), connect it to the core
-server with a connector key:
+The free studio needs no account. To let Grok Bot also work with **your**
+agents, their memory and skills, and your avatars (on a schedule, say), keep the
+same URL and give it a credential. Two ways:
 
-1. At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it shows once.
-2. Ask Grok Bot to add a custom MCP server at `https://three.ws/api/mcp` with API key authentication, and store the key as a Bot secret.
+- **Connector key (recommended for Grok Bot).** At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it shows once. Ask Grok Bot to add a custom MCP server at `https://three.ws/api/mcp-grok` with API key authentication, and store the key as a Bot secret. It is sent as `Authorization: Bearer sk_live_…`.
+- **OAuth 2.1.** Use `https://three.ws/api/mcp-grok?auth=oauth` as the server URL with OAuth authentication. The `?auth=oauth` form answers an anonymous client with `401` and a `WWW-Authenticate` challenge, which is what makes an MCP client start sign-in; the plain URL serves anonymous clients and so never would. The connector registers itself, you approve the consent screen once, and every token it holds is refused the moment you revoke the app in [Connected apps](/dashboard/settings#connected-apps).
 
-A connector key reads, generates and edits agent data and can never spend.
-If a task reaches anything that pays, sends, trades or launches, the server
-answers with a JSON-RPC error that says the action needs a browser session on
-three.ws and links there, so Grok Bot can tell you instead of retrying. Revoke
-the key from the same page at any time; it stops on its next request. Scopes
-and the exact error: [API key scopes](./mcp.md#api-key-scopes).
+Signed in, `tools/list` adds these to the fifteen studio tools, each only when
+the credential's scopes allow it and your [MCP tool settings](/settings/mcp-tools)
+leave it on:
+
+| Tool | What it does |
+|---|---|
+| `create_agent`, `attach_avatar_to_agent` | Create an agent on your account and give it a body you generated with `forge_avatar`. |
+| `identity_check`, `call_agent` | Screen an agent identity, or send another three.ws agent a message and get its reply. |
+| `remember`, `recall` | Your agents' long-term memory. |
+| `list_available_skills`, `import_community_skill`, `list_custom_skills`, `get_custom_skill`, `create_custom_skill`, `update_custom_skill` | Your agents' prompt-only skills. |
+| `list_my_avatars`, `get_avatar`, `get_embed_code`, `render_avatar_image` | Your avatars, their embed snippets and rendered images. |
+
+**It never spends.** No wallet, payment, card, trading, launch or delete tool is
+ever listed on this URL, whatever scopes the credential holds, and calling one by
+name answers `unknown tool`. Those actions happen in a browser at
+[three.ws/dashboard](/dashboard). The same tools run through the core server's
+policy, scope checks and spend gate exactly as on `/api/mcp`, and the free tools
+stay anonymous: signing in changes nothing about what they do, except that your
+generation caps key on your account instead of the MCP session.
+
+A credential that no longer verifies (expired, revoked, or minted for another
+server) is answered with `401` and the challenge rather than served anonymously,
+so a connector re-authenticates instead of quietly losing your tools. An account
+tool called without signing in answers JSON-RPC `-32002` with
+`data.reason: "sign_in_required"` and the OAuth URL. Scopes and the exact spend
+refusal: [API key scopes](./mcp.md#api-key-scopes).
 
 ## Grok connectors
 
@@ -116,8 +138,9 @@ A complete, zero-dependency Node script that also collects slow renders lives in
 
 Every finished model comes back with a `viewer_url` (an interactive viewer that
 opens in any browser), a `glb_url`, a `poster_png_url` and `embed_html`. Nothing
-renders inline in Grok, and the server's instructions tell Grok to hand those
-links to the user.
+renders inline in Grok, so this URL lists no widget templates and no `ui://`
+resources, and the server's instructions tell Grok to hand those links to the
+user. Signed in, Grok also gets the [account tools](#your-account-on-the-same-url).
 
 ## How it behaves under Grok
 
@@ -166,6 +189,8 @@ caller that already has one).
 `/api/mcp-grok` is one of three front doors on the same handler
 ([`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js)); `SURFACES` in
 [`api/_mcp-studio/dispatch.js`](../api/_mcp-studio/dispatch.js) defines what each
-advertises. They share one generation quota and one breaker, so the Grok door
+advertises. The account tools come from the core server through
+[`api/_mcp-studio/account-tools.js`](../api/_mcp-studio/account-tools.js), whose
+allowlist only admits a tool the shared policy says moves no value. They share one generation quota and one breaker, so the Grok door
 never adds GPU spend of its own. See [the free 3D Studio MCP](./mcp-studio.md)
 for the tools in depth and [MCP integration](./mcp.md) for every hosted server.

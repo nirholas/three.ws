@@ -1,8 +1,8 @@
 {
 	"probe": "scripts/mcp-client-probe.mjs",
 	"base": "http://localhost:3107",
-	"startedAt": "2026-10-08T19:03:41.146Z",
-	"finishedAt": "2026-10-08T19:03:45.282Z",
+	"startedAt": "2026-10-08T22:14:49.103Z",
+	"finishedAt": "2026-10-08T22:14:53.655Z",
 	"sdkVersion": "1.32.1",
 	"clientProtocolVersion": "2025-11-25",
 	"apiKeyMode": "ran",
@@ -126,7 +126,7 @@
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 82,
+						"ms": 303,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -253,7 +253,7 @@
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 77,
+						"ms": 76,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -339,12 +339,12 @@
 						"resources",
 						"tools"
 					],
-					"tools": 14,
+					"tools": 15,
 					"prompts": null,
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 5,
+						"ms": 11,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -363,17 +363,160 @@
 						"resources",
 						"tools"
 					],
-					"tools": 14,
+					"tools": 15,
 					"prompts": null,
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 4,
+						"ms": 9,
 						"contentItems": 1,
 						"structured": true
 					}
 				}
 			},
+			"failures": [],
+			"pass": true
+		},
+		{
+			"name": "Grok",
+			"endpoint": "https://three.ws/api/mcp-grok",
+			"url": "http://localhost:3107/api/mcp-grok",
+			"auth": "none for the free 3D tools; OAuth 2.1 or a connector API key adds the account's agent tools",
+			"expects": {
+				"anonymous": true,
+				"oauth": true,
+				"apiKey": true
+			},
+			"http": {
+				"initialize": {
+					"status": 200,
+					"contentType": "application/json; charset=utf-8",
+					"sessionId": "grk_0fef4b53-53f1-4d93-b44e-3728bd24107c",
+					"wwwAuthenticate": null,
+					"protocolVersion": "2025-06-18",
+					"rpcError": null
+				},
+				"getStream": {
+					"status": 405,
+					"contentType": "application/json; charset=utf-8",
+					"allow": "POST, OPTIONS",
+					"wwwAuthenticate": null
+				},
+				"getStreamProblem": null,
+				"negotiation": [
+					{
+						"requested": "2025-11-25",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": false,
+						"clientSupportsAnswer": true,
+						"error": null
+					},
+					{
+						"requested": "2025-06-18",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": true,
+						"clientSupportsAnswer": true,
+						"error": null
+					},
+					{
+						"requested": "2025-03-26",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": false,
+						"clientSupportsAnswer": true,
+						"error": null
+					},
+					{
+						"requested": "2024-11-05",
+						"status": 200,
+						"negotiated": "2025-06-18",
+						"echoed": false,
+						"clientSupportsAnswer": true,
+						"error": null
+					}
+				],
+				"session": {
+					"echoed": 200,
+					"unknown": 200
+				},
+				"sessionIssued": true
+			},
+			"modes": {
+				"anonymous": {
+					"transport": "streamable-http",
+					"ok": true,
+					"serverInfo": {
+						"name": "three-ws-3d-studio-free",
+						"version": "1.0.0"
+					},
+					"protocolVersion": "2025-06-18",
+					"sessionId": "grk_f75adff3-09b4-4f35-91d7-191f1ef9229f",
+					"capabilities": [
+						"logging",
+						"tools"
+					],
+					"tools": 15,
+					"prompts": null,
+					"call": {
+						"name": "search_catalog",
+						"ok": true,
+						"ms": 10,
+						"contentItems": 1,
+						"structured": true
+					}
+				},
+				"oauth": {
+					"failures": [],
+					"status": 401,
+					"wwwAuthenticate": "Bearer resource_metadata=\"http://localhost:3107/.well-known/oauth-protected-resource/api/mcp-grok\", resource=\"http://localhost:3107/api/mcp-grok\"",
+					"resourceMetadataUrl": "http://localhost:3107/.well-known/oauth-protected-resource/api/mcp-grok",
+					"metadata": {
+						"status": 200,
+						"resource": "http://localhost:3107/api/mcp-grok",
+						"authorizationServers": [
+							"http://localhost:3107"
+						]
+					},
+					"resourceAllowed": true,
+					"authorizationServer": {
+						"url": "http://localhost:3107/.well-known/oauth-authorization-server",
+						"status": 200,
+						"issuer": "http://localhost:3107",
+						"pkceS256": true,
+						"dynamicRegistration": true
+					},
+					"invalidBearer": {
+						"status": 401,
+						"wwwAuthenticate": "Bearer resource_metadata=\"http://localhost:3107/.well-known/oauth-protected-resource/api/mcp-grok\", resource=\"http://localhost:3107/api/mcp-grok\""
+					}
+				},
+				"apiKey": {
+					"transport": "streamable-http",
+					"ok": true,
+					"serverInfo": {
+						"name": "three-ws-3d-studio-free",
+						"version": "1.0.0"
+					},
+					"protocolVersion": "2025-06-18",
+					"sessionId": "grk_080d238d-4e40-4fd7-905a-4e95f1db5292",
+					"capabilities": [
+						"logging",
+						"tools"
+					],
+					"tools": 25,
+					"prompts": null,
+					"call": {
+						"name": "search_catalog",
+						"ok": true,
+						"ms": 85,
+						"contentItems": 1,
+						"structured": true
+					}
+				}
+			},
+			"signIn": "http://localhost:3107/api/mcp-grok?auth=oauth",
 			"failures": [],
 			"pass": true
 		},
@@ -490,12 +633,12 @@
 						"resources",
 						"tools"
 					],
-					"tools": 23,
+					"tools": 24,
 					"prompts": 7,
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 78,
+						"ms": 77,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -622,7 +765,7 @@
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 76,
+						"ms": 75,
 						"contentItems": 1,
 						"structured": true
 					}

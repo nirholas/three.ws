@@ -10,13 +10,17 @@
 // Parameterized by the tool surface it serves (SURFACES in ./dispatch.js):
 //   api/mcp-studio.js   surface 'full'     every tool, both widgets
 //   api/mcp-chatgpt.js  surface 'chatgpt'  generation tools, model viewer only
-//   api/mcp-grok.js     surface 'grok'     every tool, for Grok Bot and the xAI API
+//   api/mcp-grok.js     surface 'grok'     every tool, for Grok Bot and the xAI API,
+//                                          plus the account's agent tools once
+//                                          the caller signs in
 // Every front door shares one transport cap, one per-IP generation quota and one
 // platform-wide circuit breaker, so a second door never doubles the free GPU
 // budget.
 //
-// There is no OAuth and no payment path anywhere in this server: generation runs
+// There is no payment path anywhere in this server: generation runs
 // operator-funded over /api/forge, whose server-side keys cover provider cost.
+// Only the grok surface reads a credential (signedInAccount below), and only to
+// add the account's agent tools; the free tools never need one.
 // Abuse protection is real: a per-caller transport cap plus a per-caller
 // generation burst and hourly quota (../_lib/rate-limit.js), enforced whenever
 // Redis is healthy. The caller is, in order: a verified install token on the
@@ -30,7 +34,10 @@
 import { randomUUID } from 'node:crypto';
 import { cors, wrap, readJson, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { limits, clientIp, STUDIO_LIMITS } from '../_lib/rate-limit.js';
-import { dispatch, PROTOCOL_VERSION } from './dispatch.js';
+import { dispatch, PROTOCOL_VERSION, surfaceServesAccounts } from './dispatch.js';
+import { authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { acceptedAudiences, mcpResourceFor } from '../_lib/mcp-resources.js';
+import { send401 } from '../_mcp/auth.js';
 import { TOOL_NAMES } from './tools.js';
 import { isIdempotentRepeat, progressReporter } from './jobs.js';
 import { installTokenFrom, studioOrigin, INSTALL_PARAM } from './install-token.js';
@@ -71,7 +78,7 @@ const SSE_KEEPALIVE_MS = 15_000;
 // Answer one tools/call as a Streamable HTTP SSE response: each status frame of
 // the job becomes a notifications/progress message (./jobs.js
 // progressReporter), and the JSON-RPC result is the last event.
-async function streamToolCall(res, msg, auth, req, { surface, caller, token }) {
+async function streamToolCall(res, msg, auth, req, { surface, caller, token, account = null }) {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
 	res.setHeader('cache-control', 'no-cache, no-transform');
@@ -88,7 +95,7 @@ async function streamToolCall(res, msg, auth, req, { surface, caller, token }) {
 	try {
 		const report = progressReporter(token, send);
 		report({ status: 'queued', stage: 'submit' }, 'request');
-		const response = await dispatch(msg, auth, req, { surface, caller, onProgress: report });
+		const response = await dispatch(msg, auth, req, { surface, caller, onProgress: report, account });
 		if (response !== null) send(response);
 	} finally {
 		clearInterval(keepAlive);
@@ -156,12 +163,14 @@ export function callerSubject(surface, body, req) {
 
 /**
  * Who the per-caller caps charge, on every surface: a verified install token
- * first, then the surface's own subject, then the IP. An unknown or forged token
- * is ignored, so the request keys exactly as it would with no token at all.
- * @returns {{ key: string, kind: 'install'|'session'|'chatgpt_user'|'ip' }}
+ * first, then a signed-in account, then the surface's own subject, then the IP.
+ * An unknown or forged token is ignored, so the request keys exactly as it
+ * would with no token at all.
+ * @returns {{ key: string, kind: 'install'|'account'|'session'|'chatgpt_user'|'ip' }}
  */
-export function studioCaller(surface, body, req, ip, install = installTokenFrom(req)) {
+export function studioCaller(surface, body, req, ip, install = installTokenFrom(req), account = null) {
 	if (install) return { key: `inst:${install.id}`, kind: 'install' };
+	if (account?.userId) return { key: `acct:${account.userId}`, kind: 'account' };
 	const subject = callerSubject(surface, body, req);
 	if (subject) return { key: subject, kind: surface === 'chatgpt' ? 'chatgpt_user' : 'session' };
 	return { key: ip, kind: 'ip' };
@@ -173,6 +182,7 @@ export const STUDIO_RATE_LIMITED = -32000;
 
 const CALLER_SCOPE = {
 	install: 'this install token',
+	account: 'this three.ws account',
 	session: 'this MCP session',
 	chatgpt_user: 'this ChatGPT user',
 	ip: 'your IP address',
@@ -196,15 +206,15 @@ function resetAt(result) {
 
 /**
  * The remedy for a capped caller. A per-IP caller is told to get an install
- * token (one URL of its own); a caller that already has its own budget, or hit a
- * cap no token lifts, is pointed at the signed-in server, whose free lane is
- * metered per account.
+ * token (one URL of its own); a caller that already has its own budget (a token
+ * or an account), or hit a cap no token lifts, is pointed at the signed-in
+ * server, whose free lane is metered per account.
  */
 export function studioRemedy(kind, bucket, surfacePath) {
 	const origin = studioOrigin();
 	const installEndpoint = `${origin}/api/mcp-studio/install`;
 	const accountServer = `${origin}/api/mcp-3d`;
-	if (bucket !== 'global' && bucket !== 'pool' && kind !== 'install') {
+	if (bucket !== 'global' && bucket !== 'pool' && kind !== 'install' && kind !== 'account') {
 		return {
 			kind: 'install_token',
 			install_endpoint: installEndpoint,
@@ -273,7 +283,48 @@ function rpcDenial(res, body, denial, result) {
 	res.end(JSON.stringify(one(body)));
 }
 
+// `?auth=oauth` on the connector URL asks for sign-in: an MCP client only
+// starts OAuth when a server answers 401, and an anonymous request here is
+// otherwise served, so a connector set to OAuth 2.1 needs a URL that refuses it.
+export const SIGN_IN_PARAM = 'auth';
+
+function wantsSignIn(req) {
+	try {
+		return new URL(req.url || '/', 'http://localhost').searchParams.get(SIGN_IN_PARAM) === 'oauth';
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * The account a request on an account-serving surface signed in as. Returns
+ * { account } (null when anonymous) or { refused: true } after answering 401:
+ * a bearer that does not verify (expired, revoked, wrong audience) is refused
+ * rather than quietly served anonymously, so the client re-authenticates
+ * instead of losing its account tools without a word.
+ */
+export async function signedInAccount(req, res, surfacePath) {
+	const bearer = extractBearer(req);
+	const refuse = (message) => {
+		// A browser MCP client cannot start OAuth off a header it may not read.
+		const exposed = res.getHeader('access-control-expose-headers');
+		res.setHeader('access-control-expose-headers', exposed ? `${exposed}, www-authenticate` : 'www-authenticate');
+		send401(res, message, { req, resourcePath: surfacePath });
+		return { refused: true };
+	};
+	if (!bearer) {
+		if (wantsSignIn(req)) {
+			return refuse('sign in to add your three.ws agent tools to this connector');
+		}
+		return { account: null };
+	}
+	const account = await authenticateBearer(bearer, { audience: acceptedAudiences(mcpResourceFor(surfacePath)) });
+	if (!account) return refuse('missing or invalid access token');
+	return { account };
+}
+
 export function studioHandler({ surface = 'full' } = {}) {
+	const servesAccounts = surfaceServesAccounts(surface);
 	return wrap(async (req, res) => {
 		if (cors(req, res, { methods: 'GET,HEAD,POST,OPTIONS', origins: '*', payments: false })) return;
 
@@ -316,9 +367,26 @@ export function studioHandler({ surface = 'full' } = {}) {
 		const batch = Array.isArray(body) ? body : [body];
 		if (batch.length > 16) return rpcError(res, 400, -32600, 'batch too large (max 16)');
 
+		let account = null;
+		if (servesAccounts) {
+			const signIn = await signedInAccount(req, res, surfacePath);
+			if (signIn.refused) return;
+			account = signIn.account;
+			// The same per-account flood guard /api/mcp applies to these tools.
+			if (account) {
+				const userRl = await limits.mcpUser(account.userId);
+				if (!userRl.success) {
+					const at = resetAt(userRl);
+					return rateLimited(res, userRl, `too many requests for this three.ws account, resets at ${at.toISOString()}`, {
+						reset_at: at.toISOString(),
+					});
+				}
+			}
+		}
+
 		// Who this request is: the key the per-caller caps charge, and the owner of
 		// any idempotency_key it sends (./jobs.js).
-		const caller = studioCaller(surface, body, req, ip, install);
+		const caller = studioCaller(surface, body, req, ip, install, account);
 
 		// Generation quota, burst then hourly, per caller. Applied only when the
 		// request actually calls a generation tool, so discovery is never throttled
@@ -349,12 +417,12 @@ export function studioHandler({ surface = 'full' } = {}) {
 
 		const token = progressTokenOf(body);
 		if (token !== null && acceptsEventStream(req)) {
-			return streamToolCall(res, body, auth, req, { surface, caller: caller.key, token });
+			return streamToolCall(res, body, auth, req, { surface, caller: caller.key, token, account });
 		}
 
 		const responses = [];
 		for (const msg of batch) {
-			const r = await dispatch(msg, auth, req, { surface, caller: caller.key });
+			const r = await dispatch(msg, auth, req, { surface, caller: caller.key, account });
 			if (r !== null) responses.push(r);
 		}
 
