@@ -543,6 +543,34 @@ body: {"error":"upstream_error","error_description":"coin data is unavailable ri
 
 ---
 
+## 🟡 HTTP 502 on `/api/pump/price-history`: `pump-price-history-upstreams-502`
+
+```
+HTTP 502 GET /api/pump/price-history?mint=<mint>&interval=15m&from=<unix>&to=<unix>
+body: {"error":"upstream_error","error_description":"Price history is unavailable for this coin right now"}
+```
+
+- **Source:** [api/pump/price-history.js](../../api/pump/price-history.js)
+  walked every rung (Birdeye via [api/_lib/birdeye.js](../../api/_lib/birdeye.js),
+  GeckoTerminal, pump.fun candles) and held no last-good candles for the mint
+  and interval.
+- **Not this:** a coin with no market anywhere. Until 2026-10-08 such a coin
+  could 502 here: the Birdeye rung's GeckoTerminal fallback had already been
+  told "no pools", then the handler re-asked the identical URL, drew a 429 on
+  the shared egress and read the throttle as an outage. The pool lookup now
+  shares [api/_lib/market/ohlcv.js](../../api/_lib/market/ohlcv.js)
+  `topPoolForToken()`, so that coin answers `404 no_market`.
+- **What a 502 now usually means:** Birdeye is out of compute units and
+  GeckoTerminal is throttled at the same moment. Confirm Birdeye:
+  `curl -s -H "X-API-KEY: $BIRDEYE_API_KEY" -H "x-chain: solana" "https://public-api.birdeye.so/defi/ohlcv?address=<mint>&type=15m&time_from=<from>&time_to=<to>"`.
+  `{"success":false,"message":"Compute units usage limit exceeded"}` (seen
+  2026-10-08) is the plan's quota, and only the owner can reset or upgrade it.
+  The chart keeps working on GeckoTerminal meanwhile.
+- **Monitor signature:** `pump-price-history-upstreams-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `env-action`.
+
+---
+
 ## 🟡 `429 Client Error … huggingface.co` → `LocalEntryNotFoundError` on a model worker — `hf-hub-rate-limited`
 
 ```

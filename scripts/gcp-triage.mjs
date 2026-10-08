@@ -229,6 +229,12 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `502 on a /api/coin/* route means every CoinGecko rung failed and no cached last-good existed. The usual cause is the DEMO KEY, not the upstream: the demo tier caps at 10,000 calls per MONTH, and once exhausted every request carrying COINGECKO_API_KEY gets 429 while the identical keyless request is still served (2026-07-28: /coin/detail, /tickers and /exchange all 502'd for hours on an exhausted key). Confirm in one call: curl -s -H "x-cg-demo-api-key: $KEY" https://api.coingecko.com/api/v3/key — error_code 10006 is the cap. geckoFetch now benches a rejected key for 15 min and retries keyless on its own, so a lingering 502 means the keyless tier is ALSO throttled (the Cloud Run egress IP is shared). Fix: gcloud run services update three-ws-api --region us-central1 --remove-env-vars COINGECKO_API_KEY (config-only, pre-approved) to stop paying the round trip, and tell the owner the key needs a paid tier or a monthly reset. ${RUNBOOK} §coingecko-quota-exhausted.`,
 	},
 	{
+		id: 'pump-price-history-upstreams-502',
+		test: (g) => g.service === 'three-ws-api' && g.status === 502 && g.path === '/api/pump/price-history',
+		class: 'env-action',
+		action: `Every candle rung failed for this mint and no last-good copy existed: Birdeye (keyed), GeckoTerminal (keyless, throttled on the shared Cloud Run egress) and pump.fun candles (pump.fun launches only). A coin with no market anywhere answers 404 no_market, not 502 (since 2026-10-08), so a 502 is a real upstream gap. Check Birdeye first: "Compute units usage limit exceeded" on /defi/ohlcv means the BIRDEYE_API_KEY plan has spent its compute units (observed 2026-10-08) and the chart is riding GeckoTerminal alone; the owner resets or upgrades the Birdeye plan. Investigate in code only if Birdeye is healthy and the route still 502s across sweeps. ${RUNBOOK} §pump-price-history-upstreams.`,
+	},
+	{
 		id: 'r2-upload-unavailable',
 		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/forge-upload',
 		class: 'owner',

@@ -81,6 +81,12 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.signature).toBe('pump-curve-rpc-unavailable');
 		expect(finding.class).toBe('self-healing');
 	});
+
+	it('classifies an exhausted price-history candle chain as env-action', () => {
+		const [finding] = buildFindings([request({ status: 502, path: '/api/pump/price-history' })]);
+		expect(finding.signature).toBe('pump-price-history-upstreams-502');
+		expect(finding.class).toBe('env-action');
+	});
 });
 
 describe('gcp-triage page failure summary', () => {
