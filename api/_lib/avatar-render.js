@@ -14,6 +14,7 @@ import { poseRuntimeModules } from './pose-runtime.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
 import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
 import { PRESETS } from '../../src/pose-presets.js';
+import { guardPageRequests } from './page-request-guard.js';
 
 export const MIN_DIM = 64;
 export const MAX_DIM = 2048;
@@ -497,6 +498,11 @@ export async function renderAvatarScene({
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	try {
+		// glbUrl can be caller-supplied (/api/3d/look, the quality gate, MCP
+		// tools), and the bundled Chromium runs with --disable-web-security, so
+		// every request the page makes (redirect hops and glTF sub-resources
+		// included) is SSRF-checked before it leaves.
+		await guardPageRequests(page, { platformOrigin: env.APP_ORIGIN });
 		await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
 		// Pick a live three.js CDN first: an unpkg outage would otherwise hang
 		// the page's module import until the watchdog fires and the render
