@@ -11,10 +11,10 @@
 //
 // Every transfer is between platform-controlled wallets only (treasury → payer).
 // The sponsor (X402_FEE_PAYER_SECRET_BASE58) pays the Solana fee so all SOL burn
-// stays on ONE monitored wallet; if the sponsor key is absent the treasury
-// self-pays. Recorded in x402_ring_ledger (kind='sweep'). It moves OUR money in a
-// circle — it is NOT spend, so it returns amountAtomic:0 and never consumes the
-// autonomous loop's daily spend cap.
+// stays on ONE monitored wallet; if the sponsor key is absent, or the sponsor
+// is too poor to pay, the treasury self-pays. Recorded in x402_ring_ledger
+// (kind='sweep'). It moves OUR money in a circle: it is NOT spend, so it returns
+// amountAtomic:0 and never consumes the autonomous loop's daily spend cap.
 //
 // OFF unless X402_TREASURY_SECRET_BASE58 is set (the treasury signing key). Until
 // then run() is a graceful no-op.
@@ -44,6 +44,40 @@ function loadKp(b58) {
 	const raw = bs58.decode(b58);
 	if (raw.length !== 64) throw new Error(`keypair expected 64 bytes, got ${raw.length}`);
 	return Keypair.fromSecretKey(raw);
+}
+
+// A system account must keep this many lamports to stay rent-exempt; a fee
+// payer that would dip under it is refused by the chain with
+// InsufficientFundsForRent on account 0. FEE_HEADROOM covers the base fee plus
+// the priority fee these transfers set, with room for a few retries.
+export const RENT_EXEMPT_SYSTEM_LAMPORTS = 890_880;
+const FEE_HEADROOM_LAMPORTS = 50_000;
+
+/** Can a wallet holding `lamports` pay one more fee and stay rent-exempt? */
+export function canPayFee(lamports) {
+	return Number(lamports) >= RENT_EXEMPT_SYSTEM_LAMPORTS + FEE_HEADROOM_LAMPORTS;
+}
+
+/**
+ * Pick who pays the Solana fee: the sponsor when it can afford it, otherwise the
+ * wallet that is moving the money.
+ *
+ * Routing every fee through the sponsor keeps SOL burn on one monitored wallet,
+ * but with no balance check a dry sponsor turned into a total ring outage: from
+ * 2026-10-03 every sweep died with "insufficient funds for rent" on account 0
+ * while the treasury held SOL of its own and 2.587 USDC it could not move, so the
+ * payer starved and settles fell to 0%. An unreadable sponsor balance keeps the
+ * sponsor (the chain is the final judge, and an RPC blip must not shift fee burn
+ * onto other wallets); only a balance we can see is short moves the fee.
+ */
+export async function resolveFeePayer(conn, sponsorKp, fallbackKp) {
+	if (!sponsorKp || sponsorKp.publicKey.equals(fallbackKp.publicKey)) return fallbackKp;
+	const held = await conn.getBalance(sponsorKp.publicKey, 'confirmed').catch(() => null);
+	if (held != null && !canPayFee(held)) {
+		log.warn('sponsor_fee_unfunded', { sponsor: sponsorKp.publicKey.toBase58(), held, fallback: fallbackKp.publicKey.toBase58() });
+		return fallbackKp;
+	}
+	return sponsorKp;
 }
 
 // Keep this much USDC in the treasury after a sweep (default 0 — sweep all).
@@ -175,16 +209,18 @@ export async function run(ctx = {}) {
 		return { success: true, skipped: true, amountAtomic: 0, note: `below_min_sweep:${sweep}` };
 	}
 
-	// Sponsor pays the fee so SOL burn stays on one wallet; else treasury self-pays.
-	let feePayerKp = treasury;
+	// Sponsor pays the fee so SOL burn stays on one wallet; the treasury self-pays
+	// when the sponsor key is absent or the sponsor cannot afford the fee.
+	let sponsorKp = null;
 	const sponsorSecret = process.env.X402_FEE_PAYER_SECRET_BASE58;
 	if (sponsorSecret) {
 		try {
-			feePayerKp = loadKp(sponsorSecret);
+			sponsorKp = loadKp(sponsorSecret);
 		} catch {
-			feePayerKp = treasury;
+			sponsorKp = null;
 		}
 	}
+	const feePayerKp = await resolveFeePayer(conn, sponsorKp, treasury);
 
 	const payerAta = getAssociatedTokenAddressSync(mint, payerPub, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 	const payerAtaInfo = await conn.getAccountInfo(payerAta).catch(() => null);
@@ -414,11 +450,14 @@ export async function floatTopUp(ctx = {}) {
 	const decimals = await mintDecimals(conn, mint);
 	const band = floatBand();
 
-	// Sponsor pays fees when configured so SOL burn stays on one wallet.
+	// Sponsor pays fees when configured so SOL burn stays on one wallet. Checked
+	// once per run: a sponsor too poor to pay is dropped and each transfer's
+	// source wallet pays its own fee instead (see resolveFeePayer).
 	let sponsorKp = null;
 	if (process.env.X402_FEE_PAYER_SECRET_BASE58) {
 		try { sponsorKp = loadKp(process.env.X402_FEE_PAYER_SECRET_BASE58); } catch { sponsorKp = null; }
 	}
+	if (sponsorKp && (await resolveFeePayer(conn, sponsorKp, treasury)) !== sponsorKp) sponsorKp = null;
 
 	const moves = [];
 	const minMove = Math.max(0, Number(process.env.X402_RING_AGENT_MIN_FLOAT_MOVE_ATOMIC || 100_000)); // $0.10
