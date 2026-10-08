@@ -7,6 +7,7 @@
 import crypto from 'node:crypto';
 import { sql } from './db.js';
 import { error } from './http.js';
+import { authenticateBearer, extractBearer, hasSessionCookie } from './auth.js';
 
 const TTL_SECONDS = 3600;
 
@@ -23,6 +24,21 @@ export async function issueCsrf(userId) {
 // and returns false. The CSRF_DISABLED=1 escape hatch is honored ONLY outside
 // production — a misconfigured env must not silently disable CSRF platform-wide
 // on the live site. Machine-to-machine bearer auth is exempted below regardless.
+// A bearer credential cannot ride along on a cross-site request the way a cookie
+// does, so a request carrying one needs no CSRF token. The exemption has to be
+// tied to the credential that actually authenticated, though: getRequestUser
+// prefers the session cookie, so a request with the victim's cookie plus any
+// junk "Bearer x" header would otherwise run as the victim with the token check
+// skipped. Exempt only when there is no session cookie to ride on, or when the
+// bearer itself authenticates as the same account the session does.
+async function bearerVouchesFor(req, userId) {
+	const token = extractBearer(req);
+	if (!token) return false;
+	if (!hasSessionCookie(req)) return true;
+	const bearer = await authenticateBearer(token).catch(() => null);
+	return Boolean(bearer && userId && String(bearer.userId) === String(userId));
+}
+
 const IS_PROD = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
 
 /**
@@ -36,8 +52,7 @@ export async function checkCsrf(req, userId) {
 
 	// Bearer-token requests are exempt: the token itself is the proof of intent
 	// and bearer tokens aren't auto-attached by browsers like cookies are.
-	const authHeader = req.headers?.authorization || '';
-	if (authHeader.startsWith('Bearer ')) return { ok: true };
+	if (await bearerVouchesFor(req, userId)) return { ok: true };
 
 	const sent =
 		req.headers['x-csrf-token'] ||
