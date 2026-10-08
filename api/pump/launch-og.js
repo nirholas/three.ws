@@ -27,6 +27,7 @@
 
 import { cors, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
+import { fetchOgImage } from '../_lib/og-avatar.js';
 import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -66,20 +67,15 @@ function fmtNum(v) {
 // we just omit the image; the card still renders fine without it.
 async function fetchLogoBase64(imageUri) {
 	if (!imageUri) return null;
-	// pump.fun uses IPFS CIDs — resolve via a fast gateway.
 	const url = imageUri.startsWith('ipfs://')
 		? `https://ipfs.io/ipfs/${imageUri.slice(7)}`
 		: imageUri;
-	try {
-		const resp = await fetch(url, { signal: AbortSignal.timeout(3000) });
-		if (!resp.ok) return null;
-		const ct = resp.headers.get('content-type') || 'image/png';
-		const buf = await resp.arrayBuffer();
-		const b64 = Buffer.from(buf).toString('base64');
-		return `data:${ct};base64,${b64}`;
-	} catch {
-		return null;
-	}
+	// The logo URI is chosen by whoever launched the coin. fetchOgImage refuses
+	// private and metadata addresses on every redirect hop, caps the bytes, and
+	// only accepts a bare image media type, so neither internal responses nor a
+	// quote-breaking content-type can end up inside this same-origin SVG.
+	const img = await fetchOgImage(url, { timeoutMs: 3000 });
+	return img ? `data:${img.ct};base64,${img.b64}` : null;
 }
 
 async function buildCardData(mint) {

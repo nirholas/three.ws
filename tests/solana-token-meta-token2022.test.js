@@ -74,6 +74,13 @@ vi.mock('../api/_lib/pump.js', () => ({
 	}),
 }));
 
+// The off-chain read goes through the pinned SSRF guard, which opens its own
+// socket. Route it to the stubbed global fetch so these cases stay offline; the
+// guard itself is covered in tests/token-metadata-ssrf.test.js.
+vi.mock('../api/_lib/ssrf-guard.js', () => ({
+	fetchSafePublicUrlPinned: (url, init) => globalThis.fetch(url, init),
+}));
+
 const { fetchTokenMeta } = await import('../api/_lib/solana-token-meta.js');
 
 // The off-chain JSON document is a network read; every case here either has no

@@ -28,7 +28,12 @@ import { env } from './env.js';
 import { CHAIN_BY_ID, VALIDATION_REGISTRY_ABI, validationRegistryFor } from './erc8004-chains.js';
 import { evmFallbackProvider } from './evm/rpc.js';
 import { putObject, publicUrl } from './r2.js';
-import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
+import {
+	assertSafePublicUrl,
+	fetchSafePublicUrlPinned,
+	MaxBytesExceededError,
+	SsrfBlockedError,
+} from './ssrf-guard.js';
 import { inspectModel, suggestOptimizations } from './model-inspect.js';
 import {
 	buildGlbReport,
@@ -77,14 +82,26 @@ export async function validateGlb(glbUrl, validatedAt) {
 		throw err;
 	}
 
+	// Pinned fetch: every redirect hop is re-validated and the socket connects
+	// to the address that was checked, so a public host answering 302 to the
+	// metadata server (or rebinding its DNS) cannot pull internal bytes into a
+	// report that is then pinned publicly. The byte cap is enforced while
+	// streaming, before the body is buffered.
 	let upstream;
 	try {
-		upstream = await fetch(parsed.toString(), {
-			redirect: 'follow',
-			headers: { accept: 'model/gltf-binary,model/gltf+json,application/octet-stream' },
-			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-		});
+		upstream = await fetchSafePublicUrlPinned(
+			parsed.toString(),
+			{
+				headers: { accept: 'model/gltf-binary,model/gltf+json,application/octet-stream' },
+				signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+			},
+			{ allowHttp: true, maxBytes: MAX_FETCH_BYTES },
+		);
 	} catch (err) {
+		if (err instanceof SsrfBlockedError) throw new AttestError('invalid_glb_url', err.message);
+		if (err instanceof MaxBytesExceededError) {
+			throw new AttestError('glb_too_large', `GLB is ${err.observed} bytes; max ${MAX_FETCH_BYTES}`);
+		}
 		throw new AttestError('glb_fetch_failed', `could not fetch GLB: ${err.message}`);
 	}
 	if (!upstream.ok) {

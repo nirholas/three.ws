@@ -6,6 +6,7 @@
 import WebSocket from 'ws';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
 import { pumpPortalWsUrl, handlePumpPortalAck, isPumpPortalRefusal } from './pumpportal.js';
+import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 
 const RECONNECT_DELAY_MS = 2_000;
 const MAX_RECONNECTS = 5;
@@ -43,6 +44,7 @@ function markSeen(sig) {
 	return true;
 }
 const META_TIMEOUT_MS = 2_500;
+const META_MAX_BYTES = 256 * 1024;
 
 // SOL/USD via the shared 7-source failover helper (CoinGecko → Jupiter → Kraken
 // → Coinbase → DefiLlama → DIA → Bitfinex, itself cached ~60s and shared across
@@ -60,7 +62,15 @@ async function fetchMeta(uri) {
 	try {
 		const ctrl = new AbortController();
 		const tid = setTimeout(() => ctrl.abort(), META_TIMEOUT_MS);
-		const r = await fetch(uri, { signal: ctrl.signal });
+		// The uri is whatever the coin's creator put in its metadata, so it goes
+		// through the pinned SSRF guard: no private or metadata address on any
+		// redirect hop, and a byte cap while streaming. Fields from the response
+		// are broadcast to every stream subscriber.
+		const r = await fetchSafePublicUrlPinned(
+			uri,
+			{ signal: ctrl.signal, headers: { accept: 'application/json' } },
+			{ allowHttp: true, maxBytes: META_MAX_BYTES },
+		);
 		clearTimeout(tid);
 		if (!r.ok) return null;
 		const d = await r.json();

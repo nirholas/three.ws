@@ -16,6 +16,7 @@ import {
 } from '@solana/spl-token';
 import { getConnection, solanaPubkey } from './pump.js';
 import { isRpcOutageError, rpcUnavailableError } from './rpc-degrade.js';
+import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 
 const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 const NAME_MAX = 32;
@@ -119,11 +120,18 @@ async function fetchOffchainJson(uri) {
 	if (!url) return null;
 	let res;
 	try {
-		res = await fetch(url, {
-			redirect: 'follow',
-			signal: AbortSignal.timeout(METADATA_FETCH_TIMEOUT_MS),
-			headers: { accept: 'application/json' },
-		});
+		// The metadata URI is whatever the mint's creator wrote on-chain, so it is
+		// fetched through the pinned SSRF guard: private and metadata addresses
+		// are refused on every redirect hop, and the byte cap holds while
+		// streaming.
+		res = await fetchSafePublicUrlPinned(
+			url,
+			{
+				signal: AbortSignal.timeout(METADATA_FETCH_TIMEOUT_MS),
+				headers: { accept: 'application/json' },
+			},
+			{ allowHttp: true, maxBytes: MAX_OFFCHAIN_JSON_BYTES },
+		);
 	} catch {
 		return null;
 	}
@@ -154,11 +162,14 @@ export async function fetchTokenImage(imageUrl) {
 	if (!url) return null;
 	let res;
 	try {
-		res = await fetch(url, {
-			redirect: 'follow',
-			signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
-			headers: { accept: 'image/png, image/jpeg, image/webp, image/*' },
-		});
+		res = await fetchSafePublicUrlPinned(
+			url,
+			{
+				signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
+				headers: { accept: 'image/png, image/jpeg, image/webp, image/*' },
+			},
+			{ allowHttp: true, maxBytes: MAX_IMAGE_BYTES },
+		);
 	} catch {
 		return null;
 	}
