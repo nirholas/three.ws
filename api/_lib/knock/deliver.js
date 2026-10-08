@@ -81,7 +81,7 @@ export async function deliverKnock({ userId, clean, payment = {} }) {
 	// second performance for a message the owner already heard.
 	if (clean.requestId) {
 		const existing = await findByRequestId(userId, clean.requestId);
-		if (existing) return { knock: existing, duplicate: true, importance };
+		if (existing) return { knock: assertSameKnock(existing, clean), duplicate: true, importance };
 	}
 
 	const event = await safeEvent(userId, {
@@ -119,7 +119,7 @@ export async function deliverKnock({ userId, clean, payment = {} }) {
 	// above almost always catches first. Losing that race is still a duplicate.
 	if (!knock) {
 		const existing = await findByRequestId(userId, clean.requestId);
-		return { knock: existing, duplicate: true, importance };
+		return { knock: assertSameKnock(existing, clean), duplicate: true, importance };
 	}
 
 	insertNotification(userId, 'knock_received', {
@@ -133,6 +133,21 @@ export async function deliverKnock({ userId, clean, payment = {} }) {
 	});
 
 	return { knock, duplicate: false, importance };
+}
+
+/**
+ * A reused request id is a retry only when it carries the same knock. Anything
+ * else is a different sender guessing (or colliding with) somebody's key, and
+ * answering it with the original knock would hand them that knock's id and
+ * receipt URL, which is the capability to read the owner's private reply.
+ */
+function assertSameKnock(existing, clean) {
+	if (existing && existing.sender_name === clean.senderName && existing.message === clean.message) return existing;
+	throw Object.assign(new Error('that request_id was already used for a different knock; send a new one'), {
+		status: 409,
+		code: 'request_id_conflict',
+		expose: true,
+	});
 }
 
 async function safeEvent(userId, event) {
