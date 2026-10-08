@@ -123,6 +123,30 @@ tools a task needs, for example `["search_catalog", "forge_free", "get_job"]`.
 A complete, zero-dependency Node script that also collects slow renders lives in
 [examples/grok-remote-mcp](../examples/grok-remote-mcp/README.md).
 
+## A skill file for Grok
+
+[three.ws/grok-skill.md](https://three.ws/grok-skill.md) teaches Grok all of this
+in one Markdown file: what three.ws does, the connector sentence for Grok Bot,
+the sign-in options, the links contract, what needs an account, and the spend
+rule. Upload it to Grok's Skills, or ask Grok Bot to fetch it to its files:
+
+```
+Download https://three.ws/grok-skill.md to your files and follow it whenever I ask for 3D.
+```
+
+When no connector is set up, the file's plain HTTPS section is enough on its
+own: runnable `curl` JSON-RPC calls to the free server
+(`https://three.ws/api/mcp-studio`, the same tools without a session) that
+search the catalog, fetch embed code, generate a model and render it from
+several angles. Every example is run against production before the file
+changes.
+
+It renders from [`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md)
+with the same facts as the general [`skill.md`](./agent-skills.md#the-entry-point-skill-httpsthreewsskillmd)
+(server URLs, tool and prompt names, free limits), read from the code that owns
+each one, so the two files cannot disagree. A renamed tool fails the build
+rather than shipping a file that names it.
+
 ## What Grok gets
 
 | Tool | What it does |

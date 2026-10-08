@@ -2,8 +2,10 @@
 // Regenerates the three.ws Agent Skills pack manifest from the skill files
 // themselves, so the registry-facing index can never drift from what ships:
 //
-//   .agents/skills/skills-pack.json  — machine-readable pack manifest
-//   .agents/skills/SKILLS.md         — human-readable index (same data)
+//   .agents/skills/skills-pack.json  : machine-readable pack manifest
+//   .agents/skills/SKILLS.md         : human-readable index (same data)
+//   public/skill.md                  : the entry-point skill (any agent runtime)
+//   public/grok-skill.md             : the same platform, written for Grok and Grok Bot
 //
 // Usage: node scripts/build-skills-pack.mjs [--check]
 //   --check  exit 1 if the generated output differs from what is on disk
@@ -18,6 +20,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+
+import { renderFacts, skillFacts } from './lib/skill-md-facts.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const SKILLS_DIR = path.join(ROOT, '.agents', 'skills');
@@ -263,7 +267,7 @@ function firstSentence(text) {
 	return end === -1 ? flat : flat.slice(0, end + 1);
 }
 
-function renderRootSkill(skills, template) {
+export function renderRootSkill(skills, template, facts) {
 	const sections = ROOT_SKILL_CATEGORIES.map(([category, heading]) => {
 		const rows = skills
 			.filter((s) => s.category === category && s.origin === 'three.ws')
@@ -271,7 +275,16 @@ function renderRootSkill(skills, template) {
 		return [`### ${heading}`, '', ...rows].join('\n');
 	});
 	if (!template.includes('{{SKILL_INDEX}}')) throw new Error('data/skill-md.template.md is missing its {{SKILL_INDEX}} marker');
-	return `${template.replace('{{SKILL_INDEX}}', sections.join('\n\n')).trimEnd()}\n`;
+	const filled = renderFacts(template, facts, 'data/skill-md.template.md');
+	return `${filled.replace('{{SKILL_INDEX}}', sections.join('\n\n')).trimEnd()}\n`;
+}
+
+// public/grok-skill.md: the Grok variant (served at https://three.ws/grok-skill.md).
+// It renders from the same facts as public/skill.md (scripts/lib/skill-md-facts.mjs),
+// so a server URL, tool name or free limit cannot say one thing in one file and
+// another in the other.
+export function renderGrokSkill(template, facts) {
+	return `${renderFacts(template, facts, 'data/grok-skill-md.template.md').trimEnd()}\n`;
 }
 
 // Only run the generator when this file is the entry point: other scripts import
@@ -281,36 +294,42 @@ const invokedDirectly =
 if (!invokedDirectly) {
 	// Imported as a library: nothing to write.
 } else {
-	main();
+	await main();
 }
 
-function main() {
+async function main() {
 const skills = collectSkills();
+const facts = await skillFacts();
 const jsonOut = renderJson(skills);
 const mdOut = renderMarkdown(skills);
 const jsonPath = path.join(SKILLS_DIR, 'skills-pack.json');
 const mdPath = path.join(SKILLS_DIR, 'SKILLS.md');
 const rootSkillPath = path.join(ROOT, 'public', 'skill.md');
-const rootSkillOut = renderRootSkill(skills, fs.readFileSync(path.join(ROOT, 'data', 'skill-md.template.md'), 'utf8'));
+const rootSkillOut = renderRootSkill(skills, fs.readFileSync(path.join(ROOT, 'data', 'skill-md.template.md'), 'utf8'), facts);
+const grokSkillPath = path.join(ROOT, 'public', 'grok-skill.md');
+const grokSkillOut = renderGrokSkill(fs.readFileSync(path.join(ROOT, 'data', 'grok-skill-md.template.md'), 'utf8'), facts);
 
 if (process.argv.includes('--check')) {
 	const same =
 		fs.existsSync(jsonPath) &&
 		fs.existsSync(mdPath) &&
 		fs.existsSync(rootSkillPath) &&
+		fs.existsSync(grokSkillPath) &&
 		fs.readFileSync(jsonPath, 'utf8') === jsonOut &&
 		fs.readFileSync(mdPath, 'utf8') === mdOut &&
-		fs.readFileSync(rootSkillPath, 'utf8') === rootSkillOut;
+		fs.readFileSync(rootSkillPath, 'utf8') === rootSkillOut &&
+		fs.readFileSync(grokSkillPath, 'utf8') === grokSkillOut;
 	if (!same) {
-		console.error('skills-pack manifest or public/skill.md is stale: run node scripts/build-skills-pack.mjs');
+		console.error('skills-pack manifest, public/skill.md or public/grok-skill.md is stale: run node scripts/build-skills-pack.mjs');
 		process.exit(1);
 	}
-	console.log(`skills-pack manifest and public/skill.md up to date (${skills.length} skills).`);
+	console.log(`skills-pack manifest, public/skill.md and public/grok-skill.md up to date (${skills.length} skills).`);
 	process.exit(0);
 }
 
 fs.writeFileSync(jsonPath, jsonOut);
 fs.writeFileSync(mdPath, mdOut);
 fs.writeFileSync(rootSkillPath, rootSkillOut);
-console.log(`Wrote ${path.relative(ROOT, jsonPath)}, ${path.relative(ROOT, mdPath)} and ${path.relative(ROOT, rootSkillPath)} (${skills.length} skills).`);
+fs.writeFileSync(grokSkillPath, grokSkillOut);
+console.log(`Wrote ${[jsonPath, mdPath, rootSkillPath, grokSkillPath].map((p) => path.relative(ROOT, p)).join(', ')} (${skills.length} skills).`);
 }

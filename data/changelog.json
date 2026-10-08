@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
+			"title": "A skill file that teaches Grok to use three.ws",
+			"summary": "three.ws/grok-skill.md is one Markdown file you can upload to Grok's Skills or hand to Grok Bot. It tells Grok exactly which connector URL to add for a free 3D studio, how to sign it in to work with your agents, and, when no connector is set up, how to search the 3D catalog, generate a model and look at it with plain curl calls that run as written. It also spells out the links every model comes back with, what needs an account, and that Grok never spends money on your behalf. It is built from the same facts as three.ws/skill.md, so the two always agree. The Grok page has a button to download it.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/grok"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "One Grok Bot connector for 3D and your agents",
 			"summary": "https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Give the same URL a connector API key, or sign it in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading, launch or delete tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.",
 			"tags": [

@@ -6796,6 +6796,13 @@
 					"added": "2026-09-29"
 				},
 				{
+					"path": "/grok-skill.md",
+					"title": "grok-skill.md",
+					"description": "The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.",
+					"indexable": false,
+					"added": "2026-10-08"
+				},
+				{
 					"path": "/robots.txt",
 					"title": "robots.txt",
 					"description": "Crawler directives.",

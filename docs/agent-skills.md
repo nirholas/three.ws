@@ -50,6 +50,24 @@ index is generated into [`public/skill.md`](../public/skill.md) by the same
 it is stale, so a skill added or renamed in those two categories appears there on the
 next build.
 
+### The Grok variant: `https://three.ws/grok-skill.md`
+
+The same platform, written for Grok and Grok Bot: the Grok connector URL and the
+sentence that adds it, signing in for account tools, runnable `curl` JSON-RPC calls
+for a Grok with no connector, the links contract, what needs an account, and the
+spend rule. See [three.ws for Grok](./grok.md#a-skill-file-for-grok). Its prose lives
+in [`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md) and the same
+build renders it to [`public/grok-skill.md`](../public/grok-skill.md).
+
+Both templates draw every shared fact from
+[`scripts/lib/skill-md-facts.mjs`](../scripts/lib/skill-md-facts.mjs): `{{FREE_MCP}}`
+and the other server URLs come from `public/.well-known/mcp.json`, the free limits
+from `STUDIO_LIMITS`, `{{tool:forge_free}}` renders a tool name only if a studio
+surface or the Grok account allowlist serves it, and `{{prompt:asset-pack}}` a prompt
+name only if the Grok connector lists it. An unknown placeholder fails the build.
+`tests/grok-skill-file.test.js` resolves every link in both files with the production
+route resolver and checks every example call against the tool's input schema.
+
 ## Install paths
 
 ### a) As a Claude Code plugin
