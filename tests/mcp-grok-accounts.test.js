@@ -80,7 +80,9 @@ const { spendScopeFor } = await import('../api/_mcp/policy.js');
 const { dispatch: coreDispatch } = await import('../api/_mcp/dispatch.js');
 const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
 const { GROK_ACCOUNT_TOOLS } = await import('../api/_mcp-studio/account-tools.js');
-const { parseWwwAuthenticate } = await import('../scripts/mcp-client-probe.mjs');
+const { parseWwwAuthenticate, authExpectations } = await import('../scripts/mcp-client-probe.mjs');
+const { hostedServers } = await import('../packages/three-ws-cli/src/servers.js');
+const { readFileSync } = await import('node:fs');
 
 const ORIGIN = 'https://three.ws';
 const USER = '9a8b7c6d-0000-4000-8000-0000000000bb';
@@ -326,5 +328,25 @@ describe('the OAuth door', () => {
 	it('a platform token (what npx three-ws setup holds) works here', async () => {
 		const names = (await listNames(bearer(await oauthToken(CONNECTOR_SCOPE, `${ORIGIN}/api/mcp`)))).map((t) => t.name);
 		expect(names).toContain('create_agent');
+	});
+});
+
+describe('the directory entry', () => {
+	const directory = JSON.parse(readFileSync(new URL('../public/.well-known/mcp.json', import.meta.url), 'utf8'));
+	const entry = directory.servers.find((s) => s.endpoint === `${ORIGIN}/api/mcp-grok`);
+
+	it('is listed, open anonymously, and upgradeable by OAuth or a key', () => {
+		expect(entry).toBeDefined();
+		expect(authExpectations(entry.auth)).toEqual({ anonymous: true, oauth: true, apiKey: true });
+		expect(entry.signIn).toBe(`${ORIGIN}/api/mcp-grok?auth=oauth`);
+	});
+
+	// `npx three-ws setup` pre-selects every keyless server. This door repeats
+	// the free studio's fifteen tools for Grok, so a Claude or Cursor setup that
+	// pre-selected it would list each of them twice; it stays opt-in there.
+	it('is not pre-selected by the setup CLI, which already adds the free studio', () => {
+		const servers = hostedServers(directory, ORIGIN);
+		expect(servers.find((s) => s.path === '/api/mcp-grok').defaultSelected).toBe(false);
+		expect(servers.find((s) => s.path === '/api/mcp-studio').defaultSelected).toBe(true);
 	});
 });

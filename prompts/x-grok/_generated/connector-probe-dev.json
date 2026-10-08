@@ -1,8 +1,8 @@
 {
 	"probe": "scripts/mcp-client-probe.mjs",
 	"base": "http://localhost:3107",
-	"startedAt": "2026-10-08T22:14:49.103Z",
-	"finishedAt": "2026-10-08T22:14:53.655Z",
+	"startedAt": "2026-10-08T22:17:53.384Z",
+	"finishedAt": "2026-10-08T22:17:58.700Z",
 	"sdkVersion": "1.32.1",
 	"clientProtocolVersion": "2025-11-25",
 	"apiKeyMode": "ran",
@@ -126,7 +126,7 @@
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 303,
+						"ms": 267,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -253,7 +253,7 @@
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 76,
+						"ms": 77,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -344,7 +344,7 @@
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 11,
+						"ms": 12,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -368,7 +368,7 @@
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 9,
+						"ms": 10,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -381,7 +381,7 @@
 			"name": "Grok",
 			"endpoint": "https://three.ws/api/mcp-grok",
 			"url": "http://localhost:3107/api/mcp-grok",
-			"auth": "none for the free 3D tools; OAuth 2.1 or a connector API key adds the account's agent tools",
+			"auth": "OAuth 2.1 or a connector API key for the account's agent tools; none needed for the free 3D tools",
 			"expects": {
 				"anonymous": true,
 				"oauth": true,
@@ -391,7 +391,7 @@
 				"initialize": {
 					"status": 200,
 					"contentType": "application/json; charset=utf-8",
-					"sessionId": "grk_0fef4b53-53f1-4d93-b44e-3728bd24107c",
+					"sessionId": "grk_be6d0a67-c54f-482a-a8d3-39f8b9ebd633",
 					"wwwAuthenticate": null,
 					"protocolVersion": "2025-06-18",
 					"rpcError": null
@@ -452,7 +452,7 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": "grk_f75adff3-09b4-4f35-91d7-191f1ef9229f",
+					"sessionId": "grk_236b47a4-e793-4961-9b38-b26faa096b96",
 					"capabilities": [
 						"logging",
 						"tools"
@@ -462,7 +462,7 @@
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 10,
+						"ms": 9,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -500,7 +500,7 @@
 						"version": "1.0.0"
 					},
 					"protocolVersion": "2025-06-18",
-					"sessionId": "grk_080d238d-4e40-4fd7-905a-4e95f1db5292",
+					"sessionId": "grk_a762756d-f05d-4d33-8beb-b4026b9f8ad2",
 					"capabilities": [
 						"logging",
 						"tools"
@@ -510,7 +510,7 @@
 					"call": {
 						"name": "search_catalog",
 						"ok": true,
-						"ms": 85,
+						"ms": 81,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -638,7 +638,7 @@
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 77,
+						"ms": 75,
 						"contentItems": 1,
 						"structured": true
 					}
@@ -765,7 +765,7 @@
 					"call": {
 						"name": "getting_started",
 						"ok": true,
-						"ms": 75,
+						"ms": 76,
 						"contentItems": 1,
 						"structured": true
 					}
