@@ -571,20 +571,39 @@ export async function exitSwarm({ userId, swarmId, agentId }) {
 	let capped = false;
 	if (redeem > spendable) { redeem = spendable; capped = true; }
 
+	// Claim this member's one exit BEFORE any SOL moves. The member read above is
+	// a plain SELECT, so concurrent exits each saw 'active', each priced the
+	// share off the same pre-transfer NAV, and each paid it: a 30% member drained
+	// the treasury in a few parallel calls. The payout row's unique idempotency
+	// key is the claim; a concurrent exit conflicts here and pays nothing.
+	const [claim] = await sql`
+		insert into swarm_payouts (swarm_id, member_id, agent_id, kind, amount_lamports, share_bps, destination, status, idempotency_key, meta)
+		values (${swarm.id}, ${member.id}, ${agent.id}, 'exit', ${redeem.toString()}, ${member.share_bps || 0}, ${dest.address}, 'pending',
+			${`swarm_exit:${member.id}`}, ${JSON.stringify({ capped, exit_policy: pol.exit_policy })}::jsonb)
+		on conflict (idempotency_key) do nothing
+		returning id
+	`;
+	if (!claim) throw new SwarmError(409, 'exit_in_progress', 'this member already has an exit in progress or settled');
+
 	let signature = null;
 	if (redeem > 0n) {
-		const keypair = await recoverSolanaAgentKeypair(
-			(await sql`select meta from agent_identities where id = ${swarm.treasury_agent_id} limit 1`)[0]?.meta?.encrypted_solana_secret,
-			{ agentId: swarm.treasury_agent_id, userId, reason: 'swarm_exit_redeem', meta: { swarm_id: swarm.id, member_id: member.id } },
-		);
-		signature = await transferNativeSol({ fromKeypair: keypair, toAddress: dest.address, lamports: redeem, network: swarm.network });
-
-		await sql`
-			insert into swarm_payouts (swarm_id, member_id, agent_id, kind, amount_lamports, share_bps, destination, signature, status, idempotency_key, meta)
-			values (${swarm.id}, ${member.id}, ${agent.id}, 'exit', ${redeem.toString()}, ${member.share_bps || 0}, ${dest.address}, ${signature}, 'confirmed',
-				${`swarm_exit:${member.id}`}, ${JSON.stringify({ capped, exit_policy: pol.exit_policy })}::jsonb)
-			on conflict (idempotency_key) do nothing
-		`;
+		try {
+			const keypair = await recoverSolanaAgentKeypair(
+				(await sql`select meta from agent_identities where id = ${swarm.treasury_agent_id} limit 1`)[0]?.meta?.encrypted_solana_secret,
+				{ agentId: swarm.treasury_agent_id, userId, reason: 'swarm_exit_redeem', meta: { swarm_id: swarm.id, member_id: member.id } },
+			);
+			signature = await transferNativeSol({ fromKeypair: keypair, toAddress: dest.address, lamports: redeem, network: swarm.network });
+		} catch (err) {
+			// Nothing was paid: release the claim so the member can retry.
+			await sql`delete from swarm_payouts where id = ${claim.id} and status = 'pending'`;
+			throw err;
+		}
+	}
+	await sql`
+		update swarm_payouts set status = 'confirmed', signature = ${signature}, updated_at = now()
+		where id = ${claim.id}
+	`;
+	if (redeem > 0n) {
 		await recordCustodyEvent({
 			agentId: swarm.treasury_agent_id, userId, eventType: 'withdraw', category: 'swarm_payout',
 			network: swarm.network, asset: 'SOL', amountLamports: redeem, destination: dest.address,
