@@ -3227,6 +3227,14 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/docs/dextools",
+					"title": "Docs · DEXTools integration",
+					"description": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-08"
+				},
+				{
 					"path": "/docs/coin3d-embed",
 					"title": "Docs · Token in 3D, as an embed",
 					"description": "Put a live 3D view of any Solana market on your own page with one iframe, keyed by the mint or by the pair address your chart already uses. Covers the pair-to-token bridge, the parameters, sizing, the designed failure states, and driving the scene from the host page.",
