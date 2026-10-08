@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // @three-ws/solana-agent (the symlinked `file:solana-agent-sdk` workspace SDK)
 // is only ever loaded LAZILY — every importer (api/_lib/agora-human.js,
@@ -29,6 +31,30 @@ function externalizeSolanaAgentSdk() {
 	};
 }
 
+// Same transform-time trap, for a relative specifier: avatar-sdk/src/agent.js
+// lazily imports the prebuilt <agent-3d> monolith at avatar-sdk/dist/index.mjs,
+// which is gitignored and only exists after `npm run build:lib:full && npm run
+// build:avatar-sdk`. Import-analysis resolves that dynamic import when it
+// transforms agent.js, so in any checkout that has not run the build (a fresh
+// clone, the evolve worktree) tests/avatar-sdk-api.test.js died with "Failed to
+// resolve import" before reaching its ensureAgent3D guard, which never loads the
+// monolith at all. Externalizing exactly that one edge leaves it to native
+// import at runtime: a test that really executes it gets the real module when
+// it is built, and a real ERR_MODULE_NOT_FOUND when it is not.
+function externalizeAvatarSdkMonolith() {
+	const MONOLITH = fileURLToPath(new URL('./avatar-sdk/dist/index.mjs', import.meta.url));
+	return {
+		name: 'externalize-avatar-sdk-monolith',
+		enforce: 'pre',
+		resolveId(source, importer) {
+			if (!importer || !source.endsWith('/dist/index.mjs')) return null;
+			const from = path.dirname(importer.split('?')[0]);
+			if (path.resolve(from, source) !== MONOLITH) return null;
+			return { id: MONOLITH, external: true };
+		},
+	};
+}
+
 // Cold dynamic `import()` of API handlers that pull in heavy SDKs (@coinbase/x402,
 // neon-serverless, jsdom, the Solana toolchain, etc.) routinely takes 5–30s on
 // the first hit in constrained CI/Codespace environments. Individual tests that
@@ -48,7 +74,7 @@ const _cpus = Math.max(1, (os.availableParallelism?.() ?? os.cpus().length) - 1)
 const MAX_FORKS = _cpus <= 3 ? 2 : Math.min(6, _cpus);
 
 export default defineConfig({
-	plugins: [externalizeSolanaAgentSdk()],
+	plugins: [externalizeSolanaAgentSdk(), externalizeAvatarSdkMonolith()],
 	// packages/avatar-agent-mcp ships its own nested @grpc/* copies (it is a
 	// standalone publishable package). Without deduping, the package's lazy
 	// `import('@grpc/grpc-js')` resolves to that nested copy while a test's

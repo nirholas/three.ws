@@ -29,7 +29,7 @@ afterAll(() => {
 
 describe('api dispatcher rejects path traversal', () => {
 	it('encoded ../ escape to a repo-root .js returns 404, not 200/500', async () => {
-		// Would resolve to /workspaces/three.ws/vite.config.js and import()+invoke it.
+		// Would resolve to <repo root>/vite.config.js and import()+invoke it.
 		const res = await fetch(`${BASE}/api/x%2f..%2f..%2fvite.config`, { redirect: 'manual' });
 		expect(res.status).toBe(404);
 	}, 15000);

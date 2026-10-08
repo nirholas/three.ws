@@ -13,21 +13,21 @@ import { parseWorktrees, dirtyCount, isAgentWorktreeBranch } from '../scripts/cl
 describe('parseWorktrees', () => {
 	it('separates the main worktree from detached deploy scratch trees', () => {
 		const porcelain = [
-			'worktree /workspaces/three.ws',
+			'worktree /srv/three.ws',
 			'HEAD 87e5c4cf5e577c9d7a36740b0ee22d16ea2ee43b',
 			'branch refs/heads/main',
 			'',
-			'worktree /workspaces/.deploy-wt',
+			'worktree /srv/.deploy-wt',
 			'HEAD d7d9035d0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
 			'detached',
 			'',
 		].join('\n');
 		const wts = parseWorktrees(porcelain);
 		expect(wts).toHaveLength(2);
-		expect(wts[0].path).toBe('/workspaces/three.ws');
+		expect(wts[0].path).toBe('/srv/three.ws');
 		expect(wts[0].branch).toBe('refs/heads/main');
 		expect(wts[0].detached).toBe(false);
-		expect(wts[1].path).toBe('/workspaces/.deploy-wt');
+		expect(wts[1].path).toBe('/srv/.deploy-wt');
 		expect(wts[1].detached).toBe(true);
 		expect(wts[1].branch).toBe(null);
 	});

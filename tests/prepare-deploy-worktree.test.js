@@ -9,6 +9,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
+import { existsSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,6 +18,16 @@ import { ARTIFACTS, planArtifacts, cpArgsFor } from '../scripts/prepare-deploy-w
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = path.join(ROOT, 'scripts/prepare-deploy-worktree.mjs');
+
+// Plan-mode targets derived from this checkout, never from one machine's layout
+// (the default /workspaces/.deploy-wt only exists in a codespace).
+const sameDevice = (dir) => existsSync(dir) && statSync(dir).dev === statSync(ROOT).dev;
+// A directory beside the checkout when that shares its filesystem, else one
+// inside it; either way a path that does not exist yet, so plan mode can run.
+const PLAN_PARENT = sameDevice(path.dirname(ROOT)) ? path.dirname(ROOT) : ROOT;
+const UNUSED_TARGET = path.join(PLAN_PARENT, `.deploy-wt-vitest-unused-${process.pid}`);
+// A mount that is certainly not the checkout's, for the cross-filesystem guard.
+const FOREIGN_FS = ['/dev', '/proc', '/sys', tmpdir()].find((dir) => existsSync(dir) && !sameDevice(dir));
 
 /** Run the script in plan mode. It writes nothing, so this is safe in CI. */
 function plan(args) {
@@ -106,7 +118,8 @@ describe('cpArgsFor', () => {
 
 describe('guards (plan mode, writes nothing)', () => {
 	it('refuses a target on another filesystem, where cp -al cannot hardlink', () => {
-		const r = plan(['--path', '/tmp/deploy-wt-vitest-probe']);
+		expect(FOREIGN_FS, 'no mount on this host differs from the checkout').toBeTruthy();
+		const r = plan(['--path', path.join(FOREIGN_FS, 'deploy-wt-vitest-probe')]);
 		expect(r.code).toBe(1);
 		expect(r.out).toMatch(/different filesystem/);
 	});
@@ -124,9 +137,11 @@ describe('guards (plan mode, writes nothing)', () => {
 	});
 
 	it('plans without applying by default, and says so', () => {
-		const r = plan(['--path', '/workspaces/.deploy-wt-vitest-unused']);
+		expect(existsSync(UNUSED_TARGET)).toBe(false);
+		const r = plan(['--path', UNUSED_TARGET]);
 		expect(r.code).toBe(0);
 		expect(r.out).toMatch(/Plan only\. Re-run with --apply/);
 		for (const a of ARTIFACTS.filter((x) => !x.optional)) expect(r.out).toContain(a.rel);
+		expect(existsSync(UNUSED_TARGET)).toBe(false);
 	});
 });

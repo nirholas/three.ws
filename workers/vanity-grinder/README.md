@@ -95,6 +95,7 @@ WALLET_ENCRYPTION_KEY=…  TARGETS_FILE=/tmp/targets.json \
 | `RUNNER` | `local` | `local` / `cloud-run-job` / `gce-spot-mig` |
 | `WRITE_DB` | `0` | `1` to upsert into `vanity_inventory` (needs `DATABASE_URL`) |
 | `SHARD_INDEX` / `SHARD_COUNT` | `0` / `1` | partition targets across parallel instances |
+| `GCE_METADATA_HOST` | `metadata.google.internal` | metadata server `host[:port]` the MIG shard resolver reads (the override Google's client libraries honour) |
 
 ## Sharding
 

@@ -29,6 +29,12 @@ import { CANONICAL_REST_POSITION, CANONICAL_REST_WORLD } from '../src/animation-
 const idle = JSON.parse(readFileSync(new URL('../public/animations/clips/idle.json', import.meta.url), 'utf8'));
 const DEG = 180 / Math.PI;
 
+// The simulated recorder stamps every sample this many milliseconds after the
+// routine time it measured, like a real logger whose clock does not start at
+// zero. Truth lookups have to subtract it, or a comparison at a step in the
+// routine reads the sample on the far side of the step.
+const CLOCK_OFFSET_MS = 42;
+
 const v = (x, y, z) => new Vector3(x, y, z);
 const columns = (a, b, c) => new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(a, b, c));
 const axisAngle = (axis, deg) => new Quaternion().setFromAxisAngle(axis.clone().normalize(), deg / DEG);
@@ -47,7 +53,8 @@ function mounting(distalPrior, secondaryPrior, tiltDeg) {
 	const secondary = perp(v(...secondaryPrior).applyQuaternion(tilt), distal);
 	// Columns [distal, secondary, distal × secondary] map segment coordinates to
 	// sensor coordinates; the sensor's orientation is the segment's times the inverse.
-	return columns(distal, secondary, new Vector3().crossVectors(distal, secondary)).invert();
+	const toSensor = columns(distal, secondary, new Vector3().crossVectors(distal, secondary));
+	return { quat: toSensor.clone().invert(), distal, secondary };
 }
 
 /** Scripted routine: returns shoulder flexion, elbow flexion and wrist wobble (degrees) at time t. */
@@ -65,20 +72,23 @@ function routine(t) {
 function simulate(seconds = 40) {
 	const up = v(0, 0, 1);
 	const rows = [];
-	const mounts = {
-		[SLOT.chest]: axisAngle(v(0.3, 1, 0.2), 140),
+	const segmentMounts = {
 		[SLOT.leftArm]: mounting(HARNESS_PRIOR.distal[SLOT.leftArm], HARNESS_PRIOR.anterior[SLOT.leftArm], 12),
 		[SLOT.rightArm]: mounting(HARNESS_PRIOR.distal[SLOT.rightArm], HARNESS_PRIOR.anterior[SLOT.rightArm], -15),
 		[SLOT.leftForeArm]: mounting(HARNESS_PRIOR.distal[SLOT.leftForeArm], HARNESS_PRIOR.dorsal[SLOT.leftForeArm], 18),
 		[SLOT.rightForeArm]: mounting(HARNESS_PRIOR.distal[SLOT.rightForeArm], HARNESS_PRIOR.dorsal[SLOT.rightForeArm], -9),
+	};
+	const mounts = {
+		[SLOT.chest]: axisAngle(v(0.3, 1, 0.2), 140),
 		[SLOT.leftHand]: axisAngle(v(1, -0.5, 0.7), 75),
 		[SLOT.rightHand]: axisAngle(v(-0.4, 0.9, 0.3), -50),
 	};
+	for (const [slot, m] of Object.entries(segmentMounts)) mounts[slot] = m.quat;
 	const truth = [];
 	const frames = Math.round(seconds * SAMPLE_HZ);
 	for (let i = 0; i < frames; i++) {
 		const t = i / SAMPLE_HZ;
-		const timeMs = Math.round(t * 1000) + 42;
+		const timeMs = Math.round(t * 1000) + CLOCK_OFFSET_MS;
 		const { shoulder, elbow, wrist } = routine(t);
 		// Body: a constant heading plus a lean about the left axis and a small yaw wobble.
 		const lean = 6 * Math.sin(t * 0.5);
@@ -91,7 +101,7 @@ function simulate(seconds = 40) {
 			rows.push({ recording_id: 1, time_ms: timeMs, slot, quat_x: q.x, quat_y: q.y, quat_z: q.z, quat_w: q.w });
 		};
 		push(SLOT.chest, body);
-		const perSide = {};
+		const arms = {};
 		for (const side of ['left', 'right']) {
 			// Upper arm hangs (distal = -up, anterior = forward) and flexes forward at the shoulder.
 			const flex = axisAngle(left, -shoulder);
@@ -111,11 +121,30 @@ function simulate(seconds = 40) {
 			push(slots.arm, columns(armDistal, armAnterior, armThird));
 			push(slots.foreArm, foreWorld);
 			push(slots.hand, handWorld);
-			perSide[side] = { armDistal, foreDistal };
+			arms[side] = { armDistal, foreDistal };
 		}
-		truth.push({ t, shoulder, elbow, wrist, lean, forward, left, bodyUp, ...perSide });
+		// The per-arm truth lives under its own key: spread at the top level, the
+		// `left` arm would overwrite the wearer's `left` axis.
+		truth.push({ t, shoulder, elbow, wrist, lean, forward, left, bodyUp, arms });
 	}
-	return { rows, truth };
+	return { rows, truth, segmentMounts };
+}
+
+/** Truth sample behind recording time `seconds` (sample stamps carry CLOCK_OFFSET_MS). */
+function truthAtRecordingTime(truth, seconds) {
+	const index = Math.round((seconds - CLOCK_OFFSET_MS / 1000) * SAMPLE_HZ);
+	return truth[Math.min(truth.length - 1, Math.max(0, index))];
+}
+
+/**
+ * Where an upper arm points on the character for a truth sample: straight down,
+ * swung forward by the shoulder flexion and back by the torso's forward lean,
+ * since the simulated arm hangs along the leaning body. Character frame: +y up,
+ * +z forward.
+ */
+function expectedArmDirection(sample) {
+	const swing = (sample.shoulder - sample.lean) / DEG;
+	return v(0, -Math.cos(swing), Math.sin(swing));
 }
 
 /** World rotation of every bone in a clip frame, composed from the clip's own local tracks. */
@@ -142,7 +171,7 @@ function boneDirection(world, bone, child) {
 }
 
 describe('eidon imu clip: calibration from a synthetic wearer', () => {
-	const { rows, truth } = simulate();
+	const { rows, truth, segmentMounts } = simulate();
 	const frames = alignFrames(rows);
 	const cal = calibrate(frames);
 
@@ -150,6 +179,17 @@ describe('eidon imu clip: calibration from a synthetic wearer', () => {
 		expect(frames.times.length).toBe(truth.length);
 		expect(frames.quats).toHaveLength(7);
 		expect(frames.times[1] - frames.times[0]).toBeCloseTo(1 / SAMPLE_HZ, 3);
+	});
+
+	it('maps every recording timestamp back to the truth sample it was simulated from', () => {
+		// Both sides of the step at t = 20 s and t = 30 s, where reading the
+		// neighbouring sample swaps a 90 degree elbow for a straight one.
+		for (const i of [0, 479, 480, 719, 720, truth.length - 1]) {
+			expect(truthAtRecordingTime(truth, frames.times[i])).toBe(truth[i]);
+		}
+		// The wearer's axes stay vectors; the per-arm truth must not shadow them.
+		for (const key of ['forward', 'left', 'bodyUp']) expect(truth[0][key].isVector3).toBe(true);
+		expect(Object.keys(truth[0].arms)).toEqual(['left', 'right']);
 	});
 
 	it('finds the wearer\'s up, forward and left in the chest sensor frame', () => {
@@ -162,14 +202,35 @@ describe('eidon imu clip: calibration from a synthetic wearer', () => {
 	});
 
 	it('measures every arm axis from the data instead of echoing the prior', () => {
-		for (const side of ['left', 'right']) {
-			const q = cal.sides[side].quality;
+		const sides = {
+			left: { arm: SLOT.leftArm, foreArm: SLOT.leftForeArm },
+			right: { arm: SLOT.rightArm, foreArm: SLOT.rightForeArm },
+		};
+		for (const [side, slots] of Object.entries(sides)) {
+			const est = cal.sides[side];
+			const q = est.quality;
 			expect(q.hangingSeconds).toBeGreaterThan(3);
 			expect(q.anteriorFromPrior).not.toBeNull();
 			expect(q.dorsalFromPrior).not.toBeNull();
 			for (const value of Object.values(q.distalFromPrior)) expect(value).not.toBeNull();
-			// The mountings were tilted 9-18 degrees off the prior, and the estimate should follow the tilt, not the prior.
-			expect(q.anteriorFromPrior).toBeGreaterThan(4);
+			// Each long axis lands near the true mounting and far closer to it than
+			// the prior it started from (the mountings sit 9-18 degrees off the
+			// prior). The few degrees left over are the wearer's torso lean, which
+			// the hanging arm follows while gravity, the estimator's reference, does not.
+			for (const slot of [slots.arm, slots.foreArm]) {
+				const trueDistal = segmentMounts[slot].distal;
+				const error = angle(est.distal[slot], trueDistal);
+				expect(error).toBeLessThan(4);
+				expect(error).toBeLessThan(angle(v(...HARNESS_PRIOR.distal[slot]), trueDistal) / 2);
+			}
+			// The roll axes follow the true mounting too. The anterior estimate is
+			// re-projected onto the measured long axis, so what it can differ from
+			// the prior by is the tilt's twist about that axis, not the whole tilt.
+			const trueAnterior = segmentMounts[slots.arm].secondary;
+			expect(angle(est.anterior, trueAnterior)).toBeLessThan(3);
+			const trueTwist = angle(trueAnterior, perp(v(...HARNESS_PRIOR.anterior[slots.arm]), segmentMounts[slots.arm].distal));
+			expect(Math.abs(q.anteriorFromPrior - trueTwist)).toBeLessThan(0.5);
+			expect(angle(est.dorsal, segmentMounts[slots.foreArm].secondary)).toBeLessThan(4);
 		}
 	});
 
@@ -187,7 +248,7 @@ describe('eidon imu clip: baked motion on the canonical rig', () => {
 	const cal = calibrate(frames);
 	const clip = bakeClip(frames, cal, { name: 'synthetic', idle, start: 2, end: 36, loop: false });
 	const fps = 30;
-	const truthAt = (clipTime) => truth[Math.round((2 + clipTime) * SAMPLE_HZ)];
+	const truthAt = (clipTime) => truthAtRecordingTime(truth, 2 + clipTime);
 
 	it('has every idle track, at 30 fps, over the requested window', () => {
 		expect(clip.tracks.map((t) => t.name)).toEqual(idle.tracks.map((t) => t.name));
@@ -210,14 +271,19 @@ describe('eidon imu clip: baked motion on the canonical rig', () => {
 		expect(worst).toBeLessThan(4);
 	});
 
-	it('hangs the arms straight down and raises them forward when the wearer reaches', () => {
+	it('hangs the arms down along the body and raises them forward when the wearer reaches', () => {
 		const at = (clipTime) => worldRotations(clip, Math.round(clipTime * fps));
+		// t = 3 s in the routine: arms hanging while the torso leans 6 degrees
+		// forward, so the arms hang 6 degrees behind vertical, exactly as simulated.
 		const hanging = at(1);
-		expect(angle(boneDirection(hanging, 'LeftArm', 'LeftForeArm'), v(0, -1, 0))).toBeLessThan(4);
-		expect(angle(boneDirection(hanging, 'RightArm', 'RightForeArm'), v(0, -1, 0))).toBeLessThan(4);
+		const hangingArm = expectedArmDirection(truthAt(1));
+		expect(angle(hangingArm, v(0, -1, 0))).toBeGreaterThan(5);
+		expect(angle(boneDirection(hanging, 'LeftArm', 'LeftForeArm'), hangingArm)).toBeLessThan(4);
+		expect(angle(boneDirection(hanging, 'RightArm', 'RightForeArm'), hangingArm)).toBeLessThan(4);
 		// t = 23 s in the routine (21 s into the clip): shoulder 60 degrees forward, elbow about 90.
 		const reaching = at(21);
-		const expectedArm = v(0, -Math.cos(60 / DEG), Math.sin(60 / DEG));
+		expect(truthAt(21).shoulder).toBe(60);
+		const expectedArm = expectedArmDirection(truthAt(21));
 		expect(angle(boneDirection(reaching, 'LeftArm', 'LeftForeArm'), expectedArm)).toBeLessThan(5);
 		expect(angle(boneDirection(reaching, 'RightArm', 'RightForeArm'), expectedArm)).toBeLessThan(5);
 		// The flexed forearm points up and forward (elbow flexes toward the anterior side), never backward.
@@ -227,9 +293,13 @@ describe('eidon imu clip: baked motion on the canonical rig', () => {
 	});
 
 	it('keeps the level forearm palm-down: its dorsal side faces up', () => {
-		// t = 14.8 s: elbow near 100 degrees with the upper arm hanging, so the forearm is roughly level.
-		const frame = Math.round((14.8 - 2) * fps);
-		const world = worldRotations(clip, frame);
+		// t = 13.25 s: the elbow peaks at 100 degrees while the shoulder is back
+		// at rest, so the upper arm hangs and the forearm sits 10 degrees above level.
+		const clipTime = 13.25 - 2;
+		const sample = truthAt(clipTime);
+		expect(sample.elbow).toBeGreaterThan(97);
+		expect(sample.shoulder).toBeLessThan(1);
+		const world = worldRotations(clip, Math.round(clipTime * fps));
 		const restDorsal = v(0, 1, 0).applyQuaternion(new Quaternion().fromArray(CANONICAL_REST_WORLD.LeftForeArm).invert());
 		const dorsal = restDorsal.applyQuaternion(world.LeftForeArm);
 		expect(dorsal.y).toBeGreaterThan(0.85);
@@ -237,16 +307,29 @@ describe('eidon imu clip: baked motion on the canonical rig', () => {
 
 	it('leans the torso with the chest sensor and leaves the legs on the idle clip', () => {
 		const spine2 = (clipTime) => worldRotations(clip, Math.round(clipTime * fps)).Spine2;
+		// The bake time-warps the idle so it completes whole cycles inside the
+		// window; compare against the idle at that same warped time.
+		const duration = clip.duration;
+		const cycles = Math.max(1, Math.round(duration / idle.duration));
 		const idleSpine2 = (clipTime) => {
-			const idleClip = { ...idle, tracks: idle.tracks };
-			const frame = Math.round(clipTime * fps) % idle.tracks[0].times.length;
-			return worldRotations(idleClip, frame).Spine2;
+			const idleTime = ((clipTime / duration) * cycles * idle.duration) % idle.duration;
+			return worldRotations(idle, Math.round(idleTime * fps)).Spine2;
 		};
-		// The lean is 6 degrees at its peak around t = 3.14 s (1.14 s into the clip) and reverses at t = 9.4 s.
-		const forwardLean = spine2(1.14).angleTo(idleSpine2(1.14)) * DEG;
-		const backLean = spine2(7.4).angleTo(idleSpine2(7.4)) * DEG;
-		expect(forwardLean).toBeGreaterThan(3);
-		expect(backLean).toBeGreaterThan(3);
+		// The torso turn the chest sensor added, about the character's left axis
+		// (+x): positive tips the chest toward +z (forward), negative leans back.
+		const pitch = (clipTime) => {
+			const turn = spine2(clipTime).multiply(idleSpine2(clipTime).invert());
+			if (turn.w < 0) turn.set(-turn.x, -turn.y, -turn.z, -turn.w);
+			return 2 * Math.asin(Math.max(-1, Math.min(1, turn.x))) * DEG;
+		};
+		// The lean peaks at 6 degrees forward at t = 3.14 s (1.14 s into the clip)
+		// and 6 degrees back at t = 9.42 s (7.42 s into the clip).
+		const forwardLean = pitch(1.14);
+		const backLean = pitch(7.42);
+		expect(forwardLean).toBeGreaterThan(4.5);
+		expect(forwardLean).toBeLessThan(7.5);
+		expect(backLean).toBeLessThan(-4.5);
+		expect(backLean).toBeGreaterThan(-7.5);
 		const legs = clip.tracks.find((t) => t.name === 'LeftUpLeg.quaternion');
 		const idleLegs = idle.tracks.find((t) => t.name === 'LeftUpLeg.quaternion');
 		expect(legs.values.slice(0, 4)).toEqual(idleLegs.values.slice(0, 4).map((n) => Number(n.toPrecision(7))));

@@ -22,7 +22,7 @@
 // which spreads VMs across shards without coordination (some shards may collide),
 // and never to the silent all-VMs-on-shard-0 behaviour this replaces.
 
-const METADATA_ROOT = 'http://metadata.google.internal/computeMetadata/v1';
+const METADATA_HOST = 'metadata.google.internal';
 const METADATA_TIMEOUT_MS = 2_000;
 const API_TIMEOUT_MS = 10_000;
 
@@ -37,13 +37,24 @@ async function fetchWithTimeout(url, init, timeoutMs) {
 }
 
 /**
+ * Base URL of the metadata server. GCE_METADATA_HOST is the override Google's
+ * own client libraries honour (gcp-metadata, google-auth-library): an emulator,
+ * a sidecar, or an address that answers nothing, which is how a host that IS a
+ * GCE VM can still exercise the off-GCE path. Read per call, not at import.
+ */
+function metadataRoot() {
+	const host = String(process.env.GCE_METADATA_HOST || '').trim() || METADATA_HOST;
+	return `http://${host}/computeMetadata/v1`;
+}
+
+/**
  * Read one key from the GCE metadata server.
  * @param {string} path - path under computeMetadata/v1, e.g. 'instance/name'.
  * @returns {Promise<string>} the raw value.
  */
 async function metadata(path) {
 	const res = await fetchWithTimeout(
-		`${METADATA_ROOT}/${path}`,
+		`${metadataRoot()}/${path}`,
 		{ headers: { 'Metadata-Flavor': 'Google' } },
 		METADATA_TIMEOUT_MS,
 	);

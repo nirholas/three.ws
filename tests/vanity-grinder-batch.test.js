@@ -22,6 +22,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execFile } from 'node:child_process';
+import { createServer } from 'node:http';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -283,13 +284,60 @@ describe('GCE MIG shard resolution', () => {
 		expect(new Set(names.map((n) => hashShardIndex(n, 8))).size).toBeGreaterThan(1);
 	});
 
+	// The resolver honours GCE_METADATA_HOST (the override Google's client
+	// libraries read), so these run the same on a laptop and on a GCE VM, where
+	// the real metadata server would otherwise answer and change the outcome.
+	const withMetadataHost = async (host, fn) => {
+		const prior = process.env.GCE_METADATA_HOST;
+		process.env.GCE_METADATA_HOST = host;
+		try {
+			return await fn();
+		} finally {
+			if (prior === undefined) delete process.env.GCE_METADATA_HOST;
+			else process.env.GCE_METADATA_HOST = prior;
+		}
+	};
+	const listen = (handler) => new Promise((resolve) => {
+		const server = createServer(handler);
+		server.listen(0, '127.0.0.1', () => resolve(server));
+	});
+	const close = (server) => new Promise((resolve) => server.close(resolve));
+
 	it('falls back to shard 0 off GCE rather than blocking on the metadata server', async () => {
 		const { resolveGceShardIndex } = await import('../workers/vanity-grinder/gce-shard.mjs');
+		// A port nothing listens on: exactly what a non-GCE host's metadata lookup meets.
+		const vacant = await listen(() => {});
+		const { port } = vacant.address();
+		await close(vacant);
 		const t0 = performance.now();
-		const resolved = await resolveGceShardIndex(4, () => {});
+		const resolved = await withMetadataHost(`127.0.0.1:${port}`, () => resolveGceShardIndex(4, () => {}));
 		expect(resolved.source).toBe('unavailable');
 		expect(resolved.index).toBe(0);
 		// The metadata probe is bounded; a hung DNS lookup must not stall a run.
 		expect(performance.now() - t0).toBeLessThan(15_000);
+	});
+
+	it('hashes the instance name on a VM whose instance-group listing is unavailable', async () => {
+		const { resolveGceShardIndex, hashShardIndex } = await import('../workers/vanity-grinder/gce-shard.mjs');
+		const seen = [];
+		// A VM outside any managed group: the metadata server knows its name but
+		// has no created-by attribute, so there is no group to list.
+		const metadata = await listen((req, res) => {
+			seen.push({ url: req.url, flavor: req.headers['metadata-flavor'] });
+			if (req.url === '/computeMetadata/v1/instance/name') return res.end('vanity-grinder-q7zk\n');
+			res.statusCode = 404;
+			res.end('not found');
+		});
+		try {
+			const { port } = metadata.address();
+			const logs = [];
+			const resolved = await withMetadataHost(`127.0.0.1:${port}`, () => resolveGceShardIndex(4, (m) => logs.push(m)));
+			expect(resolved).toEqual({ index: hashShardIndex('vanity-grinder-q7zk', 4), source: 'name-hash', instance: 'vanity-grinder-q7zk' });
+			expect(logs.join('\n')).toMatch(/instance-group listing unavailable/);
+			expect(seen.map((r) => r.url)).toEqual(['/computeMetadata/v1/instance/name', '/computeMetadata/v1/instance/attributes/created-by']);
+			expect(seen.every((r) => r.flavor === 'Google')).toBe(true);
+		} finally {
+			await close(metadata);
+		}
 	});
 });

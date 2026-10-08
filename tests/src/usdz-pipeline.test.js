@@ -16,7 +16,7 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
-import * as path from 'node:path';
+import { resolve } from 'node:path';
 
 // jsdom doesn't provide URL.createObjectURL with Blob support — GLTFLoader
 // uses it for embedded textures. Polyfill enough of it to round-trip blobs
@@ -130,7 +130,10 @@ if (typeof HTMLCanvasElement !== 'undefined') {
 	};
 }
 
-const GLB_PATH = path.resolve('/workspaces/three.ws/public/avatars/cz.glb');
+// The committed reference avatar, resolved from this file so the suite runs in
+// any checkout, not just the one it was written in. import.meta.url is not a
+// file: URL under the jsdom environment; import.meta.dirname is.
+const GLB_PATH = resolve(import.meta.dirname, '../../public/avatars/cz.glb');
 
 let glbBlobToUsdzBlob;
 let glbBlobToHalfBodyBlob;

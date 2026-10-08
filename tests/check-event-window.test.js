@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import {
 	validateEventConfig, isNoEventSentinel, NO_EVENT_DOC, CONFIG_PATH, isoOf, zoneLines,
 } from '../scripts/check-event-window.mjs';
@@ -18,6 +20,8 @@ const BASE = {
 		{ atMin: 105, title: 'Fireworks finale', icon: '🎆' },
 	],
 };
+
+const CHECK_SCRIPT = fileURLToPath(new URL('../scripts/check-event-window.mjs', import.meta.url));
 
 const BEFORE = Date.parse('2026-08-09T12:00:00Z');
 const DURING = Date.parse('2026-08-09T18:00:00Z');
@@ -165,7 +169,44 @@ describe.skipIf(!existsSync(CONFIG_PATH) || shippedIsResting())('the configured 
 		expect(failures).toEqual([]);
 	});
 
-	it('has not already ended', () => {
-		expect(Date.parse(shippedEvent().endsAt)).toBeGreaterThan(Date.now());
+	// Judged on an injected clock, never today's: whether the shipped event is
+	// still ahead is a fact about the calendar, which `npm run check:event` (in
+	// gate) reports at run time. What this suite pins is that the guard reads
+	// the shipped window the way every surface does: live for its whole span,
+	// and flagged ENDED from the instant it closes, so a finished event left in
+	// the file fails the gate until it is rescheduled or cleared.
+	it('reads as live for its whole window and as ENDED from the instant it closes', () => {
+		const doc = shippedEvent();
+		const { window: win } = validateEventConfig(doc, Date.parse(doc.startsAt));
+		expect(win).not.toBeNull();
+		for (const at of [win.startsAt, win.endsAt - 1]) {
+			const judged = validateEventConfig(doc, at);
+			expect(judged.state).toBe('live');
+			expect(judged.failures).toEqual([]);
+		}
+		const closed = validateEventConfig(doc, win.endsAt);
+		expect(closed.state).toBe('over');
+		expect(closed.failures.join(' | ')).toMatch(/ENDED/);
+	});
+
+	it('passes the gate CLI at the event\'s start and fails it once the event is over', () => {
+		const doc = shippedEvent();
+		const run = (at) => spawnSync(process.execPath, [CHECK_SCRIPT, '--at', at], { encoding: 'utf8' });
+		const atStart = run(doc.startsAt);
+		expect(atStart.status, atStart.stderr).toBe(0);
+		expect(atStart.stdout).toMatch(/OK: the configured event is coherent/);
+		const dayAfter = run(isoOf(validateEventConfig(doc, Date.parse(doc.startsAt)).window.endsAt + 24 * 3600 * 1000));
+		expect(dayAfter.status).toBe(1);
+		expect(dayAfter.stderr).toMatch(/the event window ENDED 24h ago/);
+	});
+});
+
+describe.skipIf(!existsSync(CONFIG_PATH) || !shippedIsResting())('the resting config that ships', () => {
+	it('passes the gate CLI at any instant, since there is no window to expire', () => {
+		for (const at of ['2020-01-01T00:00:00Z', '2099-01-01T00:00:00Z']) {
+			const r = spawnSync(process.execPath, [CHECK_SCRIPT, '--at', at], { encoding: 'utf8' });
+			expect(r.status, r.stderr).toBe(0);
+			expect(r.stdout).toMatch(/explicit no-event state/);
+		}
 	});
 });
