@@ -421,7 +421,10 @@ app.use(async (req, res) => {
 		currentPath.endsWith('/') &&
 		!currentPath.startsWith('/api/')
 	) {
-		const bare = currentPath.replace(/\/+$/, '') || '/';
+		// Leading slashes collapse too: dot segments (`/.//evil.com/`) parse to a
+		// pathname of `//evil.com/`, and a Location of `//evil.com` is a
+		// protocol-relative redirect off this origin.
+		const bare = currentPath.replace(/\/+$/, '').replace(/^\/+/, '/') || '/';
 		res.redirect(301, bare + url.search);
 		return;
 	}
