@@ -254,6 +254,27 @@ gcloud builds submit --config workers/model-hunyuan3d/cloudbuild.yaml \
 Every submit deploys as well as builds, so all three are owner-gated production
 deploys, not build checks.
 
+**The RTX deploy takes the lane down for one model load.** Cloud Run enforces
+the RTX PRO 6000 quota at one GPU, and the serving revision holds it, so a
+normal rolling update can never start the new revision's instance (it waits for
+a GPU until the 4 minute startup probe gives up, and the revision is left not
+Ready while traffic stays on the old one). `cloudbuild.hunyuan21rtx.yaml`
+therefore releases the GPU first with service-level manual scaling at 0,
+deploys, and restores autoscaling (`--scaling=auto --max=1`) whether or not the
+deploy succeeded. Expect about ten minutes without this lane while the new
+instance loads its weights; forge fails over to the other image lanes
+meanwhile. A config-only change (an env var, a probe) needs the same three
+steps by hand:
+
+```bash
+gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --scaling=0
+gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --update-env-vars KEY=VALUE
+gcloud run services update model-hunyuan3d-21-rtx --region us-central1 --scaling=auto --max=1
+```
+
+The full incident is in
+[docs/ops/production-log-triage.md](../../docs/ops/production-log-triage.md).
+
 What each config asks Cloud Run for, all in `us-central1`, all with no GPU zonal
 redundancy, a 900 s request timeout, and the `three-ws-build@` /
 `avatar-reconstruction-sa@` service accounts pinned (the project's default

@@ -93,7 +93,7 @@ Six GPU services share those 3 GPUs:
 | ~~avatar-reconstruction~~ | photo-to-avatar: **moved to CPU-only 2026-07-25, holds no GPU** (see below); sized for the 10k avatars/day launch target 2026-08-12 (min 1, max 12, 4 jobs per instance: docs/ops/avatar-reconstruction-capacity.md) | 1 | 12 |
 | model-hunyuan3d-21 | PBR realism lane, L4 build (min 0 since 2026-07-17; a pinned min 1 here starved every other rollout). KNOWN-BROKEN for actual jobs: 18 GiB tmpfs weight staging + 14 GiB model OOMs the 32 Gi L4 ceiling (signal 9 mid-load); see workers/model-hunyuan3d/README.md | 0 | 1 |
 
-`model-hunyuan3d-21-rtx` (same 2.1 PBR lane, warm min 1 / max 4) does NOT draw
+`model-hunyuan3d-21-rtx` (same 2.1 PBR lane, warm min 1 / max 1) does NOT draw
 from this pool; it runs on the RTX PRO 6000 quota below.
 
 **Resolved 2026-07-25 by returning a GPU nobody was using.** `avatar-reconstruction` held one of the three L4s solely for background removal (rembg / onnxruntime-gpu); every other stage (MediaPipe, TPS, GLB ops) is CPU-bound. Measured: rembg took **~2.2 s per job with the L4 attached versus ~1.9 s on a plain CPU box** — the CUDA provider was never engaging and the GPU was buying nothing. It now runs `--gpu=0 --cpu=8`, which is *faster* (end-to-end 4.2-4.7 s, was 4.8-5.8 s) at identical output quality (mean ISE 0.1595 both ways).
