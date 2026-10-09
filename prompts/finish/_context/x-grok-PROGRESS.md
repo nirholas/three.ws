@@ -183,3 +183,4 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Loop cap: one reply per conversation to bot authors (`countBotRepliesInConversation`), never an answer to a bot replying to our reply. Chat, launch, refused text, bot-started conversations, bot or own-account roots, blocklisted or under-24h humans are skipped with recorded reasons. Documented in `docs/x-mention-bot.md`.
 - Evidence: `tests/x-mention-on-behalf.test.js` 17/17 on the real migration (PGlite), real parser, guard, store and dry-run X adapter, with synthetic thread fixtures; guard, poll and budget suites still pass (68 total). `check:rules` OK.
 - Not verified: a live thread with the real @grok or @bot (owner-gated going live, order 928; known-bot id resolution still needs a production tick). Only `make` is actionable for bots; `image3d` and `avatar` for bots are skipped until their handlers are wired through the `generate` hook.
+- Commit: d7bad3434.
