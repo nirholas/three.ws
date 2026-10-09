@@ -1,17 +1,17 @@
 {
-	"acceptedAt": "2026-09-14T18:47:23.100Z",
+	"acceptedAt": "2026-10-09T03:09:56.522Z",
 	"packages": {
-		"@pump-fun/pump-sdk": {
-			"version": "2.0.0",
-			"publishedAt": "2026-09-13T09:55:54.743Z"
-		},
-		"@pump-fun/pump-swap-sdk": {
-			"version": "1.20.0",
-			"publishedAt": "2026-09-10T13:25:11.154Z"
-		},
 		"@pump-fun/agent-payments-sdk": {
 			"version": "3.0.3",
 			"publishedAt": "2026-03-24T07:32:16.786Z"
+		},
+		"@pump-fun/pump-sdk": {
+			"version": "4.0.0",
+			"publishedAt": "2026-10-08T12:53:48.925Z"
+		},
+		"@pump-fun/pump-swap-sdk": {
+			"version": "2.1.0",
+			"publishedAt": "2026-10-07T19:49:57.700Z"
 		},
 		"@pump-fun/shared-contracts": {
 			"version": "0.2.2",
@@ -19,12 +19,6 @@
 		}
 	},
 	"repositories": {
-		"carbon": {
-			"pushedAt": "2026-09-13T21:27:02Z",
-			"defaultBranch": "main",
-			"archived": false,
-			"url": "https://github.com/pump-fun/carbon"
-		},
 		"pump-fun-skills": {
 			"pushedAt": "2026-06-23T09:37:28Z",
 			"defaultBranch": "main",
@@ -32,7 +26,7 @@
 			"url": "https://github.com/pump-fun/pump-fun-skills"
 		},
 		"pump-public-docs": {
-			"pushedAt": "2026-09-14T06:57:49Z",
+			"pushedAt": "2026-10-08T18:33:07Z",
 			"defaultBranch": "main",
 			"archived": false,
 			"url": "https://github.com/pump-fun/pump-public-docs"
