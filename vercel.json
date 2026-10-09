@@ -3277,7 +3277,7 @@
 			"dest": "/api/okx/3d/[service]?service=$1"
 		},
 		{
-			"src": "/api/cron/(audit-log-cleanup|cleanup-csrf-tokens|club-payouts|confirm-pending-purchases|cosmetic-splits-sweep|erc8004-crawl|expire-pending-purchases|fetch-x-metrics|index-delegations|irl-drops-refund|monetization-payouts|process-subscriptions|process-withdrawals|pump-agent-stats|pumpfun-graduations-sync|pumpfun-monitor|pumpfun-signals|run-buyback|run-coin-cycle|run-coin-payouts|run-dca|run-distribute-payments|run-subscriptions|run-three-buyback|run-x-scheduled-posts|run-x-triggers|settle-royalties|siwx-gc|solana-agents-crawl|solana-attest-event-cleanup|solana-attestations-crawl|treasury-autopilot|unstoppable-tick)",
+			"src": "/api/cron/(audit-log-cleanup|cleanup-csrf-tokens|club-payouts|confirm-pending-purchases|cosmetic-splits-sweep|erc8004-crawl|expire-pending-purchases|fetch-x-metrics|index-delegations|irl-drops-refund|monetization-payouts|process-subscriptions|process-withdrawals|pump-agent-stats|pumpfun-graduations-sync|pumpfun-monitor|pumpfun-signals|run-buyback|run-coin-cycle|run-coin-payouts|run-dca|run-distribute-payments|run-subscriptions|run-three-buyback|run-x-scheduled-posts|run-x-triggers|settle-royalties|siwx-gc|solana-agents-crawl|solana-attest-event-cleanup|solana-attestations-crawl|treasury-autopilot|unstoppable-tick|x-mentions)",
 			"dest": "/api/cron/[name]?name=$1"
 		},
 		{
@@ -6667,6 +6667,10 @@
 		{
 			"path": "/api/cron/run-x-triggers",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/x-mentions",
+			"schedule": "*/2 * * * *"
 		},
 		{
 			"path": "/api/cron/fetch-x-metrics",

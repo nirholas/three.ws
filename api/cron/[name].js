@@ -106,6 +106,7 @@ const HANDLERS = {
 	'monetization-payouts': handleProcessWithdrawals,
 	'run-x-scheduled-posts': handleRunXScheduledPosts,
 	'run-x-triggers': handleRunXTriggers,
+	'x-mentions': handleXMentions,
 	'fetch-x-metrics': handleFetchXMetrics,
 	'run-coin-cycle': handleRunCoinCycle,
 	'run-coin-payouts': handleRunCoinPayouts,
@@ -4589,6 +4590,16 @@ async function handleRunXScheduledPosts(req, res) {
 
 const TRIGGER_BUDGET_MS = 60_000;
 const SOL_USD_FALLBACK = 150;
+
+// x-mentions: read new mentions of our X accounts, decide, and answer each once
+// (dry run until X_MENTION_BOT_LIVE=1 and the owner flips it). See
+// api/_lib/x-mention-poll.js.
+async function handleXMentions(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!requireCron(req, res)) return;
+	const { runMentionTick } = await import('../_lib/x-mention-poll.js');
+	return json(res, 200, await runMentionTick());
+}
 
 async function handleRunXTriggers(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
