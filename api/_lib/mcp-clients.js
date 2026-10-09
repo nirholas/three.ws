@@ -121,7 +121,7 @@ export function issueSession(res, body, prefix = 'mcs') {
 	if (!initializes(body)) return null;
 	const id = `${prefix}_${randomUUID()}`;
 	res.setHeader('mcp-session-id', id);
-	const exposed = res.getHeader('access-control-expose-headers');
+	const exposed = typeof res.getHeader === 'function' ? res.getHeader('access-control-expose-headers') : undefined;
 	res.setHeader('access-control-expose-headers', exposed ? `${exposed}, mcp-session-id` : 'mcp-session-id');
 	return id;
 }

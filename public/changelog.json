@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:16:42.879Z",
+	"generated_at": "2026-10-09T04:19:53.629Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -170,6 +170,16 @@
 			"link": "/markets/robinhood/paired",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "pump.fun MCP tools explain the October program upgrade",
+			"summary": "The hosted pump.fun MCP server now tells AI clients how pump.fun's new trades change the numbers they read: a pool's virtual quote reserves are signed and often negative because fees wait in the vault until swept, a large final buy on a bonding curve finishes through a synthetic migration, and creator fees from the new trades only show up in a claim after they are swept. Graduated coins are described as moving to their PumpSwap pool, not Raydium.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

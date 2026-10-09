@@ -18160,7 +18160,7 @@
 		{
 			"name": "get_bonding_curve",
 			"title": null,
-			"description": "Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain). Pre-graduation only: these reserves come from the pump program bonding-curve account, not from a PumpSwap pool. Pump renamed the quote-side fields on-chain (real_sol_reserves -> real_quote_reserves, virtual_sol_reserves -> virtual_quote_reserves) once a non-SOL quote asset became possible; the response keys below keep their original names and are still denominated in SOL, because the curve quote_mint is the SOL default on every coin created to date. Once complete=true the curve is retired and pricing moves to the PumpSwap pool, so use pumpfun_quote_swap from that point on.",
+			"description": "Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain). Pre-graduation only: these reserves come from the pump program bonding-curve account, not from a PumpSwap pool. Pump renamed the quote-side fields on-chain (real_sol_reserves -> real_quote_reserves, virtual_sol_reserves -> virtual_quote_reserves) once a non-SOL quote asset became possible; the response keys below keep their original names and are still denominated in SOL, because the curve quote_mint is the SOL default on every coin created to date. A v3 buy that empties the curve completes it and buys the rest through a synthetic migration, priced on the reserves the PumpSwap pool will open with, so a large final buy is not capped at realTokenReserves. Once complete=true the curve is retired and pricing moves to the PumpSwap pool, so use pumpfun_quote_swap from that point on.",
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -18282,7 +18282,7 @@
 		{
 			"name": "get_graduated_tokens",
 			"title": null,
-			"description": "Tokens that graduated from the bonding curve to Raydium AMM.",
+			"description": "Tokens that graduated from the bonding curve to their PumpSwap (pump_amm) pool.",
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -18699,7 +18699,7 @@
 		{
 			"name": "pumpfun_list_claims",
 			"title": null,
-			"description": "List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim.",
+			"description": "List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim. Creator fees from the v3 curve and v2 pool trades wait on the curve and pool until a sweep_creator_fee moves them to the creator vault, so a claim covers only what was swept (usually in the same transaction) and fees still waiting appear in no claim yet.",
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",
@@ -18749,7 +18749,7 @@
 		{
 			"name": "pumpfun_quote_swap",
 			"title": null,
-			"description": "Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Only GRADUATED coins have an AMM pool; for a coin still on its bonding curve use get_bonding_curve instead. Pricing runs on the pool effective quote reserves (quote vault balance + pool.virtual_quote_reserves); the base side is the raw base vault balance. Returns amountOut, priceImpactBps, route, expiresAtMs, plus the reserves the quote was computed from so the number can be reproduced.",
+			"description": "Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Only GRADUATED coins have an AMM pool; for a coin still on its bonding curve use get_bonding_curve instead. Pricing runs on the pool effective quote reserves (quote vault balance + pool.virtual_quote_reserves, a SIGNED i128 that is commonly negative because PumpSwap v2 trades keep waiting protocol and creator fees in the vault and subtract them there); the base side is the raw base vault balance. Returns amountOut, priceImpactBps, route, expiresAtMs, plus the reserves the quote was computed from so the number can be reproduced.",
 			"server": {
 				"id": "threews-pumpfun",
 				"title": "pump.fun",

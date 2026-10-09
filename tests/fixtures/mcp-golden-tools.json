@@ -4378,8 +4378,8 @@
 		},
 		{
 			"name": "get_graduated_tokens",
-			"descHead": "Tokens that graduated from the bonding curve to Raydium AMM.",
-			"descHash": "b9156b64cef8",
+			"descHead": "Tokens that graduated from the bonding curve to their PumpSwap (pump_amm",
+			"descHash": "c5d541ec3a11",
 			"schemaHash": "d99491585978"
 		},
 		{
@@ -4445,13 +4445,13 @@
 		{
 			"name": "pumpfun_list_claims",
 			"descHead": "List recent pump.fun fee-claim events for a creator wallet (on-chain, no",
-			"descHash": "2f700653d228",
+			"descHash": "5eeeab19ee14",
 			"schemaHash": "ed5b74ae7e58"
 		},
 		{
 			"name": "pumpfun_quote_swap",
 			"descHead": "Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or ",
-			"descHash": "8e5de97f6929",
+			"descHash": "0c6ad3619605",
 			"schemaHash": "6174606137d0"
 		},
 		{

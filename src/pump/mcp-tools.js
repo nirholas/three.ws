@@ -17,11 +17,20 @@
 //
 //   Post-graduation · PumpSwap (pump_amm) Pool account. Quotes price against the
 //     EFFECTIVE quote reserve: pool_quote_token_account.amount +
-//     pool.virtual_quote_reserves, a field appended to Pool that carries a
-//     non-zero value on boost pools from 2026-07-20. It is an i128, so it is
-//     signed and effective depth can fall below the raw vault balance. The base
-//     side is unchanged: still the raw pool_base_token_account.amount. Surfaced
-//     by pumpfun_quote_swap.
+//     pool.virtual_quote_reserves, a field appended to Pool. It is an i128 and
+//     commonly NEGATIVE: since 2026-09-30 the PumpSwap v2 trades and
+//     multi_hop_swap keep the protocol and creator fee inside the quote vault
+//     until a sweep pays them out, and subtract that amount here so waiting
+//     fees never count as liquidity. Effective depth can therefore sit below
+//     the raw vault balance; the program guarantees it is never negative. The
+//     base side is unchanged: still the raw pool_base_token_account.amount.
+//     Surfaced by pumpfun_quote_swap.
+//
+//   The handoff · the v3 buy (buy_v3 / buy_exact_quote_in_v3) that empties a
+//     curve has no max size: it completes the curve and buys the rest through a
+//     synthetic migration, priced on the reserves the pool will open with. Once
+//     complete=true every curve trade fails until migration lands, so callers
+//     move to the pool.
 //
 // The two virtual_quote_reserves are DIFFERENT fields, on DIFFERENT accounts,
 // with DIFFERENT widths, that happen to share a name. A coin has one or the
@@ -172,8 +181,11 @@ export const TOOLS = [
 			'PumpSwap pool. Pump renamed the quote-side fields on-chain (real_sol_reserves -> real_quote_reserves, ' +
 			'virtual_sol_reserves -> virtual_quote_reserves) once a non-SOL quote asset became possible; the ' +
 			'response keys below keep their original names and are still denominated in SOL, because the curve ' +
-			'quote_mint is the SOL default on every coin created to date. Once complete=true the curve is retired ' +
-			'and pricing moves to the PumpSwap pool, so use pumpfun_quote_swap from that point on.',
+			'quote_mint is the SOL default on every coin created to date. A v3 buy that empties the curve ' +
+			'completes it and buys the rest through a synthetic migration, priced on the reserves the ' +
+			'PumpSwap pool will open with, so a large final buy is not capped at realTokenReserves. Once ' +
+			'complete=true the curve is retired and pricing moves to the PumpSwap pool, so use ' +
+			'pumpfun_quote_swap from that point on.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -237,7 +249,7 @@ export const TOOLS = [
 	},
 	{
 		name: 'get_graduated_tokens',
-		description: 'Tokens that graduated from the bonding curve to Raydium AMM.',
+		description: 'Tokens that graduated from the bonding curve to their PumpSwap (pump_amm) pool.',
 		inputSchema: {
 			type: 'object',
 			properties: { limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 } },
@@ -315,7 +327,7 @@ export const TOOLS = [
 	{
 		name: 'pumpfun_list_claims',
 		description:
-			'List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim.',
+			'List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim. Creator fees from the v3 curve and v2 pool trades wait on the curve and pool until a sweep_creator_fee moves them to the creator vault, so a claim covers only what was swept (usually in the same transaction) and fees still waiting appear in no claim yet.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -462,7 +474,7 @@ export const TOOLS = [
 	{
 		name: 'pumpfun_quote_swap',
 		description:
-			'Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Only GRADUATED coins have an AMM pool; for a coin still on its bonding curve use get_bonding_curve instead. Pricing runs on the pool effective quote reserves (quote vault balance + pool.virtual_quote_reserves); the base side is the raw base vault balance. Returns amountOut, priceImpactBps, route, expiresAtMs, plus the reserves the quote was computed from so the number can be reproduced.',
+			'Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Only GRADUATED coins have an AMM pool; for a coin still on its bonding curve use get_bonding_curve instead. Pricing runs on the pool effective quote reserves (quote vault balance + pool.virtual_quote_reserves, a SIGNED i128 that is commonly negative because PumpSwap v2 trades keep waiting protocol and creator fees in the vault and subtract them there); the base side is the raw base vault balance. Returns amountOut, priceImpactBps, route, expiresAtMs, plus the reserves the quote was computed from so the number can be reproduced.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -487,17 +499,20 @@ export const TOOLS = [
 				},
 				quote_reserve: {
 					type: 'string',
-					description: 'Raw quote vault balance, before virtual reserves are added.',
+					description: 'Raw quote vault balance, before virtual reserves are added. Includes protocol and creator fees waiting for a sweep, so it overstates liquidity on its own; price on effective_quote_reserve.',
 				},
 				virtual_quote_reserves: {
 					type: 'string',
 					description:
-						'Pool.virtual_quote_reserves. Quote-side liquidity the pool carries outside its vault. 0 on non-launchpad pools.',
+						'Pool.virtual_quote_reserves, a SIGNED i128 serialized as a decimal string. Positive values ' +
+						'add depth held outside the vault; negative values remove fees that sit in the vault ' +
+						'waiting for a sweep (common since the PumpSwap v2 trades). Parse it as a signed ' +
+						'integer: never unsigned, never clamped to 0, never absolute-valued.',
 				},
 				effective_quote_reserve: {
 					type: 'string',
 					description:
-						'quote_reserve + virtual_quote_reserves. This is what the quote is priced against.',
+						'quote_reserve + virtual_quote_reserves (signed addition). This is what the quote is priced against; the program guarantees it is never negative.',
 				},
 			},
 			required: ['amountOut', 'priceImpactBps', 'route', 'expiresAtMs'],

@@ -134,6 +134,80 @@ test('inputSchema integrity: required fields exist and defaults respect their bo
 	}
 });
 
+// A pump.fun coin is priced by the bonding curve before graduation and by the
+// PumpSwap pool after it. Both accounts now carry a field spelled
+// virtual_quote_reserves, and they are NOT the same quantity. These tools are
+// read by a model with no human in the loop, so each pricing tool has to say
+// which account it reads. Dropping that wording is a real regression: it lets a
+// caller apply pool math to curve reserves (or vice versa) and get a confidently
+// wrong price with no error anywhere.
+const byName = (name) => {
+	const tool = FALLBACK_TOOLS.find((t) => t.name === name);
+	assert.ok(tool, `${name}: missing from FALLBACK_TOOLS`);
+	return tool;
+};
+
+test('get_bonding_curve documents the renamed quote-side curve fields', () => {
+	const tool = byName('get_bonding_curve');
+	assert.match(tool.description, /bonding[- ]curve account/i);
+	assert.match(tool.description, /virtual_quote_reserves/);
+	// The rename is the trap: a decoder still reading virtual_sol_reserves gets
+	// undefined, which coerces to a 0 price rather than throwing.
+	assert.match(tool.description, /virtual_sol_reserves/);
+	// Reserve fields must name their on-chain source so the rename is traceable.
+	const props = tool.outputSchema.properties;
+	assert.match(props.solReserves.description, /real_quote_reserves/);
+	assert.match(props.virtualSolReserves.description, /virtual_quote_reserves/);
+});
+
+test('pumpfun_quote_swap documents pricing against effective quote reserves', () => {
+	const tool = byName('pumpfun_quote_swap');
+	// effective = vault balance + pool.virtual_quote_reserves.
+	assert.match(tool.description, /effective/i);
+	assert.match(tool.description, /pool\.virtual_quote_reserves/);
+	assert.match(tool.description, /pool_quote_token_account\.amount/);
+	// The base side is explicitly unchanged upstream, so the description says so.
+	// Without it, a reader may "symmetrically" add a virtual figure to the base.
+	assert.match(tool.description, /pool_base_token_account\.amount/);
+	assert.match(tool.outputSchema.properties.priceImpactBps.description, /effective quote reserve/i);
+});
+
+// Since 2026-09-30 Pool.virtual_quote_reserves is commonly negative: PumpSwap v2
+// trades keep waiting protocol and creator fees in the quote vault and subtract
+// them there. A model told the field is "0 on most pools" or allowed to read it
+// unsigned overstates depth by exactly the waiting fees.
+test('pumpfun_quote_swap says virtual_quote_reserves is signed and commonly negative', () => {
+	const tool = byName('pumpfun_quote_swap');
+	const props = tool.outputSchema.properties;
+	assert.match(tool.description, /signed/i);
+	assert.match(tool.description, /negative/i);
+	const virt = props.virtual_quote_reserves.description;
+	assert.match(virt, /i128/);
+	assert.match(virt, /signed/i);
+	assert.match(virt, /negative/i);
+	assert.match(virt, /never unsigned/i);
+	assert.match(virt, /never clamped/i);
+	// The stale claim that non-boost pools always read 0 must not come back.
+	assert.doesNotMatch(virt, /0 on non-boost pools/);
+	assert.doesNotMatch(tool.description, /non-zero on launchpad coins/);
+	// The raw vault includes fees waiting for a sweep, so it is not depth.
+	assert.match(props.quote_reserve.description, /waiting/i);
+	assert.match(props.effective_quote_reserve.description, /never negative/i);
+});
+
+test('get_bonding_curve documents the synthetic migration handoff', () => {
+	const tool = byName('get_bonding_curve');
+	assert.match(tool.description, /v3 buy/);
+	assert.match(tool.description, /synthetic migration/i);
+	assert.match(tool.description, /complete=true/);
+});
+
+test('claim tools explain that v3 and v2 creator fees appear only once swept', () => {
+	const tool = byName('pumpfun_list_claims');
+	assert.match(tool.description, /sweep_creator_fee/);
+	assert.match(tool.description, /creator vault/);
+});
+
 test('native composed tools carry the same annotation contract', () => {
 	assert.ok(NATIVE_TOOLS.length > 0);
 	const fallbackNames = new Set(FALLBACK_TOOLS.map((t) => t.name));

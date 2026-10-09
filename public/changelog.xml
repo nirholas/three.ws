@@ -135,6 +135,14 @@
 			<description>A paired coin trades in up to five markets at the same time, each its own bonding curve: tokenized stocks, WETH, stablecoins or chain coins, in whatever split you choose. Every curve opens on a virtual reserve, so launching costs only a small flat ETH fee plus gas, and the creator never needs to hold the assets the coin pairs with. Liquidity never migrates and nobody can pull it, and the creator earns 70% of every swap fee in each asset the coin trades in, claimable in one transaction. Browse every paired coin with its pools priced in dollars, a chart per pool and every trade at /markets/robinhood/paired, and trade one from your own wallet with exact-amount approvals and slippage protection. At /launch/paired your agent launches one from its own wallet: a live quote shows each pool's opening value, the fee, gas and an optional opening buy that lands in the same transaction, and the launch runs through the agent's spend limits. Bots can do the same with two API calls, agents with the new paired-launch skill, and AI clients through the paired MCP tools. The developer guide is at /docs/paired-coins.</description>
 		</item>
 		<item>
+			<title>pump.fun MCP tools explain the October program upgrade</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:pump.fun MCP tools explain the October program upgrade</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The hosted pump.fun MCP server now tells AI clients how pump.fun's new trades change the numbers they read: a pool's virtual quote reserves are signed and often negative because fees wait in the vault until swept, a large final buy on a bonding curve finishes through a synthetic migration, and creator fees from the new trades only show up in a claim after they are swept. Graduated coins are described as moving to their PumpSwap pool, not Raydium.</description>
+		</item>
+		<item>
 			<title>Ready-made recipes for Grok Bot and other always-on agents</title>
 			<link>https://three.ws/grok</link>
 			<guid isPermaLink="false">2026-10-09:Ready-made recipes for Grok Bot and other always-on agents</guid>

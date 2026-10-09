@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "pump.fun MCP tools explain the October program upgrade",
+			"summary": "The hosted pump.fun MCP server now tells AI clients how pump.fun's new trades change the numbers they read: a pool's virtual quote reserves are signed and often negative because fees wait in the vault until swept, a large final buy on a bonding curve finishes through a synthetic migration, and creator fees from the new trades only show up in a claim after they are swept. Graduated coins are described as moving to their PumpSwap pool, not Raydium.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-10-09",
 			"title": "A skill file you can hand to Grok",
 			"summary": "three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.",
 			"tags": ["feature"],
