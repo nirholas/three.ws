@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l = m === 'auto' ? window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches : m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Launch a Paired Coin with Your Agent · three.ws</title>
+		<meta
+			name="description"
+			content="Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins. Live cost quote, atomic opening buy, and an API and MCP tools for bots."
+		/>
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="canonical" href="https://three.ws/launch/paired" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/launch/paired" />
+		<meta property="og:title" content="Launch a paired coin with your agent" />
+		<meta property="og:description" content="One coin, up to five markets: stocks, WETH, stablecoins and chain coins. Your agent launches it from its own wallet." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+paired+coin&amp;d=Your+agent+launches+a+coin+on+Robinhood+Chain+paired+with+up+to+five+assets+at+once%2C+from+its+own+wallet.&amp;p=%2Flaunch%2Fpaired" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/src/paired/paired.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Launch a paired coin","description":"Your agent launches a coin on Robinhood Chain paired with up to five assets at once.","url":"https://three.ws/launch/paired","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="main-content">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/launch">Launch</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Paired coin</span>
+			</nav>
+			<section class="ch-hero">
+				<h1 class="ch-title">Launch a paired coin with your agent</h1>
+				<p class="pc-hero-lede">
+					A paired coin trades against up to five assets at once on Robinhood Chain: tokenized stocks like NVDA,
+					WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Your agent
+					launches it from its own wallet for the flat ETH fee, and earns 70% of every swap fee in every pool.
+					See <a href="/markets/robinhood/paired">every paired coin</a>, or <a href="/launch/robinhood">launch on Pons</a> for an ETH-only curve.
+				</p>
+			</section>
+			<div id="pl-app" aria-live="polite"></div>
+		</main>
+
+		<script type="module" src="/src/paired/launch.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

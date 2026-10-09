@@ -79,6 +79,10 @@ vi.mock('../../api/_lib/robinhood.js', () => ({
 	asOf: () => '2026-07-12T00:00:00.000Z',
 }));
 
+vi.mock('../../api/_lib/pons.js', () => ({
+	recentPonsLaunches: async () => [{ launchpad: 'Pons', type: 'bonding-curve', token: '0xp0ns567890123456789012345678901234567890', deployer: '0xcreator', block: 83042365, txHash: '0xponstx', timestamp: '2026-10-08T04:43:11.000Z', symbol: 'PROBE', name: 'Probe Coin', url: 'https://ponsfamily.com/launchpad/0xp0ns567890123456789012345678901234567890' }],
+}));
+
 beforeEach(() => {
 	robinhoodReadOk = true;
 });
@@ -257,9 +261,13 @@ describe('GET /api/v1/robinhood/launches', () => {
 	it('returns recent launches enriched with market data', async () => {
 		const { res, body } = await dispatch('../../api/v1/robinhood/launches.js', '/api/v1/robinhood/launches');
 		expect(res.statusCode).toBe(200);
-		expect(body.data.launches.length).toBe(1);
-		expect(body.data.launches[0].launchpad).toBe('NOXA');
-		expect(body.data.launchpads.length).toBe(2);
+		expect(body.data.launches.length).toBe(2);
+		// Newest block first: the Pons launch leads, NOXA follows.
+		expect(body.data.launches.map((l) => l.launchpad)).toEqual(['Pons', 'NOXA']);
+		// A curve-stage coin has no DEX pair yet, so its on-chain name and symbol carry.
+		expect(body.data.launches[0].symbol).toBe('PROBE');
+		expect(body.data.launches[0].links.launchpad).toMatch(/^https:\/\/ponsfamily\.com\/launchpad\//);
+		expect(body.data.launchpads.map((l) => l.name)).toEqual(['Pons', 'NOXA', 'The Odyssey']);
 	});
 });
 

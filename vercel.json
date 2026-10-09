@@ -1376,6 +1376,18 @@
 			"dest": "/robinhood-coin.html"
 		},
 		{
+			"src": "/markets/robinhood/paired/?",
+			"dest": "/paired-coins.html"
+		},
+		{
+			"src": "/markets/robinhood/paired/(0x[0-9a-fA-F]{40})/?",
+			"dest": "/paired-coin.html"
+		},
+		{
+			"src": "/launch/paired/?",
+			"dest": "/launch-paired.html"
+		},
+		{
 			"src": "/fear-greed/?",
 			"dest": "/fear-greed.html"
 		},
@@ -2050,6 +2062,10 @@
 		{
 			"src": "/launchpad/?",
 			"dest": "/launchpad.html"
+		},
+		{
+			"src": "/launch/robinhood/?",
+			"dest": "/launch-robinhood.html"
 		},
 		{
 			"src": "/launch/?",
@@ -3295,6 +3311,10 @@
 		{
 			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
 			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
+		},
+		{
+			"src": "/api/agents/([^/]+)/paired/([^/]+)",
+			"dest": "/api/agents/paired/[action]?id=$1&action=$2"
 		},
 		{
 			"src": "/api/agents/([^/]+)/pons/([^/]+)",

@@ -1549,6 +1549,22 @@
 					"added": "2026-06-15"
 				},
 				{
+					"path": "/launch/paired",
+					"title": "Launch a Paired Coin",
+					"description": "Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-08"
+				},
+				{
+					"path": "/launch/robinhood",
+					"title": "Launch on Robinhood Chain",
+					"description": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-08"
+				},
+				{
 					"path": "/launch-studio",
 					"title": "Launch Studio: 50 ways to mint a coin",
 					"description": "A catalog of 50 coin-launch use cases: reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
@@ -2582,6 +2598,14 @@
 					"priority": 0.6,
 					"changefreq": "hourly",
 					"added": "2026-09-07"
+				},
+				{
+					"path": "/markets/robinhood/paired",
+					"title": "Paired Coins",
+					"description": "Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-10-08"
 				},
 				{
 					"path": "/markets/news",

@@ -22,6 +22,7 @@ import { toolDefs as feedbackDefs } from './tools/feedback.js';
 import { toolDefs as homeDefs } from './tools/home.js';
 import { toolDefs as libraryDefs } from './tools/library.js';
 import { toolDefs as cardDefs } from './tools/cards.js';
+import { toolDefs as pairedDefs } from './tools/paired.js';
 import { toolDefs as customSkillDefs } from './tools/custom-skills.js';
 import { toolDefs as resourceDefs } from './tools/resources.js';
 
@@ -47,6 +48,7 @@ const baseDefs = [
 	...homeDefs,
 	...resourceDefs,
 	...cardDefs,
+	...pairedDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.

@@ -457,7 +457,21 @@ function agentChip(agent) {
 	);
 }
 
+// Coins an agent launched on an EVM chain (Robinhood Chain through Pons) carry
+// their venue in the row, not pump.fun: trade on the venue, verify on the
+// chain's explorer, and open the on-platform coin page for that chain.
+const EVM_LAUNCH_CHAINS = {
+	robinhood: {
+		label: 'Robinhood Chain',
+		explorer: (addr) => `https://robinhoodchain.blockscout.com/token/${addr}`,
+		coinPage: (addr) => `/markets/robinhood/coin/${addr}`,
+	},
+};
+const VENUE_LABELS = { pons: 'Pons' };
+
 function launchCard(launch, index, { featured = false } = {}) {
+	const evm = EVM_LAUNCH_CHAINS[launch.chain] || null;
+	if (evm) return evmLaunchCard(launch, index, evm, { featured });
 	const isDevnet = launch.network === 'devnet';
 	const tradeHref = isDevnet
 		? `https://explorer.solana.com/address/${launch.mint}?cluster=devnet`
@@ -612,6 +626,76 @@ function launchCard(launch, index, { featured = false } = {}) {
 			}),
 		);
 	}
+	return card;
+}
+
+function evmLaunchCard(launch, index, chain, { featured = false } = {}) {
+	const venue = VENUE_LABELS[launch.venue] || launch.venue || 'Launchpad';
+	const label = launch.symbol ? `$${launch.symbol}` : launch.name || 'coin';
+	const badges = el('div', { class: 'lx-badges' });
+	if (launch.created_at) {
+		badges.appendChild(
+			el('span', { class: 'lx-badge lx-badge-age', title: `Launched ${timeAgo(launch.created_at)}`, text: timeAgo(launch.created_at) }),
+		);
+	}
+	badges.appendChild(el('span', { class: 'lx-badge lx-badge-chain', text: chain.label }));
+
+	const identicon = mintIdenticon(launch.mint);
+	const logo = launch.fixed?.image_url
+		? el('img', {
+				class: 'lx-coin-logo',
+				src: proxiedImageURL(launch.fixed.image_url, launch.mint, { width: 96 }) || launch.fixed.image_url,
+				alt: '',
+				loading: 'lazy',
+				onerror: (e) => e.currentTarget.replaceWith(identicon),
+			})
+		: identicon;
+	const market = el('div', { class: 'lx-market' }, [
+		el('div', { class: 'lx-market-devnet' }, [
+			el('div', { class: 'lx-coin-art' }, [logo]),
+			el('div', { class: 'lx-coin-id' }, [
+				el('h3', { class: 'lx-coin-name', text: launch.name || launch.symbol || 'Unnamed coin' }),
+				el('span', { class: 'lx-coin-symbol', text: launch.symbol ? `$${launch.symbol}` : shortAddr(launch.mint) }),
+			]),
+			el('time', { class: 'lx-time', datetime: launch.created_at, text: timeAgo(launch.created_at) }),
+		]),
+	]);
+
+	const actions = [];
+	if (launch.fixed?.venue_url) {
+		actions.push(
+			el('a', {
+				class: 'lx-action',
+				href: launch.fixed.venue_url,
+				target: '_blank',
+				rel: 'noopener noreferrer',
+				text: `${venue} ↗`,
+				'aria-label': `Trade ${label} on ${venue}`,
+			}),
+		);
+	}
+	actions.push(
+		el('a', {
+			class: 'lx-action',
+			href: chain.explorer(launch.mint),
+			target: '_blank',
+			rel: 'noopener noreferrer',
+			text: 'Explorer ↗',
+			'aria-label': `View ${label} on the ${chain.label} explorer`,
+		}),
+	);
+
+	const card = el('article', { class: `lx-card${featured ? ' lx-card-featured' : ''}`, 'data-mint': launch.mint }, [
+		el('a', { class: 'lx-card-link', href: chain.coinPage(launch.mint), 'aria-label': `Open ${label} profile` }),
+		featured ? el('span', { class: 'lx-feat-tag', text: 'Latest' }) : null,
+		featured && launch.symbol ? el('span', { class: 'lx-feat-ghost', 'aria-hidden': 'true', text: `$${launch.symbol}` }) : null,
+		market,
+		badges,
+		agentChip(launch.agent),
+		el('div', { class: 'lx-card-actions' }, actions),
+		el('span', { class: 'lx-mint', text: launch.mint, title: launch.mint }),
+	]);
+	reveal(card, index);
 	return card;
 }
 

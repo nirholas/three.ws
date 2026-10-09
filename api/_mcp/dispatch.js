@@ -36,6 +36,11 @@ const PUBLIC_TOOLS = new Set([
 	// The community skills registry is a public, PR-reviewed catalog of
 	// instruction files. Browsing it reads nothing about the caller.
 	'list_available_skills',
+	// Paired coins on Robinhood Chain: the launchpad's quote registry and its
+	// coins, read from the chain. Public on-chain state, no caller data.
+	'paired_markets',
+	'paired_coins',
+	'paired_coin',
 ]);
 
 export function isPublicTool(name) {

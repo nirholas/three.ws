@@ -3,12 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-10-08",
-			"title": "Grok model menus now offer xAI's current models",
-			"summary": "Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.",
+			"title": "Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector",
+			"summary": "Adding the 3D Studio, agent wallet, x402 Bazaar or IBM Granite MCP server to an AI client with sign-in (Grok Bot, claude.ai connectors and any client built on the official MCP SDK) used to stop before the consent screen, because every server pointed the client at sign-in details written for the core server only. Each server now describes itself and issues a sign-in bound to it, so the connector reaches consent, gets its token and connects. Existing connections keep working. The MCP docs now carry a compatibility table with the exact connector settings for every server, and `npm run probe:mcp-clients` checks all of them the way a cloud client connects.",
 			"tags": [
-				"improvement"
+				"fix"
 			],
-			"link": "/brain"
+			"link": "/docs/mcp"
 		},
 		{
 			"date": "2026-10-08",
@@ -21,6 +21,15 @@
 		},
 		{
 			"date": "2026-10-08",
+			"title": "Coin charts say plainly when a coin has no market yet",
+			"summary": "A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.",
+			"tags": [
+				"fix"
+			],
+			"link": "/terminal"
+		},
+		{
+			"date": "2026-10-08",
 			"title": "3D Studio results now hand every agent plain links to the model",
 			"summary": "Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.",
 			"tags": [
@@ -30,12 +39,30 @@
 		},
 		{
 			"date": "2026-10-08",
-			"title": "Coin charts say plainly when a coin has no market yet",
-			"summary": "A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.",
+			"title": "Coin Clash stays playable when community data is offline",
+			"summary": "When the community roster behind Coin Clash is unavailable, the arena no longer goes dark. Each round is now fought between the coins trending on Solana right now, locked in for the whole round so battles never reshuffle mid-fight, and each army shows its market cap where the member count would be. Enlisting, rallying and war records work exactly as before.",
 			"tags": [
-				"fix"
+				"improvement"
 			],
-			"link": "/terminal"
+			"link": "/clash"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Grok model menus now offer xAI's current models",
+			"summary": "Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/brain"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Your agent can launch its own coin on Robinhood Chain",
+			"summary": "Agents can now launch a coin on Robinhood Chain through Pons, the chain's busiest launchpad, signed by the agent's own wallet. Name the coin, see the exact cost live (launch fee, opening buy, gas, and how many tokens the opening buy gets), confirm, and it is trading on a bonding curve in about a second. The opening buy lands in the same transaction, so nobody trades ahead of your agent. Bots can do the same through two API calls or the new pons-launch skill, and launched coins show up on /launches and the agent's profile. The Recent Launches feed on /markets/robinhood now lists every Pons launch too, with curve price, market cap and graduation progress.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launch/robinhood"
 		},
 		{
 			"date": "2026-10-08",
@@ -29108,19 +29135,19 @@
 		},
 		{
 			"date": "2026-10-08",
-			"title": "Fewer failed 3D generations when the concept image comes back blank",
-			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
-			"tags": ["fix"],
-			"link": "/forge"
-		},
-		{
-			"date": "2026-10-08",
 			"title": "Shared 3D models now explain themselves to X and Grok",
 			"summary": "Every 3D model page now tells whoever reads the link exactly what it is. A model shared from three.ws unfurls on X as a large card showing a render of the model itself instead of a stock image, with its own title and description. Model, avatar and agent pages also describe themselves in a machine-readable form that search engines and AI assistants like Grok can read: the 3D file, a picture of it, who made it, when, and the terms it is shared under. So when someone asks Grok what a three.ws link is, it can answer from the model rather than guess.",
 			"tags": [
 				"improvement"
 			],
 			"link": "/creations"
+		},
+		{
+			"date": "2026-10-08",
+			"title": "Fewer failed 3D generations when the concept image comes back blank",
+			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
+			"tags": ["fix"],
+			"link": "/forge"
 		}
 	]
 }

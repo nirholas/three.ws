@@ -25,6 +25,8 @@ import { registerSentimentSkills } from './agent-skills-sentiment.js';
 import { registerAgentPaymentSkills } from './agent-skills-agent-payments.js';
 import { registerA2APaymentSkills } from './agent-skills-a2a.js';
 import { registerAixbtSkills } from './agent-skills-aixbt.js';
+import { registerPonsSkills } from './agent-skills-pons.js';
+import { registerPairedSkills } from './agent-skills-paired.js';
 
 /**
  * @typedef {Object} SkillContext
@@ -79,6 +81,8 @@ export class AgentSkills {
 		registerAgentPaymentSkills(this);
 		registerA2APaymentSkills(this);
 		registerAixbtSkills(this);
+		registerPonsSkills(this);
+		registerPairedSkills(this);
 	}
 
 	// ── Registry ──────────────────────────────────────────────────────────────

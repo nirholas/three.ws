@@ -753,6 +753,7 @@ const appConfig = {
 				widget: resolve(__dirname, 'pages/widget.html'),
 				launchpad: resolve(__dirname, 'pages/launchpad.html'),
 				launch: resolve(__dirname, 'pages/launch.html'),
+				'launch-robinhood': resolve(__dirname, 'pages/launch-robinhood.html'),
 				'launch-studio': resolve(__dirname, 'pages/launch-studio.html'),
 				start: resolve(__dirname, 'pages/start.html'),
 				create: resolve(__dirname, 'pages/create.html'),
@@ -1000,6 +1001,9 @@ const appConfig = {
 				'billing-keys': resolve(__dirname, 'pages/billing/keys.html'),
 				'robinhood-stock': resolve(__dirname, 'pages/robinhood-stock.html'),
 				'robinhood-coin': resolve(__dirname, 'pages/robinhood-coin.html'),
+				'paired-coins': resolve(__dirname, 'pages/paired-coins.html'),
+				'paired-coin': resolve(__dirname, 'pages/paired-coin.html'),
+				'launch-paired': resolve(__dirname, 'pages/launch-paired.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
 				payments: resolve(__dirname, 'pages/payments.html'),
 				'pay-simulator': resolve(__dirname, 'pages/pay-simulator.html'),
@@ -1774,6 +1778,10 @@ const appConfig = {
 					'/markets/robinhood/': resolve(root, 'pages/markets-robinhood.html'),
 					'/markets/robinhood/desk': resolve(root, 'pages/hood-desk.html'),
 					'/markets/robinhood/desk/': resolve(root, 'pages/hood-desk.html'),
+					'/markets/robinhood/paired': resolve(root, 'pages/paired-coins.html'),
+					'/markets/robinhood/paired/': resolve(root, 'pages/paired-coins.html'),
+					'/launch/paired': resolve(root, 'pages/launch-paired.html'),
+					'/launch/paired/': resolve(root, 'pages/launch-paired.html'),
 					'/markets/robinhood/portfolios': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/universe': resolve(root, 'pages/hood-portfolios-universe.html'),
@@ -1972,6 +1980,8 @@ const appConfig = {
 					'/launch-week/': resolve(root, 'pages/three-ws-launch-week.html'),
 					'/launchpad': resolve(root, 'pages/launchpad.html'),
 					'/launchpad/': resolve(root, 'pages/launchpad.html'),
+					'/launch/robinhood': resolve(root, 'pages/launch-robinhood.html'),
+					'/launch/robinhood/': resolve(root, 'pages/launch-robinhood.html'),
 					'/launch': resolve(root, 'pages/launch.html'),
 					'/launch/': resolve(root, 'pages/launch.html'),
 					'/p': resolve(root, 'public/p/index.html'),
@@ -2427,6 +2437,12 @@ const appConfig = {
 						/^\/markets\/robinhood\/stock\/[A-Za-z0-9.-]{1,10}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/robinhood-stock.html');
+					// /markets/robinhood/paired/:address  → paired coin detail
+					else if (
+						!filePath &&
+						/^\/markets\/robinhood\/paired\/0x[0-9a-fA-F]{40}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/paired-coin.html');
 					// /markets/robinhood/coin/:address  → Robinhood Chain coin detail
 					else if (
 						!filePath &&

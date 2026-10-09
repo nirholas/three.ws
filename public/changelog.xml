@@ -15,12 +15,52 @@
 			<description>Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.</description>
 		</item>
 		<item>
+			<title>DEXTools integration guide</title>
+			<link>https://three.ws/docs/dextools</link>
+			<guid isPermaLink="false">2026-10-08:DEXTools integration guide</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.</description>
+		</item>
+		<item>
+			<title>Docs · Chart Companion</title>
+			<link>https://three.ws/docs/chart-companion</link>
+			<guid isPermaLink="false">2026-10-08:Docs · Chart Companion</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.</description>
+		</item>
+		<item>
+			<title>Docs · DEXTools integration</title>
+			<link>https://three.ws/docs/dextools</link>
+			<guid isPermaLink="false">2026-10-08:Docs · DEXTools integration</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.</description>
+		</item>
+		<item>
+			<title>Launch on Robinhood Chain</title>
+			<link>https://three.ws/launch/robinhood</link>
+			<guid isPermaLink="false">2026-10-08:Launch on Robinhood Chain</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.</description>
+		</item>
+		<item>
 			<title>three.ws x DEXTools</title>
 			<link>https://three.ws/dextools</link>
 			<guid isPermaLink="false">2026-10-08:three.ws x DEXTools</guid>
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every way three.ws works with DEXTools: DEXTools charts in every coin chart, any DEXTools pair rendered as a live 3D scene, a Social Boost card any project can embed, and a public count of the visits three.ws sends to DEXTools pair pages. Paste a DEXTools link to get the embed snippet.</description>
+		</item>
+		<item>
+			<title>3D Studio results now hand every agent plain links to the model</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-10-08:3D Studio results now hand every agent plain links to the model</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every model the free 3D Studio MCP server hands back, whether freshly generated, picked from the asset catalog or saved as a persona, now comes with four plain links, both in the result data and in its first lines of text: a viewer page, the GLB file, a rendered PNG picture and a paste-ready embed snippet. Agents that cannot show a 3D widget, like Grok Bot and other browser agents, can now open, download, share and embed the model directly. A model that is still rendering comes with a viewer link that waits for the job and opens the model the moment it is ready.</description>
 		</item>
 		<item>
 			<title>Agent earnings are updating again</title>
@@ -31,12 +71,36 @@
 			<description>pump.fun moved the service that reports creator fees, so the Earned figures on agent pages, agent profiles, coin pages and /analytics had stopped refreshing since the end of September. Earnings now read from pump.fun's current fees service, with a second source behind it if that one stumbles, and every agent coin is back on its 30-minute refresh.</description>
 		</item>
 		<item>
+			<title>Chart Companion: a 3D agent that watches the chart with you</title>
+			<link>https://three.ws/chart-companion</link>
+			<guid isPermaLink="false">2026-10-08:Chart Companion: a 3D agent that watches the chart with you</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paste any DEXTools pair at /chart-companion and a 3D agent sits beside the live chart, reacting to every real swap as it lands: a superhero jump for a whale buy, a facepalm for a dump, a dance for a buy streak, applause for a new daily high. Each reaction comes with a line you can trace to its transaction, and it can read them aloud. Bring your own three.ws agent, embed it on your coin's site with one iframe, or add it to OBS as a transparent overlay for your stream.</description>
+		</item>
+		<item>
 			<title>Chat and agents stay up through more AI outages</title>
 			<link>https://three.ws/chat</link>
 			<guid isPermaLink="false">2026-10-08:Chat and agents stay up through more AI outages</guid>
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Every AI answer on three.ws, from chat to agent brains, the tutor and the fact-checker, now has five more free models to fall back on when the usual ones are busy. NVIDIA's largest open model, Nemotron 3 Ultra, now answers right behind Nemotron 3 Super, with the compact Nemotron 3.5 Lightning further down the line. A second, independent route to the same Nemotron models works with no account at all, and a Gemma 4 model is back in the mix as well. The free NVIDIA and gateway models are now checked against their providers every six hours too, so the team hears the moment one is switched off instead of finding out from a failed answer.</description>
+		</item>
+		<item>
+			<title>Coin charts say plainly when a coin has no market yet</title>
+			<link>https://three.ws/terminal</link>
+			<guid isPermaLink="false">2026-10-08:Coin charts say plainly when a coin has no market yet</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A coin with no trading pool anywhere could show a price-history error on its chart when a market data source was busy. The chart now recognises the coin has no market and shows the no-price-history state, and it asks that source one question fewer per chart load.</description>
+		</item>
+		<item>
+			<title>Coin Clash stays playable when community data is offline</title>
+			<link>https://three.ws/clash</link>
+			<guid isPermaLink="false">2026-10-08:Coin Clash stays playable when community data is offline</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When the community roster behind Coin Clash is unavailable, the arena no longer goes dark. Each round is now fought between the coins trending on Solana right now, locked in for the whole round so battles never reshuffle mid-fight, and each army shows its market cap where the member count would be. Enlisting, rallying and war records work exactly as before.</description>
 		</item>
 		<item>
 			<title>Community sentiment readings are back on coin pages and the Oracle</title>
@@ -63,12 +127,52 @@
 			<description>The event-attested tier in a Solana agent's reputation, which ranks above community feedback in the Passport grade, was granted on a label written inside the memo, so any signer could claim it. It now counts only attestations the platform's own attester minted and recorded, so a self-written label earns ordinary feedback weight and nothing more.</description>
 		</item>
 		<item>
+			<title>Fewer failed 3D generations when the concept image comes back blank</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-08:Fewer failed 3D generations when the concept image comes back blank</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.</description>
+		</item>
+		<item>
+			<title>Grok model menus now offer xAI's current models</title>
+			<link>https://three.ws/brain</link>
+			<guid isPermaLink="false">2026-10-08:Grok model menus now offer xAI's current models</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every Grok picker on three.ws (the /brain menu, agent chat, the avatar page and the embed editor) now lists xAI's current line-up: Grok 4.7, xAI's flagship, Grok 4.3 with its 1M-token context at the lowest Grok price, Grok 4.20 Fast with no thinking pass, and Grok Build for coding. Agents and embeds that saved a Grok model xAI has since retired, such as Grok 4.1 Fast, keep working and answer on the model xAI recommends in its place. People who bring their own xAI key now get Grok 4.7 by default instead of an older flagship.</description>
+		</item>
+		<item>
+			<title>Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-08:Picking the free Hugging Face engine no longer leaves you stuck when its Spaces are down</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When every free Hugging Face Space is out of GPU quota, the Forge now pauses that engine for a few minutes, greys it out in the engine picker with the reason, and moves a generation you started on it to a working engine, showing you the switch, instead of retrying the same dead Spaces with a countdown.</description>
+		</item>
+		<item>
+			<title>Shared 3D models now explain themselves to X and Grok</title>
+			<link>https://three.ws/creations</link>
+			<guid isPermaLink="false">2026-10-08:Shared 3D models now explain themselves to X and Grok</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every 3D model page now tells whoever reads the link exactly what it is. A model shared from three.ws unfurls on X as a large card showing a render of the model itself instead of a stock image, with its own title and description. Model, avatar and agent pages also describe themselves in a machine-readable form that search engines and AI assistants like Grok can read: the 3D file, a picture of it, who made it, when, and the terms it is shared under. So when someone asks Grok what a three.ws link is, it can answer from the model rather than guess.</description>
+		</item>
+		<item>
 			<title>The coin visualizer and communities keep loading when pump.fun throttles us</title>
 			<link>https://three.ws/communities</link>
 			<guid isPermaLink="false">2026-10-08:The coin visualizer and communities keep loading when pump.fun throttles us</guid>
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The full coin board behind the pump.fun visualizer, the communities page and the home page's live coin now retries a rate-limited read once and falls back to the last board any server saw in the past 30 minutes, marked as slightly stale, instead of showing an error.</description>
+		</item>
+		<item>
+			<title>Your agent can launch its own coin on Robinhood Chain</title>
+			<link>https://three.ws/launch/robinhood</link>
+			<guid isPermaLink="false">2026-10-08:Your agent can launch its own coin on Robinhood Chain</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now launch a coin on Robinhood Chain through Pons, the chain's busiest launchpad, signed by the agent's own wallet. Name the coin, see the exact cost live (launch fee, opening buy, gas, and how many tokens the opening buy gets), confirm, and it is trading on a bonding curve in about a second. The opening buy lands in the same transaction, so nobody trades ahead of your agent. Bots can do the same through two API calls or the new pons-launch skill, and launched coins show up on /launches and the agent's profile. The Recent Launches feed on /markets/robinhood now lists every Pons launch too, with curve price, market cap and graduation progress.</description>
 		</item>
 		<item>
 			<title>Avatar pictures show a natural standing pose instead of a T-pose</title>

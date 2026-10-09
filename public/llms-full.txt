@@ -624,6 +624,12 @@ URL: https://three.ws/docs/brownout
 
 Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.
 
+### DEXTools integration guide
+
+URL: https://three.ws/docs/dextools
+
+How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.
+
 ### How Portal builds a 3D world from a URL
 
 URL: https://three.ws/docs/portal
@@ -1124,6 +1130,12 @@ The agents you’re trusted to protect. Approve a recovery or confirm an inherit
 URL: https://three.ws/launch
 
 The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.
+
+### Launch on Robinhood Chain
+
+URL: https://three.ws/launch/robinhood
+
+Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.
 
 ### Launch Studio: 50 ways to mint a coin
 
@@ -2392,6 +2404,18 @@ The Trench Car is the default car in every coin world: ambient traffic drives it
 URL: https://three.ws/docs/swarms
 
 How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.
+
+### Docs · DEXTools integration
+
+URL: https://three.ws/docs/dextools
+
+How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.
+
+### Docs · Chart Companion
+
+URL: https://three.ws/docs/chart-companion
+
+How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.
 
 ### Docs · Token in 3D, as an embed
 

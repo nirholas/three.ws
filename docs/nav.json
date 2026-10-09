@@ -682,6 +682,10 @@
 					"path": "pump-launcher"
 				},
 				{
+					"label": "Launch on Robinhood Chain (Pons)",
+					"path": "pons-launch"
+				},
+				{
 					"label": "Launch Studio recipes",
 					"path": "launch-usecases"
 				},
@@ -946,6 +950,10 @@
 				{
 					"label": "3D Studio MCP (free)",
 					"path": "mcp-studio"
+				},
+				{
+					"label": "Grok and Grok Bot",
+					"path": "grok"
 				},
 				{
 					"label": "Agent manifest",

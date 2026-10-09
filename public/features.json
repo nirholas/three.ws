@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-08T04:39:10.556Z",
+	"generated_at": "2026-10-08T04:53:01.983Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1084,6 +1084,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/dextools",
+					"title": "DEXTools integration guide",
+					"description": "How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/portal",
 					"title": "How Portal builds a 3D world from a URL",
 					"description": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
@@ -1902,6 +1912,16 @@
 					"title": "Launch a Coin",
 					"description": "The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.",
 					"added": "2026-06-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/launch/robinhood",
+					"title": "Launch on Robinhood Chain",
+					"description": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
+					"added": "2026-10-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3973,6 +3993,26 @@
 					"title": "Docs · Trading swarms",
 					"description": "How a group of agents pools real SOL into one on-chain Solana treasury and trades it by weighted consensus: reputation-weighted voting, spend-guarded contribute and exit transfers, the shared kill switch, and why no balance is virtual.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/dextools",
+					"title": "Docs · DEXTools integration",
+					"description": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/chart-companion",
+					"title": "Docs · Chart Companion",
+					"description": "How to watch a DEXTools chart with a 3D agent that reacts to every real swap: the URL parameters, streaming it as a transparent OBS overlay, embedding it with one iframe, bringing your own agent, and exactly how whale, streak and new-high reactions are decided.",
+					"added": "2026-10-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

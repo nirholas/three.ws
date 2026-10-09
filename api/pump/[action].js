@@ -3054,16 +3054,42 @@ async function handleByAgent(req, res) {
 			order by pam.created_at desc limit 50
 		`;
 	}
-	const [row] = rows;
-	if (!row) return json(res, 200, { data: null, coins: [] });
-	const coins = rows.map((r) => ({
+	// Coins the agent launched on an EVM chain (Robinhood Chain through Pons)
+	// live in fixed_supply_launches. They join the history list, never `data`,
+	// whose payment and burn stats are pump.fun-mint specific.
+	const evmRows = await sql`
+		select f.mint, f.network, f.name, f.symbol, f.chain, f.venue, f.venue_url, f.image_url, f.created_at
+		from fixed_supply_launches f
+		${agentId ? sql`where f.agent_id = ${agentId}` : sql`join agent_identities ai on ai.id = f.agent_id and ai.deleted_at is null where ai.avatar_id = ${avatarId}`}
+		  and f.chain <> 'solana'
+		order by f.created_at desc limit 50
+	`;
+	const evmCoins = evmRows.map((r) => ({
 		mint: r.mint,
 		network: r.network,
 		name: r.name,
 		symbol: r.symbol,
-		buyback_bps: r.buyback_bps,
+		buyback_bps: 0,
 		created_at: r.created_at,
+		chain: r.chain,
+		venue: r.venue,
+		venue_url: r.venue_url || null,
+		image_url: r.image_url || null,
 	}));
+	const [row] = rows;
+	if (!row) return json(res, 200, { data: null, coins: evmCoins });
+	const coins = rows
+		.map((r) => ({
+			mint: r.mint,
+			network: r.network,
+			name: r.name,
+			symbol: r.symbol,
+			buyback_bps: r.buyback_bps,
+			created_at: r.created_at,
+			chain: 'solana',
+		}))
+		.concat(evmCoins)
+		.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
 	const [stats] = await sql`
 		select
