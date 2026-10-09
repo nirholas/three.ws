@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-09",
+			"title": "AI agents can now read how to connect three.ws to their client",
+			"summary": "The public server directory at three.ws/.well-known/mcp.json now carries setup for each AI client: Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code. For each one it names the server to add, whether to pick no sign-in, OAuth or an API key, and the exact values for that client's connector form or config file, plus one-click install links where the client has them. An agent asked to connect three.ws to Grok Bot can now do it from that one file, without a person reading the setup page. The site index for AI agents (three.ws/llms.txt) points to it too.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/mcp"
+		},
+		{
 			"date": "2026-10-08",
 			"title": "Use three.ws from Grok Bot",
 			"summary": "The connect page now has a Grok Bot tab. Grok Bot adds three.ws as a custom MCP connector, so the tab shows the exact fields to type in: the name, transport Streamable HTTP, the URL with a copy button, and whether authentication is None (the free 3D servers) or OAuth (servers that work with your account). Pick a different server above and every field follows it, and there is a ready-made sentence to send Grok Bot instead of filling in the form. Opening three.ws/connect?client=grok starts on the Grok server, which is free with no sign-in and adds your own agents when you sign in. The page also reminds you that a localhost URL never works, because Grok Bot connects from xAI's cloud.",

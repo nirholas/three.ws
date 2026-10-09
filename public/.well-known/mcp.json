@@ -161,5 +161,134 @@
 			"description": "Pay-per-use IBM Granite AI.",
 			"documentation": "https://three.ws/docs/ibm-x402-mcp"
 		}
-	]
+	],
+	"clients": {
+		"$comment": "Per-client setup for the servers above, so an agent can connect three.ws without a human. A three.ws extension that no MCP spec defines: ignore clients and fields you do not recognize. 'server' is always one of servers[].endpoint, 'auth' is one of none, oauth or api-key, and 'settings' holds the exact values for the client's own form or config file. Human version: https://three.ws/connect",
+		"claude": {
+			"name": "Claude (claude.ai and Claude Desktop)",
+			"server": "https://three.ws/api/mcp",
+			"auth": "oauth",
+			"settings": {
+				"Name": "three.ws",
+				"Remote MCP server URL": "https://three.ws/api/mcp"
+			},
+			"installLink": "https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=three.ws&connectorUrl=https%3A%2F%2Fthree.ws%2Fapi%2Fmcp",
+			"steps": [
+				"Open the install link, check the name and URL, then click Add. By hand: Customize, Connectors, Add custom connector, paste the URL.",
+				"Click Connect and sign in to three.ws. Read the permissions before you approve.",
+				"In a chat, open the + menu, then Connectors, and switch three.ws on for that conversation."
+			],
+			"setup": "https://three.ws/connect?client=claude"
+		},
+		"chatgpt": {
+			"name": "ChatGPT",
+			"server": "https://three.ws/api/mcp",
+			"auth": "oauth",
+			"settings": {
+				"Name": "three.ws",
+				"MCP Server URL": "https://three.ws/api/mcp",
+				"Authentication": "OAuth"
+			},
+			"steps": [
+				"In Settings, Apps & Connectors, Advanced settings, turn on Developer mode.",
+				"Back in Apps & Connectors, click Create, enter the settings and create it.",
+				"Sign in to three.ws when ChatGPT asks, and approve the permissions.",
+				"In a new chat, open the + menu, choose Developer mode, and tick three.ws."
+			],
+			"setup": "https://three.ws/connect?client=chatgpt"
+		},
+		"grok-bot": {
+			"name": "Grok Bot",
+			"server": "https://three.ws/api/mcp-grok",
+			"auth": "none",
+			"settings": {
+				"Name": "three-ws-grok",
+				"Transport": "Streamable HTTP",
+				"Server URL": "https://three.ws/api/mcp-grok",
+				"Authentication": "None"
+			},
+			"say": "Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok",
+			"alternatives": [
+				{
+					"auth": "none",
+					"use": "A free quota of its own that survives reconnects, for scheduled tasks: POST the install endpoint and connect the connector_urls.grok value it returns.",
+					"install": "https://three.ws/api/mcp-studio/install"
+				},
+				{
+					"auth": "api-key",
+					"use": "The account's agents, memory and skills. Make a key for an AI agent at the keys page and store it as a Bot secret. A connector key never spends.",
+					"keys": "https://three.ws/dashboard/api",
+					"header": "Authorization",
+					"value": "Bearer <three.ws API key>"
+				},
+				{
+					"auth": "oauth",
+					"use": "The account's agents, memory and skills, signed in once in the browser.",
+					"url": "https://three.ws/api/mcp-grok?auth=oauth"
+				}
+			],
+			"steps": [
+				"In Grok Bot, open Connectors and add a custom MCP server with the settings above, or send Grok Bot the say sentence and confirm what it shows.",
+				"Check the name and URL Grok Bot shows, then confirm.",
+				"Ask for 3D in any task, or attach the server with @ and its name."
+			],
+			"notes": "Grok Bot connects from xAI's cloud, so only a public URL works; never localhost.",
+			"setup": "https://three.ws/connect?client=grok",
+			"documentation": "https://three.ws/docs/grok-bot"
+		},
+		"cursor": {
+			"name": "Cursor",
+			"server": "https://three.ws/api/mcp",
+			"auth": "oauth",
+			"settings": {
+				"file": "~/.cursor/mcp.json",
+				"config": {
+					"mcpServers": {
+						"three-ws-main": {
+							"url": "https://three.ws/api/mcp"
+						}
+					}
+				}
+			},
+			"installLink": "cursor://anysphere.cursor-deeplink/mcp/install?name=three-ws-main&config=eyJ1cmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AifQ%3D%3D",
+			"steps": [
+				"Open the install link, or add the config to the file.",
+				"Cursor runs the three.ws sign-in on first use."
+			],
+			"setup": "https://three.ws/connect?client=cursor"
+		},
+		"vscode": {
+			"name": "VS Code (GitHub Copilot agent mode)",
+			"server": "https://three.ws/api/mcp",
+			"auth": "oauth",
+			"settings": {
+				"file": ".vscode/mcp.json",
+				"config": {
+					"servers": {
+						"three-ws-main": {
+							"type": "http",
+							"url": "https://three.ws/api/mcp"
+						}
+					}
+				}
+			},
+			"installLink": "vscode:mcp/install?%7B%22name%22%3A%22three-ws-main%22%2C%22type%22%3A%22http%22%2C%22url%22%3A%22https%3A%2F%2Fthree.ws%2Fapi%2Fmcp%22%7D",
+			"steps": [
+				"Open the install link, or add the config to the file.",
+				"The server signs you in on first use."
+			],
+			"setup": "https://three.ws/connect?client=vscode"
+		},
+		"claude-code": {
+			"name": "Claude Code",
+			"server": "https://three.ws/api/mcp",
+			"auth": "oauth",
+			"command": "claude mcp add --transport http three-ws-main https://three.ws/api/mcp",
+			"steps": [
+				"Run the command.",
+				"In Claude Code, type /mcp, pick three-ws-main and choose Authenticate."
+			],
+			"setup": "https://three.ws/connect?client=claude-code"
+		}
+	}
 }

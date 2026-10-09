@@ -38,8 +38,8 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [.well-known/agent-attestation-schemas](https://three.ws/.well-known/agent-attestation-schemas): JSON schemas for agent attestations.
 - [.well-known/oauth-authorization-server](https://three.ws/.well-known/oauth-authorization-server): OAuth 2.1 authorization-server metadata.
 - [.well-known/chat-plugin.json](https://three.ws/.well-known/chat-plugin.json): ChatGPT-style plugin manifest.
-- [MCP server](https://three.ws/api/mcp): Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.
-- [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.
+- [MCP server](https://three.ws/api/mcp): Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Every other hosted server, including the Grok Bot connector, is listed in /.well-known/mcp.json.
+- [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server (endpoint, transport, auth, what each one does) plus a clients block with setup for Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code: the recommended server, the auth mode and the exact connector settings or config file.
 - [.well-known/agent-card.json](https://three.ws/.well-known/agent-card.json): A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.
 - [.well-known/x402.json](https://three.ws/.well-known/x402.json): x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
 
@@ -98,6 +98,6 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (929), grouped by section, with full descriptions.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (930), grouped by section, with full descriptions.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

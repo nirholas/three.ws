@@ -56,6 +56,7 @@
 				"title": "Developers",
 				"paths": [
 					"/connect",
+					"/grok",
 					"/mcp-tools",
 					"/docs/start-here",
 					"/docs/mcp",
@@ -5039,6 +5040,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/grok",
+					"title": "Docs · three.ws for Grok",
+					"description": "Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/grok-bot",
+					"title": "Docs · Grok Bot connector reference",
+					"description": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/prompts",
 					"title": "Docs · The prompt library",
 					"description": "How the three.ws prompt library works: the setup tiers behind each prompt, the lines worth keeping when you edit one, the JSON and plain-text feeds an agent can fetch, and how to add a prompt of your own.",
@@ -7360,8 +7381,8 @@
 				},
 				{
 					"path": "/connect",
-					"title": "Connect three.ws to Claude, ChatGPT, Cursor & VS Code",
-					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
+					"title": "Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code",
+					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
 					"added": "2026-09-29",
 					"auth": null,
 					"indexable": true,
@@ -7383,6 +7404,16 @@
 					"title": "Docs · The 10 SOL trading experiment",
 					"description": "The full risk policy behind the autonomous fleet: entry band, position sizing, taking initials at 2x, the moon-bag floor, trailing and hard stops, and how to read the decision journal.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/grok",
+					"title": "three.ws for Grok Bot: a free 3D studio and a body for Grok",
+					"description": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -8720,6 +8751,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/grok-skill.md",
+					"title": "grok-skill.md",
+					"description": "The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/.well-known/x402",
 					"title": ".well-known/x402",
 					"description": "x402 paid-API discovery document.",
@@ -8762,7 +8803,7 @@
 				{
 					"path": "/api/mcp",
 					"title": "MCP server",
-					"description": "Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.",
+					"description": "Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Every other hosted server, including the Grok Bot connector, is listed in /.well-known/mcp.json.",
 					"added": null,
 					"auth": null,
 					"indexable": false,
@@ -8772,7 +8813,7 @@
 				{
 					"path": "/.well-known/mcp.json",
 					"title": ".well-known/mcp.json",
-					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+					"description": "Directory of every hosted three.ws MCP server (endpoint, transport, auth, what each one does) plus a clients block with setup for Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code: the recommended server, the auth mode and the exact connector settings or config file.",
 					"added": "2026-07-31",
 					"auth": null,
 					"indexable": false,

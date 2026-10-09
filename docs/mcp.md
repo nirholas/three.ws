@@ -47,7 +47,7 @@ The MCP server configuration is at `.mcp.json` in the project root, which Claude
 
 This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **73 three.ws MCP servers**, all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
 
-The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch.
+The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch. Its `clients` block adds per-client setup (recommended server, auth mode, exact connector settings); see [Setup an agent can read](#setup-an-agent-can-read-the-clients-block).
 
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 
@@ -298,6 +298,38 @@ This uses the standalone npm package, which handles OAuth locally. The `--url` f
 ### Grok Bot
 
 Grok Bot connects from xAI's cloud as a custom MCP connector: transport Streamable HTTP, server URL `https://three.ws/api/mcp-grok`, authentication None for the free studio, a connector key for your agents, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth`. The [Grok Bot connector reference](./grok-bot.md) has the exact fields for each mode, which server to pick, the result and job contracts, the limits, and a fix for every failure the connector probe reports.
+
+### Setup an agent can read: the `clients` block
+
+[`/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) also carries a `clients` object, so an agent that is asked to "connect three.ws to Grok Bot" (or Claude, ChatGPT, Cursor, VS Code, Claude Code) can do it from one fetch, without reading this page. `clients` is a three.ws extension; no MCP spec defines it, so a consumer should ignore client ids and fields it does not recognize, and new ones may appear. Each entry has:
+
+| Field | Meaning |
+|---|---|
+| `name` | The client's display name. |
+| `server` | The recommended server, always one of `servers[].endpoint` in the same file. |
+| `auth` | `none`, `oauth` or `api-key`: what to pick in the client's authentication setting. |
+| `settings` | The exact values for the client's own form (keyed by the form's field labels), or `file` plus `config` for a client configured by a JSON file. |
+| `command` | The shell command, for a CLI client such as Claude Code. |
+| `installLink` | A one-click install link with the server filled in, where the client supports one. |
+| `say` | For Grok Bot: the sentence that adds the connector from chat. |
+| `alternatives` | Other auth modes for the same client, each with its `auth` and what it is for: an install-token URL for scheduled tasks, a connector API key (header and value shape), or the OAuth sign-in URL. |
+| `steps` | The client's own steps, in order. |
+| `setup` | The human page for the same setup, `https://three.ws/connect?client=<id>`. |
+
+```bash
+curl -s https://three.ws/.well-known/mcp.json | jq '.clients["grok-bot"].settings'
+```
+
+```json
+{
+  "Name": "three-ws-grok",
+  "Transport": "Streamable HTTP",
+  "Server URL": "https://three.ws/api/mcp-grok",
+  "Authentication": "None"
+}
+```
+
+`tests/mcp-directory.test.js` pins the shape, checks that every Grok Bot field matches what the [/connect](/connect?client=grok) card renders, and resolves every three.ws URL in the file against the production route table, so a recommended server or setup link that stops being served fails the test suite.
 
 ### Any MCP-compatible client
 

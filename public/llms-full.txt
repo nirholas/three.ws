@@ -3029,6 +3029,18 @@ URL: https://three.ws/docs/vscode
 
 The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.
 
+### Docs · three.ws for Grok
+
+URL: https://three.ws/docs/grok
+
+Connect Grok Bot, Grok connectors and the xAI API to one free remote MCP server that turns text or an image into a textured 3D model, a rigged avatar, or a named 3D persona that lip-syncs its replies. No account, payment or API key.
+
+### Docs · Grok Bot connector reference
+
+URL: https://three.ws/docs/grok-bot
+
+Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.
+
 ### Docs · The prompt library
 
 URL: https://three.ws/docs/prompts
@@ -4421,11 +4433,17 @@ URL: https://three.ws/docs/mcp-safety
 
 What an MCP tool's safety annotations mean on three.ws and why you can trust them: read-only tools never change what you asked about, anything that spends is labelled as spending, and a build check verifies every hint against the tool's own code before it can ship.
 
-### Connect three.ws to Claude, ChatGPT, Cursor & VS Code
+### Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code
 
 URL: https://three.ws/connect
 
-Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+
+### three.ws for Grok Bot: a free 3D studio and a body for Grok
+
+URL: https://three.ws/grok
+
+Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
 
 ### MCP Tool Catalog
 
@@ -5242,6 +5260,13 @@ Crawler directives.
 URL: https://three.ws/openapi.json
 Indexable: no (excluded from sitemap)
 
+### grok-skill.md
+
+URL: https://three.ws/grok-skill.md
+Indexable: no (excluded from sitemap)
+
+The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.
+
 Machine-readable HTTP API spec.
 
 ### .well-known/x402
@@ -5277,14 +5302,14 @@ ChatGPT-style plugin manifest.
 URL: https://three.ws/api/mcp
 Indexable: no (excluded from sitemap)
 
-Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.
+Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Every other hosted server, including the Grok Bot connector, is listed in /.well-known/mcp.json.
 
 ### .well-known/mcp.json
 
 URL: https://three.ws/.well-known/mcp.json
 Indexable: no (excluded from sitemap)
 
-Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.
+Directory of every hosted three.ws MCP server (endpoint, transport, auth, what each one does) plus a clients block with setup for Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code: the recommended server, the auth mode and the exact connector settings or config file.
 
 ### .well-known/agent-card.json
 
