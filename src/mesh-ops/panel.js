@@ -11,10 +11,10 @@
 // to the first, and every version keeps its triangle count so the before/after
 // line is exact rather than estimated.
 //
-// Usage:
-//   const tools = mountMeshTools(host, { onChange: ({ url, edited }) => ... });
-//   tools.setSource('https://.../model.glb', { label: 'my model' });
-//   tools.activate();   // start fetching; call when the panel becomes visible
+// Usage: mountMeshTools(host, { onChange }) returns the panel; onChange gets
+// { url, edited } after every edit. Give it a model with
+// setSource(glbUrl, { label }), then call activate() when the panel becomes
+// visible, which is when it starts fetching.
 
 import { inspect, run } from './client.js';
 

@@ -330,7 +330,7 @@ describe('gcp provider — trellis quality forwarding', () => {
 	});
 });
 
-describe('gcp provider — trellis2 mode wire contract', () => {
+describe('gcp provider: trellis2 mode wire contract', () => {
 	it('forwards resolution, seed and the bake overrides to the TRELLIS.2 worker', async () => {
 		process.env.MODEL_TRELLIS2_URL = 'https://trellis2.example.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
