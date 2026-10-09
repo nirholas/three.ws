@@ -219,6 +219,7 @@
 		"x:archive:import": "node scripts/x-archive-import.mjs",
 		"x:archive:refresh": "node scripts/x-archive-refresh.mjs",
 		"x:archive:analyze": "node scripts/x-archive-analyze.mjs",
+		"x:articles:pull": "node scripts/x-articles-pull.mjs",
 		"x:volume": "node scripts/x-volume-study.mjs",
 		"audit:deploy": "node scripts/audit-deploy-artifacts.mjs",
 		"guard:esbuild": "node scripts/guard-esbuild-bundles.mjs",
