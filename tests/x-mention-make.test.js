@@ -81,9 +81,9 @@ describe('reply copy', () => {
 		for (const kind of ['success', 'failure']) {
 			const text = make.composeMakeReply(kind, { prompt: long, link: `${BASE}/forge?prompt=${long}` });
 			expect(weightedLength(text)).toBeLessThanOrEqual(280);
-			expect(text).not.toMatch(/[–—]/);
+			expect(text).not.toMatch(/[\u2013\u2014]/);
 		}
-		expect(make.composeMakeReply('unsafe')).not.toMatch(/[–—]/);
+		expect(make.composeMakeReply('unsafe')).not.toMatch(/[\u2013\u2014]/);
 	});
 });
 
@@ -105,6 +105,13 @@ describe('success path', () => {
 		const [bot] = (await dbState.pg.query('select * from users where email = $1', [make.BOT_EMAIL])).rows;
 		expect(creation).toMatchObject({ x_author_id: ev.authorId, user_id: bot.id, visibility: 'unlisted' });
 		expect(bot.service_account).toBe(true);
+	});
+
+	it('uses the reference image as media when the model is too large to render', async () => {
+		const ev = await mentionRow();
+		const big = { ...doneJob, size_bytes: 12 * 1024 * 1024, preview_image_url: 'https://cdn.three.test/forge/dragon.png' };
+		const res = await make.handleMake(ev, { ...noDirector, startForge: async () => big });
+		expect(res.mediaUrl).toBe('https://cdn.three.test/forge/dragon.png');
 	});
 
 	it('hands a live row to the adapter and records the reply id once', async () => {

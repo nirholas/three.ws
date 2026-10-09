@@ -12,7 +12,7 @@
 // Rows land under account_ref `trythreews-evidence`, so they never appear in
 // the real account's review console or rate limits.
 //
-// USAGE (needs DATABASE_URL, e.g. from .env.local)
+// Usage (needs DATABASE_URL, e.g. from .env.local):
 //   node --env-file=.env.local scripts/x-mention-make-dry-run.mjs
 //   node --env-file=.env.local scripts/x-mention-make-dry-run.mjs --base https://three.ws --budget-ms 150000
 //   node --env-file=.env.local scripts/x-mention-make-dry-run.mjs --follow-up-ms 900000   # how long to keep running the follow-up tick on pending rows
