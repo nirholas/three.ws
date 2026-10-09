@@ -32,6 +32,8 @@ import { ensureKnownBots, loadKnownBots } from './x-mention-known-bots.js';
 import { answerOnBehalf } from './x-mention-on-behalf.js';
 import * as xBudget from './x-budget.js';
 import { handleAvatar, finishPendingAvatars } from './x-mention-avatar.js';
+import { finishPendingMakes } from './x-mention-make.js';
+import { createDeliver } from './x-mention-deliver.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
 const DEFAULT_LOCK_SECONDS = 110;
@@ -261,6 +263,30 @@ export async function listAccounts({ env = process.env, agentAccounts = async ()
 	return accounts;
 }
 
+/**
+ * Settle the make and avatar jobs that outlived their mention. Gated like any
+ * other reply (kill switch, then the post budget), each finisher isolated so
+ * one failing never stops the other or the tick. Delivery goes through the X
+ * adapter: dry rows are recorded, live rows are posted.
+ */
+export async function runFollowUps({ env = process.env, deps = {} } = {}) {
+	const budget = deps.budget || xBudget;
+	if (await (deps.paused || isPaused)(env)) return { followUps: { skipped: 'kill_switch' } };
+	const gate = await budget.readGate({ env }).catch(() => ({ allow: true }));
+	if (!gate.allow) return { followUps: { skipped: 'budget', reason: gate.reason } };
+	const baseDeliver = deps.deliver || createDeliver({ env, adapterFactory: deps.adapterFactory, getAccessToken: deps.getAccessToken });
+	const deliver = async (args) => {
+		const id = await baseDeliver(args);
+		if (id) await budget.recordPosts(1).catch(() => {});
+		return id;
+	};
+	const run = (fn) => fn({}, { deliver }).catch((err) => ({ error: String(err?.message || err).slice(0, 200) }));
+	return {
+		makeFollowUp: await run(deps.finishPendingMakes || finishPendingMakes),
+		avatarFollowUp: await run(deps.finishPendingAvatars || finishPendingAvatars),
+	};
+}
+
 /** One cron tick: lock, poll every account, release. Never throws for X outages. */
 export async function runMentionTick({ env = process.env, deps = {} } = {}) {
 	const holder = await (deps.acquireLock || acquireLock)(intEnv(env, 'X_MENTION_LOCK_SECONDS', DEFAULT_LOCK_SECONDS));
@@ -276,7 +302,7 @@ export async function runMentionTick({ env = process.env, deps = {} } = {}) {
 				report.accounts.push({ account: `${descriptor.kind}:${descriptor.ref}`, status: 'error', error: String(err?.message || err).slice(0, 200) });
 			}
 		}
-		report.avatarFollowUp = await (deps.finishPendingAvatars || finishPendingAvatars)().catch((err) => ({ error: String(err?.message || err).slice(0, 200) }));
+		Object.assign(report, await runFollowUps({ env, deps }));
 		return report;
 	} finally {
 		await (deps.releaseLock || releaseLock)(holder).catch(() => {});

@@ -22,6 +22,10 @@ vi.mock('../api/auth/x/[action].js', () => ({ encryptToken: (s) => s, decryptTok
 const poll = await import('../api/_lib/x-mention-poll.js');
 const store = await import('../api/_lib/x-mention-store.js');
 const { XTierUnavailable, XRateLimited } = await import('../api/_lib/x-mentions.js');
+const make = await import('../api/_lib/x-mention-make.js');
+const avatar = await import('../api/_lib/x-mention-avatar.js');
+const { createDeliver } = await import('../api/_lib/x-mention-deliver.js');
+const { createXAdapter } = await import('../api/_lib/gateway/adapters/x.js');
 
 const MIG = new URL('../api/_lib/migrations/', import.meta.url);
 const MIGRATION = readFileSync(new URL('20261008170000_x_mention_events.sql', MIG), 'utf8');
@@ -141,5 +145,87 @@ describe('the run lock', () => {
 	it('a tick releases the lock and reports unconfigured accounts quietly', async () => {
 		expect(await poll.runMentionTick({ env: {} })).toEqual({ ok: true, skipped: 'no_accounts_configured' });
 		expect(await poll.acquireLock(60)).toBeTruthy();
+	});
+});
+
+describe('late-reply follow-ups', () => {
+	const BASE = 'https://three.test';
+	const DONE = { status: 'done', glb_url: 'https://cdn.three.test/m.glb', creation_id: '11111111-1111-4111-8111-111111111111', preview_image_url: 'https://cdn.three.test/m.png' };
+	const ids = { make: '1900000000000000001', avatar: '1900000000000000002' };
+	const open = { paused: async () => false, budget: { readGate: async () => ({ allow: true }), recordPosts: vi.fn(async () => {}) } };
+
+	async function pending(intent, id, dryRun) {
+		await store.recordMention({
+			mention: { id, userId: '42', username: 'alice', text: `@trythreews ${intent}`, conversationId: id, account: ACCT },
+			parsed: { intent, args: { [intent]: { job_id: `job-${intent}`, stage: 'mesh', prompt: 'a dragon', started_at: new Date().toISOString() } } },
+			dryRun,
+			decision: 'pending',
+		});
+	}
+	const finishers = (post) => ({
+		finishPendingMakes: (o, d) => make.finishPendingMakes(o, { ...d, base: BASE, pollOnce: async () => DONE }),
+		finishPendingAvatars: (o, d) => avatar.finishPendingAvatars(o, { ...d, base: BASE, pollOnce: async () => DONE, startRig: async () => { throw Object.assign(new Error('no rig'), { code: 'rig_down' }); } }),
+		getAccessToken: post ? () => async () => 'tok' : undefined,
+		adapterFactory: post ? (o) => createXAdapter({ ...o, post, fetchMedia: async () => ({ buffer: Buffer.from('x'), mimeType: 'image/png' }), uploadMedia: async () => 'media-1', env: { X_MENTION_BOT_LIVE: '1' } }) : undefined,
+	});
+
+	beforeEach(async () => {
+		open.budget.recordPosts.mockClear();
+	});
+
+	it('a dry row is settled and recorded through the adapter, never posted', async () => {
+		await pending('make', ids.make, true);
+		const post = vi.fn();
+		const out = await poll.runFollowUps({ env: { X_MENTION_BOT_LIVE: '1' }, deps: { ...open, ...finishers(post) } });
+		expect(out.makeFollowUp).toMatchObject({ checked: 1, replied: 1 });
+		expect(post).not.toHaveBeenCalled();
+		expect(await store.getMentionEvent(ids.make)).toMatchObject({ decision: 'reply', dry_run: true, reply_tweet_id: null });
+	});
+
+	it('a live row is posted through the adapter and no longer held as paused', async () => {
+		await pending('make', ids.make, false);
+		await pending('avatar', ids.avatar, false);
+		const post = vi.fn(async () => ({ id: '2900000000000000001' }));
+		const out = await poll.runFollowUps({ env: { X_MENTION_BOT_LIVE: '1' }, deps: { ...open, ...finishers(post) } });
+		expect(out.makeFollowUp).toMatchObject({ replied: 1 });
+		expect(out.avatarFollowUp).toMatchObject({ replied: 1 });
+		expect(post).toHaveBeenCalledTimes(2);
+		expect(post.mock.calls[0][0]).toMatchObject({ accessToken: 'tok', replyTo: expect.any(String), mediaIds: ['media-1'] });
+		const row = await store.getMentionEvent(ids.make);
+		expect(row).toMatchObject({ decision: 'reply', dry_run: false, reply_tweet_id: '2900000000000000001' });
+		expect(open.budget.recordPosts).toHaveBeenCalledTimes(2);
+	});
+
+	it('a live row without a token resolver stays in dry run instead of posting', async () => {
+		await pending('make', ids.make, false);
+		const deliver = createDeliver({ env: { X_MENTION_BOT_LIVE: '1' } });
+		await dbState.pg.query(`update x_mention_events set decision = 'reply' where tweet_id = $1`, [ids.make]);
+		expect(await deliver({ text: 'done', inReplyToTweetId: ids.make })).toBeNull();
+		expect(await store.getMentionEvent(ids.make)).toMatchObject({ dry_run: true, reply_text: 'done', reply_tweet_id: null });
+	});
+
+	it('one failing finisher does not stop the other', async () => {
+		const avatarOnly = vi.fn(async () => ({ checked: 0 }));
+		const out = await poll.runFollowUps({ env: {}, deps: { ...open, finishPendingMakes: async () => { throw new Error('boom'); }, finishPendingAvatars: avatarOnly } });
+		expect(out.makeFollowUp).toEqual({ error: 'boom' });
+		expect(out.avatarFollowUp).toEqual({ checked: 0 });
+	});
+
+	it('the kill switch and the budget gate skip both finishers', async () => {
+		const spy = vi.fn(async () => ({}));
+		const killed = await poll.runFollowUps({ env: {}, deps: { ...open, paused: async () => true, finishPendingMakes: spy, finishPendingAvatars: spy } });
+		expect(killed).toEqual({ followUps: { skipped: 'kill_switch' } });
+		const broke = await poll.runFollowUps({ env: {}, deps: { ...open, budget: { readGate: async () => ({ allow: false, reason: 'daily_cap' }) }, finishPendingMakes: spy, finishPendingAvatars: spy } });
+		expect(broke).toMatchObject({ followUps: { skipped: 'budget', reason: 'daily_cap' } });
+		expect(spy).not.toHaveBeenCalled();
+	});
+
+	it('a tick runs both finishers', async () => {
+		const m = vi.fn(async () => ({ checked: 0 }));
+		const a = vi.fn(async () => ({ checked: 0 }));
+		const report = await poll.runMentionTick({ env: {}, deps: { acquireLock: async () => 'h', releaseLock: async () => {}, listAccounts: async () => [DESCRIPTOR], request, resolvedAccount: COMPANY, ...open, finishPendingMakes: m, finishPendingAvatars: a } });
+		expect(m).toHaveBeenCalledTimes(1);
+		expect(a).toHaveBeenCalledTimes(1);
+		expect(report).toMatchObject({ makeFollowUp: { checked: 0 }, avatarFollowUp: { checked: 0 } });
 	});
 });

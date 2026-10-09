@@ -73,3 +73,13 @@ Dry run applies as everywhere: the four-line reply is recorded on the row and no
 npx vitest run tests/x-mention-guard.test.js tests/x-budget.test.js
 ```
 The kill switch tests assert zero calls to the reply brain and the X adapter.
+
+## Late replies: make and avatar follow-ups
+
+A `make` or `avatar` mention whose 3D job outlives the bounded wait is recorded as `pending`. Every `x-mentions` tick then runs `runFollowUps()` (`api/_lib/x-mention-poll.js`), which calls `finishPendingMakes()` and `finishPendingAvatars()`:
+
+- **Gated like any reply.** The kill switch skips both, and a closed read/post budget gate skips both. The report carries `followUps: { skipped: 'kill_switch' | 'budget' }`.
+- **Isolated.** Each finisher runs in its own catch; one throwing reports `{ error }` under `makeFollowUp` or `avatarFollowUp` and the other still runs.
+- **Delivered through the X adapter.** `api/_lib/x-mention-deliver.js` builds the `deliver` the finishers use on `createXAdapter`. A dry row (`dry_run = true`, the default) is only recorded on the `x_mention_events` row and nothing is posted. A live row is posted by the adapter only when `X_MENTION_BOT_LIVE=1` and a token resolver is supplied (`getAccessToken(row)`); each real post counts against the post budget. With no resolver the adapter stays in dry run, so rows are no longer held as `paused` for lack of a deliver.
+
+Going live stays the separate owner step.
