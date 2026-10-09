@@ -49,6 +49,7 @@ function injectStyles() {
 	style.id = 'mesh-tools-styles';
 	style.textContent = `
 		.mt { display: flex; flex-direction: column; gap: var(--space-sm, 0.6rem); }
+		.mt:focus { outline: none; }
 		.mt-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-sm, 0.6rem); flex-wrap: wrap; }
 		.mt-title { font-family: var(--font-display, inherit); font-weight: 600; font-size: var(--text-sm, 0.9rem); color: var(--ink, #eee); }
 		.mt-tag { font-family: var(--font-mono, monospace); font-size: var(--text-xs, 0.75rem); color: var(--ink-dim, #999); }
@@ -253,6 +254,7 @@ export function mountMeshTools(host, { onChange } = {}) {
 	const id = `mt${++uid}`;
 	const root = document.createElement('div');
 	root.className = 'mt';
+	root.tabIndex = -1; // a focus target while every button is disabled mid-run
 	root.innerHTML = template(id);
 	host.appendChild(root);
 
@@ -290,12 +292,28 @@ export function mountMeshTools(host, { onChange } = {}) {
 		else statusEl.removeAttribute('data-kind');
 	}
 
+	// Disabling the focused button (Apply while it runs, Undo or Reset once the
+	// history is back at the original) would drop keyboard focus onto <body>,
+	// which also takes it out of reach of the panel's Ctrl+Z. Keep it inside.
+	// The browser moves focus off a disabled element lazily, so a focused
+	// element that is now disabled counts as focus already lost.
+	function holdFocus(change) {
+		const hadFocus = root.contains(document.activeElement);
+		change();
+		const active = document.activeElement;
+		if (!hadFocus || (root.contains(active) && !active.disabled)) return;
+		if (!applyBtn.disabled) applyBtn.focus();
+		else root.focus();
+	}
+
 	function setBusy(busy, label) {
-		state.busy = busy;
-		root.dataset.busy = String(busy);
-		applyBtn.disabled = busy || !state.sourceUrl;
-		applyBtn.innerHTML = busy ? `<span class="mt-spinner" aria-hidden="true"></span> ${label}…` : `Apply ${OPS[state.op].label.toLowerCase()}`;
-		syncButtons();
+		holdFocus(() => {
+			state.busy = busy;
+			root.dataset.busy = String(busy);
+			applyBtn.disabled = busy || !state.sourceUrl;
+			applyBtn.innerHTML = busy ? `<span class="mt-spinner" aria-hidden="true"></span> ${label}…` : `Apply ${OPS[state.op].label.toLowerCase()}`;
+			syncButtons();
+		});
 	}
 
 	function filename() {
@@ -533,7 +551,7 @@ export function mountMeshTools(host, { onChange } = {}) {
 		if (popped.url) setTimeout(() => URL.revokeObjectURL(popped.url), 1000);
 		renderDetails(current().stats);
 		setStatus(`Undid ${OPS[popped.op].label.toLowerCase()}.`);
-		afterHistoryChange();
+		holdFocus(afterHistoryChange);
 	}
 
 	function resetToOriginal() {
@@ -544,7 +562,7 @@ export function mountMeshTools(host, { onChange } = {}) {
 		}, 1000);
 		renderDetails(null);
 		setStatus('Back to the original model.');
-		afterHistoryChange();
+		holdFocus(afterHistoryChange);
 	}
 
 	// ---- wiring ---------------------------------------------------------------
