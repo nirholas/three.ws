@@ -298,6 +298,7 @@ Each run asks "Find a ready-made chair in the three.ws catalog and give me its v
 
 ## Related
 
+- [Grok Bot recipes](./tutorials/grok-bot-recipes.md): six jobs to hand Grok Bot, each run against production with its real output.
 - [three.ws for Grok](./grok.md): the product tour, the xAI API examples and the skill file.
 - [The free 3D Studio MCP](./mcp-studio.md): every tool, tier and limit in depth.
 - [MCP integration](./mcp.md): every hosted server, OAuth and API keys.

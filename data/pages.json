@@ -4094,6 +4094,14 @@
 					"added": "2026-10-08"
 				},
 				{
+					"path": "/tutorials/grok-bot-recipes",
+					"title": "Tutorial · Grok Bot recipes",
+					"description": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/docs/grok-bot",
 					"title": "Docs · Grok Bot connector reference",
 					"description": "Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.",
