@@ -40,3 +40,13 @@ scipy==1.15.3
 pyloudnorm==0.1.1
 onnx==1.22.0
 audio-separator==0.30.2
+# The runtime that executes the separator's Kim_Vocal_2.onnx. audio-separator
+# only pulls one in through its [cpu]/[gpu] extras, so a plain install leaves
+# `import onnxruntime` (separator.py, module scope) unresolvable and every
+# avatar job dies with ModuleNotFoundError before the first frame. The GPU build
+# provides the same `onnxruntime` module. 1.20.x specifically: it is the last
+# onnxruntime-gpu line built for any CUDA 12.x with cuDNN 9 (1.21 and later
+# require CUDA 12.8), which is what this image's CUDA 12.4.1 runtime base and the
+# cuDNN 9 that torch 2.6.0+cu124 loads provide. check_pins.py asserts the version,
+# the CUDA execution provider, and that the separator imports.
+onnxruntime-gpu==1.20.2
