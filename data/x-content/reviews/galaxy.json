@@ -1,7 +1,7 @@
 {
 	"id": "galaxy",
 	"contentHash": "baa1b95fe120e328eee1b2f2312d14182c0eafd8e3c31da69e14f72daa68e896",
-	"reviewedAt": "2026-09-20T07:15:37.315Z",
+	"reviewedAt": "2026-10-09T02:58:20.084Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -65,13 +65,28 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
+			"clarity": 4,
+			"specificity": 4,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 5
+			"visual": 4
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "visual",
+				"quote": "hundreds of labelled agent stars clustered in 3D space",
+				"problem": "The image shows roughly 600 small stars but only about ten of them carry text labels, so 'hundreds of labelled agent stars' overstates what is visible. Alt text must describe what is actually in the frame.",
+				"fix": "Use: \"The Agent Galaxy page: 600 agent stars in 8 constellations clustered in 3D space, with the natural-language search box over them.\""
+			},
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones.",
+				"problem": "Post 3 restates the mechanism of post 1 almost word for word ('in plain language', 'the closest ones') and post 2 already covered 'rather than by keyword'. The thread ends on repetition instead of new information.",
+				"fix": "Acceptable as is, but if revised, post 3 could add the one new verified fact: the same embedding model placed the stars and ranks the query, which is already stated. Alternatively drop post 3 and ship posts 1 and 2."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"Agent Galaxy is a 3D star-map of every published agent, placed by meaning. Type what you want in plain language and the map flies to the closest ones. three.ws/galaxy",
@@ -79,13 +94,13 @@
 				"Instead of guessing keywords, you describe what you want in plain language and the same embedding model that placed the stars finds the closest ones."
 			],
 			"altText": [
-				"The Agent Galaxy page with hundreds of labelled agent stars clustered in 3D space and the natural-language search box over them."
+				"The Agent Galaxy page: 600 agent stars in 8 constellations clustered in 3D space, with the natural-language search box over them."
 			]
 		},
-		"summary": "All four claims are verified word-for-word against docs/galaxy.md, both API probes pass, the link returns 200, and the screenshot matches the copy (600 agents, no contradicted numbers). Voice, length, alt text, and visual all comply with the house contract; ship as is.",
+		"summary": "All four claims pass verification against docs and live API probes, the text is clean of voice violations, and the fresh screenshot of the live route supports the copy. The only fix is the alt text, which claims hundreds of labelled stars when the frame shows hundreds of stars with about ten labels.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
-			"No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.",
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],

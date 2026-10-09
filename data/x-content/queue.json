@@ -802,7 +802,7 @@
 						{
 							"type": "page",
 							"url": "https://three.ws/api/catalog?limit=1",
-							"contains": "\"total\":3531"
+							"contains": "\"total\":3961"
 						}
 					]
 				},
@@ -872,6 +872,17 @@
 					"url": "https://three.ws/api/catalog?q=chair&limit=3",
 					"expect": {
 						"contains": "ArmChair_01"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the free catalog holds 3,500 or more assets",
+					"url": "https://three.ws/api/catalog?limit=1",
+					"expect": {
+						"json": {
+							"path": "total",
+							"min": 3500
+						}
 					}
 				},
 				{
