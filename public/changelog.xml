@@ -55,6 +55,14 @@
 			<description>The Agent MCP server now has a pay_quote tool. It asks a paid x402 endpoint what it charges without paying, and shows who gets paid, how much, in which token and on which chain, which wallet pays, the per-call limit, and anything that would stop the payment. pay_and_call needs the quote_id it returns plus an explicit confirm_payment, so an assistant always shows you the price before your agent wallet pays. One approval pays one call. Before this, turning pay_and_call on still left it refusing every call, because the quote step it requires did not exist.</description>
 		</item>
 		<item>
+			<title>AI agents can read how to connect, per client</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-09:AI agents can read how to connect, per client</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.</description>
+		</item>
+		<item>
 			<title>Cloud agents get their own free 3D budget with a connector link</title>
 			<link>https://three.ws/connect</link>
 			<guid isPermaLink="false">2026-10-09:Cloud agents get their own free 3D budget with a connector link</guid>
@@ -11444,7 +11452,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-07-31:.well-known/mcp.json</guid>
 			<pubDate>Fri, 31 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.</description>
+			<description>Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).</description>
 		</item>
 		<item>
 			<title>Atlas</title>

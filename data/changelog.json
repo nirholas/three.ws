@@ -29267,6 +29267,13 @@
 			"summary": "The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.",
 			"tags": ["feature"],
 			"link": "/connect?client=grok"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "AI agents can read how to connect, per client",
+			"summary": "The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.",
+			"tags": ["feature", "docs"],
+			"link": "/grok"
 		}
 	]
 }

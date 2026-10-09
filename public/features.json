@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:09:11.348Z",
+	"generated_at": "2026-10-09T04:14:41.231Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -56,6 +56,7 @@
 				"title": "Developers",
 				"paths": [
 					"/connect",
+					"/grok",
 					"/mcp-tools",
 					"/docs/start-here",
 					"/docs/mcp",
@@ -8872,7 +8873,7 @@
 				{
 					"path": "/.well-known/mcp.json",
 					"title": ".well-known/mcp.json",
-					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).",
 					"added": "2026-07-31",
 					"auth": null,
 					"indexable": false,

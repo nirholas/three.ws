@@ -9,6 +9,92 @@
 		"description": "One command signs you in (OAuth or API key), writes these servers into Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes, and verifies each with a live tools/list.",
 		"documentation": "https://three.ws/docs/cli"
 	},
+	"clients": {
+		"$comment": "three.ws extension, not part of any MCP spec: per-client setup hints so an agent can connect without a human. Consumers must ignore unknown fields. Each recommendedServer is an endpoint listed in servers[].",
+		"documentation": "https://three.ws/connect",
+		"claude": {
+			"name": "Claude (claude.ai and Claude desktop)",
+			"recommendedServer": "https://three.ws/api/mcp",
+			"auth": "oauth2.1",
+			"settings": {
+				"where": "Customize, Connectors, Add custom connector",
+				"fields": {
+					"name": "three.ws",
+					"url": "https://three.ws/api/mcp"
+				}
+			},
+			"deepLink": "https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=three.ws&connectorUrl=https%3A%2F%2Fthree.ws%2Fapi%2Fmcp",
+			"guide": "https://three.ws/connect"
+		},
+		"chatgpt": {
+			"name": "ChatGPT",
+			"recommendedServer": "https://three.ws/api/mcp",
+			"auth": "oauth2.1",
+			"settings": {
+				"where": "Settings, Apps and Connectors, Advanced settings (turn on Developer mode), then Create",
+				"fields": {
+					"name": "three.ws",
+					"url": "https://three.ws/api/mcp",
+					"authentication": "OAuth"
+				}
+			},
+			"guide": "https://three.ws/connect"
+		},
+		"cursor": {
+			"name": "Cursor",
+			"recommendedServer": "https://three.ws/api/mcp",
+			"auth": "oauth2.1",
+			"settings": {
+				"where": "mcp.json or the Add to Cursor button on the connect page",
+				"config": {
+					"mcpServers": {
+						"three-ws": {
+							"url": "https://three.ws/api/mcp"
+						}
+					}
+				}
+			},
+			"guide": "https://three.ws/connect"
+		},
+		"vscode": {
+			"name": "VS Code",
+			"recommendedServer": "https://three.ws/api/mcp",
+			"auth": "oauth2.1",
+			"settings": {
+				"where": ".vscode/mcp.json or the Add to VS Code button on the connect page",
+				"config": {
+					"servers": {
+						"three-ws": {
+							"type": "http",
+							"url": "https://three.ws/api/mcp"
+						}
+					}
+				}
+			},
+			"guide": "https://three.ws/connect"
+		},
+		"grok-bot": {
+			"name": "Grok Bot (xAI)",
+			"recommendedServer": "https://three.ws/api/mcp-grok",
+			"auth": "none",
+			"authUpgrade": {
+				"mode": "oauth2.1",
+				"url": "https://three.ws/api/mcp-grok?auth=oauth",
+				"adds": "the account's agent, memory, skill and avatar tools; never a wallet or payment tool"
+			},
+			"settings": {
+				"where": "Connectors, add a custom MCP connector",
+				"fields": {
+					"transport": "streamable-http",
+					"url": "https://three.ws/api/mcp-grok",
+					"authentication": "none"
+				},
+				"note": "The URL must be public: Grok Bot connects from xAI's cloud, so a localhost URL never works."
+			},
+			"skill": "https://three.ws/grok-skill.md",
+			"guide": "https://three.ws/grok"
+		}
+	},
 	"registry": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas",
 	"x402Catalog": "https://three.ws/.well-known/x402.json",
 	"agentCard": "https://three.ws/.well-known/agent-card.json",

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:09:11.363Z",
+	"generated_at": "2026-10-09T04:14:41.245Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -66,6 +66,17 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "AI agents can read how to connect, per client",
+			"summary": "The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.",
+			"link": "/grok",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{
@@ -15216,7 +15227,7 @@
 			"date": "2026-07-31",
 			"type": "launch",
 			"title": ".well-known/mcp.json",
-			"summary": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+			"summary": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).",
 			"link": "/.well-known/mcp.json",
 			"tags": [
 				"launch"

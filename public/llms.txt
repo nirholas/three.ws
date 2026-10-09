@@ -39,7 +39,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [.well-known/oauth-authorization-server](https://three.ws/.well-known/oauth-authorization-server): OAuth 2.1 authorization-server metadata.
 - [.well-known/chat-plugin.json](https://three.ws/.well-known/chat-plugin.json): ChatGPT-style plugin manifest.
 - [MCP server](https://three.ws/api/mcp): Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation, agent data, and memory as tools. Six more hosted servers are listed in /.well-known/mcp.json.
-- [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.
+- [.well-known/mcp.json](https://three.ws/.well-known/mcp.json): Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).
 - [.well-known/agent-card.json](https://three.ws/.well-known/agent-card.json): A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.
 - [.well-known/x402.json](https://three.ws/.well-known/x402.json): x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
 
@@ -58,6 +58,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 ## Developers
 
 - [Connect three.ws to Claude, ChatGPT, Cursor & VS Code](https://three.ws/connect): Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+- [three.ws for Grok](https://three.ws/grok): One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.
 - [MCP Tool Catalog](https://three.ws/mcp-tools): Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.
 - [Docs · Start Here](https://three.ws/docs/start-here): Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.
 - [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.

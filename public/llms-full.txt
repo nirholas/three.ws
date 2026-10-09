@@ -5345,7 +5345,7 @@ Hosted Model Context Protocol server (Streamable HTTP): avatars, glTF validation
 URL: https://three.ws/.well-known/mcp.json
 Indexable: no (excluded from sitemap)
 
-Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.
+Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).
 
 ### .well-known/agent-card.json
 

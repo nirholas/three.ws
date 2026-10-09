@@ -49,6 +49,24 @@ This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of *
 
 The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch.
 
+The same file carries a `clients` block, a three.ws extension (no MCP spec defines one, so consumers must ignore fields they do not know). It tells an agent how to connect from each supported client without a human reading the Connect page:
+
+```json
+"clients": {
+  "grok-bot": {
+    "name": "Grok Bot (xAI)",
+    "recommendedServer": "https://three.ws/api/mcp-grok",
+    "auth": "none",
+    "authUpgrade": { "mode": "oauth2.1", "url": "https://three.ws/api/mcp-grok?auth=oauth", "adds": "..." },
+    "settings": { "where": "...", "fields": { "transport": "streamable-http", "url": "https://three.ws/api/mcp-grok", "authentication": "none" } },
+    "skill": "https://three.ws/grok-skill.md",
+    "guide": "https://three.ws/grok"
+  }
+}
+```
+
+Keys are `claude`, `chatgpt`, `cursor`, `vscode` and `grok-bot`. Each entry has `name`, `recommendedServer` (always an endpoint listed in `servers[]`), `auth` (`none`, `oauth2.1` or `api-key`), `settings` (`where` to click and either `fields` to type or a `config` snippet to paste), and `guide`. Optional fields: `deepLink`, `authUpgrade` and `skill`. `tests/mcp-directory.test.js` checks the shape and that every endpoint is served.
+
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 
 **Seven hosted remote servers** (Streamable HTTP, no install):

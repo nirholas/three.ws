@@ -31,7 +31,7 @@
 			},
 			{
 				"title": "Developers",
-				"paths": ["/connect", "/mcp-tools", "/docs/start-here", "/docs/mcp", "/docs/cli", "/docs/api-reference", "/avatar-sdk", "/3d", "/crypto-api", "/docs/x402", "/x402", "/docs/skills", "/prompts"]
+				"paths": ["/connect", "/grok", "/mcp-tools", "/docs/start-here", "/docs/mcp", "/docs/cli", "/docs/api-reference", "/avatar-sdk", "/3d", "/crypto-api", "/docs/x402", "/x402", "/docs/skills", "/prompts"]
 			},
 			{
 				"title": "Economy and $THREE",
@@ -6900,7 +6900,7 @@
 				{
 					"path": "/.well-known/mcp.json",
 					"title": ".well-known/mcp.json",
-					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does.",
+					"description": "Directory of every hosted three.ws MCP server: endpoint, transport, auth, and what each one does, plus setup hints per client (Claude, ChatGPT, Cursor, VS Code, Grok Bot).",
 					"indexable": false,
 					"added": "2026-07-31"
 				},
