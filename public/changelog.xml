@@ -47,6 +47,14 @@
 			<description>Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.</description>
 		</item>
 		<item>
+			<title>A build plan for the next 27 platform upgrades</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:A build plan for the next 27 platform upgrades</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>We surveyed the strongest open-source crypto and agent projects, compared them with three.ws, and wrote the plan for closing every gap: agents that learn skills from experience, a payer command line, on-chain spending budgets, more trading venues, safer chat trading and more.</description>
+		</item>
+		<item>
 			<title>A full setup guide for Grok Bot</title>
 			<link>https://three.ws/docs/grok-bot</link>
 			<guid isPermaLink="false">2026-10-09:A full setup guide for Grok Bot</guid>
