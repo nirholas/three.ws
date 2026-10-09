@@ -14,7 +14,7 @@ actions). This page — and the API behind it — is that missing layer.
 - **Stocks** — the 24/7 tokenized-equity board. For every Stock Token: the Chainlink NAV price
   (read live on-chain), the deepest Uniswap DEX price, the premium/discount between them, 24h DEX
   volume, and liquidity. Sortable and searchable.
-- **Coins** — a memecoin screener split into CoinGecko's "Robinhood Chain Meme" / "Robinhood
+- **Coins**: a memecoin screener split into CoinGecko's "Robinhood Chain Meme" / "Robinhood
   Chain Stocks Ecosystem" / "Robinhood Ecosystem" categories, plus a live feed of recent launches
   read directly from on-chain logs: **Pons** (the chain's busiest launchpad, an ETH bonding curve
   that graduates into a locked Uniswap V4 pool), **NOXA** (instant Uniswap v3) and **The
@@ -128,7 +128,7 @@ math; Chainlink feed prices are already multiplier-adjusted, so they're never re
   twice inside the cache callback, and only a persistent outage is ever cached).
 - **Chain TVL** — [DefiLlama](https://defillama.com/chain/robinhood-chain).
 - **Memecoin screener** — CoinGecko categories `robinhood-chain-meme`, `robinhood-chain-stocks-ecosystem`, `robinhood-ecosystem`.
-- **Recent launches** — Pons V2 from its factory's `TokenLaunched` logs over RPC (the last hour
+- **Recent launches**: Pons V2 from its factory's `TokenLaunched` logs over RPC (the last hour
   of blocks, inside the public RPC's range cap), with curve reserves, graduation progress and
   supply from one multicall; NOXA and Odyssey from Blockscout's log API filtered by event topic.
   Each source fails on its own, so one indexer outage never empties the feed.

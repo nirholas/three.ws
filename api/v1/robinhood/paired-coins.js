@@ -1,4 +1,4 @@
-// GET /api/v1/robinhood/paired-coins — every paired coin, newest first.
+// GET /api/v1/robinhood/paired-coins: every paired coin, newest first.
 //
 // Free, keyless. Read from the paired launchpad itself (tokenCount/tokenAt),
 // so the list is exactly the coins the chain has, whoever launched them. Each

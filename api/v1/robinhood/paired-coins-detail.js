@@ -1,4 +1,4 @@
-// GET /api/v1/robinhood/paired-coins-detail?address=0x…[&interval=1h] — one paired coin.
+// GET /api/v1/robinhood/paired-coins-detail?address=0x…[&interval=1h]: one paired coin.
 //
 // Free, keyless. The coin's pools read live from the launchpad and priced in
 // dollars, its verified descriptor, the three.ws agent that launched it (when

@@ -1,4 +1,4 @@
-// GET /api/v1/robinhood/paired-markets — what a paired coin can trade against.
+// GET /api/v1/robinhood/paired-markets: what a paired coin can trade against.
 //
 // Free, keyless. Every quote asset registered on the paired launchpad
 // (tokenized stocks, WETH, stablecoins, chain coins), read live from the
