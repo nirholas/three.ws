@@ -14848,11 +14848,6 @@
 							"type": "file",
 							"path": "pages/forge.html",
 							"contains": "title=\"Split this model into selectable parts\""
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/image-to-3d",
-							"contains": "Split into parts"
 						}
 					]
 				},
@@ -14863,11 +14858,6 @@
 							"type": "file",
 							"path": "pages/forge.html",
 							"contains": "title=\"Retopologize to a poly budget and export an engine-ready GLB + FBX\""
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/image-to-3d",
-							"contains": "Game-Ready"
 						}
 					]
 				},
@@ -14878,6 +14868,21 @@
 							"type": "page",
 							"url": "https://three.ws/image-to-3d",
 							"contains": "The same pipeline is available to agents over MCP"
+						}
+					]
+				},
+				{
+					"says": "a single public domain photo",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://commons.wikimedia.org/wiki/File:German_garden_gnome.jpg",
+							"contains": "This work has been released into the public domain by its author"
+						},
+						{
+							"type": "file",
+							"path": "data/x-content/inputs/README.md",
+							"contains": "by Colibri1968, via Wikimedia Commons"
 						}
 					]
 				}
