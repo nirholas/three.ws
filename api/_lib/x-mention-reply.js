@@ -16,13 +16,11 @@
 // untrusted data: it is quoted into the user turn as data, never merged into
 // the system prompt.
 
-import twitterText from 'twitter-text';
 import { llmComplete } from './llm.js';
 import { resolveAgentBrain } from './agent-brain.js';
 import { modelChain } from './agent-model.js';
 import { normalizeText, CHAT_MAX } from './x-mention-intents.js';
-
-const { parseTweet, extractUrls } = twitterText;
+import { weightedLength as xWeightedLength, findUrls } from './x-text-weight.js';
 
 export const MAX_REPLY_WEIGHT = 260;
 export const THREE_CA = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -82,7 +80,7 @@ const CONTROL_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F​-‏�
 
 /** Weighted length as X counts it: links 23, CJK and emoji 2, the rest 1. */
 export function weightedLength(text) {
-	return parseTweet(String(text ?? '')).weightedLength;
+	return xWeightedLength(text);
 }
 
 /** Whether a URL string points at three.ws over https. */
@@ -110,7 +108,8 @@ export function checkReply(text) {
 	const weight = weightedLength(t);
 	if (weight > MAX_REPLY_WEIGHT) return { ok: false, reason: 'too_long', detail: String(weight) };
 
-	for (const url of extractUrls(t)) {
+	for (const span of findUrls(t)) {
+		const url = t.slice(span.start, span.end);
 		if (!allowedUrl(url)) return { ok: false, reason: 'link_not_allowed', detail: url };
 	}
 	if (/\b(?:t\.co|bit\.ly|tinyurl\.com|[\w-]+\.(?:com|net|org|io|xyz|app|dev|co|gg|fun|finance|exchange))\b/i.test(t.replace(/\bhttps:\/\/(?:[\w-]+\.)*three\.ws\S*/gi, ''))) {
