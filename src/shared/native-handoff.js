@@ -4,10 +4,7 @@
 // ios/src/native-bridge.js; everywhere else it is absent and this is a no-op.
 //
 // Call it first thing in any flow that pays, buys, deposits, tips, swaps or
-// launches, and stop when it returns true:
-//
-//   if (leaveAppForPayment()) return null;
-//
+// launches, and return from that flow straight away when it returns true.
 // The visitor sees a sheet that explains the hop and opens this page in Safari,
 // still signed in, where the same flow runs normally.
 
