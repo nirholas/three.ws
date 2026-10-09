@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "Avatar builds that hit a full library now say so, and the news knowledge base stops losing stories",
+			"summary": "If your avatar library filled up while a photo or prompt avatar was still generating, the finished job used to sit unresolved and retry in the background without ever telling you why nothing appeared. It now closes with a clear message: delete an avatar or upgrade, then build it again. Separately, news stories whose text contained a half-cut emoji or a stray null character were silently dropped from the knowledge base the 3D agents ground their answers on, about 120 a day. They are now cleaned and saved. Static files such as images and environment maps also stop answering a server error when the CDN revalidates them after an update.",
+			"tags": ["fix"],
+			"link": "/news"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Set up Grok Bot from the terminal with npx three-ws setup",
 			"summary": "Grok Bot keeps its connectors in xAI's cloud, so there is no config file to write, but the three-ws CLI now does every other step. Run npx three-ws setup --client grok-bot, or tick Grok Bot in the setup picker, and it prints the exact fields Grok Bot's custom MCP form asks for, copies the server URL to your clipboard, and checks the public URL live the way Grok Bot will call it. Pick how Grok Bot signs in: free with no account, free with an install token that keeps one quota across scheduled runs, a connector key it mints for you that can read and generate but never spend, or OAuth so Grok Bot signs in itself.",
 			"tags": ["feature", "sdk"],
