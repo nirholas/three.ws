@@ -163,6 +163,13 @@ export function riggableShape(metrics) {
 // does. Measured against started_at (the whole job, generation included)
 // because the rig submit has no timestamp column of its own.
 const RIG_STALL_MS = 45 * 60 * 1000;
+// The same guard for the generation itself. A job the lane lost keeps answering
+// queued or running (or a poll keeps failing on transport), and every pending
+// row counts against maxPending(), so one such row shrinks seeding capacity for
+// good and, at SEED_CRON_MAX_PENDING=1, stops it outright: a hunyuan3d job sat
+// 'pending' from 2026-09-17 to 2026-10-09 that way. The forge client gives a
+// running job 12 minutes and does not count queue time, so an hour is generous.
+const GENERATION_STALL_MS = 60 * 60 * 1000;
 // Gates per tick. Each one fetches the finished GLB and parses its glTF chunk;
 // two keeps the phase in the low seconds even when a burst lands together.
 const gateBatchSize = () => intEnv('SEED_CRON_GATE', 2, { min: 1, max: 10 });
@@ -344,9 +351,9 @@ function assertFreeBackend(backend) {
 //
 // A finished generation becomes 'generated', not 'done': the mesh exists but has
 // not faced the catalog gate yet. Publishing happens only after advanceGates().
-async function pollPending(origin) {
+export async function pollPending(origin) {
 	const rows = await sql`
-		select id, user_id, raw_client_id, job_id, prompt, model_category
+		select id, user_id, raw_client_id, job_id, prompt, model_category, started_at
 		from forge_seed_jobs
 		where status = 'pending'
 		  and started_at < now() - (${MIN_JOB_AGE_SECONDS} || ' seconds')::interval
@@ -356,6 +363,16 @@ async function pollPending(origin) {
 	if (!rows.length) return [];
 
 	const results = [];
+	const stalled = (job) => Date.now() - new Date(job.started_at).getTime() > GENERATION_STALL_MS;
+	const expire = async (job, lastStatus) => {
+		const error = `generation stalled past ${Math.round(GENERATION_STALL_MS / 60000)}m (last poll: ${lastStatus})`;
+		await sql`
+			update forge_seed_jobs
+			set status = 'failed', error = ${error}, finished_at = now()
+			where id = ${job.id} and status = 'pending'
+		`;
+		results.push({ job_id: job.job_id, status: 'failed', error, prompt: job.prompt });
+	};
 	await Promise.all(rows.map(async (job) => {
 		try {
 			const cronSecret = process.env.CRON_SECRET || env.CRON_SECRET || '';
@@ -392,10 +409,18 @@ async function pollPending(origin) {
 					where id = ${job.id}
 				`;
 				results.push({ job_id: job.job_id, status: 'failed', prompt: job.prompt });
+			} else if (stalled(job)) {
+				await expire(job, poll.body?.status || `HTTP ${poll.status ?? 'unknown'}`);
 			} else {
 				results.push({ job_id: job.job_id, status: poll.body?.status || 'running' });
 			}
 		} catch (err) {
+			if (stalled(job)) {
+				await expire(job, `poll error: ${err?.message || 'unknown'}`).catch((e) =>
+					results.push({ job_id: job.job_id, status: 'poll_error', error: e?.message }),
+				);
+				return;
+			}
 			results.push({ job_id: job.job_id, status: 'poll_error', error: err?.message });
 		}
 	}));
