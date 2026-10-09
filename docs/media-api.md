@@ -899,7 +899,7 @@ auth; rate-limited per IP.
 
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
-| `mesh_url` | string | required | Public https URL of the GLB. SSRF-validated server-side. |
+| `mesh_url` | string | required | Public https URL of the mesh: GLB, GLTF, OBJ, STL, PLY, OFF or DAE. SSRF-validated server-side. FBX is refused (see Errors). |
 | `method` | enum | `auto` | `auto`, `connected` (connected components), or `crease` (split at hard edges). |
 | `max_parts` | integer | `24` | 2 to 64. |
 | `min_part_faces` | integer | `64` | 4 to 100000. Parts smaller than this are merged. |
@@ -935,6 +935,7 @@ Fields are `null` until the stage that produces them completes; on failure
 | Situation | Response |
 |-----------|----------|
 | Missing/non-public `mesh_url` | `400 invalid_mesh_url` |
+| `mesh_url` names an `.fbx` file | `400 unsupported_mesh_format`; convert it to GLB with [`/api/forge-remesh`](forge.md#download-formats) (`"operation":"convert","output_format":"glb"`) first |
 | Malformed `?job=` | `400 invalid_job` (missing entirely: `400 missing_job`) |
 | Worker not deployed on this environment | `503 unconfigured` |
 | Worker rejected the job | `502 segment_failed` |

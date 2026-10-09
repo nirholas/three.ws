@@ -20,7 +20,7 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
-import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from './_lib/stylize-input.js';
+import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from './_lib/mesh-input.js';
 
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.

@@ -31,10 +31,27 @@ tinted a distinct golden-ratio-stepped hue so segmentation is visible even on an
 untextured mesh, and emitted as a separate named GLB node (`part_01`, `part_02`,
 …). `only_part` exports a single part on its own.
 
-Supported input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.fbx`,
-`.off`, `.dae`. Input is capped at 128 MiB and fetched through the SSRF-hardened
+Supported input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.off`,
+`.dae` (DAE through `pycollada`, which `trimesh[easy]` installs). Input is
+capped at 128 MiB and fetched through the SSRF-hardened
 `worker_security.fetch_remote_bytes` (https-only, private/loopback/metadata IPs
 rejected, redirects re-validated per hop).
+
+**FBX is not accepted.** trimesh has no FBX reader and this image carries no
+converter, so an FBX is refused up front instead of failing inside the parser:
+
+- an `.fbx` mesh URL is a `422` whose message names the formats above;
+- an FBX behind an extensionless or signed URL is caught by its bytes (the
+  binary `Kaydara FBX Binary` magic or an ASCII `; FBX` header) and the task
+  fails with `error_kind: "input"` and that same caller-facing message, not an
+  opaque `internal error (ref …)`;
+- `/api/forge-segment` answers `400 unsupported_mesh_format` and the
+  `segment_model` MCP tool returns an error before any job is queued.
+
+To split an FBX into parts, convert it to GLB first with the remesh worker
+(`operation: "convert"`, `output_format: "glb"`, via `/api/forge-remesh` or the
+`remesh_model` MCP tool), which reads binary FBX through headless Blender, then
+segment the GLB it returns.
 
 A glTF asset that declares `EXT_meshopt_compression` (what `gltfpack` emits, and
 what most three.ws avatars ship as) is transcoded to plain glTF by
@@ -86,7 +103,8 @@ implementation.
 | `worker_security.py` | Shared bearer-auth + SSRF-hardened fetch + opaque error helper. Byte-identical copy across all workers, so keep it in sync when editing. |
 | `gltf_meshopt.py` | Shared `EXT_meshopt_compression` decode (via the pinned `gltfpack` binary) applied to every fetched mesh. Byte-identical copy across the workers that load caller meshes; `npm run check:vendored` enforces that. |
 | `test_gltf_meshopt.py` | Tests for the decode, run as a Docker build gate alongside the core suite. |
-| `Dockerfile` | `python:3.11-slim` + native libs (`libgl1`, `libassimp5`, `libopenblas`); runs the test gate, then serves via `uvicorn` on port 8080. |
+| `test_segment_input.py` | Service-level input tests: the accepted formats, the FBX refusal (URL 422 and byte sniff), and the `error_kind` on failed tasks. No GCS, no network. A Docker build gate. |
+| `Dockerfile` | `python:3.11-slim` + native libs (`libgl1`, `libgomp1`, `libopenblas`) and the pinned `gltfpack`; runs the test gate, then serves via `uvicorn` on port 8080. No assimp: nothing in the worker loads it. |
 | `cloudbuild.yaml` | Cloud Build to Artifact Registry to Cloud Run deploy. |
 
 ## How it ships
@@ -111,8 +129,10 @@ gcloud builds submit --config workers/segment/cloudbuild.yaml \
 ```
 
 `SHORT_SHA` is required on a manual submit: the config tags the image with it,
-and an unsubstituted tag fails the build. The build runs `test_segment_core.py`
-as a gate, so a regressed merge pass never reaches a deployed image.
+and an unsubstituted tag fails the build. The build runs `test_segment_core.py`,
+`test_gltf_meshopt.py`, and `test_segment_input.py` as a gate, so a regressed
+merge pass, or a format the worker advertises but cannot read, never reaches a
+deployed image.
 
 The platform wires it in through `api/_providers/gcp.js` (`segment` mode): set
 **`GCP_SEGMENT_URL`** to this service's Cloud Run URL and **`GCP_RECONSTRUCTION_KEY`**
@@ -153,6 +173,8 @@ All routes except `/health` require `Authorization: Bearer <API_KEY>`.
 }
 ```
 
+An `.fbx` `mesh` is a `422` that names the supported input formats.
+
 `method`:
 - `connected` — split only at physically disconnected shells.
 - `crease` — minima-rule crease segmentation over the whole mesh.
@@ -188,7 +210,8 @@ Response: `{ "task_id": "<uuid>", "status": "queued" }`.
   "warnings": ["capped to 24 parts; 3 smaller fragments were combined"],
   "bytes": 184320,
   "elapsed_ms": 2140,
-  "error": null
+  "error": null,
+  "error_kind": null
 }
 ```
 
@@ -205,11 +228,12 @@ freshly started instance: it answers `done` with the full manifest, while an id
 that never existed still `404`s.
 
 **Failures say what went wrong when they safely can.** A caller's mistake
-(unknown `only_part`, a mesh with no triangles, an SSRF-refused URL) returns
-the real reason, e.g. `part 'part_99' not found. Available: part_01 (upper-back),
+(unknown `only_part`, a mesh with no triangles, an FBX, an SSRF-refused URL)
+returns the real reason with `error_kind: "input"`, e.g. `part 'part_99' not found. Available: part_01 (upper-back),
 ...` or `refused to fetch mesh: host resolves to a disallowed address:
 169.254.169.254`. Anything unexpected still returns an opaque,
-correlation-id-tagged message with the traceback logged server-side only. The
+correlation-id-tagged message with `error_kind: "internal"` and the traceback
+logged server-side only. The
 split is by exception type (`SegmentInputError` / `SegmentTimeout` are echoed,
 everything else is not), so a library-internal message can never leak.
 
@@ -269,9 +293,17 @@ is named after a fresh uuid, so replaying the write is safe.
 
 ```bash
 python3 workers/segment/test_segment_core.py
+python3 workers/segment/test_gltf_meshopt.py
+python3 workers/segment/test_segment_input.py
 ```
 
-80 checks over the geometry engine: loading and scene concatenation, connected
+`test_segment_input.py` imports the FastAPI app (with throwaway `API_KEY` and
+`GCS_BUCKET` values it sets itself) and checks that every advertised input
+suffix has a trimesh loader, that FBX is refused by URL with a `422` and by its
+bytes with `error_kind: "input"`, that a DAE still segments end to end, and that
+an unexpected parser failure stays opaque with `error_kind: "internal"`.
+
+`test_segment_core.py` runs 80 checks over the geometry engine: loading and scene concatenation, connected
 and crease segmentation, the `max_parts` cap, the face-partition property, run
 to run determinism, the time budget, GLB node naming, and the manifest shape.
 No GCS, no network, no GPU. The Docker build runs it, so a regression fails the

@@ -2,7 +2,7 @@
  * /api/forge-segment — split a 3D model into named, addressable parts.
  *
  *   POST /api/forge-segment  {
- *     mesh_url: string,
+ *     mesh_url: string,          // GLB/GLTF/OBJ/STL/PLY/OFF/DAE; FBX is a 400
  *     method?: "auto"|"connected"|"crease",
  *     max_parts?: number,        // 2–64
  *     min_part_faces?: number,   // 4–100000
@@ -21,6 +21,7 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
+import { isFbxMeshUrl, SEGMENT_FBX_MESSAGE } from './_lib/mesh-input.js';
 
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.
@@ -56,6 +57,9 @@ async function startJob(req, res) {
 			error: 'invalid_mesh_url',
 			message: err instanceof SsrfError ? `mesh_url rejected: ${err.message}` : 'mesh_url must be a public https URL.',
 		});
+	}
+	if (isFbxMeshUrl(meshUrl)) {
+		return json(res, 400, { error: 'unsupported_mesh_format', message: SEGMENT_FBX_MESSAGE });
 	}
 
 	const segMethod = VALID_METHODS.has(body?.method) ? body.method : 'auto';

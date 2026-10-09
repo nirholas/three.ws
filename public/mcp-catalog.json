@@ -16690,7 +16690,7 @@
 					"mesh_url": {
 						"type": "string",
 						"format": "uri",
-						"description": "Public https URL of the source mesh (GLB/OBJ/FBX/STL/PLY)."
+						"description": "Public https URL of the source mesh (GLB/GLTF/OBJ/STL/PLY/OFF/DAE). FBX is refused: convert it with remesh_model first."
 					},
 					"method": {
 						"type": "string",

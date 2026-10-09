@@ -35,6 +35,8 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `text_to_3d(prompt, aspect_ratio?, tier?, path?, backend?)`               | Text → reference image → reconstructed GLB. Returns a `job_id` + the intermediate preview image.                                                                |
 | `image_to_3d(image_url \| image_urls[], prompt?, tier?, path?, backend?)` | Reconstruct a GLB from 1–4 reference views (multi-view removes back-of-object hallucination). Returns a `job_id`.                                               |
 | `generation_status(job_id)`                                               | Poll any job. When done, returns the GLB URL **and** an inline `<model-viewer>` artifact. Provider-aware: routes geometry/self-host jobs to the right upstream. |
+| `cad_generate(prompt, parent_id?, values?)`                               | Description → **parametric CAD**: a build123d program the OpenCascade kernel has accepted, saved with STEP, STL, GLB (true scale) and an SVG drawing, plus a `/cad/:id` page with dimension sliders. Synchronous, usually 20-90 s. For brackets, enclosures, gears and other functional parts. See [CAD Forge](./cad-forge.md). |
+| `cad_rebuild(id, values)`                                                 | Rebuild a CAD Forge design at new parameter values (e.g. `{"WIDTH": 120}`) on the kernel, no model involved. Exact and cached per value set. |
 
 ### Rig, animate & pose
 
@@ -54,7 +56,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `remesh_model(mesh_url, operation?, target_faces?, output_format?)` | Repair, simplify (quadric decimation), or convert format (incl. FBX with skeleton for Unity/Unreal). Reads GLB/GLTF/OBJ/STL/PLY/OFF/DAE and binary FBX 7.1+. |
 | `stylize_model(mesh_url, style?, resolution?, output_format?)`      | One-pass geometric restyle: `voxel`, `brick` (LEGO-like), `voronoi` lattice, `lowpoly`. Reads GLB/GLTF/OBJ/STL/PLY/OFF/DAE; convert an FBX with `remesh_model` first. |
-| `segment_model(mesh_url, method?, max_parts?, …)`                   | Split into named, separable parts (each a node) + a parts manifest.                                  |
+| `segment_model(mesh_url, method?, max_parts?, …)`                   | Split into named, separable parts (each a node) + a parts manifest. Reads GLB/GLTF/OBJ/STL/PLY/OFF/DAE; convert an FBX with `remesh_model` first. |
 | `retexture_model(mesh_url, prompt, num_views?, texture_size?)`      | Paint a fresh texture from a prompt (SDXL + ControlNet depth, multi-view back-projection).           |
 | `retexture_region(mesh_url, mask_url, prompt?, color?, …)`          | Magic-brush: repaint only a masked UV region, feathering the seam.                                   |
 | `generate_material(description, name?)`                             | IBM Granite → a glTF 2.0 PBR material (base color, metallic, roughness, emissive).                   |
@@ -217,6 +219,8 @@ For tool calls there are two lanes:
 | `auto_rig_model`, `retexture_model`, `retexture_region` | $0.05                       |
 | `stylize_model`, `remesh_model`, `segment_model`         | $0.02                       |
 | `capture_scene`, `anchor_provenance`                    | $0.05                                     |
+| `cad_generate`                                          | $0.05                                     |
+| `cad_rebuild`                                           | $0.01                                     |
 | `remove_background`, `pose_model`, `apply_animation`, `direct_prompt`, `generate_material` | $0.01 |
 | `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `grade_sim_readiness`, `x402_preflight`, the persona tools (including `persona_payment_preview`), `read_resource`, `validate_spatial_response`, `getting_started` | free |
 

@@ -1281,7 +1281,7 @@
 			"descHead": "Segment a GLB/OBJ/STL/PLY mesh into meaningful parts with clean boundari",
 			"descHash": "be034074eec2",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
-			"schemaHash": "0bf100913339"
+			"schemaHash": "50169015a661"
 		},
 		{
 			"name": "stylize_model",

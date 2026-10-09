@@ -21,7 +21,7 @@ import { limits } from '../../_lib/rate-limit.js';
 import { assertSafePublicUrl, fetchSafePublicUrlPinned, MaxBytesExceededError } from '../../_lib/ssrf-guard.js';
 import { createRegenProvider as createReplicateProvider } from '../../_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from '../../_providers/gcp.js';
-import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from '../../_lib/stylize-input.js';
+import { isFbxMeshUrl, SEGMENT_FBX_MESSAGE, STYLIZE_FBX_MESSAGE } from '../../_lib/mesh-input.js';
 import { BYOK_PROVIDER_FACTORIES, isByokGeometryBackend } from '../../_providers/byok-registry.js';
 import { textToImage } from '../text-to-image.js';
 import {
@@ -1430,7 +1430,8 @@ export const toolDefs = [
 				mesh_url: {
 					type: 'string',
 					format: 'uri',
-					description: 'Public https URL of the source mesh (GLB/OBJ/FBX/STL/PLY).',
+					description:
+						'Public https URL of the source mesh (GLB/GLTF/OBJ/STL/PLY/OFF/DAE). FBX is refused: convert it with remesh_model first.',
 				},
 				method: {
 					type: 'string',
@@ -1482,6 +1483,9 @@ export const toolDefs = [
 					],
 					isError: true,
 				};
+			}
+			if (isFbxMeshUrl(args.mesh_url)) {
+				return { content: [{ type: 'text', text: `Error: ${SEGMENT_FBX_MESSAGE}` }], isError: true };
 			}
 			const provider = regenProvider('segment');
 			const job = await provider.submit({

@@ -19,9 +19,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
+# GL/OpenMP/BLAS runtime for trimesh and scipy. No libassimp: nothing in this
+# image loads it (trimesh 4.x has no assimp loader, DAE input goes through
+# pycollada, and FBX input is refused).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 libglib2.0-0 libgomp1 \
-        libassimp-dev libassimp5 \
         libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -35,12 +37,13 @@ COPY segment_core.py /app/segment_core.py
 COPY main.py /app/main.py
 
 # Build gate: the geometry engine is pure CPU and needs no credentials, so its
-# tests run here. A merge pass that regresses to the pre-2026-08-11 cost, or a
-# segmentation that stops being reproducible, fails the image instead of
-# reaching production.
+# tests run here. A merge pass that regresses to the pre-2026-08-11 cost, a
+# segmentation that stops being reproducible, or an input format the worker
+# advertises but cannot read fails the image instead of reaching production.
 COPY test_segment_core.py /app/test_segment_core.py
 COPY test_gltf_meshopt.py /app/test_gltf_meshopt.py
-RUN python3 test_segment_core.py && python3 test_gltf_meshopt.py
+COPY test_segment_input.py /app/test_segment_input.py
+RUN python3 test_segment_core.py && python3 test_gltf_meshopt.py && python3 test_segment_input.py
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
