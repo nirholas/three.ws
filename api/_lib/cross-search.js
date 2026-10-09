@@ -22,6 +22,7 @@ import { sql } from './db.js';
 import { publicUrlOrNull, thumbnailUrl } from './r2.js';
 import { listRemixable } from './forge-store.js';
 import { listDioramas } from './diorama-store.js';
+import { listDesigns } from './cad/store.js';
 import { searchAgentLaunches } from './pump-agent-launches.js';
 import { searchPumpTokens } from './pump-search.js';
 
@@ -177,6 +178,25 @@ export async function searchWorlds({ q, limit = 12 } = {}) {
 		creator: r.creatorUsername
 			? { label: `@${r.creatorUsername}`, url: `/u/${r.creatorUsername}` }
 			: null,
+		remix: null,
+		createdAt: r.createdAt,
+		signals: { viewCount: r.views || 0 },
+	}));
+}
+
+// ── parts (CAD Forge designs) ─────────────────────────────────────────────────
+
+export async function searchParts({ q, limit = 12 } = {}) {
+	const rows = await listDesigns({ scope: 'recent', limit, q });
+	return rows.map((r) => ({
+		type: 'part',
+		id: r.id,
+		title: r.title || 'Untitled part',
+		description: Array.isArray(r.sizeMm) ? `${r.sizeMm.map((v) => Math.round(v * 10) / 10).join(' × ')} mm · ${r.prompt || ''}` : r.prompt || '',
+		image: r.thumb,
+		glbUrl: null,
+		assetUrl: `/cad/${encodeURIComponent(r.id)}`,
+		creator: null,
 		remix: null,
 		createdAt: r.createdAt,
 		signals: { viewCount: r.views || 0 },

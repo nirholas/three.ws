@@ -66,6 +66,10 @@ class SandboxBuildTests(unittest.TestCase):
         self.assertGreater(len(art["stl"]), 84)
         self.assertIn(b"<svg", art["thumb_svg"][:400])
         self.assertIn(b"ISOMETRIC", art["drawing_svg"])
+        self.assertIn(b'fill="rgb(246,247,249)"', art["thumb_svg"])
+        import xml.dom.minidom
+        xml.dom.minidom.parseString(art["thumb_svg"])
+        xml.dom.minidom.parseString(art["drawing_svg"])
         self.assertIn("built 60", out["log"])
         if main.REQUIRE_SECCOMP:
             self.assertTrue(out["seccomp"])

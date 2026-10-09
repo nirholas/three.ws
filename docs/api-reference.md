@@ -2636,6 +2636,15 @@ as its own real, validated GLB**, not just a live preview swap.
 
 ---
 
+## AI API: text to parametric CAD
+
+`POST /api/cad` turns a description into a kernel-checked build123d part (`action: "generate"`, optionally streamed over SSE) or rebuilds a saved design at new dimension values (`action: "rebuild"`). `GET /api/cad?id=` reads a design, its lineage and a cached configuration; `&format=py` downloads the program; `?list=recent|featured` returns the gallery. Every design carries STEP, STL, GLB and SVG drawing URLs plus the kernel's measurements. Full request and response shapes, errors and limits: [CAD Forge](./cad-forge.md#http-api).
+
+```bash
+curl -s https://three.ws/api/cad -H 'content-type: application/json' \
+  -d '{"action":"generate","prompt":"L bracket, 90 degrees, 3 mm thick, four M4 holes"}' | jq '.design.files'
+```
+
 ## AI API — text→image
 
 Text→image for agents over x402 — no API key, no account. The first **5 images/day

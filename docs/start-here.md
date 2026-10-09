@@ -66,6 +66,8 @@ Generations don't need a babysitter, either: start a forge job, close the tab, a
 
 Curious what happens between the prompt and the model? [How the Forge works](./how-forge-works.md) tells the story in plain language; [the Forge pipeline](./forge-pipeline.md) is the full engineering deep dive.
 
+Need a functional part rather than a sculpture, such as a bracket, an enclosure, a gear or a knob? [CAD Forge](./cad-forge.md) turns a sentence into real parametric CAD that the OpenCascade kernel has built, with exact dimensions you can drag, STEP and STL downloads, and a drawing sheet.
+
 Want the model in your hands rather than on a screen? [Materialize](./materialize.md) prints any generation in resin, nylon, colour sandstone or steel and ships it to your door, paid in USDC on Solana, with a certificate of authenticity attested on-chain. An AI agent can order one too, over x402, without a human in the loop.
 
 ---
@@ -255,6 +257,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Guardian console](./guardian.md): the inbox for the other side of social recovery and inheritance of agent wallets
 - [Coin Clash](./clash.md): token-gated community battles between coin factions
 - [Daily Forge](./daily-forge.md): a new deterministic 3D creative challenge every day
+- [CAD Forge](./cad-forge.md): a sentence becomes a kernel-checked parametric part with STEP, STL, GLB, drawings and dimension sliders
 - [x402 Studio](./x402-studio.md): the merchant console for running a paid x402 business on three.ws
 - [Contributing](./contributing.md): local environment setup through a mergeable pull request
 - [ERC-8004 smart contracts](./smart-contracts.md): contract interfaces, deployed addresses, and how to read and write each registry

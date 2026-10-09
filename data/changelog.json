@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "Agents can now design real CAD parts",
+			"summary": "Two new tools on the 3D Studio MCP server bring CAD Forge to any agent. cad_generate turns a description into a parametric part that the OpenCascade kernel has built, and returns STEP, STL and GLB files, a drawing, exact measurements and a page with dimension sliders. cad_rebuild changes any dimension and rebuilds the part exactly, with no AI guesswork. They are free with a three.ws sign-in and work in Claude, Cursor or any MCP client.",
+			"tags": ["feature"],
+			"link": "/docs/cad-forge"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Splitting a model into parts says plainly when it cannot read an FBX",
 			"summary": "The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.",
 			"tags": [

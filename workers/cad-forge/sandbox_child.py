@@ -25,6 +25,7 @@ import io
 import json
 import math
 import os
+import re
 import sys
 import time
 import traceback
@@ -249,6 +250,25 @@ def _project(shape: Shape, origin, up):
     return Compound(children=list(visible)), Compound(children=list(hidden))
 
 
+PAPER = "rgb(246,247,249)"
+VIEWBOX = re.compile(r'viewBox="([-\d.e]+) ([-\d.e]+) ([-\d.e]+) ([-\d.e]+)"')
+
+
+def add_paper(path: str) -> None:
+    """Give an exported SVG an opaque paper background so its dark linework
+    reads on any page, dark themes included."""
+    with open(path, "r", encoding="utf-8") as fh:
+        text = fh.read()
+    match = VIEWBOX.search(text)
+    if not match:
+        return
+    x, y, w, h = match.groups()
+    rect = f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{PAPER}"/>'
+    head_end = text.index(">", match.end()) + 1
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(text[:head_end] + rect + text[head_end:])
+
+
 def write_thumbnail(shape: Shape, path: str) -> None:
     centered = shape.moved(bd.Location(-shape.center()))
     extent = max(centered.bounding_box().size.X, centered.bounding_box().size.Y, centered.bounding_box().size.Z) or 1.0
@@ -261,6 +281,7 @@ def write_thumbnail(shape: Shape, path: str) -> None:
         svg.add_shape(hidden, layer="hidden")
     svg.add_shape(visible, layer="visible")
     svg.write(path)
+    add_paper(path)
 
 
 def write_drawing(shape: Shape, size_mm, path: str) -> None:
@@ -307,6 +328,7 @@ def write_drawing(shape: Shape, size_mm, path: str) -> None:
     text = text.replace("</svg>", f'<g transform="scale(1,-1)"><g transform="scale(1,-1)">{captions}</g></g></svg>', 1)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)
+    add_paper(path)
 
 
 def export_part(shape: Shape, metrics: dict) -> dict:

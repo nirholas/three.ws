@@ -1,0 +1,89 @@
+# CAD Forge worker: builds model-written build123d programs on OpenCascade.
+#
+#   gcloud builds submit --config workers/cad-forge/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s)
+#
+# Builds run as the pinned three-ws-build service account: the project's
+# default compute service account was deleted.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  # Deliberately holds no IAM roles: this service runs code a model wrote, so a
+  # sandbox escape must find nothing to use. Its only grant is read access to
+  # its own bearer secret, which no other worker shares.
+  _RUN_SA: cad-forge-sandbox@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _SERVICE: cad-forge
+  _REPO: cad-forge
+  # Warm by default: a cold start imports OpenCascade twice (server, then the
+  # first parked sandbox child), several seconds a user would watch. CPU-only.
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "4"
+
+steps:
+  # The repository must exist before the push; create it on first deploy.
+  - id: repo
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - >-
+        gcloud artifacts repositories describe ${_REPO} --location=${_REGION} >/dev/null 2>&1 ||
+        gcloud artifacts repositories create ${_REPO} --repository-format=docker --location=${_REGION}
+
+  # The Dockerfile runs the policy tests and the sandbox suite (real builds and
+  # real escape attempts) as a build step, so a sandbox regression fails here.
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: workers/cad-forge
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      # gen2 runs a full Linux kernel, so the per-build seccomp filter and the
+      # uid drop behave exactly as the image's build-time gate tested them.
+      - --execution-environment=gen2
+      - --port=8080
+      - --cpu=4
+      - --memory=8Gi
+      - --concurrency=4
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=120
+      # The warm pool refills sandbox children in background threads between
+      # requests; throttled CPU would leave the next build cold.
+      - --no-cpu-throttling
+      - --allow-unauthenticated
+      - --set-env-vars=MAX_CONCURRENT=2,WARM_POOL=2,BUILD_TIMEOUT_S=60,REQUIRE_SECCOMP=1
+      - --set-secrets=API_KEY=cad-forge-key:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY

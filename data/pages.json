@@ -178,6 +178,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/cad",
+					"title": "CAD Forge",
+					"description": "Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-10-09",
+					"showcase": true
+				},
+				{
 					"path": "/diorama",
 					"title": "Diorama",
 					"description": "Speak a little world into being: describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
@@ -3445,6 +3454,14 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-07-18"
+				},
+				{
+					"path": "/docs/cad-forge",
+					"title": "Docs · CAD Forge (text to parametric CAD)",
+					"description": "How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
 				},
 				{
 					"path": "/docs/diorama",

@@ -15,6 +15,7 @@ const TYPE_LABELS = {
 	agent: 'Agents',
 	model: 'Models',
 	world: 'Worlds',
+	part: 'CAD parts',
 	coin: 'Coins',
 };
 
@@ -23,6 +24,7 @@ const TYPE_CREATE_CTA = {
 	agent: { label: 'Create an agent', href: '/create-agent' },
 	model: { label: 'Forge a 3D model', href: '/forge' },
 	world: { label: 'Build a world', href: '/diorama' },
+	part: { label: 'Design a CAD part', href: '/cad' },
 	coin: { label: 'Launch a coin', href: '/launch' },
 };
 

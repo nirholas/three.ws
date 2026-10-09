@@ -43,17 +43,19 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { databaseConfigured } from './_lib/env.js';
 import { forgeStoreEnabled } from './_lib/forge-store.js';
 import { dioramaStoreEnabled } from './_lib/diorama-store.js';
+import { cadStoreEnabled } from './_lib/cad/store.js';
 import {
 	searchAvatars,
 	searchAgents,
 	searchModels,
 	searchWorlds,
+	searchParts,
 	searchCoins,
 	attachFollowerCounts,
 	rankItems,
 } from './_lib/cross-search.js';
 
-const TYPES = new Set(['avatar', 'agent', 'model', 'world', 'coin']);
+const TYPES = new Set(['avatar', 'agent', 'model', 'world', 'part', 'coin']);
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -90,18 +92,20 @@ export default wrap(async (req, res) => {
 
 	const wantsModels = forgeStoreEnabled() && (type === 'all' || type === 'model');
 	const wantsWorlds = dioramaStoreEnabled() && (type === 'all' || type === 'world');
+	const wantsParts = cadStoreEnabled() && (type === 'all' || type === 'part');
 
-	const [avatarItems, agentItems, modelItems, worldItems, coinItems] = await Promise.all([
+	const [avatarItems, agentItems, modelItems, worldItems, partItems, coinItems] = await Promise.all([
 		type === 'all' || type === 'avatar' ? searchAvatars({ q: q || null, limit: perType }) : [],
 		type === 'all' || type === 'agent' ? searchAgents({ q: q || null, limit: perType }) : [],
 		wantsModels ? searchModels({ q: q || undefined, limit: perType }) : [],
 		wantsWorlds ? searchWorlds({ q: q || undefined, limit: perType }) : [],
+		wantsParts ? searchParts({ q: q || undefined, limit: perType }) : [],
 		// Coins require a query — there's no "browse all pump.fun tokens"
 		// concept here (that's /launches / /trending's job), only search.
 		q && (type === 'all' || type === 'coin') ? searchCoins({ q, limit: perType }) : [],
 	]);
 
-	let items = [...avatarItems, ...agentItems, ...modelItems, ...worldItems, ...coinItems];
+	let items = [...avatarItems, ...agentItems, ...modelItems, ...worldItems, ...partItems, ...coinItems];
 	items = await attachFollowerCounts(items);
 	items = rankItems(items).slice(0, limit);
 
@@ -110,6 +114,7 @@ export default wrap(async (req, res) => {
 		agent: agentItems.length,
 		model: modelItems.length,
 		world: worldItems.length,
+		part: partItems.length,
 		coin: coinItems.length,
 	};
 
