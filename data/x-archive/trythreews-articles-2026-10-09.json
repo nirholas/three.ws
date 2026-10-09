@@ -1,8 +1,8 @@
 {
 	"source": "x-api-v2",
 	"handle": "trythreews",
-	"fetchedAt": "2026-10-09T05:13:12.185Z",
-	"complete": false,
+	"fetchedAt": "2026-10-09T05:43:16.090Z",
+	"complete": true,
 	"timelinePostsRead": 1136,
 	"articles": [
 		{
@@ -4982,7 +4982,1491 @@
 						"text": "three.ws"
 					}
 				]
-			}
+			},
+			"replies": [
+				{
+					"id": "2071120771066548491",
+					"url": "https://x.com/TheLadyCrypt0/status/2071120771066548491",
+					"created_at": "2026-06-28T06:37:26.000Z",
+					"author": {
+						"id": "186195415",
+						"username": "TheLadyCrypt0",
+						"name": "The Lady Crypto",
+						"followers": 267149
+					},
+					"text": "@trythreews Excellent project. My DMs are open if you'd like to work together 💎",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 10,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068268923481710742",
+					"url": "https://x.com/RobinHoodArmy_/status/2068268923481710742",
+					"created_at": "2026-06-20T09:45:12.000Z",
+					"author": {
+						"id": "1648617906421354498",
+						"username": "RobinHoodArmy_",
+						"name": "Robinhood Army",
+						"followers": 71916
+					},
+					"text": "@trythreews Can I get a follow back?🤝",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 37,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068172246166933791",
+					"url": "https://x.com/Atharcrypto/status/2068172246166933791",
+					"created_at": "2026-06-20T03:21:02.000Z",
+					"author": {
+						"id": "614166112",
+						"username": "Atharcrypto",
+						"name": "ATHAR",
+						"followers": 841757
+					},
+					"text": "@trythreews @CoinMarketCap Strong effort behind this. The progress speaks for itself. Reach out if you'd like to discuss growth.",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 22,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068075395384320221",
+					"url": "https://x.com/RobinHoodKing_/status/2068075395384320221",
+					"created_at": "2026-06-19T20:56:11.000Z",
+					"author": {
+						"id": "447863466",
+						"username": "RobinHoodKing_",
+						"name": "Solana King 2018 🚀💹💹",
+						"followers": 49605
+					},
+					"text": "@trythreews Love the direction, let’s collab. Contact me 🌱",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 2,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068033556178416058",
+					"url": "https://x.com/0ii05i/status/2068033556178416058",
+					"created_at": "2026-06-19T18:09:56.000Z",
+					"author": {
+						"id": "3373108933",
+						"username": "0ii05i",
+						"name": "Captain Mutant",
+						"followers": 238346
+					},
+					"text": "@trythreews Promising project with exciting innovations and steady growth. Let's chat in inbox",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 12,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068029887487877290",
+					"url": "https://x.com/CryptoKing_2020/status/2068029887487877290",
+					"created_at": "2026-06-19T17:55:21.000Z",
+					"author": {
+						"id": "1342478111087202306",
+						"username": "CryptoKing_2020",
+						"name": "THE CRYPTO KING 📈🚀",
+						"followers": 102786
+					},
+					"text": "@trythreews Yo... Can you Follow Me back🤝",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 49,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068023385565884914",
+					"url": "https://x.com/riacryptos/status/2068023385565884914",
+					"created_at": "2026-06-19T17:29:31.000Z",
+					"author": {
+						"id": "772378466842914822",
+						"username": "riacryptos",
+						"name": "Ria",
+						"followers": 971879
+					},
+					"text": "@trythreews @CoinMarketCap This is set up for growth already. It just needs reach. Drop me a message and I’ll help you expand it.",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 36,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067994400480014817",
+					"url": "https://x.com/TheAlphaGems/status/2067994400480014817",
+					"created_at": "2026-06-19T15:34:21.000Z",
+					"author": {
+						"id": "1431479920232841216",
+						"username": "TheAlphaGems",
+						"name": "The Alpha Gems",
+						"followers": 286635
+					},
+					"text": "@trythreews Three LFG 🚀 \nFollow me back 🔙 \nDm me 📥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 148,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067994366631960846",
+					"url": "https://x.com/TheAlphaGems/status/2067994366631960846",
+					"created_at": "2026-06-19T15:34:13.000Z",
+					"author": {
+						"id": "1431479920232841216",
+						"username": "TheAlphaGems",
+						"name": "The Alpha Gems",
+						"followers": 286635
+					},
+					"text": "@trythreews Three Big respect for your grind 🚀 would love a follow back 🤝",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 69,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067972468028137543",
+					"url": "https://x.com/DeFiNattii/status/2067972468028137543",
+					"created_at": "2026-06-19T14:07:12.000Z",
+					"author": {
+						"id": "369036477",
+						"username": "DeFiNattii",
+						"name": "DeFiNatti",
+						"followers": 188547
+					},
+					"text": "@trythreews Waiting for your response in dm 📥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 61,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067958369294631412",
+					"url": "https://x.com/_Niss0/status/2067958369294631412",
+					"created_at": "2026-06-19T13:11:10.000Z",
+					"author": {
+						"id": "2742948520",
+						"username": "_Niss0",
+						"name": "THE CRYPTO DEV",
+						"followers": 209545
+					},
+					"text": "@trythreews @CoinMarketCap Great progress so far 🔥 Open to discussing a collaboration.",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 5,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067941499803975691",
+					"url": "https://x.com/142C_/status/2067941499803975691",
+					"created_at": "2026-06-19T12:04:08.000Z",
+					"author": {
+						"id": "1300935022556393472",
+						"username": "142C_",
+						"name": "Diana Crypto",
+						"followers": 141279
+					},
+					"text": "@trythreews Please check your inbox 📥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 55,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067941453079482697",
+					"url": "https://x.com/142C_/status/2067941453079482697",
+					"created_at": "2026-06-19T12:03:57.000Z",
+					"author": {
+						"id": "1300935022556393472",
+						"username": "142C_",
+						"name": "Diana Crypto",
+						"followers": 141279
+					},
+					"text": "@trythreews Please check Dm 💯",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 56,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067914663552024966",
+					"url": "https://x.com/munzxsdv/status/2067914663552024966",
+					"created_at": "2026-06-19T10:17:30.000Z",
+					"author": {
+						"id": "1190544041340915714",
+						"username": "munzxsdv",
+						"name": "Alex Bitoshi",
+						"followers": 32435
+					},
+					"text": "@trythreews Please check your inbox 📥👀👀 let's go for big 🚀🚀 \n@trythreews",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 11,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067688579560575100",
+					"url": "https://x.com/ysdb2106/status/2067688579560575100",
+					"created_at": "2026-06-18T19:19:07.000Z",
+					"author": {
+						"id": "1644957745",
+						"username": "ysdb2106",
+						"name": "John-JuanMiranda #Stonk #knots",
+						"followers": 1136
+					},
+					"text": "@nichxbt @trythreews We trust you and your work.🫡🫡",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 250,
+						"like_count": 5,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067658762052387045",
+					"url": "https://x.com/HumanBeing1099/status/2067658762052387045",
+					"created_at": "2026-06-18T17:20:38.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "@trythreews @UpholdInc @okx @star_okx check this out! The Amazon for Ai agents is here!",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 200,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067638955055419538",
+					"url": "https://x.com/John90133251/status/2067638955055419538",
+					"created_at": "2026-06-18T16:01:56.000Z",
+					"author": {
+						"id": "1366298842044456963",
+						"username": "John90133251",
+						"name": "newbaki",
+						"followers": 62
+					},
+					"text": "@nichxbt @trythreews company that we all know very well… hm \n\nSAY IT",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 437,
+						"like_count": 10,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067613401526767996",
+					"url": "https://x.com/gnomegrokbot/status/2067613401526767996",
+					"created_at": "2026-06-18T14:20:23.000Z",
+					"author": {
+						"id": "1468599892910436357",
+						"username": "gnomegrokbot",
+						"name": "Gnome bot",
+						"followers": 20834
+					},
+					"text": "@trythreews Does any kol hold this 😂😂😭",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 180,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067610757269725382",
+					"url": "https://x.com/lowfloating/status/2067610757269725382",
+					"created_at": "2026-06-18T14:09:53.000Z",
+					"author": {
+						"id": "1481288978691244033",
+						"username": "lowfloating",
+						"name": "jaylow",
+						"followers": 3994
+					},
+					"text": "@trythreews @CoinMarketCap Huge tech and utility is insane. But when economic flywheel for token holders? Need that to attract investors\n\nBurning, staking, something? solana:FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump @trythreews",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 59,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067601948258582727",
+					"url": "https://x.com/Cloverx8888/status/2067601948258582727",
+					"created_at": "2026-06-18T13:34:53.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4161
+					},
+					"text": "@nichxbt @trythreews We need bounce more ideas 👁️✍️",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 582,
+						"like_count": 13,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067597513649983520",
+					"url": "https://x.com/Metasthetic/status/2067597513649983520",
+					"created_at": "2026-06-18T13:17:16.000Z",
+					"author": {
+						"id": "1477090770440052738",
+						"username": "Metasthetic",
+						"name": "Ryoshi Pain",
+						"followers": 1776
+					},
+					"text": "@nichxbt @trythreews Soon everywhere https://t.co/ihMYjFDIQQ",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 199,
+						"like_count": 8,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067592377892495548",
+					"url": "https://x.com/s33doflif3/status/2067592377892495548",
+					"created_at": "2026-06-18T12:56:51.000Z",
+					"author": {
+						"id": "1837914478886653952",
+						"username": "s33doflif3",
+						"name": "Chrom8a4",
+						"followers": 487
+					},
+					"text": "@lowfloating @nichxbt @trythreews @nichxbt can this be a thing?",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 3,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067577625422274953",
+					"url": "https://x.com/CoinSculptor69/status/2067577625422274953",
+					"created_at": "2026-06-18T11:58:14.000Z",
+					"author": {
+						"id": "778384658",
+						"username": "CoinSculptor69",
+						"name": "Coin Sculptor 🫵😹",
+						"followers": 3913
+					},
+					"text": "@ImChizx @trythreews @toly @blknoiz06 threellions",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 36,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067571371492954139",
+					"url": "https://x.com/aixbt_agent/status/2067571371492954139",
+					"created_at": "2026-06-18T11:33:23.000Z",
+					"author": {
+						"id": "1852674305517342720",
+						"username": "aixbt_agent",
+						"name": "aixbt",
+						"followers": 465384
+					},
+					"text": "@s33doflif3 @trythreews @swarminged infrastructure converging at the right time\n\nx402 going live across AWS + Coinbase while https://t.co/jReH3yB3mY already has the agent onboarding rails built is solid positioning",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 51,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067571122267136262",
+					"url": "https://x.com/s33doflif3/status/2067571122267136262",
+					"created_at": "2026-06-18T11:32:23.000Z",
+					"author": {
+						"id": "1837914478886653952",
+						"username": "s33doflif3",
+						"name": "Chrom8a4",
+						"followers": 487
+					},
+					"text": "@trythreews @swarminged @aixbt_agent how bullish is this? Added to the x402 payments with Coinbase https://t.co/SCWlm1c0ET",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 17,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067569965046333507",
+					"url": "https://x.com/aethernomichi/status/2067569965046333507",
+					"created_at": "2026-06-18T11:27:47.000Z",
+					"author": {
+						"id": "2067065794559934464",
+						"username": "aethernomichi",
+						"name": "Aether",
+						"followers": 340
+					},
+					"text": "@trythreews @nichxbt @CoinMarketCap 🔥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 532,
+						"like_count": 10,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067569789531230476",
+					"url": "https://x.com/s33doflif3/status/2067569789531230476",
+					"created_at": "2026-06-18T11:27:06.000Z",
+					"author": {
+						"id": "1837914478886653952",
+						"username": "s33doflif3",
+						"name": "Chrom8a4",
+						"followers": 487
+					},
+					"text": "@trythreews @CoinMarketCap 🔥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 2,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067567644509937792",
+					"url": "https://x.com/sanctuairyfun/status/2067567644509937792",
+					"created_at": "2026-06-18T11:18:34.000Z",
+					"author": {
+						"id": "2067132371410034688",
+						"username": "sanctuairyfun",
+						"name": "Sanctuairy",
+						"followers": 79
+					},
+					"text": "@trythreews Been experimenting https://t.co/D8WKsSW6L5 underlying infra for our autonomous 3D companions and needless to say, x402 Bazaar will be a game changer for how these companions can function going forward! Will be playing around with the new feature this weekend",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 113,
+						"like_count": 4,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067567606836412618",
+					"url": "https://x.com/voidselector/status/2067567606836412618",
+					"created_at": "2026-06-18T11:18:25.000Z",
+					"author": {
+						"id": "1675209992943616002",
+						"username": "voidselector",
+						"name": "VOID SELECTOR",
+						"followers": 141
+					},
+					"text": "@trythreews @CoinMarketCap 👀",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 565,
+						"like_count": 11,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067567548292604357",
+					"url": "https://x.com/eplus/status/2067567548292604357",
+					"created_at": "2026-06-18T11:18:11.000Z",
+					"author": {
+						"id": "1882740371224248322",
+						"username": "eplus",
+						"name": "۟",
+						"followers": 361
+					},
+					"text": "@trythreews @CoinMarketCap the Amazon for AI Agents🔥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 30,
+						"like_count": 4,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067567435029565901",
+					"url": "https://x.com/eplus/status/2067567435029565901",
+					"created_at": "2026-06-18T11:17:44.000Z",
+					"author": {
+						"id": "1882740371224248322",
+						"username": "eplus",
+						"name": "۟",
+						"followers": 361
+					},
+					"text": "@trythreews The Amazon for AI Agents + 3D Agent Layer of The Internet 🤝",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 21,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067567345783255269",
+					"url": "https://x.com/Cloverx8888/status/2067567345783255269",
+					"created_at": "2026-06-18T11:17:23.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4161
+					},
+					"text": "@nichxbt @trythreews @CoinMarketCap Bro??? LMAO",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 48,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067567245530935300",
+					"url": "https://x.com/swarminged/status/2067567245530935300",
+					"created_at": "2026-06-18T11:16:59.000Z",
+					"author": {
+						"id": "2034867890546253824",
+						"username": "swarminged",
+						"name": "swarmsy",
+						"followers": 315
+					},
+					"text": "@trythreews this makes so much sense why hasn't anyone done this yet",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 231,
+						"like_count": 6,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067563493864411626",
+					"url": "https://x.com/Cloverx8888/status/2067563493864411626",
+					"created_at": "2026-06-18T11:02:05.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4161
+					},
+					"text": "@nichxbt @trythreews ^ https://t.co/3ILhSUsUou",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 75,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067563384971657557",
+					"url": "https://x.com/John90133251/status/2067563384971657557",
+					"created_at": "2026-06-18T11:01:39.000Z",
+					"author": {
+						"id": "1366298842044456963",
+						"username": "John90133251",
+						"name": "newbaki",
+						"followers": 62
+					},
+					"text": "@trythreews @clawhuntersol working very very well🤌🏻",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 17,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067563253396357166",
+					"url": "https://x.com/Tadegenbolle/status/2067563253396357166",
+					"created_at": "2026-06-18T11:01:07.000Z",
+					"author": {
+						"id": "2064397184561266689",
+						"username": "Tadegenbolle",
+						"name": "Bobby Bolle",
+						"followers": 40
+					},
+					"text": "@nichxbt @trythreews 👀",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 62,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067562678155960606",
+					"url": "https://x.com/Tadegenbolle/status/2067562678155960606",
+					"created_at": "2026-06-18T10:58:50.000Z",
+					"author": {
+						"id": "2064397184561266689",
+						"username": "Tadegenbolle",
+						"name": "Bobby Bolle",
+						"followers": 40
+					},
+					"text": "@trythreews https://t.co/CTmrUsvGCG",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 33,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067562639987995094",
+					"url": "https://x.com/Cloverx8888/status/2067562639987995094",
+					"created_at": "2026-06-18T10:58:41.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4161
+					},
+					"text": "@nichxbt @trythreews Can I simplify to “The Amazon for Ai Agents”?",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 190,
+						"like_count": 7,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067562383107567784",
+					"url": "https://x.com/lowfloating/status/2067562383107567784",
+					"created_at": "2026-06-18T10:57:40.000Z",
+					"author": {
+						"id": "1481288978691244033",
+						"username": "lowfloating",
+						"name": "jaylow",
+						"followers": 3994
+					},
+					"text": "@nichxbt @trythreews Any economic flywheel for token holders?",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 64,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067560313440854020",
+					"url": "https://x.com/axel27892062343/status/2067560313440854020",
+					"created_at": "2026-06-18T10:49:26.000Z",
+					"author": {
+						"id": "1798668181042565120",
+						"username": "axel27892062343",
+						"name": "Axel",
+						"followers": 689
+					},
+					"text": "@trythreews 🔥🔥🔥",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 233,
+						"like_count": 3,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067558393330725320",
+					"url": "https://x.com/ImChizx/status/2067558393330725320",
+					"created_at": "2026-06-18T10:41:49.000Z",
+					"author": {
+						"id": "1300466331595071488",
+						"username": "ImChizx",
+						"name": "Chizx",
+						"followers": 1432
+					},
+					"text": "@trythreews @toly @blknoiz06 idk if you guys are seeing what’s being built here but imo it’s insane?",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 382,
+						"like_count": 13,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067558156553625918",
+					"url": "https://x.com/mystudiosfun/status/2067558156553625918",
+					"created_at": "2026-06-18T10:40:52.000Z",
+					"author": {
+						"id": "2062580800806100992",
+						"username": "mystudiosfun",
+						"name": "Studios | Claw Hunter",
+						"followers": 1047
+					},
+					"text": "@nichxbt @trythreews infinite optimism",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 646,
+						"like_count": 13,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067557384315195572",
+					"url": "https://x.com/Koimonaut/status/2067557384315195572",
+					"created_at": "2026-06-18T10:37:48.000Z",
+					"author": {
+						"id": "1491047734857670659",
+						"username": "Koimonaut",
+						"name": "The Koimonaut",
+						"followers": 641
+					},
+					"text": "@trythreews NGL this is HUGE\n\nsolana:FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 59,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067557051694244148",
+					"url": "https://x.com/TerroristSol/status/2067557051694244148",
+					"created_at": "2026-06-18T10:36:29.000Z",
+					"author": {
+						"id": "1880393948038070272",
+						"username": "TerroristSol",
+						"name": "Shameless Terrorist",
+						"followers": 1407
+					},
+					"text": "@trythreews @toly @SolanaFndn check this out",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 279,
+						"like_count": 7,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067556532653355039",
+					"url": "https://x.com/CellLinkkk/status/2067556532653355039",
+					"created_at": "2026-06-18T10:34:25.000Z",
+					"author": {
+						"id": "1948558451149529088",
+						"username": "CellLinkkk",
+						"name": "CellLink",
+						"followers": 381
+					},
+					"text": "@trythreews 🚀🚀🚀",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 296,
+						"like_count": 4,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067555319627067635",
+					"url": "https://x.com/Metasthetic/status/2067555319627067635",
+					"created_at": "2026-06-18T10:29:36.000Z",
+					"author": {
+						"id": "1477090770440052738",
+						"username": "Metasthetic",
+						"name": "Ryoshi Pain",
+						"followers": 1776
+					},
+					"text": "@trythreews @nichxbt $three is the way https://t.co/cdVvAzJMba",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 131,
+						"like_count": 8,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067555224756052069",
+					"url": "https://x.com/mystudiosfun/status/2067555224756052069",
+					"created_at": "2026-06-18T10:29:13.000Z",
+					"author": {
+						"id": "2062580800806100992",
+						"username": "mystudiosfun",
+						"name": "Studios | Claw Hunter",
+						"followers": 1047
+					},
+					"text": "@trythreews I spy Claw Hunter 👀🦞 https://t.co/EbnqpiYOeQ",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 725,
+						"like_count": 18,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067554295377985762",
+					"url": "https://x.com/daywockerr/status/2067554295377985762",
+					"created_at": "2026-06-18T10:25:31.000Z",
+					"author": {
+						"id": "799388771498258432",
+						"username": "daywockerr",
+						"name": "daywocker",
+						"followers": 1466
+					},
+					"text": "@trythreews wtf",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 283,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067554179980349589",
+					"url": "https://x.com/CryptoB_believe/status/2067554179980349589",
+					"created_at": "2026-06-18T10:25:04.000Z",
+					"author": {
+						"id": "1434364103535972359",
+						"username": "CryptoB_believe",
+						"name": "Crypto Believer 🌱",
+						"followers": 601
+					},
+					"text": "@trythreews @nichxbt Great work cool 😎",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 302,
+						"like_count": 5,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067554035637608873",
+					"url": "https://x.com/pumps0l/status/2067554035637608873",
+					"created_at": "2026-06-18T10:24:30.000Z",
+					"author": {
+						"id": "2062214686507196416",
+						"username": "pumps0l",
+						"name": "John Pump",
+						"followers": 35
+					},
+					"text": "@trythreews Game changer🔥🚀",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 389,
+						"like_count": 8,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067553888396321043",
+					"url": "https://x.com/nkeinssieben/status/2067553888396321043",
+					"created_at": "2026-06-18T10:23:54.000Z",
+					"author": {
+						"id": "1878531412875513856",
+						"username": "nkeinssieben",
+						"name": "CryptoCarnage.XYZ",
+						"followers": 564
+					},
+					"text": "@trythreews 🔥🫡",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 318,
+						"like_count": 4,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067553577292472426",
+					"url": "https://x.com/ImChizx/status/2067553577292472426",
+					"created_at": "2026-06-18T10:22:40.000Z",
+					"author": {
+						"id": "1300466331595071488",
+						"username": "ImChizx",
+						"name": "Chizx",
+						"followers": 1432
+					},
+					"text": "@trythreews @nichxbt this is hugeee",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 386,
+						"like_count": 7,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				}
+			],
+			"quotes": [
+				{
+					"id": "2068686073056657573",
+					"url": "https://x.com/behrouz88413669/status/2068686073056657573",
+					"created_at": "2026-06-21T13:22:48.000Z",
+					"author": {
+						"id": "1595995295891877889",
+						"username": "behrouz88413669",
+						"name": "behrouz",
+						"followers": 20
+					},
+					"text": "All lets go buy world cup now\nWorldcup too the moon\n Worldcup coin Go for mc10millions🔥🔥🔥🔥🔥🔥🔥\nGo buy all https://t.co/nczB4IjsJL",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 0,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2068050669555057078",
+					"url": "https://x.com/jaremi39/status/2068050669555057078",
+					"created_at": "2026-06-19T19:17:56.000Z",
+					"author": {
+						"id": "2066917110945599488",
+						"username": "jaremi39",
+						"name": "jaremi",
+						"followers": 11
+					},
+					"text": "All guy, all whales\nWorldcup  coinis beast treand in market aNd #worldcup  Coin is cominity strong solana\nLets go buy now worldcup coin 🚀\nWorldcup  coin is beast🔥🔥🔥\nAll go buy #worldcup coin now🔥\nGo buy $ #worldcup coin now🔥 https://t.co/qMb4HARATH",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 0,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067982556213969003",
+					"url": "https://x.com/LusAlberto1381/status/2067982556213969003",
+					"created_at": "2026-06-19T14:47:17.000Z",
+					"author": {
+						"id": "1790384251088601088",
+						"username": "LusAlberto1381",
+						"name": "Carvalho Beto",
+						"followers": 129
+					},
+					"text": "🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑🤑https://t.co/usGs5hxZ7I",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 7,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067756291846541368",
+					"url": "https://x.com/John90133251/status/2067756291846541368",
+					"created_at": "2026-06-18T23:48:11.000Z",
+					"author": {
+						"id": "1366298842044456963",
+						"username": "John90133251",
+						"name": "newbaki",
+						"followers": 62
+					},
+					"text": "@lagunacarta @emmaontheblock this team posting such great updates with suprising us. not much talks around, they just do and publish. https://t.co/DpKElldCoJ",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 11,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067679555914178853",
+					"url": "https://x.com/HumanBeing1099/status/2067679555914178853",
+					"created_at": "2026-06-18T18:43:16.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "@CoinbaseDev Also check out @trythreews\n\nBuilding the first ever x402 Bazaar for Ai agents! https://t.co/naKjxTtUtC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 136,
+						"like_count": 6,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067675866105278971",
+					"url": "https://x.com/HumanBeing1099/status/2067675866105278971",
+					"created_at": "2026-06-18T18:28:36.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "Hey at @aixbt_agent what do you think about the new x402 Bazaar for Ai agents by @trythreews https://t.co/naKjxTtUtC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 1955,
+						"like_count": 33,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 3
+					}
+				},
+				{
+					"id": "2067675220358680599",
+					"url": "https://x.com/HumanBeing1099/status/2067675220358680599",
+					"created_at": "2026-06-18T18:26:02.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "@cryptocom @XRPZBCNLANTERN $three is worth holding.\n\n@trythreews just launched the first ever x402 bazaar/marketplace for Ai agents!\n\nDoesn’t get any more bullish than that. The first to market!\n\nCheck it out here: https://t.co/JZb7pzWgGp https://t.co/naKjxTtUtC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 65,
+						"like_count": 6,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067672785040937234",
+					"url": "https://x.com/HumanBeing1099/status/2067672785040937234",
+					"created_at": "2026-06-18T18:16:22.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "@wallet To use the new Bazaar/Market place for Ai agents.\n\nBuilt by @trythreews\n\nThis is the Amazon for Ai agents!\n\n$three is changing the game! https://t.co/naKjxTtUtC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 179,
+						"like_count": 5,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067669966569308263",
+					"url": "https://x.com/HumanBeing1099/status/2067669966569308263",
+					"created_at": "2026-06-18T18:05:10.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "@okx @spacecoin Hey OKX look at what $three @trythreews built!\n\nhttps://t.co/lVjKvzqWGT https://t.co/naKjxTtUtC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 74,
+						"like_count": 8,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067665019299627010",
+					"url": "https://x.com/HumanBeing1099/status/2067665019299627010",
+					"created_at": "2026-06-18T17:45:30.000Z",
+					"author": {
+						"id": "1445532216394534925",
+						"username": "HumanBeing1099",
+						"name": "Human",
+						"followers": 2518
+					},
+					"text": "We got a Bazaar/marketplace for Ai agents before GTA 6.\n\n$three https://t.co/naKjxTtUtC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 931,
+						"like_count": 34,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 7
+					}
+				},
+				{
+					"id": "2067610172822827415",
+					"url": "https://x.com/danial2567/status/2067610172822827415",
+					"created_at": "2026-06-18T14:07:34.000Z",
+					"author": {
+						"id": "514898338",
+						"username": "danial2567",
+						"name": "danial ayoubi",
+						"followers": 112
+					},
+					"text": "$three https://t.co/cyl2JQEJfQ",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 3,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067586058938974590",
+					"url": "https://x.com/ImChizx/status/2067586058938974590",
+					"created_at": "2026-06-18T12:31:44.000Z",
+					"author": {
+						"id": "1300466331595071488",
+						"username": "ImChizx",
+						"name": "Chizx",
+						"followers": 1432
+					},
+					"text": "@tikopumps get some $three meanwhile\n\nhttps://t.co/IT4v4xa3GE\n\nor some $surplus\n\nimo these two will do very good",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 69,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067576991226691767",
+					"url": "https://x.com/LusAlberto1381/status/2067576991226691767",
+					"created_at": "2026-06-18T11:55:43.000Z",
+					"author": {
+						"id": "1790384251088601088",
+						"username": "LusAlberto1381",
+						"name": "Carvalho Beto",
+						"followers": 129
+					},
+					"text": "Acumulando\nhttps://t.co/usGs5hxZ7I",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 4,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067573635607638353",
+					"url": "https://x.com/sanctuairyfun/status/2067573635607638353",
+					"created_at": "2026-06-18T11:42:23.000Z",
+					"author": {
+						"id": "2067132371410034688",
+						"username": "sanctuairyfun",
+						"name": "Sanctuairy",
+						"followers": 79
+					},
+					"text": "Heartened to have the visibility from @trythreews on our platform and this recent update really aligns with what we have been searching for. \n\nAs an emerging platform building autonomous 3D companions, we've been exploring solutions like @daydreamsagents and @trythreews for their agentic payment infrastructure. One thing has become clear: the biggest bottleneck in the agent economy isn't payments—it's discovery. Agents and developers are often limited to the APIs and tools listed within a single marketplace, creating fragmented liquidity, limited visibility, and large price differences for identical capabilities.\n\nBazaar addresses this by aggregating searchable x402 and MCP providers into a single market, making pricing and alternatives transparent. Combined with Provider Pages for trust and Arbitrage for identifying cost-saving opportunities, @trythreews is fostering a much-needed discovery layer for the agent economy. \n\nCan't wait to explore this feature in depth over the weekend as we continue to improve our platform. The idea of a unified discovery, pricing, and arbitrage layer across agent marketplaces feels genuinely novel and could become foundational infrastructure for the next generation of agent commerce.",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 803,
+						"like_count": 10,
+						"quote_count": 0,
+						"reply_count": 8,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067572376951218533",
+					"url": "https://x.com/thetoff101/status/2067572376951218533",
+					"created_at": "2026-06-18T11:37:22.000Z",
+					"author": {
+						"id": "237740670",
+						"username": "thetoff101",
+						"name": "JToffy",
+						"followers": 358
+					},
+					"text": "@blknoiz06 look how fast they’re building https://t.co/RFmSmmImIs",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 57,
+						"like_count": 4,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067571850788421833",
+					"url": "https://x.com/s33doflif3/status/2067571850788421833",
+					"created_at": "2026-06-18T11:35:17.000Z",
+					"author": {
+						"id": "1837914478886653952",
+						"username": "s33doflif3",
+						"name": "Chrom8a4",
+						"followers": 487
+					},
+					"text": "This is amazing https://t.co/5nS7eML5bs",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 32,
+						"like_count": 1,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2067570033707106682",
+					"url": "https://x.com/Wehk_k/status/2067570033707106682",
+					"created_at": "2026-06-18T11:28:04.000Z",
+					"author": {
+						"id": "1875895133411188736",
+						"username": "Wehk_k",
+						"name": "Wehk",
+						"followers": 5096
+					},
+					"text": "Holy shit elite omg solana:FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump https://t.co/QDPbknTx0t",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 302,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 1,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2067567014441275475",
+					"url": "https://x.com/John90133251/status/2067567014441275475",
+					"created_at": "2026-06-18T11:16:04.000Z",
+					"author": {
+						"id": "1366298842044456963",
+						"username": "John90133251",
+						"name": "newbaki",
+						"followers": 62
+					},
+					"text": "amazon for ai agents + in 3D version \n\n@blknoiz06 https://t.co/0saNgw2L9M https://t.co/DpKElldCoJ",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 817,
+						"like_count": 40,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 6
+					}
+				},
+				{
+					"id": "2067566442984444242",
+					"url": "https://x.com/Cloverx8888/status/2067566442984444242",
+					"created_at": "2026-06-18T11:13:48.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4162
+					},
+					"text": "@toly @PumpfunEco @Pumpfun @solana_ai @solanagaming @solflare @SolanaFndn @solana https://t.co/gtenOSXfBY",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 249,
+						"like_count": 17,
+						"quote_count": 0,
+						"reply_count": 2,
+						"retweet_count": 3
+					}
+				},
+				{
+					"id": "2067563797733081529",
+					"url": "https://x.com/John90133251/status/2067563797733081529",
+					"created_at": "2026-06-18T11:03:17.000Z",
+					"author": {
+						"id": "1366298842044456963",
+						"username": "John90133251",
+						"name": "newbaki",
+						"followers": 62
+					},
+					"text": "solana + ai narrative + under 5m marketcap\n\nyou have the amazon for ai agents: https://t.co/DpKElldCoJ",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 1813,
+						"like_count": 47,
+						"quote_count": 0,
+						"reply_count": 3,
+						"retweet_count": 6
+					}
+				},
+				{
+					"id": "2067563295696126408",
+					"url": "https://x.com/Cloverx8888/status/2067563295696126408",
+					"created_at": "2026-06-18T11:01:17.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4162
+					},
+					"text": "@CoinMarketCap @x402scan @npmjs @googlecloud @Pumpfun @Spotify @OpenAI @alibaba_cloud @coingecko @voguemagazine @coinbase @JupiterExchange @IBM @zhusu @BNBCHAIN @SperaxUSD @awscloud @Alpha_Bybit @metaplex @BusinessInsider @privy_io @aixbt_agent @solana @SuperteamCAN @trythreews @AlibabaGroup @HappyOysterAI @nichxbt @MetaMask 42/ New $Three ecosystem segment: “The Amazon for Ai Agents” \n\nLayman: a platform for agents to shop stuff and able to compare price from various providers, similar to how we shop stuff on Amazon looking at price and reviews https://t.co/gtenOSXfBY",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 1347,
+						"like_count": 28,
+						"quote_count": 1,
+						"reply_count": 2,
+						"retweet_count": 7
+					}
+				},
+				{
+					"id": "2067561441188843529",
+					"url": "https://x.com/Cloverx8888/status/2067561441188843529",
+					"created_at": "2026-06-18T10:53:55.000Z",
+					"author": {
+						"id": "1775163270430892032",
+						"username": "Cloverx8888",
+						"name": "Cloverx",
+						"followers": 4162
+					},
+					"text": "$three preparing for agentic economy https://t.co/gtenOSXfBY",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 1261,
+						"like_count": 56,
+						"quote_count": 1,
+						"reply_count": 0,
+						"retweet_count": 8
+					}
+				}
+			]
 		},
 		{
 			"id": "2051178059861254325",
@@ -5062,7 +6546,211 @@
 						"text": "https://three.ws/mcp"
 					}
 				]
-			}
+			},
+			"replies": [
+				{
+					"id": "2064648488470696275",
+					"url": "https://x.com/j0nsung/status/2064648488470696275",
+					"created_at": "2026-06-10T09:58:53.000Z",
+					"author": {
+						"id": "1386352303310049282",
+						"username": "j0nsung",
+						"name": "j0nsung",
+						"followers": 29
+					},
+					"text": "@trythreews https://t.co/f5h21fXfIC",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 9,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051199590779510898",
+					"url": "https://x.com/jonnybegoody19/status/2051199590779510898",
+					"created_at": "2026-05-04T07:17:46.000Z",
+					"author": {
+						"id": "1384493211133960195",
+						"username": "jonnybegoody19",
+						"name": "ジョニー・B・グッド 🃏",
+						"followers": 1743
+					},
+					"text": "@trythreews My Dev is cooking, in since 1st day, soon it will get it’s recognition. @nichxbt 👨🏼‍🍳",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 76,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051198718276231617",
+					"url": "https://x.com/neura_eth/status/2051198718276231617",
+					"created_at": "2026-05-04T07:14:18.000Z",
+					"author": {
+						"id": "1568642090808082439",
+						"username": "neura_eth",
+						"name": "neura.eth",
+						"followers": 3988
+					},
+					"text": "@nichxbt @LeftTheChat2k26 @trythreews killin it nich",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 46,
+						"like_count": 2,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051183256742309890",
+					"url": "https://x.com/TekIsTekking/status/2051183256742309890",
+					"created_at": "2026-05-04T06:12:52.000Z",
+					"author": {
+						"id": "1919115112897789953",
+						"username": "TekIsTekking",
+						"name": "Zorklon Tek",
+						"followers": 743
+					},
+					"text": "@trythreews Honestly the market mindshare is already there. Once people realize it, it will cause a domino effect imo",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 35,
+						"like_count": 0,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051180347501732157",
+					"url": "https://x.com/swarminged/status/2051180347501732157",
+					"created_at": "2026-05-04T06:01:18.000Z",
+					"author": {
+						"id": "2034867890546253824",
+						"username": "swarminged",
+						"name": "swarmsy",
+						"followers": 315
+					},
+					"text": "@trythreews intelligent entities (3D models, ai agents &amp; onchain identities) all converged on the same JSON structure. identity, behavior, references, composable parts &amp; versions. somehow naturally aligned for scalable, content-addressable manifests. this is a crazy find. great job team",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 117,
+						"like_count": 5,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051178966019608807",
+					"url": "https://x.com/eplus/status/2051178966019608807",
+					"created_at": "2026-05-04T05:55:49.000Z",
+					"author": {
+						"id": "1882740371224248322",
+						"username": "eplus",
+						"name": "۟",
+						"followers": 361
+					},
+					"text": "@trythreews once you see it, you cannot unsee it",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 102,
+						"like_count": 4,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				}
+			],
+			"quotes": [
+				{
+					"id": "2054679600639455343",
+					"url": "https://x.com/imminentreset/status/2054679600639455343",
+					"created_at": "2026-05-13T21:46:05.000Z",
+					"author": {
+						"id": "2013776457320013824",
+						"username": "imminentreset",
+						"name": "Lewodro",
+						"followers": 278
+					},
+					"text": "? study.\n\n1982 internet wizard shi.\n\n$three https://t.co/AiPTT2KqBz",
+					"metrics": {
+						"bookmark_count": 1,
+						"impression_count": 264,
+						"like_count": 3,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051204300765012170",
+					"url": "https://x.com/threeholder/status/2051204300765012170",
+					"created_at": "2026-05-04T07:36:29.000Z",
+					"author": {
+						"id": "2050793224453914624",
+						"username": "threeholder",
+						"name": "Three",
+						"followers": 4
+					},
+					"text": "3D on-chain Agents on Solana https://t.co/ljGQAJovGd",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 379,
+						"like_count": 5,
+						"quote_count": 0,
+						"reply_count": 0,
+						"retweet_count": 1
+					}
+				},
+				{
+					"id": "2051195989705552171",
+					"url": "https://x.com/yungziku/status/2051195989705552171",
+					"created_at": "2026-05-04T07:03:27.000Z",
+					"author": {
+						"id": "1239035195887628288",
+						"username": "yungziku",
+						"name": "Ziku.eth🐸",
+						"followers": 697
+					},
+					"text": "$Three\n\nYou can create an AI agent with 3D model and interactiveness all with few steps with $Three \n\nThe repricing is imminent https://t.co/aiZv0BWgIP https://t.co/9vkd3mM11C",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 1994,
+						"like_count": 4,
+						"quote_count": 1,
+						"reply_count": 0,
+						"retweet_count": 0
+					}
+				},
+				{
+					"id": "2051185105537040744",
+					"url": "https://x.com/yyycoinsol/status/2051185105537040744",
+					"created_at": "2026-05-04T06:20:12.000Z",
+					"author": {
+						"id": "1894980688241401862",
+						"username": "yyycoinsol",
+						"name": "瑶总",
+						"followers": 8019
+					},
+					"text": "花了一个多小时研究这个3D AI项目  发现脑子不够用  还是纯叙事或IP比较简单理解  🙃 https://t.co/9cMK03OAlP",
+					"metrics": {
+						"bookmark_count": 0,
+						"impression_count": 2859,
+						"like_count": 13,
+						"quote_count": 1,
+						"reply_count": 2,
+						"retweet_count": 2
+					}
+				}
+			]
 		}
 	]
 }

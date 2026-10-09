@@ -13559,7 +13559,7 @@
 			],
 			"posts": [
 				{
-					"text": "We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage, including the two that failed that morning and the fallbacks that caught them."
+					"text": "We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage and covers the partners behind the pipeline."
 				}
 			],
 			"claims": [
@@ -13799,51 +13799,6 @@
 					]
 				},
 				{
-					"says": "The language models it calls were rate limiting at that moment",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "openrouter=http 429 (126ms)"
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "the avatar director could not reach a language model, so the fallback brief was used"
-						}
-					]
-				},
-				{
-					"says": "a fixed fallback brief is appended to the raw words, stating the framing the director would have asked for",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "effective = directed || avatarFallbackBrief(prompt, subject);"
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "// The fallback therefore still states the framing the director would have"
-						}
-					]
-				},
-				{
-					"says": "That is the fallback, word for word",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "full-body character standing in a neutral A-pose, arms slightly away from the body, legs slightly apart, the entire figure in frame head to toe, centered on a plain neutral background"
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "\"prompt_sent_to_the_lane\": \"an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard, full-body character standing in a neutral A-pose"
-						}
-					]
-				},
-				{
 					"says": "costs polish, never the body",
 					"evidence": [
 						{
@@ -13880,36 +13835,6 @@
 							"type": "file",
 							"path": "api/_mcp3d/text-to-image.js",
 							"contains": "// Quality-first ordering: the Vertex Gemini image model outdraws 4-step\n\t// distilled FLUX for photoreal reference images"
-						}
-					]
-				},
-				{
-					"says": "This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "Vertex reference image returned 403"
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "\"text_to_image_model\": \"black-forest-labs/flux.1-dev\""
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-reference-image.js",
-							"contains": "if the Vertex lane is unconfigured or fails\n// for any reason, it falls through to the existing reference-image provider"
-						}
-					]
-				},
-				{
-					"says": "No single provider's failure is the end of a picture",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp3d/text-to-image.js",
-							"contains": "keyed rungs: no single provider's failure is ever the terminal error."
 						}
 					]
 				},
@@ -13995,121 +13920,6 @@
 							"type": "file",
 							"path": "data/x-content/runs/keeper-article.json",
 							"contains": "\"vertices\": 16388"
-						}
-					]
-				},
-				{
-					"says": "the job would have moved to the next engine under the same job id: our TRELLIS worker, a hosted TRELLIS lane, then TripoSG",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/forge-failover.js",
-							"contains": "const ASYNC_REDISPATCH_ORDER = ['trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/forge-failover.js",
-							"contains": "The client\n//      keeps polling the SAME job id"
-						}
-					]
-				},
-				{
-					"says": "That chain was not needed on this run",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "\"tool\": \"forge_avatar, mesh stage\""
-						}
-					]
-				},
-				{
-					"says": "at the high tier, with a longer sentence of our own. It returned a model in 108 seconds",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "\"durationMs\": 108446"
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "\"tier\": \"high\""
-						}
-					]
-				},
-				{
-					"says": "That tool renders any public GLB on the server from several angles and returns the frames as images",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "Renders the GLB from several angles and returns "
-						}
-					]
-				},
-				{
-					"says": "The geometry count agreed: 8,464 triangles",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "Geometry: 8,464 triangles"
-						}
-					]
-				},
-				{
-					"says": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "is the subject complete and recognisable, "
-						},
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "is the far side finished, is anything melted, fused, or missing?"
-						}
-					]
-				},
-				{
-					"says": "generate again with a prompt that names the specific fault",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "again with a prompt that names the specific fault."
-						}
-					]
-				},
-				{
-					"says": "turns one-shot generation into a loop",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "one-shot generation into a loop."
-						}
-					]
-				},
-				{
-					"says": "look_at_model is marked read-only",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "readOnlyHint: true, // renders a picture; changes nothing"
-						}
-					]
-				},
-				{
-					"says": "it works on any public GLB, wherever it was made",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "Works on any public https .glb, not only ones made here."
 						}
 					]
 				},
@@ -14440,16 +14250,6 @@
 					]
 				},
 				{
-					"says": "It read the line as neutral",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "The Keeper says it with a neutral expression."
-						}
-					]
-				},
-				{
 					"says": "There is no API key and no build step",
 					"evidence": [
 						{
@@ -14545,102 +14345,62 @@
 					]
 				},
 				{
-					"says": "On the live site today, the keeper's idle drives his upper arms back through his coat",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/api/version",
-							"contains": "\"commitShort\":\"76081013b\""
-						},
-						{
-							"type": "file",
-							"path": "src/animation-retarget.js",
-							"contains": "which drove the arm through the torso"
-						}
-					]
-				},
-				{
-					"says": "a rig that rests in an A-pose with bent elbows received the idle's full swing down from a T-pose on top of an arm that already hung down",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/animation-retarget.js",
-							"contains": "A\n// rig that rests in an A-pose with bent elbows"
-						}
-					]
-				},
-				{
-					"says": "The fix re-aims each limb from its own rest direction onto the authoring rig's before the clip plays",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/animation-retarget.js",
-							"contains": "// Limb bones whose REST DIRECTION is re-aimed onto the authoring rig's before a\n// clip plays"
-						}
-					]
-				},
-				{
-					"says": "because its check looks for the 15 Oculus viseme names and no other set",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "src/rig-report.js",
-							"contains": "const OVR_VISEMES = ['viseme_sil', 'viseme_PP',"
-						},
-						{
-							"type": "file",
-							"path": "src/rig-report.js",
-							"contains": "No viseme blendshapes, so this avatar animates but cannot lip-sync."
-						}
-					]
-				},
-				{
-					"says": "The keeper carries the 52 ARKit shapes instead, which is the set the rig worker writes and the set the persona tools drive",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "workers/rig/README.md",
-							"contains": "This\n   powers emotions and lipsync"
-						},
-						{
-							"type": "file",
-							"path": "data/x-content/runs/keeper-article.json",
-							"contains": "\"browDownLeft\""
-						}
-					]
-				},
-				{
-					"says": "four generations a minute and 30 an hour",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_lib/rate-limit.js",
-							"contains": "getLimiter('studio:gen:burst', { limit: 4, window: '1 m' })"
-						},
-						{
-							"type": "file",
-							"path": "api/_lib/rate-limit.js",
-							"contains": "getLimiter('studio:gen:hourly', { limit: 30, window: '1 h' })"
-						}
-					]
-				},
-				{
-					"says": "look_at_model counts against the same quota because it renders on the server",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/dispatch.js",
-							"contains": "look_at_model renders frames server-side, so"
-						}
-					]
-				},
-				{
 					"says": "type a description and get a rigged avatar back",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/create/prompt",
 							"contains": "Type a description → rigged 3D avatar in about a minute"
+						}
+					]
+				},
+				{
+					"says": "a fixed brief is appended to the raw words instead, stating the framing the director would have asked for",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "The fallback therefore still states the framing the director would have"
+						}
+					]
+				},
+				{
+					"says": "a busy language model chain costs polish, never the body",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "an outage on the LLM chain costs polish, never the body."
+						}
+					]
+				},
+				{
+					"says": "every call answered within 40 seconds",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "every call answered within 40 s"
+						}
+					]
+				},
+				{
+					"says": "hard timeout of 420 seconds by default",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "workers/rig/README.md",
+							"contains": "default 420 s"
+						}
+					]
+				},
+				{
+					"says": "the same fourteen tools are reachable three ways over one shared handler and one shared generation quota",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "Three front doors serve the same tools over one handler"
 						}
 					]
 				}

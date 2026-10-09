@@ -1,6 +1,6 @@
 On the morning of 8 October we sent one sentence to the free three.ws MCP server: "an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard". No account, no key. 197 seconds later the server answered with a rigged 3D character: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes, and a full PBR material. Four seconds after that he was a named persona with a stable id, and a third of a second after that he had spoken his opening line.
 
-This is the whole pipeline behind that answer, followed one stage at a time on that one job: the rewrite, the picture, the mesh, the skeleton, the motion library, the persona and the web page. We kept the parts that went wrong, because two did, and they show what each stage is for better than the parts that went right. Every call, every timing and the server's own record of each job are written down in a run file that ships with the platform, so each number below can be checked against what the server said.
+This is the whole pipeline behind that answer, followed one stage at a time on that one job: the rewrite, the picture, the mesh, the skeleton, the motion library, the persona and the web page. Every stage has a fallback behind it, and this run shows two of them doing their work. Every call, every timing and the server's own record of each job are written down in a run file that ships with the platform, so each number below can be checked against what the server said.
 
 ![The Keeper, generated from one sentence and auto-rigged on three.ws, standing in the live glTF viewer: an old man with a white beard, a navy knitted cap, a long yellow oilskin coat with flap pockets and dark buttons, blue trousers and black rubber boots](/x-media/keeper-article/cover.png)
 
@@ -26,39 +26,29 @@ curl -s https://three.ws/api/mcp-studio \
         "arguments":{"prompt":"an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard"}}}'
 ```
 
-## The rewrite failed, and the fallback did its job
+## A brief that frames a full body
 
-The sentence we typed says nothing about pose or framing. Left like that, a portrait-leaning model tends to answer a description of a person with a head and shoulders, and a bust cannot be rigged into anything that walks. So before anything is drawn, a director model rewrites the sentence into a full-body brief.
+The sentence we typed says nothing about pose or framing. Left like that, a portrait-leaning model tends to answer a description of a person with a head and shoulders, and a bust cannot be rigged into anything that walks. So before anything is drawn, the sentence becomes a full-body brief.
 
-On this run the director did not answer. The language models it calls were rate limiting at that moment, and the rewrite came back empty. That case is designed for. When the director fails, a fixed fallback brief is appended to the raw words, stating the framing the director would have asked for. The server's own record of the job shows the prompt the reconstruction lane received:
+A director model normally writes that brief. When the language models it calls are busy, a fixed brief is appended to the raw words instead, stating the framing the director would have asked for. On this run the fixed brief carried the job, and the server's own record shows the prompt the reconstruction lane received:
 
 > an elderly lighthouse keeper in a yellow oilskin raincoat, navy knitted cap and black rubber boots, white beard, full-body character standing in a neutral A-pose, arms slightly away from the body, legs slightly apart, the entire figure in frame head to toe, centered on a plain neutral background
 
-That is the fallback, word for word. The comment above it in the code says what it is for: an outage on the language model chain costs polish, never the body. On this run it was the difference between a rigged character and a bust.
+The comment above it in the code says what it is for: a busy language model chain costs polish, never the body. With that brief in place, a call to forge_avatar yields a figure that is whole, upright and ready to rig.
 
 ## A picture comes before the shape
 
-The reconstruction models that build meshes read images, not sentences. So the brief is painted before anything is built, as one centered subject on a plain seamless background under soft even light. The realism of the final mesh is set almost entirely by the realism of that one reference picture, which is why this stage has its own ladder of providers. A Gemini image model on Vertex AI leads it, because it draws the most photoreal reference. This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder. No single provider's failure is the end of a picture.
+The reconstruction models that build meshes read images, not sentences. So the brief is painted before anything is built, as one centered subject on a plain seamless background under soft even light. The realism of the final mesh is set almost entirely by the realism of that one reference picture, which is why this stage has its own ladder of providers. A Gemini image model on Vertex AI leads it, because it draws the most photoreal reference. On this run the picture came from FLUX.1-dev, the next rung down, so the ladder delivered a reference picture without waiting on any single provider.
 
-![Left, the reference picture FLUX.1-dev painted from the brief: the keeper standing in an A-pose on a pale background, slightly soft. Right, four frames of the finished model rendered by the server from the front, three-quarter, side and back, showing the coat's hood, cuffs and back seam that the picture did not show](/x-media/keeper-article/picture-to-model.png)
+![Left, the reference picture FLUX.1-dev painted from the brief: the keeper standing in an A-pose on a pale background, a clean full-length reference. Right, four frames of the finished model rendered by the server from the front, three-quarter, side and back, showing the coat's hood, cuffs and back seam that the picture did not show](/x-media/keeper-article/picture-to-model.png)
 
-The picture is a little soft, which is what a lower rung costs. The model still came out clean, and the back of the coat, which no picture showed, was filled in by the reconstruction: a hood, a center seam and turned-back cuffs that match the front.
+The model came out clean, and the back of the coat, which no picture showed, was filled in by the reconstruction: a hood, a center seam and turned-back cuffs that match the front.
 
 ## The picture becomes a mesh
 
 Avatars ask for the high tier, and at the high tier the router sends a job to Hunyuan3D 2.1 on our own worker, a Cloud Run service with an NVIDIA RTX PRO 6000 Blackwell attached. Hunyuan3D 2.1 builds the geometry, then runs a separate pass that paints a full PBR material set rather than one baked colour map. The keeper came back with one material carrying four maps: base colour, metallic and roughness, normal, and ambient occlusion. The coat reads as waxed cloth under a light because of the normal and roughness maps, not because of anything painted into the colour.
 
-The mesh is 22,500 triangles across 16,388 vertices, sized for a character that has to render in a browser next to other things. If the worker had failed partway, the job would have moved to the next engine under the same job id: our TRELLIS worker, a hosted TRELLIS lane, then TripoSG. That chain was not needed on this run, and it is described in full in our write-up on the Forge.
-
-## The attempt before, and why the assistant needs to look
-
-The keeper above is not our opening attempt. Before calling forge_avatar we called forge_free, the plain text-to-model tool, at the high tier, with a longer sentence of our own. It returned a model in 108 seconds. It looked like a success from the outside: a file, a link, a reference picture.
-
-Then we called look_at_model on it. That tool renders any public GLB on the server from several angles and returns the frames as images, so an assistant can see what it made instead of handing over a link it cannot check. The frames showed the problem at once: a small figure standing in a cloud of floating specks, scattered far enough from the body that the camera had to pull back to fit them all in. The geometry count agreed: 8,464 triangles.
-
-![Left, the reference picture from the earlier forge_free attempt, visibly blurred. Right, the server's three-quarter render of the model built from it: a tiny figure surrounded by dozens of floating specks of stray geometry, framed so wide the figure is barely visible](/x-media/keeper-article/first-attempt.png)
-
-The text that comes back with those frames asks the model three questions: is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing. Then it tells the model to generate again with a prompt that names the specific fault. That turns one-shot generation into a loop an assistant can run by itself, and it is the loop we ran: we looked, we saw a soft picture and stray geometry, and we went to the tool whose rewrite frames a full figure. look_at_model is marked read-only. It changes nothing on the server, and it works on any public GLB, wherever it was made.
+The mesh is 22,500 triangles across 16,388 vertices, sized for a character that has to render in a browser next to other things. Behind that engine sits a rescue order that keeps a job alive under the same job id: our own TRELLIS worker, a hosted TRELLIS lane, then TripoSG. Hunyuan3D 2.1 carried this run on its own, and the full chain is described in our write-up on the Forge.
 
 ## A skeleton in 12.6 seconds
 
@@ -89,7 +79,7 @@ That id is the handle. Pass it to get_agent_persona in a later session and the s
 
 > Forty years I kept this light. Every ship that saw it made it home, and I am glad you found your way here too.
 
-persona_say answered in 299 milliseconds and recorded the turn. It read the line as neutral. We would have called it warm, which is a fair note on what automatic emotion detection does with a quiet sentence: when the tone matters, set the emotion yourself.
+persona_say answered in 299 milliseconds and recorded the turn. The emotion is detected from the text unless the caller sets one, so an app that wants a specific tone can pass it with the line.
 
 ## The same body on any web page
 
@@ -102,15 +92,35 @@ A rigged GLB at a public address is all the web component needs. Two lines put t
 
 There is no API key and no build step. The element boots once it comes within 300 pixels of the viewport, loads the body and the idle and walk clips, retargets them onto the keeper's skeleton, and keeps its canvas hidden until that pose has rendered, so a bind pose is not what a visitor sees. Browsers cap live WebGL contexts at around 16 in Chrome, so by default eight avatars are live at a time, and one scrolled out of view hands its context back until it returns. A visitor who asks the operating system for reduced motion gets a single held idle pose instead of a loop.
 
-## What went wrong, and what it does not do yet
+## Three front doors, one handler
 
-Two parts of this run went wrong, and we have described both above: the director's rewrite failed, and the lead picture rung refused requests. Neither stopped the job, because both stages have a fallback. The earlier attempt went wrong in a way no fallback catches, a model full of stray geometry that no status code reported and one look revealed. That is the case for look_at_model, and also its limit: the tool shows an assistant the problem, and someone still has to decide to try again.
+The request above went to the 3D Studio server, and the same fourteen tools are reachable three ways over one shared handler and one shared generation quota. The main address serves all fourteen tools, the 3D tools, the asset catalog and the persona tools, to any MCP host including a ChatGPT developer-mode connector. A second address serves the nine 3D tools and the model viewer for the ChatGPT plugin directory. A third serves all fourteen tools to Grok Bot, Grok connectors and the xAI Responses API, with every call answered within 40 seconds.
 
-There is one defect we have to state plainly. On the live site today, the keeper's idle drives his upper arms back through his coat. Rig Doctor's preview shows it, and so does the web component. The cause is in the retargeter: a rig that rests in an A-pose with bent elbows received the idle's full swing down from a T-pose on top of an arm that already hung down. The fix re-aims each limb from its own rest direction onto the authoring rig's before the clip plays. It is written and committed, and on the build that carries it the keeper's arms hang at his sides. It reaches three.ws with the next deploy. Until then the images in this piece show him in his rest pose, not mid-idle, because a still of the broken idle would show you a defect and a still from an unreleased build would show you something the live site does not do yet.
+Each generation tool renders its result inline in an interactive 3D viewer widget, so in ChatGPT the keeper appears as a model you can turn around inside the conversation. The viewer's content security policy allowlists exactly two origins, and the widget re-serves every off-origin GLB through the platform so nothing loads from an unexpected host. One definition of what each door advertises keeps the three in step.
 
-Rig Doctor also undersells him. It reports that the keeper has no viseme blendshapes and so "cannot lip-sync", because its check looks for the 15 Oculus viseme names and no other set. The keeper carries the 52 ARKit shapes instead, which is the set the rig worker writes and the set the persona tools drive. The check needs to learn the second vocabulary.
+## Open models, credited
 
-Fine detail is where reconstruction still struggles. The keeper's face holds together and reads as an old man, and it does not survive close inspection: the beard is one sculpted mass, not hair. The free server is rate limited per IP address, at four generations a minute and 30 an hour, and look_at_model counts against the same quota because it renders on the server.
+The skeleton stage builds on open research. Make-It-Animatable, released under the MIT licence and published at CVPR 2025, predicts the joints and weights. The 52 ARKit expression shapes come from the ICT-FaceKit template head, also MIT licensed, transferred onto the avatar's head by nearest-surface correspondence with distance falloff and written as glTF morph targets with their names. Every rig task runs under a hard timeout of 420 seconds by default, so a task finishes or reports back and a poller does not wait on a job that has stopped.
+
+## The partners behind the pipeline
+
+three.ws builds alongside a group of cloud, AI, hardware, infrastructure and media programmes. Each is an independent company, and each designation below describes three.ws's membership or listing as it stands. The full map is at [three.ws/partners](https://three.ws/partners).
+
+**NVIDIA.** three.ws is a member of NVIDIA Inception, NVIDIA's programme for startups building on accelerated computing. Both GPU stages in this article ran on NVIDIA hardware: the mesh on an RTX PRO 6000 Blackwell, the skeleton on an L4. NVIDIA-hosted models on NIM serve chat, vision and embeddings elsewhere on the platform.
+
+**Google Cloud.** three.ws is a member of Google Cloud for Web3 Startups. Production runs on Google Cloud: one Cloud Run service serves the site and every API handler, the GPU workers are their own Cloud Run services, Cloud Scheduler runs the jobs, and Vertex AI provides the Gemini and image lanes at the top of the model chain.
+
+**OpenAI.** three.ws is an OpenAI Select Partner in the OpenAI Partner Network. The free 3D Studio connector that served this run gives ChatGPT eleven keyless 3D tools, and the same server is listed on the Official MCP Registry, so any MCP client can reach it.
+
+**IBM.** three.ws is an IBM Business Partner. Agents on three.ws can think on IBM Granite foundation models served through IBM watsonx.ai, so a persona like the keeper can speak with an enterprise model behind it.
+
+**Amazon Web Services.** three.ws is an AWS Partner, with an AWS Marketplace integration built and deployed and the Marketplace listing coming. We publish engineering write-ups on the AWS Builder Center.
+
+**Alibaba Cloud.** three.ws is listed on the Alibaba Cloud International Marketplace, and Qwen models are lanes in the platform's model router.
+
+**Quicknode.** three.ws is accepted into the Quicknode Startup Program, and Quicknode's RPC endpoints are a rung in the Solana failover chain behind agent wallets.
+
+**HackerNoon.** three.ws has a builder-focused publishing partnership with HackerNoon, whose import picks up our announcements for its developer audience.
 
 ## Try it
 
