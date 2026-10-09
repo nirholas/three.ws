@@ -3529,6 +3529,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/workbench",
+					"title": "Docs · Workbench",
+					"description": "How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/docs/scene-studio",
 					"title": "Docs · Scene Studio",
 					"description": "The in-browser three.js editor: import GLBs, arrange with transform gizmos, edit materials and lights, script, and export complete glTF scenes.",
