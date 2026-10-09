@@ -714,6 +714,16 @@
 			previewModel: '/animations/robotexpressive.glb',
 			ctaPrimary: { label: 'Browse the guards', href: '/guards' },
 		},
+		{
+			slug: 'grok-bot-recipes',
+			tier: 'middle',
+			title: 'Grok Bot recipes',
+			blurb: 'Six jobs to hand Grok Bot through the three.ws connector, each with the exact sentence to give it, the tools it calls in order, and the real output captured from production.',
+			builds: 'Six working Grok Bot jobs and a script that reruns each one',
+			time: '20 min',
+			previewModel: '/animations/robotexpressive.glb',
+			ctaPrimary: { label: 'Read the Grok Bot guide', href: '/docs/grok-bot' },
+		},
 	];
 
 	const TIER_META = {
