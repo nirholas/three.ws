@@ -200,3 +200,10 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Evidence: `prompts/x-grok/_generated/image3d-dry-run.json`: 3 own-image reply rows from real public product posts (photo fetch 200, `/m/` link 200). Media: 2 of 3 posters answer 200 image/png; row 2 answers 413 because production `/api/render/glb` caps input at 10 MB and that GLB is 11.5 MB.
 - Remaining line: three rows with loading media. The 25 MB cap is in `11914b4c8`; after the next deploy rerun `node scripts/x-mention-image3d-dry-run.mjs --posts <ids>` to record row 2 as 200, then delete the order file. Owner: whoever runs the deploy (gated).
 - Not wired: `x-mention-poll.js` still routes `image3d` to help via `UNBUILT_HANDLERS`, and no cron calls `finishPendingImage3d`. `x-mention-image3d.js` imports the in-flight `x-mention-make.js`.
+
+## 2026-10-09: order 053 image-to-3D wired into the x-mentions poll (dry run)
+
+- `handleMention` now routes the `image3d` intent to `handleImage3d()` (removed from `UNBUILT_HANDLERS`; `make` and `launch` still answer help). `runFollowUps()` also runs `finishPendingImage3d()` behind the same kill switch and budget gate, error-isolated, delivering through the same `createDeliver()`; report key `image3dFollowUp`.
+- Git check: `x-mention-make.js`, `x-mention-image3d.js` and their tests were already committed (`git status` clean at start); nothing to commit for them.
+- Tests: `tests/x-mention-poll.test.js` extended (image3d routed to its handler against real PGlite with only CDN/vision/store/3D-lane edges replaced; late image3d settle live and dry; failure isolation; kill switch and budget skip all three; tick runs all three). poll + image3d + make + avatar suites: 71 passing. Nothing was posted to X.
+- Remaining: unchanged from the 053 entry (rerun the image3d dry-run script after the next deploy; live posting needs the order 928 token resolver).

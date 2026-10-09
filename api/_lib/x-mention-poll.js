@@ -33,6 +33,7 @@ import { answerOnBehalf } from './x-mention-on-behalf.js';
 import * as xBudget from './x-budget.js';
 import { handleAvatar, finishPendingAvatars } from './x-mention-avatar.js';
 import { finishPendingMakes } from './x-mention-make.js';
+import { handleImage3d, finishPendingImage3d } from './x-mention-image3d.js';
 import { createDeliver } from './x-mention-deliver.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
@@ -44,7 +45,7 @@ const DAY = 86400;
 const REFUSED_REPLY = 'I cannot move funds or handle keys, and no one can ask me to. I make 3D models: try "make a red vintage scooter". https://three.ws/grok';
 
 /** Intents whose dedicated handler is a later order; they answer with help until it lands. */
-const UNBUILT_HANDLERS = Object.freeze(new Set(['make', 'image3d', 'launch']));
+const UNBUILT_HANDLERS = Object.freeze(new Set(['make', 'launch']));
 
 function intEnv(env, name, fallback) {
 	const n = Number.parseInt(env[name] ?? '', 10);
@@ -107,7 +108,7 @@ async function composeAnswer({ mention, parsed, account, compose }) {
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar, image3d = handleImage3d }) {
 	const parsed = parseMentionIntent(mention, account);
 	const dryRun = true;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
@@ -159,6 +160,11 @@ export async function handleMention({ mention, account, limits, env, store = men
 			const result = await avatar({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, author: mention.author, dryRun });
 			if (result.decision === 'reply') await budget.recordPosts(1);
 			return { tweetId: mention.id, intent: 'avatar', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
+		}
+		if (parsed.intent === 'image3d') {
+			const result = await image3d({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, args: parsed.args, dryRun });
+			if (result.decision === 'reply') await budget.recordPosts(1);
+			return { tweetId: mention.id, intent: 'image3d', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
 		}
 		const answer = await composeAnswer({ mention, parsed, account, compose });
 		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: true });
@@ -227,7 +233,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar, image3d: deps.image3d }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;
@@ -264,9 +270,9 @@ export async function listAccounts({ env = process.env, agentAccounts = async ()
 }
 
 /**
- * Settle the make and avatar jobs that outlived their mention. Gated like any
+ * Settle the make, avatar and image-to-3D jobs that outlived their mention. Gated like any
  * other reply (kill switch, then the post budget), each finisher isolated so
- * one failing never stops the other or the tick. Delivery goes through the X
+ * one failing never stops the others or the tick. Delivery goes through the X
  * adapter: dry rows are recorded, live rows are posted.
  */
 export async function runFollowUps({ env = process.env, deps = {} } = {}) {
@@ -284,6 +290,7 @@ export async function runFollowUps({ env = process.env, deps = {} } = {}) {
 	return {
 		makeFollowUp: await run(deps.finishPendingMakes || finishPendingMakes),
 		avatarFollowUp: await run(deps.finishPendingAvatars || finishPendingAvatars),
+		image3dFollowUp: await run(deps.finishPendingImage3d || finishPendingImage3d),
 	};
 }
 

@@ -24,6 +24,7 @@ const store = await import('../api/_lib/x-mention-store.js');
 const { XTierUnavailable, XRateLimited } = await import('../api/_lib/x-mentions.js');
 const make = await import('../api/_lib/x-mention-make.js');
 const avatar = await import('../api/_lib/x-mention-avatar.js');
+const image3d = await import('../api/_lib/x-mention-image3d.js');
 const { createDeliver } = await import('../api/_lib/x-mention-deliver.js');
 const { createXAdapter } = await import('../api/_lib/gateway/adapters/x.js');
 
@@ -41,7 +42,21 @@ const ACCT = { kind: 'company', ref: 'trythreews' };
 
 const request = async () => ({ status: 200, headers: {}, body: page });
 const compose = vi.fn(async () => ({ text: 'Hello from three.ws', source: 'model', reason: null }));
-const deps = (extra = {}) => ({ request, resolvedAccount: COMPANY, compose, ...extra });
+const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(2048, 7)]);
+const I3D_BASE = 'https://three.test';
+const I3D_CREATION = '7a2e4b63-1d3f-4c8f-8b69-2a1b0b5c8d21';
+const I3D_DONE = { status: 'done', glb_url: 'https://cdn.three.test/forge/sneaker.glb', creation_id: I3D_CREATION };
+/** The real image3d handler with only its network edges (CDN, vision, image store, 3D lane) replaced. */
+const image3dEdges = (extra = {}) => ({
+	base: I3D_BASE,
+	probeMedia: async () => true,
+	fetchImpl: async () => new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } }),
+	describe: async () => ({ json: { safe: true, usable: true, subject: 'red sneaker' } }),
+	persist: async () => 'https://cdn.three.test/forge/refs/x.png',
+	startForge: async () => I3D_DONE,
+	...extra,
+});
+const deps = (extra = {}) => ({ request, resolvedAccount: COMPANY, compose, image3d: (e) => image3d.handleImage3d(e, image3dEdges()), ...extra });
 
 beforeEach(async () => {
 	dbState.pg = new PGlite();
@@ -80,11 +95,30 @@ describe('a poll with a cursor', () => {
 		expect(await store.getCursor(ACCT)).toBe(out.cursor);
 	});
 
-	it('routes handlers from later orders to help with handler_not_built', async () => {
+	it('routes the make and launch intents (later orders) to help with handler_not_built', async () => {
 		await poll.pollAccount({ descriptor: DESCRIPTOR, env: {}, deps: deps() });
 		const rows = await store.recentDecisions(ACCT, { limit: 50 });
-		const unbuilt = rows.filter((r) => ['make', 'image3d', 'avatar', 'launch'].includes(r.intent) && r.decision === 'reply');
+		const unbuilt = rows.filter((r) => ['make', 'launch'].includes(r.intent) && r.decision === 'reply');
 		for (const r of unbuilt) expect(r.reason).toBe('handler_not_built');
+	});
+
+	it('answers an image3d mention with the image3d handler, not help', async () => {
+		const id = '1900000000000000100';
+		const mention = {
+			id, userId: '42', username: 'alice', text: '@trythreews 3D this', createdAt: new Date().toISOString(), conversationId: id, account: ACCT,
+			mentions: [{ username: 'trythreews', id: COMPANY.userId }], urls: [],
+			media: [{ key: '3_1', type: 'photo', url: 'https://pbs.twimg.com/media/GxQ1aBcWsAAbCdE.jpg', width: 1200, height: 900 }],
+			inReplyToUserId: null, repliedTo: null, quoted: null, isRetweet: false, fromSelf: false,
+		};
+		const budget = { readGate: async () => ({ allow: true }), budgetGate: async () => ({ allow: true }), recordPosts: vi.fn(async () => {}) };
+		const out = await poll.handleMention({
+			mention, account: COMPANY, limits: poll.replyLimits({}), env: {}, budget, paused: async () => false,
+			guard: async () => ({ allow: true }), image3d: (e) => image3d.handleImage3d(e, image3dEdges()),
+		});
+		expect(out).toMatchObject({ intent: 'image3d', decision: 'reply', reason: 'image3d_done', dry_run: true });
+		expect(out.text).toContain(`/m/${I3D_CREATION}`);
+		expect(budget.recordPosts).toHaveBeenCalledWith(1);
+		expect(await store.getMentionEvent(id)).toMatchObject({ intent: 'image3d', decision: 'reply', reason: 'image3d_done', dry_run: true, reply_tweet_id: null });
 	});
 
 	it('handles a mention once when the same page is read twice', async () => {
@@ -151,7 +185,7 @@ describe('the run lock', () => {
 describe('late-reply follow-ups', () => {
 	const BASE = 'https://three.test';
 	const DONE = { status: 'done', glb_url: 'https://cdn.three.test/m.glb', creation_id: '11111111-1111-4111-8111-111111111111', preview_image_url: 'https://cdn.three.test/m.png' };
-	const ids = { make: '1900000000000000001', avatar: '1900000000000000002' };
+	const ids = { make: '1900000000000000001', avatar: '1900000000000000002', image3d: '1900000000000000003' };
 	const open = { paused: async () => false, budget: { readGate: async () => ({ allow: true }), recordPosts: vi.fn(async () => {}) } };
 
 	async function pending(intent, id, dryRun) {
@@ -165,6 +199,7 @@ describe('late-reply follow-ups', () => {
 	const finishers = (post) => ({
 		finishPendingMakes: (o, d) => make.finishPendingMakes(o, { ...d, base: BASE, pollOnce: async () => DONE }),
 		finishPendingAvatars: (o, d) => avatar.finishPendingAvatars(o, { ...d, base: BASE, pollOnce: async () => DONE, startRig: async () => { throw Object.assign(new Error('no rig'), { code: 'rig_down' }); } }),
+		finishPendingImage3d: (o, d) => image3d.finishPendingImage3d(o, { ...d, base: BASE, pollOnce: async () => DONE, probeMedia: async () => true }),
 		getAccessToken: post ? () => async () => 'tok' : undefined,
 		adapterFactory: post ? (o) => createXAdapter({ ...o, post, fetchMedia: async () => ({ buffer: Buffer.from('x'), mimeType: 'image/png' }), uploadMedia: async () => 'media-1', env: { X_MENTION_BOT_LIVE: '1' } }) : undefined,
 	});
@@ -204,6 +239,32 @@ describe('late-reply follow-ups', () => {
 		expect(await store.getMentionEvent(ids.make)).toMatchObject({ dry_run: true, reply_text: 'done', reply_tweet_id: null });
 	});
 
+	it('a pending image3d row is settled late and delivered through the same adapter', async () => {
+		await pending('image3d', ids.image3d, false);
+		const post = vi.fn(async () => ({ id: '2900000000000000009' }));
+		const out = await poll.runFollowUps({ env: { X_MENTION_BOT_LIVE: '1' }, deps: { ...open, ...finishers(post) } });
+		expect(out.image3dFollowUp).toMatchObject({ checked: 1, replied: 1 });
+		expect(post).toHaveBeenCalledTimes(1);
+		expect(await store.getMentionEvent(ids.image3d)).toMatchObject({ intent: 'image3d', decision: 'reply', reason: 'image3d_done_late', dry_run: false, reply_tweet_id: '2900000000000000009' });
+		expect(open.budget.recordPosts).toHaveBeenCalledTimes(1);
+	});
+
+	it('a dry image3d row is recorded and never posted', async () => {
+		await pending('image3d', ids.image3d, true);
+		const post = vi.fn();
+		const out = await poll.runFollowUps({ env: { X_MENTION_BOT_LIVE: '1' }, deps: { ...open, ...finishers(post) } });
+		expect(out.image3dFollowUp).toMatchObject({ replied: 1 });
+		expect(post).not.toHaveBeenCalled();
+		expect(await store.getMentionEvent(ids.image3d)).toMatchObject({ decision: 'reply', dry_run: true, reply_tweet_id: null });
+	});
+
+	it('a failing image3d finisher does not stop makes or avatars', async () => {
+		const ok = vi.fn(async () => ({ checked: 0 }));
+		const out = await poll.runFollowUps({ env: {}, deps: { ...open, finishPendingMakes: ok, finishPendingAvatars: ok, finishPendingImage3d: async () => { throw new Error('i3d boom'); } } });
+		expect(out.image3dFollowUp).toEqual({ error: 'i3d boom' });
+		expect(ok).toHaveBeenCalledTimes(2);
+	});
+
 	it('one failing finisher does not stop the other', async () => {
 		const avatarOnly = vi.fn(async () => ({ checked: 0 }));
 		const out = await poll.runFollowUps({ env: {}, deps: { ...open, finishPendingMakes: async () => { throw new Error('boom'); }, finishPendingAvatars: avatarOnly } });
@@ -213,19 +274,21 @@ describe('late-reply follow-ups', () => {
 
 	it('the kill switch and the budget gate skip both finishers', async () => {
 		const spy = vi.fn(async () => ({}));
-		const killed = await poll.runFollowUps({ env: {}, deps: { ...open, paused: async () => true, finishPendingMakes: spy, finishPendingAvatars: spy } });
+		const killed = await poll.runFollowUps({ env: {}, deps: { ...open, paused: async () => true, finishPendingMakes: spy, finishPendingAvatars: spy, finishPendingImage3d: spy } });
 		expect(killed).toEqual({ followUps: { skipped: 'kill_switch' } });
-		const broke = await poll.runFollowUps({ env: {}, deps: { ...open, budget: { readGate: async () => ({ allow: false, reason: 'daily_cap' }) }, finishPendingMakes: spy, finishPendingAvatars: spy } });
+		const broke = await poll.runFollowUps({ env: {}, deps: { ...open, budget: { readGate: async () => ({ allow: false, reason: 'daily_cap' }) }, finishPendingMakes: spy, finishPendingAvatars: spy, finishPendingImage3d: spy } });
 		expect(broke).toMatchObject({ followUps: { skipped: 'budget', reason: 'daily_cap' } });
 		expect(spy).not.toHaveBeenCalled();
 	});
 
-	it('a tick runs both finishers', async () => {
+	it('a tick runs all three finishers', async () => {
 		const m = vi.fn(async () => ({ checked: 0 }));
 		const a = vi.fn(async () => ({ checked: 0 }));
-		const report = await poll.runMentionTick({ env: {}, deps: { acquireLock: async () => 'h', releaseLock: async () => {}, listAccounts: async () => [DESCRIPTOR], request, resolvedAccount: COMPANY, ...open, finishPendingMakes: m, finishPendingAvatars: a } });
+		const i = vi.fn(async () => ({ checked: 0 }));
+		const report = await poll.runMentionTick({ env: {}, deps: { acquireLock: async () => 'h', releaseLock: async () => {}, listAccounts: async () => [DESCRIPTOR], request, resolvedAccount: COMPANY, ...open, finishPendingMakes: m, finishPendingAvatars: a, finishPendingImage3d: i } });
 		expect(m).toHaveBeenCalledTimes(1);
 		expect(a).toHaveBeenCalledTimes(1);
-		expect(report).toMatchObject({ makeFollowUp: { checked: 0 }, avatarFollowUp: { checked: 0 } });
+		expect(i).toHaveBeenCalledTimes(1);
+		expect(report).toMatchObject({ makeFollowUp: { checked: 0 }, avatarFollowUp: { checked: 0 }, image3dFollowUp: { checked: 0 } });
 	});
 });

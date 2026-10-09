@@ -74,12 +74,14 @@ npx vitest run tests/x-mention-guard.test.js tests/x-budget.test.js
 ```
 The kill switch tests assert zero calls to the reply brain and the X adapter.
 
-## Late replies: make and avatar follow-ups
+## Late replies: make, avatar and image-to-3D follow-ups
 
-A `make` or `avatar` mention whose 3D job outlives the bounded wait is recorded as `pending`. Every `x-mentions` tick then runs `runFollowUps()` (`api/_lib/x-mention-poll.js`), which calls `finishPendingMakes()` and `finishPendingAvatars()`:
+A `make`, `avatar` or `image3d` mention whose 3D job outlives the bounded wait is recorded as `pending`. Every `x-mentions` tick then runs `runFollowUps()` (`api/_lib/x-mention-poll.js`), which calls `finishPendingMakes()`, `finishPendingAvatars()` and `finishPendingImage3d()` (`api/_lib/x-mention-image3d.js`, see [x-mention-image3d.md](x-mention-image3d.md)):
 
-- **Gated like any reply.** The kill switch skips both, and a closed read/post budget gate skips both. The report carries `followUps: { skipped: 'kill_switch' | 'budget' }`.
-- **Isolated.** Each finisher runs in its own catch; one throwing reports `{ error }` under `makeFollowUp` or `avatarFollowUp` and the other still runs.
+- **Gated like any reply.** The kill switch skips all three, and a closed read/post budget gate skips all three. The report carries `followUps: { skipped: 'kill_switch' | 'budget' }`.
+- **Isolated.** Each finisher runs in its own catch; one throwing reports `{ error }` under `makeFollowUp`, `avatarFollowUp` or `image3dFollowUp` and the others still run.
 - **Delivered through the X adapter.** `api/_lib/x-mention-deliver.js` builds the `deliver` the finishers use on `createXAdapter`. A dry row (`dry_run = true`, the default) is only recorded on the `x_mention_events` row and nothing is posted. A live row is posted by the adapter only when `X_MENTION_BOT_LIVE=1` and a token resolver is supplied (`getAccessToken(row)`); each real post counts against the post budget. With no resolver the adapter stays in dry run, so rows are no longer held as `paused` for lack of a deliver.
+
+The `image3d` intent is routed to `handleImage3d()` in `handleMention` (dry run, same budget and per-author limits as any reply); only `make` and `launch` still answer with help (`handler_not_built`).
 
 Going live stays the separate owner step.
