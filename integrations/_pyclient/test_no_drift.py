@@ -2,8 +2,8 @@
 
 ``three_ws_client.py`` is the one source of truth for the Forge contract. Each
 plugin ships a byte-identical copy so it stays self-contained and distributable
-(a Blender add-on zip / a ComfyUI custom_nodes clone). This test fails if any
-copy drifts from the canonical file — re-copy it and the contract stays in lockstep.
+(a Blender add-on zip, a ComfyUI custom_nodes clone, a Modly extension folder). This test fails if any
+copy drifts from the canonical file. Re-copy it and the contract stays in lockstep.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ _CANONICAL = os.path.join(_HERE, "three_ws_client.py")
 _VENDORED = [
     os.path.join(_ROOT, "blender", "three_ws", "three_ws_client.py"),
     os.path.join(_ROOT, "comfyui", "three_ws_nodes", "three_ws_client.py"),
+    os.path.join(_ROOT, "modly", "three-ws", "three_ws_client.py"),
+    os.path.join(_ROOT, "modly", "three-ws-publish", "three_ws_client.py"),
 ]
 
 
@@ -31,7 +33,7 @@ class NoDriftTest(unittest.TestCase):
             self.assertEqual(
                 canonical,
                 copy,
-                f"{path} drifted from the canonical three_ws_client.py — "
+                f"{path} drifted from the canonical three_ws_client.py. "
                 f"re-copy it: cp {_CANONICAL} {path}",
             )
 
