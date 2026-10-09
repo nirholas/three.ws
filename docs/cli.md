@@ -1,6 +1,6 @@
 # three-ws CLI
 
-`three-ws` connects any MCP client to three.ws in one command. It signs you in, writes the hosted three.ws MCP servers into every client it finds on your machine (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI, Hermes), and then proves each one works with a live `tools/list` call.
+`three-ws` connects any MCP client to three.ws in one command. It signs you in, writes the hosted three.ws MCP servers into every client it finds on your machine (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, IBM Bob, Codex, Gemini CLI, Hermes), and then proves each one works with a live `tools/list` call.
 
 If you only use one client and it supports remote connectors, the [connect page](/connect) is faster: one click adds three.ws to Claude, Cursor or VS Code, with no terminal. Use the CLI when you want several clients configured at once, per-project config, an API key instead of a browser sign-in, or control over which tools each client may call.
 
@@ -37,7 +37,7 @@ Without `--financial`, tools that move funds are not granted, whatever the clien
 # Only Cursor and VS Code, only the main server and the free 3D studio, no prompts
 npx three-ws setup --clients cursor,vscode --servers three-ws-main,three-ws-studio --yes
 
-# Project-scoped config: writes .mcp.json, .cursor/mcp.json, .vscode/mcp.json, .gemini/settings.json here
+# Project-scoped config: writes .mcp.json, .cursor/mcp.json, .vscode/mcp.json, .bob/mcp.json, .gemini/settings.json here
 npx three-ws setup --project
 
 # Print the config instead of writing any file
@@ -46,7 +46,7 @@ npx three-ws setup --clients print
 
 | Flag | Values |
 |---|---|
-| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `codex`, `gemini`, `hermes`, `grok-bot`, `print` |
+| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `bob`, `codex`, `gemini`, `hermes`, `grok-bot`, `print` |
 | `--connector-key` | With `grok-bot`: mint a spend-free API key for Grok Bot's Bot secret |
 | `--no-copy` | With `grok-bot`: do not copy the server URL to the clipboard |
 | `--servers` | Server names from `npx three-ws mcp list --available` |
@@ -75,9 +75,12 @@ It prints the fields Grok Bot's custom MCP connector asks for (name `three-ws`, 
 | Cursor | `~/.cursor/mcp.json` | `.cursor/mcp.json` |
 | Windsurf | `~/.codeium/windsurf/mcp_config.json` | |
 | VS Code | `Code/User/mcp.json` in your app-data folder | `.vscode/mcp.json` |
+| IBM Bob | `~/.bob/settings/mcp.json` | `.bob/mcp.json` |
 | Codex | `$CODEX_HOME/config.toml` (default `~/.codex`) | |
 | Gemini CLI | `~/.gemini/settings.json` | `.gemini/settings.json` |
 | Hermes | `$HERMES_HOME/config.yaml` (default `~/.hermes`) | |
+
+IBM Bob gets the entry shape its IDE documents, `{ "type": "streamable-http", "url": ... }`, and is detected by a `~/.bob` folder. Bob Shell reads the same files but documents the URL key as `httpURL`; if you only use the shell, rename `url` to `httpURL` in the written entry. Servers that need sign-in use Bob's built-in OAuth discovery on first connect, so the free `three-ws-studio` server is the one that works with no account at all.
 
 ### Server names
 

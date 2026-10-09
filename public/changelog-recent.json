@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T15:56:31.736Z",
+	"generated_at": "2026-10-09T16:04:25.152Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3865,
+	"total": 3866,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -128,6 +128,17 @@
 			"title": "Cloud agents get their own free 3D budget with a connector link",
 			"summary": "Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.",
 			"link": "/connect",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Connect three.ws to IBM Bob",
+			"summary": "IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.",
+			"link": "/connect?client=bob&server=three-ws-studio",
 			"tags": [
 				"feature",
 				"improvement"
@@ -1536,17 +1547,6 @@
 			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
 			"link": "/changelog",
 			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "The $THREE tier cards no longer list unbuilt perks next to real ones",
-			"summary": "Each tier on the holder page carries two kinds of line: things the hold turns on today, and things that are registered but not built yet. Further down the same card the unbuilt ones were already flagged Planned, but higher up they also appeared as plain bullets with no flag, so Silver read as though private worlds and priority routing were included and Gold as though branded environments were. They are not. The two lists are now kept apart at the source, the planned lines carry the Planned flag wherever they appear, and the pricing API publishes them as a separate field so anything reading it automatically cannot mistake a roadmap line for a benefit. Nothing about what you actually get has changed. A test now fails the build if an unbuilt feature finds its way back into the delivered list.",
-			"link": "/three",
-			"tags": [
-				"fix",
 				"improvement"
 			]
 		}

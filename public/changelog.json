@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T15:56:31.713Z",
+	"generated_at": "2026-10-09T16:04:25.131Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -125,6 +125,17 @@
 			"title": "Cloud agents get their own free 3D budget with a connector link",
 			"summary": "Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.",
 			"link": "/connect",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Connect three.ws to IBM Bob",
+			"summary": "IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.",
+			"link": "/connect?client=bob&server=three-ws-studio",
 			"tags": [
 				"feature",
 				"improvement"

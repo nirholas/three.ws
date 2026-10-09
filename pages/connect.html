@@ -36,7 +36,8 @@
 		a { color: inherit; }
 		code, pre, kbd { font-family: var(--font-mono, ui-monospace, monospace); }
 
-		.cn-wrap { max-width: var(--cn-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		/* body is a column flex container, so without min-width: 0 the server cards' min-content width pushes main past a phone viewport. */
+		.cn-wrap { width: 100%; min-width: 0; max-width: var(--cn-maxw); margin: 0 auto; padding: 0 18px 96px; }
 
 		/* ── hero ───────────────────────────────────────────────────────── */
 		.cn-hero { padding: 40px 0 10px; }
@@ -247,6 +248,7 @@
 				<button type="button" class="cn-tab" role="tab" id="tab-claude-code" aria-controls="panel-claude-code" data-client="claude-code" data-i18n="connect.claude_code">Claude Code</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-cursor" aria-controls="panel-cursor" data-client="cursor" data-i18n="connect.cursor">Cursor</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-vscode" aria-controls="panel-vscode" data-client="vscode" data-i18n="connect.vs_code">VS Code</button>
+				<button type="button" class="cn-tab" role="tab" id="tab-bob" aria-controls="panel-bob" data-client="bob" data-i18n="connect.ibm_bob">IBM Bob</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-other" aria-controls="panel-other" data-client="other" data-i18n="connect.other_clients">Other clients</button>
 			</div>
 
@@ -353,6 +355,23 @@
 				<p class="cn-src" data-i18n-html="connect.link_format_from_vs_code_s_mcp">Link format from <a href="https://code.visualstudio.com/api/extension-guides/ai/mcp" target="_blank" rel="noopener">VS Code's MCP developer guide</a>.</p>
 			</div>
 
+			<div class="cn-panel" role="tabpanel" id="panel-bob" aria-labelledby="tab-bob" tabindex="0" hidden>
+				<p class="cn-panel-lede" data-i18n-html="connect.ibm_bob_reads_mcp_servers_from">IBM Bob reads MCP servers from <code>.bob/mcp.json</code> in your project, or <code>~/.bob/settings/mcp.json</code> for every workspace. Pick <strong>3D Studio (free)</strong> above to connect with no sign-in; a server that needs sign-in runs Bob's built-in OAuth flow on first connect.</p>
+				<div class="cn-snippet">
+					<div class="cn-snippet-head"><span data-i18n="connect.add_it_to_bob_mcp_json">Add it to .bob/mcp.json</span><button type="button" class="cn-btn" data-copy-target="cn-bob-json" data-i18n="connect.copy_bob">Copy</button></div>
+					<pre><code id="cn-bob-json">{
+  "mcpServers": {
+    "three-ws-main": { "type": "streamable-http", "url": "https://three.ws/api/mcp" }
+  }
+}</code></pre>
+				</div>
+				<ol class="cn-list">
+					<li data-i18n-html="connect.in_the_bob_panel_open_settings">In the Bob panel, open <strong>Settings → MCP</strong> and click <strong>Edit Project MCP</strong> (or <strong>Edit Global MCP</strong>), paste the entry, and save.</li>
+					<li data-i18n-html="connect.bob_shell_reads_the_same_files">Using Bob Shell? It reads the same files but names the URL key <code>httpURL</code>, so rename <code>url</code> to <code>httpURL</code>. Or let the CLI write it: <code>npx three-ws setup --clients bob</code>.</li>
+				</ol>
+				<p class="cn-src" data-i18n-html="connect.config_format_from_ibm_bob_s_mcp">Config format from <a href="https://bob.ibm.com/docs/ide/configuration/mcp/mcp-in-bob" target="_blank" rel="noopener">IBM Bob's MCP docs</a>.</p>
+			</div>
+
 			<div class="cn-panel" role="tabpanel" id="panel-other" aria-labelledby="tab-other" tabindex="0" hidden>
 				<p class="cn-panel-lede" data-i18n-html="connect.any_client_that_speaks_streamable_http_mcp">Any client that speaks <strong>Streamable HTTP</strong> MCP can connect. Clients with OAuth support sign you in automatically from the server's <code>WWW-Authenticate</code> header. Clients without it can send an API key from <a href="/dashboard/api">Dashboard → API</a> as <code>Authorization: Bearer</code>.</p>
 				<div class="cn-snippet">
@@ -431,7 +450,7 @@
 		const PROD_ORIGIN = 'https://three.ws';
 		const DEFAULT_ENDPOINT = `${PROD_ORIGIN}/api/mcp`;
 		const GROK_ENDPOINT = `${PROD_ORIGIN}/api/mcp-grok`;
-		const CLIENTS = ['claude', 'chatgpt', 'grok', 'claude-code', 'cursor', 'vscode', 'other'];
+		const CLIENTS = ['claude', 'chatgpt', 'grok', 'claude-code', 'cursor', 'vscode', 'bob', 'other'];
 
 		const serversEl = document.getElementById('cn-servers');
 		const noteEl = document.getElementById('cn-servers-note');
@@ -549,6 +568,7 @@
 			document.getElementById('cn-cc-cmd').textContent = `claude mcp add --transport http ${slug} ${url}`;
 			document.getElementById('cn-cursor-json').textContent = JSON.stringify({ mcpServers: { [slug]: { url } } }, null, 2);
 			document.getElementById('cn-vscode-json').textContent = JSON.stringify({ servers: { [slug]: { type: 'http', url } } }, null, 2);
+			document.getElementById('cn-bob-json').textContent = JSON.stringify({ mcpServers: { [slug]: { type: 'streamable-http', url } } }, null, 2);
 			document.getElementById('cn-other-json').textContent = JSON.stringify({ mcpServers: { [slug]: { type: 'http', url } } }, null, 2);
 			for (const el of document.querySelectorAll('.cn-name')) el.textContent = name;
 		}

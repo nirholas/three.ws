@@ -4,7 +4,7 @@ Model Context Protocol (MCP) lets Claude and other MCP-compatible AI systems int
 
 This document covers the MCP server's tools, authentication, client configuration, and how to test locally.
 
-**Just want it connected?** [three.ws/connect](/connect) adds three.ws to Claude, ChatGPT, Cursor, VS Code or Claude Code in two clicks, and [`npx three-ws setup`](/docs/cli) configures every client on your machine at once.
+**Just want it connected?** [three.ws/connect](/connect) adds three.ws to Claude, ChatGPT, Cursor, VS Code, IBM Bob or Claude Code in two clicks, and [`npx three-ws setup`](/docs/cli) configures every client on your machine at once.
 
 ---
 
@@ -65,7 +65,7 @@ The same file carries a `clients` block, a three.ws extension (no MCP spec defin
 }
 ```
 
-Keys are `claude`, `chatgpt`, `cursor`, `vscode` and `grok-bot`. Each entry has `name`, `recommendedServer` (always an endpoint listed in `servers[]`), `auth` (`none`, `oauth2.1` or `api-key`), `settings` (`where` to click and either `fields` to type or a `config` snippet to paste), and `guide`. Optional fields: `deepLink`, `authUpgrade` and `skill`. `tests/mcp-directory.test.js` checks the shape and that every endpoint is served.
+Keys are `claude`, `chatgpt`, `cursor`, `vscode`, `grok-bot` and `ibm-bob`. Each entry has `name`, `recommendedServer` (always an endpoint listed in `servers[]`), `auth` (`none`, `oauth2.1` or `api-key`), `settings` (`where` to click and either `fields` to type or a `config` snippet to paste), and `guide`. Optional fields: `deepLink`, `authUpgrade` and `skill`. `tests/mcp-directory.test.js` checks the shape and that every endpoint is served.
 
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 

@@ -1,6 +1,6 @@
 # three-ws
 
-Connect any MCP client to [three.ws](https://three.ws) in one command. `three-ws` signs you in, writes the hosted three.ws MCP servers into every client it finds (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI, Hermes), prints the connector fields for Grok Bot, and verifies each one with a live `tools/list`.
+Connect any MCP client to [three.ws](https://three.ws) in one command. `three-ws` signs you in, writes the hosted three.ws MCP servers into every client it finds (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, IBM Bob, Codex, Gemini CLI, Hermes), prints the connector fields for Grok Bot, and verifies each one with a live `tools/list`.
 
 ```bash
 npx three-ws setup

@@ -103,6 +103,14 @@
 			<description>Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.</description>
 		</item>
 		<item>
+			<title>Connect three.ws to IBM Bob</title>
+			<link>https://three.ws/connect?client=bob&amp;server=three-ws-studio</link>
+			<guid isPermaLink="false">2026-10-09:Connect three.ws to IBM Bob</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.</description>
+		</item>
+		<item>
 			<title>Connected apps: clearer sign-in screen and instant revoke</title>
 			<link>https://three.ws/dashboard/settings</link>
 			<guid isPermaLink="false">2026-10-09:Connected apps: clearer sign-in screen and instant revoke</guid>

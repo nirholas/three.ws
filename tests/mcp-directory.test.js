@@ -11,7 +11,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = JSON.parse(readFileSync(resolve(ROOT, 'public/.well-known/mcp.json'), 'utf8'));
 const vercel = JSON.parse(readFileSync(resolve(ROOT, 'vercel.json'), 'utf8'));
 
-const CLIENTS = ['claude', 'chatgpt', 'cursor', 'vscode', 'grok-bot'];
+const CLIENTS = ['claude', 'chatgpt', 'cursor', 'vscode', 'grok-bot', 'ibm-bob'];
 const AUTH_MODES = ['none', 'oauth2.1', 'api-key'];
 
 // A path is served when a route in vercel.json rewrites it, or, as for every
@@ -80,5 +80,15 @@ describe('public/.well-known/mcp.json', () => {
 		expect(g.authUpgrade.adds).toMatch(/never a wallet/);
 		expect(g.skill).toBe('https://three.ws/grok-skill.md');
 		expect(existsSync(resolve(ROOT, 'public/grok-skill.md'))).toBe(true);
+	});
+
+	it('gives IBM Bob the free studio in the streamable-http shape Bob documents', () => {
+		const b = directory.clients['ibm-bob'];
+		expect(b.recommendedServer).toBe('https://three.ws/api/mcp-studio');
+		expect(b.auth).toBe('none');
+		expect(b.settings.config.mcpServers['three-ws'].type).toBe('streamable-http');
+		expect(b.settings.where).toMatch(/\.bob\/mcp\.json/);
+		expect(b.authUpgrade.mode).toBe('oauth2.1');
+		expect(directory.servers.some((s) => s.endpoint === b.authUpgrade.url)).toBe(true);
 	});
 });

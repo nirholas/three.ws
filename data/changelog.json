@@ -29321,6 +29321,13 @@
 			"title": "A build plan for the next 27 platform upgrades",
 			"summary": "We surveyed the strongest open-source crypto and agent projects, compared them with three.ws, and wrote the plan for closing every gap: agents that learn skills from experience, a payer command line, on-chain spending budgets, more trading venues, safer chat trading and more.",
 			"tags": ["docs"]
+		},
+		{
+			"date": "2026-10-09",
+			"title": "Connect three.ws to IBM Bob",
+			"summary": "IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.",
+			"tags": ["feature", "improvement"],
+			"link": "/connect?client=bob&server=three-ws-studio"
 		}
 	]
 }

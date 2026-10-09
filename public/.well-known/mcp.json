@@ -93,6 +93,29 @@
 			},
 			"skill": "https://three.ws/grok-skill.md",
 			"guide": "https://three.ws/grok"
+		},
+		"ibm-bob": {
+			"name": "IBM Bob",
+			"recommendedServer": "https://three.ws/api/mcp-studio",
+			"auth": "none",
+			"authUpgrade": {
+				"mode": "oauth2.1",
+				"url": "https://three.ws/api/mcp",
+				"adds": "the account's agents, memory, wallets and x402 tools, through Bob's built-in OAuth on first connect"
+			},
+			"settings": {
+				"where": ".bob/mcp.json in the project, or ~/.bob/settings/mcp.json for every workspace (Bob panel, MCP tab, Edit Project MCP or Edit Global MCP)",
+				"config": {
+					"mcpServers": {
+						"three-ws": {
+							"type": "streamable-http",
+							"url": "https://three.ws/api/mcp-studio"
+						}
+					}
+				},
+				"note": "Bob Shell reads the same files but names the URL key httpURL."
+			},
+			"guide": "https://three.ws/connect?client=bob&server=three-ws-studio"
 		}
 	},
 	"registry": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas",

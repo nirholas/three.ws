@@ -117,6 +117,56 @@ The September 2026 Partner Plus mailer, item by item:
 | IBM Software Quoting session | **Ignore** | A quoting tool for resellers. |
 | Partner Growth Day with Confluent | **Ignore** | Kafka data streaming, framed for partner sales. We are on GCP credits; Pub/Sub and the existing Cloud Scheduler crons cover our volume, and Confluent Cloud would be a new paid third-party API requiring owner approval. |
 
+### October 2026 ("Partnering for success", received 2026-10-07)
+
+This issue is the most relevant one yet: two of its three events are about exactly the
+two things a Build track partner wants, Marketplace distribution and agent-ready
+integrations, and its IBM Bob item turned out to be a client we could support the same day.
+
+| Item | Verdict | What we did or will do |
+|---|---|---|
+| Year-end incentives across Infrastructure and Software, deals closed by 31 December | **Ignore** | Resale incentives on eligible IBM deals. We do not resell IBM software or hardware, so there is no eligible deal to close. |
+| Boomerang (share IBM content through a partner-branded experience) | **Ignore for now** | Built for partners who generate pipeline for IBM products. Our audience comes to us for three.ws, not for IBM content, and a partner-branded IBM reading room would dilute the no-endorsement framing above. Revisit only if an Agent Connect listing gives us an IBM product to point prospects at. |
+| Download your partner certificate from the Partner Portal | **Do (owner, 2 minutes)** | It is the proof document for bids, marketplace applications, and "are you really an IBM Business Partner" questions. Download it once and keep it with the owner's business records, **not in this repo** (it carries the partner ID) and not on the public site. When a listing form asks for proof, attach it from there. |
+| My Digital Marketing: Affinity Plays (sell IBM into AWS, Microsoft, Veeam accounts) | **Ignore** | Cross-sell kits for resellers. |
+| My Digital Marketing: Webinar Playbook | **Pull it** | Directly useful for the second community event in [ibm-next-event.md](../ibm-next-event.md) and the in-world session kits under `marketing/growth/events/`. Read it against our format (an hour inside `/play`, not a slide webinar) and keep what applies, chiefly the promotion timeline and the follow-up sequence. |
+| My Digital Marketing: IBM Photography (100+ persona-based images) | **Use only inside IBM co-marketing** | Licensed for IBM partner campaigns. Fine on an IBM Community post or a co-branded asset in `marketing/ibm-partner-plus/`; never as general three.ws site imagery, where it would imply an IBM endorsement we may not claim. |
+| My Digital Marketing: Confluent Kafka migration kits | **Ignore** | Same reasoning as September's Confluent track. |
+| IBM Bob self-hosted option | **Shipped on our side** | Bob is IBM's AI development partner, and it reads remote MCP servers from `.bob/mcp.json`. We added it as a first-class client on the same day: an **IBM Bob** tab on [three.ws/connect](/connect) that writes the entry for whichever server you pick, `npx three-ws setup --clients bob` in the [CLI](../cli.md), and an `ibm-bob` block in `/.well-known/mcp.json` recommending the free, no-sign-in 3D Studio server. The self-hosted angle matters for IBM's sensitive-workload customers: our free server needs no account and no key, so a locked-down Bob install can use it without handing us credentials. Untested against a live Bob install; the config follows IBM's published format. |
+| Chatter reminders for partner-owned opportunities inactive 45+ days | **Ignore** | CRM hygiene for registered deals. We have none registered. |
+| Customer story (GlassHouse Systems, IBM i on Power Virtual Server) | **Ignore** | Not our market. |
+| **Partner Growth Day: Accelerate through Marketplace**, Tue 20 October, virtual | **Attend (owner)** | The Marketplace route is where Agent Connect lives. Go with a concrete ask: the BYOL listing for the 3D Studio MCP server, the submission pack already filled in at [agent-connect-listing.md](../../marketing/ibm-partner-plus/agent-connect-listing.md). The `APP_ID` request to `IBMAgentConnect@ibm.com` should go out **before** the 20th so the session can be used to chase it rather than start it. |
+| **Making your existing integrations agent-ready**, Tue 3 November, virtual | **Attend (owner), highest value of the issue** | This is our thesis as an IBM session title. We already run eight hosted MCP servers, an A2A agent card, x402 pay-per-call, and now IBM Bob support. Attend to learn what IBM means by "agent-ready" for Orchestrate, and bring the three questions below. |
+| **Cross brand partner marketing enablement**, Thu 5 November, virtual | **Attend (owner)** | The co-marketing ramp agreed in June (see "Stalled since June" below) has had no recorded delivery. This is the room to restart it, with [marketing/ibm-partner-plus/](../../marketing/ibm-partner-plus/README.md) as the ready kit. |
+| Partner News and Enablement Hub on Seismic | **Already wired** | Our CSP already permits `*.seismic.com` to frame three.ws (see "Where we actually stand"). |
+
+**Three questions to take to the 3 November session.** Each one is something we cannot
+answer from IBM's public docs, and each answer changes what we build next:
+
+1. Does watsonx Orchestrate's remote MCP import support OAuth 2.1 with protected-resource
+   discovery, or only the static-credential modes listed for Agent Connect? Our main
+   server (`/api/mcp`) speaks both; the answer decides which one we list.
+2. What does Orchestrate do with MCP tool annotations (`readOnlyHint`,
+   `destructiveHint`)? Every three.ws tool declares them, and an enterprise buyer's first
+   question is which tools can act without a human.
+3. Is there a path for a listed MCP server to be offered inside IBM Bob as well as
+   Orchestrate, or are they separate catalogs?
+
+**Blocking everything IBM-facing in this issue: Granite is still dark in production.**
+Re-checked 2026-10-09: `/api/ibm/galaxy` answers `watsonx_not_configured`,
+`/api/guardian/assess` answers `guardian_unconfigured`, and neither the Cloud Run service
+nor the local env files carry a `WATSONX_*` or `GRANITE_GUARDIAN_*` variable. Walking into
+an "agent-ready" session as an IBM partner whose IBM-model endpoints are switched off is
+the weakest position available. Two ways out, either one sufficient:
+
+- **Owner:** provide a watsonx.ai API key and project ID (IBM Cloud, the company account),
+  set as `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` on the Cloud Run service. That
+  restores every Granite surface at once.
+- **Engineering, needs a deploy approval:** deploy the self-hosted Guardian worker in
+  `workers/granite-guardian/` on GCP credits and set `GRANITE_GUARDIAN_URL`. That restores
+  governance (`/api/guardian/assess`, `@three-ws/guardian`) without an IBM Cloud account,
+  but not the other Granite surfaces.
+
 ---
 
 ## My Digital Marketing: the co-marketing benefit we are not using
@@ -175,6 +225,20 @@ IBM's ecosystem team something new to co-market.
 5. Decide whether the paid listing is worth the tax and banking paperwork later. It is not
    needed for the first listing.
 
+Added from the October 2026 mailer (see its triage above), in date order:
+
+6. **Before Tue 20 October:** send item 1 if it has not gone out, then attend Partner
+   Growth Day: Accelerate through Marketplace with the BYOL listing as the ask.
+7. **Tue 3 November:** attend "Making your existing integrations agent-ready" with the
+   three questions above.
+8. **Thu 5 November:** attend cross brand partner marketing enablement and restart the
+   June co-marketing ramp.
+9. Download the partner certificate from the Partner Portal and file it with the business
+   records (not in this repo).
+10. Pull the Webinar Playbook from My Digital Marketing for the second community event.
+11. Unblock Granite in production: either provide `WATSONX_API_KEY` and
+    `WATSONX_PROJECT_ID`, or approve deploying `workers/granite-guardian/`.
+
 **Engineering (unblocked, no external dependency):**
 
 Done on 2026-09-10, all of it in [`marketing/ibm-partner-plus/`](../../marketing/ibm-partner-plus/README.md):
@@ -193,6 +257,9 @@ Done on 2026-09-10, all of it in [`marketing/ibm-partner-plus/`](../../marketing
 
 Held until the listing is live: the announcement copy in
 [`social-copy.md`](../../marketing/ibm-partner-plus/social-copy.md).
+
+Done on 2026-10-09: IBM Bob is a supported client on [/connect](/connect), in
+`npx three-ws setup --clients bob`, and in `/.well-known/mcp.json` (`ibm-bob`).
 
 **Explicitly not doing:** the infrastructure resale incentive, IBM Software Quoting, and
 the Confluent track. None of them are reachable from a Build track partner and none of them
