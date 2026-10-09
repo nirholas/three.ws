@@ -1216,6 +1216,16 @@ classifies every debit:
 | **`LEAK`** | anything else: USDC to an unknown address, **any** non-USDC token out, an unexplained SOL debit, a System transfer to an unknown address |
 | `delegation` | an SPL `Approve` on a ring ATA — a leak vector *before* funds move |
 
+A run reads every role wallet (payer, treasury, sponsor), then as much of the
+`x402_ring_wallets` registry as fits a 200 s budget, four wallets at a time,
+picking up where the previous run stopped (the offset lives in the cache under
+`cron:x402-ring-leak-scan:offset`). A 9-minute lease (`cron:x402-ring-leak-scan:lease`)
+makes the economy tick's every-minute re-fire a cheap `lease_held` skip. Before
+2026-10-09 a run walked all 2,006 registry wallets serially, took 600 to 900 s, and
+about eight ran at once. The response reports `scanned_wallets` and
+`deferred_wallets` so a registry that outgrows the budget shows up as a growing
+deferral rather than a timeout.
+
 Every `LEAK`/`delegation` fires a CRITICAL `sendOpsAlert` (signature,
 counterparty, amount, rotate-the-key recommendation) and upserts a verdict into
 `payment_reconciliation` with source `x402_ring_onchain`, alongside the economy
