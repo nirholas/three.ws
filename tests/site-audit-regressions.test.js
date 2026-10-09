@@ -13,9 +13,13 @@ describe('production page-audit regressions', () => {
 	});
 
 	it('loads the Meshopt-ready model-viewer release in the deploy preview', () => {
+		// The preview loads through the shared failover loader, which must pin a
+		// release that awaits its bundled meshopt decoder (4.0.0 did not).
 		const js = source('src/erc8004/register-ui.js');
-		expect(js).toContain('/model-viewer/4.3.1/model-viewer.min.js');
-		expect(js).not.toContain('/model-viewer/4.3.1/model-viewer.min.js');
+		expect(js).toContain("from '../shared/model-viewer-loader.js'");
+		expect(js).not.toContain('ajax.googleapis.com/ajax/libs/model-viewer/');
+		const loader = source('src/shared/model-viewer-loader.js');
+		expect(loader).toContain("const VERSION = '4.3.1';");
 	});
 
 	it('marks only the intentional voice error preview as audit documentation', () => {
