@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T16:56:49.168Z",
+	"generated_at": "2026-10-09T17:21:05.080Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3868,
+	"total": 3869,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -87,6 +87,17 @@
 			"link": "/docs/grok-bot",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "A new default engine for photo to 3D, with regional safeguards",
+			"summary": "Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1537,16 +1548,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "Queued posts can quote an earlier post",
-			"summary": "A post in the @trythreews content queue can now name an earlier post to quote, so a follow-up can add the detail the original left out instead of repeating it. The first use quotes the $THREE token MCP announcement with the numbers behind the MCP Tool Catalog: 321 tools across 42 servers, 293 of them free, and 215 whose read-only label is checked against the source on every build.",
-			"link": "/mcp-tools",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

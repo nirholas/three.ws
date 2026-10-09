@@ -29335,6 +29335,13 @@
 			"summary": "IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.",
 			"tags": ["feature", "improvement"],
 			"link": "/connect?client=bob&server=three-ws-studio"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "A new default engine for photo to 3D, with regional safeguards",
+			"summary": "Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.",
+			"tags": ["feature", "improvement"],
+			"link": "/forge"
 		}
 	]
 }

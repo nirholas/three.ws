@@ -71,6 +71,14 @@
 			<description>There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.</description>
 		</item>
 		<item>
+			<title>A new default engine for photo to 3D, with regional safeguards</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:A new default engine for photo to 3D, with regional safeguards</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.</description>
+		</item>
+		<item>
 			<title>A paid call that fails after payment now tells you to retry, not to pay again</title>
 			<link>https://three.ws/docs/x402</link>
 			<guid isPermaLink="false">2026-10-09:A paid call that fails after payment now tells you to retry, not to pay again</guid>

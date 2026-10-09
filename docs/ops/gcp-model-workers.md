@@ -21,6 +21,7 @@ result_* }` — and authenticate with one shared bearer secret.
 
 | Lane (`backend` id) | Worker dir            | Cloud Run service  | Path served | What it does |
 |---------------------|-----------------------|--------------------|-------------|--------------|
+| `trellis2`          | `workers/model-trellis2` | `model-trellis2` | `image`  | Default image→3D lane. TRELLIS.2 (MIT): PBR GLB with alpha, `resolution` 512/1024/1536, meshopt packed. Weights staged by `workers/model-trellis2/stage_weights.sh`. |
 | `trellis_selfhost`  | `workers/model-trellis`  | `model-trellis`  | `image`  | Native single-hop image→3D (Microsoft TRELLIS). Accepts user photos and the FLUX-synthesized view for text prompts. Textured GLB. |
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
@@ -85,6 +86,7 @@ faked.
 
 | Env var                 | Used by                | Notes |
 |-------------------------|------------------------|-------|
+| `MODEL_TRELLIS2_URL`    | `trellis2`             | Cloud Run URL of `model-trellis2`. Unset means the lane is skipped. |
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
 | `GCP_TRIPOSG_URL`       | `triposg` (sketch)     | Cloud Run URL of `model-triposg`. |
