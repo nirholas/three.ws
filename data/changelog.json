@@ -29148,6 +29148,15 @@
 			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
 			"tags": ["fix"],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "The desktop companion, CLI and MCP server now work with just the bridge token",
+			"summary": "The companion bridge token is the one credential the desktop app, the companion command line and its MCP server are given, but the feed, marking a message as spoken, replying, reading contacts and checking sources all refused it, so pasting the token into the desktop app said it was wrong and an agent asking what you had heard got turned away. Those calls now accept the bridge token and only ever show the messages and contacts of the person it belongs to. It still cannot connect sources, edit contacts, change settings or rotate itself; those stay behind your signed-in account, and they now say so plainly instead of answering as if the token were wrong.",
+			"tags": [
+				"fix"
+			],
+			"link": "/companion"
 		}
 	]
 }

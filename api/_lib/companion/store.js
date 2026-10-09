@@ -10,7 +10,8 @@ import { encryptConfig, decryptConfig, redactConfig } from './crypto.js';
 
 export const SOURCE_KINDS = ['telegram', 'calendar', 'email'];
 
-// A bridge token is a bearer for POST /api/companion/ingest, typed by hand into
+// A bridge token is the bearer a device holds (ingest, the delivery stream, the
+// feed, replies; see ./caller.js for exactly which routes), typed by hand into
 // an iOS Shortcut or a shell script, so it is URL-safe and copy-pasteable.
 export function newIngestToken() {
 	return `cmp_${randomBytes(24).toString('base64url')}`;
@@ -65,11 +66,16 @@ export async function rotateIngestToken(userId) {
 	return row.ingest_token;
 }
 
+// The bridge token resolves to its owner the way a session does: a deleted
+// account's token stops working with the account, instead of outliving it on
+// every phone shortcut and desktop app it was pasted into.
 export async function userForIngestToken(token) {
 	const [row] = await sql`
-		select user_id, enabled, threshold, quiet_start, quiet_end, timezone,
-		       avatar_glb_url, voice, push_enabled
-		from companion_settings where ingest_token = ${token}
+		select s.user_id, s.enabled, s.threshold, s.quiet_start, s.quiet_end, s.timezone,
+		       s.avatar_glb_url, s.voice, s.push_enabled
+		from companion_settings s
+		join users u on u.id = s.user_id
+		where s.ingest_token = ${token} and u.deleted_at is null
 	`;
 	return row || null;
 }

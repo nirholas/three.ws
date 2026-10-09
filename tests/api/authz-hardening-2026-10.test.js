@@ -196,6 +196,9 @@ describe('bearer scope on the knock door and the chat gateway', () => {
 	});
 
 	it('every companion account route checks the profile scope', () => {
+		// The routes resolve their caller through one shared resolver, which holds
+		// API keys and OAuth tokens to profile and the bridge token to its owner.
+		expect(src('api/_lib/companion/caller.js')).toMatch(/requestUserHasScope\(user, 'profile'\)/);
 		for (const rel of [
 			'api/companion/settings.js',
 			'api/companion/poll.js',
@@ -208,7 +211,7 @@ describe('bearer scope on the knock door and the chat gateway', () => {
 			'api/companion/contacts/[id].js',
 			'api/companion/checkout.js',
 		]) {
-			expect(src(rel), rel).toMatch(/requestUserHasScope\(user, 'profile'\)/);
+			expect(src(rel), rel).toMatch(/await companionCaller\(req, res/);
 		}
 	});
 });

@@ -287,21 +287,42 @@ did not matter.
 
 ## The API
 
-Everything the page does, you can do. Session cookie or bridge token.
+Everything the page does, you can do. Two kinds of credential reach it:
 
-| Endpoint | Method | What it does |
-|---|---|---|
-| `/api/companion/ingest` | POST | Hand it a message (bridge token). Returns the triage verdict. |
-| `/api/companion/stream` | GET | Live deliveries as Server-Sent Events. |
-| `/api/companion/events` | GET | The feed, with scores and reasons. |
-| `/api/companion/events/:id` | PATCH | Mark delivered or dismissed. |
-| `/api/companion/events/:id/reply` | POST | Answer through the connection it arrived on. |
-| `/api/companion/sources` | GET, POST | List or connect a source (verified before saving). |
-| `/api/companion/sources/:id` | PATCH, DELETE, POST | Rename, pause, disconnect, or check now. |
-| `/api/companion/contacts` | GET, POST | The people who get a face. |
-| `/api/companion/contacts/:id` | DELETE | Forget one. |
-| `/api/companion/settings` | GET, PATCH, POST | Threshold, quiet hours, default body and voice; POST rotates the bridge token. |
-| `/api/companion/poll` | POST | Poll every connected source now. |
+- **The bridge token** (`cmp_…`) is what a device holds: the desktop app, the
+  CLI, the MCP server, a phone shortcut, the
+  [checkout companion](checkout-companion.md) extension. It reaches everything
+  a body needs to do its job: post a message (`ingest`), watch deliveries
+  (`stream`), read the feed, mark a delivery spoken or dismissed, answer one,
+  read the contacts it stages senders with, check sources now, and the
+  extension's `checkout` call. It resolves to exactly one account, so it only
+  ever sees that account's messages. It cannot change what the companion is: a
+  leaked phone shortcut cannot connect or remove sources, edit or forget
+  contacts, change settings, or read or rotate the token itself. Those routes
+  answer `403 bridge_token_not_accepted`. A bridge-token request carries no
+  cookie, so it needs no CSRF token.
+- **A session cookie, an API key, or an OAuth access token** reaches every route
+  except `ingest` (bridge token only); `stream` takes a session cookie but not an
+  API key or OAuth token. A cookie session carries every scope; an API key
+  or OAuth token must have been granted the `profile` scope, because private
+  messages and the bridge token live behind these routes. A narrower token (an
+  `inference`-only key, an `avatars:read` MCP client) gets
+  `403 insufficient_scope`.
+
+| Endpoint | Method | Bridge token | What it does |
+|---|---|---|---|
+| `/api/companion/ingest` | POST | yes (only) | Hand it a message. Returns the triage verdict. |
+| `/api/companion/stream` | GET | yes | Live deliveries as Server-Sent Events (bridge token or session cookie). |
+| `/api/companion/events` | GET | yes | The feed, with scores and reasons. |
+| `/api/companion/events/:id` | PATCH | yes | Mark delivered or dismissed. |
+| `/api/companion/events/:id/reply` | POST | yes | Answer through the connection it arrived on. |
+| `/api/companion/contacts` | GET, POST | GET only | The people who get a face. |
+| `/api/companion/contacts/:id` | DELETE | no | Forget one. |
+| `/api/companion/poll` | POST | yes | Poll every connected source now. |
+| `/api/companion/checkout` | POST | yes | Read a payment screen ([checkout companion](checkout-companion.md)). |
+| `/api/companion/sources` | GET, POST | no | List or connect a source (verified before saving). |
+| `/api/companion/sources/:id` | PATCH, DELETE, POST | no | Rename, pause, disconnect, or check now. |
+| `/api/companion/settings` | GET, PATCH, POST | no | Threshold, quiet hours, default body and voice; POST rotates the bridge token. |
 
 A delivery on the stream carries everything a body needs to perform it:
 

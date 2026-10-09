@@ -16,9 +16,10 @@
  *     onDelivery: (d) => console.log(`${d.speaker}: ${d.spoken_line}`),
  *   });
  *
- * The token is the bridge token from three.ws/companion. It can post messages
- * and receive that user's deliveries, and rotating it on that page revokes
- * every device at once. A browser page that already has a signed-in session can
+ * The token is the bridge token from three.ws/companion. It can post messages,
+ * receive that user's deliveries, read the feed and the contacts, mark or answer
+ * a delivery, and check sources now, all scoped to the one user it belongs to.
+ * Rotating it on that page revokes every device at once. A browser page that already has a signed-in session can
  * omit it entirely and pass `credentials: 'include'` behaviour by default.
  */
 

@@ -243,6 +243,15 @@ Needs `@modelcontextprotocol/sdk` installed alongside this package.
 Returns `{ send, list, markDelivered, dismiss, reply, contacts, checkNow, stream }`.
 Every method rejects with a `CompanionError` carrying `.status` and `.code`.
 
+Every one of these works with the bridge token alone. The token resolves to the
+one person it belongs to, so `list`, `reply`, and `contacts` only ever see that
+person's messages and contacts. It deliberately cannot change what the companion
+is: connecting sources, editing contacts, changing settings, and rotating the
+token itself need a signed-in session at
+[three.ws/companion](https://three.ws/companion), and the API answers a bridge
+token there with `403` and the code `bridge_token_not_accepted`. A token that
+was rotated away fails with `401` and the code `unauthorized`.
+
 ### `createCompanionStage(options)`
 
 | Option | Default | Meaning |
