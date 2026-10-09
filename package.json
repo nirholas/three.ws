@@ -434,6 +434,7 @@
 		"check:asset-encoding": "node scripts/check-asset-encoding.mjs",
 		"probe:generation": "node scripts/probe-generation-suite.mjs --base https://three.ws",
 		"probe:mcp-clients": "node scripts/mcp-client-probe.mjs",
+		"e2e:xai-mcp": "node scripts/xai-mcp-e2e.mjs",
 		"event:watch": "node scripts/event-watch.mjs",
 		"event:capacity": "node scripts/play-capacity-smoke.mjs",
 		"event:failover": "node --env-file=.env scripts/event-dependency-failover.mjs",

@@ -284,6 +284,18 @@ Errors a running task can see:
 | Grok adds a plugin instead of your URL | The sentence did not say "custom MCP server" | Resend the sentence under [Connect it](#connect-it). |
 | Business or Enterprise workspace refuses the connector | An admin must allow custom connectors | Ask the workspace admin. |
 
+## Prove it with a Grok model
+
+xAI's Responses API takes a remote MCP server as a tool (`type: "mcp"`, `server_url`, `server_label`, optional `server_description` and `allowed_tools`; see [Remote MCP Tools](https://docs.x.ai/developers/tools/remote-mcp)). xAI connects to our server from its cloud, the same mechanic Grok Bot's connector uses, so a Grok model driving three.ws through it is the closest scriptable proof that the connector works.
+
+```bash
+npm run e2e:xai-mcp                      # /api/mcp-studio and /api/mcp-grok
+npm run e2e:xai-mcp -- --server grok     # one surface
+npm run e2e:xai-mcp -- --dry-run         # print the exact requests, send nothing
+```
+
+Each run asks "Find a ready-made chair in the three.ws catalog and give me its viewer link." and exits non-zero unless the response records an MCP call to `search_catalog` and the final text carries a three.ws viewer URL. The key is `GROK_API_KEY` or `XAI_API_KEY` from the environment, `.env.local` or `.env`; without one the script exits 2 and `--dry-run` still prints the requests. If the model answers without calling the tool, fix the tool descriptions (every agent client reads them), not the prompt.
+
 ## Related
 
 - [three.ws for Grok](./grok.md): the product tour, the xAI API examples and the skill file.

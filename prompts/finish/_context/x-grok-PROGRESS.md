@@ -104,3 +104,9 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - `--connector-key` signs in (requesting `agents:write`), mints one `connector` preset key and reuses it from the credential store. This needed `POST /api/api-keys` (the bearer route the CLI can reach) to accept `preset: "connector"`; it fixes the grant, refuses a caller scope, and 403s a bearer lacking the expanded scopes.
 - Evidence: production run printed correct fields and `answered tools/list with 14 tools`; 23 CLI tests pass (`packages/three-ws-cli/tests/grok-bot.test.js`, 9 new) plus 4 route tests in `tests/api/api-keys-connector-preset.test.js`; `check:rules` and `audit:docs` clean.
 - Unverified: the `--connector-key` mint against production (the `/api/api-keys` preset change is not deployed; covered by mocked-fetch and route tests only). Nothing deployed or pushed.
+
+## 2026-10-09: order 039 (xAI remote MCP end to end) partial, no xAI key
+
+- Shipped `scripts/xai-mcp-e2e.mjs` and `npm run e2e:xai-mcp`: sends a Responses API request per surface (`/api/mcp-studio`, `/api/mcp-grok`) with the tool fields from the current docs.x.ai Remote MCP page (`type`, `server_url`, `server_label`, `server_description`), asks for a ready-made chair viewer link, and exits non-zero unless an MCP call to `search_catalog` is recorded and the text has a three.ws viewer URL. `--dry-run` prints the exact requests. Documented in `docs/grok-bot.md`.
+- Step 0: no `GROK_API_KEY` or `XAI_API_KEY` in `.env`, `.env.local`, the Cloud Run service or Secret Manager. Dry run verified; the live run was not.
+- Remaining: the "With a key: exits 0 against production" line. Owner: order 927 (create the xAI key). Then run `npm run e2e:xai-mcp`. Caveat: xAI does not document the output item shape of a server-side MCP call, so the call detection matches any `*call*` output item whose name is or ends with `search_catalog`; confirm on the first live run. The order file stays in place.
