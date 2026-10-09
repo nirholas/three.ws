@@ -471,6 +471,7 @@
 		"pump:watch": "node scripts/pump-upstream-watch.mjs",
 		"pump:launch": "node scripts/pump-launch-repos.mjs",
 		"pump:launch:ui": "node scripts/pump-launch-server.mjs",
+		"paired:quotes": "node scripts/paired-register-quotes.mjs",
 		"seed:skills": "node scripts/seed-skills.js",
 		"build:openai-skills": "node scripts/build-openai-skills-bundle.mjs",
 		"check:openai-skills": "node scripts/build-openai-skills-bundle.mjs --check",
