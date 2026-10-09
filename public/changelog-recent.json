@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T17:21:05.080Z",
+	"generated_at": "2026-10-09T18:40:20.458Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3869,
+	"total": 3871,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -62,9 +62,29 @@
 		{
 			"date": "2026-10-09",
 			"type": "launch",
+			"title": "Modly: 3D on Your Own GPU",
+			"summary": "Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.",
+			"link": "/modly",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
 			"title": "Tutorial · Grok Bot recipes",
 			"summary": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
 			"link": "/tutorials/grok-bot-recipes",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Workbench",
+			"summary": "A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.",
+			"link": "/workbench",
 			"tags": [
 				"launch"
 			]
@@ -1527,27 +1547,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "Paying the Club cover charge in $THREE works now",
-			"summary": "The Club door quotes its cover in USDC or in $THREE, but every attempt to pay in $THREE failed at the last step, and the payment window wrongly said you had cancelled in your wallet when you had just approved. The cause was on our side: $THREE is issued under Solana's newer token standard (Token-2022) and our payment rail only knew how to build and check transfers for the older one, so a $THREE payment could never be verified. The rail now reads which standard a token uses and handles both, in the step that builds your transaction and in the step that verifies it. Nothing was ever charged on a failed attempt. The payment window also now shows the real reason when a payment is refused instead of blaming a cancel.",
-			"link": "/club",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "Put any token's 3D scene on your own site, keyed by the pair address you already have",
-			"summary": "Token in 3D is now embeddable anywhere with a single iframe, and it accepts two identifiers instead of one. Chart terminals, launchpads and wallets name a market by its pair (pool) address, while three.ws keys tokens by mint, so /coin3d now takes ?pair= as well as ?mint= and resolves the rest itself through a new public endpoint, /api/coin/pair. Add ?embed=1 and the scene drops the chrome your own page owns, keeps one attribution link, and sends its links to a new tab instead of navigating your frame. Free, keyless, and no account: paste the iframe and it renders the live medallion, holder galaxy, graduation ring and real trade tape for that market.",
-			"link": "/docs/coin3d-embed",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

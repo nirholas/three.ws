@@ -733,6 +733,23 @@
 					"added": "2026-06-04"
 				},
 				{
+					"path": "/modly",
+					"title": "Modly: 3D on Your Own GPU",
+					"description": "Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-10-09"
+				},
+				{
+					"path": "/workbench",
+					"title": "Workbench",
+					"description": "A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-10-09",
+					"showcase": true
+				},
+				{
 					"path": "/image-to-3d",
 					"title": "Image to 3D: Turn a Photo into a 3D Model",
 					"description": "Upload a photo (or up to 6 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.",

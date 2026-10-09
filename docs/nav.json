@@ -170,6 +170,10 @@
 					"path": "restyle"
 				},
 				{
+					"label": "Workbench",
+					"path": "workbench"
+				},
+				{
 					"label": "Scene Studio",
 					"path": "scene-studio"
 				},

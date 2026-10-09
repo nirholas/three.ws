@@ -101,6 +101,16 @@ export const NAV_GROUPS = [
 						desc: 'Upload a photo (up to 4 angles) → textured GLB of the object',
 					},
 					{
+						title: 'Workbench',
+						href: '/workbench',
+						badge: 'New',
+						badgeTone: 'live',
+						// A node-workflow workspace is a power-user surface; keep it off
+						// the lite menu, which sits at its scannable ceiling.
+						tier: 'advanced',
+						desc: 'Photo → mesh through a visual workflow: remesh, rig, smooth, decimate, export',
+					},
+					{
 						title: 'CAD Forge',
 						href: '/cad',
 						badge: 'New',

@@ -527,6 +527,18 @@ URL: https://three.ws/forge
 
 Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
 
+### Modly: 3D on Your Own GPU
+
+URL: https://three.ws/modly
+
+Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.
+
+### Workbench
+
+URL: https://three.ws/workbench
+
+A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.
+
 ### Image to 3D: Turn a Photo into a 3D Model
 
 URL: https://three.ws/image-to-3d

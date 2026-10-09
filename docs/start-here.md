@@ -64,6 +64,8 @@ Built something worth showing? Put it on the wall. [Agent Spotlight](./spotlight
 
 Generations don't need a babysitter, either: start a forge job, close the tab, and the platform finishes it, saves it to your gallery, and notifies you when it's ready. See [Background generation](./forge-background-generation.md).
 
+Want to choose the steps yourself? [Workbench](./workbench.md) runs a photo through a visual workflow you can edit (background removal, generation, remeshing, rigging, material restyle), then lets you smooth, decimate and export GLB, OBJ, STL or PLY from a desktop-style viewport.
+
 Curious what happens between the prompt and the model? [How the Forge works](./how-forge-works.md) tells the story in plain language; [the Forge pipeline](./forge-pipeline.md) is the full engineering deep dive.
 
 Need a functional part rather than a sculpture, such as a bracket, an enclosure, a gear or a knob? [CAD Forge](./cad-forge.md) turns a sentence into real parametric CAD that the OpenCascade kernel has built, with exact dimensions you can drag, STEP and STL downloads, and a drawing sheet.

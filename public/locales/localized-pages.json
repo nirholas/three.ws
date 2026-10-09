@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 431,
+	"count": 432,
 	"paths": [
 		"/",
 		"/3d",
@@ -429,6 +429,7 @@
 		"/watch",
 		"/watchlist",
 		"/what-is",
+		"/workbench",
 		"/world-lines",
 		"/wrapped",
 		"/x402/studio",

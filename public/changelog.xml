@@ -47,12 +47,28 @@
 			<description>The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.</description>
 		</item>
 		<item>
+			<title>Modly: 3D on Your Own GPU</title>
+			<link>https://three.ws/modly</link>
+			<guid isPermaLink="false">2026-10-09:Modly: 3D on Your Own GPU</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.</description>
+		</item>
+		<item>
 			<title>Tutorial · Grok Bot recipes</title>
 			<link>https://three.ws/tutorials/grok-bot-recipes</link>
 			<guid isPermaLink="false">2026-10-09:Tutorial · Grok Bot recipes</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.</description>
+		</item>
+		<item>
+			<title>Workbench</title>
+			<link>https://three.ws/workbench</link>
+			<guid isPermaLink="false">2026-10-09:Workbench</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.</description>
 		</item>
 		<item>
 			<title>A build plan for the next 27 platform upgrades</title>
