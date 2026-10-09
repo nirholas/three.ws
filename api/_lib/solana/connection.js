@@ -1056,6 +1056,19 @@ const PROVIDER_CAPACITY_CODES = new Set([
 // demotion, never a lane bench: the lane is healthy for every other shape.
 const JSONRPC_INTERNAL_ERROR = -32603;
 
+// -32020 "Transaction <sig> not found" is how a node with a short ledger answers a
+// getSignaturesForAddress whose `until`/`before` cursor is older than its own
+// history. It is a statement about THAT node's storage, not about the chain:
+// measured 2026-10-09, PublicNode and Solana Vibe Station both answer -32020 for a
+// finalized 2026-10-03 signature while mainnet-beta answers the same call
+// normally. Unclassified, the envelope reached the caller as the chain's verdict,
+// so both leak scanners, whose cursors age past PublicNode's window, stopped
+// reading every controlled wallet for six days. Disposition: fail this request
+// over and charge the lane NOTHING, because the same lane serves the same method
+// for any cursor it does hold. A signature no node holds still fails, just after
+// the whole chain has been asked.
+const JSONRPC_HISTORY_NOT_ON_NODE = -32020;
+
 // A provider that refuses one call shape: by paid-tier gate, by policy, or by
 // switching the method off: answers with a method-shaped JSON-RPC error, and the
 // dangerous variant answers HTTP 200 so no status-driven rotation fires. Measured
@@ -1176,6 +1189,19 @@ export function classifyRpcBody(body) {
 				log: `200 + node internal error -32603 ${msg.slice(0, 48)}`.trim(),
 				bodyText: msg,
 				methodBlock: true,
+			};
+		}
+		// History this node does not hold (see JSONRPC_HISTORY_NOT_ON_NODE). Another
+		// lane may hold it, and this lane is healthy, so `noPenalty` rotates without
+		// cooling or demoting anything.
+		if (hasError && item.error?.code === JSONRPC_HISTORY_NOT_ON_NODE) {
+			const msg = String(item.error?.message || '');
+			return {
+				status: 502,
+				reason: 'history not on node',
+				log: `200 + history not on node -32020 ${msg.slice(0, 48)}`.trim(),
+				bodyText: msg,
+				noPenalty: true,
 			};
 		}
 	}
@@ -1599,7 +1625,7 @@ export function makeRotatingFetch(endpoints) {
 				}
 				const bad = classifyRpcBody(okBody);
 				if (bad) {
-					penalise(url, bad.status, bad.bodyText || '', bad.methodBlock === true, bad.log);
+					if (!bad.noPenalty) penalise(url, bad.status, bad.bodyText || '', bad.methodBlock === true, bad.log);
 					return { error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`) };
 				}
 				// Body already consumed above; hand the caller a fresh Response carrying
