@@ -71,16 +71,29 @@ function loadServiceCredentials() {
 }
 
 const TWEET_FIELDS = ['public_metrics', 'created_at', 'article', 'note_tweet', 'entities', 'referenced_tweets', 'conversation_id', 'author_id', 'in_reply_to_user_id'];
+// The quotes endpoint can hand back a page it already served, so a post is
+// kept once by id, and the walk stops after a full page brings nothing new.
+const PAGE_SIZE = 100;
 const READER_QUERY = {
 	'tweet.fields': ['public_metrics', 'created_at', 'note_tweet', 'referenced_tweets', 'author_id', 'in_reply_to_user_id'],
 	expansions: ['author_id'],
 	'user.fields': ['username', 'name', 'public_metrics', 'verified'],
-	max_results: 100,
+	max_results: PAGE_SIZE,
 };
 
 async function collect(paginator) {
 	const posts = [];
-	for await (const post of paginator) posts.push(post);
+	const seen = new Set();
+	let repeats = 0;
+	for await (const post of paginator) {
+		if (seen.has(post.id)) {
+			if (++repeats >= PAGE_SIZE) break;
+			continue;
+		}
+		repeats = 0;
+		seen.add(post.id);
+		posts.push(post);
+	}
 	const users = new Map((paginator.includes?.users || []).map((u) => [u.id, u]));
 	// A repost of a post that quotes the Article comes back from the quotes
 	// endpoint too. It carries no words of its own, so it is not a response.
