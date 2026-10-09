@@ -31,6 +31,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [llms.txt](https://three.ws/llms.txt): Curated AI-agent index (llmstxt.org convention): the official domain, accounts and $THREE mint, the machine-readable entry points, and the key pages, with llms-full.txt for the complete list.
 - [llms-full.txt](https://three.ws/llms-full.txt): Expanded llms.txt with full descriptions and content hints.
 - [skill.md](https://three.ws/skill.md): The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
+- [grok-skill.md](https://three.ws/grok-skill.md): The three.ws skill for Grok and Grok Bot: the connector that adds a free 3D studio, runnable curl calls for a Grok with no connector, the links every model comes back with, what needs an account, and the rule that it never spends. Upload it to Grok's Skills.
 - [robots.txt](https://three.ws/robots.txt): Crawler directives.
 - [OpenAPI](https://three.ws/openapi.json): Machine-readable HTTP API spec.
 - [.well-known/x402](https://three.ws/.well-known/x402): x402 paid-API discovery document.
@@ -56,7 +57,8 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Developers
 
-- [Connect three.ws to Claude, ChatGPT, Cursor & VS Code](https://three.ws/connect): Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+- [Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code](https://three.ws/connect): Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+- [three.ws for Grok Bot: a free 3D studio and a body for Grok](https://three.ws/grok): Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
 - [MCP Tool Catalog](https://three.ws/mcp-tools): Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.
 - [Docs · Start Here](https://three.ws/docs/start-here): Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.
 - [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
@@ -96,6 +98,6 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (925), grouped by section, with full descriptions.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (929), grouped by section, with full descriptions.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

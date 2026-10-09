@@ -5,6 +5,11 @@
 // issues the Mcp-Session-Id the server keys its quota on), tools/call, then
 // check_job until the model lands. Every request and answer goes into the
 // visible transcript, so what you watch is what Grok sees.
+//
+// The Grok Bot setup tab is the shared connector card (src/grok-connector.js),
+// the same component /connect shows in its Grok Bot tab.
+
+import { GROK_ENDPOINT, mountGrokConnector } from './grok-connector.js';
 
 const ENDPOINT = '/api/mcp-grok';
 const POLL_MIN_S = 5;
@@ -385,9 +390,13 @@ async function loadTools() {
 
 const STRIP_COUNT = 6;
 
+// The render endpoint fetches the GLB itself, so it can only draw a public
+// https one. Anything else (a dev server's same-origin proxy path) shows the
+// concept image the model was sculpted from.
 function posterFor(item) {
-	const glb = item.web_glb_url || item.glb_url;
-	return `/api/render/glb?glbUrl=${encodeURIComponent(glb)}`;
+	const glb = new URL(item.web_glb_url || item.glb_url, location.href);
+	if (glb.protocol === 'https:') return `/api/render/glb?glbUrl=${encodeURIComponent(glb.href)}`;
+	return item.preview_image_url || '';
 }
 
 async function loadStrip() {
@@ -410,7 +419,7 @@ async function loadStrip() {
 			strip.replaceChildren();
 			note.hidden = false;
 			note.removeAttribute('data-tone');
-			note.textContent = 'Nothing has been generated in a while. Be the first: try the demo above.';
+			note.textContent = 'Nothing has been generated in a while. Be the first: try the demo below.';
 			return;
 		}
 		strip.replaceChildren(
@@ -424,7 +433,8 @@ async function loadStrip() {
 				img.width = 240;
 				img.height = 240;
 				img.alt = item.prompt ? `3D model: ${item.prompt}` : 'A 3D model made on three.ws';
-				img.src = posterFor(item);
+				const poster = posterFor(item);
+				if (poster) img.src = poster;
 				// The render endpoint draws the GLB itself; if it cannot, the concept
 				// image the model was sculpted from is the next best picture of it.
 				img.addEventListener('error', () => {
@@ -451,8 +461,73 @@ async function loadStrip() {
 	}
 }
 
+// ── Grok Bot connector card ──────────────────────────────────────────────
+
+// The card renders at once for the Grok server, anonymous, which is how it
+// connects with no credential. The server directory then supplies its sign-in
+// URL, which adds the card's "your agents on the same URL" block. If the
+// directory is unreachable the anonymous settings shown are still correct.
+async function mountConnector() {
+	const card = mountGrokConnector($('gk-grok-card'), { source: false });
+	card.update({ endpoint: GROK_ENDPOINT, auth: 'none' });
+	try {
+		const res = await fetch('/.well-known/mcp.json', { headers: { accept: 'application/json' } });
+		if (!res.ok) return;
+		const dir = await res.json();
+		const entry = (dir?.servers || []).find((s) => s.endpoint === GROK_ENDPOINT);
+		if (!entry) return;
+		const signIn = typeof entry.signIn === 'string' && entry.signIn.startsWith('https://') ? entry.signIn : null;
+		card.update({ endpoint: entry.endpoint, auth: entry.auth, signIn });
+	} catch {
+		// Offline or blocked: keep the anonymous settings already on screen.
+	}
+}
+
+// ── skill file contents ──────────────────────────────────────────────────
+
+async function loadSkill() {
+	const list = $('gk-skill-list');
+	const note = $('gk-skill-note');
+	list.hidden = false;
+	list.setAttribute('aria-busy', 'true');
+	note.hidden = true;
+	try {
+		const res = await fetch('/grok-skill.md', { headers: { accept: 'text/markdown, text/plain' } });
+		if (!res.ok) throw new Error(`the file answered ${res.status}`);
+		const headings = (await res.text()).split('\n').filter((line) => line.startsWith('## ')).map((line) => line.slice(3).trim());
+		if (!headings.length) {
+			list.hidden = true;
+			note.hidden = false;
+			note.removeAttribute('data-tone');
+			note.textContent = 'The file has no sections to preview. Open it to read it whole.';
+			return;
+		}
+		list.replaceChildren(
+			...headings.map((text) => {
+				const li = document.createElement('li');
+				li.textContent = text;
+				return li;
+			}),
+		);
+	} catch (err) {
+		list.hidden = true;
+		note.hidden = false;
+		note.dataset.tone = 'error';
+		note.textContent = `Could not preview the file (${err?.message || 'network error'}). The links below still work. `;
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.textContent = 'Try again';
+		retry.addEventListener('click', loadSkill, { once: true });
+		note.append(retry);
+	} finally {
+		list.setAttribute('aria-busy', 'false');
+	}
+}
+
 wireCopy();
 wireTabs();
+mountConnector();
 loadStrip();
 startDemo();
+loadSkill();
 loadTools();

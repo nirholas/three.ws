@@ -22,13 +22,13 @@ without ever being able to spend.
 Grok Bot adds a custom MCP server from chat. Send:
 
 ```
-Add a custom MCP server called three-ws at https://three.ws/api/mcp-grok
+Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok
 ```
 
 Say "custom server" (the sentence above does), or Grok Bot may look for a
 marketplace plugin instead. It shows the name and URL and asks you to confirm.
 No sign-in card appears, because there is nothing to sign in to. Then ask for 3D
-in any task, or attach the server with `@three-ws`:
+in any task, or attach the server with `@three-ws-grok`:
 
 - "Make a 3D model of a reusable rocket booster with grid fins, then send me the viewer link and the GLB."
 - "Give yourself a body: forge a friendly white robot, save it as your persona, and say hello to me with it."
@@ -190,7 +190,8 @@ stops to ask, and ends with the plain links Grok hands back.
 | `agent-report` | `agentId` (optional) | Signed in only: a read-only status of your agents (activity, runs, cost, earnings, wallet state) and what needs attention. |
 
 A schedule such as "every morning, run the `daily-3d-brief` prompt from
-three-ws and send me the links" is all it takes. Anonymous, the connector lists
+three-ws-grok and send me the links" is all it takes. [three.ws/grok](/grok#gk-recipes-h)
+has three of these as copy-ready recipes, each with the calls it makes in order. Anonymous, the connector lists
 the first four; signed in, it adds `agent-report`. Each prompt is written out as
 its calls in [MCP use cases](./mcp.md#use-cases), and
 [`api/_mcp/prompts.js`](../api/_mcp/prompts.js) renders them against the

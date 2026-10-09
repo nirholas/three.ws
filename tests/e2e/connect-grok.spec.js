@@ -8,7 +8,8 @@ import { test, expect } from '@playwright/test';
 // the real page against the real server directory (/.well-known/mcp.json):
 // the tab opens by click, by keyboard and by ?client=grok, the URL and the
 // authentication follow every server choice, and the copy button puts the
-// picked server's URL on the clipboard.
+// picked server's URL on the clipboard. The panel is the shared connector
+// card (src/grok-connector.js) that /grok mounts too.
 
 const GROK = 'https://three.ws/api/mcp-grok';
 
@@ -36,14 +37,16 @@ test.describe('/connect Grok Bot tab', () => {
 		const panel = page.locator('#panel-grok');
 		await expect(panel).toBeVisible();
 		await expect(page.locator('#panel-claude')).toBeHidden();
-		await expect(panel.locator('.cn-settings')).toContainText('Streamable HTTP');
-		await expect(panel.locator('.cn-callout')).toContainText('localhost');
+		await expect(panel.locator('.gc-settings')).toContainText('Streamable HTTP');
+		await expect(panel.locator('.gc-callout')).toContainText('localhost');
+		// The tab sends a Grok Bot user on to the landing page that shows what it can do.
+		await expect(panel.locator('a[href="/grok"]')).toHaveCount(1);
 
 		// The default server needs sign-in, so the form asks for OAuth.
-		await expect(page.locator('#cn-grok-url')).toHaveText('https://three.ws/api/mcp');
+		await expect(page.locator('#gc-url')).toHaveText('https://three.ws/api/mcp');
 		await expect(panel.locator('[data-grok-auth="oauth"]')).toBeVisible();
 		await expect(panel.locator('[data-grok-auth="none"]')).toBeHidden();
-		await expect(page.locator('#cn-grok-say')).toHaveText(
+		await expect(page.locator('#gc-say')).toHaveText(
 			'Add a custom MCP server called three-ws-main at https://three.ws/api/mcp with OAuth authentication',
 		);
 
@@ -62,13 +65,13 @@ test.describe('/connect Grok Bot tab', () => {
 		await expect(page.locator(`.cn-server[data-endpoint="${GROK}"]`)).toHaveAttribute('aria-checked', 'true', { timeout: 60_000 });
 
 		const panel = page.locator('#panel-grok');
-		await expect(page.locator('#cn-grok-url')).toHaveText(GROK);
-		await expect(page.locator('#cn-grok-name')).toHaveText('three-ws-grok');
+		await expect(page.locator('#gc-url')).toHaveText(GROK);
+		await expect(page.locator('#gc-name')).toHaveText('three-ws-grok');
 		await expect(panel.locator('[data-grok-auth="none"]')).toBeVisible();
 		await expect(panel.locator('[data-grok-auth="oauth"]')).toBeHidden();
-		await expect(page.locator('#cn-grok-signin-url')).toHaveText(`${GROK}?auth=oauth`);
-		await expect(page.locator('#cn-grok-suggest')).toBeHidden();
-		await expect(page.locator('#cn-grok-say')).toHaveText(`Add a custom MCP server called three-ws-grok at ${GROK}`);
+		await expect(page.locator('#gc-signin-url')).toHaveText(`${GROK}?auth=oauth`);
+		await expect(page.locator('#gc-suggest')).toBeHidden();
+		await expect(page.locator('#gc-say')).toHaveText(`Add a custom MCP server called three-ws-grok at ${GROK}`);
 		expect(errors).toEqual([]);
 	});
 
@@ -80,7 +83,7 @@ test.describe('/connect Grok Bot tab', () => {
 		await expect(servers.first()).toBeVisible({ timeout: 60_000 });
 
 		// Off the Grok server, the panel offers to switch to it.
-		await expect(page.locator('#cn-grok-suggest')).toBeVisible();
+		await expect(page.locator('#gc-suggest')).toBeVisible();
 
 		const count = await servers.count();
 		expect(count).toBeGreaterThan(1);
@@ -88,9 +91,9 @@ test.describe('/connect Grok Bot tab', () => {
 			const server = servers.nth(i);
 			const endpoint = await server.getAttribute('data-endpoint');
 			await server.click();
-			await expect(page.locator('#cn-grok-url')).toHaveText(endpoint);
-			await page.locator('#cn-grok-copy').click();
-			await expect(page.locator('#cn-grok-copy')).toHaveAttribute('data-copied', 'true');
+			await expect(page.locator('#gc-url')).toHaveText(endpoint);
+			await page.locator('#gc-copy').click();
+			await expect(page.locator('#gc-copy')).toHaveAttribute('data-copied', 'true');
 			expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(endpoint);
 
 			// Exactly one authentication answer shows, and it matches the pill.
@@ -98,14 +101,14 @@ test.describe('/connect Grok Bot tab', () => {
 			const expected = pill === 'free' ? 'none' : pill === 'x402' ? 'key' : 'oauth';
 			await expect(page.locator(`[data-grok-auth="${expected}"]`)).toBeVisible();
 			await expect(page.locator('[data-grok-auth]:visible')).toHaveCount(1);
-			await expect(page.locator('#cn-grok-copy')).not.toHaveAttribute('data-copied', 'true', { timeout: 5_000 });
+			await expect(page.locator('#gc-copy')).not.toHaveAttribute('data-copied', 'true', { timeout: 5_000 });
 		}
 
 		// The suggestion button switches the whole page to the Grok server.
 		await servers.first().click();
-		await page.locator('#cn-grok-use').click();
+		await page.locator('#gc-use').click();
 		await expect(page.locator(`.cn-server[data-endpoint="${GROK}"]`)).toHaveAttribute('aria-checked', 'true');
-		await expect(page.locator('#cn-grok-url')).toHaveText(GROK);
+		await expect(page.locator('#gc-url')).toHaveText(GROK);
 		await expect(page).toHaveURL(/[?&]server=three-ws-grok\b/);
 		expect(errors).toEqual([]);
 	});

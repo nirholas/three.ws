@@ -31,7 +31,7 @@
 			},
 			{
 				"title": "Developers",
-				"paths": ["/connect", "/mcp-tools", "/docs/start-here", "/docs/mcp", "/docs/cli", "/docs/api-reference", "/avatar-sdk", "/3d", "/crypto-api", "/docs/x402", "/x402", "/docs/skills", "/prompts"]
+				"paths": ["/connect", "/grok", "/mcp-tools", "/docs/start-here", "/docs/mcp", "/docs/cli", "/docs/api-reference", "/avatar-sdk", "/3d", "/crypto-api", "/docs/x402", "/x402", "/docs/skills", "/prompts"]
 			},
 			{
 				"title": "Economy and $THREE",
@@ -5699,6 +5699,14 @@
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-09-29"
+				},
+				{
+					"path": "/grok",
+					"title": "three.ws for Grok Bot: a free 3D studio and a body for Grok",
+					"description": "Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-10-09"
 				},
 				{
 					"path": "/mcp-tools",

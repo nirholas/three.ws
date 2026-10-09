@@ -17,10 +17,10 @@ three.ws is a free 3D studio for Grok. From one sentence or one photo it makes a
 Send Grok Bot this sentence:
 
 ```
-Add a custom MCP server called three-ws at {{GROK_MCP}}
+Add a custom MCP server called three-ws-grok at {{GROK_MCP}}
 ```
 
-Say "custom server", as the sentence does, or Grok Bot may look for a marketplace plugin instead. It shows the name and URL and asks you to confirm. Transport is Streamable HTTP and authentication is None, so no sign-in card appears. Then ask for 3D in any task, or attach the server with `@three-ws`.
+Say "custom server", as the sentence does, or Grok Bot may look for a marketplace plugin instead. It shows the name and URL and asks you to confirm. Transport is Streamable HTTP and authentication is None, so no sign-in card appears. Then ask for 3D in any task, or attach the server with `@three-ws-grok`.
 
 On a paid Grok plan, a custom connector in **Connectors** takes the same URL with authentication off. In the xAI Responses API, pass it as a remote MCP tool: `{"type": "mcp", "server_url": "{{GROK_MCP}}", "server_label": "three-ws"}`.
 
@@ -42,7 +42,7 @@ What the connector does:
 
 **Retries never generate twice.** Pass your own `idempotency_key` on every generation (for a scheduled task: the task id plus the date). Calling again with the same key within 24 hours returns the first call's job instead of starting another model.
 
-**Scheduled tasks.** The connector serves guided MCP prompts written for runs with nobody watching: `{{prompt:agent-get-started}}`, `{{prompt:daily-3d-brief}}`, `{{prompt:asset-pack}}`, `{{prompt:avatar-from-photo}}`, and, signed in, `{{prompt:agent-report}}`. "Every morning, run the {{prompt:daily-3d-brief}} prompt from three-ws and send me the links" is a complete schedule.
+**Scheduled tasks.** The connector serves guided MCP prompts written for runs with nobody watching: `{{prompt:agent-get-started}}`, `{{prompt:daily-3d-brief}}`, `{{prompt:asset-pack}}`, `{{prompt:avatar-from-photo}}`, and, signed in, `{{prompt:agent-report}}`. "Every morning, run the {{prompt:daily-3d-brief}} prompt from three-ws-grok and send me the links" is a complete schedule.
 
 ## No connector: plain HTTPS
 

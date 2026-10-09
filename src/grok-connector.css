@@ -1,0 +1,90 @@
+/* The Grok Bot custom MCP connector card (src/grok-connector.js), shared by
+   /connect's Grok Bot tab and /grok. Everything it renders is styled here, so
+   it looks the same inside either page's panel. Tokens from public/tokens.css. */
+
+.gc { display: block; }
+.gc [hidden] { display: none !important; }
+.gc a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.gc a:hover { color: var(--ink-bright, var(--ink)); }
+.gc code { font-family: var(--font-mono, ui-monospace, monospace); }
+
+.gc-lede { margin: 0 0 14px; font-size: 0.92rem; line-height: 1.6; color: var(--ink-dim); max-width: 72ch; }
+.gc-lede strong { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+
+.gc-note { margin: 0 0 14px; font-size: 0.84rem; line-height: 1.55; color: var(--ink-dim); max-width: 72ch; }
+.gc-note strong { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+.gc-link {
+	font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer;
+	text-decoration: underline; text-underline-offset: 3px; font-weight: 650;
+}
+.gc-link:hover { color: var(--ink-bright, var(--ink)); }
+.gc-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+.gc-btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none;
+	font: inherit; font-size: 0.78rem; font-weight: 650; padding: 6px 12px; cursor: pointer;
+	color: var(--btn-secondary-fg, var(--ink)); background: var(--btn-secondary-bg, var(--surface-3));
+	border: 1px solid var(--btn-secondary-border, var(--stroke-strong)); border-radius: var(--radius-md, 10px);
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant, 80ms) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.gc-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
+.gc-btn:active { transform: translateY(1px); }
+.gc-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gc-btn[data-copied="true"] { color: var(--success); }
+
+.gc-settings { margin: 0 0 14px; display: grid; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); overflow: hidden; max-width: 760px; }
+.gc-settings > div { display: grid; grid-template-columns: 150px 1fr; align-items: center; border-top: 1px solid var(--stroke); }
+.gc-settings > div:first-child { border-top: 0; }
+.gc-settings dt { align-self: stretch; display: flex; align-items: center; padding: 11px 14px; font-size: 0.74rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); background: var(--surface-1, rgba(255,255,255,0.03)); border-right: 1px solid var(--stroke); }
+.gc-settings dd { margin: 0; min-width: 0; padding: 10px 14px; font-size: 0.9rem; line-height: 1.5; color: var(--ink); }
+.gc-settings dd strong { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+.gc-settings code { font-size: 0.88rem; color: var(--ink-bright, var(--ink)); }
+.gc-settings-url { display: flex; align-items: center; gap: 10px; }
+.gc-settings-url code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; }
+
+.gc-account { margin: 0 0 14px; max-width: 760px; }
+.gc-account .gc-note { margin: 0; }
+.gc-url {
+	display: flex; align-items: stretch; margin-top: 10px; overflow: hidden;
+	border: 1px solid var(--stroke-strong); border-radius: var(--radius-md, 10px); background: var(--surface-2, rgba(255,255,255,0.05));
+}
+.gc-url-label { flex: none; display: grid; place-items: center; min-width: 76px; padding: 0 12px; font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); border-right: 1px solid var(--stroke); }
+.gc-url code { flex: 1; min-width: 0; padding: 11px 14px; font-size: 0.88rem; color: var(--ink-bright, var(--ink)); overflow-x: auto; white-space: nowrap; }
+.gc-url .gc-btn { border-radius: 0; border-width: 0 0 0 1px; padding: 0 14px; }
+
+.gc-say { margin: 0 0 14px; max-width: 760px; }
+.gc-say-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 6px; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); }
+.gc-say-head .gc-btn { text-transform: none; letter-spacing: 0; }
+.gc-say pre {
+	margin: 0; padding: 13px 14px; font-size: 0.84rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+	color: var(--ink-bright, var(--ink)); background: var(--bg-1, rgba(0,0,0,0.3)); border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+}
+
+.gc-list { margin: 0; padding: 0 0 0 20px; display: grid; gap: 8px; font-size: 0.9rem; line-height: 1.55; color: var(--ink); max-width: 72ch; }
+.gc-list li::marker { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.gc-list strong { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+.gc-list code { font-size: 0.84rem; padding: 1px 5px; border-radius: 5px; background: var(--surface-1, rgba(255,255,255,0.05)); }
+
+.gc-callout {
+	margin: 16px 0 0; max-width: 72ch; padding: 11px 14px; font-size: 0.86rem; line-height: 1.55; color: var(--ink);
+	border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); border-left-width: 3px; border-radius: var(--radius-md, 10px);
+	background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+.gc-callout strong { color: var(--ink-bright, var(--ink)); }
+.gc-callout code { font-size: 0.84rem; padding: 1px 5px; border-radius: 5px; background: var(--surface-1, rgba(255,255,255,0.05)); }
+
+.gc-src { margin: 14px 0 0; font-size: 0.78rem; line-height: 1.55; color: var(--ink-faint, var(--ink-dim)); max-width: 72ch; }
+
+@media (max-width: 640px) {
+	.gc-settings > div { grid-template-columns: 1fr; }
+	.gc-settings dt { padding: 8px 14px 0; background: none; border-right: 0; }
+	.gc-settings dd { padding-top: 4px; }
+	.gc-settings-url { flex-wrap: wrap; }
+	.gc-url { flex-wrap: wrap; }
+	.gc-url-label { flex-basis: 100%; place-items: start; padding: 9px 14px 0; border-right: 0; }
+	.gc-url code { padding-top: 6px; }
+	.gc-url .gc-btn { flex-basis: 100%; padding: 10px; border-width: 1px 0 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.gc-btn { transition: none; }
+}

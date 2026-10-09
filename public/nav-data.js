@@ -842,6 +842,12 @@ export const NAV_GROUPS = [
 						desc: 'One URL adds three.ws to Claude, ChatGPT, Cursor or VS Code',
 					},
 					{
+						title: 'three.ws for Grok Bot',
+						href: '/grok',
+						tier: 'advanced',
+						desc: 'Give Grok Bot a 3D studio: models, rigged avatars, assets and your agents',
+					},
+					{
 						title: 'MCP Tool Catalog',
 						href: '/mcp-tools',
 						tier: 'advanced',
