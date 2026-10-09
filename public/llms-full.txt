@@ -116,6 +116,12 @@ URL: https://three.ws/wardrobe
 
 The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.
 
+### CAD Forge
+
+URL: https://three.ws/cad
+
+Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.
+
 ### Diorama
 
 URL: https://three.ws/diorama
@@ -2554,6 +2560,12 @@ The five steps between typing a prompt and downloading a 3D model: reference ima
 URL: https://three.ws/docs/image-to-3d
 
 Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.
+
+### Docs · CAD Forge (text to parametric CAD)
+
+URL: https://three.ws/docs/cad-forge
+
+How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.
 
 ### Docs · Diorama (text to world)
 

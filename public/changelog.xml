@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>CAD Forge</title>
+			<link>https://three.ws/cad</link>
+			<guid isPermaLink="false">2026-10-09:CAD Forge</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.</description>
+		</item>
+		<item>
+			<title>Docs · CAD Forge (text to parametric CAD)</title>
+			<link>https://three.ws/docs/cad-forge</link>
+			<guid isPermaLink="false">2026-10-09:Docs · CAD Forge (text to parametric CAD)</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.</description>
+		</item>
+		<item>
 			<title>A paid call that fails after payment now tells you to retry, not to pay again</title>
 			<link>https://three.ws/docs/x402</link>
 			<guid isPermaLink="false">2026-10-09:A paid call that fails after payment now tells you to retry, not to pay again</guid>
@@ -21,6 +37,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Agent MCP server now has a pay_quote tool. It asks a paid x402 endpoint what it charges without paying, and shows who gets paid, how much, in which token and on which chain, which wallet pays, the per-call limit, and anything that would stop the payment. pay_and_call needs the quote_id it returns plus an explicit confirm_payment, so an assistant always shows you the price before your agent wallet pays. One approval pays one call. Before this, turning pay_and_call on still left it refusing every call, because the quote step it requires did not exist.</description>
+		</item>
+		<item>
+			<title>Agents can now design real CAD parts</title>
+			<link>https://three.ws/docs/cad-forge</link>
+			<guid isPermaLink="false">2026-10-09:Agents can now design real CAD parts</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Two new tools on the 3D Studio MCP server bring CAD Forge to any agent. cad_generate turns a description into a parametric part that the OpenCascade kernel has built, and returns STEP, STL and GLB files, a drawing, exact measurements and a page with dimension sliders. cad_rebuild changes any dimension and rebuilds the part exactly, with no AI guesswork. They are free with a three.ws sign-in and work in Claude, Cursor or any MCP client.</description>
 		</item>
 		<item>
 			<title>Cloud agents get their own free 3D budget with a connector link</title>

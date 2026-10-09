@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T03:49:07.094Z",
+	"generated_at": "2026-10-09T04:01:30.929Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -251,6 +251,16 @@
 					"title": "Wardrobe",
 					"description": "The open garment catalog for 3D avatars: browse every wearable, inspect it in 3D, and generate new pieces from a text prompt. Every piece binds to any humanoid avatar at runtime.",
 					"added": "2026-07-26",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/cad",
+					"title": "CAD Forge",
+					"description": "Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -4243,6 +4253,16 @@
 					"title": "Docs · Image to 3D",
 					"description": "Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
 					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/cad-forge",
+					"title": "Docs · CAD Forge (text to parametric CAD)",
+					"description": "How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

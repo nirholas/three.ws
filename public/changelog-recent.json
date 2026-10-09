@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-10-09T03:49:07.130Z",
+	"generated_at": "2026-10-09T04:01:30.962Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3846,
+	"total": 3851,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "CAD Forge",
+			"summary": "Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.",
+			"link": "/cad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Docs · CAD Forge (text to parametric CAD)",
+			"summary": "How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.",
+			"link": "/docs/cad-forge",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-09",
 			"type": "update",
@@ -29,6 +49,16 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Agents can now design real CAD parts",
+			"summary": "Two new tools on the 3D Studio MCP server bring CAD Forge to any agent. cad_generate turns a description into a parametric part that the OpenCascade kernel has built, and returns STEP, STL and GLB files, a drawing, exact measurements and a page with dimension sliders. cad_rebuild changes any dimension and rebuilds the part exactly, with no AI guesswork. They are free with a three.ws sign-in and work in Claude, Cursor or any MCP client.",
+			"link": "/docs/cad-forge",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -77,6 +107,16 @@
 		{
 			"date": "2026-10-09",
 			"type": "update",
+			"title": "One Grok Bot connector for 3D and your agents",
+			"summary": "https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Sign the same URL in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, or give it an API key, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading or launch tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.",
+			"link": "/docs/grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
 			"title": "Paired coins: launch a coin on Robinhood Chain that trades against up to five assets at once",
 			"summary": "A paired coin trades in up to five markets at the same time, each its own bonding curve: tokenized stocks, WETH, stablecoins or chain coins, in whatever split you choose. Every curve opens on a virtual reserve, so launching costs only a small flat ETH fee plus gas, and the creator never needs to hold the assets the coin pairs with. Liquidity never migrates and nobody can pull it, and the creator earns 70% of every swap fee in each asset the coin trades in, claimable in one transaction. Browse every paired coin with its pools priced in dollars, a chart per pool and every trade at /markets/robinhood/paired, and trade one from your own wallet with exact-amount approvals and slippage protection. At /launch/paired your agent launches one from its own wallet: a live quote shows each pool's opening value, the fee, gas and an optional opening buy that lands in the same transaction, and the launch runs through the agent's spend limits. Bots can do the same with two API calls, agents with the new paired-launch skill, and AI clients through the paired MCP tools. The developer guide is at /docs/paired-coins.",
 			"link": "/markets/robinhood/paired",
@@ -92,6 +132,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Splitting a model into parts says plainly when it cannot read an FBX",
+			"summary": "The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.",
+			"link": "/forge",
+			"tags": [
 				"fix"
 			]
 		},
@@ -1508,56 +1558,6 @@
 			"link": "/trades",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-17",
-			"type": "launch",
-			"title": "Agent Wallet Agreement",
-			"summary": "The agreement governing every agent wallet: experimental custodial software, deposits by anyone at their own risk, no insurance, no guaranteed withdrawal or recovery, and no liability for lost funds.",
-			"link": "/legal/agent-wallet",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-17",
-			"type": "launch",
-			"title": "Docs · Doc freshness, keeping docs true to the code",
-			"summary": "Every doc is bound to the code it names, and git decides whether that code moved after the page was last written or last reviewed. How the measurement works, what each status means, how to record that you checked a page, and where the check runs.",
-			"link": "/docs/doc-freshness",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-17",
-			"type": "launch",
-			"title": "Docs · Smart glasses, agents on your lens",
-			"summary": "Wear smart glasses and the world tells you an agent is standing thirty metres away. How three.ws splits the work: the lens carries the signal, the phone carries the 3D body, and the presence-gated IRL rail carries the truth.",
-			"link": "/docs/glasses",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-17",
-			"type": "launch",
-			"title": "Pending settlement: the third answer an x402 settle can give",
-			"summary": "Broadcasting a Solana payment and confirming it are separate events, so a settle has three outcomes, not two. What settlement_pending means for a buyer, how our facilitator guarantees one authorization never produces two transactions, and the reconciler that closes the books.",
-			"link": "/docs/x402-settlement-pending",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-17",
-			"type": "launch",
-			"title": "Real-Funds Agreements",
-			"summary": "Sign, and review your signatures on, the Terms of Service, Risk Disclosure, and Agent Wallet Agreement required before any real-funds action.",
-			"link": "/legal/agreements",
-			"tags": [
-				"launch"
 			]
 		}
 	]
