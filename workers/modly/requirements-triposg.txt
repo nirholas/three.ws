@@ -24,9 +24,11 @@ pymeshlab==2023.12.post2
 scikit-image==0.24.0
 opencv-python-headless==4.10.0.84
 rembg==2.0.59
-onnxruntime-gpu==1.20.1
-# diso builds with --no-build-isolation, so its build-time imports live here.
+onnxruntime-gpu==1.20.0
+# diso builds with --no-build-isolation, so its build-time imports and the
+# CMake it drives live here.
 pybind11==2.13.6
+cmake==3.31.6
 ninja==1.11.1.1
 setuptools==75.8.0
 wheel==0.45.1
