@@ -57,7 +57,11 @@ describe('buildModelName', () => {
 
 describe('buildTags', () => {
 	it('always includes the AI disclosure tag first', () => {
-		expect(buildTags()[0]).toBe('ai-generated');
+		expect(buildTags()[0]).toBe('createdwithai');
+	});
+
+	it('keeps the descriptive ai-generated tag for search', () => {
+		expect(buildTags()).toContain('ai-generated');
 	});
 
 	it('appends the model category as a slug', () => {

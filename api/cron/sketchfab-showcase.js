@@ -22,7 +22,7 @@
 // (publish-safety.js) runs as a second, fail-open layer. A blocked creation is
 // parked in the ledger with status 'blocked' so it is never re-picked.
 //
-// Every upload is tagged `ai-generated`, carries the source prompt, and
+// Every upload carries Sketchfab's `createdwithai` disclosure tag, carries the source prompt, and
 // backlinks to the creation's share page + /forge with UTM parameters
 // (utm_source=sketchfab) so referral conversion is measurable. This is a
 // showcase, not a firehose: the per-run cap and the vote floor keep the
