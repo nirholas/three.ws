@@ -139,8 +139,21 @@ while still leaving the valve as a genuine runaway backstop.
 
 ```sh
 gcloud run services update three-ws-api --region us-central1 \
-  --project aerial-vehicle-466722-p5 --update-env-vars DB_RETENTION_HIGH_WATER_MB=8192
+  --project aerial-vehicle-466722-p5 --update-env-vars DB_RETENTION_HIGH_WATER_MB=16384
 ```
+
+**Raised to `16384` on 2026-10-09.** The footprint crossed 8192 MB on 2026-09-09 and
+reached 11,606 MB a month later (about 114 MB a day), with `neon.max_cluster_size`
+still `16TB`. For that whole month `launcher-tick`, `coin-intel-observe`,
+`smart-money-rollup`, `recompute-reputation` and `intel-learn` preflight-skipped on
+every tick, which is the "too low" failure above: the `db retention pressure valve
+engaged` ops alert fired about 2,200 times a day, nobody acted on it, and nothing was
+ingested. The growth is not the pump.fun firehose the valve sheds: the largest tables
+are outside the retention set (`oracle_training_set` 1.8 GB, `x402_self_facilitator_log`
+1.4 GB, `firewall_decisions` 1.2 GB, `usage_events` 0.7 GB, `club_tips` 0.6 GB,
+`ops_alerts` 0.5 GB). At the current rate 16384 is about six weeks of headroom, so
+re-measure before it runs out and decide retention for those tables rather than
+raising the mark again.
 
 ## Upgrade trigger
 
