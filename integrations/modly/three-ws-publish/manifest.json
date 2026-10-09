@@ -1,0 +1,53 @@
+{
+  "id": "three-ws-publish",
+  "name": "Publish to three.ws",
+  "type": "process",
+  "entry": "processor.py",
+  "version": "1.0.0",
+  "author": "three.ws",
+  "description": "Saves the incoming GLB into your three.ws account, where it gets a shareable 3D page, an embed, and an AI agent. Humanoid meshes are auto-rigged.",
+  "tags": ["publish", "share", "cloud"],
+  "nodes": [
+    {
+      "id": "publish",
+      "name": "Publish to three.ws",
+      "input": "mesh",
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "",
+          "tooltip": "Title shown on three.ws. Leave empty to use the file name."
+        },
+        {
+          "id": "visibility",
+          "label": "Visibility",
+          "type": "select",
+          "default": "private",
+          "options": [
+            { "value": "private", "label": "Private (only you)" },
+            { "value": "unlisted", "label": "Unlisted (anyone with the link)" },
+            { "value": "public", "label": "Public (listed on three.ws)" }
+          ],
+          "tooltip": "Who can open the model's page on three.ws. You can change this later from your dashboard."
+        },
+        {
+          "id": "tags",
+          "label": "Tags",
+          "type": "string",
+          "default": "modly",
+          "tooltip": "Comma-separated tags, up to 20."
+        },
+        {
+          "id": "api_key",
+          "label": "API Key",
+          "type": "string",
+          "default": "",
+          "tooltip": "A three.ws API key with the avatars:write scope (three.ws/dashboard/api). Paste it once: it is saved to your user profile, so you can clear this field before sharing the workflow. The THREE_WS_API_KEY environment variable also works."
+        }
+      ]
+    }
+  ]
+}
