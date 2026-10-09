@@ -329,8 +329,19 @@ function serveFile(req, res, file, headers, status) {
 	return new Promise((resolvePromise) => {
 		res.sendFile(rel, { dotfiles, root: DIST_ROOT }, (err) => {
 			if (err && !res.headersSent) {
-				console.error(`[static] ${req.method} ${req.url} → ${file} failed:`, err.message);
-				res.status(500).end();
+				// send() reports a request it cannot honour with that request's own
+				// 4xx: 412 when an If-Match / If-Unmodified-Since precondition fails
+				// (Cloud CDN revalidating a fill after a deploy changed the file), 416
+				// for an unsatisfiable range. Those are answers, not server faults;
+				// flattening them to 500 put /robots.txt and /hdri/studio.hdr in the
+				// 5xx log 14 times in a week and handed the edge an error to cache.
+				const status = Number(err.status || err.statusCode);
+				if (status >= 400 && status < 500) {
+					res.status(status).end();
+				} else {
+					console.error(`[static] ${req.method} ${req.url} → ${file} failed:`, err.message);
+					res.status(500).end();
+				}
 			}
 			resolvePromise();
 		});
