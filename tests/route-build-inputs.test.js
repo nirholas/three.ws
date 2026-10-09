@@ -20,8 +20,11 @@ const INPUTS = new Set([...vite.matchAll(/resolve\(__dirname,\s*'([^']+\.html)'\
 const INPUT_DIRS = [...vite.matchAll(/resolve\(__dirname,\s*'(pages\/[a-z0-9-]+)'\)/g)].map((m) => `${m[1]}/`);
 // Destinations produced by a build step rather than a source page: the docs site,
 // the blog, news, events and demo pages are generated into dist/ by their own
-// builders, and a capture-group destination ($1) names no single file.
-const GENERATED = /^(docs|blog|news|events|demos)\/|\$\d/;
+// builders, and a capture-group destination ($1) names no single file. The chat
+// sub-app is one of those: `npm run build:chat` writes chat/ into public/chat/
+// (gitignored) and copies it to dist/chat/, and check:dist fails the build when
+// /chat is missing, so a fresh clone that never built it is not a dead route.
+const GENERATED = /^(docs|blog|news|events|demos|chat)\/|\$\d/;
 
 function unbuiltDestinations() {
 	const missing = new Set();

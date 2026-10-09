@@ -1,24 +1,27 @@
 import { describe, it, expect } from 'vitest';
+import { Group, Object3D, SkinnedMesh } from 'three';
 import { AnimationManager } from '../../src/animation-manager.js';
 import { CANONICAL_BONES } from '../../src/glb-canonicalize.js';
 
-// AnimationManager.attach() builds a three AnimationMixer over the model but
-// only ever reads `.traverse`, `.isSkinnedMesh`, and `.name` for the canonical
-// support check — so a lightweight fake tree exercises the logic without
-// loading real GLB assets.
+// AnimationManager.attach() reads the model's rest pose (world matrices, rest
+// directions) as well as `.name` and `.isSkinnedMesh`, so the model must be a
+// real three.js scene graph. Plain named Object3D nodes under a Group exercise
+// the canonical support check without loading real GLB assets.
 function fakeModel(nodes) {
-	const all = [{ name: 'root' }, ...nodes];
-	return {
-		name: 'root',
-		traverse(cb) {
-			for (const n of all) cb(n);
-		},
-	};
+	const root = new Group();
+	root.name = 'root';
+	for (const node of nodes) root.add(node);
+	return root;
+}
+
+function named(node, name) {
+	node.name = name;
+	return node;
 }
 
 function boneNodes(names, { skinned = true } = {}) {
-	const nodes = names.map((name) => ({ name }));
-	if (skinned) nodes.push({ name: 'Body', isSkinnedMesh: true });
+	const nodes = names.map((name) => named(new Object3D(), name));
+	if (skinned) nodes.push(named(new SkinnedMesh(), 'Body'));
 	return nodes;
 }
 

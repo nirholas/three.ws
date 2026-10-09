@@ -130,7 +130,9 @@ if (typeof HTMLCanvasElement !== 'undefined') {
 	};
 }
 
-const GLB_PATH = path.resolve('/workspaces/three.ws/public/avatars/cz.glb');
+// Repo-relative: this file runs under jsdom, where import.meta.url is not a
+// file: URL, so resolve from the test's own directory instead.
+const GLB_PATH = path.resolve(__dirname, '../../public/avatars/cz.glb');
 
 let glbBlobToUsdzBlob;
 let glbBlobToHalfBodyBlob;

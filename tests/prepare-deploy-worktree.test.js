@@ -124,7 +124,9 @@ describe('guards (plan mode, writes nothing)', () => {
 	});
 
 	it('plans without applying by default, and says so', () => {
-		const r = plan(['--path', '/workspaces/.deploy-wt-vitest-unused']);
+		// A sibling of the repo shares its filesystem on any machine, which is the
+		// only place a hardlinked deploy tree can live.
+		const r = plan(['--path', path.join(path.dirname(ROOT), '.deploy-wt-vitest-unused')]);
 		expect(r.code).toBe(0);
 		expect(r.out).toMatch(/Plan only\. Re-run with --apply/);
 		for (const a of ARTIFACTS.filter((x) => !x.optional)) expect(r.out).toContain(a.rel);

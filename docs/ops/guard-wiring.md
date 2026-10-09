@@ -59,12 +59,15 @@ belongs on the deploy path, in `npm test`, or in an operator's hands.
 | `check:images` | Every JS-rendered `<img>` in `src/` declares a `loading` attribute | 0 | 10.6s | `gate` |
 | `audit:route-shadowing` | No `api/**` handler is unreachable behind a broader route rule | 0 | 9.3s | `gate` |
 | `check:docs-freshness` | Whether each doc's prose still matches the code it names, against the budget in `data/docs-freshness-budget.json` | 0 | 11s | `gate` |
-| `audit:deploy` | Committed symlinks, unsatisfied peers, undeclared api imports, and the Draco/KTX2 decoder assets in `dist/` | 0 | 5.2s | `deploy:gcp:submit` |
+| `check:pay-skills` | The committed `distributions/pay-skills/` provider files against a fresh projection of the service catalog, including orphaned files | 0 | 1.2s | `gate` |
+| `audit:deploy` | Committed symlinks, unsatisfied peers, undeclared api imports, an installed `node_modules` that matches `package-lock.json`, and the Draco/KTX2 decoder assets in `dist/` | 0 | 5.2s | `deploy:gcp:submit` |
 
 `audit:deploy` is the one that is not a `gate` guard despite being green, repo-only and fast.
-Three of its four checks are already covered by
+Four of its five checks are already covered by
 [tests/deploy-artifacts.test.js](../../tests/deploy-artifacts.test.js), which imports the same
-functions, so `npm test` runs them. The fourth, `findMissingDistAssets()`, returns
+functions, so `npm test` runs them. The lockfile check, `findLockDrift()`, joined them on
+2026-09-18 after a dependency bump nobody reinstalled shipped untested and every paid x402 route
+answered 500 on import. The fifth, `findMissingDistAssets()`, returns
 `{ skipped: true }` whenever `dist/` is absent, which is always true in vitest and always true
 in `gate`. It only means anything after a build, so it is wired into `deploy:gcp:submit` ahead
 of the upload, where a missing decoder asset (the /scene Draco outage) is still cheap to fix.
@@ -98,7 +101,6 @@ in both the registry and the runbook.
 | `audit:route-shadowing` | `GET /api/agents/vitals`, documented in `docs/agent-vitals.md` and announced in the changelog, resolved to `api/agents/[id].js` instead of its own handler | Explicit `vercel.json` rule above the `/api/agents/([^/]+)` catch-all |
 | `check:doc-media` | 30 problems: `scene-studio` never captured, and 29 `usedBy` claims naming docs that embedded no figure at all | Captured `scene-studio`; embedded all 20 figures with their alt text and captions in the 27 docs that claimed them |
 | `check:runnable-docs` | 8 documented curl samples no longer answered as documented | 7 declared their real contract (`<!-- runnable: 401 ... -->` for the two session-gated calls, `404`/`400` for the five illustrative ids and placeholders). The eighth is a deploy lag, below. |
-| `check:windows-widget:live` | The same Windows widget contract against what three.ws is really serving: the deployed manifest, the worker bytes, the picker assets, and whether the deployed Adaptive Card expands in the board's engine | 1 | 4.1s | **manual (post-deploy).** Its 5 findings are one defect: production serves a card whose expressions the board's own engine refuses (`Invalid expression format`), so every pinned slot draws empty. The card in this tree expands cleanly, so the fix ships with the next deploy; re-run after it. |
 
 ## Still unwired, with the reason
 
@@ -113,6 +115,7 @@ They belong to an operator, or to a post-deploy check.
 | Guard | What it checks | Exit | Runtime | Verdict |
 |---|---|---|---|---|
 | `check:runnable-docs` | Executes every runnable sample in `docs/` against the live API | 1 | 15s | **manual (post-deploy).** One finding left: `/api/v1/hood-portfolios/universe` 404s because `api/v1/hood-portfolios/universe.js` landed 2026-09-07 and production runs the 2026-09-05 image. Declaring `404` would be wrong the moment it deploys. Re-run after the next deploy. |
+| `check:windows-widget:live` | The same Windows widget contract against what three.ws is really serving: the deployed manifest, the worker bytes, the picker assets, and whether the deployed Adaptive Card expands in the board's engine | 1 | 4.1s | **manual (post-deploy).** Its 5 findings are one defect: production serves a card whose expressions the board's own engine refuses (`Invalid expression format`), so every pinned slot draws empty. The card in this tree expands cleanly, so the fix ships with the next deploy; re-run after it. |
 | `audit:seo` | Titles, descriptions, canonicals and sitemap agreement, fetched as Googlebot | 0 | 17.2s | **manual (post-deploy).** Fetches `https://three.ws`. |
 | `check:asset-encoding` | The largest compressible files under `public/`, fetched from the live site with a browser's exact `Accept-Encoding`, checking the bytes received against what the response promised | 0 | 8.4s | **manual (post-deploy).** Requests `https://three.ws`, so it measures the CDN rather than the diff: it exists because a brotli body served under an uncompressed `content-length` hung `/create/selfie` for every Chrome and Edge on 2026-09-11, and a page check never reads the largest binary on the site. Re-run after a deploy that changes a large asset. |
 | `audit:ibm-hosted` | The IBM-hosted page against a local publisher plus live three.ws | 1 | 15.7s | **manual.** Its 6 findings are all CORS refusals of `https://three.ws/*.js` from a `127.0.0.1` publisher origin, which is the harness's origin, not a page defect. Needs the real IBM origin to mean anything. |
@@ -123,6 +126,7 @@ They belong to an operator, or to a post-deploy check.
 | `audit:llm-metering` | Whether any lane that spends money reports exactly $0 | 0 | 1.7s | **manual (ops).** Reads `usage_events` from the live database; its answer is about production spend, not about the diff. |
 | `check:erc7710` | Every `DELEGATION_MANAGER_DEPLOYMENTS` address is a deployed contract | 0 | 3.0s | **manual.** `eth_getCode` against public RPCs; a third-party RPC outage would read as a red gate. |
 | `check:evm-rpc` | Every EVM RPC endpoint answers a keyless server-side POST, in priority order | 0 | 8.6s | **manual (ops).** Network by definition. |
+| `check:xai-models` | The Grok model catalog (`GROK_MODELS` in `api/_lib/chat-models.js`) against the ids, context sizes and prices xAI actually serves | 0 | 0.5s | **manual (ops).** Reads `api.x.ai` with `GROK_API_KEY` or `XAI_API_KEY`, else xAI's public model docs, so its answer moves whenever xAI ships or retires a model, not when the diff changes. Exit 2 means the source could not be read. Run it when the Grok rung of a failover chain starts erroring. |
 | `audit:deps` | The Python workers' pinned deps against the OSV vulnerability database | 1 | 16.6s | **manual (security sweep).** 285 advisories across 17 pinned versions, mostly `transformers` (two are RCE, fixed in 5.0.0 and 5.3.0). Each fix is a pin bump plus a worker image rebuild, which is its own piece of work, not a gate. |
 | `audit:upstreams:map` | Not a guard: `--map` regenerates `docs/resilience.md` | 0 | 38.6s | **manual (generator).** The guard half, `audit:upstreams`, is already in `gate`. |
 
@@ -155,7 +159,7 @@ viewports. They are pre-event, pre-release and incident tools.
 | `audit:csp` | Every CSP violation in a real browser | 2 | 6.0s | **manual (post-build).** Defaults to `127.0.0.1:8099`; it reported "25 of 25 pages never loaded, so this run proves nothing", which is the honest answer with nothing serving a built `dist/` there. Run it as `npm run audit:csp -- --base https://three.ws`. |
 | `check:home-voice` | The hands-free voice loop: wake word, barge-in, self-trigger, confirmation guards | 2 | 11.2s | **manual.** Starts its own server and drives real speech lanes. |
 | `audit:garments` | Every wardrobe garment: manifest validation, GLB hash, attach, walk-gait deviation | 1 | 133s | **manual.** Real finding: 1 hard failure and 4 review flags out of 59. Owned by [fix-queue](../../prompts/finish/_context/fix-queue-00-INDEX.md). |
-| `check:glb:payload` | The mobile payload budget for a high-resolution GLB, loaded under WebKit and Android Chrome | 1 | 17.4s | **manual.** Its script is currently untracked working-tree work belonging to another session; the run dies on `ENOENT` writing `public/_payload-check/`, which that session owns. |
+| `check:glb:payload` | The mobile payload budget for a high-resolution GLB, loaded under WebKit and Android Chrome | 1 | 17.4s | **manual.** Needs `npm run dev` serving `/avatar-embed`, one or more GLB paths as arguments, and Playwright's WebKit and Chromium. It stages derived files under the gitignored `public/_payload-check/` and exits 1 when either engine fails to render the finished GLB. The measured run predates the script being committed and died on `ENOENT` writing that directory. |
 
 ### Deterministic problems, deliberately not gated
 
@@ -169,12 +173,14 @@ viewports. They are pre-event, pre-release and incident tools.
 |---|---|
 | `check:rules` | The pre-push hook, as `--base <remote sha> --head <local sha>` per pushed ref (`scripts/setup-git-hooks.mjs:66`). Push-scoped is the point: it judges the commits leaving the machine, never the shared working tree, and it also lints each pushed commit subject. The bare npm script (17.5s) scans the whole worktree and would fail on other agents' in-flight work. |
 | `check:secrets` | The same hook, the same push-scoped mode, one line later, so no credential material leaves the machine. |
+| `check:community-skills` | `prebuild`, as `node scripts/build-community-registry.mjs --check` directly, so every build fails on a malformed community skill or a stale `community-skills/registry.json`. The npm script is the same check by hand (0.4s, green). |
+| `check:sri-pins` | `check:dist` runs the same `checkPins()` on every `build:gcp`, and [tests/agent-3d-releases.test.js](../../tests/agent-3d-releases.test.js) runs it under `npm test`. The npm script (0.4s, green) exists for `-- --fix`, which rewrites stale documented pins from `data/agent-3d-releases.json`. |
 
 ## Nothing was deleted
 
 Every guard measured here does something no other check does. `audit:deploy` was the one
-candidate for deletion, since `npm test` already imports three of its four functions, but its
-fourth check only fires after a build, so it moved to the deploy path instead of going away.
+candidate for deletion, since `npm test` already imports four of its five functions, but its
+decoder-asset check only fires after a build, so it moved to the deploy path instead of going away.
 `check:docs-search` looked like a decoy (its message told you to commit a gitignored file) and
 would have been a delete, except three open work orders under `prompts/finish/` invoke it as a
 local check; its message was corrected instead.

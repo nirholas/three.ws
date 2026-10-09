@@ -464,6 +464,27 @@
 			}
 		},
 		{
+			"id": "check-pay-skills",
+			"script": "scripts/build-pay-skills.mjs",
+			"npm": "check:pay-skills",
+			"title": "pay registry provider listings",
+			"protects": "The committed provider files under distributions/pay-skills/ are exactly what api/_lib/service-catalog/pay-skills.js generates from the service catalog today, with no stale or orphaned file.",
+			"why": "Publishing to the pay registry is a copy of this directory, and its paths, schemas and prices are projected from the same catalog and price functions the live 402 challenges use. A catalog change that nobody regenerated would publish listings that quote a price or a route production no longer serves, and an agent paying from that listing would be charged against the wrong contract.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A committed provider listing edited by hand, so it no longer matches what the catalog generates.",
+				"violation": {
+					"write": {
+						"distributions/pay-skills/providers/three-ws/3d/PAY.md": "Hand-edited listing that no catalog generated.\n"
+					}
+				},
+				"expect": "stale: distributions/pay-skills/providers/three-ws/3d/PAY.md"
+			}
+		},
+		{
 			"id": "audit-mcp-manifests",
 			"script": "scripts/audit-mcp-manifests.mjs",
 			"npm": "audit:mcp",

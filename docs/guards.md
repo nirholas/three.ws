@@ -161,6 +161,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | MCP tool catalog freshness | `npm run audit:mcp-catalog` | `public/mcp-catalog.json` matches what the MCP servers actually expose. |
 | MCP directory listing source | `npm run audit:mcp-listing` | The one file every third-party MCP directory listing is written from still matches the manifests, and no new server lands without listing copy. |
 | MCP resource and prompt listings | `npm run audit:mcp-surfaces` | Every hosted MCP server's registry manifest and `public/.well-known/mcp.json` list exactly the resources, templates and guided prompts the code serves. |
+| pay registry provider listings | `npm run check:pay-skills` | The provider files in `distributions/pay-skills/` are exactly what the service catalog generates, so a published listing never quotes a route or price production no longer serves. |
 | 3D Studio OpenAPI sync | `npm run check:studio-openapi` | The Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema the site serves. |
 | Live event window | `npm run check:event` | `public/event.json` describes an event that will actually happen, on every surface that reads it. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
