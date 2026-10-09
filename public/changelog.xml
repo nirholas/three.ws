@@ -31,6 +31,14 @@
 			<description>Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.</description>
 		</item>
 		<item>
+			<title>Connected apps: clearer sign-in screen and instant revoke</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-10-09:Connected apps: clearer sign-in screen and instant revoke</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an app such as Grok Bot asks to connect to your three.ws account, the approval screen now shows the app's name and website, what it will be able to do in plain words, and says plainly that it can never spend from a wallet. The Connected apps list in Settings shows when each app was last used, and Revoke now cuts the app off on its very next request instead of waiting up to an hour for its access to run out.</description>
+		</item>
+		<item>
 			<title>Creator rewards include fees pump.fun now holds on the curve and pool</title>
 			<link>https://three.ws/launch</link>
 			<guid isPermaLink="false">2026-10-09:Creator rewards include fees pump.fun now holds on the curve and pool</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A paired coin trades in up to five markets at the same time, each its own bonding curve: tokenized stocks, WETH, stablecoins or chain coins, in whatever split you choose. Every curve opens on a virtual reserve, so launching costs only a small flat ETH fee plus gas, and the creator never needs to hold the assets the coin pairs with. Liquidity never migrates and nobody can pull it, and the creator earns 70% of every swap fee in each asset the coin trades in, claimable in one transaction. Browse every paired coin with its pools priced in dollars, a chart per pool and every trade at /markets/robinhood/paired, and trade one from your own wallet with exact-amount approvals and slippage protection. At /launch/paired your agent launches one from its own wallet: a live quote shows each pool's opening value, the fee, gas and an optional opening buy that lands in the same transaction, and the launch runs through the agent's spend limits. Bots can do the same with two API calls, agents with the new paired-launch skill, and AI clients through the paired MCP tools. The developer guide is at /docs/paired-coins.</description>
+		</item>
+		<item>
+			<title>Remesh reads FBX files, and stylize says plainly when it cannot</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Remesh reads FBX files, and stylize says plainly when it cannot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.</description>
 		</item>
 		<item>
 			<title>The desktop companion, CLI and MCP server now work with just the bridge token</title>
