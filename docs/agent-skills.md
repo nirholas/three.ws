@@ -50,6 +50,11 @@ index is generated into [`public/skill.md`](../public/skill.md) by the same
 it is stale, so a skill added or renamed in those two categories appears there on the
 next build.
 
+Grok has its own variant, [`https://three.ws/grok-skill.md`](https://three.ws/grok-skill.md),
+rendered by the same script from [`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md).
+Both files read their URLs and limits from [`data/skill-md.facts.json`](../data/skill-md.facts.json).
+See [three.ws for Grok](./grok.md).
+
 ## Install paths
 
 ### a) As a Claude Code plugin

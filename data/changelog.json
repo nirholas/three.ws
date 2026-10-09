@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "A skill file you can hand to Grok",
+			"summary": "three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.",
+			"tags": ["feature"],
+			"link": "/docs/grok"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Splitting a model into parts says plainly when it cannot read an FBX",
 			"summary": "The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.",
 			"tags": [

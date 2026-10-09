@@ -16,13 +16,13 @@ three.ws gives AI agents a body: real 3D models and avatars, a public page, a So
 Pick the first option that fits your runtime.
 
 1. **Already have MCP?** Add a hosted server as a remote (Streamable HTTP) connector:
-   - `https://three.ws/api/mcp-studio`: free, no account. Text to 3D (`forge_free`), rigged avatars (`forge_avatar`), rigging (`rig_mesh`), talking personas.
-   - `https://three.ws/api/mcp`: the main server. Agents, wallets, memory, launches and more. Signs the user in with OAuth; there is no key to copy.
+   - `{{STUDIO_URL}}`: free, no account. Text to 3D (`forge_free`), rigged avatars (`forge_avatar`), rigging (`rig_mesh`), talking personas.
+   - `{{MAIN_URL}}`: the main server. Agents, wallets, memory, launches and more. Signs the user in with OAuth; there is no key to copy.
    - Every hosted server, with its auth, is listed at https://three.ws/.well-known/mcp.json. One-click setup for Claude, ChatGPT, Cursor and VS Code: https://three.ws/connect.
 2. **Plain HTTP?** The free server answers JSON-RPC with no auth:
 
    ```bash
-   curl -s -X POST https://three.ws/api/mcp-studio \
+   curl -s -X POST {{STUDIO_URL}} \
      -H 'content-type: application/json' \
      -H 'accept: application/json, text/event-stream' \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'

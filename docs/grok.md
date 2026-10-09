@@ -120,6 +120,24 @@ stay in the browser at [three.ws/dashboard](/dashboard). Your
 [MCP tool settings](/mcp-tools) can switch any listed tool off. This surface
 lists no widget templates and no `ui://` resources, since Grok renders none.
 
+## A skill file for Grok
+
+Grok Skills and Grok Bot can read a plain Markdown file. [`https://three.ws/grok-skill.md`](https://three.ws/grok-skill.md)
+is one written for them: what three.ws does, the sentence that adds the connector,
+runnable `curl` JSON-RPC calls for when no connector is set up (open a session,
+list tools, search the catalog, generate, collect with `check_job`), the four links
+every result carries, the free limits, what needs an account, and the spend rule.
+Upload it to Grok Skills or tell Grok Bot to read it.
+
+It is generated, not hand-written. The prose lives in
+[`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md), and the URLs
+and limits it quotes come from [`data/skill-md.facts.json`](../data/skill-md.facts.json),
+the same file the general [`skill.md`](./agent-skills.md) entry point reads, so the
+two cannot disagree. `node scripts/build-skills-pack.mjs` renders it,
+`npm run check:skills-pack` fails when it is stale, and
+`tests/grok-skill-md.test.js` checks that every URL in it resolves to a route this
+server serves and that the limits match the handler.
+
 ## What Grok gets
 
 | Tool | What it does |

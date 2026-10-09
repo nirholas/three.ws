@@ -45,7 +45,7 @@ Load the skill that matches the task. Each is a standalone `SKILL.md` per the [A
 
 - [`create-3d-avatar`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/create-3d-avatar/SKILL.md): Turn a text prompt (or reference image) into a rigged, animation-ready 3D avatar (GLB).
 - [`embed-three-ws-avatar`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/embed-three-ws-avatar/SKILL.md): Embed a live, animated three.ws 3D avatar in any website with the <agent-3d> web component.
-- [`find-3d-assets`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/find-3d-assets/SKILL.md): Search 3,492 ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file.
+- [`find-3d-assets`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/find-3d-assets/SKILL.md): Search thousands of ready-made 3D assets on three.ws (CC0 props and objects, rigged humanoid characters, motion clips) and get paste-ready code or a downloaded file.
 - [`generate-3d-model`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/generate-3d-model/SKILL.md): Turn a text prompt into a downloadable, textured 3D model (GLB).
 - [`rig-a-model`](https://raw.githubusercontent.com/nirholas/three.ws/main/.agents/skills/rig-a-model/SKILL.md): Auto-rig a static 3D GLB model into an animation-ready one.
 

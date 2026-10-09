@@ -1,0 +1,11 @@
+{
+  "_note": "Facts shared by data/skill-md.template.md and data/grok-skill-md.template.md. Both are rendered by scripts/build-skills-pack.mjs, which substitutes {{NAME}} markers from this file, so a URL or a limit is written once. tests/grok-skill-md.test.js pins the limits and the call budget to the handler that enforces them.",
+  "SITE": "https://three.ws",
+  "STUDIO_URL": "https://three.ws/api/mcp-studio",
+  "GROK_URL": "https://three.ws/api/mcp-grok",
+  "GROK_OAUTH_URL": "https://three.ws/api/mcp-grok?auth=oauth",
+  "MAIN_URL": "https://three.ws/api/mcp",
+  "BURST_LIMIT": "4",
+  "HOURLY_LIMIT": "30",
+  "CALL_BUDGET_SECONDS": "40"
+}

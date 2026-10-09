@@ -263,6 +263,27 @@ function firstSentence(text) {
 	return end === -1 ? flat : flat.slice(0, end + 1);
 }
 
+// Facts both entry-point files state (URLs, free limits) live once in
+// data/skill-md.facts.json and are substituted into {{NAME}} markers, so the
+// generic skill and the Grok skill cannot disagree. An unknown marker is a typo
+// that would ship as literal braces, so it fails the build.
+export function loadSkillFacts() {
+	const { _note, ...facts } = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'skill-md.facts.json'), 'utf8'));
+	return facts;
+}
+
+function fillFacts(text, facts, source) {
+	return text.replace(/\{\{([A-Z_]+)\}\}/g, (marker, name) => {
+		if (name === 'SKILL_INDEX') return marker;
+		if (!(name in facts)) throw new Error(`${source} uses ${marker}, which data/skill-md.facts.json does not define`);
+		return facts[name];
+	});
+}
+
+export function renderGrokSkill(template) {
+	return `${fillFacts(template, loadSkillFacts(), 'data/grok-skill-md.template.md').trimEnd()}\n`;
+}
+
 function renderRootSkill(skills, template) {
 	const sections = ROOT_SKILL_CATEGORIES.map(([category, heading]) => {
 		const rows = skills
@@ -271,7 +292,7 @@ function renderRootSkill(skills, template) {
 		return [`### ${heading}`, '', ...rows].join('\n');
 	});
 	if (!template.includes('{{SKILL_INDEX}}')) throw new Error('data/skill-md.template.md is missing its {{SKILL_INDEX}} marker');
-	return `${template.replace('{{SKILL_INDEX}}', sections.join('\n\n')).trimEnd()}\n`;
+	return `${fillFacts(template, loadSkillFacts(), 'data/skill-md.template.md').replace('{{SKILL_INDEX}}', sections.join('\n\n')).trimEnd()}\n`;
 }
 
 // Only run the generator when this file is the entry point: other scripts import
@@ -292,25 +313,30 @@ const jsonPath = path.join(SKILLS_DIR, 'skills-pack.json');
 const mdPath = path.join(SKILLS_DIR, 'SKILLS.md');
 const rootSkillPath = path.join(ROOT, 'public', 'skill.md');
 const rootSkillOut = renderRootSkill(skills, fs.readFileSync(path.join(ROOT, 'data', 'skill-md.template.md'), 'utf8'));
+const grokSkillPath = path.join(ROOT, 'public', 'grok-skill.md');
+const grokSkillOut = renderGrokSkill(fs.readFileSync(path.join(ROOT, 'data', 'grok-skill-md.template.md'), 'utf8'));
 
 if (process.argv.includes('--check')) {
 	const same =
 		fs.existsSync(jsonPath) &&
 		fs.existsSync(mdPath) &&
 		fs.existsSync(rootSkillPath) &&
+		fs.existsSync(grokSkillPath) &&
 		fs.readFileSync(jsonPath, 'utf8') === jsonOut &&
 		fs.readFileSync(mdPath, 'utf8') === mdOut &&
-		fs.readFileSync(rootSkillPath, 'utf8') === rootSkillOut;
+		fs.readFileSync(rootSkillPath, 'utf8') === rootSkillOut &&
+		fs.readFileSync(grokSkillPath, 'utf8') === grokSkillOut;
 	if (!same) {
-		console.error('skills-pack manifest or public/skill.md is stale: run node scripts/build-skills-pack.mjs');
+		console.error('skills-pack manifest or public/skill.md or public/grok-skill.md is stale: run node scripts/build-skills-pack.mjs');
 		process.exit(1);
 	}
-	console.log(`skills-pack manifest and public/skill.md up to date (${skills.length} skills).`);
+	console.log(`skills-pack manifest, public/skill.md and public/grok-skill.md up to date (${skills.length} skills).`);
 	process.exit(0);
 }
 
 fs.writeFileSync(jsonPath, jsonOut);
 fs.writeFileSync(mdPath, mdOut);
 fs.writeFileSync(rootSkillPath, rootSkillOut);
-console.log(`Wrote ${path.relative(ROOT, jsonPath)}, ${path.relative(ROOT, mdPath)} and ${path.relative(ROOT, rootSkillPath)} (${skills.length} skills).`);
+fs.writeFileSync(grokSkillPath, grokSkillOut);
+console.log(`Wrote ${path.relative(ROOT, jsonPath)}, ${path.relative(ROOT, mdPath)}, ${path.relative(ROOT, rootSkillPath)} and ${path.relative(ROOT, grokSkillPath)} (${skills.length} skills).`);
 }
