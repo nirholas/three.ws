@@ -117,17 +117,17 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Evidence: 7 new tests in `tests/sentiment-scout.test.js` (32 pass) over the real-shaped fixture `tests/fixtures/x-search-xai-response.json`, including the cap stopping the rung. Request shape printed by a dry run. `check:rules` OK. Docs: `docs/sentiment-scout.md` and `docs/ops/llm-lanes.md`.
 - Open line: the live call with a real xAI key. No xAI key exists in `.env`, `.env.local`, or the Cloud Run service, so the response shape (citations location, strict schema with tools) is unproven against the live API. Owner: order 927 (xAI key). Order file left in place. No changelog entry (no user-visible change until a key is set).
 
-## 2026-10-09: order 038 (Grok Bot recipes tutorial) done
-
-- Shipped `docs/tutorials/grok-bot-recipes.md` (route `/tutorials/grok-bot-recipes`) and `scripts/run-grok-recipe.mjs <name>`: six recipes (daily brief, game jam asset pack, avatar from a photo, X post image to 3D, weekly agent report, $THREE market brief), each with the exact Grok Bot sentence, the tools in order, and the output captured by running that sequence against production this session. Linked from `docs/grok-bot.md` and `/grok`; `data/pages.json` and `data/changelog.json` entries added.
-- Evidence: all six runs exited 0 and their GLB and poster URLs served 200. `audit:docs` clean, `check:rules` OK, `build:pages` passes.
-- Caveats: the two image recipes used a public catalog render as the reference image (no real teammate photo or live X post to attach in a script); Grok Bot itself was not driven, only the tool sequence. Recipes 5 and 6 target `/api/mcp` with a read-only key because production `/api/mcp-grok` does not yet list account tools. Under concurrent load two generations exceeded 10 minutes and were rerun alone. Generated feeds were not committed (they would carry another agent's uncommitted changelog entry).
-
 ## 2026-10-09: order 040 (computer-use operability) done
 
 - `scripts/audit-agent-operability.mjs` (`npm run audit:agent-operability`) drives /create, /forge, /connect, an agent profile and /launch with getByRole/getByLabel only. Before: 24 findings across 5 flows. After: 5/5 flows pass, 0 findings, 0 console errors. Evidence: `prompts/x-grok/_generated/operability.json`.
 - Fixes: accessible names contain the visible text (forge engine, Surprise me, Enhance, More ideas, Roll & Forge, create cards, x402 badge), launch counters moved to aria-describedby, atlas hint chip is a real button, walk companion canvas is a keyboard-operable named button.
 - Not verified: forge generation completing (the local run stalled at 95% after 200s); the audit asserts the visible status during the wait instead.
+
+## 2026-10-09: order 038 (Grok Bot recipes tutorial) done
+
+- Shipped `docs/tutorials/grok-bot-recipes.md` (route `/tutorials/grok-bot-recipes`) and `scripts/run-grok-recipe.mjs <name>`: six recipes (daily brief, game jam asset pack, avatar from a photo, X post image to 3D, weekly agent report, $THREE market brief), each with the exact Grok Bot sentence, the tools in order, and the output captured by running that sequence against production this session. Linked from `docs/grok-bot.md` and `/grok`; `data/pages.json` and `data/changelog.json` entries added.
+- Evidence: all six runs exited 0 and their GLB and poster URLs served 200. `audit:docs` clean, `check:rules` OK, `build:pages` passes.
+- Caveats: the two image recipes used a public catalog render as the reference image (no real teammate photo or live X post to attach in a script); Grok Bot itself was not driven, only the tool sequence. Recipes 5 and 6 target `/api/mcp` with a read-only key because production `/api/mcp-grok` does not yet list account tools. Under concurrent load two generations exceeded 10 minutes and were rerun alone. Generated feeds were not committed (they would carry another agent's uncommitted changelog entry).
 
 ## 2026-10-09: order 045 (gateway worker rebuild) found already built, one line open
 
