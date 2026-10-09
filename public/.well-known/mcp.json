@@ -6,7 +6,7 @@
 	"documentation": "https://three.ws/docs/mcp",
 	"setup": {
 		"command": "npx three-ws setup",
-		"description": "One command signs you in (OAuth or API key), writes these servers into Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes, and verifies each with a live tools/list.",
+		"description": "One command signs you in (OAuth or API key), writes these servers into Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes, prints a ready Grok Bot connector (npx three-ws setup --client grok-bot), and verifies each with a live tools/list.",
 		"documentation": "https://three.ws/docs/cli"
 	},
 	"registry": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas",

@@ -4,12 +4,17 @@
 import { c, line, sym, printJson, tildify } from '../ui.js';
 import { readStore } from '../store.js';
 import { loadDirectory, hostedServers } from '../servers.js';
-import { detectClients, getClient, removeServer } from '../clients/index.js';
+import { detectClients, getClient, removeServer, isRemote } from '../clients/index.js';
 import { verifyServers, ensureSelections, applyToClients } from '../configure.js';
 import { scanClients } from './account.js';
 
 function clientsFrom(flags, env) {
-	if (flags.clients) return String(flags.clients).split(',').map((s) => getClient(s.trim()));
+	if (flags.clients) {
+		const clients = String(flags.clients).split(',').map((s) => getClient(s.trim()));
+		const remote = clients.find(isRemote);
+		if (remote) throw new Error(`${remote.label} keeps its connectors in its own cloud, so there is no file to edit. Run \`three-ws setup --client ${remote.id}\` to print its fields and verify them.`);
+		return clients;
+	}
 	const detected = detectClients(env);
 	if (!detected.length) throw new Error('no MCP clients detected; name one with --clients (e.g. --clients cursor)');
 	return detected;
@@ -50,9 +55,9 @@ async function addCmd(ctx, name) {
 	const { flags, env, origin } = ctx;
 	if (!name) throw new Error('usage: three-ws mcp add <server> [--clients a,b] [--project] [--proxy]');
 	const store = readStore(env);
+	const clients = clientsFrom(flags, env);
 	const server = findServer(hostedServers(await loadDirectory(origin), origin), name);
 	if (server.auth === 'required' && !store.auth) throw new Error('sign in first: `three-ws login` (or `three-ws login --key sk_live_...` in CI)');
-	const clients = clientsFrom(flags, env);
 	const mode = store.auth?.type === 'apikey' ? 'apikey' : 'oauth';
 	ensureSelections([server], { financial: /\bwallet:write\b/.test(store.auth?.scope || ''), env });
 	const [result] = await verifyServers({ servers: [server], env, origin });

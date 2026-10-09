@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "Set up Grok Bot from the terminal with npx three-ws setup",
+			"summary": "Grok Bot keeps its connectors in xAI's cloud, so there is no config file to write, but the three-ws CLI now does every other step. Run npx three-ws setup --client grok-bot, or tick Grok Bot in the setup picker, and it prints the exact fields Grok Bot's custom MCP form asks for, copies the server URL to your clipboard, and checks the public URL live the way Grok Bot will call it. Pick how Grok Bot signs in: free with no account, free with an install token that keeps one quota across scheduled runs, a connector key it mints for you that can read and generate but never spend, or OAuth so Grok Bot signs in itself.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/cli"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "AI agents can now read how to connect three.ws to their client",
 			"summary": "The public server directory at three.ws/.well-known/mcp.json now carries setup for each AI client: Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code. For each one it names the server to add, whether to pick no sign-in, OAuth or an API key, and the exact values for that client's connector form or config file, plus one-click install links where the client has them. An agent asked to connect three.ws to Grok Bot can now do it from that one file, without a person reading the setup page. The site index for AI agents (three.ws/llms.txt) points to it too.",
 			"tags": [

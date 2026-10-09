@@ -46,7 +46,7 @@ npx three-ws setup --clients print
 
 | Flag | Values |
 |---|---|
-| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `codex`, `gemini`, `hermes`, `print` |
+| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `codex`, `gemini`, `hermes`, `grok-bot`, `print` (`--client` works too) |
 | `--servers` | Server names from `npx three-ws mcp list --available` |
 | `--packages` | Also add stdio `@three-ws/*-mcp` packages |
 | `--project` | Write project-scoped config in the current directory |
@@ -75,12 +75,56 @@ Every client stores a server under the same name, which is also what `--servers`
 | `three-ws-main` | `https://three.ws/api/mcp` | Sign-in |
 | `three-ws-3d` | `https://three.ws/api/mcp-3d` | Sign-in or x402 |
 | `three-ws-studio` | `https://three.ws/api/mcp-studio` | None |
+| `three-ws-grok` | `https://three.ws/api/mcp-grok` | None for the free 3D tools; a connector key or OAuth adds your agents |
 | `three-ws-agent` | `https://three.ws/api/mcp-agent` | Sign-in |
 | `three-ws-bazaar` | `https://three.ws/api/mcp-bazaar` | Sign-in or x402 |
 | `three-ws-pump-fun` | `https://three.ws/api/pump-fun-mcp` | None for reads |
 | `three-ws-ibm` | `https://three.ws/api/ibm-mcp` | Sign-in or x402 |
 
 `npx three-ws mcp list --available` prints the live list, which is the source of truth if this table and the directory ever disagree.
+
+## Grok Bot
+
+Grok Bot, xAI's computer-use agent, runs on xAI's machines and keeps its connectors there, so there is no file on your computer to write. `setup --client grok-bot` does everything else: it picks the server, gets the credential the auth mode needs, prints the exact fields Grok Bot's custom MCP connector form asks for, copies the server URL to your clipboard, and runs a live check against the public URL the way Grok Bot will call it.
+
+```bash
+# Free, no account: the 3D studio for Grok
+npx three-ws setup --client grok-bot
+
+# Free, with a quota of its own that survives reconnects (for scheduled tasks)
+npx three-ws setup --client grok-bot --auth install
+
+# Your agents, memory and skills too: mints a connector key that can never spend
+npx three-ws setup --client grok-bot --auth key
+
+# Sign in from Grok Bot instead of holding a key
+npx three-ws setup --client grok-bot --auth oauth
+```
+
+What it prints, for the free connector:
+
+```text
+Grok Bot three-ws-grok · add it in Grok Bot's Connectors (custom MCP server); nothing is written on this machine
+  Name            three-ws-grok
+  Transport       Streamable HTTP
+  Server URL      https://three.ws/api/mcp-grok
+  Authentication  None
+  Or tell it: "Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok"
+  ✔ Server URL copied to the clipboard
+
+  Live check https://three.ws/api/mcp-grok
+  ✔ public https URL a cloud agent can reach  three.ws
+  ✔ initialize + tools/list                   15 tools from three-ws-3d-studio-free 1.0.0
+```
+
+| `--auth` | What Grok Bot gets | What setup does |
+|---|---|---|
+| `none` (default) | The free studio: text to 3D, image to 3D, rigging, the asset catalog, personas | Prints the URL and runs `initialize` + `tools/list` against it |
+| `install` | The same tools, with a generation budget that lasts across every scheduled run | Mints a free [install token](/docs/mcp-studio#connector-url-for-cloud-agents-install-tokens) (no account), puts it in the URL, and reuses it on later runs so the URL stays the same |
+| `key` | Also your agents, memory and skills; a connector key reads, generates and edits but can never spend | Mints a connector key for the signed-in account (signing you in first when needed), or checks the one you pass with `--connector-key`, refuses a key that carries a spend scope, then runs `tools/list` with it |
+| `oauth` | The same as `key`, signed in once from Grok Bot and revocable any time | Prints the `?auth=oauth` URL and checks that an anonymous call is answered `401` with a protected-resource document that names the authorization server |
+
+Pass `--servers <name>` to connect a server other than `three-ws-grok`, for example `--servers three-ws-main --auth key` for the full core server. A server that needs an account only takes `key` or `oauth`, and setup says so instead of printing fields that would fail. The live check fails on any URL Grok Bot cannot reach from the internet, such as `--origin http://localhost:3000`, because Grok Bot connects from xAI's cloud. The clipboard step is best-effort (`pbcopy`, `clip`, `wl-copy`, `xclip`, `xsel`, or `clip.exe` under WSL); with none available the URL is printed as usual, and `THREE_WS_NO_CLIPBOARD=1` turns it off. `--json` prints the fields, the key's scope and every check as one document. Connector settings, the tool contract and the fix for every probe failure are in the [Grok Bot connector reference](/docs/grok-bot).
 
 ## Create an agent and launch its coin
 

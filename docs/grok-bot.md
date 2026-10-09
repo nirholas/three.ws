@@ -29,7 +29,9 @@ server never works. Add the server either by telling Grok Bot in chat
 ("Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok")
 or through its connector form. The form takes four fields, and
 [three.ws/connect?client=grok](/connect?client=grok) shows them with a copy
-button for every hosted server. Use the name `three-ws-grok` so the guided
+button for every hosted server. From a terminal, `npx three-ws setup --client grok-bot`
+prints the same fields, mints the install token or connector key the mode needs,
+copies the URL and checks it live ([CLI docs](./cli.md#grok-bot)). Use the name `three-ws-grok` so the guided
 prompts, the [skill file](https://three.ws/grok-skill.md) and the `/grok` page
 all refer to the connector by the same name.
 

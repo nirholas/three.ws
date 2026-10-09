@@ -44,12 +44,18 @@ ${c.bold('Sign-in options')} (setup, login)
   --financial           Also request the scopes that let tools spend from your agent wallet
 
 ${c.bold('Setup options')}
-  --clients a,b         claude-code, claude-desktop, cursor, windsurf, vscode, codex, gemini, hermes, print
+  --clients a,b         claude-code, claude-desktop, cursor, windsurf, vscode, codex, gemini, hermes, grok-bot, print
   --servers a,b         Server slugs or paths (default: /mcp, the unified server with every tool)
   --packages a,b        Also add stdio @three-ws/*-mcp packages
   --project             Write project-scoped config (.mcp.json, .cursor/, .vscode/, .gemini/) in this directory
   --proxy               Route every server through the local proxy (enforces tool choices in every client)
   --yes                 Never prompt; use defaults
+
+${c.bold('Grok Bot options')} (setup --client grok-bot; Grok Bot keeps connectors in xAI's cloud)
+  --auth <mode>         none (free), install (free, a quota that survives reconnects),
+                        key (a connector key that can never spend) or oauth
+  --connector-key <key> Use this key for --auth key instead of minting one
+  --servers <slug>      Connect another server than the recommended three-ws-grok
 
 ${c.bold('Tools options')}
   --server <slug>       Server to change
@@ -110,6 +116,8 @@ const OPTIONS = {
 	symbol: { type: 'string' },
 	image: { type: 'string' },
 	'initial-buy': { type: 'string' },
+	auth: { type: 'string' },
+	'connector-key': { type: 'string' },
 };
 
 // `--key` alone (no value) means "prompt for it"; parseArgs needs a value for a

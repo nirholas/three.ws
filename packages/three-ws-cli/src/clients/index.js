@@ -114,6 +114,25 @@ export const CLIENTS = [
 	},
 ];
 
+// Clients of the "remote" kind keep their configuration in their own cloud, so
+// there is no file to write: `setup` prints the connector form's fields, copies
+// the URL and verifies it live instead (../remote.js). Never detected locally.
+export const REMOTE_CLIENTS = [
+	{
+		id: 'grok-bot',
+		label: 'Grok Bot',
+		kind: 'remote',
+		// Its key in the directory's `clients` block (/.well-known/mcp.json).
+		directoryKey: 'grok-bot',
+		// Used when the directory predates that block: the Grok surface of the
+		// free studio, then the studio itself.
+		preferredPaths: ['/api/mcp-grok', '/api/mcp-studio'],
+		transport: 'Streamable HTTP',
+		where: "Grok Bot's Connectors (custom MCP server)",
+		docs: '/docs/grok-bot',
+	},
+];
+
 // Not a real client: the shape `setup` prints for any client it does not know.
 export const PRINT_CLIENT = {
 	id: 'print',
@@ -123,10 +142,12 @@ export const PRINT_CLIENT = {
 };
 
 export function getClient(id) {
-	const c = CLIENTS.find((x) => x.id === id);
-	if (!c) throw new Error(`unknown client "${id}". Known: ${CLIENTS.map((x) => x.id).join(', ')}`);
+	const c = CLIENTS.find((x) => x.id === id) || REMOTE_CLIENTS.find((x) => x.id === id);
+	if (!c) throw new Error(`unknown client "${id}". Known: ${[...CLIENTS, ...REMOTE_CLIENTS].map((x) => x.id).join(', ')}`);
 	return c;
 }
+
+export const isRemote = (client) => client?.kind === 'remote';
 
 export function detectClients(env = systemEnv()) {
 	return CLIENTS.filter((c) => c.detect(env));

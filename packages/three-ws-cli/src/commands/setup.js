@@ -1,5 +1,6 @@
 // `three-ws setup`: sign in, pick servers and clients, write every config,
-// then prove it with a real tools/list per server.
+// then prove it with a real tools/list per server. Remote clients (Grok Bot)
+// get their connector fields printed and checked live instead (setup-remote.js).
 
 import * as p from '@clack/prompts';
 import { answer, canPrompt, signIn, authModeFromFlags } from './common.js';
@@ -7,10 +8,11 @@ import { c, line, sym, printJson, tildify } from '../ui.js';
 import { readStore } from '../store.js';
 import { currentIdentity, ensureStdioKey } from '../auth.js';
 import { loadDirectory, loadCatalog, hostedServers, stdioPackages } from '../servers.js';
-import { CLIENTS, PRINT_CLIENT, detectClients, getClient } from '../clients/index.js';
+import { CLIENTS, REMOTE_CLIENTS, PRINT_CLIENT, detectClients, getClient, isRemote } from '../clients/index.js';
 import { verifyServers, ensureSelections, applyToClients } from '../configure.js';
 import { usesProxy, buildEntry } from '../entries.js';
 import { VERSION } from '../http.js';
+import { connectRemote, printRemote, remoteJson, remoteOk } from './setup-remote.js';
 
 function list(value) {
 	if (!value) return null;
@@ -30,6 +32,14 @@ export async function setup(ctx) {
 	const { flags, origin, env } = ctx;
 	const interactive = canPrompt(ctx);
 	if (interactive) p.intro(`${c.bold('three.ws')} setup ${c.dim(`v${VERSION} · ${origin}`)}`);
+
+	// Only remote clients asked for: nothing to write here, and no account
+	// needed unless the chosen auth mode mints a key.
+	const requestedClients = list(flags.clients);
+	const requested = requestedClients ? requestedClients.filter((id) => id !== 'print').map(getClient) : [];
+	if (requested.length && requested.every(isRemote) && !requestedClients.includes('print')) {
+		return setupRemoteOnly(ctx, requested, interactive);
+	}
 
 	// 1. Account. Reuse a working credential unless a mode was asked for.
 	const requestedMode = authModeFromFlags(flags);
@@ -77,15 +87,15 @@ export async function setup(ctx) {
 	const detected = detectClients(env);
 	let clients;
 	let printOnly = false;
-	const requestedClients = list(flags.clients);
 	if (requestedClients) {
 		printOnly = requestedClients.includes('print');
-		clients = requestedClients.filter((id) => id !== 'print').map(getClient);
+		clients = requested;
 	} else if (interactive) {
 		const chosen = answer(await p.multiselect({
 			message: detected.length ? 'Write the config into which clients?' : 'No MCP clients found on this machine. Write a config for which ones anyway?',
 			options: [
 				...CLIENTS.map((cl) => ({ value: cl.id, label: cl.label, hint: detected.includes(cl) ? tildify(cl.configPath(env, { project: flags.project })) : 'not detected' })),
+				...REMOTE_CLIENTS.map((cl) => ({ value: cl.id, label: cl.label, hint: 'runs in its own cloud: prints the connector fields and checks them live' })),
 				{ value: 'print', label: 'Print the JSON instead', hint: 'for any other MCP client' },
 			],
 			initialValues: detected.length ? detected.map((cl) => cl.id) : ['print'],
@@ -97,6 +107,8 @@ export async function setup(ctx) {
 		clients = detected;
 		printOnly = !detected.length;
 	}
+	const remoteClients = clients.filter(isRemote);
+	clients = clients.filter((cl) => !isRemote(cl));
 
 	// 4. Optional stdio packages.
 	let packages = [];
@@ -132,6 +144,7 @@ export async function setup(ctx) {
 	const apiKey = mode === 'apikey' ? readStore(env).auth.key : null;
 	const writes = applyToClients({ clients, servers, packages, mode, apiKey, stdioKey, liveTools, forceProxy: Boolean(flags.proxy), project: Boolean(flags.project), origin, env });
 	const selections = readStore(env).tools || {};
+	const remote = remoteClients.length ? await connectRemote(ctx, { clients: remoteClients, directory, servers: allServers }) : [];
 	const printed = printOnly
 		? Object.fromEntries(servers.map((s) => [s.slug, buildEntry({ client: PRINT_CLIENT, server: s, mode, apiKey, selection: selections[s.slug], liveTools: liveTools[s.slug], forceProxy: Boolean(flags.proxy) })]))
 		: null;
@@ -143,8 +156,9 @@ export async function setup(ctx) {
 			servers: results.map((r) => ({ slug: r.server.slug, url: r.server.url, ok: r.ok, tools: r.ok ? r.total : null, enabled: r.ok ? r.enabled : null, error: r.error || null })),
 			clients: writes.map((w) => ({ id: w.client.id, file: w.file, servers: w.servers, error: w.error })),
 			...(printed ? { print: { mcpServers: printed } } : {}),
+			...(remote.length ? { remote: remoteJson(remote) } : {}),
 		});
-		return results.every((r) => r.ok) && writes.every((w) => !w.error) ? 0 : 1;
+		return results.every((r) => r.ok) && writes.every((w) => !w.error) && remote.every(remoteOk) ? 0 : 1;
 	}
 
 	line('');
@@ -173,8 +187,9 @@ export async function setup(ctx) {
 		line(c.bold('Add this to any MCP client:'));
 		printJson({ mcpServers: printed });
 	}
+	if (remote.length) printRemote(remote, { origin });
 	line('');
-	const failed = results.filter((r) => !r.ok).length + writes.filter((w) => w.error).length;
+	const failed = results.filter((r) => !r.ok).length + writes.filter((w) => w.error).length + remote.filter((r) => !remoteOk(r)).length;
 	if (interactive) {
 		if (failed) p.outro(c.yellow(`${failed} step${failed === 1 ? '' : 's'} failed above. Fix it and run \`three-ws setup\` again; finished steps are kept.`));
 		else p.outro(`Done. Restart your client${writes.length === 1 ? '' : 's'} to load the tools. ${c.dim('Check anytime: three-ws status')}`);
@@ -182,4 +197,26 @@ export async function setup(ctx) {
 		line(failed ? c.yellow(`${failed} step(s) failed.`) : `Done. Restart your clients to load the tools. Check anytime: three-ws status`);
 	}
 	return failed ? 1 : 0;
+}
+
+async function setupRemoteOnly(ctx, clients, interactive) {
+	const { flags, origin } = ctx;
+	const directory = await loadDirectory(origin);
+	const servers = hostedServers(directory, origin);
+	const results = await connectRemote(ctx, { clients, directory, servers, picked: pickServers(servers, list(flags.servers)) });
+	const ok = results.every(remoteOk);
+	if (flags.json) {
+		printJson({ remote: remoteJson(results) });
+		return ok ? 0 : 1;
+	}
+	printRemote(results, { origin });
+	line('');
+	const names = clients.map((cl) => cl.label).join(' and ');
+	if (interactive) {
+		if (ok) p.outro(`Ready. Add the connector in ${names} with the fields above.`);
+		else p.outro(c.yellow('A step failed above. Fix it and run setup again.'));
+	} else {
+		line(ok ? `Ready. Add the connector in ${names} with the fields above.` : c.yellow('A step failed above.'));
+	}
+	return ok ? 0 : 1;
 }

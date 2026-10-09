@@ -36,6 +36,11 @@ export function authRequired(authText) {
 	return !/^none\b/i.test(String(authText || '').trim());
 }
 
+/** True when anonymous callers are served, even if an account unlocks more ("none needed for the free 3D tools"). */
+export function servesAnonymous(authText) {
+	return !authRequired(authText) || /\bnone needed\b/i.test(String(authText || ''));
+}
+
 /** Normalize the live directory into the CLI's server records, rebased onto `origin`. */
 export function hostedServers(directory, origin) {
 	const list = Array.isArray(directory?.servers) ? directory.servers : [];
@@ -53,6 +58,7 @@ export function hostedServers(directory, origin) {
 				url: `${origin}${pathname}`,
 				description: s.description || '',
 				auth: needsAuth ? 'required' : 'none',
+				keyless: servesAnonymous(s.auth),
 				unified: pathname === UNIFIED_PATH,
 				defaultSelected,
 			};
