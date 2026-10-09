@@ -66,6 +66,8 @@ Generations don't need a babysitter, either: start a forge job, close the tab, a
 
 Want to choose the steps yourself? [Workbench](./workbench.md) runs a photo through a visual workflow you can edit (background removal, generation, remeshing, rigging, material restyle), then lets you smooth, decimate and export GLB, OBJ, STL or PLY from a desktop-style viewport.
 
+Have a graphics card? [Modly and three.ws](./modly.md) covers generating on your own GPU through the free Modly app (from [/modly](https://three.ws/modly) or the Forge's **Use your GPU** panel), plus the three.ws nodes for Modly that bring cloud generation, auto-rigging, remeshing and publishing into Modly itself.
+
 Curious what happens between the prompt and the model? [How the Forge works](./how-forge-works.md) tells the story in plain language; [the Forge pipeline](./forge-pipeline.md) is the full engineering deep dive.
 
 Need a functional part rather than a sculpture, such as a bracket, an enclosure, a gear or a knob? [CAD Forge](./cad-forge.md) turns a sentence into real parametric CAD that the OpenCascade kernel has built, with exact dimensions you can drag, STEP and STL downloads, and a drawing sheet.

@@ -3537,6 +3537,14 @@
 					"added": "2026-10-09"
 				},
 				{
+					"path": "/docs/modly",
+					"title": "Docs · Modly and three.ws",
+					"description": "Every way three.ws works with Modly, the free open-source 3D app: generate on your own GPU from /modly or the Forge, add three.ws cloud nodes and publishing to Modly, the desktop app, and the mesh tools and slicer handoff built from Modly ideas.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/docs/scene-studio",
 					"title": "Docs · Scene Studio",
 					"description": "The in-browser three.js editor: import GLBs, arrange with transform gizmos, edit materials and lights, script, and export complete glTF scenes.",

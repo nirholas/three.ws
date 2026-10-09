@@ -29342,6 +29342,27 @@
 			"summary": "Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.",
 			"tags": ["feature", "improvement"],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "Generate 3D models on your own graphics card in the Forge",
+			"summary": "The From photos tab now has a Use your GPU panel. Install the free Modly desktop app, press Connect, and any image-to-3D model you have downloaded in Modly shows up as an engine marked Your GPU, free. Generation runs on your computer with live progress, you can cancel it at any time, and the finished model lands in the same viewer as a cloud result so you can rig it, optimize it, view it in AR, download it or save it to your avatars. Nothing on your computer is contacted until you press Connect.",
+			"tags": ["feature"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "three.ws nodes for the Modly desktop app",
+			"summary": "Modly users can now add three.ws to their workflow editor. Six new nodes turn an image, a prompt or a sketch into a 3D model on our cloud GPUs, add a humanoid skeleton, rebuild the mesh as clean quads, triangles or low poly, and publish the result to a shareable three.ws page. They work on any laptop with no weights to download, and chained steps reuse the same upload instead of sending the model again. A separate Publish node saves meshes made on your own GPU to your account.",
+			"tags": ["feature"],
+			"link": "/modly"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "Fix, smooth and slim any model in your browser, then send it straight to your 3D printer",
+			"summary": "Every finished model now has mesh tools: repair welds cracks and fixes inside-out faces, smoothing softens blocky surfaces without tearing textures, and decimate cuts the triangle count to a number you choose, with undo and a before and after count. Nothing is uploaded. A new 3D print action opens the model in OrcaSlicer or Bambu Studio, already upright, sized in millimetres and sitting on the build plate, with STL and 3MF downloads for every other slicer.",
+			"tags": ["feature"],
+			"link": "/forge"
 		}
 	]
 }
