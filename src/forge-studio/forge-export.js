@@ -14,6 +14,7 @@
 // styles and only needs the result panel's download anchor to exist.
 
 import { createLogger } from '../shared/log.js';
+import { creationIdFromGlbUrl, mountSlicerMenuItems } from '../slicer-handoff.js';
 
 const log = createLogger('forge-export');
 
@@ -125,7 +126,7 @@ if (download && resultPanel) {
 	caret.setAttribute('aria-haspopup', 'menu');
 	caret.setAttribute('aria-expanded', 'false');
 	caret.setAttribute('aria-label', 'More download formats');
-	caret.title = 'More formats: OBJ, STL, PLY, USDZ';
+	caret.title = 'More formats, or open in a 3D-printing slicer';
 	caret.innerHTML =
 		'<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 	split.appendChild(caret);
@@ -153,6 +154,13 @@ if (download && resultPanel) {
 		itemStatus.set(f.id, item.querySelector('.status'));
 	}
 
+	// Slicer handoff rows (OrcaSlicer, Bambu Studio). They download the stored
+	// creation from /api/slicer/<id>/model.stl, so they appear only for a model
+	// that has a creation id, and say so when the viewer shows an unsaved edit.
+	const slicerItems = mountSlicerMenuItems(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
+
 	// ---- menu behavior -------------------------------------------------------
 
 	function setOpen(open) {
@@ -168,7 +176,7 @@ if (download && resultPanel) {
 	});
 	split.addEventListener('keydown', (e) => {
 		if (!isOpen()) return;
-		const items = [...menu.querySelectorAll('.export-item')];
+		const items = [...menu.querySelectorAll('.export-item:not([hidden])')];
 		const idx = items.indexOf(document.activeElement);
 		if (e.key === 'Escape') {
 			setOpen(false);
@@ -297,8 +305,9 @@ if (download && resultPanel) {
 
 	// A new generation invalidates the parsed-scene cache (the href changes, but
 	// clearing eagerly also frees the old scene graph for GC).
-	document.addEventListener('forge:model-ready', () => {
+	document.addEventListener('forge:model-ready', (e) => {
 		sceneCache = { url: null, scene: null };
+		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		for (const status of itemStatus.values()) {
 			status.textContent = '';
 			status.classList.remove('is-error');

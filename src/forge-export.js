@@ -26,6 +26,7 @@
 // styles and only needs the result panel's download anchor to exist.
 
 import { createLogger } from './shared/log.js';
+import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js';
 
 const log = createLogger('forge-export');
 
@@ -167,7 +168,7 @@ if (download && resultPanel) {
 	caret.setAttribute('aria-haspopup', 'menu');
 	caret.setAttribute('aria-expanded', 'false');
 	caret.setAttribute('aria-label', 'More download formats');
-	caret.title = 'More formats: OBJ, STL, PLY, USDZ';
+	caret.title = 'More formats, or open in a 3D-printing slicer';
 	caret.innerHTML =
 		'<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 	split.appendChild(caret);
@@ -194,6 +195,13 @@ if (download && resultPanel) {
 		menu.appendChild(item);
 		itemStatus.set(f.id, item.querySelector('.status'));
 	}
+
+	// Slicer handoff rows (OrcaSlicer, Bambu Studio). They download the stored
+	// creation from /api/slicer/<id>/model.stl, so they appear only for a model
+	// that has a creation id, and say so when the viewer shows an unsaved edit.
+	const slicerItems = mountSlicerMenuItems(menu, {
+		isLocalEdit: () => (download.getAttribute('href') || '').startsWith('blob:'),
+	});
 
 	// ---- menu behavior -------------------------------------------------------
 
@@ -232,7 +240,7 @@ if (download && resultPanel) {
 	});
 	split.addEventListener('keydown', (e) => {
 		if (!isOpen()) return;
-		const items = [...menu.querySelectorAll('.export-item')];
+		const items = [...menu.querySelectorAll('.export-item:not([hidden])')];
 		const idx = items.indexOf(document.activeElement);
 		if (e.key === 'Escape') {
 			setOpen(false);
@@ -382,6 +390,14 @@ if (download && resultPanel) {
 		const url = download.getAttribute('href');
 		if (!url) return;
 		const status = itemStatus.get(format.id);
+		// A server conversion fetches its source over the network, and an
+		// in-browser mesh edit only exists as a blob in this tab. Say so rather
+		// than silently converting the unedited model.
+		if (format.server && url.startsWith('blob:')) {
+			status.textContent = 'converts the saved model only: reset your mesh edits, or pick OBJ, STL or PLY';
+			status.classList.add('is-error');
+			return;
+		}
 		busy.add(format.id);
 		item.setAttribute('aria-disabled', 'true');
 		status.classList.remove('is-error');
@@ -444,8 +460,9 @@ if (download && resultPanel) {
 
 	// A new generation invalidates the parsed-scene cache (the href changes, but
 	// clearing eagerly also frees the old scene graph for GC).
-	document.addEventListener('forge:model-ready', () => {
+	document.addEventListener('forge:model-ready', (e) => {
 		sceneCache = { url: null, scene: null };
+		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		// Retire any conversion still polling for the previous model.
 		convertEpoch += 1;
 		for (const status of itemStatus.values()) {

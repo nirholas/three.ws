@@ -2097,6 +2097,13 @@ export const limits = {
 	// stopping a script from using the analyzer as a free mesh-processing service.
 	printQuoteIp: (ip) =>
 		getLimiter('print:quote:ip', { limit: 90, window: '5 m', local: true }).limit(ip),
+	// Slicer handoff file (api/slicer/model.js). A miss downloads the creation's
+	// GLB and writes an STL or 3MF, so it is CPU-bound like the quote analyzer;
+	// hits are served from the converted-file cache and the CDN and never reach
+	// this bucket. Sized for someone opening a few models in OrcaSlicer, re-sizing
+	// them, and downloading the fallback file, not for bulk conversion.
+	slicerFileIp: (ip) =>
+		getLimiter('slicer:file:ip', { limit: 30, window: '5 m', local: true }).limit(ip),
 	// Materialize checkout (api/print/orders.js and its confirm step). Both are
 	// session-gated and CSRF-gated already, so this is not the security boundary;
 	// it caps how often one IP can open orders or poll the chain for a payment.
