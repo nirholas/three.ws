@@ -26,6 +26,8 @@ import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
 import { createCompare } from './forge-compare.js';
 import { initForgeDestinationPicker, storedForgeDestination } from './shared/forge-destination-picker.js';
+import { generateWithModly, defaultModlyParams } from './modly-local.js';
+import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -76,6 +78,14 @@ const els = {
 	modeSwitch: document.getElementById('mode-switch'),
 	textPane: document.getElementById('text-pane'),
 	imagePane: document.getElementById('image-pane'),
+	// Your GPU (Modly) lane: the connect panel in the photos tab, the
+	// "Feel free to leave" line it must hide (a local run stops with the tab),
+	// and the explicit save row under a local result.
+	modlyPanel: document.getElementById('modly-panel'),
+	genLeaveHint: document.querySelector('#state-generating .gen-leave-hint'),
+	modlySave: document.getElementById('modly-save'),
+	modlySaveText: document.getElementById('modly-save-text'),
+	modlySaveBtn: document.getElementById('modly-save-btn'),
 	viewsGrid: document.getElementById('views-grid'),
 	fileInput: document.getElementById('view-file-input'),
 	imagePrompt: document.getElementById('image-prompt'),
@@ -199,6 +209,12 @@ let currentResultTier = null;
 // The GLB currently shown in the viewer (set on every result). Lets the
 // rate-limit state know a model exists to refine locally as a fallback.
 let lastShownGlb = '';
+// Your GPU lane. `modly` is the connect panel (src/forge-modly.js); `modlyRun`
+// is the generation in flight on the user's machine, whose real percent and
+// step text drive the meter; `modlyResult` is the local model on screen.
+let modly = null;
+let modlyRun = null;
+let modlyResult = null;
 
 // Quality tiers, lowest → highest. Refine walks one step up this ladder.
 const TIER_ORDER = ['draft', 'standard', 'high'];
@@ -217,13 +233,17 @@ let catalog = null;
 // optimistically from the catalog and tighten when health lands.
 let health = null;
 let selectedTier = 'standard';
-let selectedEngine = {
+// What the composer submits before the catalog has rendered an engine button.
+const DEFAULT_ENGINE = Object.freeze({
 	id: 'trellis',
 	path: 'image',
 	backend: 'trellis',
 	byok: null,
 	polyControl: false,
-};
+	modly: false,
+	modelId: null,
+});
+let selectedEngine = { ...DEFAULT_ENGINE };
 // Once the user deliberately picks an engine we stop auto-selecting the
 // catalog's per-tier default (e.g. the free NVIDIA lane on draft) under them.
 let userPickedEngine = false;
@@ -431,6 +451,7 @@ function revealStage() {
 // Human label for a backend id, from the short-label map or the live catalog.
 function engineLabel(id) {
 	if (!id) return 'the engine';
+	if (isModlyEngine(id)) return modlyEngineLabel(id);
 	return ENGINE_LABELS[id] || catalog?.backends?.find((b) => b.id === id)?.label || id;
 }
 
@@ -520,6 +541,13 @@ function startElapsed(offsetMs = 0) {
 		const s = Math.floor((performance.now() - elapsedStart) / 1000);
 		// Re-read every tick: the accepted job replaces the catalog guess with the
 		// server's real ETA for the lane that actually ran (cold start included).
+		// A run on the user's own GPU reports a real percent and step, so the
+		// meter shows exactly that instead of a time-based estimate.
+		if (modlyRun) {
+			timeline.tick(s);
+			paintModlyProgress(s);
+			return;
+		}
 		const typical = currentEtaSeconds();
 		if (els.genProgress) els.genProgress.dataset.indeterminate = typical ? 'false' : 'true';
 		// The timeline's warming card counts real seconds against that same ETA.
@@ -686,7 +714,7 @@ function setMode(next) {
 	}
 	// Sketch serves through its own engine set (TripoSG) — rebuild the selector
 	// so each mode only offers engines that can actually take its input.
-	if (catalog) buildEngineButtons();
+	refreshEnginePicker();
 	updateAspectVisibility();
 	// The estimate caption is tab-aware (text → "renders a preview"; photos →
 	// "builds from your reference photos"), so refresh it when the tab changes
@@ -764,7 +792,7 @@ function buildEngineButtons() {
 	if (!els.engine) return;
 	// Each mode offers only the engines that take its input: sketch mode shows
 	// the sketch-path engines (TripoSG); text/photo modes hide sketch-only ones.
-	const usable = catalog.backends.filter((b) => {
+	const usable = (catalog?.backends || []).filter((b) => {
 		if (!(b.configured || b.byok)) return false;
 		const sketchOnly = Array.isArray(b.paths) && b.paths.every((p) => p === 'sketch');
 		return mode === 'sketch' ? b.paths.includes('sketch') : !sketchOnly;
@@ -797,6 +825,7 @@ function buildEngineButtons() {
 		btn.setAttribute('aria-pressed', String(b.id === selectedEngine.backend));
 		els.engine.appendChild(btn);
 	}
+	const modlyIds = appendModlyEngineButtons();
 	// Catalog loaded but no lane can serve this mode (every backend unconfigured,
 	// non-BYOK, or sketch-only in a text/photo tab) — say so rather than leave a
 	// blank pill. The catalog-missing case is handled separately in loadCatalog().
@@ -808,7 +837,7 @@ function buildEngineButtons() {
 		els.engine.appendChild(note);
 	}
 	// If the previously-selected engine isn't usable, fall back to the first.
-	if (!usable.some((b) => b.id === selectedEngine.backend)) {
+	if (!usable.some((b) => b.id === selectedEngine.backend) && !modlyIds.includes(selectedEngine.backend)) {
 		const first = els.engine.querySelector('button');
 		if (first) selectEngine(first, true);
 	}
@@ -895,7 +924,12 @@ function selectEngine(btn, silent) {
 		backend: btn.dataset.backend,
 		byok: btn.dataset.byok || null,
 		polyControl: btn.dataset.poly === 'true',
+		modly: btn.dataset.modly === '1',
+		modelId: btn.dataset.modelId || null,
 	};
+	// A Modly model runs with its own settings, so the cloud quality tiers do
+	// not apply to it: hide that row rather than offer a control that does nothing.
+	els.tier?.classList.toggle('is-hidden', selectedEngine.modly);
 	for (const b of els.engine.querySelectorAll('button')) {
 		b.setAttribute('aria-pressed', String(b === btn));
 	}
@@ -952,7 +986,7 @@ let _highAccess = null; // last resolved forge.high access payload (for the gate
 // own Meshy/Tripo/Rodin key would be wrongly blocked from High. Draft/Standard are never
 // gated. Every client gate check keys on this, so the lock can never engage outside it.
 function highTierNeedsPass() {
-	return selectedTier === 'high' && !selectedEngine.byok;
+	return selectedTier === 'high' && !selectedEngine.byok && !selectedEngine.modly;
 }
 
 function accessHost() {
@@ -1146,7 +1180,12 @@ function costSegment(backend, tierMeta) {
 // Render the honest time/cost/poly estimate for the current engine + tier from
 // the catalog. No fabricated numbers — everything comes from /api/forge?catalog.
 function updateEstimate() {
-	if (!els.estimate || !catalog) return;
+	if (!els.estimate) return;
+	if (selectedEngine.modly) {
+		renderModlyEstimate();
+		return;
+	}
+	if (!catalog) return;
 	const backend = catalog.backends.find((b) => b.id === selectedEngine.backend);
 	const tierMeta = catalog.tiers.find((t) => t.id === selectedTier);
 	if (!backend || !tierMeta) {
@@ -2084,7 +2123,7 @@ function setViewsBadge(meta) {
 		parts.push(`${used} ${used === 1 ? 'view' : 'views'}`);
 		if (meta.multiview) parts.push('multi-view');
 	}
-	if (meta?.backend) parts.push(ENGINE_LABELS[meta.backend] || meta.backend);
+	if (meta?.backend) parts.push(engineLabel(meta.backend));
 	if (meta?.tier) parts.push(meta.tier);
 	if (meta?.path === 'geometry') parts.push('geometry-first');
 	if (meta?.path === 'sketch') parts.push('sketch→3D');
@@ -2195,6 +2234,28 @@ function updateRefineButton() {
 	}
 }
 
+// Point the cross-page result actions at this model. Also called when a local
+// (Modly) result gains its public copy after it was first shown.
+function linkResultTools(glbUrl) {
+	// Deep-link the physical lane at THIS generation. A creation id is the
+	// better handle (it carries the prompt and the creator through to the
+	// print), but a model that has not been persisted yet still materializes
+	// from its own URL, so the action is never dead.
+	if (els.materialize) {
+		const handle = currentCreationId
+			? `?creation=${encodeURIComponent(currentCreationId)}`
+			: glbUrl && !glbUrl.startsWith('blob:')
+				? `?glb=${encodeURIComponent(glbUrl)}`
+				: '';
+		els.materialize.href = `/materialize${handle}`;
+		els.materialize.hidden = false;
+	}
+	// Cross-link into Parts Studio with this exact model pre-loaded.
+	if (els.segmentBtn) els.segmentBtn.href = `/segment?mesh=${encodeURIComponent(glbUrl)}`;
+	if (els.openInComposer) els.openInComposer.href = `/compose?glb=${encodeURIComponent(glbUrl)}`;
+	if (els.irlBtn) els.irlBtn.href = `/irl?avatar=${encodeURIComponent(glbUrl)}`;
+}
+
 // `glbUrl` is what the VIEWER loads and `downloadUrl` is what the Download
 // button hands over. They differ for a re-opened creation that has a delivery
 // variant (api/_lib/forge-store.js): the viewer takes the phone-sized meshopt +
@@ -2253,19 +2314,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 		// Hide after animation completes (3s).
 		setTimeout(() => els.savedChip?.classList.add('is-hidden'), 3100);
 	}
-	// Deep-link the physical lane at THIS generation. A creation id is the
-	// better handle (it carries the prompt and the creator through to the
-	// print), but a model that has not been persisted yet still materializes
-	// from its own URL, so the action is never dead.
-	if (els.materialize) {
-		const handle = currentCreationId
-			? `?creation=${encodeURIComponent(currentCreationId)}`
-			: glbUrl && !glbUrl.startsWith('blob:')
-				? `?glb=${encodeURIComponent(glbUrl)}`
-				: '';
-		els.materialize.href = `/materialize${handle}`;
-		els.materialize.hidden = false;
-	}
+	linkResultTools(glbUrl);
 	els.download.href = downloadUrl || glbUrl;
 	els.download.setAttribute(
 		'download',
@@ -2276,10 +2325,6 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 				.replace(/^-|-$/g, '') || 'forge'
 		}.glb`,
 	);
-	// Cross-link into Parts Studio with this exact model pre-loaded.
-	if (els.segmentBtn) els.segmentBtn.href = `/segment?mesh=${encodeURIComponent(glbUrl)}`;
-	if (els.openInComposer) els.openInComposer.href = `/compose?glb=${encodeURIComponent(glbUrl)}`;
-	if (els.irlBtn) els.irlBtn.href = `/irl?avatar=${encodeURIComponent(glbUrl)}`;
 	// Offer "Refine" when a higher tier exists and this job can be re-run. Use the
 	// tier the result was actually produced at (meta), falling back to the current
 	// selection for re-opened gallery models that don't carry tier metadata.
@@ -2306,6 +2351,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	if (els.forgeShareBtn) {
 		els.forgeShareBtn.dataset.sharePrompt = label;
 	}
+	if (!meta?.modly) hideModlySave();
 }
 
 // Deterministic gradient from prompt text — same prompt → same colours.
@@ -3028,6 +3074,411 @@ async function run(cfg) {
 	}
 }
 
+// Your GPU (Modly) -----------------------------------------------------------
+// An opt-in lane that runs image-to-3D on the visitor's own graphics card
+// through Modly (src/modly-local.js, src/forge-modly.js). Its models join the
+// engine picker as `modly:<id>` engines, the run reports Modly's real percent
+// and step text, and the finished GLB enters the same result path as a cloud
+// generation once it has a public copy (rig, optimize and AR need a URL).
+
+function isModlyEngine(id) {
+	return typeof id === 'string' && id.startsWith('modly:');
+}
+
+function modlyEngineLabel(id) {
+	const modelId = id.slice('modly:'.length);
+	return `Your GPU (${modly?.modelById(modelId)?.name || modelId})`;
+}
+
+// Models that can serve the current tab: Modly takes a photo, so only the
+// photos tab offers them.
+function modlyReadyModels() {
+	return mode === 'image' && modly ? modly.readyModels() : [];
+}
+
+function appendModlyEngineButtons() {
+	const ids = [];
+	for (const m of modlyReadyModels()) {
+		const id = `modly:${m.id}`;
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		Object.assign(btn.dataset, {
+			engine: id,
+			path: 'modly',
+			backend: id,
+			byok: '',
+			poly: 'false',
+			userimages: 'true',
+			modly: '1',
+			modelId: m.id,
+		});
+		const name = document.createElement('span');
+		name.className = 'eng-label';
+		name.textContent = m.name;
+		const pill = document.createElement('span');
+		pill.className = 'eng-free eng-local';
+		pill.setAttribute('aria-hidden', 'true');
+		pill.textContent = 'Your GPU, free';
+		btn.append(name, ' ', pill);
+		const vram = m.vramGb ? ` · needs about ${m.vramGb} GB of graphics memory` : '';
+		btn.title = `${m.name}: runs in Modly on your own graphics card, free${vram}`;
+		btn.setAttribute('aria-label', `${m.name}, runs on your GPU, free`);
+		btn.setAttribute('aria-pressed', String(id === selectedEngine.backend));
+		els.engine.appendChild(btn);
+		ids.push(id);
+	}
+	return ids;
+}
+
+// Rebuild the engine picker from whatever can serve right now: the cloud
+// catalog, the connected Modly models, or both. With no catalog (an older
+// deployment) the picker still appears for Modly alone.
+function refreshEnginePicker() {
+	if (!els.engine) return;
+	if (!catalog) {
+		const local = modlyReadyModels().length > 0;
+		els.engine.closest('#forge-quality')?.classList.toggle('is-hidden', !local);
+		if (!local) {
+			els.engine.innerHTML = '';
+			if (selectedEngine.modly) {
+				selectedEngine = { ...DEFAULT_ENGINE };
+				els.tier?.classList.remove('is-hidden');
+			}
+			return;
+		}
+	}
+	buildEngineButtons();
+}
+
+function onModlyChange(state) {
+	if (state.status === 'probing') return;
+	if (state.status !== 'connected' && selectedEngine.modly) userPickedEngine = false;
+	refreshEnginePicker();
+	// Connecting is an explicit opt-in, so a first connect puts a local model in
+	// the selection. A Refresh keeps whichever Modly model was already picked.
+	if (state.status === 'connected' && mode === 'image' && !selectedEngine.modly) {
+		const btn = els.engine?.querySelector('button[data-modly="1"]:not(:disabled)');
+		if (btn) {
+			userPickedEngine = true;
+			selectEngine(btn);
+		}
+	}
+	updateEstimate();
+}
+
+function renderModlyEstimate() {
+	const model = modly?.modelById(selectedEngine.modelId);
+	const parts = [
+		'<strong>Your GPU</strong>',
+		'<span class="est-free">Free</span>',
+		'runs in Modly on this computer',
+		'builds from your first photo',
+	];
+	if (model?.vramGb) parts.push(`needs about ${Number(model.vramGb)} GB of graphics memory`);
+	els.estimate.innerHTML = parts.join(' · ');
+}
+
+function paintModlyProgress(elapsedS) {
+	const pending = modlyRun.state === 'pending';
+	if (els.genProgress) {
+		els.genProgress.dataset.indeterminate = String(pending);
+		els.genProgress.dataset.over = 'false';
+	}
+	if (!pending) setProgress(modlyRun.pct);
+	const strong = document.createElement('strong');
+	strong.textContent = `${elapsedS}s`;
+	els.genMeta.replaceChildren('Elapsed ', strong, pending ? '' : ` · ${modlyRun.pct}%`);
+	if (modlyRun.step) els.genMeta.append(` · ${modlyRun.step}`);
+}
+
+// The photo Modly builds from: the first view the user added. Modly takes a
+// single image, so extra views are named as unused rather than silently dropped.
+function modlySourceSlot() {
+	const index = slots.findIndex(
+		(s) => (s.state === 'uploaded' || s.state === 'uploading') && s.objectUrl,
+	);
+	return index < 0 ? null : { index, slot: slots[index] };
+}
+
+function modlyErrorCopy(err, modelName) {
+	switch (err?.code) {
+		case 'GENERATION_FAILED':
+			return {
+				title: `${modelName} couldn't finish`,
+				message: `Modly reported: ${err.message} The full trace is in Modly's log.`,
+			};
+		case 'CANCELLED':
+			return {
+				title: 'Cancelled in Modly',
+				message: 'The generation was stopped from inside the Modly app. Press Try again to run it again.',
+			};
+		case 'NOT_RUNNING':
+		case 'BLOCKED':
+		case 'TIMEOUT':
+			return {
+				title: 'Modly stopped answering',
+				message: `${err.message} Make sure Modly is still open, then press Try again.`,
+			};
+		case 'UNKNOWN_MODEL':
+			return {
+				title: 'Model not available in Modly',
+				message: `${err.message} Press Refresh under "Use your GPU" to reload the model list.`,
+			};
+		default:
+			return {
+				title: 'Modly couldn’t finish',
+				message: err?.message || 'Modly could not finish this generation.',
+			};
+	}
+}
+
+async function runModly(modelId) {
+	if (modlyRun) return;
+	stopRateLimitCountdown();
+	lastJob = { modly: true, modelId };
+	// A Retry after Modly restarted: look for it again before giving up.
+	if (modly && modly.state.status !== 'connected') await modly.connect();
+	const origin = modly?.state.status === 'connected' ? modly.state.origin : null;
+	const model = origin ? modly.readyModels().find((m) => m.id === modelId) : null;
+	if (!origin) {
+		showError(
+			'Forge could not reach Modly on this computer. Start Modly, then press Try again. The "Use your GPU" panel in the photos tab shows what the browser saw.',
+			{ title: 'Modly is not reachable' },
+		);
+		return;
+	}
+	if (!model) {
+		showError(
+			`${modelId} is no longer downloaded in Modly. Pick another engine, or download it again in Modly's Models page.`,
+			{ title: 'Model not available in Modly' },
+		);
+		return;
+	}
+	const source = modlySourceSlot();
+	if (!source) {
+		const first = slotEl(0);
+		first?.focus();
+		first?.classList.add('drop-target');
+		setTimeout(() => first?.classList.remove('drop-target'), 600);
+		return;
+	}
+	let image;
+	try {
+		image = await (await fetch(source.slot.objectUrl)).blob();
+	} catch {
+		showError('Forge could not read your photo. Add it again, then press Try again.', {
+			title: 'Photo unavailable',
+		});
+		return;
+	}
+
+	const backend = `modly:${modelId}`;
+	const controller = new AbortController();
+	modlyRun = { controller, pct: 0, step: 'Sending your photo to Modly', state: 'pending' };
+	currentCreationId = null;
+	pollAbort = false;
+	setBusy(true);
+	timeline.begin({
+		mode: 'image',
+		backend,
+		viewCount: 1,
+		localPreviewUrl: source.slot.objectUrl,
+		usesReference: false,
+		local: true,
+	});
+	const views = slots.filter((s) => s.state === 'uploaded' || s.state === 'uploading').length;
+	setLaneNote(
+		views > 1
+			? `Modly builds from a single photo, so only your ${VIEW_LABELS[source.index]} view is used.`
+			: '',
+	);
+	// A local run lives in this tab: leaving the page would stop following it.
+	if (els.genLeaveHint) els.genLeaveHint.hidden = true;
+	startElapsed();
+	showState('generating');
+	revealStage();
+
+	const prompt = els.imagePrompt?.value.trim() || '';
+	const label = prompt || `${model.name} model`;
+	try {
+		const result = await generateWithModly(origin, {
+			image,
+			modelId,
+			params: defaultModlyParams(model.paramsSchema),
+			signal: controller.signal,
+			onStarted: () => timeline.applySubmit({ backend, status: 'queued' }),
+			onProgress: (pct, step, state) => {
+				if (modlyRun?.controller !== controller) return;
+				Object.assign(modlyRun, { pct, step, state: state || modlyRun.state });
+				if (state === 'done') {
+					timeline.finalizing();
+				} else {
+					timeline.applyPoll({ status: state === 'running' ? 'running' : 'queued' });
+					timeline.setStepText(step);
+				}
+				elapsedRetick?.();
+			},
+		});
+
+		// The mesh is on this machine. Give it a public copy so every downstream
+		// tool (rig, optimize, AR, embed, save) can fetch it like a cloud result.
+		Object.assign(modlyRun, { pct: 100, step: 'Copying the model to three.ws storage' });
+		elapsedRetick?.();
+		markProgressDone();
+		const objectUrl = URL.createObjectURL(result.blob);
+		let publicUrl = '';
+		let storageError = '';
+		try {
+			publicUrl = await promoteModlyGlb(result.blob, { signal: controller.signal });
+		} catch (err) {
+			if (controller.signal.aborted) {
+				URL.revokeObjectURL(objectUrl);
+				throw err;
+			}
+			storageError = err?.message || 'Storage is unavailable.';
+		}
+
+		releaseModlyResult();
+		modlyResult = {
+			objectUrl,
+			publicUrl,
+			storageError,
+			blob: result.blob,
+			label,
+			prompt,
+			modelName: model.name,
+		};
+		showResult(
+			publicUrl || objectUrl,
+			label,
+			{ backend, views_used: 1, modly: true },
+			{ downloadUrl: objectUrl },
+		);
+		timeline.complete();
+		// Not a server-side creation: the creation-scoped feedback controls
+		// (verdict, category, destination) would have nothing to write to.
+		if (els.verdict) els.verdict.hidden = true;
+		if (els.categoryPicker) els.categoryPicker.hidden = true;
+		destinationPicker.hide();
+		renderModlySave();
+	} catch (err) {
+		const ours = controller.signal.aborted;
+		if (ours) {
+			// The person pressed Cancel; generateWithModly already told Modly to stop.
+			stopElapsed();
+			timeline.fail();
+			showState('empty');
+			modly?.notify('Cancelled. Modly stopped the generation.');
+			els.imagePrompt?.focus();
+			return;
+		}
+		const copy = modlyErrorCopy(err, model.name);
+		showError(copy.message, { title: copy.title });
+	} finally {
+		if (modlyRun?.controller === controller) modlyRun = null;
+		if (els.genLeaveHint) els.genLeaveHint.hidden = false;
+		setBusy(false);
+	}
+}
+
+function releaseModlyResult() {
+	if (modlyResult?.objectUrl) URL.revokeObjectURL(modlyResult.objectUrl);
+	modlyResult = null;
+}
+
+// Any non-local result replaces the local one: drop its save row and blob.
+function hideModlySave() {
+	if (els.modlySave) els.modlySave.hidden = true;
+	if (els.verdict) els.verdict.hidden = false;
+	releaseModlyResult();
+}
+
+// The save row under a local result. `phase` is one of: ready, saving,
+// signin, saved, error.
+function renderModlySave(phase = 'ready', detail = {}) {
+	if (!els.modlySave || !modlyResult) return;
+	const r = modlyResult;
+	const text = els.modlySaveText;
+	const btn = els.modlySaveBtn;
+	els.modlySave.hidden = false;
+	text.dataset.tone = phase === 'saved' ? 'ok' : phase === 'error' || phase === 'signin' ? 'error' : '';
+	btn.hidden = phase === 'saved';
+	btn.disabled = phase === 'saving';
+	btn.setAttribute('aria-busy', String(phase === 'saving'));
+	btn.textContent = r.publicUrl ? 'Save to my avatars' : 'Upload and save';
+	const strong = (s) => {
+		const el = document.createElement('strong');
+		el.textContent = s;
+		return el;
+	};
+	const link = (href, s) => {
+		const a = document.createElement('a');
+		a.href = href;
+		a.textContent = s;
+		return a;
+	};
+	if (phase === 'saving') {
+		text.replaceChildren(r.publicUrl ? 'Saving to your avatars…' : 'Uploading, then saving to your avatars…');
+	} else if (phase === 'saved') {
+		text.replaceChildren(strong('Saved to your avatars.'), ' ');
+		if (detail.viewUrl) text.append(link(detail.viewUrl, 'Open it'));
+	} else if (phase === 'signin') {
+		text.replaceChildren(
+			strong('Sign in to save it.'),
+			' ',
+			link(`/login?next=${encodeURIComponent('/forge')}`, 'Sign in'),
+			' in a new tab if you want to keep this model on screen, then press Save again. Download works without an account.',
+		);
+	} else if (phase === 'error') {
+		text.replaceChildren(strong('Not saved.'), ` ${detail.message || 'Try again.'}`);
+	} else if (r.publicUrl) {
+		text.replaceChildren(
+			`Made on your GPU with ${r.modelName}. It is not in Your creations: save it to your avatars to keep it in your library.`,
+		);
+	} else {
+		text.replaceChildren(
+			strong('Only on this computer.'),
+			` Copying it to three.ws failed (${r.storageError}), so rigging, optimizing and saving need an upload first. Download keeps the GLB either way.`,
+		);
+	}
+}
+
+async function saveModlyResult() {
+	const r = modlyResult;
+	if (!r) return;
+	renderModlySave('saving');
+	if (!r.publicUrl) {
+		try {
+			r.publicUrl = await promoteModlyGlb(r.blob);
+			r.storageError = '';
+		} catch (err) {
+			r.storageError = err?.message || 'Storage is unavailable.';
+			renderModlySave('error', { message: `Upload failed: ${r.storageError}` });
+			return;
+		}
+		if (modlyResult !== r) return;
+		// The model now has a public URL: hand it to the result tools that need one.
+		linkResultTools(r.publicUrl);
+		lastShownGlb = r.publicUrl;
+		document.dispatchEvent(
+			new CustomEvent('forge:model-ready', { detail: { glbUrl: r.publicUrl, label: r.label } }),
+		);
+	}
+	const out = await saveModlyResultToLibrary({
+		glbUrl: r.publicUrl,
+		name: r.label,
+		sourcePrompt: r.prompt,
+		modelName: r.modelName,
+	});
+	if (modlyResult !== r) return;
+	if (out.ok) renderModlySave('saved', { viewUrl: out.viewUrl });
+	else if (out.status === 401) renderModlySave('signin');
+	else renderModlySave('error', { message: out.message });
+}
+
+els.modlySaveBtn?.addEventListener('click', saveModlyResult);
+modly = createModlyPanel({ root: els.modlyPanel, onChange: onModlyChange });
+
 // Resume an in-flight generation persisted before a reload/navigation. The
 // server holds all job state, so picking it back up is just polling the same
 // job id; the panel restores in its mesh phase with an honest elapsed count.
@@ -3156,6 +3607,11 @@ function collectComposerCfg() {
 }
 
 function submit() {
+	// Your GPU lane: the run happens in Modly on this computer, not /api/forge.
+	if (selectedEngine.modly && mode === 'image') {
+		runModly(selectedEngine.modelId);
+		return;
+	}
 	// Platform-keyed High is a $THREE holder perk. The Generate button is disabled
 	// when locked, but a keyboard submit (⌘↵) can still reach here — open the upsell
 	// (with the working Pay-per-use path) instead of firing a request the server will
@@ -3373,6 +3829,12 @@ els.providerKey?.addEventListener('input', () => {
 });
 
 els.cancel.addEventListener('click', () => {
+	// Aborting a local run makes generateWithModly call Modly's own cancel
+	// endpoint, so the GPU stops working too; runModly shows the outcome.
+	if (modlyRun) {
+		modlyRun.controller.abort();
+		return;
+	}
 	pollAbort = true;
 	clearInflight();
 	stopElapsed();
@@ -3408,7 +3870,9 @@ els.retry.addEventListener('click', () => {
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
 	destinationPicker.hide();
-	if (lastJob && (lastJob.prompt || (lastJob.imageUrls && lastJob.imageUrls.length))) {
+	if (lastJob?.modly) {
+		runModly(lastJob.modelId);
+	} else if (lastJob && (lastJob.prompt || (lastJob.imageUrls && lastJob.imageUrls.length))) {
 		run(lastJob);
 	} else {
 		showState('empty');
