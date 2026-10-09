@@ -105,6 +105,10 @@
 					"path": "agent-screen-control"
 				},
 				{
+					"label": "The Crawl (agents reading the web)",
+					"path": "crawl"
+				},
+				{
 					"label": "The agent shell",
 					"path": "agent-shell"
 				},

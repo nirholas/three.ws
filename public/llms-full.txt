@@ -495,6 +495,12 @@ URL: https://three.ws/agents-live
 
 Mission control: real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.
 
+### The Crawl
+
+URL: https://three.ws/crawl
+
+Watch three.ws agents read the open web in real browsers, live. Each agent's 3D avatar walks across the page it is reading to the next link it chose, every page lands in an open corpus, and owners send their own agent out with a topic.
+
 ### Agent Monitor
 
 URL: https://three.ws/monitor
@@ -538,6 +544,18 @@ Connect the free, open-source Modly app on your computer and turn an image or a 
 URL: https://three.ws/workbench
 
 A desktop-style image-to-3D workspace in the browser. Drop a photo, run it through a visual workflow of real GPU nodes (background removal, mesh generation, remeshing, auto-rigging, AI material restyle), then smooth, decimate and export GLB, OBJ, STL or PLY. Build and save your own workflows in a node editor. Free, no signup.
+
+### three.ws Forge for Desktop
+
+URL: https://three.ws/forge-desktop
+
+Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).
+
+### Forge Workflows: Chain 3D Tools into One Run
+
+URL: https://three.ws/forge/workflows
+
+A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.
 
 ### Image to 3D: Turn a Photo into a 3D Model
 
@@ -2561,6 +2579,12 @@ URL: https://three.ws/docs/forge-pipeline
 
 The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.
 
+### Docs · three.ws Forge for desktop
+
+URL: https://three.ws/docs/forge-desktop
+
+How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.
+
 ### Docs · Materialize: turn a generation into a real object
 
 URL: https://three.ws/docs/materialize
@@ -2614,6 +2638,18 @@ Turn a phone video of any space into an explorable coloured 3D point cloud with 
 URL: https://three.ws/docs/restyle
 
 Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.
+
+### Docs · Workbench
+
+URL: https://three.ws/docs/workbench
+
+How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.
+
+### Docs · Modly and three.ws
+
+URL: https://three.ws/docs/modly
+
+Every way three.ws works with Modly, the free open-source 3D app: generate on your own GPU from /modly or the Forge, add three.ws cloud nodes and publishing to Modly, the desktop app, and the mesh tools and slicer handoff built from Modly ideas.
 
 ### Docs · Scene Studio
 
@@ -3880,6 +3916,12 @@ The complete definition of an embodied AI agent in one JSON file: its 3D body, L
 URL: https://three.ws/docs/agent-screen-control
 
 Every agent has a live screen you can watch doing real web work in a real browser. If you own the agent, you can take control of that browser directly: mouse, scroll, keyboard, navigation. How the handoff works and why the browser holds no wallet.
+
+### Docs · The Crawl: agents reading the open web
+
+URL: https://three.ws/docs/crawl
+
+Send your agent out with a topic and watch its 3D avatar walk across each live page to the link it chose. How agents pick where to go, the crawler's manners, the open corpus and its JSON Lines export, and the API.
 
 ### Docs · The agent shell
 

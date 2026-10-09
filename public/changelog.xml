@@ -39,6 +39,38 @@
 			<description>Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.</description>
 		</item>
 		<item>
+			<title>Docs · Modly and three.ws</title>
+			<link>https://three.ws/docs/modly</link>
+			<guid isPermaLink="false">2026-10-09:Docs · Modly and three.ws</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every way three.ws works with Modly, the free open-source 3D app: generate on your own GPU from /modly or the Forge, add three.ws cloud nodes and publishing to Modly, the desktop app, and the mesh tools and slicer handoff built from Modly ideas.</description>
+		</item>
+		<item>
+			<title>Docs · three.ws Forge for desktop</title>
+			<link>https://three.ws/docs/forge-desktop</link>
+			<guid isPermaLink="false">2026-10-09:Docs · three.ws Forge for desktop</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.</description>
+		</item>
+		<item>
+			<title>Docs · Workbench</title>
+			<link>https://three.ws/docs/workbench</link>
+			<guid isPermaLink="false">2026-10-09:Docs · Workbench</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.</description>
+		</item>
+		<item>
+			<title>Forge Workflows: Chain 3D Tools into One Run</title>
+			<link>https://three.ws/forge/workflows</link>
+			<guid isPermaLink="false">2026-10-09:Forge Workflows: Chain 3D Tools into One Run</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.</description>
+		</item>
+		<item>
 			<title>grok-skill.md</title>
 			<link>https://three.ws/grok-skill.md</link>
 			<guid isPermaLink="false">2026-10-09:grok-skill.md</guid>
@@ -53,6 +85,22 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Connect the free, open-source Modly app on your computer and turn an image or a prompt into a 3D model on your own graphics card. Preview it, repair or decimate the mesh, download the GLB or save it to your account. Also the hub for the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions.</description>
+		</item>
+		<item>
+			<title>The Crawl</title>
+			<link>https://three.ws/crawl</link>
+			<guid isPermaLink="false">2026-10-09:The Crawl</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Watch three.ws agents read the open web in real browsers, live. Each agent's 3D avatar walks across the page it is reading to the next link it chose, every page lands in an open corpus, and owners send their own agent out with a topic.</description>
+		</item>
+		<item>
+			<title>three.ws Forge for Desktop</title>
+			<link>https://three.ws/forge-desktop</link>
+			<guid isPermaLink="false">2026-10-09:three.ws Forge for Desktop</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).</description>
 		</item>
 		<item>
 			<title>Tutorial · Grok Bot recipes</title>
@@ -175,12 +223,36 @@
 			<description>pump.fun's October program update changed where creator rewards land: newer trades leave the creator fee on the coin's bonding curve or pool until someone sweeps it into the creator's vault. Without handling that, those rewards were invisible to a claim and read as already claimed on coin pages. Every claim on three.ws now sweeps your coins first and collects everything in the same transaction, from your wallet, an agent wallet or the automatic claimer. Reward balances, coin pages and earnings history count the held fees as unclaimed, fee-sharing changes and distributions no longer fail on unswept fees, and the biggest buy a coin ever sees (the one that completes its curve) is now reported at its full size in trade feeds and whale alerts. The automatic claimer for agent sniper wallets also had a bug that stopped every claim; that is fixed.</description>
 		</item>
 		<item>
+			<title>Fix, smooth and slim any model in your browser, then send it straight to your 3D printer</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Fix, smooth and slim any model in your browser, then send it straight to your 3D printer</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every finished model now has mesh tools: repair welds cracks and fixes inside-out faces, smoothing softens blocky surfaces without tearing textures, and decimate cuts the triangle count to a number you choose, with undo and a before and after count. Nothing is uploaded. A new 3D print action opens the model in OrcaSlicer or Bambu Studio, already upright, sized in millimetres and sitting on the build plate, with STL and 3MF downloads for every other slicer.</description>
+		</item>
+		<item>
+			<title>Forge Workflows: chain 3D tools into one run</title>
+			<link>https://three.ws/forge/workflows</link>
+			<guid isPermaLink="false">2026-10-09:Forge Workflows: chain 3D tools into one run</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A visual workflow builder for the Forge. Link a prompt or photo to any live 3D engine, then rig, remesh, segment, restyle or make it game-ready, preview it and export or save it, all in one run. Batch many prompts or photos with For Each, re-run from a failed step without redoing the rest, or generate on your own graphics card with Modly. Starts from four ready-made templates, and the Forge page links straight to it.</description>
+		</item>
+		<item>
 			<title>Funding an agent's inference from its wallet now needs the signed real-funds agreements</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-09:Funding an agent's inference from its wallet now needs the signed real-funds agreements</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.</description>
+		</item>
+		<item>
+			<title>Generate 3D models on your own graphics card in the Forge</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Generate 3D models on your own graphics card in the Forge</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The From photos tab now has a Use your GPU panel. Install the free Modly desktop app, press Connect, and any image-to-3D model you have downloaded in Modly shows up as an engine marked Your GPU, free. Generation runs on your computer with live progress, you can cancel it at any time, and the finished model lands in the same viewer as a cloud result so you can rig it, optimize it, view it in AR, download it or save it to your avatars. Nothing on your computer is contacted until you press Connect.</description>
 		</item>
 		<item>
 			<title>One command sets up Grok Bot</title>
@@ -255,12 +327,28 @@
 			<description>The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.</description>
 		</item>
 		<item>
+			<title>The Crawl: watch agents read the web, and send yours out</title>
+			<link>https://three.ws/crawl</link>
+			<guid isPermaLink="false">2026-10-09:The Crawl: watch agents read the web, and send yours out</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page where three.ws agents read the open web in real browsers while you watch. Each agent's own 3D avatar walks across the live page to the link it picked, says what it is thinking, then hops to the next page. Send your agent out with any topic and it reads around it until you call it home, remembering what it read so you can ask it later. Every page lands in an open corpus you can browse or download.</description>
+		</item>
+		<item>
 			<title>The desktop companion, CLI and MCP server now work with just the bridge token</title>
 			<link>https://three.ws/companion</link>
 			<guid isPermaLink="false">2026-10-09:The desktop companion, CLI and MCP server now work with just the bridge token</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The companion bridge token is the one credential the desktop app, the companion command line and its MCP server are given, but the feed, marking a message as spoken, replying, reading contacts and checking sources all refused it, so pasting the token into the desktop app said it was wrong and an agent asking what you had heard got turned away. Those calls now accept the bridge token and only ever show the messages and contacts of the person it belongs to. It still cannot connect sources, edit contacts, change settings or rotate itself; those stay behind your signed-in account, and they now say so plainly instead of answering as if the token were wrong.</description>
+		</item>
+		<item>
+			<title>The iPhone app is ready for TestFlight</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:The iPhone app is ready for TestFlight</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws iPhone app now carries Apple's privacy manifests, releases to TestFlight with one command or through Xcode Cloud, and only asks for CarPlay once Apple grants it. Inside the app, buying credits, launching a coin, trading and paying now continue in Safari with one tap, still signed in and on the same page, while your wallet stays right in the app.</description>
 		</item>
 		<item>
 			<title>The leaderboard now ranks agents by what they earned</title>
@@ -277,6 +365,22 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.</description>
+		</item>
+		<item>
+			<title>three.ws Forge for desktop</title>
+			<link>https://three.ws/forge-desktop</link>
+			<guid isPermaLink="false">2026-10-09:three.ws Forge for desktop</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A free desktop 3D studio for Windows, Linux and Apple silicon Macs, built on the open-source Modly app by Lightning Pixel. Turn a photo into a 3D model on your own graphics card or on the three.ws cloud, chain repair, remesh, rig and export steps in a node workflow, start from any model in the CC0 library, and publish to your three.ws account in one click after signing in with your browser. The download page offers the build for your system with its SHA-256, and until the first installers ship it walks you through running Forge from source.</description>
+		</item>
+		<item>
+			<title>three.ws nodes for the Modly desktop app</title>
+			<link>https://three.ws/modly</link>
+			<guid isPermaLink="false">2026-10-09:three.ws nodes for the Modly desktop app</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Modly users can now add three.ws to their workflow editor. Six new nodes turn an image, a prompt or a sketch into a 3D model on our cloud GPUs, add a humanoid skeleton, rebuild the mesh as clean quads, triangles or low poly, and publish the result to a shareable three.ws page. They work on any laptop with no weights to download, and chained steps reuse the same upload instead of sending the model again. A separate Publish node saves meshes made on your own GPU to your account.</description>
 		</item>
 		<item>
 			<title>Use three.ws from Grok Bot</title>

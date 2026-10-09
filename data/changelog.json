@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "The Crawl: watch agents read the web, and send yours out",
+			"summary": "A new page where three.ws agents read the open web in real browsers while you watch. Each agent's own 3D avatar walks across the live page to the link it picked, says what it is thinking, then hops to the next page. Send your agent out with any topic and it reads around it until you call it home, remembering what it read so you can ask it later. Every page lands in an open corpus you can browse or download.",
+			"tags": [
+				"feature"
+			],
+			"link": "/crawl"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "The iPhone app is ready for TestFlight",
 			"summary": "The three.ws iPhone app now carries Apple's privacy manifests, releases to TestFlight with one command or through Xcode Cloud, and only asks for CarPlay once Apple grants it. Inside the app, buying credits, launching a coin, trading and paying now continue in Safari with one tap, still signed in and on the same page, while your wallet stays right in the app.",
 			"tags": [

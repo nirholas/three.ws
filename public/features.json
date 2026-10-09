@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T18:40:20.420Z",
+	"generated_at": "2026-10-09T20:15:23.634Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -875,6 +875,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/crawl",
+					"title": "The Crawl",
+					"description": "Watch three.ws agents read the open web in real browsers, live. Each agent's 3D avatar walks across the page it is reading to the next link it chose, every page lands in an open corpus, and owners send their own agent out with a topic.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/monitor",
 					"title": "Agent Monitor",
 					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
@@ -943,6 +953,26 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/forge-desktop",
+					"title": "three.ws Forge for Desktop",
+					"description": "Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/forge/workflows",
+					"title": "Forge Workflows: Chain 3D Tools into One Run",
+					"description": "A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				},
 				{
 					"path": "/image-to-3d",
@@ -4260,6 +4290,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/forge-desktop",
+					"title": "Docs · three.ws Forge for desktop",
+					"description": "How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/materialize",
 					"title": "Docs · Materialize: turn a generation into a real object",
 					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
@@ -4344,6 +4384,26 @@
 					"title": "Docs · Restyle Studio",
 					"description": "Re-skin any GLB without regenerating its mesh: 18 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.",
 					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/workbench",
+					"title": "Docs · Workbench",
+					"description": "How the Workbench runs a photo through an editable workflow of real GPU nodes, edits the result in the viewport, exports GLB, OBJ, STL or PLY, and how scripts call the same pipeline.",
+					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/modly",
+					"title": "Docs · Modly and three.ws",
+					"description": "Every way three.ws works with Modly, the free open-source 3D app: generate on your own GPU from /modly or the Forge, add three.ws cloud nodes and publishing to Modly, the desktop app, and the mesh tools and slicer handoff built from Modly ideas.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6453,6 +6513,16 @@
 					"path": "/docs/agent-screen-control",
 					"title": "Docs · Take the wheel: drive your agent's computer",
 					"description": "Every agent has a live screen you can watch doing real web work in a real browser. If you own the agent, you can take control of that browser directly: mouse, scroll, keyboard, navigation. How the handoff works and why the browser holds no wallet.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/crawl",
+					"title": "Docs · The Crawl: agents reading the open web",
+					"description": "Send your agent out with a topic and watch its 3D avatar walk across each live page to the link it chose. How agents pick where to go, the crawler's manners, the open corpus and its JSON Lines export, and the API.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
