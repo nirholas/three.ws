@@ -44,6 +44,13 @@ const MAX_UPSTREAM_ATTEMPTS = 6;
 // everywhere, so it is never retried.
 const RETRYABLE_CODES = new Set(['upstream_rate_limited', 'upstream_unreachable']);
 const isRetryable = (err) => RETRYABLE_CODES.has(err?.code) || err?.status === 502;
+// In a pool of interchangeable hosts, a 401 or 403 is about that host (an
+// expired or quota-dead key, a node blocking our egress IP; the RPC registry
+// already cools such a host for hours), not about the request, so the next
+// host answers it. Observed 2026-10-09: the keyed Solana primary answered 403
+// and largest-holders failed outright while the public hosts below it were
+// healthy. A single-host provider still surfaces the 4xx unchanged.
+const isRetryableInPool = (err) => isRetryable(err) || err?.status === 401 || err?.status === 403;
 
 // Short per-host memory of retryable failures. Without it, every request
 // re-discovers a dead primary the hard way (worst case the full 20s timeout)
@@ -244,7 +251,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 			markGood(provider.base);
 			return out;
 		} catch (err) {
-			if (!isRetryable(err)) throw err;
+			if (!(hasPool ? isRetryableInPool(err) : isRetryable(err))) throw err;
 			markBad(provider.base);
 			reportFailure(provider.base, err);
 			logHostFailure(provider, provider.base, err);
@@ -281,7 +288,7 @@ export async function executeUpstream({ provider, endpoint, query = {}, body, ap
 			markGood(base);
 			return out;
 		} catch (next) {
-			if (!isRetryable(next)) throw next;
+			if (!isRetryableInPool(next)) throw next;
 			markBad(base);
 			reportFailure(base, next);
 			logHostFailure(provider, base, next);
