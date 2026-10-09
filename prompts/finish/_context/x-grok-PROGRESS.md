@@ -169,3 +169,9 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Follow-up from order 050: the reply post-check now rejects em and en dashes (`reason: dash`) and `cleanModelText` normalizes them to commas (number ranges to hyphens) before the check.
 - Evidence: `tests/x-mention-guard.test.js` (rule tests on the real migration in PGlite; the kill switch tests assert zero calls to the reply brain and adapter) and `tests/x-mention-reply.test.js` pass; poll, reader and store suites still pass (112 total in the five touched suites).
 - Not verified: a live `users/by` resolution of `grok` and `bot` (first production tick does it; tier refusals are recorded as unresolved). Order 056 relaxes `known_bot` for the on-behalf-of flow.
+
+## 2026-10-09: order 057 (X budget controller) done
+
+- Shipped `api/_lib/x-budget.js`: daily and monthly read and post counters in `app_settings` (no migration; the `budget` decision already existed), caps from `X_MENTION_MONTHLY_POST_CAP` (1500), `X_MENTION_DAILY_POST_CAP` (80), `X_MENTION_MONTHLY_READ_CAP` (15000), a degrade ladder (chat 70%, avatar 80%, image3d 90%, make/launch/help 100%) recorded as `budget` decisions, and header-driven backoff (`x-rate-limit-*`, `x-app-limit-24hour-*`, 429 fallback 15 minutes). Wired into `handleMention` (gate before compose, count after send, dry run included) and `pollAccount` (read gate, read count, backoff from headers and from a 429). `fetchMentions` now returns response `headers`; `XRateLimited` carries them. `getBudgetUsage()` is the object order 064 serves from the status endpoint (no status endpoint exists yet, so nothing is exposed over HTTP).
+- Defaults and reasoning: `docs/x-mention-bot.md`, "The X budget". Defaults are conservative placeholders for order 926 to replace with the real tier allowances.
+- Evidence: `tests/x-budget.test.js` 25/25 on the real migration (PGlite).

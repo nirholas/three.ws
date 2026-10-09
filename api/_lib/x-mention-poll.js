@@ -29,6 +29,7 @@ import { composePublicReply, FIXED_HELP_REPLY } from './x-mention-reply.js';
 import { createXAdapter } from './gateway/adapters/x.js';
 import { guardMention, isPaused } from './x-mention-guard.js';
 import { ensureKnownBots } from './x-mention-known-bots.js';
+import * as xBudget from './x-budget.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
 const DEFAULT_LOCK_SECONDS = 110;
@@ -102,7 +103,7 @@ async function composeAnswer({ mention, parsed, account, compose }) {
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget }) {
 	const parsed = parseMentionIntent(mention, account);
 	const dryRun = true;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
@@ -129,9 +130,15 @@ export async function handleMention({ mention, account, limits, env, store = men
 			await store.updateDecision(mention.id, { decision: 'rate_limited', reason: limited });
 			return { tweetId: mention.id, intent: parsed.intent, decision: 'rate_limited', reason: limited };
 		}
+		const allowed = await budget.budgetGate({ intent: parsed.intent, env });
+		if (!allowed.allow) {
+			await store.updateDecision(mention.id, { decision: 'budget', reason: allowed.reason });
+			return { tweetId: mention.id, intent: parsed.intent, decision: 'budget', reason: allowed.reason };
+		}
 		const answer = await composeAnswer({ mention, parsed, account, compose });
 		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: true });
 		await adapter.sendText(mention.id, answer.text);
+		await budget.recordPosts(1);
 		await store.updateDecision(mention.id, { reason: answer.reason });
 		return { tweetId: mention.id, intent: parsed.intent, decision: 'reply', reason: answer.reason, text: answer.text, dry_run: !adapter.live };
 	} catch (err) {
@@ -158,16 +165,27 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 		return { account: label, status: 'error', error: String(err?.message || err).slice(0, 200) };
 	}
 
+	const budget = deps.budget || xBudget;
+	const gate = await budget.readGate({ env });
+	if (!gate.allow) return { account: label, status: 'budget', reason: gate.reason, until: gate.until || null };
+
 	let page;
 	try {
 		page = await fetcher({ account: descriptor.fetch, sinceId, env, request: deps.request || null, resolvedAccount: deps.resolvedAccount || null });
 	} catch (err) {
 		if (err instanceof XTierUnavailable) return { account: label, status: 'unavailable', reason: err.reason || 'tier_unavailable' };
-		if (err instanceof XRateLimited) return { account: label, status: 'rate_limited', reset_at: err.resetAt };
+		if (err instanceof XRateLimited) {
+			const backoff = budget.backoffFromHeaders({ headers: err.headers, status: 429 });
+			await budget.setBackoff(backoff || { until: err.resetAt, reason: 'http_429' }).catch(() => {});
+			return { account: label, status: 'rate_limited', reset_at: err.resetAt };
+		}
 		if (err instanceof XAuthFailed) return { account: label, status: 'auth_failed' };
 		if (err instanceof XMentionsError) return { account: label, status: 'unavailable', reason: err.code };
 		throw err;
 	}
+
+	await budget.recordReads(page.mentions.length).catch(() => {});
+	await budget.noteResponse({ headers: page.headers }).catch(() => {});
 
 	if (!sinceId) {
 		if (page.newestId) await store.advanceCursor({ kind: descriptor.kind, ref: descriptor.ref }, page.newestId);
@@ -184,7 +202,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;

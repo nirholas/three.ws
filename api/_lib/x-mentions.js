@@ -170,7 +170,9 @@ export function classifyMentionsError(res, now = Date.now()) {
 		// A 429 without a usable reset still has to stop the poller; X's
 		// mention window is 15 minutes, so that is the honest fallback.
 		const resetAt = rl.resetAt && Date.parse(rl.resetAt) > now ? rl.resetAt : new Date(now + 15 * 60_000).toISOString();
-		return new XRateLimited(`X rate limit on the mention timeline until ${resetAt}`, { status, body, resetAt, limit: rl.limit });
+		const err = new XRateLimited(`X rate limit on the mention timeline until ${resetAt}`, { status, body, resetAt, limit: rl.limit });
+		err.headers = plainHeaders(res.headers);
+		return err;
 	}
 	if (status === 402 || (status === 403 && TIER_PATTERNS.some((re) => re.test(detail)))) {
 		const reason = body?.reason || body?.type || body?.title || null;
@@ -453,11 +455,13 @@ export async function fetchMentions({ account, sinceId = null, maxResults = PAGE
 	let token = null;
 	let pages = 0;
 	let rateLimit = null;
+	let lastHeaders = {};
 	let truncated = false;
 
 	for (;;) {
 		const res = await req(path, mentionsQuery({ sinceId, maxResults, paginationToken: token }));
 		rateLimit = readRateLimit(res.headers);
+		lastHeaders = plainHeaders(res.headers);
 		if (res.status < 200 || res.status >= 300) throw classifyMentionsError(res);
 		pages += 1;
 		const body = res.body || {};
@@ -476,7 +480,7 @@ export async function fetchMentions({ account, sinceId = null, maxResults = PAGE
 	}
 
 	const mentions = [...byId.values()].sort((a, b) => compareIds(a.id, b.id));
-	return { account: acct, mentions, newestId: newestId || (sinceId ? String(sinceId) : null), pages, truncated, rateLimit, partialErrors };
+	return { account: acct, mentions, newestId: newestId || (sinceId ? String(sinceId) : null), pages, truncated, rateLimit, headers: lastHeaders, partialErrors };
 }
 
 /**
