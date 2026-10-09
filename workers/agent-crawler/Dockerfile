@@ -13,7 +13,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY index.js crawler.js frontier.js extract.js net.js seeds.js ./
+COPY index.js crawler.js frontier.js extract.js guard.js robots.js seeds.js ./
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV NODE_ENV=production \

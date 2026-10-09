@@ -10,7 +10,8 @@ import { readPage, revealLink, visibleLinks, CONSENT_CSS } from './extract.js';
 import {
 	Frontier, canonical, gistOf, hostOf, relevance, scoreLink, thoughtFor, topicTerms,
 } from './frontier.js';
-import { USER_AGENT, claimDomain, domainReadyIn, guardHost, robotsCheck } from './net.js';
+import { USER_AGENT, guardHost } from './guard.js';
+import { claimDomain, domainReadyIn, robotsCheck } from './robots.js';
 import { searchSeeds } from './seeds.js';
 
 export const VIEWPORT = { width: 1200, height: 750 };
@@ -36,6 +37,7 @@ export class Crawler {
 		this.log = (msg) => log(`[${this.name}] ${msg}`);
 		this.frontier = new Frontier();
 		this.visited = new Set();
+		this.bounces = new Map(); // page -> links of it that redirected back to it
 		this.domainCounts = new Map();
 		this.seq = 0;
 		this.stopped = false;
@@ -165,8 +167,15 @@ export class Crawler {
 		}
 	}
 
+	// Start pages are re-read on every shift even if the corpus already holds
+	// them: they are where the owner pointed the agent, and their links are the
+	// freshest leads it has. The API files a re-read page only once.
 	async seed() {
-		for (const url of this.seeds) this.frontier.add(url, 50, null, 'start page');
+		for (const url of this.seeds) {
+			const key = canonical(url);
+			if (key) this.visited.delete(key);
+			this.frontier.add(url, 50, null, 'start page');
+		}
 		if (!this.frontier.size) await this.searchForLeads();
 	}
 
@@ -178,10 +187,15 @@ export class Crawler {
 		return urls.length;
 	}
 
+	// Called when pickNext() found nothing. Every path either adds an unvisited
+	// lead or really waits, so run() can never spin without yielding.
 	async reseedOrRest() {
-		const sinceReseed = Date.now() - this.lastReseedAt;
-		if (sinceReseed > 120_000) {
-			for (const url of this.seeds) if (!this.visited.has(canonical(url))) this.frontier.add(url, 50);
+		for (const item of [...this.frontier.items.values()]) {
+			if (this.visited.has(item.url)) this.frontier.drop(item.url);
+		}
+		if (Date.now() - this.lastReseedAt > 120_000) {
+			this.lastReseedAt = Date.now();
+			for (const url of this.seeds) if (!this.visited.has(canonical(url))) this.frontier.add(url, 50, null, 'start page');
 			if (this.frontier.size || (await this.searchForLeads())) return;
 		}
 		this.status = 'resting';
@@ -209,6 +223,20 @@ export class Crawler {
 			item = this.frontier.pop((i) => !this.visited.has(i.url));
 		}
 		return item;
+	}
+
+	// Two links from one page that both bounced back to it mean the rest of
+	// its links will too (a hash-routed docs shell, a forced locale redirect):
+	// drop them all so the agent stops walking in circles on one screen.
+	noteBounce(home) {
+		const n = (this.bounces.get(home) || 0) + 1;
+		this.bounces.set(home, n);
+		if (n !== 2) return;
+		let dropped = 0;
+		for (const item of [...this.frontier.items.values()]) {
+			if (item.from === home) { this.frontier.drop(item.url); dropped += 1; }
+		}
+		if (dropped) this.log(`${home} redirects its links back to itself; dropped ${dropped} leads`);
 	}
 
 	async pushStep(step, extra = {}) {
@@ -278,6 +306,13 @@ export class Crawler {
 		await this.page.waitForLoadState('load', { timeout: 6000 }).catch(() => {});
 
 		const finalUrl = canonical(this.page.url()) || url;
+		// Redirected onto a page this agent already read (a docs shell that
+		// bounces every deep link back to itself, a paywall home page): nothing
+		// new to read here, so let the frontier choose without dwelling.
+		if (finalUrl !== url && this.visited.has(finalUrl)) {
+			this.noteBounce(finalUrl);
+			return null;
+		}
 		this.visited.add(finalUrl);
 		const finalHost = hostOf(finalUrl);
 		this.domainCounts.set(finalHost, (this.domainCounts.get(finalHost) || 0) + 1);

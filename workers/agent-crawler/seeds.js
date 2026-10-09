@@ -2,7 +2,7 @@
 // walked itself into a dead end: real public search, tried in order until one
 // answers. Each source is a free, keyless public endpoint.
 
-import { guardedFetch } from './net.js';
+import { guardedFetch } from './guard.js';
 
 // DuckDuckGo's HTML endpoint. Result anchors carry the target in the uddg
 // parameter of a /l/ redirect. It sometimes answers bots with a 202 challenge
