@@ -55,7 +55,7 @@ export const def = {
 		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Overrides SOLANA_SECRET_KEY.'),
 		confirm: z.boolean().optional().describe('Must be true to broadcast. Anything else returns a spend-nothing preview.'),
 	},
-	handler: (args) => runMint(args, { preview: REQUIRE_CONFIRM && args.confirm !== true }),
+	handler: (args) => (REQUIRE_CONFIRM && args.confirm !== true ? previewMint(args) : sendMint(args)),
 };
 
 /**
@@ -76,68 +76,82 @@ export const previewDef = {
 		...mintShape,
 		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Only its public key is read.'),
 	},
-	handler: (args) => runMint(args, { preview: true }),
+	handler: (args) => previewMint(args),
 };
 
-async function runMint(args, { preview }) {
-		const network = args.network || NETWORK;
-		const umi = buildUmi({ network, secret: args.secret, requireSigner: true });
-		const wallet = umi.identity.publicKey.toString();
+/**
+ * Everything both paths share: the signer's wallet, the resolved deploy fee and
+ * the built (never signed, never sent) mint. buildAgentMint only appends
+ * instructions to umi builders, so nothing here touches the chain beyond reads.
+ */
+async function planMint(args) {
+	const network = args.network || NETWORK;
+	const umi = buildUmi({ network, secret: args.secret, requireSigner: true });
+	const wallet = umi.identity.publicKey.toString();
+	const fee = await resolveDeployFee(umi, { network, payer: wallet });
+	const mint = buildAgentMint(
+		umi,
+		mintParams(args, { network, creator: wallet, feeLamports: fee.lamports, feeWallet: fee.wallet }),
+	);
+	return { network, umi, wallet, fee, mint, total: EST_NETWORK_SOL + fee.sol };
+}
 
-		const fee = await resolveDeployFee(umi, { network, payer: wallet });
-		const total = EST_NETWORK_SOL + fee.sol;
-		const mint = buildAgentMint(
-			umi,
-			mintParams(args, { network, creator: wallet, feeLamports: fee.lamports, feeWallet: fee.wallet }),
+/**
+ * The spend-nothing preview. Deliberately has no path to sendAgentMint, so the
+ * preview tool cannot broadcast whatever flags or config say.
+ */
+async function previewMint(args) {
+	const { network, umi, wallet, fee, mint, total } = await planMint(args);
+	const balance = await solBalance(umi, wallet);
+	return {
+		ok: true,
+		confirm_required: true,
+		wallet_balance_sol: balance,
+		balance_covers_cost: balance >= total,
+		message:
+			`Preview only. Re-issue with confirm:true to mint on ${network} for ~${total} SOL ` +
+			`(~${EST_NETWORK_SOL} rent + network fees${fee.sol > 0 ? `, ${fee.sol} SOL deploy fee to ${fee.wallet}` : ', no deploy fee'}).`,
+		network,
+		paying_wallet: wallet,
+		estimated_cost_sol: total,
+		network_cost_sol: EST_NETWORK_SOL,
+		...feeBlock(fee),
+		asset_metadata: mint.assetMetadata,
+		metadata_uri_bytes: mint.metadataUri.length,
+		registration: mint.registration,
+	};
+}
+
+/** Sign and broadcast the mint. Only mint_onchain_agent reaches this. */
+async function sendMint(args) {
+	const { network, umi, wallet, fee, mint, total } = await planMint(args);
+	const asset = mint.assetSigner.publicKey.toString();
+
+	const balance = await solBalance(umi, wallet);
+	if (balance * LAMPORTS_PER_SOL < EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS + fee.lamports) {
+		throw Object.assign(
+			new Error(
+				`Wallet ${wallet} holds ${balance} SOL on ${network}; this deploy needs ~${total} SOL. Fund it and retry.`,
+			),
+			{ code: 'insufficient_sol' },
 		);
-		const asset = mint.assetSigner.publicKey.toString();
+	}
 
-		if (preview) {
-			const balance = await solBalance(umi, wallet);
-			return {
-				ok: true,
-				confirm_required: true,
-				wallet_balance_sol: balance,
-				balance_covers_cost: balance >= total,
-				message:
-					`Preview only. Re-issue with confirm:true to mint on ${network} for ~${total} SOL ` +
-					`(~${EST_NETWORK_SOL} rent + network fees${fee.sol > 0 ? `, ${fee.sol} SOL deploy fee to ${fee.wallet}` : ', no deploy fee'}).`,
-				network,
-				paying_wallet: wallet,
-				estimated_cost_sol: total,
-				network_cost_sol: EST_NETWORK_SOL,
-				...feeBlock(fee),
-				asset_metadata: mint.assetMetadata,
-				metadata_uri_bytes: mint.metadataUri.length,
-				registration: mint.registration,
-			};
-		}
+	const { signatures, atomic } = await sendAgentMint(umi, mint, { toBase58Signature });
 
-		const balance = await solBalance(umi, wallet);
-		if (balance * LAMPORTS_PER_SOL < EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS + fee.lamports) {
-			throw Object.assign(
-				new Error(
-					`Wallet ${wallet} holds ${balance} SOL on ${network}; this deploy needs ~${total} SOL. Fund it and retry.`,
-				),
-				{ code: 'insufficient_sol' },
-			);
-		}
-
-		const { signatures, atomic } = await sendAgentMint(umi, mint, { toBase58Signature });
-
-		return {
-			ok: true,
-			network,
-			asset,
-			atomic,
-			signatures,
-			txs: signatures.map((s) => txLink(s, network)),
-			owner: args.owner || wallet,
-			agent_wallet: assetSignerAddress(umi, asset),
-			...feeBlock(fee),
-			metadata_uri: mint.metadataUri,
-			registration: mint.registration,
-			links: agentLinks(asset, network),
-			note: 'The agent is live in the Metaplex Agent Registry. DAS indexers surface it within minutes; fund agent_wallet to let the asset act on-chain.',
-		};
+	return {
+		ok: true,
+		network,
+		asset,
+		atomic,
+		signatures,
+		txs: signatures.map((s) => txLink(s, network)),
+		owner: args.owner || wallet,
+		agent_wallet: assetSignerAddress(umi, asset),
+		...feeBlock(fee),
+		metadata_uri: mint.metadataUri,
+		registration: mint.registration,
+		links: agentLinks(asset, network),
+		note: 'The agent is live in the Metaplex Agent Registry. DAS indexers surface it within minutes; fund agent_wallet to let the asset act on-chain.',
+	};
 }

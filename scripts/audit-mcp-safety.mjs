@@ -52,9 +52,10 @@ import { checkTool, extractTools } from './lib/mcp-safety-check.mjs';
 // because the evidence is not the effect the caller receives. Keyed
 // `tool:evidence`; every entry states why. Two reviewed categories:
 //
-// 1. Read-through cache fills: the caller asked for a read and got a read, and
-//    the server warmed its own cache on the way. Each write is wrapped
-//    non-fatally at the source, so a failed write still returns the read.
+// 1. Read-through cache fills and observation records: the caller asked for a
+//    read and got a read, and the server warmed its own cache (or logged what
+//    it just showed) on the way. Each write is wrapped non-fatally at the
+//    source, so a failed write still returns the read.
 // 2. Transaction BUILDERS that broadcast nothing: the handler assembles an
 //    unsigned transaction and returns its bytes for a wallet to sign elsewhere.
 //    Instruction constructors (umi's `transferSol`, Metaplex's `mintAsset`) read
@@ -88,6 +89,14 @@ const EXEMPTIONS = new Map([
 	[
 		'prepare_agent_mint:funds-transfer',
 		'Builder, not sender (category 2). buildAgentMint() calls umi transferSol() to APPEND the mainnet deploy-fee instruction to the mint builder; the handler signs only with the new asset keypair, serializes to txs_base64 with the caller wallet as a noop fee payer, and returns. It never broadcasts. The sibling that does broadcast, mint_onchain_agent, is annotated readOnlyHint:false + destructiveHint:true.',
+	],
+	[
+		'preview_agent_mint:funds-transfer',
+		'Builder, not sender (category 2). The handler is previewMint() alone: planMint() runs buildAgentMint(), whose umi transferSol() only APPENDS the deploy-fee instruction to an unsigned builder, then previewMint() reads the wallet balance and returns the cost lines. It has no call path to sendMint()/sendAgentMint() (split out of the shared runMint on purpose so no flag can turn the preview into a send) and nothing is signed. The broadcasting sibling, mint_onchain_agent, is annotated readOnlyHint:false + destructiveHint:true.',
+	],
+	[
+		'sentiment_scout:db-write',
+		'Observation record (category 1). On a board read, runSentimentScout() calls recordScoutReads() to upsert what the Scout just showed into sentiment_scout_reads (first sighting kept, latest read overwritten) so the track record can grade it later. Each insert is wrapped in .catch(() => null), so the caller receives the same board whether or not the write lands, and nothing the caller owns changes. The tool never trades.',
 	],
 ]);
 
