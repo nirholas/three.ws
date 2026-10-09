@@ -1,0 +1,261 @@
+{
+  "id": "three-ws",
+  "name": "three.ws Cloud",
+  "type": "model",
+  "source": "https://github.com/nirholas/three.ws/tree/main/integrations/modly",
+  "description": "Cloud 3D generation, auto-rigging and retopology from three.ws Forge. No GPU, no weights, no setup: image, text and sketch to 3D on hosted TRELLIS and Hunyuan3D lanes, a humanoid auto-rigger, a quad remesher, and one-click publishing to a shareable three.ws page.",
+  "version": "1.0.0",
+  "author": "three.ws",
+  "generator_class": "ThreeWSGenerator",
+  "tags": ["image-to-3d", "text-to-3d", "sketch-to-3d", "rigging", "remesh", "cloud", "no-gpu"],
+  "vram_gb": 0,
+  "nodes": [
+    {
+      "id": "image-to-3d",
+      "name": "three.ws Image to 3D",
+      "input": "image",
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "engine",
+          "label": "Engine",
+          "type": "select",
+          "default": "auto",
+          "tooltip": "Which three.ws lane builds the mesh. Auto picks the healthiest free lane. Engines marked (your key) need a provider key.",
+          "options": [
+            { "value": "auto", "label": "Auto (free)" },
+            { "value": "hunyuan3d", "label": "Hunyuan3D (free)" },
+            { "value": "nvidia", "label": "TRELLIS on NVIDIA (free)" },
+            { "value": "trellis_selfhost", "label": "TRELLIS self-host (free)" },
+            { "value": "trellis2", "label": "TRELLIS.2 (free)" },
+            { "value": "huggingface", "label": "Hugging Face Spaces (free)" },
+            { "value": "meshy", "label": "Meshy 6 (your key)" },
+            { "value": "tripo", "label": "Tripo v3.1 (your key)" },
+            { "value": "rodin", "label": "Rodin Hyper3D (your key)" },
+            { "value": "stability", "label": "Stable Fast 3D (your key)" },
+            { "value": "replicate_byok", "label": "Replicate (your key)" }
+          ]
+        },
+        {
+          "id": "tier",
+          "label": "Quality",
+          "type": "select",
+          "default": "standard",
+          "tooltip": "Draft is fast and low-poly. High spends the deepest sampler budget and adds PBR textures.",
+          "options": [
+            { "value": "draft", "label": "Draft" },
+            { "value": "standard", "label": "Standard" },
+            { "value": "high", "label": "High" }
+          ]
+        },
+        {
+          "id": "prompt",
+          "label": "Hint (optional)",
+          "type": "string",
+          "default": "",
+          "tooltip": "A few words naming the subject. Helps lanes that accept a text hint."
+        },
+        {
+          "id": "provider_key",
+          "label": "Provider key (optional)",
+          "type": "string",
+          "default": "",
+          "tooltip": "Only for engines marked (your key). Prefer the THREE_WS_PROVIDER_KEY environment variable so the key is not saved into workflow files."
+        }
+      ]
+    },
+    {
+      "id": "text-to-3d",
+      "name": "three.ws Text to 3D",
+      "input": "text",
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "route",
+          "label": "Route",
+          "type": "select",
+          "default": "image",
+          "tooltip": "Reference image renders the prompt to a picture and lifts it to 3D on a free lane. Native text-to-3D sends the prompt straight to Meshy, Tripo or Rodin with your key.",
+          "options": [
+            { "value": "image", "label": "Reference image, then 3D (free)" },
+            { "value": "geometry", "label": "Native text-to-3D (your key)" }
+          ]
+        },
+        {
+          "id": "engine",
+          "label": "Engine",
+          "type": "select",
+          "default": "auto",
+          "tooltip": "Auto uses the server default for the chosen route.",
+          "options": [
+            { "value": "auto", "label": "Auto" },
+            { "value": "hunyuan3d", "label": "Hunyuan3D (free, image route)" },
+            { "value": "nvidia", "label": "TRELLIS on NVIDIA (free, image route)" },
+            { "value": "trellis_selfhost", "label": "TRELLIS self-host (free, image route)" },
+            { "value": "trellis2", "label": "TRELLIS.2 (free, image route)" },
+            { "value": "meshy", "label": "Meshy 6 (your key)" },
+            { "value": "tripo", "label": "Tripo v3.1 (your key)" },
+            { "value": "rodin", "label": "Rodin Hyper3D (your key)" }
+          ]
+        },
+        {
+          "id": "tier",
+          "label": "Quality",
+          "type": "select",
+          "default": "standard",
+          "options": [
+            { "value": "draft", "label": "Draft" },
+            { "value": "standard", "label": "Standard" },
+            { "value": "high", "label": "High" }
+          ]
+        },
+        {
+          "id": "aspect_ratio",
+          "label": "Reference framing",
+          "type": "select",
+          "default": "1:1",
+          "tooltip": "Framing of the reference image on the image route.",
+          "options": [
+            { "value": "1:1", "label": "Square" },
+            { "value": "3:4", "label": "Portrait" },
+            { "value": "4:3", "label": "Landscape" }
+          ]
+        },
+        {
+          "id": "provider_key",
+          "label": "Provider key (optional)",
+          "type": "string",
+          "default": "",
+          "tooltip": "Needed for the native route. Prefer the THREE_WS_PROVIDER_KEY environment variable."
+        }
+      ]
+    },
+    {
+      "id": "sketch-to-3d",
+      "name": "three.ws Sketch to 3D",
+      "inputs": ["image", "text"],
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "prompt",
+          "label": "What the sketch shows",
+          "type": "string",
+          "default": "",
+          "tooltip": "Required unless a text node is connected. The sketch model is prompt-conditioned, for example: a wooden chair with curved legs."
+        },
+        {
+          "id": "tier",
+          "label": "Quality",
+          "type": "select",
+          "default": "standard",
+          "options": [
+            { "value": "draft", "label": "Draft" },
+            { "value": "standard", "label": "Standard" },
+            { "value": "high", "label": "High" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rig",
+      "name": "three.ws Auto-Rig",
+      "input": "mesh",
+      "output": "mesh",
+      "params_schema": []
+    },
+    {
+      "id": "remesh",
+      "name": "three.ws Remesh",
+      "input": "mesh",
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "remesh_mode",
+          "label": "Topology",
+          "type": "select",
+          "default": "quad",
+          "tooltip": "Quad gives clean edge loops for animation and sculpting. Low poly is for games and the web.",
+          "options": [
+            { "value": "quad", "label": "Quads" },
+            { "value": "triangle", "label": "Triangles" },
+            { "value": "lowpoly", "label": "Low poly" }
+          ]
+        },
+        {
+          "id": "operation",
+          "label": "Operation",
+          "type": "select",
+          "default": "full",
+          "tooltip": "Full retopologizes and rebakes textures. Simplify only reduces faces. Repair fixes holes and non-manifold edges.",
+          "options": [
+            { "value": "full", "label": "Retopology + texture bake" },
+            { "value": "simplify", "label": "Simplify" },
+            { "value": "repair", "label": "Repair" }
+          ]
+        },
+        {
+          "id": "target_faces",
+          "label": "Target faces",
+          "type": "int",
+          "default": 8000,
+          "min": 0,
+          "max": 200000,
+          "tooltip": "Face budget for the output. 0 lets the worker choose."
+        },
+        {
+          "id": "texture_size",
+          "label": "Texture size",
+          "type": "select",
+          "default": 1024,
+          "options": [
+            { "value": 512, "label": "512" },
+            { "value": 1024, "label": "1024" },
+            { "value": 2048, "label": "2048" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "publish",
+      "name": "three.ws Publish",
+      "input": "mesh",
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "api_key",
+          "label": "three.ws API key",
+          "type": "string",
+          "default": "",
+          "tooltip": "A key with the avatars:write scope from three.ws/dashboard/api. Prefer the THREE_WS_API_KEY environment variable."
+        },
+        {
+          "id": "name",
+          "label": "Name",
+          "type": "string",
+          "default": "Made in Modly"
+        },
+        {
+          "id": "visibility",
+          "label": "Visibility",
+          "type": "select",
+          "default": "unlisted",
+          "options": [
+            { "value": "unlisted", "label": "Unlisted (link only)" },
+            { "value": "public", "label": "Public" },
+            { "value": "private", "label": "Private" }
+          ]
+        },
+        {
+          "id": "open_page",
+          "label": "Open the page when done",
+          "type": "select",
+          "default": "yes",
+          "options": [
+            { "value": "yes", "label": "Yes" },
+            { "value": "no", "label": "No" }
+          ]
+        }
+      ]
+    }
+  ]
+}

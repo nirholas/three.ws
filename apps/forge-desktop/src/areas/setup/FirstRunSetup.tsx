@@ -3,7 +3,7 @@ import { useAppStore, SetupProgress } from '@shared/stores/appStore'
 
 // ─── Logo (shared) ──────────────────────────────────────────────────────────
 
-function three.ws ForgeLogo(): JSX.Element {
+function ForgeLogo(): JSX.Element {
   return (
     <div className="mb-8">
       <svg width="64" height="64" viewBox="0 0 609 609" xmlns="http://www.w3.org/2000/svg">
@@ -27,7 +27,7 @@ function three.ws ForgeLogo(): JSX.Element {
 function AppHeader(): JSX.Element {
   return (
     <>
-      <three.ws ForgeLogo />
+      <ForgeLogo />
       <h1 className="text-2xl font-semibold text-zinc-100 mb-1">three.ws Forge</h1>
       <p className="text-sm text-zinc-500 mb-10">AI-powered 3D mesh generation</p>
     </>

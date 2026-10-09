@@ -2,7 +2,7 @@ import type { GenerationJob } from '../../shared/stores/appStore'
 import type { AssetLibraryOpenRequest } from '../../shared/types/assetLibrary'
 import { resolveAssetLibraryOpenTarget, type AssetLibraryOpenTarget, type ProjectedAssetLibraryEntry } from './assetLibraryProjection'
 
-export type GenerateOpenPanel = 'export' | 'decimate' | 'smooth' | 'import' | 'library' | 'light' | null
+export type GenerateOpenPanel = 'export' | 'publish' | 'decimate' | 'smooth' | 'import' | 'library' | 'threewsLibrary' | 'light' | null
 export type AssetLibrarySortMode = 'type' | 'name' | 'date'
 
 export interface AssetLibraryEntryGroup {

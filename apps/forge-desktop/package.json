@@ -12,11 +12,14 @@
     "prepare-resources": "node scripts/download-python-embed.js",
     "test": "npm run test:py && npm run test:node",
     "test:py": "node scripts/run-pytests.mjs",
-    "test:node": "node --test --experimental-strip-types --experimental-loader ./scripts/node-ts-extensionless-loader.mjs src/shared/types/assetLibrary.test.ts src/areas/generate/assetLibraryProjection.test.ts src/areas/generate/assetLibraryService.test.ts src/areas/generate/assetLibraryUi.test.ts src/areas/generate/orcaSlicerLink.test.ts electron/main/artifact-registry-service.test.ts electron/main/extension-path-guard.test.ts electron/preload/artifact-registry-preload.test.ts && node --test electron/main/*.test.mjs src/**/*.test.mjs",
-    "package": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run build && npm run prepare-resources && electron-builder",
-    "package:mac": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run build && npm run prepare-resources && electron-builder --mac --arm64",
+    "test:node": "node --test --experimental-strip-types --experimental-loader ./scripts/node-ts-extensionless-loader.mjs src/shared/types/assetLibrary.test.ts src/areas/generate/assetLibraryProjection.test.ts src/areas/generate/assetLibraryService.test.ts src/areas/generate/assetLibraryUi.test.ts src/areas/generate/orcaSlicerLink.test.ts src/areas/generate/threeWsPublish.test.ts electron/main/artifact-registry-service.test.ts electron/main/extension-path-guard.test.ts electron/preload/artifact-registry-preload.test.ts && node --test electron/main/*.test.mjs src/**/*.test.mjs",
+    "package": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run build && npm run prepare-resources && electron-builder --config electron-builder.config.cjs",
+    "package:mac": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run build && npm run prepare-resources -- --platform darwin --arch arm64 && electron-builder --config electron-builder.config.cjs --mac",
     "lint": "eslint .",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "package:linux": "npm run build && npm run prepare-resources -- --platform linux --arch x64 && electron-builder --config electron-builder.config.cjs --linux --publish never",
+    "package:win": "npm run build && npm run prepare-resources -- --platform win32 --arch x64 && electron-builder --config electron-builder.config.cjs --win --publish never",
+    "release:manifest": "node scripts/release-manifest.mjs"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
@@ -60,88 +63,6 @@
   },
   "overrides": {
     "esbuild": "^0.28.0"
-  },
-  "build": {
-    "appId": "ws.three.forge",
-    "productName": "three.ws Forge",
-    "directories": {
-      "output": "dist"
-    },
-    "afterPack": "scripts/after-pack.js",
-    "files": [
-      "out/**/*",
-      "resources/icons/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "api",
-        "to": "api",
-        "filter": [
-          "**/*",
-          "!.venv/**/*",
-          "!__pycache__/**/*",
-          "!**/build/**/*",
-          "!**/*.pyd",
-          "!**/*.egg-info/**/*"
-        ]
-      },
-      {
-        "from": "out/builtin-extensions",
-        "to": "builtin-extensions"
-      }
-    ],
-    "publish": [
-      {
-        "provider": "generic",
-        "url": "https://three.ws/releases/forge",
-        "channel": "latest"
-      }
-    ],
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "shortcutName": "three.ws Forge"
-    },
-    "win": {
-      "target": "nsis",
-      "artifactName": "${productName}-Setup-${version}.${ext}",
-      "icon": "resources/icons/icon.png",
-      "extraResources": [
-        {
-          "from": "resources/python-embed",
-          "to": "python-embed"
-        }
-      ]
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "resources/icons/icon.png",
-      "artifactName": "${productName}-${version}-arm64.${ext}",
-      "identity": null,
-      "category": "public.app-category.graphics-design",
-      "extraResources": [
-        {
-          "from": "resources/python-embed",
-          "to": "python-embed"
-        }
-      ]
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "resources/icons/icon.png",
-      "extraResources": [
-        {
-          "from": "resources/python-embed",
-          "to": "python-embed"
-        }
-      ],
-      "category": "Graphics",
-      "executableName": "three-ws-forge",
-      "maintainer": "three.ws <support@three.ws>",
-      "vendor": "three.ws",
-      "synopsis": "Image-to-3D generation and mesh workflows on your machine or the three.ws cloud"
-    },
-    "copyright": "Copyright three.ws. Based on Modly by Lightning Pixel (MIT)."
   },
   "homepage": "https://three.ws/forge-desktop",
   "license": "MIT"

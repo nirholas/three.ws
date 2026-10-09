@@ -5,6 +5,15 @@ import type {
   AssetLibraryReadRequest,
   AssetLibraryReadResult,
 } from '../../src/shared/types/assetLibrary'
+import type {
+  DeviceLink,
+  LibraryObject,
+  LibraryPage,
+  PublishRequest,
+  PublishResult,
+  ThreeWsAccount,
+  ThreeWsResult,
+} from '../../src/shared/types/threeWs'
 
 export interface IpcRendererLike {
   invoke(channel: string, ...args: unknown[]): Promise<unknown>
@@ -300,6 +309,34 @@ export function createElectronApi(ipcRenderer: IpcRendererLike, webFrame: WebFra
       delete: (id: string):                                   Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('workflows:delete', id) as Promise<{ success: boolean; error?: string }>,
       import: ():                                             Promise<{ success: boolean; error?: string; workflow?: unknown }> => ipcRenderer.invoke('workflows:import') as Promise<{ success: boolean; error?: string; workflow?: unknown }>,
       export: (workflow: { id: string; name?: string; [key: string]: unknown }): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('workflows:export', workflow) as Promise<{ success: boolean; error?: string }>,
+    },
+
+    // three.ws account, publishing and the CC0 object library. The API key
+    // stays in the main process; these calls only ever return account info.
+    threews: {
+      origin:       (): Promise<string> => ipcRenderer.invoke('threews:origin') as Promise<string>,
+      account:      (): Promise<ThreeWsResult<ThreeWsAccount>> =>
+        ipcRenderer.invoke('threews:account') as Promise<ThreeWsResult<ThreeWsAccount>>,
+      signInWithKey: (key: string): Promise<ThreeWsResult<ThreeWsAccount>> =>
+        ipcRenderer.invoke('threews:signInWithKey', key) as Promise<ThreeWsResult<ThreeWsAccount>>,
+      signOut:      (): Promise<ThreeWsResult<ThreeWsAccount>> =>
+        ipcRenderer.invoke('threews:signOut') as Promise<ThreeWsResult<ThreeWsAccount>>,
+      startLink:    (): Promise<ThreeWsResult<DeviceLink>> =>
+        ipcRenderer.invoke('threews:startLink') as Promise<ThreeWsResult<DeviceLink>>,
+      cancelLink:   (): Promise<void> => ipcRenderer.invoke('threews:cancelLink') as Promise<void>,
+      onLinkResult: (cb: (result: ThreeWsResult<ThreeWsAccount>) => void) => {
+        ipcRenderer.on('threews:linkResult', (_event, result) => cb(result as ThreeWsResult<ThreeWsAccount>))
+      },
+      offLinkResult: () => ipcRenderer.removeAllListeners('threews:linkResult'),
+      publish:      (args: PublishRequest): Promise<ThreeWsResult<PublishResult>> =>
+        ipcRenderer.invoke('threews:publish', args) as Promise<ThreeWsResult<PublishResult>>,
+      libraryList:  (args: { offset?: number; limit?: number }): Promise<ThreeWsResult<LibraryPage>> =>
+        ipcRenderer.invoke('threews:libraryList', args) as Promise<ThreeWsResult<LibraryPage>>,
+      librarySearch: (args: { q: string; limit?: number }): Promise<ThreeWsResult<LibraryPage>> =>
+        ipcRenderer.invoke('threews:librarySearch', args) as Promise<ThreeWsResult<LibraryPage>>,
+      libraryDownload: (object: Pick<LibraryObject, 'url' | 'name'>): Promise<ThreeWsResult<string>> =>
+        ipcRenderer.invoke('threews:libraryDownload', object) as Promise<ThreeWsResult<string>>,
+      open:         (path: string): Promise<void> => ipcRenderer.invoke('threews:open', path) as Promise<void>,
     },
 
     // Auto-updater

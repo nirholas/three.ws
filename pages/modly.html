@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Modly on three.ws · Image to 3D on your own GPU · three.ws</title>
+	<meta name="description" content="Everything Modly on three.ws. Detect the free, open-source Modly app on your computer, generate 3D from an image or a prompt on your own GPU, clean the mesh and save it to your account, plus the Forge GPU lane, the three.ws Forge desktop app and the Modly extensions." />
+	<link rel="canonical" href="https://three.ws/modly" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Modly on three.ws" />
+	<meta property="og:description" content="Image or prompt to 3D on your own graphics card, free and private. Preview, repair and save to three.ws from the browser." />
+	<meta property="og:url" content="https://three.ws/modly" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Modly+on+three.ws&amp;d=Image+or+prompt+to+3D+on+your+own+graphics+card%2C+free+and+private.&amp;p=%2Fmodly" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Modly on three.ws" />
+	<meta name="twitter:description" content="Image or prompt to 3D on your own graphics card, free and private. Preview, repair and save to three.ws from the browser." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Modly+on+three.ws&amp;d=Image+or+prompt+to+3D+on+your+own+graphics+card%2C+free+and+private.&amp;p=%2Fmodly" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Modly on three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/modly-page.css" />
+	<script src="/model-viewer-meshopt.js" defer></script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Modly on three.ws","applicationCategory":"DesignApplication","operatingSystem":"Windows, macOS, Linux","description":"Image or text prompt to 3D on your own GPU through the open-source Modly app, with preview, mesh repair and saving to three.ws.","url":"https://three.ws/modly","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}]}</script>
+</head>
+<body class="md-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="md">
+		<section class="md-hero" aria-labelledby="mdTitle">
+			<p class="md-eyebrow"><span class="md-eyebrow__mark" aria-hidden="true"></span>Modly on three.ws</p>
+			<h1 id="mdTitle">Make 3D on your own graphics card.</h1>
+			<p class="md-lede">Modly is a free, open-source app that turns images into 3D models on your own GPU. three.ws connects to it straight from this page: your image never leaves your machine, there is no queue and no quota, and the finished model comes back here to preview, clean up and save. <a href="#md-ways">See every way to use Modly with three.ws</a>.</p>
+			<p class="md-credit">Based on <a href="https://github.com/lightningpixel/modly" rel="noopener" target="_blank">Modly by Lightning Pixel</a> (MIT license).</p>
+		</section>
+
+		<!-- Connection to the local Modly server -->
+		<section id="mdConn" class="md-conn" data-state="idle" aria-labelledby="mdConnTitle">
+			<div class="md-conn__head">
+				<h2 id="mdConnTitle" class="md-h2"><span class="md-dot" aria-hidden="true"></span><span id="mdConnStatus">Not connected</span></h2>
+				<form id="mdBaseForm" class="md-base" autocomplete="off" novalidate>
+					<label for="mdBase" class="md-base__label">Modly address</label>
+					<input id="mdBase" class="md-input md-input--mono" type="text" inputmode="url" spellcheck="false" placeholder="http://127.0.0.1:8765" aria-describedby="mdBaseHint" />
+					<button id="mdConnect" type="submit" class="md-btn md-btn--primary">
+						<span class="md-btn__label">Connect</span>
+						<span class="md-btn__spinner" aria-hidden="true"></span>
+					</button>
+				</form>
+			</div>
+			<p id="mdBaseHint" class="md-hint">Leave it empty to use Modly's default port, <code>8765</code> on this computer. Only fill it in if you changed the port.</p>
+			<p id="mdBaseError" class="md-field-error" role="alert" hidden></p>
+
+			<div class="md-conn__body" aria-live="polite">
+				<div class="md-panel" data-for="idle">
+					<p>Connect to check whether Modly is running on this computer. Your browser may ask whether three.ws can reach apps on your device: allow it, since that is exactly the connection being made.</p>
+				</div>
+
+				<div class="md-panel" data-for="probing">
+					<div class="md-skel-line" aria-hidden="true"></div>
+					<div class="md-skel-line md-skel-line--short" aria-hidden="true"></div>
+					<p class="md-sr" id="mdProbingText">Looking for Modly.</p>
+				</div>
+
+				<div class="md-panel" data-for="not-running">
+						<p class="md-panel__lead"><strong>Modly is not running on this computer.</strong> Install it once, start it, and connect again.</p>
+						<ol class="md-steps">
+							<li><span class="md-steps__n" aria-hidden="true">1</span><div><strong>Download Modly</strong> for Windows, Linux or Apple Silicon macOS from <a id="mdInstallLink" href="https://modly3d.app/" rel="noopener" target="_blank">modly3d.app</a> or its <a href="https://github.com/lightningpixel/modly/releases/latest" rel="noopener" target="_blank">latest GitHub release</a>.</div></li>
+							<li><span class="md-steps__n" aria-hidden="true">2</span><div><strong>Open the app.</strong> It starts its local server on port 8765 in the background. Keep it open while you work here.</div></li>
+							<li><span class="md-steps__n" aria-hidden="true">3</span><div><strong>Add a model</strong> from Modly's Models page with <em>Install from GitHub</em>. You can also do this after connecting; this page lists the official ones.</div></li>
+						</ol>
+						<p class="md-hint">Already running? Check that the address above matches Modly's port, and that your browser lets this site reach apps on your device (Chrome and Edge ask once; Brave has a per-site setting for it).</p>
+						<button type="button" class="md-btn" data-action="retry">Retry</button>
+					</div>
+
+					<div class="md-panel" data-for="blocked">
+						<div data-reason="lna-denied">
+							<p class="md-panel__lead"><strong>Your browser blocked the connection to your computer.</strong> This site was refused access to apps on your device earlier.</p>
+							<ol class="md-steps">
+								<li><span class="md-steps__n" aria-hidden="true">1</span><div>Click the site settings icon at the left of the address bar.</div></li>
+								<li><span class="md-steps__n" aria-hidden="true">2</span><div>Set <strong>Local network access</strong> for three.ws to <strong>Allow</strong>.</div></li>
+								<li><span class="md-steps__n" aria-hidden="true">3</span><div>Press Retry. Modly only answers on your own machine, so nothing on your network is exposed.</div></li>
+							</ol>
+						</div>
+						<div data-reason="mixed-content">
+							<p class="md-panel__lead"><strong>Safari does not let secure pages reach apps on your computer.</strong> It treats Modly's local <code>http://</code> address as insecure content and blocks it, with no setting to allow it.</p>
+							<p>Open <strong>three.ws/modly</strong> in Chrome, Edge or Firefox on this Mac, or use the <a href="#md-way-desktop">three.ws Forge desktop app</a>. Modly itself works the same either way.</p>
+						</div>
+						<button type="button" class="md-btn" data-action="retry">Retry</button>
+					</div>
+
+					<div class="md-panel md-panel--ok" data-for="connected">
+					<p><strong>Connected to Modly</strong> <span id="mdConnOrigin" class="md-muted md-mono"></span></p>
+					<p class="md-hint" id="mdConnSummary"></p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Studio, shown once connected -->
+		<section id="mdStudio" class="md-studio" hidden aria-label="Local generation studio">
+			<div class="md-col md-col--controls">
+				<!-- Models -->
+				<section class="md-card" aria-labelledby="mdModelsTitle">
+					<div class="md-card__head">
+						<h2 id="mdModelsTitle" class="md-h3">Model</h2>
+						<div class="md-card__actions">
+							<button type="button" id="mdRefreshModels" class="md-btn md-btn--ghost md-btn--sm">
+								<span class="md-btn__label">Refresh</span>
+								<span class="md-btn__spinner" aria-hidden="true"></span>
+							</button>
+						</div>
+					</div>
+					<div id="mdModelsLoading" class="md-skel-list" aria-hidden="true">
+						<div class="md-skel-card"></div>
+						<div class="md-skel-card"></div>
+					</div>
+					<div id="mdModelsEmpty" class="md-empty" hidden>
+						<p class="md-panel__lead"><strong>No models installed in Modly yet.</strong> Modly runs models as extensions. Add one, then press Refresh.</p>
+						<ol class="md-steps md-steps--compact">
+							<li><span class="md-steps__n" aria-hidden="true">1</span><div>In Modly, open <strong>Models</strong> and click <strong>Install from GitHub</strong>.</div></li>
+							<li><span class="md-steps__n" aria-hidden="true">2</span><div>Paste one of the repository links below and confirm.</div></li>
+							<li><span class="md-steps__n" aria-hidden="true">3</span><div>Download the model weights when Modly offers to. Or skip this: the first generation downloads them.</div></li>
+						</ol>
+						<ul id="mdExtList" class="md-ext-list"></ul>
+						<p class="md-hint">No GPU to spare? The <a href="#md-way-cloud">three.ws Cloud extension</a> adds hosted generators to Modly that need no weights at all.</p>
+					</div>
+					<div id="mdModelsError" class="md-alert md-alert--error" role="alert" hidden></div>
+					<div id="mdModelList" class="md-model-list" role="radiogroup" aria-labelledby="mdModelsTitle" hidden></div>
+					<div id="mdParams" class="md-params" hidden>
+						<h3 class="md-h4">Model settings</h3>
+						<div id="mdParamsForm" class="md-form"></div>
+					</div>
+				</section>
+
+				<!-- Input -->
+				<section class="md-card" aria-labelledby="mdInputTitle">
+					<div class="md-card__head">
+						<h2 id="mdInputTitle" class="md-h3">Input</h2>
+						<div class="md-tabs" role="tablist" aria-label="Input type">
+							<button type="button" role="tab" id="mdTabImage" aria-controls="mdPaneImage" aria-selected="true" class="md-tab">Image</button>
+							<button type="button" role="tab" id="mdTabPrompt" aria-controls="mdPanePrompt" aria-selected="false" class="md-tab" tabindex="-1">Text prompt</button>
+						</div>
+					</div>
+
+					<div id="mdPaneImage" role="tabpanel" aria-labelledby="mdTabImage" class="md-pane">
+						<div id="mdDrop" class="md-drop" tabindex="0" role="button" aria-describedby="mdDropHint">
+							<input id="mdFile" type="file" accept="image/png,image/jpeg,image/webp" class="md-sr" tabindex="-1" />
+							<img id="mdDropImg" class="md-drop__img" alt="" hidden />
+							<div class="md-drop__empty" id="mdDropEmpty">
+								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="9" r="1.6"/><path d="m21 15-4.5-4.5L6 21"/></svg>
+								<strong>Drop an image, paste one, or click to choose</strong>
+								<span id="mdDropHint" class="md-hint">One object, plain background, PNG, JPEG or WebP.</span>
+							</div>
+						</div>
+						<div class="md-drop__meta" id="mdDropMeta" hidden>
+							<span id="mdDropName" class="md-muted"></span>
+							<button type="button" id="mdClearImage" class="md-btn md-btn--ghost md-btn--sm">Remove</button>
+						</div>
+					</div>
+
+					<div id="mdPanePrompt" role="tabpanel" aria-labelledby="mdTabPrompt" class="md-pane" hidden>
+						<label for="mdPrompt" class="md-label">Describe one object</label>
+						<textarea id="mdPrompt" class="md-input" rows="3" maxlength="1000" placeholder="A weathered bronze robot owl, standing, full body"></textarea>
+						<div class="md-row">
+							<span class="md-hint">three.ws draws a concept image first, then Modly turns it into 3D on your GPU. <kbd>Ctrl</kbd> <kbd>Enter</kbd></span>
+							<button type="button" id="mdConcept" class="md-btn">
+								<span class="md-btn__label">Draw concept</span>
+								<span class="md-btn__spinner" aria-hidden="true"></span>
+							</button>
+						</div>
+						<div id="mdConceptError" class="md-alert md-alert--error" role="alert" hidden></div>
+					</div>
+
+					<div class="md-generate">
+						<button type="button" id="mdGenerate" class="md-btn md-btn--primary md-btn--wide" disabled>
+							<span class="md-btn__label">Generate on my GPU</span>
+						</button>
+						<p id="mdGenerateHint" class="md-hint" aria-live="polite">Pick a model and add an image.</p>
+					</div>
+				</section>
+
+				<!-- Open an existing workspace file -->
+				<details class="md-card md-details" id="mdOpenCard">
+					<summary class="md-h3">Open from your Modly workspace</summary>
+					<form id="mdOpenForm" class="md-form" autocomplete="off" novalidate>
+						<p class="md-hint" id="mdOpenHint">Bring in a GLB you already made in Modly. Paths are relative to Modly's workspace folder, for example <code>Default/model.glb</code>.</p>
+						<div class="md-row">
+							<label for="mdOpenPath" class="md-sr">Workspace path</label>
+							<input id="mdOpenPath" class="md-input md-input--mono" type="text" spellcheck="false" placeholder="Default/model.glb" />
+							<button type="submit" class="md-btn">Open</button>
+						</div>
+						<p id="mdOpenError" class="md-field-error" role="alert" hidden></p>
+					</form>
+				</details>
+			</div>
+
+			<div class="md-col md-col--stage">
+				<section class="md-stage" id="mdStage" data-stage="empty" aria-label="3D preview">
+					<div class="md-stage__view">
+						<div class="md-stage__empty" data-for="empty">
+							<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>
+							<p><strong>Your model appears here.</strong></p>
+							<p class="md-hint">Generate one on the left, or open a GLB from your Modly workspace.</p>
+						</div>
+						<div class="md-stage__progress" data-for="generating">
+							<p class="md-stage__step" id="mdStep">Sending your image to Modly</p>
+							<div class="md-progress" role="progressbar" aria-labelledby="mdStep" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mdProgress">
+								<span class="md-progress__bar" id="mdProgressBar"></span>
+							</div>
+							<p class="md-muted"><span id="mdPct">0%</span> · <span id="mdElapsed">0:00</span></p>
+							<button type="button" id="mdCancel" class="md-btn">Cancel</button>
+						</div>
+						<div class="md-stage__loading" data-for="loading">
+							<div class="md-spinner" aria-hidden="true"></div>
+							<p id="mdLoadingText">Loading the model</p>
+						</div>
+						<div class="md-stage__error" data-for="error" role="alert">
+							<p class="md-panel__lead"><strong id="mdStageErrorTitle">Something went wrong</strong></p>
+							<p id="mdStageErrorText"></p>
+							<details class="md-details" id="mdStageErrorDetail" hidden>
+								<summary>Technical details</summary>
+								<pre class="md-pre" id="mdStageErrorPre"></pre>
+							</details>
+							<div class="md-row md-row--start">
+								<button type="button" id="mdStageRetry" class="md-btn md-btn--primary">Try again</button>
+								<button type="button" id="mdStageDismiss" class="md-btn md-btn--ghost">Dismiss</button>
+							</div>
+						</div>
+						<div class="md-stage__viewer" id="mdViewerHost" data-for="ready"></div>
+					</div>
+					<div class="md-stage__meta" id="mdMeta" hidden>
+						<span id="mdMetaPath" class="md-mono"></span>
+						<span id="mdMetaStats" class="md-muted"></span>
+					</div>
+				</section>
+
+				<div id="mdResult" class="md-result" hidden>
+					<!-- Mesh tools -->
+					<section class="md-card" aria-labelledby="mdToolsTitle">
+						<div class="md-card__head">
+							<h2 id="mdToolsTitle" class="md-h3">Clean up the mesh</h2>
+							<button type="button" id="mdUndo" class="md-btn md-btn--ghost md-btn--sm" disabled>Undo</button>
+						</div>
+						<p class="md-hint">Runs in Modly on your machine. Each step writes a new file, so Undo goes back to the previous one.</p>
+						<div id="mdOps" class="md-ops"></div>
+						<div id="mdOpsError" class="md-alert md-alert--error" role="alert" hidden></div>
+					</section>
+
+					<!-- Export + save -->
+					<section class="md-card" aria-labelledby="mdExportTitle">
+						<h2 id="mdExportTitle" class="md-h3">Download</h2>
+						<div class="md-export">
+							<button type="button" class="md-btn" id="mdDownload">Download GLB</button>
+						</div>
+						<p class="md-hint">The file is also in your Modly workspace, at the path shown under the preview.</p>
+					</section>
+
+					<section class="md-card" aria-labelledby="mdSaveTitle" id="mdSaveCard">
+						<h2 id="mdSaveTitle" class="md-h3">Save to my three.ws account</h2>
+						<form id="mdSaveForm" class="md-form" autocomplete="off" novalidate>
+							<div class="md-field">
+								<label for="mdSaveName" class="md-label">Name</label>
+								<input id="mdSaveName" class="md-input" type="text" maxlength="120" required />
+							</div>
+							<div class="md-field">
+								<label for="mdSaveVis" class="md-label">Visibility</label>
+								<select id="mdSaveVis" class="md-input">
+									<option value="private">Private: only you</option>
+									<option value="unlisted">Unlisted: anyone with the link</option>
+									<option value="public">Public: listed on three.ws</option>
+								</select>
+							</div>
+							<button type="submit" id="mdSave" class="md-btn md-btn--primary">
+								<span class="md-btn__label">Save to my account</span>
+								<span class="md-btn__spinner" aria-hidden="true"></span>
+							</button>
+							<div class="md-progress md-progress--thin" id="mdSaveProgress" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+								<span class="md-progress__bar" id="mdSaveProgressBar"></span>
+							</div>
+						</form>
+						<div id="mdSaveSignedOut" class="md-alert" hidden>
+							<p>Sign in to keep this model in your three.ws library. You will come straight back here and the save finishes on its own.</p>
+							<a id="mdSignIn" class="md-btn md-btn--primary" href="/login?next=%2Fmodly">Sign in to save</a>
+						</div>
+						<div id="mdSaveDone" class="md-alert md-alert--ok" role="status" hidden>
+							<p><strong>Saved.</strong> It is in your library now.</p>
+							<a id="mdSaveLink" class="md-btn md-btn--primary" href="/dashboard">Open the model page</a>
+						</div>
+						<p id="mdSaveError" class="md-field-error" role="alert" hidden></p>
+					</section>
+				</div>
+			</div>
+		</section>
+
+		<section id="md-ways" class="md-ways" aria-labelledby="mdWaysTitle">
+			<div class="md-ways__head">
+				<h2 id="mdWaysTitle" class="md-h2">Every way to use Modly with three.ws</h2>
+				<p>This page is the quickest route: a browser tab talking to Modly on your machine. When you want more, pick the surface that fits how you work.</p>
+			</div>
+			<ul class="md-ways__grid">
+				<li class="md-way" id="md-way-forge">
+					<span class="md-way__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></span>
+					<p class="md-way__kind">In the browser</p>
+					<h3 class="md-h3">Forge, Your GPU lane</h3>
+					<p>Forge is the full three.ws generation studio. Its <strong>Your GPU (Modly)</strong> lane sits beside the cloud lanes, so you can pick your own card or three.ws servers job by job, with history and the rest of the Forge tools around it.</p>
+					<div class="md-way__actions"><a class="md-btn md-btn--primary" href="/forge">Open Forge</a></div>
+				</li>
+				<li class="md-way" id="md-way-desktop">
+					<span class="md-way__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+					<p class="md-way__kind">Desktop app</p>
+					<h3 class="md-h3">three.ws Forge for desktop</h3>
+					<p>A desktop studio built on Modly with three.ws inside it: local open-source generators and the three.ws cloud side by side, node-based mesh workflows, and your three.ws account signed in.</p>
+					<ul class="md-way__points">
+						<li>Windows, Linux and Apple Silicon macOS.</li>
+						<li>The Publish to three.ws node comes built in.</li>
+						<li>No browser permission prompts, works in every browser setup.</li>
+					</ul>
+					<div class="md-way__actions"><a class="md-btn" href="https://github.com/nirholas/three.ws/tree/main/apps/forge-desktop" rel="noopener" target="_blank">Source and build guide</a></div>
+				</li>
+				<li class="md-way" id="md-way-cloud">
+					<span class="md-way__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1.4-9.8A6 6 0 0 1 21 11.5 3.8 3.8 0 0 1 17.5 19z"/></svg></span>
+					<p class="md-way__kind">Modly extension</p>
+					<h3 class="md-h3">three.ws Cloud generator</h3>
+					<p>Adds three.ws Forge to Modly's model list. No GPU, no weights, no setup: image, text and sketch to 3D on hosted lanes, plus a humanoid auto-rigger and a quad remesher, all as Modly nodes.</p>
+					<ul class="md-way__points">
+						<li>Install: clone the folder, then <em>Link local folder</em> on Modly's Models page.</li>
+						<li>Once linked it shows up here too, in the model list above.</li>
+					</ul>
+					<div class="md-way__actions"><a class="md-btn" href="https://github.com/nirholas/three.ws/tree/main/integrations/modly/three-ws" rel="noopener" target="_blank">Get the extension</a></div>
+				</li>
+				<li class="md-way" id="md-way-publish">
+					<span class="md-way__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+					<p class="md-way__kind">Modly workflow node</p>
+					<h3 class="md-h3">Publish to three.ws</h3>
+					<p>A process node that saves any mesh flowing through a Modly workflow into your three.ws account, where it gets a shareable 3D page, an embed and an AI agent. Humanoid meshes are auto-rigged.</p>
+					<ul class="md-way__points">
+						<li>Needs an API key with the <code>avatars:write</code> scope from <a href="/dashboard/api">your API keys</a>.</li>
+						<li>Its output is the new model's page URL.</li>
+					</ul>
+					<div class="md-way__actions"><a class="md-btn" href="https://github.com/nirholas/three.ws/tree/main/integrations/modly/three-ws-publish" rel="noopener" target="_blank">Get the node</a></div>
+				</li>
+			</ul>
+		</section>
+
+		<footer class="md-foot">
+			<p>Prefer not to install anything? <a href="/forge">Forge</a> generates on three.ws servers right in the browser.</p>
+			<p class="md-credit">Based on <a href="https://github.com/lightningpixel/modly" rel="noopener" target="_blank">Modly by Lightning Pixel</a> (MIT license). three.ws is not affiliated with Lightning Pixel.</p>
+		</footer>
+		<div id="mdToast" class="md-toast" role="status" aria-live="polite" hidden></div>
+	</main>
+
+	<script type="module" src="/src/modly-page.js"></script>
+</body>
+</html>

@@ -156,7 +156,7 @@ export function markSetupDone(userData: string): void {
 
 /**
  * On Linux AppImage, process.resourcesPath resolves to an ephemeral mount point
- * (/tmp/.mount_three.ws Forge-XXXXXX/) that changes every launch, which breaks venv symlinks.
+ * (/tmp/.mount_<app>XXXXXX/) that changes every launch, which breaks venv symlinks.
  * This copies the bundled Python runtime to a stable userData path once per app version.
  */
 async function ensureStableEmbeddedPython(userData: string, win: BrowserWindow): Promise<string> {

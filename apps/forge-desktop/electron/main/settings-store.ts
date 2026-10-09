@@ -10,6 +10,8 @@ export interface AppSettings {
   /** Local LLM engine, GGUF models, logs and config used by the agent. */
   agentDir:         string
   hfToken?:         string
+  /** three.ws API key from Settings → three.ws, encrypted (secure-store.ts). */
+  threeWsApiKey?:   string
 }
 
 function settingsPath(userData: string): string {

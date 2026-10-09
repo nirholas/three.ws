@@ -8,6 +8,15 @@ import type {
   AssetLibraryReadRequest,
   AssetLibraryReadResult,
 } from './assetLibrary'
+import type {
+  DeviceLink,
+  LibraryObject,
+  LibraryPage,
+  PublishRequest,
+  PublishResult,
+  ThreeWsAccount,
+  ThreeWsResult,
+} from './threeWs'
 
 // ─── Extension types ──────────────────────────────────────────────────────────
 
@@ -211,6 +220,24 @@ declare global {
         moveDirectory:   (args: { src: string; dest: string }) => Promise<{ success: boolean; error?: string }>
         deleteDirectory: (dirPath: string) => Promise<{ success: boolean; error?: string }>
         readScreenshotDataUrl: (filename: string) => Promise<string>
+      }
+      threews: {
+        origin:          () => Promise<string>
+        account:         () => Promise<ThreeWsResult<ThreeWsAccount>>
+        signInWithKey:   (key: string) => Promise<ThreeWsResult<ThreeWsAccount>>
+        signOut:         () => Promise<ThreeWsResult<ThreeWsAccount>>
+        /** Opens the browser; the outcome arrives through onLinkResult. */
+        startLink:       () => Promise<ThreeWsResult<DeviceLink>>
+        cancelLink:      () => Promise<void>
+        onLinkResult:    (cb: (result: ThreeWsResult<ThreeWsAccount>) => void) => void
+        offLinkResult:   () => void
+        publish:         (args: PublishRequest) => Promise<ThreeWsResult<PublishResult>>
+        libraryList:     (args: { offset?: number; limit?: number }) => Promise<ThreeWsResult<LibraryPage>>
+        librarySearch:   (args: { q: string; limit?: number }) => Promise<ThreeWsResult<LibraryPage>>
+        /** Resolves to the local path of the downloaded .glb. */
+        libraryDownload: (object: Pick<LibraryObject, 'url' | 'name'>) => Promise<ThreeWsResult<string>>
+        /** Opens a three.ws page (a path or a three.ws URL) in the browser. */
+        open:            (path: string) => Promise<void>
       }
       settings: {
         get: () => Promise<{ modelsDir: string; workspaceDir: string; workflowsDir: string; extensionsDir: string; hfToken?: string }>

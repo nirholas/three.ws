@@ -54,3 +54,24 @@ async def update_hf_token(body: TokenUpdate):
         os.environ.pop("HUGGING_FACE_HUB_TOKEN", None)
         os.environ.pop("HF_TOKEN", None)
     return {"ok": True}
+
+
+class ThreeWsAccountUpdate(BaseModel):
+    api_key:  str
+    base_url: Optional[str] = None
+
+
+@router.post("/three-ws")
+async def update_three_ws_account(body: ThreeWsAccountUpdate):
+    """
+    Point the bundled three.ws extensions at the account signed in through
+    Settings → three.ws. The cloud generator runs inside this process and the
+    publish node in a subprocess spawned after this call; both read the env.
+    """
+    if body.api_key:
+        os.environ["THREE_WS_API_KEY"] = body.api_key
+    else:
+        os.environ.pop("THREE_WS_API_KEY", None)
+    if body.base_url:
+        os.environ["THREE_WS_BASE_URL"] = body.base_url
+    return {"ok": True}

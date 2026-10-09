@@ -53,6 +53,10 @@ WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
 # extensions/ folder: in userData (passed by Electron via EXTENSIONS_DIR)
 _extensions_dir_raw = os.environ.get("EXTENSIONS_DIR", "")
 EXTENSIONS_DIR = Path(_extensions_dir_raw) if _extensions_dir_raw else None
+# Model extensions that ship inside the app (synced to userData/builtin-extensions
+# by Electron on every start). A user-installed extension with the same id wins.
+_builtin_extensions_dir_raw = os.environ.get("BUILTIN_EXTENSIONS_DIR", "")
+BUILTIN_EXTENSIONS_DIR = Path(_builtin_extensions_dir_raw) if _builtin_extensions_dir_raw else None
 _REGISTRATION_PENDING_PREFIX = ".forge-registration-pending-"
 _EXTENSION_ID = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 _REGISTRATION_PENDING_NAME = re.compile(
@@ -64,6 +68,21 @@ _REGISTRATION_CAPABILITY_LOCK = threading.Lock()
 print(f"[Registry] MODELS_DIR     = {MODELS_DIR}")
 print(f"[Registry] WORKSPACE_DIR  = {WORKSPACE_DIR}")
 print(f"[Registry] EXTENSIONS_DIR = {EXTENSIONS_DIR or '(not set)'}")
+print(f"[Registry] BUILTIN_EXTENSIONS_DIR = {BUILTIN_EXTENSIONS_DIR or '(not set)'}")
+
+
+def _extension_dirs() -> List[Tuple[Path, bool]]:
+    """Every candidate extension folder as (path, is_builtin).
+
+    Built-ins come first so a user-installed extension with the same id,
+    discovered later, replaces the bundled one.
+    """
+    found: List[Tuple[Path, bool]] = []
+    for root, builtin in ((BUILTIN_EXTENSIONS_DIR, True), (EXTENSIONS_DIR, False)):
+        if root is None or not root.exists():
+            continue
+        found.extend((child, builtin) for child in sorted(root.iterdir()))
+    return found
 
 
 def is_within_workspace(resolved_path: Path) -> bool:
@@ -400,7 +419,7 @@ def _discover_extensions(
     Dict[str, str],
 ]:
     """
-    Scans EXTENSIONS_DIR to find valid extensions.
+    Scans BUILTIN_EXTENSIONS_DIR, then EXTENSIONS_DIR, to find valid extensions.
     Each extension must have manifest.json + generator.py.
     Returns ({full_id: (GeneratorClass, node_manifest, ext_dir)}, errors)
     where full_id is "ext_id/node_id".
@@ -410,9 +429,8 @@ def _discover_extensions(
 
     if EXTENSIONS_DIR is None or not EXTENSIONS_DIR.exists():
         print(f"[Registry] WARNING: EXTENSIONS_DIR not set or not found: {EXTENSIONS_DIR}")
-        return result, errors
 
-    for ext_dir in sorted(EXTENSIONS_DIR.iterdir()):
+    for ext_dir, builtin in _extension_dirs():
         if not ext_dir.is_dir():
             continue
         # Dot-dirs are install machinery (staging/backup), never extensions
@@ -529,7 +547,8 @@ def _discover_extensions(
                 (ext_dir / ".forge-incomplete").exists()
                 or (ext_dir / ".forge-registration-pending").exists()
                 or (
-                    _registration_pending(ext_id)
+                    not builtin
+                    and _registration_pending(ext_id)
                     and not (
                         registration_authorization is not None
                         and registration_authorization[0] == ext_id

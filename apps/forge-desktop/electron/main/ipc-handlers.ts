@@ -90,6 +90,7 @@ import { ModelWeightOperations } from './model-weight-operations'
 import { readLocalFileBase64 } from './bounded-file-reader'
 import { encryptSecret, decryptSecret } from './secure-store'
 import { getHfToken, initHfToken, setHfToken } from './hf-token'
+import { registerThreeWsIpcHandlers } from './three-ws-ipc'
 
 type WindowGetter = () => BrowserWindow | null
 const pExecFile = promisify(execFile)
@@ -910,6 +911,9 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     }
   }
 
+  // three.ws account, publishing and the CC0 library (three-ws-ipc.ts).
+  registerThreeWsIpcHandlers(getWindow)
+
   ipcMain.handle('settings:get', () => {
     // hfToken is stored encrypted, hand the renderer the usable value.
     return { ...getSettings(app.getPath('userData')), hfToken: getHfToken() }
@@ -1122,8 +1126,14 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     }
   })
 
-  // Remote registry: list of trusted GitHub repo URLs
-  const REGISTRY_URL = 'https://raw.githubusercontent.com/lightningpixel/modly-official-extension/main/registry.json'
+  // Remote registries: lists of trusted GitHub repo URLs. three.ws publishes
+  // its own list, and the upstream Modly list keeps the official model
+  // extensions (Hunyuan3D mini, TripoSG, TRELLIS.2) marked trusted. A repo is
+  // trusted when either list names it.
+  const REGISTRY_URLS = [
+    'https://three.ws/forge-desktop/registry.json',
+    'https://raw.githubusercontent.com/lightningpixel/modly-official-extension/main/registry.json',
+  ]
   const REGISTRY_TTL = 5 * 60 * 1000 // 5 minutes
 
   let registryCache: { repos: Set<string>; fetchedAt: number } | null = null
@@ -1133,20 +1143,24 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     if (registryCache && now - registryCache.fetchedAt < REGISTRY_TTL) {
       return registryCache.repos
     }
-    try {
-      const { net } = require('electron')
-      const res = await net.fetch(REGISTRY_URL)
+    const { net } = require('electron')
+    const lists = await Promise.allSettled(REGISTRY_URLS.map(async (url) => {
+      const res = await net.fetch(url)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json() as { trusted_repos?: string[] }
-      const repos = new Set(
-        (data.trusted_repos ?? []).map((r: string) => r.toLowerCase().replace(/\/$/, ''))
-      )
-      registryCache = { repos, fetchedAt: now }
-      return repos
-    } catch {
-      // Offline or fetch failed: keep previous cache, or empty
+      const data = await res.json() as { trusted_repos?: unknown }
+      if (!Array.isArray(data.trusted_repos)) throw new Error('trusted_repos missing')
+      return data.trusted_repos.filter((r): r is string => typeof r === 'string')
+    }))
+    const fetched = lists.filter((l): l is PromiseFulfilledResult<string[]> => l.status === 'fulfilled')
+    if (fetched.length === 0) {
+      // Offline or every fetch failed: keep previous cache, or empty
       return registryCache?.repos ?? new Set()
     }
+    const repos = new Set(
+      fetched.flatMap((l) => l.value).map((r) => r.toLowerCase().replace(/\/$/, ''))
+    )
+    registryCache = { repos, fetchedAt: now }
+    return repos
   }
 
   function isTrustedSource(source: string | undefined, trustedRepos: Set<string>): boolean {
@@ -1485,8 +1499,10 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       readExtensionsFromDir(builtinDir,    true),
     ])
 
-    // Built-ins come first, then user extensions
-    return [...builtinExts, ...userExts]
+    // Built-ins come first, then user extensions. A user-installed extension
+    // with a built-in's id replaces it, matching the backend registry.
+    const userIds = new Set(userExts.map((ext) => ext.id))
+    return [...builtinExts.filter((ext) => !userIds.has(ext.id)), ...userExts]
   })
 
   // Install an extension from a GitHub repo URL

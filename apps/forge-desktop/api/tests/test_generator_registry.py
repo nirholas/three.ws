@@ -156,6 +156,47 @@ class GeneratorRegistryDiscoveryTests(unittest.TestCase):
         self.registry.reload()
         self.assertNotIn(str(extension.resolve()), sys.path)
 
+    def _write_named_generator(self, directory: Path, extension_id: str, name: str) -> None:
+        directory.mkdir(parents=True)
+        manifest = {
+            "id": extension_id, "name": name, "type": "model",
+            "generator_class": "TestGenerator",
+            "nodes": [{"id": "generate", "name": name}],
+        }
+        (directory / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (directory / "generator.py").write_text(
+            "from services.generators.base import BaseGenerator\n"
+            "class TestGenerator(BaseGenerator):\n"
+            " def load(self): self._model = object()\n"
+            " def generate(self, value, params, progress_cb=None, cancel_event=None): return self.outputs_dir\n",
+            encoding="utf-8",
+        )
+
+    def test_builtin_extensions_load_without_a_user_install(self) -> None:
+        builtin_dir = self.root / "builtin-extensions"
+        self._write_named_generator(builtin_dir / "three-ws", "three-ws", "Bundled")
+        old_builtin = registry_module.BUILTIN_EXTENSIONS_DIR
+        registry_module.BUILTIN_EXTENSIONS_DIR = builtin_dir
+        try:
+            self.registry.initialize()
+            self.assertEqual(self.registry.get_manifest("three-ws/generate")["name"], "Bundled")
+        finally:
+            registry_module.BUILTIN_EXTENSIONS_DIR = old_builtin
+            sys.modules.pop("extensions.three-ws.generator", None)
+
+    def test_user_installed_extension_overrides_the_builtin_with_the_same_id(self) -> None:
+        builtin_dir = self.root / "builtin-extensions"
+        self._write_named_generator(builtin_dir / "three-ws", "three-ws", "Bundled")
+        self._write_named_generator(self.extensions_dir / "three-ws", "three-ws", "Installed")
+        old_builtin = registry_module.BUILTIN_EXTENSIONS_DIR
+        registry_module.BUILTIN_EXTENSIONS_DIR = builtin_dir
+        try:
+            self.registry.initialize()
+            self.assertEqual(self.registry.get_manifest("three-ws/generate")["name"], "Installed")
+        finally:
+            registry_module.BUILTIN_EXTENSIONS_DIR = old_builtin
+            sys.modules.pop("extensions.three-ws.generator", None)
+
     def test_scene_and_existing_custom_io_types_are_registered(self) -> None:
         for extension_id, input_kind in (("scene-io", "scene"), ("capture-io", "capture"), ("video-io", "video")):
             extension = self._make_extension(extension_id)

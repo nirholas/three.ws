@@ -7,6 +7,9 @@ import { ColorPicker } from '@shared/components/ui'
 import GenerationHUD from './components/GenerationHUD'
 import Viewer3D from './components/Viewer3D'
 import WorkflowPanel from './components/WorkflowPanel'
+import PublishPopover from './components/PublishPopover'
+import ThreeWsLibraryPopover from './components/ThreeWsLibraryPopover'
+import { canPublishToThreeWs } from './threeWsPublish'
 import { getDefaultAssetLibraryService } from './assetLibraryService'
 import { buildOrcaSlicerDeepLink, canOpenInOrcaSlicer } from './orcaSlicerLink'
 import { resolveAssetLibraryOpenTarget, type ProjectedAssetLibraryEntry } from './assetLibraryProjection'
@@ -715,6 +718,7 @@ export default function GeneratePage(): JSX.Element {
 
   const hasModel = currentJob?.status === 'done' && !!currentJob.outputUrl
   const showOpenInSlicer = hasModel && canOpenInOrcaSlicer(currentJob?.outputUrl)
+  const canPublish = hasModel && canPublishToThreeWs(currentJob?.outputUrl)
 
   // Selecting a point light (from the 3D marker or the light panel list),  // also drops the active gizmo tool so it doesn't silently carry over from
   // whatever was selected before. Switching selection directly (mesh →
@@ -800,24 +804,39 @@ export default function GeneratePage(): JSX.Element {
     return url
   }
 
+  async function openImportedMesh(filePath: string) {
+    const { url } = await importMesh(filePath)
+    const job: GenerationJob = {
+      id: `import-${Date.now()}`,
+      imageFile: '',
+      status: 'done',
+      progress: 100,
+      outputUrl: url,
+      originalOutputUrl: url,
+      createdAt: Date.now(),
+    }
+    setCurrentJob(job)
+    pushMeshUrl(url)
+  }
+
   async function handleImportMesh() {
     const filePath = await window.electron.fs.selectMeshFile()
     if (!filePath) return
     setOpenPanel(null)
     setImporting(true)
     try {
-      const { url } = await importMesh(filePath)
-      const job: GenerationJob = {
-        id: `import-${Date.now()}`,
-        imageFile: '',
-        status: 'done',
-        progress: 100,
-        outputUrl: url,
-        originalOutputUrl: url,
-        createdAt: Date.now(),
-      }
-      setCurrentJob(job)
-      pushMeshUrl(url)
+      await openImportedMesh(filePath)
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  // A model picked from the three.ws library was downloaded by the main
+  // process; it opens exactly like a mesh imported from disk.
+  async function handleImportFromThreeWs(filePath: string) {
+    setImporting(true)
+    try {
+      await openImportedMesh(filePath)
     } finally {
       setImporting(false)
     }
@@ -1036,7 +1055,26 @@ export default function GeneratePage(): JSX.Element {
                     <p className="text-[10px] text-zinc-500">.glb .obj .stl .ply .splat</p>
                   </div>
                 </button>
+                <button
+                  onClick={() => setOpenPanel('threewsLibrary')}
+                  className="px-3 py-2 text-left hover:bg-zinc-800 rounded-lg transition-colors flex items-center gap-2.5"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-zinc-400">
+                    <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z" />
+                    <path d="M12 22V12M12 12l8.66-5M12 12L3.34 7" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-zinc-200">three.ws library</p>
+                    <p className="text-[10px] text-zinc-500">Free CC0 models</p>
+                  </div>
+                </button>
               </div>
+            )}
+            {openPanel === 'threewsLibrary' && (
+              <ThreeWsLibraryPopover
+                onImport={(filePath) => handleImportFromThreeWs(filePath)}
+                onClose={() => setOpenPanel(null)}
+              />
             )}
           </div>
 
@@ -1106,6 +1144,35 @@ export default function GeneratePage(): JSX.Element {
                   />
                 )}
               </div>
+
+              {/* Publish to three.ws */}
+              {canPublish && currentJob?.outputUrl && (
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenPanel((p) => (p === 'publish' ? null : 'publish'))}
+                    title="Save this model to your three.ws account"
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors
+                      ${openPanel === 'publish'
+                        ? 'bg-accent/25 border-accent/50 text-accent-light'
+                        : 'bg-accent/10 border-accent/30 text-accent-light hover:bg-accent/20 hover:border-accent/50'
+                      }`}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                      <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z" />
+                      <polyline points="8.5 11 12 7.5 15.5 11" />
+                      <line x1="12" y1="7.5" x2="12" y2="16" />
+                    </svg>
+                    Publish
+                  </button>
+                  {openPanel === 'publish' && (
+                    <PublishPopover
+                      key={currentJob.outputUrl}
+                      outputUrl={currentJob.outputUrl}
+                      onClose={() => setOpenPanel(null)}
+                    />
+                  )}
+                </div>
+              )}
 
               {/* Smooth */}
               <div className="relative">

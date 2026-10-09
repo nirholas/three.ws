@@ -1,0 +1,22 @@
+# Upload context for apps/forge-desktop/cloudbuild.yaml, submitted from the
+# repo root with --ignore-file apps/forge-desktop/.gcloudignore. The Forge build
+# needs the app, the three.ws cloud extensions it bundles as built-ins
+# (integrations/modly), and the release manifest it shares with three.ws
+# Desktop; everything else in the monorepo stays on this machine.
+/*
+!/apps/
+/apps/*
+!/apps/forge-desktop/
+/apps/forge-desktop/node_modules/
+/apps/forge-desktop/out/
+/apps/forge-desktop/dist/
+/apps/forge-desktop/resources/python-embed/
+/apps/forge-desktop/api/.venv/
+/apps/forge-desktop/api/venv/
+**/__pycache__/
+!/apps/desktop/
+/apps/desktop/*
+!/apps/desktop/scripts/
+!/integrations/
+/integrations/*
+!/integrations/modly/

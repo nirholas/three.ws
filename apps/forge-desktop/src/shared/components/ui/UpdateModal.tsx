@@ -9,7 +9,7 @@ interface UpdateModalProps {
 
 export function UpdateModal({ currentVersion, latestVersion, onDismiss }: UpdateModalProps): JSX.Element {
   const handleDownload = (): void => {
-    window.open('https://github.com/lightningpixel/modly/releases', '_blank')
+    window.open('https://three.ws/forge-desktop', '_blank')
   }
 
   return createPortal(
@@ -59,7 +59,7 @@ export function UpdateModal({ currentVersion, latestVersion, onDismiss }: Update
           </div>
 
           <p className="text-xs text-zinc-500 leading-relaxed">
-            Download the latest release from GitHub to get bug fixes, improvements, and new features.
+            Download the latest release from three.ws to get bug fixes, improvements, and new features.
           </p>
 
           {/* Actions */}

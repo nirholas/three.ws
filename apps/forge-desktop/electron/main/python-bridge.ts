@@ -5,8 +5,10 @@ import { existsSync, mkdirSync } from 'fs'
 import axios from 'axios'
 import { ensureAgentDir, getSettings } from './settings-store'
 import { getHfToken } from './hf-token'
+import { getThreeWsApiKey, THREE_WS_ORIGIN } from './three-ws-account'
 import { logger } from './logger'
 import { cleanPythonEnv, getVenvPythonExe } from './python-setup'
+import { getBuiltinExtensionsDir } from './builtin-sync'
 
 const API_PORT = 8765
 const API_HOST = '127.0.0.1'
@@ -66,11 +68,18 @@ export class PythonBridge {
         MODELS_DIR:             this.resolveModelsDir(),
         WORKSPACE_DIR:          this.resolveWorkspaceDir(),
         EXTENSIONS_DIR:         this.resolveExtensionsDir(),
+        // Model extensions bundled with the app (the three.ws cloud generator).
+        BUILTIN_EXTENSIONS_DIR: getBuiltinExtensionsDir(),
         // llm_server.py keeps everything of the local LLM here: engine, GGUF models, logs, config.
         THREEWS_LLM_DIR:          this.resolveAgentDir(),
         SELECTED_MODEL_ID:      process.env['SELECTED_MODEL_ID'] ?? '',
         HUGGING_FACE_HUB_TOKEN: this.resolveHfToken(),
         HF_TOKEN:               this.resolveHfToken(),
+        // The three.ws account from Settings → three.ws, for the bundled
+        // cloud generator and publish node. Sign-in later updates it through
+        // POST /settings/three-ws without a restart.
+        THREE_WS_BASE_URL:      THREE_WS_ORIGIN,
+        ...(getThreeWsApiKey() ? { THREE_WS_API_KEY: getThreeWsApiKey() } : {}),
       },
       // On Unix, put the bridge in its own process group so every subprocess
       // it spawns (extension runners, etc.) inherits that group. On shutdown

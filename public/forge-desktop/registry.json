@@ -1,0 +1,8 @@
+{
+  "description": "Extension repositories three.ws Forge marks as trusted. The desktop app unions this list with the upstream Modly registry.",
+  "trusted_repos": [
+    "https://github.com/lightningpixel/modly-hunyuan3d-mini-extension",
+    "https://github.com/lightningpixel/modly-triposg-extension",
+    "https://github.com/lightningpixel/modly-trellis2-extension"
+  ]
+}

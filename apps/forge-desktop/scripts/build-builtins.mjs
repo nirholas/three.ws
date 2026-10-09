@@ -1,16 +1,22 @@
 /**
- * Compile built-in extensions (TypeScript → CommonJS JS) and copy manifests.
+ * Compile built-in extensions (TypeScript → CommonJS JS) and copy manifests,
+ * then bundle the three.ws cloud extensions from integrations/modly/.
  * Output: out/builtin-extensions/{id}/processor.js + manifest.json
  */
 
 import { execSync }                                           from 'child_process'
-import { readdirSync, existsSync, cpSync, mkdirSync, statSync } from 'fs'
+import { readdirSync, existsSync, cpSync, mkdirSync, rmSync, statSync } from 'fs'
 import { join, dirname }                                      from 'path'
 import { fileURLToPath }                                      from 'url'
 
 const root   = join(dirname(fileURLToPath(import.meta.url)), '..')
 const srcDir = join(root, 'src', 'areas', 'workflows', 'nodes')
 const outDir = join(root, 'out', 'builtin-extensions')
+// The three.ws Forge extensions are published for upstream Modly users from
+// integrations/modly/ in this repo. The desktop app ships the same source as
+// built-ins, so a fix there lands in both places at once.
+const cloudSrcDir = join(root, '..', '..', 'integrations', 'modly')
+const CLOUD_EXTENSIONS = ['three-ws', 'three-ws-publish']
 
 if (!existsSync(srcDir)) {
   console.log('[build-builtins] No builtin-extensions directory found, skipping.')
@@ -57,6 +63,22 @@ for (const id of readdirSync(srcDir)) {
       console.log(`[build-builtins] ${id}: ${file} copied`)
     }
   }
+}
+
+// 3. Bundle the three.ws cloud generator and the Publish to three.ws node.
+for (const id of CLOUD_EXTENSIONS) {
+  const extSrcDir = join(cloudSrcDir, id)
+  if (!existsSync(join(extSrcDir, 'manifest.json'))) {
+    console.error(`[build-builtins] ${id}: missing ${extSrcDir}/manifest.json. The cloud extensions are part of the app; restore integrations/modly/${id}.`)
+    process.exit(1)
+  }
+  const extOutDir = join(outDir, id)
+  rmSync(extOutDir, { recursive: true, force: true })
+  cpSync(extSrcDir, extOutDir, {
+    recursive: true,
+    filter: (src) => !/(^|[\\/])(__pycache__|test_[^\\/]*\.py)$/.test(src),
+  })
+  console.log(`[build-builtins] ${id}: bundled from integrations/modly`)
 }
 
 console.log('[build-builtins] Done.')

@@ -3,6 +3,7 @@ import { spawn }       from 'child_process'
 import { existsSync }  from 'fs'
 import { join }        from 'path'
 import { app }         from 'electron'
+import { getThreeWsApiKey, THREE_WS_ORIGIN } from './three-ws-account'
 
 // ─── Worker code for JS process extensions ────────────────────────────────────
 
@@ -232,6 +233,9 @@ export class PythonProcessRunner implements IProcessRunner {
           // template read these names, so both spellings are exported.
           MODLY_API_DIR: apiDir,
           MODLY_NODE_EXECUTABLE: process.execPath,
+          // The signed-in three.ws account, so the bundled three.ws nodes
+          // (publish, cloud generation) work without pasting a key per node.
+          ...threeWsEnv(),
           EXTENSION_DIR: this.extDir,
           WORKSPACE_DIR: this.workspaceDir,
           TEMP_DIR: this.tempDir,
@@ -305,6 +309,11 @@ export class PythonProcessRunner implements IProcessRunner {
 
   // Python processes are spawned per run, nothing persistent to terminate
   terminate(): void {}
+}
+
+function threeWsEnv(): Record<string, string> {
+  const key = getThreeWsApiKey()
+  return key ? { THREE_WS_API_KEY: key, THREE_WS_BASE_URL: THREE_WS_ORIGIN } : { THREE_WS_BASE_URL: THREE_WS_ORIGIN }
 }
 
 // ─── Helper: find Python executable for an extension ─────────────────────────
