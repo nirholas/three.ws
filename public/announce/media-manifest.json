@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-09-20T07:23:11.414Z",
+	"generatedAt": "2026-10-09T02:48:42.322Z",
 	"shots": {
 		"activity-hero": {
 			"id": "activity-hero",
@@ -47,9 +47,9 @@
 			"viewport": "wide",
 			"animated": false,
 			"authenticated": false,
-			"capturedAt": "2026-09-20T05:37:08.173Z",
+			"capturedAt": "2026-10-09T02:48:40.603Z",
 			"capturedFrom": "https://three.ws",
-			"commit": "9b0113316",
+			"commit": "642181bc4",
 			"sha256": "3a1f060d02f858d24dea90d34c4cf3246706c2aab61a133c33ea164ff97e808f",
 			"bytes": 73908,
 			"width": 1800,
@@ -122,6 +122,23 @@
 			"commit": "8b426bc58",
 			"sha256": "413fbcb5cd822dad02bced47f758e07f6174720a2e0bd56bca68c1f942cc5ad8",
 			"bytes": 136432,
+			"width": 1800,
+			"height": 1013
+		},
+		"data-desk-hero": {
+			"id": "data-desk-hero",
+			"src": "/announce/img/data-desk-hero.webp",
+			"alt": "A dark three.ws dashboard titled Data Desk with a counter reading DATASETS LIVE 0 and text explaining that fresh-wallet workers buy datasets with verifiable Solana settlement receipts.",
+			"caption": "Captured from the live /data-desk route for the data-desk announcement.",
+			"route": "/data-desk",
+			"viewport": "wide",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-10-09T02:48:42.143Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "642181bc4",
+			"sha256": "6bacabdad51e86b7c117ee3585a5cd7b1bd6dff209dc338173b1ce38068585f2",
+			"bytes": 77012,
 			"width": 1800,
 			"height": 1013
 		},

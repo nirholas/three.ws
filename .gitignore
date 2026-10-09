@@ -594,6 +594,9 @@ public/models/voice/runtime/
 # owner approves that specific frame; approval is recorded on the shot in
 # data/announce-media.json as thirdPartyMarketDataApproved.
 public/announce/img/activity-*
+# The activity-mcp title card is typeset from the package README, not captured
+# from a live market surface, so it carries no tickers and ships like any other.
+!public/announce/img/activity-mcp-hero.webp
 
 # The announcement ledger, held out of the tree pending owner approval. Its
 # entries copy descriptions verbatim out of data/pages.json and packages/*, and
