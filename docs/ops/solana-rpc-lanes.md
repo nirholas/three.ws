@@ -145,6 +145,15 @@ to 8/8 on a warmed instance:
   mainnet-beta). Its throttle answers `-32005`, which the capacity classifier already
   parks correctly, so it is depth rather than a primary.
 
+**`-32020` (2026-10-09) is a free failover too.** PublicNode and Solana Vibe Station
+keep a short ledger, so a `getSignaturesForAddress` whose `until` or `before` cursor is
+older than their history answers `-32020 Transaction <sig> not found` while
+mainnet-beta answers the same call normally. Handed back as the chain's verdict, it left
+both leak scanners unable to read any controlled wallet for six days once their cursors
+aged past PublicNode's window. `classifyRpcBody` now rotates on it with `noPenalty`:
+nothing is cooled or demoted, because the same lane serves the method for every cursor
+it does hold.
+
 The standing cost is unchanged and is a billing decision, not a code one: while both
 metered lanes sit at their monthly ceiling, this shape is served only by throttled
 free nodes, so it stays the first read to degrade.

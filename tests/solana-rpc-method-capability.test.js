@@ -392,6 +392,49 @@ describe('classifyRpcBody: a node internal error is a per-shape failover, not an
 	});
 });
 
+// PublicNode and Solana Vibe Station keep a short ledger. Asked for signatures
+// `until` a cursor older than that window they answer -32020 "Transaction <sig>
+// not found", while mainnet-beta answers the same call (measured live
+// 2026-10-09). Handed back as the chain's answer, that error blinded both leak
+// scanners for six days once their cursors aged past PublicNode's history.
+const SHORT_LEDGER_NOT_FOUND = {
+	jsonrpc: '2.0',
+	id: 1,
+	error: { code: -32020, message: 'Transaction 5UUzsXbGUSoimU1qzfmnbYUXhGyURDN3KjQcZ5ENtoqXuBXt3JKkKVqeHSkgLtuU3pm2dqP1VNud7Bt8ytpAwc5H not found' },
+};
+
+describe('classifyRpcBody: history a node does not hold is a free failover', () => {
+	it('fails a -32020 envelope over without demoting or cooling anything', () => {
+		const bad = classifyRpcBody(JSON.stringify(SHORT_LEDGER_NOT_FOUND));
+		expect(bad).toBeTruthy();
+		expect(bad.reason).toBe('history not on node');
+		expect(bad.noPenalty).toBe(true);
+		expect(bad.methodBlock).toBeFalsy();
+	});
+
+	it('rotates onto a lane that holds the cursor and leaves the short-ledger lane primary', async () => {
+		const shortLedger = 'https://cap-h1.test/';
+		const archive = 'https://cap-h2.test/';
+		const page = { jsonrpc: '2.0', id: 1, result: [] };
+		global.fetch = vi.fn(async (url, init) => {
+			const { method, params } = JSON.parse(init.body);
+			if (url === shortLedger && method === 'getSignaturesForAddress' && params?.[1]?.until) return resp(SHORT_LEDGER_NOT_FOUND);
+			return resp(method === 'getSignaturesForAddress' ? page : OK);
+		});
+		const rf = makeRotatingFetch([shortLedger, archive]);
+
+		const r = await rf(null, rpc('getSignaturesForAddress', ['WalletPlaceholder111111111111111111111111111', { limit: 100, until: 'OldCursor' }]));
+		await expect(r.json()).resolves.toEqual(page);
+		expect(global.fetch.mock.calls.at(-1)[0]).toBe(archive);
+		expect(isEndpointCooling(shortLedger)).toBe(false);
+		expect(isMethodDemoted(shortLedger, 'getSignaturesForAddress')).toBe(false);
+
+		// A cursor the short-ledger lane does hold still goes to it first.
+		await rf(null, rpc('getSignaturesForAddress', ['WalletPlaceholder111111111111111111111111111', { limit: 100 }]));
+		expect(global.fetch.mock.calls.at(-1)[0]).toBe(shortLedger);
+	});
+});
+
 // PublicNode accepts a getTokenLargestAccounts and then never answers it: no
 // response at 35 s, while getAccountInfo comes back in milliseconds. Charging
 // that hang to the LANE parked the free chain's primary for every method, on one
