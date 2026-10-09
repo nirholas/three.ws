@@ -31,6 +31,7 @@ import { guardMention, isPaused } from './x-mention-guard.js';
 import { ensureKnownBots, loadKnownBots } from './x-mention-known-bots.js';
 import { answerOnBehalf } from './x-mention-on-behalf.js';
 import * as xBudget from './x-budget.js';
+import { handleAvatar, finishPendingAvatars } from './x-mention-avatar.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
 const DEFAULT_LOCK_SECONDS = 110;
@@ -41,7 +42,7 @@ const DAY = 86400;
 const REFUSED_REPLY = 'I cannot move funds or handle keys, and no one can ask me to. I make 3D models: try "make a red vintage scooter". https://three.ws/grok';
 
 /** Intents whose dedicated handler is a later order; they answer with help until it lands. */
-const UNBUILT_HANDLERS = Object.freeze(new Set(['make', 'image3d', 'avatar', 'launch']));
+const UNBUILT_HANDLERS = Object.freeze(new Set(['make', 'image3d', 'launch']));
 
 function intEnv(env, name, fallback) {
 	const n = Number.parseInt(env[name] ?? '', 10);
@@ -104,7 +105,7 @@ async function composeAnswer({ mention, parsed, account, compose }) {
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null, avatar = handleAvatar }) {
 	const parsed = parseMentionIntent(mention, account);
 	const dryRun = true;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
@@ -151,6 +152,11 @@ export async function handleMention({ mention, account, limits, env, store = men
 		if (!allowed.allow) {
 			await store.updateDecision(mention.id, { decision: 'budget', reason: allowed.reason });
 			return { tweetId: mention.id, intent: parsed.intent, decision: 'budget', reason: allowed.reason };
+		}
+		if (parsed.intent === 'avatar') {
+			const result = await avatar({ tweetId: mention.id, authorId: mention.userId || mention.author?.id, author: mention.author, dryRun });
+			if (result.decision === 'reply') await budget.recordPosts(1);
+			return { tweetId: mention.id, intent: 'avatar', decision: result.decision, reason: result.reason, text: result.text, dry_run: dryRun };
 		}
 		const answer = await composeAnswer({ mention, parsed, account, compose });
 		const adapter = adapterFactory({ mention, parsed, env, policyDryRun: true });
@@ -219,7 +225,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots, avatar: deps.avatar }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;
@@ -270,6 +276,7 @@ export async function runMentionTick({ env = process.env, deps = {} } = {}) {
 				report.accounts.push({ account: `${descriptor.kind}:${descriptor.ref}`, status: 'error', error: String(err?.message || err).slice(0, 200) });
 			}
 		}
+		report.avatarFollowUp = await (deps.finishPendingAvatars || finishPendingAvatars)().catch((err) => ({ error: String(err?.message || err).slice(0, 200) }));
 		return report;
 	} finally {
 		await (deps.releaseLock || releaseLock)(holder).catch(() => {});

@@ -1,0 +1,100 @@
+{
+  "generatedAt": "2026-10-09T16:34:54.184Z",
+  "base": "https://three.ws",
+  "dryRun": true,
+  "rows": [
+    {
+      "post": "@trythreews make a 3D dragon",
+      "intent": "make",
+      "prompt": "a 3D dragon",
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "make_done",
+      "wouldReply": "Here is your 3D model \"a 3D dragon\". Spin it around: https://three.ws/m/2a06700f-a594-42e8-b8a7-7c0ccecf5fea",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2a06700f-a594-42e8-b8a7-7c0ccecf5fea.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/2a06700f-a594-42e8-b8a7-7c0ccecf5fea",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "2a06700f-a594-42e8-b8a7-7c0ccecf5fea",
+      "seconds": 273
+    },
+    {
+      "post": "@trythreews can you make me a low poly fox sitting on a mossy rock",
+      "intent": "make",
+      "prompt": "a low poly fox sitting on a mossy rock",
+      "outcome": "pending",
+      "decision": "pending",
+      "reason": "make_pending",
+      "wouldReply": null,
+      "mediaUrl": null,
+      "mediaCheck": null,
+      "link": null,
+      "linkCheck": null,
+      "creationId": "d3c6e132-80b6-4b59-a065-76699144d7e8",
+      "seconds": 439
+    },
+    {
+      "post": "@trythreews 3d a vintage brass telescope on a tripod",
+      "intent": "make",
+      "prompt": "a vintage brass telescope on a tripod",
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "make_done",
+      "wouldReply": "Here is your 3D model \"a vintage brass telescope on a tripod\". Spin it around: https://three.ws/m/c38c01eb-4097-48e5-8e89-afbc9352d101",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fc38c01eb-4097-48e5-8e89-afbc9352d101.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/c38c01eb-4097-48e5-8e89-afbc9352d101",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "c38c01eb-4097-48e5-8e89-afbc9352d101",
+      "seconds": 267
+    },
+    {
+      "post": "@trythreews generate a cozy wooden cabin with a snowy roof",
+      "intent": "make",
+      "prompt": "a cozy wooden cabin with a snowy roof",
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "make_done",
+      "wouldReply": "Here is your 3D model \"a cozy wooden cabin with a snowy roof\". Spin it around: https://three.ws/m/eb6594ad-5305-4e4e-9115-f5eac87acfcd",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Feb6594ad-5305-4e4e-9115-f5eac87acfcd.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/eb6594ad-5305-4e4e-9115-f5eac87acfcd",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "eb6594ad-5305-4e4e-9115-f5eac87acfcd",
+      "seconds": 336
+    },
+    {
+      "post": "@trythreews forge a cute robot barista holding a coffee cup",
+      "intent": "make",
+      "prompt": "a cute robot barista holding a coffee cup",
+      "outcome": "pending",
+      "decision": "pending",
+      "reason": "make_pending",
+      "wouldReply": null,
+      "mediaUrl": null,
+      "mediaCheck": null,
+      "link": null,
+      "linkCheck": null,
+      "creationId": "711eba92-0145-465f-a48c-814459966de5",
+      "seconds": 439
+    }
+  ]
+}

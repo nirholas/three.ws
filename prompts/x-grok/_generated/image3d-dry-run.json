@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-10-09T16:36:16.601Z",
+  "base": "https://three.ws",
+  "dryRun": true,
+  "rows": [
+    {
+      "label": "own image 1",
+      "shape": "attached",
+      "sourcePost": "https://x.com/glitchtoriches/status/2108593510001889542",
+      "photo": "https://pbs.twimg.com/media/HUM6nzBaQAAL5o7.jpg",
+      "photoCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "image3d_done_late",
+      "wouldReply": "Here is your a shoe in 3D. Spin it around: https://three.ws/m/d24462ff-cce8-415d-b99c-f4f63614b824",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd24462ff-cce8-415d-b99c-f4f63614b824.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/d24462ff-cce8-415d-b99c-f4f63614b824",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "d24462ff-cce8-415d-b99c-f4f63614b824",
+      "seconds": 204,
+      "tweetId": "7514360520900608001",
+      "dryRun": true,
+      "posted": false
+    },
+    {
+      "label": "own image 2",
+      "shape": "reply",
+      "sourcePost": "https://x.com/2WildAlerts/status/2108592640891474301",
+      "photo": "https://pbs.twimg.com/media/HUM51UHWMAAassY.jpg",
+      "photoCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "image3d_done_late",
+      "wouldReply": "Here is your three running shoes in 3D. Spin it around: https://three.ws/m/271c4aef-5091-4dcd-b3fb-3d9b4edfc716",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F271c4aef-5091-4dcd-b3fb-3d9b4edfc716.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 0,
+        "error": "The operation was aborted due to timeout"
+      },
+      "link": "https://three.ws/m/271c4aef-5091-4dcd-b3fb-3d9b4edfc716",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "271c4aef-5091-4dcd-b3fb-3d9b4edfc716",
+      "seconds": 208,
+      "tweetId": "7514360520900608002",
+      "dryRun": true,
+      "posted": false
+    },
+    {
+      "label": "own image 3",
+      "shape": "attached",
+      "sourcePost": "https://x.com/222Themoon27952/status/2108589747316969518",
+      "photo": "https://pbs.twimg.com/media/HUM3MwLbwAAjaJq.jpg",
+      "photoCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "reply",
+      "reason": "image3d_done_late",
+      "wouldReply": "Here is your plushie shark in 3D. Spin it around: https://three.ws/m/22df40c5-e5f1-4f16-9642-638499c7e282",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F22df40c5-e5f1-4f16-9642-638499c7e282.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/22df40c5-e5f1-4f16-9642-638499c7e282",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "22df40c5-e5f1-4f16-9642-638499c7e282",
+      "seconds": 206,
+      "tweetId": "7514360520900608003",
+      "dryRun": true,
+      "posted": false
+    },
+    {
+      "label": "someone else's image",
+      "shape": "reply",
+      "sourcePost": "https://x.com/glitchtoriches/status/2108593510001889542",
+      "photo": "https://pbs.twimg.com/media/HUM6nzBaQAAL5o7.jpg",
+      "photoCheck": {
+        "status": 200,
+        "contentType": "image/jpeg"
+      },
+      "outcome": "reply",
+      "decision": "skip",
+      "reason": "not_own_image",
+      "wouldReply": null,
+      "mediaUrl": null,
+      "mediaCheck": null,
+      "link": null,
+      "linkCheck": null,
+      "creationId": null,
+      "seconds": 0,
+      "tweetId": "7514360520900608004",
+      "dryRun": true,
+      "posted": false
+    }
+  ],
+  "finishedAt": "2026-10-09T16:43:20.120Z"
+}
