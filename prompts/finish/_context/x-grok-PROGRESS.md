@@ -148,3 +148,9 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Weighting: `twitter-text` last published June 2022 (fails the 2-year maintenance rule), so `api/_lib/x-text-weight.js` implements X's documented counting (Latin 1, other code points 2, emoji sequence 2, URL 23) plus `chunkForX` (at most two parts, never cuts a URL or emoji).
 - Evidence: `tests/x-text-weight.test.js` and `tests/x-gateway-adapter.test.js`, 27 pass, against the real migration in PGlite and the real `x-post.js` with only `fetchUpstream` captured. Dry-run tests assert zero HTTP calls and a complete row; live tests assert the exact `/2/tweets` and media upload request shapes. `check:rules` OK.
 - Not verified: a live post to X (owner-gated, order 928).
+
+## 2026-10-09: order 051 (public reply brain) done
+
+- Shipped `api/_lib/x-mention-reply.js` (`composePublicReply`): tool-less single completion on the agent's brain chain (order 044 `resolveAgentBrain`) or the platform chain for the company account; mention text quoted as data in the user turn only. Post-checks in code: X weighted length (official `twitter-text`, new dependency) at most 260, https three.ws link allowlist, no hashtags or handles, cashtags and coin names other than $THREE rejected, address detection, financial-phrasing denylist, "I did it" action-claim detector. Any failure returns the fixed help reply. `llmComplete` gained an optional `chain` override.
+- Evidence: `tests/x-mention-reply.test.js` 40/40. Opt-in `RUN_LLM_TESTS=1` corpus (`tests/x-mention-reply.llm.test.js`) 16/16 against the real chain (kilo, ovh); the checks caught one over-long reply and one "financial advice" reply, and an llm7 429 fell to the fixed reply.
+- Not verified: an xAI-served reply (no xAI key on this account).
