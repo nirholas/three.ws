@@ -164,8 +164,29 @@ shortlisted candidates, caches each coin's posts for 10 minutes (a failed read
 for 1 minute), and stops searching once the remaining quota drops below a
 reserve, so it can never exhaust the quota other X features share.
 Credentials: `X_BEARER_TOKEN`, or the app key pair `X_API_KEY` / `X_API_SECRET`
-from which an app token is minted. Without them X posts are listed as
-unavailable and everything else works.
+from which an app token is minted. Without them, and without the fallback
+below, X posts are listed as unavailable and everything else works.
+
+### Failover: X search through xAI
+
+When our own X bearer cannot answer (no credentials, a rejected token, a 429,
+the reserve reached, X down), `api/_lib/x-search.js` makes one call to xAI's
+Responses API (`POST https://api.x.ai/v1/responses`) with the built-in
+`x_search` tool and a strict JSON schema, then parses the answer into the same
+post shape. The candidate's `x.rung` field says which rung served (`bearer` or
+`xai`).
+
+| Env var | Meaning |
+|---|---|
+| `XAI_API_KEY` (or `GROK_API_KEY`) | Enables the rung. Unset means the rung never runs. |
+| `XAI_X_SEARCH_DAILY_CAP` | Calls per UTC day, default 200. `0` turns the rung off. Reaching it fails with reason `xai_daily_cap`. |
+| `XAI_X_SEARCH_MODEL` | Model id, default the flagship Grok in `api/_lib/chat-models.js`. |
+
+xAI bills `x_search` per call, so the rung only runs after the bearer path
+fails. Post text is untrusted: a post is kept only if the tool itself cited its
+status URL and its text contains the mint, so an invented post is dropped.
+Each served search logs one `x_search` JSON line (rung, latency, post count)
+and per-day counts per rung are readable with `xSearchStats()`.
 
 ## Related
 

@@ -210,6 +210,15 @@ without writing fake rows into the production ledger.
 It is not wired into `npm run gate`: the gate is offline and this needs the
 database. Run it after any change to a provider chain or the price table.
 
+## X search through xAI
+
+Not a chat lane, but the same key. `api/_lib/x-search.js` falls back to xAI's
+built-in `x_search` tool (Responses API) when our own X bearer cannot answer.
+It needs `GROK_API_KEY` or `XAI_API_KEY`, is capped per UTC day by
+`XAI_X_SEARCH_DAILY_CAP` (default 200), and is documented in
+[docs/sentiment-scout.md](../sentiment-scout.md#failover-x-search-through-xai).
+No xAI key is configured in production yet, so the rung is dormant.
+
 ## Grok model ids
 
 xAI retires model ids in batches. On 2026-05-15 it retired eight at once,

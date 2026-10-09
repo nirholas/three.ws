@@ -37,7 +37,7 @@ import { cacheGet, cacheSet, cacheWrap } from './cache.js';
 import { getBondingStatus } from './pump-bonding.js';
 import { fetchPumpFunCallouts } from './pump-callouts.js';
 import { receiptTxUrl } from './trade-receipt.js';
-import { searchMintPosts, summarizePosts, xSearchConfigured } from './x-search.js';
+import { searchMintPostsDetailed, summarizePosts, xSearchConfigured } from './x-search.js';
 
 export const EVIDENCE_TYPES = Object.freeze([
 	'volume_spike',
@@ -554,8 +554,8 @@ async function readXPosts(mint, firstSeenAt) {
 	try {
 		const first = Date.parse(firstSeenAt instanceof Date ? firstSeenAt.toISOString() : firstSeenAt);
 		const sinceIso = Number.isFinite(first) ? new Date(first - X_LOOKBACK_BEFORE_LAUNCH_MS).toISOString() : null;
-		const posts = await searchMintPosts(mint, { sinceIso, maxResults: 25 });
-		value = { posts, summary: summarizePosts(posts), read_at: new Date().toISOString() };
+		const { posts, rung } = await searchMintPostsDetailed(mint, { sinceIso, maxResults: 25 });
+		value = { posts, summary: summarizePosts(posts), rung, read_at: new Date().toISOString() };
 		cacheSet(key, value, X_CACHE_TTL_S).catch(() => {});
 	} catch (err) {
 		value = { unavailable: err?.reason || 'upstream_error' };
