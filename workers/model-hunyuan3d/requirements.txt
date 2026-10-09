@@ -6,9 +6,17 @@
 # (DTensor import) that fails to load on the torch pinned below.
 
 # ── Model stack (torch 2.3.1/cu121 era, matching the Dockerfile pin) ─────────
+# transformers 4.57.6 and accelerate 1.15.0 are the newest releases that clear
+# their advisories (ReDoS, model-file deserialization, sharded-checkpoint path
+# traversal) and still run on torch 2.3.1: transformers only imports DTensor on
+# torch>=2.5 and only disables itself below torch 2.1. Tiny seeded Dinov2, CLIP
+# and UNet models give bit-identical outputs against 4.46.3/0.34.2 on torch 2.3.1.
+# diffusers stays on 0.31.0: its open advisories need 0.38 and are reachable only
+# by loading an attacker-chosen repo or custom_pipeline, and this worker loads the
+# operator-staged weights plus hy3dgen's own in-image pipeline code.
 diffusers==0.31.0
-transformers==4.46.3
-accelerate==0.34.2
+transformers==4.57.6
+accelerate==1.15.0
 safetensors>=0.4.0
 einops==0.8.0
 omegaconf==2.3.0

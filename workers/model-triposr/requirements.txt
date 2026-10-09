@@ -8,7 +8,10 @@ trimesh>=4.4.0
 Pillow>=10.3.0
 
 # Background removal (TripoSR works best with isolated subject).
-rembg[gpu]==2.0.56
+# 2.0.59 clears the 2.0.57-and-earlier CORS/SSRF advisories. The rest are fixed
+# only in 2.0.75, which needs Python 3.11 and numpy 2.3 (this image is 3.10); all
+# of them live in rembg's own HTTP server, which this worker never starts.
+rembg[gpu]==2.0.59
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0

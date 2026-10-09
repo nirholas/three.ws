@@ -23,11 +23,24 @@ ninja==1.11.1.1
 pybind11==2.13.4
 
 # ── Core ML / diffusion ──────────────────────────────────────────────────────
-transformers==4.46.0
+# Security bumps over upstream's list, each clearing every advisory its line can:
+#   - transformers 4.57.6 (from 4.46.0) needs huggingface-hub>=0.34, hence 0.36.2,
+#     the hub release model-triposg already runs.
+#   - accelerate 1.15.0 (from 1.1.1): sharded-checkpoint path traversal.
+#   - pytorch-lightning 2.6.6 (from 1.9.5): inference only subclasses
+#     pl.LightningModule at import (hunyuanpaintpbr/unet/model.py); every Trainer,
+#     checkpoint and callback path is training code this worker never runs.
+#     1.9.5 also stopped importing on a fresh build: its lightning_fabric calls
+#     pkg_resources, which the setuptools 84 that the Dockerfile's
+#     `pip install --upgrade setuptools` pulls no longer ships.
+# diffusers stays on 0.30.0: its open advisories need 0.38 and are reachable only
+# by loading an attacker-chosen repo or custom_pipeline; the paint pass loads the
+# in-image hy3dpaint/hunyuanpaintpbr pipeline from operator-staged weights.
+transformers==4.57.6
 diffusers==0.30.0
-accelerate==1.1.1
-pytorch-lightning==1.9.5
-huggingface-hub==0.30.2
+accelerate==1.15.0
+pytorch-lightning==2.6.6
+huggingface-hub==0.36.2
 safetensors==0.4.4
 
 # ── Scientific computing ─────────────────────────────────────────────────────

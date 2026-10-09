@@ -38,5 +38,5 @@ soundfile==0.13.1
 soxr==0.5.0.post1
 scipy==1.15.3
 pyloudnorm==0.1.1
-onnx==1.18.0
+onnx==1.22.0
 audio-separator==0.30.2

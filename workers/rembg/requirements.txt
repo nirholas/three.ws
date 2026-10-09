@@ -4,7 +4,10 @@ uvicorn[standard]==0.32.1
 # onnxruntime-gpu plus its CUDA libraries on top of the CPU runtime that rembg
 # already installs. onnxruntime is pinned because rembg leaves it open, which
 # made every rebuild a different inference runtime.
-rembg==2.0.59
+# 2.0.75 is the first release with the fixes for the model_path traversal and
+# the server SSRF/CORS advisories. It needs Python 3.11 and numpy 2.3, which this
+# python:3.11-slim image takes cleanly (onnxruntime 1.28 ships numpy 2 wheels).
+rembg==2.0.75
 onnxruntime==1.28.0
 # Pillow 12.3.0, not 11.x: every 11.x release carries open advisories, and this
 # service decodes an image the caller supplied, which is the exact path the heap
