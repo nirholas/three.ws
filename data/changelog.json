@@ -29209,6 +29209,13 @@
 			"summary": "Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.",
 			"tags": ["feature", "improvement"],
 			"link": "/connect"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "Connected apps: clearer sign-in screen and instant revoke",
+			"summary": "When an app such as Grok Bot asks to connect to your three.ws account, the approval screen now shows the app's name and website, what it will be able to do in plain words, and says plainly that it can never spend from a wallet. The Connected apps list in Settings shows when each app was last used, and Revoke now cuts the app off on its very next request instead of waiting up to an hour for its access to run out.",
+			"tags": ["feature", "security"],
+			"link": "/dashboard/settings"
 		}
 	]
 }

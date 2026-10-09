@@ -24,7 +24,6 @@ loadEnv('.env');
 const EMAIL = process.env.AUDIT_EMAIL;
 const PASSWORD = process.env.AUDIT_PASSWORD;
 const REDIRECT = 'https://grok-bot-connector.example/oauth/callback';
-const RESOURCE = 'https://three.ws/api/mcp';
 
 const b64url = (buf) => buf.toString('base64url');
 
@@ -43,11 +42,12 @@ test.describe('OAuth for cloud connectors', () => {
 	test.skip(!EMAIL || !PASSWORD, 'AUDIT_EMAIL / AUDIT_PASSWORD missing: run npm run audit:web:provision');
 	test.setTimeout(240_000);
 
-	test('Grok Bot registers, authorizes with PKCE, calls tools/list, is revoked, and fails on the next call', async ({ page, context }) => {
-		// The connector's own redirect host does not exist: capture the navigation.
-		await context.route('https://grok-bot-connector.example/**', (route) =>
-			route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>connector callback</h1>' }),
-		);
+	test('Grok Bot registers, authorizes with PKCE, calls tools/list, is revoked, and fails on the next call', async ({ page }) => {
+		// A connector learns the resource it is signing in for from discovery
+		// (RFC 9728), exactly as Grok Bot does.
+		const discovery = await page.request.get('/.well-known/oauth-protected-resource');
+		expect(discovery.status()).toBe(200);
+		const RESOURCE = (await discovery.json()).resource;
 
 		await page.goto('/login');
 		await page.waitForSelector('#email', { timeout: 60_000 });
@@ -88,11 +88,13 @@ test.describe('OAuth for cloud connectors', () => {
 		await expect(page.locator('.nospend')).toContainText('can never spend from a wallet');
 		await expect(page.locator('li')).toContainText(['Read your avatars', 'See your name and email']);
 
-		await Promise.all([
-			page.waitForURL(/grok-bot-connector\.example\/oauth\/callback\?/),
+		// The connector's redirect host is not a real server: the 302 to it is the
+		// observable result, so read the code off that request.
+		const [callback] = await Promise.all([
+			page.waitForRequest((r) => r.url().startsWith(REDIRECT)),
 			page.click('button[value="allow"]'),
 		]);
-		const back = new URL(page.url());
+		const back = new URL(callback.url());
 		expect(back.searchParams.get('state')).toBe(state);
 		const code = back.searchParams.get('code');
 		expect(code).toBeTruthy();

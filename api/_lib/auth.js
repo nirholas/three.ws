@@ -285,7 +285,6 @@ export function extractBearer(req) {
 	return h.slice(7).trim();
 }
 
-// Returns { userId, scope, source: 'oauth'|'apikey', clientId?, apiKeyId? } or null.
 // Access tokens are stateless JWTs, so revoking a connected app also records a
 // cutoff per (user, client). A token issued at or before the cutoff is dead on
 // its next use; a token minted after the person re-authorizes the app is not.
@@ -316,6 +315,7 @@ export async function revokeClientGrant({ userId, clientId }) {
 	return revoked.length;
 }
 
+// Returns { userId, scope, source: 'oauth'|'apikey', clientId?, apiKeyId? } or null.
 export async function authenticateBearer(token, { audience } = {}) {
 	if (!token) return null;
 	// API keys are prefixed with `sk_live_` (or `sk_test_`) — short-circuit.

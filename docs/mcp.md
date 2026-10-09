@@ -182,6 +182,17 @@ GET /.well-known/oauth-protected-resource/api/mcp-3d       # one document per ho
 
 Each OAuth-protected hosted server is its own resource. On a `401`, the `WWW-Authenticate` header points the client at that server's own metadata document, whose `resource` is the server's URL, so a client connected to `/api/mcp-3d` signs in for `https://three.ws/api/mcp-3d` and receives a token bound to it. A token issued for `https://three.ws/api/mcp` (what `npx three-ws setup` and older connections hold) is accepted by every hosted server.
 
+#### Cloud connectors (Grok Bot and other hosted agents)
+
+A connector that runs in a vendor's cloud has no browser on your machine and no pre-issued client ID, so the flow above is built for it:
+
+- **Registration.** `POST /oauth/register` accepts any `https` redirect URI, plus `http://localhost` and `http://127.0.0.1` (any port) for desktop clients, and private-use schemes such as `com.example.app:/callback`. It rejects every other `http` host and every executable scheme. `client_name` and `client_uri` are stored and shown on the consent screen.
+- **Consent.** The screen names the app, shows its website host, lists what it will be able to do in plain words, and states that the app can never spend from a wallet or move funds. If a grant includes `wallet:write` the screen says instead that the app is asking to spend from the agent wallet within your caps, so the statement is never untrue.
+- **PKCE.** `code_challenge_method=S256` is required on every authorization request.
+- **Seeing and revoking.** Every connected app is listed at [Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps) with when it was authorized and last used. `GET /api/oauth/grants` returns the same list and `DELETE /api/oauth/grants?client_id=...` revokes one app (browser session only, so a token can never list or revoke other apps). Revocation is effective on the app's next request: its refresh tokens are revoked and a cutoff is recorded that every access token issued before it fails against, so there is no one-hour tail. The app can ask you again; a token issued after you approve it anew works.
+
+The end-to-end proof is `tests/e2e/oauth-cloud-connector.spec.js`: it registers "Grok Bot" with an external redirect URI, runs the PKCE flow as the QA account, calls `tools/list` on `/api/mcp`, revokes from Settings and watches the next call fail with `401`.
+
 This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client with no account belongs on `https://three.ws/api/mcp-studio`, which never challenges and serves the free 3D generation and asset catalog tools.
 
 ### API key (server-to-server)
