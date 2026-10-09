@@ -40,7 +40,7 @@ test('resolveExtensionPathWithinRoot confines paths to root', async () => {
 test('resolvePathWithinRoot rejects canonical escapes', async () => {
   const { resolvePathWithinRoot } = await loadGuard()
   const root = path.join('/tmp', 'extensions-root')
-  assert.equal(resolvePathWithinRoot(root, '.modly-backup-safe-123'), path.resolve(root, '.modly-backup-safe-123'))
+  assert.equal(resolvePathWithinRoot(root, '.forge-backup-safe-123'), path.resolve(root, '.forge-backup-safe-123'))
   assert.throws(() => resolvePathWithinRoot(root, '../escape'), /escapes root/i)
 })
 
@@ -53,23 +53,23 @@ test('resolvePathWithinRoot rejects leaves that resolve to the root itself', asy
 
 test('parseExtensionBackupName extracts ids with dashes and rejects foreign names', async () => {
   const { parseExtensionBackupName } = await loadGuard()
-  assert.deepEqual(parseExtensionBackupName('.modly-backup-hunyuan3d-mini-1752580000000'), { extensionId: 'hunyuan3d-mini' })
-  assert.deepEqual(parseExtensionBackupName('.modly-backup-x-1'), { extensionId: 'x' })
-  assert.equal(parseExtensionBackupName('.modly-backup-noTimestamp'), null)
-  assert.equal(parseExtensionBackupName('.modly-staging-x-1'), null)
+  assert.deepEqual(parseExtensionBackupName('.forge-backup-hunyuan3d-mini-1752580000000'), { extensionId: 'hunyuan3d-mini' })
+  assert.deepEqual(parseExtensionBackupName('.forge-backup-x-1'), { extensionId: 'x' })
+  assert.equal(parseExtensionBackupName('.forge-backup-noTimestamp'), null)
+  assert.equal(parseExtensionBackupName('.forge-staging-x-1'), null)
   assert.equal(parseExtensionBackupName('regular-extension'), null)
 })
 
 test('buildExtensionBackupPath stays within root and rejects unsafe ids', async () => {
   const { buildExtensionBackupPath } = await loadGuard()
   const root = path.join('/tmp', 'extensions-root')
-  assert.equal(buildExtensionBackupPath(root, 'mesh-process', '123'), path.resolve(root, '.modly-backup-mesh-process-123'))
+  assert.equal(buildExtensionBackupPath(root, 'mesh-process', '123'), path.resolve(root, '.forge-backup-mesh-process-123'))
   assert.throws(() => buildExtensionBackupPath(root, '../escape', '123'), /path separators/i)
 })
 
 test('buildExtensionStagingPath stays within root and rejects unsafe ids', async () => {
   const { buildExtensionStagingPath } = await loadGuard()
   const root = path.join('/tmp', 'extensions-root')
-  assert.equal(buildExtensionStagingPath(root, 'mesh-process', '42'), path.resolve(root, '.modly-staging-mesh-process-42'))
+  assert.equal(buildExtensionStagingPath(root, 'mesh-process', '42'), path.resolve(root, '.forge-staging-mesh-process-42'))
   assert.throws(() => buildExtensionStagingPath(root, '../escape', '42'), /path separators/i)
 })

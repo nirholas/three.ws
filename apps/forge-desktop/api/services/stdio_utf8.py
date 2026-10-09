@@ -5,7 +5,7 @@ Windows embedded Python defaults stdout/stderr/stdin to the active console
 codepage (cp1252, cp932, ...). Any print() containing non-ASCII characters
 (e.g. "→", "…") then crashes with UnicodeEncodeError, and reading UTF-8
 output under a legacy codepage can kill pipe reader threads. Reconfiguring
-all three streams to UTF-8 makes Modly and extension workers agree with the
+all three streams to UTF-8 makes three.ws Forge and extension workers agree with the
 UTF-8 pipe readers used on the Electron side.
 """
 import sys

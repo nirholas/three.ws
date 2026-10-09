@@ -40,7 +40,7 @@ function loadModule() {
 // so a fresh worker starts again from 1.
 function makeRunner() {
   const { ProcessRunner } = loadModule()
-  const root = mkdtempSync(join(tmpdir(), 'modly-worker-exit-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-worker-exit-'))
   const extDir = join(root, 'ext')
   mkdirSync(extDir, { recursive: true })
   writeFileSync(join(extDir, 'processor.js'), [

@@ -55,8 +55,8 @@ test('refresh and the model list keep their identity across renders', async () =
 
 test('a consumer that refreshes from an effect settles instead of looping', async () => {
   // Exactly the shape of ModelLibraryModal: an effect keyed on `refresh` that
-  // stores something in state. With an unstable `refresh` this rendered — and
-  // fetched — without end; the modal flickered for as long as it was open.
+  // stores something in state. With an unstable `refresh` this rendered, and
+  // fetched, without end; the modal flickered for as long as it was open.
   const useLlmModels = freshHook()
   const calls = countingFetch()
   let renders = 0
@@ -67,7 +67,7 @@ test('a consumer that refreshes from an effect settles instead of looping', asyn
     renders++
     // Fails fast and says why: an unstable `refresh` makes this loop forever,
     // and a test that hangs for a minute before dying explains nothing.
-    if (renders > 50) throw new Error('render loop — the effect keeps re-running')
+    if (renders > 50) throw new Error('render loop, the effect keeps re-running')
     React.useEffect(() => { void refresh(); setStatus({ checkedAt: renders }) }, [refresh])
     return null
   }

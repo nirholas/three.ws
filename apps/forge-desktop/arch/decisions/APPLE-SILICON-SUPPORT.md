@@ -5,7 +5,7 @@
 
 ## Decision
 
-Modly supports macOS on Apple Silicon (`darwin/arm64`) as a first-class
+three.ws Forge supports macOS on Apple Silicon (`darwin/arm64`) as a first-class
 platform. This ADR consolidates the runtime, packaging, extension, and
 workflow rules needed to run the image-to-mesh pipeline reliably on 16 GB
 unified-memory Macs.
@@ -24,7 +24,7 @@ Scope and operating rules:
 
 ## Context
 
-Apple Silicon changes the constraints under which Modly runs:
+Apple Silicon changes the constraints under which three.ws Forge runs:
 
 - Unified memory means overlapping heavy GPU stages can destabilize the whole
   machine on 16 GB systems.
@@ -45,7 +45,7 @@ Apple Silicon changes the constraints under which Modly runs:
 ## Consequences
 
 - Packaging:
-  Modly packages macOS as an Apple Silicon build path only, including the
+  three.ws Forge packages macOS as an Apple Silicon build path only, including the
   embedded Python runtime in the app bundle. See `package.json:99`.
 
 - Extension and model distribution:
@@ -86,7 +86,7 @@ Apple Silicon changes the constraints under which Modly runs:
 
 - Subprocess lifecycle:
   Extension subprocesses are owned as a full process tree. On Unix, the Python
-  bridge runs as its own process-group leader and Modly kills the process group
+  bridge runs as its own process-group leader and three.ws Forge kills the process group
   on quit. Free-memory/unload operations hard-stop the subprocess. Cancel first
   sends a cooperative request, then escalates to a kill after a short grace
   period if native code is still blocking. See `api/services/extension_process.py:78`

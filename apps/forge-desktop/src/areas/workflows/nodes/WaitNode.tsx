@@ -3,7 +3,7 @@ import type { WFNodeData } from '@shared/types/electron.d'
 import { useWaitButton } from '../useWaitButton'
 import BaseNode from './BaseNode'
 
-const HANDLE_STYLE = { background: '#71717a', width: 14, height: 14, border: '2.5px solid #18181b' }
+const HANDLE_STYLE = { background: '#71717a', width: 14, height: 14, border: '2.5px solid #1a1a1a' }
 
 export default function WaitNode({ id, data, selected }: { id: string; data: WFNodeData; selected?: boolean }) {
   const { waitState, canContinue, isRunning, label, buttonClass, statusText, onContinue } = useWaitButton(id)

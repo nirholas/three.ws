@@ -413,7 +413,7 @@ function ExtensionParamRow({ nodeId, ext, nodes, onPatch }: { nodeId: string; ex
                       onClick={() => openExtension(ext.extensionId)}
                       className="mt-1 text-[10px] text-amber-400 hover:text-amber-300 hover:underline"
                     >
-                      Not installed — install it
+                      Not installed: install it
                     </button>
                   )}
                 </div>
@@ -438,7 +438,7 @@ function EmbeddedCanvas({ workflow, allExtensions }: {
   const { navigate }                     = useNavStore()
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Direct patch into controlled nodes state — no React Flow store dependency
+  // Direct patch into controlled nodes state, no React Flow store dependency
   const patchNode = useCallback<PatchFn>((nodeId, patch) => {
     setNodes((nds) => nds.map((n) =>
       n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
@@ -463,8 +463,8 @@ function EmbeddedCanvas({ workflow, allExtensions }: {
   }, [workflow.updatedAt])
 
   // Persist to the store and claim the echo so the sync effect above does not
-  // treat our own write as an external change. The claim is optimistic — the store
-  // is updated before save() resolves — and is rolled back when the write fails, so
+  // treat our own write as an external change. The claim is optimistic, the store
+  // is updated before save() resolves, and is rolled back when the write fails, so
   // a failed save never silently replaces the canvas with the last persisted version.
   const saveAndClaim = useCallback((updated: Workflow) => {
     const prevSyncedAt = lastSyncedAtRef.current
@@ -475,7 +475,7 @@ function EmbeddedCanvas({ workflow, allExtensions }: {
   }, [])
 
   // Debounced save to the store when local state changes (Generate→Workflows)
-  // No cleanup return — lets the timer fire even if user navigates away
+  // No cleanup return: lets the timer fire even if user navigates away
   useEffect(() => {
     if (!didMountRef.current) { didMountRef.current = true; return }
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -511,7 +511,7 @@ function EmbeddedCanvas({ workflow, allExtensions }: {
 
   const firstPreflightIssue = preflightIssues[0]?.message ?? null
 
-  // Ordered nodes for params list — only those marked showInGenerate
+  // Ordered nodes for params list: only those marked showInGenerate
   const sortedNodes = useMemo(
     () => topoSortNodes(nodes as WFNode[], edges as WFEdge[]),
     [nodes, edges],
@@ -528,7 +528,7 @@ function EmbeddedCanvas({ workflow, allExtensions }: {
       return
     }
     // Persist the edited params so they survive remounts and are the values actually used.
-    // Drop the pending debounce — this save supersedes it.
+    // Drop the pending debounce: this save supersedes it.
     if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null }
     const wf: Workflow = {
       ...workflow,

@@ -108,7 +108,7 @@ export function validateWorkflowPreflight(
     }
 
     // A node fed by two different Wait branches can't be scheduled into a single
-    // branch — it would run before either branch produces its mesh.
+    // branch, it would run before either branch produces its mesh.
     if (
       isBranchConsumer(node.type) &&
       nearestUpstreamWaits(node.id, workflow.edges, nodeMap).size > 1

@@ -13,7 +13,7 @@ export interface WaitButtonModel {
 
 // Shared derivation for the Wait Continue/Retry control, used by both the
 // canvas node (WaitNode) and the params panel (WaitParamRow). Keeps the two
-// renderings in sync — they differ only in markup/sizing, not in logic.
+// renderings in sync, they differ only in markup/sizing, not in logic.
 export function useWaitButton(nodeId: string): WaitButtonModel {
   const waitState       = useWorkflowRunStore((s) => s.waitStates[nodeId])
   const runningBranchId = useWorkflowRunStore((s) => s.runningBranchId)
@@ -39,12 +39,12 @@ export function useWaitButton(nodeId: string): WaitButtonModel {
   const statusText =
     waitState === 'blocked' ? 'Waiting for the previous Wait to finish…' :
     waitState === 'running' ? 'Branch in progress…' :
-    waitState === 'done'    ? 'Branch finished — Retry to re-run.' :
-    waitState === 'error'   ? 'Branch failed — Retry to re-run.' :
-    waitState === 'pending' && runAborted ? 'Run failed upstream — fix the error and run again.' :
+    waitState === 'done'    ? 'Branch finished, Retry to re-run.' :
+    waitState === 'error'   ? 'Branch failed, Retry to re-run.' :
+    waitState === 'pending' && runAborted ? 'Run failed upstream, fix the error and run again.' :
     waitState === 'pending' && inPrePhase ? 'Waiting for upstream nodes…' :
     waitState === 'pending' && otherBranchRunning ? 'Another branch is running…' :
-    waitState === 'pending' ? 'Workflow paused — click Continue to run this branch.' :
+    waitState === 'pending' ? 'Workflow paused, click Continue to run this branch.' :
     'Pauses the workflow until you click Continue.'
 
   return { waitState, canContinue, isRunning, label, buttonClass, statusText, onContinue: () => continueRun(nodeId) }

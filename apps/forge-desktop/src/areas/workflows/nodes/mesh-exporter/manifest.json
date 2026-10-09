@@ -4,7 +4,7 @@
   "type": "process",
   "entry": "processor.js",
   "version": "1.0.0",
-  "author": "Modly",
+  "author": "three.ws Forge",
   "description": "Exports the mesh to a chosen format (GLB, STL, OBJ, PLY) at a specified output path.",
   "nodes": [
     {

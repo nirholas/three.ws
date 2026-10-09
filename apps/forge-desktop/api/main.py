@@ -1,5 +1,5 @@
 """
-Modly FastAPI backend.
+three.ws Forge FastAPI backend.
 Runs locally within the Electron app to provide AI inference endpoints.
 """
 import logging
@@ -35,7 +35,7 @@ logging.getLogger("uvicorn.access").addFilter(_StatusFilter())
 
 
 app = FastAPI(
-    title="Modly API",
+    title="three.ws Forge API",
     version="0.4.3",
     lifespan=lifespan,
 )
@@ -61,7 +61,7 @@ app.include_router(workflow_runs.router,   prefix="/workflow-runs")
 app.include_router(agent.router)
 app.include_router(llm.router,             prefix="/llm")
 
-# Serve generated files from workspace — dynamic so path changes take effect immediately
+# Serve generated files from workspace: dynamic so path changes take effect immediately
 @app.get("/workspace/{full_path:path}")
 async def serve_workspace_file(full_path: str):
     import services.generator_registry as reg

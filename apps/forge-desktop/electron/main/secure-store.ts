@@ -9,7 +9,7 @@ const PLAINTEXT_PREFIX = 'plain:'
 let warnedOnce = false
 
 // Electron 33 (pinned in package.json) only ships the synchronous safeStorage
-// API — encryptStringAsync/decryptStringAsync/isAsyncEncryptionAvailable were
+// API encryptStringAsync/decryptStringAsync/isAsyncEncryptionAvailable were
 // added in a later Electron release. The sync calls are cheap (no disk I/O,
 // just OS keychain/DPAPI crypto), so wrapping them in an async function here
 // is only to keep the IPC handler signature uniform, not for a real await.
@@ -20,7 +20,7 @@ export function encryptSecretSync(plainText: string): string {
   if (!safeStorage.isEncryptionAvailable()) {
     if (!warnedOnce) {
       warnedOnce = true
-      logger.warn('[secure-store] OS-level encryption unavailable — storing secrets in plain text')
+      logger.warn('[secure-store] OS-level encryption unavailable, storing secrets in plain text')
     }
     return PLAINTEXT_PREFIX + plainText
   }
@@ -31,10 +31,10 @@ export function encryptSecretSync(plainText: string): string {
 /**
  * True when `stored` has the shape encryptSecretSync produces: a hex blob
  * starting with Chromium OSCrypt's version tag ("v10", "v11", …). The tag
- * matters — hex alone also matched plaintext API keys that happen to be hex
+ * matters: hex alone also matched plaintext API keys that happen to be hex
  * (common for self-hosted endpoints), which then "failed to decrypt" and were
  * wiped during the migration instead of encrypted. Used to tell "this was never encrypted" apart from "this IS one of
- * our blobs but decryption just failed" — the two must not be confused: DPAPI
+ * our blobs but decryption just failed", the two must not be confused: DPAPI
  * keys are per-OS-user, so a restored backup or a different Windows account
  * makes decryption fail on a perfectly valid ciphertext. Treating that as
  * plaintext would hand the ciphertext out as a credential and then re-encrypt
@@ -59,7 +59,7 @@ export function decryptSecretSync(stored: string): string | null {
     return safeStorage.decryptString(Buffer.from(stored, 'hex'))
   } catch (err) {
     logger.error(
-      '[secure-store] a stored secret could not be decrypted — it was encrypted by a ' +
+      '[secure-store] a stored secret could not be decrypted, it was encrypted by a ' +
       `different OS user or machine. It must be re-entered. (${err})`,
     )
     return null
@@ -71,7 +71,7 @@ export async function encryptSecret(plainText: string): Promise<string> {
   return encryptSecretSync(plainText)
 }
 
-/** `null` on an undecryptable blob — never the ciphertext, which callers would
+/** `null` on an undecryptable blob, never the ciphertext, which callers would
  *  otherwise use as a credential and re-encrypt. */
 export async function decryptSecret(stored: string): Promise<string | null> {
   return decryptSecretSync(stored)

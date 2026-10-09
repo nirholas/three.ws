@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-model-plan-module-')), 'model-plan.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-model-plan-module-')), 'model-plan.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/main/model-download-plan.ts')],
@@ -21,7 +21,7 @@ function loadModule() {
 }
 
 function setupExtension(manifest) {
-  const root = mkdtempSync(join(tmpdir(), 'modly-action-plan-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-action-plan-'))
   const user = join(root, 'user')
   const builtin = join(root, 'builtin')
   const extension = join(user, manifest.id)

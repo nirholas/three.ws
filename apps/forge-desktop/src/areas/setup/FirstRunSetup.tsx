@@ -3,7 +3,7 @@ import { useAppStore, SetupProgress } from '@shared/stores/appStore'
 
 // ─── Logo (shared) ──────────────────────────────────────────────────────────
 
-function ModlyLogo(): JSX.Element {
+function three.ws ForgeLogo(): JSX.Element {
   return (
     <div className="mb-8">
       <svg width="64" height="64" viewBox="0 0 609 609" xmlns="http://www.w3.org/2000/svg">
@@ -27,8 +27,8 @@ function ModlyLogo(): JSX.Element {
 function AppHeader(): JSX.Element {
   return (
     <>
-      <ModlyLogo />
-      <h1 className="text-2xl font-semibold text-zinc-100 mb-1">Modly</h1>
+      <three.ws ForgeLogo />
+      <h1 className="text-2xl font-semibold text-zinc-100 mb-1">three.ws Forge</h1>
       <p className="text-sm text-zinc-500 mb-10">AI-powered 3D mesh generation</p>
     </>
   )
@@ -260,7 +260,7 @@ export default function FirstRunSetup(): JSX.Element {
         return <InstallingPanel progress={setupProgress} />
 
       case 'done':
-        // setup done — now waiting for backend
+        // setup done, now waiting for backend
         if (backendStatus === 'error') return <ErrorPanel message={backendError} />
         return <StartingPanel />
 
@@ -291,7 +291,7 @@ export default function FirstRunSetup(): JSX.Element {
               <path d="M4037 2838 c-25 -33 -443 -702 -467 -747 l-12 -24 -1384 4 c-1247 4 -1385 2 -1399 -12 -44 -44 -21 -170 42 -231 21 -20 203 -132 408 -249 385 -220 1034 -594 1310 -754 88 -51 183 -105 210 -121 28 -15 88 -49 134 -76 158 -90 177 -86 475 84 127 72 416 236 641 363 226 128 507 287 625 354 212 121 250 145 250 163 0 5 -40 73 -88 151 -49 78 -177 286 -284 462 -393 643 -407 664 -430 665 -4 0 -18 -15 -31 -32z"/>
             </g>
           </svg>
-          <span className="text-xs font-semibold text-zinc-300">Modly</span>
+          <span className="text-xs font-semibold text-zinc-300">three.ws Forge</span>
         </div>
         <div className="flex-1" />
         {!isMac && (

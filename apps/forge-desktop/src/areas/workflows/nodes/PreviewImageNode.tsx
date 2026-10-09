@@ -41,7 +41,7 @@ export default function PreviewImageNode({ id, selected }: { id: string; selecte
         <Handle
           type="target"
           position={Position.Left}
-          style={{ background: INPUT_COLOR, width: 14, height: 14, border: '2.5px solid #18181b' }}
+          style={{ background: INPUT_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a' }}
         />
       }
     >

@@ -96,7 +96,7 @@ class ModelSourcesTests(unittest.TestCase):
 
     def test_requires_all_checks_and_rejects_symlinked_extension_ancestry(self) -> None:
         sources = normalize_model_sources(valid_node()) or []
-        with tempfile.TemporaryDirectory(prefix="modly-model-sources-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="forge-model-sources-") as tmp:
             models = Path(tmp) / "models"
             model_root = models / "pixal3d" / "generate"
             encoder = model_root / "auxiliary" / "encoder"
@@ -164,7 +164,7 @@ class ModelSourcesTests(unittest.TestCase):
                 }],
             }]
         }) or [])[0]
-        with tempfile.TemporaryDirectory(prefix="modly-shared-sources-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="forge-shared-sources-") as tmp:
             models = Path(tmp) / "models"
             group_root = models / "demo" / "_shared" / "base"
             self.assertEqual(resolve_weight_group_root(models, "demo", "base"), group_root)
@@ -230,7 +230,7 @@ class ModelSourcesTests(unittest.TestCase):
         with_vram = normalize_weight_variants(with_options([{**variant("Q4"), "vram_gb": 6.5}])) or {}
         self.assertEqual(with_vram["options"][0]["vram_gb"], 6.5)
 
-        with tempfile.TemporaryDirectory(prefix="modly-weight-variants-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="forge-weight-variants-") as tmp:
             models = Path(tmp) / "models"
             dit = models / "trellis" / "generate" / "dit"
             dit.mkdir(parents=True)

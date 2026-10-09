@@ -1,5 +1,5 @@
 """
-Agent chat endpoint — runs a tool-use loop against Modly's API, on the managed
+Agent chat endpoint: runs a tool-use loop against three.ws Forge's API, on the managed
 local llama.cpp server or any OpenAI-compatible provider.
 """
 import asyncio
@@ -17,27 +17,27 @@ from services.llm_server import llama_pool
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
-MODLY_API = "http://localhost:8765"
+THREEWS_API = "http://localhost:8765"
 
 SYSTEM_PROMPT = """\
-You are Modly's built-in AI assistant, specialized in 3D modeling and workflow automation.
-You help users generate 3D models from images, optimize meshes, and manage workflows directly inside the Modly application.
+You are three.ws Forge's built-in AI assistant, specialized in 3D modeling and workflow automation.
+You help users generate 3D models from images, optimize meshes, and manage workflows directly inside the three.ws Forge application.
 
 ## Available tools
 
-- **list_models** — List all downloaded 3D generation models ready to use.
-- **unload_models** — Unload all 3D generation models from GPU VRAM to free memory.
-- **get_mesh_info** — Get info about the current mesh in the 3D viewer (path, triangle count).
-- **decimate_mesh(path, target_faces)** — Reduce the polygon count of a mesh.
-- **smooth_mesh(path, iterations)** — Apply Laplacian smoothing to a mesh.
-- **get_generation_status(job_id)** — Poll the status of an ongoing 3D generation job.
-- **list_workflows** — List all available workflows in Modly.
-- **run_workflow(workflow_id)** — Execute a workflow in Modly by its ID. If the user attached an image in their message, it will automatically be used as the workflow's input image.
-- **create_workflow(name, input_type, steps, description?)** — Create a new workflow from an ordered list of processing steps. Each step references an extension by its exact `id` and may override its params. The steps run in sequence, the output of one feeding the next. The input source is one of exactly three nodes — `image` (Image), `text` (Text), or `mesh` (Load 3D Mesh) — and an Add-to-Scene output node is appended automatically.
+- **list_models**: List all downloaded 3D generation models ready to use.
+- **unload_models**: Unload all 3D generation models from GPU VRAM to free memory.
+- **get_mesh_info**: Get info about the current mesh in the 3D viewer (path, triangle count).
+- **decimate_mesh(path, target_faces)**: Reduce the polygon count of a mesh.
+- **smooth_mesh(path, iterations)**: Apply Laplacian smoothing to a mesh.
+- **get_generation_status(job_id)**: Poll the status of an ongoing 3D generation job.
+- **list_workflows**: List all available workflows in three.ws Forge.
+- **run_workflow(workflow_id)**: Execute a workflow in three.ws Forge by its ID. If the user attached an image in their message, it will automatically be used as the workflow's input image.
+- **create_workflow(name, input_type, steps, description?)**: Create a new workflow from an ordered list of processing steps. Each step references an extension by its exact `id` and may override its params. The steps run in sequence, the output of one feeding the next. The input source is one of exactly three nodes, `image` (Image), `text` (Text), or `mesh` (Load 3D Mesh), and an Add-to-Scene output node is appended automatically.
 
 ## Rules
 
-- Always use tools to act on the scene — never just describe what you would do.
+- Always use tools to act on the scene, never just describe what you would do.
 - If you need the current mesh path, call get_mesh_info first.
 - If you need to run a workflow but don't know the ID, call list_workflows first.
 - To create a workflow, ONLY use extension ids listed under "Available extensions" in the context. Never invent an id. Chain steps so each step's input type matches the previous step's output type.
@@ -107,7 +107,7 @@ TOOLS = [
                     },
                     "iterations": {
                         "type": "integer",
-                        "description": "Number of smoothing iterations (1–20). More = smoother but loses detail.",
+                        "description": "Number of smoothing iterations (1-20). More = smoother but loses detail.",
                     },
                 },
                 "required": ["path", "iterations"],
@@ -132,7 +132,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_workflows",
-            "description": "List all workflows available in Modly.",
+            "description": "List all workflows available in three.ws Forge.",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -140,7 +140,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "run_workflow",
-            "description": "Execute a Modly workflow by its ID. The workflow runs in the background; progress is shown in the app.",
+            "description": "Execute a three.ws Forge workflow by its ID. The workflow runs in the background; progress is shown in the app.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -155,7 +155,7 @@ TOOLS = [
         "function": {
             "name": "create_workflow",
             "description": (
-                "Create a new Modly workflow from an ordered list of steps. "
+                "Create a new three.ws Forge workflow from an ordered list of steps. "
                 "Each step references an extension by its exact id (see 'Available extensions' in context). "
                 "Steps run in sequence; do not include the input itself as a step."
             ),
@@ -200,7 +200,7 @@ TOOLS = [
 ]
 
 
-# Input kinds the agent may pick, mapped to the real Modly source-node types.
+# Input kinds the agent may pick, mapped to the real three.ws Forge source-node types.
 # Keep this in sync with the node palette in WorkflowsPage.tsx.
 INPUT_NODES = {
     "image": {"type": "imageNode", "data": {"enabled": True, "params": {}, "showInGenerate": True}},
@@ -210,7 +210,7 @@ INPUT_NODES = {
 
 
 def _build_workflow_graph(name: str, description: str, input_type: str, steps: list[dict]) -> dict:
-    """Assemble a Modly workflow graph (nodes + edges) from a simplified step spec.
+    """Assemble a three.ws Forge workflow graph (nodes + edges) from a simplified step spec.
 
     Layout: one source node (Image / Text / Load 3D Mesh), one extensionNode per
     step, then an Add-to-Scene output node, all wired in a single linear chain with
@@ -266,7 +266,7 @@ async def execute_tool(name: str, arguments: dict, context: dict) -> tuple[str, 
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
             if name == "list_models":
-                r = await client.get(f"{MODLY_API}/model/all")
+                r = await client.get(f"{THREEWS_API}/model/all")
                 r.raise_for_status()
                 models = [m for m in r.json() if m.get("downloaded")]
                 if not models:
@@ -275,7 +275,7 @@ async def execute_tool(name: str, arguments: dict, context: dict) -> tuple[str, 
                 return f"Available models:\n{lines}", None
 
             elif name == "unload_models":
-                r = await client.post(f"{MODLY_API}/model/unload-all")
+                r = await client.post(f"{THREEWS_API}/model/unload-all")
                 r.raise_for_status()
                 return "All 3D generation models have been unloaded from VRAM.", None
 
@@ -291,7 +291,7 @@ async def execute_tool(name: str, arguments: dict, context: dict) -> tuple[str, 
 
             elif name == "decimate_mesh":
                 r = await client.post(
-                    f"{MODLY_API}/optimize/mesh",
+                    f"{THREEWS_API}/optimize/mesh",
                     json={"path": arguments["path"], "target_faces": arguments["target_faces"]},
                 )
                 r.raise_for_status()
@@ -301,7 +301,7 @@ async def execute_tool(name: str, arguments: dict, context: dict) -> tuple[str, 
 
             elif name == "smooth_mesh":
                 r = await client.post(
-                    f"{MODLY_API}/optimize/smooth",
+                    f"{THREEWS_API}/optimize/smooth",
                     json={"path": arguments["path"], "iterations": arguments["iterations"]},
                 )
                 r.raise_for_status()
@@ -310,7 +310,7 @@ async def execute_tool(name: str, arguments: dict, context: dict) -> tuple[str, 
                 return f"Smoothed mesh ({arguments['iterations']} iterations).", payload
 
             elif name == "get_generation_status":
-                r = await client.get(f"{MODLY_API}/generate/status/{arguments['job_id']}")
+                r = await client.get(f"{THREEWS_API}/generate/status/{arguments['job_id']}")
                 r.raise_for_status()
                 s = r.json()
                 text = f"Status: {s['status']}, Progress: {s.get('progress', 0)}%"
@@ -393,7 +393,7 @@ class ProviderConfig(BaseModel):
 
 class AgentChatRequest(BaseModel):
     messages: list[ChatMessage]
-    model: str = Field(default_factory=llm_server.default_model_id)  # local: catalog/custom id — external: provider model name
+    model: str = Field(default_factory=llm_server.default_model_id)  # local: catalog/custom id, external: provider model name
     provider: ProviderConfig = ProviderConfig()
     context: dict = {}
     thinking: str = "auto"  # "auto" | "on" | "off"
@@ -460,7 +460,7 @@ async def list_external_models(req: ExternalModelsRequest):
 
 async def _unload_llm_after_workflow(request: AgentChatRequest, actions_done: list[ActionDone]) -> None:
     """Free the local LLM's VRAM once a workflow has been dispatched, so the
-    workflow gets the full GPU. Best-effort — never fail the chat over it."""
+    workflow gets the full GPU. Best-effort, never fail the chat over it."""
     if request.provider.type != "local":
         return
     if not any(a.tool == "run_workflow" for a in actions_done):

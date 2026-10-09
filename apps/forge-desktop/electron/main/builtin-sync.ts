@@ -17,7 +17,7 @@ function getBuiltinResourcesDir(): string {
 
 /**
  * Copies built-in extensions from app resources to userData/builtin-extensions.
- * Always overwrites — ensures built-ins are always up to date with the app version.
+ * Always overwrites, ensures built-ins are always up to date with the app version.
  */
 export function syncBuiltinExtensions(): void {
   const resourcesDir = getBuiltinResourcesDir()

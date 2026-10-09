@@ -14,7 +14,7 @@ import {
 } from './artifact-registry-service.ts'
 
 async function withWorkspace(run: (workspaceDir: string) => Promise<void>) {
-  const workspaceDir = await mkdtemp(path.join(tmpdir(), 'modly-library-'))
+  const workspaceDir = await mkdtemp(path.join(tmpdir(), 'forge-library-'))
   try {
     await run(workspaceDir)
   } finally {
@@ -67,7 +67,7 @@ test('lists Workflows and Exports assets while skipping hidden, cache, and inter
 test('registers a generated scene directory through its canonical manifest artifact', () => withWorkspace(async (workspaceDir) => {
   await mkdir(path.join(workspaceDir, 'Workflows/world'), { recursive: true })
   await writeFile(path.join(workspaceDir, 'Workflows/world/scene-manifest.json'), JSON.stringify({
-    schema: 'modly.scene-manifest.v1', sceneRoot: '.', assets: [],
+    schema: 'three-ws.forge.scene-manifest.v1', sceneRoot: '.', assets: [],
   }))
   const result = await listWorkspaceAssetLibrary({ workspaceDir })
   assert.equal(result.success, true)
@@ -214,7 +214,7 @@ test('IPC read and open handlers forward sourceWorkspacePath without trusting ma
   const handlers = new Map<string, (event: unknown, payload: unknown) => Promise<unknown>>()
   registerWorkspaceAssetLibraryIpcHandlers({
     ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
-    getWorkspaceDir: () => '/tmp/modly-workspace',
+    getWorkspaceDir: () => '/tmp/forge-workspace',
   })
 
   const result = await handlers.get('workspace:library:open')?.({}, {
@@ -230,7 +230,7 @@ test('registers workspace library IPC handlers with structured results', async (
   const handlers = new Map<string, (event: unknown, payload: unknown) => Promise<unknown>>()
   registerWorkspaceAssetLibraryIpcHandlers({
     ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
-    getWorkspaceDir: () => '/tmp/modly-workspace',
+    getWorkspaceDir: () => '/tmp/forge-workspace',
   })
 
   assert.equal(typeof handlers.get('workspace:library:list'), 'function')

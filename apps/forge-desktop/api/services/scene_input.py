@@ -5,7 +5,7 @@ import re
 import stat
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
-SCHEMA = "modly.scene-manifest.v1"
+SCHEMA = "three-ws.forge.scene-manifest.v1"
 MANIFEST = "scene-manifest.json"
 MAX_MANIFEST_BYTES = 1024 * 1024
 MAX_REFERENCES = 4096

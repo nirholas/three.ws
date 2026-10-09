@@ -15,7 +15,7 @@ from services.generator_registry import GeneratorRegistry
 
 class GeneratorRegistryDiscoveryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self._tempdir = tempfile.TemporaryDirectory(prefix="modly-registry-test-")
+        self._tempdir = tempfile.TemporaryDirectory(prefix="forge-registry-test-")
         self.root = Path(self._tempdir.name)
         self.extensions_dir = self.root / "extensions"
         self.models_dir = self.root / "models"
@@ -80,7 +80,7 @@ class GeneratorRegistryDiscoveryTests(unittest.TestCase):
         token: str = "t" * 43,
     ) -> dict[str, str]:
         state_name = (
-            f".modly-registration-pending-{extension_id}-{suffix}"
+            f".forge-registration-pending-{extension_id}-{suffix}"
         )
         state_path = self.extensions_dir / state_name
         state_path.write_text(
@@ -607,7 +607,7 @@ class GeneratorRegistryDiscoveryTests(unittest.TestCase):
         extension = self._make_extension("interrupted")
         self._write_manifest(extension, extension_id="interrupted", node_ids=("one", "two"))
         (extension / "generator.py").write_text("", encoding="utf-8")
-        (extension / ".modly-incomplete").write_text("installing", encoding="utf-8")
+        (extension / ".forge-incomplete").write_text("installing", encoding="utf-8")
 
         self.registry.initialize()
 
@@ -624,7 +624,7 @@ class GeneratorRegistryDiscoveryTests(unittest.TestCase):
             "        raise AssertionError('pending extension must not be loaded')\n",
             encoding="utf-8",
         )
-        (self.extensions_dir / ".modly-registration-pending-pending-registration-100").write_text(
+        (self.extensions_dir / ".forge-registration-pending-pending-registration-100").write_text(
             "validating",
             encoding="utf-8",
         )
@@ -802,7 +802,7 @@ class GeneratorRegistryDiscoveryTests(unittest.TestCase):
             extension_type="process",
         )
         (extension / "processor.py").write_text("print('ok')\n", encoding="utf-8")
-        (extension / ".modly-incomplete").write_text("installing", encoding="utf-8")
+        (extension / ".forge-incomplete").write_text("installing", encoding="utf-8")
 
         self.registry.initialize()
 

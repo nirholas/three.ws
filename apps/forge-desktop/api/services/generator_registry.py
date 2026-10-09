@@ -1,5 +1,5 @@
 """
-GeneratorRegistry — manages the lifecycle of all model adapters.
+GeneratorRegistry: manages the lifecycle of all model adapters.
 Dynamically loads extensions from the extensions/ folder.
 
 To add a new model: create a folder in extensions/ with
@@ -42,18 +42,18 @@ from services.model_sources import (
 # Global paths
 # ------------------------------------------------------------------ #
 
-_models_dir_raw    = os.environ.get("MODELS_DIR")    or str(Path.home() / ".modly" / "models")
-_workspace_dir_raw = os.environ.get("WORKSPACE_DIR") or str(Path.home() / ".modly" / "workspace")
+_models_dir_raw    = os.environ.get("MODELS_DIR")    or str(Path.home() / ".three-ws-forge" / "models")
+_workspace_dir_raw = os.environ.get("WORKSPACE_DIR") or str(Path.home() / ".three-ws-forge" / "workspace")
 MODELS_DIR    = Path(_models_dir_raw)
 WORKSPACE_DIR = Path(_workspace_dir_raw)
 
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 WORKSPACE_DIR.mkdir(parents=True, exist_ok=True)
 
-# extensions/ folder — in userData (passed by Electron via EXTENSIONS_DIR)
+# extensions/ folder: in userData (passed by Electron via EXTENSIONS_DIR)
 _extensions_dir_raw = os.environ.get("EXTENSIONS_DIR", "")
 EXTENSIONS_DIR = Path(_extensions_dir_raw) if _extensions_dir_raw else None
-_REGISTRATION_PENDING_PREFIX = ".modly-registration-pending-"
+_REGISTRATION_PENDING_PREFIX = ".forge-registration-pending-"
 _EXTENSION_ID = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 _REGISTRATION_PENDING_NAME = re.compile(
     rf"^{re.escape(_REGISTRATION_PENDING_PREFIX)}"
@@ -362,7 +362,7 @@ def _consume_registration_validation_capability(
                 "consumed": True,
             }
             temporary_path = root / (
-                f".modly-registration-capability-{secrets.token_hex(16)}"
+                f".forge-registration-capability-{secrets.token_hex(16)}"
             )
             try:
                 flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
@@ -442,7 +442,7 @@ def _discover_extensions(
 
         try:
             # Process extensions run via Electron's process runner, not this
-            # registry — skip them even when their entry file is generator.py.
+            # registry: skip them even when their entry file is generator.py.
             if manifest.get("type", "model") != "model":
                 print(f"[Registry] Skipping '{ext_dir.name}': type "
                       f"'{manifest.get('type')}' is not handled by this registry")
@@ -526,8 +526,8 @@ def _discover_extensions(
             # the UI attach this error to each expected model node even when
             # startup could not immediately restore a locked backup.
             install_interrupted = (
-                (ext_dir / ".modly-incomplete").exists()
-                or (ext_dir / ".modly-registration-pending").exists()
+                (ext_dir / ".forge-incomplete").exists()
+                or (ext_dir / ".forge-registration-pending").exists()
                 or (
                     _registration_pending(ext_id)
                     and not (
@@ -546,7 +546,7 @@ def _discover_extensions(
                 message = (
                     f"Extension '{ext_id}' has an incomplete installation "
                     "or interrupted runtime registration. "
-                    "Restart Modly to recover it, or click 'Repair' on the Models page."
+                    "Restart three.ws Forge to recover it, or click 'Repair' on the Models page."
                 )
                 print(f"[Registry] ERROR: {message}")
                 _record_discovery_error(
@@ -637,7 +637,7 @@ def _discover_extensions(
                     else:
                         print(f"[Registry] Loaded node: {full_id} ({class_name})")
             else:
-                # No nodes defined — register by ext_id as fallback
+                # No nodes defined: register by ext_id as fallback
                 result[ext_id] = (cls_or_None, manifest, ext_dir, legacy_context)
                 if subprocess_mode:
                     if has_venv:
@@ -695,7 +695,7 @@ class GeneratorRegistry:
                     # Subprocess mode: venv must exist
                     if not _venv_python(ext_dir).is_file():
                         raise RuntimeError(
-                            "venv not found — extension needs setup. "
+                            "venv not found, extension needs setup. "
                             "Click 'Repair' on the Models page to run setup.py."
                         )
                     # Subprocess mode: wrap in ExtensionProcess
@@ -819,13 +819,13 @@ class GeneratorRegistry:
             ) and not downloaded:
                 raise RuntimeError(
                     "Model sources are incomplete. Download this node's shared and private weights "
-                    "from the Modly Models page before generation."
+                    "from the three.ws Forge Models page before generation."
                 )
             if not gen.is_loaded():
                 if not downloaded:
                     if isinstance(gen, ExtensionProcess):
                         # Let the subprocess handle its own download logic during
-                        # load() — some extensions (e.g. mv-adapter) need custom
+                        # load(): some extensions (e.g. mv-adapter) need custom
                         # multi-repo downloads that the standard HF endpoint can't do.
                         pass
                     else:
@@ -894,7 +894,7 @@ class GeneratorRegistry:
                 )
             # 3D generation owns the GPU: evict the chat LLMs before anything is
             # about to allocate on it. The trigger is "the target model is not
-            # resident", not "the target model changed" — the common case is the
+            # resident", not "the target model changed": the common case is the
             # default generator, which is already `_active_id` at boot and still
             # has to load its weights. Gating on the id alone let a full LLM pool
             # (2 slots, ~11.6 GB of 12) sit through an entire generation.

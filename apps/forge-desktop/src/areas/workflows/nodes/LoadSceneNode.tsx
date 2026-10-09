@@ -86,7 +86,7 @@ export default function LoadSceneNode({ id, data, selected }: { id: string; data
         <Handle
           type="source"
           position={Position.Right}
-          style={{ background: OUTPUT_COLOR, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }}
+          style={{ background: OUTPUT_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }}
         />
       }
     >

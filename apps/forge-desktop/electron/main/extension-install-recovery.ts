@@ -412,7 +412,7 @@ export async function runExtensionRepairTransaction(
     )
     if (!quarantined.ok) {
       throw new Error(
-        `Runtime registration failed, and Modly could not preserve quarantine `
+        `Runtime registration failed, and three.ws Forge could not preserve quarantine `
         + `during ${quarantined.stage}: ${String(quarantined.error)}. `
         + `Original failure: ${String(registrationError)}`,
       )
@@ -421,7 +421,7 @@ export async function runExtensionRepairTransaction(
       await options.quarantine()
     } catch (runtimeQuarantineError) {
       throw new Error(
-        `Runtime registration failed, and Modly preserved filesystem quarantine but `
+        `Runtime registration failed, and three.ws Forge preserved filesystem quarantine but `
         + `could not evict partially registered runtime state: `
         + `${String(runtimeQuarantineError)}. Original failure: ${String(registrationError)}`,
       )
@@ -436,9 +436,9 @@ export async function runExtensionRepairTransaction(
   )
   if (!cleaned.ok) {
     throw new Error(
-      `Runtime registration succeeded, but Modly could not finish removing the previous `
+      `Runtime registration succeeded, but three.ws Forge could not finish removing the previous `
       + `extension backup during ${cleaned.stage}: ${String(cleaned.error)}. `
-      + `Restart Modly to retry the validated cleanup.`,
+      + `Restart three.ws Forge to retry the validated cleanup.`,
     )
   }
 }
@@ -480,7 +480,7 @@ export async function runExtensionRegistrationValidationTransaction(
     )
     if (!quarantined.ok) {
       throw new Error(
-        `Runtime registration failed, and Modly could not preserve quarantine `
+        `Runtime registration failed, and three.ws Forge could not preserve quarantine `
         + `during ${quarantined.stage}: ${String(quarantined.error)}. `
         + `Original failure: ${String(registrationError)}`,
       )
@@ -489,7 +489,7 @@ export async function runExtensionRegistrationValidationTransaction(
       await options.quarantine()
     } catch (runtimeQuarantineError) {
       throw new Error(
-        `Runtime registration failed, and Modly preserved filesystem quarantine but `
+        `Runtime registration failed, and three.ws Forge preserved filesystem quarantine but `
         + `could not evict partially registered runtime state: `
         + `${String(runtimeQuarantineError)}. Original failure: ${String(registrationError)}`,
       )
@@ -504,9 +504,9 @@ export async function runExtensionRegistrationValidationTransaction(
   )
   if (!cleaned.ok) {
     throw new Error(
-      `Runtime registration succeeded, but Modly could not finish transaction cleanup `
+      `Runtime registration succeeded, but three.ws Forge could not finish transaction cleanup `
       + `during ${cleaned.stage}: ${String(cleaned.error)}. `
-      + `Restart Modly to retry the validated cleanup.`,
+      + `Restart three.ws Forge to retry the validated cleanup.`,
     )
   }
 }

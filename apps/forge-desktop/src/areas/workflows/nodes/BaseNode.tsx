@@ -16,16 +16,16 @@ export interface BaseNodeProps {
   icon?:  ReactNode   // small icon left of title
   badge?: string      // e.g. "built-in"
 
-  // Optional controls — only rendered when prop is provided
+  // Optional controls: only rendered when prop is provided
   enabled?:         boolean   // shows enable toggle
   showInGenerate?:  boolean   // shows eye toggle
   deletable?:       boolean   // default true
-  collapsible?:     boolean   // default false — shows chevron, hides body when collapsed
+  collapsible?:     boolean   // default false, shows chevron, hides body when collapsed
   defaultExpanded?: boolean   // default true
 
   // Extra slots
   subheader?: ReactNode   // always visible, sits between header and body (e.g. IO row)
-  handles?:   ReactNode   // React Flow handles — rendered at root level
+  handles?:   ReactNode   // React Flow handles, rendered at root level
 
   // Resize
   minWidth?:  number   // default 180
@@ -73,7 +73,7 @@ export default function BaseNode({
         handleStyle={autoHeight ? { display: 'none' } : RESIZER_HANDLE_STYLE}
       />
 
-      {/* React Flow handles — must live at root level */}
+      {/* React Flow handles, must live at root level */}
       {handles}
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
@@ -97,7 +97,7 @@ export default function BaseNode({
           )}
         </div>
 
-        {/* Eye — visible in Generate page */}
+        {/* Eye, visible in Generate page */}
         {showInGenerate !== undefined && (
           <button
             onClick={() => updateNodeData(id, { showInGenerate: !showInGenerate })}

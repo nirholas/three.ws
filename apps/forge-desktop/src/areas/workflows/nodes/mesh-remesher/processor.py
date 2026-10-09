@@ -1,5 +1,5 @@
 """
-Mesh Remesher — built-in process extension.
+Mesh Remesher: built-in process extension.
 
 Protocol: reads one JSON line from stdin, writes JSON lines to stdout.
   stdin : { input, params, workspaceDir, tempDir }

@@ -93,23 +93,23 @@ const MCP_CLIENTS: { value: McpClient; label: string; path: string; config: stri
     value:  'claude',
     label:  'Claude Desktop',
     path:   '~/.config/claude/claude_desktop_config.json',
-    config: `{\n  "mcpServers": {\n    "modly": {\n      "command": "modly-mcp"\n    }\n  }\n}`,
+    config: `{\n  "mcpServers": {\n    "three-ws-forge": {\n      "command": "forge-mcp"\n    }\n  }\n}`,
   },
   {
     value:  'codex',
     label:  'Codex CLI',
     path:   '~/.codex/config.toml',
-    config: `[mcp_servers.modly]\ncommand = "modly-mcp"`,
+    config: `[mcp_servers.three-ws-forge]\ncommand = "forge-mcp"`,
   },
   {
     value:  'opencode',
     label:  'OpenCode',
     path:   '~/.config/opencode/config.json',
-    config: `{\n  "$schema": "https://opencode.ai/config.json",\n  "mcp": {\n    "modly": {\n      "type": "local",\n      "command": ["modly-mcp"]\n    }\n  }\n}`,
+    config: `{\n  "$schema": "https://opencode.ai/config.json",\n  "mcp": {\n    "three-ws-forge": {\n      "type": "local",\n      "command": ["forge-mcp"]\n    }\n  }\n}`,
   },
 ]
 
-const MCP_INSTALL = 'npm install -g modly-cli-mcp'
+const MCP_INSTALL = 'npm install -g forge-cli-mcp'
 
 const THINKING_OPTIONS: { value: ThinkingMode; label: string; desc: string }[] = [
   { value: 'auto', label: 'Auto',     desc: 'The model decides whether to think' },
@@ -190,7 +190,7 @@ export function AgentSection(): JSX.Element {
       })
       const data = await res.json()
       setResolvedMax(data.resolved_max_models ?? null)
-    } catch { /* API unreachable — keep the optimistic value, refreshLocal will resync */ }
+    } catch { /* API unreachable, keep the optimistic value, refreshLocal will resync */ }
   }
 
   useEffect(() => { void refreshLocal() }, [refreshLocal])
@@ -238,7 +238,7 @@ export function AgentSection(): JSX.Element {
   const client        = MCP_CLIENTS.find((c) => c.value === mcpClient) ?? MCP_CLIENTS[0]
 
   return (
-    <Section title="Agent" subtitle="Configure the LLM powering the chat — fully local by default.">
+    <Section title="Agent" subtitle="Configure the LLM powering the chat, fully local by default.">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
 
         {/* ── Left column ── */}
@@ -312,15 +312,15 @@ export function AgentSection(): JSX.Element {
                 ) : (
                   <p className="px-3 py-2 rounded-lg bg-surface-500 border border-zinc-800 text-[11px] text-zinc-500">
                     {models.length === 0
-                      ? 'No model yet — open Browse… to add or download one.'
-                      : 'No model selected — open Browse… and select one.'}
+                      ? 'No model yet, open Browse… to add or download one.'
+                      : 'No model selected, open Browse… and select one.'}
                   </p>
                 )}
               </Block>
 
               <Block
                 label="Simultaneous models"
-                hint="How many local models may stay loaded at once (one llama-server process each). Auto sizes it from your GPU's VRAM — on 8 GB cards keep 1 so 3D generation always has room."
+                hint="How many local models may stay loaded at once (one llama-server process each). Auto sizes it from your GPU's VRAM, on 8 GB cards keep 1 so 3D generation always has room."
               >
                 <select
                   value={maxModels}
@@ -328,7 +328,7 @@ export function AgentSection(): JSX.Element {
                   className={`${inputCls} cursor-pointer`}
                 >
                   <option value="auto">
-                    Auto{resolvedMax != null ? ` — ${resolvedMax} model${resolvedMax > 1 ? 's' : ''}${vramGb != null ? ` (${vramGb} GB VRAM)` : ''}` : ''}
+                    Auto{resolvedMax != null ? `, ${resolvedMax} model${resolvedMax > 1 ? 's' : ''}${vramGb != null ? ` (${vramGb} GB VRAM)` : ''}` : ''}
                   </option>
                   {[1, 2, 3, 4].map((n) => (
                     <option key={n} value={String(n)}>{n}</option>
@@ -352,7 +352,7 @@ export function AgentSection(): JSX.Element {
               <Block
                 label={PROVIDERS[provider].noKey ? 'API key (optional)' : 'API key'}
                 hint={PROVIDERS[provider].noKey
-                  ? 'Not needed for a local Ollama — models already pulled with it are reused as-is.'
+                  ? 'Not needed for a local Ollama, models already pulled with it are reused as-is.'
                   : 'Stored locally on this machine only.'}
               >
                 <div className="flex gap-2">
@@ -368,13 +368,13 @@ export function AgentSection(): JSX.Element {
                   </button>
                 </div>
                 {extResult === 'ok' && (
-                  <p className="text-[11px] text-emerald-400">Connected — {extModels.length} model{extModels.length > 1 ? 's' : ''} available</p>
+                  <p className="text-[11px] text-emerald-400">Connected, {extModels.length} model{extModels.length > 1 ? 's' : ''} available</p>
                 )}
                 {extResult === 'error' && (
                   <p className="text-[11px] text-red-400">
                     {provider === 'ollama'
-                      ? 'Could not list models — is Ollama running?'
-                      : `Could not list models — check the key${provider === 'custom' ? ' and URL' : ''}`}
+                      ? 'Could not list models, is Ollama running?'
+                      : `Could not list models, check the key${provider === 'custom' ? ' and URL' : ''}`}
                   </p>
                 )}
               </Block>
@@ -383,7 +383,7 @@ export function AgentSection(): JSX.Element {
                 {extModels.length > 0 ? (
                   <select value={extModelDraft} onChange={(e) => setExtModelDraft(e.target.value)} className={`${inputCls} cursor-pointer`}>
                     {/* Without it the browser shows the first model while the draft
-                      * stays '' — Save then persisted an empty model name. */}
+                      * stays '', Save then persisted an empty model name. */}
                     {!extModelDraft && <option value="" disabled>Select a model…</option>}
                     {!extModels.includes(extModelDraft) && extModelDraft && <option value={extModelDraft}>{extModelDraft}</option>}
                     {extModels.map((m) => <option key={m} value={m}>{m}</option>)}
@@ -404,7 +404,7 @@ export function AgentSection(): JSX.Element {
             </Card>
           )}
 
-          <Card title="Thinking" description="Default mode — can be changed on the fly in the chat via the brain icon.">
+          <Card title="Thinking" description="Default mode, can be changed on the fly in the chat via the brain icon.">
             <div className="px-4 py-3 flex flex-col gap-3">
               {THINKING_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-start gap-3 cursor-pointer group">
@@ -430,7 +430,7 @@ export function AgentSection(): JSX.Element {
         <div className="flex flex-col gap-4 min-w-0">
           <Card
             title="MCP server"
-            description={<>Control Modly from Claude Desktop, Codex or OpenCode. Community package by <span className="text-zinc-300">DrHepa</span>.</>}
+            description={<>Control three.ws Forge from Claude Desktop, Codex or OpenCode. Community package by <span className="text-zinc-300">DrHepa</span>.</>}
             aside={<Badge tone="muted">Community</Badge>}
           >
             <Block>

@@ -53,7 +53,7 @@ test('canOpenInOrcaSlicer accepts sliceable workspace meshes and rejects splats 
 
 test('canOpenInOrcaSlicer accepts an imported mesh served from outside the workspace', () => {
   // `Import` serves user-picked files through /optimize/serve-file, never from
-  // the workspace — excluding those made the action invisible for the most
+  // the workspace, excluding those made the action invisible for the most
   // direct "I have a model, slice it" path.
   assert.equal(canOpenInOrcaSlicer('/optimize/serve-file?path=%2Ftmp%2Fx.glb'), true)
   assert.equal(canOpenInOrcaSlicer('/optimize/serve-file?path=C%3A%5CUsers%5CMe%5Cmage.glb'), true)

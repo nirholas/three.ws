@@ -39,7 +39,7 @@ _job_generators: Dict[str, object] = {}
 # without parking default-executor workers on a blocking lock acquisition.
 _pinned_generation_executor = ThreadPoolExecutor(
     max_workers=1,
-    thread_name_prefix="modly-pinned-generation",
+    thread_name_prefix="forge-pinned-generation",
 )
 
 _JOB_TTL = 1800  # purge terminal jobs after 30 minutes

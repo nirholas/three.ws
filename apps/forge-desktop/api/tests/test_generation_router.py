@@ -72,7 +72,7 @@ class RunGenerationWorkspaceTests(unittest.TestCase):
         registry.WORKSPACE_DIR = Path(self._tmp.name) / "new_workspace"
         # Keep the test hermetic against the module's import-time binding: if the
         # stale name still exists (before the fix) redirect it into the temp tree
-        # so the assertion — not a stray write to the real workspace — is what
+        # so the assertion: not a stray write to the real workspace, is what
         # catches the bug.
         self._had_stale = hasattr(generation, "WORKSPACE_DIR")
         if self._had_stale:

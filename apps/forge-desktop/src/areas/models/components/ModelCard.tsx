@@ -29,7 +29,7 @@ export function ModelCard({ model, onDelete, onGenerate, disabled }: Props): JSX
 
       {/* Size */}
       <span className="text-[11px] font-medium text-zinc-400">
-        {model.size_gb > 0 ? `${model.size_gb} GB` : '—'}
+        {model.size_gb > 0 ? `${model.size_gb} GB` : '-'}
       </span>
 
       {/* Actions */}

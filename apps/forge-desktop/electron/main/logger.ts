@@ -3,7 +3,7 @@ import { appendFileSync, mkdirSync, existsSync, readdirSync, statSync, renameSyn
 import { join } from 'path'
 
 const MAX_SESSIONS = 10
-const LOG_FILES = ['modly.log', 'errors.log', 'runtime.log']
+const LOG_FILES = ['forge.log', 'errors.log', 'runtime.log']
 
 function getLogsDir(): string {
   const logsDir = join(app.getPath('userData'), 'logs')
@@ -57,9 +57,9 @@ function safeConsole(fn: (msg: string) => void, msg: string): void {
 }
 
 export const logger = {
-  info:   (msg: string) => { safeConsole(console.log, msg);   writeTo('modly.log', line('INFO',   msg)) },
-  warn:   (msg: string) => { safeConsole(console.warn, msg);  writeTo('modly.log', line('WARN',   msg)) },
-  error:  (msg: string) => { safeConsole(console.error, msg); writeTo('modly.log', line('ERROR',  msg)); writeTo('errors.log', line('ERROR', msg)) },
+  info:   (msg: string) => { safeConsole(console.log, msg);   writeTo('forge.log', line('INFO',   msg)) },
+  warn:   (msg: string) => { safeConsole(console.warn, msg);  writeTo('forge.log', line('WARN',   msg)) },
+  error:  (msg: string) => { safeConsole(console.error, msg); writeTo('forge.log', line('ERROR',  msg)); writeTo('errors.log', line('ERROR', msg)) },
   python: (msg: string) => {
     writeTo('runtime.log', line('RUNTIME', msg))
     if (/error|exception|traceback|critical/i.test(msg)) {

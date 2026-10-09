@@ -4,7 +4,7 @@
  * Extension setup scripts are third-party code we cannot edit, and they install
  * PyTorch themselves from an index they hardcode. The launcher wraps them: it
  * patches subprocess so every pip invocation passes through a few corrections
- * before it runs — dropping CUDA-only indexes on macOS, keeping the shared wheel
+ * before it runs, dropping CUDA-only indexes on macOS, keeping the shared wheel
  * cache alive, and redirecting torch to ROCm wheels on AMD machines.
  *
  * Kept in its own module so setup-launcher.test.mjs can execute it for real
@@ -67,12 +67,12 @@ def _rewrite_command(command):
         i += 1
 
     if changed:
-        print("[Modly setup compat] Removed CUDA-only PyTorch index on macOS; pip will use macOS wheels.", file=sys.stderr)
+        print("[three.ws Forge setup compat] Removed CUDA-only PyTorch index on macOS; pip will use macOS wheels.", file=sys.stderr)
         return rewritten
     return command
 
 # Matches the executable spellings pip arrives under: "pip", "pip3", "pip3.11",
-# "pip.exe", or a stub script like "pip.py" — but not a requirement that merely
+# "pip.exe", or a stub script like "pip.py": but not a requirement that merely
 # starts with "pip" (pipdeptree) or a script like "pipeline.py".
 _PIP_BASENAME_RE = re.compile(r"^pip[0-9.]*(\\.py|\\.exe)?$", re.I)
 
@@ -94,22 +94,22 @@ def _is_pip_command(command):
 
 def _strip_no_cache(command):
     # Extension setup scripts often hardcode --no-cache-dir, which forces pip to
-    # re-download multi-GB wheels on every retry. Modly provides a shared cache
+    # re-download multi-GB wheels on every retry. three.ws Forge provides a shared cache
     # via PIP_CACHE_DIR, so drop the flag and let pip use it.
     if not _is_pip_command(command):
         return command
     if not any(str(part) == "--no-cache-dir" for part in command):
         return command
-    print("[Modly setup compat] Removed --no-cache-dir so pip reuses the shared wheel cache.", file=sys.stderr)
+    print("[three.ws Forge setup compat] Removed --no-cache-dir so pip reuses the shared wheel cache.", file=sys.stderr)
     return [part for part in command if str(part) != "--no-cache-dir"]
 
 # ROCm redirect. Most extension setup.py scripts predate AMD support and
 # hardcode a CUDA index (hunyuan3d-mini even forces the CPU index on Windows),
-# so on an AMD machine we swap the whole torch install for the ROCm one Modly
+# so on an AMD machine we swap the whole torch install for the ROCm one three.ws Forge
 # resolved. An index the extension already pointed at ROCm is left alone.
-_ROCM_INDEX = os.environ.get("MODLY_TORCH_INDEX_URL", "")
+_ROCM_INDEX = os.environ.get("THREEWS_TORCH_INDEX_URL", "")
 try:
-    _ROCM_SPECS = json.loads(os.environ.get("MODLY_TORCH_SPECS", "[]"))
+    _ROCM_SPECS = json.loads(os.environ.get("THREEWS_TORCH_SPECS", "[]"))
 except ValueError:
     _ROCM_SPECS = []
 
@@ -118,7 +118,7 @@ def _is_pytorch_index(value):
 
 def _is_rocm_index(value):
     # Covers the pytorch.org rocm indexes, AMD's Windows multi-arch index, and
-    # whatever MODLY_ROCM_INDEX was overridden to.
+    # whatever THREEWS_ROCM_INDEX was overridden to.
     if not isinstance(value, str):
         return False
     if _ROCM_INDEX and value.rstrip("/") == _ROCM_INDEX.rstrip("/"):
@@ -160,7 +160,7 @@ def _has_non_torch_requirement(command):
     return False
 
 def _rewrite_rocm(command):
-    if os.environ.get("MODLY_TORCH_FLAVOR") != "rocm" or not _ROCM_INDEX or not _ROCM_SPECS:
+    if os.environ.get("THREEWS_TORCH_FLAVOR") != "rocm" or not _ROCM_INDEX or not _ROCM_SPECS:
         return command
     if not isinstance(command, (list, tuple)):
         return command
@@ -224,19 +224,19 @@ def _rewrite_rocm(command):
     if _has_non_torch_requirement(command) and not any("pypi.org/simple" in str(part) for part in rewritten):
         # The ROCm index only mirrors torch's own dependency closure (numpy,
         # pillow…), not application packages like trimesh or diffusers. A pip
-        # call that mixes both still needs PyPI reachable — also when the
+        # call that mixes both still needs PyPI reachable: also when the
         # extension supplied the ROCm index itself.
         index_args += ["--extra-index-url", "https://pypi.org/simple"]
     injected = index_args + list(_ROCM_SPECS)
     rewritten[insert_at:insert_at] = injected
-    print("[Modly setup compat] Redirected PyTorch to ROCm wheels: " + " ".join(injected), file=sys.stderr)
+    print("[three.ws Forge setup compat] Redirected PyTorch to ROCm wheels: " + " ".join(injected), file=sys.stderr)
     return rewritten
 
 def _transform_command(command):
     return _strip_no_cache(_rewrite_rocm(_rewrite_command(command)))
 
-# Every subprocess entry point — run, call, check_call, check_output, and a
-# direct subprocess.Popen(...) — constructs the module-global Popen, so patching
+# Every subprocess entry point: run, call, check_call, check_output, and a
+# direct subprocess.Popen(...): constructs the module-global Popen, so patching
 # that one class covers them all exactly once, whether the command arrives
 # positionally or as the args= keyword. This also holds for code that did
 # "from subprocess import run" before this launcher ran: run() still looks

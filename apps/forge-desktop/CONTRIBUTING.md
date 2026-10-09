@@ -1,7 +1,7 @@
-# Contributing to Modly
+# Contributing to three.ws Forge
 
 Thanks for wanting to help out! You don't need write access to the repository to
-pick up a ticket, work on it, and ship a fix — here's how the flow works.
+pick up a ticket, work on it, and ship a fix, here's how the flow works.
 
 ## Finding something to work on
 
@@ -13,7 +13,7 @@ pick up a ticket, work on it, and ship a fix — here's how the flow works.
 ## Claiming a ticket
 
 Comment **`/assign`** on the issue you want to work on. A bot will assign it to
-you automatically — no repo permissions required.
+you automatically, no repo permissions required.
 
 - Only one person can be assigned to an issue at a time. If it's already
   assigned, ask the assignee first or wait for them to release it.
@@ -27,7 +27,7 @@ looking at the board can see what's actively being worked on.
 ## Submitting your work
 
 1. **Fork** the repository and create a branch for your change.
-2. Make your change. Keep it focused — one issue, one PR.
+2. Make your change. Keep it focused, one issue, one PR.
 3. Run the checks locally before opening a PR:
    ```bash
    npm run lint
@@ -44,5 +44,5 @@ test**; once merged, it moves to **Done**.
 ## Getting help
 
 If something in an issue is unclear, ask in a comment on the issue itself
-before starting — it's cheaper to clarify scope up front than to redo work
+before starting, it's cheaper to clarify scope up front than to redo work
 later.

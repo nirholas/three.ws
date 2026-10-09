@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path'
 
 // slotInputs.ts has no runtime imports, so esbuild bundles it standalone.
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-slotinputs-test-')), 'slotInputs.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-slotinputs-test-')), 'slotInputs.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/areas/workflows/slotInputs.ts')],

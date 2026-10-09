@@ -20,9 +20,9 @@ import { join, resolve } from 'node:path'
 
 // Windows refuses symlink creation unless the process is elevated or Developer
 // Mode is on, so probe once rather than letting the test report an EPERM as a
-// product failure — that turns a stock Windows checkout into a failing suite.
+// product failure, that turns a stock Windows checkout into a failing suite.
 const symlinksAvailable = (() => {
-  const probe = mkdtempSync(join(tmpdir(), 'modly-symlink-probe-'))
+  const probe = mkdtempSync(join(tmpdir(), 'forge-symlink-probe-'))
   try {
     symlinkSync(join(probe, 'target'), join(probe, 'link'), 'dir')
     return true
@@ -34,7 +34,7 @@ const symlinksAvailable = (() => {
 })()
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-recovery-module-')), 'extension-install-recovery.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-recovery-module-')), 'extension-install-recovery.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/main/extension-install-recovery.ts')],
@@ -48,13 +48,13 @@ function loadModule() {
 }
 
 test('startup reconciliation removes all orphan incomplete folders, including corrupted names', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-recovery-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-recovery-test-'))
   const corrupted = join(root, 'Broken Extension')
   const valid = join(root, 'later-extension')
   mkdirSync(corrupted)
   mkdirSync(valid)
-  writeFileSync(join(corrupted, '.modly-incomplete'), 'installing', 'utf8')
-  writeFileSync(join(valid, '.modly-incomplete'), 'installing', 'utf8')
+  writeFileSync(join(corrupted, '.forge-incomplete'), 'installing', 'utf8')
+  writeFileSync(join(valid, '.forge-incomplete'), 'installing', 'utf8')
 
   try {
     const mod = loadModule()
@@ -68,13 +68,13 @@ test('startup reconciliation removes all orphan incomplete folders, including co
 })
 
 test('failed update rollback replaces the unvalidated destination with its backup', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-rollback-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-rollback-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-100')
+  const backup = join(root, '.forge-backup-pixal3d-100')
   mkdirSync(destination)
   mkdirSync(backup)
   writeFileSync(join(destination, 'version.txt'), 'new-broken', 'utf8')
-  writeFileSync(join(destination, '.modly-registration-pending'), 'pending', 'utf8')
+  writeFileSync(join(destination, '.forge-registration-pending'), 'pending', 'utf8')
   writeFileSync(join(backup, 'version.txt'), 'old-working', 'utf8')
 
   try {
@@ -83,7 +83,7 @@ test('failed update rollback replaces the unvalidated destination with its backu
 
     assert.deepEqual(result, { ok: true })
     assert.equal(readFileSync(join(destination, 'version.txt'), 'utf8'), 'old-working')
-    assert.equal(existsSync(join(destination, '.modly-registration-pending')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-pending')), false)
     assert.equal(existsSync(backup), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
@@ -91,14 +91,14 @@ test('failed update rollback replaces the unvalidated destination with its backu
 })
 
 test('startup restores a parked version when registration was interrupted', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-pending-recovery-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-pending-recovery-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-101')
+  const backup = join(root, '.forge-backup-pixal3d-101')
   mkdirSync(destination)
   mkdirSync(backup)
   writeFileSync(join(destination, 'version.txt'), 'new-unvalidated', 'utf8')
   writeFileSync(join(backup, 'version.txt'), 'old-working', 'utf8')
-  writeFileSync(join(root, '.modly-registration-pending-pixal3d-101'), 'pending', 'utf8')
+  writeFileSync(join(root, '.forge-registration-pending-pixal3d-101'), 'pending', 'utf8')
 
   try {
     const mod = loadModule()
@@ -107,7 +107,7 @@ test('startup restores a parked version when registration was interrupted', asyn
     assert.equal(readFileSync(join(destination, 'version.txt'), 'utf8'), 'old-working')
     assert.equal(existsSync(backup), false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-101')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-101')),
       false,
     )
   } finally {
@@ -116,12 +116,12 @@ test('startup restores a parked version when registration was interrupted', asyn
 })
 
 test('update validation keeps pending state hidden from the destination until commit', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-update-validation-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-update-validation-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-104')
+  const backup = join(root, '.forge-backup-pixal3d-104')
   mkdirSync(destination)
   mkdirSync(backup)
-  writeFileSync(join(destination, '.modly-incomplete'), 'setup', 'utf8')
+  writeFileSync(join(destination, '.forge-incomplete'), 'setup', 'utf8')
 
   try {
     const mod = loadModule()
@@ -135,11 +135,11 @@ test('update validation keeps pending state hidden from the destination until co
     assert.equal(transaction.validationCapability.destinationName, 'pixal3d')
     assert.equal(
       transaction.validationCapability.stateName,
-      '.modly-registration-pending-pixal3d-104',
+      '.forge-registration-pending-pixal3d-104',
     )
     assert.ok(transaction.validationCapability.token.length >= 32)
     const capabilityStat = statSync(
-      join(root, '.modly-registration-pending-pixal3d-104'),
+      join(root, '.forge-registration-pending-pixal3d-104'),
     )
     assert.equal(capabilityStat.nlink, 1)
     if (process.platform !== 'win32') {
@@ -151,11 +151,11 @@ test('update validation keeps pending state hidden from the destination until co
       destination,
       async () => {
         validatorCalled = true
-        assert.equal(existsSync(join(destination, '.modly-incomplete')), false)
-        assert.equal(existsSync(join(destination, '.modly-registration-pending')), false)
-        assert.equal(existsSync(join(backup, '.modly-registration-pending')), false)
+        assert.equal(existsSync(join(destination, '.forge-incomplete')), false)
+        assert.equal(existsSync(join(destination, '.forge-registration-pending')), false)
+        assert.equal(existsSync(join(backup, '.forge-registration-pending')), false)
         assert.equal(
-          existsSync(join(root, '.modly-registration-pending-pixal3d-104')),
+          existsSync(join(root, '.forge-registration-pending-pixal3d-104')),
           true,
         )
       },
@@ -168,9 +168,9 @@ test('update validation keeps pending state hidden from the destination until co
       { ok: true },
     )
     assert.equal(existsSync(backup), false)
-    assert.equal(existsSync(join(destination, '.modly-registration-validated')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-validated')), false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-104')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-104')),
       false,
     )
   } finally {
@@ -179,9 +179,9 @@ test('update validation keeps pending state hidden from the destination until co
 })
 
 test('Repair transaction starts before setup and keeps state outside the destination', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-repair-validation-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-repair-validation-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-105')
+  const backup = join(root, '.forge-backup-pixal3d-105')
   mkdirSync(destination)
   mkdirSync(backup)
 
@@ -199,7 +199,7 @@ test('Repair transaction starts before setup and keeps state outside the destina
       quarantine: async () => {
         order.push('quarantine')
         assert.equal(
-          existsSync(join(root, '.modly-registration-pending-pixal3d-105')),
+          existsSync(join(root, '.forge-registration-pending-pixal3d-105')),
           true,
         )
         runtimeLoaded = false
@@ -209,11 +209,11 @@ test('Repair transaction starts before setup and keeps state outside the destina
         setupCalled = true
         assert.equal(runtimeLoaded, false)
         assert.equal(
-          existsSync(join(root, '.modly-registration-pending-pixal3d-105')),
+          existsSync(join(root, '.forge-registration-pending-pixal3d-105')),
           true,
         )
-        assert.equal(existsSync(join(destination, '.modly-registration-pending')), false)
-        assert.equal(existsSync(join(backup, '.modly-registration-pending')), false)
+        assert.equal(existsSync(join(destination, '.forge-registration-pending')), false)
+        assert.equal(existsSync(join(backup, '.forge-registration-pending')), false)
       },
       validate: async (validationCapability) => {
         order.push('validate')
@@ -221,10 +221,10 @@ test('Repair transaction starts before setup and keeps state outside the destina
         assert.equal(validationCapability.extensionId, 'pixal3d')
         assert.equal(
           validationCapability.stateName,
-          '.modly-registration-pending-pixal3d-105',
+          '.forge-registration-pending-pixal3d-105',
         )
         assert.equal(
-          existsSync(join(root, '.modly-registration-pending-pixal3d-105')),
+          existsSync(join(root, '.forge-registration-pending-pixal3d-105')),
           true,
         )
       },
@@ -234,7 +234,7 @@ test('Repair transaction starts before setup and keeps state outside the destina
     assert.equal(validatorCalled, true)
     assert.deepEqual(order, ['quarantine', 'setup', 'validate'])
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-105')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-105')),
       false,
     )
     assert.equal(existsSync(backup), false)
@@ -244,7 +244,7 @@ test('Repair transaction starts before setup and keeps state outside the destina
 })
 
 test('Repair setup failure retains pending quarantine and never validates runtime', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-repair-setup-failure-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-repair-setup-failure-test-'))
   const destination = join(root, 'pixal3d')
   mkdirSync(destination)
 
@@ -261,7 +261,7 @@ test('Repair setup failure retains pending quarantine and never validates runtim
         suffix: '109',
         quarantine: async () => {
           assert.equal(
-            existsSync(join(root, '.modly-registration-pending-pixal3d-109')),
+            existsSync(join(root, '.forge-registration-pending-pixal3d-109')),
             true,
           )
           runtimeLoaded = false
@@ -269,7 +269,7 @@ test('Repair setup failure retains pending quarantine and never validates runtim
         setup: async () => {
           assert.equal(runtimeLoaded, false)
           assert.equal(
-            existsSync(join(root, '.modly-registration-pending-pixal3d-109')),
+            existsSync(join(root, '.forge-registration-pending-pixal3d-109')),
             true,
           )
           throw new Error('setup exploded')
@@ -284,17 +284,17 @@ test('Repair setup failure retains pending quarantine and never validates runtim
     assert.equal(validatorCalled, false)
     assert.equal(runtimeLoaded, false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-109')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-109')),
       true,
     )
-    assert.equal(existsSync(join(destination, '.modly-registration-pending')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-pending')), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
 })
 
 test('Repair validation failure re-evicts partially registered runtime state', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-repair-validation-failure-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-repair-validation-failure-test-'))
   const destination = join(root, 'pixal3d')
   mkdirSync(destination)
 
@@ -327,7 +327,7 @@ test('Repair validation failure re-evicts partially registered runtime state', a
     assert.equal(quarantineCount, 2)
     assert.equal(runtimeLoaded, false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-113')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-113')),
       true,
     )
   } finally {
@@ -336,7 +336,7 @@ test('Repair validation failure re-evicts partially registered runtime state', a
 })
 
 test('fresh-install crash keeps a complete destination externally quarantined', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-fresh-crash-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-fresh-crash-test-'))
   const destination = join(root, 'pixal3d')
   mkdirSync(destination)
   writeFileSync(join(destination, 'version.txt'), 'unvalidated', 'utf8')
@@ -354,17 +354,17 @@ test('fresh-install crash keeps a complete destination externally quarantined', 
 
     assert.equal(readFileSync(join(destination, 'version.txt'), 'utf8'), 'unvalidated')
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-106')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-106')),
       true,
     )
-    assert.equal(existsSync(join(destination, '.modly-registration-pending')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-pending')), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
 })
 
 test('new registration capability replaces older pending attempts without a quarantine gap', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-capability-rotation-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-capability-rotation-test-'))
   const destination = join(root, 'pixal3d')
   mkdirSync(destination)
 
@@ -388,11 +388,11 @@ test('new registration capability replaces older pending attempts without a quar
       second.validationCapability.token,
     )
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-111')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-111')),
       false,
     )
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-112')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-112')),
       true,
     )
   } finally {
@@ -401,8 +401,8 @@ test('new registration capability replaces older pending attempts without a quar
 })
 
 test('registration capability creation never overwrites a pre-existing sidecar', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-capability-exclusive-test-'))
-  const statePath = join(root, '.modly-registration-pending-pixal3d-114')
+  const root = mkdtempSync(join(tmpdir(), 'forge-capability-exclusive-test-'))
+  const statePath = join(root, '.forge-registration-pending-pixal3d-114')
   writeFileSync(statePath, 'pre-existing', 'utf8')
   if (process.platform !== 'win32') chmodSync(statePath, 0o644)
 
@@ -425,9 +425,9 @@ test('registration capability creation never overwrites a pre-existing sidecar',
 })
 
 test('registration capability creation rejects a hard-linked target', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-capability-hardlink-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-capability-hardlink-test-'))
   const original = join(root, 'original')
-  const statePath = join(root, '.modly-registration-pending-pixal3d-115')
+  const statePath = join(root, '.forge-registration-pending-pixal3d-115')
   writeFileSync(original, 'pre-existing', 'utf8')
   linkSync(original, statePath)
 
@@ -448,7 +448,7 @@ test('registration capability creation rejects a hard-linked target', async () =
 })
 
 test('no-backup Repair failure preserves external quarantine state', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-repair-failure-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-repair-failure-test-'))
   const destination = join(root, 'pixal3d')
   mkdirSync(destination)
 
@@ -460,17 +460,17 @@ test('no-backup Repair failure preserves external quarantine state', async () =>
     )
 
     const pendingNames = readdirSync(root).filter((name) =>
-      name.startsWith('.modly-registration-pending-pixal3d-'),
+      name.startsWith('.forge-registration-pending-pixal3d-'),
     )
     assert.equal(pendingNames.length, 1)
-    assert.equal(existsSync(join(destination, '.modly-registration-pending')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-pending')), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
 })
 
 test('failed local registration validation persists quarantine for restart', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-local-validation-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-local-validation-test-'))
   const destination = join(root, 'pixal3d')
   mkdirSync(destination)
 
@@ -488,7 +488,7 @@ test('failed local registration validation persists quarantine for restart', asy
         quarantine: async () => {
           quarantineCount += 1
           assert.equal(
-            existsSync(join(root, '.modly-registration-pending-pixal3d-110')),
+            existsSync(join(root, '.forge-registration-pending-pixal3d-110')),
             true,
           )
           runtimeLoaded = false
@@ -496,7 +496,7 @@ test('failed local registration validation persists quarantine for restart', asy
         activate: async () => {
           assert.equal(runtimeLoaded, false)
           assert.equal(
-            existsSync(join(root, '.modly-registration-pending-pixal3d-110')),
+            existsSync(join(root, '.forge-registration-pending-pixal3d-110')),
             true,
           )
         },
@@ -515,17 +515,17 @@ test('failed local registration validation persists quarantine for restart', asy
     assert.equal(quarantineCount, 2)
     assert.equal(
       receivedCapability.stateName,
-      '.modly-registration-pending-pixal3d-110',
+      '.forge-registration-pending-pixal3d-110',
     )
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-110')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-110')),
       true,
     )
 
     await mod.reconcileInterruptedExtensionInstalls(root)
     assert.equal(existsSync(destination), true)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-110')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-110')),
       true,
     )
   } finally {
@@ -534,7 +534,7 @@ test('failed local registration validation persists quarantine for restart', asy
 })
 
 test('local link transaction creates quarantine before any destination mutation', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-local-ordering-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-local-ordering-test-'))
 
   try {
     const mod = loadModule()
@@ -551,7 +551,7 @@ test('local link transaction creates quarantine before any destination mutation'
         },
         activate: async () => {
           assert.equal(
-            existsSync(join(root, '.modly-registration-pending-pixal3d-116')),
+            existsSync(join(root, '.forge-registration-pending-pixal3d-116')),
             true,
           )
           order.push('mutate-link')
@@ -567,7 +567,7 @@ test('local link transaction creates quarantine before any destination mutation'
     assert.deepEqual(order, ['quarantine', 'mutate-link', 'quarantine'])
     assert.equal(validatorCalled, false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-116')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-116')),
       true,
     )
   } finally {
@@ -576,14 +576,14 @@ test('local link transaction creates quarantine before any destination mutation'
 })
 
 test('uninstall removes backups before the destination so restart cannot resurrect it', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-uninstall-recovery-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-uninstall-recovery-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-102')
+  const backup = join(root, '.forge-backup-pixal3d-102')
   mkdirSync(destination)
   mkdirSync(backup)
   writeFileSync(join(destination, 'version.txt'), 'current', 'utf8')
   writeFileSync(join(backup, 'version.txt'), 'previous', 'utf8')
-  writeFileSync(join(root, '.modly-registration-pending-pixal3d-102'), 'pending', 'utf8')
+  writeFileSync(join(root, '.forge-registration-pending-pixal3d-102'), 'pending', 'utf8')
 
   try {
     const mod = loadModule()
@@ -593,7 +593,7 @@ test('uninstall removes backups before the destination so restart cannot resurre
     assert.equal(existsSync(destination), false)
     assert.equal(existsSync(backup), false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-102')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-102')),
       false,
     )
 
@@ -605,15 +605,15 @@ test('uninstall removes backups before the destination so restart cannot resurre
 })
 
 test('startup completes validated backup cleanup without replacing the destination', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-validated-cleanup-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-validated-cleanup-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-103')
+  const backup = join(root, '.forge-backup-pixal3d-103')
   mkdirSync(destination)
   mkdirSync(backup)
   writeFileSync(join(destination, 'version.txt'), 'new-working', 'utf8')
   writeFileSync(join(backup, 'version.txt'), 'old-working', 'utf8')
-  writeFileSync(join(root, '.modly-registration-pending-pixal3d-103'), 'pending', 'utf8')
-  writeFileSync(join(root, '.modly-registration-validated-pixal3d-104'), 'validated', 'utf8')
+  writeFileSync(join(root, '.forge-registration-pending-pixal3d-103'), 'pending', 'utf8')
+  writeFileSync(join(root, '.forge-registration-validated-pixal3d-104'), 'validated', 'utf8')
 
   try {
     const mod = loadModule()
@@ -621,9 +621,9 @@ test('startup completes validated backup cleanup without replacing the destinati
 
     assert.equal(readFileSync(join(destination, 'version.txt'), 'utf8'), 'new-working')
     assert.equal(existsSync(backup), false)
-    assert.equal(existsSync(join(destination, '.modly-registration-validated')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-validated')), false)
     assert.equal(
-      readdirSync(root).some((name) => name.startsWith('.modly-registration-')),
+      readdirSync(root).some((name) => name.startsWith('.forge-registration-')),
       false,
     )
   } finally {
@@ -632,13 +632,13 @@ test('startup completes validated backup cleanup without replacing the destinati
 })
 
 test('destination validated marker cannot authorize deletion of an uncommitted backup', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-forged-validated-test-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-forged-validated-test-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-107')
+  const backup = join(root, '.forge-backup-pixal3d-107')
   mkdirSync(destination)
   mkdirSync(backup)
   writeFileSync(join(destination, 'version.txt'), 'unvalidated', 'utf8')
-  writeFileSync(join(destination, '.modly-registration-validated'), 'packaged', 'utf8')
+  writeFileSync(join(destination, '.forge-registration-validated'), 'packaged', 'utf8')
   writeFileSync(join(backup, 'version.txt'), 'old-working', 'utf8')
 
   try {
@@ -647,7 +647,7 @@ test('destination validated marker cannot authorize deletion of an uncommitted b
 
     assert.equal(readFileSync(join(destination, 'version.txt'), 'utf8'), 'unvalidated')
     assert.equal(readFileSync(join(backup, 'version.txt'), 'utf8'), 'old-working')
-    assert.equal(existsSync(join(destination, '.modly-registration-validated')), false)
+    assert.equal(existsSync(join(destination, '.forge-registration-validated')), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
@@ -658,10 +658,10 @@ test('registration transaction state never writes through a symlinked backup', {
     ? false
     : 'symlink creation needs elevation or Developer Mode on this platform',
 }, async () => {
-  const root = mkdtempSync(join(tmpdir(), 'modly-symlink-state-test-'))
-  const source = mkdtempSync(join(tmpdir(), 'modly-linked-source-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-symlink-state-test-'))
+  const source = mkdtempSync(join(tmpdir(), 'forge-linked-source-'))
   const destination = join(root, 'pixal3d')
-  const backup = join(root, '.modly-backup-pixal3d-108')
+  const backup = join(root, '.forge-backup-pixal3d-108')
   mkdirSync(destination)
   symlinkSync(source, backup, 'dir')
 
@@ -674,9 +674,9 @@ test('registration transaction state never writes through a symlinked backup', {
     )
     assert.equal(transaction.ok, true)
 
-    assert.equal(existsSync(join(source, '.modly-registration-pending')), false)
+    assert.equal(existsSync(join(source, '.forge-registration-pending')), false)
     assert.equal(
-      existsSync(join(root, '.modly-registration-pending-pixal3d-108')),
+      existsSync(join(root, '.forge-registration-pending-pixal3d-108')),
       true,
     )
 
@@ -685,7 +685,7 @@ test('registration transaction state never writes through a symlinked backup', {
       { ok: true },
     )
     assert.equal(existsSync(source), true)
-    assert.equal(existsSync(join(source, '.modly-registration-pending')), false)
+    assert.equal(existsSync(join(source, '.forge-registration-pending')), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
     rmSync(source, { recursive: true, force: true })

@@ -25,7 +25,7 @@ type Filter = 'all' | 'fits' | 'vision' | 'cad'
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function formatBytes(n?: number): string {
-  return n ? fmtBytes(n) : '—'
+  return n ? fmtBytes(n) : '-'
 }
 
 type Tone = 'accent' | 'warn' | 'muted' | 'outline'
@@ -80,11 +80,11 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
 
   // The model list comes from the shared catalog store, so a download or delete
   // here immediately updates every other picker (chat, extension params,
-  // chat) and vice-versa — no independent per-surface fetch.
+  // chat) and vice-versa, no independent per-surface fetch.
   const { models, refresh: refreshModels } = useLlmModels()
 
   // Downloads live in a module-level store (src/shared/services/llmDownloads.ts)
-  // so they keep running — and stay visible on reopen — after this modal closes.
+  // so they keep running, and stay visible on reopen, after this modal closes.
   const downloads         = useLlmDownloadsStore((s) => s.downloads)
   const downloadError     = useLlmDownloadsStore((s) => s.error)
   const startDownload     = useLlmDownloadsStore((s) => s.start)
@@ -148,7 +148,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
     }
   }, [apiUrl, refreshModels])
 
-  // Once, on open (and if the API URL changes) — `refresh` is stable, see
+  // Once, on open (and if the API URL changes), `refresh` is stable, see
   // useLlmModels. It used to be rebuilt on every render, so this effect re-ran
   // on every render and each pass forced another /llm/models + /llm/status.
   useEffect(() => { void refresh() }, [refresh])
@@ -172,7 +172,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
   }
 
   // Downloads run in the shared store, possibly finishing while this modal is
-  // closed — refresh the model list whenever one drops out (done/error/cancelled)
+  // closed, refresh the model list whenever one drops out (done/error/cancelled)
   // while we're mounted, so "downloaded" flips without waiting for a remount.
   const prevDownloadIdsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
@@ -219,7 +219,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
     // own picker leaves them out, so they cannot become the agent's model here.
     const nodeOnly = tags.some((t) => t === 'code' || t === 'cad')
     const fit    = vramFit(m.vram_estimate_mb, vramGb)
-    // Size and VRAM say nothing about how well a model drives the agent — a 4B
+    // Size and VRAM say nothing about how well a model drives the agent, a 4B
     // outscores a 20B here. The tooltip keeps a measured rate and an estimate
     // visibly apart.
     const grade  = agentGrade(m)
@@ -327,7 +327,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
             <div>
               <h2 className="text-lg font-semibold text-zinc-100 leading-tight">Models</h2>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Local models shared by the whole app — chat agent and extensions.
+                Local models shared by the whole app, chat agent and extensions.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -372,7 +372,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
 
           {status === null && (
             <p className="text-[11px] text-zinc-500 flex items-center gap-2">
-              Cannot reach the Modly API.
+              Cannot reach the three.ws Forge API.
               {/* The library does not poll, so a backend that was still starting
                 * up needs a way back in short of reopening the modal. */}
               <button onClick={() => { void refresh() }} className="text-accent-light hover:underline underline-offset-2">
@@ -399,7 +399,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
             {
               title: 'Installed',
               items: installed,
-              empty: filtering ? 'No installed model matches.' : 'No model installed yet — add a .gguf file or download a suggestion below.',
+              empty: filtering ? 'No installed model matches.' : 'No model installed yet, add a .gguf file or download a suggestion below.',
             },
             {
               title: 'Suggested',

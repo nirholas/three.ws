@@ -1,8 +1,8 @@
 """
-Local LLM engine — manages a llama.cpp `llama-server` subprocess.
+Local LLM engine: manages a llama.cpp `llama-server` subprocess.
 
-Everything lives under the agent directory (MODLY_LLM_DIR, set by Electron to
-the `agent` folder beside models/, extensions/, … — ~/.modly/llm/ when the API
+Everything lives under the agent directory (THREEWS_LLM_DIR, set by Electron to
+the `agent` folder beside models/, extensions/, …, ~/.three-ws-forge/llm/ when the API
 runs standalone):
   bin/         llama-server binary + DLLs (auto-downloaded from GitHub releases)
   models/      GGUF files (catalog downloads + any custom .gguf the user drops in)
@@ -29,19 +29,19 @@ from typing import Callable, Optional
 from urllib.request import Request, urlopen
 import json as _json
 
-LLM_DIR        = Path(os.environ.get("MODLY_LLM_DIR") or Path.home() / ".modly" / "llm")
+LLM_DIR        = Path(os.environ.get("THREEWS_LLM_DIR") or Path.home() / ".three-ws-forge" / "llm")
 BIN_DIR        = LLM_DIR / "bin"
 LLM_MODELS_DIR = LLM_DIR / "models"
 LOGS_DIR       = LLM_DIR / "logs"
-SERVER_PORT    = int(os.environ.get("MODLY_LLM_PORT", "8791"))
+SERVER_PORT    = int(os.environ.get("THREEWS_LLM_PORT", "8791"))
 
-# Modly is first and foremost a 3D-generation app: the LLM must never sit on
+# three.ws Forge is first and foremost a 3D-generation app: the LLM must never sit on
 # VRAM it isn't using. Idle models are evicted after this many seconds.
-IDLE_TTL_SECONDS = int(os.environ.get("MODLY_LLM_IDLE_TTL", "300"))
+IDLE_TTL_SECONDS = int(os.environ.get("THREEWS_LLM_IDLE_TTL", "300"))
 
 # Multi-model pool: each loaded model gets its own llama-server process on its
 # own port (SERVER_PORT .. SERVER_PORT+MAX_SLOT_PORTS-1). How many may run at
-# once is user-configurable ("auto" sizes it from the GPU's VRAM — small cards
+# once is user-configurable ("auto" sizes it from the GPU's VRAM: small cards
 # stay at 1, exactly like the old single-slot behavior).
 MAX_SLOT_PORTS = 4
 CONFIG_PATH    = LLM_DIR / "config.json"
@@ -82,10 +82,10 @@ def detect_vram_gb() -> float:
 def resolve_max_models() -> int:
     """How many llama-server processes may run at once.
 
-    Priority: MODLY_LLM_MAX_MODELS env → user config → auto from VRAM.
+    Priority: THREEWS_LLM_MAX_MODELS env → user config → auto from VRAM.
     Auto is deliberately conservative: 8 GB cards keep the single-slot
     behavior, VRAM stays available for the 3D pipeline."""
-    raw = os.environ.get("MODLY_LLM_MAX_MODELS") or load_config().get("max_models") or "auto"
+    raw = os.environ.get("THREEWS_LLM_MAX_MODELS") or load_config().get("max_models") or "auto"
     if isinstance(raw, str) and raw.lower() == "auto":
         # Thresholds sit just under the marketing size on purpose: a card sold
         # as "12 GB" reports 12227 MiB = 11.9 GiB, so a `>= 12` test excluded
@@ -101,13 +101,13 @@ def resolve_max_models() -> int:
     return max(1, min(n, MAX_SLOT_PORTS))
 
 _BINARY_NAME = "llama-server.exe" if sys.platform == "win32" else "llama-server"
-_UA          = {"User-Agent": "modly-llm"}
+_UA          = {"User-Agent": "forge-llm"}
 
 # Pinned to a known-good tag by default so installs are reproducible and never
-# silently pick up a broken/incompatible "latest" release. Set MODLY_LLM_RELEASE
+# silently pick up a broken/incompatible "latest" release. Set THREEWS_LLM_RELEASE
 # to another llama.cpp tag (e.g. "b10075") to override, or to "latest" to track
 # the newest release.
-_RELEASE_TAG  = os.environ.get("MODLY_LLM_RELEASE", "b10075")
+_RELEASE_TAG  = os.environ.get("THREEWS_LLM_RELEASE", "b10075")
 _RELEASES_API = (
     "https://api.github.com/repos/ggml-org/llama.cpp/releases/latest"
     if _RELEASE_TAG.lower() == "latest"
@@ -199,7 +199,7 @@ def estimate_vram_mb(entry: dict) -> int:
     Catalog entries declare it. A user's own GGUF doesn't, so it is derived from
     the file: weights land in VRAM about 1:1, plus the KV cache and compute
     buffers for a 16k context. Measured against the catalog's own numbers, whose
-    declared/file ratio runs 1.22–1.32, so 1.25 + 500 MiB sits in the middle."""
+    declared/file ratio runs 1.22-1.32, so 1.25 + 500 MiB sits in the middle."""
     declared = entry.get("vram_estimate_mb")
     if isinstance(declared, (int, float)) and declared > 0:
         return int(declared)
@@ -208,12 +208,12 @@ def estimate_vram_mb(entry: dict) -> int:
 
 
 def vram_budget_mb() -> int:
-    """VRAM the LLM pool may fill, in MiB — total minus what the desktop needs.
+    """VRAM the LLM pool may fill, in MiB, total minus what the desktop needs.
     0 when no NVIDIA GPU is detected, which disables budgeting entirely."""
     total = detect_vram_gb() * 1024
     if total <= 0:
         return 0
-    reserve = _env_int("MODLY_LLM_VRAM_RESERVE_MB", 768)
+    reserve = _env_int("THREEWS_LLM_VRAM_RESERVE_MB", 768)
     return max(0, int(total) - reserve)
 
 
@@ -231,7 +231,7 @@ def resolve_model(model_id: str) -> dict:
         # The name is user/agent-supplied and this path is both loaded and
         # DELETEd (DELETE /llm/models/{model_id}). Confine it to the models dir:
         # on Windows a backslash is a separator too, so "custom:..\..\x.gguf"
-        # would otherwise resolve — and unlink — outside it.
+        # would otherwise resolve: and unlink, outside it.
         name = model_id[len("custom:"):]
         path = (LLM_MODELS_DIR / name).resolve()
         root = LLM_MODELS_DIR.resolve()
@@ -441,7 +441,7 @@ def install_binary(progress_cb: Callable[[dict], None], control_check: Callable[
     """Download and install the best llama-server build for this machine."""
     progress_cb({"status": "Fetching latest llama.cpp release…", "percent": 0})
     release = _fetch_release()
-    progress_cb({"status": f"Release {release['tag_name']} — selecting build for this machine…", "percent": 1})
+    progress_cb({"status": f"Release {release['tag_name']}, selecting build for this machine…", "percent": 1})
 
     assets = _pick_assets(release["assets"])
     if not assets:
@@ -462,9 +462,9 @@ def install_binary(progress_cb: Callable[[dict], None], control_check: Callable[
 
 
 # ─── Orphan prevention ────────────────────────────────────────────────────────
-# If Modly is force-killed, a plain child process would keep its model in
+# If three.ws Forge is force-killed, a plain child process would keep its model in
 # memory forever. On Windows we put llama-server in a Job object with
-# KILL_ON_JOB_CLOSE (the OS kills it when Modly dies); on Linux we ask the
+# KILL_ON_JOB_CLOSE (the OS kills it when three.ws Forge dies); on Linux we ask the
 # kernel to deliver SIGKILL on parent death.
 
 _win_job_handle = None
@@ -539,13 +539,13 @@ def _linux_preexec():
 
 
 def _kill_stale_server(port: int = SERVER_PORT) -> None:
-    """Kill a leftover llama-server holding `port` (e.g. after a force-kill of Modly)."""
+    """Kill a leftover llama-server holding `port` (e.g. after a force-kill of three.ws Forge)."""
     try:
         with urlopen(Request(f"http://127.0.0.1:{port}/health", headers=_UA), timeout=1) as r:
             if r.status != 200:
                 return
     except Exception:
-        return  # nothing listening — the normal case
+        return  # nothing listening, the normal case
     try:
         if sys.platform == "win32":
             out = subprocess.run(
@@ -578,7 +578,7 @@ def _kill_stale_server(port: int = SERVER_PORT) -> None:
 # ─── Managed server ───────────────────────────────────────────────────────────
 
 class LlamaServerManager:
-    """One llama-server slot — a single loaded GGUF on a dedicated port.
+    """One llama-server slot, a single loaded GGUF on a dedicated port.
 
     Slots are owned by LlamaPool, which decides how many run at once, evicts
     idle ones (IDLE_TTL_SECONDS), and unloads everything when the 3D pipeline
@@ -652,8 +652,8 @@ class LlamaServerManager:
         """Hold the slot for the duration of one request.
 
         _last_used only moved when a completion *finished*, so a generation
-        longer than IDLE_TTL_SECONDS — a Text-to-CAD node parked on /llm/chat,
-        or an agent round on a 14B running on CPU — looked idle to the reaper,
+        longer than IDLE_TTL_SECONDS, a Text-to-CAD node parked on /llm/chat,
+        or an agent round on a 14B running on CPU, looked idle to the reaper,
         which terminated the server mid-answer: truncated stream, node failed
         with no message. Marking the request in flight covers the whole call,
         including the prompt-eval stall before the first token."""
@@ -684,7 +684,7 @@ class LlamaServerManager:
             # V-cache quantization requires flash attention (fine on CUDA).
             cmd += ["-fa", "on", "-ctk", "q8_0", "-ctv", "q8_0"]
         # llama-server resolves its plugin DLLs (ggml-cuda, ggml-cpu-*) relative
-        # to cwd, not the exe path — running from bin/ is required.
+        # to cwd, not the exe path: running from bin/ is required.
         env = {**os.environ, "PATH": str(BIN_DIR) + os.pathsep + os.environ.get("PATH", "")}
         kwargs: dict = {}
         if sys.platform.startswith("linux"):
@@ -758,7 +758,7 @@ class LlamaServerManager:
 
 
 class LlamaPool:
-    """Pool of llama-server slots — one process per loaded model, each on its
+    """Pool of llama-server slots, one process per loaded model, each on its
     own port, capped by BOTH resolve_max_models() and vram_budget_mb()
     (LRU eviction).
 
@@ -795,14 +795,14 @@ class LlamaPool:
         start blocks in _wait_for_health for up to 180 s, and holding the pool
         lock that long froze every other caller: /llm/status, polled by an open
         Settings → Agent page, hung for the whole load, and switch_model's
-        unload_all() — which exists to reclaim VRAM before a 3D model — queued
+        unload_all(), which exists to reclaim VRAM before a 3D model, queued
         behind the very LLM competing for it.
 
         Loading outside the lock means two callers can be starting different
         models at the same time (an agent turn plus a workflow LLM node). A slot
         being started holds no process, so it cannot be evicted to make room:
         when only such loads keep the pool over its limit, this waits for one to
-        land — it then becomes an ordinary eviction candidate — instead of
+        land, it then becomes an ordinary eviction candidate, instead of
         putting a second model on a card sized for one.
         """
         incoming_mb = spec.get("vram_mb") or 0
@@ -824,7 +824,7 @@ class LlamaPool:
                 # Also for a dead slot respawned in place, so reviving one
                 # cannot push the pool past the limit. Only alive slots that are
                 # not answering a request are eviction candidates, so this never
-                # evicts our own — nor anyone's live stream.
+                # evicts our own: nor anyone's live stream.
                 self._enforce_limit_locked(reserve=1, incoming_mb=incoming_mb)
                 remaining = deadline - time.monotonic()
                 if (not self._over_capacity_locked(incoming_mb)
@@ -844,7 +844,7 @@ class LlamaPool:
                 )
                 if port is None:
                     # A bare next() raised StopIteration here, which surfaced to
-                    # the caller as "Could not start the local LLM: " — an empty
+                    # the caller as "Could not start the local LLM: ": an empty
                     # message. Say what actually happened.
                     raise RuntimeError(
                         f"All {MAX_SLOT_PORTS} local-LLM slots are in use or starting up. "
@@ -868,7 +868,7 @@ class LlamaPool:
             slot.ensure(model_id, spec)
         except Exception:
             if hold:
-                slot.release()  # nothing to answer with — do not pin the slot
+                slot.release()  # nothing to answer with, do not pin the slot
             with self._lock:
                 if self._slots.get(model_id) is slot and not slot._alive():
                     self._slots.pop(model_id, None)
@@ -881,7 +881,7 @@ class LlamaPool:
 
     def _evictable_locked(self, slot: LlamaServerManager) -> bool:
         """May this slot be unloaded to make room? Shared by the limit check and
-        the idle reaper, which both unload while holding the pool lock — a rule
+        the idle reaper, which both unload while holding the pool lock, a rule
         applied to only one of them is a rule that does not hold.
 
         A slot answering a request is spared because terminating it truncates
@@ -889,7 +889,7 @@ class LlamaPool:
         spared for a harder reason: from the moment Popen returns it is _alive()
         (the long wait is _wait_for_health, up to 180 s) while its own lock is
         held by the loader, so unload() would block on that lock and freeze the
-        whole pool with it — /llm/status, every ensure(), and the unload_all()
+        whole pool with it, /llm/status, every ensure(), and the unload_all()
         the 3D pipeline needs to reclaim VRAM. Its cost is still counted, it
         just cannot be the victim."""
         return slot.busy_count == 0 and slot.port not in self._loading_ports
@@ -901,7 +901,7 @@ class LlamaPool:
         The count alone was not enough. `max_models: 2` let any two models in,
         so a 9 GB custom model plus a vision model on a 12 GB card oversubscribed
         the card; Windows spills to shared memory instead of failing, so nothing
-        errored — a cold start just went from 5 s to 24 s with no explanation.
+        errored, a cold start just went from 5 s to 24 s with no explanation.
         Budgeting on declared estimates keeps the pairs that actually fit (a 4B
         and a 7B come to 10.4 of 11.5 GiB) and refuses the ones that never did.
 
@@ -911,7 +911,7 @@ class LlamaPool:
         alive.sort(key=lambda kv: kv[1]._last_used)  # oldest first
         # Slots reserved by a concurrent ensure() hold no process yet, so
         # _alive() cannot see them. Counting only live slots let two concurrent
-        # ensure() calls — an agent turn plus a workflow LLM node — each
+        # ensure() calls: an agent turn plus a workflow LLM node, each
         # conclude the pool was empty and both load, which on an 8 GB card
         # (max_models = 1) is exactly the oversubscription this rule prevents.
         loading = [s for s in self._slots.values()
@@ -930,7 +930,7 @@ class LlamaPool:
 
         budget = vram_budget_mb()
         if not budget or not incoming_mb:
-            return  # no GPU detected, or an unknown estimate — count rule only
+            return  # no GPU detected, or an unknown estimate, count rule only
 
         def _committed_mb() -> int:
             return sum(s.vram_mb for _mid, s in alive) + sum(s.vram_mb for s in loading)
@@ -939,7 +939,7 @@ class LlamaPool:
             _evict_oldest()
 
     def _transient_blockers_locked(self) -> bool:
-        """Is the pool full only of things that end on their own — a load in
+        """Is the pool full only of things that end on their own, a load in
         flight, or a slot answering a request? Those are worth waiting for; a
         merely idle slot is not (it gets evicted instead)."""
         return bool(self._loading_ports) or any(
@@ -1020,7 +1020,7 @@ class LlamaPool:
         with self._lock:
             for mid, slot in list(self._slots.items()):
                 if not self._evictable_locked(slot):
-                    continue  # answering right now, or being loaded — never idle
+                    continue  # answering right now, or being loaded, never idle
                 if not slot._alive():
                     self._drop_dead_locked(mid, slot)
                 elif now - slot._last_used > IDLE_TTL_SECONDS:

@@ -5,7 +5,7 @@ export function AccessibilitySection(): JSX.Element {
   const { useAtkinsonFont, setUseAtkinsonFont, uiScale, setUiScale } = useAppStore()
 
   return (
-    <Section title="Accessibility" subtitle="Make Modly easier to read and use.">
+    <Section title="Accessibility" subtitle="Make three.ws Forge easier to read and use.">
       <div className="grid grid-cols-2 gap-4">
 
         <Card title="Display Font" description="Use a more legible typeface, helpful for dyslexia and low vision.">

@@ -6,10 +6,10 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-const dir = mkdtempSync(join(tmpdir(), 'modly-scene-run-'))
+const dir = mkdtempSync(join(tmpdir(), 'forge-scene-run-'))
 const stub = (name, source) => { const path = join(dir, name); writeFileSync(path, source); return path }
 const appStoreStub = stub('app.ts', `
-export const appState: any = { apiUrl: 'http://modly.test', currentJob: null,
+export const appState: any = { apiUrl: 'http://forge.test', currentJob: null,
  setCurrentJob(value: any) { this.currentJob = value },
  updateCurrentJob(value: any) { this.currentJob = { ...(this.currentJob ?? {}), ...value } } }
 export const useAppStore: any = (selector: any) => selector(appState)

@@ -67,7 +67,7 @@ async def collect_events(response) -> list[dict]:
 
 class MultiSourceRouterTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.tempdir = tempfile.TemporaryDirectory(prefix="modly-model-router-")
+        self.tempdir = tempfile.TemporaryDirectory(prefix="forge-model-router-")
         self.models_dir = Path(self.tempdir.name) / "models"
         self.models_dir.mkdir()
         self.old_models_dir = model_router.registry_module.MODELS_DIR

@@ -13,7 +13,7 @@ export interface ExternalConfig {
 
 export const PROVIDERS: Record<ProviderId, { label: string; baseUrl: string; noKey?: boolean }> = {
   local:      { label: 'Local (llama.cpp)', baseUrl: '' },
-  // Ollama serves an OpenAI-compatible API — reuses models already pulled with it.
+  // Ollama serves an OpenAI-compatible API, reuses models already pulled with it.
   ollama:     { label: 'Ollama',            baseUrl: 'http://localhost:11434/v1', noKey: true },
   openai:     { label: 'ChatGPT (OpenAI)',  baseUrl: 'https://api.openai.com/v1' },
   anthropic:  { label: 'Claude (Anthropic)', baseUrl: 'https://api.anthropic.com/v1' },
@@ -54,8 +54,7 @@ interface AgentSettings {
 
 // ─── Secure persistence ────────────────────────────────────────────────────────
 // External provider API keys are the one sensitive field in this store. They're
-// encrypted at rest via Electron's safeStorage (OS keychain/DPAPI/libsecret) —
-// everything else (provider, localModel, defaultThinking) stays plain, it isn't
+// encrypted at rest via Electron's safeStorage (OS keychain/DPAPI/libsecret),// everything else (provider, localModel, defaultThinking) stays plain, it isn't
 // a secret. The ciphertext itself still lives in localStorage as a hex string;
 // only the plaintext key never touches disk unencrypted.
 
@@ -125,15 +124,14 @@ export const useAgentStore = create<AgentSettings>()(
       setDefaultThinking: (mode)           => set({ defaultThinking: mode }),
     }),
     {
-      name: 'modly-agent-settings',
+      name: 'forge-agent-settings',
       version: 3,
       storage: createJSONStorage(() => secureAgentStorage),
-      // v0 stored { ollamaUrl, defaultModel } — drop them, keep only thinking.
+      // v0 stored { ollamaUrl, defaultModel }, drop them, keep only thinking.
       // v2 retired the Qwen2.5/Llama3.1 catalog ids.
       // v3 is a shape-less bump: the version change alone forces one re-persist
       //    through secureAgentStorage.setItem, which encrypts any legacy
-      //    plaintext API key saved before safeStorage existed. Self-limiting —
-      //    once stored as v3 it never re-runs, so it costs one write, not one per boot.
+      //    plaintext API key saved before safeStorage existed. Self-limiting,      //    once stored as v3 it never re-runs, so it costs one write, not one per boot.
       migrate: (persisted: unknown, version) => {
         if (version === 0 && persisted && typeof persisted === 'object') {
           const old = persisted as { defaultThinking?: ThinkingMode }

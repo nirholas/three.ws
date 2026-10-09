@@ -4,7 +4,7 @@
   "type": "process",
   "entry": "processor.py",
   "version": "1.0.0",
-  "author": "Modly",
+  "author": "three.ws Forge",
   "description": "Smooths mesh vertices to reduce sharp artifacts (e.g. zipper triangles from AI-generated meshes) using Taubin smoothing.",
   "nodes": [
     {

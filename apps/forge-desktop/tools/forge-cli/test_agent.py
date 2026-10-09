@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for the stdlib-only Modly agent CLI."""
+"""Unit tests for the stdlib-only three.ws Forge agent CLI."""
 from __future__ import annotations
 
 import importlib.util
@@ -14,7 +14,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 MODULE_PATH = Path(__file__).with_name("agent.py")
-SPEC = importlib.util.spec_from_file_location("modly_agent", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location("forge_agent", MODULE_PATH)
 agent = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader
 SPEC.loader.exec_module(agent)
@@ -84,7 +84,7 @@ class CommandTests(unittest.TestCase):
 
         args = SimpleNamespace(request_timeout=1, model="missing")
         with patch.object(agent, "_request_json", fake_request):
-            with self.assertRaises(agent.ModlyCliError) as ctx:
+            with self.assertRaises(agent.ForgeCliError) as ctx:
                 agent._resolve_model_id(args, "http://example.test")
         self.assertEqual(ctx.exception.code, "INVALID_MODEL_ID")
 
@@ -110,7 +110,7 @@ class CommandTests(unittest.TestCase):
         with patch.object(agent, "_download", side_effect=AssertionError("unsafe path should not be downloaded")):
             for bad_path in bad_paths:
                 with self.subTest(path=bad_path):
-                    with self.assertRaises(agent.ModlyCliError) as ctx:
+                    with self.assertRaises(agent.ForgeCliError) as ctx:
                         agent._export_workspace_path("http://example.test", bad_path, "glb", Path("out.glb"), timeout=1)
                     self.assertEqual(ctx.exception.code, "INVALID_WORKSPACE_PATH")
 
@@ -123,13 +123,13 @@ class CommandTests(unittest.TestCase):
         ]
         for bad_url in bad_urls:
             with self.subTest(url=bad_url):
-                with self.assertRaises(agent.ModlyCliError) as ctx:
+                with self.assertRaises(agent.ForgeCliError) as ctx:
                     agent._workspace_relative_path(bad_url)
                 self.assertEqual(ctx.exception.code, "INVALID_WORKSPACE_PATH")
 
     def test_workflow_workspace_path_rejects_unsafe_scene_candidate_path(self) -> None:
         status = {"scene_candidate": {"workspace_path": "Agent/../secret.glb"}}
-        with self.assertRaises(agent.ModlyCliError) as ctx:
+        with self.assertRaises(agent.ForgeCliError) as ctx:
             agent._workflow_workspace_path(status)
         self.assertEqual(ctx.exception.code, "INVALID_WORKSPACE_PATH")
 
@@ -218,14 +218,14 @@ class CommandTests(unittest.TestCase):
         def fake_request(method: str, url: str, *, timeout: float, **_: object) -> object:
             if url.endswith("/health"):
                 return {"status": "ok"}
-            raise agent.ModlyCliError("missing", code="HTTP_404", http_status=404)
+            raise agent.ForgeCliError("missing", code="HTTP_404", http_status=404)
 
         cap_args = SimpleNamespace(base_url="http://example.test", request_timeout=1, compact=True)
         proc_args = SimpleNamespace(base_url="http://example.test", request_timeout=1, run_id="run-1", compact=True)
         with patch.object(agent, "_request_json", fake_request):
-            with self.assertRaises(agent.ModlyCliError) as cap_ctx:
+            with self.assertRaises(agent.ForgeCliError) as cap_ctx:
                 agent.cmd_capability_list(cap_args)
-            with self.assertRaises(agent.ModlyCliError) as proc_ctx:
+            with self.assertRaises(agent.ForgeCliError) as proc_ctx:
                 agent.cmd_process_run_status(proc_args)
         self.assertEqual(cap_ctx.exception.code, "UNSUPPORTED_PROCESS")
         self.assertEqual(proc_ctx.exception.code, "UNSUPPORTED_PROCESS")
@@ -269,7 +269,7 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(payload["code"], "INVALID_ARGUMENTS")
         self.assertIn("--bogus", payload["message"])
 
-    def test_generate_from_workflow_downloads_direct_asset_without_modly_health(self) -> None:
+    def test_generate_from_workflow_downloads_direct_asset_without_forge_health(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             output = Path(td) / "robot.glb"
             history = {
@@ -282,7 +282,7 @@ class CommandTests(unittest.TestCase):
                 }
             }
             args = SimpleNamespace(
-                base_url="http://modly.test",
+                base_url="http://forge.test",
                 request_timeout=1,
                 compact=True,
                 output=str(output),
@@ -292,8 +292,8 @@ class CommandTests(unittest.TestCase):
             with (
                 patch.object(agent, "_run_comfy_workflow", return_value={"ok": True, "comfy_url": "http://comfy.test", "workflow": "Trellis2-Full", "prompt_id": "prompt-1", "history": history}),
                 patch.object(agent, "_download", return_value=789) as download,
-                patch.object(agent, "_require_health", side_effect=AssertionError("Modly health should not run for direct asset output")),
-                patch.object(agent, "_generate_one", side_effect=AssertionError("Modly generation should not run for direct asset output")),
+                patch.object(agent, "_require_health", side_effect=AssertionError("three.ws Forge health should not run for direct asset output")),
+                patch.object(agent, "_generate_one", side_effect=AssertionError("three.ws Forge generation should not run for direct asset output")),
                 redirect_stdout(io.StringIO()) as buf,
             ):
                 self.assertEqual(agent.cmd_generate_from_workflow(args), 0)
@@ -310,7 +310,7 @@ class CommandTests(unittest.TestCase):
             self.assertIn("/view?", download.call_args.args[0])
             self.assertIn("filename=robot.glb", download.call_args.args[0])
 
-    def test_generate_from_workflow_falls_back_to_modly_for_image_only_outputs(self) -> None:
+    def test_generate_from_workflow_falls_back_to_forge_for_image_only_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             output = Path(td) / "robot.glb"
             history = {
@@ -323,7 +323,7 @@ class CommandTests(unittest.TestCase):
                 }
             }
             args = SimpleNamespace(
-                base_url="http://modly.test",
+                base_url="http://forge.test",
                 request_timeout=1,
                 compact=True,
                 output=str(output),
@@ -349,13 +349,13 @@ class CommandTests(unittest.TestCase):
             self.assertEqual(payload["output_type"], "image")
             self.assertEqual(payload["comfy"]["prompt_id"], "prompt-1")
             self.assertTrue(payload["meta"]["experimental"])
-            health.assert_called_once_with("http://modly.test", 1)
+            health.assert_called_once_with("http://forge.test", 1)
 
     def test_generate_from_workflow_fails_when_history_has_no_supported_output(self) -> None:
-        args = SimpleNamespace(base_url="http://modly.test", request_timeout=1, compact=True, output="robot.glb", workflow="Trellis2-Full")
+        args = SimpleNamespace(base_url="http://forge.test", request_timeout=1, compact=True, output="robot.glb", workflow="Trellis2-Full")
         history = {"outputs": {"4": {"text": ["done"]}}}
         with patch.object(agent, "_run_comfy_workflow", return_value={"ok": True, "comfy_url": "http://comfy.test", "workflow": "Trellis2-Full", "prompt_id": "prompt-1", "history": history}):
-            with self.assertRaises(agent.ModlyCliError) as ctx:
+            with self.assertRaises(agent.ForgeCliError) as ctx:
                 agent.cmd_generate_from_workflow(args)
         self.assertEqual(ctx.exception.code, "NO_WORKFLOW_OUTPUT")
 
@@ -414,7 +414,7 @@ class ComfyWorkflowTests(unittest.TestCase):
         workflow = {
             "1": {"class_type": "LoadImage", "inputs": {"image": "photo.png"}},
         }
-        with self.assertRaises(agent.ModlyCliError):
+        with self.assertRaises(agent.ForgeCliError):
             agent._patch_comfy_workflow(workflow, prompt="good", seed=None)
 
     def test_patch_fallback_to_prompt_key(self) -> None:
@@ -434,7 +434,7 @@ class ComfyWorkflowTests(unittest.TestCase):
 
     def test_rejects_editor_format(self) -> None:
         workflow = {"nodes": [], "links": []}
-        with self.assertRaises(agent.ModlyCliError):
+        with self.assertRaises(agent.ForgeCliError):
             agent._patch_comfy_workflow(workflow, prompt="x", seed=None)
 
     def test_prompt_wrapper(self) -> None:
@@ -455,30 +455,30 @@ class ServeConfigTests(unittest.TestCase):
             repo = root / "repo"
             repo.mkdir()
             bad_local = root / "Default" / "AppData" / "Local"
-            good_api = root / "joshu" / "AppData" / "Local" / "Programs" / "Modly" / "resources" / "api"
+            good_api = root / "joshu" / "AppData" / "Local" / "Programs" / "three.ws Forge" / "resources" / "api"
             good_api.mkdir(parents=True)
             (good_api / "main.py").write_text("# api", encoding="utf-8")
 
             with patch.object(agent, "_repo_root", return_value=repo), patch.object(agent, "_windows_env_paths", return_value=[bad_local, good_api.parents[3]]):
                 self.assertEqual(agent._default_api_dir(), good_api)
 
-    def test_load_modly_settings_checks_all_windows_appdata_candidates(self) -> None:
+    def test_load_forge_settings_checks_all_windows_appdata_candidates(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             bad_roaming = root / "Default" / "AppData" / "Roaming"
             good_roaming = root / "joshu" / "AppData" / "Roaming"
-            settings = good_roaming / "Modly" / "settings.json"
+            settings = good_roaming / "three.ws Forge" / "settings.json"
             settings.parent.mkdir(parents=True)
             settings.write_text(json.dumps({"workspaceDir": "C:/workspace"}), encoding="utf-8")
 
             with patch.object(agent, "_windows_env_paths", return_value=[bad_roaming, good_roaming]):
-                self.assertEqual(agent._load_modly_settings()["workspaceDir"], "C:/workspace")
+                self.assertEqual(agent._load_forge_settings()["workspaceDir"], "C:/workspace")
 
     def test_malformed_timeout_environment_does_not_break_module_import(self) -> None:
-        spec = importlib.util.spec_from_file_location("modly_agent_bad_env", MODULE_PATH)
+        spec = importlib.util.spec_from_file_location("forge_agent_bad_env", MODULE_PATH)
         module = importlib.util.module_from_spec(spec)
         assert spec and spec.loader
-        with patch.dict(os.environ, {"MODLY_CLI_TIMEOUT": "not-int", "MODLY_CLI_POLL_SECONDS": "not-float"}):
+        with patch.dict(os.environ, {"THREEWS_CLI_TIMEOUT": "not-int", "THREEWS_CLI_POLL_SECONDS": "not-float"}):
             spec.loader.exec_module(module)
         self.assertEqual(module.DEFAULT_TIMEOUT_SECONDS, 1800)
         self.assertEqual(module.DEFAULT_POLL_SECONDS, 2.0)

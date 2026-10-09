@@ -11,7 +11,7 @@ import { join, resolve } from 'node:path'
 //   - appStore         → useAppStore returns a fixed apiUrl (no React runtime)
 // The stub modules communicate with the test through globalThis.
 function loadUseApi() {
-  const dir = mkdtempSync(join(tmpdir(), 'modly-useapi-test-'))
+  const dir = mkdtempSync(join(tmpdir(), 'forge-useapi-test-'))
 
   const axiosStub = join(dir, 'axios-stub.mjs')
   writeFileSync(axiosStub, `

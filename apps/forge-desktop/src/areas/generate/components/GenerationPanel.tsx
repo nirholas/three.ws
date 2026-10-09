@@ -24,7 +24,7 @@ export default function GenerationPanel(): JSX.Element {
   const status = currentJob?.status
   const isActive = status === 'uploading' || status === 'generating'
 
-  // Elapsed timer — starts when generation begins, resets on idle
+  // Elapsed timer: starts when generation begins, resets on idle
   useEffect(() => {
     if (isActive) {
       if (!startRef.current) startRef.current = Date.now()

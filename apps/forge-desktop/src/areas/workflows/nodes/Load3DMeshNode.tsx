@@ -51,7 +51,7 @@ export default function Load3DMeshNode({ id, data, selected }: { id: string; dat
       }
       handles={
         <Handle type="source" position={Position.Right}
-          style={{ background: OUTPUT_COLOR, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }} />
+          style={{ background: OUTPUT_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }} />
       }
     >
       <div className="px-3 py-2.5 flex flex-col gap-2">
@@ -66,7 +66,7 @@ export default function Load3DMeshNode({ id, data, selected }: { id: string; dat
           <span className="text-[10px] text-zinc-400">Use current model</span>
         </button>
 
-        {/* File picker — disabled when using current */}
+        {/* File picker, disabled when using current */}
         {source === 'file' ? (
           fileName ? (
             <button

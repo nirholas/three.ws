@@ -29,7 +29,7 @@ export function ErrorModal(): JSX.Element | null {
           <span className="text-sm font-semibold text-zinc-100">An error occurred</span>
         </div>
 
-        {/* Error message — selectable */}
+        {/* Error message, selectable */}
         <div className="px-5 py-4">
           <pre className="text-xs text-red-400 bg-red-950/30 border border-red-900/30 rounded-lg px-4 py-3 max-h-60 overflow-y-auto whitespace-pre-wrap break-words select-text font-mono leading-relaxed">
             {errorModal}

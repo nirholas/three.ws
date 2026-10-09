@@ -71,7 +71,7 @@ function makeStdioExtension(root) {
 
 test('a JS process runner follows the workspace after it moves', async () => {
   const { getProcessRunner, terminateAllProcessRunners } = loadModule()
-  const root = mkdtempSync(join(tmpdir(), 'modly-runner-js-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-runner-js-'))
   const extDir = makeJsExtension(root)
   const oldWorkspace = join(root, 'workspace-old')
   const newWorkspace = join(root, 'workspace-new')
@@ -88,7 +88,7 @@ test('a JS process runner follows the workspace after it moves', async () => {
 
 test('a Python process runner follows the workspace after it moves', async () => {
   const { getPythonProcessRunner, terminateAllProcessRunners } = loadModule()
-  const root = mkdtempSync(join(tmpdir(), 'modly-runner-py-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-runner-py-'))
   const extDir = makeStdioExtension(root)
   const oldWorkspace = join(root, 'workspace-old')
   const newWorkspace = join(root, 'workspace-new')
@@ -105,7 +105,7 @@ test('a Python process runner follows the workspace after it moves', async () =>
 
 test('unchanged arguments keep reusing the same warm runner', async () => {
   const { getProcessRunner, terminateAllProcessRunners } = loadModule()
-  const root = mkdtempSync(join(tmpdir(), 'modly-runner-reuse-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-runner-reuse-'))
   const extDir = makeJsExtension(root)
   const workspace = join(root, 'workspace')
   try {

@@ -52,7 +52,7 @@ export default function TextNode({ id, data, selected }: { id: string; data: WFN
       }
       handles={
         <Handle type="source" position={Position.Right}
-          style={{ background: OUTPUT_COLOR, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }} />
+          style={{ background: OUTPUT_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }} />
       }
     >
       <div className="px-3 pb-3 pt-2.5">

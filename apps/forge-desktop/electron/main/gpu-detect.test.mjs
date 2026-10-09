@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-gpu-test-')), 'gpu-detect.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-gpu-test-')), 'gpu-detect.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/main/gpu-detect.ts')],
@@ -52,7 +52,7 @@ test('parseKfdGfxTarget skips the CPU node and reads the first GPU', () => {
 
 test('parseKfdGfxTarget prefers the discrete GPU over an APU', () => {
   // Ryzen 7840 (gfx1103, 24 SIMDs) + RX 7900 XTX (gfx1100, 384 SIMDs): the APU
-  // gets the lower node number, but gfx1103 has no published wheels — the card
+  // gets the lower node number, but gfx1103 has no published wheels, the card
   // with more SIMDs is the one the user bought for this.
   const cpuNode = 'cpu_cores_count 16\nsimd_count 0\ngfx_target_version 0\n'
   const apuNode = 'cpu_cores_count 0\nsimd_count 24\ngfx_target_version 110003\n'
@@ -127,7 +127,7 @@ test('resolveWindowsGfxTarget maps device ids by silicon, not by marketing range
   assert.equal(target('7550'), 'gfx1201')  // Navi 48
   assert.equal(target('744C'), 'gfx1100')  // Navi 31, uppercase from WMI
   assert.equal(target('747e'), 'gfx1101')  // Navi 32
-  // 0x73f0 sells as "RX 7600M XT" but is Navi 33 — it must not land with its
+  // 0x73f0 sells as "RX 7600M XT" but is Navi 33, it must not land with its
   // 0x73xx RDNA2 neighbours.
   assert.equal(target('73f0'), 'gfx1102')
   assert.equal(target('73bf'), 'gfx1030')  // Navi 21
@@ -167,10 +167,10 @@ test('resolveRocmTorchSpec uses AMD\'s index with a device extra on Windows', ()
   ])
 })
 
-test('resolveRocmTorchSpec honours MODLY_ROCM_INDEX and MODLY_ROCM_TORCH_SPEC', () => {
+test('resolveRocmTorchSpec honours THREEWS_ROCM_INDEX and THREEWS_ROCM_TORCH_SPEC', () => {
   const rolledBack = mod.resolveRocmTorchSpec('linux', 'gfx1200', {
-    MODLY_ROCM_INDEX: 'https://download.pytorch.org/whl/rocm6.4',
-    MODLY_ROCM_TORCH_SPEC: 'torch==2.8.0 torchvision==0.23.0',
+    THREEWS_ROCM_INDEX: 'https://download.pytorch.org/whl/rocm6.4',
+    THREEWS_ROCM_TORCH_SPEC: 'torch==2.8.0 torchvision==0.23.0',
   })
   assert.equal(rolledBack.indexUrl, 'https://download.pytorch.org/whl/rocm6.4')
   assert.deepEqual(rolledBack.specs, ['torch==2.8.0', 'torchvision==0.23.0'])
@@ -199,7 +199,7 @@ test('detectGpuInfo keeps Apple Silicon on MPS', async () => {
 
 test('detectGpuInfo forced to rocm resolves wheels without probing hardware', async () => {
   const info = await mod.detectGpuInfo({
-    env: { MODLY_TORCH_FLAVOR: 'rocm', MODLY_ROCM_GFX: 'gfx1201' },
+    env: { THREEWS_TORCH_FLAVOR: 'rocm', THREEWS_ROCM_GFX: 'gfx1201' },
     platform: 'linux',
     arch: 'x64',
   })
@@ -214,7 +214,7 @@ test('detectGpuInfo forced to rocm resolves wheels without probing hardware', as
 
 test('detectGpuInfo forced to rocm overrides MPS on Apple Silicon', async () => {
   const info = await mod.detectGpuInfo({
-    env: { MODLY_TORCH_FLAVOR: 'rocm', MODLY_ROCM_GFX: 'gfx1200' },
+    env: { THREEWS_TORCH_FLAVOR: 'rocm', THREEWS_ROCM_GFX: 'gfx1200' },
     platform: 'darwin',
     arch: 'arm64',
   })
@@ -224,7 +224,7 @@ test('detectGpuInfo forced to rocm overrides MPS on Apple Silicon', async () => 
 test('detectGpuInfo forced to cuda overrides MPS on Apple Silicon', async () => {
   // The override has to beat every probe, the darwin/arm64 default included.
   const info = await mod.detectGpuInfo({
-    env: { MODLY_TORCH_FLAVOR: 'cuda' },
+    env: { THREEWS_TORCH_FLAVOR: 'cuda' },
     platform: 'darwin',
     arch: 'arm64',
   })
@@ -233,7 +233,7 @@ test('detectGpuInfo forced to cuda overrides MPS on Apple Silicon', async () => 
 
 test('detectGpuInfo forced to cpu short-circuits everything', async () => {
   const info = await mod.detectGpuInfo({
-    env: { MODLY_TORCH_FLAVOR: 'cpu', MODLY_ROCM_GFX: 'gfx1200' },
+    env: { THREEWS_TORCH_FLAVOR: 'cpu', THREEWS_ROCM_GFX: 'gfx1200' },
     platform: 'linux',
     arch: 'x64',
   })
@@ -243,11 +243,11 @@ test('detectGpuInfo forced to cpu short-circuits everything', async () => {
 test('detectGpuInfo falls back to CPU when forced to rocm on Windows with no target', async () => {
   const logs = []
   const info = await mod.detectGpuInfo({
-    env: { MODLY_TORCH_FLAVOR: 'rocm' },
+    env: { THREEWS_TORCH_FLAVOR: 'rocm' },
     platform: 'win32',
     arch: 'x64',
     onLog: (line) => logs.push(line),
   })
   assert.equal(info.accelerator, 'cpu')
-  assert.ok(logs.some((l) => l.includes('MODLY_ROCM_GFX')))
+  assert.ok(logs.some((l) => l.includes('THREEWS_ROCM_GFX')))
 })

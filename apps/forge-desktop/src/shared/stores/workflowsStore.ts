@@ -5,7 +5,7 @@ interface WorkflowsStore {
   workflows:   Workflow[]
   loading:     boolean
   activeId:    string | null
-  /** Workflows shown as tabs. Closing a tab only removes it here — the file stays on disk. */
+  /** Workflows shown as tabs. Closing a tab only removes it here, the file stays on disk. */
   openIds:     string[]
   /** Folder names for the workflow browser (workflows reference them via their `folder` field) */
   folders:     string[]
@@ -41,7 +41,7 @@ export const FOLDER_COLORS = ['#38bdf8', '#34d399', '#fbbf24', '#f87171', '#a78b
 
 // Empty folders have no workflow referencing them, so their names (and colors)
 // are persisted separately in localStorage to survive reloads.
-const FOLDERS_KEY = 'modly-workflow-folders'
+const FOLDERS_KEY = 'forge-workflow-folders'
 
 function readStoredFolders(): { names: string[]; colors: Record<string, string>; bookmarked: string[] } {
   try {

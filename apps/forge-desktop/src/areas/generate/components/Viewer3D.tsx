@@ -8,7 +8,7 @@ import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh'
 
-// Patch THREE pour utiliser BVH sur tous les meshes — réduit le raycast O(N) → O(log N)
+// Patch THREE to use a BVH on every mesh, cutting raycasts from O(N) to O(log N)
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree as any
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree as any
 THREE.Mesh.prototype.raycast = acceleratedRaycast
@@ -76,7 +76,7 @@ function makeLightBulbTexture(color: string, isSelected: boolean): THREE.CanvasT
   const cy = size / 2
 
   // Draws the bulb glyph (rays + circle + base). `pad` grows every part by a
-  // few pixels — used to lay down an oversized violet silhouette behind the
+  // few pixels, used to lay down an oversized violet silhouette behind the
   // normal-sized icon, so the outline hugs the actual glyph shape instead of
   // being a plain circle around it.
   const drawGlyph = (fillColor: string, pad: number) => {
@@ -119,7 +119,7 @@ function makeLightBulbTexture(color: string, isSelected: boolean): THREE.CanvasT
 }
 
 // ---------------------------------------------------------------------------
-// CanvasCapture — exposes gl.domElement ref outside Canvas
+// CanvasCapture: exposes gl.domElement ref outside Canvas
 // ---------------------------------------------------------------------------
 
 function CanvasCapture({
@@ -136,7 +136,7 @@ function CanvasCapture({
 }
 
 // ---------------------------------------------------------------------------
-// ModelErrorBoundary — catches useGLTF load failures (e.g. 404)
+// ModelErrorBoundary: catches useGLTF load failures (e.g. 404)
 // ---------------------------------------------------------------------------
 
 interface ErrorBoundaryProps {
@@ -274,7 +274,7 @@ function SceneMeshModel({
     }
   }, [scene])
 
-  // Centre the mesh on the grid. Runs only on first load / model change — never
+  // Centre the mesh on the grid. Runs only on first load / model change, never
   // on plain re-renders, so a live gizmo transform is not silently overwritten.
   useEffect(() => {
     // Clear any cached transform before measuring (useGLTF may reuse a scene
@@ -329,7 +329,7 @@ function SceneMeshModel({
           break
         }
         case 'normals':
-          // Ensure vertex normals exist — AI-generated meshes often skip this
+          // Ensure vertex normals exist, AI-generated meshes often skip this
           child.geometry.computeVertexNormals()
           next = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide })
           break
@@ -359,7 +359,7 @@ function SceneMeshModel({
 }
 
 // ---------------------------------------------------------------------------
-// Orientation gizmo — coloured bubbles only (X/Y/Z)
+// Orientation gizmo: coloured bubbles only (X/Y/Z)
 // ---------------------------------------------------------------------------
 
 function makeAxisLabelTexture(letter: string, bg: string): THREE.CanvasTexture {
@@ -432,7 +432,7 @@ function GizmoBubbles() {
 }
 
 // ---------------------------------------------------------------------------
-// Transform gizmos — custom move / rotate / scale handles (shared style)
+// Transform gizmos: custom move / rotate / scale handles (shared style)
 // ---------------------------------------------------------------------------
 
 type GizmoAxis = 'x' | 'y' | 'z'
@@ -584,7 +584,7 @@ function GizmoScaleArm({ color, active }: { color: string; active: boolean }): J
   const tint = active ? lightenColor(color) : color
   return (
     <group>
-      {/* Invisible, fat hit target — starts above the centre cube so a
+      {/* Invisible, fat hit target, starts above the centre cube so a
           centre click hits the uniform-scale handle, not an axis */}
       <mesh position={[0, 0.6, 0]}>
         <cylinderGeometry args={[0.09, 0.09, 0.8, 8]} />
@@ -690,7 +690,7 @@ function TranslateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Obje
 
   return (
     <group ref={groupRef} renderOrder={999}>
-      {/* Central origin handle (decorative — never blocks picking) */}
+      {/* Central origin handle (decorative, never blocks picking) */}
       <mesh raycast={() => null} renderOrder={999}>
         <sphereGeometry args={[0.05, 20, 20]} />
         <meshBasicMaterial color="#e4e4e7" toneMapped={false} transparent depthTest={false} depthWrite={false} />
@@ -777,7 +777,7 @@ function ScaleGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D
     e.stopPropagation()
     const origin = new THREE.Vector3()
     object.getWorldPosition(origin)
-    // World length of one local unit — maps drag distance to a sensible factor.
+    // World length of one local unit, maps drag distance to a sensible factor.
     const armLength = Math.max(groupRef.current?.scale.x ?? 1, 1e-4)
 
     let axisDir: THREE.Vector3 | null = null
@@ -823,7 +823,7 @@ function ScaleGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D
 
   return (
     <group ref={groupRef} renderOrder={999}>
-      {/* Central cube — uniform scale */}
+      {/* Central cube, uniform scale */}
       <mesh {...hoverHandlers<ScaleHandleId>('xyz', setHovered, (e) => beginDrag('xyz', e))} renderOrder={999}>
         <boxGeometry args={[0.12, 0.12, 0.12]} />
         <meshBasicMaterial color={uniformActive ? lightenColor('#e4e4e7') : '#e4e4e7'} toneMapped={false} transparent depthTest={false} depthWrite={false} />
@@ -839,7 +839,7 @@ function ScaleGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D
 }
 
 // ---------------------------------------------------------------------------
-// PointLightMarker — renders a point light + billboard icon + optional gizmo
+// PointLightMarker: renders a point light + billboard icon + optional gizmo
 // ---------------------------------------------------------------------------
 
 function PointLightMarker({
@@ -960,7 +960,7 @@ export default function Viewer3D({
   // plys are converted to GLB on import and workflow mesh outputs are .glb.
   const isSplat = /\.(ply|splat)$/i.test(outputUrl)
 
-  // The splat viewer needs binary .splat — route raw workspace .ply through the
+  // The splat viewer needs binary .splat, route raw workspace .ply through the
   // conversion endpoint; import URLs already point at a .splat via serve-file.
   const splatUrl = outputUrl.startsWith('/workspace/')
     ? `${apiUrl}/optimize/ply-to-splat?path=${encodeURIComponent(outputUrl.slice('/workspace/'.length))}`
@@ -974,7 +974,7 @@ export default function Viewer3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the model changes; setters are stable
   }, [modelUrl])
 
-  // Clear the shared selection when the viewer unmounts — the store would
+  // Clear the shared selection when the viewer unmounts, the store would
   // otherwise keep it set and flash a stale selection on the next mount.
   useEffect(() => () => setSelected(false), [setSelected])
 
@@ -1010,7 +1010,7 @@ export default function Viewer3D({
       : canvasRef.current?.toDataURL('image/png') ?? null
     if (!dataUrl) return
     const link = document.createElement('a')
-    link.download = `modly-${Date.now()}.png`
+    link.download = `forge-${Date.now()}.png`
     link.href = dataUrl
     link.click()
   }
@@ -1107,7 +1107,7 @@ export default function Viewer3D({
             outputColorSpace: THREE.SRGBColorSpace,
           }}
         >
-          <color attach="background" args={['#18181b']} />
+          <color attach="background" args={['#1a1a1a']} />
           <CanvasCapture domRef={canvasRef} />
           <ambientLight intensity={lightSettings.ambientIntensity ?? DEFAULT_LIGHT_SETTINGS.ambientIntensity} />
           <Environment background={false}>
@@ -1183,7 +1183,7 @@ export default function Viewer3D({
         </Canvas>
         )}
 
-        {/* Left toolbar — visible only when a model is loaded */}
+        {/* Left toolbar, visible only when a model is loaded */}
         {modelUrl && (
           <ViewerToolbar
             viewMode={viewMode}

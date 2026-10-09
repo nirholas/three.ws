@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-preload-download-')), 'electron-api.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-preload-download-')), 'electron-api.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/preload/electron-api.ts')],

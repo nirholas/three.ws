@@ -4,22 +4,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // three.ws monochrome base (public/tokens.css: --bg-0, --bg-1, --ink).
         surface: {
-          50:  '#f4f4f5',
-          100: '#e4e4e7',
-          200: '#27272a',
-          300: '#1e1e21',
-          400: '#18181b',
-          500: '#111113',
+          50:  '#e8e8e8',
+          100: '#d4d4d4',
+          200: '#262626',
+          300: '#1f1f1f',
+          400: '#1a1a1a',
+          500: '#0a0a0a',
         },
+        // three.ws identity violet (public/tokens.css: --accent-violet,
+        // --accent-violet-strong, and the rgb(139, 92, 246) wallet fill).
         accent: {
-          DEFAULT: '#7c3aed',
-          light:   '#a78bfa',
-          dark:    '#5b21b6',
+          DEFAULT: '#8b5cf6',
+          light:   '#c4b5fd',
+          dark:    '#6d28d9',
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       keyframes: {

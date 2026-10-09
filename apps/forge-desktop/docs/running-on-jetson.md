@@ -1,11 +1,11 @@
-# Running Modly headless on an NVIDIA Jetson (AGX Orin, JetPack 6)
+# Running three.ws Forge headless on an NVIDIA Jetson (AGX Orin, JetPack 6)
 
-This guide explains how to run Modly's image-to-3D generation on an **NVIDIA Jetson**,
-a platform Modly does not officially target. Jetson is `aarch64` with NVIDIA's
+This guide explains how to run three.ws Forge's image-to-3D generation on an **NVIDIA Jetson**,
+a platform three.ws Forge does not officially target. Jetson is `aarch64` with NVIDIA's
 Tegra/L4T CUDA stack, so the desktop installers and the stock extension `setup.py`
 (which assume `x86_64` + the standard CUDA wheels) don't work as-is.
 
-The good news: **Modly's FastAPI backend is fully standalone and HTTP-driven**, so you
+The good news: **three.ws Forge's FastAPI backend is fully standalone and HTTP-driven**, so you
 don't need Electron, a display, or the GUI. You run the backend on the Jetson and drive
 it with `curl`. The only real work is building the model extension's venv with the
 **Jetson-native** PyTorch and working around a broken ONNX Runtime.
@@ -13,7 +13,7 @@ it with `curl`. The only real work is building the model extension's venv with t
 > Verified on: **Jetson AGX Orin Developer Kit, 64 GB, JetPack 6.2 (L4T R36.4),
 > Python 3.10, CUDA 12.6, compute capability sm_87.**
 > Model: the base **Hunyuan3D-2 Mini** extension (`hunyuan3d-mini`), mesh-only
-> (no texture). ~6 GB VRAM-class model; comfortable on a 32–64 GB Orin.
+> (no texture). ~6 GB VRAM-class model; comfortable on a 32-64 GB Orin.
 
 ---
 
@@ -48,15 +48,15 @@ free -h                     # confirm enough unified memory (16 GB+ recommended)
 Set up working directories and environment:
 
 ```bash
-export EXTENSIONS_DIR=$HOME/.modly/extensions
-export MODELS_DIR=$HOME/.modly/models
-export WORKSPACE_DIR=$HOME/.modly/workspace
+export EXTENSIONS_DIR=$HOME/.three-ws-forge/extensions
+export MODELS_DIR=$HOME/.three-ws-forge/models
+export WORKSPACE_DIR=$HOME/.three-ws-forge/workspace
 mkdir -p "$EXTENSIONS_DIR" "$MODELS_DIR" "$WORKSPACE_DIR"
 ```
 
 ---
 
-## 2. Clone Modly and build the API backend venv
+## 2. Clone three.ws Forge and build the API backend venv
 
 The backend itself contains **no PyTorch**; it's just the FastAPI orchestrator plus
 mesh post-processing (`trimesh`, `pymeshlab`). `pymeshlab` has `aarch64` wheels, so this
@@ -64,7 +64,7 @@ installs cleanly.
 
 ```bash
 git clone https://github.com/lightningpixel/modly.git ~/modly
-cd ~/modly/api
+cd ~/forge/api
 python3 -m venv .venv
 ./.venv/bin/pip install -U pip
 ./.venv/bin/pip install -r requirements.txt
@@ -232,10 +232,10 @@ fails, NumPy is ≥2 (see 4b).
 ## 5. Run the backend (headless)
 
 ```bash
-cd ~/modly/api
-EXTENSIONS_DIR=$HOME/.modly/extensions \
-MODELS_DIR=$HOME/.modly/models \
-WORKSPACE_DIR=$HOME/.modly/workspace \
+cd ~/forge/api
+EXTENSIONS_DIR=$HOME/.three-ws-forge/extensions \
+MODELS_DIR=$HOME/.three-ws-forge/models \
+WORKSPACE_DIR=$HOME/.three-ws-forge/workspace \
 ./.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -316,7 +316,7 @@ diffusion).
 
 ## Notes for a proper upstream fix
 
-If Modly wants first-class Jetson support, the cleanest changes would be:
+If three.ws Forge wants first-class Jetson support, the cleanest changes would be:
 
 1. In the extension `setup.py`, detect Tegra (`/etc/nv_tegra_release`) and install torch
    from the jetson-ai-lab index for the detected JetPack/CUDA, pinning `numpy<2`.

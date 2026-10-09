@@ -51,7 +51,7 @@ export function ExtensionDrawer({
 
   const isModel     = ext.type === 'model'
   // Built-ins are corrupted-flagged too (builtin-sync repairs them on restart),
-  // but they can't be deleted — show the banner without the delete action.
+  // but they can't be deleted, show the banner without the delete action.
   const isCorrupted = !!ext.corrupted
   const canRepair   = isExtensionRepairable(ext)
   const corruptedMsg =
@@ -59,7 +59,7 @@ export function ExtensionDrawer({
       ? 'This extension folder has a manifest that cannot be parsed. Fix the JSON syntax in its manifest.json, or delete the folder and reinstall.'
       : ext.manifestError === 'incomplete'
         ? 'Setup or runtime registration was interrupted. Click Repair to rebuild and validate the extension, or delete it and reinstall.'
-        : 'This extension folder is incomplete (its manifest is missing) — usually the leftover of an interrupted install. Delete the folder, then install the extension again.'
+        : 'This extension folder is incomplete (its manifest is missing), usually the leftover of an interrupted install. Delete the folder, then install the extension again.'
   const isLocal = typeof ext.source === 'string' && ext.source.startsWith('local://')
   const localPath = isLocal ? ext.source!.replace('local://', '') : null
   const { total, done, installing, hasAvailable } = extInstallSummary(ext, installedIds, downloading)
@@ -170,7 +170,7 @@ export function ExtensionDrawer({
               <div className="min-w-0">
                 <p className="text-[12px] font-semibold text-amber-400">Corrupted installation</p>
                 <p className="text-[11px] leading-5 text-amber-400/80 mt-1">
-                  {ext.builtin ? 'This built-in extension folder is damaged — restart Modly to let it re-sync.' : corruptedMsg}
+                  {ext.builtin ? 'This built-in extension folder is damaged, restart three.ws Forge to let it re-sync.' : corruptedMsg}
                 </p>
               </div>
             </div>
@@ -295,7 +295,7 @@ export function ExtensionDrawer({
                       </div>
                     </div>
 
-                    {/* Weight variants — each one installs and deletes on its own */}
+                    {/* Weight variants, each one installs and deletes on its own */}
                     {variants && (
                       <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex flex-col gap-1.5">
                         {variants.options.map((option) => {
@@ -380,12 +380,12 @@ export function ExtensionDrawer({
             <div className="text-[10.5px] font-semibold uppercase tracking-[0.07em] text-zinc-600 mb-2.5">Details</div>
             <dl className="grid grid-cols-[1fr_auto] gap-x-3.5 gap-y-2.5 text-xs">
               <dt className="text-zinc-600">Author</dt>
-              <dd className="text-zinc-400 text-right font-mono text-[11.5px]">{ext.author ?? '—'}</dd>
+              <dd className="text-zinc-400 text-right font-mono text-[11.5px]">{ext.author ?? '-'}</dd>
               <dt className="text-zinc-600">Version</dt>
-              <dd className="text-zinc-400 text-right font-mono text-[11.5px]">{ext.version ? `v${ext.version}` : '—'}</dd>
+              <dd className="text-zinc-400 text-right font-mono text-[11.5px]">{ext.version ? `v${ext.version}` : '-'}</dd>
               <dt className="text-zinc-600">Source</dt>
               <dd className="text-zinc-400 text-right font-mono text-[11.5px] max-w-[230px] truncate" style={{ direction: 'rtl' }} title={localPath ?? ext.source ?? undefined}>
-                {localPath ?? ext.source ?? (ext.builtin ? 'Built-in' : '—')}
+                {localPath ?? ext.source ?? (ext.builtin ? 'Built-in' : '-')}
               </dd>
               <dt className="text-zinc-600">Nodes</dt>
               <dd className="text-zinc-400 text-right font-mono text-[11.5px]">{ext.nodes.length}</dd>
@@ -433,7 +433,7 @@ export function ExtensionDrawer({
             <button
               onClick={handleRepair}
               disabled={repairing || disabled}
-              title="Repair — re-run the extension environment setup"
+              title="Repair, re-run the extension environment setup"
               className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-[9px] text-xs font-medium border border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {repairing ? (
@@ -451,7 +451,7 @@ export function ExtensionDrawer({
             <button
               onClick={handleSync}
               disabled={syncing || disabled}
-              title="Sync — reload extension from local folder"
+              title="Sync, reload extension from local folder"
               className="p-2.5 rounded-[9px] border border-zinc-700/60 text-zinc-500 hover:text-orange-400 hover:bg-orange-950/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={syncing ? 'animate-spin' : ''}>

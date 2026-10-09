@@ -39,13 +39,13 @@ export function createElectronApi(ipcRenderer: IpcRendererLike, webFrame: WebFra
         ipcRenderer.invoke('notifications:show', title, body) as Promise<{ success: boolean; error?: string }>,
     },
 
-    // Renderer UI (zoom whole page — scales every px/rem consistently)
+    // Renderer UI (zoom whole page, scales every px/rem consistently)
     ui: { setZoomFactor: (factor: number) => webFrame.setZoomFactor(factor) },
 
     // Shell utilities
     shell: { openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url) },
 
-    // Slicer integration — open a model in OrcaSlicer via its deeplink
+    // Slicer integration: open a model in OrcaSlicer via its deeplink
     slicer: {
       open: (url: string): Promise<{ success: boolean; error?: string }> =>
         ipcRenderer.invoke('slicer:open', url) as Promise<{ success: boolean; error?: string }>,
@@ -103,15 +103,15 @@ export function createElectronApi(ipcRenderer: IpcRendererLike, webFrame: WebFra
         ipcRenderer.invoke('fs:readScreenshotDataUrl', filename) as Promise<string>,
     },
 
-    // Secure storage — OS-level encryption for secrets (API keys, …)
+    // Secure storage, OS-level encryption for secrets (API keys, …)
     secureStore: {
       encrypt: (plainText: string): Promise<string> => ipcRenderer.invoke('secure:encrypt', plainText) as Promise<string>,
       // null = one of our blobs that couldn't be decrypted here (different OS
-      // user/machine). Never the ciphertext — see secure-store.ts.
+      // user/machine). Never the ciphertext, see secure-store.ts.
       decrypt: (stored: string): Promise<string | null> => ipcRenderer.invoke('secure:decrypt', stored) as Promise<string | null>,
     },
 
-    // Agent — local LLM models
+    // Agent: local LLM models
     agent: {
       // Opens a file picker and copies the chosen .gguf into the agent's models folder.
       addModel: (): Promise<{ success: boolean; cancelled?: boolean; fileName?: string; error?: string }> =>

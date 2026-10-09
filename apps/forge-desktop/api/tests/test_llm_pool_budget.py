@@ -133,8 +133,8 @@ class PoolBudgetTests(unittest.TestCase):
         # From the moment Popen returns, a slot is _alive() while the loading
         # thread still holds its lock for the whole of _wait_for_health (up to
         # 180 s). unload() runs UNDER the pool lock, so evicting it there would
-        # block every other pool operation — /llm/status, ensure(), and the
-        # unload_all() the 3D pipeline calls to reclaim VRAM — for that long.
+        # block every other pool operation: /llm/status, ensure(), and the
+        # unload_all() the 3D pipeline calls to reclaim VRAM: for that long.
         starting = _FakeSlot(last_used=0.0, vram_mb=7800, port=llm_server.SERVER_PORT)
         self.pool._slots["starting"] = starting
         self.pool._loading_ports.add(llm_server.SERVER_PORT)

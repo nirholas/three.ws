@@ -173,7 +173,7 @@ def smooth_mesh(body: SmoothRequest):
 @router.post("/transform")
 def transform_mesh(body: TransformRequest):
     # Bake an interactive-gizmo transform into the GLB at scene level so it
-    # persists to export. Pure trimesh — no pymeshlab needed.
+    # persists to export. Pure trimesh: no pymeshlab needed.
     input_path = _resolve_input_path(body.path)
 
     matrix = np.asarray(body.matrix, dtype=float)
@@ -207,7 +207,7 @@ class ImportByPathRequest(BaseModel):
 # Gaussian Splatting support
 #
 # A 3DGS .ply is a point cloud whose colour lives in SH coefficients
-# (f_dc_*), not in a texture or vertex colours — trimesh strips all of it and
+# (f_dc_*), not in a texture or vertex colours: trimesh strips all of it and
 # yields a blank blob. Detect those files by their header and convert them to
 # the standard binary .splat format (rowLength = 32) read by the splat viewer:
 #   pos   3 × float32  (offset  0)
@@ -285,7 +285,7 @@ def _convert_gaussian_ply_to_splat(ply_path: Path, out_path: str) -> None:
 
     # Normalise into the viewer's space: a 3DGS lives in an arbitrary world
     # frame (offset origin, any scale) and often has a few far-away "floater"
-    # splats. Centre x/z on the robust 1–99 percentile box and scale to fit so
+    # splats. Centre x/z on the robust 1-99 percentile box and scale to fit so
     # the model always lands in front of the camera (meshes get this for free
     # via Box3 centring; splats don't). The gaussian sizes scale with it.
     lo = np.percentile(xyz, 1, axis=0)
@@ -334,21 +334,21 @@ async def import_mesh_by_path(body: ImportByPathRequest):
         return {"url": f"/optimize/serve-file?path={quote(str(file_path))}"}
 
     if ext == "ply" and _is_gaussian_ply(file_path):
-        tmp_dir = tempfile.mkdtemp(prefix="modly_import_")
+        tmp_dir = tempfile.mkdtemp(prefix="forge_import_")
         output_path = os.path.join(tmp_dir, "splat.splat")
         try:
             _convert_gaussian_ply_to_splat(file_path, output_path)
-        except Exception as err:  # noqa: BLE001 — surface a clean error, never 500-crash
+        except Exception as err:  # noqa: BLE001, surface a clean error, never 500-crash
             raise HTTPException(400, f"Unrecognised Gaussian .ply: {err}")
         return {"url": f"/optimize/serve-file?path={quote(output_path)}"}
 
     if ext == "glb":
-        # Serve the original file directly — no copy
+        # Serve the original file directly: no copy
         imported_sources.register(file_path, file_path)
         return {"url": f"/optimize/serve-file?path={quote(str(file_path))}"}
 
     # Mesh ply / obj / stl: convert to GLB in a temp directory (not the workspace)
-    tmp_dir = tempfile.mkdtemp(prefix="modly_import_")
+    tmp_dir = tempfile.mkdtemp(prefix="forge_import_")
     output_path = os.path.join(tmp_dir, "mesh.glb")
     loaded = trimesh.load(str(file_path))
     loaded.export(output_path)
@@ -395,7 +395,7 @@ def ply_to_splat(path: str):
         raise HTTPException(400, "Not a Gaussian .ply")
 
     key = hashlib.md5(f"{src}:{int(src.stat().st_mtime)}:{_SPLAT_CONV_VERSION}".encode()).hexdigest()
-    out = Path(tempfile.gettempdir()) / f"modly_splat_{key}.splat"
+    out = Path(tempfile.gettempdir()) / f"forge_splat_{key}.splat"
     if not out.is_file():
         try:
             _convert_gaussian_ply_to_splat(src, str(out))
@@ -425,7 +425,7 @@ def export_mesh(path: str, format: str):
     data = mesh.export(file_type=format)
     stem = input_path.stem
     mime = "text/plain" if format == "obj" else "application/octet-stream"
-    # trimesh exports ply as bytes even in text mode — octet-stream is fine for all binary formats
+    # trimesh exports ply as bytes even in text mode: octet-stream is fine for all binary formats
     return Response(
         content=data,
         media_type=mime,

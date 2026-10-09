@@ -16,7 +16,7 @@ class SceneInputTests(unittest.TestCase):
         (self.scene / "model.glb").write_bytes(b"mesh")
         self.manifest = self.scene / "scene-manifest.json"
         self.manifest.write_text(json.dumps({
-            "schema": "modly.scene-manifest.v1",
+            "schema": "three-ws.forge.scene-manifest.v1",
             "sceneRoot": ".",
             "assets": [{"path": "model.glb"}],
         }))

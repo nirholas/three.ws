@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-ext-test-')), 'extension-install-utils.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-ext-test-')), 'extension-install-utils.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/main/extension-install-utils.ts')],

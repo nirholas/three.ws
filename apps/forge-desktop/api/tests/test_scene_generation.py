@@ -31,7 +31,7 @@ class SceneGenerationTests(unittest.TestCase):
         self.scene = self.workspace / "Workflows" / "room"
         self.scene.mkdir(parents=True)
         self.manifest = self.scene / "scene-manifest.json"
-        self.manifest.write_text(json.dumps({"schema": "modly.scene-manifest.v1", "sceneRoot": ".", "assets": []}))
+        self.manifest.write_text(json.dumps({"schema": "three-ws.forge.scene-manifest.v1", "sceneRoot": ".", "assets": []}))
         self.registry = _Registry()
         self.patches = [patch.object(generation, "generator_registry", self.registry), patch.object(registry, "WORKSPACE_DIR", self.workspace)]
         for item in self.patches: item.start()

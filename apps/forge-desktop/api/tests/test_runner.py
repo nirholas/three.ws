@@ -10,7 +10,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 
-_tmp_ext_dir = tempfile.mkdtemp(prefix="modly-runner-test-")
+_tmp_ext_dir = tempfile.mkdtemp(prefix="forge-runner-test-")
 Path(_tmp_ext_dir, "manifest.json").write_text("{}", encoding="utf-8")
 os.environ.setdefault("EXTENSION_DIR", _tmp_ext_dir)
 
@@ -28,7 +28,7 @@ class RunnerTests(unittest.TestCase):
             scene.mkdir(parents=True)
             manifest = scene / "scene-manifest.json"
             manifest.write_text(json.dumps({
-                "schema": "modly.scene-manifest.v1", "sceneRoot": ".", "assets": [],
+                "schema": "three-ws.forge.scene-manifest.v1", "sceneRoot": ".", "assets": [],
             }))
             with patch.object(runner, "WORKSPACE_DIR", workspace):
                 typed = runner.decode_model_input({"input": {"kind": "scene", "path": str(manifest)}})
@@ -247,7 +247,7 @@ class _RunnerDriver:
     """Runs runner.main() against a throwaway extension dir."""
 
     def __init__(self, generator_src: str, generator_class: str) -> None:
-        self.ext_dir = Path(tempfile.mkdtemp(prefix="modly-texgen-test-"))
+        self.ext_dir = Path(tempfile.mkdtemp(prefix="forge-texgen-test-"))
         (self.ext_dir / "generator.py").write_text(generator_src, encoding="utf-8")
         (self.ext_dir / "manifest.json").write_text(
             json.dumps({"id": "demo-ext", "generator_class": generator_class}),

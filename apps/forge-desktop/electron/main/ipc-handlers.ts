@@ -137,9 +137,9 @@ function runExtensionSetup(
       env:   {
         ...process.env,
         PIP_CACHE_DIR:         pipCacheDir,
-        MODLY_TORCH_FLAVOR:    torchFlavor,
-        MODLY_TORCH_INDEX_URL: gpu.torchIndexUrl ?? '',
-        MODLY_TORCH_SPECS:     JSON.stringify(gpu.torchSpecs ?? []),
+        THREEWS_TORCH_FLAVOR:    torchFlavor,
+        THREEWS_TORCH_INDEX_URL: gpu.torchIndexUrl ?? '',
+        THREEWS_TORCH_SPECS:     JSON.stringify(gpu.torchSpecs ?? []),
       },
     })
 
@@ -162,7 +162,7 @@ function runExtensionSetup(
 }
 
 // Extension ids with an install currently in flight. Their folder carries the
-// incomplete marker during setup — extensions:list must not report it as
+// incomplete marker during setup, extensions:list must not report it as
 // corrupted while the install is legitimately running.
 const activeExtensionInstalls = new Set<string>()
 const rmWithRetry = (path: string, label: string) =>
@@ -227,11 +227,11 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
   const LOCKED_MODEL_FILES_ERROR = 'Model files are still locked after several attempts. Close any programs using the model and try again.'
   // Logging from renderer
   ipcMain.on('log:error', (_event, message: string) => logger.error(`[Renderer] ${message}`))
-  ipcMain.handle('log:getPath', () => join(app.getPath('userData'), 'logs', 'modly.log'))
+  ipcMain.handle('log:getPath', () => join(app.getPath('userData'), 'logs', 'forge.log'))
   ipcMain.handle('log:readAll', async (_event, session?: string) => {
     const logsDir = join(app.getPath('userData'), 'logs')
     const dir = session ? join(logsDir, 'sessions', session) : logsDir
-    const files = ['modly.log', 'errors.log', 'runtime.log']
+    const files = ['forge.log', 'errors.log', 'runtime.log']
     const result: Record<string, string> = {}
     for (const file of files) {
       try {
@@ -256,7 +256,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     }
   })
 
-  // Secure storage — OS-level encryption (Keychain/DPAPI/libsecret) for secrets
+  // Secure storage, OS-level encryption (Keychain/DPAPI/libsecret) for secrets
   // the renderer would otherwise have to keep in plain-text localStorage (API keys).
   ipcMain.handle('secure:encrypt', (_, plainText: string) => encryptSecret(plainText))
   ipcMain.handle('secure:decrypt', (_, stored: string) => decryptSecret(stored))
@@ -273,7 +273,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
 
   // Native OS notification (Windows toast / macOS Notification Center / Linux),
   // for events the user wants to know about even when the window is minimized or
-  // behind other apps — e.g. a generation or workflow run finishing. Routed through
+  // behind other apps, e.g. a generation or workflow run finishing. Routed through
   // the main process rather than the renderer's own Notification API so it works
   // the same way regardless of focus and carries the app's own icon.
   ipcMain.handle('notifications:show', (_event, title: string, body: string) => {
@@ -294,10 +294,10 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     return { success: true }
   })
 
-  // Setup handlers — skipped in dev (uses .venv instead of python-embed)
+  // Setup handlers: skipped in dev (uses .venv instead of python-embed)
   ipcMain.handle('setup:check', async () => {
     const userData = app.getPath('userData')
-    const defaultDataDir = join(app.getPath('documents'), 'Modly')
+    const defaultDataDir = join(app.getPath('documents'), 'three.ws Forge')
     return {
       needed: checkSetupNeeded(userData),
       defaultDataDir,
@@ -514,7 +514,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     }
   })
 
-  // null means "unknown" (unreadable plan, or a node without variants) — the renderer
+  // null means "unknown" (unreadable plan, or a node without variants), the renderer
   // must not read an empty array as "no variant installed".
   ipcMain.handle('model:installedWeightVariants', async (_, modelId: string): Promise<string[] | null> => {
     try {
@@ -841,7 +841,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
   //
   // The returned error only covers the shell refusing the call outright. It is
   // NOT an install check: on Windows an unregistered scheme still makes
-  // ShellExecuteEx succeed — the OS shows its own "You'll need a new app to open
+  // ShellExecuteEx succeed: the OS shows its own "You'll need a new app to open
   // this orcaslicer link" dialog and this resolves with success. Detecting a
   // missing OrcaSlicer would take a per-platform handler probe (registry on
   // Windows), so the renderer must not promise the user that it knows.
@@ -900,7 +900,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     arch:      process.arch,
   }))
 
-  // Settings — decrypt the HF token (migrating a legacy plaintext one) and seed
+  // Settings: decrypt the HF token (migrating a legacy plaintext one) and seed
   // it into the main-process env at startup.
   {
     const token = initHfToken(app.getPath('userData'))
@@ -911,7 +911,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
   }
 
   ipcMain.handle('settings:get', () => {
-    // hfToken is stored encrypted — hand the renderer the usable value.
+    // hfToken is stored encrypted, hand the renderer the usable value.
     return { ...getSettings(app.getPath('userData')), hfToken: getHfToken() }
   })
 
@@ -931,7 +931,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       // without requiring a full app restart.
       try {
         await axios.post(`${API_BASE_URL}/settings/hf-token`, { token: hfToken }, { timeout: 3000 })
-      } catch { /* FastAPI may not be running yet — ignore */ }
+      } catch { /* FastAPI may not be running yet, ignore */ }
     }
     return { ...getSettings(app.getPath('userData')), hfToken: getHfToken() }
   })
@@ -947,7 +947,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     return result.canceled ? null : result.filePaths[0]
   })
 
-  // Cache clear — deletes and recreates the gen-cache folder
+  // Cache clear: deletes and recreates the gen-cache folder
   // NOTE: userData/cache (lowercase) = Chromium disk cache on Windows (case-insensitive)
   //       → use a dedicated subfolder to avoid collision
   ipcMain.handle('cache:clear', async () => {
@@ -1122,7 +1122,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     }
   })
 
-  // Remote registry — list of trusted GitHub repo URLs
+  // Remote registry: list of trusted GitHub repo URLs
   const REGISTRY_URL = 'https://raw.githubusercontent.com/lightningpixel/modly-official-extension/main/registry.json'
   const REGISTRY_TTL = 5 * 60 * 1000 // 5 minutes
 
@@ -1144,7 +1144,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       registryCache = { repos, fetchedAt: now }
       return repos
     } catch {
-      // Offline or fetch failed — keep previous cache, or empty
+      // Offline or fetch failed: keep previous cache, or empty
       return registryCache?.repos ?? new Set()
     }
   }
@@ -1163,7 +1163,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     entry?: string
     model_sources?: unknown
     weight_groups?: unknown
-    // Optional top-level fallbacks — applied to each node if not set on the node
+    // Optional top-level fallbacks, applied to each node if not set on the node
     params_schema?:  unknown[]
     param_defaults?: Record<string, unknown>
     nodes?: {
@@ -1339,9 +1339,9 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     const restored = await restoreExtensionBackup(destinationDir, backupDir, logger)
     if (!restored.ok) {
       throw new Error(
-        `Extension update failed, and Modly could not restore the previous version `
+        `Extension update failed, and three.ws Forge could not restore the previous version `
         + `during ${restored.stage}: ${String(restored.error)}. `
-        + `Restart Modly to retry recovery. Original failure: ${String(originalFailure)}`,
+        + `Restart three.ws Forge to retry recovery. Original failure: ${String(originalFailure)}`,
       )
     }
 
@@ -1352,7 +1352,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     )
     if (!stateCleared.ok) {
       throw new Error(
-        `Extension update failed and the previous version was restored, but Modly `
+        `Extension update failed and the previous version was restored, but three.ws Forge `
         + `could not clear recovery state during ${stateCleared.stage}: `
         + `${String(stateCleared.error)}. Original failure: ${String(originalFailure)}`,
       )
@@ -1368,7 +1368,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     } catch (reloadError) {
       throw new Error(
         `Extension update failed and the previous version was restored on disk, `
-        + `but Modly could not reload it: ${String(reloadError)}. `
+        + `but three.ws Forge could not reload it: ${String(reloadError)}. `
         + `Original failure: ${String(originalFailure)}`,
       )
     }
@@ -1387,14 +1387,14 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     const cleaned = await cleanupValidatedExtensionBackups(extensionsDir, extensionId, logger)
     if (!cleaned.ok) {
       throw new Error(
-        `Runtime registration succeeded, but Modly could not finish removing the previous `
+        `Runtime registration succeeded, but three.ws Forge could not finish removing the previous `
         + `extension backup during ${cleaned.stage}: ${String(cleaned.error)}. `
-        + `Restart Modly to retry the validated cleanup.`,
+        + `Restart three.ws Forge to retry the validated cleanup.`,
       )
     }
   }
 
-  // Extensions — reads user extensions directory + built-in extensions directory
+  // Extensions: reads user extensions directory + built-in extensions directory
   ipcMain.handle('extensions:list', async () => {
     const userData      = app.getPath('userData')
     const extensionsDir = getSettings(userData).extensionsDir
@@ -1438,10 +1438,10 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
           )
           if (installInterrupted && activeExtensionInstalls.has(entry.name)) return null
 
-          // Detect local extensions: check for .modly-local sentinel
+          // Detect local extensions: check for .forge-local sentinel
           let localSourcePath: string | undefined
           if (!isBuiltin) {
-            const sentinelPath = join(entryPath, '.modly-local')
+            const sentinelPath = join(entryPath, '.forge-local')
             if (existsSync(sentinelPath)) {
               try {
                 localSourcePath = (await readFile(sentinelPath, 'utf-8')).trim()
@@ -1511,14 +1511,14 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
 
       // 2. Download tarball via GitHub API
       const tarballUrl = `https://api.github.com/repos/${owner}/${repo}/tarball/HEAD`
-      tarPath    = join(tmpDir, `modly-ext-${Date.now()}.tar.gz`)
-      extractDir = join(tmpDir, `modly-ext-extract-${Date.now()}`)
+      tarPath    = join(tmpDir, `forge-ext-${Date.now()}.tar.gz`)
+      extractDir = join(tmpDir, `forge-ext-extract-${Date.now()}`)
 
       const response = await axios.get(tarballUrl, {
         responseType: 'arraybuffer',
         headers: {
           'Accept':     'application/vnd.github.v3+json',
-          'User-Agent': 'Modly-App',
+          'User-Agent': 'three.ws Forge-App',
         },
         onDownloadProgress: (evt) => {
           const pct = evt.total ? Math.round((evt.loaded / evt.total) * 80) : 40
@@ -1563,7 +1563,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       // 5. Stage into a fresh, unique dir next to the final location (so a new
       //    attempt can never merge into leftovers of a previous one), mark it
       //    incomplete, and swap it in with atomic renames BEFORE the long setup
-      //    phase. setup.py then runs in the final path — venvs record absolute
+      //    phase. setup.py then runs in the final path, venvs record absolute
       //    paths, so the folder must not move after setup. If anything dies
       //    mid-way, the marker + backup let the startup reconciler put the
       //    previous version back.
@@ -1638,14 +1638,14 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
         const parked = await renameWithRetry(destDir, backupDir, 'ext-install')
         if (!parked.ok) {
           await rmWithRetry(stagingDir, 'ext-install')
-          throw new Error('The current extension folder is locked (antivirus or a running process) — close what might be using it and try again.')
+          throw new Error('The current extension folder is locked (antivirus or a running process), close what might be using it and try again.')
         }
       }
       const activated = await renameWithRetry(stagingDir, destDir, 'ext-install')
       if (!activated.ok) {
         await rmWithRetry(stagingDir, 'ext-install')
         if (backupDir) await renameWithRetry(backupDir, destDir, 'ext-install')
-        throw new Error('Could not move the staged extension into place — the folder is locked. Try again.')
+        throw new Error('Could not move the staged extension into place, the folder is locked. Try again.')
       }
 
       // Persist transaction state beside extension folders, never inside a
@@ -1730,9 +1730,9 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
           const restored = await restoreExtensionBackup(destDir, backupDir, logger)
           if (!restored.ok) {
             throw new Error(
-              `Extension setup failed, and Modly could not restore the previous version `
+              `Extension setup failed, and three.ws Forge could not restore the previous version `
               + `during ${restored.stage}: ${String(restored.error)}. `
-              + `Restart Modly to retry recovery. Original failure: ${String(setupErr)}`,
+              + `Restart three.ws Forge to retry recovery. Original failure: ${String(setupErr)}`,
             )
           }
           const cleared = await clearExtensionRegistrationTransaction(
@@ -1742,7 +1742,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
           )
           if (!cleared.ok) {
             throw new Error(
-              `Extension setup failed and the previous version was restored, but Modly `
+              `Extension setup failed and the previous version was restored, but three.ws Forge `
               + `could not clear recovery state during ${cleared.stage}: ${String(cleared.error)}.`,
             )
           }
@@ -1756,7 +1756,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
             )
             if (!cleared.ok) {
               throw new Error(
-                `Extension setup failed and its incomplete folder was removed, but Modly `
+                `Extension setup failed and its incomplete folder was removed, but three.ws Forge `
                 + `could not clear recovery state during ${cleared.stage}: ${String(cleared.error)}.`,
               )
             }
@@ -1800,9 +1800,9 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
           )
           if (!quarantined.ok) {
             throw new Error(
-              `Runtime registration failed, and Modly could not quarantine the extension `
+              `Runtime registration failed, and three.ws Forge could not quarantine the extension `
               + `during ${quarantined.stage}: ${String(quarantined.error)}. `
-              + `Restart Modly to retry recovery. Original failure: ${String(registrationError)}`,
+              + `Restart three.ws Forge to retry recovery. Original failure: ${String(registrationError)}`,
             )
           }
           if (!isProcess) {
@@ -1811,7 +1811,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
             } catch (runtimeQuarantineError) {
               throw new Error(
                 `Runtime registration failed and filesystem quarantine was preserved, `
-                + `but Modly could not evict partially registered model state: `
+                + `but three.ws Forge could not evict partially registered model state: `
                 + `${String(runtimeQuarantineError)}. `
                 + `Original failure: ${String(registrationError)}`,
               )
@@ -1842,7 +1842,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     }
   })
 
-  // Uninstall an extension — built-ins cannot be uninstalled
+  // Uninstall an extension: built-ins cannot be uninstalled
   ipcMain.handle('extensions:uninstall', async (_, extensionId: string) => {
     try {
       if ([...activeDownloads.keys()].some((modelId) => modelId.split('/', 1)[0] === extensionId)) {
@@ -1850,7 +1850,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       }
       // Corrupted folders can carry arbitrary names (manual copies, failed
       // unzips), so only enforce root confinement for the deletion path. The
-      // strict id pattern still guards the built-in check — a non-conforming
+      // strict id pattern still guards the built-in check, a non-conforming
       // name can never be a built-in.
       const extensionsDir = getSettings(app.getPath('userData')).extensionsDir
 
@@ -1874,7 +1874,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
           success: false,
           error: removed.locked
             ? `Could not delete the extension ${removed.stage === 'backup' ? 'backup' : 'folder'} `
-              + '— a file inside it is locked (antivirus or a running process). '
+              + ',  a file inside it is locked (antivirus or a running process). '
               + 'Close what might be using it and try again.'
             : `Could not uninstall the extension during ${removed.stage}: ${String(removed.error)}`,
         }
@@ -1896,7 +1896,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       const extensionsDir = getSettings(app.getPath('userData')).extensionsDir
       const extDir = resolveExtensionPathWithinRoot(extensionsDir, safeExtensionId)
       if (!existsSync(join(extDir, 'setup.py'))) {
-        return { success: false, error: 'setup.py is missing from the extension folder — the install looks incomplete. Uninstall the extension and install it again.' }
+        return { success: false, error: 'setup.py is missing from the extension folder, the install looks incomplete. Uninstall the extension and install it again.' }
       }
       const manifestRaw = await readFile(join(extDir, 'manifest.json'), 'utf-8')
       const manifest = JSON.parse(manifestRaw) as ParsedManifest
@@ -2055,7 +2055,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
 
               // The sentinel lives in the linked source folder. Runtime
               // registration is still pending externally until validation.
-              await writeFile(join(linkPath, '.modly-local'), localPath, 'utf-8')
+              await writeFile(join(linkPath, '.forge-local'), localPath, 'utf-8')
             },
             validate: async (validationCapability) => {
               if (!isProcess) {

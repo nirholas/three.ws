@@ -6,11 +6,11 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-// Bundle the store with its real zustand dependency — same approach as
+// Bundle the store with its real zustand dependency, same approach as
 // workflowsStore.test.mjs. Only fetchModels() is exercised, so the React hook
 // at the bottom of the module is never rendered.
 function loadStore() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-llmstore-test-')), 'llmModelsStore.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-llmstore-test-')), 'llmModelsStore.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/stores/llmModelsStore.ts')],

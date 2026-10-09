@@ -49,7 +49,7 @@ async function run(payload) {
     100,
     Math.round(Number(payload.params?.target_faces ?? 10000)),
   )
-  log(`Target: ${targetFaces} triangles — input: ${payload.inputPath}`)
+  log(`Target: ${targetFaces} triangles, input: ${payload.inputPath}`)
 
   await MeshoptSimplifier.ready
 
@@ -60,7 +60,7 @@ async function run(payload) {
   log(`Current triangles: ${currentFaces}`)
 
   if (currentFaces <= targetFaces) {
-    log('Already within target — skipping simplification')
+    log('Already within target, skipping simplification')
     if (!payload.outputPath) {
       progress(100, 'Done')
       return { filePath: payload.inputPath, faceCount: currentFaces }

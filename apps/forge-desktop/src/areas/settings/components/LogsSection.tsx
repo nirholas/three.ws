@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 const LOG_FILES = [
   { id: 'errors.log',  label: 'Errors',  description: 'All errors from Electron and Python' },
   { id: 'runtime.log', label: 'Runtime', description: 'FastAPI / Python output' },
-  { id: 'modly.log',   label: 'App',     description: 'General Electron logs' },
+  { id: 'forge.log',   label: 'App',     description: 'General Electron logs' },
 ]
 
 function formatSession(id: string): string {
@@ -66,7 +66,7 @@ export function LogsSection(): JSX.Element {
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-sm font-semibold text-zinc-100">Logs</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">Application log files — share these when reporting issues.</p>
+        <p className="text-xs text-zinc-500 mt-0.5">Application log files, share these when reporting issues.</p>
       </div>
 
       {/* Session selector */}

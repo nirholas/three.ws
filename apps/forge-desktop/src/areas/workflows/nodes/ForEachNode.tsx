@@ -4,7 +4,7 @@ import type { WFNodeData } from '@shared/types/electron.d'
 import BaseNode from './BaseNode'
 import { useWorkflowRunStore } from '../workflowRunStore'
 
-// For Each — an iterator source. It walks a folder alphabetically and emits one
+// For Each: an iterator source. It walks a folder alphabetically and emits one
 // file per loop pass; every node wired downstream re-runs for each file. Runs to
 // completion unless the user hits Stop, with an optional Pause (then Continue →
 // next file / Retry → same file). A dropdown picks what it emits: image / text / mesh.
@@ -75,7 +75,7 @@ export default function ForEachNode({ id, data, selected }: { id: string; data: 
       }
       handles={
         <Handle type="source" position={Position.Right}
-          style={{ background: variant.color, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }} />
+          style={{ background: variant.color, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }} />
       }
     >
       <div className="px-3 pb-3 pt-2.5 flex flex-col gap-2">

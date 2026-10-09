@@ -4,7 +4,7 @@
  * Deliberately free of electron imports: the parsing and resolution helpers are
  * pure and get unit-tested by bundling this file directly (gpu-detect.test.mjs).
  *
- * Modly never installs PyTorch itself — each extension's setup.py does, from an
+ * three.ws Forge never installs PyTorch itself, each extension's setup.py does, from an
  * index it picks on its own. What we produce here is the information that lets
  * that choice land on the right wheels: the accelerator, and for AMD the ROCm
  * compute target plus the pip index/requirements the setup must end up using.
@@ -40,7 +40,7 @@ const ROCM_LINUX_INDEX   = 'https://download.pytorch.org/whl/rocm7.2'
 const ROCM_WINDOWS_INDEX = 'https://repo.amd.com/rocm/whl-multi-arch/'
 
 // Pinned because AMD's index carries several ROCm builds side by side; this is
-// the newest pair published for cp311 (Modly's embedded Python) on Windows.
+// the newest pair published for cp311 (three.ws Forge's embedded Python) on Windows.
 const ROCM_WINDOWS_TORCH       = '2.11.0+rocm7.14.0'
 const ROCM_WINDOWS_TORCHVISION = '0.26.0+rocm7.14.0'
 
@@ -128,7 +128,7 @@ export function formatGfxTarget(version: number): string | null {
  * Node 0 is the CPU node (simd_count 0) and is skipped. Among GPU nodes the
  * largest simd_count wins: on an APU + dGPU machine the APU commonly gets the
  * lower node number, and its gfx target (e.g. gfx1103) often has no published
- * wheels — the discrete card is always the one with more SIMDs.
+ * wheels: the discrete card is always the one with more SIMDs.
  */
 export function parseKfdGfxTarget(nodeProperties: string[]): string | null {
   let best: { target: string; simdCount: number } | null = null
@@ -202,8 +202,8 @@ export function resolveWindowsGfxTarget(
 
 /**
  * The pip index and requirements an extension's torch install has to end up
- * using on this platform. `MODLY_ROCM_INDEX` and `MODLY_ROCM_TORCH_SPEC`
- * (space-separated requirements) override either half — the escape hatch when a
+ * using on this platform. `THREEWS_ROCM_INDEX` and `THREEWS_ROCM_TORCH_SPEC`
+ * (space-separated requirements) override either half, the escape hatch when a
  * newer torch breaks an extension and you need to drop back to, say, rocm6.4.
  */
 export function resolveRocmTorchSpec(
@@ -211,8 +211,8 @@ export function resolveRocmTorchSpec(
   gfxTarget: string | null,
   env: NodeJS.ProcessEnv = process.env,
 ): { indexUrl: string; specs: string[] } {
-  const indexOverride = env['MODLY_ROCM_INDEX']?.trim()
-  const specOverride  = env['MODLY_ROCM_TORCH_SPEC']?.trim()
+  const indexOverride = env['THREEWS_ROCM_INDEX']?.trim()
+  const specOverride  = env['THREEWS_ROCM_TORCH_SPEC']?.trim()
 
   const isWindows = platform === 'win32'
   const indexUrl  = indexOverride || (isWindows ? ROCM_WINDOWS_INDEX : ROCM_LINUX_INDEX)
@@ -258,7 +258,7 @@ function cpuInfo(): GpuInfo {
 /**
  * AMD keeps sm/cudaVersion at 0 on purpose. Extensions that predate `torch_flavor`
  * branch on those two numbers, and 0 sends them down their most conservative
- * path — which also keeps them off `rembg[gpu]`, whose onnxruntime-gpu is
+ * path: which also keeps them off `rembg[gpu]`, whose onnxruntime-gpu is
  * CUDA-only. Their torch install is then corrected by the ROCm setup shim.
  */
 function rocmInfo(
@@ -278,7 +278,7 @@ function rocmInfo(
 }
 
 function readFlavorOverride(env: NodeJS.ProcessEnv): TorchFlavor | null {
-  const raw = env['MODLY_TORCH_FLAVOR']?.trim().toLowerCase()
+  const raw = env['THREEWS_TORCH_FLAVOR']?.trim().toLowerCase()
   return raw === 'cuda' || raw === 'rocm' || raw === 'cpu' ? raw : null
 }
 
@@ -297,7 +297,7 @@ function queryNvidiaSmi(): Promise<{ sm: number; cudaVersion: number } | null> {
 
 /**
  * Reads the compute target straight out of the kernel's KFD topology. This
- * needs no ROCm installation and no external binary — the amdgpu driver alone
+ * needs no ROCm installation and no external binary, the amdgpu driver alone
  * publishes it, which is exactly the state of a machine that has only ever run
  * PyTorch ROCm wheels (they bundle their own runtime).
  */
@@ -345,14 +345,14 @@ export async function detectGpuInfo(options: DetectOptions = {}): Promise<GpuInf
   const log      = options.onLog    ?? (() => {})
 
   const forced = readFlavorOverride(env)
-  if (forced) log(`[gpu-detect] MODLY_TORCH_FLAVOR=${forced} — skipping auto-detection`)
+  if (forced) log(`[gpu-detect] THREEWS_TORCH_FLAVOR=${forced}, skipping auto-detection`)
 
   if (forced === 'cpu') return cpuInfo()
 
   if (forced === 'rocm') {
     const { gfxTarget } = await resolveGfxTarget(env, platform)
     if (!gfxTarget && platform === 'win32') {
-      log('[gpu-detect] ROCm forced on Windows but no compute target found — set MODLY_ROCM_GFX (e.g. gfx1200)')
+      log('[gpu-detect] ROCm forced on Windows but no compute target found, set THREEWS_ROCM_GFX (e.g. gfx1200)')
       return cpuInfo()
     }
     return rocmInfo(gfxTarget, platform, env)
@@ -377,14 +377,14 @@ export async function detectGpuInfo(options: DetectOptions = {}): Promise<GpuInf
 
   const { gfxTarget, amdAdapters } = await resolveGfxTarget(env, platform)
   if (gfxTarget) {
-    log(`[gpu-detect] AMD GPU detected — compute target ${gfxTarget}`)
+    log(`[gpu-detect] AMD GPU detected, compute target ${gfxTarget}`)
     return rocmInfo(gfxTarget, platform, env)
   }
 
   if (amdAdapters.length > 0) {
     log(
       `[gpu-detect] AMD GPU found (${amdAdapters.join(', ')}) but its ROCm compute target is unknown. ` +
-      'Falling back to CPU — set MODLY_ROCM_GFX (e.g. gfx1201) to force one.',
+      'Falling back to CPU, set THREEWS_ROCM_GFX (e.g. gfx1201) to force one.',
     )
   }
 
@@ -399,7 +399,7 @@ async function resolveGfxTarget(
   env: NodeJS.ProcessEnv,
   platform: string,
 ): Promise<{ gfxTarget: string | null; amdAdapters: string[] }> {
-  const override = env['MODLY_ROCM_GFX']?.trim()
+  const override = env['THREEWS_ROCM_GFX']?.trim()
   if (override) return { gfxTarget: override, amdAdapters: [] }
   if (platform === 'linux') return { gfxTarget: readKfdGfxTarget(), amdAdapters: [] }
   if (platform === 'win32') return resolveWindowsGfxTarget(await queryWindowsVideoControllers())

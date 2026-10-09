@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @font-face {
   font-family: 'Atkinson Hyperlegible';
@@ -37,8 +37,8 @@
     height: 100%;
     width: 100%;
     overflow: hidden;
-    background-color: #111113;
-    color: #f4f4f5;
+    background-color: #0a0a0a;
+    color: #e8e8e8;
     font-family: var(--app-font);
     -webkit-font-smoothing: antialiased;
     user-select: none;
@@ -49,14 +49,14 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #18181b;
+    background: #0a0a0a;
   }
   ::-webkit-scrollbar-thumb {
-    background: #3f3f46;
+    background: #333333;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #52525b;
+    background: #4a4a4a;
   }
 }
 

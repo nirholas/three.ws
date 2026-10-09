@@ -206,7 +206,7 @@ export const useAppStore = create<AppState>()(
           set({ setupStatus: 'error', setupError: data.message })
         })
 
-        // Fire and forget — progress comes via IPC events
+        // Fire and forget: progress comes via IPC events
         window.electron.setup.run()
       },
 
@@ -308,7 +308,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: 'modly-store',
+      name: 'forge-store',
       partialize: (state) => ({
         generationOptions: state.generationOptions,
         showRamIndicator: state.showRamIndicator,

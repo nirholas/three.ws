@@ -188,8 +188,8 @@ export class ProcessRunner implements IProcessRunner {
 
 // ─── Python ProcessRunner (subprocess, one process per run) ───────────────────
 //
-// Protocol — stdin:  one JSON line  { input, params, workspaceDir, tempDir }
-// Protocol — stdout: JSON lines     { type: 'progress'|'log'|'done'|'error', ... }
+// Protocol: stdin:  one JSON line  { input, params, workspaceDir, tempDir }
+// Protocol: stdout: JSON lines     { type: 'progress'|'log'|'done'|'error', ... }
 
 export class PythonProcessRunner implements IProcessRunner {
   private pythonExe:    string
@@ -212,6 +212,9 @@ export class PythonProcessRunner implements IProcessRunner {
     onProgress?: (percent: number, label: string) => void,
     onLog?:      (message: string) => void,
   ): Promise<ProcessResult> {
+    const apiDir = app.isPackaged
+      ? join(process.resourcesPath, 'api')
+      : join(app.getAppPath(), 'api')
     return new Promise((resolve, reject) => {
       const proc = spawn(this.pythonExe, [this.scriptPath], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -221,11 +224,13 @@ export class PythonProcessRunner implements IProcessRunner {
           // crash under legacy Windows codepages (cp1252/cp932).
           PYTHONUTF8: '1',
           // Built-in process nodes may import shared services from the backend.
-          MODLY_API_DIR: app.isPackaged
-            ? join(process.resourcesPath, 'api')
-            : join(app.getAppPath(), 'api'),
+          THREEWS_API_DIR: apiDir,
           // Electron is also the packaged Node runtime. meshopt_runner.cjs uses
           // ELECTRON_RUN_AS_NODE when it launches this executable.
+          THREEWS_NODE_EXECUTABLE: process.execPath,
+          // Community process extensions written against the upstream Modly
+          // template read these names, so both spellings are exported.
+          MODLY_API_DIR: apiDir,
           MODLY_NODE_EXECUTABLE: process.execPath,
           EXTENSION_DIR: this.extDir,
           WORKSPACE_DIR: this.workspaceDir,
@@ -268,7 +273,7 @@ export class PythonProcessRunner implements IProcessRunner {
               reject(new Error(msg.message ?? 'Unknown error'))
             }
           } catch {
-            // Non-JSON stdout line — treat as a log message
+            // Non-JSON stdout line, treat as a log message
             onLog?.(trimmed)
           }
         }
@@ -298,7 +303,7 @@ export class PythonProcessRunner implements IProcessRunner {
     })
   }
 
-  // Python processes are spawned per run — nothing persistent to terminate
+  // Python processes are spawned per run, nothing persistent to terminate
   terminate(): void {}
 }
 
@@ -319,8 +324,8 @@ export function getExtPythonExe(extDir: string): string | null {
 
 const registry = new Map<string, IProcessRunner>()
 // The arguments each cached runner was built with. A runner bakes them in at
-// construction, so a call with different ones — e.g. after the workspace is
-// moved in Settings, which updates paths without a restart — must not get the
+// construction, so a call with different ones, e.g. after the workspace is
+// moved in Settings, which updates paths without a restart, must not get the
 // old runner back, or node output keeps landing in the previous folder.
 const registryArgs = new Map<string, string>()
 

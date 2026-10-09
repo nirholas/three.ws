@@ -5,7 +5,7 @@
  * bugs the user actually sees have come from: a hook returning a fresh callback
  * on every render made a modal re-run its effect forever, flickering and
  * hammering the API. That class of bug is invisible to a type-checker and to
- * store-level tests — it only exists once a component renders more than once.
+ * store-level tests, it only exists once a component renders more than once.
  *
  * Deliberately built on jsdom + react-dom directly rather than a testing
  * library: what we need is "render, re-render, count the effects", not queries
@@ -23,7 +23,7 @@ export function setupDom() {
   const { window } = dom
 
   // Node 24 defines some of these (`navigator`) as getter-only on globalThis,
-  // so a plain assignment throws — go through defineProperty for all of them.
+  // so a plain assignment throws, go through defineProperty for all of them.
   const define = (name, value) =>
     Object.defineProperty(globalThis, name, { value, writable: true, configurable: true })
 
@@ -45,13 +45,13 @@ export function setupDom() {
  * Bundle a source module and load it as CommonJS.
  *
  * `react` and `react-dom` stay external so the module under test and the test
- * file share one React instance — two copies produce "invalid hook call",
+ * file share one React instance, two copies produce "invalid hook call",
  * which reads as a bug in the code under test and is not one.
  */
 export function loadModule(entryPath) {
   // Inside the project, not the system temp dir: the bundle keeps `react` as a
   // bare require, and that only resolves from a path under this node_modules.
-  const cacheRoot = resolve('node_modules/.cache/modly-react-tests')
+  const cacheRoot = resolve('node_modules/.cache/forge-react-tests')
   mkdirSync(cacheRoot, { recursive: true })
   const outfile = join(mkdtempSync(join(cacheRoot, 'm-')), 'module.cjs')
   const result = buildSync({
@@ -68,8 +68,7 @@ export function loadModule(entryPath) {
 }
 
 /**
- * Render `element`, and hand back a way to re-render it with the same root —
- * which is the whole point: a hook that misbehaves does so on the SECOND render.
+ * Render `element`, and hand back a way to re-render it with the same root, * which is the whole point: a hook that misbehaves does so on the SECOND render.
  */
 export async function mount(element) {
   const require = createRequire(import.meta.url)
@@ -88,7 +87,7 @@ export async function mount(element) {
   return {
     container,
     /** Re-render. The element is cloned by default: handed the very same
-     *  element object, React bails out and nothing re-renders — which silently
+     *  element object, React bails out and nothing re-renders, which silently
      *  turns a re-render test into a no-op. */
     rerender: async (next) => {
       await act(async () => { root.render(next ?? cloneElement(element)) })

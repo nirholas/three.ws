@@ -1,6 +1,6 @@
 # Architecture Decisions
 
-This directory stores architecture decision records for Modly.
+This directory stores architecture decision records for three.ws Forge.
 
 The current Apple Silicon support work is documented in one consolidated ADR so
 the platform scope, runtime assumptions, and operational constraints stay in a

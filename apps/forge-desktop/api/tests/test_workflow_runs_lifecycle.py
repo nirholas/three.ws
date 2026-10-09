@@ -53,7 +53,7 @@ def _clear_job_stores() -> None:
 
 class WorkflowRunJobLifecycleTests(unittest.TestCase):
     """The headless /workflow-runs surface shares the job dicts with /generate,
-    so it must take part in the same TTL purge — otherwise long-running
+    so it must take part in the same TTL purge, otherwise long-running
     automation leaks a JobStatus + Event per run forever."""
 
     def setUp(self) -> None:

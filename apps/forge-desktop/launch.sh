@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo " Modly — Production Launcher"
+echo " three.ws Forge, Production Launcher"
 echo "================================"
 echo
 
@@ -26,5 +26,5 @@ if [ ! -d "out" ]; then
 fi
 
 # Launch
-echo "Launching Modly..."
+echo "Launching three.ws Forge..."
 npm run preview

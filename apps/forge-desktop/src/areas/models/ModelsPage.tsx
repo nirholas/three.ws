@@ -22,7 +22,7 @@ const FILTERS: { id: FilterId; label: string }[] = [
 ]
 
 const SORTS: { id: SortId; label: string }[] = [
-  { id: 'name', label: 'Name (A–Z)' },
+  { id: 'name', label: 'Name (A-Z)' },
   { id: 'type', label: 'Type' },
 ]
 
@@ -86,7 +86,7 @@ export default function ModelsPage(): JSX.Element {
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
-  // Check each model node individually via filesystem IPC — reliable regardless of API state
+  // Check each model node individually via filesystem IPC, reliable regardless of API state
   async function refreshInstalledIds(exts: ModelExtension[]) {
     const revision = ++installedRefreshRevision.current
     const ids: string[] = []
@@ -611,7 +611,7 @@ export default function ModelsPage(): JSX.Element {
             <div className="text-center">
               <p className="text-sm font-medium text-zinc-400">No extensions installed</p>
               <p className="text-xs text-zinc-600 mt-1">
-                Install from GitHub or drop into the Modly extensions directory.
+                Install from GitHub or drop into the three.ws Forge extensions directory.
               </p>
             </div>
           </div>

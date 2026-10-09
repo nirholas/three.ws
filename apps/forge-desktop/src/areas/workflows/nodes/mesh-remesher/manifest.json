@@ -4,7 +4,7 @@
   "type": "process",
   "entry": "processor.py",
   "version": "1.0.0",
-  "author": "Modly",
+  "author": "three.ws Forge",
   "description": "Regularizes mesh topology with isotropic remeshing. Quad mode is quad-dominant cleanup, not character retopology.",
   "nodes": [
     {

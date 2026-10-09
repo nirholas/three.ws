@@ -6,9 +6,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-// Same bundling trick as vramFit.test.mjs — a pure helper, no React deps.
+// Same bundling trick as vramFit.test.mjs: a pure helper, no React deps.
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-agentgrade-test-')), 'agentGrade.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-agentgrade-test-')), 'agentGrade.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/components/ui/agentGrade.ts')],
@@ -32,13 +32,13 @@ test('a model without a tier gets no badge at all', () => {
 test('a measured model shows its own score', () => {
   const g = agentGrade({ agent_tier: 'excellent', agent_score: 0.98, agent_source: 'measured' })
   assert.equal(g.label, 'Agent: excellent (98%)')
-  assert.match(g.title, /Modly's tool-calling suite/)
+  assert.match(g.title, /three.ws Forge's tool-calling suite/)
 })
 
 test('an unmeasured model never borrows the credibility of a measurement', () => {
   const g = agentGrade({ agent_tier: 'solid', agent_score: 0.9, agent_source: 'estimate' })
   assert.equal(g.label, 'Agent: solid')            // no percentage
-  assert.match(g.title, /not measured in Modly/)
+  assert.match(g.title, /not measured in three.ws Forge/)
 })
 
 test('the note is carried into the tooltip', () => {

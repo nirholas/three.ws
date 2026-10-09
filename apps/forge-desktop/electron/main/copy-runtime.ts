@@ -2,7 +2,7 @@
  * Copying the bundled Python runtime out of an ephemeral AppImage mount.
  *
  * Kept apart from python-setup.ts (which imports electron) so the symlink
- * behaviour this depends on can be tested — it is subtle, silent when wrong,
+ * behaviour this depends on can be tested, it is subtle, silent when wrong,
  * and only shows up on the *next* launch.
  */
 
@@ -14,7 +14,7 @@ import { cp } from 'fs/promises'
  * `verbatimSymlinks` is the whole point. Without it `fs.cp` resolves a relative
  * link (`bin/python3 -> python3.11`) into an absolute path pointing back at the
  * *source* tree. When the source is an AppImage mount at
- * /tmp/.mount_Modly-XXXXXX/ — which is a different path on every launch — the
+ * /tmp/.mount_three.ws Forge-XXXXXX/, which is a different path on every launch, the
  * copy silently keeps a hard dependency on a directory that is about to vanish:
  *
  *   - `bin/python3` in the "stable" copy points into the old mount

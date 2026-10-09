@@ -33,12 +33,12 @@ const IDLE: WorkflowRunState = {
 
 const _cancel      = { current: false }
 const _activeJobId = { current: null as string | null }
-// While container (manual mode) pause/resume — set by continueWhile()/retryWhile().
+// While container (manual mode) pause/resume, set by continueWhile()/retryWhile().
 const _resume      = { current: null as (() => void) | null }
 const _retry       = { current: false }
 // For Each auto-loop: the user asked to pause at the next iteration boundary.
 const _pauseRequested = { current: false }
-// Live node params — the UI pushes edits here so a looping/paused run re-reads the
+// Live node params: the UI pushes edits here so a looping/paused run re-reads the
 // latest values when a body node starts (instead of the snapshot from run start).
 const _liveParams  = { current: new Map<string, Record<string, unknown>>() }
 
@@ -95,7 +95,7 @@ async function readTextFile(filePath: string): Promise<string> {
 
 /**
  * Executable nodes reachable downstream from `startId` (its loop body). Traversal
- * stops at Wait boundaries — those nodes belong to branches, not the pre-phase loop.
+ * stops at Wait boundaries, those nodes belong to branches, not the pre-phase loop.
  */
 function reachableExecutable(startId: string, edges: WFEdge[], nodeMap: Map<string, WFNode>): Set<string> {
   const body = new Set<string>([startId])
@@ -121,7 +121,7 @@ function toWorkspaceUrl(filePath: string, workspaceDir: string): string | undefi
   return `/workspace/${norm.slice(workspaceDir.length).replace(/^\//, '')}`
 }
 
-// Inverse of toWorkspaceUrl — used by node components that read a `/workspace/...`
+// Inverse of toWorkspaceUrl: used by node components that read a `/workspace/...`
 // output URL back off disk (e.g. to build a data: URL for a preview).
 export function fromWorkspaceUrl(url: string, workspaceDir: string): string {
   const wsDir = workspaceDir.replace(/\\/g, '/').replace(/\/+$/, '')
@@ -218,7 +218,7 @@ function isInsideWhile(n: WFNode, whileId: string, b: WhileBounds): boolean {
 
 // ─── Branch identification ────────────────────────────────────────────────────
 // A node belongs to Wait W's branch if its single nearest upstream Wait is W
-// (dominance). Nodes with no upstream Wait — or with multiple (merges) — execute
+// (dominance). Nodes with no upstream Wait, or with multiple (merges), execute
 // in the pre-phase before any user pause.
 
 function identifyBranches(workflow: Workflow): {
@@ -598,7 +598,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
   }
 
   const finalize = (ctx: RunContext, finalWaitStates?: Record<string, WaitState>): void => {
-    // Prefer the mesh of the last branch the user actually ran — it's already in the
+    // Prefer the mesh of the last branch the user actually ran, it's already in the
     // viewer, and topo order must not override the user's last action.
     let outputUrl:  string | undefined = ctx.lastSceneMesh
     let outputPath: string | undefined
@@ -737,7 +737,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
       // progress total reflects the real work (manual loops stay unbounded). While
       // loops are independent. For Each loops sharing a boundary (same lastIdx) run
       // in lockstep over the union of their bodies, so that union is replayed once
-      // per pass — count it once, for max(files) − 1 extra passes.
+      // per pass, count it once, for max(files) − 1 extra passes.
       const forEachGroups = new Map<number, LoopInfo[]>()
       let loopExtraSteps = 0
       for (const l of loops) {
@@ -862,7 +862,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
           // share the same downstream body (e.g. an image folder + a mesh folder both
           // feeding one node); they advance together, in lockstep. It only stops if
           // the user hit Pause; then Continue advances to the next file(s) and Retry
-          // re-runs the current one. No forced pause at the end — it just finishes.
+          // re-runs the current one. No forced pause at the end, it just finishes.
           if (forEachLoops.length > 0) {
             const groupBody = new Set<string>()
             let jumpTo = Infinity
@@ -877,7 +877,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
               // Pause every iterator of the group together (they show the same state).
               const groupIds = forEachLoops.map((l) => l.whileId)
               set({ activeNodeId: groupIds[0], runningBranchId: groupIds[0], pausedGroup: groupIds })
-              setRunState((s) => ({ ...s, status: 'paused', blockStep: 'Paused — Continue or Retry' }))
+              setRunState((s) => ({ ...s, status: 'paused', blockStep: 'Paused, Continue or Retry' }))
               await new Promise<void>((resolve) => { _resume.current = resolve })
               if (_cancel.current) return 'cancel'
               set({ runningBranchId: null, pausedGroup: [] })
@@ -925,7 +925,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
           // runningBranchId blocks Wait branches while the pre-phase is parked here.
           _retry.current = false
           set({ activeNodeId: whileLoop.whileId, runningBranchId: whileLoop.whileId })
-          setRunState((s) => ({ ...s, status: 'paused', blockStep: 'Loop finished — Continue or Retry' }))
+          setRunState((s) => ({ ...s, status: 'paused', blockStep: 'Loop finished, Continue or Retry' }))
           await new Promise<void>((resolve) => { _resume.current = resolve })
           if (_cancel.current) return 'cancel'
           set({ runningBranchId: null })
@@ -960,7 +960,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
         }
 
         if (waitIds.length > 0) {
-          // Hand off to the user — branches run on demand via continueRun(id).
+          // Hand off to the user: branches run on demand via continueRun(id).
           set((s) => ({
             activeNodeId: null,
             runState: { ...s.runState, status: 'paused', blockStep: 'Pick a branch and click Continue' },
@@ -985,11 +985,11 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
       const ws = state.waitStates[waitId]
       if (ws !== 'pending' && ws !== 'done' && ws !== 'error') return
       // A pending Wait only runs after a clean handoff. If the run errored in the
-      // pre-phase, it never handed off — don't start a branch with missing inputs.
+      // pre-phase, it never handed off, don't start a branch with missing inputs.
       if (ws === 'pending' && state.runState.status === 'error') return
       const ctx = _ctx.current
       if (!ctx) {
-        console.warn('continueRun: no active run context — was the module hot-reloaded mid-run?')
+        console.warn('continueRun: no active run context, was the module hot-reloaded mid-run?')
         return
       }
 
@@ -1026,7 +1026,7 @@ export const useWorkflowRunStore = create<WorkflowRunStore>((set, get) => {
           }
           pushBranchSceneMesh(ctx, waitId)
         }
-        // A failed branch can never feed its descendants — surface them as error
+        // A failed branch can never feed its descendants, surface them as error
         // too, otherwise they stay 'blocked' and the run hangs on 'paused' forever.
         if (next === 'error') {
           for (const d of descendantWaits(waitId, ctx)) {

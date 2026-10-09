@@ -65,7 +65,7 @@ export function ExtensionCard({
       tabIndex={0}
       onClick={handleOpen}
       onKeyDown={handleKey}
-      aria-label={`${ext.name} — open details`}
+      aria-label={`${ext.name}, open details`}
       className="relative flex flex-col min-h-[218px] p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 overflow-hidden cursor-pointer transition-all duration-150 hover:bg-zinc-900 hover:border-zinc-700 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(0,0,0,0.7)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
     >
       {/* Header */}
@@ -103,7 +103,7 @@ export function ExtensionCard({
 
       {/* Description */}
       <p className="mt-3 text-xs leading-5 text-zinc-500 line-clamp-2 min-h-[2.5rem]">
-        {ext.description?.trim() || '—'}
+        {ext.description?.trim() || '-'}
       </p>
 
       {/* Load error */}

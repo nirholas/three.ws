@@ -13,9 +13,9 @@ export interface LlmModel {
   downloaded:         boolean
   source:             'catalog' | 'custom'
   tags?:              string[]
-  /** How well this model drives the agent — see components/ui/agentGrade.ts.
+  /** How well this model drives the agent, see components/ui/agentGrade.ts.
    *  `agent_score` is only shown when `agent_source` is 'measured', i.e. the
-   *  model was actually run against Modly's own eval suite. */
+   *  model was actually run against three.ws Forge's own eval suite. */
   agent_tier?:        'excellent' | 'solid' | 'limited'
   agent_score?:       number
   agent_source?:      'measured' | 'estimate'

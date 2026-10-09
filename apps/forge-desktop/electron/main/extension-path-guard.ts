@@ -37,7 +37,7 @@ export function resolvePathWithinRoot(rootDir: string, unsafeLeaf: string): stri
   const normalizedRelative = relative(resolvedRoot, resolvedCandidate).replace(/\\/g, '/')
 
   // An empty relative path means the leaf resolved to the root itself ('', '.')
-  // — never a valid child, and catastrophic for deletion call sites.
+  //, never a valid child, and catastrophic for deletion call sites.
   if (normalizedRelative === '' || normalizedRelative === '..' || normalizedRelative.startsWith('../') || isAbsolute(normalizedRelative)) {
     throw new Error(`Resolved path escapes root: ${unsafeLeaf}`)
   }
@@ -54,17 +54,16 @@ export function resolveExtensionPathWithinRoot(rootDir: string, extensionId: unk
 // for install machinery: staging copies, backups of the previous version.
 // Both the Electron and Python discovery sides must skip them.
 
-export const EXT_BACKUP_PREFIX  = '.modly-backup-'
-export const EXT_STAGING_PREFIX = '.modly-staging-'
-// Marker file inside an extension folder while its setup is still running —
-// presence after a crash means the install never completed.
-export const EXT_INCOMPLETE_MARKER = '.modly-incomplete'
+export const EXT_BACKUP_PREFIX  = '.forge-backup-'
+export const EXT_STAGING_PREFIX = '.forge-staging-'
+// Marker file inside an extension folder while its setup is still running,// presence after a crash means the install never completed.
+export const EXT_INCOMPLETE_MARKER = '.forge-incomplete'
 // Reserved basename for registration-pending state. Active transactions append
 // "-<extension-id>-<timestamp>" and live beside extension folders so linked
 // source trees are never mutated.
-export const EXT_REGISTRATION_PENDING_MARKER = '.modly-registration-pending'
+export const EXT_REGISTRATION_PENDING_MARKER = '.forge-registration-pending'
 // Reserved basename for the matching validated transaction commit marker.
-export const EXT_VALIDATED_MARKER = '.modly-registration-validated'
+export const EXT_VALIDATED_MARKER = '.forge-registration-validated'
 
 export function isInternalExtensionDirName(name: string): boolean {
   return name.startsWith('.')
@@ -76,7 +75,7 @@ export function buildExtensionBackupPath(rootDir: string, extensionId: unknown, 
 }
 
 // A backup dir is the previous version of an extension, parked during an
-// install swap. Its name embeds the extension id: .modly-backup-<id>-<ts>.
+// install swap. Its name embeds the extension id: .forge-backup-<id>-<ts>.
 // Ids may contain '-', so strip the numeric timestamp suffix, not a naive split.
 export function parseExtensionBackupName(name: string): { extensionId: string } | null {
   if (!name.startsWith(EXT_BACKUP_PREFIX)) return null

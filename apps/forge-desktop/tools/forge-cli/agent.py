@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Minimal agent-friendly CLI for the local Modly API.
+"""Minimal agent-friendly CLI for the local three.ws Forge API.
 
 The Electron app normally owns the FastAPI server. This tool is intentionally
-small and stdlib-only so automation agents can call a running Modly instance,
+small and stdlib-only so automation agents can call a running three.ws Forge instance,
 optionally start only the FastAPI backend, and always receive parseable JSON.
 """
 from __future__ import annotations
@@ -37,18 +37,18 @@ def _float_env(primary: str, fallback: str, default: float) -> float:
         return default
 
 
-DEFAULT_BASE_URL = os.environ.get("MODLY_API_URL", "http://127.0.0.1:8765")
-DEFAULT_TIMEOUT_SECONDS = _int_env("MODLY_CLI_TIMEOUT", "MODLY_AGENT_TIMEOUT", 1800)
-DEFAULT_POLL_SECONDS = _float_env("MODLY_CLI_POLL_SECONDS", "MODLY_AGENT_POLL_SECONDS", 2.0)
+DEFAULT_BASE_URL = os.environ.get("THREEWS_API_URL") or os.environ.get("MODLY_API_URL", "http://127.0.0.1:8765")
+DEFAULT_TIMEOUT_SECONDS = _int_env("THREEWS_CLI_TIMEOUT", "THREEWS_AGENT_TIMEOUT", 1800)
+DEFAULT_POLL_SECONDS = _float_env("THREEWS_CLI_POLL_SECONDS", "THREEWS_AGENT_POLL_SECONDS", 2.0)
 EXPORT_FORMATS = ("glb", "stl", "obj", "ply")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 WORKFLOW_ASSET_SUFFIXES = {".glb", ".gltf", ".obj", ".stl", ".ply"}
 
 
-class ModlyCliError(RuntimeError):
+class ForgeCliError(RuntimeError):
     """Expected user/API failure that should be reported as JSON."""
 
-    def __init__(self, message: str, *, code: str = "MODLY_CLI_ERROR", http_status: int | None = None) -> None:
+    def __init__(self, message: str, *, code: str = "THREEWS_CLI_ERROR", http_status: int | None = None) -> None:
         super().__init__(message)
         self.message = message
         self.code = code
@@ -76,13 +76,13 @@ def _request_json(
             raw = resp.read().decode("utf-8")
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise ModlyCliError(f"HTTP {exc.code} from {url}: {detail}", code=f"HTTP_{exc.code}", http_status=exc.code) from exc
+        raise ForgeCliError(f"HTTP {exc.code} from {url}: {detail}", code=f"HTTP_{exc.code}", http_status=exc.code) from exc
     except urllib.error.URLError as exc:
-        raise ModlyCliError(f"Cannot reach Modly API at {url}: {exc.reason}", code="API_UNAVAILABLE") from exc
+        raise ForgeCliError(f"Cannot reach three.ws Forge API at {url}: {exc.reason}", code="API_UNAVAILABLE") from exc
     try:
         return json.loads(raw) if raw else {}
     except json.JSONDecodeError as exc:
-        raise ModlyCliError(f"Expected JSON from {url}, got: {raw[:500]}", code="INVALID_JSON_RESPONSE") from exc
+        raise ForgeCliError(f"Expected JSON from {url}, got: {raw[:500]}", code="INVALID_JSON_RESPONSE") from exc
 
 
 def _download(url: str, dest: Path, *, timeout: float) -> int:
@@ -98,15 +98,15 @@ def _download(url: str, dest: Path, *, timeout: float) -> int:
                 total += len(chunk)
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise ModlyCliError(f"HTTP {exc.code} while downloading {url}: {detail}", code=f"HTTP_{exc.code}", http_status=exc.code) from exc
+        raise ForgeCliError(f"HTTP {exc.code} while downloading {url}: {detail}", code=f"HTTP_{exc.code}", http_status=exc.code) from exc
     except urllib.error.URLError as exc:
-        raise ModlyCliError(f"Cannot download {url}: {exc.reason}", code="DOWNLOAD_FAILED") from exc
+        raise ForgeCliError(f"Cannot download {url}: {exc.reason}", code="DOWNLOAD_FAILED") from exc
     except OSError as exc:
-        raise ModlyCliError(f"Cannot write to {dest}: {exc}", code="WRITE_FAILED") from exc
+        raise ForgeCliError(f"Cannot write to {dest}: {exc}", code="WRITE_FAILED") from exc
 
 
 def _multipart_form(fields: dict[str, str], file_field: str, file_path: Path) -> tuple[bytes, str]:
-    boundary = f"----modly-cli-{time.time_ns()}"
+    boundary = f"----forge-cli-{time.time_ns()}"
     parts: list[bytes] = []
 
     for name, value in fields.items():
@@ -153,7 +153,7 @@ def _validate_workspace_path(workspace_path: str) -> str:
         or any(part == ".." for part in parts)
         or any(_is_windows_drive_component(part) for part in parts)
     ):
-        raise ModlyCliError(f"Invalid workspace path: {workspace_path}", code="INVALID_WORKSPACE_PATH")
+        raise ForgeCliError(f"Invalid workspace path: {workspace_path}", code="INVALID_WORKSPACE_PATH")
     return value
 
 
@@ -166,7 +166,7 @@ def _export_workspace_path(base_url: str, workspace_path: str, fmt: str, dest: P
 def _try_health(base_url: str, timeout: float) -> dict[str, Any] | None:
     try:
         health = _request_json("GET", f"{base_url.rstrip('/')}/health", timeout=timeout)
-    except ModlyCliError:
+    except ForgeCliError:
         return None
     return health if isinstance(health, dict) else {"raw": health}
 
@@ -179,7 +179,7 @@ def _require_health(base_url: str, timeout: float) -> dict[str, Any]:
 def _model_catalog(base_url: str, timeout: float) -> list[dict[str, Any]]:
     data = _request_json("GET", f"{base_url.rstrip('/')}/model/all", timeout=timeout)
     if not isinstance(data, list):
-        raise ModlyCliError(f"Expected /model/all to return a list, got: {data}", code="INVALID_MODEL_CATALOG")
+        raise ForgeCliError(f"Expected /model/all to return a list, got: {data}", code="INVALID_MODEL_CATALOG")
     return [model for model in data if isinstance(model, dict)]
 
 
@@ -192,7 +192,7 @@ def _validate_model_id(base_url: str, request_timeout: float, model_id: str, mod
     ids = _model_ids(models)
     if model_id not in ids:
         available = ", ".join(sorted(ids)) or "(none)"
-        raise ModlyCliError(
+        raise ForgeCliError(
             f"Unknown model id '{model_id}'. Use one of: {available}",
             code="INVALID_MODEL_ID",
         )
@@ -200,7 +200,7 @@ def _validate_model_id(base_url: str, request_timeout: float, model_id: str, mod
 
 
 def _recovery_meta(base_url: str, run_id: str, *, legacy: bool = False, kind: str = "workflow-run", extra: dict[str, Any] | None = None) -> dict[str, Any]:
-    prefix = "python tools/modly-cli/agent.py"
+    prefix = "python tools/forge-cli/agent.py"
     if base_url.rstrip("/") != DEFAULT_BASE_URL.rstrip("/"):
         prefix = f"{prefix} --base-url {base_url.rstrip('/')}"
     if legacy:
@@ -222,14 +222,14 @@ def _recovery_meta(base_url: str, run_id: str, *, legacy: bool = False, kind: st
     return meta
 
 
-def _unsupported_process(message: str = "This process is not available through the canonical process-run contract.") -> ModlyCliError:
-    return ModlyCliError(message, code="UNSUPPORTED_PROCESS")
+def _unsupported_process(message: str = "This process is not available through the canonical process-run contract.") -> ForgeCliError:
+    return ForgeCliError(message, code="UNSUPPORTED_PROCESS")
 
 
 def _request_supported_contract(method: str, url: str, *, timeout: float, data: bytes | None = None, headers: dict[str, str] | None = None) -> Any:
     try:
         return _request_json(method, url, timeout=timeout, data=data, headers=headers)
-    except ModlyCliError as exc:
+    except ForgeCliError as exc:
         if exc.http_status == 404:
             raise _unsupported_process() from exc
         raise
@@ -277,7 +277,7 @@ def _default_api_dir() -> Path | None:
     if (repo_api / "main.py").exists():
         return repo_api
     for local in _windows_env_paths("LOCALAPPDATA"):
-        installed = local / "Programs" / "Modly" / "resources" / "api"
+        installed = local / "Programs" / "three.ws Forge" / "resources" / "api"
         if (installed / "main.py").exists():
             return installed
     return None
@@ -289,7 +289,7 @@ def _default_python(api_dir: Path) -> Path | None:
         api_dir / ".venv" / "bin" / "python",
     ]
     for appdata in _windows_env_paths("APPDATA"):
-        candidates.append(appdata / "Modly" / "dependencies" / "venv" / "Scripts" / "python.exe")
+        candidates.append(appdata / "three.ws Forge" / "dependencies" / "venv" / "Scripts" / "python.exe")
     candidates.append(Path(sys.executable))
     for candidate in candidates:
         if candidate.exists():
@@ -297,11 +297,11 @@ def _default_python(api_dir: Path) -> Path | None:
     return None
 
 
-def _load_modly_settings() -> dict[str, Any]:
+def _load_forge_settings() -> dict[str, Any]:
     candidates: list[Path] = []
     for appdata in _windows_env_paths("APPDATA"):
-        candidates.append(appdata / "Modly" / "settings.json")
-    candidates.append(Path.home() / ".config" / "Modly" / "settings.json")
+        candidates.append(appdata / "three.ws Forge" / "settings.json")
+    candidates.append(Path.home() / ".config" / "three.ws Forge" / "settings.json")
     for path in candidates:
         if path.exists():
             try:
@@ -315,19 +315,19 @@ def _load_modly_settings() -> dict[str, Any]:
 def _resolve_serve_config(args: argparse.Namespace) -> tuple[Path, Path, dict[str, str], list[str], str]:
     api_dir = Path(args.api_dir).expanduser().resolve() if getattr(args, "api_dir", None) else _default_api_dir()
     if not api_dir or not (api_dir / "main.py").exists():
-        raise ModlyCliError("Could not find Modly api directory; pass --api-dir")
+        raise ForgeCliError("Could not find three.ws Forge api directory; pass --api-dir")
 
     python = Path(args.python).expanduser().resolve() if getattr(args, "python", None) else _default_python(api_dir)
     if not python or not python.exists():
-        raise ModlyCliError("Could not find Modly Python environment; pass --python")
+        raise ForgeCliError("Could not find three.ws Forge Python environment; pass --python")
 
-    settings = _load_modly_settings()
+    settings = _load_forge_settings()
     env = os.environ.copy()
     hf_token = getattr(args, "hf_token", None) or settings.get("hfToken") or os.environ.get("HF_TOKEN", "")
     env.update({
         "PYTHONUNBUFFERED": "1",
-        "MODELS_DIR": getattr(args, "models_dir", None) or settings.get("modelsDir") or str(Path.home() / ".modly" / "models"),
-        "WORKSPACE_DIR": getattr(args, "workspace_dir", None) or settings.get("workspaceDir") or str(Path.home() / ".modly" / "workspace"),
+        "MODELS_DIR": getattr(args, "models_dir", None) or settings.get("modelsDir") or str(Path.home() / ".three-ws-forge" / "models"),
+        "WORKSPACE_DIR": getattr(args, "workspace_dir", None) or settings.get("workspaceDir") or str(Path.home() / ".three-ws-forge" / "workspace"),
         "EXTENSIONS_DIR": getattr(args, "extensions_dir", None) or settings.get("extensionsDir") or "",
         "SELECTED_MODEL_ID": getattr(args, "model", None) or os.environ.get("SELECTED_MODEL_ID", ""),
         "HUGGING_FACE_HUB_TOKEN": hf_token,
@@ -396,16 +396,16 @@ def _parse_params(params_json: str | None, params_file: str | None) -> dict[str,
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise ModlyCliError(f"params must be valid JSON: {exc}") from exc
+        raise ForgeCliError(f"params must be valid JSON: {exc}") from exc
     if not isinstance(parsed, dict):
-        raise ModlyCliError("params must be a JSON object")
+        raise ForgeCliError("params must be a JSON object")
     return parsed
 
 
 def _choose_auto_model(base_url: str, request_timeout: float) -> str:
     active = _request_json("GET", f"{base_url.rstrip('/')}/model/status", timeout=request_timeout)
     if not isinstance(active, dict) or not active.get("id"):
-        raise ModlyCliError(f"Could not resolve active model id: {active}", code="MODEL_NOT_READY")
+        raise ForgeCliError(f"Could not resolve active model id: {active}", code="MODEL_NOT_READY")
     return _validate_model_id(base_url, request_timeout, str(active["id"]))
 
 
@@ -416,7 +416,7 @@ def _resolve_model_id(args: argparse.Namespace, base_url: str) -> str:
     if model_id == "active":
         active = _request_json("GET", f"{base_url}/model/status", timeout=args.request_timeout)
         if not isinstance(active, dict) or not active.get("id"):
-            raise ModlyCliError(f"Could not resolve active model id: {active}", code="MODEL_NOT_READY")
+            raise ForgeCliError(f"Could not resolve active model id: {active}", code="MODEL_NOT_READY")
         return _validate_model_id(base_url, args.request_timeout, str(active["id"]))
     return _validate_model_id(base_url, args.request_timeout, str(model_id))
 
@@ -456,9 +456,9 @@ def _load_comfy_workflow(workflow: str, *, host: str, timeout: float) -> dict[st
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
-            raise ModlyCliError(f"workflow must be valid JSON: {path}: {exc}") from exc
+            raise ForgeCliError(f"workflow must be valid JSON: {path}: {exc}") from exc
         if not isinstance(data, dict):
-            raise ModlyCliError(f"workflow JSON must be an object: {path}")
+            raise ForgeCliError(f"workflow JSON must be an object: {path}")
         return data
 
     candidates = [workflow, f"{workflow}.json"] if not workflow.endswith(".json") else [workflow]
@@ -467,7 +467,7 @@ def _load_comfy_workflow(workflow: str, *, host: str, timeout: float) -> dict[st
         for prefix in ("/userdata/workflows/", "/api/userdata/workflows/", "/userdata/", "/api/userdata/"):
             try:
                 data = _request_json("GET", f"{host.rstrip('/')}{prefix}{quoted}", timeout=timeout)
-            except ModlyCliError:
+            except ForgeCliError:
                 continue
             if isinstance(data, dict):
                 return data
@@ -492,19 +492,19 @@ def _load_comfy_workflow(workflow: str, *, host: str, timeout: float) -> dict[st
                 try:
                     data = json.loads(candidate.read_text(encoding="utf-8"))
                 except json.JSONDecodeError as exc:
-                    raise ModlyCliError(f"workflow must be valid JSON: {candidate}: {exc}") from exc
+                    raise ForgeCliError(f"workflow must be valid JSON: {candidate}: {exc}") from exc
                 if isinstance(data, dict):
                     return data
-    raise ModlyCliError(f"Could not find ComfyUI workflow '{workflow}'. Pass a JSON path or set COMFYUI_WORKFLOW_DIR.")
+    raise ForgeCliError(f"Could not find ComfyUI workflow '{workflow}'. Pass a JSON path or set COMFYUI_WORKFLOW_DIR.")
 
 
 def _patch_comfy_workflow(workflow: dict[str, Any], *, prompt: str | None, seed: int | None) -> dict[str, Any]:
     workflow = json.loads(json.dumps(workflow))
     nodes = workflow.get("prompt", workflow)
     if not isinstance(nodes, dict):
-        raise ModlyCliError("ComfyUI workflow must be API format (top-level node-id object, or {'prompt': {...}})")
+        raise ForgeCliError("ComfyUI workflow must be API format (top-level node-id object, or {'prompt': {...}})")
     if "nodes" in workflow and "links" in workflow:
-        raise ModlyCliError("ComfyUI workflow is editor format; export it as API format first")
+        raise ForgeCliError("ComfyUI workflow is editor format; export it as API format first")
 
     if prompt is not None:
         patched = False
@@ -530,7 +530,7 @@ def _patch_comfy_workflow(workflow: dict[str, Any], *, prompt: str | None, seed:
                 if patched:
                     break
         if not patched:
-            raise ModlyCliError("Could not find a text/prompt input to patch in ComfyUI workflow")
+            raise ForgeCliError("Could not find a text/prompt input to patch in ComfyUI workflow")
 
     if seed is not None:
         for node in nodes.values():
@@ -549,11 +549,11 @@ def _run_comfy_workflow(args: argparse.Namespace) -> dict[str, Any]:
     prompt = getattr(args, "prompt", None)
     seed = getattr(args, "seed", None)
     graph = _patch_comfy_workflow(workflow, prompt=prompt, seed=seed)
-    payload = json.dumps({"prompt": graph, "client_id": "modly-cli"}).encode("utf-8")
+    payload = json.dumps({"prompt": graph, "client_id": "forge-cli"}).encode("utf-8")
     queued = _request_json("POST", f"{host}/prompt", timeout=args.request_timeout, data=payload, headers={"Content-Type": "application/json"})
     prompt_id = queued.get("prompt_id") if isinstance(queued, dict) else None
     if not prompt_id:
-        raise ModlyCliError(f"ComfyUI did not return prompt_id: {queued}")
+        raise ForgeCliError(f"ComfyUI did not return prompt_id: {queued}")
 
     deadline = time.monotonic() + args.timeout
     history: dict[str, Any] = {}
@@ -566,7 +566,7 @@ def _run_comfy_workflow(args: argparse.Namespace) -> dict[str, Any]:
             print(json.dumps({"phase": "comfy", "prompt_id": prompt_id, "status": "running"}), file=sys.stderr)
         time.sleep(args.poll)
     if not history:
-        raise ModlyCliError(f"Timed out waiting for ComfyUI prompt {prompt_id}", code="TIMEOUT")
+        raise ForgeCliError(f"Timed out waiting for ComfyUI prompt {prompt_id}", code="TIMEOUT")
 
     return {"ok": True, "comfy_url": host, "workflow": args.workflow, "prompt_id": str(prompt_id), "history": history}
 
@@ -613,7 +613,7 @@ def _download_comfy_ref(host: str, ref: dict[str, Any], dest: Path, *, timeout: 
 
 def _temp_path_for_comfy_ref(ref: dict[str, Any], *, default_suffix: str) -> Path:
     suffix = _comfy_ref_suffix(ref) or default_suffix
-    tmp = tempfile.NamedTemporaryFile(delete=False, prefix="modly-comfy-", suffix=suffix)
+    tmp = tempfile.NamedTemporaryFile(delete=False, prefix="forge-comfy-", suffix=suffix)
     tmp.close()
     return Path(tmp.name)
 
@@ -625,7 +625,7 @@ def _download_comfy_image_output(args: argparse.Namespace, comfy: dict[str, Any]
 
     image_ref = _find_comfy_file_ref(history, IMAGE_SUFFIXES)
     if not image_ref:
-        raise ModlyCliError(f"ComfyUI prompt {prompt_id} completed without a supported image output", code="NO_WORKFLOW_OUTPUT")
+        raise ForgeCliError(f"ComfyUI prompt {prompt_id} completed without a supported image output", code="NO_WORKFLOW_OUTPUT")
 
     out_path: Path | None = getattr(args, "comfy_output", None)
     if out_path:
@@ -664,7 +664,7 @@ def cmd_generate_from_workflow(args: argparse.Namespace) -> int:
     asset_ref = _find_comfy_file_ref(history, WORKFLOW_ASSET_SUFFIXES)
     if asset_ref:
         if not args.output:
-            raise ModlyCliError("--output is required when a workflow produces a direct 3D asset", code="OUTPUT_REQUIRED")
+            raise ForgeCliError("--output is required when a workflow produces a direct 3D asset", code="OUTPUT_REQUIRED")
         export_dest = Path(args.output).expanduser().resolve()
         bytes_written = _download_comfy_ref(host, asset_ref, export_dest, timeout=args.request_timeout)
         _json_print({
@@ -708,7 +708,7 @@ def _workflow_workspace_path(status: dict[str, Any]) -> str:
     output_url = str(status.get("output_url") or "")
     if output_url:
         return _workspace_relative_path(output_url)
-    raise ModlyCliError(f"Workflow run completed without an output path: {status}", code="MISSING_OUTPUT")
+    raise ForgeCliError(f"Workflow run completed without an output path: {status}", code="MISSING_OUTPUT")
 
 
 def _start_workflow_run(args: argparse.Namespace, image_path: Path, *, base_url: str, model_id: str, params: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -728,7 +728,7 @@ def _start_workflow_run(args: argparse.Namespace, image_path: Path, *, base_url:
     )
     run_id = started.get("run_id") if isinstance(started, dict) else None
     if not run_id:
-        raise ModlyCliError(f"Modly did not return a run_id: {started}", code="MISSING_RUN_ID")
+        raise ForgeCliError(f"three.ws Forge did not return a run_id: {started}", code="MISSING_RUN_ID")
     return str(run_id), started if isinstance(started, dict) else {"raw": started}
 
 
@@ -742,14 +742,14 @@ def _poll_workflow_run(args: argparse.Namespace, *, base_url: str, run_id: str, 
         if state == "done":
             return last_status, _workflow_workspace_path(last_status)
         if state in {"error", "cancelled"}:
-            raise ModlyCliError(f"Workflow run {run_id} ended with status {state}: {last_status}", code="WORKFLOW_RUN_FAILED")
+            raise ForgeCliError(f"Workflow run {run_id} ended with status {state}: {last_status}", code="WORKFLOW_RUN_FAILED")
         if getattr(args, "progress", False) and not getattr(args, "quiet", False):
             progress = last_status.get("progress", 0)
             step = last_status.get("step", "")
             print(json.dumps({"phase": progress_label, "run_id": run_id, "status": state, "progress": progress, "step": step}), file=sys.stderr)
         time.sleep(args.poll)
 
-    raise ModlyCliError(f"Timed out waiting for workflow run {run_id}. Last status: {last_status}", code="TIMEOUT")
+    raise ForgeCliError(f"Timed out waiting for workflow run {run_id}. Last status: {last_status}", code="TIMEOUT")
 
 
 def _run_workflow_run(
@@ -773,7 +773,7 @@ def cmd_workflow_run_start(args: argparse.Namespace) -> int:
     _require_health(base_url, args.request_timeout)
     image_path = Path(args.image).expanduser().resolve()
     if not image_path.exists() or not image_path.is_file():
-        raise ModlyCliError(f"image file not found: {image_path}", code="IMAGE_NOT_FOUND")
+        raise ForgeCliError(f"image file not found: {image_path}", code="IMAGE_NOT_FOUND")
     model_id = _resolve_model_id(args, base_url)
     params = _canonical_generation_params(args)
     run_id, status, rel_path = _run_workflow_run(args, image_path, base_url=base_url, model_id=model_id, params=params, wait=getattr(args, "wait", False))
@@ -842,7 +842,7 @@ def _run_generation_job(
     )
     job_id = started.get("job_id") if isinstance(started, dict) else None
     if not job_id:
-        raise ModlyCliError(f"Modly did not return a job_id: {started}")
+        raise ForgeCliError(f"three.ws Forge did not return a job_id: {started}")
 
     deadline = time.monotonic() + args.timeout
     last_status: dict[str, Any] = {}
@@ -853,17 +853,17 @@ def _run_generation_job(
         if state == "done":
             output_url = str(last_status.get("output_url") or "")
             if not output_url:
-                raise ModlyCliError(f"Job completed without output_url: {last_status}")
+                raise ForgeCliError(f"Job completed without output_url: {last_status}")
             return str(job_id), last_status, _workspace_relative_path(output_url)
         if state in {"error", "cancelled"}:
-            raise ModlyCliError(f"Job {job_id} ended with status {state}: {last_status}")
+            raise ForgeCliError(f"Job {job_id} ended with status {state}: {last_status}")
         if getattr(args, "progress", False) and not getattr(args, "quiet", False):
             progress = last_status.get("progress", 0)
             step = last_status.get("step", "")
             print(json.dumps({"phase": progress_label, "job_id": job_id, "status": state, "progress": progress, "step": step}), file=sys.stderr)
         time.sleep(args.poll)
 
-    raise ModlyCliError(f"Timed out waiting for job {job_id}. Last status: {last_status}")
+    raise ForgeCliError(f"Timed out waiting for job {job_id}. Last status: {last_status}")
 
 
 def _generate_one(args: argparse.Namespace, image_path: Path, output_path: Path | None = None) -> dict[str, Any]:
@@ -871,7 +871,7 @@ def _generate_one(args: argparse.Namespace, image_path: Path, output_path: Path 
     _require_health(base_url, args.request_timeout)
     image_path = image_path.expanduser().resolve()
     if not image_path.exists() or not image_path.is_file():
-        raise ModlyCliError(f"image file not found: {image_path}", code="IMAGE_NOT_FOUND")
+        raise ForgeCliError(f"image file not found: {image_path}", code="IMAGE_NOT_FOUND")
 
     _ensure_no_external_texture_process(args)
     params = _canonical_generation_params(args)
@@ -922,7 +922,7 @@ def cmd_legacy_generate(args: argparse.Namespace) -> int:
     _require_health(base_url, args.request_timeout)
     image_path = Path(args.image).expanduser().resolve()
     if not image_path.exists() or not image_path.is_file():
-        raise ModlyCliError(f"image file not found: {image_path}", code="IMAGE_NOT_FOUND")
+        raise ForgeCliError(f"image file not found: {image_path}", code="IMAGE_NOT_FOUND")
     params = _parse_params(getattr(args, "params_json", None), getattr(args, "params_file", None))
     model_id = _resolve_model_id(args, base_url)
     job_id, status, rel_path = _run_generation_job(
@@ -974,7 +974,7 @@ def cmd_export(args: argparse.Namespace) -> int:
 
 def _iter_images(input_dir: Path) -> list[Path]:
     if not input_dir.exists() or not input_dir.is_dir():
-        raise ModlyCliError(f"input directory not found: {input_dir}")
+        raise ForgeCliError(f"input directory not found: {input_dir}")
     return sorted(p for p in input_dir.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES)
 
 
@@ -982,10 +982,10 @@ def _manifest_jobs(path: Path, fallback_output_dir: Path | None, default_format:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ModlyCliError(f"manifest must be valid JSON: {exc}") from exc
+        raise ForgeCliError(f"manifest must be valid JSON: {exc}") from exc
     entries = raw.get("jobs", raw.get("images")) if isinstance(raw, dict) else raw
     if not isinstance(entries, list):
-        raise ModlyCliError("manifest must be a JSON list or object with a jobs/images list")
+        raise ForgeCliError("manifest must be a JSON list or object with a jobs/images list")
 
     jobs: list[tuple[Path, Path | None, str]] = []
     for index, entry in enumerate(entries):
@@ -996,14 +996,14 @@ def _manifest_jobs(path: Path, fallback_output_dir: Path | None, default_format:
         elif isinstance(entry, dict):
             image_value = entry.get("image") or entry.get("image_path") or entry.get("path")
             if not image_value:
-                raise ModlyCliError(f"manifest entry {index} is missing image")
+                raise ForgeCliError(f"manifest entry {index} is missing image")
             image = Path(str(image_value))
             fmt = str(entry.get("format") or default_format)
             if fmt not in EXPORT_FORMATS:
-                raise ModlyCliError(f"manifest entry {index} has unsupported format: {fmt}")
+                raise ForgeCliError(f"manifest entry {index} has unsupported format: {fmt}")
             output = Path(str(entry["output"])) if entry.get("output") else None
         else:
-            raise ModlyCliError(f"manifest entry {index} must be a string or object")
+            raise ForgeCliError(f"manifest entry {index} must be a string or object")
 
         if not image.is_absolute():
             image = path.parent / image
@@ -1023,7 +1023,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
         jobs = _manifest_jobs(Path(args.manifest).expanduser().resolve(), output_dir, args.format)
     else:
         if not args.input_dir or output_dir is None:
-            raise ModlyCliError("batch requires --input-dir and --output-dir, or --manifest with per-entry outputs")
+            raise ForgeCliError("batch requires --input-dir and --output-dir, or --manifest with per-entry outputs")
         input_dir = Path(args.input_dir).expanduser().resolve()
         jobs = [(image, output_dir / f"{image.stem}.{args.format}", args.format) for image in _iter_images(input_dir)]
 
@@ -1035,7 +1035,7 @@ def cmd_batch(args: argparse.Namespace) -> int:
             args.format = fmt
             try:
                 results.append(_generate_one(args, image, output))
-            except ModlyCliError as exc:
+            except ForgeCliError as exc:
                 failures += 1
                 results.append({"ok": False, "image": str(image), "error": str(exc)})
                 if not args.continue_on_error:
@@ -1068,9 +1068,9 @@ def cmd_ensure_server(args: argparse.Namespace) -> int:
         _json_print({"ok": True, "started": False, "base_url": base_url, "health": health, "meta": meta}, compact=args.compact)
         return 0
     if not args.start:
-        message = "Modly API is not running; launch Modly or run ensure-server --start"
+        message = "three.ws Forge API is not running; launch three.ws Forge or run ensure-server --start"
         if args.fail_on_unavailable:
-            raise ModlyCliError(message, code="API_UNAVAILABLE")
+            raise ForgeCliError(message, code="API_UNAVAILABLE")
         _json_print({"ok": False, "started": False, "base_url": base_url, "error": message, "code": "API_UNAVAILABLE", "message": message, "meta": meta}, compact=args.compact)
         return 0
     api_dir, _python, env, cmd, resolved_url = _resolve_serve_config(args)
@@ -1132,7 +1132,7 @@ def _add_comfy_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--prompt", help="Prompt text to inject into the first positive text/prompt input")
     parser.add_argument("--seed", type=int, help="Seed to inject into seed/noise_seed inputs")
     parser.add_argument("--comfy-url", default=os.environ.get("COMFYUI_URL", "http://127.0.0.1:8188"), help="ComfyUI API URL (default: http://127.0.0.1:8188)")
-    parser.add_argument("--comfy-output", help="Where to save the ComfyUI image output before passing it to Modly")
+    parser.add_argument("--comfy-output", help="Where to save the ComfyUI image output before passing it to three.ws Forge")
 
 
 def _add_generation_options(parser: argparse.ArgumentParser, *, image: bool, output: bool, batch: bool = False) -> None:
@@ -1143,7 +1143,7 @@ def _add_generation_options(parser: argparse.ArgumentParser, *, image: bool, out
         parser.add_argument("--no-export", action="store_true", help="Do not download/export the completed workspace mesh")
     parser.add_argument("--format", choices=EXPORT_FORMATS, default="glb", help="Export format (default: glb)")
     parser.add_argument("--model", default="auto", help="Model id to use, 'active', or 'auto' (default: auto)")
-    parser.add_argument("--collection", default="Agent", help="Modly workspace collection (default: Agent)")
+    parser.add_argument("--collection", default="Agent", help="three.ws Forge workspace collection (default: Agent)")
     parser.add_argument("--remesh", choices=["quad", "triangle", "none"], default="quad", help="Remesh mode (default: quad)")
     parser.add_argument("--texture", dest="enable_texture", action="store_true", default=True, help="Enable texture generation (default)")
     parser.add_argument("--no-texture", dest="enable_texture", action="store_false", help="Disable texture generation for faster geometry-only smoke tests")
@@ -1167,8 +1167,8 @@ def _add_generation_options(parser: argparse.ArgumentParser, *, image: bool, out
 def _add_serve_options(parser: argparse.ArgumentParser, *, include_start: bool = False) -> None:
     if include_start:
         parser.add_argument("--start", action="store_true", help="Start the backend if health check fails")
-    parser.add_argument("--api-dir", help="Directory containing Modly API main.py")
-    parser.add_argument("--python", help="Python executable with Modly API dependencies installed")
+    parser.add_argument("--api-dir", help="Directory containing three.ws Forge API main.py")
+    parser.add_argument("--python", help="Python executable with three.ws Forge API dependencies installed")
     parser.add_argument("--host", default="127.0.0.1", help="Backend host (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8765, help="Backend port (default: 8765)")
     parser.add_argument("--models-dir", help="Models directory for the backend")
@@ -1182,22 +1182,22 @@ def _add_serve_options(parser: argparse.ArgumentParser, *, include_start: bool =
 
 class JsonArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
-        raise ModlyCliError(message, code="INVALID_ARGUMENTS")
+        raise ForgeCliError(message, code="INVALID_ARGUMENTS")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = JsonArgumentParser(
-        prog="modly-cli",
-        description="Tiny stdlib-only CLI for agents calling a running Modly desktop API.",
+        prog="forge-cli",
+        description="Tiny stdlib-only CLI for agents calling a running three.ws Forge desktop API.",
     )
-    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help=f"Modly API URL (default: {DEFAULT_BASE_URL})")
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help=f"three.ws Forge API URL (default: {DEFAULT_BASE_URL})")
     parser.add_argument("--request-timeout", type=float, default=30, help="Per-request timeout in seconds (default: 30)")
     parser.add_argument("--compact", action="store_true", help="Print compact one-line JSON")
     parser.add_argument("--quiet", action="store_true", help="Suppress progress output; final JSON is still printed")
     canonical_commands = "{health,model,workflow-run,capability,process-run,generate,dev,experimental,legacy}"
     sub = parser.add_subparsers(dest="command", required=True, metavar=canonical_commands)
 
-    health = sub.add_parser("health", help="Check that Modly's local API is reachable")
+    health = sub.add_parser("health", help="Check that three.ws Forge's local API is reachable")
     health.set_defaults(func=cmd_health)
 
     status = sub.add_parser("status", help=argparse.SUPPRESS)
@@ -1338,7 +1338,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = parser.parse_args(argv)
         return int(args.func(args))
-    except ModlyCliError as exc:
+    except ForgeCliError as exc:
         _json_print({"ok": False, "code": exc.code, "message": exc.message, "error": exc.message}, compact=getattr(args, "compact", False) if args else False)
         return 1
     except SystemExit as exc:

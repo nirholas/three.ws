@@ -37,7 +37,7 @@ export default function AddToSceneNode({ id, data, selected }: { id: string; dat
       }
       handles={
         <Handle type="target" position={Position.Left}
-          style={{ background: INPUT_COLOR, width: 14, height: 14, border: '2.5px solid #18181b' }} />
+          style={{ background: INPUT_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a' }} />
       }
     >
       <div className="px-3 pb-3 pt-2.5">

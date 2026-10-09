@@ -30,15 +30,15 @@ function loadModule() {
 const { getSettings, setSettings, ensureAgentDir } = loadModule()
 
 test('a fresh install puts the agent folder in userData beside the others', () => {
-  const userData = mkdtempSync(join(tmpdir(), 'modly-settings-'))
+  const userData = mkdtempSync(join(tmpdir(), 'forge-settings-'))
   const s = getSettings(userData)
   assert.equal(s.agentDir, join(userData, 'agent'))
   assert.equal(s.modelsDir, join(userData, 'models'))
 })
 
 test('an existing install gets the agent folder beside its chosen data folders', () => {
-  const userData = mkdtempSync(join(tmpdir(), 'modly-settings-'))
-  const base = join(userData, 'Documents', 'Modly')
+  const userData = mkdtempSync(join(tmpdir(), 'forge-settings-'))
+  const base = join(userData, 'Documents', 'three.ws Forge')
   writeFileSync(join(userData, 'settings.json'), JSON.stringify({
     modelsDir:     join(base, 'models'),
     workspaceDir:  join(base, 'workspace'),
@@ -48,7 +48,7 @@ test('an existing install gets the agent folder beside its chosen data folders',
 })
 
 test('a saved agent folder is kept, and persists once any setting is written', () => {
-  const userData = mkdtempSync(join(tmpdir(), 'modly-settings-'))
+  const userData = mkdtempSync(join(tmpdir(), 'forge-settings-'))
   const custom = join(userData, 'elsewhere', 'agent')
   writeFileSync(join(userData, 'settings.json'), JSON.stringify({ agentDir: custom }))
   assert.equal(getSettings(userData).agentDir, custom)
@@ -58,8 +58,8 @@ test('a saved agent folder is kept, and persists once any setting is written', (
 })
 
 test('an existing install gets its agent folder created and pinned at startup', () => {
-  const userData = mkdtempSync(join(tmpdir(), 'modly-settings-'))
-  const base = join(userData, 'Documents', 'Modly')
+  const userData = mkdtempSync(join(tmpdir(), 'forge-settings-'))
+  const base = join(userData, 'Documents', 'three.ws Forge')
   writeFileSync(join(userData, 'settings.json'), JSON.stringify({ modelsDir: join(base, 'models') }))
 
   assert.equal(ensureAgentDir(userData), join(base, 'agent'))
@@ -72,7 +72,7 @@ test('an existing install gets its agent folder created and pinned at startup', 
 })
 
 test('a fresh install gets its agent folder without settings.json being written', () => {
-  const userData = mkdtempSync(join(tmpdir(), 'modly-settings-'))
+  const userData = mkdtempSync(join(tmpdir(), 'forge-settings-'))
   assert.equal(ensureAgentDir(userData), join(userData, 'agent'))
   assert.equal(existsSync(join(userData, 'agent')), true)
   assert.equal(existsSync(join(userData, 'settings.json')), false)

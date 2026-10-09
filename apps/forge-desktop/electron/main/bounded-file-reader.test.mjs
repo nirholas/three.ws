@@ -29,7 +29,7 @@ test('oversized scene manifests are rejected before their bytes are read', async
 })
 
 test('scene manifests at the bound are read and encoded', async () => {
-  const bytes = new TextEncoder().encode('{"schema":"modly.scene-manifest.v1"}')
+  const bytes = new TextEncoder().encode('{"schema":"three-ws.forge.scene-manifest.v1"}')
   const encoded = await readLocalFileBase64('/workspace/room/scene-manifest.json', {
     statFile: async () => ({ size: MAX_SCENE_MANIFEST_BYTES, isFile: () => true }),
     readBytes: async () => bytes,

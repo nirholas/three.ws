@@ -4,7 +4,7 @@
   "type": "process",
   "entry": "processor.py",
   "version": "1.2.0",
-  "author": "Modly",
+  "author": "three.ws Forge",
   "description": "Repairs mesh topology: removes duplicates, degenerate faces, fixes non-manifold edges, fills simple boundary holes.",
   "nodes": [
     {

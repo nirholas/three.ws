@@ -38,7 +38,7 @@ export default function InputNode({ id, data, selected }: { id: string; data: WF
       icon={<div className="w-2 h-2 rounded-full bg-zinc-500" />}
       handles={
         <Handle type="source" position={Position.Right}
-          style={{ background: handleColor, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }} />
+          style={{ background: handleColor, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }} />
       }
     >
       <div ref={toggleRowRef} className="px-3 pb-3 pt-2.5 flex gap-1.5">

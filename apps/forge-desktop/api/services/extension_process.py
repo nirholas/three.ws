@@ -1,5 +1,5 @@
 """
-ExtensionProcess — manages a generator running in an isolated subprocess.
+ExtensionProcess: manages a generator running in an isolated subprocess.
 
 Each extension runs in its own venv via runner.py.
 Communication is done via newline-delimited JSON on stdin/stdout.
@@ -73,16 +73,19 @@ class ExtensionProcess:
         env["EXTENSION_DIR"] = str(self.ext_dir)
         env["MODELS_DIR"]    = str(MODELS_DIR)
         env["WORKSPACE_DIR"] = str(WORKSPACE_DIR)
-        env["MODLY_API_DIR"] = str(Path(__file__).parent.parent)
-        # Lets extensions call back into the Modly API (e.g. /llm/chat for the shared LLM).
-        env.setdefault("MODLY_API_URL", "http://127.0.0.1:8765")
+        env["THREEWS_API_DIR"] = str(Path(__file__).parent.parent)
+        # Lets extensions call back into the three.ws Forge API (e.g. /llm/chat for the shared LLM).
+        env.setdefault("THREEWS_API_URL", "http://127.0.0.1:8765")
+        # Extensions written against the upstream Modly template read these names.
+        env["MODLY_API_DIR"] = env["THREEWS_API_DIR"]
+        env.setdefault("MODLY_API_URL", env["THREEWS_API_URL"])
         # Force the worker's Python stdio to UTF-8 so it matches the UTF-8
         # pipe readers below regardless of the OS locale (cp1252/cp932).
         env["PYTHONUTF8"] = "1"
         env["PYTHONIOENCODING"] = "utf-8"
         if sys.platform == "darwin":
             env.setdefault("NUMBA_DISABLE_JIT", "1")
-            # Must be set before the subprocess's first `import torch` — PyTorch
+            # Must be set before the subprocess's first `import torch`: PyTorch
             # reads this once to decide whether MPS ops with no Metal kernel
             # (e.g. 3D pooling) fall back to CPU or raise NotImplementedError.
             # Setting it inside generator.py is too late, since generator.py
@@ -129,7 +132,7 @@ class ExtensionProcess:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                # Without these, text=True decodes with the locale codec — cp1252
+                # Without these, text=True decodes with the locale codec: cp1252
                 # on Windows. tqdm draws its partial blocks with U+258D/U+258F,
                 # whose UTF-8 bytes (0x8d/0x8f) are undefined there: the decode
                 # raises, _stderr_loop dies, nobody drains the pipe, and the
@@ -149,7 +152,7 @@ class ExtensionProcess:
             stderr_fwd = threading.Thread(target=self._stderr_loop, args=(self._proc,), daemon=True)
             stderr_fwd.start()
 
-            # Wait for ready — runner sends params_schema in this message
+            # Wait for ready: runner sends params_schema in this message
             msg = self._recv(timeout=None)
             if msg.get("type") == "ready":
                 # Override params_schema with what the generator class actually declares
@@ -227,11 +230,11 @@ class ExtensionProcess:
         """Forward subprocess stderr to the main process stderr, emitting
         one line every time we see EITHER '\\n' or '\\r'. tqdm writes live
         progress updates with '\\r' only, so a newline-only iterator would
-        buffer every tick until the loop exits with '\\n' — which is why
+        buffer every tick until the loop exits with '\\n', which is why
         the HUD's log pane went dark during multi-minute volume decode.
 
         No per-line extension-id prefix: the HUD log pane is a single
-        truncated line, and eating 20 characters with "[modly-hy3d2-mac] "
+        truncated line, and eating 20 characters with "[forge-hy3d2-mac] "
         hides the tail of the tqdm bar the user actually wants to read.
         """
         stream = proc.stderr
@@ -334,7 +337,7 @@ class ExtensionProcess:
             # Check for cancellation
             if cancel_event and cancel_event.is_set():
                 if cancel_sent_at is None:
-                    # First observation of the cancel — ask the subprocess to stop.
+                    # First observation of the cancel: ask the subprocess to stop.
                     try:
                         self._send({"action": "cancel", "id": req_id})
                     except Exception:
@@ -344,7 +347,7 @@ class ExtensionProcess:
                 else:
                     import time
                     if time.monotonic() - cancel_sent_at >= CANCEL_GRACE_SECONDS:
-                        # Grace period expired — the subprocess is not
+                        # Grace period expired: the subprocess is not
                         # responding (almost certainly stuck in native code).
                         # Hard-kill it and drop our state so the next
                         # generation forces a fresh load.

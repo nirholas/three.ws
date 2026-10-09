@@ -96,7 +96,7 @@ function ExportDropdown({
 }
 
 // ---------------------------------------------------------------------------
-// ToolButton — icon-only toolbar button with tooltip + active state
+// ToolButton: icon-only toolbar button with tooltip + active state
 // ---------------------------------------------------------------------------
 
 function ToolButton({
@@ -384,7 +384,7 @@ function SmoothPopover({
       <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Smooth mesh</p>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] text-zinc-500">Iterations <span className="text-zinc-600">(1–20)</span></label>
+        <label className="text-[10px] text-zinc-500">Iterations <span className="text-zinc-600">(1-20)</span></label>
         <input
           type="number"
           value={inputValue}
@@ -678,7 +678,7 @@ export default function GeneratePage(): JSX.Element {
   const [gizmoMode, setGizmoMode] = useState<'translate' | 'rotate' | 'scale' | null>(null)
   const dragging = useRef(false)
   const [selectedPointLightId, setSelectedPointLightId] = useState<string | null>(null)
-  // Populated by Viewer3D — undoes the latest live gizmo transform, if any.
+  // Populated by Viewer3D: undoes the latest live gizmo transform, if any.
   const gizmoUndoRef = useRef<(() => boolean) | null>(null)
 
   const lightSettings = useAppStore((s) => s.lightSettings)
@@ -716,8 +716,7 @@ export default function GeneratePage(): JSX.Element {
   const hasModel = currentJob?.status === 'done' && !!currentJob.outputUrl
   const showOpenInSlicer = hasModel && canOpenInOrcaSlicer(currentJob?.outputUrl)
 
-  // Selecting a point light (from the 3D marker or the light panel list) —
-  // also drops the active gizmo tool so it doesn't silently carry over from
+  // Selecting a point light (from the 3D marker or the light panel list),  // also drops the active gizmo tool so it doesn't silently carry over from
   // whatever was selected before. Switching selection directly (mesh →
   // point light, or point light → point light) never passes through a
   // fully-deselected state, so an effect keyed on the selection alone can't
@@ -764,7 +763,7 @@ export default function GeneratePage(): JSX.Element {
 
   function handleExport(format: 'glb' | 'obj' | 'stl' | 'ply') {
     if (!currentJob?.outputUrl) return
-    const stem = `modly-${Date.now()}`
+    const stem = `forge-${Date.now()}`
     const link = document.createElement('a')
     if (format === 'glb') {
       link.href = `${apiUrl}${currentJob.outputUrl}`
@@ -1178,7 +1177,7 @@ export default function GeneratePage(): JSX.Element {
             </>
           )}
 
-          {/* Light — always visible, pushed to the right */}
+          {/* Light, always visible, pushed to the right */}
           <div className="relative ml-auto">
             <button
               onClick={() => setOpenPanel((p) => (p === 'light' ? null : 'light'))}
@@ -1215,7 +1214,7 @@ export default function GeneratePage(): JSX.Element {
           </div>
         </div>
 
-        {/* Tools bar — always visible; transform tools appear once a mesh is selected */}
+        {/* Tools bar, always visible; transform tools appear once a mesh is selected */}
         <div className="flex items-center gap-2 px-3 h-10 border-b border-zinc-800 bg-surface-400 shrink-0">
           {(meshSelected || selectedPointLightId) && (
             <>

@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-api_dir = os.environ.get("MODLY_API_DIR")
+api_dir = os.environ.get("THREEWS_API_DIR") or os.environ.get("MODLY_API_DIR")
 if not api_dir:
     for parent in Path(__file__).resolve().parents:
         candidate = parent / "api"

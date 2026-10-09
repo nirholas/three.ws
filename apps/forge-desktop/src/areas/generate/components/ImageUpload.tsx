@@ -35,7 +35,7 @@ export default function ImageUpload(): JSX.Element {
       setSelectedImageData(null)
       setSelectedImagePath(filePath)
     } else {
-      // file.path unavailable (some Electron configs) — read directly via FileReader
+      // file.path unavailable (some Electron configs), read directly via FileReader
       const reader = new FileReader()
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string

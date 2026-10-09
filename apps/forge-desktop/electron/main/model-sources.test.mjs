@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-model-sources-module-')), 'model-sources.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-model-sources-module-')), 'model-sources.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/main/model-sources.ts')],
@@ -80,7 +80,7 @@ test('rejects unsafe destinations, unsupported providers, and non-portable sourc
 
 test('requires every declared check and rejects symlinked extension-root ancestry', (t) => {
   const { areModelSourcesDownloaded, normalizeModelSources } = loadModule()
-  const root = mkdtempSync(join(tmpdir(), 'modly-model-readiness-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-model-readiness-'))
   const models = join(root, 'models')
   const modelRoot = join(models, 'pixal3d', 'generate')
   const sources = normalizeModelSources(validNode())
@@ -149,7 +149,7 @@ test('stores and checks shared weights under the reserved extension root', () =>
     resolveWeightGroupRoot,
     resolveWeightStorageRoot,
   } = loadModule()
-  const root = mkdtempSync(join(tmpdir(), 'modly-shared-readiness-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-shared-readiness-'))
   const models = join(root, 'models')
   const [group] = normalizeWeightGroups({
     weight_groups: [{
@@ -238,7 +238,7 @@ test('validates weight variants and rejects ambiguous or unsafe declarations', (
 test('reports installed variants and lists only the files of the variant being removed', async () => {
   const { installedWeightVariants, listWeightVariantFiles, normalizeWeightVariants } = loadModule()
   const variants = normalizeWeightVariants(quantNode())
-  const root = mkdtempSync(join(tmpdir(), 'modly-weight-variants-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-weight-variants-'))
   const models = join(root, 'models')
   const nodeRoot = join(models, 'trellis', 'generate')
   mkdirSync(join(nodeRoot, 'dit'), { recursive: true })

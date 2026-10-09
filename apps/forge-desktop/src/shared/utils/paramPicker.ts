@@ -25,8 +25,8 @@ export interface ParamPickerApi {
 type PickerParam = Pick<ParamSchema, 'pickerIntent' | 'picker_intent'>
 
 /**
- * Intent a param asks for, falling back to 'folder' — the behavior every
- * `string` param had before `pickerIntent` existed — when it is unset or is a
+ * Intent a param asks for, falling back to 'folder', the behavior every
+ * `string` param had before `pickerIntent` existed, when it is unset or is a
  * value this build doesn't know about.
  */
 export function resolvePickerIntent(param: PickerParam | undefined): PickerIntent {

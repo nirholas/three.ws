@@ -36,7 +36,7 @@ for (const id of readdirSync(srcDir)) {
     cpSync(manifestSrc, join(extOutDir, 'manifest.json'))
     console.log(`[build-builtins] ${id}: manifest.json copied`)
   } else {
-    console.warn(`[build-builtins] ${id}: manifest.json missing — skipping`)
+    console.warn(`[build-builtins] ${id}: manifest.json missing, skipping`)
   }
 
   const pkgSrc = join(extSrcDir, 'package.json')

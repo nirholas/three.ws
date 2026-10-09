@@ -28,7 +28,7 @@ function deferred() {
   return { promise, resolve }
 }
 function fixture(t) {
-  const root = mkdtempSync(join(tmpdir(), 'modly-weight-ipc-'))
+  const root = mkdtempSync(join(tmpdir(), 'forge-weight-ipc-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const settings = { modelsDir: join(root, 'models'), extensionsDir: join(root, 'extensions') }
   const extension = join(settings.extensionsDir, 'demo')

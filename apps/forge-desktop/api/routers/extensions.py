@@ -37,7 +37,7 @@ async def setup_extension(ext_id: str):
     """
     Creates the isolated venv for an extension by running its setup.py.
     Called automatically after installing an extension from GitHub.
-    Runs setup.py with Modly's embedded Python and the detected GPU SM.
+    Runs setup.py with three.ws Forge's embedded Python and the detected GPU SM.
     """
     from services.generator_registry import EXTENSIONS_DIR
 
@@ -61,7 +61,7 @@ async def setup_extension(ext_id: str):
     flavor               = "cuda" if gpu_sm else ("rocm" if gfx_target else "cpu")
 
     # Pass arguments as JSON so setup.py sees torch_flavor. The keys mirror
-    # runExtensionSetup in electron/main/ipc-handlers.ts exactly — setup.py
+    # runExtensionSetup in electron/main/ipc-handlers.ts exactly: setup.py
     # scripts read the same contract whichever side launched them. Note this
     # endpoint is a fallback: Electron normally runs setup.py itself, and only
     # that path gets the ROCm index rewriting for extensions that ignore
@@ -79,7 +79,7 @@ async def setup_extension(ext_id: str):
         "arch":            _node_arch(),
     })
 
-    # Run setup.py using Modly's embedded Python (sys.executable)
+    # Run setup.py using three.ws Forge's embedded Python (sys.executable)
     loop   = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
@@ -115,13 +115,13 @@ async def extension_errors():
 
 def _detect_nvidia_gpu() -> tuple[int, int]:
     """
-    Returns (compute capability, max CUDA version) — e.g. (86, 124) — or (0, 0)
+    Returns (compute capability, max CUDA version), e.g. (86, 124), or (0, 0)
     when there is no NVIDIA GPU.
 
-    Asks nvidia-smi rather than torch: this process runs in Modly's main venv,
+    Asks nvidia-smi rather than torch: this process runs in three.ws Forge's main venv,
     which has no torch at all (see api/requirements.txt), so a torch import
     always failed here and silently reported every machine as CPU-only. Asking
-    the driver also sidesteps the ROCm ambiguity — PyTorch's HIP build answers
+    the driver also sidesteps the ROCm ambiguity, PyTorch's HIP build answers
     the whole torch.cuda API, reporting (12, 0) for a gfx1200 Radeon exactly
     like an sm_120 Blackwell. Mirrors parseNvidiaSmi in
     electron/main/gpu-detect.ts, including the driver → CUDA version table.
@@ -166,7 +166,7 @@ def _detect_nvidia_gpu() -> tuple[int, int]:
 def _rocm_index_url() -> str:
     """The pip index a ROCm torch install must come from. Mirrors
     resolveRocmTorchSpec in electron/main/gpu-detect.ts."""
-    override = os.environ.get("MODLY_ROCM_INDEX", "").strip()
+    override = os.environ.get("THREEWS_ROCM_INDEX", "").strip()
     if override:
         return override
     if sys.platform == "win32":
@@ -190,7 +190,7 @@ def _detect_gfx_target() -> str:
     Returns the ROCm compute target (e.g. "gfx1200"), or "" when there is no AMD GPU.
 
     Reads the kernel's KFD topology rather than asking torch: this process runs
-    in Modly's main venv, which has no torch at all (see api/requirements.txt).
+    in three.ws Forge's main venv, which has no torch at all (see api/requirements.txt).
     The amdgpu driver publishes the target on its own, so no ROCm install is
     needed either. Mirrors electron/main/gpu-detect.ts.
     """

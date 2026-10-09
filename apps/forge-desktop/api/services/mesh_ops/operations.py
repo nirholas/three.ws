@@ -1,4 +1,4 @@
-"""Canonical implementations for Modly's built-in mesh operations."""
+"""Canonical implementations for three.ws Forge's built-in mesh operations."""
 
 import json
 import os
@@ -289,7 +289,7 @@ def smooth_mesh(
 
 
 def _node_executable() -> tuple[str, bool]:
-    configured = os.environ.get("MODLY_NODE_EXECUTABLE")
+    configured = os.environ.get("THREEWS_NODE_EXECUTABLE") or os.environ.get("MODLY_NODE_EXECUTABLE")
     if configured:
         executable = Path(configured)
         if not executable.is_file():
@@ -301,7 +301,7 @@ def _node_executable() -> tuple[str, bool]:
     executable = shutil.which("node") or shutil.which("nodejs")
     if executable is None:
         raise MeshOpUnavailableError(
-            "mesh-optimizer requires Node.js (or Modly's Electron runtime)"
+            "mesh-optimizer requires Node.js (or three.ws Forge's Electron runtime)"
         )
     return executable, False
 
@@ -327,7 +327,7 @@ def _meshopt_dependency_dir() -> Path:
 
     raise MeshOpUnavailableError(
         "mesh-optimizer dependencies are unavailable; run `npm run build` "
-        "before starting Modly from source"
+        "before starting three.ws Forge from source"
     )
 
 

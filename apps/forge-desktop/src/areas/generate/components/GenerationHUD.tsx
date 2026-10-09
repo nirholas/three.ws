@@ -60,7 +60,7 @@ export default function GenerationHUD(): JSX.Element | null {
   const isActive = status === 'uploading' || status === 'generating'
   const isVisible = status === 'uploading' || status === 'generating' || status === 'error'
 
-  // Elapsed timer — based on currentJob.createdAt so it survives navigation
+  // Elapsed timer: based on currentJob.createdAt so it survives navigation
   useEffect(() => {
     if (isActive && currentJob?.createdAt) {
       const id = setInterval(() => {
@@ -72,7 +72,7 @@ export default function GenerationHUD(): JSX.Element | null {
     }
   }, [isActive, currentJob?.createdAt])
 
-  // tqdm log listener — parse to "Verbing (N%)" and skip non-progress noise
+  // tqdm log listener, parse to "Verbing (N%)" and skip non-progress noise
   useEffect(() => {
     if (isActive) {
       setTqdmLog(null)

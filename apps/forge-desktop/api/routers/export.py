@@ -18,13 +18,13 @@ router = APIRouter(tags=["export"])
 SUPPORTED = {"glb", "stl", "obj", "ply"}
 
 # Formats OrcaSlicer's importer accepts (see the orcaslicer://open contract).
-# GLB is deliberately excluded — OrcaSlicer cannot import glTF/GLB, so a .glb
+# GLB is deliberately excluded: OrcaSlicer cannot import glTF/GLB, so a .glb
 # deeplink downloads but silently fails to slice.
 SLICER_FORMATS = {"stl", "obj"}
 SLICER_MEDIA_TYPES = {"stl": "model/stl", "obj": "text/plain"}
 
 # Image-to-3D output has no inherent physical scale (a single photo carries no
-# real-world size), and AI generators emit roughly unit-sized meshes — which
+# real-world size), and AI generators emit roughly unit-sized meshes: which
 # import into a slicer as an invisible ~1 mm speck. Normalise the longest
 # bounding-box edge to a sane, obviously-printable default; the user rescales
 # in OrcaSlicer as needed.
@@ -36,7 +36,7 @@ DEFAULT_PRINT_LONGEST_MM = 50.0
 UNIT_SCALE_MAX = 5.0
 
 # Source formats whose up-axis is Y (the glTF convention). Everything else this
-# route accepts — STL, OBJ, PLY — is conventionally Z-up already.
+# route accepts: STL, OBJ, PLY, is conventionally Z-up already.
 GLTF_SUFFIXES = {".glb", ".gltf"}
 
 
@@ -53,7 +53,7 @@ def _to_single_mesh(loaded: object) -> "trimesh.Trimesh":
         if len(loaded.geometry) == 0:
             raise HTTPException(422, "Mesh contains no geometry")
         # Bake the scene-graph node transforms into a single mesh. The spelling
-        # varies across trimesh versions — to_mesh()/to_geometry() are the modern
+        # varies across trimesh versions: to_mesh()/to_geometry() are the modern
         # APIs (4.6+); dump(concatenate=True) is the pre-removal fallback for 4.5.
         for flatten in (lambda s: s.to_mesh(), lambda s: s.to_geometry(), lambda s: s.dump(concatenate=True)):
             try:
@@ -102,7 +102,7 @@ def _resolve_slicer_source(token: str) -> tuple[Path, str]:
       equality test on the resolved path, so this grants no traversal and does
       not widen the route to arbitrary disk paths.
 
-    The returned suffix is the format the user actually supplied — for an import
+    The returned suffix is the format the user actually supplied, for an import
     that is the pre-conversion extension, which is what decides the up-axis.
     """
     try:
@@ -140,10 +140,10 @@ def export_for_slicer(fmt: str, token: str, filename: str):
 
     The URL is intentionally path-only and ends in the real filename+extension
     (e.g. ``/export/slicer/stl/<b64url-workspace-path>/model.stl``). OrcaSlicer
-    downloads the URL and derives the import filename — and therefore the mesh
-    format — from the URL's FINAL path segment, so a query string (``?path=...``)
+    downloads the URL and derives the import filename, and therefore the mesh
+    format, from the URL's FINAL path segment, so a query string (``?path=...``)
     would corrupt the parsed extension and the model would silently fail to
-    import. ``token`` is the url-safe-base64 of the source path — workspace-
+    import. ``token`` is the url-safe-base64 of the source path, workspace-
     relative, or absolute for a file the user imported this session (see
     ``_resolve_slicer_source``); ``filename`` (e.g. ``model.stl``) is what
     OrcaSlicer names the download.
@@ -158,10 +158,10 @@ def export_for_slicer(fmt: str, token: str, filename: str):
 
     mesh = _to_single_mesh(trimesh.load(str(full_path)))
     # glTF/GLB is Y-up; OrcaSlicer's world is Z-up. Rotate +90° about X so the
-    # model imports standing upright instead of on its side. (Modly's own viewer
+    # model imports standing upright instead of on its side. (three.ws Forge's own viewer
     # rests generated meshes on the Y=0 plane, confirming Y is the up axis.)
     # STL/OBJ/PLY sources are already Z-up, so rotating them would do the very
-    # thing this corrects — lay an upright model on its side.
+    # thing this corrects: lay an upright model on its side.
     if source_suffix in GLTF_SUFFIXES:
         mesh.apply_transform(trimesh.transformations.rotation_matrix(math.pi / 2, [1, 0, 0]))
     _normalize_print_scale(mesh)
@@ -172,7 +172,7 @@ def export_for_slicer(fmt: str, token: str, filename: str):
     return Response(
         content=data,
         media_type=SLICER_MEDIA_TYPES.get(fmt, "application/octet-stream"),
-        # Fixed name (not the client-supplied segment) — keeps arbitrary input out
+        # Fixed name (not the client-supplied segment): keeps arbitrary input out
         # of the response header. OrcaSlicer names the file from the URL anyway.
         headers={"Content-Disposition": f'attachment; filename="model.{fmt}"'},
     )
@@ -189,7 +189,7 @@ def export_mesh(fmt: str, path: str):
     if not full_path.exists():
         raise HTTPException(404, f"File not found: {path}")
 
-    # GLB — serve directly, no conversion needed
+    # GLB: serve directly, no conversion needed
     if fmt == "glb":
         return FileResponse(str(full_path), media_type="model/gltf-binary")
 

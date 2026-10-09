@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-weight-variants-test-')), 'weightVariants.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-weight-variants-test-')), 'weightVariants.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/utils/weightVariants.ts')],

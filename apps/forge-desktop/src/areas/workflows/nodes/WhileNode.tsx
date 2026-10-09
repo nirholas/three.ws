@@ -2,7 +2,7 @@ import { NodeResizer, useReactFlow } from '@xyflow/react'
 import type { WFNodeData } from '@shared/types/electron.d'
 import { useWorkflowRunStore } from '../workflowRunStore'
 
-// While container — a resizable frame that wraps the loop-body nodes.
+// While container: a resizable frame that wraps the loop-body nodes.
 // Drop nodes inside it (they become children) to define the body; the runner
 // re-runs that body either N times (iterations) or via the manual buttons.
 export default function WhileNode({ id, data, selected }: { id: string; data: WFNodeData; selected?: boolean }) {
@@ -42,7 +42,7 @@ export default function WhileNode({ id, data, selected }: { id: string; data: WF
         </svg>
         <span className="text-[11px] font-semibold text-amber-300 leading-none">While</span>
 
-        {/* Iterations counter — 0 / empty = manual only */}
+        {/* Iterations counter, 0 / empty = manual only */}
         <label className="nodrag flex items-center gap-1 ml-1 text-[9px] text-amber-400/70">
           <span>loop</span>
           <input
@@ -63,7 +63,7 @@ export default function WhileNode({ id, data, selected }: { id: string; data: WF
 
         <div className="flex-1" />
 
-        {/* Continue / Retry — only while paused on this node */}
+        {/* Continue / Retry, only while paused on this node */}
         {isPaused && (
           <div className="nodrag flex items-center gap-1">
             <button

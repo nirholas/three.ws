@@ -1,9 +1,9 @@
 /**
- * How well a model drives the agent — the one thing the model list never said.
+ * How well a model drives the agent, the one thing the model list never said.
  *
  * Size and VRAM are already shown, and both are poor proxies: a 4B tops the
  * tool-calling tests while a 20B sits below it. `agent_tier` comes from the
- * catalog; when Modly's own eval suite has been run against the model, the
+ * catalog; when three.ws Forge's own eval suite has been run against the model, the
  * measured pass rate is shown with it, and everything else is flagged as an
  * estimate so the two are never confused.
  */
@@ -12,7 +12,7 @@ export type AgentTier = 'excellent' | 'solid' | 'limited'
 
 export interface AgentGradeInput {
   agent_tier?:   string | null
-  agent_score?:  number | null   // 0..1, Modly's eval suite
+  agent_score?:  number | null   // 0..1, three.ws Forge's eval suite
   agent_note?:   string | null
   agent_source?: string | null   // 'measured' | 'estimate'
 }
@@ -35,8 +35,8 @@ export function agentGrade(m: AgentGradeInput | null | undefined): AgentGrade | 
   const { label, className } = TIERS[tier]
 
   const measured = m?.agent_source === 'measured' && typeof m?.agent_score === 'number'
-  const score = measured ? `${Math.round((m!.agent_score as number) * 100)}% on Modly's tool-calling suite` : null
-  const title = [score ?? 'Estimated from published benchmarks — not measured in Modly', m?.agent_note]
+  const score = measured ? `${Math.round((m!.agent_score as number) * 100)}% on three.ws Forge's tool-calling suite` : null
+  const title = [score ?? 'Estimated from published benchmarks, not measured in three.ws Forge', m?.agent_note]
     .filter(Boolean)
     .join(' · ')
 

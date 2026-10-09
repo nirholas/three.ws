@@ -32,17 +32,17 @@ export function initHfToken(userData: string): string {
   const decrypted = decryptSecretSync(stored)
   if (decrypted === null) {
     // One of our blobs, but not decryptable here (different OS user/machine).
-    // Leave settings.json alone — rewriting would turn an unreadable-but-intact
-    // blob into a permanently lost one — and expose no token rather than
+    // Leave settings.json alone: rewriting would turn an unreadable-but-intact
+    // blob into a permanently lost one, and expose no token rather than
     // handing the ciphertext out as a credential.
     cached = ''
-    logger.error('[hf-token] the stored Hugging Face token could not be decrypted — re-enter it in Settings → Integrations')
+    logger.error('[hf-token] the stored Hugging Face token could not be decrypted, re-enter it in Settings → Integrations')
     return cached
   }
 
   cached = decrypted
   // An unchanged value means it was never encrypted (saved before encryption
-  // existed) — upgrade it in place.
+  // existed), upgrade it in place.
   if (cached === stored) {
     try {
       setSettings(userData, { hfToken: encryptSecretSync(cached) })

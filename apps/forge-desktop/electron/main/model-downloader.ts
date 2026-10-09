@@ -1,5 +1,5 @@
 /**
- * ModelDownloader — downloads models via the SSE endpoint of the Python backend.
+ * ModelDownloader: downloads models via the SSE endpoint of the Python backend.
  * No longer depends on the Go API catalog.
  */
 import { existsSync, readdirSync, statSync, readFileSync } from 'fs'
@@ -111,7 +111,7 @@ export function listDownloadedModels(modelsDir: string): { id: string; name: str
 
 /**
  * Download a model from HuggingFace Hub via the Python FastAPI SSE endpoint.
- * Reports progress (0–100) via the onProgress callback.
+ * Reports progress (0-100) via the onProgress callback.
  */
 export async function downloadModelFromHF(
   repoId:        string,
@@ -131,7 +131,7 @@ export async function downloadModelFromHF(
   // Header, never a query param: uvicorn logs the full request line to stdout,
   // python-bridge pipes that into runtime.log, and `log:readAll` hands that file
   // to the user for bug reports. The token used to ride all the way there.
-  const hfToken = getHfToken()   // decrypted cache — settings.json holds the ciphertext
+  const hfToken = getHfToken()   // decrypted cache, settings.json holds the ciphertext
   const res = await net.fetch(url, hfToken ? { headers: { 'X-HF-Token': hfToken } } : undefined)
   if (!res.ok) throw new Error(`HuggingFace download failed: HTTP ${res.status}`)
   await consumeDownloadStream(res, onProgress)

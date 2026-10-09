@@ -18,8 +18,7 @@ _VISION = {
 class DiscardIncompleteTests(unittest.TestCase):
     """Cancelling a download has to leave nothing behind. A vision model fetches
     weights then projector, so a cancel during the second one used to leave the
-    finished weights on disk under a model still reported `downloaded: false` —
-    the UI offers no trash button for those, so the space was unreclaimable."""
+    finished weights on disk under a model still reported `downloaded: false`,    the UI offers no trash button for those, so the space was unreclaimable."""
 
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
@@ -77,7 +76,7 @@ class _FakeResponse:
 
 class EngineDigestTests(unittest.TestCase):
     """The engine archive's files are executed, so a download whose bytes differ
-    from the digest GitHub published for the asset must be refused — and must
+    from the digest GitHub published for the asset must be refused, and must
     not be left behind in the temp folder."""
 
     BODY = b"llama-server archive bytes"

@@ -1,6 +1,11 @@
 import type { SceneArtifactManifestInitialView, SceneArtifactManifestPreview, SceneArtifactManifestV1 } from '../../shared/types/artifacts'
 
 export const SCENE_MANIFEST_FILE_NAME = 'scene-manifest.json'
+export const SCENE_MANIFEST_SCHEMA = 'three-ws.forge.scene-manifest.v1'
+// Scenes written by extensions built for upstream Modly carry the original
+// schema id. They are byte-compatible, so they load and are normalized.
+export const LEGACY_SCENE_MANIFEST_SCHEMA = 'modly.scene-manifest.v1'
+const ACCEPTED_SCENE_MANIFEST_SCHEMAS = new Set([SCENE_MANIFEST_SCHEMA, LEGACY_SCENE_MANIFEST_SCHEMA])
 
 export type SceneSourceKind = 'manifest' | 'directory'
 
@@ -154,8 +159,8 @@ function validateSceneManifest(manifest: unknown): { ok: true; manifest: SceneAr
   if (!isPlainObject(manifest)) {
     return { ok: false, error: 'Scene manifest must be a JSON object.' }
   }
-  if (manifest.schema !== 'modly.scene-manifest.v1') {
-    return { ok: false, error: 'Scene manifest schema must be modly.scene-manifest.v1.' }
+  if (typeof manifest.schema !== 'string' || !ACCEPTED_SCENE_MANIFEST_SCHEMAS.has(manifest.schema)) {
+    return { ok: false, error: `Scene manifest schema must be ${SCENE_MANIFEST_SCHEMA}.` }
   }
 
   const rawSceneRoot = manifest.sceneRoot
@@ -191,7 +196,7 @@ function validateSceneManifest(manifest: unknown): { ok: true; manifest: SceneAr
     sceneRoot,
     manifest: {
       ...metadata,
-      schema: 'modly.scene-manifest.v1',
+      schema: SCENE_MANIFEST_SCHEMA,
       sceneRoot: rawSceneRoot,
       assets: manifest.assets,
       ...(preview !== undefined ? { preview } : {}),

@@ -37,8 +37,8 @@ import WorkflowEdge     from './nodes/WorkflowEdge'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DRAG_KEY      = 'modly/extension-id'
-const DRAG_NODE_KEY = 'modly/node-type'
+const DRAG_KEY      = 'forge/extension-id'
+const DRAG_NODE_KEY = 'forge/node-type'
 const NODE_TYPES = { extensionNode: ExtensionNode, imageNode: ImageNode, textNode: TextNode, outputNode: AddToSceneNode, meshNode: Load3DMeshNode, sceneNode: LoadSceneNode, previewNode: PreviewImageNode, imagePreviewNode: ImagePreviewNode, waitNode: WaitNode, whileNode: WhileNode, forEachNode: ForEachNode }
 
 // Loop-container node types: resizable frames whose children form a loop body.
@@ -84,7 +84,7 @@ function IoBadge({ type }: { type: 'image' | 'text' | 'mesh' | 'audio' | 'scene'
 function newId(): string { return crypto.randomUUID() }
 
 // Node clipboard (module-level so Ctrl+C in one workflow tab can be pasted in
-// another — the canvas remounts per tab but the module survives).
+// another, the canvas remounts per tab but the module survives).
 const _nodeClipboard: { current: { nodes: Node[]; edges: Edge[]; pastes: number } | null } = { current: null }
 
 function newWorkflow(): Workflow {
@@ -350,7 +350,7 @@ const BUILTIN_NODES = [
   { type: 'textNode',    label: 'Text',           color: '#fbbf24', description: 'Text input' },
   { type: 'meshNode',    label: 'Load 3D Mesh',   color: '#a78bfa', description: 'Load a 3D mesh file or use current model' },
   { type: 'sceneNode',   label: 'Load Scene',     color: '#f472b6', description: 'Load and validate a workspace scene directory' },
-  { type: 'outputNode',  label: 'Add to Scene',   color: '#a78bfa', description: 'Output node — adds the mesh to the 3D scene' },
+  { type: 'outputNode',  label: 'Add to Scene',   color: '#a78bfa', description: 'Output node, adds the mesh to the 3D scene' },
   { type: 'previewNode', label: 'Preview Views',  color: '#38bdf8', description: 'Displays multi-view image outputs in a 2×3 grid' },
   { type: 'imagePreviewNode', label: 'Preview Image',  color: '#38bdf8', description: 'Displays a single image output in the workflow' },
   { type: 'waitNode',    label: 'Wait',           color: '#71717a', description: 'Pauses the workflow until you click Continue' },
@@ -597,7 +597,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
           <section className="flex flex-col gap-2">
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Concept</h3>
             <p className="text-[12px] text-zinc-300 leading-relaxed">
-              A workflow is a <span className="text-zinc-100 font-medium">directed graph of nodes</span>. Each node receives data from its inputs (left handle) and produces a result on its output (right handle). Data flows from left to right — you connect nodes by dragging from one handle to another.
+              A workflow is a <span className="text-zinc-100 font-medium">directed graph of nodes</span>. Each node receives data from its inputs (left handle) and produces a result on its output (right handle). Data flows from left to right, you connect nodes by dragging from one handle to another.
             </p>
           </section>
 
@@ -606,7 +606,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
             <div className="rounded-xl overflow-hidden border border-zinc-800">
               <img src={helperImg} alt="Basic workflow example" className="w-full object-cover" />
               <p className="px-3 py-2 text-[10px] text-zinc-500 bg-zinc-800/50 border-t border-zinc-800">
-                Example — Image → AI model → Add to Scene
+                Example, Image → AI model → Add to Scene
               </p>
             </div>
           )}
@@ -620,7 +620,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400 shrink-0 mt-0.5">image</span>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Image</p>
-                  <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Source node. Pick a local image file — it becomes the input of the first processing node.</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Source node. Pick a local image file, it becomes the input of the first processing node.</p>
                 </div>
               </div>
 
@@ -660,7 +660,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Process extension <span className="text-[10px] font-normal text-zinc-500">(mesh processor)</span></p>
-                  <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Transforms a mesh — examples: Optimize Mesh (polygon reduction), Export Mesh (save to file). No GPU required.</p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Transforms a mesh, examples: Optimize Mesh (polygon reduction), Export Mesh (save to file). No GPU required.</p>
                 </div>
               </div>
 
@@ -795,8 +795,8 @@ function WorkflowCanvasInner({
   }, [workflow.updatedAt])
 
   // Persist and claim the echo so the sync effect above does not treat our own
-  // write as an external change. The claim is optimistic — the store is updated
-  // before save() resolves — and is rolled back when the write fails, so a failed
+  // write as an external change. The claim is optimistic, the store is updated
+  // before save() resolves, and is rolled back when the write fails, so a failed
   // save never silently replaces the canvas with the last persisted version.
   const saveAndClaim = useCallback((updated: Workflow) => {
     const prevSavedAt = lastSavedAtRef.current
@@ -842,7 +842,7 @@ function WorkflowCanvasInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce on editable state; latest workflow/onSave read in the timeout
   }, [nodes, edges])
 
-  // Switching tabs unmounts this page — flush the pending autosave instead of
+  // Switching tabs unmounts this page: flush the pending autosave instead of
   // dropping it, otherwise an edit made within the debounce window is lost.
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -936,7 +936,7 @@ function WorkflowCanvasInner({
       pendingConnectionRef.current = null
       return
     }
-    // Dropped on empty canvas — or inside a While body — opens the palette. The
+    // Dropped on empty canvas: or inside a While body, opens the palette. The
     // While is a giant node, so don't treat its empty body as "dropped on a node";
     // bail only on a real node or a handle.
     const target = event.target as Element
@@ -1016,7 +1016,7 @@ function WorkflowCanvasInner({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [undo, redo])
 
-  // Copy/paste selected nodes (Ctrl+C / Ctrl+V) — works across workflow tabs
+  // Copy/paste selected nodes (Ctrl+C / Ctrl+V), works across workflow tabs
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
@@ -1107,7 +1107,7 @@ function WorkflowCanvasInner({
       const isExt = type === 'extensionNode'
       // Skip wiring when the new node can't take the connection: a source-only node
       // (Image/Text/Mesh) as target, or a sink-only node (Add to Scene/Preview) as
-      // source — those have no matching handle and would orphan the edge.
+      // source, those have no matching handle and would orphan the edge.
       const canWire = isSource ? !NODE_TYPES_WITHOUT_TARGET.has(type) : !NODE_TYPES_WITHOUT_SOURCE.has(type)
       if (canWire) {
         const edge = isSource
@@ -1190,7 +1190,7 @@ function WorkflowCanvasInner({
       showToast(preflightIssues[0].message)
       return
     }
-    // Drop the pending debounce — this save supersedes it.
+    // Drop the pending debounce: this save supersedes it.
     if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; flushSaveRef.current = null }
     const wf: Workflow = { ...workflow, nodes: nodes as WFNode[], edges: edges as WFEdge[], updatedAt: new Date().toISOString() }
     saveAndClaim(wf)
@@ -1323,12 +1323,12 @@ function WorkflowCanvasInner({
               <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
               </svg>
-              <span className="text-[10px] font-medium">No AI model node in this workflow — add one from the extensions panel to generate a 3D mesh.</span>
+              <span className="text-[10px] font-medium">No AI model node in this workflow, add one from the extensions panel to generate a 3D mesh.</span>
             </div>
           </div>
         )}
 
-        {/* Floating panel toggle — over the canvas, below the header */}
+        {/* Floating panel toggle, over the canvas, below the header */}
         <button
           onClick={onTogglePanel}
           title={panelOpen ? 'Close extensions panel' : 'Open extensions panel'}
@@ -1370,7 +1370,7 @@ function WorkflowCanvasInner({
 }
 
 // ─── Mini graph preview ───────────────────────────────────────────────────────
-// Schematic thumbnail of a workflow's graph for the Open popup cards — plain
+// Schematic thumbnail of a workflow's graph for the Open popup cards, plain
 // SVG built from stored node positions, no React Flow instance needed.
 
 // Node tint by role, echoing the real canvas: inputs green, processing violet,
@@ -1517,8 +1517,7 @@ export default function WorkflowsPage(): JSX.Element {
     return () => window.removeEventListener('mousedown', close)
   }, [tabMenu])
 
-  // Escape closes whichever popup is topmost, regardless of what's focused —
-  // relying on a focused element's own onKeyDown would miss presses right after
+  // Escape closes whichever popup is topmost, regardless of what's focused,  // relying on a focused element's own onKeyDown would miss presses right after
   // a popup opens (before anything inside it has focus).
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -1610,7 +1609,7 @@ export default function WorkflowsPage(): JSX.Element {
         key={wf.id}
         draggable
         onDragStart={(e) => {
-          e.dataTransfer.setData('modly/workflow-id', wf.id)
+          e.dataTransfer.setData('forge/workflow-id', wf.id)
           e.dataTransfer.effectAllowed = 'move'
         }}
         onClick={() => { openWorkflow(wf.id); setOpenListVisible(false) }}
@@ -1691,7 +1690,7 @@ export default function WorkflowsPage(): JSX.Element {
             e.preventDefault()
             e.stopPropagation()
             setDragOverFolder(null)
-            const id = e.dataTransfer.getData('modly/workflow-id')
+            const id = e.dataTransfer.getData('forge/workflow-id')
             if (id) handleMoveToFolder(id, folder)
           }}
           className={`group flex items-center gap-2 px-4 py-2 cursor-pointer text-zinc-400 hover:text-zinc-200 transition-colors
@@ -1753,13 +1752,13 @@ export default function WorkflowsPage(): JSX.Element {
           </div>
         )}
         {!collapsed && inFolder.length === 0 && (
-          <p className="pl-11 pr-5 py-1.5 text-[10px] text-zinc-700 italic">Empty — drag workflows here</p>
+          <p className="pl-11 pr-5 py-1.5 text-[10px] text-zinc-700 italic">Empty, drag workflows here</p>
         )}
       </div>
     )
   }
 
-  // Closing the tab of an empty workflow (no nodes) deletes it too — a blank
+  // Closing the tab of an empty workflow (no nodes) deletes it too, a blank
   // "New Workflow" the user closes is throwaway, don't let them pile up on disk.
   // Reads the store directly so a keyboard shortcut never acts on a stale list.
   function handleCloseTab(id: string) {
@@ -1771,7 +1770,7 @@ export default function WorkflowsPage(): JSX.Element {
   async function handleToggleBookmark(id: string) {
     const wf = workflows.find((w) => w.id === id)
     if (!wf) return
-    // Not an edit — keep updatedAt so the recency sort doesn't reshuffle
+    // Not an edit: keep updatedAt so the recency sort doesn't reshuffle
     await save({ ...wf, bookmarked: !wf.bookmarked })
   }
 
@@ -1820,9 +1819,9 @@ export default function WorkflowsPage(): JSX.Element {
             <div
               key={wf.id}
               draggable
-              onDragStart={(e) => { e.dataTransfer.setData('modly/tab-id', wf.id); e.dataTransfer.effectAllowed = 'move' }}
+              onDragStart={(e) => { e.dataTransfer.setData('forge/tab-id', wf.id); e.dataTransfer.effectAllowed = 'move' }}
               onDragOver={(e) => {
-                if (!e.dataTransfer.types.includes('modly/tab-id')) return
+                if (!e.dataTransfer.types.includes('forge/tab-id')) return
                 e.preventDefault()
                 setDragOverTab(wf.id)
               }}
@@ -1830,7 +1829,7 @@ export default function WorkflowsPage(): JSX.Element {
               onDrop={(e) => {
                 e.preventDefault()
                 setDragOverTab(null)
-                const dragId = e.dataTransfer.getData('modly/tab-id')
+                const dragId = e.dataTransfer.getData('forge/tab-id')
                 if (dragId) moveOpenTab(dragId, wf.id)
               }}
               onClick={() => setActive(wf.id)}
@@ -1972,7 +1971,7 @@ export default function WorkflowsPage(): JSX.Element {
         document.body,
       )}
 
-      {/* Delete confirmation popup (topmost — reachable from the Open popup) */}
+      {/* Delete confirmation popup (topmost, reachable from the Open popup) */}
       {deleteTarget && createPortal(
         <div
           className="fixed inset-0 z-[10001] flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm"
@@ -2087,7 +2086,7 @@ export default function WorkflowsPage(): JSX.Element {
                 // Drop on the list background (not a folder) → move back to root
                 e.preventDefault()
                 setDragOverFolder(null)
-                const id = e.dataTransfer.getData('modly/workflow-id')
+                const id = e.dataTransfer.getData('forge/workflow-id')
                 if (id) handleMoveToFolder(id, undefined)
               }}
             >
@@ -2095,7 +2094,7 @@ export default function WorkflowsPage(): JSX.Element {
                 <p className="px-5 py-6 text-center text-xs text-zinc-600 italic">No saved workflows.</p>
               )}
 
-              {/* Search results — flat list across all folders */}
+              {/* Search results, flat list across all folders */}
               {openSearch.trim() !== '' && (() => {
                 const q = openSearch.trim().toLowerCase()
                 const matches = workflows
@@ -2111,7 +2110,7 @@ export default function WorkflowsPage(): JSX.Element {
                 )
               })()}
 
-              {/* Bookmarks — pinned section: starred folders, then starred workflows */}
+              {/* Bookmarks, pinned section: starred folders, then starred workflows */}
               {openSearch.trim() === '' && (() => {
                 const markedFolders = [...bookmarkedFolders].filter((f) => folders.includes(f)).sort((a, b) => a.localeCompare(b))
                 // Starred workflows already shown inside a starred folder aren't repeated

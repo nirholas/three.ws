@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { useAppStore } from '@shared/stores/appStore'
 
 // GGUF model downloads must survive the Model Library modal being closed and
-// reopened — the backend already keeps downloading in the background once
+// reopened, the backend already keeps downloading in the background once
 // started (see api/routers/llm.py), it just needs a watcher that isn't tied to
 // a component's lifecycle. This module-level store owns that watch, the same
 // way agentChat.ts owns the chat's SSE stream outside React.
@@ -36,7 +36,7 @@ export async function consumeSse(url: string, onEvent: (data: SseEvent) => void,
       let data: SseEvent
       try { data = JSON.parse(line.slice(6)) } catch { continue /* malformed frame */ }
       onEvent(data)
-      // The stream stays open after an error frame — stop reading instead of
+      // The stream stays open after an error frame, stop reading instead of
       // spinning on a download the server has already given up on.
       if (data.error) { void reader.cancel().catch(() => {}); break outer }
     }
@@ -95,7 +95,7 @@ export const useLlmDownloadsStore = create<LlmDownloadsStore>((set) => ({
   async cancel(modelId) {
     const apiUrl = useAppStore.getState().apiUrl
     await fetch(`${apiUrl}/llm/download/cancel?model_id=${encodeURIComponent(modelId)}`, { method: 'POST' }).catch(() => {})
-    // A paused download has no live watcher to hit its .finally cleanup — drop
+    // A paused download has no live watcher to hit its .finally cleanup, drop
     // the row here so Cancel visibly clears it.
     set((s) => ({ downloads: { ...s.downloads, [modelId]: undefined } }))
   },

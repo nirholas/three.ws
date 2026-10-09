@@ -31,7 +31,7 @@ const TAG_CLS: Record<string, string> = {
 
 // ─── Param control ────────────────────────────────────────────────────────────
 
-// nodrag — without it, React Flow starts dragging the node on mousedown inside
+// nodrag, without it, React Flow starts dragging the node on mousedown inside
 // these fields, so click-drag text selection (or opening a <select>) moves the
 // node instead.
 const inputCls = 'nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-accent/60'
@@ -178,7 +178,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
                 <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
               </svg>
               <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[ext?.output ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
-                {ext?.output ?? '—'}
+                {ext?.output ?? '-'}
               </span>
             </>
           )}
@@ -189,7 +189,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
     // Single-input layout (existing behavior)
     <div ref={(el) => { if (el) handleRefs.current[0] = el }} className="flex items-center justify-between px-3 py-2">
       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[ext?.input ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
-        {ext?.input ?? '—'}
+        {ext?.input ?? '-'}
       </span>
       {!isTerminal && (
         <>
@@ -197,7 +197,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
           <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[ext?.output ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
-            {ext?.output ?? '—'}
+            {ext?.output ?? '-'}
           </span>
         </>
       )}
@@ -213,7 +213,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
           id={`input-${i}`}
           type="target"
           position={Position.Left}
-          style={{ background: HANDLE_COLOR[inputType], width: 14, height: 14, border: '2.5px solid #18181b', top: handleTops[i] ?? '50%' }}
+          style={{ background: HANDLE_COLOR[inputType], width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTops[i] ?? '50%' }}
         />
       ))}
       {!isTerminal && (
@@ -221,7 +221,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
           id="output"
           type="source"
           position={Position.Right}
-          style={{ background: outputColor, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTops[0] ?? '50%' }}
+          style={{ background: outputColor, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTops[0] ?? '50%' }}
         />
       )}
     </>
@@ -231,14 +231,14 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
         id="input-0"
         type="target"
         position={Position.Left}
-        style={{ background: HANDLE_COLOR[ext?.input ?? 'image'], width: 14, height: 14, border: '2.5px solid #18181b', top: handleTops[0] ?? '50%' }}
+        style={{ background: HANDLE_COLOR[ext?.input ?? 'image'], width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTops[0] ?? '50%' }}
       />
       {!isTerminal && (
         <Handle
           id="output"
           type="source"
           position={Position.Right}
-          style={{ background: outputColor, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTops[0] ?? '50%' }}
+          style={{ background: outputColor, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTops[0] ?? '50%' }}
         />
       )}
     </>
@@ -260,8 +260,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
       {hasParams && (
         <div className="px-3 pb-3 pt-2.5 flex flex-col gap-2">
           {(() => {
-            // Effective values of every param (user value or schema default) —
-            // lets file-select params resolve their source folder (dir_from).
+            // Effective values of every param (user value or schema default),            // lets file-select params resolve their source folder (dir_from).
             const resolvedParams = Object.fromEntries(
               (ext?.params ?? []).map((p) => [p.id, data.params[p.id] ?? p.default]),
             )
@@ -283,7 +282,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
                         onClick={() => openExtension(ext.extensionId)}
                         className="nodrag mt-1 text-[10px] text-amber-400 hover:text-amber-300 hover:underline"
                       >
-                        Not installed — install it
+                        Not installed: install it
                       </button>
                     )}
                   </div>

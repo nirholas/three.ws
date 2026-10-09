@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-ext-store-test-')), 'extensionsStore.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-ext-store-test-')), 'extensionsStore.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/stores/extensionsStore.ts')],

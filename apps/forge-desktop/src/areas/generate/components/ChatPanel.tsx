@@ -38,7 +38,7 @@ interface ActionDone {
 
 const COLLAPSE_AFTER = 4
 
-// ─── Prose renderer — basic markdown-like ────────────────────────────────────
+// ─── Prose renderer, basic markdown-like ────────────────────────────────────
 
 function ProseMessage({ content }: { content: string }): JSX.Element {
   const blocks = content.split(/\n\n+/)
@@ -415,7 +415,7 @@ export default function ChatPanel(): JSX.Element {
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
-      setError(msg.includes('fetch') ? 'Cannot reach Modly API. Is the backend running?' : msg)
+      setError(msg.includes('fetch') ? 'Cannot reach three.ws Forge API. Is the backend running?' : msg)
     } finally {
       setIsLoading(false)
     }
@@ -559,7 +559,7 @@ export default function ChatPanel(): JSX.Element {
             </div>
           ))}
 
-          {/* Workflow progress card — visible while agent waits for workflow */}
+          {/* Workflow progress card, visible while agent waits for workflow */}
           {pendingWorkflow && <WorkflowProgressCard name={pendingWorkflow.name} />}
 
           {/* Loading indicator */}
@@ -619,7 +619,7 @@ export default function ChatPanel(): JSX.Element {
             value={input}
             onChange={(e) => { setInput(e.target.value); adjustHeight() }}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Modly…"
+            placeholder="Ask three.ws Forge…"
             rows={1}
             spellCheck={false}
             className="w-full bg-transparent text-[12.5px] text-zinc-200 placeholder-zinc-600 focus:outline-none resize-none leading-relaxed overflow-hidden"
@@ -663,9 +663,9 @@ export default function ChatPanel(): JSX.Element {
               {showModelPicker && (
                 <div className="absolute bottom-full mb-2 left-0 z-50 bg-zinc-900 border border-zinc-700/60 rounded-xl shadow-xl overflow-hidden min-w-[180px]">
                   {!isLocal ? (
-                    <p className="px-3 py-2.5 text-[11px] text-zinc-500">{PROVIDERS[provider].label} — change the model in Settings → Agent.</p>
+                    <p className="px-3 py-2.5 text-[11px] text-zinc-500">{PROVIDERS[provider].label}, change the model in Settings → Agent.</p>
                   ) : localModels.length === 0 ? (
-                    <p className="px-3 py-2.5 text-[11px] text-zinc-500">No local model downloaded — open Settings → Agent.</p>
+                    <p className="px-3 py-2.5 text-[11px] text-zinc-500">No local model downloaded, open Settings → Agent.</p>
                   ) : (
                     localModels.map((m) => (
                       <button

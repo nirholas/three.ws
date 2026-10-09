@@ -6,9 +6,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-// format.ts has no imports — bundle it straight to CJS and require.
+// format.ts has no imports, bundle it straight to CJS and require.
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-format-test-')), 'format.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-format-test-')), 'format.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/utils/format.ts')],

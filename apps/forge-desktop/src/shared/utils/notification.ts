@@ -1,6 +1,6 @@
 /**
  * Native OS notification (Windows toast / macOS Notification Center / Linux) for
- * events worth surfacing even when the user isn't looking at the app — e.g. a
+ * events worth surfacing even when the user isn't looking at the app, e.g. a
  * generation or workflow run finishing while they're in another window. Plays
  * each platform's own default notification sound (the toast isn't `silent`).
  *
@@ -16,10 +16,10 @@ async function notifyIfUnfocused(title: string, body: string): Promise<void> {
   }
 }
 
-export function showCompletionNotification(body: string, title = 'Modly'): Promise<void> {
+export function showCompletionNotification(body: string, title = 'three.ws Forge'): Promise<void> {
   return notifyIfUnfocused(title, body)
 }
 
-export function showErrorNotification(body: string, title = 'Modly'): Promise<void> {
+export function showErrorNotification(body: string, title = 'three.ws Forge'): Promise<void> {
   return notifyIfUnfocused(title, body)
 }

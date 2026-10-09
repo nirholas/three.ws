@@ -26,7 +26,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     frame: false,
-    backgroundColor: '#111113',
+    backgroundColor: '#0a0a0a',
     titleBarStyle: 'hidden',
     icon: join(__dirname, '../../resources/icons/icon.png'),
     webPreferences: {
@@ -42,7 +42,7 @@ function createWindow(): void {
     mainWindow?.show()
   })
 
-  // Keep the renderer's maximize/restore icon in sync — covers the toolbar
+  // Keep the renderer's maximize/restore icon in sync, covers the toolbar
   // button, double-clicking the title bar, and OS window-snap gestures.
   mainWindow.on('maximize',   () => mainWindow?.webContents.send('window:maximizeChanged', true))
   mainWindow.on('unmaximize', () => mainWindow?.webContents.send('window:maximizeChanged', false))
@@ -75,7 +75,7 @@ function createWindow(): void {
   }
 }
 
-app.setName('Modly')
+app.setName('three.ws Forge')
 
 process.on('uncaughtException', (err) => {
   if ((err as NodeJS.ErrnoException).code === 'EPIPE') return
@@ -91,8 +91,8 @@ process.on('unhandledRejection', (reason) => {
 
 app.whenReady().then(async () => {
   archiveCurrentSession()
-  logger.info(`App started — version ${app.getVersion()}`)
-  electronApp.setAppUserModelId('com.modly.app')
+  logger.info(`App started, version ${app.getVersion()}`)
+  electronApp.setAppUserModelId('ws.three.forge')
 
   // Clear Chromium disk cache on startup to recover from any corruption
   await session.defaultSession.clearCache()
@@ -127,7 +127,7 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => {
-  // Modly holds a multi-GB Python subprocess; leaving it running in the
+  // three.ws Forge holds a multi-GB Python subprocess; leaving it running in the
   // Dock after the window closes (the Mac default) is the wrong behavior
   // for this app. Closing the window means quit.
   app.quit()

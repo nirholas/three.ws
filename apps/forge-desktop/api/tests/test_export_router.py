@@ -106,7 +106,7 @@ class ExportForSlicerTests(unittest.TestCase):
 
     def test_rejects_sibling_prefix_escape(self) -> None:
         # A sibling dir whose name starts with the workspace dir name must not be
-        # reachable — the old str.startswith containment guard would allow it.
+        # reachable: the old str.startswith containment guard would allow it.
         sibling = self.workspace.parent / (self.workspace.name + "-secret")
         sibling.mkdir(parents=True, exist_ok=True)
         (sibling / "x.glb").write_bytes(b"nope")
@@ -148,7 +148,7 @@ class FlattenAndScaleHelperTests(unittest.TestCase):
 
 @unittest.skipUnless(HAVE_TRIMESH, "trimesh not installed")
 class ImportedSourceSlicerTests(unittest.TestCase):
-    """Meshes imported from outside the workspace are sliceable — but only the
+    """Meshes imported from outside the workspace are sliceable, but only the
     exact files the user picked, and never with the wrong up-axis."""
 
     def setUp(self) -> None:

@@ -5,7 +5,7 @@
 
 ## Decision
 
-Modly supports AMD Radeon GPUs through ROCm on Linux and Windows. Detection is
+three.ws Forge supports AMD Radeon GPUs through ROCm on Linux and Windows. Detection is
 automatic and requires no ROCm installation on the user's machine.
 
 Scope and operating rules:
@@ -26,9 +26,9 @@ Scope and operating rules:
 
 ## Context
 
-Modly never installs PyTorch itself. Each extension ships a `setup.py` that
-creates its own venv and installs torch from an index it hardcodes — and those
-scripts are third-party code in separate GitHub repositories that Modly cannot
+three.ws Forge never installs PyTorch itself. Each extension ships a `setup.py` that
+creates its own venv and installs torch from an index it hardcodes, and those
+scripts are third-party code in separate GitHub repositories that three.ws Forge cannot
 edit. Before this work `detectGpuInfo()` only probed `nvidia-smi`, so an AMD
 machine was reported as `accelerator: 'cpu'` with `gpu_sm: 0`, which sent every
 extension down its legacy CUDA 11.8 branch and installed a torch that cannot see
@@ -38,9 +38,8 @@ That leaves two distinct problems, and both have to be solved:
 
 - Extensions that *do* understand AMD were never told. The official
   `modly-hunyuan3d-mini-extension` has accepted a `torch_flavor: "rocm"` argument
-  for some time; Modly simply never sent it.
-- Extensions that don't understand AMD — `triposg`, `trellis2`, and the rest —
-  hardcode `--index-url .../whl/cu124` and have no branch to select. Passing an
+  for some time; three.ws Forge simply never sent it.
+- Extensions that don't understand AMD, `triposg`, `trellis2`, and the rest,  hardcode `--index-url .../whl/cu124` and have no branch to select. Passing an
   argument achieves nothing for them.
 
 The wheel sources are also not symmetric across platforms. `download.pytorch.org`
@@ -66,9 +65,8 @@ rather than by the index URL, which means Windows needs the compute target
   path. It also keeps them off `rembg[gpu]`, whose `onnxruntime-gpu` is
   CUDA-only. Reporting a synthesised capability instead would break both.
   PyTorch's HIP build answers the whole `torch.cuda` API, so
-  `get_device_capability()` reports `(12, 0)` for a gfx1200 Radeon —
-  indistinguishable from an sm_120 Blackwell. `api/routers/extensions.py` asks
-  `nvidia-smi` rather than torch for this reason (and because Modly's main venv
+  `get_device_capability()` reports `(12, 0)` for a gfx1200 Radeon,  indistinguishable from an sm_120 Blackwell. `api/routers/extensions.py` asks
+  `nvidia-smi` rather than torch for this reason (and because three.ws Forge's main venv
   carries no torch at all).
 - **Compute-target discovery is platform-specific.** Linux reads
   `gfx_target_version` from the kernel's KFD topology, which needs no ROCm
@@ -80,7 +78,7 @@ rather than by the index URL, which means Windows needs the compute target
 - **The Linux and Windows torch versions diverge.** Linux gets unpinned wheels
   from the pytorch.org ROCm index (currently torch 2.11+); Windows gets a pinned
   pair from AMD's index. Extension code written against torch 2.6/2.7 may not
-  survive that jump, which is why `MODLY_ROCM_INDEX` and `MODLY_ROCM_TORCH_SPEC`
+  survive that jump, which is why `THREEWS_ROCM_INDEX` and `THREEWS_ROCM_TORCH_SPEC`
   exist as first-class escape hatches rather than debug affordances.
 - **Linux is verified, Windows is not.** On a Radeon RX 9060 XT (gfx1200),
   `torch 2.13.0+rocm7.2` loads, rocBLAS and MIOpen kernels execute, 14 GB of the
@@ -92,7 +90,7 @@ rather than by the index URL, which means Windows needs the compute target
 - **This work also required fixing an unrelated AppImage bug** to be verifiable
   at all. `ensureStableEmbeddedPython()` copied the bundled runtime with
   `fs.cp`, which rewrites relative symlinks into absolute paths pointing back at
-  the ephemeral `/tmp/.mount_Modly-XXXXXX/` mount — so the "stable" copy was not
+  the ephemeral `/tmp/.mount_three.ws Forge-XXXXXX/` mount, so the "stable" copy was not
   stable, and every extension venv built from it died on the next launch with a
   misleading `No module named 'PIL'`. See `electron/main/copy-runtime.ts`.
 - **Texture generation is out of scope.** `api/texture_baker` already carries a

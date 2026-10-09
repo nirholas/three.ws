@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path'
 
 // nodeBehaviors.ts only type-imports from electron.d, so esbuild erases it.
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-nodebehaviors-test-')), 'nodeBehaviors.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-nodebehaviors-test-')), 'nodeBehaviors.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/areas/workflows/nodeBehaviors.ts')],

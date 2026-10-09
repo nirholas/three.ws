@@ -93,12 +93,12 @@ export default function ImagePreviewNode({ id, selected }: { id: string; selecte
           <Handle
             type="target"
             position={Position.Left}
-            style={{ background: IO_COLOR, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }}
+            style={{ background: IO_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }}
           />
           <Handle
             type="source"
             position={Position.Right}
-            style={{ background: IO_COLOR, width: 14, height: 14, border: '2.5px solid #18181b', top: handleTop }}
+            style={{ background: IO_COLOR, width: 14, height: 14, border: '2.5px solid #1a1a1a', top: handleTop }}
           />
         </>
       }

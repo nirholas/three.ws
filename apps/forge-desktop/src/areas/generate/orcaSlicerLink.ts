@@ -1,8 +1,7 @@
 // Builds the OrcaSlicer deeplink for a generated mesh.
 //
 // OrcaSlicer registers the `orcaslicer://open?file=<url>` scheme; its handler
-// downloads the http(s) URL in `file=` and imports it, deriving the filename —
-// and therefore the mesh format — from the URL's FINAL path segment. That means
+// downloads the http(s) URL in `file=` and imports it, deriving the filename,// and therefore the mesh format, from the URL's FINAL path segment. That means
 // the served URL must be path-only and end in a real `model.<ext>` with NO
 // query string, and the whole thing must be percent-encoded. OrcaSlicer cannot
 // import GLB, so we point at the backend's slicer-export route which converts to
@@ -20,7 +19,7 @@ const SERVE_FILE_PREFIX = '/optimize/serve-file?path='
  */
 const SLICEABLE_SOURCE = /\.(glb|gltf|obj|stl)$/i
 
-/** URL-safe base64 (no padding) of a UTF-8 string — matches the API's token decode. */
+/** URL-safe base64 (no padding) of a UTF-8 string, matches the API's token decode. */
 export function encodeWorkspacePathToken(workspacePath: string): string {
   const bytes = new TextEncoder().encode(workspacePath)
   let binary = ''
@@ -34,7 +33,7 @@ export function encodeWorkspacePathToken(workspacePath: string): string {
  *
  * Two output shapes reach the viewer: a workspace URL (generated or
  * workflow-produced meshes) and a `serve-file` URL (meshes the user imported
- * from elsewhere on disk). Both are sliceable — the API accepts the absolute
+ * from elsewhere on disk). Both are sliceable, the API accepts the absolute
  * path of an import because it recorded that the user picked it themselves.
  */
 function sliceableSourcePath(outputUrl: string | undefined): string | undefined {
@@ -65,9 +64,9 @@ export function canOpenInOrcaSlicer(outputUrl: string | undefined): boolean {
 /**
  * Build the `orcaslicer://open?file=...` deeplink for a generated mesh.
  *
- * @param apiUrl    Modly backend origin, e.g. `http://localhost:8765`
+ * @param apiUrl    three.ws Forge backend origin, e.g. `http://localhost:8765`
  * @param outputUrl workspace or serve-file URL of the mesh
- * @throws if `outputUrl` is not sliceable — guard with {@link canOpenInOrcaSlicer}
+ * @throws if `outputUrl` is not sliceable, guard with {@link canOpenInOrcaSlicer}
  */
 export function buildOrcaSlicerDeepLink(apiUrl: string, outputUrl: string): string {
   const sourcePath = sliceableSourcePath(outputUrl)

@@ -8,7 +8,7 @@ const RESOURCES_DIR = path.join(__dirname, '..', 'resources')
 const EMBED_DIR = path.join(RESOURCES_DIR, 'python-embed')
 
 // python-build-standalone provides a full Python installation (includes venv + pip)
-// Used for ALL platforms — consistent behavior, no stripped-down embed issues.
+// Used for ALL platforms: consistent behavior, no stripped-down embed issues.
 const PBS_VERSION = '3.11.9'
 const PBS_RELEASE = '20240726'
 
@@ -32,7 +32,7 @@ function download(url, dest) {
     console.log(`Downloading ${url} → ${dest}`)
     const file = fs.createWriteStream(dest)
     const request = (u) => {
-      https.get(u, { headers: { 'User-Agent': 'modly-build' } }, (res) => {
+      https.get(u, { headers: { 'User-Agent': 'forge-build' } }, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
           request(res.headers.location)
           return

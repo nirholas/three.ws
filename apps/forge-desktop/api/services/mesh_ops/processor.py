@@ -35,7 +35,7 @@ def run_processor(operation_id: str, processor_id: str) -> None:
         workspace_dir = Path(
             data.get("workspaceDir")
             or os.environ.get("WORKSPACE_DIR")
-            or Path.home() / ".modly" / "workspace"
+            or Path.home() / ".three-ws-forge" / "workspace"
         )
         temp_dir = Path(
             data.get("tempDir")

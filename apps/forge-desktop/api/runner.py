@@ -1,14 +1,14 @@
 """
-Modly Extension Runner — generic subprocess entry point.
+three.ws Forge Extension Runner, generic subprocess entry point.
 
 Runs inside the extension's own venv. Loaded by ExtensionProcess via:
     {venv_python} {runner_path}
 
 Environment variables (set by ExtensionProcess):
-    EXTENSION_DIR   — absolute path to the extension directory
-    MODELS_DIR      — where model weights are stored
-    WORKSPACE_DIR   — where generated files are saved
-    MODLY_API_DIR   — path to Modly's api/ dir (so generator.py can import
+    EXTENSION_DIR   absolute path to the extension directory
+    MODELS_DIR      where model weights are stored
+    WORKSPACE_DIR   where generated files are saved
+    THREEWS_API_DIR   path to three.ws Forge's api/ dir (so generator.py can import
                       from services.generators.base)
 
 Protocol: newline-delimited JSON on stdin/stdout.
@@ -28,9 +28,9 @@ from pathlib import Path
 # ------------------------------------------------------------------ #
 
 EXT_DIR       = Path(os.environ["EXTENSION_DIR"])
-MODELS_DIR    = Path(os.environ.get("MODELS_DIR",    Path.home() / ".modly" / "models"))
-WORKSPACE_DIR = Path(os.environ.get("WORKSPACE_DIR", Path.home() / ".modly" / "workspace"))
-MODLY_API_DIR = os.environ.get("MODLY_API_DIR", "")
+MODELS_DIR    = Path(os.environ.get("MODELS_DIR",    Path.home() / ".three-ws-forge" / "models"))
+WORKSPACE_DIR = Path(os.environ.get("WORKSPACE_DIR", Path.home() / ".three-ws-forge" / "workspace"))
+THREEWS_API_DIR = os.environ.get("THREEWS_API_DIR") or os.environ.get("MODLY_API_DIR", "")
 # MODEL_DIR is set by ExtensionProcess to match its own model_dir (composite node id path).
 # Falls back to MODELS_DIR/manifest_id for standalone/legacy use.
 _MODEL_DIR_OVERRIDE = os.environ.get("MODEL_DIR", "")
@@ -44,10 +44,10 @@ try:
 except (AttributeError, TypeError, ValueError, json.JSONDecodeError):
     _SHARED_MODEL_DIRS = {}
 
-# Inject Modly's api/ so generator.py can do:
+# Inject three.ws Forge's api/ so generator.py can do:
 #   from services.generators.base import BaseGenerator, ...
-if MODLY_API_DIR and MODLY_API_DIR not in sys.path:
-    sys.path.insert(0, MODLY_API_DIR)
+if THREEWS_API_DIR and THREEWS_API_DIR not in sys.path:
+    sys.path.insert(0, THREEWS_API_DIR)
 
 # Inject ext dir so generator.py can import local vendor modules
 if str(EXT_DIR) not in sys.path:
@@ -141,7 +141,7 @@ def _ensure_model_loaded(gen) -> bool:
     free the shape pipeline first to make room for them. When that setup fails
     (a missing `xatlas` being the common case) the generator is left with
     _model = None, yet the worker process stays alive and both ExtensionProcess
-    and GeneratorRegistry still consider it loaded — so load() is never called
+    and GeneratorRegistry still consider it loaded, so load() is never called
     again and every later generate() dies with
 
         TypeError: 'NoneType' object is not callable

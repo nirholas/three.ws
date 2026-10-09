@@ -10,7 +10,7 @@ import { join, resolve } from 'node:path'
 // All @shared/* imports in those files are type-only, so esbuild erases them
 // and no path-alias resolution is required.
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-preflight-test-')), 'preflight.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-preflight-test-')), 'preflight.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/areas/workflows/preflight.ts')],

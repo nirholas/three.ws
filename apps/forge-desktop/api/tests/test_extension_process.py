@@ -31,7 +31,7 @@ class ExtensionProcessTests(unittest.TestCase):
             scene.mkdir(parents=True)
             manifest = scene / "scene-manifest.json"
             manifest.write_text(json.dumps({
-                "schema": "modly.scene-manifest.v1", "sceneRoot": ".", "assets": [],
+                "schema": "three-ws.forge.scene-manifest.v1", "sceneRoot": ".", "assets": [],
             }))
             proc = _make_proc()
             calls = []

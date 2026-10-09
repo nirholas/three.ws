@@ -12,7 +12,7 @@ export interface SceneArtifactManifestInitialView {
   up?: [number, number, number]
 }
 export interface SceneArtifactManifestV1 {
-  schema: 'modly.scene-manifest.v1'
+  schema: 'three-ws.forge.scene-manifest.v1'
   sceneRoot: string
   assets: unknown[]
   preview?: SceneArtifactManifestPreview

@@ -8,7 +8,7 @@ export interface SplatViewerHandle {
 }
 
 // ---------------------------------------------------------------------------
-// X/Y/Z orientation gizmo — a tiny overlay Canvas synced to the splat camera.
+// X/Y/Z orientation gizmo, a tiny overlay Canvas synced to the splat camera.
 // mkkellogg runs outside R3F, so the mesh viewer's drei GizmoHelper can't be
 // reused; this mirrors its look (coloured axis bubbles) driven by the live
 // camera quaternion.
@@ -162,7 +162,7 @@ function frameSplatToView(viewer: any, grid: THREE.GridHelper): void {
 }
 
 // ---------------------------------------------------------------------------
-// SplatViewer — self-contained Gaussian-Splatting viewer (mkkellogg, outside
+// SplatViewer: self-contained Gaussian-Splatting viewer (mkkellogg, outside
 // R3F). It owns its own canvas / scene / camera / controls, so nothing from the
 // mesh viewer's pipeline can interfere. Fed a normalised binary .splat.
 // ---------------------------------------------------------------------------
@@ -210,7 +210,7 @@ const SplatViewer = forwardRef<SplatViewerHandle, { url: string; autoRotate: boo
         selfDrivenMode:         true,
         useBuiltInControls:     true,
         sharedMemoryForWorkers: false,        // no cross-origin isolation in Electron/Vite
-        gpuAcceleratedSort:     false,        // CPU sort — most robust across GPUs/Electron
+        gpuAcceleratedSort:     false,        // CPU sort, most robust across GPUs/Electron
         // Frame like the mesh viewer: look at the model's centre (feet at y=0,
         // head ≈ 2), from the front. This splat faces −Z after the 180° Z flip,
         // so the camera sits on the −Z side to show the face, not the back.
@@ -221,7 +221,7 @@ const SplatViewer = forwardRef<SplatViewerHandle, { url: string; autoRotate: boo
       viewerRef.current = viewer
 
       // Match the mesh viewer's framing: mkkellogg defaults to fov 65, the mesh
-      // Canvas uses 45 — the wider fov made the splat look smaller / distorted.
+      // Canvas uses 45: the wider fov made the splat look smaller / distorted.
       if (viewer.camera) {
         viewer.camera.fov = 45
         viewer.camera.updateProjectionMatrix()
@@ -236,7 +236,7 @@ const SplatViewer = forwardRef<SplatViewerHandle, { url: string; autoRotate: boo
           format:          GaussianSplats3D.SceneFormat.Splat,
           showLoadingUI:   false,
           progressiveLoad: false,
-          rotation:        [0, 0, 1, 0],   // 180° about Z — 3DGS is Y-down; stands it upright while keeping the front toward the camera (X-mirror is invisible on a symmetric model)
+          rotation:        [0, 0, 1, 0],   // 180° about Z, 3DGS is Y-down; stands it upright while keeping the front toward the camera (X-mirror is invisible on a symmetric model)
         })
         .then(() => {
           if (disposed) return

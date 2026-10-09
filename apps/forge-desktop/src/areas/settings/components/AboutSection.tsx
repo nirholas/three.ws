@@ -13,8 +13,8 @@ export function AboutSection(): JSX.Element {
       <div className="grid grid-cols-2 gap-4">
 
         <Card>
-          <Row label="Modly" description="Local 3D mesh generation app.">
-            <span className="text-xs font-mono text-zinc-400">{version ? `v${version}` : '—'}</span>
+          <Row label="three.ws Forge" description="Local 3D mesh generation app.">
+            <span className="text-xs font-mono text-zinc-400">{version ? `v${version}` : '-'}</span>
           </Row>
           <Row label="Documentation" description="Guides and API reference.">
             <LinkButton label="Open" href="https://modly3d.app" />

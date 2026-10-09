@@ -23,7 +23,7 @@ export default function WorkflowEdge({
   const sourceNode = getNode(source)
   const targetNode = getNode(target)
 
-  // Read targetHandle directly from edge store — reliable regardless of EdgeProps version
+  // Read targetHandle directly from edge store, reliable regardless of EdgeProps version
   const thisEdge    = edges.find((e) => e.id === id)
   const targetHandle = thisEdge?.targetHandle
 

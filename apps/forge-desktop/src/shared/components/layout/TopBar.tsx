@@ -36,7 +36,7 @@ export default function TopBar(): JSX.Element {
             <path d="M4037 2838 c-25 -33 -443 -702 -467 -747 l-12 -24 -1384 4 c-1247 4 -1385 2 -1399 -12 -44 -44 -21 -170 42 -231 21 -20 203 -132 408 -249 385 -220 1034 -594 1310 -754 88 -51 183 -105 210 -121 28 -15 88 -49 134 -76 158 -90 177 -86 475 84 127 72 416 236 641 363 226 128 507 287 625 354 212 121 250 145 250 163 0 5 -40 73 -88 151 -49 78 -177 286 -284 462 -393 643 -407 664 -430 665 -4 0 -18 -15 -31 -32z"/>
           </g>
         </svg>
-        <span className="text-sm font-semibold text-zinc-100">Modly</span>
+        <span className="text-sm font-semibold text-zinc-100">three.ws Forge</span>
       </div>
 
       {/* Spacer */}
@@ -58,7 +58,7 @@ export default function TopBar(): JSX.Element {
         </div>
       )}
 
-      {/* Window controls — Mac uses the native traffic-light buttons on the left */}
+      {/* Window controls, Mac uses the native traffic-light buttons on the left */}
       {!isMac && (
         <div className="flex items-center gap-1 no-drag">
           <button

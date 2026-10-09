@@ -1,4 +1,4 @@
-# Modly — FastAPI Backend
+# three.ws Forge: FastAPI Backend
 
 Local Python server started and managed by Electron.
 
@@ -35,5 +35,5 @@ uvicorn main:app --host 127.0.0.1 --port 8765 --reload
 ## Model
 
 Default: **TripoSR** (`stabilityai/TripoSR`, ~2.4 GB)
-Downloaded on first launch to `~/.modly/models/TripoSR/`.
+Downloaded on first launch to `~/.three-ws-forge/models/TripoSR/`.
 To change model: edit `services/model_manager.py`.

@@ -238,7 +238,7 @@ export interface LegacyDownloadStep {
 /**
  * Hugging Face filter passes for one download action. A node that declares weight
  * variants always fetches its shared files first (every variant excluded), then the
- * requested variant — its default one when no variant id is given. The shared pass
+ * requested variant, its default one when no variant id is given. The shared pass
  * skips files already complete on disk, so it stays cheap on a resume or a second
  * variant.
  */

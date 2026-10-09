@@ -4,15 +4,15 @@ import { logger } from './logger'
 
 type WindowGetter = () => BrowserWindow | null
 
-// Les builds macOS ne sont pas signés avec un Developer ID (pas de licence Apple).
-// electron-updater valide la signature du bundle avant d'appliquer une mise à
-// jour : sur darwin il échouerait systématiquement, en boucle toutes les 2 h.
-// Les utilisateurs mac mettent donc à jour manuellement via les releases GitHub.
+// macOS builds are ad-hoc signed, not Developer ID signed. electron-updater
+// validates the bundle signature before applying an update, so on darwin it
+// would fail every time, looping every 2 hours. Mac users update by
+// downloading the new DMG from https://three.ws/forge-desktop instead.
 export const updatesSupported = process.platform !== 'darwin'
 
 export function initAutoUpdater(getWindow: WindowGetter): void {
   if (!updatesSupported) {
-    logger.info('[updater] Disabled on macOS (unsigned build) — manual updates only')
+    logger.info('[updater] Disabled on macOS (unsigned build), manual updates only')
     return
   }
 
@@ -29,18 +29,18 @@ export function initAutoUpdater(getWindow: WindowGetter): void {
     const isPatch = rMaj === iMaj && rMin === iMin
 
     if (isPatch) {
-      logger.info(`[updater] Patch ${incoming} available — downloading`)
+      logger.info(`[updater] Patch ${incoming} available, downloading`)
       autoUpdater.downloadUpdate().catch((err: Error) => {
         logger.error(`[updater] Download failed: ${err.message}`)
       })
     } else {
-      logger.info(`[updater] Major/minor update ${incoming} available — notifying renderer`)
+      logger.info(`[updater] Major/minor update ${incoming} available, notifying renderer`)
       getWindow()?.webContents.send('updater:major-minor-available', { version: incoming })
     }
   })
 
   autoUpdater.on('update-downloaded', (info) => {
-    logger.info(`[updater] Patch ${info.version} downloaded — applying now`)
+    logger.info(`[updater] Patch ${info.version} downloaded, applying now`)
     getWindow()?.webContents.send('updater:applying', { version: info.version })
     // Small delay so the renderer can render the "Applying…" panel before quit
     setTimeout(() => {

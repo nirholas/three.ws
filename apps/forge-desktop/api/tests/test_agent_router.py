@@ -9,7 +9,7 @@ import routers.agent as agent
 
 class _MockClientFactory:
     """Builds real AsyncClients wired to a MockTransport, so execute_tool talks to
-    a fake Modly API instead of the network."""
+    a fake three.ws Forge API instead of the network."""
 
     def __init__(self, handler) -> None:
         self._handler = handler
@@ -28,7 +28,7 @@ def _run_tool(name: str, handler) -> tuple[str, object]:
 
 class UnloadModelsErrorTests(unittest.TestCase):
     """unload_models must report a failed unload, not claim success (like every
-    other POST tool and like the MCP server's modly_unload_models)."""
+    other POST tool and like the MCP server's forge_unload_models)."""
 
     def test_http_error_is_surfaced(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:

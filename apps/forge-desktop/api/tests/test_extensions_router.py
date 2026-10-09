@@ -45,7 +45,7 @@ class ExtensionReloadRouteTests(unittest.TestCase):
         capability = {
             "extensionId": "pending",
             "destinationName": "pending",
-            "stateName": ".modly-registration-pending-pending-100",
+            "stateName": ".forge-registration-pending-pending-100",
             "token": "t" * 43,
         }
 

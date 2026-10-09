@@ -1,5 +1,5 @@
 """
-BaseGenerator — contract that each model adapter must implement.
+BaseGenerator: contract that each model adapter must implement.
 """
 from abc import ABC, abstractmethod
 import threading
@@ -19,7 +19,7 @@ def select_device() -> str:
     in one place and Windows/CUDA behavior is unaffected.
 
     PyTorch only falls back to CPU for MPS ops with no Metal kernel (e.g. 3D
-    pooling) — instead of raising NotImplementedError — if
+    pooling), instead of raising NotImplementedError, if
     PYTORCH_ENABLE_MPS_FALLBACK=1 is set *before the process's first `import
     torch`*. That's set for every extension subprocess in
     ExtensionProcess._build_env(); the setdefault() below is just a
@@ -75,7 +75,7 @@ def smooth_progress(
 
 class BaseGenerator(ABC):
     # ------------------------------------------------------------------ #
-    # Metadata — override in each subclass
+    # Metadata: override in each subclass
     # ------------------------------------------------------------------ #
     MODEL_ID:     str = ""
     MODEL_NODE_ID: str = ""

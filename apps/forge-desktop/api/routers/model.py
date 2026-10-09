@@ -317,7 +317,7 @@ async def hf_download(
                       A HEADER, not a query param: uvicorn logs the full request
                       line to stdout, python-bridge.ts pipes that into runtime.log,
                       and `log:readAll` hands that file to the user for bug
-                      reports — the token used to travel all the way there.
+                      reports, the token used to travel all the way there.
     All fall back to the extension's manifest / environment when not supplied.
 
     SSE format: data: {"percent": 0-100, "file": "...", "status": "..."}
@@ -490,7 +490,7 @@ def _download_file_streamed(
         or os.environ.get("HUGGINGFACE_HUB_TOKEN")
         or os.environ.get("HUGGING_FACE_HUB_TOKEN")
     )
-    headers = {"User-Agent": "modly/0.3.1"}
+    headers = {"User-Agent": "forge/0.3.1"}
     if hf_token:
         headers["Authorization"] = f"Bearer {hf_token}"
 

@@ -1,5 +1,5 @@
 """
-Local LLM engine endpoints — model catalog, GGUF downloads, llama-server lifecycle.
+Local LLM engine endpoints: model catalog, GGUF downloads, llama-server lifecycle.
 Reuses the streamed/resumable downloader from routers.model.
 """
 import asyncio
@@ -105,7 +105,7 @@ async def set_config(request: LlmConfigRequest):
     cfg = llm_server.load_config()
     cfg["max_models"] = value
     llm_server.save_config(cfg)
-    # A lowered limit applies immediately — small-VRAM users count on it.
+    # A lowered limit applies immediately: small-VRAM users count on it.
     await asyncio.to_thread(llama_pool.enforce_limit)
     return {"max_models": value, "resolved_max_models": llm_server.resolve_max_models()}
 
@@ -209,7 +209,7 @@ async def pause_download(model_id: str):
 async def cancel_download(model_id: str):
     """Cancel an in-flight download, or clean up a paused one.
 
-    A paused download has already left `_run_download` — its control is gone
+    A paused download has already left `_run_download`, its control is gone
     from `_controls`, so setting the cancel event would be a no-op. Reporting
     success there left the user with a multi-GB .part file they believed they
     had deleted, so the partial files are removed here instead."""
@@ -237,7 +237,7 @@ def _discard_incomplete(entry: dict) -> list[str]:
 
     Not just the .part: a vision model downloads weights then projector, so
     cancelling during the second one left 2.5 GB of finished weights on disk
-    under a model still reported as `downloaded: false` — no trash button is
+    under a model still reported as `downloaded: false`, no trash button is
     offered for those, so the space could not be reclaimed from the UI at all.
     A model whose files are all present is complete, not in flight, and is
     never touched here (deleting it is what DELETE /llm/models/{id} is for)."""
@@ -263,7 +263,7 @@ async def _run_download(model_id: str, entry: dict, control: dict[str, threading
     loop = asyncio.get_running_loop()
 
     def _broadcast(msg: dict) -> None:
-        # _progress (below) runs in a worker thread — hop back onto the loop.
+        # _progress (below) runs in a worker thread: hop back onto the loop.
         def _do() -> None:
             state.last_msg = msg
             for q in list(state.subscribers):
@@ -272,7 +272,7 @@ async def _run_download(model_id: str, entry: dict, control: dict[str, threading
 
     from huggingface_hub import hf_hub_url
 
-    # Vision models ship a companion mmproj file — download it alongside the
+    # Vision models ship a companion mmproj file: download it alongside the
     # weights, stored under a per-model local name (HF names collide).
     files: list[tuple[str, str, int]] = [(entry["hf_filename"], entry["hf_filename"], entry.get("size_bytes") or 0)]
     if entry.get("hf_mmproj_filename"):
@@ -346,7 +346,7 @@ async def download_model(model_id: str):
         raise HTTPException(status_code=404, detail=f"Unknown catalog model: {model_id}")
 
     # Reconnect-safe: if this model is already downloading, attach a new watcher
-    # instead of starting a second download racing the same .part file — this is
+    # instead of starting a second download racing the same .part file: this is
     # what lets the Model Library modal be closed and reopened mid-download.
     state = _downloads.get(model_id)
     if state is None or state.task is None or state.task.done():

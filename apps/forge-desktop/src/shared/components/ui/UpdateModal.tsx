@@ -26,10 +26,10 @@ export function UpdateModal({ currentVersion, latestVersion, onDismiss }: Update
           <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent pointer-events-none" />
 
           <div className="relative flex items-center gap-4">
-            <img src={logo} alt="Modly" className="w-12 h-12 rounded-xl shrink-0" />
+            <img src={logo} alt="three.ws Forge" className="w-12 h-12 rounded-xl shrink-0" />
             <div>
               <h2 className="text-lg font-semibold text-zinc-100 leading-tight">New update available</h2>
-              <p className="text-sm text-zinc-500 mt-0.5">A new version of Modly is ready to download.</p>
+              <p className="text-sm text-zinc-500 mt-0.5">A new version of three.ws Forge is ready to download.</p>
             </div>
           </div>
         </div>
@@ -41,7 +41,7 @@ export function UpdateModal({ currentVersion, latestVersion, onDismiss }: Update
             <div className="flex-1 flex flex-col items-center gap-1">
               <span className="text-[11px] uppercase tracking-widest text-zinc-500 font-medium">Current</span>
               <span className="text-base font-mono font-semibold text-zinc-400">
-                {currentVersion ? `v${currentVersion}` : '—'}
+                {currentVersion ? `v${currentVersion}` : '-'}
               </span>
             </div>
 

@@ -10,7 +10,7 @@ import { join, resolve } from 'node:path'
 // type-only one (electron.d) which esbuild erases. The store reads the global
 // `window.electron.workflows.*` bridge, which we stub per test.
 function loadStore() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-wfstore-test-')), 'workflowsStore.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-wfstore-test-')), 'workflowsStore.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/stores/workflowsStore.ts')],

@@ -8,7 +8,7 @@ import { join, resolve } from 'node:path'
 
 // paramPicker.ts only type-imports from electron.d, so esbuild erases it.
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-parampicker-test-')), 'paramPicker.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-parampicker-test-')), 'paramPicker.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('src/shared/utils/paramPicker.ts')],
@@ -55,7 +55,7 @@ test('resolvePickerIntent falls back to the folder picker when unset or unknown'
 
 // ─── openParamPicker ───────────────────────────────────────────────────────────
 
-test('openParamPicker opens the image dialog for pickerIntent: image — issue #155', async () => {
+test('openParamPicker opens the image dialog for pickerIntent: image, issue #155', async () => {
   const fs = fakeFs()
   const picked = await openParamPicker(stringParam({ pickerIntent: 'image' }), fs)
 
@@ -87,7 +87,7 @@ test('PICKER_LABELS names every intent, so the browse button always has an acces
 })
 
 // ─── Call sites ────────────────────────────────────────────────────────────────
-// The bug in #155 was not in a resolver (there wasn't one) — it was the string
+// The bug in #155 was not in a resolver (there wasn't one), it was the string
 // param's browse button calling selectDirectory() unconditionally. There is no
 // DOM harness in this repo, so guard the wiring at the source level instead.
 

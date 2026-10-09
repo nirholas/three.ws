@@ -4,15 +4,15 @@ import type { WFNode, WFEdge } from '@shared/types/electron.d'
 //
 // Add a new entry here when you introduce a node type that needs to participate
 // in the runner's control-flow logic. The predicates and helpers below derive
-// everything they need from this table — no hardcoded type checks anywhere else.
+// everything they need from this table, no hardcoded type checks anywhere else.
 //
-// • passthrough   — data flows through this node unchanged. Resolvers (inputs,
+// • passthrough, data flows through this node unchanged. Resolvers (inputs,
 //                   preflight typing) walk past it to find the real source.
-// • branchStarter — splits the run into a user-driven sub-DAG. The runner
+// • branchStarter, splits the run into a user-driven sub-DAG. The runner
 //                   pauses on these nodes and exposes a Continue/Retry button.
-// • sceneOutput   — terminal sink that gets pushed to the 3D viewer. Used by
+// • sceneOutput, terminal sink that gets pushed to the 3D viewer. Used by
 //                   the immediate mesh-push logic during execution.
-// • branchConsumer — executes inside a Wait branch and consumes its single mesh
+// • branchConsumer, executes inside a Wait branch and consumes its single mesh
 //                   output, so it can't be fed by more than one Wait branch.
 
 export interface NodeBehavior {
@@ -59,7 +59,7 @@ export function resolveDataSource(
 
 /**
  * Walks backwards from `nodeId` and returns the set of nearest upstream
- * branch-starter (Wait) nodes — the first Wait found on each incoming path,
+ * branch-starter (Wait) nodes, the first Wait found on each incoming path,
  * without traversing past it. Empty = no upstream Wait. Size > 1 = the node
  * merges two distinct branches.
  */
@@ -83,7 +83,7 @@ export function nearestUpstreamWaits(
 
 /**
  * True if any forward path from `sourceId` reaches a sceneOutput node, walking
- * through passthrough nodes — but stopping at branch-starter (Wait) boundaries.
+ * through passthrough nodes, but stopping at branch-starter (Wait) boundaries.
  * A scene output gated behind a Wait belongs to a branch that runs later, so it
  * must not be treated as immediately reachable (otherwise pre-phase nodes would
  * push their mesh to the viewer before the user clicks Continue).

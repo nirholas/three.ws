@@ -15,7 +15,7 @@ api/*.pyc
 api/**/*.pyc
 api/.venv/
 api/venv/
-tools/modly-cli/__pycache__/
+tools/forge-cli/__pycache__/
 .hermes-e2e/
 
 # Models (heavy, downloaded at runtime)

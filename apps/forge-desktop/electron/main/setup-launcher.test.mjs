@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 function loadModule() {
-  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-launcher-test-')), 'setup-launcher.cjs')
+  const outfile = join(mkdtempSync(join(tmpdir(), 'forge-launcher-test-')), 'setup-launcher.cjs')
   const require = createRequire(import.meta.url)
   const result = buildSync({
     entryPoints: [resolve('electron/main/setup-launcher.ts')],
@@ -42,7 +42,7 @@ function findPython() {
 const PYTHON = findPython()
 
 // The launcher's _is_pip_command matches pip's executable spellings ahead of
-// the subcommand, so the stub is named pip.py — matching how extensions invoke
+// the subcommand, so the stub is named pip.py, matching how extensions invoke
 // "<venv>/bin/pip".
 const FAKE_PIP = `
 import json, sys
@@ -53,10 +53,10 @@ with open(sys.argv[1], "w") as handle:
 /**
  * Runs a pip command through the launcher and returns the argv the stub
  * actually received, i.e. the command after every rewrite. `invoke` picks how
- * the stand-in setup.py issues the call — the shapes real extensions use.
+ * the stand-in setup.py issues the call, the shapes real extensions use.
  */
 function runThroughLauncher(pipArgs, env = {}, invoke = 'run') {
-  const dir     = mkdtempSync(join(tmpdir(), 'modly-launcher-run-'))
+  const dir     = mkdtempSync(join(tmpdir(), 'forge-launcher-run-'))
   const fakePip = join(dir, 'pip.py')
   const capture = join(dir, 'captured.json')
   writeFileSync(fakePip, FAKE_PIP, 'utf8')
@@ -90,9 +90,9 @@ function runThroughLauncher(pipArgs, env = {}, invoke = 'run') {
 }
 
 const ROCM_ENV = {
-  MODLY_TORCH_FLAVOR:    'rocm',
-  MODLY_TORCH_INDEX_URL: 'https://download.pytorch.org/whl/rocm7.2',
-  MODLY_TORCH_SPECS:     JSON.stringify(['torch', 'torchvision']),
+  THREEWS_TORCH_FLAVOR:    'rocm',
+  THREEWS_TORCH_INDEX_URL: 'https://download.pytorch.org/whl/rocm7.2',
+  THREEWS_TORCH_SPECS:     JSON.stringify(['torch', 'torchvision']),
 }
 
 test('ROCm shim redirects a CUDA-pinned install (triposg / trellis2 shape)', { skip: !PYTHON }, () => {
@@ -116,8 +116,8 @@ test('ROCm shim rescues the CPU fallback hunyuan3d-mini forces on Windows', { sk
     ['install', 'torch==2.6.0', 'torchvision==0.21.0', '--index-url', 'https://download.pytorch.org/whl/cpu'],
     {
       ...ROCM_ENV,
-      MODLY_TORCH_INDEX_URL: 'https://repo.amd.com/rocm/whl-multi-arch/',
-      MODLY_TORCH_SPECS: JSON.stringify([
+      THREEWS_TORCH_INDEX_URL: 'https://repo.amd.com/rocm/whl-multi-arch/',
+      THREEWS_TORCH_SPECS: JSON.stringify([
         'torch[device-gfx1200]==2.11.0+rocm7.14.0',
         'torchvision[device-gfx1200]==0.26.0+rocm7.14.0',
       ]),
@@ -134,7 +134,7 @@ test('ROCm shim rescues the CPU fallback hunyuan3d-mini forces on Windows', { sk
 
 test('ROCm shim leaves an extension that already chose ROCm alone', { skip: !PYTHON }, () => {
   // hunyuan3d-mini's own rocm branch on Linux. Its index is kept; only the
-  // requirements are normalised to what Modly resolved.
+  // requirements are normalised to what three.ws Forge resolved.
   const { argv } = runThroughLauncher(
     ['install', 'torch', 'torchvision', '--index-url', 'https://download.pytorch.org/whl/rocm7.2'],
     ROCM_ENV,
@@ -216,9 +216,9 @@ test('ROCm shim does not add PyPI for a torch-only install', { skip: !PYTHON }, 
 test('shim is inert on a CUDA machine', { skip: !PYTHON }, () => {
   const original = ['install', 'torch==2.6.0', '--index-url', 'https://download.pytorch.org/whl/cu124']
   const { argv } = runThroughLauncher(original, {
-    MODLY_TORCH_FLAVOR: 'cuda',
-    MODLY_TORCH_INDEX_URL: '',
-    MODLY_TORCH_SPECS: '[]',
+    THREEWS_TORCH_FLAVOR: 'cuda',
+    THREEWS_TORCH_INDEX_URL: '',
+    THREEWS_TORCH_SPECS: '[]',
   })
   assert.deepEqual(argv, original)
 })
@@ -244,11 +244,11 @@ test('ROCm shim covers subprocess.Popen and the args= keyword too', { skip: !PYT
 test('ROCm shim matches "python -u -m pip install" too', { skip: !PYTHON }, () => {
   // hunyuan3d-style scripts call pip through the interpreter; "pip" is then the
   // fourth token, which the old first-three-tokens check missed.
-  const dir     = mkdtempSync(join(tmpdir(), 'modly-launcher-m-'))
+  const dir     = mkdtempSync(join(tmpdir(), 'forge-launcher-m-'))
   const capture = join(dir, 'captured.json')
   writeFileSync(join(dir, 'pip.py'), [
     'import json, os, sys',
-    'with open(os.environ["MODLY_TEST_CAPTURE"], "w") as handle:',
+    'with open(os.environ["THREEWS_TEST_CAPTURE"], "w") as handle:',
     '    json.dump(sys.argv[1:], handle)',
   ].join('\n'), 'utf8')
 
@@ -261,7 +261,7 @@ test('ROCm shim matches "python -u -m pip install" too', { skip: !PYTHON }, () =
 
   const result = spawnSync(PYTHON, ['-c', SETUP_LAUNCHER_SOURCE, setupPy, '{}'], {
     encoding: 'utf8',
-    env: { ...process.env, ...ROCM_ENV, MODLY_TEST_CAPTURE: capture, PYTHONPATH: dir },
+    env: { ...process.env, ...ROCM_ENV, THREEWS_TEST_CAPTURE: capture, PYTHONPATH: dir },
   })
   assert.equal(result.status, 0, `launcher failed:\n${result.stderr}`)
 
@@ -312,8 +312,8 @@ test('ROCm shim recognises AMD\'s Windows index as already-ROCm', { skip: !PYTHO
   // ROCm index or the shim would inject a second, conflicting --index-url.
   const winEnv = {
     ...ROCM_ENV,
-    MODLY_TORCH_INDEX_URL: 'https://repo.amd.com/rocm/whl-multi-arch/',
-    MODLY_TORCH_SPECS: JSON.stringify(['torch[device-gfx1200]==2.11.0+rocm7.14.0']),
+    THREEWS_TORCH_INDEX_URL: 'https://repo.amd.com/rocm/whl-multi-arch/',
+    THREEWS_TORCH_SPECS: JSON.stringify(['torch[device-gfx1200]==2.11.0+rocm7.14.0']),
   }
   const { argv } = runThroughLauncher(
     ['install', 'torch==2.6.0', '--index-url', 'https://repo.amd.com/rocm/whl-multi-arch/'],

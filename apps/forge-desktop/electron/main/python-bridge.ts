@@ -55,9 +55,10 @@ export class PythonBridge {
         PYTHONUNBUFFERED:       '1',
         // mesh_ops uses Electron in Node mode for the existing meshoptimizer
         // backend, so packaged builds do not depend on a system Node install.
-        MODLY_NODE_EXECUTABLE:  process.execPath,
+        THREEWS_NODE_EXECUTABLE:  process.execPath,
+        MODLY_NODE_EXECUTABLE:    process.execPath,
         // We decode both pipes as UTF-8 below (Buffer.toString() default), and
-        // the API forwards extension output — tqdm bars included — through its
+        // the API forwards extension output, tqdm bars included, through its
         // own stderr. Without this the API would encode them with the Windows
         // locale codec and the HUD log pane would show █ escapes.
         PYTHONIOENCODING:       'utf-8',
@@ -66,7 +67,7 @@ export class PythonBridge {
         WORKSPACE_DIR:          this.resolveWorkspaceDir(),
         EXTENSIONS_DIR:         this.resolveExtensionsDir(),
         // llm_server.py keeps everything of the local LLM here: engine, GGUF models, logs, config.
-        MODLY_LLM_DIR:          this.resolveAgentDir(),
+        THREEWS_LLM_DIR:          this.resolveAgentDir(),
         SELECTED_MODEL_ID:      process.env['SELECTED_MODEL_ID'] ?? '',
         HUGGING_FACE_HUB_TOKEN: this.resolveHfToken(),
         HF_TOKEN:               this.resolveHfToken(),
@@ -74,7 +75,7 @@ export class PythonBridge {
       // On Unix, put the bridge in its own process group so every subprocess
       // it spawns (extension runners, etc.) inherits that group. On shutdown
       // we SIGKILL the whole group (negative PID) to take them all out
-      // together — otherwise children get reparented to launchd and keep
+      // together, otherwise children get reparented to launchd and keep
       // holding MPS-wired memory until the user kills them manually.
       detached: process.platform !== 'win32',
     })
@@ -218,7 +219,7 @@ export class PythonBridge {
       if (existsSync(c)) return c
     }
 
-    // Never fall back to bare 'python' on Windows — it would be the user's system Python
+    // Never fall back to bare 'python' on Windows, it would be the user's system Python
     if (process.platform === 'win32') {
       throw new Error('Python venv not found. Please restart the application to re-run setup.')
     }
@@ -253,6 +254,6 @@ export class PythonBridge {
   }
 
   private resolveHfToken(): string {
-    return getHfToken()   // decrypted cache — settings.json holds the ciphertext
+    return getHfToken()   // decrypted cache, settings.json holds the ciphertext
   }
 }

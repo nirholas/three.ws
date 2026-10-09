@@ -1,7 +1,7 @@
 """Registry of meshes the user explicitly imported from outside the workspace.
 
 `/optimize/import-by-path` serves files the user picked through the OS file
-dialog, either in place or converted into a temp dir — never from the workspace.
+dialog, either in place or converted into a temp dir, never from the workspace.
 The slicer export route confines itself to the workspace by design, so those
 imports would be unsliceable without widening that guard to arbitrary absolute
 paths, which would be a real regression.
@@ -49,5 +49,5 @@ def is_registered(path: str | Path) -> bool:
 
 
 def clear() -> None:
-    """Drop every entry — for tests."""
+    """Drop every entry: for tests."""
     _SOURCES.clear()
