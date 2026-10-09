@@ -26,7 +26,6 @@ struct alignas(32) Triangle {
   uv_float2 centroid;
 
   bool overlaps(const Triangle &other) {
-    // return tri_tri_overlap_test_2d(v0, v1, v2, other.v0, other.v1, other.v2);
     return triangle_triangle_intersection(v0, v1, v2, other.v0, other.v1,
                                           other.v2);
   }

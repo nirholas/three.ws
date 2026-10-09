@@ -24,7 +24,8 @@ export const DEFAULT_BASE_URL = 'https://three.ws/releases/forge';
 
 // Electron 42 supports macOS 12 and later and Windows 10 and later. The mac
 // build is arm64 only because the bundled CPython is per-architecture. Local
-// GPU generation additionally needs an NVIDIA GPU (CUDA) or Apple silicon;
+// GPU generation additionally needs an NVIDIA GPU (CUDA), an AMD Radeon GPU
+// (ROCm, Windows and Linux) or Apple silicon;
 // cloud generation runs on any of these.
 export const MINIMUM_OS = {
   mac: 'macOS 12 Monterey or later on Apple silicon',

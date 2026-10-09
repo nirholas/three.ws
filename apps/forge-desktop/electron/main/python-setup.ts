@@ -318,9 +318,12 @@ export async function runFullSetup(win: BrowserWindow, userData: string): Promis
       const venvPython = getVenvPythonExe(userData)
       await installRequirements(venvPython, requirementsPath, win)
     } else {
-      // Linux / macOS dev: use system Python
+      // Linux / macOS dev: prefer the runtime `npm run prepare-resources` staged
+      // (it always carries ensurepip, which Debian's system Python lacks), and
+      // fall back to system Python when it has not been downloaded.
       win.webContents.send('setup:progress', { step: 'venv', percent: 5 })
-      const python3 = findSystemPython()
+      const embedded = getEmbeddedPythonExe()
+      const python3 = existsSync(embedded) ? embedded : findSystemPython()
       await createVenv(python3, venvDir, win)
       const venvPython = getVenvPythonExe(userData)
       await installRequirements(venvPython, requirementsPath, win)

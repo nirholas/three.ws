@@ -246,7 +246,9 @@ export function ThreeWsSection(): JSX.Element {
   const account = useThreeWsStore((s) => s.account)
   const loading = useThreeWsStore((s) => s.loading)
   const error = useThreeWsStore((s) => s.error)
+  const errorRetryable = useThreeWsStore((s) => s.errorRetryable)
   const refresh = useThreeWsStore((s) => s.refresh)
+  const dismissError = useThreeWsStore((s) => s.dismissError)
 
   useEffect(() => { void refresh() }, [refresh])
 
@@ -255,7 +257,11 @@ export function ThreeWsSection(): JSX.Element {
       {error && (
         <div role="alert" className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-center justify-between gap-4">
           <span>{error}</span>
-          <button type="button" onClick={() => void refresh()} className="shrink-0 text-red-200 hover:underline">Retry</button>
+          {errorRetryable ? (
+            <button type="button" onClick={() => void refresh()} className="shrink-0 text-red-200 hover:underline">Retry</button>
+          ) : (
+            <button type="button" onClick={dismissError} className="shrink-0 text-red-200 hover:underline">Dismiss</button>
+          )}
         </div>
       )}
       {account === null && loading ? (

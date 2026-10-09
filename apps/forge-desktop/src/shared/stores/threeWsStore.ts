@@ -13,8 +13,11 @@ interface ThreeWsStore {
   account:  ThreeWsAccount | null
   loading:  boolean
   error:    string | null
+  /** True when `error` came from reading the account, which a retry can fix. */
+  errorRetryable: boolean
   link:     LinkState
   refresh:  () => Promise<void>
+  dismissError: () => void
   startLink: () => Promise<void>
   cancelLink: () => Promise<void>
   signInWithKey: (key: string) => Promise<boolean>
@@ -29,7 +32,7 @@ export const useThreeWsStore = create<ThreeWsStore>((set, get) => {
     listening = true
     window.electron.threews.onLinkResult((result) => {
       if (result.ok) set({ account: result.value, error: null, link: { status: 'idle' } })
-      else set({ error: result.error, link: { status: 'idle' } })
+      else set({ error: result.error, errorRetryable: false, link: { status: 'idle' } })
     })
   }
 
@@ -37,6 +40,7 @@ export const useThreeWsStore = create<ThreeWsStore>((set, get) => {
     account: null,
     loading: false,
     error:   null,
+    errorRetryable: false,
     link:    { status: 'idle' },
 
     refresh: async () => {
@@ -44,15 +48,17 @@ export const useThreeWsStore = create<ThreeWsStore>((set, get) => {
       set({ loading: true })
       const result = await window.electron.threews.account()
       if (result.ok) set({ account: result.value, loading: false, error: null })
-      else set({ loading: false, error: result.error })
+      else set({ loading: false, error: result.error, errorRetryable: true })
     },
+
+    dismissError: () => set({ error: null }),
 
     startLink: async () => {
       listen()
       set({ link: { status: 'starting' }, error: null })
       const result = await window.electron.threews.startLink()
       if (result.ok) set({ link: { status: 'waiting', link: result.value, startedAt: Date.now() } })
-      else set({ link: { status: 'idle' }, error: result.error })
+      else set({ link: { status: 'idle' }, error: result.error, errorRetryable: false })
     },
 
     cancelLink: async () => {
@@ -67,7 +73,7 @@ export const useThreeWsStore = create<ThreeWsStore>((set, get) => {
         set({ account: result.value, loading: false })
         return true
       }
-      set({ loading: false, error: result.error })
+      set({ loading: false, error: result.error, errorRetryable: false })
       return false
     },
 
@@ -75,7 +81,7 @@ export const useThreeWsStore = create<ThreeWsStore>((set, get) => {
       if (get().link.status !== 'idle') await get().cancelLink()
       const result = await window.electron.threews.signOut()
       if (result.ok) set({ account: result.value, error: null })
-      else set({ error: result.error })
+      else set({ error: result.error, errorRetryable: false })
     },
   }
 })
