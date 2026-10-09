@@ -39,7 +39,8 @@
 				"three://agents/{agentId}/runs/{runId}",
 				"three://agents/{agentId}/orders",
 				"three://agents/{agentId}/dca",
-				"three://agents/{agentId}/intents"
+				"three://agents/{agentId}/intents",
+				"three://agents/{agentId}/earnings"
 			],
 			"prompts": [
 				"get-started",
@@ -100,7 +101,8 @@
 				"three://agents/{agentId}/runs/{runId}",
 				"three://agents/{agentId}/orders",
 				"three://agents/{agentId}/dca",
-				"three://agents/{agentId}/intents"
+				"three://agents/{agentId}/intents",
+				"three://agents/{agentId}/earnings"
 			],
 			"prompts": [
 				"get-started",

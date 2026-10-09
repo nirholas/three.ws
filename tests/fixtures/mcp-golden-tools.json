@@ -295,6 +295,120 @@
 			"schemaHash": "5d9b231c5a24"
 		}
 	],
+	"api/_mcp/tools/cards.js": [
+		{
+			"name": "agent_card_balance",
+			"title": "Card balance",
+			"descHead": "The card's remaining balance. When the provider does not report balances",
+			"descHash": "1042cbcebb7c",
+			"annotations": "ref:READ",
+			"schemaHash": "a37fd68b8f89"
+		},
+		{
+			"name": "agent_card_cancel",
+			"title": "Cancel a card",
+			"descHead": "Cancel a card. Unpaid quotes can always be cancelled; whether a paid car",
+			"descHash": "1f77ff50a645",
+			"annotations": "ref:MONEY",
+			"schemaHash": "8399ee3ea864"
+		},
+		{
+			"name": "agent_card_connect",
+			"title": "Card provider verification status",
+			"descHead": "Whether the card provider needs the account holder to complete identity ",
+			"descHash": "a6475ea32a69",
+			"annotations": "ref:READ",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "agent_card_connect_link",
+			"title": "Card provider verification link",
+			"descHead": "A browser link where the account holder completes the provider's identit",
+			"descHash": "be6da8bf56ce",
+			"annotations": "ref:WRITE",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "agent_card_create",
+			"title": "Buy a card from the agent wallet",
+			"descHead": "Buy the card a quote describes, paying the quoted USDC from the agent wa",
+			"descHash": "ae3f1cfc82bd",
+			"annotations": "ref:MONEY",
+			"schemaHash": "99e6bfcd101a"
+		},
+		{
+			"name": "agent_card_data",
+			"title": "Card data and reveal preview",
+			"descHead": "The masked card number, which secret fields exist (code, PIN, link) and ",
+			"descHash": "26b38a1a23dd",
+			"annotations": "ref:WRITE",
+			"schemaHash": "a37fd68b8f89"
+		},
+		{
+			"name": "agent_card_get",
+			"title": "Get one agent card",
+			"descHead": "One card with its audit trail (quotes, payment, status changes, reveals ",
+			"descHash": "47bf1a48104b",
+			"annotations": "ref:READ",
+			"schemaHash": "a37fd68b8f89"
+		},
+		{
+			"name": "agent_card_list",
+			"title": "List agent cards",
+			"descHead": "List the agent's cards, newest first, with masked numbers, status and wh",
+			"descHash": "e3275cdf16b2",
+			"annotations": "ref:READ",
+			"schemaHash": "422f49d7d24b"
+		},
+		{
+			"name": "agent_card_quote",
+			"title": "Quote a card purchase",
+			"descHead": "Lock a price for one card: returns the total in USDC including fees, the",
+			"descHash": "9a1704b94711",
+			"annotations": "ref:WRITE",
+			"schemaHash": "42512dca827d"
+		},
+		{
+			"name": "agent_card_reveal",
+			"title": "Reveal a card secret once",
+			"descHead": "Return the card number, PIN or redemption code. Requires the preview_id ",
+			"descHash": "1cc4d5cce8ba",
+			"annotations": "ref:MONEY",
+			"schemaHash": "196267a969e2"
+		},
+		{
+			"name": "agent_card_search_gift_cards",
+			"title": "Search gift and prepaid card products",
+			"descHead": "Search card products with their denominations: fixed packages and/or an ",
+			"descHash": "01b9275fca63",
+			"annotations": "ref:READ",
+			"schemaHash": "a4f0f024e84c"
+		},
+		{
+			"name": "agent_card_search_merchants",
+			"title": "Search card merchants",
+			"descHead": "Search merchants an agent can buy a gift card or prepaid card from (for ",
+			"descHash": "d7e76e330fc4",
+			"annotations": "ref:READ",
+			"schemaHash": "110265cbdf52"
+		},
+		{
+			"name": "agent_card_status",
+			"title": "Refresh a card from the provider",
+			"descHead": "Ask the provider for the card's current status (processing, delivered, f",
+			"descHash": "ce0fcdcc28eb",
+			"annotations": "ref:READ",
+			"schemaHash": "a37fd68b8f89"
+		},
+		{
+			"name": "agent_card_withdraw",
+			"title": "Withdraw a prepaid balance to USDC",
+			"descHead": "Move a prepaid card balance back to the agent wallet as USDC, where the ",
+			"descHash": "e324fe655042",
+			"annotations": "ref:MONEY",
+			"schemaHash": "2d69e4aed6ec"
+		}
+	],
 	"api/_mcp/tools/crypto-data.js": [
 		{
 			"name": "crypto_data",
@@ -311,6 +425,69 @@
 			"descHash": "dynamic",
 			"annotations": "ref:READ_ONLY_LIVE_FEED",
 			"schemaHash": "1ba25dd7ff2b"
+		}
+	],
+	"api/_mcp/tools/custom-skills.js": [
+		{
+			"name": "create_custom_skill",
+			"title": "Write a custom skill for an agent",
+			"descHead": "Write a new prompt-only skill on one of your agents: markdown instructio",
+			"descHash": "acda6a0149c7",
+			"annotations": "ref:WRITE",
+			"schemaHash": "da4864989207"
+		},
+		{
+			"name": "delete_custom_skill",
+			"title": "Delete a custom skill",
+			"descHead": "Permanently delete a custom skill from your agent. Irreversible: a hand-",
+			"descHash": "9d62bcf0d0be",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "e176ac7ab924"
+		},
+		{
+			"name": "get_custom_skill",
+			"title": "Get one custom skill",
+			"descHead": "Read one custom skill on your agent, full text included, plus where it l",
+			"descHash": "4ccbf8fba8af",
+			"annotations": "ref:READ",
+			"schemaHash": "3757d27a1ff3"
+		},
+		{
+			"name": "import_community_skill",
+			"title": "Import a community skill onto an agent",
+			"descHead": "Install a community registry skill (see list_available_skills) on one of",
+			"descHash": "e15467043ad2",
+			"annotations": "ref:WRITE",
+			"schemaHash": "9f18b63cd440"
+		},
+		{
+			"name": "list_available_skills",
+			"title": "Browse community skills",
+			"descHead": "Search the public three.ws community skills registry: prompt-only skills",
+			"descHash": "8191ecf913f0",
+			"annotations": "ref:READ",
+			"schemaHash": "5a2445aa2ecd"
+		},
+		{
+			"name": "list_custom_skills",
+			"title": "List an agent's custom skills",
+			"descHead": "List every prompt-only custom skill on one of your agents in install ord",
+			"descHash": "29e621018bb3",
+			"annotations": "ref:READ",
+			"schemaHash": "235b5953bcf3"
+		},
+		{
+			"name": "update_custom_skill",
+			"title": "Edit or toggle a custom skill",
+			"descHead": "Edit a custom skill on your agent: rename it, rewrite its instructions, ",
+			"descHash": "bb2ba4d21984",
+			"annotations": "ref:WRITE",
+			"schemaHash": "8eeb0fbab1ed"
 		}
 	],
 	"api/_mcp/tools/embed.js": [
@@ -555,6 +732,64 @@
 			"schemaHash": "7187ef4e7b09"
 		}
 	],
+	"api/_mcp/tools/paired.js": [
+		{
+			"name": "paired_claim_fees",
+			"title": "Claim paired-coin creator fees",
+			"descHead": "Collect every quote asset an agent has earned in paired-coin swap fees, ",
+			"descHash": "e9bff3ce01a3",
+			"annotations": "ref:MONEY",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "paired_coin",
+			"title": "Read a paired coin",
+			"descHead": "One paired coin in full: its pools priced in dollars, recent trades, per",
+			"descHash": "fd50022a9348",
+			"annotations": "ref:READ",
+			"schemaHash": "f7b30b8cb101"
+		},
+		{
+			"name": "paired_coins",
+			"title": "List paired coins",
+			"descHead": "Paired coins on Robinhood Chain, newest first, with every pool (quote as",
+			"descHash": "39f12de03d87",
+			"annotations": "ref:READ",
+			"schemaHash": "ea7713c2fc50"
+		},
+		{
+			"name": "paired_fees",
+			"title": "Read paired-coin creator fees",
+			"descHead": "Swap fees an agent has earned as the creator of paired coins and can cla",
+			"descHash": "16f948364b37",
+			"annotations": "ref:READ",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "paired_launch",
+			"title": "Launch a paired coin from an agent wallet",
+			"descHead": "Launch the coin paired_launch_quote priced, signed by the agent's custod",
+			"descHash": "df948cf84507",
+			"annotations": "ref:MONEY",
+			"schemaHash": "66aa37c1fb27"
+		},
+		{
+			"name": "paired_launch_quote",
+			"title": "Quote a paired-coin launch",
+			"descHead": "Price a paired-coin launch from an agent's own EVM wallet on Robinhood C",
+			"descHash": "40f4057bb885",
+			"annotations": "ref:WRITE",
+			"schemaHash": "fc7a3d9fec58"
+		},
+		{
+			"name": "paired_markets",
+			"title": "List paired-coin markets",
+			"descHead": "Every asset a paired coin on Robinhood Chain can trade against, read liv",
+			"descHash": "341c46d099c2",
+			"annotations": "ref:READ",
+			"schemaHash": "8d68aaf97b18"
+		}
+	],
 	"api/_mcp/tools/print.js": [
 		{
 			"name": "print_analyze",
@@ -612,7 +847,7 @@
 			"name": "read_resource",
 			"title": "Read a three:// resource",
 			"descHead": "Read a live three.ws resource by URI: three://me (account, scopes, quota",
-			"descHash": "b7b40596d6b8",
+			"descHash": "c2103458cb7d",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -727,6 +962,14 @@
 			"schemaHash": "4371f009b2b2"
 		},
 		{
+			"name": "sentiment_scout",
+			"title": "Sourced momentum candidates (Sentiment Scout)",
+			"descHead": "Surface pump.fun momentum candidates with evidence you can cite. Each ca",
+			"descHash": "e649a7dfcebe",
+			"annotations": "ref:LIVE",
+			"schemaHash": "13a0e7cff817"
+		},
+		{
 			"name": "trade_receipt",
 			"title": "Why an agent took one trade",
 			"descHead": "Get the decision receipt for one pump.fun trade by an agent: the entry t",
@@ -774,6 +1017,14 @@
 			"descHash": "dynamic",
 			"annotations": "ref:READ_ANNOTATIONS",
 			"schemaHash": "a9b240149140"
+		},
+		{
+			"name": "persona_payment_preview",
+			"title": "Preview a USDC payment from a persona's wallet (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:READ_ANNOTATIONS",
+			"schemaHash": "b08badfaa5ea"
 		},
 		{
 			"name": "persona_send",
@@ -1439,6 +1690,21 @@
 			"schemaHash": "c4ae91289bf9"
 		}
 	],
+	"packages/agentcore-payments-mcp/src/tools/quote-session-payment.js": [
+		{
+			"name": "quote_session_payment",
+			"title": "Quote an x402 payment against a payment session (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "aa69c4eb3776"
+		}
+	],
 	"packages/agora-mcp/src/tools/board.js": [
 		{
 			"name": "agora_board",
@@ -1521,6 +1787,19 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "3c49ac6bbe6f"
+		},
+		{
+			"name": "agora_quote_task",
+			"title": "Quote an Agora bounty (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "3596b5d9b887"
 		}
 	],
 	"packages/agora-mcp/src/tools/professions.js": [
@@ -1552,6 +1831,19 @@
 		}
 	],
 	"packages/agora-mcp/src/tools/register.js": [
+		{
+			"name": "agora_quote_register",
+			"title": "Quote an Agora registration (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "a1c0debb9fad"
+		},
 		{
 			"name": "agora_register",
 			"title": "Register as an Agora citizen (on-chain)",
@@ -1993,6 +2285,21 @@
 			"schemaHash": "c63918aa820c"
 		}
 	],
+	"packages/avatar-agent-mcp/src/tools/pump-buy-quote.js": [
+		{
+			"name": "pump_buy_quote",
+			"title": "Quote a token buy via Jupiter (no funds move)",
+			"descHead": "Quote a pump_buy before it runs: the SOL spent, the expected and minimum",
+			"descHash": "3775617cdf3f",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "ab27eb808d40"
+		}
+	],
 	"packages/avatar-agent-mcp/src/tools/pump-buy.js": [
 		{
 			"name": "pump_buy",
@@ -2008,6 +2315,21 @@
 			"schemaHash": "3c5c2209541c"
 		}
 	],
+	"packages/avatar-agent-mcp/src/tools/pump-collect-preview.js": [
+		{
+			"name": "pump_collect_preview",
+			"title": "Preview a creator-fee collection (no funds move)",
+			"descHead": "Preview pump_collect_fees before it runs: the live creator-fee vault bal",
+			"descHash": "e86ace5a4717",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "21761348966b"
+		}
+	],
 	"packages/avatar-agent-mcp/src/tools/pump-collect.js": [
 		{
 			"name": "pump_collect_fees",
@@ -2021,6 +2343,21 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "fa11cc2059d5"
+		}
+	],
+	"packages/avatar-agent-mcp/src/tools/pump-launch-preview.js": [
+		{
+			"name": "pump_launch_preview",
+			"title": "Preview a coin launch (no funds move)",
+			"descHead": "Preview a pump_launch before it runs: the funder and creator addresses, ",
+			"descHash": "06581cb81fb3",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "7176b2bf67c2"
 		}
 	],
 	"packages/avatar-agent-mcp/src/tools/pump-launch.js": [
@@ -2165,6 +2502,21 @@
 				"openWorldHint": false
 			},
 			"schemaHash": "1f05b8548040"
+		}
+	],
+	"packages/avatar-agent-mcp/src/tools/wallet-send-preview.js": [
+		{
+			"name": "wallet_send_preview",
+			"title": "Preview a SOL send (no funds move)",
+			"descHead": "Preview a wallet_send before it runs: the sender address, recipient, amo",
+			"descHash": "5a93d7e6b8ce",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "53c671af96ba"
 		}
 	],
 	"packages/avatar-agent-mcp/src/tools/wallet-send.js": [
@@ -2676,6 +3028,21 @@
 			"schemaHash": "44136fa355b3"
 		}
 	],
+	"packages/home-mcp/src/tools/preview-macro.js": [
+		{
+			"name": "preview_macro",
+			"title": "Preview which scene a phrase would run (nothing runs)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "f5660d7b4e01"
+		}
+	],
 	"packages/home-mcp/src/tools/run-macro.js": [
 		{
 			"name": "run_macro",
@@ -3071,6 +3438,19 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "0ee1f0a920c3"
+		},
+		{
+			"name": "preview_agent_mint",
+			"title": "Preview an on-chain agent mint (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "19efba8a9803"
 		}
 	],
 	"packages/metaplex-agent-mcp/src/tools/prepare-agent-mint.js": [
@@ -3088,6 +3468,19 @@
 		}
 	],
 	"packages/metaplex-agent-mcp/src/tools/register-agent-identity.js": [
+		{
+			"name": "preview_agent_identity",
+			"title": "Preview an Agent Identity registration (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "ref:previewShape"
+		},
 		{
 			"name": "register_agent_identity",
 			"title": "Register an existing Core asset in the Metaplex Agent Registry",
@@ -3312,6 +3705,21 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "2774dafb1fcf"
+		}
+	],
+	"packages/portfolio-mcp/src/tools/preview-transfer.js": [
+		{
+			"name": "preview_transfer",
+			"title": "Preview a SOL or SPL transfer (no funds move)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "f56e86a6e211"
 		}
 	],
 	"packages/portfolio-mcp/src/tools/send-transfer.js": [
@@ -3541,6 +3949,62 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "b73a7b0f84ee"
+		}
+	],
+	"packages/solana-memo-media-mcp/src/tools/decode-data-uri.js": [
+		{
+			"name": "decode_solana_memo_data_uri",
+			"title": "Decode a Solana memo data URI",
+			"descHead": "Decode and validate one base64 image data URI from a Solana memo. Only P",
+			"descHash": "9c057b11cc8d",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "b38a60428d81"
+		}
+	],
+	"packages/solana-memo-media-mcp/src/tools/extract-transaction.js": [
+		{
+			"name": "extract_solana_memo_media",
+			"title": "Extract media from a Solana transaction memo",
+			"descHead": "Fetch a confirmed Solana transaction (legacy, v0, or v1), inspect top-le",
+			"descHash": "c1478d5211af",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "e42bbc7daa6d"
+		}
+	],
+	"packages/solana-memo-media-mcp/src/tools/find-address-media.js": [
+		{
+			"name": "find_solana_memo_media",
+			"title": "Find recent memo media for a Solana address",
+			"descHead": "Scan a Solana address's recent confirmed transactions and return only va",
+			"descHash": "0fedf5ff2ff8",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "5e606dfa40ee"
+		}
+	],
+	"packages/solana-memo-media-mcp/src/tools/status.js": [
+		{
+			"name": "get_solana_memo_media_status",
+			"title": "Solana memo media capability",
+			"descHead": "Report the local decoding policy, recognized memo programs, and ordered ",
+			"descHash": "c9f6708400c9",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "44136fa355b3"
 		}
 	],
 	"packages/three-token-mcp/src/tools/three-balance.js": [

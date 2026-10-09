@@ -7,8 +7,8 @@
 		"free": 340,
 		"paid": 28,
 		"read": 247,
-		"write": 90,
-		"irreversible": 31,
+		"write": 89,
+		"irreversible": 32,
 		"withSchema": 368,
 		"withArguments": 342
 	},
@@ -13398,10 +13398,10 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"safety": "write",
+			"safety": "irreversible",
 			"annotations": {
 				"readOnlyHint": false,
-				"destructiveHint": false,
+				"destructiveHint": true,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},

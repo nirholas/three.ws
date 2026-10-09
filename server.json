@@ -122,6 +122,12 @@
 					"name": "agent-intents",
 					"title": "Agent wallet intents",
 					"mimeType": "application/json"
+				},
+				{
+					"uriTemplate": "three://agents/{agentId}/earnings",
+					"name": "agent-earnings",
+					"title": "Agent earnings",
+					"mimeType": "application/json"
 				}
 			],
 			"prompts": [

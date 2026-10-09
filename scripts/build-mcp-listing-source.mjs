@@ -491,6 +491,16 @@ const OVERLAY = {
 			"Show the mirror leaderboard of top publishers.",
 		],
 	},
+	"io.github.nirholas/solana-memo-media-mcp": {
+		tagline: "See the images people embed in Solana memos: give it a signature, get the picture back inline, validated.",
+		category: "market-data",
+		tags: ["solana","memo","images","data-uri","read-only"],
+		examplePrompts: [
+			"Show any image embedded in this Solana transaction.",
+			"Scan this wallet's recent transactions for memo images.",
+			"Decode this data URI I copied from a memo and tell me its size and hash.",
+		],
+	},
 	"io.github.nirholas/three-token-mcp": {
 		tagline: "Price, hold, and burn $THREE on Solana. The first MCP server whose actions burn a token.",
 		category: "payments",
