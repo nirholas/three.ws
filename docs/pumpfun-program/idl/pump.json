@@ -5286,7 +5286,7 @@
         "depth-0 coins only, up to 5 planned), and Q's curve must not be mayhem mode; a depth-0 Q",
         "must itself be quoted in SOL, a `Global`-whitelisted mint or a quote-control mint",
         "(`QuoteBondingCurveNotEligible`). The new curve's virtual quote reserves are then derived",
-        "from Q's live price — the seed a fresh curve in Q's own quote would get for a depth-0 Q, or",
+        "from Q's live price - the seed a fresh curve in Q's own quote would get for a depth-0 Q, or",
         "Q's own stored `initial_virtual_quote_reserves` for a deeper Q (so every hop below Q is",
         "pinned at its creation price and only Q is read), times Q's curve `virtual_token_reserves`",
         "over `virtual_quote_reserves` while Q's curve trades, or times Q's canonical pump-amm pool",
