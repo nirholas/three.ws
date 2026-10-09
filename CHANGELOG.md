@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-10-09
 
+- **Funding an agent's inference from its wallet now needs the signed real-funds agreements**: Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves. `[security]`
 - **The desktop companion, CLI and MCP server now work with just the bridge token**: The companion bridge token is the one credential the desktop app, the companion command line and its MCP server are given, but the feed, marking a message as spoken, replying, reading contacts and checking sources all refused it, so pasting the token into the desktop app said it was wrong and an agent asking what you had heard got turned away. Those calls now accept the bridge token and only ever show the messages and contacts of the person it belongs to. It still cannot connect sources, edit contacts, change settings or rotate itself; those stay behind your signed-in account, and they now say so plainly instead of answering as if the token were wrong. (`/companion`) `[fix]`
 
 ## 2026-10-08

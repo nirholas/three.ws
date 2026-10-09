@@ -2,6 +2,14 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-09",
+			"title": "Funding an agent's inference from its wallet now needs the signed real-funds agreements",
+			"summary": "Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.",
+			"tags": [
+				"security"
+			]
+		},
+		{
 			"date": "2026-10-08",
 			"title": "Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector",
 			"summary": "Adding the 3D Studio, agent wallet, x402 Bazaar or IBM Granite MCP server to an AI client with sign-in (Grok Bot, claude.ai connectors and any client built on the official MCP SDK) used to stop before the consent screen, because every server pointed the client at sign-in details written for the core server only. Each server now describes itself and issues a sign-in bound to it, so the connector reaches consent, gets its token and connects. Existing connections keep working. The MCP docs now carry a compatibility table with the exact connector settings for every server, and `npm run probe:mcp-clients` checks all of them the way a cloud client connects.",

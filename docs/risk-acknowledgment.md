@@ -212,6 +212,7 @@ keeps the sign-in clickwrap record in step with the Terms version.
 | Agent wallet: arm sniper | `src/agent-wallet-hub/tabs/snipe.js` | `snipe` |
 | Agent wallet: arm autopilot | `src/agent-wallet-hub/tabs/autopilot.js` | `autopilot` |
 | Agent wallet: x402 pay | `src/agent-wallet-hub/tabs/pay.js` | `x402-pay` |
+| Agent inference credits: top up, arm auto-fund | `src/inference-credits.js` | `inference-topup`, `inference-auto-fund` |
 | Tip an agent from a connected wallet | `src/shared/agent-tip-modal.js` | `tip` |
 | Master wallet: deposit, send, fund agent | `src/master-wallet.js` | `deposit`, `master-send`, `fund-agent` |
 | Oracle arm (live mode only) | `src/arm.js` | `oracle-arm` |

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Funding an agent's inference from its wallet now needs the signed real-funds agreements</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-09:Funding an agent's inference from its wallet now needs the signed real-funds agreements</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.</description>
+		</item>
+		<item>
 			<title>The desktop companion, CLI and MCP server now work with just the bridge token</title>
 			<link>https://three.ws/companion</link>
 			<guid isPermaLink="false">2026-10-09:The desktop companion, CLI and MCP server now work with just the bridge token</guid>
