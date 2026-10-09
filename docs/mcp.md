@@ -81,7 +81,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-The free studio also has two client-tuned doors on the same tools and quota: `/api/mcp-chatgpt` for the ChatGPT plugin directory, and `/api/mcp-grok` for Grok Bot, Grok connectors and the xAI API, where no call hangs, the quota follows your MCP session and, with OAuth 2.1 or an API key (`/api/mcp-grok?auth=oauth`), the account's agent, memory, skill and avatar tools are added. It never lists a wallet or payment tool. See [three.ws for Grok](./grok.md).
+The free studio also has two client-tuned doors on the same tools and quota: `/api/mcp-chatgpt` for the ChatGPT plugin directory, and `/api/mcp-grok` for Grok Bot, Grok connectors and the xAI API, where no call hangs, the quota follows your MCP session and, with OAuth 2.1 or an API key (`/api/mcp-grok?auth=oauth`), the account's agent, memory, skill and avatar tools are added. It never lists a wallet or payment tool. See [three.ws for Grok](./grok.md) and the [Grok Bot connector reference](./grok-bot.md).
 
 **Forty-two install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
@@ -286,6 +286,10 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ```
 
 This uses the standalone npm package, which handles OAuth locally. The `--url` flag lets you point at a local dev server.
+
+### Grok Bot
+
+Send Grok Bot: `Add a custom MCP server called three-ws at https://three.ws/api/mcp-grok`. Transport Streamable HTTP, authentication none for the free studio, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth` to add your agent tools. Setup per sign-in mode, limits, jobs and troubleshooting: [Grok Bot connector reference](./grok-bot.md).
 
 ### Any MCP-compatible client
 

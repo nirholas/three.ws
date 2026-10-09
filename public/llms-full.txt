@@ -3095,6 +3095,12 @@ URL: https://three.ws/docs/grok
 
 Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.
 
+### Docs · Grok Bot connector reference
+
+URL: https://three.ws/docs/grok-bot
+
+Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.
+
 ### Docs · AR in ChatGPT
 
 URL: https://three.ws/docs/chatgpt-ar

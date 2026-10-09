@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:14:41.231Z",
+	"generated_at": "2026-10-09T04:16:21.299Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5144,6 +5144,16 @@
 					"title": "Docs · three.ws for Grok",
 					"description": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
 					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/grok-bot",
+					"title": "Docs · Grok Bot connector reference",
+					"description": "Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

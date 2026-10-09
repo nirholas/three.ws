@@ -29274,6 +29274,20 @@
 			"summary": "The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.",
 			"tags": ["feature", "docs"],
 			"link": "/grok"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "A full setup guide for Grok Bot",
+			"summary": "There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.",
+			"tags": ["docs"],
+			"link": "/docs/grok-bot"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "Three ready-made jobs and the skill file on the Grok page",
+			"summary": "The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.",
+			"tags": ["improvement"],
+			"link": "/grok"
 		}
 	]
 }

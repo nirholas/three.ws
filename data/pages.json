@@ -4094,6 +4094,12 @@
 					"added": "2026-10-08"
 				},
 				{
+					"path": "/docs/grok-bot",
+					"title": "Docs · Grok Bot connector reference",
+					"description": "Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/docs/chatgpt-ar",
 					"title": "Docs · AR in ChatGPT",
 					"description": "How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.",

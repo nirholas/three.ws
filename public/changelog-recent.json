@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T04:14:41.267Z",
+	"generated_at": "2026-10-09T04:16:21.332Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3856,
+	"total": 3859,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -32,11 +32,31 @@
 		{
 			"date": "2026-10-09",
 			"type": "launch",
+			"title": "Docs · Grok Bot connector reference",
+			"summary": "Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.",
+			"link": "/docs/grok-bot",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
 			"title": "grok-skill.md",
 			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
 			"link": "/grok-skill.md",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "A full setup guide for Grok Bot",
+			"summary": "There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.",
+			"link": "/docs/grok-bot",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -205,6 +225,16 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Three ready-made jobs and the skill file on the Grok page",
+			"summary": "The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.",
+			"link": "/grok",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1522,39 +1552,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Granite Guardian now answers on three.ws, not just in the docs",
-			"summary": "The governance check that screens what an agent is asked to do, and vetoes it when the request is a jailbreak, harmful, or fraudulent, runs on IBM Granite Guardian. It was built to call IBM's hosted watsonx.ai service, so on our live site it answered with a not-configured error, and the new agent identity check quietly skipped itself for the same reason. IBM publishes Granite Guardian's weights openly, so we now run the model ourselves on a dedicated GPU as a second lane: watsonx still leads wherever it is set up, and our own copy answers whenever it is not. Every verdict now says which model and which lane produced it. The identity check also compares a new agent against existing ones using the site's regular embedding service when Granite embeddings are unavailable; it lists the look-alikes it finds but only scores them on Granite, because that is what its thresholds were tuned on.",
-			"link": "/docs/ibm",
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Paid endpoints now describe themselves the way marketplaces expect",
-			"summary": "When an agent or a marketplace asks one of our paid endpoints what it costs, the answer also explains how to call it and what comes back. Around sixty endpoints were sending that explanation in an older layout, or in one that did not match its own rules, which is enough for a marketplace to skip the listing without saying why. Every paid endpoint now sends it in the current standard layout, checked against its own rules. We also added a tool that tests our endpoints with the same checklist a marketplace validator uses, so a listing problem shows up on our side first.",
-			"link": "/docs/x402-dev-tools",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Paid x402 endpoints are answering again",
-			"summary": "For several hours on September 18, nearly every paid endpoint on three.ws, the x402 discovery document at /.well-known/x402, the payment facilitator and the MCP server answered with a server error instead of a price. A routine update to the library behind wallet sign-in changed what it needs at startup, and our code tripped over it the moment it loaded, before any request could be served. Agents and marketplace validators that probed us saw a broken seller. The sign-in code now supplies what the library expects, returning buyers can sign back in to what they already paid for exactly as before, and the deploy checks now refuse to ship when the tested dependencies differ from the ones the live site will run, which is how this got past us.",
-			"link": "/docs/x402",
-			"tags": [
-				"fix",
-				"infra"
 			]
 		}
 	]

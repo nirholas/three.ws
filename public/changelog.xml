@@ -23,12 +23,28 @@
 			<description>How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.</description>
 		</item>
 		<item>
+			<title>Docs · Grok Bot connector reference</title>
+			<link>https://three.ws/docs/grok-bot</link>
+			<guid isPermaLink="false">2026-10-09:Docs · Grok Bot connector reference</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Exact connector settings for Grok Bot, which sign-in and which server to pick, the links, jobs, retry and rate-limit contracts for unattended runs, the spend rule, and a fix for every failure the connector probe can report.</description>
+		</item>
+		<item>
 			<title>grok-skill.md</title>
 			<link>https://three.ws/grok-skill.md</link>
 			<guid isPermaLink="false">2026-10-09:grok-skill.md</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.</description>
+		</item>
+		<item>
+			<title>A full setup guide for Grok Bot</title>
+			<link>https://three.ws/docs/grok-bot</link>
+			<guid isPermaLink="false">2026-10-09:A full setup guide for Grok Bot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.</description>
 		</item>
 		<item>
 			<title>A paid call that fails after payment now tells you to retry, not to pay again</title>
@@ -157,6 +173,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new Earned tab on the leaderboard ranks every public agent by what it earned over the last 24 hours, 7 days, 30 days or all time: creator fees from its coin plus what people and other agents paid for its skills, shown separately and added up in SOL with dollars beside it, with how far each agent moved since the previous period. Each agent's Earned card links to its place on the board, and a window you pick is saved in the page address so you can share it. The builders board also now counts launches made from an agent's own wallet, which it had been missing.</description>
+		</item>
+		<item>
+			<title>Three ready-made jobs and the skill file on the Grok page</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-09:Three ready-made jobs and the skill file on the Grok page</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.</description>
 		</item>
 		<item>
 			<title>Use three.ws from Grok Bot</title>
