@@ -122,6 +122,30 @@
 				margin: 0;
 				line-height: var(--leading-normal);
 			}
+			/* Way out to the node builder for multi-step runs (generate, rig,
+			   remesh, export). Pushed to the right end of the hero row. */
+			.forge-head-link {
+				margin-left: auto;
+				flex: none;
+				font-size: var(--text-sm);
+				color: var(--ink-dim);
+				text-decoration: none;
+				border: 1px solid var(--stroke);
+				border-radius: 999px;
+				padding: 4px 12px;
+				transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+			}
+			.forge-head-link:hover {
+				color: var(--ink);
+				border-color: var(--ink-dim);
+			}
+			.forge-head-link:active {
+				transform: translateY(1px);
+			}
+			.forge-head-link:focus-visible {
+				outline: 2px solid var(--accent, currentColor);
+				outline-offset: 2px;
+			}
 			/* "Free" lede tag: the first word a first-timer reads, so the core hook
 			   (this costs nothing, no account) lands immediately. */
 			.forge-free-tag {
@@ -3388,6 +3412,9 @@
 				.forge-head h1 {
 					font-size: var(--text-lg);
 				}
+				.forge-head-link {
+					margin-left: 0;
+				}
 				/* Engine / quality / tier / aspect button groups carry up to seven
 				   chips — let them wrap instead of forcing horizontal scroll. */
 				.aspect {
@@ -3759,6 +3786,7 @@
 			<header class="forge-head">
 				<h1 data-i18n="forge.forge">Forge</h1>
 				<p data-i18n-html="forge.free_text_or_photos_textured_3d_model"><span class="forge-free-tag">Free</span> text or photos → textured 3D model. Orbit, AR, download.</p>
+				<a class="forge-head-link" href="/forge/workflows" data-i18n="forge.chain_steps_in_workflows">Chain steps in Workflows</a>
 				<noscript>
 					<p>The Forge turns a text prompt or photos into a downloadable, textured 3D model in your browser, and that generation pipeline needs JavaScript. Enable JavaScript and reload to forge. The same lane is also callable as a keyless API: <a href="/3d">the free 3D API</a>.</p>
 					<p><a href="/">three.ws home</a> · <a href="/docs">Read the docs</a></p>

@@ -2342,7 +2342,11 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	playMaterialize(glbUrl);
 	// Hand the live model to the Stylize panel (src/forge-stylize.js) so its
 	// one-click geometric filters operate on the current source mesh.
-	document.dispatchEvent(new CustomEvent('forge:model-ready', { detail: { glbUrl, label } }));
+	// creationId lets the slicer handoff address the creation directly instead
+	// of parsing it out of a storage URL a lane may not have produced.
+	document.dispatchEvent(
+		new CustomEvent('forge:model-ready', { detail: { glbUrl, label, creationId: currentCreationId } }),
+	);
 	document.dispatchEvent(
 		new CustomEvent('tws:feature-done', {
 			detail: { feature: 'forge', model: { glbUrl, label } },

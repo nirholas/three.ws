@@ -88,18 +88,23 @@ a three.ws chain. Both take an API key with the `avatars:write` scope from
 
 ## three.ws Forge desktop app
 
-[`apps/forge-desktop/`](../apps/forge-desktop/README.md) is Modly's desktop app
-in three.ws colors, with a three.ws account built in: sign in from Settings,
-publish a result from the Generate screen, and browse your three.ws library
-without leaving the app. The Publish node ships inside it, already signed in.
-Downloads are on [/forge-desktop](https://three.ws/forge-desktop).
+three.ws Forge for desktop is Modly's desktop app in three.ws colors, with a
+three.ws account built in: sign in from Settings with your browser, publish a
+result to your account from the Generate screen, and import free models from
+the three.ws CC0 library without leaving the app. The Publish node ships inside
+it, already signed in. Get it from
+[three.ws/forge-desktop](https://three.ws/forge-desktop); the full guide is
+[Forge for desktop](./forge-desktop.md), and the source is
+[`apps/forge-desktop/`](../apps/forge-desktop/README.md).
 
 ## Ideas from Modly, built into the platform
 
 - **Workflow builder** at [/forge/workflows](https://three.ws/forge/workflows):
   link a prompt or photo to any live engine, then remesh, rig, segment, restyle
   or make it game-ready, in one run, like Modly's workflow editor but on
-  three.ws GPUs.
+  three.ws GPUs. For Each batches follow Modly's loop rules, and the "Your GPU
+  (Modly)" engine runs a step on your own Modly. See
+  [Forge Workflows](./forge-workflows.md).
 - **Mesh tools** on every finished model in the Forge and on `/m/:id`: repair,
   Taubin or Laplacian smoothing and decimation in a browser worker, with undo.
   See [Forge: mesh tools](./forge.md#mesh-tools-repair-smooth-decimate).
@@ -119,7 +124,7 @@ Downloads are on [/forge-desktop](https://three.ws/forge-desktop).
 | Cloud extension | [integrations/modly/three-ws/](../integrations/modly/three-ws/) | `python3 -m unittest discover -s integrations/modly/tests -p 'test_*.py'` |
 | Publish node | [integrations/modly/three-ws-publish/](../integrations/modly/three-ws-publish/) | see its README |
 | Shared Python client | [integrations/_pyclient/](../integrations/_pyclient/) | `python3 -m unittest discover -s integrations/_pyclient -p 'test_*.py'` |
-| Desktop app | [apps/forge-desktop/](../apps/forge-desktop/) | see its README |
+| Desktop app | [apps/forge-desktop/](../apps/forge-desktop/), guide [forge-desktop.md](./forge-desktop.md) | see its README |
 | Mesh tools | [src/mesh-ops/](../src/mesh-ops/) | `npx vitest run tests/mesh-ops.test.js` |
 | Slicer handoff | [api/slicer/model.js](../api/slicer/model.js), [api/_lib/print/slicer.js](../api/_lib/print/slicer.js), [src/slicer-handoff.js](../src/slicer-handoff.js) | `npx vitest run tests/slicer-handoff.test.js` |
 
@@ -133,5 +138,7 @@ lists every such file.
 
 - [Forge](./forge.md): the cloud generator these surfaces share
 - [Workbench](./workbench.md): a desktop-style workspace in the browser
+- [Forge Workflows](./forge-workflows.md): the node builder at /forge/workflows
+- [Forge for desktop](./forge-desktop.md): the desktop app built on Modly
 - [integrations/README.md](../integrations/README.md): Blender, ComfyUI and Modly plugins
 - [STRUCTURE.md](../STRUCTURE.md): where every surface lives
