@@ -139,6 +139,7 @@ The page closes with four reasons, useful as the short pitch when someone asks: 
 
 ## Related
 
+- [Partner prospects](./partners/prospects.md) and [the outreach plan](./partners/outreach-plan.md): who we approach next, and how
 - [Press kit](./press-kit.md): marks, announcement graphics, boilerplate, and the rules for all of it
 - [Listings and distribution](./listings.md): marketplaces, ecosystem directories, and media partners with per-listing status
 - [Integrations](./integrations.md): the catalog of ways to put an agent on a site you do not control
