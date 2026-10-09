@@ -107,7 +107,7 @@ Together they make a refine loop you can evaluate: perception says whether it lo
 
 The other half of agentic 3D is that the asset should *do* something, and animation is where a universal approach pays off most.
 
-We never see a model before it arrives. It might come from our own lanes, from Mixamo, VRoid, Daz, Unreal, or a Blender export from years ago. So instead of a curated allowlist of supported rigs, we canonicalise bone names, then retarget onto the canonical set. The mapping covers Mixamo, Avaturn, VRM 0.x and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, the Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R`, and simple `shoulderL` conventions. A new convention is one mapping entry plus a test. Rest-pose skew and hip up-axis differences are corrected automatically, every result reports its bone coverage, and a model that cannot be skeleton-driven falls back to a default rig, so every user sees a character in motion.
+We never see a model before it arrives. It might come from our own lanes, from Mixamo, VRoid, Daz, Unreal, or a Blender export from years ago. So instead of a curated allowlist of supported rigs, we canonicalise bone names, then retarget onto the canonical set. The mapping covers Mixamo, VRM 0.x and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, the Unreal mannequin, HumanIK/Maya, Blender `.L`/`.R`, and simple `shoulderL` conventions. A new convention is one mapping entry plus a test. Rest-pose skew and hip up-axis differences are corrected automatically, every result reports its bone coverage, and a model that cannot be skeleton-driven falls back to a default rig, so every user sees a character in motion.
 
 It is published on its own as `@three-ws/retarget`, with a crossfading runtime that layers one-shot gestures over a base loop.
 

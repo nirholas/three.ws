@@ -63,7 +63,7 @@ A library tied to one spelling animates one family of avatars. We wanted it to a
 
 ## 2. One canonical skeleton, and why fingers decide everything
 
-The clips are produced by a build script ([`scripts/build-animations.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/build-animations.mjs)) that retargets source motion onto one reference avatar, an Avaturn-rigged model checked in as `public/avatars/cz.glb`, and writes each clip out as three.js JSON. Every track in the library therefore addresses one of 52 canonical joint names:
+The clips are produced by a build script ([`scripts/build-animations.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/build-animations.mjs)) that retargets source motion onto one reference avatar, a full-body humanoid checked in as `public/avatars/cz.glb`, and writes each clip out as three.js JSON. Every track in the library therefore addresses one of 52 canonical joint names:
 
 ```js
 export const CANONICAL_BONES = Object.freeze([
@@ -88,7 +88,7 @@ export const MIN_COVERAGE = 0.5;
 
 `canonicalizeBoneName(name)` takes any string and returns a canonical name or `null`. It works in stages, and the order of the stages is where the subtlety lives.
 
-**Strip namespaces and vendor prefixes.** A leading namespace (`Character1:Hips` from Autodesk HumanIK, `subject:LeftUpLeg` from mocap tools) goes first. Then known vendor prefixes, each one a single line: `mixamorig:` and its numbered variants, Blender's `Armature_`, Rigify's `DEF-`/`ORG-`/`MCH-` layers, CharacterStudio's `CH_`, Reallusion's `CC_Base_`, Sketchfab's `j_`, the 3ds Max `Bip01 ` prefix, and the numbered `5.joint_` form a VRM converter emits.
+**Strip namespaces and vendor prefixes.** A leading namespace (`Character1:Hips` from Autodesk HumanIK, `subject:LeftUpLeg` from mocap tools) goes first. Then known vendor prefixes, each one a single line: `mixamorig:` and its numbered variants, Blender's `Armature_`, Rigify's `DEF-`/`ORG-`/`MCH-` layers, Avatar Studio's `CH_`, Reallusion's `CC_Base_`, Sketchfab's `j_`, the 3ds Max `Bip01 ` prefix, and the numbered `5.joint_` form a VRM converter emits.
 
 **Collapse separators and case, then look up.** What remains is folded into one key, and the key is looked up in three tables in a fixed priority order:
 

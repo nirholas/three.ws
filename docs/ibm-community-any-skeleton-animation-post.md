@@ -74,7 +74,7 @@ Most write-ups solve the first and gesture at the other two, yet the second caus
 
 The foundation is boring on purpose: **pick one skeleton, author everything against it, and treat every other rig as a translation problem.**
 
-Our canonical set is 52 joints (`CANONICAL_BONES` in [`src/glb-canonicalize.js`](https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js)): six for spine and head (`Hips`, `Spine`, `Spine1`, `Spine2`, `Neck`, `Head`), and per side a clavicle (`LeftShoulder`), `LeftArm`, `LeftForeArm`, `LeftHand`, fifteen finger joints, and four leg joints (`LeftUpLeg`, `LeftLeg`, `LeftFoot`, `LeftToeBase`). The reference body the clips are baked on is an Avaturn-rigged avatar, public at `https://three.ws/avatars/cz.glb`. Measured from the file, both upper arms point exactly horizontal, so it rests in a **T-pose**, with its hips 0.984 m above the floor.
+Our canonical set is 52 joints (`CANONICAL_BONES` in [`src/glb-canonicalize.js`](https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js)): six for spine and head (`Hips`, `Spine`, `Spine1`, `Spine2`, `Neck`, `Head`), and per side a clavicle (`LeftShoulder`), `LeftArm`, `LeftForeArm`, `LeftHand`, fifteen finger joints, and four leg joints (`LeftUpLeg`, `LeftLeg`, `LeftFoot`, `LeftToeBase`). The reference body the clips are baked on is a full-body humanoid avatar, public at `https://three.ws/avatars/cz.glb`. Measured from the file, both upper arms point exactly horizontal, so it rests in a **T-pose**, with its hips 0.984 m above the floor.
 
 Two consequences recur throughout:
 
@@ -153,7 +153,7 @@ Suppose every track now finds a joint. The obvious next step is to rename tracks
 | `michelle` (Mixamo, T-pose) | 1.0 | **body tipped 87.6 degrees, lying down** |
 | `xbot` (Mixamo, T-pose) | 0.0 | 1.4 / -6.1, **arms stay out** |
 | `parametric-base` (MakeHuman-derived, A-pose) | 50.4 | -96.3 / -82.9, **arms overhead** |
-| `selfie-girl` (Avaturn, A-pose) | 54.7 | 72.2 / 76.9, correct |
+| `selfie-girl` (photo-to-avatar export, A-pose) | 54.7 | 72.2 / 76.9, correct |
 
 `michelle` is a Mixamo export with 90 degrees baked onto the armature and the opposite on the hips; writing the clip's absolute hip rotation deletes the counter-rotation and the body tips over (our codebase still calls it "the lying-down bug"). `xbot` shares the reference's stance but not its local axes. `selfie-girl` shares the reference's axis conventions, so the copy happens to work. Hold on to that row.
 
@@ -316,7 +316,7 @@ For a humanoid under the joint floor, the verdict from our browser-side checker 
 
 **Spelling cases.** `tests/glb-canonicalize.test.js` holds 477 cases, and the six retargeting suites 649 (as of 2026-10-08). The control-rig exclusion has a test that fails if someone "fixes" it.
 
-**A sweep that measures motion, not mapping.** A rig can map its hips and still animate as a torso with four frozen sticks, and every unit test stays green. `scripts/animation-dignity-sweep.mjs` renames one synthetic skeleton ten ways (Mixamo, Avaturn, Unreal, VRM 0.x / VRoid, VRM 1.0, Daz / Genesis 8, MakeHuman, Blender / Rigify, the simple `shoulderL` rig, anatomical Latin), so any difference is naming alone. It drives the real idle and walk through both lanes and measures limb swing and end-effector **world travel**, which catches a name-mapped bone whose parent chain broke. Run today: 10 of 10 conventions move both arms and both legs on both lanes.
+**A sweep that measures motion, not mapping.** A rig can map its hips and still animate as a torso with four frozen sticks, and every unit test stays green. `scripts/animation-dignity-sweep.mjs` renames one synthetic skeleton ten ways (Mixamo, the photo-to-avatar builder convention, Unreal, VRM 0.x / VRoid, VRM 1.0, Daz / Genesis 8, MakeHuman, Blender / Rigify, the simple `shoulderL` rig, anatomical Latin), so any difference is naming alone. It drives the real idle and walk through both lanes and measures limb swing and end-effector **world travel**, which catches a name-mapped bone whose parent chain broke. Run today: 10 of 10 conventions move both arms and both legs on both lanes.
 
 **An audit against real avatars.** `scripts/audit-rig-coverage.mjs` sweeps stored avatars cheaply with a trick worth borrowing: a GLB's JSON chunk always starts at byte 20, so an HTTP `Range` request fetches the skeleton without the mesh. Its first run found five broken conventions, and fixing them moved avatars animating with a complete leg chain from 93.0% to 95.9% for uploads and 93.8% to 97.9% for imports, over 400 avatars per lane (2026-07-29).
 

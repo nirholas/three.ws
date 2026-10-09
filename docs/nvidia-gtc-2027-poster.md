@@ -79,10 +79,10 @@ Coverage by source, from the same run (counts of distinct files):
 | Auto-rig | 19 | 0 | 0 | 0 |
 | Import | 8 | 4 | 1 | 47 |
 | Upload | 4 | 0 | 1 | 55 |
-| Avaturn | 0 | 0 | 0 | 59 |
+| Photo-to-avatar export | 0 | 0 | 0 | 59 |
 | Forge (text to 3D props) | 0 | 0 | 0 | 59 |
 
-Say plainly in the poster: forge outputs are mostly props and have no face, and the Avaturn
+Say plainly in the poster: forge outputs are mostly props and have no face, and the photo-to-avatar
 exports stored on three.ws carry no morph targets at all (verified on the raw files), so those
 avatars use the amplitude fallback. The 98.0% figure is coverage of rigs that have a face to
 drive, and the poster must label it that way.

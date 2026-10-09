@@ -229,7 +229,7 @@ You choose how you look in every world, and there are many ways to do it.
 
 **Change without leaving.** Inside any world, press V or tap the Avatar button to swap your look on the spot: choose from your saved avatars, community quick picks, the full public gallery, a pasted link, an uploaded `.glb` or `.vrm` file, or the avatar creator. Your new look appears on you instantly, and everyone else sees it live.
 
-**Every rig is welcome.** three.ws reads the bone names of whatever avatar you bring (Mixamo, Avaturn, Unreal, VRM and VRoid, VRM 1.0, Daz and Genesis, MakeHuman, Blender's naming style, and more) and maps them onto one shared skeleton, so an avatar made almost anywhere walks, idles, and emotes correctly the moment it loads. Compressed models load smoothly too, including Draco- and meshopt-compressed files.
+**Every rig is welcome.** three.ws reads the bone names of whatever avatar you bring (Mixamo, Unreal, VRM and VRoid, VRM 1.0, Daz and Genesis, MakeHuman, Blender's naming style, and more) and maps them onto one shared skeleton, so an avatar made almost anywhere walks, idles, and emotes correctly the moment it loads. Compressed models load smoothly too, including Draco- and meshopt-compressed files.
 
 ## Photo mode, zen mode, and sharing
 
