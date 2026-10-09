@@ -1,20 +1,17 @@
 {
 	"id": "photo-to-3d",
-	"contentHash": "2c9455ee34da952b466602a281dba4f45ba6fe3b60310691a11451aa16236f59",
-	"reviewedAt": "2026-10-09T19:30:35.078Z",
-	"passed": false,
-	"blockers": [
-		"probe:scenario the filmed scenario: step 6 (click Generate): POST /api/forge answered HTTP 403",
-		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; editor returned no JSON object"
-	],
+	"contentHash": "da8486124083257944b7c0f50ac0f7d597d5ce4cc3bf31e6443c38e2ac74de95",
+	"reviewedAt": "2026-10-09T20:30:08.402Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
-		"One photo of a garden gnome went in, and a textured 3D model came out, built in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
+		"One photo of a garden gnome went in, and a textured 3D model came out, viewable in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
 		"One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen.",
 		"The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or rebuild it to a polygon budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "One photo of a garden gnome went in, and a textured 3D model came out",
@@ -138,8 +135,8 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "step 6 (click Generate): POST /api/forge answered HTTP 403"
+				"ok": true,
+				"detail": "11 steps passed against the live product"
 			},
 			{
 				"kind": "link",
@@ -149,6 +146,33 @@
 			}
 		]
 	},
-	"editor": null,
-	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
+	"editor": {
+		"verdict": "publish",
+		"scores": {
+			"accuracy": 5,
+			"clarity": 5,
+			"specificity": 5,
+			"voice": 5,
+			"professionalism": 5,
+			"visual": 5
+		},
+		"issues": [],
+		"rewrite": {
+			"posts": [
+				"One photo of a garden gnome went in, and a textured 3D model came out, viewable in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
+				"One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen.",
+				"The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or rebuild it to a polygon budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
+			],
+			"altText": []
+		},
+		"summary": "Every claim passes verification against the live page, the codebase, or the filmed run, and the reel frames confirm each caption and the gnome-to-model narrative with the wait honestly labelled as cut. Voice contract is obeyed throughout: no hashtags, emoji, dashes, or hype openers, a mechanism lead in the first post, one link, no tags to defend.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": []
+	},
+	"editorError": null
 }

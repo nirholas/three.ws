@@ -14655,12 +14655,12 @@
 		},
 		{
 			"id": "photo-to-3d",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-10-10T00:00:00Z",
+			"notBefore": "2026-10-10T00:00:00.000Z",
 			"covers": [
 				"/image-to-3d"
 			],
@@ -14684,19 +14684,20 @@
 						"expect": "1 of 6 views"
 					},
 					{
-						"hold": 1600
+						"hold": 1600,
+						"caption": "Free: no account, no key, no GPU"
 					},
 					{
 						"click": "Generate",
-						"awaits": "/api/forge",
-						"caption": "Free: no account, no key, no GPU"
+						"awaits": "/api/forge"
 					},
 					{
 						"expect": "Download GLB",
 						"within": 300000
 					},
 					{
-						"hold": 2400
+						"hold": 2400,
+						"caption": "Generated on a cloud GPU"
 					},
 					{
 						"hold": 2400,
@@ -14728,7 +14729,7 @@
 			],
 			"posts": [
 				{
-					"text": "One photo of a garden gnome went in, and a textured 3D model came out, built in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
+					"text": "One photo of a garden gnome went in, and a textured 3D model came out, viewable in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
 					"media": [
 						{
 							"path": "public/x-media/photo-to-3d/reel.mp4",
@@ -14887,7 +14888,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		}
 	]
 }

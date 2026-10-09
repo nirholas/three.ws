@@ -1,10 +1,10 @@
 {
 	"id": "photo-to-3d",
-	"scenarioHash": "bcf981e91c624192e75a53ac21f380b988bdc41c93350e26e66ea3c74cbb6fcb",
-	"ranAt": "2026-10-09T18:58:02.389Z",
+	"scenarioHash": "d10ed129eb98eb462961c43d995f935613990fabb227195815120e1a8dfefc99",
+	"ranAt": "2026-10-09T20:15:32.219Z",
 	"target": {
-		"commit": "ec8d1d270",
-		"revision": "three-ws-api-00482-fzq"
+		"commit": "ce1b779b0",
+		"revision": "three-ws-api-00486-4nx"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/image-to-3d",
 			"detail": "loaded https://three.ws/image-to-3d",
 			"ok": true,
-			"ms": 8870,
+			"ms": 11174,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 4334,
+			"ms": 4447,
 			"frames": 36
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "data/x-content/inputs/garden-gnome.jpg",
 			"detail": "uploaded data/x-content/inputs/garden-gnome.jpg; POST /api/forge-upload answered 200 in 0.3 s",
 			"ok": true,
-			"ms": 3038,
+			"ms": 3034,
 			"frames": 21
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "1 of 6 views",
 			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 16,
+			"ms": 20,
 			"frames": 0
 		},
 		{
@@ -50,25 +50,25 @@
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 7138,
+			"ms": 6588,
 			"frames": 48
 		},
 		{
 			"index": 6,
 			"kind": "click",
 			"target": "Generate",
-			"detail": "clicked; POST /api/forge answered 200 in 2.7 s",
+			"detail": "clicked; POST /api/forge answered 200 in 4.4 s",
 			"ok": true,
-			"ms": 5505,
+			"ms": 6180,
 			"frames": 21
 		},
 		{
 			"index": 7,
 			"kind": "expect",
 			"target": "Download GLB",
-			"detail": "appeared after 197.5 s",
+			"detail": "appeared after 180.2 s",
 			"ok": true,
-			"ms": 197454,
+			"ms": 180215,
 			"frames": 0
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 35251,
+			"ms": 33998,
 			"frames": 72
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 23618,
+			"ms": 20817,
 			"frames": 72
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "0.3,0.45,0.75,0.45",
 			"detail": "dragged over 54 frames",
 			"ok": true,
-			"ms": 23243,
+			"ms": 21016,
 			"frames": 72
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "4000",
 			"detail": "4000 ms",
 			"ok": true,
-			"ms": 23220,
+			"ms": 22073,
 			"frames": 120
 		}
 	],
@@ -124,7 +124,7 @@
 			"method": "POST",
 			"path": "/api/forge",
 			"status": 200,
-			"seconds": 2.7
+			"seconds": 4.4
 		}
 	],
 	"uploads": [
@@ -136,14 +136,14 @@
 	"cuts": [
 		{
 			"afterStep": 7,
-			"seconds": 197.4
+			"seconds": 180.1
 		}
 	],
 	"video": {
 		"path": "public/x-media/photo-to-3d/reel.mp4",
-		"sha256": "c113c471a6d63e7e508000475d2e8253576b4445651af4f37145a0ba8b84f859",
+		"sha256": "66aa5624fa5bce982bf99c37c65483f99841b51c9a18ded1e4f49b0261efe0c2",
 		"frames": 462,
-		"motion": 0.551,
+		"motion": 0.549,
 		"durationSec": 15.4,
 		"width": 1080,
 		"height": 1080,
