@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "three.ws Forge for desktop",
+			"summary": "A free desktop 3D studio for Windows, Linux and Apple silicon Macs, built on the open-source Modly app by Lightning Pixel. Turn a photo into a 3D model on your own graphics card or on the three.ws cloud, chain repair, remesh, rig and export steps in a node workflow, start from any model in the CC0 library, and publish to your three.ws account in one click after signing in with your browser. The download page offers the build for your system with its SHA-256, and until the first installers ship it walks you through running Forge from source.",
+			"tags": ["feature"],
+			"link": "/forge-desktop"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Claim the 3D models the bot made for you on X",
 			"summary": "Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.",
 			"tags": ["feature"],

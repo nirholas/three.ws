@@ -178,6 +178,10 @@
 					"path": "modly"
 				},
 				{
+					"label": "three.ws Forge for desktop",
+					"path": "forge-desktop"
+				},
+				{
 					"label": "Scene Studio",
 					"path": "scene-studio"
 				},

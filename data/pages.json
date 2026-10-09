@@ -3473,6 +3473,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/forge-desktop",
+					"title": "Docs · three.ws Forge for desktop",
+					"description": "How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/docs/materialize",
 					"title": "Docs · Materialize: turn a generation into a real object",
 					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",

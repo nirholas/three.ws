@@ -4,11 +4,11 @@
 
 # three.ws Forge
 
-**Local, open source, AI-powered image-to-3D mesh generation.**
-Turn any photo into a 3D model using open source AI models running entirely on your GPU.
+**The desktop 3D studio for three.ws.**
+Turn any photo into a 3D model with open-source AI models running entirely on your GPU, or with the three.ws cloud when you have no GPU. Chain mesh tools in node workflows, import free CC0 models from the three.ws library, and publish to your three.ws account in one click.
 three.ws Forge is a desktop application for Windows, Linux, and Apple Silicon macOS.
 
-> Created by [Lightning Pixel](https://github.com/lightningpixel)
+> Based on [Modly](https://github.com/lightningpixel/modly) by [Lightning Pixel](https://github.com/lightningpixel), used under the MIT license.
 
 <p align="center">
   <img src="docs/app-screenshot.png" alt="three.ws Forge screenshot" />
@@ -19,9 +19,9 @@ three.ws Forge is a desktop application for Windows, Linux, and Apple Silicon ma
 
 ## Download
 
-Head to the [Releases](../../releases/latest) page to download the latest installer for Windows, Linux, or Apple Silicon macOS.
+Get the installer for Windows, Linux, or Apple Silicon macOS from [three.ws/forge-desktop](https://three.ws/forge-desktop). The page lists every build with its size and SHA-256, and the release notes. The user guide is at [three.ws/docs/forge-desktop](https://three.ws/docs/forge-desktop).
 
-Alternatively, you can clone the repository and run the app directly without installing:
+Alternatively, you can run the app from this directory without installing:
 
 ```bash
 # Windows
@@ -33,7 +33,21 @@ launch.bat
 
 ---
 
+## three.ws integration
 
+<p align="center">
+  <img src="docs/forge-library.png" width="32%" alt="The three.ws library popover with chair search results" />
+  <img src="docs/forge-publish.png" width="32%" alt="The Publish to three.ws popover" />
+  <img src="docs/forge-settings.png" width="32%" alt="The three.ws section of Settings" />
+</p>
+
+- **Account.** Settings, then three.ws: sign in through your browser (the same device flow as the three.ws CLI) or paste an `sk_live_` API key from [three.ws/dashboard/developers](https://three.ws/dashboard/developers). The key is encrypted with Electron `safeStorage` and synced to the Python engine so the three.ws workflow nodes are signed in too ([electron/main/three-ws-account.ts](electron/main/three-ws-account.ts), [api/routers/settings.py](api/routers/settings.py)).
+- **Publish.** The Publish button on the Generate toolbar uploads the open model to your account as a three.ws page, with a name, tags and visibility ([src/areas/generate/components/PublishPopover.tsx](src/areas/generate/components/PublishPopover.tsx)).
+- **Library.** Import, then three.ws library: search the [CC0 object library](https://three.ws/objects) and open a model in the viewport ([src/areas/generate/components/ThreeWsLibraryPopover.tsx](src/areas/generate/components/ThreeWsLibraryPopover.tsx)).
+- **Cloud nodes.** The bundled three.ws extensions add image, text and sketch to 3D, rigging, remeshing and a Publish node that run on three.ws GPUs.
+- **Releases.** Builds publish to `https://three.ws/releases/forge/` through [cloudbuild.yaml](cloudbuild.yaml) and [scripts/release-mac.sh](scripts/release-mac.sh); the in-app updater reads the same feed. Release history lives in [releases.json](releases.json).
+
+---
 
 ## Getting started
 
@@ -43,15 +57,13 @@ launch.bat
 npm install
 ```
 
-### 2. Set up Python backend
+### 2. Stage the bundled Python
 
 ```bash
-cd api
-python -m venv .venv
-.venv\Scripts\activate     # Windows
-source .venv/bin/activate  # Linux / macOS
-pip install -r requirements.txt
+npm run prepare-resources
 ```
+
+This downloads a standalone Python for your platform into `resources/python-embed/`. On first launch the app builds its virtual environment from it and installs `api/requirements.txt`, so Forge never depends on the Python your system ships (Debian and Ubuntu leave out `ensurepip`, which breaks `python -m venv`).
 
 ### 3. Run in development
 
@@ -315,14 +327,14 @@ See `tools/forge-cli/SKILL.md` for the agent workflow and output contract.
 
 ### Community
 
-Join the [Discord server](https://discord.gg/BvjDCvS3yr) to stay up to date with the latest news, report bugs, and share feedback.
+Report three.ws Forge bugs in the [three.ws repository](https://github.com/nirholas/three.ws/issues). For the upstream Modly app, its extensions and model support, join the [Modly Discord server](https://discord.gg/BvjDCvS3yr).
 
 ---
 
-## Sponsors
+## Modly sponsors
 
 <p align="center">
-  Thanks to our early sponsors for believing in three.ws Forge and helping make local AI 3D generation more accessible.
+  three.ws Forge is built on Modly. Thanks to Modly's early sponsors for believing in it and helping make local AI 3D generation more accessible.
 </p>
 
 <p align="center">
@@ -353,6 +365,8 @@ MIT License: see [LICENSE](LICENSE) for details.
 
 **If you fork this project and build your own app from it, you must credit the original project and its creator:**
 
-> Based on [three.ws Forge](https://github.com/lightningpixel/modly) by [Lightning Pixel](https://github.com/lightningpixel)
+> Based on [Modly](https://github.com/lightningpixel/modly) by [Lightning Pixel](https://github.com/lightningpixel)
+
+three.ws Forge keeps this credit in its About screen, on [three.ws/forge-desktop](https://three.ws/forge-desktop) and in [NOTICE](NOTICE). three.ws is not affiliated with Lightning Pixel.
 
 This is a requirement of the MIT license attribution clause. Please keep this credit visible in your app's UI or documentation.

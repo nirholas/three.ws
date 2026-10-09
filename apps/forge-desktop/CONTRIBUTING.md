@@ -1,48 +1,52 @@
 # Contributing to three.ws Forge
 
-Thanks for wanting to help out! You don't need write access to the repository to
-pick up a ticket, work on it, and ship a fix, here's how the flow works.
+three.ws Forge lives in the three.ws repository, so it follows the repo-wide
+[contributing guide](../../CONTRIBUTING.md): the same issue tracker, branch
+flow, commit style and pre-push checks. This page covers what is specific to
+the desktop app.
 
-## Finding something to work on
+## Where things go
 
-- Browse [open issues](https://github.com/lightningpixel/modly/issues) or the
-  [project board](https://github.com/users/lightningpixel/projects/1).
-- Issues labeled `good first issue` are a good place to start if you're new to
-  the codebase. See [`CLAUDE.md`](./CLAUDE.md) for an architecture overview.
+| Change | Where to send it |
+|---|---|
+| A bug or feature in three.ws Forge, including the three.ws sign-in, Publish, library and cloud nodes | [three.ws issues](https://github.com/nirholas/three.ws/issues) |
+| A bug that also exists in an unmodified Modly (the generators, the node editor, the Python engine) | [Modly issues](https://github.com/lightningpixel/modly/issues) as well, so the fix can reach both apps |
+| A new local model | Its own GitHub repository with a Modly-compatible `manifest.json`; Forge installs it from the **Models** tab |
 
-## Claiming a ticket
+[Your first contribution](../../docs/first-contribution.md) walks through
+claiming an issue and opening a pull request.
 
-Comment **`/assign`** on the issue you want to work on. A bot will assign it to
-you automatically, no repo permissions required.
+## Run it
 
-- Only one person can be assigned to an issue at a time. If it's already
-  assigned, ask the assignee first or wait for them to release it.
-- No longer working on it? Comment **`/unassign`** to free it up for someone
-  else.
+```bash
+cd apps/forge-desktop
+npm install
+npm run prepare-resources   # standalone Python for your platform
+npm run dev
+```
 
-This keeps the [project board](https://github.com/users/lightningpixel/projects/1)
-honest: an assigned issue moves to **In progress** automatically, so anyone
-looking at the board can see what's actively being worked on.
+The app has three layers: the Electron main process in `electron/main/`, the
+React renderer in `src/`, and the FastAPI engine in `api/` on
+`127.0.0.1:8765`. The [user guide](../../docs/forge-desktop.md) describes what
+each screen does.
 
-## Submitting your work
+## Before you open a pull request
 
-1. **Fork** the repository and create a branch for your change.
-2. Make your change. Keep it focused, one issue, one PR.
-3. Run the checks locally before opening a PR:
-   ```bash
-   npm run lint
-   npm run test
-   ```
-4. Open a **pull request** against `dev`. Include `Closes #<issue-number>` in
-   the PR description so it's linked to the ticket and closes it automatically
-   on merge.
+```bash
+npm run lint
+npm run test        # Node tests, then the Python engine tests
+npm run build       # typechecks and bundles main, preload and renderer
+```
 
-Opening a PR from your fork moves the linked issue to **Ready to review** on
-the board. Once a maintainer approves the review, it moves to **Ready to
-test**; once merged, it moves to **Done**.
+From the repo root, `npm run check:rules -- --paths <files you changed>` checks
+your added lines against the house rules the pre-push hook enforces.
 
-## Getting help
+Open the pull request against `main` with `Closes #<issue-number>` in the
+description. Keep it to one change: a fix to the three.ws integration and an
+upstream sync are reviewed separately.
 
-If something in an issue is unclear, ask in a comment on the issue itself
-before starting, it's cheaper to clarify scope up front than to redo work
-later.
+## License
+
+Forge is based on [Modly](https://github.com/lightningpixel/modly) by Lightning
+Pixel, used under the MIT license ([LICENSE](./LICENSE), [NOTICE](./NOTICE)).
+Keep both files and the About screen credit intact.
