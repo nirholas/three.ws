@@ -1,0 +1,929 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "three.ws 3D",
+    "version": "1.0.0",
+    "description": "Text-to-3D and image-to-3D generation returning GLB models, plus a 3D asset pipeline: auto-rigging, remeshing, game-ready retopology, geometric stylizing, background removal, model inspection, remixing, and talking avatar bodies.",
+    "x-logo": {
+      "url": "https://three.ws/favicon.svg",
+      "altText": "three.ws"
+    },
+    "x-guidance": "Call an endpoint without payment to receive an x402 challenge, pay it in USDC on Solana mainnet, and retry with the payment header. Asynchronous 3D jobs return a token to poll for free at GET /api/forge?job=<token>."
+  },
+  "servers": [
+    {
+      "url": "https://three.ws"
+    }
+  ],
+  "paths": {
+    "/api/x402/forge": {
+      "post": {
+        "operationId": "forge",
+        "summary": "Generate a 3D model (GLB) from a text prompt or photos",
+        "description": "Generate a textured GLB mesh from one text prompt or up to six reference photos of one object. Tiers: draft (fast, low-poly), standard (default), high (PBR textures). Returns a job token to poll for free.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Provide exactly one of prompt (text->3D) or image_urls (image->3D). tier and aspect_ratio are optional; tier defaults to \"standard\".",
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 1000,
+                    "description": "Describe one subject for text->3D. Omit when supplying image_urls."
+                  },
+                  "image_urls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "minItems": 1,
+                    "maxItems": 6,
+                    "description": "Up to 6 public https reference views of one object for image->3D. Omit when supplying a prompt."
+                  },
+                  "tier": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "standard",
+                      "high"
+                    ],
+                    "default": "standard",
+                    "description": "Quality/price tier: draft $0.05 (low-poly), standard $0.15 (default), high $0.50 (PBR textures). The 402 quotes the price for the requested tier."
+                  },
+                  "aspect_ratio": {
+                    "type": "string",
+                    "enum": [
+                      "1:1",
+                      "4:3",
+                      "3:4",
+                      "16:9",
+                      "9:16"
+                    ],
+                    "default": "1:1",
+                    "description": "Aspect ratio of the synthesized reference view for text->3D."
+                  }
+                }
+              },
+              "example": {
+                "prompt": "a brass steampunk owl, full body",
+                "tier": "standard",
+                "aspect_ratio": "1:1"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "dynamic",
+            "currency": "USD",
+            "min": "0.05",
+            "max": "0.5"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/forge": {
+      "get": {
+        "operationId": "forge_job_status",
+        "summary": "Fetch the status and GLB URL of a 3D generation job",
+        "description": "Poll a generation or pipeline job without payment. Returns status (queued, running, done, failed), per-stage progress for pipelines, and the GLB URL once the job is done.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "job",
+            "in": "query",
+            "required": true,
+            "description": "Job token returned by a paid generation or pipeline call.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result as JSON. No payment required."
+          }
+        }
+      }
+    },
+    "/api/x402/pipeline": {
+      "post": {
+        "operationId": "pipeline",
+        "summary": "Submit a chained 3D job: generate, rig, remesh, stylize",
+        "description": "Run an ordered chain of 3D stages (generate, rig, remesh, gameready, stylize) in one paid call. The 402 quotes the sum of the requested stages. Returns a job token to poll for free.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "stages"
+                ],
+                "properties": {
+                  "stages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 5,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "generate",
+                        "rig",
+                        "remesh",
+                        "gameready",
+                        "stylize"
+                      ]
+                    },
+                    "description": "Ordered subsequence of [\"generate\",\"rig\",\"remesh\",\"gameready\",\"stylize\"]. generate must be first and requires prompt; without generate, glb_url is required."
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 1000,
+                    "description": "Subject for the generate stage. Required when stages starts with generate."
+                  },
+                  "glb_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public https GLB to feed the first stage when the chain does not start with generate."
+                  },
+                  "options": {
+                    "type": "object",
+                    "description": "Per-stage options keyed by stage: tier and aspect_ratio for generate, rig_type for rig, remesh settings, gameready topology and poly_budget, stylize style and resolution."
+                  }
+                }
+              },
+              "example": {
+                "stages": [
+                  "generate",
+                  "rig"
+                ],
+                "prompt": "a brass steampunk owl, full body",
+                "options": {
+                  "tier": "draft",
+                  "rig": {
+                    "rig_type": "biped"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "dynamic",
+            "currency": "USD",
+            "min": "0.05",
+            "max": "0.41"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/pipeline-rig": {
+      "post": {
+        "operationId": "pipeline_rig",
+        "summary": "Convert a static GLB mesh into a rigged, animatable model",
+        "description": "Infer a skeleton for a static GLB and bind it with skin weights so the model can walk, wave, and emote. Returns a durable URL to the rigged GLB.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "glb_url"
+                ],
+                "properties": {
+                  "glb_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public HTTPS URL of the static .glb mesh to rig."
+                  },
+                  "rig_type": {
+                    "type": "string",
+                    "enum": [
+                      "biped",
+                      "quadruped"
+                    ],
+                    "default": "biped",
+                    "description": "Skeleton to infer: biped (humanoid, the default) or quadruped."
+                  }
+                }
+              },
+              "example": {
+                "glb_url": "https://three.ws/avatars/mannequin.glb",
+                "rig_type": "biped"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.05"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/pipeline-remesh": {
+      "post": {
+        "operationId": "pipeline_remesh",
+        "summary": "Convert a GLB mesh to a new topology and face count",
+        "description": "Retopologize a GLB as triangles, quads, or low-poly, with repair and decimation to a target face count, and re-bake the texture onto the new mesh. Returns a durable GLB URL.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "glb_url"
+                ],
+                "properties": {
+                  "glb_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public HTTPS URL of the source .glb mesh."
+                  },
+                  "remesh_mode": {
+                    "type": "string",
+                    "enum": [
+                      "triangle",
+                      "quad",
+                      "lowpoly"
+                    ],
+                    "default": "triangle",
+                    "description": "Output topology: triangle (default), quad, or lowpoly."
+                  },
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "full",
+                      "simplify",
+                      "repair",
+                      "convert"
+                    ],
+                    "default": "full",
+                    "description": "full (default) remeshes and re-bakes; simplify, repair, or convert run one step only."
+                  },
+                  "target_faces": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 500000,
+                    "default": 50000,
+                    "description": "Target face count for the output mesh, 1,000 to 500,000."
+                  },
+                  "texture_size": {
+                    "type": "integer",
+                    "enum": [
+                      512,
+                      1024,
+                      2048
+                    ],
+                    "default": 1024,
+                    "description": "Edge length in pixels of the re-baked texture."
+                  }
+                }
+              },
+              "example": {
+                "glb_url": "https://three.ws/avatars/mannequin.glb",
+                "remesh_mode": "quad",
+                "target_faces": 20000
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.03"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/pipeline-gameready": {
+      "post": {
+        "operationId": "pipeline_gameready",
+        "summary": "Convert a GLB into a game-ready mesh under a poly budget",
+        "description": "Retopologize a GLB to a fixed polygon budget (quad or silhouette-preserving triangles) with PBR textures re-baked onto the new topology, ready for a game engine. Returns a durable GLB URL.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "glb_url"
+                ],
+                "properties": {
+                  "glb_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public HTTPS URL of the source .glb mesh."
+                  },
+                  "topology": {
+                    "type": "string",
+                    "enum": [
+                      "quad",
+                      "tri"
+                    ],
+                    "default": "quad",
+                    "description": "Output topology: quad (default) or tri."
+                  },
+                  "poly_budget": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 500000,
+                    "default": 15000,
+                    "description": "Maximum polygon count of the output mesh, 1,000 to 500,000."
+                  },
+                  "texture_size": {
+                    "type": "integer",
+                    "enum": [
+                      1024,
+                      2048
+                    ],
+                    "default": 1024,
+                    "description": "Edge length in pixels of the re-baked PBR textures."
+                  }
+                }
+              },
+              "example": {
+                "glb_url": "https://three.ws/avatars/mannequin.glb",
+                "topology": "quad",
+                "poly_budget": 12000
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.03"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/pipeline-stylize": {
+      "post": {
+        "operationId": "pipeline_stylize",
+        "summary": "Convert a GLB mesh into voxel, brick, shatter, or low-poly",
+        "description": "Rebuild a GLB geometrically in a voxel, brick, Voronoi-shatter, or faceted low-poly style. The style lives in the mesh, not a shader, so it survives export to any engine.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "glb_url"
+                ],
+                "properties": {
+                  "glb_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public HTTPS URL of the source .glb mesh."
+                  },
+                  "style": {
+                    "type": "string",
+                    "enum": [
+                      "voxel",
+                      "brick",
+                      "voronoi",
+                      "lowpoly"
+                    ],
+                    "default": "voxel",
+                    "description": "Geometric style: voxel (default), brick, voronoi, or lowpoly."
+                  },
+                  "resolution": {
+                    "type": "integer",
+                    "description": "Style density, clamped per filter."
+                  }
+                }
+              },
+              "example": {
+                "glb_url": "https://three.ws/avatars/mannequin.glb",
+                "style": "voxel",
+                "resolution": 48
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.03"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/pipeline-rembg": {
+      "post": {
+        "operationId": "pipeline_rembg",
+        "summary": "Remove the background from an image for image-to-3D",
+        "description": "Strip the background from an image and return a transparent PNG, the clean reference view image-to-3D reconstruction needs. Returns a durable PNG URL.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "image_url"
+                ],
+                "properties": {
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public HTTPS URL of the source image (PNG, JPEG, WEBP, or GIF)."
+                  },
+                  "model": {
+                    "type": "string",
+                    "enum": [
+                      "rmbg2",
+                      "birefnet",
+                      "u2net",
+                      "isnet",
+                      "u2net_human_seg",
+                      "silueta"
+                    ],
+                    "default": "rmbg2",
+                    "description": "Segmentation model to use; rmbg2 (default) suits most objects."
+                  }
+                }
+              },
+              "example": {
+                "image_url": "https://three.ws/avatars/thumbs/default.png",
+                "model": "rmbg2"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/model-check": {
+      "get": {
+        "operationId": "model_check",
+        "summary": "Analyze a GLB model and return stats and optimization tips",
+        "description": "Fetch a public glTF or GLB and return structural stats (vertices, triangles, materials, textures, animations, extensions) with a prioritized list of optimization recommendations.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "description": "Public HTTPS URL of a glTF/GLB model.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": "https://three.ws/avatars/mannequin.glb"
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/remix-asset": {
+      "post": {
+        "operationId": "remix_asset",
+        "summary": "Create a remix of a published 3D model from an instruction",
+        "description": "Generate a new 3D model from a published remixable source and a plain-language change. Records parent-to-child provenance and routes the creator royalty on-chain.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "source_creation_id",
+                  "instruction"
+                ],
+                "properties": {
+                  "source_creation_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "The id of a remixable creation (from GET /api/remix-feed)."
+                  },
+                  "instruction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "description": "The change to make, in plain language: \"make it metallic\", \"bigger helmet\", \"add a cape\"."
+                  }
+                }
+              },
+              "example": {
+                "source_creation_id": "3abac32f-ced2-4189-b822-d30c96dbc87e",
+                "instruction": "make it matte black with gold trim"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.25"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/remix-feed": {
+      "get": {
+        "operationId": "remix_feed",
+        "summary": "Browse remixable 3D models and their royalty terms",
+        "description": "List published 3D models that accept remixes, with their GLB and preview URLs, royalty percentage, and remix count. Use a returned id as source_creation_id for a paid remix.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of remixable models to return.",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 12
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result as JSON. No payment required."
+          }
+        }
+      }
+    },
+    "/api/x402/embody": {
+      "post": {
+        "operationId": "embody",
+        "summary": "Create a rigged, talking 3D avatar body for an AI agent",
+        "description": "Create a rigged, animated, voiced 3D avatar from a prompt or a photo. Returns the agent id, GLB URL, viewer and profile URLs, and an HTML embed. Failed generations are not charged.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "oneOf": [
+                  {
+                    "required": [
+                      "prompt"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "image_url"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "Display name for the avatar and its agent profile."
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 600,
+                    "description": "Appearance of the avatar in plain language. Give this or image_url."
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Public photo of the subject to build the avatar from. Give this or prompt."
+                  },
+                  "personality": {
+                    "type": "string",
+                    "maxLength": 600,
+                    "description": "Optional persona text the avatar speaks and behaves from."
+                  },
+                  "voice": {
+                    "type": "string",
+                    "description": "Optional voice id for the avatar's speech."
+                  }
+                }
+              },
+              "example": {
+                "name": "Nova Scout",
+                "prompt": "a friendly explorer in a teal jumpsuit",
+                "voice": "nova"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "1"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/mint-to-mesh": {
+      "get": {
+        "operationId": "mint_to_mesh",
+        "summary": "Render a Solana token mint as a themed GLB 3D object",
+        "description": "Turn any Solana SPL token mint into a GLB object themed from its on-chain metadata, with the token image as a texture when one exists and the metadata attached to the model.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "mint",
+            "in": "query",
+            "required": true,
+            "description": "Base58 SPL mint address on Solana mainnet.",
+            "schema": {
+              "type": "string",
+              "minLength": 32,
+              "maxLength": 44
+            },
+            "example": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/mint-to-mesh-batch": {
+      "post": {
+        "operationId": "mint_to_mesh_batch",
+        "summary": "Render up to 10 Solana token mints as themed GLB objects",
+        "description": "Resolve one to ten Solana SPL mints to themed GLB objects in one call. Each mint succeeds or fails on its own; GLB bytes come back base64-encoded in JSON.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mints"
+                ],
+                "properties": {
+                  "mints": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string",
+                      "minLength": 32,
+                      "maxLength": 44
+                    },
+                    "description": "One to ten base58 SPL mint addresses on Solana mainnet."
+                  }
+                }
+              },
+              "example": {
+                "mints": [
+                  "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+                ]
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.05"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    }
+  }
+}

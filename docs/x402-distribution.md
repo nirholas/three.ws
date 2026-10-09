@@ -43,6 +43,29 @@ search results after 30 days without a settle**.
 
 ## Surface-by-surface
 
+### `pay` registry (Solana Foundation)
+
+[`pay`](https://github.com/solana-foundation/pay) is the Solana Foundation's
+agentic-payments CLI and MCP server: `pay curl <url>` answers a 402 by signing a
+USDC transfer on Solana and retrying, and `pay skills search` / `pay mcp` let
+agents browse a public registry of paid APIs,
+[`pay-skills`](https://github.com/solana-foundation/pay-skills). It is
+Solana-only by design, so it is the most direct agent-discovery surface for our
+home-chain rail.
+
+- **What gets listed:** a `PAY.md` plus a committed OpenAPI document per
+  provider. We publish three providers, `three-ws/3d`, `three-ws/market-data`,
+  and `three-ws/agent-trust`, generated from the service catalog into
+  [`distributions/pay-skills/`](../distributions/pay-skills/README.md) by
+  `npm run build:pay-skills`.
+- **Admission:** the registry's CI probes every paid endpoint and merges only
+  ones whose 402 is payable in USDC or USDT on Solana mainnet. Our self-hosted
+  Solana facilitator passes as-is; `npm run verify:pay-skills` runs the same
+  validator locally against production.
+- **Ranking:** the catalog is searched by description and use case, so the
+  listing copy is written to the registry's rules rather than reused from other
+  storefronts.
+
 ### CDP Bazaar (feeds agentic.market)
 
 - **Mechanism:** settlement-triggered. The CDP facilitator catalogs an endpoint
@@ -203,6 +226,7 @@ search results after 30 days without a settle**.
 | ai-plugin manifest | `/.well-known/ai-plugin.json` | same generator |
 | Human catalog | `/discover`, `/x402/studio`, `/pricing` | live |
 | LLM-readable index | `/llms.txt` | build-time |
+| `pay` registry providers | `distributions/pay-skills/` | `npm run build:pay-skills`; `tests/pay-skills.test.js` fails on drift |
 
 **Adding a paid endpoint?** Drop the service-catalog descriptor + barrel row +
 ring-catalog entry (tests enforce all three), deploy, then run the registrar

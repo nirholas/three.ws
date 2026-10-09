@@ -1,0 +1,300 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "three.ws Agent Trust",
+    "version": "1.0.0",
+    "description": "Counterparty checks for AI agents: 0-100 reputation scores for wallets, mints, and agents from on-chain evidence, admit or refuse verdicts against a trust policy, on-chain identity claim verification, and sourced fact checks.",
+    "x-logo": {
+      "url": "https://three.ws/favicon.svg",
+      "altText": "three.ws"
+    },
+    "x-guidance": "Call an endpoint without payment to receive an x402 challenge, pay it in USDC on Solana mainnet, and retry with the payment header. Asynchronous 3D jobs return a token to poll for free at GET /api/forge?job=<token>."
+  },
+  "servers": [
+    {
+      "url": "https://three.ws"
+    }
+  ],
+  "paths": {
+    "/api/x402/agent-reputation": {
+      "get": {
+        "operationId": "agent_reputation",
+        "summary": "Score a wallet, token, or AI agent for trust from 0 to 100",
+        "description": "Return a deterministic 0-100 trust score for a wallet, token mint, ERC-8004 agent id, or three.ws agent id from transaction history, age, counterparties, holdings, and settled agent payments.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "subject",
+            "in": "query",
+            "required": true,
+            "description": "Counterparty to score: a Solana or EVM wallet, a token mint, an ERC-8004 agent id, or a three.ws agent id.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+          },
+          {
+            "name": "chain",
+            "in": "query",
+            "required": false,
+            "description": "Optional EVM chain id or CAIP-2 chain to resolve an EVM subject on.",
+            "schema": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/agent-bouncer": {
+      "get": {
+        "operationId": "agent_bouncer",
+        "summary": "Check whether to admit an AI agent by its payment record",
+        "description": "Read a three.ws agent's Solana track record (payments, distinct payers, failure rate, attestations) and return an admit or refuse verdict with a tier: newcomer, regular, trusted, or vip.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "query",
+            "required": true,
+            "description": "three.ws agent id (UUID) of the counterparty to check.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "27a0f649-3b59-4552-bb0b-faf616ac448b"
+          },
+          {
+            "name": "min_payments",
+            "in": "query",
+            "required": false,
+            "description": "Minimum confirmed on-chain payments the agent must have received.",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 10
+          },
+          {
+            "name": "min_distinct_payers",
+            "in": "query",
+            "required": false,
+            "description": "Minimum number of distinct wallets that have paid the agent.",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 3
+          },
+          {
+            "name": "max_failure_rate",
+            "in": "query",
+            "required": false,
+            "description": "Highest acceptable payment failure rate, from 0 to 1.",
+            "schema": {
+              "type": "number"
+            },
+            "example": 0.2
+          },
+          {
+            "name": "min_attestations",
+            "in": "query",
+            "required": false,
+            "description": "Minimum signed Solana attestations the agent must hold.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "allow_newcomers",
+            "in": "query",
+            "required": false,
+            "description": "Admit agents with no history yet instead of refusing them.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/onchain-identity-verify": {
+      "get": {
+        "operationId": "onchain_identity_verify",
+        "summary": "Verify that an identity controls a wallet, mint, or contract",
+        "description": "Check a claim that an identity controls an address and return on-chain evidence (deployer, mint and update authority, name resolution, agent registration) with verified true, false, or unverifiable.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "identity",
+            "in": "query",
+            "required": true,
+            "description": "Claimed identity: a wallet, a name-service name, an ERC-8004 agent id, or a three.ws agent id.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "27a0f649-3b59-4552-bb0b-faf616ac448b"
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "description": "Contract, mint, or wallet the identity claims to control.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+          },
+          {
+            "name": "chain",
+            "in": "query",
+            "required": false,
+            "description": "Optional CAIP-2 chain hint for the address.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    },
+    "/api/x402/fact-check": {
+      "post": {
+        "operationId": "fact_check",
+        "summary": "Verify a factual claim and return a sourced verdict",
+        "description": "Check a claim against live web sources and return supported, contradicted, mixed, or insufficient with cited sources, a confidence score, and a SHA-256 attestation. The first 3 checks per day per IP are free.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "claim"
+                ],
+                "properties": {
+                  "claim": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 1000,
+                    "description": "One factual statement to check, 5 to 1,000 characters."
+                  },
+                  "strictness": {
+                    "type": "string",
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low"
+                    ],
+                    "description": "How hard low-authority sources are downweighted: high, medium, or low."
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "description": "Optional public image URL to check alongside the claim."
+                  }
+                }
+              },
+              "example": {
+                "claim": "The Eiffel Tower is 330 meters tall.",
+                "strictness": "high"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.1"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "responses": {
+          "200": {
+            "description": "Paid result as JSON."
+          },
+          "400": {
+            "description": "Missing or invalid input. Refused before any payment settles."
+          },
+          "402": {
+            "description": "Payment Required: an x402 challenge payable in USDC on Solana mainnet."
+          }
+        }
+      }
+    }
+  }
+}
