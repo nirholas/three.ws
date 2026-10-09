@@ -19,5 +19,9 @@
         "repo": "nirholas/three.ws"
       }
     }
+  },
+  "autoCompactWindow": 200000,
+  "env": {
+    "BASH_MAX_OUTPUT_LENGTH": "20000"
   }
 }
