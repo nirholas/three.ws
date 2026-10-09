@@ -500,3 +500,23 @@ export async function lookupUsersByUsername({ usernames, request }) {
 		.filter((u) => u?.id && u?.username)
 		.map((u) => ({ id: String(u.id), username: String(u.username), createdAt: u.created_at || null }));
 }
+
+/**
+ * The author of one post (GET /2/tweets/:id). Used to find the human at the
+ * root of a conversation a bot tagged us in. Returns null when X does not
+ * return the post (deleted, protected, suspended author). Throws the
+ * classified X error on a refusal.
+ *
+ * @param {{ postId: string, request: (path: string, query: Record<string,string>) => Promise<{ status: number, headers: object, body: any }> }} o
+ * @returns {Promise<{ id: string, username: string|null, createdAt: string|null, postId: string }|null>}
+ */
+export async function lookupPostAuthor({ postId, request }) {
+	const id = String(postId ?? '');
+	if (!/^\d{1,25}$/.test(id)) return null;
+	const res = await request(`tweets/${id}`, { expansions: 'author_id', 'tweet.fields': 'author_id,conversation_id', 'user.fields': USER_FIELDS.join(',') });
+	if (res.status < 200 || res.status >= 300) throw classifyMentionsError(res);
+	const authorId = res.body?.data?.author_id;
+	if (!authorId) return null;
+	const author = authorOf(authorId, new Map((res.body?.includes?.users || []).map((u) => [String(u.id), u])));
+	return { id: author.id, username: author.username, createdAt: author.createdAt, postId: id };
+}

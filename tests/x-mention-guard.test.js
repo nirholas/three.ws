@@ -157,7 +157,7 @@ describe('the kill switch', () => {
 	});
 
 	it('a guarded skip reaches neither the reply brain nor the adapter', async () => {
-		const m = mention({ username: 'grok', userId: '1700000000000000060', author: { id: '1700000000000000060', username: 'grok', createdAt: null } });
+		const m = mention({ text: '@trythreews how are you today', username: 'grok', userId: '1700000000000000060', author: { id: '1700000000000000060', username: 'grok', createdAt: null } });
 		const out = await handle(m, {});
 		expect(out).toMatchObject({ decision: 'skip', reason: 'known_bot' });
 		expect(compose).not.toHaveBeenCalled();

@@ -176,3 +176,10 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Defaults and reasoning: `docs/x-mention-bot.md`, "The X budget". Defaults are conservative placeholders for order 926 to replace with the real tier allowances.
 - Evidence: `tests/x-budget.test.js` 25/25 on the real migration (PGlite).
 - Commit: 43b81959e.
+
+## 2026-10-09: order 056 (bot-to-bot: @grok and @bot tag us) done
+
+- Shipped `api/_lib/x-mention-on-behalf.js` and the wiring in `handleMention`: when the guard reports `known_bot` and the bot asks for a 3D model, the request is answered on behalf of the human at the root of the conversation (parent post when it is the root, otherwise `lookupPostAuthor`, a new `GET /2/tweets/:id` helper in `x-mentions.js`). The mention is stamped `args.on_behalf_of`; the human's allowance is counted across their own and bot-written mentions (`countByPrincipal`); the budget gate and post counter apply. One four-line reply to the bot's post: what we made, `Viewer:`, `GLB:`, and the `/api/mcp-grok` connector line. Failure or timeout (`X_BOT_MAKE_BUDGET_MS`, 90 s) replies with a prefilled `/forge` link; moderation refusal replies with a fixed line.
+- Loop cap: one reply per conversation to bot authors (`countBotRepliesInConversation`), never an answer to a bot replying to our reply. Chat, launch, refused text, bot-started conversations, bot or own-account roots, blocklisted or under-24h humans are skipped with recorded reasons. Documented in `docs/x-mention-bot.md`.
+- Evidence: `tests/x-mention-on-behalf.test.js` 17/17 on the real migration (PGlite), real parser, guard, store and dry-run X adapter, with synthetic thread fixtures; guard, poll and budget suites still pass (68 total). `check:rules` OK.
+- Not verified: a live thread with the real @grok or @bot (owner-gated going live, order 928; known-bot id resolution still needs a production tick). Only `make` is actionable for bots; `image3d` and `avatar` for bots are skipped until their handlers are wired through the `generate` hook.

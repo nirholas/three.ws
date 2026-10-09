@@ -17,7 +17,7 @@ Text from X is untrusted data. None of the rules below read what a mention says;
 | Our own account | `skip` / `own_account` | The polled account's id and handle, the company id, plus env `X_MENTION_OWN_USER_IDS` (comma separated ids). |
 | Blocklist | `skip` / `author_blocked` | `app_settings` row `x_mention_blocklist` = `{"ids": ["<author id>", ...]}`. |
 | Known bot quoting our post without addressing us | `skip` / `bot_quote_of_own_post` | Automatic for any known bot. |
-| Known bot | `skip` / `known_bot` | See below. |
+| Known bot | `skip` / `known_bot`, unless it asks for a 3D model: then [answered on behalf of the human](#when-grok-or-bot-tags-us) | See below. |
 | Author account under 24 hours old | `skip` / `new_account` | `MIN_AUTHOR_AGE_SECONDS` in the guard. Skipped only when X returns `created_at`. |
 | One reply per conversation per hour | `skip` / `conversation_hourly` | `CONVERSATION_WINDOW_SECONDS` in the guard. |
 | Depth cap: never a third reply in a conversation | `skip` / `conversation_depth` | `CONVERSATION_MAX_REPLIES` in the guard. |
@@ -54,6 +54,18 @@ The ladder uses the largest used fraction of any cap (the "level"). Dropped inte
 X's own headers are honored too. After every read, `x-rate-limit-remaining: 0` backs the bot off until `x-rate-limit-reset`, and `x-app-limit-24hour-remaining: 0` until `x-app-limit-24hour-reset`; a 429 with neither backs off 15 minutes. While a backoff is active the reader does not call X and no reply is composed (`rate_limit_backoff`); the cursor stays put, so mentions are read after the window, never lost. A budget that cannot be read fails closed (`budget_unreadable`). When the read cap is reached the poll tick reports `status: budget`.
 
 `getBudgetUsage()` returns caps, usage, remaining, level, dropped intents and any backoff; the status endpoint (order 064) serves it.
+
+## When @grok or @bot tags us
+
+Grok Bot acts on X for its user, and @grok answers in threads, so one of them will tag us on a person's behalf ("@trythreews can you make a 3D version of this?"). Code: `api/_lib/x-mention-on-behalf.js`, called from `handleMention` when the guard reports `known_bot`.
+
+1. **Whose request it is.** The human is the author of the conversation's root post (the post whose id is the mention's `conversation_id`). It comes from the parent post when the bot replied directly to the root, otherwise from `GET /2/tweets/:id`. The mention is stamped `args.on_behalf_of = { id, username, via }`. If the bot started the conversation itself, the root is gone, or the root author is another known bot, one of our accounts, blocklisted or under 24 hours old, the mention is skipped with `bot_no_human_root`, `bot_root_unresolved`, `bot_root_not_human`, `author_blocked` or `new_account`.
+2. **What a bot may ask for.** Only a 3D model request (`make`), parsed by the same parser as any mention. Chat, `launch`, refused requests and anything else stay skipped as `known_bot`: a bot can never start a conversation, a launch or anything that moves funds.
+3. **Whose limits apply.** The human's. `x_mention_events` counts a person's own mentions and mentions a bot wrote for them together (`countByPrincipal`), against `X_MENTION_REPLIES_PER_AUTHOR_HOUR` and `_DAY`. The bot account is never charged.
+4. **One reply, machine-friendly.** To the bot's post, four lines: what we made, `Viewer: <link>`, `GLB: <link>`, and `Add three.ws to Grok Bot as an MCP connector: https://three.ws/api/mcp-grok`. A generation that fails or outlasts `X_BOT_MAKE_BUDGET_MS` (default 90 seconds) gets a reply with a prefilled `/forge?prompt=` link instead; a prompt the studio moderation refuses gets a fixed refusal with no echo. No handles, no hashtags, no dashes.
+5. **Loop cap.** One reply per conversation to bot authors, ever (`bot_loop_cap`, counted from `args.on_behalf_of` on replied rows), and never an answer to a bot's reply to our reply (`bot_reply_to_own_reply`). The conversation depth cap above still applies.
+
+Dry run applies as everywhere: the four-line reply is recorded on the row and nothing is posted until the owner flips the bot live. Tests with synthetic thread fixtures: `tests/x-mention-on-behalf.test.js`.
 
 ## Checking it
 

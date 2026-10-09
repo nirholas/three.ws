@@ -212,3 +212,63 @@ export async function countRepliesInConversation(conversationId, { windowSeconds
 	`;
 	return row?.n ?? 0;
 }
+
+/**
+ * Merge a patch into a recorded mention's args. Used to stamp the human a bot
+ * mention is answered on behalf of (`on_behalf_of`) so rate limits and the
+ * bot loop cap can find it later.
+ *
+ * @param {string} tweetId
+ * @param {Record<string, unknown>} patch
+ */
+export async function mergeArgs(tweetId, patch) {
+	const id = String(tweetId ?? '');
+	if (!SNOWFLAKE_RE.test(id)) throw new MentionStoreError('not an X post id', 'bad_mention');
+	const rows = await sql`
+		update x_mention_events set args = coalesce(args, '{}'::jsonb) || ${JSON.stringify(patch || {})}::jsonb, updated_at = now()
+		where tweet_id = ${id}
+		returning tweet_id
+	`;
+	return rows.length > 0;
+}
+
+/**
+ * Mentions attributed to one human in the trailing window: the ones they wrote
+ * themselves plus the ones a known bot wrote on their behalf, so a person gets
+ * one allowance however they reach us.
+ *
+ * @param {string} principalId  the human's X user id
+ * @param {{ windowSeconds?: number, decisions?: string[]|null, account?: { kind: string, ref: string }|null }} [opts]
+ */
+export async function countByPrincipal(principalId, { windowSeconds = 3600, decisions = null, account = null } = {}) {
+	const secs = Math.max(1, Math.round(Number(windowSeconds) || 3600));
+	const list = decisions && decisions.length ? decisions.filter((x) => DECISIONS.includes(x)) : null;
+	const acct = account ? accountOf(account) : null;
+	const [row] = await sql`
+		select count(*)::int as n from x_mention_events
+		where (author_id = ${String(principalId)} or args->'on_behalf_of'->>'id' = ${String(principalId)})
+		  and created_at > now() - make_interval(secs => ${secs})
+		  and (${list ? list.join(',') : null}::text is null or decision = any(string_to_array(${list ? list.join(',') : null}::text, ',')))
+		  and (${acct?.kind ?? null}::text is null or (account_kind = ${acct?.kind ?? null} and account_ref = ${acct?.ref ?? null}))
+	`;
+	return row?.n ?? 0;
+}
+
+/**
+ * Replies already sent to a bot on behalf of a human in one conversation.
+ * The bot loop cap reads this: one per conversation, ever.
+ *
+ * @param {string} conversationId
+ * @param {{ account: { kind: string, ref: string } }} opts
+ */
+export async function countBotRepliesInConversation(conversationId, { account }) {
+	const acct = accountOf(account);
+	const [row] = await sql`
+		select count(*)::int as n from x_mention_events
+		where conversation_id = ${String(conversationId)}
+		  and decision = 'reply'
+		  and args->'on_behalf_of' is not null
+		  and account_kind = ${acct.kind} and account_ref = ${acct.ref}
+	`;
+	return row?.n ?? 0;
+}

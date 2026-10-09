@@ -28,7 +28,8 @@ import { parseMentionIntent } from './x-mention-intents.js';
 import { composePublicReply, FIXED_HELP_REPLY } from './x-mention-reply.js';
 import { createXAdapter } from './gateway/adapters/x.js';
 import { guardMention, isPaused } from './x-mention-guard.js';
-import { ensureKnownBots } from './x-mention-known-bots.js';
+import { ensureKnownBots, loadKnownBots } from './x-mention-known-bots.js';
+import { answerOnBehalf } from './x-mention-on-behalf.js';
 import * as xBudget from './x-budget.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
@@ -103,7 +104,7 @@ async function composeAnswer({ mention, parsed, account, compose }) {
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused, budget = xBudget, request = null, onBehalf = answerOnBehalf, knownBots = null }) {
 	const parsed = parseMentionIntent(mention, account);
 	const dryRun = true;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
@@ -121,6 +122,22 @@ export async function handleMention({ mention, account, limits, env, store = men
 
 	try {
 		const verdict = await guard({ mention, account: mention.account, env, store });
+		if (!verdict.allow && verdict.reason === 'known_bot') {
+			// A known xAI account tagged us: answer on behalf of the human at the
+			// root of the conversation, or skip with the reason (x-mention-on-behalf.js).
+			const allowedBot = await budget.budgetGate({ intent: parsed.intent, env });
+			if (!allowedBot.allow) {
+				await store.updateDecision(mention.id, { decision: 'budget', reason: allowedBot.reason });
+				return { tweetId: mention.id, intent: parsed.intent, decision: 'budget', reason: allowedBot.reason };
+			}
+			const answered = await onBehalf({
+				mention, parsed, account: mention.account, limits, env, store, adapterFactory,
+				bots: knownBots || (await loadKnownBots({ env })),
+				request: typeof request === 'function' ? await request() : request,
+			});
+			if (answered.decision === 'reply') await budget.recordPosts(1);
+			return answered;
+		}
 		if (!verdict.allow) {
 			await store.updateDecision(mention.id, { decision: verdict.decision, reason: verdict.reason });
 			return { tweetId: mention.id, intent: parsed.intent, decision: verdict.decision, reason: verdict.reason };
@@ -193,8 +210,8 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	}
 
 	const batch = page.mentions.slice(0, maxMentions);
+	const resolve = () => (deps.request ? Promise.resolve(deps.request) : resolveAccount(descriptor.fetch, env).then((r) => r.request));
 	if (batch.length) {
-		const resolve = () => (deps.request ? Promise.resolve(deps.request) : resolveAccount(descriptor.fetch, env).then((r) => r.request));
 		await (deps.ensureKnownBots || ensureKnownBots)({ env, request: async (...a) => (await resolve())(...a) }).catch(() => {});
 	}
 	const decisions = [];
@@ -202,7 +219,7 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused, budget: deps.budget, request: resolve, onBehalf: deps.onBehalf, knownBots: deps.knownBots }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;
