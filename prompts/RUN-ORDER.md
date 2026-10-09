@@ -11,11 +11,12 @@ so you can open one, run it, and open the next without consulting anything. Ever
 | `001` to `014` | Runnable right now, no gate. Highest value first. Start at `001`. | 14 |
 | `015` to `022` | The `parity-` campaign, added 2026-09-30. Runnable, no gate except where an order names one step. Run 015 before 017 (017 ranks 015's data); 919 ships them. | 8 |
 | `023` to `066` | The `x-grok-` campaign, added 2026-10-08: Grok Bot as an MCP client, xAI as a provider, and the X mention bot (dry run). Runnable; lane C ships nothing live. Run 023 first, 045 before 049, 046 to 049 before 050. | 44 |
+| `067` to `083` | The `best3d-` campaign, added 2026-10-09 from the 3D landscape sweep. Runnable, no gate. Run 067 first (compliance fix), 068 and 069 after it, 070 before 078, 074 before the TSL part of 080. Shared facts: [finish/_context/best3d-00-CONTEXT.md](finish/_context/best3d-00-CONTEXT.md). | 17 |
 | `100` to `248` | The route-audit swarm, ordered by measured defect class. Parallel-safe. | 149 |
 | `300` to `313` | The unbuilt Home campaign, in numeric order (04 gates 05 and 06, 11 gates 20). | 14 |
 | `400` to `499` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | varies |
 | `500` to `549` | The `integrate-` campaign, added 2026-10-08: bringing the owner's other GitHub repositories into three.ws (ports, failover rungs, consolidations, mirror hygiene). Runnable; gated steps are named per order. Run 500 and 501 before any mirror push, 505 before 506 and 507, 524 before 525, 529 before 530 and 531, and 015 before 510. Shared facts: [finish/_context/integrate-00-CONTEXT.md](finish/_context/integrate-00-CONTEXT.md). | 50 |
-| `900` and up | Blocked: the last step is an owner action or an outside party. Read before running. | 20 |
+| `900` and up | Blocked: the last step is an owner action or an outside party. Read before running. (Includes 932 to 935 of the `best3d-` campaign.) | 24 |
 
 The number is a position, not an identity. When an order retires its file is deleted and a gap
 is left rather than renumbering the folder, so a link to `003-...` keeps meaning the same order.
