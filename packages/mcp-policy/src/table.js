@@ -89,6 +89,7 @@ export const POLICY = {
 		identity_check: r('agents'),
 		list_feedback: r('utility'),
 		list_garment_catalog: r('assets'),
+		list_my_agents: r('agents'),
 		list_my_avatars: r('assets'),
 		list_sign_vocabulary: r('assets'),
 		mint_3d_asset: w('assets'),

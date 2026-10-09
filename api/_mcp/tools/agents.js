@@ -656,4 +656,50 @@ export const toolDefs = [
 			return toolResult(structured);
 		},
 	},
+	{
+		name: 'list_my_agents',
+		title: 'List my agents',
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: false,
+		},
+		description:
+			'List the agents on your account, newest first: id, name, description, brain model, public Solana address, whether the page is published and the page URL. Use the ids with recall, list_custom_skills, attach_avatar_to_agent and call_agent. Reads only; no funds move.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				limit: { type: 'integer', minimum: 1, maximum: 100, default: 50, description: 'How many agents to return.' },
+			},
+			additionalProperties: false,
+		},
+		scope: 'agents:read',
+		async handler(args, auth) {
+			if (!auth.userId) {
+				return designedError('sign_in_required', 'Sign in with three.ws OAuth or an API key to list your agents.');
+			}
+			const limit = Math.min(Math.max(Number(args?.limit) || 50, 1), 100);
+			const rows = await sql`
+				SELECT id, name, description, is_published, created_at,
+				       meta->>'solana_address' AS solana_address,
+				       meta->'brain'->>'provider' AS model
+				  FROM agent_identities
+				 WHERE user_id = ${auth.userId} AND deleted_at IS NULL
+				 ORDER BY created_at DESC
+				 LIMIT ${limit}
+			`;
+			const agents = rows.map((r) => ({
+				id: r.id,
+				name: r.name,
+				description: r.description || null,
+				model: r.model || null,
+				solana_address: r.solana_address || null,
+				is_published: Boolean(r.is_published),
+				created_at: r.created_at,
+				page_url: agentHomeUrl(r.id),
+			}));
+			return toolResult({ count: agents.length, agents });
+		},
+	},
 ];

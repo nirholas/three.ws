@@ -29,6 +29,7 @@ const CORE_SERVER = 'three.ws';
 export const GROK_ACCOUNT_TOOLS = Object.freeze([
 	// Agents
 	'create_agent',
+	'list_my_agents',
 	'attach_avatar_to_agent',
 	'identity_check',
 	'call_agent',
