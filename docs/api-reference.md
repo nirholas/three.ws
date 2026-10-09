@@ -4354,7 +4354,7 @@ or, for an AI agent:
 { "key": { "id": "2c25ec0c-…", "name": "Grok Bot", "prefix": "sk_live_Xb3Q", "scope": "avatars:read … connector", "expires_at": null, "created_at": "…", "secret": "sk_live_…" } }
 ```
 
-The `secret` is returned **only once**. Store it immediately; it cannot be retrieved, only replaced. `POST /api/api-keys` takes `{ name, scope, expires_at }` and answers `{ "data": { ..., "token": "sk_live_…" } }`.
+The `secret` is returned **only once**. Store it immediately; it cannot be retrieved, only replaced. `POST /api/api-keys` takes `{ name, scope, expires_at }` and answers `{ "data": { ..., "token": "sk_live_…" } }`. It also takes `preset: "connector"`, which ignores `scope` like `/api/keys` does; a bearer caller gets the connector scopes it holds itself plus the marker, and one holding none of them is refused with `403 insufficient_scope`. `npx three-ws setup --client grok-bot --auth key` mints its key this way ([CLI docs](./cli.md#grok-bot)).
 
 ---
 

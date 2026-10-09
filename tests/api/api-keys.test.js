@@ -225,6 +225,46 @@ describe('POST /api/api-keys — create', () => {
 	});
 });
 
+describe('POST /api/api-keys with preset connector', () => {
+	const row = (scope) => [{ id: 'kc', name: 'Grok Bot', prefix: 'sk_live_conn', scope, expires_at: null, created_at: '2026-10-09T00:00:00Z' }];
+	const inserted = () => sqlState.calls.find((c) => /insert into api_keys/i.test(c.query));
+
+	it('mints the whole connector set for a browser session', async () => {
+		authState.session = { id: 'user-c1' };
+		sqlState.queue.push(row('avatars:read avatars:write agents:read agents:write memory:read memory:write connector'));
+		const { status, body } = await invoke({ method: 'POST', body: { name: 'Grok Bot', preset: 'connector' } });
+		expect(status).toBe(201);
+		expect(body.data.token).toMatch(/^sk_live_/);
+		expect(inserted().values).toContain('avatars:read avatars:write agents:read agents:write memory:read memory:write connector');
+	});
+
+	it('gives a bearer only the connector scopes it holds, plus the marker', async () => {
+		authState.bearer = { userId: 'user-c2', scope: 'offline_access profile avatars:read avatars:write memory:read memory:write agents:read wallet:read wallet:write', source: 'oauth' };
+		sqlState.queue.push(row('avatars:read avatars:write agents:read memory:read memory:write connector'));
+		const { status } = await invoke({ method: 'POST', body: { name: 'Grok Bot', preset: 'connector' } });
+		expect(status).toBe(201);
+		const scope = inserted().values.find((v) => typeof v === 'string' && v.includes('connector'));
+		expect(scope.split(' ').sort()).toEqual(['agents:read', 'avatars:read', 'avatars:write', 'connector', 'memory:read', 'memory:write']);
+		expect(scope).not.toMatch(/wallet|services|profile/);
+	});
+
+	it('ignores a scope sent beside the preset, so a connector key never carries a spend scope', async () => {
+		authState.session = { id: 'user-c3' };
+		sqlState.queue.push(row('x'));
+		await invoke({ method: 'POST', body: { name: 'Grok Bot', preset: 'connector', scope: 'wallet:write services:write' } });
+		const scope = inserted().values.find((v) => typeof v === 'string' && v.includes('connector'));
+		expect(scope).not.toMatch(/wallet:write|services:write/);
+	});
+
+	it('refuses a bearer that holds none of the connector scopes', async () => {
+		authState.bearer = { userId: 'user-c4', scope: 'profile wallet:read', source: 'oauth' };
+		const { status, body } = await invoke({ method: 'POST', body: { name: 'Grok Bot', preset: 'connector' } });
+		expect(status).toBe(403);
+		expect(body.error).toBe('insufficient_scope');
+		expect(inserted()).toBeUndefined();
+	});
+});
+
 describe('method routing', () => {
 	it('rejects PUT with 405', async () => {
 		const { status, body } = await invoke({ method: 'PUT' });
