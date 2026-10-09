@@ -415,6 +415,8 @@
 
 .cad-card {
 	display: grid;
+	grid-template-rows: auto 1fr;
+	align-content: start;
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg, 14px);
 	overflow: hidden;
@@ -431,20 +433,28 @@
 }
 
 .cad-card__paper {
+	position: relative;
 	aspect-ratio: 4 / 3;
+	overflow: hidden;
 	background-color: var(--cad-paper);
 	background-image:
 		repeating-linear-gradient(0deg, rgba(91, 141, 239, 0.08) 0 1px, transparent 1px 16px),
 		repeating-linear-gradient(90deg, rgba(91, 141, 239, 0.08) 0 1px, transparent 1px 16px);
 	display: grid;
 	place-items: center;
-	padding: 14px;
 }
 
 .cad-card__paper img {
-	max-width: 100%;
-	max-height: 100%;
+	position: absolute;
+	inset: 12px;
+	width: calc(100% - 24px);
+	height: calc(100% - 24px);
 	object-fit: contain;
+	transition: transform 0.25s ease;
+}
+
+.cad-card:hover .cad-card__paper img {
+	transform: scale(1.04);
 }
 
 .cad-card__nothumb {
@@ -903,6 +913,13 @@
 }
 
 .cad-metric.is-warn dd {
+	color: var(--warn);
+}
+
+.cad-metric-note {
+	margin: 2px 0 0;
+	font-size: 12px;
+	line-height: 1.5;
 	color: var(--warn);
 }
 

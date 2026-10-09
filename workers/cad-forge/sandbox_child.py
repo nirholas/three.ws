@@ -370,9 +370,11 @@ def write_result(out: dict) -> None:
 
 
 def main() -> int:
-    # A segfault inside OpenCascade prints the Python stack to stderr, which is
-    # how the parent learns which program line crashed the kernel.
-    faulthandler.enable(file=sys.stderr, all_threads=False)
+    # A segfault inside OpenCascade prints the Python stacks to stderr, which is
+    # how the parent learns which program line crashed the kernel. All threads,
+    # because OCCT often faults on one of its own worker threads while the
+    # program line that called it sits on the main thread.
+    faulthandler.enable(file=sys.stderr, all_threads=True)
     sys.stdout.write("READY\n")
     sys.stdout.flush()
     raw = sys.stdin.readline()

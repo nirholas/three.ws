@@ -14,7 +14,8 @@
  *   POST /api/cad { action:'rebuild', id, values }
  *       Rebuilds a saved design's own program with new parameter values (no
  *       model involved). Each distinct value set is cached, so a shared
- *       configuration link builds once. → { variant }
+ *       configuration link builds once. → { ok:true, variant, cached }, or
+ *       { ok:false, message, buildError } when the kernel rejects the values.
  *
  *   GET  /api/cad?id=<uuid>[&v=<key>]       → { design, lineage, variant? }
  *   GET  /api/cad?id=<uuid>&format=py[&v=]  → the program as a .py download
@@ -190,9 +191,14 @@ async function handleRebuild(req, res, body) {
 				if (!rl.success) throw Object.assign(new CadForgeError('rate_limited', 'Rebuilding too fast. Give it a moment.', 429), { rl });
 			},
 		});
-		return json(res, 200, { variant, cached });
+		return json(res, 200, { ok: true, variant, cached });
 	} catch (err) {
 		if (err?.rl) return rateLimited(res, err.rl, err.message);
+		// The kernel refusing a value set is an answer, not a failed request:
+		// the page shows the reason beside the sliders.
+		if (err instanceof CadForgeError && err.code === 'rebuild_failed') {
+			return json(res, 200, { ok: false, error: err.code, message: err.message, buildError: err.detail || null });
+		}
 		return sendError(res, err, null);
 	}
 }

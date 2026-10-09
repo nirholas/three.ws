@@ -128,7 +128,7 @@ curl -s https://three.ws/api/cad -H 'content-type: application/json' \
 { "action": "rebuild", "id": "<design id>", "values": { "WIDTH": 120 } }
 ```
 
-Returns `{ "variant": { "key", "values", "metrics", "files", "adjustments", "url" }, "cached": false }`. Values are clamped to each parameter's range and snapped to its step. A value set that has been built before returns instantly with `cached: true`. `422 rebuild_failed` means the kernel cannot build those values; `buildError` carries its message.
+Returns `{ "ok": true, "variant": { "key", "values", "metrics", "files", "adjustments", "url" }, "cached": false }`. Values are clamped to each parameter's range and snapped to its step. A value set that has been built before returns instantly with `cached: true`. When the kernel cannot build those values the answer is still `200`, as `{ "ok": false, "error": "rebuild_failed", "message", "buildError": { "kind", "message", "line" } }`.
 
 ### Read
 

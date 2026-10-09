@@ -381,8 +381,15 @@ async function runRebuild() {
 	badge.hidden = false;
 	err.hidden = true;
 	try {
-		const { variant } = await rebuildDesign(state.design.id, state.values, { signal: controller.signal });
+		const result = await rebuildDesign(state.design.id, state.values, { signal: controller.signal });
 		if (controller.signal.aborted) return;
+		if (!result.ok) {
+			const kernel = result.buildError;
+			err.textContent = kernel ? `${result.message} Kernel: ${kernel.message}` : result.message;
+			err.hidden = false;
+			return;
+		}
+		const { variant } = result;
 		state.variant = variant;
 		const viewer = await ensureViewer();
 		await viewer.load(variant.files.glb, variant.metrics.size_mm);
@@ -418,11 +425,14 @@ function renderOutputs() {
 	const d = state.design;
 	const [x, y, z] = metrics.size_mm;
 	$('#cadMetrics').replaceChildren(
+		...[
 		metricRow('Size', `${fmtMm(x)} × ${fmtMm(y)} × ${fmtMm(z)} mm`),
 		metricRow('Volume', `${(metrics.volume_mm3 / 1000).toFixed(2)} cm³`),
 		metricRow('Surface', `${(metrics.area_mm2 / 100).toFixed(1)} cm²`),
-		metricRow('Topology', `${metrics.solids} solid${metrics.solids === 1 ? '' : 's'} · ${metrics.faces} faces · ${metrics.edges} edges`),
+		metricRow('Topology', `${metrics.solids} solid${metrics.solids === 1 ? '' : 's'} · ${metrics.faces} faces · ${metrics.edges} edges`, metrics.solids > 1 ? 'warn' : null),
+		metrics.solids > 1 ? el('p', { class: 'cad-metric-note', text: `This part is ${metrics.solids} separate bodies that do not touch. If it should be one piece, use Refine: "connect every feature to the main body".` }) : null,
 		metricRow('Kernel check', metrics.valid ? 'Valid B-rep' : 'Built, with geometry warnings', metrics.valid ? 'ok' : 'warn'),
+		].filter(Boolean),
 	);
 	$('#cadMass').replaceChildren(
 		...MATERIALS.map((m) =>

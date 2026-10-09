@@ -197,7 +197,9 @@ def _signal_failure(returncode: int, stderr: str) -> dict:
     """Explain a child that died before reporting, by the signal that killed it."""
     signum = -returncode if returncode and returncode < 0 else None
     match = CRASH_LINE.findall(stderr or "")
-    line = int(match[-1]) if match else None
+    # faulthandler prints the most recent call first: the first match is the
+    # innermost program line.
+    line = int(match[0]) if match else None
     if signum == signal.SIGXCPU:
         return {"kind": "timeout", "message": "The design used more CPU time than a build allows. Reduce feature counts or boolean operations.", "line": line}
     if signum in (signal.SIGKILL, signal.SIGABRT):

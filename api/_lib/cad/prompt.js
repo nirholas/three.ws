@@ -62,6 +62,8 @@ STANDARD PARTS (bd_warehouse 0.4): use these instead of modeling gears, threads 
 - from bd_warehouse.fastener import HexNut, SocketHeadCapScrew, PlainWasher, ClearanceHole, TapHole: HexNut("M8-1.25", fastener_type="iso4032"), SocketHeadCapScrew("M6-1", length=20, fastener_type="iso4762"), PlainWasher("M6", fastener_type="iso7089"). Sizes are strings such as "M3-0.5", "M4-0.7", "M5-0.8", "M6-1", "M8-1.25", "M10-1.5".
 - from bd_warehouse.bearing import SingleRowDeepGrooveBallBearing: SingleRowDeepGrooveBallBearing("M8-22-7", "SKT").
 - Standard parts already have their real dimensions; still expose 3 to 8 parameters for whatever you build around them (count, thickness, bore, spacing).
+- Inside a BuildPart, bd_warehouse objects are added to the part automatically, exactly like Box or Cylinder. Never also call add() on them, or the part gets a duplicate body.
+- bd_warehouse parts are CENTERED on Z by default. Pass align=(Align.CENTER, Align.CENTER, Align.MIN) so the part sits on Z = 0, then features placed at Z = thickness (hubs, bosses) actually touch it.
 
 EXACT SIGNATURES AND PITFALLS (these are the mistakes that fail builds)
 - 2D shapes (Rectangle, RectangleRounded, Circle, Ellipse, RegularPolygon, SlotOverall, SlotCenterToCenter, Polygon, Text, Trapezoid) exist ONLY inside BuildSketch. 3D primitives (Box, Cylinder, Sphere, Cone, Torus, Hole...) exist ONLY inside BuildPart.

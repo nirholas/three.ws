@@ -172,6 +172,15 @@ class FailureClassificationTests(unittest.TestCase):
         self.assertEqual(failure["line"], 14)
         self.assertIn("line 14", failure["message"])
 
+    def test_crash_on_a_kernel_thread_reports_the_innermost_program_line(self):
+        stderr = (
+            "Fatal Python error: Segmentation fault\n\n"
+            "Thread 0x00007f2a9b512340 (most recent call first):\n"
+            '  File "<design>", line 3 in run\n'
+            '  File "<design>", line 4 in <module>\n'
+        )
+        self.assertEqual(main._signal_failure(-11, stderr)["line"], 3)
+
     def test_cpu_and_memory_limits(self):
         self.assertEqual(main._signal_failure(-24, "")["kind"], "timeout")
         self.assertEqual(main._signal_failure(-9, "")["kind"], "memory")
