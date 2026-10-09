@@ -116,7 +116,7 @@ OPENROUTER_API_KEY=sk-or-xxxxx
 ANTHROPIC_API_KEY=sk-ant-api03-xxxxx
 ```
 
-Get from [console.anthropic.com](https://console.anthropic.com). `OPENAI_API_KEY` fills the same paid-backstop role for OpenAI, and watsonx (`WATSONX_API_KEY` plus a project scope) is served only on explicit request, never as a silent default.
+Get from [console.anthropic.com](https://console.anthropic.com). `OPENAI_API_KEY` fills the same paid-backstop role for OpenAI, and `GROK_API_KEY` (alias `XAI_API_KEY`) adds xAI Grok as the last paid rung; when it is unset the Grok rungs are skipped and only a user's own BYOK Grok key works. watsonx (`WATSONX_API_KEY` plus a project scope) is served only on explicit request, never as a silent default.
 
 #### `CHAT_MODEL`
 **Optional.** Pin a default chat model by id. It only applies when the provider that serves that model id (per the model catalog) is the one routed to; every other provider keeps its own default, so an Anthropic-style model id never leaks into a Groq request.
@@ -391,7 +391,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 {
   "src": "/agent/([^/]+)/embed",
   "headers": {
-    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
     "x-content-type-options": "nosniff",
     "referrer-policy": "strict-origin-when-cross-origin",
     "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
@@ -411,6 +411,8 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 }
 ```
 
+These routes also send `access-control-allow-origin: *` and `cross-origin-resource-policy: cross-origin` so any site can load the bundle. The moving channels (`latest`, a major like `1`, or a minor like `1.5`) get a short cache instead (`max-age=3600, s-maxage=300`). A miss under a version path (one that has not been released yet) answers 404 without the immutable policy, so a CDN edge does not keep serving that 404 after the version is cut. The UMD build (`agent-3d.umd.cjs`) is served as `text/javascript`, so it runs from a plain `<script>` tag.
+
 **Cron jobs** are declared here as the source of truth for the schedule. Read the `crons` array itself for the current set rather than trusting a count quoted in prose. In production they are driven by **Google Cloud Scheduler**, each job hitting its `/api/cron/*` handler on the Cloud Run service:
 
 ```json
@@ -422,7 +424,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 ]
 ```
 
-These only run against the production deployment (Cloud Scheduler → Cloud Run), not locally. See [docs/ops/gcp-production.md](ops/gcp-production.md) for how the Scheduler jobs are provisioned.
+These only run against the production deployment (Cloud Scheduler → Cloud Run), not locally. A cron added to this array gets its Scheduler job on the next deploy: `npm run deploy:gcp:sync-crons` (part of `npm run deploy:gcp`) creates a job for every declared cron that has none and never touches existing jobs. See [docs/ops/gcp-production.md](ops/gcp-production.md) for how the Scheduler jobs are provisioned.
 
 ---
 

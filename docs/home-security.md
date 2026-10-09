@@ -36,7 +36,7 @@ model is never permitted to assert its own confirmation.
 |---|---|---|
 | A stranger on the internet | Reach our API | Session or bearer auth on every route; ownership resolved in SQL (`WHERE user_id`), never compared in JavaScript; 404 (never 403) across a tenancy boundary; a rate-limit bucket on every route |
 | A stranger who obtains a session | Act as the user | The gate. An unlock still needs a fresh, single-use, 90 second confirmation minted server-side and redeemed by a session that also passes CSRF |
-| A compromised or hijacked model | Call any tool with any argument | `confirmed` is absent from every home tool schema on both the MCP and the chat surface. A confirmation is only ever asserted by a browser session: `api/home/:id/confirm.js` refuses a bearer before it authenticates one, and `call.js` and `activate.js` refuse an inline `confirmed: true` from any principal that is not a session ([`canAssertConfirmation`](../api/_lib/home/access.js)). A token holding `home:act` can ask to act and is answered with the same 409 a browser gets |
+| A compromised or hijacked model | Call any tool with any argument | `confirmed` is absent from every home tool schema on both the MCP and the chat surface. A confirmation is only ever asserted by a browser session: `api/home/:id/confirm.js` refuses a bearer before it authenticates one, and `call.js` and `activate.js` refuse an inline `confirmed: true` from any principal that is not a session ([`canAssertConfirmation`](../api/_lib/home/access.js)). A token holding `home:act` can ask to act and is answered with the same 409 a browser gets. A standing allowance is a yes too, so `POST`/`DELETE /api/home/:id/grants` refuse every principal that is not a session for the same reason: otherwise a token could grant itself `lock.front_door` and then unlock it unconfirmed |
 | A delegate the user authorised for something else | Hold a valid API key or OAuth token for this account | `resolveHomeAccess` reads the granted scope before it reads the home: `home:read` for a read, `home:act` for anything that changes a house. A token granted only `profile` is refused with `insufficient_scope` and never reaches the tenancy lookup |
 | A malicious device or integration in the user's own house | Control entity names, area names, scene names | Those strings reach a model, so they are treated as untrusted input: capped, structured, and never the sole basis of an action. The gate is downstream of all of them and classifies by resolved entity, not by the words in the request |
 | Another household member | Hold legitimate partial access | Roles and per-entity scopes ([`api/_lib/home/members.js`](../api/_lib/home/members.js)). A role that is short answers 403 and names the role; a home you are not in answers 404 and names nothing |
@@ -325,8 +325,8 @@ node scripts/home-test-instance.mjs --down --name sec11 --force
 
 **The model half is a real requirement, not a nicety.** Check 4's real arm asks the
 [LLM chain](../api/_lib/llm.js) for four turns and executes whatever they ask for. Without a
-credential the chain falls through to its two keyless anonymous rungs, both of which answer 429
-under any load, and the test **fails** with `no model in the chain answered, so this proved
+credential the chain falls through to its keyless anonymous rungs (Kilo's free Nemotron pool,
+OVH, Pollinations and LLM7), which are rate-limited per IP and answer 429 under load, and the test **fails** with `no model in the chain answered, so this proved
 nothing`, followed by whatever the chain last said. That is deliberate: a door staying locked
 because nothing ever asked to open it is an outage, not a proof, and a security check that passes
 during an outage is worse than no check. Production carries the keys; locally, put one keyed rung

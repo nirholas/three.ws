@@ -133,7 +133,7 @@ membership-aware at once rather than each one growing its own check.
 |---|---|---|
 | Store reads | `api/_lib/home/store.js` | `getConnection`, `listConnections` and `getDecryptedToken` join `home_members`. Each row comes back carrying `role` and `entity_scope`. There is deliberately no `or user_id = ...` beside the join. |
 | Bridge runtime | `api/_lib/home/runtime.js` | `acquire` reads the home and its token through those two store functions, so it inherits membership without a check of its own |
-| REST routes | `api/_lib/home/access.js` | `resolveHomeAccess(req, res, homeId, capability)` is the single door. It returns `role` and `scope`, refuses a non-member 404 and a member without the capability 403. A bearer principal is held to the OAuth scope its capability maps to (`read` needs `home:read`, everything that changes the house, the roster, the layout or the allowances needs `home:act`), checked BEFORE the home is read so the refusal names the principal and not a house id |
+| REST routes | `api/_lib/home/access.js` | `resolveHomeAccess(req, res, homeId, capability)` is the single door. It returns `role` and `scope`, refuses a non-member 404 and a member without the capability 403. A bearer principal is held to the OAuth scope its capability maps to (`read` needs `home:read`, everything that changes the house, the roster, the layout or the allowances needs `home:act`), checked BEFORE the home is read so the refusal names the principal and not a house id. The account-level routes that have no single home to resolve (`GET`/`POST /api/home`, `/api/home/pair`, `/api/home/plan`) apply the same table through `homeScopeRefusal(caller, capability)`: listing needs `home:read`, connecting and pairing need `home:act` |
 | Room graph | `api/home/[id].js`, `api/home/[id]/stream.js` | `filterGraphForScope` runs before serialization, on the single read and on every streamed frame |
 | The gate | `api/home/[id]/call.js` | `confirmed: true` is refused before the socket is acquired, twice over: `canAssertConfirmation` refuses any principal that is not a signed-in browser session (a bearer token holding `home:act` can ask to act and can never say yes), then the role must hold `confirm`. An out-of-scope target is refused against the live graph |
 | Scenes | `api/home/[id]/activate.js` | needs `act`; a scoped role is refused outright, because a scene reaches the whole house and a half-run scene is worse than none |
@@ -149,11 +149,11 @@ Route by route:
 | `GET /api/home/:id` | `read` |
 | `DELETE /api/home/:id` | `disconnect` |
 | `GET /api/home/:id/stream` | `read` |
-| `GET /api/home/:id/log`, `/macros` | `read` |
+| `GET /api/home/:id/log`, `/macros` | `read` (the log is session-only, and a scoped member sees only actions on devices inside their scope, without who confirmed them or why) |
 | `POST /api/home/:id/call`, `/activate` | `act`, plus `confirm` when the body carries `confirmed: true` |
 | `POST /api/home/:id/confirm` | `confirm` |
 | `GET /api/home/:id/grants` | `read` |
-| `POST`, `DELETE /api/home/:id/grants` | `grant` |
+| `POST`, `DELETE /api/home/:id/grants` | `grant`, from a signed-in session only (a grant is a standing yes, so a bearer token is refused) |
 | `/api/home/pair` on an existing home | `manage` |
 | `GET /api/home/:id/members` | `read` |
 | `POST`, `PATCH`, `DELETE /api/home/:id/members` | `invite` |
@@ -178,8 +178,10 @@ one home and one role.
   `{skipped: true}` and this reports `emailed: false`, which is a fact rather than a failure. A
   dead mail provider never costs anybody their invitation: the row is already written and the link
   in the response still works.
-- **Single use is enforced in the redeeming UPDATE's own WHERE clause**, not by a read followed by
-  a write, so two people opening the same link at the same moment cannot both become members.
+- **Single use is enforced in the redeeming statement itself**, not by a read followed by a write:
+  one statement claims the invite in its UPDATE's WHERE clause and inserts the membership row only
+  from that claim, so two people opening the same link at the same moment cannot both become
+  members, and a burst of concurrent redemptions cannot slip past the seat cap.
 - **Accepting requires an account, and this endpoint does not create one.** Registration and
   sign-in already exist, they carry the captcha, the password rules and the session handling, and a
   second door into account creation is a second door to keep secure. An unauthenticated POST

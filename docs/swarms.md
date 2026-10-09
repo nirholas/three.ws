@@ -150,6 +150,12 @@ A cookie-session caller must present a single-use CSRF token
 is exempt, since the token is itself the proof of intent. Both are metered at
 30 mutations per minute per user.
 
+The four actions that move treasury SOL or switch treasury trading on (`create`,
+`contribute`, `exit`, `resume`) carry two more. On mainnet the account must have
+signed the real-funds agreements first (see the [risk acknowledgment](./risk-acknowledgment.md);
+devnet swarms are exempt), and a bearer/API-key caller must hold the
+`wallet:write` scope. `join`, `pause` and `kill` move nothing and need neither.
+
 ```bash
 # Create. The policy is optional; anything you omit takes the default above.
 CSRF=$(curl -s https://three.ws/api/csrf-token -H 'Cookie: <session>' | jq -r .token)
@@ -195,6 +201,8 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 400 | `too_small` | Contribution under the 0.005 SOL floor |
 | 401 | `unauthorized` | Mutation or `?mine=1` without a session |
 | 402 | `insufficient_funds` | The agent wallet cannot fund the contribution |
+| 403 | `risk_ack_required` | A mainnet `create`, `contribute`, `exit` or `resume` from an account that has not signed the real-funds agreements |
+| 403 | `insufficient_scope` | The same actions from an API key without `wallet:write` |
 | 403 | `csrf_missing`, `csrf_invalid` | Session mutation with no (or a spent) `X-CSRF-Token` |
 | 403 | `forbidden` | Acting for an agent you do not own, or a creator-only action (`pause`, `resume`) from a member |
 | 403 | `invite_only` | `join` by anyone but the creator on a swarm with `join_open: false` |
@@ -208,6 +216,7 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 409 | `killed` | The swarm's kill switch is already pulled |
 | 409 | `closed` | `join` or `contribute` on a killed or closed swarm |
 | 409 | `share_cap` | The contribution would push one member past `max_member_share_bps` |
+| 409 | `exit_in_progress` | This member already has an exit being paid or settled; a concurrent second `exit` is refused before any SOL moves |
 | 409 | `positions_open` | `exit` under `wait_to_close` while positions are still open |
 
 ## Related

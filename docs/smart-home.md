@@ -299,7 +299,10 @@ page sideways at 320px: the failure it exists to catch is a state nobody ever op
 all, connects a real Home Assistant, and is the only one that can prove the summary is the
 house's own numbers, that a real long-lived token reaches no browser storage, and that stopping
 the container really does produce `degraded` with the summary intact. It runs under
-`npm run test:home:e2e`.
+`npm run test:home:e2e`, which must carry the encryption key bound to the database it writes to
+(`HOME_E2E_ENC_KEY`, else an exported `WALLET_ENCRYPTION_KEY`); a random per-run key is refused at
+the first connect with `secret_box_key_mismatch`, and the global setup checks the binding before
+any browser opens. The exact command is in [tests/e2e/README.md](../tests/e2e/README.md).
 
 Two invariants hold the surface together, and both are asserted in those specs rather than left
 as prose.

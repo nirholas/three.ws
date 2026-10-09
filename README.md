@@ -8571,7 +8571,7 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 - Built-in tools: `wave`, `lookAt`, `play_clip`, `setExpression`, `speak`, `remember`
 - Composable skill system — install skills from IPFS, Arweave, or HTTP; each skill is a self-contained bundle with a description, tool definitions, and async handlers
 - Weighted emotion blending (celebration, concern, curiosity, empathy, patience) driven by protocol events, not a finite-state machine
-- Web Speech API for STT/TTS out of the box; ElevenLabs integration for production-quality voice
+- Web Speech API for STT/TTS out of the box; on-device speech-to-text when the manifest sets `voice.stt.provider` to `"whisper"` (Moonshine for English, Whisper for 99 languages, run in the browser through transformers.js, with the NVIDIA Riva lane as fallback), so dictation works in Firefox and Safari too; ElevenLabs integration for production-quality voice
 - **Talk mode** with audio-driven ARKit-52 lip-sync — TTS audio is analysed in real time and drives 52 standard blendshapes on the avatar
 - Anonymous Groq-powered chat for unauthenticated visitors; owner-card gating when an agent has a paying author
 
@@ -10069,7 +10069,7 @@ GET  /.well-known/oauth-authorization-server →  RFC 8414 discovery
 GET  /.well-known/oauth-protected-resource  →  RFC 9728 resource discovery
 ```
 
-Token scopes: `avatars:read`, `avatars:write`, `agents:read`, `agents:write`, `mcp`.
+Token scopes (the full list lives in [api/_lib/oauth-scopes.js](api/_lib/oauth-scopes.js)): `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `offline_access`, `memory:read`, `memory:write`, `agents:read`, `agents:write`, `feedback:read`, `home:read`, `home:act`, `wallet:read`, `wallet:write`, `services:write`. A bearer token is held to the scopes it was granted: every route that moves an agent's funds requires `wallet:write`, and a bearer can only mint an API key with scopes it holds itself.
 
 Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings stored hashed in Postgres.
 
@@ -10080,7 +10080,7 @@ Access tokens are short-lived JWTs (1 hour). Refresh tokens are opaque strings s
 [`api/mcp.js`](api/mcp.js) is a thin HTTP entrypoint (POST / GET-SSE / DELETE) that implements the [Model Context Protocol](https://modelcontextprotocol.io) 2025-06-18 specification over JSON-RPC 2.0. The protocol logic is split across [`api/_mcp/`](api/_mcp/): `auth.js` (Bearer/OAuth + x402 paywall), `dispatch.js` (JSON-RPC routing), `catalog.js` (dynamic tool catalog), `payments.js` (x402 paid-tool settlement), `render.js`, and `embed-policy.js`. Tools are registered per category under [`api/_mcp/tools/`](api/_mcp/tools/) (14 category modules: `avatars.js`, `models.js`, `solana.js`, `pumpfun.js`, `animations.js`, `agents.js`, `garments.js`, `memory.js`, `oracle.js`, `trader.js`, `embed.js`, `sign.js`, `crypto-data.js`, `tokenize.js`). External AI systems (including Claude Desktop, other agents, or custom integrations) can drive avatars programmatically through this surface.
 
 **Endpoint:** `POST /api/mcp` (tools), `GET /api/mcp` (SSE), `DELETE /api/mcp` (session terminate)
-**Auth:** OAuth 2.1 Bearer token with `mcp` scope; some tools additionally require x402 USDC payment
+**Auth:** OAuth 2.1 Bearer token or API key, with each tool checking its own scope (for example `avatars:read`, or `avatars:delete` for `delete_avatar`); some tools additionally require x402 USDC payment
 **Registry:** Listed on the [official MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as `io.github.nirholas/three.ws`, alongside the other three.ws servers published under the `io.github.nirholas` namespace (`threews-3d-studio`, `threews-avatar`, `threews-pumpfun`, `threews-x402-bazaar`, `three-token-mcp`, and more). Also discoverable on [Smithery](https://smithery.ai/search?q=three.ws), [Glama](https://glama.ai/mcp/servers?query=three.ws), and [PulseMCP](https://www.pulsemcp.com/servers?q=three.ws).
 **x402scan:** [view on x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) — paid MCP tool calls and revenue
 
@@ -10549,7 +10549,7 @@ Full design and configuration in [docs/solana-pumpfun.md](docs/solana-pumpfun.md
 
 Beyond the Solana reputation signals described above, the platform also ships consumer-facing pump.fun tooling:
 
-- **Token Launcher** (live at [three.ws/pumpfun](https://three.ws/pumpfun)): UI for creating and launching new tokens, source in [public/pumpfun.html](public/pumpfun.html).
+- **Pump.fun Stream** (live at [three.ws/pumpfun](https://three.ws/pumpfun)): a live feed of every launch, trade, graduation and fee claim with a reacting, optionally narrating 3D agent, source in [public/pumpfun.html](public/pumpfun.html). Its "Launch a coin" button opens the launcher at [three.ws/launch](https://three.ws/launch).
 - **Live Dashboard** (live at [three.ws/pump-live](https://three.ws/pump-live)): real-time tracker for new tokens, source in [pages/pump-live.html](pages/pump-live.html).
 - **Skills** — the [pump-fun-skills/](pump-fun-skills/) directory contains agent skills for reading and acting on pump.fun.
 
@@ -11074,14 +11074,14 @@ npm run claude -- <command>
 
 ### Production Deployment (Google Cloud Run)
 
-Production runs on **Google Cloud Run** (`three-ws-api`, region `us-central1`): one Express container ([server/index.mjs](server/index.mjs)) serves the static frontend, the `vercel.json` route table, and every `api/**` handler, fronted by a global HTTPS load balancer + Cloud CDN. Deployment is two steps — build the frontend, then submit the container build:
+Production runs on **Google Cloud Run** (`three-ws-api`, region `us-central1`): one Express container ([server/index.mjs](server/index.mjs)) serves the static frontend, the `vercel.json` route table, and every `api/**` handler, fronted by a global HTTPS load balancer + Cloud CDN. Deployment is two steps, build then submit, from a clean deploy worktree (`npm run prep:worktree -- --apply`):
 
 ```bash
-npm run build       # frontend build to dist/ (only when frontend changed)
-npm run deploy:gcp  # check:dist + db:check, gcloud builds submit, purge CDN
+npm run build:gcp   # the full, order-dependent build chain (lib, avatar SDK, chat, frontend, checks)
+npm run deploy:gcp  # check:dist + check:pages, then the gated submit, cron sync, CDN purge, smoke test
 ```
 
-`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (110 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
+`npm run deploy:gcp` runs `deploy:gcp:submit` (the migration gate `db:check` and the upload and import checks, then `gcloud builds submit --config server/cloudbuild.yaml`), then `deploy:gcp:sync-crons`, which creates a Cloud Scheduler job for any newly declared cron, then a synchronous CDN purge and `smoke:prod`. `npm run deploy:gcp:full` is the build and the deploy in one command. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
 
 **Environment variables** live on the Cloud Run service, not in `.env` files — inspect or update them with `gcloud run services describe/update three-ws-api --region us-central1`. See [Environment Variables](#environment-variables) for the full list.
 

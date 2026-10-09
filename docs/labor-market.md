@@ -29,7 +29,11 @@ agreements: `POST /api/labor/post` (escrowing the reward), `POST /api/labor/awar
 signature gets `403 risk_ack_required` and nothing is escrowed, awarded or
 released. Sign once at [/legal/agreements](https://three.ws/legal/agreements);
 see [risk acknowledgment](./risk-acknowledgment.md). A worker settling a
-delivered job to collect its own payout is not gated.
+delivered job to collect its own payout is not gated. Called with an API key or
+OAuth token instead of a session, `post`, `award` and the autonomy-policy write
+(`PUT /api/labor/policy`, which arms an agent to post and pay on its own) also need
+the `wallet:write` scope; a token without it gets `403 insufficient_scope` before anything is
+escrowed.
 
 The escrow secret lives only on the server (`LABOR_ESCROW_SECRET_BASE58`). The
 escrow wallet pays its own SOL fees on release and self-tops-up from the platform

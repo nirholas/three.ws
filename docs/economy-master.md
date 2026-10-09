@@ -148,8 +148,8 @@ the return.
 
 ## Agent-wallet reclaim: the other half of the fleet's SOL
 
-Sweepback and `reclaimIdleSol` both walk the **`SOLANA_SIGNERS` registry** — the
-fifteen engine wallets. That is not where most of the platform's SOL lives.
+Sweepback and `reclaimIdleSol` both walk the **`SOLANA_SIGNERS` registry**, the
+sixteen engine wallets. That is not where most of the platform's SOL lives.
 `fundAgentForLaunch` ([`api/_lib/launcher-funding.js`](../api/_lib/launcher-funding.js))
 moves SOL master → **agent custody wallet** one way, and nothing ever moved it
 back: snipes recycle ~97 % of their capital, but the proceeds settle into the
@@ -240,7 +240,18 @@ its next trade, the deficit, and why any arm is not trading:
 ```bash
 node scripts/sniper-fleet-restore.mjs            # report only, nothing moves
 node scripts/sniper-fleet-restore.mjs --apply --yes   # top up the fundable arms
+node scripts/sniper-fleet-restore.mjs --from-platform-bots              # plan from idle bots
+node scripts/sniper-fleet-restore.mjs --from-platform-bots --apply --yes
 ```
+
+`--from-platform-bots` is for when the funding master itself is dry. It pays the
+deficits out of idle platform-owned agent wallets instead (the house account and
+`*@agents.three.ws` circulation bots that have no sniper strategy and no open
+position), and leaves each source at its idle reclaim floor. A customer's wallet
+is never a source, and only arms that opted into auto-funding and whose one
+blocking stall is `wallet_dry` are targets, so no SOL lands where it cannot trade
+or would be swept straight back. Like the default mode it is dry until
+`--apply --yes`.
 
 Sweeps below `ECONOMY_SWEEPBACK_MIN_SOL` (0.01 SOL) are skipped as dust.
 
@@ -274,6 +285,12 @@ A floor skip now carries both numbers, in the `<have><<need>` shape
   "keepSol": 0.11
 }
 ```
+
+A wallet that sits ABOVE its keep line but whose excess is smaller than the
+minimum sweep is not fenced at all; it holds dust the sweep declines to move. It
+reports `below_min_sweep:<excess><<min>` (with an `excessSol` field) rather than
+`at_or_below_floor`, and the lever for that SOL is `ECONOMY_SWEEPBACK_MIN_SOL`,
+not a floor.
 
 - `keepSol` is the number that actually blocked the sweep. Reporting and sizing
   both read `reclaimKeepLineSol()`, so the message can never explain a refusal the
@@ -646,9 +663,9 @@ a third-party-verifiable timestamp of the books.
 The 2026-07-02 wiring gaps this section used to track are closed. Current state
 of the tree the master feeds:
 
-- **The registry defines the master plus fifteen engine signers** (relayers,
-  launcher master, treasuries, marketplace payer, a2a payer, ring sponsor/payer,
-  circulation treasury, NFT collection authority). An engine whose secret env is
+- **The registry defines the master plus sixteen engine signers** (relayers,
+  launcher master, treasuries, marketplace payer, gasless launch sponsor, a2a
+  payer, ring sponsor/payer, circulation treasury, NFT collection authority). An engine whose secret env is
   unset simply never resolves and is skipped by the sweep; set each engine's
   secret to bring it online, and override floors per signer with
   `SIGNER_MIN_SOL_<NAME>` / `SIGNER_REFILL_TO_SOL_<NAME>`.

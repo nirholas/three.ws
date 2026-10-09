@@ -8,7 +8,10 @@ discovery endpoints (the MCP tool catalog and the agent skills manifest).
 The browser UI for all of this lives in the dashboard:
 
 - **`/dashboard/api`**: create, list, and revoke API keys, and run the MCP
-  "Test connection" button (source: `src/dashboard-next/pages/api.js`).
+  "Test connection" button (source: `src/dashboard-next/pages/api.js`). An MCP
+  client with OAuth (Claude, ChatGPT, Cursor, VS Code) needs no key at all:
+  [/connect](https://three.ws/connect) adds three.ws with a browser sign-in.
+  Keys are for scripts, servers, and clients without OAuth.
 - **`/dashboard/developers`**: the Developer Hub with webhooks and the usage
   overview (source: `src/dashboard-next/pages/developers.js`).
 
@@ -60,12 +63,20 @@ endpoints that accept `Authorization: Bearer` (see the
 [API reference](./api-reference.md)). Each key carries a set of scopes:
 
 `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`,
-`memory:write`, `agents:read`, `agents:write`
+`memory:write`, `agents:read`, `agents:write`, `herald:announce` (posting
+through the [Herald](./herald.md)), `wallet:read`, `wallet:write`,
+`services:write`, and `inference` (model calls on the OpenAI-compatible
+endpoint, billed to the account's credits, and nothing else).
 
-One more scope, `herald:announce` (posting through the
-[Herald](./herald.md)), is accepted by `/api/keys`, the dashboard form, and the
-older `POST /api/api-keys` route documented in
-[Authentication](./authentication.md#available-scopes).
+`wallet:write` is the scope every route that moves an agent's funds checks for
+a bearer caller, so a key without it can read balances but never spend. One
+list ([api/_lib/api-keys.js](../api/_lib/api-keys.js)) feeds every surface that
+mints a key: `/api/keys`, the dashboard form, the CLI device link, and the older
+`POST /api/api-keys` route documented in
+[Authentication](./authentication.md#available-scopes). When that older route is
+called with a bearer token rather than a session, it refuses
+(`403 insufficient_scope`) to mint any scope the calling token does not itself
+hold.
 
 Keys are stored as a SHA-256 hash. The plaintext secret is returned **exactly
 once**, in the create response. Only the 12-character prefix is kept for
