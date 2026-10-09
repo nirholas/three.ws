@@ -64,6 +64,21 @@ async function ensureTable() {
 	return _ensured;
 }
 
+// Postgres refuses two things JavaScript strings carry happily: an unpaired
+// UTF-16 surrogate (jsonb: "invalid input syntax for type json", Unicode low
+// surrogate must follow a high surrogate) and NUL (\u0000 cannot be converted
+// to text). Publisher pages and length-capped slices produce both, and either
+// one dropped the whole story: 120 failed writes a day in production on
+// 2026-10-09. Repair surrogates to U+FFFD and drop NULs at this boundary.
+export function pgSafeText(v) {
+	return typeof v === 'string' ? v.toWellFormed().replaceAll('\u0000', '') : v;
+}
+
+/** JSON for a ::jsonb parameter with every string made Postgres-safe. */
+export function pgSafeJson(value) {
+	return JSON.stringify(value, (_key, v) => pgSafeText(v));
+}
+
 const iso = (v) => {
 	const t = Date.parse(v || '');
 	return Number.isNaN(t) ? null : new Date(t).toISOString();
@@ -80,8 +95,9 @@ const iso = (v) => {
 export async function recordExtraction(record) {
 	if (!record?.id || !record?.url || !record?.title) return false;
 	if (!(await ensureTable())) return false;
-	const tickers = Array.isArray(record.tickers) ? record.tickers.slice(0, 12) : [];
-	const entities = Array.isArray(record.entities) ? record.entities.slice(0, 24) : [];
+	const tickers = Array.isArray(record.tickers) ? record.tickers.slice(0, 12).map(pgSafeText) : [];
+	const entities = Array.isArray(record.entities) ? record.entities.slice(0, 24).map(pgSafeText) : [];
+	const text = (v) => pgSafeText(v || null);
 	const doc = {
 		paragraphs: Array.isArray(record.paragraphs) ? record.paragraphs.slice(0, 60) : [],
 		key_points: Array.isArray(record.key_points) ? record.key_points.slice(0, 6) : [],
@@ -97,12 +113,12 @@ export async function recordExtraction(record) {
 				(id, url, title, source, author, image, published_at, extraction,
 				 sentiment, analysis, tickers, entities, summary, content_chars, doc, updated_at)
 			values
-				(${record.id}, ${record.url}, ${record.title.slice(0, 500)}, ${record.source || null},
-				 ${record.author || null}, ${record.image || null}, ${iso(record.published_at)},
+				(${record.id}, ${text(record.url)}, ${text(record.title.slice(0, 500))}, ${text(record.source)},
+				 ${text(record.author)}, ${text(record.image)}, ${iso(record.published_at)},
 				 ${record.extraction || 'preview'}, ${record.sentiment || null},
 				 ${record.analysis_provider || null}, ${tickers}::text[], ${entities}::text[],
-				 ${(record.summary || '').slice(0, 2000) || null}, ${record.content_chars || 0},
-				 ${JSON.stringify(doc)}::jsonb, now())
+				 ${text((record.summary || '').slice(0, 2000))}, ${record.content_chars || 0},
+				 ${pgSafeJson(doc)}::jsonb, now())
 			on conflict (id) do update set
 				url = excluded.url,
 				title = excluded.title,
