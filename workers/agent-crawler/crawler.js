@@ -8,15 +8,16 @@
 
 import { readPage, revealLink, visibleLinks, CONSENT_CSS } from './extract.js';
 import {
-	Frontier, canonical, gistOf, hostOf, relevance, scoreLink, thoughtFor, topicTerms,
+	Frontier, canonical, gistOf, hostOf, looksLikeWall, relevance, scoreLink, thoughtFor, topicTerms,
 } from './frontier.js';
 import { USER_AGENT, guardHost } from './guard.js';
-import { claimDomain, domainReadyIn, robotsCheck } from './robots.js';
+import { claimDomain, domainReadyIn, robotsAllowsCached, robotsCheck } from './robots.js';
 import { searchSeeds } from './seeds.js';
 
 export const VIEWPORT = { width: 1200, height: 750 };
 const STEP_LINKS = 48;
 const MIN_TEXT_FOR_CORPUS = 200;
+const MAX_SEARCHES_WITHOUT_READ = 3;
 const FRAME_B64_MAX = 690_000;
 const RECYCLE_PAGE_EVERY = 40;
 
@@ -47,6 +48,8 @@ export class Crawler {
 		this.currentUrl = null;
 		this.status = 'starting';
 		this.lastReseedAt = 0;
+		this.searchRound = 0;
+		this.searchesSinceRead = 0;
 		this.done = null;
 	}
 
@@ -148,8 +151,31 @@ export class Crawler {
 				await this.reseedOrRest();
 				continue;
 			}
-			following = await this.visit(next);
+			try {
+				following = await this.visit(next);
+			} catch (err) {
+				if (err instanceof NotEnrolledError || this.stopped) throw err;
+				following = null;
+				await this.pageFault(next.url, err);
+			}
 		}
+	}
+
+	// One page misbehaving (a crash, a self-destructing script, a hung
+	// screenshot) costs that page, never the agent's shift: say so on screen,
+	// get a fresh tab if the old one is gone, and carry on with the frontier.
+	async pageFault(url, err) {
+		const msg = String(err?.message || err);
+		this.log(`${url} fell over (${msg.split('\n')[0]}); moving on`);
+		await this.reviveTab(msg);
+		await this.blocked(hostOf(url) || 'that site', 'fell over while it was being read');
+	}
+
+	// A crashed or closed tab fails every later navigation instantly, so an
+	// agent that keeps it would burn through its whole queue in seconds,
+	// filing each lead as blocked. Replace it whenever an error says so.
+	async reviveTab(msg) {
+		if (!this.page || this.page.isClosed() || /Target closed|crashed|has been closed/i.test(msg)) await this.newPage();
 	}
 
 	// Pages this agent already read survive restarts: the corpus is the memory.
@@ -181,19 +207,27 @@ export class Crawler {
 
 	async searchForLeads() {
 		this.lastReseedAt = Date.now();
-		const { urls, source } = await searchSeeds(this.topic, this.log);
+		this.searchesSinceRead += 1;
+		const { urls, source } = await searchSeeds(this.topic, {
+			log: this.log,
+			round: this.searchRound++,
+			fresh: (u) => !this.visited.has(canonical(u)),
+		});
 		urls.forEach((u, i) => this.frontier.add(u, 20 - i * 0.5, null, ''));
 		if (urls.length) this.log(`${urls.length} leads from ${source}`);
 		return urls.length;
 	}
 
 	// Called when pickNext() found nothing. Every path either adds an unvisited
-	// lead or really waits, so run() can never spin without yielding.
+	// lead or really waits, so run() can never spin without yielding. Searching
+	// again straight away is fine while searches keep turning into read pages;
+	// MAX_SEARCHES_WITHOUT_READ dry rounds in a row fall back to the slow cadence.
 	async reseedOrRest() {
 		for (const item of [...this.frontier.items.values()]) {
 			if (this.visited.has(item.url)) this.frontier.drop(item.url);
 		}
-		if (Date.now() - this.lastReseedAt > 120_000) {
+		const searchNow = this.searchesSinceRead < MAX_SEARCHES_WITHOUT_READ || Date.now() - this.lastReseedAt > 120_000;
+		if (searchNow) {
 			this.lastReseedAt = Date.now();
 			for (const url of this.seeds) if (!this.visited.has(canonical(url))) this.frontier.add(url, 50, null, 'start page');
 			if (this.frontier.size || (await this.searchForLeads())) return;
@@ -225,6 +259,20 @@ export class Crawler {
 		return item;
 	}
 
+	// A site refused one page: drop every queued link on that host its
+	// robots.txt also refuses, so the agent does not burn through them one
+	// refusal at a time (an unreachable site refuses all of them).
+	purgeRefused(host) {
+		let dropped = 0;
+		for (const item of [...this.frontier.items.values()]) {
+			if (hostOf(item.url) === host && robotsAllowsCached(item.url) === false) {
+				this.frontier.drop(item.url);
+				dropped += 1;
+			}
+		}
+		if (dropped) this.log(`${host} refuses crawlers on ${dropped} more queued links; dropped them`);
+	}
+
 	// Two links from one page that both bounced back to it mean the rest of
 	// its links will too (a hash-routed docs shell, a forced locale redirect):
 	// drop them all so the agent stops walking in circles on one screen.
@@ -242,6 +290,24 @@ export class Crawler {
 	async pushStep(step, extra = {}) {
 		this.seq += 1;
 		return this.api.push({ agentId: this.agentId, step: { ...step, seq: this.seq }, ...extra });
+	}
+
+	// Some pages replace themselves right after load (a client-side redirect, a
+	// consent wall reloading the document), which destroys the context mid-read.
+	// Wait for the replacement to land and read that instead, once.
+	async readSettled() {
+		try {
+			return await this.page.evaluate(readPage, 600);
+		} catch (err) {
+			if (!/Execution context was destroyed|navigat/i.test(String(err?.message || err))) throw err;
+			await this.page.waitForLoadState('load', { timeout: 6000 }).catch(() => {});
+			const settled = canonical(this.page.url());
+			if (settled) {
+				this.visited.add(settled);
+				this.currentUrl = settled;
+			}
+			return this.page.evaluate(readPage, 600);
+		}
 	}
 
 	async screenshot() {
@@ -274,6 +340,7 @@ export class Crawler {
 
 		const robots = await robotsCheck(url).catch(() => ({ allowed: false, delayMs: 0 }));
 		if (!robots.allowed) {
+			this.purgeRefused(host);
 			await this.blocked(host, 'asks crawlers to stay out of that page');
 			return null;
 		}
@@ -289,8 +356,10 @@ export class Crawler {
 			resp = await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: this.opts.navTimeoutMs });
 		} catch (err) {
 			const msg = String(err?.message || err);
-			await this.blocked(host, /ERR_BLOCKED_BY_CLIENT/.test(msg) ? 'is not a public address' : 'did not answer in time');
-			if (/Target closed|crashed/i.test(msg)) await this.newPage();
+			const refused = /ERR_BLOCKED_BY_CLIENT/.test(msg);
+			if (!refused) this.log(`${url} did not load (${msg.split('\n')[0]})`);
+			await this.reviveTab(msg);
+			await this.blocked(host, refused ? 'is not a public address' : 'did not answer in time');
 			return null;
 		}
 		if (!resp || resp.status() >= 400) {
@@ -305,7 +374,7 @@ export class Crawler {
 		// Let the page paint its above-the-fold content before the frame is taken.
 		await this.page.waitForLoadState('load', { timeout: 6000 }).catch(() => {});
 
-		const finalUrl = canonical(this.page.url()) || url;
+		let finalUrl = canonical(this.page.url()) || url;
 		// Redirected onto a page this agent already read (a docs shell that
 		// bounces every deep link back to itself, a paywall home page): nothing
 		// new to read here, so let the frontier choose without dwelling.
@@ -314,11 +383,19 @@ export class Crawler {
 			return null;
 		}
 		this.visited.add(finalUrl);
-		const finalHost = hostOf(finalUrl);
+		let finalHost = hostOf(finalUrl);
 		this.domainCounts.set(finalHost, (this.domainCounts.get(finalHost) || 0) + 1);
 		this.currentUrl = finalUrl;
 
-		const data = await this.page.evaluate(readPage, 600);
+		const data = await this.readSettled();
+		if (this.currentUrl !== finalUrl) {
+			finalUrl = this.currentUrl;
+			finalHost = hostOf(finalUrl);
+		}
+		if (looksLikeWall(data.title, data.text)) {
+			await this.blocked(finalHost, 'put up a wall instead of the page');
+			return null;
+		}
 		const rel = relevance(this.terms, data.title, data.text);
 		const gist = gistOf(data.text, this.terms);
 
@@ -346,7 +423,10 @@ export class Crawler {
 			url: finalUrl, title: data.title, status: 'reading', links: shown, target: null, scrollY: data.scrollY,
 			thought: thoughtFor('reading', { title: data.title || finalHost, domain: finalHost, topic: this.topic, relevance: rel }),
 		}, { frame, page });
-		if (res?.recorded) this.pagesRead = res.pagesRead || this.pagesRead + 1;
+		if (res?.recorded) {
+			this.pagesRead = res.pagesRead || this.pagesRead + 1;
+			this.searchesSinceRead = 0;
+		}
 
 		// Read: dwell on the page roughly in proportion to how much there is.
 		await this.idle(this.opts.readMs + Math.min(3000, data.text.length / 20));
@@ -401,7 +481,7 @@ export class Crawler {
 		await this.pushStep({
 			url: pageUrl, title: '', status: 'leaping', scrollY: measured.scrollY,
 			links: list.map(({ x, y, w, h, t }) => ({ x, y, w, h, t })), target: idx, nextUrl: link.href,
-			thought: thoughtFor('walking', { text: link.text, host, offsite: host !== pageHost }),
+			thought: thoughtFor('opening', { text: link.text, host, offsite: host !== pageHost }),
 		});
 		await this.idle(this.opts.leapMs);
 		this.frontier.drop(link.href);

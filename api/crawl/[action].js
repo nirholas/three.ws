@@ -220,6 +220,10 @@ async function handlePush(req, res) {
 		r.zremrangebyscore(ACTIVE_KEY, 0, now - CRAWL_ACTIVE_WINDOW_MS * 2),
 	];
 	if (frame) writes.push(r.set(FRAME_KEY(agentId), frame, { ex: CRAWL_LIVE_TTL }));
+	// The live record keeps pointing at the last frame, so that frame must live
+	// exactly as long as the record does, or a crawler that rests on one page
+	// for longer than the TTL serves a frameTs whose image is gone.
+	else if (live.frameTs) writes.push(r.expire(FRAME_KEY(agentId), CRAWL_LIVE_TTL));
 	if (recorded?.inserted) {
 		const entry = { agentId, name: mission.name, url: page.url, title: page.title, domain: page.domain, tokens: page.tokens, gist: page.gist, ts: now };
 		writes.push(r.lpush(FEED_KEY, JSON.stringify(entry)).then(() => r.ltrim(FEED_KEY, 0, FEED_CAP - 1)));

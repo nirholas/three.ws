@@ -187,6 +187,19 @@ export class Frontier {
 
 // Extractive gist: the first few real sentences, preferring ones that mention
 // the topic. No model call, so it is free, deterministic, and never invents.
+// Pages that answered 200 but are a wall, not content: a CDN refusal, a bot
+// challenge, a soft 404. Judged on the title plus the opening text, and only
+// when the page is short, so an article that merely mentions "access denied"
+// is still read.
+const WALL = /\b(access denied|forbidden|attention required|just a moment|are you a (robot|human)|verify(ing)? you are (a )?human|checking your browser|request blocked|page not found|404 not found|not acceptable|too many requests|enable (javascript|cookies) to continue)\b/i;
+const WALL_MAX_TEXT = 1500;
+
+export function looksLikeWall(title, text) {
+	const body = String(text || '');
+	if (body.length > WALL_MAX_TEXT) return false;
+	return WALL.test(`${title || ''} ${body.slice(0, 300)}`);
+}
+
 export function gistOf(text, terms, max = 480) {
 	// Lines are block boundaries (readPage puts one per paragraph), so a menu
 	// crumb on its own line never glues onto the first real sentence.
@@ -229,6 +242,8 @@ export function thoughtFor(kind, d = {}) {
 			return d.text
 				? `Walking to "${quote(d.text, 60)}"${d.offsite ? `, off to ${d.host}` : ''}.`
 				: `Walking to a link${d.offsite ? ` on ${d.host}` : ''}.`;
+		case 'opening':
+			return d.text ? `Opening "${quote(d.text, 60)}".` : `Opening the link${d.offsite ? ` on ${d.host}` : ''}.`;
 		case 'leaping':
 			return d.text ? `Leaping to "${quote(d.text, 60)}" from my list.` : `Leaping to ${d.host} from my list.`;
 		case 'blocked':

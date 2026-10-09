@@ -2,7 +2,7 @@
 // the rules that decide where an agent walks are pinned here.
 import { describe, expect, it } from 'vitest';
 import {
-	Frontier, MAX_PAGES_PER_DOMAIN, canonical, gistOf, isCrawlable, relevance, scoreLink, stem, thoughtFor, tokenize, topicTerms,
+	Frontier, MAX_PAGES_PER_DOMAIN, canonical, gistOf, isCrawlable, looksLikeWall, relevance, scoreLink, stem, thoughtFor, tokenize, topicTerms,
 } from '../workers/agent-crawler/frontier.js';
 
 const ctx = (over = {}) => ({ terms: topicTerms('solana validator economics'), fromHost: 'example.com', domainCounts: new Map(), visited: new Set(), ...over });
@@ -104,6 +104,21 @@ describe('thoughtFor', () => {
 	it('narrates what the agent is really doing', () => {
 		expect(thoughtFor('reading', { title: 'Rewards', domain: 'e.com', topic: 'validators', relevance: 0.5 })).toMatch(/squarely about validators/);
 		expect(thoughtFor('walking', { text: 'Next page', host: 'b.org', offsite: true })).toBe('Walking to "Next page", off to b.org.');
+		expect(thoughtFor('opening', { text: 'Next page' })).toBe('Opening "Next page".');
 		expect(thoughtFor('blocked', { host: 'e.com', reason: 'answered 403' })).toBe('e.com answered 403. Finding another way.');
+	});
+});
+
+describe('looksLikeWall', () => {
+	it('catches refusals, bot challenges and soft 404s that answered 200', () => {
+		expect(looksLikeWall('Access Denied', 'You don\'t have permission to access this server.')).toBe(true);
+		expect(looksLikeWall('Just a moment...', 'Checking your browser before accessing the site.')).toBe(true);
+		expect(looksLikeWall('Example', 'Page not found. The page you asked for moved.')).toBe(true);
+	});
+
+	it('still reads a real article that mentions a wall', () => {
+		const article = 'Access denied errors on validators usually mean a misconfigured RPC allowlist. '.repeat(30);
+		expect(looksLikeWall('Debugging RPC access', article)).toBe(false);
+		expect(looksLikeWall('Validator rewards explained', 'Rewards come from inflation and fees.')).toBe(false);
 	});
 });
