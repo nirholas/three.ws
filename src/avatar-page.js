@@ -1111,7 +1111,7 @@ function openDownloadMenu(ev) {
 		</button>
 		<button type="button" role="menuitem" data-format="vrm">
 			<strong>VRM</strong>
-			<span>VRChat, Resonite, Hubs, VTube Studio</span>
+			<span>Warudo, VNyan, Resonite, VRChat via Unity</span>
 		</button>
 		<button type="button" role="menuitem" data-format="usdz">
 			<strong>USDZ</strong>

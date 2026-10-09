@@ -708,7 +708,7 @@ const DOWNLOAD_FORMATS = [
 	{
 		id: 'vrm',
 		label: 'VRM',
-		blurb: 'Humanoid avatar standard. Plug into VRChat, Resonite, Mozilla Hubs, Warudo, VTube Studio, TalkingHead.',
+		blurb: 'Humanoid avatar standard (VRM 1.0). Opens in Warudo, VNyan, Resonite and any three-vrm app, and imports into VRChat through Unity.',
 		ext: '.vrm',
 		size: 'similar to GLB',
 	},
