@@ -3,7 +3,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { presignUpload, headObject, r2, publicUrl, putObject } from '../_lib/r2.js';
-import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor, assertAvatarSlotAvailable, isPlanLimitError, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
+import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor, assertAvatarSlotAvailable, isPlanLimitError, PLAN_LIMIT_JOB_ERROR, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
 import { listAvatars } from '../_lib/avatars.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
@@ -514,12 +514,11 @@ const handleRegenerate = wrap(async (req, res) => {
 
 // ── regenerate-status ─────────────────────────────────────────────────────────
 
-// Copy shown to a user whose library is full when a job reaches materialization.
-// handleReconstruct pre-flights the same quota, so this only fires on the race
-// (another avatar landed while the mesh was generating), but a job that loses
-// that race must still end somewhere the user can act on.
-const PLAN_LIMIT_JOB_ERROR =
-	'Your avatar library is full on this plan. Delete an avatar or upgrade, then build this one again.';
+// PLAN_LIMIT_JOB_ERROR is the copy shown to a user whose library is full when a
+// job reaches materialization. handleReconstruct pre-flights the same quota, so
+// this only fires on the race (another avatar landed while the mesh was
+// generating), but a job that loses that race must still end somewhere the user
+// can act on.
 
 /**
  * A materialize stage threw. If the cause was a plan-limit refusal, terminate

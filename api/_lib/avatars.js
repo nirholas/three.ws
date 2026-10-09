@@ -608,6 +608,14 @@ export async function enforceQuotas(userId, incomingBytes) {
  * @param {unknown} err
  * @returns {boolean}
  */
+/**
+ * Copy for a job that reaches materialization with the owner's library full.
+ * Every lane that terminates a job on a plan limit (the status poll and the
+ * reconstruct sweep) shows the same words, relayed verbatim as error_kind 'input'.
+ */
+export const PLAN_LIMIT_JOB_ERROR =
+	'Your avatar library is full on this plan. Delete an avatar or upgrade, then build this one again.';
+
 export function isPlanLimitError(err) {
 	const code = /** @type {any} */ (err)?.code;
 	return typeof code === 'string' && code.startsWith('plan_limit');

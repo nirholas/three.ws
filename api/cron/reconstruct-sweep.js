@@ -31,6 +31,7 @@ import { getRegenProviderForMode } from '../_lib/regen-provider.js';
 import { finalizeReconstructStage, pollRiggingStage } from '../_lib/reconstruct-finalize.js';
 import { isAllowedProviderResultUrl } from '../_lib/provider-result-url.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { isPlanLimitError, PLAN_LIMIT_JOB_ERROR } from '../_lib/avatars.js';
 
 // The browser polls every few seconds while the tab is open, so a row that has
 // been untouched for 3 minutes is either abandoned or wedged — never a job
@@ -218,6 +219,15 @@ export default wrapCron(async (req, res) => {
 				summary.pending++;
 			}
 		} catch (err) {
+			// A full library is the owner's to fix, not a fault to retry: left open,
+			// the job re-ran the same refused materialization on every 5-minute tick
+			// (one job logged 'avatar count limit reached' all day on 2026-10-09).
+			// Close it with the copy the status poll relays, as that path does.
+			if (isPlanLimitError(err)) {
+				await failJob(job.job_id, job.user_id, PLAN_LIMIT_JOB_ERROR, 'input');
+				summary.failed++;
+				continue;
+			}
 			console.warn('[reconstruct-sweep] job error', { jobId: job.job_id, error: err?.message });
 			summary.errored++;
 		}
