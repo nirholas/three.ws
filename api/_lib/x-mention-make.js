@@ -34,7 +34,7 @@ import { weightedLength, X_POST_MAX_WEIGHT } from './x-text-weight.js';
 import { updateDecision } from './x-mention-store.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { startForge, pollJob, pollOnce, directPrompt } from '../_mcp-studio/gpt-forge-client.js';
-import { posterPngUrl } from '../_mcp-studio/asset-links.js';
+import { posterPngUrl, RENDER_MAX_GLB_BYTES } from '../_mcp-studio/asset-links.js';
 import { meshDirectorFor, meshSubjectClass } from './forge-director-prompts.js';
 
 export const BOT_EMAIL = 'x-mentions@forge.three.ws';
@@ -154,12 +154,19 @@ async function markPending(tweetId, { jobId, creationId, prompt, startedAt }) {
 	return rows.length > 0;
 }
 
-function successReply({ base, prompt, glbUrl, creationId }) {
+// A model over the renderer's size cap cannot be rendered to a PNG (it answers
+// 413), so the reply carries the generation's own reference image instead.
+function posterFor({ base, glbUrl, sizeBytes, previewImageUrl }) {
+	if (Number(sizeBytes) > RENDER_MAX_GLB_BYTES && previewImageUrl) return previewImageUrl;
+	return posterPngUrl(base, glbUrl);
+}
+
+function successReply({ base, prompt, glbUrl, creationId, sizeBytes = null, previewImageUrl = null }) {
 	const link = creationId ? creationLink(base, creationId) : `${base}/viewer?src=${encodeURIComponent(glbUrl)}`;
 	return {
 		kind: 'success',
 		text: composeMakeReply('success', { prompt, link }),
-		mediaUrl: posterPngUrl(base, glbUrl),
+		mediaUrl: posterFor({ base, glbUrl, sizeBytes, previewImageUrl }),
 		link,
 	};
 }
@@ -252,7 +259,7 @@ export async function handleMake(event, deps = {}) {
 		}
 	}
 
-	const reply = successReply({ base, prompt, glbUrl: result.glb_url, creationId: result.creation_id || creationId });
+	const reply = successReply({ base, prompt, glbUrl: result.glb_url, creationId: result.creation_id || creationId, sizeBytes: result.size_bytes, previewImageUrl: result.preview_image_url });
 	const sent = await finalize({ tweetId, reply, dryRun, deliver: deps.deliver, reason: 'make_done', creationId: result.creation_id || creationId });
 	return done('reply', { decision: sent.decision, text: reply.text, mediaUrl: reply.mediaUrl, link: reply.link, creationId: result.creation_id || creationId, reason: 'make_done' });
 }
@@ -299,7 +306,7 @@ export async function finishPendingMakes({ limit = 10 } = {}, deps = {}) {
 		let reply;
 		let reason;
 		if (status?.status === 'done' && status.glb_url) {
-			reply = successReply({ base, prompt, glbUrl: status.glb_url, creationId: status.creation_id || row.creation_id });
+			reply = successReply({ base, prompt, glbUrl: status.glb_url, creationId: status.creation_id || row.creation_id, sizeBytes: status.size_bytes, previewImageUrl: status.preview_image_url });
 			reason = 'make_done_late';
 		} else if (status?.status === 'failed' || probeError?.code === 'unknown_job' || overdue) {
 			reply = failureReply({ base, prompt });

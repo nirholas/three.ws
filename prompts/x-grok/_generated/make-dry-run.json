@@ -1,15 +1,37 @@
 {
-  "generatedAt": "2026-10-09T16:34:54.184Z",
+  "generatedAt": "2026-10-09T16:46:25.190Z",
   "base": "https://three.ws",
   "dryRun": true,
+  "note": "rows with followUpTick=true outlived the 150s wait budget, were recorded pending, and were answered by finishPendingMakes",
   "rows": [
     {
       "post": "@trythreews make a 3D dragon",
-      "intent": "make",
       "prompt": "a 3D dragon",
-      "outcome": "reply",
+      "tweetId": "7514354648744984576",
+      "decision": "reply",
+      "reason": "make_done_late",
+      "followUpTick": true,
+      "wouldReply": "Here is your 3D model \"a 3D dragon\". Spin it around: https://three.ws/m/9bd011bd-6830-43f4-b577-660166cf091f",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F9bd011bd-6830-43f4-b577-660166cf091f.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/9bd011bd-6830-43f4-b577-660166cf091f",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
+      "creationId": "9bd011bd-6830-43f4-b577-660166cf091f",
+      "dryRun": true
+    },
+    {
+      "post": "@trythreews make a 3D dragon",
+      "prompt": "a 3D dragon",
+      "tweetId": "7514355407251308544",
       "decision": "reply",
       "reason": "make_done",
+      "followUpTick": false,
       "wouldReply": "Here is your 3D model \"a 3D dragon\". Spin it around: https://three.ws/m/2a06700f-a594-42e8-b8a7-7c0ccecf5fea",
       "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F2a06700f-a594-42e8-b8a7-7c0ccecf5fea.glb&width=1024&height=1024",
       "mediaCheck": {
@@ -22,30 +44,36 @@
         "contentType": "text/html; charset=utf-8"
       },
       "creationId": "2a06700f-a594-42e8-b8a7-7c0ccecf5fea",
-      "seconds": 273
+      "dryRun": true
     },
     {
       "post": "@trythreews can you make me a low poly fox sitting on a mossy rock",
-      "intent": "make",
       "prompt": "a low poly fox sitting on a mossy rock",
-      "outcome": "pending",
-      "decision": "pending",
-      "reason": "make_pending",
-      "wouldReply": null,
-      "mediaUrl": null,
-      "mediaCheck": null,
-      "link": null,
-      "linkCheck": null,
+      "tweetId": "7514355407251308545",
+      "decision": "reply",
+      "reason": "make_done_late",
+      "followUpTick": true,
+      "wouldReply": "Here is your 3D model \"a low poly fox sitting on a mossy rock\". Spin it around: https://three.ws/m/d3c6e132-80b6-4b59-a065-76699144d7e8",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd3c6e132-80b6-4b59-a065-76699144d7e8.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/d3c6e132-80b6-4b59-a065-76699144d7e8",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
       "creationId": "d3c6e132-80b6-4b59-a065-76699144d7e8",
-      "seconds": 439
+      "dryRun": true
     },
     {
       "post": "@trythreews 3d a vintage brass telescope on a tripod",
-      "intent": "make",
       "prompt": "a vintage brass telescope on a tripod",
-      "outcome": "reply",
+      "tweetId": "7514355407251308546",
       "decision": "reply",
       "reason": "make_done",
+      "followUpTick": false,
       "wouldReply": "Here is your 3D model \"a vintage brass telescope on a tripod\". Spin it around: https://three.ws/m/c38c01eb-4097-48e5-8e89-afbc9352d101",
       "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fc38c01eb-4097-48e5-8e89-afbc9352d101.glb&width=1024&height=1024",
       "mediaCheck": {
@@ -58,15 +86,15 @@
         "contentType": "text/html; charset=utf-8"
       },
       "creationId": "c38c01eb-4097-48e5-8e89-afbc9352d101",
-      "seconds": 267
+      "dryRun": true
     },
     {
       "post": "@trythreews generate a cozy wooden cabin with a snowy roof",
-      "intent": "make",
       "prompt": "a cozy wooden cabin with a snowy roof",
-      "outcome": "reply",
+      "tweetId": "7514355407251308547",
       "decision": "reply",
       "reason": "make_done",
+      "followUpTick": false,
       "wouldReply": "Here is your 3D model \"a cozy wooden cabin with a snowy roof\". Spin it around: https://three.ws/m/eb6594ad-5305-4e4e-9115-f5eac87acfcd",
       "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Feb6594ad-5305-4e4e-9115-f5eac87acfcd.glb&width=1024&height=1024",
       "mediaCheck": {
@@ -79,22 +107,28 @@
         "contentType": "text/html; charset=utf-8"
       },
       "creationId": "eb6594ad-5305-4e4e-9115-f5eac87acfcd",
-      "seconds": 336
+      "dryRun": true
     },
     {
       "post": "@trythreews forge a cute robot barista holding a coffee cup",
-      "intent": "make",
       "prompt": "a cute robot barista holding a coffee cup",
-      "outcome": "pending",
-      "decision": "pending",
-      "reason": "make_pending",
-      "wouldReply": null,
-      "mediaUrl": null,
-      "mediaCheck": null,
-      "link": null,
-      "linkCheck": null,
+      "tweetId": "7514355407251308548",
+      "decision": "reply",
+      "reason": "make_done_late",
+      "followUpTick": true,
+      "wouldReply": "Here is your 3D model \"a cute robot barista holding a coffee...\". Spin it around: https://three.ws/m/711eba92-0145-465f-a48c-814459966de5",
+      "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F711eba92-0145-465f-a48c-814459966de5.glb&width=1024&height=1024",
+      "mediaCheck": {
+        "status": 200,
+        "contentType": "image/png"
+      },
+      "link": "https://three.ws/m/711eba92-0145-465f-a48c-814459966de5",
+      "linkCheck": {
+        "status": 200,
+        "contentType": "text/html; charset=utf-8"
+      },
       "creationId": "711eba92-0145-465f-a48c-814459966de5",
-      "seconds": 439
+      "dryRun": true
     }
   ]
 }
