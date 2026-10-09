@@ -126,3 +126,20 @@ describe('composePublicReply', () => {
 		expect(r).toMatchObject({ source: 'fallback', reason: 'empty' });
 	});
 });
+
+describe('dashes', () => {
+	const EM = String.fromCharCode(0x2014);
+	const EN = String.fromCharCode(0x2013);
+
+	it('rejects an em dash or an en dash in a final reply', () => {
+		expect(checkReply(`Try three.ws ${EM} it makes 3D models.`)).toMatchObject({ ok: false, reason: 'dash' });
+		expect(checkReply(`Models take 1${EN}2 minutes.`)).toMatchObject({ ok: false, reason: 'dash' });
+		expect(checkReply('Try three.ws, it makes 3D models.')).toEqual({ ok: true });
+	});
+
+	it('cleanModelText turns dashes into commas and number ranges into hyphens', () => {
+		expect(cleanModelText(`I make 3D models ${EM} try https://three.ws`)).toBe('I make 3D models, try https://three.ws');
+		expect(cleanModelText(`Takes 1${EN}2 minutes`)).toBe('Takes 1-2 minutes');
+		expect(checkReply(cleanModelText(`A ${EM} B ${EN} C`))).toEqual({ ok: true });
+	});
+});

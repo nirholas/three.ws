@@ -191,3 +191,24 @@ export async function recentDecisions(account, { limit = 50, decision = null, dr
 		limit ${n}
 	`;
 }
+
+/**
+ * How many replies we recorded in one conversation on one of our accounts,
+ * optionally only inside a trailing window. Dry-run replies count: they are
+ * recorded with decision `reply` exactly like live ones.
+ *
+ * @param {string} conversationId
+ * @param {{ windowSeconds?: number|null, account: { kind: string, ref: string } }} opts
+ */
+export async function countRepliesInConversation(conversationId, { windowSeconds = null, account }) {
+	const acct = accountOf(account);
+	const secs = windowSeconds ? Math.max(1, Math.round(Number(windowSeconds))) : null;
+	const [row] = await sql`
+		select count(*)::int as n from x_mention_events
+		where conversation_id = ${String(conversationId)}
+		  and decision = 'reply'
+		  and account_kind = ${acct.kind} and account_ref = ${acct.ref}
+		  and (${secs}::int is null or created_at > now() - make_interval(secs => ${secs}))
+	`;
+	return row?.n ?? 0;
+}

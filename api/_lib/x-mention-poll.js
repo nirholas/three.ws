@@ -23,10 +23,12 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from './db.js';
 import * as mentionStore from './x-mention-store.js';
-import { fetchMentions, companyMentionsConfigured, XMentionsError, XTierUnavailable, XRateLimited, XAuthFailed } from './x-mentions.js';
+import { fetchMentions, resolveAccount, companyMentionsConfigured, XMentionsError, XTierUnavailable, XRateLimited, XAuthFailed } from './x-mentions.js';
 import { parseMentionIntent } from './x-mention-intents.js';
 import { composePublicReply, FIXED_HELP_REPLY } from './x-mention-reply.js';
 import { createXAdapter } from './gateway/adapters/x.js';
+import { guardMention, isPaused } from './x-mention-guard.js';
+import { ensureKnownBots } from './x-mention-known-bots.js';
 
 export const LOCK_KEY = 'x_mentions_lock';
 const DEFAULT_LOCK_SECONDS = 110;
@@ -100,11 +102,16 @@ async function composeAnswer({ mention, parsed, account, compose }) {
  * Only ever throws for a store failure on the mention row itself, which the
  * caller treats as "not fully recorded" and stops the batch there.
  */
-export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter }) {
+export async function handleMention({ mention, account, limits, env, store = mentionStore, compose = composePublicReply, adapterFactory = createXAdapter, guard = guardMention, paused = isPaused }) {
 	const parsed = parseMentionIntent(mention, account);
 	const dryRun = true;
 	const { inserted } = await store.recordMention({ mention, parsed, dryRun });
 	if (!inserted) return { tweetId: mention.id, decision: 'duplicate', reason: null };
+
+	if (await paused(env)) {
+		await store.updateDecision(mention.id, { decision: 'paused', reason: 'kill_switch' });
+		return { tweetId: mention.id, intent: parsed.intent, decision: 'paused', reason: 'kill_switch' };
+	}
 
 	if (parsed.intent === 'ignore') {
 		await store.updateDecision(mention.id, { decision: 'skip', reason: parsed.reason });
@@ -112,6 +119,11 @@ export async function handleMention({ mention, account, limits, env, store = men
 	}
 
 	try {
+		const verdict = await guard({ mention, account: mention.account, env, store });
+		if (!verdict.allow) {
+			await store.updateDecision(mention.id, { decision: verdict.decision, reason: verdict.reason });
+			return { tweetId: mention.id, intent: parsed.intent, decision: verdict.decision, reason: verdict.reason };
+		}
 		const limited = await overReplyLimit(mention.userId || mention.author?.id, mention.account, limits, store);
 		if (limited) {
 			await store.updateDecision(mention.id, { decision: 'rate_limited', reason: limited });
@@ -163,12 +175,16 @@ export async function pollAccount({ descriptor, env = process.env, maxMentions =
 	}
 
 	const batch = page.mentions.slice(0, maxMentions);
+	if (batch.length) {
+		const resolve = () => (deps.request ? Promise.resolve(deps.request) : resolveAccount(descriptor.fetch, env).then((r) => r.request));
+		await (deps.ensureKnownBots || ensureKnownBots)({ env, request: async (...a) => (await resolve())(...a) }).catch(() => {});
+	}
 	const decisions = [];
 	let lastRecorded = null;
 	let stoppedAt = null;
 	for (const mention of batch) {
 		try {
-			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory }));
+			decisions.push(await handleMention({ mention, account: page.account, limits, env, store, compose: deps.compose, adapterFactory: deps.adapterFactory, guard: deps.guard, paused: deps.paused }));
 			lastRecorded = mention.id;
 		} catch (err) {
 			stoppedAt = mention.id;

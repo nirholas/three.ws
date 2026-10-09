@@ -56,7 +56,7 @@ export const EXPANSIONS = [
 	'referenced_tweets.id.author_id',
 	'referenced_tweets.id.attachments.media_keys',
 ];
-export const USER_FIELDS = ['username', 'name', 'profile_image_url', 'verified'];
+export const USER_FIELDS = ['username', 'name', 'profile_image_url', 'verified', 'created_at'];
 export const MEDIA_FIELDS = ['url', 'type', 'width', 'height', 'preview_image_url', 'alt_text'];
 
 export class XMentionsError extends Error {
@@ -217,6 +217,7 @@ function authorOf(id, usersById) {
 		name: u?.name ? decodeXText(u.name) : null,
 		profileImageUrl: u?.profile_image_url || null,
 		verified: u?.verified === true,
+		createdAt: u?.created_at && Number.isFinite(Date.parse(u.created_at)) ? String(u.created_at) : null,
 	};
 }
 
@@ -396,7 +397,7 @@ export function bearerTransport(accessToken, fetchImpl = fetchUpstream) {
  * A caller may pass `request` to supply its own transport (the probe script
  * and tests replay captured responses through it).
  */
-async function resolveAccount(account, env) {
+export async function resolveAccount(account, env) {
 	if (account?.kind === 'agent') {
 		if (!account.agentId || !account.userId) throw new XMentionsError('agent mentions need agentId and userId', { code: 'bad_account' });
 		const { resolveXConnection, refreshIfNeeded } = await import('./x-post.js');
@@ -476,4 +477,22 @@ export async function fetchMentions({ account, sinceId = null, maxResults = PAGE
 
 	const mentions = [...byId.values()].sort((a, b) => compareIds(a.id, b.id));
 	return { account: acct, mentions, newestId: newestId || (sinceId ? String(sinceId) : null), pages, truncated, rateLimit, partialErrors };
+}
+
+/**
+ * Look accounts up by username (GET /2/users/by). Returns the ones X knows;
+ * a name X does not return is simply absent. Throws the classified X error on
+ * a refusal so the caller can keep its cache and record the outcome.
+ *
+ * @param {{ usernames: string[], request: (path: string, query: Record<string,string>) => Promise<{ status: number, headers: object, body: any }> }} o
+ * @returns {Promise<{ id: string, username: string, createdAt: string|null }[]>}
+ */
+export async function lookupUsersByUsername({ usernames, request }) {
+	const names = [...new Set((usernames || []).map((n) => String(n).replace(/^@/, '').trim()).filter((n) => /^\w{1,15}$/.test(n)))];
+	if (!names.length) return [];
+	const res = await request('users/by', { usernames: names.join(','), 'user.fields': 'created_at,username' });
+	if (res.status < 200 || res.status >= 300) throw classifyMentionsError(res);
+	return (Array.isArray(res.body?.data) ? res.body.data : [])
+		.filter((u) => u?.id && u?.username)
+		.map((u) => ({ id: String(u.id), username: String(u.username), createdAt: u.created_at || null }));
 }

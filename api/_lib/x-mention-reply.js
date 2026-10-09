@@ -78,6 +78,9 @@ const HANDLE_RE = /(^|[^\w])@\w+/;
 const OTHER_COIN_RE = /\b(?:bitcoin|btc|ethereum|ether|eth|dogecoin|doge|shib|pepe|bonk|wif|trump|melania|usdt|tether|bnb|xrp|ripple|cardano|ada|litecoin|ltc|polkadot|dot|avalanche|avax|chainlink|link|sui|aptos|toncoin|ton|hyperliquid|hype|memecoins?|altcoins?|shitcoins?|pump\.?fun|jupiter|jup|raydium|ray|orca|meteora)\b/i;
 const CONTROL_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F​-‏‪-‮⁠-⁩﻿]/;
 
+// The em and en dashes read as machine-written and are banned in everything we publish.
+const DASH_RE = /[\u2013\u2014]/;
+
 /** Weighted length as X counts it: links 23, CJK and emoji 2, the rest 1. */
 export function weightedLength(text) {
 	return xWeightedLength(text);
@@ -105,6 +108,7 @@ export function checkReply(text) {
 	const t = String(text ?? '');
 	if (!t.trim()) return { ok: false, reason: 'empty' };
 	if (CONTROL_RE.test(t)) return { ok: false, reason: 'control_chars' };
+	if (DASH_RE.test(t)) return { ok: false, reason: 'dash' };
 	const weight = weightedLength(t);
 	if (weight > MAX_REPLY_WEIGHT) return { ok: false, reason: 'too_long', detail: String(weight) };
 
@@ -148,6 +152,7 @@ export function cleanModelText(raw) {
 		.replace(/^#{1,6}\s+/gm, '')
 		.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '$1 $2');
 	t = normalizeText(t).text.replace(/\s*\n\s*/g, ' ').trim();
+	t = t.replace(/(\d)\s*\u2013\s*(\d)/g, '$1-$2').replace(/\s*[\u2013\u2014]\s*/g, ', ');
 	t = t.replace(/^(?:@\w+[\s,:]*)+/, '').trim();
 	const quoted = t.match(/^["“](.*)["”]$/);
 	if (quoted) t = quoted[1].trim();
