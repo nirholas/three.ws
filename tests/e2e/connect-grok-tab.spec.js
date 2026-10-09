@@ -64,7 +64,7 @@ test.describe('/connect Grok Bot tab', () => {
 
 	test('arrow keys move between tabs and reach the Grok Bot tab', async ({ page }) => {
 		await page.goto('/connect');
-		await page.getByRole('tab', { name: 'ChatGPT' }).focus();
+		await page.getByRole('tab', { name: 'ChatGPT' }).click();
 		await page.keyboard.press('ArrowRight');
 		const grok = page.getByRole('tab', { name: 'Grok Bot' });
 		await expect(grok).toBeFocused();
