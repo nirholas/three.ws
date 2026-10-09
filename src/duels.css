@@ -57,7 +57,7 @@
 .dx-ava.lg { width: 64px; height: 64px; font-size: 22px; border-width: 3px; }
 
 .dx-crowd { height: 8px; border-radius: 999px; overflow: hidden; display: flex; background: var(--sy-panel-2); border: 1px solid var(--sy-line); }
-.dx-crowd i { display: block; height: 100%; transition: width 500ms cubic-bezier(.2, .8, .2, 1); }
+.dx-crowd i { display: block; height: 100%; transition: width var(--duration-slow) var(--ease-standard); }
 .dx-crowd i.a { background: var(--dx-a); }
 .dx-crowd i.b { background: var(--dx-b); }
 .dx-crowd.empty i { background: transparent; }

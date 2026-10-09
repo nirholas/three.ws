@@ -121,7 +121,7 @@
 	font-weight: var(--weight-medium, 500);
 	text-decoration: none;
 	cursor: pointer;
-	transition: background var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease, transform var(--dur-fast, 120ms) ease, opacity var(--dur-fast, 120ms) ease;
+	transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard), opacity var(--dur-fast) var(--ease-standard);
 }
 
 .sc-btn:hover {
@@ -189,7 +189,7 @@
 	color: var(--ink-bright, #fff);
 	font-family: var(--font-body);
 	font-size: var(--text-ui, 14px);
-	transition: border-color var(--dur-fast, 120ms) ease;
+	transition: border-color var(--dur-fast) var(--ease-standard);
 }
 
 .sc-select {
@@ -260,7 +260,7 @@
 	font-size: var(--text-ui, 14px);
 	font-weight: var(--weight-medium, 500);
 	cursor: pointer;
-	transition: color var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease;
+	transition: color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 
 .sc-tab:hover {
@@ -321,7 +321,7 @@
 	font-family: var(--font-body);
 	font-size: var(--text-sm, 13px);
 	cursor: pointer;
-	transition: background var(--dur-fast, 120ms) ease, color var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease;
+	transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 
 .sc-chip:hover {
@@ -357,7 +357,7 @@
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
 	border-radius: var(--radius-card, 14px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
-	transition: transform var(--dur-med, 180ms) var(--ease-out, ease), border-color var(--dur-med, 180ms) ease, background var(--dur-med, 180ms) ease;
+	transition: transform var(--dur-med) var(--ease-out), border-color var(--dur-med) var(--ease-standard), background var(--dur-med) var(--ease-standard);
 	animation: sc-rise var(--dur-med, 220ms) var(--ease-out, ease) both;
 }
 
@@ -576,7 +576,7 @@
 	background: transparent;
 	color: var(--ink-dim, rgba(255, 255, 255, 0.7));
 	cursor: pointer;
-	transition: background var(--dur-fast, 120ms) ease, color var(--dur-fast, 120ms) ease;
+	transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
 
 .sc-icon-btn:hover {
@@ -767,7 +767,7 @@
 	height: 100%;
 	background: var(--success, #4ade80);
 	transform-origin: left center;
-	transition: transform var(--dur-med, 260ms) var(--ease-out, ease);
+	transition: transform var(--dur-med) var(--ease-out);
 	will-change: transform;
 }
 
@@ -818,7 +818,7 @@
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
 	border-radius: var(--radius-md, 12px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
-	transition: opacity var(--dur-med, 180ms) ease, border-color var(--dur-med, 180ms) ease;
+	transition: opacity var(--dur-med) var(--ease-standard), border-color var(--dur-med) var(--ease-standard);
 	animation: sc-rise var(--dur-med, 200ms) var(--ease-out, ease) both;
 }
 
@@ -918,7 +918,7 @@
 	height: 22px;
 	border-radius: var(--radius-pill, 999px);
 	background: var(--surface-3, rgba(255, 255, 255, 0.14));
-	transition: background var(--dur-fast, 140ms) ease;
+	transition: background var(--dur-fast) var(--ease-standard);
 	position: relative;
 }
 
@@ -931,7 +931,7 @@
 	height: 16px;
 	border-radius: 50%;
 	background: var(--ink-bright, #fff);
-	transition: transform var(--dur-fast, 140ms) var(--ease-out, ease);
+	transition: transform var(--dur-fast) var(--ease-out);
 }
 
 .sc-switch:hover span {

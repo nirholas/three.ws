@@ -91,7 +91,7 @@
 	font: 600 14px/1 var(--font-body);
 	text-decoration: none;
 	cursor: pointer;
-	transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .tl-btn:hover:not(:disabled) {
 	border-color: var(--tl-accent-stroke);
@@ -264,7 +264,7 @@
 	color: inherit;
 	font: inherit;
 	cursor: pointer;
-	transition: transform 0.15s ease, border-color 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .tl-card:hover,
 .tl-card[aria-pressed='true'] {
@@ -317,7 +317,7 @@
 	height: 100%;
 	border-radius: inherit;
 	background: var(--tl-accent);
-	transition: width 0.5s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .tl-card-meta {
 	display: flex;
@@ -422,7 +422,7 @@
 	color: var(--ink-dim);
 	font: 600 13px/1 var(--font-body);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .tl-seg button:not([aria-selected='true']):hover {
 	background: var(--surface-2);
@@ -455,7 +455,7 @@
 	background: var(--surface-1, var(--bg));
 	color: var(--ink);
 	font: 500 15px/1.3 var(--font-body);
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .tl-field textarea {
 	min-height: 84px;
@@ -480,7 +480,7 @@
 	color: var(--ink-dim);
 	font: 600 12px/1 var(--font-mono);
 	cursor: pointer;
-	transition: border-color 0.15s ease, color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .tl-chip:hover {
 	border-color: var(--tl-accent-stroke);

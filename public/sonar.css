@@ -19,6 +19,9 @@
 	--sn-live: var(--success);
 	--sn-warn: var(--warn);
 	--sn-error: var(--danger);
+	/* Live meters track a value sampled every frame, so they move at constant
+	   speed: an eased curve would make each sample surge and settle. */
+	--sn-ease-track: linear;
 }
 :root[data-theme='light'] {
 	--sn-border: rgba(0, 0, 0, 0.1);
@@ -147,7 +150,7 @@
 	font-weight: 500;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .sn-btn:hover { background: var(--sn-surface-3); border-color: var(--sn-border-strong); }
@@ -251,7 +254,7 @@
 	backdrop-filter: blur(10px);
 	display: grid;
 	gap: 8px;
-	transition: border-color 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard);
 }
 
 .sn-hud[data-direction='approaching'],
@@ -283,7 +286,7 @@
 	width: 0%;
 	border-radius: inherit;
 	background: var(--sn-accent);
-	transition: width 0.08s linear, background 0.2s ease;
+	transition: width var(--duration-instant) var(--sn-ease-track), background var(--duration-base) var(--ease-standard);
 }
 
 .sn-meter-fill.is-hot { background: var(--sn-live); }
@@ -319,7 +322,7 @@
 	height: 100%;
 	width: 0%;
 	background: var(--sn-accent);
-	transition: width 0.12s linear;
+	transition: width var(--duration-fast) var(--sn-ease-track);
 }
 
 /* ── side panels ──────────────────────────────────────────────────────── */
@@ -378,7 +381,7 @@
 	background: var(--sn-surface-2);
 	font-size: 13px;
 	cursor: pointer;
-	transition: border-color 0.16s ease, background 0.16s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .sn-mode:hover { border-color: var(--sn-border-strong); }
@@ -425,7 +428,7 @@
 	margin-left: -6px;
 	border-radius: 7px;
 	cursor: pointer;
-	transition: background 0.16s ease, color 0.16s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .sn-toggles label:hover { background: var(--sn-surface-2); color: inherit; }
@@ -459,7 +462,7 @@
 	border-radius: var(--sn-radius);
 	border: 1px solid var(--sn-border);
 	background: var(--sn-surface);
-	transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.16s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .sn-card:hover { transform: translateY(-2px); border-color: var(--sn-border-strong); }
@@ -582,7 +585,7 @@ kbd {
 	text-decoration: underline;
 	text-decoration-color: color-mix(in srgb, var(--sn-accent) 40%, transparent);
 	text-underline-offset: 2px;
-	transition: color 0.16s ease, text-decoration-color 0.16s ease;
+	transition: color var(--duration-fast) var(--ease-standard), text-decoration-color var(--duration-fast) var(--ease-standard);
 }
 
 .sn-page main p a:hover,

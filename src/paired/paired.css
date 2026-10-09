@@ -29,7 +29,7 @@
 	font: 600 0.875rem/1 var(--cv-font-sans);
 	text-decoration: none;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .pc-btn:hover {
 	border-color: var(--cv-border-hover);
@@ -100,7 +100,7 @@
 	color: #a78bfa;
 }
 .pc-class-crypto-native {
-	background: color-mix(in srgb, #fbbf24 18%, transparent);
+	background: color-mix(in srgb, var(--warn) 18%, transparent);
 	color: #d4a017;
 }
 :root[data-theme='light'] .pc-class-rwa-equity { color: #1d4ed8; }
@@ -139,7 +139,7 @@
 	color: inherit;
 	text-decoration: none;
 	box-shadow: var(--cv-shadow-card);
-	transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 	animation: pc-in 0.25s ease both;
 }
 .pc-card:hover {
@@ -281,7 +281,7 @@
 	color: var(--cv-text-2);
 	font: 600 0.8125rem/1 var(--cv-font-sans);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .pc-tab:hover {
 	color: var(--cv-text);
@@ -353,7 +353,7 @@
 	color: inherit;
 	font: inherit;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .pc-pool:hover {
 	border-color: var(--cv-border-hover);
@@ -397,7 +397,7 @@
 	height: 100%;
 	min-width: 2px;
 	background: var(--cv-accent-solid);
-	transition: width 0.4s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 
 /* Chart */
@@ -486,6 +486,11 @@
 	color: var(--cv-text-2);
 	font: 700 0.875rem/1 var(--cv-font-sans);
 	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.pc-side button:hover {
+	background: var(--cv-surface-3);
+	color: var(--cv-text);
 }
 .pc-side button[aria-pressed='true'][data-side='buy'] {
 	background: var(--cv-green-soft);
@@ -521,7 +526,7 @@
 	color: var(--cv-text);
 	font: 500 0.9375rem/1.3 var(--cv-font-sans);
 	box-sizing: border-box;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .pc-input:hover {
 	border-color: var(--cv-border-hover);
@@ -652,7 +657,7 @@
 	color: var(--cv-text);
 	font: 600 0.8125rem/1 var(--cv-font-mono);
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .pc-chip:hover {
 	border-color: var(--cv-border-hover);

@@ -72,7 +72,7 @@
 	font-weight: 600;
 	text-decoration: none;
 	border-bottom: 1px solid var(--cv-border-hover);
-	transition: color var(--duration-fast, 120ms);
+	transition: color var(--duration-fast);
 }
 .dc-venue-line a:hover,
 .dc-venue-line a:focus-visible {
@@ -164,8 +164,8 @@
 	font-weight: 600;
 	text-decoration: none;
 	transition:
-		transform var(--duration-fast, 120ms),
-		filter var(--duration-fast, 120ms);
+		transform var(--duration-fast),
+		filter var(--duration-fast);
 }
 .dc-trade:hover {
 	filter: brightness(1.08);
@@ -302,8 +302,8 @@
 	background: var(--cv-surface);
 	color: var(--cv-text);
 	transition:
-		border-color var(--duration-fast, 120ms),
-		box-shadow var(--duration-fast, 120ms);
+		border-color var(--duration-fast),
+		box-shadow var(--duration-fast);
 }
 .dc-calc input:hover {
 	border-color: var(--cv-border-hover);
@@ -414,7 +414,7 @@
 	height: 100%;
 	border-radius: 999px;
 	background: var(--cv-accent);
-	transition: width var(--duration-slow, 400ms) ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .dc-share .cap {
 	margin: 0.375rem 0 0;
@@ -506,8 +506,8 @@
 	text-decoration: none;
 	color: inherit;
 	transition:
-		border-color var(--duration-base, 200ms),
-		box-shadow var(--duration-base, 200ms);
+		border-color var(--duration-base),
+		box-shadow var(--duration-base);
 	margin-bottom: 1rem;
 }
 .dc-asset:hover,
@@ -576,8 +576,8 @@
 	color: var(--cv-text);
 	cursor: pointer;
 	transition:
-		border-color var(--duration-fast, 120ms),
-		background var(--duration-fast, 120ms);
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .dc-retry:hover {
 	border-color: var(--cv-border-hover);

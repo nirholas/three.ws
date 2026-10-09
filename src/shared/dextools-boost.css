@@ -9,13 +9,18 @@
 	background: color-mix(in srgb, currentColor 4%, transparent);
 	text-align: left;
 	animation: dtb-in 220ms ease-out both;
+	/* The card also renders on the standalone /embed/dextools-boost frame, which
+	   does not load public/tokens.css, so the motion tokens carry their ladder
+	   values as fallbacks there and follow the platform tokens everywhere else. */
+	--dtb-duration: var(--duration-fast, 140ms);
+	--dtb-ease: var(--ease-standard, cubic-bezier(0.2, 0.8, 0.2, 1));
 }
 @keyframes dtb-in {
 	from { opacity: 0; transform: translateY(4px); }
 	to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-	.dtb { animation: none; }
+	.dtb { animation: none; --dtb-duration: 0ms; }
 }
 .dtb-head {
 	display: flex;
@@ -39,7 +44,7 @@
 	color: inherit;
 	opacity: 0.8;
 	text-decoration: none;
-	transition: opacity 150ms ease, border-color 150ms ease;
+	transition: opacity var(--dtb-duration) var(--dtb-ease), border-color var(--dtb-duration) var(--dtb-ease);
 }
 .dtb-pill:hover { opacity: 1; border-color: color-mix(in srgb, currentColor 45%, transparent); }
 .dtb-pill:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; opacity: 1; }

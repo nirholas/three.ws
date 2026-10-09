@@ -89,7 +89,7 @@
 	color: var(--ink-dim);
 	font: 600 14px var(--font-body);
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .lx-tab:hover {
 	color: var(--ink);
@@ -217,7 +217,7 @@
 	text-align: left;
 	font: inherit;
 	cursor: pointer;
-	transition: border-color 0.15s, background 0.15s, transform 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-fast);
 }
 .lx-agent:hover {
 	border-color: var(--stroke-strong);
@@ -295,7 +295,7 @@
 	font-weight: 600;
 	text-align: center;
 	text-decoration: none;
-	transition: color 0.15s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .lx-agent-new:hover {
 	color: var(--lx-accent);
@@ -389,7 +389,7 @@
 	background: var(--lx-field);
 	color: var(--ink-bright, var(--ink));
 	font: 400 15px/1.4 var(--font-body);
-	transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast);
 }
 .lx-input::placeholder,
 .lx-textarea::placeholder {
@@ -498,7 +498,7 @@
 	border-radius: var(--radius-md);
 	border: 1px dashed var(--stroke-strong);
 	background: var(--surface-1);
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .lx-drop.is-over {
 	border-color: var(--lx-accent);
@@ -535,7 +535,7 @@
 	font: 600 13px var(--font-body);
 	text-align: left;
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 .lx-seg button small {
 	font-weight: 500;
@@ -574,7 +574,7 @@
 	color: var(--ink);
 	font: 600 12px var(--font-mono);
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .lx-chip:hover {
 	background: var(--surface-3);
@@ -634,7 +634,7 @@
 	border: 1px solid var(--stroke-strong);
 	background: var(--surface-3);
 	cursor: pointer;
-	transition: background 0.18s, border-color 0.18s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .lx-switch::after {
 	content: '';
@@ -645,7 +645,7 @@
 	height: 18px;
 	border-radius: 50%;
 	background: var(--ink);
-	transition: transform 0.18s;
+	transition: transform var(--duration-fast);
 }
 .lx-switch[aria-checked='true'] {
 	background: var(--lx-accent);
@@ -682,7 +682,7 @@
 	font: 600 13px var(--font-body);
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s, transform 0.1s, opacity 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant), opacity var(--duration-fast);
 }
 .lx-btn:hover:not(:disabled) {
 	background: var(--surface-3);

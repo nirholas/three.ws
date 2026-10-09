@@ -59,7 +59,7 @@
 			font: inherit; font-size: 0.88rem; font-weight: 650; padding: 10px 16px; cursor: pointer;
 			color: var(--btn-secondary-fg, var(--ink)); background: var(--btn-secondary-bg, var(--surface-3));
 			border: 1px solid var(--btn-secondary-border, var(--stroke-strong)); border-radius: var(--radius-md, 10px);
-			transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant, 80ms) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+			transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 		}
 		.gk-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
 		.gk-btn:active { transform: translateY(1px); }
@@ -79,7 +79,7 @@
 			display: flex; flex-direction: column; gap: 6px; text-align: left; font: inherit; cursor: pointer;
 			padding: 12px 14px; color: var(--ink); background: var(--surface-1, rgba(255,255,255,0.03));
 			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
-			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant, 80ms) var(--ease-standard);
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 		}
 		.gk-ask:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.06)); }
 		.gk-ask:active { transform: translateY(1px); }
@@ -137,7 +137,7 @@
 		.gk-stage-wait .gk-orb { animation: gk-breathe 2.4s var(--ease-standard) infinite; }
 		@keyframes gk-breathe { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.06); opacity: 1; } }
 		.gk-progress { width: min(260px, 80%); height: 4px; margin: 16px auto 0; border-radius: 999px; background: var(--surface-3, rgba(255,255,255,0.08)); overflow: hidden; }
-		.gk-progress span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width 600ms var(--ease-standard); }
+		.gk-progress span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width var(--duration-slow) var(--ease-standard); }
 		.gk-stage-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--stroke); }
 		.gk-stage-bar .gk-src { margin-left: auto; font-size: 0.76rem; color: var(--ink-faint, var(--ink-dim)); }
 		.gk-stage [hidden] { display: none !important; }

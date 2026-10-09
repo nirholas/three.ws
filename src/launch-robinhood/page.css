@@ -239,7 +239,15 @@ textarea.lr-input {
 	background: var(--surface-3);
 	position: relative;
 	cursor: pointer;
-	transition: background var(--duration-fast);
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+.lr-switch:hover {
+	border-color: var(--lr-accent-stroke);
+}
+.lr-switch:not([aria-checked='true']):hover::after {
+	background: var(--ink);
 }
 .lr-switch::after {
 	content: '';

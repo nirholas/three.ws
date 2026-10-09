@@ -226,14 +226,14 @@ dialog.sy-dialog[open] { animation: sy-in var(--sy-base) ease both; }
 .qx-level { display: flex; align-items: center; gap: 16px; }
 .qx-level-num { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-size: 26px; font-weight: 900; color: #fff; background: linear-gradient(135deg, var(--sy-accent), var(--sy-accent-2)); flex: none; }
 .qx-bar { height: 10px; border-radius: 999px; background: var(--sy-panel-2); border: 1px solid var(--sy-line); overflow: hidden; margin-top: 8px; }
-.qx-bar > i { display: block; height: 100%; width: var(--p, 0%); background: linear-gradient(90deg, var(--sy-accent), var(--sy-accent-2)); border-radius: inherit; transition: width 600ms cubic-bezier(.2, .8, .2, 1); }
+.qx-bar > i { display: block; height: 100%; width: var(--p, 0%); background: linear-gradient(90deg, var(--sy-accent), var(--sy-accent-2)); border-radius: inherit; transition: width var(--duration-slow) var(--ease-standard); }
 .qx-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .qx-quest { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; background: var(--sy-panel); border: 1px solid var(--sy-line); border-radius: 14px; padding: 14px 16px; transition: border-color var(--sy-fast), background var(--sy-fast); animation: sy-in var(--sy-base) ease both; }
 .qx-quest.done { border-color: color-mix(in srgb, var(--sy-green) 45%, var(--sy-line)); background: color-mix(in srgb, var(--sy-green) 6%, var(--sy-panel)); }
 .qx-ring { width: 44px; height: 44px; }
 .qx-ring circle { fill: none; stroke-width: 5; }
 .qx-ring .track { stroke: var(--sy-panel-2); }
-.qx-ring .fill { stroke: var(--sy-accent); stroke-linecap: round; transition: stroke-dashoffset 600ms cubic-bezier(.2, .8, .2, 1); }
+.qx-ring .fill { stroke: var(--sy-accent); stroke-linecap: round; transition: stroke-dashoffset var(--duration-slow) var(--ease-standard); }
 .qx-quest.done .qx-ring .fill { stroke: var(--sy-green); }
 .qx-ring text { font: 800 11px 'Inter', system-ui, sans-serif; fill: var(--sy-text); }
 .qx-q-title { font-weight: 800; font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

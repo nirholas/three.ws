@@ -55,7 +55,7 @@ function renderHead(c) {
 		`<a class="pc-btn" href="${EXPLORER}/token/${esc(c.address)}" target="_blank" rel="noopener noreferrer">Explorer ↗</a>`,
 	].filter(Boolean);
 	const by = c.agent
-		? `<a class="pc-agent" href="${esc(c.agent.url)}">${c.agent.avatar ? `<img src="${esc(c.agent.avatar)}" alt="" />` : '<span class="pc-agent-dot"></span>'}<span>Launched by ${esc(c.agent.name || 'an agent')}</span></a>`
+		? `<a class="pc-agent" href="${esc(c.agent.url)}">${c.agent.avatar ? `<img src="${esc(c.agent.avatar)}" alt="" width="20" height="20" loading="lazy" decoding="async" />` : '<span class="pc-agent-dot"></span>'}<span>Launched by ${esc(c.agent.name || 'an agent')}</span></a>`
 		: `<span class="pc-agent"><span>Created by <a href="${EXPLORER}/address/${esc(c.creator)}" target="_blank" rel="noopener noreferrer"><code>${esc(short(c.creator))}</code></a></span></span>`;
 	const verified = d
 		? d.verified

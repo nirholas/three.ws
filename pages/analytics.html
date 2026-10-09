@@ -55,7 +55,7 @@
 		.pa-seg button {
 			appearance: none; border: 0; background: none; color: var(--ink-dim); font: inherit; font-size: 0.82rem; font-weight: 600;
 			padding: 6px 12px; border-radius: 7px; cursor: pointer; min-height: 32px;
-			transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), color var(--duration-fast, 140ms) var(--ease-standard, ease), transform 80ms var(--ease-standard, ease);
+			transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 		}
 		.pa-seg button:hover { color: var(--ink-bright, var(--ink)); background: var(--surface-2); }
 		.pa-seg button:active { transform: translateY(1px); }
@@ -69,7 +69,7 @@
 		/* error + partial */
 		.pa-error { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; margin: 0 0 18px; border-radius: var(--radius-md, 10px); border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: color-mix(in srgb, var(--danger) 9%, transparent); color: var(--ink); font-size: 0.9rem; line-height: 1.5; }
 		.pa-error strong { color: var(--ink-bright, var(--ink)); }
-		.pa-error button { appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-2); color: var(--ink-bright, var(--ink)); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), transform 80ms; }
+		.pa-error button { appearance: none; border: 1px solid var(--stroke-strong); background: var(--surface-2); color: var(--ink-bright, var(--ink)); font: inherit; font-size: 0.85rem; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant); }
 		.pa-error button:hover { background: var(--surface-3); }
 		.pa-error button:active { transform: translateY(1px); }
 		.pa-error button:focus-visible { outline: 2px solid var(--pa-mark); outline-offset: 2px; }
@@ -81,7 +81,7 @@
 		.pa-tile {
 			display: block; text-decoration: none; padding: 16px 16px 14px; border-radius: var(--radius-md, 10px);
 			background: var(--surface-1); border: 1px solid var(--stroke); min-height: 108px;
-			transition: border-color var(--duration-fast, 140ms) var(--ease-standard, ease), background var(--duration-fast, 140ms) var(--ease-standard, ease), transform 120ms var(--ease-standard, ease);
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			animation: pa-in 260ms var(--ease-standard, ease) both;
 		}
 		a.pa-tile:hover { border-color: var(--stroke-strong); background: var(--surface-2); transform: translateY(-1px); }
@@ -111,7 +111,7 @@
 		.pa-chart-msg a:hover, .pa-link-btn:hover { color: var(--pa-mark); }
 		.pa-chart-msg a:focus-visible, .pa-link-btn:focus-visible { outline: 2px solid var(--pa-mark); outline-offset: 2px; border-radius: 4px; }
 		.pa-link-btn { appearance: none; background: none; border: 0; font: inherit; cursor: pointer; padding: 0; }
-		.pa-tip { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -100%); background: var(--bg-1); border: 1px solid var(--stroke-strong); border-radius: 8px; padding: 6px 10px; font-size: 0.76rem; line-height: 1.4; white-space: nowrap; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3); transition: opacity 120ms ease; z-index: 2; left: 0; top: 0; }
+		.pa-tip { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -100%); background: var(--bg-1); border: 1px solid var(--stroke-strong); border-radius: 8px; padding: 6px 10px; font-size: 0.76rem; line-height: 1.4; white-space: nowrap; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3); transition: opacity var(--duration-fast) var(--ease-standard); z-index: 2; left: 0; top: 0; }
 		.pa-tip[data-open="1"] { opacity: 1; }
 		.pa-tip-day { color: var(--ink-dim); font-size: 0.7rem; }
 		.pa-tip-val { font-weight: 700; color: var(--ink-bright, var(--ink)); font-variant-numeric: tabular-nums; }

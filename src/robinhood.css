@@ -183,9 +183,9 @@
 	border-radius: 999px;
 	border: 1px solid var(--cv-border);
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease,
-		background 0.15s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .rh-launch-cta:hover {
