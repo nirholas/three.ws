@@ -1292,12 +1292,16 @@ async function claim(address) {
 	renderCoins();
 	try {
 		let signature;
+		// Each claim sweeps the fees still held on its coins' curves and pools
+		// first; what does not fit in one transaction waits for the next claim.
+		let remaining = 0;
 		if (w.kind === 'agent') {
 			const out = await api('/api/pump/collect-creator-fee-agent', {
 				method: 'POST',
 				body: { agent_id: w.agent.id, mint: w.claim_mint, network: 'mainnet', all_quotes: true },
 			});
 			signature = out.signature;
+			remaining = out.sweeps_remaining || 0;
 		} else {
 			if (!state.wallet || state.wallet.address !== address) {
 				await connectWallet();
@@ -1307,8 +1311,16 @@ async function claim(address) {
 			}
 			const prep = await api('/api/pump/collect-creator-fee-prep', {
 				method: 'POST',
-				body: { creator_address: address, wallet_address: address, network: 'mainnet', all_quotes: true, v1_capable: !!state.wallet.v1 },
+				body: {
+					creator_address: address,
+					wallet_address: address,
+					network: 'mainnet',
+					all_quotes: true,
+					v1_capable: !!state.wallet.v1,
+					mints: w.coins.slice(0, 50),
+				},
 			});
+			remaining = prep.sweeps_remaining || 0;
 			signature = await signAndBroadcast({ txBase64: prep.tx_base64, version: prep.transaction_version, address });
 			const confirmed = await waitForConfirmation(signature);
 			if (!confirmed) {
@@ -1316,7 +1328,10 @@ async function claim(address) {
 				return;
 			}
 		}
-		status(`<div class="lx-alert is-good">Rewards claimed. <a class="lx-link" href="https://solscan.io/tx/${esc(signature)}" target="_blank" rel="noopener">View transaction</a></div>`);
+		const more = remaining > 0
+			? ` ${remaining === 1 ? 'One coin still holds' : `${remaining} coins still hold`} rewards that did not fit in this transaction: claim again to collect ${remaining === 1 ? 'it' : 'them'}.`
+			: '';
+		status(`<div class="lx-alert is-good">Rewards claimed.${more} <a class="lx-link" href="https://solscan.io/tx/${esc(signature)}" target="_blank" rel="noopener">View transaction</a></div>`);
 	} catch (err) {
 		status(`<div class="lx-alert" role="alert">${esc(friendlyLaunchError(err))}</div>`);
 	} finally {

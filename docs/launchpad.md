@@ -64,7 +64,15 @@ clear error instead of a failed signature. You can pin v0 or v1 under **Transact
 
 pump.fun pools creator rewards per creator wallet, not per coin. **My coins**
 (`GET /api/pump/my-coins`) groups your coins by the wallet that earns their rewards and reads the
-live unclaimed balance for every quote mint (bonding curve and PumpSwap vaults both).
+live unclaimed balance for every quote mint (bonding curve and PumpSwap vaults both). Since
+pump.fun's October 2026 program update, newer trades leave the creator fee on the coin's bonding
+curve or pool until it is swept into the vault; those amounts are counted too (`rewards[].unswept`
+is the part still waiting on a curve or pool), so the balance is what a claim collects now.
+
+Every claim sweeps first: the transaction moves the fees held on your coins' curves and pools
+into your vaults, then collects the vaults, all in one signature. When more coins hold fees than
+fit in one transaction, the largest go first and the response says how many wait for the next
+claim (`sweeps_remaining`).
 
 - **Your wallet:** Claim builds `collect-creator-fee-prep` with `all_quotes: true`, your wallet signs,
   the page confirms it.
@@ -87,8 +95,9 @@ linked to it (`/api/auth/wallets/link-solana`).
 | `POST launch-confirm` | Verify the confirmed transaction (pump.fun program invoked, launch fee paid) and record the launch. |
 | `POST launch-agent` | Launch signed by the agent's custodial wallet. Returns `platform_fee` with `settlement`. |
 | `GET my-coins` | Your coins plus unclaimed rewards per creator wallet. |
-| `POST collect-creator-fee-prep` | Claim transaction for a wallet creator. `all_quotes: true` sweeps SOL and USDC vaults. |
-| `POST collect-creator-fee-agent` | Server-signed claim for an agent-wallet creator. |
+| `POST collect-creator-fee-prep` | Claim transaction for a wallet creator. `all_quotes: true` collects every quote vault (SOL, USDC, and any pump coin your coins are paired with). `mints` (up to 50) adds coins to sweep beyond the ones you launched here. Returns `swept` (`mint`, `source` `curve` or `pool`, `quote_mint`, `amount`) and `sweeps_remaining`. |
+| `POST collect-creator-fee-agent` | Server-signed claim for an agent-wallet creator. Sweeps the agent's coins first; returns `swept` and `sweeps_remaining`. |
+| `GET fee-info` | One coin's fee setup and claimable balance. `claimable_lamports` includes `unswept_lamports`, the SOL fees still on the coin's curve or pool. |
 
 ```bash
 curl -s https://three.ws/api/pump/launch-config

@@ -27,6 +27,7 @@ import { NATIVE_MINT, getAssociatedTokenAddressSync, createCloseAccountInstructi
 
 import { getConnection, getPumpSdk, solanaPubkey } from '../pump.js';
 import { submitProtected } from '../execution-engine.js';
+import { creatorFeeSweepInstructions, readCreatorFeeBuckets, unsweptCreatorFees } from '../pump-creator-fees.js';
 
 const PRIORITY_MICRO_LAMPORTS = 100_000;
 
@@ -63,10 +64,20 @@ export async function claimCreatorFees({ coin, coinCreator, treasury }) {
 	// robust against SDK version drift.
 	const balanceBefore = BigInt(await connection.getBalance(creatorPk, 'confirmed'));
 
-	const ixs = await sdk.collectCoinCreatorFeeInstructions(creatorPk, treasuryPk);
-	if (!Array.isArray(ixs) || ixs.length === 0) {
+	const collectIxs = await sdk.collectCoinCreatorFeeInstructions(creatorPk, treasuryPk);
+	if (!Array.isArray(collectIxs) || collectIxs.length === 0) {
 		return { tx_signature: null, claimed_lamports: 0n, was_empty: true };
 	}
+	// v3 / PumpSwap v2 trades leave the creator fee on the curve or in the pool
+	// until it is swept into the vault: sweep this coin's SOL legs first so the
+	// collect picks them up in the same transaction.
+	const legs = coin.mint
+		? unsweptCreatorFees((await readCreatorFeeBuckets(connection, [coin.mint])).values(), creatorPk.toBase58()).filter(
+				(l) => l.quoteMint === NATIVE_MINT.toBase58(),
+			)
+		: [];
+	const { instructions: sweeps } = await creatorFeeSweepInstructions(connection, { legs, payer: treasuryPk });
+	const ixs = [...sweeps, ...collectIxs];
 
 	// Append close-account on the creator's WSOL ATA to unwrap any wSOL that
 	// landed there during the AMM collect path. If the ATA doesn't exist or

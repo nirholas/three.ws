@@ -852,23 +852,44 @@ export function registerPumpFunSkills(skills) {
 		name: 'pumpfun-claim-fees',
 		description:
 			'Claim accumulated creator fees from the agent-creator vault to the agent owner wallet.',
-		instruction: 'Calls collectCoinCreatorFeeInstructions on OnlinePumpSdk.',
+		instruction:
+			'Sweeps the fees v3 / PumpSwap v2 trades left on the given coins\' curves and pools, then calls collectCoinCreatorFeeInstructions on OnlinePumpSdk.',
 		animationHint: 'celebrate',
 		voicePattern: 'Claiming creator fees…',
 		mcpExposed: true,
 		inputSchema: {
 			type: 'object',
-			properties: { network: { type: 'string', enum: ['mainnet', 'devnet'] } },
+			properties: {
+				network: { type: 'string', enum: ['mainnet', 'devnet'] },
+				mints: {
+					type: 'array',
+					items: { type: 'string' },
+					maxItems: 20,
+					description: 'Coins this wallet created. Their creator fees still on the curve or pool are swept in first.',
+				},
+			},
 		},
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
 			const { pump, web3 } = await loadCore();
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
+			const creator = pubkey.toBase58();
+			const { readCreatorFeeBuckets, unsweptCreatorFees, creatorFeeSweepInstructions } = await import(
+				'./solana/pump-creator-sweep.js'
+			);
+			const mints = (Array.isArray(args.mints) ? args.mints : []).filter((m) => typeof m === 'string' && m.length >= 32);
+			const legs = mints.length
+				? unsweptCreatorFees((await readCreatorFeeBuckets(connection, mints)).values(), creator).filter(
+						(l) => l.quoteMint === 'So11111111111111111111111111111111111111112',
+					)
+				: [];
+			const unswept = legs.reduce((sum, l) => sum + l.amount, 0n);
 
 			const onlineSdk = new pump.OnlinePumpSdk(connection);
-			const balance = await onlineSdk.getCreatorVaultBalanceBothPrograms(pubkey);
-			if (balance.isZero?.() || balance.toString() === '0') {
+			const vault = BigInt((await onlineSdk.getCreatorVaultBalanceBothPrograms(pubkey)).toString());
+			const total = vault + unswept;
+			if (total === 0n) {
 				return {
 					success: true,
 					output: 'No creator fees to claim right now.',
@@ -877,19 +898,21 @@ export function registerPumpFunSkills(skills) {
 				};
 			}
 
+			const { instructions: sweeps, swept } = await creatorFeeSweepInstructions(connection, { legs, payer: pubkey });
+			const claimed = vault + swept.reduce((sum, l) => sum + l.amount, 0n);
 			const ixs = await onlineSdk.collectCoinCreatorFeeInstructions(pubkey, pubkey);
 			const sig = await sendIxs({
 				web3,
 				connection,
 				wallet,
 				payer: pubkey,
-				instructions: ixs,
+				instructions: [...sweeps, ...ixs],
 			});
 			return {
 				success: true,
-				output: `Claimed ${balance.toString()} lamports of creator fees.`,
+				output: `Claimed ${claimed.toString()} lamports of creator fees.`,
 				sentiment: 0.8,
-				data: { signature: sig, lamports: balance.toString(), network },
+				data: { signature: sig, lamports: claimed.toString(), swept: swept.length, network },
 			};
 		},
 	});

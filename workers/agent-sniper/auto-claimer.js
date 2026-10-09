@@ -54,8 +54,10 @@ async function fetchFeeInfo(mint, network) {
 }
 
 /**
- * POST collect-creator-fee-agent to claim fees.
- * Returns { ok, sig, lamports } on success, null on failure.
+ * POST collect-creator-fee-agent to claim fees. The endpoint sweeps the fees
+ * v3 / PumpSwap v2 trades left on the agent's curves and pools in the same
+ * transaction, and collects every quote mint (SOL and token-paired coins).
+ * Returns { ok, signature, lamports } on success, null on failure.
  */
 async function collectCreatorFee(agentId, mint, network) {
 	const url = `${API_BASE}/api/pump?action=collect-creator-fee-agent`;
@@ -66,7 +68,7 @@ async function collectCreatorFee(agentId, mint, network) {
 				'content-type': 'application/json',
 				authorization: `Bearer ${AGENT_JWT}`,
 			},
-			body: JSON.stringify({ agentId, mint, network }),
+			body: JSON.stringify({ agent_id: agentId, mint, network, all_quotes: true }),
 		});
 		if (!res.ok) {
 			const body = await res.text().catch(() => '');
@@ -186,13 +188,13 @@ async function processCoin(cfg, coin) {
 		await sql`
 			UPDATE agent_launched_coins
 			SET claimable_lamports       = 0,
-			    last_claim_sig           = ${result.sig ?? null},
+			    last_claim_sig           = ${result.signature ?? null},
 			    last_claim_at            = now(),
 			    total_claimed_lamports   = ${newTotal.toString()}
 			WHERE id = ${coin.id}
 		`;
 	} catch (err) {
-		log.warn('claim db update failed', { mint: coin.mint, sig: result.sig, err: err?.message });
+		log.warn('claim db update failed', { mint: coin.mint, sig: result.signature, err: err?.message });
 	}
 
 	log.trade('creator-fee-claimed', {
@@ -202,7 +204,7 @@ async function processCoin(cfg, coin) {
 		claimed_lamports: claimedLamports.toString(),
 		claimed_sol: lamportsToSol(claimedLamports),
 		total_claimed_sol: Number(totalSol),
-		sig: result.sig,
+		sig: result.signature,
 	});
 
 	screenPush(`Claimed ${lamportsToSol(claimedLamports)} SOL from $${symbol} — total: ${totalSol} SOL`, 'trade');

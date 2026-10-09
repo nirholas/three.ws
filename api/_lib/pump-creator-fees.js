@@ -25,7 +25,9 @@
 //                three.ws has launched, so the page never showed a real figure.
 //   unclaimed    the creator vault balances read straight from the cluster
 //                (pump bonding-curve vault plus the PumpSwap coin-creator vault),
-//                the exact lamports a claim would sweep right now.
+//                plus, when the caller names the wallet's coins, the fees v3 and
+//                PumpSwap v2 trades left on their curves and pools: the lamports
+//                a claim (which sweeps those buckets first) would collect now.
 //   claimed      earned minus unclaimed: every lamport the index says was
 //                earned and the vault no longer holds was swept by a claim.
 //
@@ -39,6 +41,18 @@
 import { PublicKey } from '@solana/web3.js';
 import { withBreaker } from './resilience.js';
 import { pumpFetchJson, PUMP_FRONTEND_BASE, PUMP_SWAP_BASE } from './pump-feed-fetch.js';
+import { readCreatorFeeBuckets, sumByQuote, unsweptCreatorFees } from '../../src/solana/pump-creator-sweep.js';
+
+// The bucket reads and sweep builders are chain-only and shared with the
+// browser skills, so they live in src/solana/pump-creator-sweep.js.
+export {
+	MAX_SWEEPS_PER_TX,
+	creatorExtraQuoteMints,
+	creatorFeeSweepInstructions,
+	readCreatorFeeBuckets,
+	sumByQuote,
+	unsweptCreatorFees,
+} from '../../src/solana/pump-creator-sweep.js';
 
 export const CREATOR_FEES_BREAKER = 'pumpfun:creator-fees';
 // The fallback rung gets its own breaker so a sick primary cannot open it.
@@ -160,36 +174,21 @@ export async function fetchCreatorFeeBuckets(wallet, interval) {
 }
 
 /**
- * The on-chain fee recipient of each mint. Bonding curves are read in one
- * batched RPC call per 100 mints; a graduated coin's recipient comes from its
- * canonical PumpSwap pool. A mint whose curve cannot be read maps to null.
+ * The on-chain fee recipient of each mint, read from the bonding curve, or from
+ * the canonical PumpSwap pool once the coin graduated. A mint whose curve
+ * cannot be read maps to null.
  *
  * @param {import('@solana/web3.js').Connection} connection
  * @param {string[]} mints
  * @returns {Promise<Map<string, { creator: string, graduated: boolean } | null>>}
  */
 export async function resolveCoinCreators(connection, mints) {
-	const [{ PumpSdk, bondingCurvePda, canonicalPumpPoolPda }, { OnlinePumpAmmSdk }] = await Promise.all([
-		import('@pump-fun/pump-sdk'),
-		import('@pump-fun/pump-swap-sdk'),
-	]);
-	const offline = new PumpSdk();
+	const buckets = await readCreatorFeeBuckets(connection, mints);
 	/** @type {Map<string, { creator: string, graduated: boolean } | null>} */
 	const out = new Map();
-	for (let i = 0; i < mints.length; i += 100) {
-		const chunk = mints.slice(i, i + 100);
-		const infos = await connection.getMultipleAccountsInfo(chunk.map((m) => bondingCurvePda(new PublicKey(m))));
-		chunk.forEach((mint, j) => {
-			const info = infos[j];
-			const curve = info ? offline.decodeBondingCurveNullable(info) : null;
-			out.set(mint, curve ? { creator: curve.creator.toBase58(), graduated: curve.complete === true } : null);
-		});
-	}
-	const amm = new OnlinePumpAmmSdk(connection);
-	for (const [mint, row] of out) {
-		if (!row?.graduated) continue;
-		const pool = await amm.fetchPool(canonicalPumpPoolPda(new PublicKey(mint))).catch(() => null);
-		if (pool?.coinCreator) row.creator = pool.coinCreator.toBase58();
+	for (const mint of mints) {
+		const b = buckets.get(mint);
+		out.set(mint, b ? { creator: b.pool?.coinCreator ?? b.creator, graduated: b.complete } : null);
 	}
 	return out;
 }
@@ -213,19 +212,47 @@ export async function readUnclaimedLamports(connection, wallet) {
 }
 
 /**
+ * SOL creator fees still on `wallet`'s coins' curves and pools (not yet swept
+ * into the vault), in lamports. Null when the cluster could not be read.
+ * @param {import('@solana/web3.js').Connection} connection
+ * @param {string} wallet
+ * @param {string[]} mints
+ * @returns {Promise<bigint | null>}
+ */
+export async function readUnsweptLamports(connection, wallet, mints) {
+	if (!mints.length) return 0n;
+	try {
+		const legs = unsweptCreatorFees((await readCreatorFeeBuckets(connection, mints)).values(), wallet);
+		const byQuote = sumByQuote(legs);
+		let total = 0n;
+		for (const [quote, amount] of byQuote) if (SOL_QUOTES.has(quote)) total += amount;
+		return total;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * One wallet's full creator-fee report: lifetime total, unclaimed, derived
  * claimed. `ok: false` when pump.fun could not answer (the caller keeps its last
  * good figure). `unclaimed_lamports` is null when the cluster read failed; the
  * report is still good, claimed is then unknown.
  *
+ * Pass the wallet's coins as `mints` so unclaimed also counts the fees v3 and
+ * PumpSwap v2 trades left on their curves and pools: they are earned and not
+ * yet collected, and without them every such lamport would read as claimed.
+ *
  * @param {import('@solana/web3.js').Connection} connection
  * @param {string} wallet
+ * @param {{ mints?: string[] }} [opts]
  */
-export async function readCreatorFeeReport(connection, wallet) {
-	const [total, unclaimed] = await Promise.all([
+export async function readCreatorFeeReport(connection, wallet, { mints = [] } = {}) {
+	const [total, vault, unswept] = await Promise.all([
 		fetchCreatorFeeTotal(wallet),
 		readUnclaimedLamports(connection, wallet),
+		readUnsweptLamports(connection, wallet, mints),
 	]);
+	const unclaimed = vault == null || unswept == null ? null : vault + unswept;
 	if (!total.ok) return { ok: false, error: total.error };
 	const earned = total.value;
 	// The index can lag a fresh trade by a few seconds while the vault is live, so
