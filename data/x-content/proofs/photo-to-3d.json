@@ -1,0 +1,145 @@
+{
+	"id": "photo-to-3d",
+	"scenarioHash": "c99577fc53913d20ee39a086c87ad029695615bc0759cc1507937a398c4a5135",
+	"ranAt": "2026-10-09T18:25:03.001Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/image-to-3d",
+			"detail": "loaded https://three.ws/image-to-3d",
+			"ok": true,
+			"ms": 8474,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 4625,
+			"frames": 36
+		},
+		{
+			"index": 3,
+			"kind": "upload",
+			"target": "data/x-content/inputs/garden-gnome.jpg",
+			"detail": "uploaded data/x-content/inputs/garden-gnome.jpg; POST /api/forge-upload answered 200 in 0.3 s",
+			"ok": true,
+			"ms": 3142,
+			"frames": 21
+		},
+		{
+			"index": 4,
+			"kind": "expect",
+			"target": "1 of 6 views",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 18,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 6932,
+			"frames": 48
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "Generate",
+			"detail": "clicked; POST /api/forge answered 200 in 2.7 s",
+			"ok": true,
+			"ms": 5351,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "expect",
+			"target": "Download GLB",
+			"detail": "appeared after 178.3 s",
+			"ok": true,
+			"ms": 178323,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
+			"ok": true,
+			"ms": 35864,
+			"frames": 72
+		},
+		{
+			"index": 9,
+			"kind": "drag",
+			"target": "0.3,0.45,0.75,0.45",
+			"detail": "dragged over 54 frames",
+			"ok": true,
+			"ms": 24046,
+			"frames": 72
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "4000",
+			"detail": "4000 ms",
+			"ok": true,
+			"ms": 24370,
+			"frames": 120
+		}
+	],
+	"facts": {},
+	"saw": [
+		"1 of 6 views",
+		"Download GLB"
+	],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/forge-upload",
+			"status": 200,
+			"seconds": 0.3
+		},
+		{
+			"method": "POST",
+			"path": "/api/forge",
+			"status": 200,
+			"seconds": 2.7
+		}
+	],
+	"uploads": [
+		{
+			"path": "data/x-content/inputs/garden-gnome.jpg",
+			"sha256": "a835c0534a0f28949d9bfc5376ea86e704bd8929c35f180c32be361b2066babd"
+		}
+	],
+	"cuts": [
+		{
+			"afterStep": 7,
+			"seconds": 178.2
+		}
+	],
+	"video": {
+		"path": "public/x-media/photo-to-3d/reel.mp4",
+		"sha256": "a7f2c77f9c18365bc7b7447a235faf9c83273acd873fbe2cb8c590b2eb096329",
+		"frames": 390,
+		"motion": 0.504,
+		"durationSec": 13,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

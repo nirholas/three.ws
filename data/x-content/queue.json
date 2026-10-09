@@ -14652,6 +14652,224 @@
 				}
 			],
 			"mentions": {}
+		},
+		{
+			"id": "photo-to-3d",
+			"status": "review",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-10-10T00:00:00Z",
+			"covers": [
+				"/image-to-3d"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/image-to-3d",
+						"settle": 6000,
+						"caption": "One photo of a garden gnome"
+					},
+					{
+						"hold": 1200
+					},
+					{
+						"upload": "data/x-content/inputs/garden-gnome.jpg",
+						"into": "FRONT",
+						"awaits": "/api/forge-upload"
+					},
+					{
+						"expect": "1 of 6 views"
+					},
+					{
+						"hold": 1600
+					},
+					{
+						"click": "Generate",
+						"awaits": "/api/forge",
+						"caption": "Free: no account, no key, no GPU"
+					},
+					{
+						"expect": "Download GLB",
+						"within": 300000
+					},
+					{
+						"hold": 2400,
+						"caption": "A textured 3D model, in the browser"
+					},
+					{
+						"drag": [
+							[
+								0.3,
+								0.45
+							],
+							[
+								0.75,
+								0.45
+							]
+						],
+						"ms": 1800,
+						"caption": "Orbit it, then download the GLB"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				}
+			],
+			"posts": [
+				{
+					"text": "One photo of a garden gnome went in, and a textured 3D model came out, built in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
+					"media": [
+						{
+							"path": "public/x-media/photo-to-3d/reel.mp4",
+							"probe": {
+								"durationSec": 13,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what is actually there.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen."
+				},
+				{
+					"text": "The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or retopologize it to a poly budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
+				}
+			],
+			"claims": [
+				{
+					"says": "One photo of a garden gnome went in, and a textured 3D model came out",
+					"evidence": [
+						{
+							"type": "proof",
+							"responded": "/api/forge-upload"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/forge"
+						},
+						{
+							"type": "proof",
+							"saw": "Download GLB"
+						}
+					]
+				},
+				{
+					"says": "It is free, with no sign-up and no API key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Free · no sign-up · yours to download"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Engines marked FREE run with no key"
+						},
+						{
+							"type": "proof",
+							"responded": "/api/forge"
+						}
+					]
+				},
+				{
+					"says": "The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Engines marked FREE run with no key: NVIDIA-hosted generation plus our own self-hosted GPU workers"
+						}
+					]
+				},
+				{
+					"says": "orbit it and download the GLB",
+					"evidence": [
+						{
+							"type": "proof",
+							"saw": "Download GLB"
+						}
+					]
+				},
+				{
+					"says": "Photo mode takes up to 6 views of the same object",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Photo mode accepts up to 6 views for multi-view reconstruction"
+						},
+						{
+							"type": "proof",
+							"saw": "1 of 6 views"
+						}
+					]
+				},
+				{
+					"says": "a second or third angle",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Photo mode accepts up to 6 views for multi-view reconstruction"
+						}
+					]
+				},
+				{
+					"says": "view it in AR in your own room",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "View this model in AR, placed in your room"
+						}
+					]
+				},
+				{
+					"says": "split it into selectable parts",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Split this model into selectable parts"
+						}
+					]
+				},
+				{
+					"says": "retopologize it to a poly budget and export an engine-ready GLB and FBX",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "Retopologize to a poly budget and export an engine-ready GLB + FBX"
+						}
+					]
+				},
+				{
+					"says": "the same pipeline is available to agents over MCP",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/image-to-3d",
+							"contains": "The same pipeline is available to agents over MCP"
+						}
+					]
+				}
+			],
+			"mentions": {}
 		}
 	]
 }
