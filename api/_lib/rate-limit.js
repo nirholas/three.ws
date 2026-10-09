@@ -851,6 +851,13 @@ export const limits = {
 	// distinct override gets its own isolated bucket under the rl:api:ip prefix.
 	apiIp: (ip, opts = {}) =>
 		getLimiter('api:ip', { limit: 120, window: '1 m', ...opts }).limit(ip),
+	// The Crawl (api/crawl/[action].js). Frames are fetched once per step per tile
+	// by every viewer of /crawl, so that bucket stays in per-instance memory rather
+	// than spending a Redis command per JPEG; it guards against floods, not spend.
+	// Reads are the stats/crawlers/pages/live lane; missions are the owner write.
+	crawlFrameIp: (ip) => getLimiter('crawl:frame:ip', { limit: 900, window: '1 m', local: true }).limit(ip),
+	crawlReadIp: (ip) => getLimiter('crawl:read:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	crawlMissionIp: (ip) => getLimiter('crawl:mission:ip', { limit: 30, window: '10 m' }).limit(ip),
 	// Free, unauthenticated 3D Studio (api/mcp-studio.js) abuse protection. Every
 	// studio tool routes through a FREE lane (NVIDIA NIM text→3D, HF Spaces
 	// image→3D) — zero marginal vendor cost — because the studio never names the

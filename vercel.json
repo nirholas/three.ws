@@ -1663,6 +1663,10 @@
 			"dest": "/rig-doctor.html"
 		},
 		{
+			"src": "/crawl/?",
+			"dest": "/crawl.html"
+		},
+		{
 			"src": "/avatar-artifact/?",
 			"dest": "/avatar-artifact.html"
 		},
@@ -3931,6 +3935,42 @@
 		{
 			"src": "/api/agent-screen-active",
 			"dest": "/api/agent-screen-active.js"
+		},
+		{
+			"src": "/api/crawl/stats",
+			"dest": "/api/crawl/[action]?action=stats"
+		},
+		{
+			"src": "/api/crawl/crawlers",
+			"dest": "/api/crawl/[action]?action=crawlers"
+		},
+		{
+			"src": "/api/crawl/live",
+			"dest": "/api/crawl/[action]?action=live"
+		},
+		{
+			"src": "/api/crawl/frame",
+			"dest": "/api/crawl/[action]?action=frame"
+		},
+		{
+			"src": "/api/crawl/pages",
+			"dest": "/api/crawl/[action]?action=pages"
+		},
+		{
+			"src": "/api/crawl/mission",
+			"dest": "/api/crawl/[action]?action=mission"
+		},
+		{
+			"src": "/api/crawl/mine",
+			"dest": "/api/crawl/[action]?action=mine"
+		},
+		{
+			"src": "/api/crawl/roster",
+			"dest": "/api/crawl/[action]?action=roster"
+		},
+		{
+			"src": "/api/crawl/push",
+			"dest": "/api/crawl/[action]?action=push"
 		},
 		{
 			"src": "/api/agent-task",
