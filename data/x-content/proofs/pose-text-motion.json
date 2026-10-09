@@ -1,0 +1,80 @@
+{
+	"id": "pose-text-motion",
+	"scenarioHash": "642c4de8362dbbb269025bcfb0e17ceb863c6e6a8e978cfa262bae2916fa8ae9",
+	"ranAt": "2026-10-09T17:08:16.547Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/pose?src=/avatars/michelle.glb&title=Michelle&anim=idle",
+			"detail": "loaded https://three.ws/pose?src=/avatars/michelle.glb&title=Michelle&anim=idle",
+			"ok": true,
+			"ms": 16445,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "expect",
+			"target": "Playing",
+			"detail": "appeared after 3.4 s",
+			"ok": true,
+			"ms": 3357,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 87023,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "type",
+			"target": "a person does jumping jacks",
+			"detail": "typed 27 characters",
+			"ok": true,
+			"ms": 118277,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "click",
+			"target": "Generate",
+			"detail": "clicked; POST /api/forge-motion answered 202 in 1.6 s",
+			"ok": true,
+			"ms": 35273,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "expect",
+			"target": "Playing “a person does jumping jacks",
+			"ok": false,
+			"detail": "locator.waitFor: Timeout 150000ms exceeded.",
+			"ms": 153442,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [
+		"Playing"
+	],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/forge-motion",
+			"status": 202,
+			"seconds": 1.6
+		}
+	],
+	"cuts": [],
+	"video": null
+}

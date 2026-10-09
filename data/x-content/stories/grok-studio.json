@@ -1,0 +1,296 @@
+{
+	"id": "grok-studio",
+	"status": "draft",
+	"kind": "post",
+	"tier": 1,
+	"lane": "community",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/grok",
+		"/docs/grok",
+		"/api/mcp-grok",
+		"/grok-skill.md"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/grok",
+				"settle": 7000
+			},
+			{
+				"hold": 2200,
+				"caption": "One sentence gives Grok Bot a 3D studio"
+			},
+			{
+				"scroll": "Made on three.ws, just now",
+				"ms": 1000,
+				"caption": "Models made on the free studio Grok calls"
+			},
+			{
+				"hold": 2000
+			},
+			{
+				"scroll": "What Grok gets",
+				"ms": 1000,
+				"caption": "The tool list is read live from the server"
+			},
+			{
+				"read": "tools",
+				"match": "(\\d+) tools, all free"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"scroll": "Three jobs to hand Grok",
+				"ms": 1000,
+				"caption": "Each job names the tools it calls, in order"
+			},
+			{
+				"hold": 2000
+			},
+			{
+				"scroll": "Set it up anywhere Grok runs",
+				"ms": 1000,
+				"caption": "The same URL for Grok Bot and the xAI API"
+			},
+			{
+				"click": "xAI API"
+			},
+			{
+				"hold": 2600
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the free Grok server still lists the 15 tools the post counts",
+			"url": "https://three.ws/api/mcp-grok",
+			"method": "POST",
+			"body": {
+				"jsonrpc": "2.0",
+				"id": 2,
+				"method": "tools/list"
+			},
+			"expect": {
+				"json": {
+					"path": "result.tools.length",
+					"equals": 15
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "Grok Bot can make 3D now. One sentence adds the free studio at three.ws/grok as a custom MCP server, with no account and no key, and from then on text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.\n\nGrok Bot runs on its own cloud computer, so a render that takes minutes on a cold GPU never hangs a task: every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\n\nThe 15 tools behind it are read live from the server's tools/list. Every 3D generation lane runs on @nvidia silicon; we are a member of NVIDIA Inception.",
+			"media": [
+				{
+					"path": "public/x-media/grok-studio/reel.mp4",
+					"probe": {
+						"durationSec": 15.3,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "Three jobs on the page name the tools Grok calls in order: an asset pack from the CC0 catalog, a model with a page-ready embed, and a talking persona that lip-syncs a greeting. Six tested recipes and a skill file you can upload to Grok Skills sit beside them."
+		}
+	],
+	"claims": [
+		{
+			"says": "One sentence adds the free studio",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "that is one sentence away"
+				}
+			]
+		},
+		{
+			"says": "with no account and no key",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Free, no account, no key."
+				}
+			]
+		},
+		{
+			"says": "text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear"
+				}
+			]
+		},
+		{
+			"says": "Grok Bot runs on its own cloud computer",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Grok Bot runs on its own cloud computer"
+				}
+			]
+		},
+		{
+			"says": "a render that takes minutes on a cold GPU never hangs a task",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Never hangs a task"
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "A render can take minutes on a cold GPU."
+				}
+			]
+		},
+		{
+			"says": "every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Every call answers within 40 seconds, with the model or a job id, and Grok collects it with check_job."
+				}
+			]
+		},
+		{
+			"says": "Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours."
+				}
+			]
+		},
+		{
+			"says": "15 tools",
+			"evidence": [
+				{
+					"type": "proof",
+					"fact": "tools",
+					"equals": "15"
+				}
+			]
+		},
+		{
+			"says": "read live from the server's tools/list",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Read live from the server's tools/list"
+				}
+			]
+		},
+		{
+			"says": "Every 3D generation lane runs on @nvidia silicon",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/partners",
+					"contains": "Every 3D generation lane already runs on NVIDIA silicon"
+				}
+			]
+		},
+		{
+			"says": "we are a member of NVIDIA Inception",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/partners",
+					"contains": "three.ws is a member of NVIDIA Inception"
+				}
+			]
+		},
+		{
+			"says": "Three jobs on the page name the tools Grok calls in order",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Each one names the tools Grok calls, in order."
+				}
+			]
+		},
+		{
+			"says": "an asset pack from the CC0 catalog",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Ten ready-made props for a game jam."
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Thousands of ready-made CC0 props"
+				}
+			]
+		},
+		{
+			"says": "a model with a page-ready embed",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "A textured model with a link and a page-ready embed."
+				}
+			]
+		},
+		{
+			"says": "a talking persona that lip-syncs a greeting",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "A rigged character that lip-syncs a greeting."
+				}
+			]
+		},
+		{
+			"says": "Six tested recipes",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Six tested recipes"
+				}
+			]
+		},
+		{
+			"says": "a skill file you can upload to Grok Skills",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/grok",
+					"contains": "Upload it to Grok Skills"
+				}
+			]
+		}
+	],
+	"mentions": {
+		"@nvidia": "the free 3D generation lanes behind the Grok connector run on NVIDIA GPUs, and three.ws is a member of NVIDIA Inception, as /partners states"
+	}
+}

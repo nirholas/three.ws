@@ -1,11 +1,11 @@
 {
 	"id": "docs-world",
-	"contentHash": "ff72e0aff1445d80640ba694802a26c521f2ee515ae7930a08c5820e338376a8",
-	"reviewedAt": "2026-10-01T06:50:23.721Z",
+	"contentHash": "845d3f6cee792f9b02c9fe838a8d4bd0fb8660a65a48bb2511aca7f4b0b75a86",
+	"reviewedAt": "2026-10-09T17:13:41.808Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+		"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 16 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 		"Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
 	],
 	"lint": [],
@@ -17,7 +17,7 @@
 				"kind": "evidence:proof",
 				"target": "pages",
 				"ok": true,
-				"detail": "the run read pages = \"306\", at least 300"
+				"detail": "the run read pages = \"313\", at least 300"
 			},
 			{
 				"claim": "you read them by walking up to them",
@@ -34,11 +34,11 @@
 				"detail": "live page shows \"Every section of the sidebar is a glowing pavilion on a ring\""
 			},
 			{
-				"claim": "15 in all",
+				"claim": "16 in all",
 				"kind": "evidence:proof",
 				"target": "pavilions",
 				"ok": true,
-				"detail": "the run read pavilions = \"15\""
+				"detail": "the run read pavilions = \"16\""
 			},
 			{
 				"claim": "Search a page from wherever you stand",
@@ -128,11 +128,11 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "19 steps passed against the live product, every claimed fact still holds (pages 307, pavilions 15)"
+				"detail": "19 steps passed against the live product, every claimed fact still holds (pages 313, pavilions 16)"
 			},
 			{
 				"kind": "probe:api",
-				"target": "the docs index still holds the 15 sections the post counts",
+				"target": "the docs index still holds the 16 sections the post counts",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
@@ -150,19 +150,19 @@
 			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
-			"voice": 4,
+			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
 		"issues": [],
 		"rewrite": {
 			"posts": [
-				"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+				"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 16 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 				"Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
 			],
 			"altText": []
 		},
-		"summary": "Every claim in the post is backed by a passing verification against the live page, the source file, or the filmed run, and the reel frames show exactly what the copy describes, including the 15 pavilions, the search palette, the chevron trail, and the real page opening in scene. The voice is clean, the link resolves, and there is nothing blocking.",
+		"summary": "Every factual claim is verified against the live page, the filmed run (313 pages, 16 pavilions), and the wayfinder source, and the reel frames match each caption exactly, including the readable Forge page opening in-scene. The copy obeys the voice contract, opens on the mechanism, tags no one, and links the surface once, so it ships unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

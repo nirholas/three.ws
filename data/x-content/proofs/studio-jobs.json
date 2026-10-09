@@ -1,0 +1,103 @@
+{
+	"id": "studio-jobs",
+	"scenarioHash": "c9752c45628c6da52360e3cd4e308816ba00fc11d243bad2fe8b6e6130412d03",
+	"ranAt": "2026-10-09T17:18:50.242Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
+			"detail": "loaded https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
+			"ok": true,
+			"ms": 6098,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 19664,
+			"frames": 78
+		},
+		{
+			"index": 3,
+			"kind": "scroll",
+			"target": "620",
+			"detail": "scrolled 620 px",
+			"ok": true,
+			"ms": 16409,
+			"frames": 60
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 17938,
+			"frames": 66
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "700",
+			"detail": "scrolled 700 px",
+			"ok": true,
+			"ms": 16676,
+			"frames": 60
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 18704,
+			"frames": 66
+		},
+		{
+			"index": 7,
+			"kind": "goto",
+			"target": "https://three.ws/docs/mcp-studio#any-mcp-client",
+			"detail": "loaded https://three.ws/docs/mcp-studio#any-mcp-client",
+			"ok": true,
+			"ms": 3068,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 5505,
+			"frames": 36
+		},
+		{
+			"index": 9,
+			"kind": "click",
+			"target": "Send POST",
+			"ok": false,
+			"detail": "nothing visible matches \"Send POST\"",
+			"ms": 12519,
+			"frames": 61
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [
+		{
+			"afterStep": 7,
+			"seconds": 3
+		}
+	],
+	"video": null
+}

@@ -1,0 +1,81 @@
+{
+	"id": "forged-receipts",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "number",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/forged"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/forged",
+				"settle": 7000
+			},
+			{
+				"read": "props",
+				"match": "([\\d,]+) props forged"
+			},
+			{
+				"read": "usdc",
+				"match": "\\$([\\d.]+) USDC settled"
+			},
+			{
+				"scroll": "props forged",
+				"ms": 900,
+				"caption": "Every prop here was bought by an AI agent"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"click": "Furniture",
+				"caption": "Filter by what the agents asked for"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"scroll": 420,
+				"ms": 1200,
+				"caption": "Price paid, paying wallet, Solana receipt"
+			},
+			{
+				"hold": 3200
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		}
+	],
+	"posts": [
+		{
+			"text": "placeholder head",
+			"media": [
+				{
+					"path": "public/x-media/forged-receipts/reel.mp4",
+					"probe": {
+						"durationSec": 9.6,
+						"width": 1080,
+						"height": 1080,
+						"fps": 30,
+						"videoCodec": "h264",
+						"pixFmt": "yuv420p"
+					},
+					"reel": true
+				}
+			]
+		},
+		{
+			"text": "placeholder reply three.ws/forged"
+		}
+	],
+	"claims": [],
+	"mentions": {}
+}

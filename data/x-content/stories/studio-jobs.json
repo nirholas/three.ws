@@ -1,0 +1,230 @@
+{
+	"id": "studio-jobs",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "correction",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/docs/mcp-studio",
+		"/api/mcp-studio",
+		"/mcp-tools"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
+				"settle": 5000
+			},
+			{
+				"hold": 2600,
+				"caption": "get_job answers with status alone"
+			},
+			{
+				"scroll": 620,
+				"ms": 2000
+			},
+			{
+				"hold": 2200,
+				"caption": "Polling never starts work or spends quota"
+			},
+			{
+				"scroll": 700,
+				"ms": 2000
+			},
+			{
+				"hold": 2200,
+				"caption": "Same key within 24 hours, same job"
+			},
+			{
+				"goto": "https://three.ws/docs/mcp-studio#any-mcp-client",
+				"settle": 3000
+			},
+			{
+				"hold": 1200,
+				"caption": "The tools/list call, run from the page"
+			},
+			{
+				"click": "Send POST"
+			},
+			{
+				"click": "Confirm POST",
+				"awaits": "/api/mcp-studio",
+				"within": 20000
+			},
+			{
+				"expect": "200 OK",
+				"within": 20000
+			},
+			{
+				"read": "status",
+				"match": "(200) OK",
+				"selector": ".dlive-chip"
+			},
+			{
+				"read": "tool",
+				"match": "\"name\":\\s*\"(get_job)\"",
+				"selector": ".dlive-out code"
+			},
+			{
+				"hold": 3000,
+				"caption": "Live answer: the tool list, get_job included"
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/mcp-studio",
+			"method": "POST",
+			"body": {
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "tools/list"
+			},
+			"expect": {
+				"status": 200,
+				"contains": "\"get_job\""
+			}
+		},
+		{
+			"type": "api",
+			"url": "https://three.ws/api/mcp-studio",
+			"method": "POST",
+			"body": {
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "tools/list"
+			},
+			"expect": {
+				"status": 200,
+				"contains": "\"idempotency_key\""
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "A timed-out 3D job on the free 3D Studio MCP no longer means a second generation. Pass an idempotency_key on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar or refine_model, and the same key with the same arguments within 24 hours gets the original job back, pending or finished, marked replayed: true. get_job answers with status alone (queued, running, done, failed, not_found or unknown) plus progress and eta_seconds, and it never starts work or consumes generation quota.",
+			"media": "reel"
+		},
+		{
+			"text": "Send a progressToken and the call streams a notifications/progress event each time the job moves, a whole percent that only rises, then the final result. Clients that send no token get the single JSON response, unchanged. Docs, with the tools/list request you can run from the page: three.ws/docs/mcp-studio"
+		}
+	],
+	"claims": [
+		{
+			"says": "no longer means a second generation",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "retry a timed-out call without starting a second generation"
+				}
+			]
+		},
+		{
+			"says": "Pass an idempotency_key on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar or refine_model",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "idempotency_key is an optional argument on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar and refine_model."
+				},
+				{
+					"type": "proof",
+					"responded": "POST /api/mcp-studio 200"
+				}
+			]
+		},
+		{
+			"says": "the same key with the same arguments within 24 hours gets the original job back, pending or finished, marked replayed: true",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "sending the same key with the same arguments within 24 hours gets the original job back instead of a new generation: a pending job comes back with its current state (or the finished model once it lands), and the result carries \"idempotency\": { \"key\": \"…\", \"replayed\": true }"
+				}
+			]
+		},
+		{
+			"says": "get_job answers with status alone (queued, running, done, failed, not_found or unknown) plus progress and eta_seconds",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "reshaped so a client branches on status alone. Every field is present in every state."
+				},
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "status, progress, eta_seconds, asset links when done, error and remedy when failed"
+				},
+				{
+					"type": "proof",
+					"fact": "tool",
+					"equals": "get_job"
+				}
+			]
+		},
+		{
+			"says": "it never starts work or consumes generation quota",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "get_job never starts work and does not consume generation quota, so a client can poll it on a schedule."
+				}
+			]
+		},
+		{
+			"says": "Send a progressToken and the call streams a notifications/progress event each time the job moves, a whole percent that only rises, then the final result",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "a notifications/progress event each time the job reports movement (progress a whole percent that only rises, total: 100, message such as Rendering, about 22s left), then the final JSON-RPC result as the last event"
+				}
+			]
+		},
+		{
+			"says": "Clients that send no token get the single JSON response, unchanged",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "Clients that send no token, or do not accept an event stream, get the ordinary single JSON response, unchanged."
+				}
+			]
+		},
+		{
+			"says": "the tools/list request you can run from the page",
+			"evidence": [
+				{
+					"type": "proof",
+					"saw": "Send POST"
+				},
+				{
+					"type": "proof",
+					"fact": "status",
+					"equals": "200"
+				}
+			]
+		},
+		{
+			"says": "free 3D Studio MCP",
+			"evidence": [
+				{
+					"type": "page",
+					"url": "https://three.ws/docs/mcp-studio",
+					"contains": "A free, non-crypto MCP server that turns a text prompt or an image into an"
+				}
+			]
+		}
+	],
+	"mentions": {}
+}

@@ -1,0 +1,114 @@
+{
+	"id": "changelog-feed",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "community",
+	"pattern": "number",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": ["/changelog", "api/cron/changelog-push.js"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/changelog", "settle": 6000 },
+			{ "hold": 2000, "caption": "Everything shipped, newest first" },
+			{ "read": "total", "match": "of ([\\d,]+) shown" },
+			{ "click": "docs", "caption": "Filter by the kind of change" },
+			{ "hold": 1600 },
+			{ "scroll": 700, "ms": 1800, "caption": "Each entry has its own permalink" },
+			{ "hold": 1500 },
+			{ "scroll": -1400, "ms": 1600, "caption": "Follow it by RSS or JSON feed" },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the public JSON feed still holds more than the 3,800 entries the post counts", "url": "https://three.ws/changelog.json", "expect": { "json": { "path": "entries", "min": 3800 } } },
+		{ "type": "api", "name": "an entry permalink answers", "url": "https://three.ws/changelog/2026-10-09-six-grok-bot-recipes-each-run-for-real", "expect": { "status": 200 } },
+		{ "type": "api", "name": "the RSS feed answers", "url": "https://three.ws/changelog.xml", "expect": { "status": 200, "contains": "<rss" } }
+	],
+	"posts": [
+		{
+			"text": "More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it."
+		},
+		{
+			"text": "Follow it by RSS, JSON feed or llms.txt, or filter the page by the kind of change.\n\nthree.ws/changelog"
+		}
+	],
+	"claims": [
+		{
+			"says": "More than 3,800 entries",
+			"evidence": [
+				{ "type": "proof", "fact": "total", "min": 3800 }
+			]
+		},
+		{
+			"says": "newest first",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/changelog", "contains": "newest first" }
+			]
+		},
+		{
+			"says": "each tagged launch, feature, improvement, fix, sdk, security, infra or docs",
+			"evidence": [
+				{ "type": "file", "path": "public/changelog/index.html", "contains": "const FILTERS = ['all', 'launch', 'feature', 'improvement', 'fix', 'sdk', 'security', 'infra', 'docs'];" },
+				{ "type": "file", "path": "CLAUDE.md", "contains": "tags from: feature, improvement, fix, sdk, infra, docs, security" }
+			]
+		},
+		{
+			"says": "each with its own permalink",
+			"evidence": [
+				{ "type": "file", "path": "public/changelog/index.html", "contains": "const detailUrl = `/changelog/${slugify(e.title, e.date)}`;" }
+			]
+		},
+		{
+			"says": "the launch date a page carries in the site index becomes an entry with no one writing one",
+			"evidence": [
+				{ "type": "file", "path": "scripts/build-page-index.mjs", "contains": "page launches (`added` dates) merged with" },
+				{ "type": "file", "path": "CLAUDE.md", "contains": "the `added` date in `data/pages.json` feeds the changelog automatically" }
+			]
+		},
+		{
+			"says": "Everything else a user would notice gets a written entry with a plain-language summary",
+			"evidence": [
+				{ "type": "file", "path": "CLAUDE.md", "contains": "community-readable title + summary (plain language, no commit jargon)" }
+			]
+		},
+		{
+			"says": "A job runs every 20 minutes",
+			"evidence": [
+				{ "type": "file", "path": "vercel.json", "contains": "\"path\": \"/api/cron/changelog-push\",\n\t\t\t\"schedule\": \"*/20 * * * *\"" },
+				{ "type": "file", "path": "api/cron/changelog-push.js", "contains": "Runs every 20 minutes" }
+			]
+		},
+		{
+			"says": "reads the feed baked into the running build, and posts anything new to the community Telegram channel",
+			"evidence": [
+				{ "type": "file", "path": "api/cron/changelog-push.js", "contains": "Reads the changelog feed baked into the running" },
+				{ "type": "file", "path": "api/cron/changelog-push.js", "contains": "posts anything new to the community Telegram channel" },
+				{ "type": "file", "path": "api/cron/changelog-push.js", "contains": "Telegram gets every entry." }
+			]
+		},
+		{
+			"says": "an entry goes out shortly after the deploy that shipped it",
+			"evidence": [
+				{ "type": "file", "path": "api/cron/changelog-push.js", "contains": "entries go out shortly after the" }
+			]
+		},
+		{
+			"says": "Follow it by RSS, JSON feed or llms.txt",
+			"evidence": [
+				{ "type": "page", "url": "https://three.ws/changelog", "contains": "RSS" },
+				{ "type": "page", "url": "https://three.ws/changelog", "contains": "JSON feed" },
+				{ "type": "page", "url": "https://three.ws/changelog", "contains": "llms.txt" }
+			]
+		},
+		{
+			"says": "filter the page by the kind of change",
+			"evidence": [
+				{ "type": "file", "path": "public/changelog/index.html", "contains": "const FILTERS = ['all', 'launch', 'feature', 'improvement', 'fix', 'sdk', 'security', 'infra', 'docs'];" }
+			]
+		}
+	],
+	"mentions": {}
+}

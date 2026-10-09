@@ -1,0 +1,32 @@
+{
+	"id": "club-alley",
+	"status": "draft",
+	"kind": "post",
+	"tier": 1,
+	"lane": "token",
+	"pattern": "clip",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": ["/club"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/club", "settle": 12000 },
+			{ "hold": 2200, "caption": "A line outside the club. Real avatars." },
+			{ "drag": [[0.72, 0.5], [0.58, 0.5]], "ms": 1400, "caption": "Drag to look. The line is talking." },
+			{ "hold": 1200 },
+			{ "press": "w", "hold": 1800, "caption": "Walk to the door. The line notices you." },
+			{ "expect": "Wallet out when you are ready", "within": 15000, "film": true },
+			{ "caption": "The bouncer quotes the cover: one cent." },
+			{ "hold": 2600 },
+			{ "caption": "He reads the paying wallet on-chain." },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [{ "type": "scenario" }],
+	"posts": [
+		{ "text": "placeholder" },
+		{ "text": "placeholder three.ws/club" }
+	],
+	"claims": [],
+	"mentions": {}
+}

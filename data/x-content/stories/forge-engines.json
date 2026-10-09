@@ -1,0 +1,123 @@
+{
+	"id": "forge-engines",
+	"status": "draft",
+	"kind": "post",
+	"tier": 1,
+	"lane": "labs",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": [
+		"/forge",
+		"/forge-studio",
+		"workers/model-trellis2"
+	],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{
+				"goto": "https://three.ws/forge",
+				"settle": 6000,
+				"caption": "Four free lanes, no key, in text mode"
+			},
+			{
+				"read": "standard",
+				"match": "(Standard · Free · usually ~\\d+s)"
+			},
+			{
+				"hold": 1800
+			},
+			{
+				"click": {
+					"selector": "button[data-tier=\"draft\"]"
+				},
+				"caption": "Each tier shows its live estimate"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"read": "draft",
+				"match": "(Draft · Free · usually ~\\d+s)"
+			},
+			{
+				"click": "TRELLIS",
+				"caption": "Our own TRELLIS worker, selected"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"click": "NVIDIA",
+				"caption": "The free NIM lane: the safety net"
+			},
+			{
+				"hold": 1600
+			},
+			{
+				"click": "From a sketch",
+				"caption": "A sketch gets its own free lane"
+			},
+			{
+				"hold": 1200
+			},
+			{
+				"read": "sketch",
+				"match": "((?:Draft|Standard) · Free · usually ~\\d+s · up to [\\d,]+ polygons)"
+			},
+			{
+				"hold": 2400
+			}
+		]
+	},
+	"probes": [
+		{
+			"type": "scenario"
+		},
+		{
+			"type": "api",
+			"name": "the free NVIDIA NIM lane reports ok",
+			"url": "https://three.ws/api/forge?health=1",
+			"expect": {
+				"status": 200,
+				"json": {
+					"path": "backends.nvidia.status",
+					"equals": "ok"
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the self-host TRELLIS worker reports ok",
+			"url": "https://three.ws/api/forge?health=1",
+			"expect": {
+				"json": {
+					"path": "backends.trellis_selfhost.status",
+					"equals": "ok"
+				}
+			}
+		},
+		{
+			"type": "api",
+			"name": "the catalog marks the NVIDIA lane free",
+			"url": "https://three.ws/api/forge?catalog=1",
+			"expect": {
+				"json": {
+					"path": "backends.0.free",
+					"equals": true
+				}
+			}
+		}
+	],
+	"posts": [
+		{
+			"text": "placeholder"
+		},
+		{
+			"text": "placeholder three.ws/forge"
+		}
+	],
+	"claims": [],
+	"mentions": {
+		"@nvidia": "the free NIM lane behind the forge and the self-hosted TRELLIS and Hunyuan3D workers run on NVIDIA GPUs; three.ws is an NVIDIA Inception member"
+	}
+}

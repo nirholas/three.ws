@@ -1,11 +1,10 @@
 {
 	"id": "holo-material-article",
-	"contentHash": "82add87cfae43ed4c3b5cca79f504b5bd5782659c78b964208569d2501469a54",
-	"reviewedAt": "2026-10-08T04:34:09.953Z",
+	"contentHash": "a68b32512a6a3958930dd1109933fe9decbf6c8bd73868ed68504ffcc2dac605",
+	"reviewedAt": "2026-10-09T17:21:58.615Z",
 	"passed": false,
 	"blockers": [
-		"evidence:file src/holo.js: file does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\"",
-		"editor verdict is revise"
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"Request had insufficient authentication scopes.\",; \"status\": \"PERMISSION_DENIED\",; \"details\": [; {; \"@type\": \"type.googleapis.com/goog; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; editor returned no JSON object"
 	],
 	"texts": [
 		"How a holographic sticker is cut, lit and peeled in the browser, with no image files",
@@ -13,7 +12,7 @@
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "with no image files",
@@ -586,8 +585,22 @@
 				"claim": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
 				"kind": "evidence:file",
 				"target": "src/holo.js",
-				"ok": false,
-				"detail": "file does not contain \"peelUniforms.uRadius.value = 0.17 + amount * 0.18;\""
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel",
+				"kind": "evidence:file",
+				"target": "src/holo.js",
+				"ok": true,
+				"detail": "file supports the claim"
 			},
 			{
 				"claim": "The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent",
@@ -728,90 +741,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "revise",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 4,
-			"specificity": 5,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 4
-		},
-		"issues": [
-			{
-				"severity": "major",
-				"area": "voice",
-				"quote": "Each step, with the code's own numbers, from the cut to the vertex-shader peel.",
-				"problem": "The post carries no link. The house contract requires one link to the surface the post is about, and for an article-format post the head must still let a reader reach the thing. The verified URL https://three.ws/holo is absent from the post text.",
-				"fix": "Append the link as its own sentence: 'The full piece and the live sticker: https://three.ws/holo'"
-			},
-			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "A die-cut foil sticker with no image behind it",
-				"problem": "The opening is a fragment and says 'no image behind it', which is accurate but abstract; a first-time reader may not grasp that 'no image behind it' means the whole sticker is computed in the browser rather than rendered from an image file. The live page wording supports saying this directly.",
-				"fix": "Recast the first line to state the mechanism plainly: the sticker's outline, foil, light and peeling corner are all computed in the browser with no image or model files, per the live page text already verified."
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"A die-cut foil sticker with no image behind it: the mark is drawn into a 640 pixel canvas, grown by a 28 pixel disc the way a cutter adds a margin, traced back into outlines with marching squares, and lit by a thin film 120 to 480 nanometres thick. Each step, with the code's own numbers, from the cut to the vertex-shader peel. The full piece and the live sticker: https://three.ws/holo"
-			],
-			"altText": [
-				"A die-cut holographic foil sticker of three slanted bars floating on black, tilted toward the viewer, its rim shifting from green to violet and its top corner curling up where it peels, rendered live on the three.ws Holo Sticker page"
-			]
-		},
-		"summary": "The copy is accurate, specific, and in voice: every number in the post text (640, 28, marching squares, 120 to 480) passed verification against the code and the live page. The one fix needed is the missing link to three.ws/holo, which the house contract requires; the failed radius verification affects only an article-body sentence, not this post.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": [
-			"claims: claim \"Type a word of up to 16 characters into the sticker page and it comes back as a die-cut foil sticker\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"holes inside the letters\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"No image or model file is downloaded to draw it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the code that does all of it is one file of under 800 lines\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Everything starts as white pixels on a 640 by 640 canvas that stays off screen\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Text is set at weight 900, starting at 36% of the canvas height and shrunk until it fits inside a 10% margin\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The default mark is three slanted bars, and each slant is 45 degrees so the notches between the bars come out crisp\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"it stamps the mark 48 times around a circle of radius 28 pixels, which is 4.4% of the canvas, and once more in the centre\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"shapes that sit closer than twice that radius merge into one backing\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"counts a pixel as inside when it is over half opaque, and walks the image in 2 by 2 cells\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Each cell is one of 16 cases\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The code fixes one pairing, so each edge midpoint touches exactly two segments and stitching a loop together cannot fork\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"smoothed with three rounds of corner cutting, which replaces each edge with points at a quarter and three quarters of its length, and points closer than 1.4 pixels are dropped\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Loops under 30 square pixels are thrown away as specks\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The loops are sorted by area, and each one counts how many larger loops contain it. An even count is an outline. An odd count is a hole in the outline around it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Both sets of outlines are scaled so the cut is 3.1 units wide, with the same transform, so the mark lands exactly on its backing\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the backing 0.028 units thick with a 0.016 bevel, the mark 0.05 thick with a 0.02 bevel, raised just above it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A last pass bows the whole sheet with three sine waves, the tallest 0.038 units high, and tilts the normals to match\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"that slight bow is what smears the reflections into gradients across each face\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Both surfaces use a physical material that is fully metallic, with a clear coat on top\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The backing's film has an index of 1.32 and a thickness range of 120 to 480 nanometres\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The raised mark uses 1.28 and 140 to 860\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A 256 pixel noise texture roughens both surfaces slightly\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"That light is painted when the page loads, into a 1024 by 512 canvas\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"soft colour blobs at eight fixed positions, blended additively so overlaps run toward white the way stage lights do, plus three white bands\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The canvas is then blurred ahead of time at several strengths, so rough surfaces reflect a softer version of it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The rainbow and neon foils run iridescence at full strength, gold at 0.35 and chrome at 0.18\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Switching foil swaps the light and the numbers and leaves the geometry alone\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The blobs sit in fixed places, so a reload gives you the same sticker\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Before the material compiles, the page injects a few lines into its vertex shader\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A fold line runs at 45 degrees across one corner, and each vertex past it is wrapped around a virtual cylinder\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the angle is the vertex's distance past the fold divided by the radius, capped at 1.22 half turns, about 220 degrees, after which the sticker carries on straight\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The radius grows as you peel, from 0.17 units at rest by another 0.18 at full peel\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The normals are rotated through the same angle, so the light on the curled lip is computed for the surface as it is bent\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The corner rests at 30% and breathes by 2.8% either way\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"unless your system asks for reduced motion, in which case both stop\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Tilt follows the pointer through a spring, a drag gives full control, and the stage takes focus so the arrow keys tilt it too\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"One line of text, up to 16 characters\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Download PNG saves the frame you are looking at\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Without it the page says so instead of drawing\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The sticker is at three.ws/holo\" does not appear in the copy; claims must quote the post"
-		]
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  editor returned no JSON object"
 }

@@ -1,0 +1,149 @@
+{
+	"id": "print-check",
+	"scenarioHash": "3378d0342d9fd5b902b9f39cb9ca5cbf0e1e6cecbbe91ea8db5748008914bfd4",
+	"ranAt": "2026-10-09T17:20:44.894Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/materialize?creation=f25348ec-0f5a-4bcc-a6f1-8a42967f513d",
+			"detail": "loaded https://three.ws/materialize?creation=f25348ec-0f5a-4bcc-a6f1-8a42967f513d",
+			"ok": true,
+			"ms": 10650,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "expect",
+			"target": "the analyzer flagged",
+			"detail": "appeared after 0.2 s",
+			"ok": true,
+			"ms": 185,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "score",
+			"detail": "score = \"84\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "read",
+			"target": "pieces",
+			"detail": "pieces = \"4\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "read",
+			"target": "triangles",
+			"detail": "triangles = \"30,000\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 10747,
+			"frames": 45
+		},
+		{
+			"index": 7,
+			"kind": "scroll",
+			"target": "PRINTABILITY",
+			"detail": "scrolled 615 px",
+			"ok": true,
+			"ms": 7359,
+			"frames": 30
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 21917,
+			"frames": 66
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "260",
+			"detail": "scrolled 260 px",
+			"ok": true,
+			"ms": 9055,
+			"frames": 27
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 14284,
+			"frames": 66
+		},
+		{
+			"index": 11,
+			"kind": "click",
+			"target": "Tough resin",
+			"detail": "clicked; POST /api/print/quote answered 200 in 0.3 s",
+			"ok": true,
+			"ms": 5274,
+			"frames": 21
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 12164,
+			"frames": 78
+		}
+	],
+	"facts": {
+		"score": "84",
+		"pieces": "4",
+		"triangles": "30,000"
+	},
+	"saw": [
+		"the analyzer flagged"
+	],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/print/quote",
+			"status": 200,
+			"seconds": 0.3
+		}
+	],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/print-check/reel.mp4",
+		"sha256": "ab5d5b8701df9e87c8e7948776060c61725ee2368c88358ebac4a316798a4ec9",
+		"frames": 333,
+		"motion": 0.373,
+		"durationSec": 11.1,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

@@ -1,0 +1,93 @@
+{
+	"id": "skill-md",
+	"scenarioHash": "100cabda78823990932302e1520de1b752e43eb845826ecf24a286647f198bc3",
+	"ranAt": "2026-10-09T17:20:59.402Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/docs/agent-skills",
+			"detail": "loaded https://three.ws/docs/agent-skills",
+			"ok": true,
+			"ms": 6999,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 11162,
+			"frames": 60
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "files",
+			"detail": "files = \"15\"",
+			"ok": true,
+			"ms": 5,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "The entry-point skill",
+			"detail": "scrolled 1344 px",
+			"ok": true,
+			"ms": 12472,
+			"frames": 54
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 19777,
+			"frames": 66
+		},
+		{
+			"index": 6,
+			"kind": "scroll",
+			"target": "d) Downloaded from three.ws, no clone",
+			"detail": "scrolled 1821 px",
+			"ok": true,
+			"ms": 13451,
+			"frames": 54
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "2800",
+			"detail": "2800 ms",
+			"ok": true,
+			"ms": 14661,
+			"frames": 84
+		}
+	],
+	"facts": {
+		"files": "15"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/skill-md/reel.mp4",
+		"sha256": "231a29b7853ec3b2b8ce622bfabf43092b48dae41a07894dad9c99dc8c6e59a5",
+		"frames": 318,
+		"motion": 0.347,
+		"durationSec": 10.6,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

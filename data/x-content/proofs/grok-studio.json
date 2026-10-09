@@ -1,0 +1,138 @@
+{
+	"id": "grok-studio",
+	"scenarioHash": "9af01f6cb972070812971ab3896dbd375cefde2d9aeb533572d4c2712dc33100",
+	"ranAt": "2026-10-09T17:10:06.701Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/grok",
+			"detail": "loaded https://three.ws/grok",
+			"ok": true,
+			"ms": 8631,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 19218,
+			"frames": 66
+		},
+		{
+			"index": 3,
+			"kind": "scroll",
+			"target": "Made on three.ws, just now",
+			"detail": "scrolled 1333 px",
+			"ok": true,
+			"ms": 9478,
+			"frames": 30
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 18503,
+			"frames": 60
+		},
+		{
+			"index": 5,
+			"kind": "scroll",
+			"target": "What Grok gets",
+			"detail": "scrolled 703 px",
+			"ok": true,
+			"ms": 9952,
+			"frames": 30
+		},
+		{
+			"index": 6,
+			"kind": "read",
+			"target": "tools",
+			"detail": "tools = \"15\"",
+			"ok": true,
+			"ms": 4,
+			"frames": 0
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 14009,
+			"frames": 54
+		},
+		{
+			"index": 8,
+			"kind": "scroll",
+			"target": "Three jobs to hand Grok",
+			"detail": "scrolled 1033 px",
+			"ok": true,
+			"ms": 8032,
+			"frames": 30
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 14451,
+			"frames": 60
+		},
+		{
+			"index": 10,
+			"kind": "scroll",
+			"target": "Set it up anywhere Grok runs",
+			"detail": "scrolled 502 px",
+			"ok": true,
+			"ms": 7693,
+			"frames": 30
+		},
+		{
+			"index": 11,
+			"kind": "click",
+			"target": "xAI API",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 6197,
+			"frames": 21
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 22107,
+			"frames": 78
+		}
+	],
+	"facts": {
+		"tools": "15"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/grok-studio/reel.mp4",
+		"sha256": "a9db5f8a8ae64b01cdea21f76c4c00367f71c75f3fd417ca02e544a1fb754873",
+		"frames": 459,
+		"motion": 0.312,
+		"durationSec": 15.3,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

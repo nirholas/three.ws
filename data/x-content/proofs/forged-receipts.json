@@ -1,0 +1,112 @@
+{
+	"id": "forged-receipts",
+	"scenarioHash": "a5bd2b06f79b248980bb2396078bea044defeb31b2d5d0315488503d2156a2ac",
+	"ranAt": "2026-10-09T17:08:52.096Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/forged",
+			"detail": "loaded https://three.ws/forged",
+			"ok": true,
+			"ms": 8551,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "props",
+			"detail": "props = \"281\"",
+			"ok": true,
+			"ms": 7,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "usdc",
+			"detail": "usdc = \"47.40\"",
+			"ok": true,
+			"ms": 8,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "scroll",
+			"target": "props forged",
+			"detail": "scrolled 288 px",
+			"ok": true,
+			"ms": 45429,
+			"frames": 27
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 79603,
+			"frames": 54
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "Furniture",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 21140,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 20950,
+			"frames": 54
+		},
+		{
+			"index": 8,
+			"kind": "scroll",
+			"target": "420",
+			"detail": "scrolled 420 px",
+			"ok": true,
+			"ms": 40388,
+			"frames": 36
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "3200",
+			"detail": "3200 ms",
+			"ok": true,
+			"ms": 197581,
+			"frames": 96
+		}
+	],
+	"facts": {
+		"props": "281",
+		"usdc": "47.40"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/forged-receipts/reel.mp4",
+		"sha256": "1187b6d0fa93c16519313325d4022c70b014186bd18a59f0319b43257bd56704",
+		"frames": 288,
+		"motion": 0.819,
+		"durationSec": 9.6,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

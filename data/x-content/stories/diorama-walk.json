@@ -1,0 +1,31 @@
+{
+	"id": "diorama-walk",
+	"status": "draft",
+	"kind": "post",
+	"tier": 2,
+	"lane": "labs",
+	"pattern": "mechanism",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": ["/diorama"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/diorama?id=57801ece-11a9-4103-9ab3-422f14cf6ac2", "settle": 7000 },
+			{ "scroll": 640, "ms": 1200, "caption": "A world someone spoke into being" },
+			{ "expect": "spoken into being", "within": 60000 },
+			{ "hold": 2200 },
+			{ "read": "pieces", "match": "(\\d+) pieces" },
+			{ "drag": [[0.3, 0.55], [0.7, 0.55]], "ms": 2600, "caption": "Every piece is a real forged 3D model" },
+			{ "hold": 1200 },
+			{ "drag": [[0.6, 0.45], [0.4, 0.6]], "ms": 2200, "caption": "One sentence in. A scene you can orbit." },
+			{ "hold": 2600 }
+		]
+	},
+	"probes": [{ "type": "scenario" }],
+	"posts": [
+		{ "text": "placeholder" },
+		{ "text": "placeholder three.ws/diorama" }
+	],
+	"claims": [],
+	"mentions": {}
+}

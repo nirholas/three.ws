@@ -1,0 +1,120 @@
+{
+	"id": "three-split",
+	"scenarioHash": "ddd1471bc159444e097f2ee0bd9f31c718fd42a277b38a1efb7f4f16faf1e6b0",
+	"ranAt": "2026-10-09T17:21:45.520Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/three-token",
+			"detail": "loaded https://three.ws/three-token",
+			"ok": true,
+			"ms": 22553,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "Of every $100 paid for paid compute",
+			"detail": "scrolled 66 px",
+			"ok": true,
+			"ms": 7707,
+			"frames": 48
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "2000",
+			"detail": "2000 ms",
+			"ok": true,
+			"ms": 8411,
+			"frames": 60
+		},
+		{
+			"index": 4,
+			"kind": "read",
+			"target": "treasuryCompute",
+			"detail": "treasuryCompute = \"70\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "read",
+			"target": "rewardsCompute",
+			"detail": "rewardsCompute = \"30\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "scroll",
+			"target": "Of every $100 paid for marketplace sales",
+			"detail": "scrolled 167 px",
+			"ok": true,
+			"ms": 6279,
+			"frames": 48
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 6677,
+			"frames": 54
+		},
+		{
+			"index": 8,
+			"kind": "read",
+			"target": "sellerMarket",
+			"detail": "sellerMarket = \"90\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "Of every $100 paid for spins",
+			"detail": "scrolled 336 px",
+			"ok": true,
+			"ms": 7384,
+			"frames": 48
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 6511,
+			"frames": 54
+		},
+		{
+			"index": 11,
+			"kind": "scroll",
+			"target": "Of every $100 paid for copy-trading",
+			"ok": false,
+			"detail": "page.screenshot: Target page, context or browser has been closed",
+			"ms": 3140,
+			"frames": 21
+		}
+	],
+	"facts": {
+		"treasuryCompute": "70",
+		"rewardsCompute": "30",
+		"sellerMarket": "90"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

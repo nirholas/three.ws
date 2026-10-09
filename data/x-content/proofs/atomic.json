@@ -1,0 +1,53 @@
+{
+	"id": "atomic",
+	"scenarioHash": "96fa469dac69f4786f7a5778dc385c9487051e0ae53bc05e6cbd7c97b807f25b",
+	"ranAt": "2026-10-09T17:22:38.474Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/atomic",
+			"detail": "loaded https://three.ws/atomic",
+			"ok": true,
+			"ms": 5998,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "Inspect before you sign",
+			"detail": "scrolled 674 px",
+			"ok": true,
+			"ms": 719,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "type",
+			"target": "5wfwLEDWWbZVduTGJdTtwfCygfP4Y2jRbB8UDm5nUWHd4XTt6zyAnbk4utuNsSFdrc7hrSXa2d9gkymNyqGHT69K",
+			"detail": "typed 88 characters",
+			"ok": true,
+			"ms": 1867,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "click",
+			"target": "Inspect transaction",
+			"ok": false,
+			"detail": "the caption \"This one is an x402 receipt from the Forged gallery\" does not fit the bar in this format; shorten it",
+			"ms": 404,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

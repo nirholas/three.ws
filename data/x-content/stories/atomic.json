@@ -1,0 +1,36 @@
+{
+	"id": "atomic",
+	"status": "draft",
+	"kind": "post",
+	"tier": 3,
+	"lane": "developer",
+	"pattern": "walkthrough",
+	"notBefore": "2026-10-10T00:00:00Z",
+	"covers": ["/atomic"],
+	"scenario": {
+		"format": "square",
+		"steps": [
+			{ "goto": "https://three.ws/atomic", "settle": 5000 },
+			{ "scroll": "Inspect before you sign", "ms": 900, "caption": "Paste any Solana mainnet signature" },
+			{ "type": "5wfwLEDWWbZVduTGJdTtwfCygfP4Y2jRbB8UDm5nUWHd4XTt6zyAnbk4utuNsSFdrc7hrSXa2d9gkymNyqGHT69K", "into": "Paste a transaction signature" },
+			{ "click": "Inspect transaction", "awaits": "/api/solana/atomic", "caption": "This one is an x402 receipt from the Forged gallery" },
+			{ "expect": "bytes free", "within": 30000 },
+			{ "read": "bytes", "match": "([\\d,]+) bytes" },
+			{ "read": "free", "match": "([\\d,]+) bytes free" },
+			{ "scroll": "WIRE ENVELOPE", "ms": 1000, "caption": "Where every byte goes" },
+			{ "hold": 2200 },
+			{ "scroll": 360, "ms": 1000, "caption": "Compute caps, read from where V1 keeps them" },
+			{ "hold": 3000 }
+		]
+	},
+	"probes": [
+		{ "type": "scenario" },
+		{ "type": "api", "name": "the inspector still decodes the receipt", "url": "https://three.ws/api/solana/atomic?signature=5wfwLEDWWbZVduTGJdTtwfCygfP4Y2jRbB8UDm5nUWHd4XTt6zyAnbk4utuNsSFdrc7hrSXa2d9gkymNyqGHT69K", "expect": { "json": { "path": "inspection.bytes", "equals": 333 } } }
+	],
+	"posts": [
+		{ "text": "placeholder head" },
+		{ "text": "placeholder reply three.ws/atomic" }
+	],
+	"claims": [],
+	"mentions": {}
+}

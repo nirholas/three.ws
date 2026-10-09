@@ -71,7 +71,11 @@
 			"canonicalizer",
 			"Qwen",
 			"Quicknode",
-			"Quicknode's"
+			"Quicknode's",
+			"lowerarm",
+			"Miku",
+			"SMPL",
+			"chibi"
 		],
 		"maximumLength": 1000
 	},
@@ -4229,7 +4233,7 @@
 		},
 		{
 			"id": "docs-world",
-			"status": "approved",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4336,19 +4340,19 @@
 				},
 				{
 					"type": "api",
-					"name": "the docs index still holds the 15 sections the post counts",
+					"name": "the docs index still holds the 16 sections the post counts",
 					"url": "https://three.ws/docs/nav.json",
 					"expect": {
 						"json": {
 							"path": "sections.length",
-							"equals": 15
+							"equals": 16
 						}
 					}
 				}
 			],
 			"posts": [
 				{
-					"text": "This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 15 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
+					"text": "This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 16 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 					"media": [
 						{
 							"path": "public/x-media/docs-world/reel.mp4",
@@ -4400,12 +4404,12 @@
 					]
 				},
 				{
-					"says": "15 in all",
+					"says": "16 in all",
 					"evidence": [
 						{
 							"type": "proof",
 							"fact": "pavilions",
-							"equals": "15"
+							"equals": "16"
 						}
 					]
 				},
@@ -4508,8 +4512,7 @@
 					]
 				}
 			],
-			"mentions": {},
-			"approvedBy": "policy"
+			"mentions": {}
 		},
 		{
 			"id": "drive-copilot",
@@ -9234,7 +9237,7 @@
 						{
 							"type": "file",
 							"path": "scripts/publish-lib.mjs",
-							"contains": "[major]: { tracks: `>=${major}.0.0 <${Number(major) + 1}.0.0` }"
+							"contains": "channels[String(major)] = { tracks: `>=${major}.0.0 <${major + 1}.0.0`, build: 'current' };"
 						}
 					]
 				},
@@ -10234,7 +10237,17 @@
 						{
 							"type": "file",
 							"path": "src/holo.js",
-							"contains": "peelUniforms.uRadius.value = 0.17 + amount * 0.18;"
+							"contains": "peelUniforms.uRadius.value = PEEL_RADIUS_MIN + amount * PEEL_RADIUS_GAIN;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const PEEL_RADIUS_MIN = 0.17;"
+						},
+						{
+							"type": "file",
+							"path": "src/holo.js",
+							"contains": "const PEEL_RADIUS_GAIN = 0.18;"
 						}
 					]
 				},
@@ -10414,31 +10427,61 @@
 				"/docs/mcp-studio"
 			],
 			"article": {
-				"title": "Eleven free 3D tools for Claude Code and any MCP client, from one address",
+				"title": "Fifteen free 3D tools for Claude Code and any MCP client, from one address",
 				"body": "data/x-content/articles/mcp-article.md",
 				"cover": {
 					"path": "public/x-media/mcp-article/cover.png",
-					"alt": "A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; the model is the one the look_at_model tool inspected in the session described in the article"
+					"alt": "A vintage film camera rendered in the browser 3D viewer against a dark background, seen from the front three-quarter angle with its three-lens turret, speed dial and textured olive body; it is the CC0 catalog model the look_at_model tool rendered in the session the article walks through, one of the fifteen free tools on the server"
 				}
 			},
 			"posts": [
 				{
-					"text": "Add one address to Claude Code or any MCP client and the assistant gets eleven free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
+					"text": "Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up includes a real session against the server."
 				}
 			],
 			"claims": [
 				{
-					"says": "Eleven free 3D tools",
+					"says": "Fifteen free 3D tools",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/docs/mcp-studio",
-							"contains": "All eleven are free and keyless."
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`tools/list` returns exactly **fifteen** tools"
 						},
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "`tools/list` returns exactly **eleven** tools"
+							"contains": "All fifteen are free and keyless."
+						}
+					]
+				},
+				{
+					"says": "fifteen free tools for 3D work",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`tools/list` returns exactly **fifteen** tools"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "All fifteen are free and keyless."
+						}
+					]
+				},
+				{
+					"says": "What the fifteen tools do",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`tools/list` returns exactly **fifteen** tools"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "All fifteen are free and keyless."
 						}
 					]
 				},
@@ -10458,6 +10501,36 @@
 					]
 				},
 				{
+					"says": "a search of the free asset catalog",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "### Ready-made assets (`search_catalog`, `get_catalog_item`, `get_item_source`)"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp/tools/library.js",
+							"contains": "Search every ready-made asset three.ws publishes in one call"
+						}
+					]
+				},
+				{
+					"says": "a persistent agent body that speaks",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Save a rigged model as a living, persistent agent body"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Speak a reply through a persona: lip-sync + emotion + gesture"
+						}
+					]
+				},
+				{
 					"says": "renders a model so the assistant can check its own work",
 					"evidence": [
 						{
@@ -10471,14 +10544,44 @@
 					"says": "runs an MCP server that needs no account and no API key",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/docs/mcp-studio",
-							"contains": "All eleven are free and keyless."
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| **Auth** | None"
 						},
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| **Auth** | None"
+							"contains": "All fifteen are free and keyless."
+						}
+					]
+				},
+				{
+					"says": "search a catalog of ready-made assets",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "### Ready-made assets (`search_catalog`, `get_catalog_item`, `get_item_source`)"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "Before generating anything, check whether three.ws already publishes it."
+						}
+					]
+				},
+				{
+					"says": "give the assistant a persistent body that speaks",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Save a rigged model as a living, persistent agent body"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/persona-tools.js",
+							"contains": "Speak a reply through a persona: lip-sync + emotion + gesture"
 						}
 					]
 				},
@@ -10533,7 +10636,12 @@
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| `forge_free` | Generate a 3D model from text | `prompt`, `tier?` | GLB model |"
+							"contains": "| `forge_free` | Generate a 3D model from text | `prompt`, `tier?`, `idempotency_key?` | GLB model |"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "reliably textured"
 						}
 					]
 				},
@@ -10603,7 +10711,52 @@
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
-							"contains": "| `check_job` | Check a pending 3D generation and collect it |"
+							"contains": "| `check_job` | Check a pending 3D generation | `job_id` | GLB model, or an updated pending state |"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "### Pending generations (`check_job`)"
+						}
+					]
+				},
+				{
+					"says": "get_job reports the same job as a status a script can branch on, with progress and the seconds that remain",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "**`get_job(job_id)`** is the machine-readable twin of `check_job`"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "reshaped so a client branches on `status` alone"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `get_job` | Get the status of a 3D job | `job_id` | `status`, `progress`, `eta_seconds`"
+						}
+					]
+				},
+				{
+					"says": "search the platform's free asset catalog of CC0 props, rigged characters and motion clips, read one item in full, and return paste-ready code that renders it on any site",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "the CC0 prop library, the ready-made rigged characters and the motion-clip library."
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp/tools/library.js",
+							"contains": "Read one three.ws catalog item in full by its id"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp/tools/library.js",
+							"contains": "Returns working code that renders one three.ws catalog item on any site"
 						}
 					]
 				},
@@ -10653,7 +10806,7 @@
 					]
 				},
 				{
-					"says": "The server marks look_at_model as read-only, alongside get_agent_persona",
+					"says": "The server marks five of the fifteen tools read-only: look_at_model, the three catalog tools and get_agent_persona",
 					"evidence": [
 						{
 							"type": "file",
@@ -10662,8 +10815,58 @@
 						},
 						{
 							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "three read-only tools search the same catalog as the main server's tools of the"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp/tools/library.js",
+							"contains": "annotations: READ_ANNOTATIONS,"
+						},
+						{
+							"type": "file",
 							"path": "api/_mcp-studio/persona-tools.js",
 							"contains": "const READ_ANNOTATIONS = { readOnlyHint: true"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`get_agent_persona` is a pure read (`readOnlyHint:true`,"
+						}
+					]
+				},
+				{
+					"says": "look_at_model changes nothing on the server",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "readOnlyHint: true, // renders a picture; changes nothing"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "`look_at_model` is genuinely read-only and idempotent,"
+						}
+					]
+				},
+				{
+					"says": "the four plain links that come with any model result (viewer, GLB, poster PNG and embed HTML)",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "carries a model also carries four plain, absolute links under fixed snake_case"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "- **Inspection**: `look_at_model`, for the model it rendered."
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/tools.js",
+							"contains": "const links = assetLinks({ base, glbUrl, kind: 'model' });"
 						}
 					]
 				},
@@ -10778,7 +10981,17 @@
 						{
 							"type": "file",
 							"path": "api/_mcp-studio/tools.js",
-							"contains": "viewer_url: viewerUrl(base, glbUrl),"
+							"contains": "const links = assetLinks({ base, glbUrl, kind: 'model' });"
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/asset-links.js",
+							"contains": "viewer_url: `${origin}/viewer?src=${encodeURIComponent(glb)}&title=${encodeURIComponent(label)}`,"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "| `viewer_url` | `https://three.ws/viewer?src=<glb>&title=<title>`, the interactive viewer |"
 						}
 					]
 				},
@@ -10813,12 +11026,22 @@
 					]
 				},
 				{
-					"says": "check_job never counts against it",
+					"says": "check_job and the catalog tools never count against it",
 					"evidence": [
 						{
 							"type": "file",
 							"path": "docs/mcp-studio.md",
 							"contains": "It still never counts against the generation quota."
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "The catalog tools never"
+						},
+						{
+							"type": "file",
+							"path": "docs/mcp-studio.md",
+							"contains": "count against the generation quota."
 						}
 					]
 				},
@@ -10858,27 +11081,42 @@
 					]
 				},
 				{
-					"says": "The catalog search tools live on the platform's main MCP server, which asks a full MCP client to sign in when it connects",
+					"says": "The platform's main MCP server lists the same three, but a full MCP client that connects there is sent through sign-in first",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_mcp/dispatch.js",
-							"contains": "'search_catalog',"
+							"path": "docs/mcp-studio.md",
+							"contains": "The main server at `https://three.ws/api/mcp` lists the same three tools, but a"
 						},
 						{
 							"type": "file",
-							"path": "api/_mcp/auth.js",
-							"contains": "an OAuth-capable MCP client must still receive the 401 on"
+							"path": "docs/mcp-studio.md",
+							"contains": "protocol client that connects there is sent through three.ws sign-in first,"
 						}
 					]
 				},
 				{
-					"says": "A plain JSON-RPC call to that search answers without a key",
+					"says": "With no account, the free server is where a client reaches the catalog",
 					"evidence": [
 						{
 							"type": "file",
-							"path": "api/_mcp/dispatch.js",
-							"contains": "Discovery has to work before a client signs in, or"
+							"path": "docs/mcp-studio.md",
+							"contains": "They are here because this is the server an MCP client can use with no account."
+						},
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/catalog-tools.js",
+							"contains": "This keyless server is where a client with no account reaches the"
+						}
+					]
+				},
+				{
+					"says": "the server's own instructions tell the assistant to search it before generating anything",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_mcp-studio/dispatch.js",
+							"contains": "Before generating a prop, character or animation, search_catalog(q) checks"
 						}
 					]
 				}
@@ -10886,7 +11124,7 @@
 			"probes": [
 				{
 					"type": "api",
-					"name": "the free server still lists eleven tools to a keyless client",
+					"name": "the free server still lists fifteen tools to a keyless client",
 					"url": "https://three.ws/api/mcp-studio",
 					"method": "POST",
 					"body": {
@@ -10897,7 +11135,7 @@
 					"expect": {
 						"json": {
 							"path": "result.tools.length",
-							"equals": 11
+							"equals": 15
 						}
 					}
 				},
@@ -10947,13 +11185,13 @@
 				},
 				{
 					"type": "browser",
-					"name": "the docs page says all eleven tools are free",
+					"name": "the docs page says the tools are free and keyless",
 					"steps": [
 						{
 							"goto": "https://three.ws/docs/mcp-studio"
 						},
 						{
-							"expect": "All eleven are free and keyless."
+							"expect": "are free and keyless"
 						}
 					]
 				}
@@ -10962,12 +11200,12 @@
 		},
 		{
 			"id": "proof-reels-article",
-			"status": "review",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
 			"pattern": "longform",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-09T19:04:26.396Z",
 			"covers": [],
 			"article": {
 				"title": "How our feature reels are filmed: a scripted test run against the live site",
@@ -11575,7 +11813,8 @@
 					"text": "The feature videos in this feed are scripted test runs against the live site, filmed as they run. If any step fails, there is no video and the feature is not announced. The page clock is stepped one frame at a time, 1/30 of a second each, so a heavy 3D page films smoothly on a machine with no GPU. Here is how the camera works, and what it refuses to film."
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "any-skeleton-article",
@@ -12053,12 +12292,12 @@
 		},
 		{
 			"id": "wardrobe-article",
-			"status": "review",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
 			"pattern": "longform",
-			"notBefore": "2026-10-02T00:00:00Z",
+			"notBefore": "2026-10-09T19:06:15.919Z",
 			"covers": [
 				"workers/garment-forge",
 				"/wardrobe"
@@ -12484,7 +12723,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "forge-article",

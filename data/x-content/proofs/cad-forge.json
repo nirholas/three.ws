@@ -1,0 +1,139 @@
+{
+	"id": "cad-forge",
+	"scenarioHash": "33ecd9acf6cf938c428f06a4481b8dd6492aed68c7455aac62d3135e0b579810",
+	"ranAt": "2026-10-09T17:19:44.411Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+			"detail": "loaded https://three.ws/cad/26cf0ca4-c0a4-4454-a689-7871ca77633c",
+			"ok": true,
+			"ms": 12443,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "size",
+			"detail": "size = \"75.0 × 19.0 × 90.0 mm\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "topology",
+			"detail": "topology = \"1 solid · 23 faces · 66 edges\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 16231,
+			"frames": 54
+		},
+		{
+			"index": 5,
+			"kind": "drag",
+			"target": "0.3,0.45,0.62,0.45",
+			"detail": "dragged over 66 frames",
+			"ok": true,
+			"ms": 28813,
+			"frames": 84
+		},
+		{
+			"index": 6,
+			"kind": "hold",
+			"target": "1200",
+			"detail": "1200 ms",
+			"ok": true,
+			"ms": 8972,
+			"frames": 36
+		},
+		{
+			"index": 7,
+			"kind": "click",
+			"target": "Drawing",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 4489,
+			"frames": 21
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "2200",
+			"detail": "2200 ms",
+			"ok": true,
+			"ms": 10957,
+			"frames": 66
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "Dimensions",
+			"detail": "scrolled 585 px",
+			"ok": true,
+			"ms": 4462,
+			"frames": 27
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 7782,
+			"frames": 45
+		},
+		{
+			"index": 11,
+			"kind": "scroll",
+			"target": "Files",
+			"detail": "scrolled 959 px",
+			"ok": true,
+			"ms": 5360,
+			"frames": 27
+		},
+		{
+			"index": 12,
+			"kind": "hold",
+			"target": "2600",
+			"detail": "2600 ms",
+			"ok": true,
+			"ms": 17247,
+			"frames": 78
+		}
+	],
+	"facts": {
+		"size": "75.0 × 19.0 × 90.0 mm",
+		"topology": "1 solid · 23 faces · 66 edges"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/cad-forge/reel.mp4",
+		"sha256": "20d242ac9cb85e008907ad7215f54a583d527d6b78a7372e51a41af1cc213b38",
+		"frames": 438,
+		"motion": 0.414,
+		"durationSec": 14.6,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

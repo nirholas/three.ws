@@ -1,10 +1,10 @@
 {
 	"id": "docs-world",
 	"scenarioHash": "c94f7bbc38d9168b793d5f944e52f79a7ce09e2fd7a9fb33231400a802febb17",
-	"ranAt": "2026-09-29T08:19:56.838Z",
+	"ranAt": "2026-10-09T17:01:23.066Z",
 	"target": {
-		"commit": "f2081d946",
-		"revision": "three-ws-api-00460-4j6"
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
 	},
 	"passed": true,
 	"steps": [
@@ -14,14 +14,14 @@
 			"target": "https://three.ws/docs/world",
 			"detail": "loaded https://three.ws/docs/world",
 			"ok": true,
-			"ms": 10497,
+			"ms": 11680,
 			"frames": 0
 		},
 		{
 			"index": 2,
 			"kind": "read",
 			"target": "pages",
-			"detail": "pages = \"306\"",
+			"detail": "pages = \"313\"",
 			"ok": true,
 			"ms": 1,
 			"frames": 0
@@ -32,14 +32,14 @@
 			"target": "Next →",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 4349,
+			"ms": 5887,
 			"frames": 21
 		},
 		{
 			"index": 4,
 			"kind": "read",
 			"target": "pavilions",
-			"detail": "pavilions = \"15\"",
+			"detail": "pavilions = \"16\"",
 			"ok": true,
 			"ms": 2,
 			"frames": 0
@@ -50,7 +50,7 @@
 			"target": "Skip",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 4572,
+			"ms": 5607,
 			"frames": 21
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 7682,
+			"ms": 10306,
 			"frames": 36
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "0.3,0.6,0.72,0.6",
 			"detail": "dragged over 96 frames",
 			"ok": true,
-			"ms": 26458,
+			"ms": 37860,
 			"frames": 114
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "600",
 			"detail": "600 ms",
 			"ok": true,
-			"ms": 3787,
+			"ms": 4784,
 			"frames": 18
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "Search docs",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5140,
+			"ms": 6424,
 			"frames": 21
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "forge",
 			"detail": "typed 5 characters",
 			"ok": true,
-			"ms": 7252,
+			"ms": 9183,
 			"frames": 26
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "900",
 			"detail": "900 ms",
 			"ok": true,
-			"ms": 7350,
+			"ms": 9382,
 			"frames": 27
 		},
 		{
@@ -113,16 +113,16 @@
 			"target": "Shift+Enter",
 			"detail": "pressed Shift+Enter",
 			"ok": true,
-			"ms": 1758,
+			"ms": 2041,
 			"frames": 6
 		},
 		{
 			"index": 13,
 			"kind": "expect",
 			"target": "Read now",
-			"detail": "appeared after 0.0 s",
+			"detail": "appeared after 0.1 s",
 			"ok": true,
-			"ms": 9,
+			"ms": 120,
 			"frames": 0
 		},
 		{
@@ -131,7 +131,7 @@
 			"target": "1500",
 			"detail": "1500 ms",
 			"ok": true,
-			"ms": 10023,
+			"ms": 11551,
 			"frames": 45
 		},
 		{
@@ -140,7 +140,7 @@
 			"target": "0.62,0.7,0.45,0.62",
 			"detail": "dragged over 54 frames",
 			"ok": true,
-			"ms": 16083,
+			"ms": 18579,
 			"frames": 72
 		},
 		{
@@ -149,7 +149,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 7897,
+			"ms": 13153,
 			"frames": 36
 		},
 		{
@@ -158,16 +158,16 @@
 			"target": "Read now",
 			"detail": "clicked; GET /docs/forge.md answered 200 in 0.1 s",
 			"ok": true,
-			"ms": 4108,
+			"ms": 6891,
 			"frames": 21
 		},
 		{
 			"index": 18,
 			"kind": "expect",
 			"target": "free-first engine grid",
-			"detail": "appeared after 0.1 s",
+			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 102,
+			"ms": 21,
 			"frames": 0
 		},
 		{
@@ -176,13 +176,13 @@
 			"target": "3200",
 			"detail": "3200 ms",
 			"ok": true,
-			"ms": 14171,
+			"ms": 19032,
 			"frames": 96
 		}
 	],
 	"facts": {
-		"pages": "306",
-		"pavilions": "15"
+		"pages": "313",
+		"pavilions": "16"
 	},
 	"saw": [
 		"Read now",
@@ -199,9 +199,9 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/docs-world/reel.mp4",
-		"sha256": "50dee9575ce6e3b99bce3257ceecab978346e856e37ac9633f96240726e9265d",
+		"sha256": "d59be7703de098a2dbaa92292e8b6577ca1103b4466c688bdd85d04c77d90834",
 		"frames": 560,
-		"motion": 0.998,
+		"motion": 0.996,
 		"durationSec": 18.67,
 		"width": 1280,
 		"height": 720,

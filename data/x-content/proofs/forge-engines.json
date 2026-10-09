@@ -1,0 +1,64 @@
+{
+	"id": "forge-engines",
+	"scenarioHash": "27e52bf4287cc6884ca1162f7d018afbcc77d71b122283f8d0c6add7d005cc5e",
+	"ranAt": "2026-10-09T17:22:31.189Z",
+	"target": {
+		"commit": "ec8d1d270",
+		"revision": "three-ws-api-00482-fzq"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/forge",
+			"detail": "loaded https://three.ws/forge",
+			"ok": true,
+			"ms": 7616,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "standard",
+			"detail": "standard = \"Standard · Free · usually ~60s\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 8780,
+			"frames": 54
+		},
+		{
+			"index": 4,
+			"kind": "click",
+			"target": "button[data-tier=\"draft\"]",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3181,
+			"frames": 21
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1600",
+			"ok": false,
+			"detail": "clock.runFor: Target page, context or browser has been closed",
+			"ms": 3910,
+			"frames": 27
+		}
+	],
+	"facts": {
+		"standard": "Standard · Free · usually ~60s"
+	},
+	"saw": [],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}
