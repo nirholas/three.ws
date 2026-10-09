@@ -1,0 +1,241 @@
+{
+	"id": "photo-to-3d",
+	"contentHash": "4f24f137250b185fca5afe2ff0bf05cc6eb6c0c15f06c747745f0f3bb1f42887",
+	"reviewedAt": "2026-10-09T18:45:01.110Z",
+	"passed": false,
+	"blockers": [
+		"evidence:page https://three.ws/image-to-3d: live page does not show \"View this model in AR, placed in your room\"",
+		"evidence:page https://three.ws/image-to-3d: live page does not show \"Split this model into selectable parts\"",
+		"evidence:page https://three.ws/image-to-3d: live page does not show \"Retopologize to a poly budget and export an engine-ready GLB + FBX\"",
+		"probe:scenario the filmed scenario: step 7 (expect Download GLB): locator.waitFor: Timeout 300000ms exceeded.",
+		"spelling retopologize: not a known word; add it to the queue glossary if it is correct",
+		"editor (accuracy): The live page check failed: three.ws/image-to-3d does not show the quoted AR string. A claim whose verification failed cannot ship.",
+		"editor (accuracy): The live page check failed: the quoted string is not on the page.",
+		"editor (accuracy): The live page check failed: the quoted retopology string is not on the page. The copy promises an export path the live product text does not confirm.",
+		"editor verdict is revise"
+	],
+	"texts": [
+		"One photo of a garden gnome went in, and a textured 3D model came out, built in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
+		"One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what is actually there.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen.",
+		"The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or retopologize it to a poly budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
+	],
+	"lint": [
+		{
+			"where": "reply 1",
+			"rule": "register",
+			"severity": "major",
+			"message": "\"actually\" is filler; replace it with the fact it stands in for"
+		}
+	],
+	"verification": {
+		"ok": false,
+		"checks": [
+			{
+				"claim": "One photo of a garden gnome went in, and a textured 3D model came out",
+				"kind": "evidence:proof",
+				"target": "/api/forge-upload",
+				"ok": true,
+				"detail": "POST /api/forge-upload answered 200 in 0.3 s"
+			},
+			{
+				"claim": "One photo of a garden gnome went in, and a textured 3D model came out",
+				"kind": "evidence:proof",
+				"target": "/api/forge",
+				"ok": true,
+				"detail": "POST /api/forge-upload answered 200 in 0.3 s"
+			},
+			{
+				"claim": "One photo of a garden gnome went in, and a textured 3D model came out",
+				"kind": "evidence:proof",
+				"target": "Download GLB",
+				"ok": true,
+				"detail": "the run waited for and saw \"Download GLB\""
+			},
+			{
+				"claim": "It is free, with no sign-up and no API key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "live page shows \"Free · no sign-up · yours to download\""
+			},
+			{
+				"claim": "It is free, with no sign-up and no API key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "live page shows \"Engines marked FREE run with no key\""
+			},
+			{
+				"claim": "It is free, with no sign-up and no API key",
+				"kind": "evidence:proof",
+				"target": "/api/forge",
+				"ok": true,
+				"detail": "POST /api/forge-upload answered 200 in 0.3 s"
+			},
+			{
+				"claim": "The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "live page shows \"Engines marked FREE run with no key: NVIDIA-hosted generation plus our own self-hosted GPU workers\""
+			},
+			{
+				"claim": "orbit it and download the GLB",
+				"kind": "evidence:proof",
+				"target": "Download GLB",
+				"ok": true,
+				"detail": "the run waited for and saw \"Download GLB\""
+			},
+			{
+				"claim": "Photo mode takes up to 6 views of the same object",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "live page shows \"Photo mode accepts up to 6 views for multi-view reconstruction\""
+			},
+			{
+				"claim": "Photo mode takes up to 6 views of the same object",
+				"kind": "evidence:proof",
+				"target": "1 of 6 views",
+				"ok": true,
+				"detail": "the run waited for and saw \"1 of 6 views\""
+			},
+			{
+				"claim": "a second or third angle",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "live page shows \"Photo mode accepts up to 6 views for multi-view reconstruction\""
+			},
+			{
+				"claim": "view it in AR in your own room",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": false,
+				"detail": "live page does not show \"View this model in AR, placed in your room\""
+			},
+			{
+				"claim": "split it into selectable parts",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": false,
+				"detail": "live page does not show \"Split this model into selectable parts\""
+			},
+			{
+				"claim": "retopologize it to a poly budget and export an engine-ready GLB and FBX",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": false,
+				"detail": "live page does not show \"Retopologize to a poly budget and export an engine-ready GLB + FBX\""
+			},
+			{
+				"claim": "the same pipeline is available to agents over MCP",
+				"kind": "evidence:page",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "live page shows \"The same pipeline is available to agents over MCP\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": false,
+				"detail": "step 7 (expect Download GLB): locator.waitFor: Timeout 300000ms exceeded."
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/image-to-3d",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "spelling",
+				"target": "retopologize",
+				"ok": false,
+				"detail": "not a known word; add it to the queue glossary if it is correct"
+			}
+		]
+	},
+	"editor": {
+		"verdict": "revise",
+		"scores": {
+			"accuracy": 2,
+			"clarity": 4,
+			"specificity": 4,
+			"voice": 4,
+			"professionalism": 4,
+			"visual": 3
+		},
+		"issues": [
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "view it in AR in your own room",
+				"problem": "The live page check failed: three.ws/image-to-3d does not show the quoted AR string. A claim whose verification failed cannot ship.",
+				"fix": "Remove the AR clause from post 3 and leave it out of the rewrite."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "split it into selectable parts",
+				"problem": "The live page check failed: the quoted string is not on the page.",
+				"fix": "Remove the part-splitting clause from post 3."
+			},
+			{
+				"severity": "blocking",
+				"area": "accuracy",
+				"quote": "retopologize it to a poly budget and export an engine-ready GLB and FBX",
+				"problem": "The live page check failed: the quoted retopology string is not on the page. The copy promises an export path the live product text does not confirm.",
+				"fix": "Remove the retopology and FBX clause from post 3; do not re-add until a page check against the live page passes."
+			},
+			{
+				"severity": "major",
+				"area": "accuracy",
+				"quote": "probe:scenario the filmed scenario: step 7 (expect Download GLB): locator.waitFor: Timeout 300000ms exceeded",
+				"problem": "The end-to-end scenario run timed out waiting for Download GLB, even though a separate proof check saw it. The reel's own record supports the claim, but the failing probe should be re-run before scheduling so the reel stands on a fully passing scenario.",
+				"fix": "Re-run npm run x:content -- prove for this scenario and confirm step 7 passes; if it passes, no copy change is needed."
+			},
+			{
+				"severity": "major",
+				"area": "visual",
+				"quote": "caption: A textured 3D model, in the browser (frame at 5.2 s)",
+				"problem": "That caption sits under a frame where the gnome is mostly an untextured wireframe with only patches of texture. The caption is true of the later frames, not the one it sits under.",
+				"fix": "Re-time the captions so \"A textured 3D model, in the browser\" sits under the 8.5 s or 11.7 s frame where the model is fully textured; use a caption like \"Reconstruction in progress\" for the wireframe frame."
+			},
+			{
+				"severity": "major",
+				"area": "voice",
+				"quote": "what is actually there",
+				"problem": "\"actually\" is filler; the register check flags it. Replace it with the fact it stands in for.",
+				"fix": "Replace with \"what the camera saw\"."
+			},
+			{
+				"severity": "minor",
+				"area": "professionalism",
+				"quote": "retopologize",
+				"problem": "Flagged by spelling as not a known word. It is correct domain terminology, and the clause is being removed anyway; if it returns in a future post, add the word to the queue glossary.",
+				"fix": "No copy change needed in the rewrite; add \"retopologize\" to the queue glossary."
+			}
+		],
+		"rewrite": {
+			"posts": [
+				"One photo of a garden gnome went in, and a textured 3D model came out, built in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
+				"One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen.",
+				"The result is a GLB you keep, downloaded from the same screen you made it on.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
+			],
+			"altText": []
+		},
+		"summary": "Posts 1 and 2 are accurate and on-voice, but post 3 makes three feature claims (AR in your room, split into selectable parts, retopologize with GLB and FBX export) whose verification against the live page failed, so they are removed in the rewrite. Also fix the 5.2 s caption that calls a wireframe a textured model, replace the filler \"actually\", and re-run the scenario probe that timed out before scheduling.",
+		"model": "nvidia:moonshotai/kimi-k3",
+		"fallbacks": [
+			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
+			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
+			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
+		],
+		"rewriteFindings": [
+			"claims: claim \"view it in AR in your own room\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"split it into selectable parts\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"retopologize it to a poly budget and export an engine-ready GLB and FBX\" does not appear in the copy; claims must quote the post"
+		]
+	},
+	"editorError": null
+}

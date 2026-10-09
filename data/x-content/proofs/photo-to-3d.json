@@ -1,7 +1,7 @@
 {
 	"id": "photo-to-3d",
-	"scenarioHash": "c99577fc53913d20ee39a086c87ad029695615bc0759cc1507937a398c4a5135",
-	"ranAt": "2026-10-09T18:25:03.001Z",
+	"scenarioHash": "bcf981e91c624192e75a53ac21f380b988bdc41c93350e26e66ea3c74cbb6fcb",
+	"ranAt": "2026-10-09T18:58:02.389Z",
 	"target": {
 		"commit": "ec8d1d270",
 		"revision": "three-ws-api-00482-fzq"
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/image-to-3d",
 			"detail": "loaded https://three.ws/image-to-3d",
 			"ok": true,
-			"ms": 8474,
+			"ms": 8870,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 4625,
+			"ms": 4334,
 			"frames": 36
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "data/x-content/inputs/garden-gnome.jpg",
 			"detail": "uploaded data/x-content/inputs/garden-gnome.jpg; POST /api/forge-upload answered 200 in 0.3 s",
 			"ok": true,
-			"ms": 3142,
+			"ms": 3038,
 			"frames": 21
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "1 of 6 views",
 			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 18,
+			"ms": 16,
 			"frames": 0
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 6932,
+			"ms": 7138,
 			"frames": 48
 		},
 		{
@@ -59,16 +59,16 @@
 			"target": "Generate",
 			"detail": "clicked; POST /api/forge answered 200 in 2.7 s",
 			"ok": true,
-			"ms": 5351,
+			"ms": 5505,
 			"frames": 21
 		},
 		{
 			"index": 7,
 			"kind": "expect",
 			"target": "Download GLB",
-			"detail": "appeared after 178.3 s",
+			"detail": "appeared after 197.5 s",
 			"ok": true,
-			"ms": 178323,
+			"ms": 197454,
 			"frames": 0
 		},
 		{
@@ -77,25 +77,34 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 35864,
+			"ms": 35251,
 			"frames": 72
 		},
 		{
 			"index": 9,
-			"kind": "drag",
-			"target": "0.3,0.45,0.75,0.45",
-			"detail": "dragged over 54 frames",
+			"kind": "hold",
+			"target": "2400",
+			"detail": "2400 ms",
 			"ok": true,
-			"ms": 24046,
+			"ms": 23618,
 			"frames": 72
 		},
 		{
 			"index": 10,
+			"kind": "drag",
+			"target": "0.3,0.45,0.75,0.45",
+			"detail": "dragged over 54 frames",
+			"ok": true,
+			"ms": 23243,
+			"frames": 72
+		},
+		{
+			"index": 11,
 			"kind": "hold",
 			"target": "4000",
 			"detail": "4000 ms",
 			"ok": true,
-			"ms": 24370,
+			"ms": 23220,
 			"frames": 120
 		}
 	],
@@ -127,15 +136,15 @@
 	"cuts": [
 		{
 			"afterStep": 7,
-			"seconds": 178.2
+			"seconds": 197.4
 		}
 	],
 	"video": {
 		"path": "public/x-media/photo-to-3d/reel.mp4",
-		"sha256": "a7f2c77f9c18365bc7b7447a235faf9c83273acd873fbe2cb8c590b2eb096329",
-		"frames": 390,
-		"motion": 0.504,
-		"durationSec": 13,
+		"sha256": "c113c471a6d63e7e508000475d2e8253576b4445651af4f37145a0ba8b84f859",
+		"frames": 462,
+		"motion": 0.551,
+		"durationSec": 15.4,
 		"width": 1080,
 		"height": 1080,
 		"fps": 30,

@@ -14696,6 +14696,9 @@
 						"within": 300000
 					},
 					{
+						"hold": 2400
+					},
+					{
 						"hold": 2400,
 						"caption": "A textured 3D model, in the browser"
 					},
@@ -14730,7 +14733,7 @@
 						{
 							"path": "public/x-media/photo-to-3d/reel.mp4",
 							"probe": {
-								"durationSec": 13,
+								"durationSec": 15.4,
 								"width": 1080,
 								"height": 1080,
 								"fps": 30,
@@ -14742,10 +14745,10 @@
 					]
 				},
 				{
-					"text": "One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what is actually there.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen."
+					"text": "One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen."
 				},
 				{
-					"text": "The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or retopologize it to a poly budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
+					"text": "The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or rebuild it to a polygon budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
 				}
 			],
 			"claims": [
@@ -14832,9 +14835,9 @@
 					"says": "view it in AR in your own room",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/image-to-3d",
-							"contains": "View this model in AR, placed in your room"
+							"type": "file",
+							"path": "pages/forge.html",
+							"contains": "title=\"View this model in AR, placed in your room\""
 						}
 					]
 				},
@@ -14842,19 +14845,29 @@
 					"says": "split it into selectable parts",
 					"evidence": [
 						{
+							"type": "file",
+							"path": "pages/forge.html",
+							"contains": "title=\"Split this model into selectable parts\""
+						},
+						{
 							"type": "page",
 							"url": "https://three.ws/image-to-3d",
-							"contains": "Split this model into selectable parts"
+							"contains": "Split into parts"
 						}
 					]
 				},
 				{
-					"says": "retopologize it to a poly budget and export an engine-ready GLB and FBX",
+					"says": "rebuild it to a polygon budget and export an engine-ready GLB and FBX",
 					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/forge.html",
+							"contains": "title=\"Retopologize to a poly budget and export an engine-ready GLB + FBX\""
+						},
 						{
 							"type": "page",
 							"url": "https://three.ws/image-to-3d",
-							"contains": "Retopologize to a poly budget and export an engine-ready GLB + FBX"
+							"contains": "Game-Ready"
 						}
 					]
 				},
