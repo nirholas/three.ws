@@ -21,7 +21,7 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from '../db.js';
 import { apiError } from './http.js';
-import { providerChainFor } from '../llm-tool-chain.js';
+import { resolveAgentBrain } from '../agent-brain.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
 import { debitCredits } from '../credits.js';
@@ -274,10 +274,16 @@ export async function agentSystemPrompt(agentId) {
 	return parts.join('\n\n');
 }
 
-function chainFor(run) {
-	const chain = providerChainFor(run.model || null);
+export async function chainFor(run) {
+	const [agent] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${run.agent_id} LIMIT 1`;
+	const { chain } = await resolveAgentBrain({
+		agent: agent || { id: run.agent_id, user_id: run.user_id, meta: null },
+		requested: run.model || null,
+		purpose: 'run',
+		lenient: true,
+	});
 	if (toNumber(run.budget_credits_usd) > 0) return chain;
-	return chain.filter((p) => isFreeLane(p.name, p.catalogModel || p.model));
+	return chain.filter((p) => p.keySource === 'owner' || isFreeLane(p.name, p.catalogModel || p.model));
 }
 
 function toolsFor(run) {
@@ -298,7 +304,7 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 
 	if (run.cancel_requested_at) return finalize(run, 'cancelled', { note: 'cancelled by the owner' });
 
-	const chain = chainFor(run);
+	const chain = await chainFor(run);
 	if (!chain.length) {
 		return finalize(run, 'failed', {
 			error: toNumber(run.budget_credits_usd) > 0

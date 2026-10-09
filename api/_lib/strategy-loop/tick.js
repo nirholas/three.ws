@@ -22,7 +22,7 @@
 // in worker memory between steps.
 
 import { sql } from '../db.js';
-import { providerChainFor } from '../llm-tool-chain.js';
+import { resolveAgentBrain } from '../agent-brain.js';
 import { createAgentLoop, initialLoopState, loopFinished, finalAnswer } from '../agent-loop.js';
 import { computeContext } from '../memory-store.js';
 import { insertNotification } from '../notify.js';
@@ -502,7 +502,7 @@ export async function runAgentTick({ agentId, workerId, cfg, log, signal = null,
 		({ state, context } = initialLoopState({ operationId: `tick-${tick.id}`, messages, maxSteps: runtimeSteps }));
 	}
 
-	const chain = deps.chain || providerChainFor(agent.meta?.runtime?.model || null);
+	const chain = deps.chain || (await resolveAgentBrain({ agent, purpose: 'run', lenient: true })).chain;
 	if (!chain.length) {
 		await finishTick(tick.id, { status: 'failed', error: 'no LLM provider is configured' });
 		await scheduleNext({ agentId, slot: tick.slot, intervalSeconds: loop.intervalSeconds, status: 'failed', failed: true });
@@ -591,7 +591,9 @@ export async function runAgentTick({ agentId, workerId, cfg, log, signal = null,
 			const rows = [];
 			for (const [i, event] of pending.entries()) {
 				const row = eventRow(event);
-				if (event.kind === 'model_call') {
+				if (event.kind === 'model_call' && event.keySource === 'owner') {
+					row.cost_usd = 0;
+				} else if (event.kind === 'model_call') {
 					const charge = await chargeInference({
 						userId: agent.user_id,
 						agentId,

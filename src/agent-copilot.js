@@ -53,6 +53,8 @@ const STYLE = `
 .awh-cop-bubble.is-empty { color: var(--ink-dim,#888); }
 .awh-cop-name { font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); padding: 0 4px; }
 .awh-cop-via { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line,rgba(255,255,255,.14)); font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); vertical-align: 1px; }
+.awh-cop-brain { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line,rgba(255,255,255,.14)); font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); vertical-align: 1px; }
+.awh-cop-brain.is-failover { border-color: var(--warning,#fbbf24); color: var(--warning,#fbbf24); }
 .awh-cop-msg.is-user .awh-cop-via { margin: 0 4px 2px 0; align-self: flex-end; }
 
 .awh-cop-tools { display: flex; flex-direction: column; gap: 4px; }
@@ -405,9 +407,23 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 					${i === lastAgentIndex() ? `<button class="awh-cop-msg-act" type="button" data-msgact="regen" title="Regenerate">↻ Retry</button>` : ''}
 				</div>` : '';
 		return `<div class="awh-cop-msg is-agent">
-			<div class="awh-cop-name">${esc(agentName)}${viaTag(m)}</div>
+			<div class="awh-cop-name">${esc(agentName)}${viaTag(m)}${brainTag(m)}</div>
 			${activity}${body}${props}${actions}
 		</div>`;
+	}
+
+	// Which brain answered, from the server's own response metadata: the lane and
+	// model that served the last round, whose key paid, and whether the agent's
+	// chosen brain was skipped for a fallback rung.
+	function brainTag(m) {
+		const b = m.brain;
+		if (!b || !b.served) return '';
+		const keyNote = b.keySource === 'owner' ? ' · your key' : b.keySource === 'server' ? ' · platform key' : '';
+		const label = b.failover && b.chosen ? `${b.served} (fallback for ${b.chosen})` : `${b.served}${keyNote}`;
+		const title = b.failover
+			? `${b.chosen} was unavailable, so ${b.served} answered on ${b.lane}.`
+			: `Answered by ${b.served} on ${b.lane}${keyNote}.`;
+		return `<span class="awh-cop-brain${b.failover ? ' is-failover' : ''}" data-brain="${esc(b.served)}" data-brain-lane="${esc(b.lane || '')}" title="${esc(title)}">${esc(label)}</span>`;
 	}
 
 	function viaTag(m) {
@@ -872,6 +888,8 @@ export function mountTradingCopilot({ panel, agentId, agentName = 'Copilot', isO
 		} else if (event === 'proposal') {
 			agentMsg.proposals.push(normalizeProposal(payload));
 			render();
+		} else if (event === 'model') {
+			if (payload.served) { agentMsg.brain = payload; render(); }
 		} else if (event === 'chunk') {
 			agentMsg.content += payload.text || '';
 			render();

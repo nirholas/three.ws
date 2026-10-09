@@ -279,9 +279,10 @@ export function buildSystemPrompt({ agentName, persona, network }) {
  * @param {() => boolean} [opts.isActive]  false once the caller has gone away
  * @param {string} [opts.surfaceNote]  extra system guidance for the delivering surface
  * @param {Array} [opts.chain]  provider chain override (defaults to providerChain())
- * @returns {Promise<{ reply:string, proposals:object[], citations:object[], toolCalls:{name:string, summary:string}[] }>}
+ * @param {(served:object) => void} [opts.onRound]  called with the rung that served each model round
+ * @returns {Promise<{ reply:string, proposals:object[], citations:object[], toolCalls:{name:string, summary:string}[], served:object|null }>}
  */
-export async function runCopilotTurn({ agent, history, network, emit = () => {}, isActive = () => true, surfaceNote = '', chain = providerChain() }) {
+export async function runCopilotTurn({ agent, history, network, emit = () => {}, isActive = () => true, surfaceNote = '', chain = providerChain(), onRound = () => {} }) {
 	if (!chain.length) {
 		throw Object.assign(new Error('No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (or GOOGLE_CLOUD_PROJECT for the Vertex credits anchor).'), { code: 'llm_unavailable' });
 	}
@@ -295,6 +296,11 @@ export async function runCopilotTurn({ agent, history, network, emit = () => {},
 	const citations = [];
 	const toolCalls = [];
 	let finalText = '';
+	let served = null; // the rung that answered the latest round
+	const noteServed = (provider, usage) => {
+		served = { provider: provider.name, model: provider.model, catalogModel: provider.catalogModel || null, keySource: provider.keySource || null, usage: usage || null };
+		onRound(served);
+	};
 	const active = () => isActive();
 
 	// Read-only tools are pure within a turn, the wallet/intel/quote a round sees
@@ -436,6 +442,7 @@ export async function runCopilotTurn({ agent, history, network, emit = () => {},
 					tools: COPILOT_TOOLS,
 					onContent: (t) => { emitted = true; finalText += t; send('chunk', { text: t }); },
 				});
+				noteServed(provider, roundOut.usage);
 				break;
 			} catch (e) {
 				lastErr = e;
@@ -504,10 +511,10 @@ export async function runCopilotTurn({ agent, history, network, emit = () => {},
 					tools: [],
 					onContent: (t) => { finalText += t; send('chunk', { text: t }); },
 				});
-				if (out) break;
+				if (out) { noteServed(provider, out.usage); break; }
 			} catch { /* try next provider */ }
 		}
 	}
 
-	return { reply: finalText.trim(), proposals, citations, toolCalls };
+	return { reply: finalText.trim(), proposals, citations, toolCalls, served };
 }

@@ -80,7 +80,8 @@ export async function admitCall({ userId, agent, model }) {
  * @returns {Promise<{ chargedUsd: number, shortfallUsd: number }>}
  */
 export async function chargeCall({ userId, agentId, callId, event, model, free }) {
-	if (free) return { chargedUsd: 0, shortfallUsd: 0 };
+	// A call on the owner's own provider key is billed by that provider, not in credits.
+	if (free || event.keySource === 'owner') return { chargedUsd: 0, shortfallUsd: 0 };
 	// The named paid model answered: bill its own metered cost.
 	if (isPaidModel(model) && !event.free && event.costMicroUsd > 0) {
 		const amountUsd = Math.ceil(event.costMicroUsd) / 1e6;

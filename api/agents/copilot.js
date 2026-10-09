@@ -44,7 +44,8 @@ import { limits } from '../_lib/rate-limit.js';
 import { providerChain } from '../_lib/llm-tool-chain.js';
 import { runCopilotTurn, netOf, COPILOT_MAX_MESSAGES } from '../_lib/copilot-engine.js';
 import { appendThreadMessage, listThread } from '../_lib/agent-thread.js';
-import { resolveMessageModel, modelChain, ModelChoiceError } from '../_lib/agent-model.js';
+import { ModelChoiceError } from '../_lib/agent-model.js';
+import { resolveAgentBrain, brainBadge } from '../_lib/agent-brain.js';
 import { meterFreeModel, FreeTierExhaustedError, freeTierErrorBody, retryAfterSeconds } from '../_lib/free-tier.js';
 import { recordEvent } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
@@ -87,9 +88,10 @@ export default async function handler(req, res, id) {
 		return error(res, 422, 'no_message', 'send at least one user message');
 	}
 
+	const override = typeof body?.model === 'string' && body.model.trim() ? body.model.trim().slice(0, 80) : null;
 	let choice;
 	try {
-		choice = copilotModel(body?.model, row.meta);
+		choice = await resolveAgentBrain({ agent: row, requested: override, purpose: 'run', lenient: true });
 	} catch (e) {
 		if (e instanceof ModelChoiceError) return error(res, e.status, e.code, e.message);
 		throw e;
@@ -102,7 +104,7 @@ export default async function handler(req, res, id) {
 		return error(res, 429, 'free_tier_exhausted', e.message, freeTierErrorBody(e));
 	}
 
-	const { chain } = modelChain(choice.model);
+	const { chain } = choice;
 	if (!chain.length) return error(res, 503, 'llm_unavailable', 'No LLM provider configured. Set GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (or GOOGLE_CLOUD_PROJECT for the Vertex credits anchor).');
 
 	// SSE open.
@@ -131,7 +133,7 @@ export default async function handler(req, res, id) {
 			chain,
 			isActive: () => active,
 			onRound: (served) => {
-				send('model', { model: choice.model, source: choice.source, served: served.catalogModel || served.model, lane: served.provider });
+				send('model', { model: choice.model, source: choice.source, served: served.catalogModel || served.model, lane: served.provider, ...brainBadge(choice, served) });
 				meterRound({ userId: auth.userId, agentId: id, served });
 			},
 			// tool_start is for surfaces that paint a live status line (the chat
@@ -161,25 +163,6 @@ async function sendThread(req, res, { agentId, userId }) {
 		messages: rows.map((m) => ({ id: m.id, role: m.role, content: m.content, channel: m.channel, signatures: m.signatures, createdAt: m.createdAt })),
 		latest_id: latestId ?? null,
 	}, { 'cache-control': 'no-store' });
-}
-
-/**
- * The model one copilot message runs on. An explicit override must call tools
- * (the copilot is a tool loop); an agent default without tools is skipped for
- * the platform chain rather than blocking the owner's chat. Exported for tests.
- * @param {unknown} requested body.model
- * @param {object|null} meta agent meta
- */
-export function copilotModel(requested, meta) {
-	const override = typeof requested === 'string' && requested.trim() ? requested.trim().slice(0, 80) : null;
-	try {
-		return resolveMessageModel({ requested: override, agentMeta: meta, purpose: 'run' });
-	} catch (e) {
-		if (!override && e instanceof ModelChoiceError && e.code === 'model_lacks_tools') {
-			return { model: null, source: 'platform', tools: true };
-		}
-		throw e;
-	}
 }
 
 // Every model round is recorded against the owner, priced at the lane that

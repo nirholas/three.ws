@@ -13,6 +13,7 @@
 // (./voice.js).
 
 import { runCopilotTurn } from '../copilot-engine.js';
+import { resolveAgentBrain } from '../agent-brain.js';
 import { appendThreadMessage, threadHistoryForModel } from '../agent-thread.js';
 import { resolveChatAgent, listAccountAgents } from './agents.js';
 import { createPreview, setPreviewMessageRef, PREVIEW_TTL_MINUTES } from './store.js';
@@ -131,9 +132,11 @@ export async function converse({ gw, event, link, text }) {
 	const status = statusLine(gw, event.chatId);
 	let turn;
 	try {
+		const brain = await resolveAgentBrain({ agent, purpose: 'run', lenient: true });
 		turn = await runCopilotTurn({
 			agent,
 			history,
+			chain: brain.chain,
 			network: 'mainnet',
 			surfaceNote: surfaceNote(event.platform, { buttons: hasButtons(gw) }),
 			emit: (name, data) => { if (name === 'tool_start') status.working(data.name); },
