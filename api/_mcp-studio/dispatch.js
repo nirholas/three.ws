@@ -9,7 +9,7 @@
 
 import { recordEvent, logger } from '../_lib/usage.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
-import { TOOL_CATALOG, TOOLS } from './tools.js';
+import { TOOL_CATALOG, TOOLS, jobProgress } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
 import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from './catalog-tools.js';
 import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
@@ -41,7 +41,9 @@ const BASE_INSTRUCTIONS = [
 	'viewer_url (opens in any browser), glb_url (the file), poster_png_url (a rendered PNG) and embed_html (paste-ready).',
 	'refine_model(glb_url, instruction) iterates on a generated model in plain language ("make it metallic") and keeps',
 	'a version lineage you can branch or revert. If a result comes back with status "pending", the model is still',
-	'rendering: call check_job(job_id) after the suggested wait to collect it.',
+	'rendering: call check_job(job_id) after the suggested wait to collect it, or get_job(job_id) for its status,',
+	'progress, eta_seconds and, once done, the asset links. Every generation tool takes an optional idempotency_key:',
+	'retry with the same key after a timeout and you get the original job back instead of a second generation.',
 ];
 
 // /api/mcp-grok also serves the account's agent tools (./account-tools.js) to a
@@ -250,7 +252,38 @@ function summarize(args) {
 	return o;
 }
 
-async function onToolCall(params, auth, started, req, surface) {
+// Turns the progress a job reports on each poll into MCP notifications/progress
+// for the client's progressToken. progress is a whole percent out of 100 and only
+// ever rises (the spec requires it to), so a poll that reports no movement sends
+// nothing. The message is the job's own status line, never an invented one.
+function progressReporter(token, notify, jobProgress) {
+	let last = -1;
+	return (poll) => {
+		const queued = poll?.status === 'queued';
+		const fraction = jobProgress({
+			status: queued ? 'queued' : 'running',
+			elapsedSeconds: poll?.elapsed_seconds,
+			etaRemainingSeconds: poll?.eta_remaining_seconds,
+		});
+		if (fraction === null) return;
+		const percent = Math.round(fraction * 100);
+		if (percent <= last) return;
+		last = percent;
+		const eta = Number(poll?.eta_remaining_seconds);
+		notify({
+			jsonrpc: '2.0',
+			method: 'notifications/progress',
+			params: {
+				progressToken: token,
+				progress: percent,
+				total: 100,
+				message: `${queued ? 'Queued' : 'Rendering'}${Number.isFinite(eta) && eta > 0 ? `, about ${Math.round(eta)}s left` : ''}`,
+			},
+		});
+	};
+}
+
+async function onToolCall(params, auth, started, req, surface, notify, token) {
 	const { name, arguments: args = {} } = params || {};
 	const tool = typeof name === 'string' && Object.hasOwn(surface.tools, name) ? surface.tools[name] : null;
 	if (!tool) throw rpcError(-32602, `unknown tool: ${name}`);
@@ -264,6 +297,7 @@ async function onToolCall(params, auth, started, req, surface) {
 	}
 	try {
 		const ctx = surface.callBudgetMs ? { deadline: started + surface.callBudgetMs } : {};
+		if (notify && token !== null && token !== undefined) ctx.onPoll = progressReporter(token, notify, jobProgress);
 		const result = await tool.handler(args, auth, req, ctx);
 		recordEvent({ kind: 'tool_call', tool: name, latencyMs: Date.now() - started, meta: { args_summary: summarize(args), server: surface.server } });
 		return await finishCall(POLICY_SERVER, name, sentArgs, auth, result, gate.preview);
@@ -279,7 +313,7 @@ async function onToolCall(params, auth, started, req, surface) {
 // (./handler.js), or null. Studio tools always run as the anonymous `auth`, so
 // signing in never changes what a free tool does; only the account tools see
 // the account.
-export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', account = null } = {}) {
+export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', account = null, notify = null } = {}) {
 	const surface = surfaceOf(surfaceName);
 	const signedIn = Boolean(surface.accounts && account?.userId);
 	const origin = env.APP_ORIGIN || 'https://three.ws';
@@ -330,7 +364,7 @@ export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', 
 					docs: `${origin}/docs/mcp`,
 				});
 			}
-			return ok(id, await onToolCall(msg.params, auth, started, req, surface));
+			return ok(id, await onToolCall(msg.params, auth, started, req, surface, notify, msg.params?._meta?.progressToken));
 		}
 		if (method === 'resources/list') {
 			return ok(id, { resources: widgetResources(surface).map(({ text: _t, ...r }) => r) });

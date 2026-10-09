@@ -215,7 +215,7 @@ export async function startRig(base, glbUrl, { deadline } = {}) {
 // coded failure on a failed job, or returns { _timedOut: true } at the deadline.
 // `deadline` (epoch ms) caps the wait below timeoutMs when the caller's own call
 // budget ends sooner; no probe or sleep is allowed to run past it.
-export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: callDeadline } = {}) {
+export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: callDeadline, onPoll } = {}) {
 	const tMs = timeoutMs || DEFAULT_TIMEOUT_MS;
 	const deadline = Math.min(Date.now() + tMs, callDeadline || Infinity);
 	const left = () => deadline - Date.now();
@@ -255,6 +255,15 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs, deadline: ca
 		if (!res.ok) throw failure('provider_error', data?.message || `generation poll returned ${res.status}`);
 		softFails = 0;
 		last = data;
+		// Tell a progress listener what the job just reported. A listener that
+		// throws must never cost the caller their generation.
+		if (onPoll) {
+			try {
+				onPoll(data);
+			} catch {
+				/* progress is advisory */
+			}
+		}
 		if (data.status === 'done' && data.glb_url) return data;
 		if (data.status === 'failed') {
 			throw failure('generation_failed', data.error || 'generation failed', {
@@ -302,7 +311,7 @@ export async function pollOnce(base, jobId) {
 // Run a submit→poll cycle end to end, returning the terminal job payload.
 // A timed-out payload keeps `job_id` so the caller can hand the (still
 // running) job back to the client as a pollable handle instead of an error.
-export async function generate(base, submitArgs, { timeoutEnv, deadline } = {}) {
+export async function generate(base, submitArgs, { timeoutEnv, deadline, onPoll } = {}) {
 	const job = await startForge(base, submitArgs, { deadline });
 	if (job.status === 'done' && job.glb_url) return job;
 	// The submit outlived the call budget: its ticket handle is the job id.
@@ -311,16 +320,18 @@ export async function generate(base, submitArgs, { timeoutEnv, deadline } = {}) 
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
 		deadline,
+		onPoll,
 	});
 	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }
 
-export async function rig(base, glbUrl, { timeoutEnv, deadline } = {}) {
+export async function rig(base, glbUrl, { timeoutEnv, deadline, onPoll } = {}) {
 	const job = await startRig(base, glbUrl, { deadline });
 	const out = await pollJob(base, job.job_id, {
 		timeoutMs: timeoutEnv ? envNum(timeoutEnv, DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
 		intervalMs: envNum('STUDIO_POLL_MS', DEFAULT_POLL_MS),
 		deadline,
+		onPoll,
 	});
 	return out._timedOut ? { ...out, job_id: job.job_id } : out;
 }

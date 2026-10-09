@@ -8,14 +8,14 @@ import { dispatch, toolCatalogFor } from '../api/_mcp-studio/dispatch.js';
 import { COMPONENT_HTML, COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
 import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
 
-// The eight tools in api/_mcp-studio/tools.js: six generators (which render the
+// The nine tools in api/_mcp-studio/tools.js: six generators (which render the
 // model-viewer widget) + check_job (collects a pending generation) +
-// look_at_model (renders frames of an existing model). PERSONA adds the three
+// look_at_model (renders frames of an existing model). (also get_job, its machine-readable twin). PERSONA adds the three
 // embodiment tools from api/_mcp-studio/persona-tools.js (which render the
 // living-body embed). CATALOG adds the three free asset catalog reads
 // (api/_mcp-studio/catalog-tools.js) on the full surface only, for the fourteen
 // /api/mcp-studio advertises in total.
-const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'look_at_model'];
+const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'get_job', 'look_at_model'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
 const CATALOG = ['search_catalog', 'get_catalog_item', 'get_item_source'];
 const ALL = [...ALLOWED, ...CATALOG, ...PERSONA];
@@ -38,13 +38,13 @@ describe('mcp-studio catalog', () => {
 	});
 
 	// The published count. Every doc, manifest and listing that quotes a number
-	// for this connector quotes eleven (docs/mcp-studio.md, the /openai page, the
+	// for this connector quotes twelve (docs/mcp-studio.md, the /openai page, the
 	// OpenAI submission answer sheet). Adding or removing a tool without updating
 	// them is the drift this pins.
-	it('advertises exactly eleven tools across both catalogs', () => {
-		expect(ALLOWED.length).toBe(8);
+	it('advertises exactly twelve tools across both catalogs', () => {
+		expect(ALLOWED.length).toBe(9);
 		expect(PERSONA.length).toBe(3);
-		expect(TOOL_CATALOG.length + PERSONA_TOOL_CATALOG.length).toBe(11);
+		expect(TOOL_CATALOG.length + PERSONA_TOOL_CATALOG.length).toBe(12);
 	});
 
 	it('every tool has a title and correct annotations', () => {
@@ -635,7 +635,7 @@ describe('mcp-studio asset catalog tools', () => {
 describe('mcp-studio chatgpt surface', () => {
 	const opts = { surface: 'chatgpt' };
 
-	it('lists exactly the eight tools in tools.js', async () => {
+	it('lists exactly the nine tools in tools.js', async () => {
 		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, auth, mkReq(), opts);
 		expect(r.result.tools.map((t) => t.name).sort()).toEqual([...ALLOWED].sort());
 		expect(toolCatalogFor('chatgpt').map((t) => t.name).sort()).toEqual([...ALLOWED].sort());

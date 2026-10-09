@@ -40,11 +40,12 @@ import { resolveInstallToken } from '../_lib/mcp-studio-installs.js';
 
 const ORIGIN = 'https://three.ws';
 
-// check_job collects a job that is already running rather than starting one: it
-// must never burn the caller's generation quota, or collecting a pending job
-// could be rate-blocked by the very generation that created it. It rides the
-// transport cap only.
-const GEN_TOOLS = new Set(TOOL_NAMES.filter((name) => name !== 'check_job'));
+// check_job and get_job collect a job that is already running rather than
+// starting one: they must never burn the caller's generation quota, or
+// collecting a pending job could be rate-blocked by the very generation that
+// created it. They ride the transport cap only.
+const COLLECTOR_TOOLS = new Set(['check_job', 'get_job']);
+const GEN_TOOLS = new Set(TOOL_NAMES.filter((name) => !COLLECTOR_TOOLS.has(name)));
 
 /** Does calling this tool start a generation that counts against the quota? */
 export function isGenerationTool(name) {
@@ -205,6 +206,31 @@ export async function signedInAccount(req, res, surfacePath) {
 	return { account };
 }
 
+/** The progressToken a tools/call carries in params._meta, if it sent a usable one. */
+export function progressTokenOf(msg) {
+	const token = msg?.params?._meta?.progressToken;
+	return msg?.method === 'tools/call' && (typeof token === 'string' || Number.isFinite(token)) ? token : null;
+}
+
+function wantsProgressStream(req, batch) {
+	const accept = String(req?.headers?.accept || '');
+	return /text\/event-stream/i.test(accept) && batch.some((m) => progressTokenOf(m) !== null);
+}
+
+function openStream(res) {
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/event-stream; charset=utf-8');
+	res.setHeader('cache-control', 'no-store, no-transform');
+	res.setHeader('x-accel-buffering', 'no');
+	res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+	res.flushHeaders?.();
+}
+
+function writeEvent(res, message) {
+	if (res.writableEnded || res.destroyed) return;
+	res.write(`event: message\ndata: ${JSON.stringify(message)}\n\n`);
+}
+
 export function studioHandler({ surface = 'full' } = {}) {
 	const servesAccounts = surfaceServesAccounts(surface);
 	const surfacePath = `/api/mcp-${surface}`;
@@ -251,6 +277,10 @@ export function studioHandler({ surface = 'full' } = {}) {
 			}
 		}
 
+		// Who this caller is for per-caller state (quotas, idempotency keys): an
+		// install token beats the surface's own subject, which beats the IP.
+		let caller = ip;
+
 		// Generation quota, burst then hourly, per IP. Applied only when the request
 		// actually calls a generation tool, so discovery is never throttled by it.
 		if (callsGenerationTool(body)) {
@@ -265,7 +295,7 @@ export function studioHandler({ surface = 'full' } = {}) {
 				const pool = await limits.studioGenPoolHourly(ip);
 				if (!pool.success) return capped(res, pool, { what: 'The free 3D studio is at capacity for this network right now (300 generations per hour across every installation behind one IP)', id, installed });
 			}
-			const caller = subject || ip;
+			caller = subject || ip;
 			const burst = await limits.studioGenBurst(caller);
 			if (!burst.success) return capped(res, burst, { what: 'Generation burst limit reached (4 generations per minute per caller)', id, installed });
 			const hourly = await limits.studioGenHourly(caller);
@@ -278,12 +308,25 @@ export function studioHandler({ surface = 'full' } = {}) {
 		}
 
 		// Anonymous principal, no auth, no scope. rateKey carries the IP for usage logs.
-		const auth = { userId: null, rateKey: ip, scope: '' };
+		const auth = { userId: null, rateKey: ip, scope: '', caller };
+
+		// A client that sent a progressToken and accepts an event stream gets the
+		// response as SSE: notifications/progress while a job renders, then the
+		// result. Everyone else gets the plain JSON response, unchanged.
+		const stream = wantsProgressStream(req, batch);
+		if (stream) openStream(res);
+		const notify = stream ? (message) => writeEvent(res, message) : null;
 
 		const responses = [];
 		for (const msg of batch) {
-			const r = await dispatch(msg, auth, req, { surface, account });
+			const r = await dispatch(msg, auth, req, { surface, account, notify });
 			if (r !== null) responses.push(r);
+		}
+
+		if (stream) {
+			for (const r of responses) writeEvent(res, r);
+			res.end();
+			return;
 		}
 
 		res.statusCode = 200;

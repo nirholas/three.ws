@@ -49,6 +49,7 @@ import {
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
 import { assetLinks, assetLinksText } from './asset-links.js';
+import { runOnce, normalizeKey, argsDigest } from '../_lib/idempotency.js';
 import { renderTurntable, describeGeometry, fetchGeometryStats } from '../_lib/3d-vision.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
 // The same pure cold-start core the browser surfaces render from
@@ -235,6 +236,7 @@ function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage =
 		structuredContent: {
 			status: 'pending',
 			jobId,
+			job_id: jobId,
 			pollUrl,
 			viewer_url: watchUrl,
 			// Which half of the pipeline is still running. A client that collects
@@ -437,7 +439,7 @@ async function handleForgeFree(args, _auth, req, ctx = {}) {
 			markImageUrls
 				? { prompt: effective, imageUrls: markImageUrls, tier, internal: true, director: false }
 				: { prompt: effective, path: 'image', tier, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
@@ -475,7 +477,7 @@ async function handleTextToAvatar(args, _auth, req, ctx = {}) {
 		job = await generate(
 			base,
 			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
@@ -528,7 +530,7 @@ async function handleMeshForge(args, _auth, req, ctx = {}) {
 				internal: true,
 				director: false,
 			},
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
@@ -549,7 +551,7 @@ async function handleRigMesh(args, _auth, req, ctx = {}) {
 	}
 	let job;
 	try {
-		job = await rig(base, glbUrl, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline });
+		job = await rig(base, glbUrl, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll });
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
@@ -589,7 +591,7 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 		gen = await generate(
 			base,
 			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true, director: false },
-			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
@@ -600,7 +602,7 @@ async function handleForgeAvatar(args, _auth, req, ctx = {}) {
 	// Stage 2 — auto-rig the generated mesh.
 	let rigged;
 	try {
-		rigged = await rig(base, gen.glb_url, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline });
+		rigged = await rig(base, gen.glb_url, { timeoutEnv: 'STUDIO_RIG_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll });
 	} catch (err) {
 		// Generation succeeded but rigging failed: hand back the (unrigged) mesh so
 		// the work isn't lost, and say so plainly.
@@ -707,7 +709,7 @@ async function handleRefineModel(args, _auth, req, ctx = {}) {
 			refImageUrl
 				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
 				: { prompt: composed, tier: 'standard', internal: true },
-			{ timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS', deadline: ctx.deadline },
+			{ timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS', deadline: ctx.deadline, onPoll: ctx.onPoll },
 		);
 	} catch (err) {
 		return toolError(failureMessage(err));
@@ -771,10 +773,12 @@ function finishRefinement(base, data, refine) {
 // running returns a fresh pending envelope with updated timing, failed returns
 // the same clean failure copy the generating tools use. Without this tool the
 // only way back to a pending job was browsing the raw poll URL.
-async function handleCheckJob(args, _auth, req) {
+async function collectJob(args, req) {
 	const base = originFromReq(req);
 	const jobId = String(args.job_id || '').trim();
-	if (!jobId) return toolError('Provide the job_id a pending generation returned.');
+	if (!jobId) {
+		return { result: toolError('Provide the job_id a pending generation returned.'), job: { status: 'unknown' } };
+	}
 	let data;
 	try {
 		data = await pollOnce(base, jobId);
@@ -783,30 +787,200 @@ async function handleCheckJob(args, _auth, req) {
 		// an upstream blip leaves the job running, and the first check of a
 		// finished job does the slow save-and-score work, so checking again
 		// usually returns the model at once.
-		return toolError(failureMessage(err), err?.code === 'unknown_job' ? {} : { retryable: true });
+		const final = err?.code === 'unknown_job';
+		return {
+			result: toolError(failureMessage(err), final ? {} : { retryable: true }),
+			job: {
+				status: final ? 'not_found' : 'unknown',
+				retryable: !final,
+				error: failureMessage(err),
+				remedy: final
+					? 'Start a new generation; a job id that is not recognized cannot be recovered.'
+					: `Call get_job again with the same job_id${Number(err?.retryAfter) > 0 ? ` in about ${Math.ceil(Number(err.retryAfter))}s` : ' shortly'}; the job itself is not affected.`,
+			},
+		};
 	}
 	if (data.status === 'done' && data.glb_url) {
-		const refined = finishRefinement(base, data, args.refine);
-		if (refined) return refined;
-		return ok({
-			glbUrl: data.glb_url,
-			base,
-			kind: 'model',
-			prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
-			referenceImageUrl: data.preview_image_url,
-		});
+		const result =
+			finishRefinement(base, data, args.refine) ||
+			ok({
+				glbUrl: data.glb_url,
+				base,
+				kind: 'model',
+				prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
+				referenceImageUrl: data.preview_image_url,
+			});
+		return { result, job: { status: 'done' } };
 	}
 	if (data.status === 'failed') {
 		// data.error is already sanitized server-side (sanitizeJobError): safe copy.
-		return toolError(data.error ? `Generation failed: ${data.error}` : failureMessage({ code: 'generation_failed' }));
+		const message = data.error ? `Generation failed: ${data.error}` : failureMessage({ code: 'generation_failed' });
+		const backends = Array.isArray(data.retry_backends) ? data.retry_backends : [];
+		return {
+			result: toolError(message),
+			job: {
+				status: 'failed',
+				retryable: true,
+				error: message,
+				remedy:
+					'Start a new generation. Rephrase the prompt to name the subject plainly (one object or character, no scene), ' +
+					'or pass a reference image_url' +
+					(backends.length ? `; the engines that can take it next: ${backends.join(', ')}` : '') +
+					'. A failed attempt is never remembered, so the same idempotency_key starts a fresh job.',
+			},
+		};
 	}
-	return pendingResult({
+	const result = pendingResult({
 		base,
 		jobId,
 		what: 'model',
 		prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
 		...pendingTiming(data),
 	});
+	return {
+		result,
+		job: {
+			status: data.status === 'queued' ? 'queued' : 'running',
+			elapsedSeconds: finiteOrNull(data.elapsed_seconds),
+			etaRemainingSeconds: finiteOrNull(data.eta_remaining_seconds),
+		},
+	};
+}
+
+function handleCheckJob(args, _auth, req) {
+	return collectJob(args, req).then((c) => c.result);
+}
+
+function finiteOrNull(n) {
+	return Number.isFinite(Number(n)) && n !== null && n !== '' ? Number(n) : null;
+}
+
+/**
+ * How far along a job is, 0 to 1, from the two numbers the poll reports: seconds
+ * elapsed and seconds left. Null when the job reports neither (never a guess), and
+ * capped just under 1 until the job is actually done, because the estimate is a
+ * typical duration and not a deadline.
+ */
+export function jobProgress({ status, elapsedSeconds, etaRemainingSeconds }) {
+	if (status === 'done') return 1;
+	if (status === 'failed' || status === 'not_found' || status === 'unknown') return null;
+	const elapsed = finiteOrNull(elapsedSeconds);
+	const left = finiteOrNull(etaRemainingSeconds);
+	if (elapsed === null || left === null) return null;
+	const total = elapsed + left;
+	return total > 0 ? Math.min(0.95, Math.max(0, Math.round((elapsed / total) * 100) / 100)) : null;
+}
+
+// The machine-readable status of one job: the same probe as check_job, reshaped
+// for an agent that schedules its own follow-ups. Every field is present on every
+// state so a client branches on `status` alone: queued and running carry progress
+// and eta_seconds, done carries the asset links (viewer_url, glb_url,
+// poster_png_url, embed_html), failed and not_found carry the reason and a remedy.
+async function handleGetJob(args, _auth, req) {
+	const jobId = String(args.job_id || '').trim();
+	const { result, job } = await collectJob(args, req);
+	const status = job.status;
+	const eta = status === 'done' ? 0 : finiteOrNull(job.etaRemainingSeconds);
+	const base = {
+		job_id: jobId,
+		status,
+		progress: jobProgress(job),
+		eta_seconds: eta,
+		elapsed_seconds: finiteOrNull(job.elapsedSeconds),
+		...(job.error ? { error: job.error, retryable: Boolean(job.retryable), remedy: job.remedy } : {}),
+		...(status === 'queued' || status === 'running'
+			? { next_check_seconds: eta ? Math.min(60, Math.max(5, Math.round(eta / 2))) : 15 }
+			: {}),
+	};
+	const structuredContent = { ...(result.structuredContent || {}), ...base };
+	if (status === 'failed' || status === 'not_found' || status === 'unknown') {
+		return {
+			content: [{ type: 'text', text: `${job.error}\n${job.remedy}` }],
+			structuredContent,
+			isError: true,
+		};
+	}
+	return { ...result, structuredContent };
+}
+
+
+// ── idempotency ─────────────────────────────────────────────────────────────
+
+const IDEMPOTENCY_PROPERTY = {
+	type: 'string',
+	minLength: 1,
+	maxLength: 200,
+	description:
+		'Optional retry key. Send the same key again (same caller, same arguments, within 24 hours) and you get the ' +
+		'original job back instead of a second generation, so a retry after a timeout cannot burn quota twice. ' +
+		'Use a fresh key for each distinct request. A failed attempt is not remembered, so its key can be reused.',
+};
+
+function idempotencyError(code, message, retryable) {
+	return toolError(message, { code, retryable });
+}
+
+// A stored pending job may have finished or failed since. Probe it once: done
+// replays the model, running replays a fresh pending envelope, failed forgets the
+// entry so the same key retries, and an unreachable status check keeps the
+// stored answer rather than starting a duplicate.
+async function revalidateStored(stored, req) {
+	const sc = stored?.structuredContent;
+	if (!sc || sc.status !== 'pending' || !sc.jobId) return stored;
+	const { result, job } = await collectJob({ job_id: sc.jobId, refine: sc.refine }, req);
+	if (job.status === 'failed' || job.status === 'not_found') return null;
+	if (job.status === 'unknown') return stored;
+	return { content: result.content, structuredContent: { ...result.structuredContent, job_id: sc.jobId } };
+}
+
+/**
+ * Give a generation handler an optional `idempotency_key`. Without a key the
+ * handler runs exactly as before. With one, the call runs at most once per
+ * (caller, key) across 24 hours and every repeat returns that outcome.
+ */
+function idempotent(tool, handler) {
+	return async (args, auth, req, ctx = {}) => {
+		const key = normalizeKey(args?.idempotency_key);
+		if (!key) return handler(args, auth, req, ctx);
+		const { idempotency_key: _omit, ...request } = args;
+		const caller = auth?.caller || auth?.rateKey || 'anonymous';
+		const outcome = await runOnce({
+			caller,
+			key,
+			fingerprint: argsDigest({ tool, ...request }),
+			run: () => handler(request, auth, req, ctx),
+			shouldStore: (r) => !r?.isError,
+			toStored: (r) => ({ content: r.content, structuredContent: r.structuredContent }),
+			revalidate: (stored) => revalidateStored(stored, req),
+		});
+		if (outcome.state === 'conflict') {
+			return idempotencyError(
+				'idempotency_key_reused',
+				'That idempotency_key was already used for a different request. Use a new key for a new request, or repeat the original arguments to collect the original job.',
+				false,
+			);
+		}
+		if (outcome.state === 'in_progress') {
+			return idempotencyError(
+				'idempotency_in_progress',
+				'A call with this idempotency_key is still running. Wait a few seconds and call again with the same key to collect it.',
+				true,
+			);
+		}
+		const replayed = outcome.state === 'replayed';
+		const source = replayed ? outcome.stored : outcome.value;
+		const content = replayed
+			? [{ type: 'text', text: "Replayed: this idempotency_key matched an earlier call, so this is that call's job, not a new generation." }, ...(source.content || [])]
+			: source.content;
+		return {
+			...source,
+			content,
+			structuredContent: {
+				...(source.structuredContent || {}),
+				idempotency: { key, replayed },
+			},
+		};
+	};
 }
 
 // ── definitions ─────────────────────────────────────────────────────────────
@@ -909,6 +1083,7 @@ const DEFS = [
 			additionalProperties: false,
 			required: ['prompt'],
 			properties: {
+				idempotency_key: IDEMPOTENCY_PROPERTY,
 				prompt: {
 					type: 'string',
 					minLength: 3,
@@ -924,7 +1099,7 @@ const DEFS = [
 		},
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Generating your 3D model…', 'Here is your 3D model'),
-		handler: handleForgeFree,
+		handler: idempotent('forge_free', handleForgeFree),
 	},
 	{
 		name: 'text_to_avatar',
@@ -936,13 +1111,14 @@ const DEFS = [
 			type: 'object',
 			additionalProperties: false,
 			properties: {
+				idempotency_key: IDEMPOTENCY_PROPERTY,
 				prompt: { type: 'string', maxLength: 1000, description: 'Description of the avatar to generate.' },
 				image_url: { type: 'string', format: 'uri', description: 'Optional http(s) URL to a reference image to reconstruct in 3D.' },
 			},
 		},
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Generating your avatar…', 'Here is your avatar'),
-		handler: handleTextToAvatar,
+		handler: idempotent('text_to_avatar', handleTextToAvatar),
 	},
 	{
 		name: 'mesh_forge',
@@ -955,13 +1131,14 @@ const DEFS = [
 			type: 'object',
 			additionalProperties: false,
 			properties: {
+				idempotency_key: IDEMPOTENCY_PROPERTY,
 				prompt: { type: 'string', maxLength: 1000, description: 'Description of the single object to model.' },
 				image_url: { type: 'string', format: 'uri', description: 'Optional http(s) URL to a reference image to reconstruct directly.' },
 			},
 		},
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Generating your 3D mesh…', 'Here is your 3D mesh'),
-		handler: handleMeshForge,
+		handler: idempotent('mesh_forge', handleMeshForge),
 	},
 	{
 		name: 'rig_mesh',
@@ -975,12 +1152,13 @@ const DEFS = [
 			additionalProperties: false,
 			required: ['glb_url'],
 			properties: {
+				idempotency_key: IDEMPOTENCY_PROPERTY,
 				glb_url: { type: 'string', format: 'uri', description: 'http(s) URL to the static GLB mesh to rig.' },
 			},
 		},
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Rigging your model…', 'Here is your rigged model'),
-		handler: handleRigMesh,
+		handler: idempotent('rig_mesh', handleRigMesh),
 	},
 	{
 		name: 'forge_avatar',
@@ -994,6 +1172,7 @@ const DEFS = [
 			type: 'object',
 			additionalProperties: false,
 			properties: {
+				idempotency_key: IDEMPOTENCY_PROPERTY,
 				prompt: { type: 'string', maxLength: 1000, description: 'Description of the character/avatar to generate.' },
 				image_url: { type: 'string', format: 'uri', description: 'Optional http(s) URL to a reference image to reconstruct in 3D.' },
 				allow_non_humanoid: { type: 'boolean', description: 'Set true to rig a non-humanoid subject anyway (rigging assumes a humanoid figure).' },
@@ -1001,7 +1180,7 @@ const DEFS = [
 		},
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Generating your rigged avatar…', 'Here is your rigged avatar'),
-		handler: handleForgeAvatar,
+		handler: idempotent('forge_avatar', handleForgeAvatar),
 	},
 	{
 		name: 'refine_model',
@@ -1018,6 +1197,7 @@ const DEFS = [
 			additionalProperties: false,
 			required: ['glb_url', 'instruction'],
 			properties: {
+				idempotency_key: IDEMPOTENCY_PROPERTY,
 				glb_url: { type: 'string', format: 'uri', description: 'http(s) URL of the model to refine (e.g. the glbUrl a previous generation returned).' },
 				instruction: {
 					type: 'string',
@@ -1049,7 +1229,7 @@ const DEFS = [
 		},
 		annotations: GEN_ANNOTATIONS,
 		_meta: widgetMeta('Refining your 3D model…', 'Here is the refined model'),
-		handler: handleRefineModel,
+		handler: idempotent('refine_model', handleRefineModel),
 	},
 	{
 		name: 'check_job',
@@ -1093,6 +1273,42 @@ const DEFS = [
 		},
 		_meta: widgetMeta('Checking your 3D model…', 'Here is your 3D model'),
 		handler: handleCheckJob,
+	},
+	{
+		name: 'get_job',
+		title: 'Get the status of a 3D job',
+		description:
+			'Machine-readable status of a generation that returned "pending". Returns status (queued, running, done, ' +
+			'failed, not_found), progress (0 to 1, null when unknown), eta_seconds, and next_check_seconds while it runs; ' +
+			'the asset links (viewer_url, glb_url, poster_png_url, embed_html) when done; and a plain error with a ' +
+			'remedy when it failed. Safe to call on a schedule: it never starts work and is not counted against the ' +
+			'generation quota. Same job_id as check_job, which renders the finished model in the inline viewer.',
+		inputSchema: {
+			type: 'object',
+			additionalProperties: false,
+			required: ['job_id'],
+			properties: {
+				job_id: {
+					type: 'string',
+					minLength: 8,
+					maxLength: 4096,
+					description: 'The job_id (or jobId) a pending generation returned.',
+				},
+				refine: {
+					type: 'object',
+					additionalProperties: true,
+					description: 'Optional: the refine object a pending refine_model result carried, passed back unchanged.',
+				},
+			},
+		},
+		annotations: {
+			readOnlyHint: false, // the first check of a finished job saves the model
+			destructiveHint: false,
+			idempotentHint: false, // later checks can advance recovery to another provider
+			openWorldHint: true,
+		},
+		_meta: widgetMeta('Checking your 3D job…', 'Here is the job status'),
+		handler: handleGetJob,
 	},
 	{
 		name: 'look_at_model',
