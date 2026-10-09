@@ -16,11 +16,12 @@
 // Every dispatcher calls the same three functions: listForRequest on
 // tools/list, gateCall before a handler runs, finishCall after it returns.
 
-import { createPolicy, resolveEnablement, describeEnablement } from '@three-ws/mcp-policy';
+import { createPolicy, resolveEnablement, describeEnablement, normalizeEntry, POLICY } from '@three-ws/mcp-policy';
 
 import { cacheDel, cacheGetFresh, cacheSet } from '../_lib/cache.js';
 import { sql } from '../_lib/db.js';
 import { logger } from '../_lib/usage.js';
+import { connectorSpendMessage } from '../_lib/key-scopes.js';
 
 const log = logger('mcp-policy');
 const PREVIEW_KEY = (id) => `mcp:preview:${id}`;
@@ -134,17 +135,44 @@ export async function enablementFor(req, auth) {
 	return en;
 }
 
+// Financial-tier tools a connector key may still call: they delete the
+// caller's own data or run an action on the caller's own gear, and move no
+// funds. Every other financial tool spends, pays, launches or withdraws.
+const NON_SPENDING_CONFIRMS = new Set(['confirm_delete', 'confirm_run']);
+
+/** True when a tool moves value, so a key issued for an unattended agent may never call it. */
+export function movesValue(serverId, name) {
+	const row = POLICY[serverId]?.[name];
+	if (!row) return false;
+	const entry = normalizeEntry(name, row);
+	return entry.tier === 'financial' && !NON_SPENDING_CONFIRMS.has(entry.confirmFlag);
+}
+
+/** The JSON-RPC error a connector key gets for a value-moving tool. */
+export function connectorSpendError(name) {
+	return Object.assign(new Error(connectorSpendMessage(name)), {
+		code: -32003,
+		data: { reason: 'spend_requires_browser_session', tool: name, url: 'https://three.ws/dashboard' },
+	});
+}
+
 /** tools/list for this request: disabled tools removed, financial ones annotated. */
 export async function listForRequest(serverId, catalog, auth, req) {
-	return policyFor(serverId).listTools(catalog, await enablementFor(req, auth));
+	const tools = await policyFor(serverId).listTools(catalog, await enablementFor(req, auth));
+	// A connector key cannot call a value-moving tool, so it never sees one.
+	return auth?.connector ? tools.filter((t) => !movesValue(serverId, t.name)) : tools;
 }
 
 /**
- * Gate one tools/call. Returns { ok: false, result } with a designed refusal,
+ * Gate one tools/call. A connector key calling a value-moving tool throws a
+ * JSON-RPC error (-32003). Otherwise returns { ok: false, result } with a designed refusal,
  * or { ok: true, args, preview } with the arguments to pass the handler.
  * @param {string[]} ownArgs  argument names the tool's own schema declares
  */
 export async function gateCall(serverId, name, args, auth, req, ownArgs = []) {
+	// Before the enablement check, so a connector key is told it needs a browser
+	// session instead of being told to switch the tool on.
+	if (auth?.connector && movesValue(serverId, name)) throw connectorSpendError(name);
 	const en = await enablementFor(req, auth);
 	return policyFor(serverId).beforeCall({ name, args, en, principal: principalOf(auth), ownArgs });
 }

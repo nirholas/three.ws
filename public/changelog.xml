@@ -39,14 +39,6 @@
 			<description>The Agent MCP server now has a pay_quote tool. It asks a paid x402 endpoint what it charges without paying, and shows who gets paid, how much, in which token and on which chain, which wallet pays, the per-call limit, and anything that would stop the payment. pay_and_call needs the quote_id it returns plus an explicit confirm_payment, so an assistant always shows you the price before your agent wallet pays. One approval pays one call. Before this, turning pay_and_call on still left it refusing every call, because the quote step it requires did not exist.</description>
 		</item>
 		<item>
-			<title>Agents can now design real CAD parts</title>
-			<link>https://three.ws/docs/cad-forge</link>
-			<guid isPermaLink="false">2026-10-09:Agents can now design real CAD parts</guid>
-			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Two new tools on the 3D Studio MCP server bring CAD Forge to any agent. cad_generate turns a description into a parametric part that the OpenCascade kernel has built, and returns STEP, STL and GLB files, a drawing, exact measurements and a page with dimension sliders. cad_rebuild changes any dimension and rebuilds the part exactly, with no AI guesswork. They are free with a three.ws sign-in and work in Claude, Cursor or any MCP client.</description>
-		</item>
-		<item>
 			<title>Cloud agents get their own free 3D budget with a connector link</title>
 			<link>https://three.ws/connect</link>
 			<guid isPermaLink="false">2026-10-09:Cloud agents get their own free 3D budget with a connector link</guid>
@@ -101,6 +93,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.</description>
+		</item>
+		<item>
+			<title>Safe retries and live status for 3D jobs</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-10-09:Safe retries and live status for 3D jobs</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The free 3D studio now has a get_job tool that reports a job's status, progress, time remaining, download links, or a failure with what to do next. Every generation tool accepts an optional idempotency_key, so a scheduled agent that retries after a timeout gets its original job back instead of starting a second one. Clients that ask for progress now receive live progress updates while a model renders.</description>
 		</item>
 		<item>
 			<title>Splitting a model into parts says plainly when it cannot read an FBX</title>

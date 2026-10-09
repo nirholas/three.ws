@@ -4230,10 +4230,10 @@ Authentication is covered in detail in the [Authentication documentation](authen
 ### List API keys
 
 ```
-GET /api/api-keys
+GET /api/keys
 ```
 
-Requires auth. Returns all API keys for the current user. Plaintext key values are never returned after creation.
+Requires a browser session. Returns every key for the current user. Plaintext key values are never returned after creation.
 
 **Response**
 
@@ -4241,63 +4241,83 @@ Requires auth. Returns all API keys for the current user. Plaintext key values a
 {
 	"keys": [
 		{
-			"id": "key_abc",
-			"name": "My Integration",
-			"scopes": ["avatars:read", "avatars:write"],
-			"created_at": "2025-01-15T10:00:00Z",
-			"last_used_at": "2025-01-20T08:30:00Z"
+			"id": "0b6d1f2e-0000-4000-8000-000000000000",
+			"name": "Grok Bot",
+			"prefix": "sk_live_AbCd12",
+			"scope": "read generate agents:write",
+			"preset": "connector",
+			"last_used_at": "2026-10-09T08:30:00Z",
+			"expires_at": null,
+			"revoked_at": null,
+			"created_at": "2026-10-09T08:00:00Z"
 		}
 	]
 }
 ```
+
+`preset` is `null` for a custom key and `"connector"` for a key issued for an unattended AI agent.
 
 ---
 
 ### Create API key
 
 ```
-POST /api/api-keys
+POST /api/keys
 ```
 
-Requires auth.
+Requires a browser session.
 
 **Request body**
 
 ```json
 {
-	"name": "My Integration",
-	"scopes": ["avatars:read", "avatars:write"]
+	"name": "Grok Bot",
+	"preset": "connector"
 }
 ```
 
-**Available scopes**
+| Field | Description |
+| --- | --- |
+| `name` | Label shown in the dashboard |
+| `scope` | Space-separated scopes. Required unless `preset` is `connector` |
+| `preset` | `connector` issues `read generate agents:write` and can never hold `spend` |
+| `expires_in_days` | Optional lifetime, up to 3650 |
 
-| Scope            | Description                          |
-| ---------------- | ------------------------------------ |
-| `avatars:read`   | Read agents and avatars              |
-| `avatars:write`  | Create and update agents and avatars |
-| `avatars:delete` | Delete agents and avatars            |
-| `profile`        | Read user profile data               |
+**Scopes**
 
-**Response**
+| Scope | Description |
+| --- | --- |
+| `read` | Read avatars, memory, agents and wallet balances |
+| `generate` | Create 3D models and avatars |
+| `agents:write` | Create and edit agents and their memory |
+| `spend` | Move funds: pay, trade, launch, withdraw, publish paid services |
+| `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`, `memory:write`, `agents:read`, `wallet:read`, `wallet:write`, `services:write` | Fine-grained scopes; the coarse ones expand into these |
+
+A `connector` key asking for `spend` or any scope outside its three answers `400 validation_error`. At authentication a connector key has every spend-capable scope removed, so value-moving MCP tools answer JSON-RPC `-32003` and spend routes answer `insufficient_scope`. Keys created before scopes existed keep the power they had. See [Key scopes and the AI agent preset](./mcp.md#key-scopes-and-the-ai-agent-preset).
+
+**Response** (`201`)
 
 ```json
 {
-	"id": "key_abc",
-	"key": "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	"key": {
+		"id": "0b6d1f2e-0000-4000-8000-000000000000",
+		"name": "Grok Bot",
+		"prefix": "sk_live_AbCd12",
+		"scope": "read generate agents:write",
+		"preset": "connector",
+		"secret": "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	}
 }
 ```
 
-The plaintext `key` is returned **only once** at creation time. Store it immediately — it cannot be retrieved again.
-
-Keys use the format `sk_live_` + 32 random characters.
+The plaintext `secret` is returned **only once**. Store it immediately: it cannot be retrieved again.
 
 ---
 
 ### Revoke API key
 
 ```
-DELETE /api/api-keys/:id
+DELETE /api/keys/:id
 ```
 
 Requires auth. Permanently revokes the key.

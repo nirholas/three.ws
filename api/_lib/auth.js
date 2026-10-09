@@ -8,6 +8,7 @@ import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 import { recordDailyActivity } from './streaks.js';
 import { clientIp } from './rate-limit.js';
+import { effectiveKeyScope } from './key-scopes.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -322,14 +323,17 @@ export async function authenticateBearer(token, { audience } = {}) {
 	if (token.startsWith('sk_live_') || token.startsWith('sk_test_')) {
 		const hash = await sha256(token);
 		const rows = await sql`
-			select id, user_id, scope, expires_at, revoked_at
+			select id, user_id, scope, preset, expires_at, revoked_at
 			from api_keys where token_hash = ${hash} limit 1
 		`;
 		const row = rows[0];
 		if (!row || row.revoked_at) return null;
 		if (row.expires_at && new Date(row.expires_at) < new Date()) return null;
 		await sql`update api_keys set last_used_at = now() where id = ${row.id}`;
-		return { userId: row.user_id, scope: row.scope, source: 'apikey', apiKeyId: row.id };
+		// Coarse scopes expand to the fine ones every route checks, and a
+		// connector key is stripped of every spend-capable scope (key-scopes.js).
+		const { scope, connector } = effectiveKeyScope(row);
+		return { userId: row.user_id, scope, source: 'apikey', apiKeyId: row.id, ...(connector ? { connector: true } : {}) };
 	}
 	// Otherwise treat as JWT access token.
 	try {
@@ -361,7 +365,7 @@ export async function getRequestUser(req, res) {
 	const session = await getSessionUser(req, res);
 	if (session) return session;
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { id: bearer.userId, source: 'bearer', scope: bearer.scope || '' };
+	if (bearer) return { id: bearer.userId, source: 'bearer', scope: bearer.scope || '', ...(bearer.connector ? { connector: true } : {}) };
 	return null;
 }
 

@@ -57,7 +57,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 |--------|----------|--------------|
 | three.ws | `/api/mcp` | Avatars, glTF/GLB validation, agent data, memory, copy-trading, a connected home (this page) |
 | 3D Studio | `/api/mcp-3d` | Paid text/image→3D, rigging, retexture, optimization |
-| 3D Studio (free) | `/api/mcp-studio` | Free text/image→3D and rigged avatars — no auth, no payment |
+| 3D Studio (free) | `/api/mcp-studio` | Free text/image→3D and rigged avatars; `get_job` status, `idempotency_key` retries and progress notifications ([details](./mcp-studio.md#long-jobs-and-safe-retries-get_job-idempotency_key-progress)) |
 | Agent wallet | `/api/mcp-agent` | The agent's custodial wallet: balance, find + pay services, and `monetize_endpoint` |
 | x402 Bazaar | `/api/mcp-bazaar` | Discover and price paid agent services across the facilitator network |
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
@@ -208,6 +208,29 @@ curl -X POST https://three.ws/api/mcp \
 
 Keys are tied to a single user account and inherit that user's plan quotas.
 
+#### Key scopes and the AI agent preset
+
+A key carries scopes, and a call outside them fails with `insufficient_scope`. Four coarse scopes cover most automation, and each expands at authentication time into the fine scopes the routes check:
+
+| Scope | Lets the key |
+| --- | --- |
+| `read` | Read avatars, memory, agents and wallet balances |
+| `generate` | Create 3D models and avatars |
+| `agents:write` | Create and edit agents and their memory |
+| `spend` | Move funds: pay x402, trade, launch, withdraw, publish paid services (implies `wallet:write` and `services:write`) |
+
+The fine scopes (`avatars:read`, `avatars:write`, `wallet:write`, ...) keep working. Keys minted before scopes existed keep exactly the power they had: a key that could spend still can.
+
+**For an AI agent (Grok Bot, schedules, CI).** The new-key dialog at [/dashboard/api](https://three.ws/dashboard/api) offers this preset by default. It issues `read generate agents:write` and marks the key as a connector key. The scopes are fixed: `POST /api/keys` with `"preset": "connector"` refuses `spend` or any other scope with a `400`, and the dashboard cannot edit them. A connector key is stripped of every spend-capable scope when it authenticates, so the guarantee holds even if its stored scope string is later altered. Create a custom key if you want one that spends.
+
+What a connector key sees and gets on every hosted MCP server:
+
+- `tools/list` omits every value-moving tool, even when the client asks for the full catalog.
+- Calling one anyway returns a JSON-RPC error with code `-32003`, `data.reason` set to `spend_requires_browser_session` and `data.url` set to `https://three.ws/dashboard`. The message tells the model that the account owner must do it in a browser session on three.ws.
+- HTTP routes that move funds answer `insufficient_scope` for the missing `wallet:write`.
+
+Tools that only confirm or cancel an action you already approved in the browser (`confirm_delete`, `confirm_run`) move no funds and stay available.
+
 ---
 
 ## Connecting Claude Code
@@ -275,7 +298,7 @@ A local server must set `PUBLIC_APP_ORIGIN` to its own origin, otherwise its OAu
 
 Notes for connector setup:
 
-- **API key.** Create one at [/dashboard/api](https://three.ws/dashboard/api) and store it as the connector's secret. It is sent as `Authorization: Bearer sk_live_…`; if the connector asks for a header name, use `Authorization` with the value `Bearer sk_live_…`. A cloud agent holds this key unattended, so give it only the scopes it needs (`avatars:read avatars:write profile agents:read memory:read` covers generation, avatars and agent data) and never `wallet:write`: spending stays a same-site action you confirm yourself.
+- **API key.** Create one at [/dashboard/api](https://three.ws/dashboard/api) and store it as the connector's secret. It is sent as `Authorization: Bearer sk_live_…`; if the connector asks for a header name, use `Authorization` with the value `Bearer sk_live_…`. A cloud agent holds this key unattended, so choose the **For an AI agent** preset (`read generate agents:write`), which can never spend: spending stays a same-site action you confirm yourself in a browser session.
 - **OAuth 2.1.** The connector registers itself through dynamic client registration (RFC 7591), so there is no client ID to create; you approve the consent screen once and it refreshes the token on its own. PKCE S256 is required and advertised.
 - **x402 pay-per-call** is not an unattended connector mode: every paid call needs a signed payment, which a connector cannot make on your behalf.
 - **The URL must be public.** Grok Bot connects from xAI's cloud, so `localhost` never works; use the `https://three.ws` URLs above.

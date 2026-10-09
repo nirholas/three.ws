@@ -6,12 +6,18 @@
 import { sql } from './db.js';
 import { randomToken, sha256 } from './crypto.js';
 import { logAudit } from './audit.js';
+import { CONNECTOR_PRESET, CONNECTOR_SCOPES } from './key-scopes.js';
 
 // The wallet and services scopes gate the agent-wallet MCP server
 // (api/mcp-agent). A key carrying them is bounded exactly like an OAuth token
 // carrying them: every spend still passes the server-side caps and
 // THREEWS_AGENT_PAY_ENABLED, so a key is never a wider grant than consent.
 export const API_KEY_SCOPES = Object.freeze([
+	// Coarse scopes (api/_lib/key-scopes.js): they expand into the fine scopes
+	// below when the key authenticates. `spend` is the one that moves funds.
+	'read',
+	'generate',
+	'spend',
 	'avatars:read',
 	'avatars:write',
 	'avatars:delete',
@@ -46,21 +52,30 @@ export function normalizeKeyScopes(scope) {
  * Insert a new API key and return its row plus the plaintext secret. The secret
  * is never stored; only its sha256 is. Callers validate scopes first.
  */
-export async function mintApiKey({ userId, name, scopes, expiresAt = null, environment = 'live', req = null, via = 'dashboard' }) {
+export async function mintApiKey({ userId, name, scopes, expiresAt = null, environment = 'live', req = null, via = 'dashboard', preset = null }) {
+	// The connector preset is a fixed grant. Refuse anything else here as well as
+	// in the route, so no caller of this helper can mint a connector key that
+	// holds a scope it may never have.
+	if (preset === CONNECTOR_PRESET && scopes.some((s) => !CONNECTOR_SCOPES.includes(s)))
+		throw Object.assign(new Error('a connector key can only hold read, generate and agents:write'), {
+			status: 400,
+			code: 'validation_error',
+			expose: true,
+		});
 	const raw = `sk_${environment}_${randomToken(28)}`;
 	const hash = await sha256(raw);
 	const prefix = raw.slice(0, 12);
 	const [row] = await sql`
-		insert into api_keys (user_id, name, prefix, token_hash, scope, expires_at)
-		values (${userId}, ${name}, ${prefix}, ${hash}, ${scopes.join(' ')}, ${expiresAt})
-		returning id, name, prefix, scope, expires_at, created_at
+		insert into api_keys (user_id, name, prefix, token_hash, scope, expires_at, preset)
+		values (${userId}, ${name}, ${prefix}, ${hash}, ${scopes.join(' ')}, ${expiresAt}, ${preset})
+		returning id, name, prefix, scope, preset, expires_at, created_at
 	`;
 	// Never the secret or its hash, only the id, prefix, and granted scope.
 	logAudit({
 		userId,
 		action: 'create_api_key',
 		resourceId: row.id,
-		meta: { prefix, scope: row.scope, environment, via },
+		meta: { prefix, scope: row.scope, preset, environment, via },
 		req,
 	});
 	return { row, secret: raw };

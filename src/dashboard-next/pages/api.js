@@ -9,7 +9,7 @@
 //
 // Endpoints (all real):
 //   GET    /api/keys                       { keys: [...] }
-//   POST   /api/keys                       body { name, scope, expires_in_days? } → { key: { ..., secret } }
+//   POST   /api/keys                       body { name, scope, preset?, expires_in_days? } → { key: { ..., secret } }
 //   DELETE /api/keys/:id
 //   GET    /api/avatars                    { avatars: [...] }
 //   GET    /api/widgets                    { widgets: [...] }
@@ -25,6 +25,9 @@ import { errorStateHTML, emptyStateHTML, skeletonHTML, ensureStateKitStyles } fr
 
 // Scopes accepted by /api/keys: match API_KEY_SCOPES in api/_lib/api-keys.js exactly.
 const SCOPES = [
+	{ value: 'read',           label: 'read',           note: 'Read avatars, agents, memory and wallet balances' },
+	{ value: 'generate',       label: 'generate',       note: 'Generate 3D models and avatars' },
+	{ value: 'spend',          label: 'spend',          note: 'Move funds: pay, trade, launch, withdraw, publish paid services' },
 	{ value: 'avatars:read',   label: 'avatars:read',   note: 'List, fetch, and stream avatars' },
 	{ value: 'avatars:write',  label: 'avatars:write',  note: 'Create or modify avatars' },
 	{ value: 'avatars:delete', label: 'avatars:delete', note: 'Permanently remove avatars' },
@@ -38,6 +41,17 @@ const SCOPES = [
 	{ value: 'wallet:write',   label: 'wallet:write',   note: 'Spend USDC from your agent wallet, within your caps' },
 	{ value: 'services:write', label: 'services:write', note: 'Publish paid services that earn USDC to your agent wallet' },
 	{ value: 'inference',      label: 'inference',      note: 'Call the OpenAI-compatible /api/v1 endpoint, billed to your credits' },
+];
+
+// The "For an AI agent" preset. Mirrors CONNECTOR_SCOPES in api/_lib/key-scopes.js:
+// the server issues this exact grant and refuses a connector key any spend scope.
+const CONNECTOR_PRESET = 'connector';
+const CONNECTOR_SCOPES = ['read', 'generate', 'agents:write'];
+const CONNECTOR_CAPS = [
+	{ ok: true, text: 'Read your avatars, agents and memory' },
+	{ ok: true, text: 'Generate 3D models and avatars' },
+	{ ok: true, text: 'Create and edit agents and their memory' },
+	{ ok: false, text: 'Never spend: no payments, trades, launches or withdrawals' },
 ];
 
 const EXPIRY_OPTIONS = [
@@ -532,7 +546,7 @@ export function renderKeysTable(keys) {
 						const st = keyStatus(k);
 						return `
 						<tr${st.dead ? ' class="dn-row-muted"' : ''}>
-							<td>${esc(k.name)}</td>
+							<td>${esc(k.name)}${k.preset === CONNECTOR_PRESET ? ' <span class="dn-tag success" title="Issued for an AI agent. This key can never spend.">AI agent</span>' : ''}</td>
 							<td><code class="dn-mono-sm">${esc(k.prefix)}…</code></td>
 							<td>
 								<span class="dn-tag ${st.tag}"${st.at ? ` title="${esc(st.label)} ${esc(relTime(st.at))}"` : ''}>${st.label}</span>
@@ -570,6 +584,31 @@ function openNewKeyModal(state) {
 				<input data-autofocus name="name" type="text" placeholder="e.g. Production server" required maxlength="80" />
 			</label>
 			<fieldset class="dn-field">
+				<legend>Key type</legend>
+				<div class="dn-presets" role="radiogroup" aria-label="Key type">
+					<label class="dn-preset">
+						<input type="radio" name="preset" value="${CONNECTOR_PRESET}" checked />
+						<div>
+							<div class="dn-scope-label"><strong>For an AI agent</strong> (Grok Bot, schedules, CI)</div>
+							<div class="dn-scope-note">Safe to store as a bot secret. It can read, generate and edit agent data, and can never spend.</div>
+						</div>
+					</label>
+					<label class="dn-preset">
+						<input type="radio" name="preset" value="custom" />
+						<div>
+							<div class="dn-scope-label"><strong>Custom scopes</strong></div>
+							<div class="dn-scope-note">Pick exactly what the key may do, including spending.</div>
+						</div>
+					</label>
+				</div>
+			</fieldset>
+			<div data-slot="connector-caps" class="dn-caps">
+				<ul class="dn-cap-list">
+					${CONNECTOR_CAPS.map((c) => `<li class="${c.ok ? 'ok' : 'no'}"><span aria-hidden="true">${c.ok ? '✓' : '✕'}</span> ${esc(c.text)}</li>`).join('')}
+				</ul>
+				<p class="dn-scope-note">Moving funds needs a browser session on three.ws. This cannot be changed later: to spend, create a custom key.</p>
+			</div>
+			<fieldset class="dn-field" data-slot="custom-scopes" hidden>
 				<legend>Scopes</legend>
 				<div class="dn-scopes">
 					${SCOPES.map((s) => `
@@ -600,6 +639,16 @@ function openNewKeyModal(state) {
 	const form = el.querySelector('form');
 	const errSlot = form.querySelector('[data-slot="error"]');
 	const submitBtn = form.querySelector('[data-submit]');
+	const capsSlot = form.querySelector('[data-slot="connector-caps"]');
+	const customSlot = form.querySelector('[data-slot="custom-scopes"]');
+
+	function syncPreset() {
+		const connector = form.querySelector('input[name="preset"]:checked')?.value === CONNECTOR_PRESET;
+		capsSlot.hidden = !connector;
+		customSlot.hidden = connector;
+	}
+	form.querySelectorAll('input[name="preset"]').forEach((r) => r.addEventListener('change', syncPreset));
+	syncPreset();
 
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -607,7 +656,8 @@ function openNewKeyModal(state) {
 		errSlot.textContent = '';
 		const fd = new FormData(form);
 		const name = String(fd.get('name') || '').trim();
-		const scopes = fd.getAll('scope');
+		const connector = fd.get('preset') === CONNECTOR_PRESET;
+		const scopes = connector ? CONNECTOR_SCOPES : fd.getAll('scope');
 		const expiryIdx = parseInt(String(fd.get('expiry') ?? '0'), 10);
 		if (!name) { errSlot.textContent = 'Name is required.'; errSlot.hidden = false; return; }
 		if (!scopes.length) { errSlot.textContent = 'Pick at least one scope.'; errSlot.hidden = false; return; }
@@ -616,6 +666,7 @@ function openNewKeyModal(state) {
 		submitBtn.textContent = 'Creating…';
 		try {
 			const payload = { name, scope: scopes.join(' '), environment: 'live' };
+			if (connector) payload.preset = CONNECTOR_PRESET;
 			const days = EXPIRY_OPTIONS[expiryIdx]?.days;
 			if (days) payload.expires_in_days = days;
 			const resp = await post('/api/keys', payload);
@@ -625,6 +676,7 @@ function openNewKeyModal(state) {
 				name: resp.key.name,
 				prefix: resp.key.prefix,
 				scope: resp.key.scope,
+				preset: resp.key.preset ?? null,
 				created_at: resp.key.created_at,
 				expires_at: resp.key.expires_at,
 				last_used_at: null,
@@ -1477,6 +1529,16 @@ function injectStyles() {
 		.dn-scopes { display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); background: rgba(255,255,255,0.02); }
 		.dn-scope-row { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
 		.dn-scope-row input { margin-top: 3px; }
+		.dn-presets { display: flex; flex-direction: column; gap: 8px; }
+		.dn-preset { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; padding: 10px 12px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); background: rgba(255,255,255,0.02); transition: border-color .15s ease, background .15s ease; }
+		.dn-preset:hover { border-color: var(--nxt-ink-fade); }
+		.dn-preset:has(input:checked) { border-color: var(--nxt-accent, #7c9cff); background: rgba(124,156,255,0.07); }
+		.dn-preset input { margin-top: 3px; }
+		.dn-preset input:focus-visible { outline: 2px solid var(--nxt-accent, #7c9cff); outline-offset: 2px; }
+		.dn-caps { margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); }
+		.dn-cap-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--nxt-ink); }
+		.dn-cap-list li.ok span { color: #4ade80; }
+		.dn-cap-list li.no span { color: #f87171; }
 		.dn-scope-label { font-size: 13px; color: var(--nxt-ink); }
 		.dn-scope-label code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; }
 		.dn-scope-note { font-size: 12px; color: var(--nxt-ink-fade); }

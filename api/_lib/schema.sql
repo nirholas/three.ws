@@ -343,7 +343,8 @@ create table if not exists api_keys (
     last_used_at    timestamptz,
     expires_at      timestamptz,
     revoked_at      timestamptz,
-    created_at      timestamptz not null default now()
+    created_at      timestamptz not null default now(),
+    preset          text check (preset is null or preset = 'connector')
 );
 
 create index if not exists api_keys_user on api_keys(user_id) where revoked_at is null;
