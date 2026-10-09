@@ -39,6 +39,14 @@
 			<description>The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.</description>
 		</item>
 		<item>
+			<title>Tutorial · Grok Bot recipes</title>
+			<link>https://three.ws/tutorials/grok-bot-recipes</link>
+			<guid isPermaLink="false">2026-10-09:Tutorial · Grok Bot recipes</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.</description>
+		</item>
+		<item>
 			<title>A full setup guide for Grok Bot</title>
 			<link>https://three.ws/docs/grok-bot</link>
 			<guid isPermaLink="false">2026-10-09:A full setup guide for Grok Bot</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>When an app such as Grok Bot asks to connect to your three.ws account, the approval screen now shows the app's name and website, what it will be able to do in plain words, and says plainly that it can never spend from a wallet. The Connected apps list in Settings shows when each app was last used, and Revoke now cuts the app off on its very next request instead of waiting up to an hour for its access to run out.</description>
+		</item>
+		<item>
+			<title>Create, Forge and Launch are easier for screen readers and AI agents to operate</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Create, Forge and Launch are easier for screen readers and AI agents to operate</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Buttons and cards on Create and Forge now announce the same words you see on screen, the search hint and the walking companion can be reached with the keyboard, and the Launch form fields keep stable names while their character counters change.</description>
 		</item>
 		<item>
 			<title>Creator rewards include fees pump.fun now holds on the curve and pool</title>
@@ -165,6 +181,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The free 3D studio now has a get_job tool that reports a job's status, progress, time remaining, download links, or a failure with what to do next. Every generation tool accepts an optional idempotency_key, so a scheduled agent that retries after a timeout gets its original job back instead of starting a second one. Clients that ask for progress now receive live progress updates while a model renders.</description>
+		</item>
+		<item>
+			<title>Six Grok Bot recipes, each run for real</title>
+			<link>https://three.ws/tutorials/grok-bot-recipes</link>
+			<guid isPermaLink="false">2026-10-09:Six Grok Bot recipes, each run for real</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>A new tutorial gives you six jobs to hand Grok Bot: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image turned into a 3D model, a weekly agent report and a $THREE market brief. Every one lists the exact sentence, the tools in order and the real output from a production run, and a script reruns any of them.</description>
 		</item>
 		<item>
 			<title>Splitting a model into parts says plainly when it cannot read an FBX</title>

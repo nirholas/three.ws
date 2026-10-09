@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T04:19:53.652Z",
+	"generated_at": "2026-10-09T05:13:24.527Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3861,
+	"total": 3864,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -45,6 +45,16 @@
 			"title": "grok-skill.md",
 			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
 			"link": "/grok-skill.md",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Tutorial · Grok Bot recipes",
+			"summary": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
+			"link": "/tutorials/grok-bot-recipes",
 			"tags": [
 				"launch"
 			]
@@ -122,6 +132,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Create, Forge and Launch are easier for screen readers and AI agents to operate",
+			"summary": "Buttons and cards on Create and Forge now announce the same words you see on screen, the search hint and the walking companion can be reached with the keyboard, and the Launch form fields keep stable names while their character counters change.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -214,6 +234,16 @@
 			"link": "/docs/mcp-studio",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Six Grok Bot recipes, each run for real",
+			"summary": "A new tutorial gives you six jobs to hand Grok Bot: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image turned into a 3D model, a weekly agent report and a $THREE market brief. Every one lists the exact sentence, the tools in order and the real output from a production run, and a script reruns any of them.",
+			"link": "/tutorials/grok-bot-recipes",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -1519,37 +1549,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "The flagship post slot now gets flagship material",
-			"summary": "The @trythreews account publishes into three slots a day, one owned by each tier: proof of work at 04:00 UTC, a shipped feature at 12:00, a flagship at 20:00. The machine that drafts announcements from the backlog was not filling them that way. It never recorded a tier on anything it wrote, so every draft it produced was treated as a mid-tier feature and the 20:00 slot was left to whatever happened to be ready. It also dated the surfaces that need owner sign-off on their imagery into the best slot of every day, which pushed everything it could publish on its own weeks into the future. Announcements are now planned into the slot their own tier owns, the ones awaiting sign-off are listed separately instead of blocking the calendar, and six new announcements are queued for review.",
-			"link": "/changelog",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "There's a bouncer at the Club door now",
-			"summary": "The Club's cover charge has always said a bouncer checks your wallet, and until now nobody was standing there. Walk up the alley and you will find him posted beside the door, a head taller than you, in black with shades. He watches you come down the alley, tells you the cover (one cent, in USDC or $THREE), looks down at his list while your wallet is checked on-chain, then nods you through or shakes his head. Regulars and VIPs get a different welcome. Tap him and he explains how the club works, one line at a time, and if you try to walk through him he does not move. There is a line of people waiting behind the rope beside him too, and they have opinions about you cutting past.",
-			"link": "/club",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "Two Uniswap v4 hooks: wearable 3D items as coins, and fees that reward agent reputation",
-			"summary": "New open-source contracts. SkinHook turns a wearable 3D item into a fixed-supply coin with its own pool: wearing it locks one token, so every wearer shrinks the tradable supply, and the creator's royalty is taken inside the swap where it cannot be skipped, with a share for the site that referred the sale. AgentTierHook gives ERC-8004 agents a lower trading fee as their on-chain reputation grows, with liquidity providers keeping every fee. Both are tested against the real Uniswap v4 contracts and are not deployed yet.",
-			"link": null,
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

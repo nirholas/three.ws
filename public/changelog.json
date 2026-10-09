@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:19:53.629Z",
+	"generated_at": "2026-10-09T05:13:24.490Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -42,6 +42,16 @@
 			"title": "grok-skill.md",
 			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
 			"link": "/grok-skill.md",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Tutorial · Grok Bot recipes",
+			"summary": "Six jobs to hand Grok Bot, each with the exact sentence, the tools it calls in order, and the real output of running that sequence against production: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image as a 3D model, a weekly agent report and a $THREE market brief.",
+			"link": "/tutorials/grok-bot-recipes",
 			"tags": [
 				"launch"
 			]
@@ -119,6 +129,16 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Create, Forge and Launch are easier for screen readers and AI agents to operate",
+			"summary": "Buttons and cards on Create and Forge now announce the same words you see on screen, the search hint and the walking companion can be reached with the keyboard, and the Launch form fields keep stable names while their character counters change.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -211,6 +231,16 @@
 			"link": "/docs/mcp-studio",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Six Grok Bot recipes, each run for real",
+			"summary": "A new tutorial gives you six jobs to hand Grok Bot: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image turned into a 3D model, a weekly agent report and a $THREE market brief. Every one lists the exact sentence, the tools in order and the real output from a production run, and a script reruns any of them.",
+			"link": "/tutorials/grok-bot-recipes",
+			"tags": [
+				"docs"
 			]
 		},
 		{
