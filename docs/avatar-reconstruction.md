@@ -14,7 +14,7 @@ person* onto a fixed, pre-rigged template — the same architecture Avaturn and
 Ready Player Me use, and the reason the output is born-rigged with facial
 blendshapes instead of a bare mesh that still needs auto-rigging.
 
-- **Worker:** [`workers/avatar-reconstruction/`](../workers/avatar-reconstruction) — FastAPI on a Cloud Run L4 GPU.
+- **Worker:** [`workers/avatar-reconstruction/`](../workers/avatar-reconstruction): FastAPI on a CPU-only Cloud Run service (8 vCPU). It ran on an L4 until background removal was measured to gain nothing from CUDA; see the comment in its `cloudbuild.yaml`.
 - **Backend provider:** [`api/_providers/gcp.js`](../api/_providers/gcp.js), selected by `AVATAR_REGEN_PROVIDER=gcp` (see [`api/_lib/regen-provider.js`](../api/_lib/regen-provider.js)).
 - **User entry points:** the selfie/upload flow (and, via the full-body lane, the text→avatar prompt flow) in [`api/avatars/_actions.js`](../api/avatars/_actions.js) (`POST /api/avatars/reconstruct`).
 - **Completion:** normally driven by the browser polling `/api/avatars/regenerate-status`, which runs the finalize stages inline. [`api/cron/reconstruct-sweep.js`](../api/cron/reconstruct-sweep.js) is the server-side backstop for when it isn't — see below.

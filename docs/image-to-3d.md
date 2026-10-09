@@ -16,9 +16,10 @@ When you add photos, the app switches to the `image` (image-intermediate) genera
 
 Routing is free-first and health-aware, exactly as in Forge. Because the free NVIDIA NIM TRELLIS lane is text-only (it rejects user images), photo submissions filter it out and fall to the free reconstruction chain in `api/_lib/forge-tiers.js`, most preferred first:
 
-1. **TRELLIS (self-host)**, our own Cloud Run GPU worker, a native single-hop image-to-3D lane (image to TRELLIS to GLB), zero vendor cost.
-2. **Hunyuan3D (self-host)**, our own high-poly reconstruction worker, strong on people and organic subjects.
-3. **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR.
+1. **TRELLIS.2 (self-host)**, the configured default at every tier (MIT licensed, the tier picks its resolution). The lane is env-gated on `MODEL_TRELLIS2_URL` and is skipped wherever that worker is not deployed.
+2. **TRELLIS (self-host)**, our own Cloud Run GPU worker, a native single-hop image-to-3D lane (image to TRELLIS to GLB), zero vendor cost.
+3. **Hunyuan3D (self-host)**, our own high-poly reconstruction worker, strong on people and organic subjects. Its licence excludes the EU, the UK and South Korea, so requests from those countries (or an unknown country) skip it.
+4. **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR.
 
 If a self-host worker accepts your job and then fails it, the job moves to the next lane on its own and you keep watching the same progress screen. The last rung is **TripoSG (self-host)**: it only takes over when every textured lane is down, and it returns the shape without textures (the progress screen tells you when that happens), so an outage costs you color rather than the whole model.
 

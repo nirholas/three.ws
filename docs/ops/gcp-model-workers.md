@@ -89,8 +89,8 @@ faked.
 | `MODEL_TRELLIS2_URL`    | `trellis2`             | Cloud Run URL of `model-trellis2`. Unset means the lane is skipped. |
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
-| `GCP_TRIPOSG_URL`       | `triposg` (sketch)     | Cloud Run URL of `model-triposg`. |
-| `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `model-rig` (the env name predates the engine swap that retired the old `unirig` service). Required for rigging: without it, `rerig` falls back to `GCP_RECONSTRUCTION_URL`, whose deployed service exposes no `/rig`, so every rig submit 404s. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
+| `GCP_TRIPOSG_URL`       | `sketch`, `triposg`    | Cloud Run URL of `model-triposg`. Serves the sketch lane and the last-resort, untextured photo rung of the poll-time failover. |
+| `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `model-rig` (the env name predates the engine swap that retired the old `unirig` service). Required for rigging: it is the only `rerig` backend, so without it the provider reports the mode unsupported rather than submitting anywhere. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
 | `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager; `model-rig`'s `API_KEY` references the same secret). |
 | `GCP_REMESH_URL`        | Game-Ready export      | `model`/`remesh` worker (post-gen). |
 | `FORGE_PREFER_FREE`     | routing (optional)     | Defaults on. Set `false` only to restore the paid-default ordering once the paid account is funded. |
