@@ -105,6 +105,7 @@ re-authenticates.
 
 | Signed-in tool | What it does |
 |---|---|
+| `list_my_agents` | The account's agents with their ids, page URLs and public Solana addresses. |
 | `create_agent`, `identity_check`, `call_agent` | Create an agent, read its identity, send another agent a message. |
 | `attach_avatar_to_agent` | Give an agent a body you just generated. |
 | `remember`, `recall` | Read and write an agent's memory. |
@@ -119,6 +120,20 @@ cannot reach a wallet tool through this URL. Wallet, payment and launch actions
 stay in the browser at [three.ws/dashboard](/dashboard). Your
 [MCP tool settings](/mcp-tools) can switch any listed tool off. This surface
 lists no widget templates and no `ui://` resources, since Grok renders none.
+
+## Prompts for scheduled tasks
+
+`prompts/list` on this URL offers guided prompts written for an unattended agent. Each names exact tools and argument shapes, never asks you a question mid-run, and tells Grok to pass an `idempotency_key` on every generation so a retried or double-fired schedule collects the original job instead of generating twice.
+
+| Prompt | Arguments | What a scheduled run produces |
+|---|---|---|
+| `agent-get-started` | none | A short tour of the tools and one real example with its links. |
+| `daily-3d-brief` | `topic` or `trending` | A model and a poster image for the day's topic, with the four links. |
+| `asset-pack` | `theme`, `count` | A table of catalog props plus generated gap-fillers. |
+| `avatar-from-photo` | `image_url` | A rigged avatar, its links and a pose studio link. |
+| `agent-report` | `focus` | A read-only status report on your agents. Listed only once the connector is signed in. |
+
+Example schedule text for Grok Bot: "Every morning at 8, run the three.ws prompt `daily-3d-brief` with topic trending and post the poster image and viewer link here." The full prompt list and arguments are in the [guided prompts](/docs/mcp) section.
 
 ## A skill file for Grok
 

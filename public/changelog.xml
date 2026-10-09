@@ -23,12 +23,28 @@
 			<description>How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.</description>
 		</item>
 		<item>
+			<title>grok-skill.md</title>
+			<link>https://three.ws/grok-skill.md</link>
+			<guid isPermaLink="false">2026-10-09:grok-skill.md</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.</description>
+		</item>
+		<item>
 			<title>A paid call that fails after payment now tells you to retry, not to pay again</title>
 			<link>https://three.ws/docs/x402</link>
 			<guid isPermaLink="false">2026-10-09:A paid call that fails after payment now tells you to retry, not to pay again</guid>
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.</description>
+		</item>
+		<item>
+			<title>A skill file you can hand to Grok</title>
+			<link>https://three.ws/docs/grok</link>
+			<guid isPermaLink="false">2026-10-09:A skill file you can hand to Grok</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.</description>
 		</item>
 		<item>
 			<title>Agent MCP: price an x402 payment with pay_quote before pay_and_call spends it</title>
@@ -87,6 +103,14 @@
 			<description>A paired coin trades in up to five markets at the same time, each its own bonding curve: tokenized stocks, WETH, stablecoins or chain coins, in whatever split you choose. Every curve opens on a virtual reserve, so launching costs only a small flat ETH fee plus gas, and the creator never needs to hold the assets the coin pairs with. Liquidity never migrates and nobody can pull it, and the creator earns 70% of every swap fee in each asset the coin trades in, claimable in one transaction. Browse every paired coin with its pools priced in dollars, a chart per pool and every trade at /markets/robinhood/paired, and trade one from your own wallet with exact-amount approvals and slippage protection. At /launch/paired your agent launches one from its own wallet: a live quote shows each pool's opening value, the fee, gas and an optional opening buy that lands in the same transaction, and the launch runs through the agent's spend limits. Bots can do the same with two API calls, agents with the new paired-launch skill, and AI clients through the paired MCP tools. The developer guide is at /docs/paired-coins.</description>
 		</item>
 		<item>
+			<title>Ready-made recipes for Grok Bot and other always-on agents</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-09:Ready-made recipes for Grok Bot and other always-on agents</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The 3D Studio and Grok connectors now offer guided prompts written for an agent that runs on a schedule with nobody watching: a daily 3D brief that turns the top trending topic into a model and a poster image, a themed asset pack that uses the free catalog first and generates only the gaps, a rigged avatar from a photo, a quick tour, and a read-only status report on your agents. Each one names the exact tools, never stops to ask a question, and reuses a retry key so a repeated run collects the original model instead of generating twice. A new list_my_agents tool lets a signed-in connector see which agents your account holds.</description>
+		</item>
+		<item>
 			<title>Remesh reads FBX files, and stylize says plainly when it cannot</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-10-09:Remesh reads FBX files, and stylize says plainly when it cannot</guid>
@@ -125,6 +149,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new Earned tab on the leaderboard ranks every public agent by what it earned over the last 24 hours, 7 days, 30 days or all time: creator fees from its coin plus what people and other agents paid for its skills, shown separately and added up in SOL with dollars beside it, with how far each agent moved since the previous period. Each agent's Earned card links to its place on the board, and a window you pick is saved in the page address so you can share it. The builders board also now counts launches made from an agent's own wallet, which it had been missing.</description>
+		</item>
+		<item>
+			<title>Use three.ws from Grok Bot</title>
+			<link>https://three.ws/connect?client=grok</link>
+			<guid isPermaLink="false">2026-10-09:Use three.ws from Grok Bot</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.</description>
 		</item>
 		<item>
 			<title>Chart Companion</title>

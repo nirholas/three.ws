@@ -45,7 +45,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "d0b27741c3cf"
+			"schemaHash": "d823705fdba9"
 		},
 		{
 			"name": "forge_free",
@@ -53,7 +53,20 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "c515ce38f402"
+			"schemaHash": "77aa0dc8c0e0"
+		},
+		{
+			"name": "get_job",
+			"title": "Get the status of a 3D job",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "09d1c0446ce9"
 		},
 		{
 			"name": "look_at_model",
@@ -74,7 +87,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "8282c22b2dc6"
+			"schemaHash": "af8e2b3a8465"
 		},
 		{
 			"name": "refine_model",
@@ -82,7 +95,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "b966b3537b41"
+			"schemaHash": "2e23bd7e9f8c"
 		},
 		{
 			"name": "rig_mesh",
@@ -90,7 +103,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "69bf89c0d2be"
+			"schemaHash": "cf4dbefabc4c"
 		},
 		{
 			"name": "text_to_avatar",
@@ -98,7 +111,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "dfba7138f9a1"
+			"schemaHash": "765248cd3400"
 		}
 	],
 	"api/_mcp/tools/agents.js": [
@@ -153,6 +166,19 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "4b32993a5276"
+		},
+		{
+			"name": "list_my_agents",
+			"title": "List my agents",
+			"descHead": "List the agents on your account, newest first: id, name, description, br",
+			"descHash": "bfaf03bfbad0",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "ba34ea051f7c"
 		},
 		{
 			"name": "register_agent",
@@ -1007,6 +1033,34 @@
 				"openWorldHint": false
 			},
 			"schemaHash": "4f88431f681a"
+		}
+	],
+	"api/_mcp3d/tools/cad.js": [
+		{
+			"name": "cad_generate",
+			"title": "Generate a parametric CAD part (STEP, STL, GLB)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "28187a99a2df"
+		},
+		{
+			"name": "cad_rebuild",
+			"title": "Rebuild a CAD part with new dimensions",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "a13b01f481c6"
 		}
 	],
 	"api/_mcp3d/tools/persona-identity.js": [

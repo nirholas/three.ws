@@ -10,6 +10,13 @@
 		},
 		{
 			"date": "2026-10-09",
+			"title": "Ready-made recipes for Grok Bot and other always-on agents",
+			"summary": "The 3D Studio and Grok connectors now offer guided prompts written for an agent that runs on a schedule with nobody watching: a daily 3D brief that turns the top trending topic into a model and a poster image, a themed asset pack that uses the free catalog first and generates only the gaps, a rigged avatar from a photo, a quick tour, and a read-only status report on your agents. Each one names the exact tools, never stops to ask a question, and reuses a retry key so a repeated run collects the original model instead of generating twice. A new list_my_agents tool lets a signed-in connector see which agents your account holds.",
+			"tags": ["feature"],
+			"link": "/grok"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Splitting a model into parts says plainly when it cannot read an FBX",
 			"summary": "The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.",
 			"tags": [

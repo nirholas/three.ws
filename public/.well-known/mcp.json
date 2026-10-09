@@ -56,7 +56,8 @@
 				"earn-yield",
 				"perps",
 				"predictions",
-				"embed-avatar"
+				"embed-avatar",
+				"agent-report"
 			]
 		},
 		{
@@ -76,7 +77,8 @@
 			"transport": "streamable-http",
 			"auth": "none",
 			"description": "Free text-to-3D, image-to-3D, rigged avatars, persistent talking personas, and a search of the ready-made asset catalog. No account, no payment.",
-			"documentation": "https://three.ws/docs/mcp-studio"
+			"documentation": "https://three.ws/docs/mcp-studio",
+			"prompts": ["agent-get-started", "daily-3d-brief", "asset-pack", "avatar-from-photo"]
 		},
 		{
 			"name": "Grok",
@@ -85,7 +87,14 @@
 			"auth": "none for the free 3D tools; OAuth 2.1 or a connector API key adds the account's agent tools",
 			"signIn": "https://three.ws/api/mcp-grok?auth=oauth",
 			"description": "One connector URL for Grok Bot and the xAI API: the free 3D studio with agent-ready links and no widgets, plus your agents, their memory and skills once signed in. Never lists a wallet or payment tool.",
-			"documentation": "https://three.ws/docs/grok"
+			"documentation": "https://three.ws/docs/grok",
+			"prompts": [
+				"agent-get-started",
+				"daily-3d-brief",
+				"asset-pack",
+				"avatar-from-photo",
+				"agent-report"
+			]
 		},
 		{
 			"name": "Agent wallet",

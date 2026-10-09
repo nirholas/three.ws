@@ -396,6 +396,10 @@ event: message
 data: {"jsonrpc":"2.0","id":3,"result":{"content":[…],"structuredContent":{"status":"pending",…}}}
 ```
 
+### Guided prompts for scheduled agents
+
+`/api/mcp-studio` and `/api/mcp-grok` answer `prompts/list` and `prompts/get` with `agent-get-started`, `daily-3d-brief`, `asset-pack` and `avatar-from-photo`: recipes for an unattended agent that name the exact tools above, pass an `idempotency_key` on every generation and end with the four links. `/api/mcp-chatgpt` offers none. The prompts are rendered against the tools the caller can actually list, so a prompt never names a tool that is switched off. Details and arguments: [guided prompts](/docs/mcp).
+
 ### Conversational refinement (`refine_model`)
 
 Iterate on a model by describing the change in words — *"make it metallic"*,

@@ -31,6 +31,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [llms.txt](https://three.ws/llms.txt): Curated AI-agent index (llmstxt.org convention): the official domain, accounts and $THREE mint, the machine-readable entry points, and the key pages, with llms-full.txt for the complete list.
 - [llms-full.txt](https://three.ws/llms-full.txt): Expanded llms.txt with full descriptions and content hints.
 - [skill.md](https://three.ws/skill.md): The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
+- [grok-skill.md](https://three.ws/grok-skill.md): The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.
 - [robots.txt](https://three.ws/robots.txt): Crawler directives.
 - [OpenAPI](https://three.ws/openapi.json): Machine-readable HTTP API spec.
 - [.well-known/x402](https://three.ws/.well-known/x402): x402 paid-API discovery document.

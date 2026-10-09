@@ -200,6 +200,11 @@
 					"name": "embed-avatar",
 					"title": "Embed an agent on a website",
 					"arguments": ["agentId"]
+				},
+				{
+					"name": "agent-report",
+					"title": "Agent status report",
+					"arguments": ["focus"]
 				}
 			]
 		}

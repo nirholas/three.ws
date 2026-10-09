@@ -21,5 +21,31 @@
 			"type": "streamable-http",
 			"url": "https://three.ws/api/mcp-studio"
 		}
-	]
+	],
+	"_meta": {
+		"io.modelcontextprotocol.registry/publisher-provided": {
+			"prompts": [
+				{
+					"name": "agent-get-started",
+					"title": "What three.ws can do for an autonomous agent",
+					"arguments": []
+				},
+				{
+					"name": "daily-3d-brief",
+					"title": "Daily 3D brief",
+					"arguments": ["topic"]
+				},
+				{
+					"name": "asset-pack",
+					"title": "Themed asset pack",
+					"arguments": ["theme", "count"]
+				},
+				{
+					"name": "avatar-from-photo",
+					"title": "Rigged avatar from a photo",
+					"arguments": ["image_url"]
+				}
+			]
+		}
+	}
 }

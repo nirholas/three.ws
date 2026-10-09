@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T04:01:36.718Z",
+	"generated_at": "2026-10-09T04:09:11.384Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3851,
+	"total": 3855,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -31,6 +31,16 @@
 		},
 		{
 			"date": "2026-10-09",
+			"type": "launch",
+			"title": "grok-skill.md",
+			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
+			"link": "/grok-skill.md",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
 			"type": "update",
 			"title": "A paid call that fails after payment now tells you to retry, not to pay again",
 			"summary": "If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.",
@@ -38,6 +48,16 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "A skill file you can hand to Grok",
+			"summary": "three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.",
+			"link": "/docs/grok",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -117,6 +137,16 @@
 		{
 			"date": "2026-10-09",
 			"type": "update",
+			"title": "Ready-made recipes for Grok Bot and other always-on agents",
+			"summary": "The 3D Studio and Grok connectors now offer guided prompts written for an agent that runs on a schedule with nobody watching: a daily 3D brief that turns the top trending topic into a model and a poster image, a themed asset pack that uses the free catalog first and generates only the gaps, a rigged avatar from a photo, a quick tour, and a read-only status report on your agents. Each one names the exact tools, never stops to ask a question, and reuses a retry key so a repeated run collects the original model instead of generating twice. A new list_my_agents tool lets a signed-in connector see which agents your account holds.",
+			"link": "/grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
 			"title": "Remesh reads FBX files, and stylize says plainly when it cannot",
 			"summary": "The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.",
 			"link": "/forge",
@@ -164,6 +194,16 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Use three.ws from Grok Bot",
+			"summary": "The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.",
+			"link": "/connect?client=grok",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1515,49 +1555,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Text avatars now wear what you describe",
-			"summary": "Typing a description on /genesis (or sending a prompt to the avatar API) used to produce the same template body with a face pasted onto it, so an explorer in a teal flight jacket came back in someone else's clothes. Text avatars are now built from your words head to toe: the prompt is painted as a full-body character, sculpted into a textured 3D model on our own GPU, and given a skeleton so it animates immediately. Selfies still use the face pipeline, which is what a likeness needs. The free 3D generator behind the forge_avatar tool also stopped failing when the community GPU spaces were out of quota: it now moves the job onto our own worker instead of giving up.",
-			"link": "/genesis",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "The $THREE page now has a live DEXTools chart and the Social Boost wins",
-			"summary": "The $THREE page shows a live candle chart of the three / SOL pair, drawn by DEXTools. Below the platform's own buybacks there is a new section for the community's: the three DEXTools Social Boost prizes $THREE has won so far, $11,382 of buybacks in total, each with a link to its receipt on DEXTools. Social Boost ranks tokens by visits to their DEXTools page, so the section also links straight there. Every visit counts toward the next win.",
-			"link": "/three-token",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "The embedded 3D agent is readable on light websites and quiet in the console",
-			"summary": "Two fixes for anyone who has put a three.ws agent on their own site with the two-line embed. The floating widget had no background of its own, so on a light page its white button labels and name vanished into the page; it now has its own dark panel, and the suggestion buttons carry a solid ground, so it reads the same on any site. You can still ask for a transparent or light panel with the background attribute. The embed also made two background requests that browsers blocked on every site but ours, logging errors in the host page's console; those requests now succeed, and only the public, signed-out answer is ever shared across sites.",
-			"link": "/tutorials/embed-in-30-seconds",
-			"tags": [
-				"fix",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "The Trade Terminal finally looks the way it was designed",
-			"summary": "The Trade Terminal at /trades was written against a set of colors and fonts that the page itself never defined, so browsers quietly fell back to their defaults: Times New Roman text, oversized controls and missing panel colors. The page now defines its own palette, in both dark and light themes, and renders as the dense, monospaced trading terminal it was meant to be.",
-			"link": "/trades",
-			"tags": [
-				"fix"
 			]
 		}
 	]

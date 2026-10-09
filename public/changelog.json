@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:01:36.694Z",
+	"generated_at": "2026-10-09T04:09:11.363Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -28,6 +28,16 @@
 		},
 		{
 			"date": "2026-10-09",
+			"type": "launch",
+			"title": "grok-skill.md",
+			"summary": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
+			"link": "/grok-skill.md",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
 			"type": "update",
 			"title": "A paid call that fails after payment now tells you to retry, not to pay again",
 			"summary": "If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.",
@@ -35,6 +45,16 @@
 			"tags": [
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "A skill file you can hand to Grok",
+			"summary": "three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.",
+			"link": "/docs/grok",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -114,6 +134,16 @@
 		{
 			"date": "2026-10-09",
 			"type": "update",
+			"title": "Ready-made recipes for Grok Bot and other always-on agents",
+			"summary": "The 3D Studio and Grok connectors now offer guided prompts written for an agent that runs on a schedule with nobody watching: a daily 3D brief that turns the top trending topic into a model and a poster image, a themed asset pack that uses the free catalog first and generates only the gaps, a rigged avatar from a photo, a quick tour, and a read-only status report on your agents. Each one names the exact tools, never stops to ask a question, and reuses a retry key so a repeated run collects the original model instead of generating twice. A new list_my_agents tool lets a signed-in connector see which agents your account holds.",
+			"link": "/grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
 			"title": "Remesh reads FBX files, and stylize says plainly when it cannot",
 			"summary": "The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.",
 			"link": "/forge",
@@ -161,6 +191,16 @@
 			"tags": [
 				"feature",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Use three.ws from Grok Bot",
+			"summary": "The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.",
+			"link": "/connect?client=grok",
+			"tags": [
+				"feature"
 			]
 		},
 		{

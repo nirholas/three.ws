@@ -51,9 +51,10 @@ const BASE_INSTRUCTIONS = [
 // whether this request carried a valid credential.
 const GROK_SIGNED_IN_INSTRUCTIONS = [
 	'This connector is signed in to a three.ws account, so it can also manage the account\'s agents:',
-	'create_agent, attach_avatar_to_agent (give an agent a generated body), remember and recall (agent memory), the',
+	'list_my_agents, create_agent, attach_avatar_to_agent (give an agent a generated body), remember and recall (agent memory), the',
 	'custom skill tools, list_my_avatars and get_embed_code. It can never move funds: wallet, payment and launch',
 	'actions happen only in a browser at https://three.ws/dashboard, so tell the user that when they ask for one.',
+	'The guided prompt agent-report writes a status report on those agents.',
 ];
 const GROK_ANONYMOUS_INSTRUCTIONS = [
 	'To also manage a three.ws account\'s agents, reconnect with a three.ws connector API key as the bearer token, or',
@@ -85,7 +86,8 @@ const GROK_INSTRUCTIONS = [
 	'check_job(job_id) again until it is done, and keep going without asking the user; a Grok Bot task should finish',
 	'with the finished model, not the pending handle. To give yourself a body, forge_avatar a character, then',
 	'create_agent_persona(glb_url, name) and share its embed_url; persona_say makes that body speak your reply and',
-	'returns an embed_url that plays it.',
+	'returns an embed_url that plays it. For scheduled tasks use the guided prompts (prompts/list): agent-get-started,',
+	'daily-3d-brief, asset-pack and avatar-from-photo.',
 ];
 
 // The same headroom as ChatGPT: a call that outlives an unpublished host
@@ -149,6 +151,7 @@ const SURFACES = {
 		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		widgets: true,
 		personas: true,
+		prompts: true,
 		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 	},
 	chatgpt: {
@@ -166,6 +169,7 @@ const SURFACES = {
 		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
 		widgets: false,
 		personas: true,
+		prompts: true,
 		accounts: true,
 		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS, ...GROK_INSTRUCTIONS].join(' '),
 		signedInInstructions: GROK_SIGNED_IN_INSTRUCTIONS.join(' '),
@@ -331,6 +335,7 @@ export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', 
 				serverInfo: SERVER_INFO,
 				capabilities: {
 					tools: { listChanged: false },
+					...(surface.prompts ? { prompts: { listChanged: false } } : {}),
 					...(surface.widgets ? { resources: { listChanged: false, subscribe: false } } : {}),
 					logging: {},
 				},
@@ -376,7 +381,19 @@ export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', 
 			return ok(id, { contents: [{ uri: res.uri, mimeType: res.mimeType, text: res.text, _meta: res._meta }] });
 		}
 		if (method === 'resources/templates/list') return ok(id, { resourceTemplates: [] });
-		if (method === 'prompts/list') return ok(id, { prompts: [] });
+		if (method === 'prompts/list' || method === 'prompts/get') {
+			if (!surface.prompts) {
+				if (method === 'prompts/list') return ok(id, { prompts: [] });
+				throw rpcError(-32602, `unknown prompt: ${msg.params?.name}`);
+			}
+			// Rendered against the tools this caller's tools/list shows, so a prompt
+			// never names a tool the caller cannot call (the account prompts appear
+			// only once the connector is signed in).
+			const studio = await listForRequest(POLICY_SERVER, surface.catalog, auth, req);
+			const visible = signedIn ? [...studio, ...(await accountToolCatalog(account, req))] : studio;
+			const { handlePromptMethod } = await import('../_mcp/prompts.js');
+			return ok(id, handlePromptMethod(surface.server, visible, method, msg.params));
+		}
 		if (method === 'logging/setLevel') return ok(id, {});
 
 		throw rpcError(-32601, `method not found: ${method}`);

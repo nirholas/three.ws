@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:01:36.682Z",
+	"generated_at": "2026-10-09T04:09:11.348Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8784,6 +8784,16 @@
 					"title": "skill.md",
 					"description": "The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.",
 					"added": "2026-09-29",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/grok-skill.md",
+					"title": "grok-skill.md",
+					"description": "The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.",
+					"added": "2026-10-09",
 					"auth": null,
 					"indexable": false,
 					"tags": [],

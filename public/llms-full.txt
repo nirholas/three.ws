@@ -5284,6 +5284,13 @@ Indexable: no (excluded from sitemap)
 
 The three.ws Agent Skill: how an AI agent connects to three.ws, the rules it follows around money and official addresses, and an index of the focused skills for 3D generation, avatars and agents. Load it like any SKILL.md.
 
+### grok-skill.md
+
+URL: https://three.ws/grok-skill.md
+Indexable: no (excluded from sitemap)
+
+The three.ws skill file for Grok and Grok Bot: the connector URL to add, runnable curl calls for the free 3D studio over plain HTTPS, the links every result returns, the free limits, and the spend rule. Upload it to Grok Skills or have Grok Bot read it.
+
 ### robots.txt
 
 URL: https://three.ws/robots.txt

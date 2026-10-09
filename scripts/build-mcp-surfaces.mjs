@@ -27,14 +27,29 @@ const SERVERS = [
 	{ id: 'mcp-agent', manifest: 'server-agent.json', endpoint: 'https://three.ws/api/mcp-agent', catalog: '../api/_mcpagent/catalog.js' },
 	{ id: 'mcp-3d', manifest: 'server-3d.json', endpoint: 'https://three.ws/api/mcp-3d', catalog: '../api/_mcp3d/catalog.js' },
 	{ id: 'mcp-bazaar', manifest: 'server-bazaar.json', endpoint: 'https://three.ws/api/mcp-bazaar', catalog: '../api/_mcpbazaar/catalog.js' },
+	// The studio surfaces serve prompts but no resources. Their catalog is the
+	// surface's own tools/list; the Grok surface adds the account tools a
+	// signed-in connector sees, so the directory lists agent-report there too.
+	{ id: 'mcp-studio', manifest: 'server-studio.json', endpoint: 'https://three.ws/api/mcp-studio', surface: 'full', promptsOnly: true },
+	{ id: 'mcp-grok', manifest: 'server-grok.json', endpoint: 'https://three.ws/api/mcp-grok', surface: 'grok', accountTools: true, promptsOnly: true },
 ];
 
 const { resourcesFor } = await import('../api/_mcp/resources.js');
 const { promptsFor } = await import('../api/_mcp/prompts.js');
 
+async function catalogFor(server) {
+	if (server.catalog) return (await import(server.catalog)).TOOL_CATALOG;
+	const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
+	const studio = toolCatalogFor(server.surface);
+	if (!server.accountTools) return studio;
+	const { GROK_ACCOUNT_TOOLS } = await import('../api/_mcp-studio/account-tools.js');
+	const { TOOL_CATALOG: core } = await import('../api/_mcp/catalog.js');
+	return [...studio, ...core.filter((t) => GROK_ACCOUNT_TOOLS.includes(t.name))];
+}
+
 async function surfaceFor(server) {
-	const { TOOL_CATALOG } = await import(server.catalog);
-	const defs = resourcesFor(server.id);
+	const TOOL_CATALOG = await catalogFor(server);
+	const defs = server.promptsOnly ? [] : resourcesFor(server.id);
 	return {
 		resources: defs.filter((d) => d.uri).map((d) => ({ uri: d.uri, name: d.name, title: d.title, mimeType: 'application/json' })),
 		resourceTemplates: defs
@@ -72,21 +87,23 @@ for (const server of SERVERS) {
 		...(manifest._meta || {}),
 		[PUBLISHER_KEY]: {
 			...(manifest._meta?.[PUBLISHER_KEY] || {}),
-			resources: surface.resources,
-			resourceTemplates: surface.resourceTemplates,
+			...(server.promptsOnly ? {} : { resources: surface.resources, resourceTemplates: surface.resourceTemplates }),
 			prompts: surface.prompts,
 		},
 	};
 	await emit(server.manifest, manifest);
 }
 
+const promptsOnly = new Set(SERVERS.filter((x) => x.promptsOnly).map((x) => x.endpoint));
 const dirPath = 'public/.well-known/mcp.json';
 const directory = JSON.parse(readFileSync(join(ROOT, dirPath), 'utf8'));
 for (const entry of directory.servers || []) {
 	const surface = surfaces.get(entry.endpoint);
 	if (!surface) continue;
-	entry.resources = surface.resources.map((r) => r.uri);
-	entry.resourceTemplates = surface.resourceTemplates.map((r) => r.uriTemplate);
+	if (!promptsOnly.has(entry.endpoint)) {
+		entry.resources = surface.resources.map((r) => r.uri);
+		entry.resourceTemplates = surface.resourceTemplates.map((r) => r.uriTemplate);
+	}
 	entry.prompts = surface.prompts.map((p) => p.name);
 }
 await emit(dirPath, directory);
