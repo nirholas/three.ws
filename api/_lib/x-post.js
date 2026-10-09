@@ -84,7 +84,7 @@ export async function refreshIfNeeded(conn) {
 	return tok.access_token;
 }
 
-async function postOne({ accessToken, text, replyTo, mediaIds = null }) {
+export async function postOne({ accessToken, text, replyTo, mediaIds = null }) {
 	const body = {};
 	if (text) body.text = text;
 	if (replyTo) body.reply = { in_reply_to_tweet_id: replyTo };
