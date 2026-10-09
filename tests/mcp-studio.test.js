@@ -288,7 +288,7 @@ describe('mcp-studio dispatch', () => {
 		// bucket 2026-09-09: Origin https://three.ws gets the header back,
 		// ChatGPT's sandbox origin gets none.
 		const { COMPONENT_HTML } = await import('../api/_mcp-studio/component.js');
-		const src = COMPONENT_HTML.match(/function fetchable\(glb\) \{[\s\S]*?\n  \}/);
+		const src = COMPONENT_HTML.match(/function fetchable\(glb\) \{[\s\S]*?\n {2}\}/);
 		const guard = COMPONENT_HTML.match(/function isHttps\(u\) \{[^\n]*\}/);
 		expect(src, 'the widget must define a fetchable() indirection').not.toBeNull();
 		expect(guard, 'fetchable() leans on the widget isHttps() guard').not.toBeNull();

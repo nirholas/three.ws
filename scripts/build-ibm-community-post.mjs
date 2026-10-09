@@ -45,7 +45,7 @@ const raw = readFileSync(SRC, 'utf8');
 // Frontmatter is editorial metadata for us, never post content.
 const fm = raw.match(/^---\n([\s\S]*?)\n---\n/);
 if (!fm) throw new Error(`${SRC} has no frontmatter to strip; refusing to guess where the post starts.`);
-const title = (fm[1].match(/^title:\s*"?(.*?)"?\s*$/m) || [, 'IBM Community post'])[1];
+const title = (fm[1].match(/^title:\s*"?(.*?)"?\s*$/m)?.[1] ?? 'IBM Community post');
 
 let body = raw.slice(fm[0].length);
 
