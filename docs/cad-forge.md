@@ -137,7 +137,7 @@ Returns `{ "ok": true, "variant": { "key", "values", "metrics", "files", "adjust
 | `GET /api/cad?id=<uuid>` | `{ design, lineage: { parent, children }, variant: null }` |
 | `GET /api/cad?id=<uuid>&v=<key>` | The same plus the cached `variant` |
 | `GET /api/cad?id=<uuid>&format=py[&v=<key>]` | The program as a `.py` download, at the variant's values if given |
-| `GET /api/cad?list=recent\|featured[&q=][&limit=]` | `{ designs: [card], available }`, cards carry `thumb` and `sizeMm` |
+| `GET /api/cad?list=recent[&q=][&limit=]` | `{ designs: [card], available }`, newest first; cards carry `thumb` and `sizeMm` |
 
 ## MCP
 
@@ -152,7 +152,7 @@ The program is written by a model from a request anyone can send, so the builder
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | `GCP_CAD_FORGE_URL` | three-ws-api | Base URL of the cad-forge Cloud Run service |
-| `CAD_FORGE_KEY` | three-ws-api | Bearer secret for the worker (`cad-forge-key` in Secret Manager) |
+| `CAD_FORGE_KEY` | three-ws-api | Bearer secret for the worker (`cad-forge-key` in Secret Manager). Falls back to `GCP_RECONSTRUCTION_KEY` when unset, for a worker deployed with the shared key. |
 | `CAD_WRITER_MODEL` | three-ws-api, optional | Override the leading NIM writer model |
 | `CAD_FORGE_GLOBAL_HOURLY` | three-ws-api, optional | Global hourly design ceiling (default 400) |
 

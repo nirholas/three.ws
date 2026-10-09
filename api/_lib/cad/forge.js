@@ -1,8 +1,8 @@
 // CAD Forge: sentence → build123d program → real B-rep part.
 //
-// The loop text-to-cad popularised, run server-side: a model writes the
-// program, workers/cad-forge builds it in a sandbox, and when the kernel
-// rejects it the real error (kind, message, failing line) goes back to the
+// The agentic CAD loop, run server-side: a model writes the program,
+// workers/cad-forge builds it in a sandbox, and when the kernel rejects it
+// the real error (kind, message, failing line) goes back to the
 // model for a repair round. A design only ever reaches the user once the
 // geometry kernel has accepted it, so nothing shown is a guess.
 //
@@ -141,9 +141,16 @@ export async function forgeDesign({ prompt, baseCode = null, onEvent = () => {},
 		if (attempt > MAX_REPAIRS || deadline - Date.now() < 40_000) break;
 		const last = attempts[attempts.length - 1].error;
 		onEvent({ stage: 'repairing', attempt: attempt + 1, error: last });
-		written = written.code
-			? await writeImpl({ user: repairMessage({ request: prompt, code: written.code, error: last }), track, deadline })
-			: await writeImpl({ user: baseCode ? refineMessage(prompt, baseCode) : generateMessage(prompt), track, deadline });
+		try {
+			written = written.code
+				? await writeImpl({ user: repairMessage({ request: prompt, code: written.code, error: last }), track, deadline })
+				: await writeImpl({ user: baseCode ? refineMessage(prompt, baseCode) : generateMessage(prompt), track, deadline });
+		} catch (err) {
+			// A part the kernel already accepted is never thrown away because a
+			// later repair round could not reach a writer.
+			if (fallback) break;
+			throw err;
+		}
 	}
 
 	if (fallback) {

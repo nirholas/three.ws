@@ -187,7 +187,7 @@ export async function searchWorlds({ q, limit = 12 } = {}) {
 // ── parts (CAD Forge designs) ─────────────────────────────────────────────────
 
 export async function searchParts({ q, limit = 12 } = {}) {
-	const rows = await listDesigns({ scope: 'recent', limit, q });
+	const rows = await listDesigns({ limit, q });
 	return rows.map((r) => ({
 		type: 'part',
 		id: r.id,

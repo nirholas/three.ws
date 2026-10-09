@@ -12,6 +12,21 @@
 import { CadForgeError } from '../../_lib/cad/forge.js';
 import { cleanPrompt, createDesign, loadParent, rebuildVariant } from '../../_lib/cad/service.js';
 import { buildSpatialArtifact } from '../../_lib/spatial-mcp.js';
+import { limits } from '../../_lib/rate-limit.js';
+
+// The same buckets as POST /api/cad, keyed by the MCP principal: a signed-in
+// caller runs these operator-funded, and one design is up to four model calls
+// plus kernel builds, so the server-wide mcpUser ceiling is far too loose.
+function rateKey(auth) {
+	return auth?.userId || auth?.rateKey || 'anon';
+}
+
+async function limit(limiter, key) {
+	const rl = await limiter(key);
+	if (rl.success) return;
+	const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
+	throw new CadForgeError('rate_limited', `CAD Forge rate limit reached. Retry in ${retryAfter} s.`, 429, { retry_after: retryAfter });
+}
 
 function failure(err) {
 	const known = err instanceof CadForgeError;
@@ -19,7 +34,13 @@ function failure(err) {
 	const kernel = known && err.code === 'design_failed' ? err.detail?.lastError : known && err.code === 'rebuild_failed' ? err.detail : null;
 	return {
 		content: [{ type: 'text', text: kernel ? `${message}\nLast kernel error: ${kernel.message}${kernel.line ? ` (line ${kernel.line})` : ''}` : message }],
-		structuredContent: { error: true, code: known ? err.code : 'internal_error', message, ...(kernel ? { kernelError: kernel } : {}) },
+		structuredContent: {
+			error: true,
+			code: known ? err.code : 'internal_error',
+			message,
+			...(kernel ? { kernelError: kernel } : {}),
+			...(known && err.code === 'rate_limited' ? { retry_after: err.detail?.retry_after } : {}),
+		},
 		isError: true,
 	};
 }
@@ -67,6 +88,8 @@ export const toolDefs = [
 		async handler(args, auth) {
 			try {
 				const prompt = cleanPrompt(args.prompt);
+				await limit(limits.cadForgeIp, rateKey(auth));
+				await limit(() => limits.cadForgeGlobal(), 'global');
 				const parent = await loadParent(args.parent_id);
 				const { design, attempts } = await createDesign({
 					prompt,
@@ -133,9 +156,13 @@ export const toolDefs = [
 				},
 			},
 		},
-		async handler(args) {
+		async handler(args, auth) {
 			try {
-				const { variant, cached, design } = await rebuildVariant({ id: args.id, values: args.values });
+				const { variant, cached, design } = await rebuildVariant({
+					id: args.id,
+					values: args.values,
+					beforeBuild: () => limit(limits.cadRebuildIp, rateKey(auth)),
+				});
 				return {
 					content: [
 						{

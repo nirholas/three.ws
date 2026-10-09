@@ -43,12 +43,10 @@ async function ensureTables() {
 				model        text,
 				user_id      uuid,
 				views        bigint not null default 0,
-				featured     boolean not null default false,
 				created_at   timestamptz not null default now()
 			)
 		`;
 		await sql`create index if not exists cad_designs_created_idx on cad_designs (created_at desc)`;
-		await sql`create index if not exists cad_designs_featured_idx on cad_designs (featured, created_at desc)`;
 		await sql`create index if not exists cad_designs_user_idx on cad_designs (user_id, created_at desc)`;
 		await sql`create index if not exists cad_designs_parent_idx on cad_designs (parent_id)`;
 		await sql`
@@ -121,7 +119,6 @@ function toDesign(row) {
 		adjustments: Array.isArray(row.adjustments) ? row.adjustments : [],
 		model: row.model || null,
 		views: Number(row.views) || 0,
-		featured: Boolean(row.featured),
 		creatorUsername: row.creator_username || null,
 		createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
 	};
@@ -149,7 +146,7 @@ export async function saveDesign(design) {
 		recordDailyActivity(design.userId).catch(() => {});
 		maybeAwardFirstCreation(design.userId).catch(() => {});
 	}
-	return { ...design, views: 0, featured: false, createdAt };
+	return { ...design, views: 0, createdAt };
 }
 
 export async function getDesign(id) {
@@ -203,31 +200,21 @@ export async function bumpViews(id) {
 	}
 }
 
-/** Gallery cards: index columns and the thumbnail only, never the program. */
-export async function listDesigns({ scope = 'recent', limit = 24, q, userId } = {}) {
+/** Gallery cards, newest first: index columns and the thumbnail only, never the program. */
+export async function listDesigns({ limit = 24, q } = {}) {
 	if (!(await ensureTables())) return [];
 	const lim = Math.min(60, Math.max(1, Number(limit) || 24));
 	const search = typeof q === 'string' && q.trim() ? `%${q.trim().slice(0, 120)}%` : null;
 	try {
-		const rows = userId
+		const rows = search
 			? await sql`
 					select id, title, summary, prompt, files->>'thumb_svg' as thumb, metrics->'size_mm' as size_mm, views, created_at
-					from cad_designs where user_id = ${userId}
+					from cad_designs where title ilike ${search} or prompt ilike ${search}
 					order by created_at desc limit ${lim}`
-			: scope === 'featured'
-				? await sql`
-						select id, title, summary, prompt, files->>'thumb_svg' as thumb, metrics->'size_mm' as size_mm, views, created_at
-						from cad_designs where featured
-						order by created_at desc limit ${lim}`
-				: search
-					? await sql`
-							select id, title, summary, prompt, files->>'thumb_svg' as thumb, metrics->'size_mm' as size_mm, views, created_at
-							from cad_designs where title ilike ${search} or prompt ilike ${search}
-							order by created_at desc limit ${lim}`
-					: await sql`
-							select id, title, summary, prompt, files->>'thumb_svg' as thumb, metrics->'size_mm' as size_mm, views, created_at
-							from cad_designs
-							order by created_at desc limit ${lim}`;
+			: await sql`
+					select id, title, summary, prompt, files->>'thumb_svg' as thumb, metrics->'size_mm' as size_mm, views, created_at
+					from cad_designs
+					order by created_at desc limit ${lim}`;
 		return rows.map((r) => ({
 			id: r.id,
 			title: r.title,

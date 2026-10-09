@@ -19,7 +19,7 @@
  *
  *   GET  /api/cad?id=<uuid>[&v=<key>]       → { design, lineage, variant? }
  *   GET  /api/cad?id=<uuid>&format=py[&v=]  → the program as a .py download
- *   GET  /api/cad?list=recent|featured[&q=][&limit=] → { designs }
+ *   GET  /api/cad?list=recent[&q=][&limit=]   → { designs }, newest first
  *
  * No mocks: when the builder or the writer is unreachable the caller gets a
  * designed 503, never a fabricated part. Every part returned has been accepted
@@ -85,9 +85,7 @@ async function handleGet(req, res) {
 	}
 
 	if (list !== null) {
-		const scope = list === 'featured' ? 'featured' : 'recent';
 		const designs = await listDesigns({
-			scope,
 			limit: Number(url.searchParams.get('limit')) || 24,
 			q: url.searchParams.get('q') || undefined,
 		});

@@ -274,12 +274,18 @@ function current() {
 
 async function openDesign(id, variantKey) {
 	$('#cadDesignError').hidden = true;
+	$('#cadDesignBody').hidden = false;
 	$('#cadDesignBody').classList.add('is-loading');
+	$('#cadViewLoading').hidden = false;
+	$('#cadViewportError').hidden = true;
+	setMode('model');
 	let payload;
 	try {
 		payload = await fetchDesign(id, variantKey);
 	} catch (err) {
 		$('#cadDesignBody').classList.remove('is-loading');
+		$('#cadDesignBody').hidden = true;
+		$('#cadViewLoading').hidden = true;
 		const box = $('#cadDesignError');
 		const missing = err instanceof CadApiError && err.status === 404;
 		box.replaceChildren(
@@ -310,6 +316,8 @@ async function openDesign(id, variantKey) {
 		viewer.reframe();
 	} catch {
 		$('#cadViewportError').hidden = false;
+	} finally {
+		$('#cadViewLoading').hidden = true;
 	}
 }
 
@@ -476,6 +484,10 @@ function renderOutputs() {
 
 	const drawing = $('#cadDrawingImg');
 	if (files.drawing_svg) drawing.src = files.drawing_svg;
+	else {
+		drawing.removeAttribute('src');
+		setMode('model');
+	}
 	$('#cadModeDrawing').disabled = !files.drawing_svg;
 }
 

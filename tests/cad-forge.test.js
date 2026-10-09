@@ -116,6 +116,22 @@ describe('CAD Forge write, build, repair loop', () => {
 		expect(design.build.metrics.solids).toBe(1);
 	});
 
+	it('keeps an accepted multi-body part when a later repair cannot reach a writer', async () => {
+		let writes = 0;
+		const builds = [ok(2), fail('boolean failed')];
+		const design = await forgeDesign({
+			prompt: 'a bracket',
+			buildImpl: async () => builds.shift(),
+			writeImpl: async () => {
+				writes++;
+				if (writes === 3) throw new CadForgeError('writer_unavailable', 'busy', 503);
+				return program(writes);
+			},
+		});
+		expect(design.title).toBe('Part 1');
+		expect(design.build.metrics.solids).toBe(2);
+	});
+
 	it('gives up with the last kernel error after the repair budget', async () => {
 		const s = scripted([fail('a'), fail('b'), fail('c'), fail('d')]);
 		const err = await forgeDesign({ prompt: 'a box', ...s }).catch((e) => e);

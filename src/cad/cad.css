@@ -532,8 +532,22 @@
 }
 
 .cad-design__body.is-loading {
-	opacity: 0.4;
 	pointer-events: none;
+}
+
+/* Skeleton: each panel card keeps its shape and shimmers until the design
+   arrives, instead of showing empty headings and controls. */
+.cad-design__body.is-loading .cad-panel__head,
+.cad-design__body.is-loading .cad-section {
+	min-height: 120px;
+	background: linear-gradient(90deg, var(--surface-1), var(--surface-2), var(--surface-1));
+	background-size: 200% 100%;
+	animation: cad-shimmer 1.4s ease-in-out infinite;
+}
+
+.cad-design__body.is-loading .cad-panel__head > *,
+.cad-design__body.is-loading .cad-section > * {
+	visibility: hidden;
 }
 
 .cad-stage {
@@ -645,6 +659,15 @@
 	transition: background 0.15s ease, color 0.15s ease;
 }
 
+.cad-seg button:hover:not(:disabled):not([aria-pressed='true']) {
+	background: var(--scrim-strong);
+	color: var(--on-scrim-bright, #fff);
+}
+
+.cad-seg button:active:not(:disabled) {
+	transform: scale(0.97);
+}
+
 .cad-seg button[aria-pressed='true'] {
 	background: var(--on-scrim-bright, #fff);
 	color: #111;
@@ -669,6 +692,15 @@
 	cursor: pointer;
 }
 
+.cad-toggle:hover {
+	background: var(--scrim-strong);
+}
+
+.cad-toggle:focus-within {
+	outline: 2px solid var(--cad-blue);
+	outline-offset: 2px;
+}
+
 .cad-toggle input {
 	accent-color: var(--cad-blue);
 }
@@ -689,6 +721,29 @@
 
 .cad-icon-btn:hover {
 	background: var(--scrim-strong);
+}
+
+.cad-icon-btn:active,
+.cad-mass:active,
+.cad-card:active {
+	transform: scale(0.97);
+}
+
+.cad-link:active,
+.cad-back:active {
+	opacity: 0.7;
+}
+
+.cad-back:focus-visible {
+	outline: 2px solid var(--cad-blue);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.cad-param input[type='range']:focus-visible {
+	outline: 2px solid var(--cad-blue);
+	outline-offset: 4px;
+	border-radius: 4px;
 }
 
 .cad-badge {
