@@ -35,7 +35,7 @@
 // pages/ibm/vendor/ stops matching the pinned build.
 
 /** The pinned model-viewer version. One build platform-wide; see above. */
-export const MODEL_VIEWER_VERSION = '4.0.0';
+export const MODEL_VIEWER_VERSION = '4.3.1';
 
 /** CDN origin the embed surfaces load model-viewer from (must be CSP-allowlisted). */
 export const MODEL_VIEWER_CDN_ORIGIN = 'https://cdn.jsdelivr.net';

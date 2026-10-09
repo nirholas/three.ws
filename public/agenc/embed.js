@@ -36,7 +36,7 @@
 // The element is dependency-free apart from <model-viewer>, which is loaded
 // lazily from the npm CDN on first connect (the same source three.ws uses).
 
-const MODEL_VIEWER_CDN = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js';
+const MODEL_VIEWER_CDN = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js';
 // Served from three.ws rather than a public CDN: the decoder is a hard
 // dependency of every compressed avatar, so it must have the same availability
 // as the embed script itself.

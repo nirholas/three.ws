@@ -42,7 +42,7 @@
 		}
 	})();
 
-	var MV_CDN = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+	var MV_CDN = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
 	// Served from the same origin this embed script came from (ORIGIN above), not
 	// a public CDN: the decoder is a hard dependency of every compressed avatar,
 	// so it must have exactly the same availability as the embed itself.

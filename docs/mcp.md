@@ -348,7 +348,7 @@ free studio's generation and persona tools ([docs/mcp-studio.md](./mcp-studio.md
       "viewer_url": "https://three.ws/viewer?src=https%3A%2F%2F...%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001",
       "glb_url": "https://.../objects/polyhaven/glb/painted_wooden_chair_01.glb",
       "poster_png_url": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2F...%2Fpainted_wooden_chair_01.glb&width=1024&height=1024",
-      "embed_html": "<script type=\"module\" src=\"https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js\" ...></script>\n\n<model-viewer src=\"...\" ...></model-viewer>"
+      "embed_html": "<script type=\"module\" src=\"https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js\" ...></script>\n\n<model-viewer src=\"...\" ...></model-viewer>"
     }
   ],
   "facets": { "kinds": { "object": 10 }, "categories": [{ "value": "furniture", "count": 8 }] },

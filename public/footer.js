@@ -95,7 +95,7 @@
 		// model-viewer load and the element injection behind it.
 		ensureScript({ src: '/model-viewer-meshopt.js' }).then(() => {
 			ensureScript({
-				src: 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js',
+				src: 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js',
 				type: 'module',
 			});
 			// model-viewer needs a <model-viewer> element; swap the canvas for one.

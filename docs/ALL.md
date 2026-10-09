@@ -35263,10 +35263,10 @@ Call log:
 ### `/spatial-mcp` (labs)
 - **desktop**
   - console: $l: fetch for "https://three.ws/cdn/forge/anon/eddcea57-a278-474a-a632-99ca99861755.glb" responded with 502: 
-    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js:17:507206
+    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js:17:507206
 - **mobile**
   - console: $l: fetch for "https://three.ws/cdn/forge/anon/eddcea57-a278-474a-a632-99ca99861755.glb" responded with 502: 
-    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js:17:507206
+    at https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js:17:507206
 
 ### `/ibm/hello` (crypto)
 - **desktop**
@@ -112869,7 +112869,7 @@ The live demo at [`/spatial-mcp`](https://three.ws/spatial-mcp) renders exactly 
 The reference renderer is framework-free and reusable independent of three.ws:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/dist/model-viewer.min.js"></script>
 <div id="mount" style="height:360px"></div>
 <script type="module">
   import { renderSpatialArtifact } from 'https://three.ws/spatial-mcp/spatial-renderer.js';

@@ -212,7 +212,7 @@ Generated a 3D model (GLB).
 Viewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fcreations%2F…%2Fmodel.glb&title=a%20red%20ceramic%20teapot
 GLB: https://three.ws/cdn/creations/…/model.glb
 Poster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fcreations%2F…%2Fmodel.glb&width=1024&height=1024
-Embed HTML: <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-…" crossorigin="anonymous" ></script> <model-viewer src="https://three.ws/cdn/creations/…/model.glb" alt="a red ceramic teapot" camera-controls auto-rotate ar shadow-intensity="1" style="width:100%;height:420px" ></model-viewer>
+Embed HTML: <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js" integrity="sha384-…" crossorigin="anonymous" ></script> <model-viewer src="https://three.ws/cdn/creations/…/model.glb" alt="a red ceramic teapot" camera-controls auto-rotate ar shadow-intensity="1" style="width:100%;height:420px" ></model-viewer>
 Place it in your room (AR, open on a phone): https://three.ws/api/ar?src=…
 ```
 

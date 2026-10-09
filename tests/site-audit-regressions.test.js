@@ -15,7 +15,7 @@ describe('production page-audit regressions', () => {
 	it('loads the Meshopt-ready model-viewer release in the deploy preview', () => {
 		const js = source('src/erc8004/register-ui.js');
 		expect(js).toContain('/model-viewer/4.3.1/model-viewer.min.js');
-		expect(js).not.toContain('/model-viewer/4.0.0/model-viewer.min.js');
+		expect(js).not.toContain('/model-viewer/4.3.1/model-viewer.min.js');
 	});
 
 	it('marks only the intentional voice error preview as audit documentation', () => {
