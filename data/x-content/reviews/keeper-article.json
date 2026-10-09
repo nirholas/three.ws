@@ -1,25 +1,16 @@
 {
 	"id": "keeper-article",
-	"contentHash": "c3c3ed488eb83447507a562f2c1d740c6144a6faee0c62fb85b80491747764b9",
-	"reviewedAt": "2026-10-08T05:00:00.455Z",
-	"passed": false,
-	"blockers": [
-		"evidence:page https://three.ws/api/version: live page does not show \"\"commitShort\":\"76081013b\"\"",
-		"spelling CVPR: did you mean cspr, CSPR, cvar?",
-		"spelling mixamorig: did you mean mixamo?",
-		"spelling canonicalizer: did you mean canonicalize, canonicalized, canonicalizes?",
-		"spelling viseme: did you mean vise, vised, vises?",
-		"spelling blendshapes: not a known word; add it to the queue glossary if it is correct",
-		"editor (accuracy): The article asserts the idle defect is unfixed on production and the fix is not yet deployed, anchored to commit 76081013b. The verification probe against https://three.ws/api/version failed: the live site does not report that commit. Either the fix has already deployed (making the defect disclosure and the image choice wrong) or the version evidence is wrong. A failed verification on a claim about the current live state must not publish.",
-		"editor verdict is revise"
-	],
+	"contentHash": "640dd2730199a6861db502a23ca581b18ce771cbbf3329563562ed45b76a4fa6",
+	"reviewedAt": "2026-10-09T15:58:34.989Z",
+	"passed": true,
+	"blockers": [],
 	"texts": [
 		"One sentence to a rigged, talking 3D character in 197 seconds: each stage, as it ran",
-		"We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage, including the two that failed that morning and the fallbacks that caught them."
+		"We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage and covers the partners behind the pipeline."
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "in 197 seconds",
@@ -239,48 +230,6 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The language models it calls were rate limiting at that moment",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The language models it calls were rate limiting at that moment",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a fixed fallback brief is appended to the raw words, stating the framing the director would have asked for",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "a fixed fallback brief is appended to the raw words, stating the framing the director would have asked for",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "That is the fallback, word for word",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "That is the fallback, word for word",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
 				"claim": "costs polish, never the body",
 				"kind": "evidence:file",
 				"target": "api/_mcp-studio/tools.js",
@@ -303,34 +252,6 @@
 			},
 			{
 				"claim": "A Gemini image model on Vertex AI leads it, because it draws the most photoreal reference",
-				"kind": "evidence:file",
-				"target": "api/_mcp3d/text-to-image.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-reference-image.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "No single provider's failure is the end of a picture",
 				"kind": "evidence:file",
 				"target": "api/_mcp3d/text-to-image.js",
 				"ok": true,
@@ -417,97 +338,6 @@
 				"claim": "22,500 triangles across 16,388 vertices",
 				"kind": "evidence:file",
 				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "the job would have moved to the next engine under the same job id: our TRELLIS worker, a hosted TRELLIS lane, then TripoSG",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-failover.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "the job would have moved to the next engine under the same job id: our TRELLIS worker, a hosted TRELLIS lane, then TripoSG",
-				"kind": "evidence:file",
-				"target": "api/_lib/forge-failover.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "That chain was not needed on this run",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "at the high tier, with a longer sentence of our own. It returned a model in 108 seconds",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "at the high tier, with a longer sentence of our own. It returned a model in 108 seconds",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "That tool renders any public GLB on the server from several angles and returns the frames as images",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The geometry count agreed: 8,464 triangles",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "generate again with a prompt that names the specific fault",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "turns one-shot generation into a loop",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "look_at_model is marked read-only",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "it works on any public GLB, wherever it was made",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/tools.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
@@ -778,13 +608,6 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "It read the line as neutral",
-				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
 				"claim": "There is no API key and no build step",
 				"kind": "evidence:file",
 				"target": "docs/web-component.md",
@@ -862,88 +685,46 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "On the live site today, the keeper's idle drives his upper arms back through his coat",
+				"claim": "type a description and get a rigged avatar back",
 				"kind": "evidence:page",
-				"target": "https://three.ws/api/version",
-				"ok": false,
-				"detail": "live page does not show \"\"commitShort\":\"76081013b\"\""
+				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "live page shows \"Type a description → rigged 3D avatar in about a minute\""
 			},
 			{
-				"claim": "On the live site today, the keeper's idle drives his upper arms back through his coat",
+				"claim": "a fixed brief is appended to the raw words instead, stating the framing the director would have asked for",
 				"kind": "evidence:file",
-				"target": "src/animation-retarget.js",
+				"target": "api/_mcp-studio/tools.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a rig that rests in an A-pose with bent elbows received the idle's full swing down from a T-pose on top of an arm that already hung down",
+				"claim": "a busy language model chain costs polish, never the body",
 				"kind": "evidence:file",
-				"target": "src/animation-retarget.js",
+				"target": "api/_mcp-studio/tools.js",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The fix re-aims each limb from its own rest direction onto the authoring rig's before the clip plays",
+				"claim": "every call answered within 40 seconds",
 				"kind": "evidence:file",
-				"target": "src/animation-retarget.js",
+				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "because its check looks for the 15 Oculus viseme names and no other set",
-				"kind": "evidence:file",
-				"target": "src/rig-report.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "because its check looks for the 15 Oculus viseme names and no other set",
-				"kind": "evidence:file",
-				"target": "src/rig-report.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "The keeper carries the 52 ARKit shapes instead, which is the set the rig worker writes and the set the persona tools drive",
+				"claim": "hard timeout of 420 seconds by default",
 				"kind": "evidence:file",
 				"target": "workers/rig/README.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "The keeper carries the 52 ARKit shapes instead, which is the set the rig worker writes and the set the persona tools drive",
+				"claim": "the same fourteen tools are reachable three ways over one shared handler and one shared generation quota",
 				"kind": "evidence:file",
-				"target": "data/x-content/runs/keeper-article.json",
+				"target": "docs/mcp-studio.md",
 				"ok": true,
 				"detail": "file supports the claim"
-			},
-			{
-				"claim": "four generations a minute and 30 an hour",
-				"kind": "evidence:file",
-				"target": "api/_lib/rate-limit.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "four generations a minute and 30 an hour",
-				"kind": "evidence:file",
-				"target": "api/_lib/rate-limit.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "look_at_model counts against the same quota because it renders on the server",
-				"kind": "evidence:file",
-				"target": "api/_mcp-studio/dispatch.js",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "type a description and get a rigged avatar back",
-				"kind": "evidence:page",
-				"target": "https://three.ws/create/prompt",
-				"ok": true,
-				"detail": "live page shows \"Type a description → rigged 3D avatar in about a minute\""
 			},
 			{
 				"kind": "probe:api",
@@ -983,7 +764,19 @@
 			},
 			{
 				"kind": "link",
+				"target": "https://three.ws/partners",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
 				"target": "https://three.ws/create/prompt",
+				"ok": true,
+				"detail": "HTTP 200"
+			},
+			{
+				"kind": "link",
+				"target": "https://three.ws/partners",
 				"ok": true,
 				"detail": "HTTP 200"
 			},
@@ -1010,43 +803,13 @@
 				"target": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fa9694760-e134-4c5c-b334-59129a2d42c9.glb",
 				"ok": true,
 				"detail": "HTTP 200"
-			},
-			{
-				"kind": "spelling",
-				"target": "CVPR",
-				"ok": false,
-				"detail": "did you mean cspr, CSPR, cvar?"
-			},
-			{
-				"kind": "spelling",
-				"target": "mixamorig",
-				"ok": false,
-				"detail": "did you mean mixamo?"
-			},
-			{
-				"kind": "spelling",
-				"target": "canonicalizer",
-				"ok": false,
-				"detail": "did you mean canonicalize, canonicalized, canonicalizes?"
-			},
-			{
-				"kind": "spelling",
-				"target": "viseme",
-				"ok": false,
-				"detail": "did you mean vise, vised, vises?"
-			},
-			{
-				"kind": "spelling",
-				"target": "blendshapes",
-				"ok": false,
-				"detail": "not a known word; add it to the queue glossary if it is correct"
 			}
 		]
 	},
 	"editor": {
-		"verdict": "revise",
+		"verdict": "publish",
 		"scores": {
-			"accuracy": 3,
+			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
@@ -1055,29 +818,22 @@
 		},
 		"issues": [
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "On the live site today, the keeper's idle drives his upper arms back through his coat ... It reaches three.ws with the next deploy.",
-				"problem": "The article asserts the idle defect is unfixed on production and the fix is not yet deployed, anchored to commit 76081013b. The verification probe against https://three.ws/api/version failed: the live site does not report that commit. Either the fix has already deployed (making the defect disclosure and the image choice wrong) or the version evidence is wrong. A failed verification on a claim about the current live state must not publish.",
-				"fix": "Re-run the api/version check. If the live commit now carries the fix, rewrite the paragraph to say the retargeting defect was fixed and is live, verify the keeper's idle no longer clips in the live viewer, and update the image-choice sentence accordingly. If the check was simply stale, capture a fresh api/version response and keep the paragraph. Do not touch the X post itself; it makes no claim about the defect."
-			},
-			{
 				"severity": "minor",
 				"area": "visual",
-				"quote": "the two that failed that morning and the fallbacks that caught them",
-				"problem": "The cover image shows the keeper in rest pose and looks clean, which supports the post, but the article explains images avoid showing the broken idle. That is fine once the deploy status is re-verified; if the fix proves live, the cover choice rationale must be revisited too.",
-				"fix": "No recapture needed unless the accuracy fix changes the deploy story."
+				"quote": "black rubber boots",
+				"problem": "The cover image shows the keeper's boots in dark grey, not black. The alt text says black, which is what a screen reader user will be told the image shows. It is close enough in shadowed render lighting that it is polish rather than a contradiction, but the description should match what is visible.",
+				"fix": "Change the alt text to \"dark grey rubber boots\" or recapture the cover with clearly black boots if the render supports it."
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage, including the two that failed that morning and the fallbacks that caught them."
+				"We sent one sentence to the free three.ws MCP server and got back a rigged 3D lighthouse keeper in 197 seconds: 22,500 triangles, a 52-joint skeleton with every finger, 52 facial expression shapes. The article follows that one job through each stage and covers the partners behind the pipeline."
 			],
 			"altText": [
-				"A 3D character generated from one sentence and auto-rigged on three.ws, standing in the live glTF viewer on a dark background: an old lighthouse keeper with a white beard and a navy knitted cap, in a long yellow oilskin coat with flap pockets and dark buttons, blue trousers and black rubber boots"
+				"A 3D character generated from one sentence and auto-rigged on three.ws, standing in the live glTF viewer on a dark background: an old lighthouse keeper with a white beard and a navy knitted cap, in a long yellow oilskin coat with flap pockets and dark buttons, blue trousers and dark grey rubber boots"
 			]
 		},
-		"summary": "The X post itself is excellent: every number checks out, voice is compliant, and the image matches the copy. However the article body claims the retargeting fix is not yet deployed, and the live version check failed to confirm that, so the deploy status must be re-verified and the paragraph corrected before release.",
+		"summary": "A strong article promo whose every number (197 seconds, 22,500 triangles, 52 joints, 52 expression shapes) is verified by the run file, and the voice is clean with the mechanism and number up front. The only note is that the cover render shows dark grey boots while the alt text says black, a one-word alt text fix; publish stands either way.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
@@ -1097,30 +853,15 @@
 			"claims: claim \"the mesh stage took 100 seconds and the rig stage 12.6 seconds\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"rewriting the sentence, painting the picture, storing each intermediate file and polling the workers\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"a portrait-leaning model tends to answer a description of a person with a head and shoulders, and a bust cannot be rigged into anything that walks\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The language models it calls were rate limiting at that moment\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a fixed fallback brief is appended to the raw words, stating the framing the director would have asked for\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"That is the fallback, word for word\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"costs polish, never the body\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"as one centered subject on a plain seamless background under soft even light\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"set almost entirely by the realism of that one reference picture\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"A Gemini image model on Vertex AI leads it, because it draws the most photoreal reference\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"This morning that rung was refusing requests, so the picture came from FLUX.1-dev, further down the ladder\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"No single provider's failure is the end of a picture\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Avatars ask for the high tier, and at the high tier the router sends a job to Hunyuan3D 2.1 on our own worker\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"a Cloud Run service with an NVIDIA RTX PRO 6000 Blackwell attached\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"builds the geometry, then runs a separate pass that paints a full PBR material set rather than one baked colour map\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"one material carrying four maps: base colour, metallic and roughness, normal, and ambient occlusion\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"22,500 triangles across 16,388 vertices\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the job would have moved to the next engine under the same job id: our TRELLIS worker, a hosted TRELLIS lane, then TripoSG\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"That chain was not needed on this run\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"at the high tier, with a longer sentence of our own. It returned a model in 108 seconds\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"That tool renders any public GLB on the server from several angles and returns the frames as images\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The geometry count agreed: 8,464 triangles\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"is the subject complete and recognisable, is the far side finished, is anything melted, fused or missing\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"generate again with a prompt that names the specific fault\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"turns one-shot generation into a loop\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"look_at_model is marked read-only\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"it works on any public GLB, wherever it was made\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"a Cloud Run service on an NVIDIA L4 running Make-It-Animatable\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"released under the MIT licence and published at CVPR 2025\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"predicts joint positions, skinning weights and pose for a 52-bone Mixamo skeleton, fingers included, in under a second of GPU time\" does not appear in the copy; claims must quote the post",
@@ -1148,7 +889,6 @@
 			"claims: claim \"lip-sync, a facial expression and a gesture, with the emotion detected from the text unless the caller sets one\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"Every ship that saw it made it home\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"persona_say answered in 299 milliseconds and recorded the turn\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It read the line as neutral\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"There is no API key and no build step\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"boots once it comes within 300 pixels of the viewport\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"loads the body and the idle and walk clips\" does not appear in the copy; claims must quote the post",
@@ -1157,14 +897,12 @@
 			"claims: claim \"by default eight avatars are live at a time\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"one scrolled out of view hands its context back until it returns\" does not appear in the copy; claims must quote the post",
 			"claims: claim \"gets a single held idle pose instead of a loop\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"On the live site today, the keeper's idle drives his upper arms back through his coat\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a rig that rests in an A-pose with bent elbows received the idle's full swing down from a T-pose on top of an arm that already hung down\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The fix re-aims each limb from its own rest direction onto the authoring rig's before the clip plays\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"because its check looks for the 15 Oculus viseme names and no other set\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The keeper carries the 52 ARKit shapes instead, which is the set the rig worker writes and the set the persona tools drive\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"four generations a minute and 30 an hour\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"look_at_model counts against the same quota because it renders on the server\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"type a description and get a rigged avatar back\" does not appear in the copy; claims must quote the post"
+			"claims: claim \"type a description and get a rigged avatar back\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a fixed brief is appended to the raw words instead, stating the framing the director would have asked for\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"a busy language model chain costs polish, never the body\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"every call answered within 40 seconds\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"hard timeout of 420 seconds by default\" does not appear in the copy; claims must quote the post",
+			"claims: claim \"the same fourteen tools are reachable three ways over one shared handler and one shared generation quota\" does not appear in the copy; claims must quote the post"
 		]
 	},
 	"editorError": null

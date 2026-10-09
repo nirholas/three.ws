@@ -65,7 +65,13 @@
 			"retopo",
 			"photoreal",
 			"crossfade",
-			"retargeter"
+			"retargeter",
+			"CVPR",
+			"mixamorig",
+			"canonicalizer",
+			"Qwen",
+			"Quicknode",
+			"Quicknode's"
 		],
 		"maximumLength": 1000
 	},
@@ -13480,7 +13486,7 @@
 		},
 		{
 			"id": "keeper-article",
-			"status": "draft",
+			"status": "approved",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",

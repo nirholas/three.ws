@@ -112,9 +112,9 @@ three.ws builds alongside a group of cloud, AI, hardware, infrastructure and med
 
 **OpenAI.** three.ws is an OpenAI Select Partner in the OpenAI Partner Network. The free 3D Studio connector that served this run gives ChatGPT eleven keyless 3D tools, and the same server is listed on the Official MCP Registry, so any MCP client can reach it.
 
-**IBM.** three.ws is an IBM Business Partner. Agents on three.ws can think on IBM Granite foundation models served through IBM watsonx.ai, so a persona like the keeper can speak with an enterprise model behind it.
+**IBM.** three.ws is an IBM Business Partner. Agents on three.ws can think on IBM Granite foundation models served through IBM watsonx, so a persona like the keeper can speak with an enterprise model behind it.
 
-**Amazon Web Services.** three.ws is an AWS Partner, with an AWS Marketplace integration built and deployed and the Marketplace listing coming. We publish engineering write-ups on the AWS Builder Center.
+**Amazon Web Services.** three.ws is an AWS Partner, with an AWS Marketplace integration built and deployed. We publish engineering write-ups on the AWS Builder Center.
 
 **Alibaba Cloud.** three.ws is listed on the Alibaba Cloud International Marketplace, and Qwen models are lanes in the platform's model router.
 
