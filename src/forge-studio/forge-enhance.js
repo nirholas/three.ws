@@ -25,7 +25,7 @@ if (prompt && tools) {
 	btn.type = 'button';
 	btn.className = 'ptool ptool--ai';
 	btn.id = 'enhance';
-	btn.setAttribute('aria-label', 'Rewrite your prompt into a sharper, model-ready description');
+	btn.setAttribute('aria-label', 'Enhance: rewrite your prompt into a sharper, model-ready description');
 	btn.title = 'Rewrite your prompt into a sharper, model-ready description';
 	btn.innerHTML = `
 		<svg class="enhance-spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

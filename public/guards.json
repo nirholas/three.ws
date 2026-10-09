@@ -1788,6 +1788,10 @@
 		{
 			"pattern": "scripts/verify-*.mjs",
 			"reason": "One-off integration verifiers for a specific vendor surface or world build, not repository guards. They prove an external service works, so they belong with that feature rather than in a guard stage."
+		},
+		{
+			"pattern": "scripts/audit-agent-operability.mjs",
+			"reason": "A live-browser walkthrough that needs a running dev server and a real generation, so it is run on demand like the page audit and never inside a repository guard stage."
 		}
 	]
 }

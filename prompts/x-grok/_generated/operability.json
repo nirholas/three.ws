@@ -1,0 +1,1158 @@
+{
+	"before": {
+		"ranAt": "2026-10-09T04:35:45.215Z",
+		"baseUrl": "http://localhost:3000",
+		"summary": {
+			"flowsPassed": 5,
+			"flowsTotal": 5,
+			"findings": 24,
+			"consoleErrors": 1
+		},
+		"flows": [
+			{
+				"baseline": [
+					"I’ll walk along while you explore.",
+					"What do you want to create?"
+				],
+				"id": "create",
+				"path": "/create",
+				"task": "Choose the 3D model path from the creation hub, then the describe-an-avatar path",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /What do you want to create/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 35
+					},
+					{
+						"step": "see link /Build an AI agent/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 17
+					},
+					{
+						"step": "see link /Launch a token world/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 9
+					},
+					{
+						"step": "click link /Make a 3D avatar/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 98
+					},
+					{
+						"step": "see button /Describe an avatar in words/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 6
+					},
+					{
+						"step": "see button /Upload a GLB file/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 15
+					},
+					{
+						"step": "click button /Describe an avatar in words/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 336
+					},
+					{
+						"step": "url matches /\\/create\\/prompt|\\/login\\?next=%2Fcreate%2Fprompt/",
+						"via": "page.url",
+						"ok": true,
+						"ms": 1473
+					},
+					{
+						"step": "see heading /./",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 92
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [
+					{
+						"kind": "label-not-in-name",
+						"where": "a.intent-card.is-current :: Make a 3D avatar - jump to the avatar options belo (visible: you re here; missing: you re here)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "div#card-prompt.create-card.tile :: Describe an avatar in words and generate it in 3D  (visible: describe it to 3d; missing: to)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "div#card-selfie.create-card.tile :: Scan yourself into a 3D avatar (visible: scan yourself to 3d; missing: to)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "div#card-upload-glb.create-card.tile :: Upload a GLB file (visible: upload your own glb; missing: your own)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "canvas-no-alt",
+						"where": "canvas.walk-companion-canvas",
+						"detail": "canvas with no aria-label, role or fallback text"
+					}
+				],
+				"consoleErrors": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [
+						{
+							"kind": "label-not-in-name",
+							"where": "a.intent-card.is-current :: Make a 3D avatar - jump to the avatar options belo (visible: you re here; missing: you re here)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "div#card-prompt.create-card.tile :: Describe an avatar in words and generate it in 3D  (visible: describe it to 3d; missing: to)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "div#card-selfie.create-card.tile :: Scan yourself into a 3D avatar (visible: scan yourself to 3d; missing: to)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "div#card-upload-glb.create-card.tile :: Upload a GLB file (visible: upload your own glb; missing: your own)"
+						}
+					],
+					"pointerOnly": [],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [
+						"input#privy-email-input"
+					],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [
+						"canvas#avatar-canvas",
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"Name one object and a material, e.g. “a brass compass, weathered”.",
+					"Standard · Free · usually ~60s · renders a preview image, then builds 3D",
+					"Hold $THREE for up to 10× free generations →",
+					"ENTER A PROMPT TO GENERATE Roll & Forge Free · no sign-up · yours to download a tall ceramic vase, matte terracotta a wi",
+					"I’ll walk along while you explore.",
+					"◆ High quality is a $THREE holder feature: hold to unlock, or pay per generation."
+				],
+				"id": "forge",
+				"path": "/forge",
+				"task": "Describe an object, press Generate, follow the visible status to a finished model",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /Forge/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 41
+					},
+					{
+						"step": "click tab /Describe it/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 70
+					},
+					{
+						"step": "fill textbox /Describe the object to generate/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 12
+					},
+					{
+						"step": "click button /^Generate$/",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 91
+					},
+					{
+						"step": "status visible after Generate",
+						"via": "aria-live",
+						"ok": true,
+						"ms": 93
+					}
+				],
+				"waits": [
+					{
+						"label": "forge generation",
+						"samples": 60,
+						"silentSamples": 0,
+						"lastStatus": "Good prompt - add “studio lighting” for an even cleaner bake.",
+						"finished": false,
+						"ms": 60826
+					}
+				],
+				"notes": [
+					"generation still running at the 60s budget; last status: Good prompt - add “studio lighting” for an even cleaner bake."
+				],
+				"findings": [
+					{
+						"kind": "label-not-in-name",
+						"where": "button#surprise.ptool :: Fill the box with a random vivid prompt (visible: surprise me; missing: surprise me)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button#enhance.ptool.ptool--ai :: Rewrite your prompt into a sharper, model-ready de (visible: enhance; missing: enhance)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button :: TRELLIS (free) · free, no API key (visible: nvidiafree; missing: nvidiafree)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button :: Hunyuan3D / TRELLIS (free) · free, no API key (visible: hunyuan3dfree; missing: hunyuan3dfree)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button :: Hunyuan3D · free, no API key (visible: hunyuan3dfree; missing: hunyuan3dfree)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button :: TRELLIS (self-host) · free, no API key (visible: trellisfree; missing: trellisfree)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button#chips-more.chips-more :: Swap in a fresh set of example prompts (visible: more ideas; missing: more ideas)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "button#roll-forge.btn.forge-roll :: Forge a random model, no prompt needed (visible: roll forge; missing: roll)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "label-not-in-name",
+						"where": "a.showcase-cat-badge.showcase-x402-badge :: Paid via x402. View settle transaction on Solscan (visible: x402 0 15; missing: 15)",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "pointer-only",
+						"where": "div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×",
+						"detail": "clickable element that is not focusable and has no role"
+					},
+					{
+						"kind": "canvas-no-alt",
+						"where": "canvas.walk-companion-canvas",
+						"detail": "canvas with no aria-label, role or fallback text"
+					}
+				],
+				"consoleErrors": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [
+						{
+							"kind": "label-not-in-name",
+							"where": "button#surprise.ptool :: Fill the box with a random vivid prompt (visible: surprise me; missing: surprise me)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button#enhance.ptool.ptool--ai :: Rewrite your prompt into a sharper, model-ready de (visible: enhance; missing: enhance)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: TRELLIS (free) · free, no API key (visible: nvidiafree; missing: nvidiafree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: Hunyuan3D / TRELLIS (free) · free, no API key (visible: hunyuan3dfree; missing: hunyuan3dfree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: Hunyuan3D · free, no API key (visible: hunyuan3dfree; missing: hunyuan3dfree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: TRELLIS (self-host) · free, no API key (visible: trellisfree; missing: trellisfree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button#chips-more.chips-more :: Swap in a fresh set of example prompts (visible: more ideas; missing: more ideas)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button#roll-forge.btn.forge-roll :: Forge a random model, no prompt needed (visible: roll forge; missing: roll)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "a.showcase-cat-badge.showcase-x402-badge :: Paid via x402. View settle transaction on Solscan (visible: x402 0 15; missing: 15)"
+						}
+					],
+					"pointerOnly": [
+						"div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×"
+					],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [
+						{
+							"kind": "label-not-in-name",
+							"where": "button#surprise.ptool :: Fill the box with a random vivid prompt (visible: surprise me; missing: surprise me)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button#enhance.ptool.ptool--ai :: Rewrite your prompt into a sharper, model-ready de (visible: enhance; missing: enhance)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: TRELLIS (free) · free, no API key (visible: nvidiafree; missing: nvidiafree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: Hunyuan3D / TRELLIS (free) · free, no API key (visible: hunyuan3dfree; missing: hunyuan3dfree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: Hunyuan3D · free, no API key (visible: hunyuan3dfree; missing: hunyuan3dfree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button :: TRELLIS (self-host) · free, no API key (visible: trellisfree; missing: trellisfree)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "button#chips-more.chips-more :: Swap in a fresh set of example prompts (visible: more ideas; missing: more ideas)"
+						},
+						{
+							"kind": "label-not-in-name",
+							"where": "a.showcase-cat-badge.showcase-x402-badge :: Paid via x402. View settle transaction on Solscan (visible: x402 0 15; missing: 15)"
+						}
+					],
+					"pointerOnly": [],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"Keep the URL private: whoever holds it spends your installation's budget. How install tokens work.",
+					"I’ll walk along while you explore.",
+					"One URL. Your AI gets three.ws."
+				],
+				"id": "connect",
+				"path": "/connect",
+				"task": "Pick the free studio server, read its URL, copy it, open the Grok Bot setup, mint a connector URL",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /One URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 33
+					},
+					{
+						"step": "check radio /3D Studio \\(free\\)/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 78
+					},
+					{
+						"step": "see button /Copy URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 8
+					},
+					{
+						"step": "click button /Copy URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 232
+					},
+					{
+						"step": "status visible after Copy URL",
+						"via": "aria-live",
+						"ok": true,
+						"ms": 1002
+					},
+					{
+						"step": "click tab /Grok Bot/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 95
+					},
+					{
+						"step": "see tabpanel /Grok Bot/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 5
+					},
+					{
+						"step": "click button /Generate my connector URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 74
+					},
+					{
+						"step": "status visible after Generate my connector URL",
+						"via": "aria-live",
+						"ok": true,
+						"ms": 76
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [
+					{
+						"kind": "canvas-no-alt",
+						"where": "canvas.walk-companion-canvas",
+						"detail": "canvas with no aria-label, role or fallback text"
+					}
+				],
+				"consoleErrors": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [
+						"div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×"
+					],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"24+ agents",
+					"Say hi to Agent Index!",
+					"Every on-chain agent, across Solana and every EVM chain, not just the ones launched on three.ws. We crawl the Metaplex A"
+				],
+				"id": "agent-profile",
+				"path": "/agents",
+				"task": "Search the agent index, open an agent profile, find its sign-in and create paths",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /Agent Index/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 35
+					},
+					{
+						"step": "see searchbox /Search agents/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 5
+					},
+					{
+						"step": "see link /\\.agent|Agent #/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 11
+					},
+					{
+						"step": "fill searchbox /Search agents/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 14
+					},
+					{
+						"step": "click link /\\.agent|Agent #/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 77
+					},
+					{
+						"step": "url matches /\\/a\\/\\d+\\/\\d+/",
+						"via": "page.url",
+						"ok": true,
+						"ms": 877
+					},
+					{
+						"step": "see heading /./",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 26
+					},
+					{
+						"step": "see link /Sign in/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 21
+					},
+					{
+						"step": "see link /Generate from text/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 11
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [
+					{
+						"kind": "pointer-only",
+						"where": "div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×",
+						"detail": "clickable element that is not focusable and has no role"
+					},
+					{
+						"kind": "canvas-no-alt",
+						"where": "canvas.walk-companion-canvas",
+						"detail": "canvas with no aria-label, role or fallback text"
+					}
+				],
+				"consoleErrors": [
+					"Failed to load resource: the server responded with a status of 429 ()"
+				],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [
+						"div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×"
+					],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"Pick the 3D agent this coin belongs to Name your coin Ticker needs at least two letters or digits Sign in to launch",
+					"I’ll walk along while you explore.",
+					"PUMP.FUN LAUNCHPAD FOR 3D AGENTS"
+				],
+				"id": "launch",
+				"path": "/launch",
+				"task": "Fill in the coin form and reach the launch confirmation without signing",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /Launch a coin for your agent/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 33
+					},
+					{
+						"step": "click tab /My coins/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 73
+					},
+					{
+						"step": "see tabpanel /My coins/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 5
+					},
+					{
+						"step": "click tab /^Create$/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 1861
+					},
+					{
+						"step": "fill textbox /Coin name/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 17
+					},
+					{
+						"step": "fill textbox /Ticker/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 21
+					},
+					{
+						"step": "check radio /Agent's wallet/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 411
+					},
+					{
+						"step": "click button /0\\.5 SOL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 102
+					},
+					{
+						"step": "see button /0\\.5 SOL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 4
+					},
+					{
+						"step": "see complementary /Launch preview/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 11
+					},
+					{
+						"step": "see button /Sign in to launch|Launch/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 6
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [
+					{
+						"kind": "volatile-name",
+						"where": "input#f-name.lx-input :: Coin name 0/32",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "volatile-name",
+						"where": "input#f-symbol.lx-input.is-mono :: Ticker 0/10",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "volatile-name",
+						"where": "textarea#f-description.lx-textarea :: Description optional · 0/500",
+						"detail": "accessible name does not match what a model reads on screen"
+					},
+					{
+						"kind": "pointer-only",
+						"where": "div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×",
+						"detail": "clickable element that is not focusable and has no role"
+					},
+					{
+						"kind": "canvas-no-alt",
+						"where": "canvas.walk-companion-canvas",
+						"detail": "canvas with no aria-label, role or fallback text"
+					}
+				],
+				"consoleErrors": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [
+						{
+							"kind": "volatile-name",
+							"where": "input#f-name.lx-input :: Coin name 0/32"
+						},
+						{
+							"kind": "volatile-name",
+							"where": "input#f-symbol.lx-input.is-mono :: Ticker 0/10"
+						},
+						{
+							"kind": "volatile-name",
+							"where": "textarea#f-description.lx-textarea :: Description optional · 0/500"
+						}
+					],
+					"pointerOnly": [
+						"div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×"
+					],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [
+						{
+							"kind": "volatile-name",
+							"where": "input#f-name.lx-input :: Coin name 16/32"
+						},
+						{
+							"kind": "volatile-name",
+							"where": "input#f-symbol.lx-input.is-mono :: Ticker 6/10"
+						},
+						{
+							"kind": "volatile-name",
+							"where": "textarea#f-description.lx-textarea :: Description optional · 0/500"
+						}
+					],
+					"pointerOnly": [
+						"div.tws-atlas-hint.tws-corner-item :: Ctrl K search anything on three.ws ×"
+					],
+					"canvases": [
+						"canvas.walk-companion-canvas"
+					],
+					"hoverOnly": []
+				}
+			}
+		]
+	},
+	"after": {
+		"ranAt": "2026-10-09T04:49:30.098Z",
+		"baseUrl": "http://localhost:3000",
+		"summary": {
+			"flowsPassed": 5,
+			"flowsTotal": 5,
+			"findings": 0,
+			"consoleErrors": 0
+		},
+		"flows": [
+			{
+				"baseline": [
+					"I’ll walk along while you explore.",
+					"What do you want to create?"
+				],
+				"id": "create",
+				"path": "/create",
+				"task": "Choose the 3D model path from the creation hub, then the describe-an-avatar path",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /What do you want to create/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 39
+					},
+					{
+						"step": "see link /Build an AI agent/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 11
+					},
+					{
+						"step": "see link /Launch a token world/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 13
+					},
+					{
+						"step": "click link /Make a 3D avatar/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 80
+					},
+					{
+						"step": "see button /Describe an avatar in words/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 17
+					},
+					{
+						"step": "see button /Upload a GLB file/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 7
+					},
+					{
+						"step": "click button /Describe an avatar in words/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 376
+					},
+					{
+						"step": "url matches /\\/create\\/prompt|\\/login\\?next=%2Fcreate%2Fprompt/",
+						"via": "page.url",
+						"ok": true,
+						"ms": 1778
+					},
+					{
+						"step": "see heading /./",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 165
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [],
+				"consoleErrors": [],
+				"failedRequests": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [
+						"input#privy-email-input"
+					],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [
+						"canvas#avatar-canvas"
+					],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"Name one object and a material, e.g. “a brass compass, weathered”.",
+					"Standard · Free · usually ~60s · renders a preview image, then builds 3D",
+					"Hold $THREE for up to 10× free generations →",
+					"ENTER A PROMPT TO GENERATE Roll & Forge Free · no sign-up · yours to download a wizard staff, gnarled driftwood, embedde",
+					"I’ll walk along while you explore.",
+					"◆ High quality is a $THREE holder feature: hold to unlock, or pay per generation."
+				],
+				"id": "forge",
+				"path": "/forge",
+				"task": "Describe an object, press Generate, follow the visible status to a finished model",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /Forge/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 43
+					},
+					{
+						"step": "click tab /Describe it/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 74
+					},
+					{
+						"step": "fill textbox /Describe the object to generate/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 24
+					},
+					{
+						"step": "click button /^Generate$/",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 86
+					},
+					{
+						"step": "status visible after Generate",
+						"via": "aria-live",
+						"ok": true,
+						"ms": 89
+					}
+				],
+				"waits": [
+					{
+						"label": "forge generation",
+						"samples": 60,
+						"silentSamples": 0,
+						"lastStatus": "Good prompt - add “studio lighting” for an even cleaner bake.",
+						"finished": false,
+						"ms": 60800
+					}
+				],
+				"notes": [
+					"generation still running at the 60s budget; last status: Good prompt - add “studio lighting” for an even cleaner bake."
+				],
+				"findings": [],
+				"consoleErrors": [],
+				"failedRequests": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"Keep the URL private: whoever holds it spends your installation's budget. How install tokens work.",
+					"I’ll walk along while you explore.",
+					"One URL. Your AI gets three.ws."
+				],
+				"id": "connect",
+				"path": "/connect",
+				"task": "Pick the free studio server, read its URL, copy it, open the Grok Bot setup, mint a connector URL",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /One URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 29
+					},
+					{
+						"step": "check radio /3D Studio \\(free\\)/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 79
+					},
+					{
+						"step": "see button /Copy URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 5
+					},
+					{
+						"step": "click button /Copy URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 232
+					},
+					{
+						"step": "status visible after Copy URL",
+						"via": "aria-live",
+						"ok": true,
+						"ms": 1006
+					},
+					{
+						"step": "click tab /Grok Bot/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 84
+					},
+					{
+						"step": "see tabpanel /Grok Bot/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 4
+					},
+					{
+						"step": "click button /Generate my connector URL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 78
+					},
+					{
+						"step": "status visible after Generate my connector URL",
+						"via": "aria-live",
+						"ok": true,
+						"ms": 79
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [],
+				"consoleErrors": [],
+				"failedRequests": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"24+ agents",
+					"Say hi to Agent Index!",
+					"Every on-chain agent, across Solana and every EVM chain, not just the ones launched on three.ws. We crawl the Metaplex A"
+				],
+				"id": "agent-profile",
+				"path": "/agents",
+				"task": "Search the agent index, open an agent profile, find its sign-in and create paths",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /Agent Index/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 33
+					},
+					{
+						"step": "see searchbox /Search agents/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 4
+					},
+					{
+						"step": "see link /\\.agent|Agent #/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 10
+					},
+					{
+						"step": "fill searchbox /Search agents/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 15
+					},
+					{
+						"step": "click link /\\.agent|Agent #/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 75
+					},
+					{
+						"step": "url matches /\\/a\\/\\d+\\/\\d+/",
+						"via": "page.url",
+						"ok": true,
+						"ms": 1197
+					},
+					{
+						"step": "see heading /./",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 25
+					},
+					{
+						"step": "see link /Sign in/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 5
+					},
+					{
+						"step": "see link /Generate from text/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 3
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [],
+				"consoleErrors": [],
+				"failedRequests": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				}
+			},
+			{
+				"baseline": [
+					"Pick the 3D agent this coin belongs to Name your coin Ticker needs at least two letters or digits Sign in to launch",
+					"I’ll walk along while you explore.",
+					"PUMP.FUN LAUNCHPAD FOR 3D AGENTS"
+				],
+				"id": "launch",
+				"path": "/launch",
+				"task": "Fill in the coin form and reach the launch confirmation without signing",
+				"ok": true,
+				"steps": [
+					{
+						"step": "see heading /Launch a coin for your agent/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 33
+					},
+					{
+						"step": "click tab /My coins/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 76
+					},
+					{
+						"step": "see tabpanel /My coins/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 5
+					},
+					{
+						"step": "click tab /^Create$/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 1855
+					},
+					{
+						"step": "fill textbox /Coin name/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 17
+					},
+					{
+						"step": "fill textbox /Ticker/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 27
+					},
+					{
+						"step": "check radio /Agent's wallet/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 395
+					},
+					{
+						"step": "click button /0\\.5 SOL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 80
+					},
+					{
+						"step": "see button /0\\.5 SOL/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 11
+					},
+					{
+						"step": "see complementary /Launch preview/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 4
+					},
+					{
+						"step": "see button /Sign in to launch|Launch/i",
+						"via": "getByRole",
+						"ok": true,
+						"ms": 12
+					}
+				],
+				"waits": [],
+				"notes": [],
+				"findings": [],
+				"consoleErrors": [],
+				"failedRequests": [],
+				"scan": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				},
+				"scanAfter": {
+					"unnamed": [],
+					"nameQuality": [],
+					"pointerOnly": [],
+					"canvases": [],
+					"hoverOnly": []
+				}
+			}
+		]
+	}
+}

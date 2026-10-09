@@ -29308,6 +29308,13 @@
 			"summary": "A new tutorial gives you six jobs to hand Grok Bot: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image turned into a 3D model, a weekly agent report and a $THREE market brief. Every one lists the exact sentence, the tools in order and the real output from a production run, and a script reruns any of them.",
 			"tags": ["docs"],
 			"link": "/tutorials/grok-bot-recipes"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "Create, Forge and Launch are easier for screen readers and AI agents to operate",
+			"summary": "Buttons and cards on Create and Forge now announce the same words you see on screen, the search hint and the walking companion can be reached with the keyboard, and the Launch form fields keep stable names while their character counters change.",
+			"tags": ["improvement"],
+			"link": "/forge"
 		}
 	]
 }

@@ -297,6 +297,7 @@
 		"guard:hidden": "node scripts/inject-hidden-guard.mjs --write",
 		"check:images": "node scripts/audit-image-loading.mjs --strict",
 		"audit:web": "node scripts/page-audit.mjs",
+		"audit:agent-operability": "node scripts/audit-agent-operability.mjs",
 		"evolve": "node scripts/evolve.mjs status",
 		"evolve:start": "node scripts/evolve.mjs start",
 		"evolve:stop": "node scripts/evolve.mjs stop",

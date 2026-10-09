@@ -787,12 +787,12 @@ function buildEngineButtons() {
 		// BYOK engines carry a small key glyph so the picker shows at a glance
 		// which lanes run on the user's own API key vs the free/included ones.
 		const short = ENGINE_LABELS[b.id] || b.label;
-		btn.innerHTML = `<span class="eng-label">${short}</span>${b.free ? ENGINE_FREE_PILL : ''}${b.byok ? ENGINE_KEY_SVG : ''}`;
+		btn.innerHTML = `<span class="eng-label">${short}</span> ${b.free ? ENGINE_FREE_PILL : ''}${b.byok ? ENGINE_KEY_SVG : ''}`;
 		const keyNote = b.byok ? ` · uses your own ${KEY_HINTS[b.byok]?.label || b.byok} key` : '';
 		const freeNote = b.free ? ' · free, no API key' : '';
 		btn.title = `${b.label} — ${b.blurb}${freeNote}${keyNote}`;
 		// aria-label survives the dynamic title rewrites in updateEngineAvailability.
-		btn.setAttribute('aria-label', `${b.label}${freeNote}${keyNote}`);
+		btn.setAttribute('aria-label', `${short}${freeNote}${keyNote}`);
 		btn.setAttribute('aria-pressed', String(b.id === selectedEngine.backend));
 		els.engine.appendChild(btn);
 	}

@@ -245,16 +245,16 @@ function renderShell(root) {
 				<div class="lx-row">
 					<label class="lx-field" style="margin-top:0">
 						<span class="lx-label">Coin name <span class="lx-count" id="c-name">0/${NAME_MAX}</span></span>
-						<input class="lx-input" id="f-name" name="name" maxlength="${NAME_MAX}" autocomplete="off" placeholder="Name your coin" value="${esc(f.name)}" />
+						<input class="lx-input" id="f-name" name="name" aria-label="Coin name" aria-describedby="c-name" maxlength="${NAME_MAX}" autocomplete="off" placeholder="Name your coin" value="${esc(f.name)}" />
 					</label>
 					<label class="lx-field" style="margin-top:0">
 						<span class="lx-label">Ticker <span class="lx-count" id="c-symbol">0/${SYMBOL_MAX}</span></span>
-						<input class="lx-input is-mono" id="f-symbol" name="symbol" maxlength="${SYMBOL_MAX}" autocomplete="off" placeholder="e.g. AGENT" value="${esc(f.symbol)}" />
+						<input class="lx-input is-mono" id="f-symbol" name="symbol" aria-label="Ticker" aria-describedby="c-symbol" maxlength="${SYMBOL_MAX}" autocomplete="off" placeholder="e.g. AGENT" value="${esc(f.symbol)}" />
 					</label>
 				</div>
 				<label class="lx-field">
 					<span class="lx-label">Description <span class="lx-opt">optional · <span id="c-desc">0/${DESCRIPTION_MAX}</span></span></span>
-					<textarea class="lx-textarea" id="f-description" name="description" maxlength="${DESCRIPTION_MAX}" placeholder="What is this agent and why does it have a coin?">${esc(f.description)}</textarea>
+					<textarea class="lx-textarea" id="f-description" name="description" aria-label="Description (optional)" aria-describedby="c-desc" maxlength="${DESCRIPTION_MAX}" placeholder="What is this agent and why does it have a coin?">${esc(f.description)}</textarea>
 				</label>
 				<details class="lx-disclosure">
 					<summary>Social links <span class="lx-opt">optional</span></summary>

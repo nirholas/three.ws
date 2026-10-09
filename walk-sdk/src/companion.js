@@ -238,7 +238,7 @@ class WalkCompanion {
 			${pickerBtn}
 			<div class="walk-companion__skel" aria-hidden="true"></div>
 			<div class="walk-companion-bubble" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-			<canvas class="walk-companion-canvas" width="${CANVAS_W}" height="${CANVAS_H}"></canvas>
+			<canvas class="walk-companion-canvas" width="${CANVAS_W}" height="${CANVAS_H}" role="button" tabindex="0" aria-label="Walk companion avatar: activate to let it walk around the page"></canvas>
 		`;
 		document.body.appendChild(host);
 		this.host = host;
@@ -253,7 +253,13 @@ class WalkCompanion {
 			this.openPicker();
 		});
 		// Clicking the avatar detaches it into Playground mode.
-		this.canvas.addEventListener('click', () => this.owner._detachToPlayground(this));
+		const detach = () => this.owner._detachToPlayground(this);
+		this.canvas.addEventListener('click', detach);
+		this.canvas.addEventListener('keydown', (e) => {
+			if (e.key !== 'Enter' && e.key !== ' ') return;
+			e.preventDefault();
+			detach();
+		});
 		requestAnimationFrame(() => host.classList.add('is-in'));
 		// Claim the corner before anything else settles there, and re-measure on
 		// resize: the narrow-viewport rule shrinks the companion to 148x208.
@@ -736,6 +742,7 @@ function ensureStyles() {
 .walk-companion-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:auto;cursor:pointer;touch-action:pan-y;filter:drop-shadow(0 18px 22px rgba(0,0,0,.32))}
 .walk-companion__skel{position:absolute;left:50%;bottom:8%;z-index:0;width:46%;height:70%;transform:translateX(-50%);border-radius:46% 46% 40% 40%/55% 55% 45% 45%;overflow:hidden;opacity:0;transition:opacity .25s ease;pointer-events:none;background:linear-gradient(180deg,rgba(122,162,255,.18),rgba(18,20,28,.10))}
 .walk-companion.is-loading .walk-companion__skel{opacity:1}
+.walk-companion-canvas:focus-visible{outline:2px solid var(--accent,#7c9cff);outline-offset:-4px;border-radius:12px}
 .walk-companion.is-loading .walk-companion-canvas{opacity:0}
 .walk-companion__skel::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 18%,rgba(255,255,255,.22) 46%,transparent 72%);transform:translateX(-120%);animation:walk-companion-shimmer 1.2s ease-in-out infinite}
 .walk-companion-close,.walk-companion-swap{position:absolute;top:2px;z-index:3;width:22px;height:22px;border:none;border-radius:50%;background:rgba(12,14,20,.55);color:#fff;font-size:14px;line-height:1;cursor:pointer;pointer-events:auto;opacity:0;transition:opacity .2s ease,background .2s ease;display:grid;place-items:center;padding:0}

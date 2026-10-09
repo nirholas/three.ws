@@ -170,13 +170,15 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		'background:var(--surface-1,#0e0e0e);color:var(--ink,#ececec);',
 		'border:1px solid var(--stroke-strong,rgba(255,255,255,.18));border-radius:999px;',
 		'box-shadow:0 8px 28px rgba(0,0,0,.4);font-size:12px;',
-		'font-family:var(--font-body,ui-sans-serif,system-ui,sans-serif);cursor:pointer;',
+		'font-family:var(--font-body,ui-sans-serif,system-ui,sans-serif);',
 		'animation:tws-atlas-rise .34s cubic-bezier(.2,.8,.3,1) both}',
 		'.tws-atlas-hint kbd{font-family:inherit;font-size:11px;border:1px solid var(--stroke,rgba(255,255,255,.2));',
 		'border-radius:5px;padding:2px 6px;background:var(--surface-2,rgba(255,255,255,.06))}',
 		'.tws-atlas-hint button{background:none;border:0;color:var(--ink-dim,#8b8b8b);cursor:pointer;',
 		'font:inherit;font-size:15px;line-height:1;padding:0 0 0 3px}',
 		'.tws-atlas-hint button:hover{color:var(--ink,#ececec)}',
+		'.tws-atlas-hint .tws-atlas-hint-open{display:flex;align-items:center;gap:9px;padding:0;font-size:12px;color:inherit}',
+		'.tws-atlas-hint .tws-atlas-hint-open:hover{color:var(--ink,#ececec)}',
 		'@keyframes tws-atlas-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}',
 
 		/* Light theme. The site flips [data-theme] on <html>. */
@@ -741,8 +743,13 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		chip.setAttribute('role', 'complementary');
 		chip.setAttribute('aria-label', 'Search shortcut');
 		chip.dataset.cornerPriority = '30';
-		chip.appendChild(el('kbd', null, MOD_LABEL + ' K'));
-		chip.appendChild(el('span', null, 'search anything on three.ws'));
+		// The chip's main action is a real button, so a keyboard or a screen-reader
+		// user (or a computer-use agent) can open search from the hint itself.
+		var open = el('button', 'tws-atlas-hint-open');
+		open.type = 'button';
+		open.appendChild(el('kbd', null, MOD_LABEL + ' K'));
+		open.appendChild(el('span', null, 'search anything on three.ws'));
+		chip.appendChild(open);
 		var dismiss = el('button', null, '×');
 		dismiss.type = 'button';
 		dismiss.setAttribute('aria-label', 'Dismiss');
@@ -760,7 +767,7 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 			e.stopPropagation();
 			seen();
 		});
-		chip.addEventListener('click', function () {
+		open.addEventListener('click', function () {
 			seen();
 			show('');
 		});

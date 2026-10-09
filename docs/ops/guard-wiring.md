@@ -151,6 +151,7 @@ viewports. They are pre-event, pre-release and incident tools.
 |---|---|---|---|---|
 | `audit:console` | Console errors, page errors and failed requests on every route in `data/pages.json`, desktop and mobile | capped | >600s (reached 591 of 796 route-viewport pairs in 600s) | **manual (pre-release).** |
 | `audit:web` / `audit:web:login` | The full authed page sweep: console, network, layout | capped | >600s | **manual.** See [page-audit.md](page-audit.md). `audit:web:login` mints the session `audit:web` replays, so it is the same sweep plus a login. |
+| `audit:agent-operability` | Whether /create, /forge, /connect, an agent profile and /launch can be completed with role and label locators only | not run | n/a | **manual.** Needs a running `npm run dev` and drives a real browser (plus a bounded wait on a live generation), so it cannot sit in `gate`. See [page-audit.md](page-audit.md). |
 | `audit:a11y` | Playwright accessibility pass over the top pages | killed at cap | >578s (44 tests, one worker, several minutes each) | **manual.** It is also a second `playwright test` run, which fights the shared dev server on :3000. |
 | `audit:overlays` | That no floating widget covers another, across routes and viewports | capped | >240s | **manual.** |
 | `audit:mobile-touch` | Live computed touch-target sizes and spacing in a Pixel 5 context | capped | >240s | **manual.** |
