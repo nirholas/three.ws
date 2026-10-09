@@ -1,19 +1,9 @@
 {
-	"id": "three-community-meetup-2",
-	"name": "$THREE Community Meetup #2",
-	"tagline": "The Three.ws User Group on IBM Community, meeting inside the world.",
-	"startsAt": "2026-09-25T16:00:00Z",
-	"endsAt": "2026-09-25T17:00:00Z",
-	"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
-	"linkLabel": "Join the meetup",
-	"souvenir": { "cosmeticId": "star-shades-meetup-2" },
-	"agenda": [
-		{ "atMin": 0, "title": "Doors open in the plaza", "detail": "Welcome and controls", "icon": "👋" },
-		{ "atMin": 6, "title": "Live build: one sentence to a rigged agent", "detail": "Then we wear it", "icon": "🧍" },
-		{ "atMin": 15, "title": "Forge into the world", "detail": "Type /forge in chat", "icon": "🔨" },
-		{ "atMin": 24, "title": "An agent pays for a tool", "detail": "At the Agent Exchange", "icon": "🧾" },
-		{ "atMin": 30, "title": "Community showcase", "detail": "Members show what they brought", "icon": "🎤" },
-		{ "atMin": 42, "title": "Open Q&A and what ships next", "detail": "Ask anything", "icon": "💬" },
-		{ "atMin": 55, "title": "Group photo", "detail": "Gather at the totem", "icon": "📸" }
-	]
+	"id": null,
+	"name": null,
+	"tagline": null,
+	"startsAt": null,
+	"endsAt": null,
+	"link": null,
+	"note": "No event is scheduled. This file stays in place between events so /event.json answers 200 with an explicit no-event state instead of putting a 404 in every visitor console. Schedule the next event with: npm run event:schedule -- --start <ISO> --duration <minutes> --apply"
 }
