@@ -107,6 +107,7 @@ covers the thing you meant to film.
 | `{ "hold": 2000 }` | Films 2 seconds of the page as it is. | yes |
 | `{ "click": "Search" }` | Moves the pointer to the control with that text and clicks it. `{ "click": { "selector": "#go" } }` when the control has no text. | yes |
 | `{ "hover": "Preview" }` | Moves the pointer onto a control. | yes |
+| `{ "upload": "data/x-content/inputs/garden-gnome.jpg", "into": "FRONT" }` | Clicks the control whose text matches `into` (or `{ "selector": "..." }`), and hands the file picker it opens that file. The file must live in the repository under `data/` or `public/`; the proof records its SHA-256, so swapping the file voids the proof. Inputs and their licenses are listed in `data/x-content/inputs/README.md`. | yes |
 | `{ "type": "trading bots", "into": "Search by meaning" }` | Clicks the field whose placeholder or label matches `into`, then types. | yes |
 | `{ "press": "Enter" }` | Presses a key. `{ "press": "w", "hold": 2000 }` holds it down for 2 s of page time, which is how a character is walked. | yes |
 | `{ "drag": [[0.3, 0.5], [0.7, 0.5]], "ms": 1500 }` | Drags across the viewport, as fractions of its width and height. This is how you orbit a 3D scene. | yes |
@@ -122,7 +123,7 @@ holds far less than a landscape one, and the stamp and cut badge share the width
 every caption in the real bar before it films, beside the longest stamp and badge, and refuses a
 caption that would be cut off, naming it. About 40 characters is safe in square.
 
-An action (`click`, `type`, `press`) can carry `"awaits": "/api/path"`: the request
+An action (`click`, `type`, `press`, `upload`) can carry `"awaits": "/api/path"`: the request
 the action has to cause. The run fails if no such request answers, or if it answers with an error.
 
 ### What makes a scenario prove something

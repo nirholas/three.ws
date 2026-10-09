@@ -206,7 +206,9 @@ How it is filmed, and why:
   and the date sit in a bar under the page. Only the pointer is drawn on the page.
 - **The proof is bound to the post.** `data/x-content/proofs/<id>.json` records the hash of the
   scenario and of the reel. Change a step, or swap the file, and the item no longer validates. A
-  proof expires after 14 days.
+  proof expires after 14 days. A scenario that uploads a file (the `upload` step) also records
+  the file's SHA-256 in `uploads`, so a reel can never be paired with a different input than the
+  one it filmed.
 - **Reviews run it again.** The `scenario` probe runs the steps unfilmed. A fact the post states
   exactly must still read what the reel shows; a fact it states as a floor (`min`) must stay at or
   above it; a fact no claim cites may move. A fact that broke its rule is a stale post: film it
