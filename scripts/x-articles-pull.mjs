@@ -82,7 +82,10 @@ async function collect(paginator) {
 	const posts = [];
 	for await (const post of paginator) posts.push(post);
 	const users = new Map((paginator.includes?.users || []).map((u) => [u.id, u]));
-	return posts.map((post) => {
+	// A repost of a post that quotes the Article comes back from the quotes
+	// endpoint too. It carries no words of its own, so it is not a response.
+	const isRepost = (post) => (post.referenced_tweets || []).some((ref) => ref.type === 'retweeted');
+	return posts.filter((post) => !isRepost(post)).map((post) => {
 		const author = users.get(post.author_id);
 		return {
 			id: post.id,
