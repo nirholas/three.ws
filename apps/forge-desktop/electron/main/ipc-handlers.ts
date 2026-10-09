@@ -1,0 +1,2275 @@
+import { ipcMain, BrowserWindow, Notification, dialog, app, shell } from 'electron'
+import { buildSync } from 'esbuild'
+import { autoUpdater } from 'electron-updater'
+import { basename, join } from 'path'
+import { rm as rmAsync, readFile, writeFile, mkdir, readdir, rename, cp, symlink, lstat, copyFile } from 'fs/promises'
+import { existsSync, mkdirSync, readdirSync, statSync } from 'fs'
+import axios from 'axios'
+import * as tar from 'tar'
+import * as os from 'os'
+import { promisify } from 'util'
+import { PythonBridge, API_BASE_URL } from './python-bridge'
+import {
+  isModelDownloaded,
+  listDownloadedModels,
+  downloadModelFromHF,
+  downloadModelSourcesFromHF,
+  type DownloadProgress,
+} from './model-downloader'
+import {
+  legacyDownloadSteps,
+  resolveInstalledExtensionSharedWeightGroups,
+  resolveInstalledModelDownloadPlan,
+} from './model-download-plan'
+import {
+  areModelSourcesDownloaded,
+  areModelSourcesDownloadedAtRoot,
+  areWeightGroupSourcesDownloaded,
+  installedWeightVariants,
+  listWeightVariantFiles,
+  modelHasLocalData,
+  normalizeModelSources,
+  normalizeWeightGroupReferences,
+  normalizeWeightGroups,
+  normalizeWeightVariants,
+  validateModelNodeIds,
+  removePartialDownloadArtifacts,
+  resolveExtensionModelRoot,
+  resolveModelRoot,
+  resolveWeightGroupRoot,
+  resolveWeightStorageRoot,
+  safeModelSourceId,
+  weightStorageHasLocalData,
+} from './model-sources'
+import { getSettings, setSettings } from './settings-store'
+import { checkSetupNeeded, markSetupDone, runFullSetup, getVenvPythonExe, ensureSslPatch } from './python-setup'
+import { logger } from './logger'
+import { getProcessRunner, getPythonProcessRunner, getExtPythonExe, terminateProcessRunner, terminateAllProcessRunners } from './process-runner'
+import { getBuiltinExtensionsDir } from './builtin-sync'
+import { spawn, execFile } from 'child_process'
+import {
+  EXT_INCOMPLETE_MARKER,
+  EXT_REGISTRATION_PENDING_MARKER,
+  EXT_VALIDATED_MARKER,
+  assertSafeExtensionId,
+  buildExtensionBackupPath,
+  buildExtensionStagingPath,
+  isInternalExtensionDirName,
+  resolveExtensionPathWithinRoot,
+} from './extension-path-guard'
+import { detectGpuInfo, describeGpuInfo, torchFlavorFor, type GpuInfo } from './gpu-detect'
+import { SETUP_LAUNCHER_SOURCE } from './setup-launcher'
+import {
+  assertCompatibleExtensionUpdateType,
+  expectedModelIds,
+  markExtensionInstallationInterrupted,
+  validateExtensionQuarantinePayload,
+  validateExtensionReloadPayload,
+  validateExistingExtensionReplacement,
+  validateInstallManifest,
+  assertSupportedSceneNodeShape,
+} from './extension-install-utils'
+import {
+  beginExtensionRegistrationTransaction,
+  clearExtensionRegistrationTransaction,
+  cleanupValidatedExtensionBackups,
+  quarantineExtensionRegistrationFailure,
+  parseExtensionRegistrationPendingName,
+  removeExtensionWithBackups,
+  renameWithRetry as renameExtensionWithRetry,
+  restoreExtensionBackup,
+  rmWithRetry as removeExtensionWithRetry,
+  runExtensionRegistrationValidationTransaction,
+  runExtensionRepairTransaction,
+  type ExtensionRegistrationValidationCapability,
+  validateExtensionDestinationRegistration,
+} from './extension-install-recovery'
+import { registerWorkspaceAssetLibraryIpcHandlers } from './artifact-registry-service'
+import { updatesSupported } from './updater'
+import { ModelWeightOperations } from './model-weight-operations'
+import { readLocalFileBase64 } from './bounded-file-reader'
+import { encryptSecret, decryptSecret } from './secure-store'
+import { getHfToken, initHfToken, setHfToken } from './hf-token'
+
+type WindowGetter = () => BrowserWindow | null
+const pExecFile = promisify(execFile)
+
+// ─── Run an extension's setup.py directly (no FastAPI needed) ─────────────────
+
+function runExtensionSetup(
+  extDir: string,
+  gpu:    GpuInfo,
+  onLog?: (line: string) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const userData  = app.getPath('userData')
+    ensureSslPatch(userData)
+    const pythonExe = getVenvPythonExe(userData)
+    const setupPy   = join(extDir, 'setup.py')
+
+    // Shared pip wheel cache: a failed setup retried later reuses the multi-GB
+    // torch wheels instead of re-downloading them (see issue #223). Extension
+    // setup.py scripts that pass --no-cache-dir get it stripped by the launcher.
+    const pipCacheDir = join(getSettings(userData).dependenciesDir, 'pip-cache')
+    try { mkdirSync(pipCacheDir, { recursive: true }) } catch { /* pip creates it too */ }
+
+    const torchFlavor = torchFlavorFor(gpu.accelerator)
+    const args = JSON.stringify({
+      python_exe: pythonExe,
+      ext_dir: extDir,
+      gpu_sm: gpu.sm,
+      cuda_version: gpu.cudaVersion,
+      accelerator: gpu.accelerator,
+      // Extensions that know about AMD branch on torch_flavor (the official
+      // hunyuan3d-mini one does). Those that don't get corrected by the ROCm
+      // shim in setup-launcher.ts instead.
+      torch_flavor: torchFlavor,
+      gfx_target: gpu.gfxTarget ?? '',
+      torch_index_url: gpu.torchIndexUrl ?? '',
+      platform: process.platform,
+      arch: process.arch,
+    })
+    const launcher = SETUP_LAUNCHER_SOURCE
+    // The rewrite decision itself is made in gpu-detect.ts (and unit-tested
+    // there); the launcher above only applies what these carry.
+    const proc = spawn(pythonExe, ['-c', launcher, setupPy, args], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env:   {
+        ...process.env,
+        PIP_CACHE_DIR:         pipCacheDir,
+        MODLY_TORCH_FLAVOR:    torchFlavor,
+        MODLY_TORCH_INDEX_URL: gpu.torchIndexUrl ?? '',
+        MODLY_TORCH_SPECS:     JSON.stringify(gpu.torchSpecs ?? []),
+      },
+    })
+
+    const handleLine = (line: string) => { if (line) onLog?.(line) }
+
+    let stderr = ''
+    proc.stdout?.on('data', (d: Buffer) => d.toString().split('\n').forEach(handleLine))
+    proc.stderr?.on('data', (d: Buffer) => {
+      const s = d.toString()
+      stderr += s
+      s.split('\n').forEach(handleLine)
+    })
+
+    proc.on('close', (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`setup.py exited with code ${code}\n${stderr.slice(-2000)}`))
+    })
+    proc.on('error', reject)
+  })
+}
+
+// Extension ids with an install currently in flight. Their folder carries the
+// incomplete marker during setup — extensions:list must not report it as
+// corrupted while the install is legitimately running.
+const activeExtensionInstalls = new Set<string>()
+const rmWithRetry = (path: string, label: string) =>
+  removeExtensionWithRetry(path, label, logger)
+const renameWithRetry = (from: string, to: string, label: string) =>
+  renameExtensionWithRetry(from, to, label, logger)
+
+export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGetter): void {
+  type ActiveDownload = {
+    progress: DownloadProgress & { variantId?: string }
+    done: Promise<void>
+    finish: () => void
+    targetRoots: string[]
+    currentTargetId?: string
+    stopRequested?: 'pause' | 'cancel'
+  }
+  const activeDownloads = new Map<string, ActiveDownload>()
+  const weightOperations = new ModelWeightOperations()
+  // Paused/error sessions retain their original paths even after settings change.
+  const interruptedTargets = new Map<string, string[]>()
+  const notifyWeightChange = () => {
+    getWindow()?.webContents.send('model:weightsChanged')
+  }
+  // No backend listening means no Python process can hold the weight files
+  // open, so deletion is safe. A backend that answers (or times out) is not.
+  const backendUnreachable = (err: unknown): boolean => {
+    if (!axios.isAxiosError(err) || err.response) return false
+    const cause = (err as { cause?: { code?: string } }).cause
+    return err.code === 'ECONNREFUSED' || cause?.code === 'ECONNREFUSED'
+  }
+  async function unloadForRemoval(modelIds: string[]) {
+    for (const id of modelIds) {
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/model/unload/${encodeURIComponent(id)}`, {}, { timeout: 40_000 },
+        )
+        if (response.data?.unloaded !== true) throw new Error('Model unload was not confirmed; weights were preserved')
+      } catch (err) {
+        if (backendUnreachable(err)) return
+        throw err
+      }
+    }
+  }
+  // Unload only this extension's generators, not every model in the app.
+  async function unloadExtensionForRemoval(extensionId: string) {
+    let modelIds: string[]
+    try {
+      const { data } = await axios.get<{ id: string }[]>(`${API_BASE_URL}/model/all`, { timeout: 10_000 })
+      modelIds = data.map((model) => model.id).filter((id) => id.startsWith(`${extensionId}/`))
+    } catch (err) {
+      if (backendUnreachable(err)) return
+      throw err
+    }
+    await unloadForRemoval(modelIds)
+  }
+  const resolveModelPlan = (modelId: unknown) => resolveInstalledModelDownloadPlan({
+    modelId,
+    userExtensionsDir: getSettings(app.getPath('userData')).extensionsDir,
+    builtinExtensionsDir: getBuiltinExtensionsDir(),
+    blockedExtensionIds: activeExtensionInstalls,
+  })
+  const LOCKED_MODEL_FILES_ERROR = 'Model files are still locked after several attempts. Close any programs using the model and try again.'
+  // Logging from renderer
+  ipcMain.on('log:error', (_event, message: string) => logger.error(`[Renderer] ${message}`))
+  ipcMain.handle('log:getPath', () => join(app.getPath('userData'), 'logs', 'modly.log'))
+  ipcMain.handle('log:readAll', async (_event, session?: string) => {
+    const logsDir = join(app.getPath('userData'), 'logs')
+    const dir = session ? join(logsDir, 'sessions', session) : logsDir
+    const files = ['modly.log', 'errors.log', 'runtime.log']
+    const result: Record<string, string> = {}
+    for (const file of files) {
+      try {
+        const filePath = join(dir, file)
+        result[file] = existsSync(filePath) ? await readFile(filePath, 'utf-8') : ''
+      } catch {
+        result[file] = ''
+      }
+    }
+    return result
+  })
+  ipcMain.handle('log:listSessions', () => {
+    const sessionsDir = join(app.getPath('userData'), 'logs', 'sessions')
+    if (!existsSync(sessionsDir)) return []
+    try {
+      return readdirSync(sessionsDir)
+        .filter(f => statSync(join(sessionsDir, f)).isDirectory())
+        .sort()
+        .reverse()
+    } catch {
+      return []
+    }
+  })
+
+  // Secure storage — OS-level encryption (Keychain/DPAPI/libsecret) for secrets
+  // the renderer would otherwise have to keep in plain-text localStorage (API keys).
+  ipcMain.handle('secure:encrypt', (_, plainText: string) => encryptSecret(plainText))
+  ipcMain.handle('secure:decrypt', (_, stored: string) => decryptSecret(stored))
+
+  // Window controls (frameless window)
+  ipcMain.on('window:minimize', () => getWindow()?.minimize())
+  ipcMain.on('window:maximize', () => {
+    const win = getWindow()
+    if (!win) return
+    win.isMaximized() ? win.restore() : win.maximize()
+  })
+  ipcMain.on('window:close', () => getWindow()?.close())
+  ipcMain.handle('window:isMaximized', () => getWindow()?.isMaximized() ?? false)
+
+  // Native OS notification (Windows toast / macOS Notification Center / Linux),
+  // for events the user wants to know about even when the window is minimized or
+  // behind other apps — e.g. a generation or workflow run finishing. Routed through
+  // the main process rather than the renderer's own Notification API so it works
+  // the same way regardless of focus and carries the app's own icon.
+  ipcMain.handle('notifications:show', (_event, title: string, body: string) => {
+    if (!Notification.isSupported()) return { success: false, error: 'Notifications not supported' }
+    const notification = new Notification({
+      title,
+      body,
+      icon: join(__dirname, '../../resources/icons/icon.png'),
+    })
+    notification.on('click', () => {
+      const win = getWindow()
+      if (!win) return
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+    })
+    notification.show()
+    return { success: true }
+  })
+
+  // Setup handlers — skipped in dev (uses .venv instead of python-embed)
+  ipcMain.handle('setup:check', async () => {
+    const userData = app.getPath('userData')
+    const defaultDataDir = join(app.getPath('documents'), 'Modly')
+    return {
+      needed: checkSetupNeeded(userData),
+      defaultDataDir,
+      platform: process.platform,
+      arch: process.arch,
+    }
+  })
+
+  ipcMain.handle('setup:saveDataDir', async (_event, { baseDir }: { baseDir: string }) => {
+    const userData = app.getPath('userData')
+    setSettings(userData, {
+      modelsDir:        join(baseDir, 'models'),
+      workspaceDir:     join(baseDir, 'workspace'),
+      workflowsDir:     join(baseDir, 'workflows'),
+      extensionsDir:    join(baseDir, 'extensions'),
+      dependenciesDir:  join(baseDir, 'dependencies'),
+      agentDir:         join(baseDir, 'agent'),
+    })
+  })
+
+  ipcMain.handle('setup:run', async () => {
+    const userData = app.getPath('userData')
+    const win = getWindow()
+    if (!win) return { success: false, error: 'No window available' }
+    try {
+      await runFullSetup(win, userData)
+      markSetupDone(userData)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Python bridge
+  ipcMain.handle('python:start', async () => {
+    try {
+      await pythonBridge.start()
+      return { success: true, port: pythonBridge.getPort() }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('python:status', () => ({
+    ready: pythonBridge.isReady(),
+    apiUrl: API_BASE_URL
+  }))
+
+  // File system
+  ipcMain.handle('fs:selectImage', async () => {
+    const win = getWindow()
+    if (!win) return null
+
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Select an image',
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+      properties: ['openFile']
+    })
+
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('fs:selectMeshFile', async () => {
+    const win = getWindow()
+    if (!win) return null
+
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Select a 3D mesh file',
+      filters: [{ name: '3D Mesh', extensions: ['glb', 'obj', 'stl', 'ply', 'splat'] }],
+      properties: ['openFile']
+    })
+
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('fs:saveModel', async (_, defaultName: string) => {
+    const win = getWindow()
+    if (!win) return null
+
+    const result = await dialog.showSaveDialog(win, {
+      title: 'Save 3D Model',
+      defaultPath: defaultName,
+      filters: [
+        { name: 'OBJ', extensions: ['obj'] },
+        { name: 'GLB', extensions: ['glb'] },
+        { name: 'STL', extensions: ['stl'] }
+      ]
+    })
+
+    return result.canceled ? null : result.filePath
+  })
+
+  ipcMain.handle('fs:savePath', async (_, args: { filters: { name: string; extensions: string[] }[]; defaultPath?: string }) => {
+    const win = getWindow()
+    if (!win) return null
+    const result = await dialog.showSaveDialog(win, {
+      title:       'Choose output path',
+      filters:     args.filters,
+      defaultPath: args.defaultPath,
+    })
+    return result.canceled ? null : result.filePath
+  })
+
+  ipcMain.handle('model:unloadAll', async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await axios.post(`${API_BASE_URL}/model/unload-all`, {}, { timeout: 10_000 })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('model:delete', async (_, modelId: string): Promise<{ success: boolean; error?: string }> => {
+    if (activeDownloads.has(modelId)) {
+      return { success: false, error: 'Cannot remove model weights while their download is active' }
+    }
+    let modelDir: string
+    try {
+      await resolveModelPlan(modelId)
+      modelDir = resolveModelRoot(getSettings(app.getPath('userData')).modelsDir, modelId)
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+
+    try {
+      const removed = await weightOperations.remove(
+        [modelDir], () => unloadForRemoval([modelId]), () => rmWithRetry(modelDir, 'model-delete'),
+      )
+      notifyWeightChange()
+      return removed.ok ? { success: true } : {
+        success: false, error: removed.locked ? 'Model files are still locked. Try again after closing the model.' : String(removed.error),
+      }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('model:deleteWeightVariant', async (_, modelId: string, variantId: string): Promise<{ success: boolean; error?: string }> => {
+    if (activeDownloads.has(modelId)) {
+      return { success: false, error: 'Cannot remove model weights while their download is active' }
+    }
+    try {
+      const plan = await resolveModelPlan(modelId)
+      const variant = plan.kind === 'legacy'
+        ? plan.weightVariants?.options.find((option) => option.id === variantId)
+        : undefined
+      if (!variant) throw new Error(`Model node "${modelId}" has no weight variant "${String(variantId)}"`)
+      const modelsDir = getSettings(app.getPath('userData')).modelsDir
+      // Reserve the node root (blocks a concurrent download of any of its variants),
+      // unload with confirmation, then list and remove only this variant's files.
+      const removed = await weightOperations.remove(
+        [resolveModelRoot(modelsDir, modelId)],
+        () => unloadForRemoval([modelId]),
+        async (): Promise<Awaited<ReturnType<typeof rmWithRetry>>> => {
+          for (const file of await listWeightVariantFiles(modelsDir, modelId, variant)) {
+            const result = await rmWithRetry(file, 'model-variant-delete')
+            if (!result.ok) return result
+          }
+          return { ok: true }
+        },
+      )
+      notifyWeightChange()
+      if (removed.ok) return { success: true }
+      return { success: false, error: removed.locked ? LOCKED_MODEL_FILES_ERROR : String(removed.error) }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('model:showInFolder', (_, modelId: string) => {
+    const modelDir = join(getSettings(app.getPath('userData')).modelsDir, modelId)
+    if (existsSync(modelDir)) {
+      shell.openPath(modelDir)
+    }
+  })
+
+  // Read local file → base64 (bypasses file:// restrictions in the renderer)
+  ipcMain.handle('fs:readFileBase64', (_, filePath: string) => readLocalFileBase64(filePath))
+
+  ipcMain.handle('fs:readScreenshotDataUrl', async (_, filename: string) => {
+    const filePath = app.isPackaged
+      ? join(process.resourcesPath, 'screenshots', filename)
+      : join(app.getAppPath(), 'src/assets', filename)
+    const buffer = await readFile(filePath)
+    return `data:image/png;base64,${buffer.toString('base64')}`
+  })
+
+  // Model management
+  ipcMain.handle('model:listDownloaded', () => {
+    const modelsDir = getSettings(app.getPath('userData')).modelsDir
+    return listDownloadedModels(modelsDir)
+  })
+
+  ipcMain.handle('model:isDownloaded', async (_, modelId: string): Promise<boolean> => {
+    const modelsDir = getSettings(app.getPath('userData')).modelsDir
+    try {
+      const plan = await resolveInstalledModelDownloadPlan({
+        modelId,
+        userExtensionsDir: getSettings(app.getPath('userData')).extensionsDir,
+        builtinExtensionsDir: getBuiltinExtensionsDir(),
+        blockedExtensionIds: activeExtensionInstalls,
+      })
+      if (plan.kind === 'multi-source') {
+        const privateReady = plan.sources.length === 0
+          || areModelSourcesDownloaded(modelsDir, modelId, plan.sources)
+        return privateReady && plan.sharedGroups.every((group) => (
+          areWeightGroupSourcesDownloaded(modelsDir, plan.extensionId, group)
+        ))
+      }
+      return isModelDownloaded(modelsDir, modelId, plan.downloadCheck)
+        && (!plan.weightVariants || installedWeightVariants(modelsDir, modelId, plan.weightVariants).length > 0)
+    } catch {
+      return false
+    }
+  })
+
+  // null means "unknown" (unreadable plan, or a node without variants) — the renderer
+  // must not read an empty array as "no variant installed".
+  ipcMain.handle('model:installedWeightVariants', async (_, modelId: string): Promise<string[] | null> => {
+    try {
+      const plan = await resolveModelPlan(modelId)
+      return plan.kind === 'legacy' && plan.weightVariants
+        ? installedWeightVariants(getSettings(app.getPath('userData')).modelsDir, modelId, plan.weightVariants)
+        : null
+    } catch {
+      return null
+    }
+  })
+
+  ipcMain.handle('model:hasLocalData', async (_, modelId: string): Promise<boolean> => {
+    try {
+      await resolveModelPlan(modelId)
+      return modelHasLocalData(getSettings(app.getPath('userData')).modelsDir, modelId)
+    } catch {
+      return false
+    }
+  })
+
+  ipcMain.handle('model:sharedGroups', async (_, extensionId: string) => {
+    try {
+      const groups = await resolveInstalledExtensionSharedWeightGroups({
+        extensionId,
+        userExtensionsDir: getSettings(app.getPath('userData')).extensionsDir,
+        builtinExtensionsDir: getBuiltinExtensionsDir(),
+        blockedExtensionIds: activeExtensionInstalls,
+      })
+      const modelsDir = getSettings(app.getPath('userData')).modelsDir
+      return groups.map((group) => ({
+        id: group.id,
+        targetId: group.targetId,
+        dependentModelIds: group.dependentModelIds,
+        downloaded: areWeightGroupSourcesDownloaded(modelsDir, extensionId, group),
+        hasLocalData: weightStorageHasLocalData(modelsDir, group.targetId),
+      }))
+    } catch {
+      return []
+    }
+  })
+
+  ipcMain.handle('model:deleteSharedGroup', async (
+    _,
+    extensionId: string,
+    groupId: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const groups = await resolveInstalledExtensionSharedWeightGroups({
+        extensionId,
+        userExtensionsDir: getSettings(app.getPath('userData')).extensionsDir,
+        builtinExtensionsDir: getBuiltinExtensionsDir(),
+        blockedExtensionIds: activeExtensionInstalls,
+      })
+      const group = groups.find((candidate) => candidate.id === groupId)
+      if (!group) return { success: false, error: `Unknown shared weight group: ${groupId}` }
+      const groupRoot = resolveWeightGroupRoot(
+        getSettings(app.getPath('userData')).modelsDir,
+        extensionId,
+        group.id,
+      )
+      const removed = await weightOperations.remove(
+        [groupRoot],
+        () => unloadForRemoval(group.dependentModelIds),
+        () => rmWithRetry(groupRoot, 'shared-model-delete'),
+      )
+      notifyWeightChange()
+      if (removed.ok) return { success: true }
+      return {
+        success: false,
+        error: removed.locked
+          ? 'Shared model files are still locked. Close any programs using them and try again.'
+          : String(removed.error),
+      }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('model:deleteExtensionWeights', async (
+    _,
+    extensionId: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const safeExtensionId = assertSafeExtensionId(extensionId)
+      if ([...activeDownloads.keys()].some((modelId) => modelId.split('/', 1)[0] === safeExtensionId)) {
+        return { success: false, error: 'Cannot remove extension weights while a download is active' }
+      }
+      const extensionRoot = resolveExtensionModelRoot(
+        getSettings(app.getPath('userData')).modelsDir,
+        safeExtensionId,
+      )
+      const removed = await weightOperations.remove(
+        [extensionRoot],
+        () => unloadExtensionForRemoval(safeExtensionId),
+        () => rmWithRetry(extensionRoot, 'extension-model-delete'),
+      )
+      notifyWeightChange()
+      if (removed.ok) return { success: true }
+      return {
+        success: false,
+        error: removed.locked
+          ? 'Extension model files are still locked. Close any programs using them and try again.'
+          : String(removed.error),
+      }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('model:activeDownloads', () =>
+    [...activeDownloads.entries()].map(([modelId, active]) => ({ modelId, ...active.progress }))
+  )
+
+  ipcMain.handle('model:download', async (
+    event,
+    modelId: string,
+    requestedVariantId?: string | null,
+  ) => {
+    if (activeDownloads.has(modelId)) {
+      return { success: false, error: 'Download already in progress' }
+    }
+    const variantId = requestedVariantId ?? undefined
+    let plan: Awaited<ReturnType<typeof resolveInstalledModelDownloadPlan>>
+    let legacySteps: ReturnType<typeof legacyDownloadSteps> = []
+    try {
+      plan = await resolveModelPlan(modelId)
+      if (plan.kind === 'multi-source') {
+        if (variantId !== undefined) throw new Error(`Model node "${modelId}" does not declare weight variants`)
+      } else {
+        // Shared files first (every variant excluded), then the requested variant.
+        legacySteps = legacyDownloadSteps(plan, variantId)
+      }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+    if (activeDownloads.has(modelId)) {
+      return { success: false, error: 'Download already in progress' }
+    }
+
+    const modelsDir = getSettings(app.getPath('userData')).modelsDir
+    const allTargets = plan.kind === 'multi-source'
+      ? [
+          ...plan.sharedGroups.map((group) => ({
+            targetId: group.targetId,
+            label: `Shared · ${group.id}`,
+            sources: group.sources,
+          })),
+          ...(plan.sources.length > 0 ? [{
+            targetId: modelId,
+            label: 'Node-specific',
+            sources: plan.sources,
+          }] : []),
+        ]
+      : []
+    const targetRoots = plan.kind === 'multi-source'
+      ? allTargets.map((target) => resolveWeightStorageRoot(modelsDir, target.targetId))
+      : [resolveModelRoot(modelsDir, modelId)]
+    let release: () => void
+    try {
+      release = weightOperations.acquire(`downloading ${modelId}`, targetRoots)
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+    const managedTargets = allTargets.filter((target) => !areModelSourcesDownloadedAtRoot(
+      resolveWeightStorageRoot(modelsDir, target.targetId), target.sources,
+    ))
+
+    let finish!: () => void
+    const done = new Promise<void>((resolveDone) => { finish = resolveDone })
+    const active: ActiveDownload = { progress: { percent: 0, variantId }, done, finish, targetRoots }
+    activeDownloads.set(modelId, active)
+    interruptedTargets.set(modelId, targetRoots)
+    try {
+      const onProgress = (progress: DownloadProgress) => {
+        active.progress = { ...progress, variantId }
+        event.sender.send('model:downloadProgress', { modelId, variantId, ...progress })
+      }
+      if (plan.kind === 'multi-source') {
+        if (managedTargets.length === 0) {
+          onProgress({ percent: 100 })
+        }
+        for (const [index, target] of managedTargets.entries()) {
+          if (active.stopRequested) throw new Error(`Model download ${active.stopRequested === 'pause' ? 'paused' : 'cancelled'}`)
+          active.currentTargetId = target.targetId
+          await downloadModelSourcesFromHF(target.targetId, target.sources, (progress) => {
+            const aggregatePercent = Math.min(
+              99,
+              Math.round(((index + progress.percent / 100) / managedTargets.length) * 100),
+            )
+            onProgress({
+              ...progress,
+              percent: aggregatePercent,
+              status: progress.status ? `${target.label} · ${progress.status}` : target.label,
+            })
+          })
+          notifyWeightChange()
+        }
+        if (active.stopRequested) throw new Error(`Model download ${active.stopRequested === 'pause' ? 'paused' : 'cancelled'}`)
+        if (managedTargets.length > 0) onProgress({ percent: 100, status: 'done' })
+      } else {
+        active.currentTargetId = modelId
+        // Shared files and the variant are separate passes sharing one 0-100 bar.
+        for (const [index, step] of legacySteps.entries()) {
+          if (active.stopRequested) throw new Error(`Model download ${active.stopRequested === 'pause' ? 'paused' : 'cancelled'}`)
+          await downloadModelFromHF(
+            plan.repoId,
+            modelId,
+            (progress) => onProgress({ ...progress, percent: Math.round((index * 100 + progress.percent) / legacySteps.length) }),
+            step.skipPrefixes,
+            step.includePrefixes,
+          )
+        }
+      }
+      interruptedTargets.delete(modelId)
+      return { success: true }
+    } catch (err: any) {
+      const message = err?.message ?? String(err)
+      if (message.includes('paused')) {
+        event.sender.send('model:downloadProgress', { modelId, variantId, percent: 0, status: 'paused', paused: true })
+        return { success: false, paused: true }
+      }
+      if (message.includes('cancelled')) {
+        event.sender.send('model:downloadProgress', { modelId, variantId, percent: 0, status: 'cancelled', cancelled: true })
+        return { success: false, cancelled: true }
+      }
+      return { success: false, error: String(err) }
+    } finally {
+      if (activeDownloads.get(modelId) === active) activeDownloads.delete(modelId)
+      release()
+      active.finish()
+      notifyWeightChange()
+    }
+  })
+
+  ipcMain.handle('model:pauseDownload', async (_, modelId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const active = activeDownloads.get(modelId)
+      const targetId = active?.currentTargetId
+      if (!active || !targetId) return { success: false, error: 'No active download target' }
+      active.stopRequested = 'pause'
+      await axios.post(`${API_BASE_URL}/model/hf-download/pause`, null, {
+        params: { model_id: targetId },
+        timeout: 5000,
+      })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('model:cancelDownload', async (_, modelId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const active = activeDownloads.get(modelId)
+      if (active) active.stopRequested = 'cancel'
+      if (active?.currentTargetId) {
+        await axios.post(`${API_BASE_URL}/model/hf-download/cancel`, null, {
+          params: { model_id: active.currentTargetId },
+          timeout: 5000,
+        })
+      }
+      if (active) {
+        let timer: ReturnType<typeof setTimeout> | undefined
+        try {
+          await Promise.race([
+            active.done,
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(() => reject(new Error('Timed out waiting for the download to stop')), 30_000)
+            }),
+          ])
+        } finally {
+          clearTimeout(timer)
+        }
+      }
+      const roots = active?.targetRoots ?? interruptedTargets.get(modelId) ?? [resolveModelRoot(
+        getSettings(app.getPath('userData')).modelsDir, modelId,
+      )]
+      // Another sibling may have resumed these targets after our session stopped.
+      const release = weightOperations.acquire(`cancelling ${modelId}`, roots)
+      try {
+        await Promise.all(roots.map((root) => removePartialDownloadArtifacts(root)))
+        interruptedTargets.delete(modelId)
+      } finally {
+        release()
+        notifyWeightChange()
+      }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Export mesh to GLB / STL / OBJ
+  ipcMain.handle('model:export', async (_, { outputUrl, format }: { outputUrl: string; format: string }) => {
+    const win = getWindow()
+    if (!win) return { success: false, error: 'No window' }
+
+    const meshPath = outputUrl.replace(/^\/workspace\//, '')
+    const baseName = meshPath.split('/').pop()?.replace(/\.\w+$/, '') ?? 'model'
+
+    const result = await dialog.showSaveDialog(win, {
+      title: 'Export 3D Model',
+      defaultPath: `${baseName}.${format}`,
+      filters: [{ name: format.toUpperCase(), extensions: [format] }],
+    })
+    if (result.canceled || !result.filePath) return { success: false }
+
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/export/${format}?path=${encodeURIComponent(meshPath)}`,
+        { responseType: 'arraybuffer' }
+      )
+      await writeFile(result.filePath, Buffer.from(response.data as ArrayBuffer))
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Shell
+  ipcMain.handle('shell:openExternal', (_, url: string) => shell.openExternal(url))
+
+  // Open a model in OrcaSlicer via its orcaslicer://open?file=<url> deeplink.
+  //
+  // The returned error only covers the shell refusing the call outright. It is
+  // NOT an install check: on Windows an unregistered scheme still makes
+  // ShellExecuteEx succeed — the OS shows its own "You'll need a new app to open
+  // this orcaslicer link" dialog and this resolves with success. Detecting a
+  // missing OrcaSlicer would take a per-platform handler probe (registry on
+  // Windows), so the renderer must not promise the user that it knows.
+  ipcMain.handle('slicer:open', async (_, url: string): Promise<{ success: boolean; error?: string }> => {
+    if (typeof url !== 'string' || !url.startsWith('orcaslicer://')) {
+      return { success: false, error: 'slicer:open requires an orcaslicer:// URL' }
+    }
+    try {
+      await shell.openExternal(url)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  // App info
+  // System memory (used/available/total bytes).
+  // On macOS, matches Activity Monitor's "Memory Used":
+  //     used = wired + active + compressed.
+  ipcMain.handle('system:memory', async () => {
+    const total = os.totalmem()
+
+    if (process.platform === 'darwin') {
+      try {
+        const { stdout } = await pExecFile('vm_stat', [])
+        const pageSizeMatch = stdout.match(/page size of (\d+) bytes/)
+        const pageSize = pageSizeMatch ? parseInt(pageSizeMatch[1]!, 10) : 16384
+
+        const pagesFor = (label: string): number => {
+          const m = stdout.match(new RegExp(`${label}:\\s+(\\d+)`))
+          return m ? parseInt(m[1]!, 10) : 0
+        }
+
+        const active = pagesFor('Pages active')
+        const wired = pagesFor('Pages wired down')
+        const compressed = pagesFor('Pages occupied by compressor')
+
+        const used = (active + wired + compressed) * pageSize
+        const available = Math.max(0, total - used)
+        return { total, used, available }
+      } catch {
+        // Fall back to total - free outside Activity Monitor semantics.
+      }
+    }
+
+    const free = os.freemem()
+    return { total, used: total - free, available: free }
+  })
+
+  ipcMain.handle('app:info', () => ({
+    version:   app.getVersion(),
+    userData:  app.getPath('userData'),
+    modelsDir: getSettings(app.getPath('userData')).modelsDir,
+    apiUrl:    API_BASE_URL,
+    platform:  process.platform,
+    arch:      process.arch,
+  }))
+
+  // Settings — decrypt the HF token (migrating a legacy plaintext one) and seed
+  // it into the main-process env at startup.
+  {
+    const token = initHfToken(app.getPath('userData'))
+    if (token) {
+      process.env['HUGGING_FACE_HUB_TOKEN'] = token
+      process.env['HF_TOKEN']               = token
+    }
+  }
+
+  ipcMain.handle('settings:get', () => {
+    // hfToken is stored encrypted — hand the renderer the usable value.
+    return { ...getSettings(app.getPath('userData')), hfToken: getHfToken() }
+  })
+
+  ipcMain.handle('settings:set', async (_event, patch: { modelsDir?: string; workspaceDir?: string; extensionsDir?: string; hfToken?: string }) => {
+    if (patch.modelsDir !== undefined && weightOperations.busy) {
+      throw new Error('Cannot change model storage while model weights are busy')
+    }
+    const { hfToken, ...dirs } = patch
+    setSettings(app.getPath('userData'), dirs)
+    // Keep main-process env in sync so child processes spawned after token change inherit it
+    if (hfToken !== undefined) {
+      setHfToken(app.getPath('userData'), hfToken)
+      process.env['HUGGING_FACE_HUB_TOKEN'] = hfToken
+      process.env['HF_TOKEN']               = hfToken
+      // Also push the token into the live FastAPI process env so extension
+      // subprocesses spawned by ExtensionProcess._build_env() pick it up
+      // without requiring a full app restart.
+      try {
+        await axios.post(`${API_BASE_URL}/settings/hf-token`, { token: hfToken }, { timeout: 3000 })
+      } catch { /* FastAPI may not be running yet — ignore */ }
+    }
+    return { ...getSettings(app.getPath('userData')), hfToken: getHfToken() }
+  })
+
+  // Directory picker
+  ipcMain.handle('fs:selectDirectory', async (_event, defaultPath?: string) => {
+    const win = getWindow()
+    if (!win) return null
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory', 'createDirectory'],
+      ...(defaultPath && { defaultPath }),
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  // Cache clear — deletes and recreates the gen-cache folder
+  // NOTE: userData/cache (lowercase) = Chromium disk cache on Windows (case-insensitive)
+  //       → use a dedicated subfolder to avoid collision
+  ipcMain.handle('cache:clear', async () => {
+    const cacheDir = join(app.getPath('userData'), 'gen-cache')
+    try {
+      if (existsSync(cacheDir)) {
+        await rmAsync(cacheDir, { recursive: true, force: true })
+      }
+      await mkdir(cacheDir, { recursive: true })
+      return { success: true }
+    } catch (err) {
+      console.error('[cache:clear] error:', err)
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Workspace filesystem-based persistence
+  const workspacePath = (...parts: string[]) =>
+    join(getSettings(app.getPath('userData')).workspaceDir, ...parts)
+
+  registerWorkspaceAssetLibraryIpcHandlers({
+    ipcMain,
+    getWorkspaceDir: () => getSettings(app.getPath('userData')).workspaceDir,
+  })
+
+  ipcMain.handle('workspace:listCollections', async () => {
+    const base = workspacePath()
+    await mkdir(base, { recursive: true })
+    const entries = await readdir(base, { withFileTypes: true })
+    return entries.filter(e => e.isDirectory()).map(e => e.name)
+  })
+
+  ipcMain.handle('workspace:createCollection', async (_, name: string) => {
+    await mkdir(workspacePath(name), { recursive: true })
+  })
+
+  ipcMain.handle('workspace:renameCollection', async (_, { oldName, newName }: { oldName: string; newName: string }) => {
+    await rename(workspacePath(oldName), workspacePath(newName))
+  })
+
+  ipcMain.handle('workspace:deleteCollection', async (_, name: string) => {
+    await rmAsync(workspacePath(name), { recursive: true, force: true })
+  })
+
+  ipcMain.handle('workspace:listJobs', async (_, collection: string) => {
+    try {
+      const files = await readdir(workspacePath(collection))
+      const metas = files.filter(f => f.endsWith('.meta.json'))
+      return Promise.all(metas.map(async f => {
+        const raw = await readFile(workspacePath(collection, f), 'utf-8')
+        return JSON.parse(raw)
+      }))
+    } catch { return [] }
+  })
+
+  ipcMain.handle('workspace:saveJobMeta', async (_, { collection, filename, meta }: { collection: string; filename: string; meta: unknown }) => {
+    const metaFile = filename.replace(/\.glb$/, '.meta.json')
+    await writeFile(workspacePath(collection, metaFile), JSON.stringify(meta, null, 2), 'utf-8')
+  })
+
+  ipcMain.handle('workspace:deleteJob', async (_, { collection, filename }: { collection: string; filename: string }) => {
+    await rmAsync(workspacePath(collection, filename), { force: true })
+    await rmAsync(workspacePath(collection, filename.replace(/\.glb$/, '.meta.json')), { force: true })
+  })
+
+  // Directory utilities for settings
+  ipcMain.handle('fs:listDir', async (_, dirPath: string) => {
+    try {
+      const entries = await readdir(dirPath, { withFileTypes: true })
+      return entries.filter(e => e.isDirectory()).map(e => e.name)
+    } catch {
+      return []
+    }
+  })
+
+  // List files (not directories) in a folder, optionally filtered by extension.
+  // `extensions` are lowercase without the dot (e.g. ['txt', 'png']).
+  ipcMain.handle('fs:listFiles', async (_, dirPath: string, extensions?: string[]) => {
+    try {
+      const wanted = extensions?.map(e => e.toLowerCase().replace(/^\./, ''))
+      const entries = await readdir(dirPath, { withFileTypes: true })
+      return entries
+        .filter(e => e.isFile())
+        .map(e => e.name)
+        .filter(name => {
+          if (!wanted || wanted.length === 0) return true
+          const ext = name.split('.').pop()?.toLowerCase() ?? ''
+          return wanted.includes(ext)
+        })
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    } catch {
+      return []
+    }
+  })
+
+  // Text-file picker for the standalone Load Prompt node.
+  ipcMain.handle('fs:selectTextFile', async () => {
+    const win = getWindow()
+    if (!win) return null
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Select a prompt text file',
+      filters: [{ name: 'Text', extensions: ['txt', 'md', 'prompt'] }],
+      properties: ['openFile'],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  // Add a local GGUF to the agent's models folder. Picking and copying both
+  // happen here, so the renderer never hands main an arbitrary path to copy.
+  ipcMain.handle('agent:addModel', async (): Promise<{ success: boolean; cancelled?: boolean; fileName?: string; error?: string }> => {
+    const win = getWindow()
+    if (!win) return { success: false, error: 'No window available' }
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Add a model',
+      filters: [{ name: 'GGUF model', extensions: ['gguf'] }],
+      properties: ['openFile'],
+    })
+    if (result.canceled || !result.filePaths[0]) return { success: false, cancelled: true }
+
+    const src      = result.filePaths[0]
+    const fileName = basename(src)
+    if (!fileName.toLowerCase().endsWith('.gguf')) return { success: false, error: 'Only .gguf files can be added.' }
+
+    const modelsDir = join(getSettings(app.getPath('userData')).agentDir, 'models')
+    const dest      = join(modelsDir, fileName)
+    if (existsSync(dest)) return { success: false, error: `"${fileName}" is already in your models.` }
+
+    // Copied under a temporary name first: the API lists every *.gguf in the
+    // folder, so a multi-GB copy in progress would otherwise show up as a model.
+    const partial = `${dest}.part`
+    try {
+      await mkdir(modelsDir, { recursive: true })
+      await copyFile(src, partial)
+      await rename(partial, dest)
+      return { success: true, fileName }
+    } catch (err) {
+      await rmAsync(partial, { force: true }).catch(() => {})
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('fs:moveDirectory', async (_, { src, dest }: { src: string; dest: string }) => {
+    try {
+      await mkdir(dest, { recursive: true })
+      await cp(src, dest, { recursive: true })
+      await rmAsync(src, { recursive: true, force: true })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('fs:deleteDirectory', async (_, dirPath: string) => {
+    const userData = app.getPath('userData')
+    const settings = getSettings(userData)
+    const allowedRoots = [
+      settings.modelsDir,
+      settings.workspaceDir,
+      settings.extensionsDir,
+      join(userData, 'gen-cache'),
+    ]
+    const resolved = join(dirPath)
+    const isAllowed = allowedRoots.some((root) => resolved.startsWith(root))
+    if (!isAllowed) {
+      return { success: false, error: 'Path is outside allowed directories' }
+    }
+    try {
+      await rmAsync(resolved, { recursive: true, force: true })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Remote registry — list of trusted GitHub repo URLs
+  const REGISTRY_URL = 'https://raw.githubusercontent.com/lightningpixel/modly-official-extension/main/registry.json'
+  const REGISTRY_TTL = 5 * 60 * 1000 // 5 minutes
+
+  let registryCache: { repos: Set<string>; fetchedAt: number } | null = null
+
+  async function fetchTrustedRepos(): Promise<Set<string>> {
+    const now = Date.now()
+    if (registryCache && now - registryCache.fetchedAt < REGISTRY_TTL) {
+      return registryCache.repos
+    }
+    try {
+      const { net } = require('electron')
+      const res = await net.fetch(REGISTRY_URL)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json() as { trusted_repos?: string[] }
+      const repos = new Set(
+        (data.trusted_repos ?? []).map((r: string) => r.toLowerCase().replace(/\/$/, ''))
+      )
+      registryCache = { repos, fetchedAt: now }
+      return repos
+    } catch {
+      // Offline or fetch failed — keep previous cache, or empty
+      return registryCache?.repos ?? new Set()
+    }
+  }
+
+  function isTrustedSource(source: string | undefined, trustedRepos: Set<string>): boolean {
+    if (!source) return false
+    return trustedRepos.has(source.toLowerCase().replace(/\/$/, ''))
+  }
+
+  type ParsedManifest = {
+    id?: string; name?: string; displayName?: string; version?: string
+    description?: string; author?: string | { name?: string }
+    source?: string; generator_class?: string
+    // extension type
+    type?:  'model' | 'process'
+    entry?: string
+    model_sources?: unknown
+    weight_groups?: unknown
+    // Optional top-level fallbacks — applied to each node if not set on the node
+    params_schema?:  unknown[]
+    param_defaults?: Record<string, unknown>
+    nodes?: {
+      id:                string
+      name?:             string
+      input?:            string
+      inputs?:           string[]
+      input_labels?:     string[]
+      output?:           string
+      params_schema?:    unknown[]
+      param_defaults?:   Record<string, unknown>
+      hf_repo?:          string
+      download_check?:   string
+      hf_skip_prefixes?: string[]
+      hf_include_prefixes?: string[]
+      model_sources?: unknown
+      weight_groups?: unknown
+      weight_variants?: unknown
+    }[]
+  }
+
+  function parseExtensionManifest(parsed: ParsedManifest, fallbackId: string, trustedRepos: Set<string>, builtin = false) {
+    const common = {
+      id:          parsed.id          ?? fallbackId,
+      name:        parsed.displayName ?? parsed.name ?? fallbackId,
+      version:     parsed.version,
+      description: parsed.description,
+      author:      typeof parsed.author === 'string' ? parsed.author : parsed.author?.name,
+      trusted:     builtin || isTrustedSource(parsed.source, trustedRepos),
+      source:      parsed.source,
+      builtin,
+    }
+
+    if (parsed.model_sources !== undefined) {
+      throw new Error('manifest.json: model_sources must be declared on a model node')
+    }
+    if (parsed.type === 'process' && parsed.weight_groups !== undefined) {
+      throw new Error('manifest.json: weight_groups is supported only for model extensions')
+    }
+    const weightGroups = normalizeWeightGroups(parsed)
+    if (weightGroups || parsed.nodes?.some((node) => node.model_sources !== undefined || node.weight_groups !== undefined)) {
+      validateModelNodeIds(parsed.nodes ?? [])
+    }
+    const nodes = (parsed.nodes ?? []).map(n => {
+      const declaredInputs = Array.isArray(n.inputs) ? n.inputs : [n.input ?? 'image']
+      const output = n.output ?? 'mesh'
+      assertSupportedSceneNodeShape(parsed.type === 'process' ? 'process' : 'model', n, declaredInputs, output)
+      const usesManagedWeights = weightGroups !== undefined
+        || n.model_sources !== undefined
+        || n.weight_groups !== undefined
+      if (weightGroups !== undefined && typeof n.id === 'string' && n.id.toLowerCase() === '_shared') {
+        throw new Error('manifest.json: model node id "_shared" is reserved')
+      }
+      const nodeId = usesManagedWeights ? safeModelSourceId(n.id, 'model node id') : n.id
+      if (parsed.type === 'process' && (n.model_sources !== undefined || n.weight_groups !== undefined)) {
+        throw new Error('manifest.json: model_sources and weight_groups are supported only for model nodes')
+      }
+      if (parsed.type === 'process' && n.weight_variants !== undefined) {
+        throw new Error('manifest.json: weight_variants is supported only for model nodes')
+      }
+      const modelSources = normalizeModelSources(n)
+      const weightVariants = normalizeWeightVariants(n, n.params_schema ?? parsed.params_schema)
+      const groupRefs = normalizeWeightGroupReferences(
+        n,
+        weightGroups,
+        `nodes[${n.id}].weight_groups`,
+      )
+      if (groupRefs && n.hf_repo !== undefined) {
+        throw new Error(
+          `manifest.json: model node "${nodeId}" must use model_sources for private weights when weight_groups are declared`,
+        )
+      }
+      return {
+        id:             nodeId,
+        name:           n.name ?? n.id,
+        input:          n.input  ?? 'image' as const,
+        inputs:         n.inputs,
+        inputLabels:    n.input_labels,
+        output:         n.output ?? 'mesh'  as const,
+        paramsSchema:   n.params_schema ?? parsed.params_schema ?? [],
+        paramDefaults:  { ...(parsed.param_defaults ?? {}), ...(n.param_defaults ?? {}) },
+        hfRepo:         n.hf_repo,
+        downloadCheck:  n.download_check,
+        hfSkipPrefixes: n.hf_skip_prefixes,
+        hfIncludePrefixes: n.hf_include_prefixes,
+        hasModelSources: modelSources !== undefined,
+        weightGroups: groupRefs,
+        weightVariants: weightVariants && {
+          param:   weightVariants.param,
+          default: weightVariants.default,
+          options: weightVariants.options.map((option) => ({
+            id:     option.id,
+            label:  option.label,
+            sizeGb: option.size_gb,
+            vramGb: option.vram_gb,
+          })),
+        },
+      }
+    })
+
+    if (parsed.type === 'process') {
+      return { ...common, type: 'process' as const, entry: parsed.entry ?? 'processor.js', nodes }
+    }
+
+    return {
+      ...common,
+      type: 'model' as const,
+      nodes,
+      weightGroups: (weightGroups ?? []).map((group) => ({
+        id: group.id,
+        dependentNodeIds: nodes
+          .filter((node) => node.weightGroups?.includes(group.id))
+          .map((node) => node.id),
+      })),
+    }
+  }
+
+  async function reloadAndValidateModelExtension(
+    manifest: ParsedManifest,
+    extensionId: string,
+    validationCapability?: ExtensionRegistrationValidationCapability,
+  ): Promise<void> {
+    const expectedIds = expectedModelIds({ ...manifest, id: extensionId })
+    if (expectedIds.length === 0) return
+
+    let payload: unknown
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/extensions/reload`,
+        validationCapability ? { validationCapability } : {},
+        { timeout: 10_000 },
+      )
+      payload = response.data
+    } catch (err) {
+      throw new Error(
+        `Could not validate runtime registration for extension "${extensionId}": ${String(err)}`,
+      )
+    }
+    validateExtensionReloadPayload(payload, extensionId, expectedIds)
+  }
+
+  async function quarantineModelExtensionRuntime(
+    manifest: ParsedManifest,
+    extensionId: string,
+  ): Promise<void> {
+    const forbiddenIds = expectedModelIds({ ...manifest, id: extensionId })
+    if (forbiddenIds.length === 0) return
+
+    let payload: unknown
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/extensions/reload`,
+        {},
+        { timeout: 10_000 },
+      )
+      payload = response.data
+    } catch (err) {
+      throw new Error(
+        `Could not quarantine runtime registration for extension "${extensionId}": `
+        + `${String(err)}`,
+      )
+    }
+    validateExtensionQuarantinePayload(payload, extensionId, forbiddenIds)
+  }
+
+  async function rollbackFailedExtensionUpdate(
+    extensionsDir: string,
+    destinationDir: string,
+    backupDir: string,
+    extensionId: string,
+    originalFailure: unknown,
+  ): Promise<never> {
+    const restored = await restoreExtensionBackup(destinationDir, backupDir, logger)
+    if (!restored.ok) {
+      throw new Error(
+        `Extension update failed, and Modly could not restore the previous version `
+        + `during ${restored.stage}: ${String(restored.error)}. `
+        + `Restart Modly to retry recovery. Original failure: ${String(originalFailure)}`,
+      )
+    }
+
+    const stateCleared = await clearExtensionRegistrationTransaction(
+      extensionsDir,
+      extensionId,
+      logger,
+    )
+    if (!stateCleared.ok) {
+      throw new Error(
+        `Extension update failed and the previous version was restored, but Modly `
+        + `could not clear recovery state during ${stateCleared.stage}: `
+        + `${String(stateCleared.error)}. Original failure: ${String(originalFailure)}`,
+      )
+    }
+
+    try {
+      const previousManifest = JSON.parse(
+        await readFile(join(destinationDir, 'manifest.json'), 'utf-8'),
+      ) as ParsedManifest
+      if (previousManifest.type !== 'process') {
+        await reloadAndValidateModelExtension(previousManifest, extensionId)
+      }
+    } catch (reloadError) {
+      throw new Error(
+        `Extension update failed and the previous version was restored on disk, `
+        + `but Modly could not reload it: ${String(reloadError)}. `
+        + `Original failure: ${String(originalFailure)}`,
+      )
+    }
+
+    throw new Error(
+      `Extension update failed before runtime registration could be committed, `
+      + `so the previous version was restored. `
+      + `${String(originalFailure)}`,
+    )
+  }
+
+  async function cleanupValidatedBackupsOrThrow(
+    extensionsDir: string,
+    extensionId: string,
+  ): Promise<void> {
+    const cleaned = await cleanupValidatedExtensionBackups(extensionsDir, extensionId, logger)
+    if (!cleaned.ok) {
+      throw new Error(
+        `Runtime registration succeeded, but Modly could not finish removing the previous `
+        + `extension backup during ${cleaned.stage}: ${String(cleaned.error)}. `
+        + `Restart Modly to retry the validated cleanup.`,
+      )
+    }
+  }
+
+  // Extensions — reads user extensions directory + built-in extensions directory
+  ipcMain.handle('extensions:list', async () => {
+    const userData      = app.getPath('userData')
+    const extensionsDir = getSettings(userData).extensionsDir
+    const builtinDir    = getBuiltinExtensionsDir()
+
+    const trustedRepos = await fetchTrustedRepos()
+
+    async function readExtensionsFromDir(dir: string, isBuiltin: boolean) {
+      if (!existsSync(dir)) return []
+      try {
+        const entries = await readdir(dir, { withFileTypes: true })
+        const pendingRegistrationIds = new Set(
+          isBuiltin
+            ? []
+            : entries
+              .map((entry) => parseExtensionRegistrationPendingName(entry.name)?.extensionId)
+              .filter((extensionId): extensionId is string => Boolean(extensionId)),
+        )
+        // On Windows, junction points are reported by Node.js as isSymbolicLink()=true,
+        // isDirectory()=false. Use statSync (which follows links) as the authoritative check.
+        const dirs = entries.filter(e => {
+          // Staging/backup dirs are never extensions (ids can't start with '.')
+          if (isInternalExtensionDirName(e.name)) return false
+          if (e.isDirectory()) return true
+          if (e.isSymbolicLink()) {
+            try { return statSync(join(dir, e.name)).isDirectory() } catch { return false }
+          }
+          return false
+        })
+        const results = await Promise.all(dirs.map(async (entry) => {
+          const entryPath = join(dir, entry.name)
+          const skeleton  = { type: 'model' as const, id: entry.name, name: entry.name, trusted: isBuiltin, builtin: isBuiltin, nodes: [], corrupted: true }
+
+          // A setup/registration marker still present means this folder is not
+          // safe to expose. Hide it only while the current install owns it;
+          // after a failed startup recovery, surface it as Repairable instead.
+          const installInterrupted = (
+            existsSync(join(entryPath, EXT_INCOMPLETE_MARKER))
+            || existsSync(join(entryPath, EXT_REGISTRATION_PENDING_MARKER))
+            || pendingRegistrationIds.has(entry.name)
+          )
+          if (installInterrupted && activeExtensionInstalls.has(entry.name)) return null
+
+          // Detect local extensions: check for .modly-local sentinel
+          let localSourcePath: string | undefined
+          if (!isBuiltin) {
+            const sentinelPath = join(entryPath, '.modly-local')
+            if (existsSync(sentinelPath)) {
+              try {
+                localSourcePath = (await readFile(sentinelPath, 'utf-8')).trim()
+              } catch { /* ignore */ }
+            }
+          }
+
+          // 'missing' = no manifest at all (gutted folder); 'invalid' = a manifest
+          // exists but doesn't parse (fixable by hand, don't push deletion only)
+          let manifestError: 'missing' | 'invalid' = 'missing'
+          for (const manifestFile of ['manifest.json', 'package.json']) {
+            const p = join(entryPath, manifestFile)
+            if (existsSync(p)) {
+              try {
+                const raw    = await readFile(p, 'utf-8')
+                const parsed = JSON.parse(raw) as ParsedManifest
+                // Inject local:// source so the UI shows the Local badge
+                if (localSourcePath) parsed.source = `local://${localSourcePath}`
+                const extension = parseExtensionManifest(
+                  parsed,
+                  entry.name,
+                  trustedRepos,
+                  isBuiltin,
+                )
+                return markExtensionInstallationInterrupted(extension, installInterrupted)
+              } catch { manifestError = 'invalid' }
+            }
+          }
+          return installInterrupted
+            ? markExtensionInstallationInterrupted(skeleton, true)
+            : { ...skeleton, manifestError }
+        }))
+        return results.filter((e): e is Exclude<typeof e, null> => e !== null)
+      } catch {
+        return []
+      }
+    }
+
+    const [userExts, builtinExts] = await Promise.all([
+      readExtensionsFromDir(extensionsDir, false),
+      readExtensionsFromDir(builtinDir,    true),
+    ])
+
+    // Built-ins come first, then user extensions
+    return [...builtinExts, ...userExts]
+  })
+
+  // Install an extension from a GitHub repo URL
+  ipcMain.handle('extensions:installFromGitHub', async (event, githubUrl: string) => {
+    const win    = getWindow()
+    const emit   = (data: object) => win?.webContents.send('extensions:installProgress', data)
+    const tmpDir = app.getPath('temp')
+
+    let tarPath    = ''
+    let extractDir = ''
+    let trackedExtensionId = ''
+
+    try {
+      // 1. Parse and validate GitHub URL
+      const parsed  = new URL(githubUrl.trim())
+      if (parsed.hostname !== 'github.com') throw new Error('Invalid URL: must be a GitHub repository (github.com)')
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      if (parts.length < 2) throw new Error('Invalid URL: expected format https://github.com/owner/repo')
+      const [owner, repo] = parts
+
+      emit({ step: 'downloading', percent: 0 })
+
+      // 2. Download tarball via GitHub API
+      const tarballUrl = `https://api.github.com/repos/${owner}/${repo}/tarball/HEAD`
+      tarPath    = join(tmpDir, `modly-ext-${Date.now()}.tar.gz`)
+      extractDir = join(tmpDir, `modly-ext-extract-${Date.now()}`)
+
+      const response = await axios.get(tarballUrl, {
+        responseType: 'arraybuffer',
+        headers: {
+          'Accept':     'application/vnd.github.v3+json',
+          'User-Agent': 'Modly-App',
+        },
+        onDownloadProgress: (evt) => {
+          const pct = evt.total ? Math.round((evt.loaded / evt.total) * 80) : 40
+          emit({ step: 'downloading', percent: pct })
+        },
+      })
+
+      await writeFile(tarPath, Buffer.from(response.data as ArrayBuffer))
+
+      // 3. Extract tarball (GitHub wraps contents in a top-level {owner}-{repo}-{sha}/ folder)
+      emit({ step: 'extracting' })
+      await mkdir(extractDir, { recursive: true })
+      await tar.x({ file: tarPath, cwd: extractDir, strip: 1 })
+
+      // 4. Validate manifest.json
+      emit({ step: 'validating' })
+      const manifestPath = join(extractDir, 'manifest.json')
+
+      if (!existsSync(manifestPath)) throw new Error('manifest.json missing from repository')
+
+      const manifestRaw = await readFile(manifestPath, 'utf-8')
+      const manifest    = JSON.parse(manifestRaw) as ParsedManifest
+
+      const { id: rawManifestId, isProcess, entryFile, isPythonProcess, hasNodes } = validateInstallManifest(
+        manifest,
+        {
+          hasEntryFile: (candidate) => existsSync(join(extractDir, candidate)),
+          hasGeneratorFile: () => existsSync(join(extractDir, 'generator.py')),
+        },
+        'repository',
+      )
+      if (!hasNodes) throw new Error('manifest.json: required field "nodes" missing or empty')
+      const extensionId = assertSafeExtensionId(rawManifestId)
+      manifest.id = extensionId
+      trackedExtensionId = extensionId
+      activeExtensionInstalls.add(extensionId)
+
+      // Override source field with the actual GitHub URL so trust is based on origin
+      manifest.source = `https://github.com/${owner}/${repo}`
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
+
+      // 5. Stage into a fresh, unique dir next to the final location (so a new
+      //    attempt can never merge into leftovers of a previous one), mark it
+      //    incomplete, and swap it in with atomic renames BEFORE the long setup
+      //    phase. setup.py then runs in the final path — venvs record absolute
+      //    paths, so the folder must not move after setup. If anything dies
+      //    mid-way, the marker + backup let the startup reconciler put the
+      //    previous version back.
+      const extensionsDir = getSettings(app.getPath('userData')).extensionsDir
+      await mkdir(extensionsDir, { recursive: true })
+      const installSuffix = String(Date.now())
+      const destDir    = resolveExtensionPathWithinRoot(extensionsDir, extensionId)
+      const stagingDir = buildExtensionStagingPath(extensionsDir, extensionId, installSuffix)
+
+      if (existsSync(destDir)) {
+        const currentManifestPath = join(destDir, 'manifest.json')
+        let currentManifestJson: string
+        try {
+          currentManifestJson = await readFile(currentManifestPath, 'utf-8')
+        } catch (error) {
+          throw new Error(
+            `Cannot safely replace extension "${extensionId}" because its existing `
+            + `manifest.json is missing or unreadable. Uninstall it first. ${String(error)}`,
+          )
+        }
+        validateExistingExtensionReplacement(
+          currentManifestJson,
+          manifest,
+          {
+            hasEntryFile: (candidate) => existsSync(join(destDir, candidate)),
+            hasGeneratorFile: () => existsSync(join(destDir, 'generator.py')),
+          },
+          'existing extension folder',
+        )
+      }
+
+      try {
+        await cp(extractDir, stagingDir, { recursive: true })
+        // Reserved recovery files are host-owned transaction state, never
+        // repository content. Strip packaged/stale copies before activation.
+        await rmAsync(
+          join(stagingDir, EXT_REGISTRATION_PENDING_MARKER),
+          { recursive: true, force: true },
+        )
+        await rmAsync(
+          join(stagingDir, EXT_VALIDATED_MARKER),
+          { recursive: true, force: true },
+        )
+        await writeFile(join(stagingDir, EXT_INCOMPLETE_MARKER), new Date().toISOString(), 'utf-8')
+
+        // Compile TypeScript entry to JS at install time (once, no runtime overhead)
+        if (isProcess && entryFile.endsWith('.ts')) {
+          emit({ step: 'setting_up', message: 'Compiling TypeScript entry…' })
+          const compiledEntry = entryFile.replace(/\.ts$/, '.js')
+          buildSync({
+            entryPoints: [join(stagingDir, entryFile)],
+            outfile:     join(stagingDir, compiledEntry),
+            bundle:      true,
+            platform:    'node',
+            format:      'cjs',
+            external:    ['electron'],
+          })
+          manifest.entry = compiledEntry
+          await writeFile(join(stagingDir, 'manifest.json'), JSON.stringify(manifest, null, 2), 'utf-8')
+        }
+      } catch (stageErr) {
+        await rmWithRetry(stagingDir, 'ext-install')
+        throw stageErr
+      }
+
+      // 6. Swap into place (backup the previous version first)
+      terminateProcessRunner(extensionId)
+      const backupDir = existsSync(destDir)
+        ? buildExtensionBackupPath(extensionsDir, extensionId, installSuffix)
+        : null
+      if (backupDir) {
+        const parked = await renameWithRetry(destDir, backupDir, 'ext-install')
+        if (!parked.ok) {
+          await rmWithRetry(stagingDir, 'ext-install')
+          throw new Error('The current extension folder is locked (antivirus or a running process) — close what might be using it and try again.')
+        }
+      }
+      const activated = await renameWithRetry(stagingDir, destDir, 'ext-install')
+      if (!activated.ok) {
+        await rmWithRetry(stagingDir, 'ext-install')
+        if (backupDir) await renameWithRetry(backupDir, destDir, 'ext-install')
+        throw new Error('Could not move the staged extension into place — the folder is locked. Try again.')
+      }
+
+      // Persist transaction state beside extension folders, never inside a
+      // destination or backup that may be a symlink to developer source.
+      const pending = await beginExtensionRegistrationTransaction(
+        extensionsDir,
+        extensionId,
+        installSuffix,
+        logger,
+      )
+      if (!pending.ok) {
+        if (backupDir) {
+          await rollbackFailedExtensionUpdate(
+            extensionsDir,
+            destDir,
+            backupDir,
+            extensionId,
+            `Could not mark the update as pending: ${String(pending.error)}`,
+          )
+        } else {
+          await rmWithRetry(destDir, 'ext-install')
+        }
+        throw new Error(`Could not mark extension registration as pending: ${String(pending.error)}`)
+      }
+
+      // 7. Setup runs in the final folder; a failure restores the previous version
+      try {
+        if (isPythonProcess) {
+          // 7a. Python process extension: run setup.py if present (same as model extensions)
+          if (existsSync(join(destDir, 'setup.py'))) {
+            emit({ step: 'setting_up', message: 'Setting up Python environment…' })
+            const gpu = await detectGpuInfo({ onLog: (line) => logger.info(line) })
+            logger.info(`[ext-setup] ${describeGpuInfo(gpu)}`)
+            await runExtensionSetup(destDir, gpu, (line) => {
+              logger.info(`[ext-setup] ${line}`)
+              emit({ step: 'setting_up', message: line })
+            })
+          }
+        } else if (isProcess) {
+          // 7b. JS process extension: npm install if package.json present
+          if (existsSync(join(destDir, 'package.json'))) {
+            emit({ step: 'setting_up', message: 'Installing dependencies…' })
+            await new Promise<void>((resolve, reject) => {
+              const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+              const child = spawn(npm, ['install', '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts=false'], {
+                cwd:   destDir,
+                stdio: 'pipe',
+              })
+              let buf = ''
+              const onData = (chunk: Buffer) => {
+                buf += chunk.toString()
+                const lines = buf.split('\n')
+                buf = lines.pop() ?? ''
+                for (const raw of lines) {
+                  const line = raw.replace(/\x1b\[[0-9;]*m/g, '').trim()
+                  if (line) emit({ step: 'setting_up', message: line })
+                }
+              }
+              child.stdout?.on('data', onData)
+              child.stderr?.on('data', onData)
+              child.on('close', (code) => code === 0 ? resolve() : reject(new Error(`npm install failed (exit ${code})`)))
+              child.on('error', reject)
+            })
+          }
+        } else {
+          // 7c. Model extension: run setup.py directly (no FastAPI required)
+          if (existsSync(join(destDir, 'setup.py'))) {
+            emit({ step: 'setting_up', message: 'Setting up Python environment…' })
+            const gpu = await detectGpuInfo({ onLog: (line) => logger.info(line) })
+            logger.info(`[ext-setup] ${describeGpuInfo(gpu)}`)
+            await runExtensionSetup(destDir, gpu, (line) => {
+              logger.info(`[ext-setup] ${line}`)
+              emit({ step: 'setting_up', message: line })
+            })
+          }
+        }
+      } catch (setupErr) {
+        // Discard the half-set-up folder and put the previous version back. If
+        // the folder is locked, the marker keeps it flagged corrupted and the
+        // startup reconciler restores the backup on next launch.
+        if (backupDir) {
+          const restored = await restoreExtensionBackup(destDir, backupDir, logger)
+          if (!restored.ok) {
+            throw new Error(
+              `Extension setup failed, and Modly could not restore the previous version `
+              + `during ${restored.stage}: ${String(restored.error)}. `
+              + `Restart Modly to retry recovery. Original failure: ${String(setupErr)}`,
+            )
+          }
+          const cleared = await clearExtensionRegistrationTransaction(
+            extensionsDir,
+            extensionId,
+            logger,
+          )
+          if (!cleared.ok) {
+            throw new Error(
+              `Extension setup failed and the previous version was restored, but Modly `
+              + `could not clear recovery state during ${cleared.stage}: ${String(cleared.error)}.`,
+            )
+          }
+        } else {
+          const removed = await rmWithRetry(destDir, 'ext-install')
+          if (removed.ok) {
+            const cleared = await clearExtensionRegistrationTransaction(
+              extensionsDir,
+              extensionId,
+              logger,
+            )
+            if (!cleared.ok) {
+              throw new Error(
+                `Extension setup failed and its incomplete folder was removed, but Modly `
+                + `could not clear recovery state during ${cleared.stage}: ${String(cleared.error)}.`,
+              )
+            }
+          }
+        }
+        throw setupErr
+      }
+
+      // 8. Setup succeeded. Root-level transaction state remains pending while
+      //    the new destination is explicitly validated. A crash or failure in
+      //    this window restores a backup or quarantines a fresh destination.
+      try {
+        await validateExtensionDestinationRegistration(
+          destDir,
+          async () => {
+            if (!isProcess) {
+              await reloadAndValidateModelExtension(
+                manifest,
+                extensionId,
+                pending.validationCapability,
+              )
+            }
+          },
+          'ext-install',
+          logger,
+        )
+      } catch (registrationError) {
+        if (backupDir) {
+          await rollbackFailedExtensionUpdate(
+            extensionsDir,
+            destDir,
+            backupDir,
+            extensionId,
+            registrationError,
+          )
+        } else {
+          const quarantined = await quarantineExtensionRegistrationFailure(
+            extensionsDir,
+            extensionId,
+            logger,
+          )
+          if (!quarantined.ok) {
+            throw new Error(
+              `Runtime registration failed, and Modly could not quarantine the extension `
+              + `during ${quarantined.stage}: ${String(quarantined.error)}. `
+              + `Restart Modly to retry recovery. Original failure: ${String(registrationError)}`,
+            )
+          }
+          if (!isProcess) {
+            try {
+              await quarantineModelExtensionRuntime(manifest, extensionId)
+            } catch (runtimeQuarantineError) {
+              throw new Error(
+                `Runtime registration failed and filesystem quarantine was preserved, `
+                + `but Modly could not evict partially registered model state: `
+                + `${String(runtimeQuarantineError)}. `
+                + `Original failure: ${String(registrationError)}`,
+              )
+            }
+          }
+        }
+        throw registrationError
+      }
+
+      // Runtime validation passed. Mark cleanup as validated before deleting
+      // rollback copies so startup can safely retry an interrupted deletion.
+      await cleanupValidatedBackupsOrThrow(extensionsDir, extensionId)
+
+      emit({ step: 'done', extensionId })
+
+      const trustedRepos = await fetchTrustedRepos()
+      const ext = parseExtensionManifest(manifest, extensionId, trustedRepos)
+      return { success: true, extensionId, extension: ext }
+
+    } catch (err) {
+      emit({ step: 'error', message: String(err) })
+      return { success: false, error: String(err) }
+    } finally {
+      if (trackedExtensionId) activeExtensionInstalls.delete(trackedExtensionId)
+      // Cleanup temp files
+      if (tarPath    && existsSync(tarPath))    rmAsync(tarPath,    { force: true }).catch(() => {})
+      if (extractDir && existsSync(extractDir)) rmAsync(extractDir, { recursive: true, force: true }).catch(() => {})
+    }
+  })
+
+  // Uninstall an extension — built-ins cannot be uninstalled
+  ipcMain.handle('extensions:uninstall', async (_, extensionId: string) => {
+    try {
+      if ([...activeDownloads.keys()].some((modelId) => modelId.split('/', 1)[0] === extensionId)) {
+        return { success: false, error: 'Cannot uninstall an extension while its model download is active' }
+      }
+      // Corrupted folders can carry arbitrary names (manual copies, failed
+      // unzips), so only enforce root confinement for the deletion path. The
+      // strict id pattern still guards the built-in check — a non-conforming
+      // name can never be a built-in.
+      const extensionsDir = getSettings(app.getPath('userData')).extensionsDir
+
+      try {
+        const safeExtensionId = assertSafeExtensionId(extensionId)
+        if (existsSync(resolveExtensionPathWithinRoot(getBuiltinExtensionsDir(), safeExtensionId))) {
+          return { success: false, error: `"${safeExtensionId}" is a built-in extension and cannot be uninstalled.` }
+        }
+      } catch { /* non-conforming folder name → not a built-in */ }
+
+      // Terminate process runner if it's a process extension
+      terminateProcessRunner(extensionId)
+
+      const removed = await removeExtensionWithBackups(
+        extensionsDir,
+        String(extensionId),
+        logger,
+      )
+      if (!removed.ok) {
+        return {
+          success: false,
+          error: removed.locked
+            ? `Could not delete the extension ${removed.stage === 'backup' ? 'backup' : 'folder'} `
+              + '— a file inside it is locked (antivirus or a running process). '
+              + 'Close what might be using it and try again.'
+            : `Could not uninstall the extension during ${removed.stage}: ${String(removed.error)}`,
+        }
+      }
+      // Hot-reload Python so it stops using the deleted model extension
+      try {
+        await axios.post(`${API_BASE_URL}/extensions/reload`, {}, { timeout: 10_000 })
+      } catch { /* ignore if Python is not running */ }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Re-run setup.py for a model extension (creates the venv if missing)
+  ipcMain.handle('extensions:repair', async (_, extensionId: string) => {
+    try {
+      const safeExtensionId = assertSafeExtensionId(extensionId)
+      const extensionsDir = getSettings(app.getPath('userData')).extensionsDir
+      const extDir = resolveExtensionPathWithinRoot(extensionsDir, safeExtensionId)
+      if (!existsSync(join(extDir, 'setup.py'))) {
+        return { success: false, error: 'setup.py is missing from the extension folder — the install looks incomplete. Uninstall the extension and install it again.' }
+      }
+      const manifestRaw = await readFile(join(extDir, 'manifest.json'), 'utf-8')
+      const manifest = JSON.parse(manifestRaw) as ParsedManifest
+      const { isProcess } = validateInstallManifest(
+        manifest,
+        {
+          hasEntryFile: (candidate) => existsSync(join(extDir, candidate)),
+          hasGeneratorFile: () => existsSync(join(extDir, 'generator.py')),
+        },
+        'extension folder',
+      )
+      const gpu = await detectGpuInfo({ onLog: (line) => logger.info(line) })
+      logger.info(`[ext-repair] ${describeGpuInfo(gpu)}`)
+      await runExtensionRepairTransaction(
+        {
+          extensionsDir,
+          extensionId: safeExtensionId,
+          destinationDir: extDir,
+          suffix: String(Date.now()),
+          quarantine: async () => {
+            terminateProcessRunner(safeExtensionId)
+            if (!isProcess) {
+              await quarantineModelExtensionRuntime(manifest, safeExtensionId)
+            }
+          },
+          setup: () => runExtensionSetup(
+            extDir,
+            gpu,
+            (line) => logger.info(`[ext-repair] ${line}`),
+          ),
+          validate: async (validationCapability) => {
+            if (!isProcess) {
+              await reloadAndValidateModelExtension(
+                manifest,
+                safeExtensionId,
+                validationCapability,
+              )
+            }
+          },
+        },
+        logger,
+      )
+      return { success: true }
+    } catch (err: any) {
+      return { success: false, error: `Repair failed: ${err?.message ?? err}` }
+    }
+  })
+
+  // Install a local extension by creating a symlink/junction to a local folder
+  ipcMain.handle('extensions:installFromLocal', async () => {
+    const win  = getWindow()
+    const emit = (data: object) => win?.webContents.send('extensions:installProgress', data)
+
+    // 1. Open folder picker
+    const pickResult = await dialog.showOpenDialog(win!, {
+      title:      'Select local extension folder',
+      properties: ['openDirectory'],
+    })
+    if (pickResult.canceled || pickResult.filePaths.length === 0) {
+      return { success: false, cancelled: true }
+    }
+    const localPath = pickResult.filePaths[0]
+
+    try {
+      emit({ step: 'validating' })
+
+      // 2. Read and validate manifest.json
+      const manifestPath = join(localPath, 'manifest.json')
+      if (!existsSync(manifestPath)) {
+        throw new Error('manifest.json not found in the selected folder')
+      }
+      const manifestRaw = await readFile(manifestPath, 'utf-8')
+      const manifest    = JSON.parse(manifestRaw) as ParsedManifest
+
+      const { id: rawManifestId, isProcess } = validateInstallManifest(
+        manifest,
+        {
+          hasEntryFile:     (candidate) => existsSync(join(localPath, candidate)),
+          hasGeneratorFile: ()          => existsSync(join(localPath, 'generator.py')),
+        },
+        'local folder',
+      )
+      const extensionId = assertSafeExtensionId(rawManifestId)
+
+      // 3. Create symlink / junction in extensionsDir
+      const userData      = app.getPath('userData')
+      const extensionsDir = getSettings(userData).extensionsDir
+      await mkdir(extensionsDir, { recursive: true })
+
+      const linkPath = resolveExtensionPathWithinRoot(extensionsDir, extensionId)
+      const installSuffix = String(Date.now())
+      let backupDir: string | null = null
+
+      // Inspect an existing local link without mutating it. The host-side
+      // pending transaction is created before the link is ever parked or
+      // replaced, so a crash cannot expose the new target as validated.
+      if (existsSync(linkPath)) {
+        const currentManifestPath = join(linkPath, 'manifest.json')
+        if (!existsSync(currentManifestPath)) {
+          throw new Error(
+            `Cannot safely replace local extension "${extensionId}" because its existing `
+            + 'manifest.json is missing. Uninstall it first.',
+          )
+        }
+        const currentManifest = JSON.parse(
+          await readFile(currentManifestPath, 'utf-8'),
+        ) as ParsedManifest
+        assertCompatibleExtensionUpdateType(currentManifest, manifest)
+
+        const linkStat = await lstat(linkPath)
+        if (!linkStat.isSymbolicLink() && !(process.platform === 'win32' && linkStat.isDirectory())) {
+          throw new Error(
+            `A non-symlink folder named "${extensionId}" already exists in `
+            + 'extensionsDir. Remove it first.',
+          )
+        }
+        backupDir = buildExtensionBackupPath(extensionsDir, extensionId, installSuffix)
+      }
+
+      const trustedRepos = await fetchTrustedRepos()
+      // Build manifest with localPath marker so the UI can identify local extensions
+      const annotatedManifest = { ...manifest, source: `local://${localPath}` }
+      const ext = parseExtensionManifest(annotatedManifest, extensionId, trustedRepos)
+
+      try {
+        await runExtensionRegistrationValidationTransaction(
+          {
+            extensionsDir,
+            extensionId,
+            suffix: installSuffix,
+            quarantine: async () => {
+              terminateProcessRunner(extensionId)
+              if (!isProcess) {
+                await quarantineModelExtensionRuntime(manifest, extensionId)
+              }
+            },
+            activate: async () => {
+              emit({ step: 'setting_up', message: 'Linking local folder…' })
+              if (backupDir) {
+                const parked = await renameWithRetry(linkPath, backupDir, 'ext-local')
+                if (!parked.ok) {
+                  throw new Error(
+                    `Could not preserve the previous local extension: `
+                    + `${String(parked.error)}`,
+                  )
+                }
+              }
+
+              if (process.platform === 'win32') {
+                // Windows: junction (no elevation needed, works for directories)
+                await symlink(localPath, linkPath, 'junction')
+              } else {
+                // macOS / Linux: standard symlink
+                await symlink(localPath, linkPath)
+              }
+
+              // The sentinel lives in the linked source folder. Runtime
+              // registration is still pending externally until validation.
+              await writeFile(join(linkPath, '.modly-local'), localPath, 'utf-8')
+            },
+            validate: async (validationCapability) => {
+              if (!isProcess) {
+                await reloadAndValidateModelExtension(
+                  manifest,
+                  extensionId,
+                  validationCapability,
+                )
+              }
+            },
+          },
+          logger,
+        )
+      } catch (err) {
+        if (backupDir && existsSync(backupDir)) {
+          await rollbackFailedExtensionUpdate(
+            extensionsDir,
+            linkPath,
+            backupDir,
+            extensionId,
+            err,
+          )
+        }
+
+        // Local links intentionally do not run setup. A fresh model that
+        // cannot register remains linked, externally quarantined, and visible
+        // only as a Repairable entry.
+        if (!isProcess && existsSync(linkPath)) {
+          const error = (
+            `The local extension was linked, but it is not runtime-ready. `
+            + `Click 'Repair' on its extension card, then retry. ${String(err)}`
+          )
+          emit({ step: 'error', extensionId, message: error })
+          return {
+            success: false,
+            needsRepair: true,
+            error,
+            extensionId,
+            extension: markExtensionInstallationInterrupted(ext, true),
+            localPath,
+          }
+        }
+        throw err
+      }
+
+      emit({ step: 'done', extensionId })
+      return { success: true, extensionId, extension: ext, localPath }
+
+    } catch (err) {
+      emit({ step: 'error', message: String(err) })
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Trigger Python extension reload (without touching the filesystem)
+  ipcMain.handle('extensions:reload', async () => {
+    terminateAllProcessRunners()
+    try {
+      const res = await axios.post(`${API_BASE_URL}/extensions/reload`, {}, { timeout: 10_000 })
+      return { success: true, errors: (res.data as { errors?: Record<string, string> }).errors ?? {} }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Run a process extension in an isolated worker thread
+  ipcMain.handle('extensions:runProcess', async (_, extensionId: string, input: { filePath?: string; text?: string; texts?: (string | undefined)[]; nodeId?: string }, params: Record<string, unknown>) => {
+    const userData        = app.getPath('userData')
+    const { extensionsDir, workspaceDir } = getSettings(userData)
+
+    // Resolve extension directory: check built-ins first, then user extensions
+    const builtinExtDir = join(getBuiltinExtensionsDir(), extensionId)
+    const userExtDir    = join(extensionsDir, extensionId)
+    const extDir        = existsSync(builtinExtDir) ? builtinExtDir : userExtDir
+
+    if (!existsSync(extDir)) return { success: false, error: `Extension "${extensionId}" not found` }
+
+    try {
+      const manifestRaw = await readFile(join(extDir, 'manifest.json'), 'utf-8')
+      const manifest    = JSON.parse(manifestRaw) as ParsedManifest
+      if (manifest.type !== 'process') return { success: false, error: `Extension "${extensionId}" is not a process extension` }
+
+      const entry           = manifest.entry ?? 'processor.js'
+      const isPythonEntry   = entry.endsWith('.py')
+      const userData        = app.getPath('userData')
+
+      let runner
+      if (isPythonEntry) {
+        const pythonExe = getExtPythonExe(extDir) ?? getVenvPythonExe(userData)
+        runner = getPythonProcessRunner(extensionId, pythonExe, extDir, entry, workspaceDir, app.getPath('temp'))
+      } else {
+        runner = getProcessRunner(extensionId, extDir, entry, workspaceDir, app.getPath('temp'))
+      }
+
+      const result = await runner.run(input, params)
+      return { success: true, result }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // Terminate all process runners on app quit
+  app.on('before-quit', () => terminateAllProcessRunners())
+
+  // Auto-updater
+  ipcMain.handle('updater:check', async () => {
+    if (!app.isPackaged || !updatesSupported) return { success: false }
+    try {
+      await autoUpdater.checkForUpdates()
+      return { success: true }
+    } catch (err) {
+      logger.error(`[updater:check] ${err}`)
+      return { success: false }
+    }
+  })
+
+  ipcMain.handle('updater:quitAndInstall', () => {
+    if (!updatesSupported) return
+    app.removeAllListeners('window-all-closed')
+    BrowserWindow.getAllWindows().forEach(w => w.destroy())
+    autoUpdater.quitAndInstall(true, true)
+  })
+
+  // Update FastAPI paths at runtime (without restarting)
+  ipcMain.handle('api:updatePaths', async (_event, patch: { modelsDir?: string; workspaceDir?: string; extensionsDir?: string }) => {
+    try {
+      if (patch.modelsDir !== undefined && weightOperations.busy) {
+        throw new Error('Cannot change model storage while model weights are busy')
+      }
+      await axios.post(`${API_BASE_URL}/settings/paths`, {
+        models_dir:     patch.modelsDir,
+        workspace_dir:  patch.workspaceDir,
+        extensions_dir: patch.extensionsDir,
+      })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  // ── Workflows ────────────────────────────────────────────────────────────
+
+  function workflowsDir(): string {
+    const dir = getSettings(app.getPath('userData')).workflowsDir
+    if (!existsSync(dir)) require('fs').mkdirSync(dir, { recursive: true })
+    return dir
+  }
+
+  ipcMain.handle('workflows:list', async () => {
+    const dir = workflowsDir()
+    const files = readdirSync(dir).filter(f => f.endsWith('.json'))
+    const workflows = []
+    for (const file of files) {
+      try {
+        const raw = await readFile(join(dir, file), 'utf-8')
+        workflows.push(JSON.parse(raw))
+      } catch { /* skip corrupted files */ }
+    }
+    return workflows.sort((a: { updatedAt?: string }, b: { updatedAt?: string }) =>
+      (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')
+    )
+  })
+
+  ipcMain.handle('workflows:save', async (_, workflow: { id: string; [key: string]: unknown }) => {
+    try {
+      const path = join(workflowsDir(), `${workflow.id}.json`)
+      await writeFile(path, JSON.stringify(workflow, null, 2), 'utf-8')
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('workflows:delete', async (_, id: string) => {
+    try {
+      await rmAsync(join(workflowsDir(), `${id}.json`), { force: true })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('workflows:import', async () => {
+    const win = getWindow()
+    const result = await dialog.showOpenDialog(win!, {
+      title: 'Import Workflow',
+      filters: [{ name: 'Workflow', extensions: ['json'] }],
+      properties: ['openFile'],
+    })
+    if (result.canceled || result.filePaths.length === 0) return { success: false }
+    try {
+      const raw = await readFile(result.filePaths[0], 'utf-8')
+      const workflow = JSON.parse(raw)
+      if (!workflow.id || !workflow.nodes) return { success: false, error: 'Invalid workflow file' }
+      await writeFile(join(workflowsDir(), `${workflow.id}.json`), JSON.stringify(workflow, null, 2), 'utf-8')
+      return { success: true, workflow }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+
+  ipcMain.handle('workflows:export', async (_, workflow: { id: string; name?: string; [key: string]: unknown }) => {
+    const win = getWindow()
+    const result = await dialog.showSaveDialog(win!, {
+      title: 'Export Workflow',
+      defaultPath: `${workflow.name ?? workflow.id}.json`,
+      filters: [{ name: 'Workflow', extensions: ['json'] }],
+    })
+    if (result.canceled || !result.filePath) return { success: false }
+    try {
+      await writeFile(result.filePath, JSON.stringify(workflow, null, 2), 'utf-8')
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err) }
+    }
+  })
+}

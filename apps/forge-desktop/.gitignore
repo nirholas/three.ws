@@ -1,0 +1,45 @@
+node_modules/
+out/
+dist/
+install.bat
+launch.bat
+
+# Generated at build time by scripts/download-python-embed.js
+resources/python-embed/
+resources/get-pip.py
+
+# Python
+api/__pycache__/
+api/**/__pycache__/
+api/*.pyc
+api/**/*.pyc
+api/.venv/
+api/venv/
+tools/modly-cli/__pycache__/
+.hermes-e2e/
+
+# Models (heavy, downloaded at runtime)
+/models/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+
+# TypeScript incremental build output
+*.tsbuildinfo
+
+# Local dev helpers
+install.bat
+launch.bat

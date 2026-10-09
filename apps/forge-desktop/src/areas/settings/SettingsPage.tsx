@@ -1,0 +1,136 @@
+import { useState } from 'react'
+import { StorageSection } from './components/StorageSection'
+import { AboutSection } from './components/AboutSection'
+import { LogsSection } from './components/LogsSection'
+import { IntegrationsSection } from './components/IntegrationsSection'
+import { AgentSection } from './components/AgentSection'
+import { ApplicationSection } from './components/ApplicationSection'
+import { AccessibilitySection } from './components/AccessibilitySection'
+
+type Section = 'application' | 'storage' | 'integrations' | 'accessibility' | 'agent' | 'logs' | 'about'
+
+const SECTIONS: { id: Section; label: string; icon: JSX.Element }[] = [
+  {
+    id: 'application',
+    label: 'Application',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07" />
+      </svg>
+    )
+  },
+  {
+    id: 'storage',
+    label: 'Storage',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <ellipse cx="12" cy="5" rx="9" ry="3" />
+        <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+      </svg>
+    )
+  },
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
+      </svg>
+    )
+  },
+  {
+    id: 'accessibility',
+    label: 'Accessibility',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="4" r="2" />
+        <path d="M19 9l-7 1-7-1" />
+        <path d="M12 10v6" />
+        <path d="M9 22l3-6 3 6" />
+      </svg>
+    )
+  },
+  {
+    id: 'agent',
+    label: 'Agent',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+      </svg>
+    )
+  },
+  {
+    id: 'logs',
+    label: 'Logs',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    )
+  },
+  {
+    id: 'about',
+    label: 'About',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    )
+  }
+]
+
+// ─── Page shell ───────────────────────────────────────────────────────────────
+
+export default function SettingsPage(): JSX.Element {
+  const [section, setSection] = useState<Section>('application')
+
+  return (
+    <div className="flex h-full">
+
+      {/* Left nav */}
+      <nav className="w-52 shrink-0 border-r border-zinc-800 bg-surface-400 py-5 px-3 flex flex-col gap-0.5">
+        <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-wider px-3 mb-3">Settings</p>
+        {SECTIONS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSection(s.id)}
+            className={`
+              flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] text-left transition-colors
+              ${section === s.id
+                ? 'bg-accent/15 text-accent-light'
+                : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'}
+            `}
+          >
+            <span className={section === s.id ? 'text-accent-light' : 'text-zinc-600'}>{s.icon}</span>
+            {s.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto bg-surface-400">
+        <div className="p-8">
+          {section === 'application'   && <ApplicationSection />}
+          {section === 'storage'       && <StorageSection />}
+          {section === 'integrations'  && <IntegrationsSection />}
+          {section === 'accessibility' && <AccessibilitySection />}
+          {section === 'agent'         && <AgentSection />}
+          {section === 'logs'          && <LogsSection />}
+          {section === 'about'         && <AboutSection />}
+        </div>
+      </div>
+
+    </div>
+  )
+}

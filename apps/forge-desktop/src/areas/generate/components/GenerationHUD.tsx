@@ -1,0 +1,179 @@
+import { useEffect, useRef, useState } from 'react'
+import { useGeneration } from '@shared/hooks/useGeneration'
+
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
+// Convert tqdm bar text to a clean "Verbing (N%)" form. Examples:
+//   "Diffusion Sampling: 60%|████| 3/5 [..."         → "Diffusing (60%)"
+//   "Volume Decoding: 42%|██▏ | 1752/4200 [..."      → "Decoding (42%)"
+//   "Loading pipeline components...: 100%|███| 4/4"  → "Loading (100%)"
+// Anything that isn't a tqdm progress line returns null so the caller
+// leaves the HUD's sub-line untouched instead of filling it with noise.
+const PHASE_VERB: Array<[RegExp, string]> = [
+  [/diffusion|sampling/i,       'Generating'],
+  [/volume|flashvdm|decoding/i, 'Decoding'],
+  [/surface|extract/i,          'Extracting'],
+  [/loading|download/i,         'Loading'],
+]
+
+function parseTqdmLine(line: string): string | null {
+  const m = line.match(/^(.+?):\s*(\d+)%\|/)
+  if (!m) return null
+  const desc = m[1].replace(/\.+$/, '').trim()
+  const pct  = m[2]
+  const verb =
+    PHASE_VERB.find(([re]) => re.test(desc))?.[1] ??
+    desc.replace(/^./, (c) => c.toUpperCase())
+  return `${verb} (${pct}%)`
+}
+
+function parseProgressFromStderr(chunk: string): string | null {
+  // One chunk may contain multiple tqdm ticks separated by \r or \n;
+  // show the most recent tqdm-like line.
+  const lines = chunk.split(/[\r\n]+/).filter(Boolean)
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const parsed = parseTqdmLine(lines[i]!)
+    if (parsed) return parsed
+  }
+  return null
+}
+
+export default function GenerationHUD(): JSX.Element | null {
+  const { currentJob, reset } = useGeneration()
+  const [elapsed, setElapsed] = useState(0)
+  const [tqdmLog, setTqdmLog] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleCopyError(text: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    if (copyTimeout.current) clearTimeout(copyTimeout.current)
+    copyTimeout.current = setTimeout(() => setCopied(false), 2000)
+  }
+
+  const status = currentJob?.status
+  const isActive = status === 'uploading' || status === 'generating'
+  const isVisible = status === 'uploading' || status === 'generating' || status === 'error'
+
+  // Elapsed timer — based on currentJob.createdAt so it survives navigation
+  useEffect(() => {
+    if (isActive && currentJob?.createdAt) {
+      const id = setInterval(() => {
+        setElapsed(Math.floor((Date.now() - currentJob.createdAt) / 1000))
+      }, 1000)
+      return () => clearInterval(id)
+    } else {
+      setElapsed(0)
+    }
+  }, [isActive, currentJob?.createdAt])
+
+  // tqdm log listener — parse to "Verbing (N%)" and skip non-progress noise
+  useEffect(() => {
+    if (isActive) {
+      setTqdmLog(null)
+      window.electron.python.onLog((line) => {
+        const parsed = parseProgressFromStderr(line)
+        if (parsed !== null) {
+          setTqdmLog((prev) => (prev === parsed ? prev : parsed))
+        }
+      })
+      return () => { window.electron.python.offLog(); setTqdmLog(null) }
+    }
+  }, [isActive])
+
+  if (!currentJob || !isVisible) return null
+
+  const { progress, step, error } = currentJob
+
+  return (
+    <div className="absolute bottom-8 left-1/2 animate-slide-up z-20 w-96 pointer-events-auto">
+      <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700/60 rounded-2xl shadow-2xl overflow-hidden">
+
+        {/* Generating / uploading */}
+        {isActive && (
+          <div className="px-5 py-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                <span className="text-sm font-medium text-zinc-200">
+                  {step ?? (status === 'uploading' ? 'Reading image…' : 'Generating 3D mesh…')}
+                </span>
+              </div>
+              <span className="text-xs tabular-nums text-zinc-500">{formatElapsed(elapsed)}</span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                {tqdmLog && (
+                  <span className="text-[11px] text-zinc-500 truncate font-mono">{tqdmLog}</span>
+                )}
+                <span className="text-xs text-zinc-600 tabular-nums shrink-0 ml-auto">{progress}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {status === 'error' && (
+          <div className="px-5 py-4 flex flex-col gap-3 animate-fade-in">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-red-400">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-zinc-200">Generation failed</span>
+            </div>
+            <pre className="text-xs text-red-400 bg-red-950/40 border border-red-900/40 rounded-lg px-3 py-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words select-text font-mono leading-relaxed">
+              {error}
+            </pre>
+            <div className="flex gap-2">
+              <button
+                onClick={reset}
+                className="flex-1 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition-colors"
+              >
+                Try again
+              </button>
+              {error && (
+                <button
+                  onClick={() => handleCopyError(error)}
+                  title="Copy error"
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-sm font-medium transition-colors"
+                >
+                  {copied ? (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-400">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span className="text-green-400">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,509 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { buildSync } from 'esbuild'
+import { createRequire } from 'node:module'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+
+function loadModule() {
+  const outfile = join(mkdtempSync(join(tmpdir(), 'modly-ext-test-')), 'extension-install-utils.cjs')
+  const require = createRequire(import.meta.url)
+  const result = buildSync({
+    entryPoints: [resolve('electron/main/extension-install-utils.ts')],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    write: false,
+  })
+  writeFileSync(outfile, result.outputFiles[0].text, 'utf8')
+  return require(outfile)
+}
+
+test('validateInstallManifest accepts legacy flat model manifests', () => {
+  const mod = loadModule()
+
+  const validated = mod.validateInstallManifest(
+    { id: 'legacy-model', generator_class: 'Generator' },
+    {
+      hasEntryFile: () => false,
+      hasGeneratorFile: () => true,
+    },
+    'repository',
+  )
+
+  assert.equal(validated.id, 'legacy-model')
+  assert.equal(validated.isProcess, false)
+  assert.equal(validated.hasNodes, false)
+})
+
+test('validateInstallManifest still rejects missing process entry files', () => {
+  const mod = loadModule()
+
+  assert.throws(
+    () => mod.validateInstallManifest(
+      { id: 'proc', type: 'process', entry: 'processor.py' },
+      {
+        hasEntryFile: () => false,
+        hasGeneratorFile: () => false,
+      },
+      'selected folder',
+    ),
+    /entry file "processor\.py" missing from selected folder/,
+  )
+})
+
+test('validateInstallManifest accepts multi-source nodes and preserves legacy shapes', () => {
+  const mod = loadModule()
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'multi-model',
+    generator_class: 'Generator',
+    nodes: [{
+      id: 'generate',
+      model_sources: [
+        {
+          id: 'primary', provider: 'huggingface', repo_id: 'org/main',
+          destination: '.', checks: ['pipeline.json'],
+        },
+        {
+          id: 'encoder', provider: 'huggingface', repo_id: 'org/encoder',
+          destination: 'auxiliary/encoder', checks: ['model.safetensors'],
+        },
+      ],
+    }],
+  }, { hasEntryFile: () => false, hasGeneratorFile: () => true }, 'repository'))
+
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'legacy',
+    generator_class: 'Generator',
+    nodes: [{
+      id: 'projection',
+      hf_repo: 'org/legacy',
+      download_check: '../generate/model.safetensors',
+      hf_skip_prefixes: ['weights/**'],
+    }],
+  }, { hasEntryFile: () => false, hasGeneratorFile: () => true }, 'repository'))
+
+  // Nodes that do not opt into managed sources keep the pre-existing validation path.
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'legacy-unmanaged',
+    generator_class: 'Generator',
+    nodes: [{ id: 'legacy node' }],
+  }, { hasEntryFile: () => false, hasGeneratorFile: () => true }, 'repository'))
+})
+
+test('validateInstallManifest accepts scene IO without rejecting third-party artifact kinds', () => {
+  const mod = loadModule()
+  const files = { hasEntryFile: () => false, hasGeneratorFile: () => true }
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'scene-model', generator_class: 'Generator',
+    nodes: [{ id: 'normalize', input: 'scene', output: 'scene' }],
+  }, files, 'repository'))
+  for (const input of ['capture', 'video']) {
+    assert.doesNotThrow(() => mod.validateInstallManifest({
+      id: 'future-model', generator_class: 'Generator',
+      nodes: [{ id: 'future', input, output: 'scene' }],
+    }, files, 'repository'))
+  }
+})
+
+test('scene is model-only, single-input, while image-multi to scene stays valid', () => {
+  const mod = loadModule()
+  const modelFiles = { hasEntryFile: () => false, hasGeneratorFile: () => true }
+  const processFiles = { hasEntryFile: () => true, hasGeneratorFile: () => false }
+  for (const node of [
+    { id: 'mixed', input: 'scene', inputs: ['scene', 'text'], output: 'mesh' },
+    { id: 'duplicate', input: 'scene', inputs: ['scene', 'scene'], output: 'mesh' },
+    { id: 'hidden', input: 'image', inputs: ['scene'], output: 'mesh' },
+  ]) {
+    assert.throws(() => mod.validateInstallManifest({ id: 'bad', generator_class: 'Generator', nodes: [node] }, modelFiles, 'repository'), /scene.*single|single.*scene/i)
+  }
+  for (const node of [
+    { id: 'input', input: 'scene', output: 'mesh' },
+    { id: 'output', input: 'image', output: 'scene' },
+  ]) {
+    assert.throws(() => mod.validateInstallManifest({ id: 'proc', type: 'process', entry: 'processor.js', nodes: [node] }, processFiles, 'repository'), /scene.*model|model.*scene/i)
+  }
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'images-to-scene', generator_class: 'Generator',
+    nodes: [{ id: 'prepare', input: 'image', inputs: ['image', 'image'], output: 'scene' }],
+  }, modelFiles, 'repository'))
+  for (const output of ['scene', 'mesh']) {
+    assert.doesNotThrow(() => mod.validateInstallManifest({
+      id: `scene-to-${output}`, generator_class: 'Generator',
+      nodes: [{ id: 'generate', input: 'scene', output }],
+    }, modelFiles, 'repository'))
+  }
+})
+
+test('validateInstallManifest rejects malformed or process model_sources', () => {
+  const mod = loadModule()
+  const source = {
+    id: 'weights', provider: 'huggingface', repo_id: 'org/model',
+    destination: '../outside', checks: ['model.safetensors'],
+  }
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'unsafe', generator_class: 'Generator',
+    nodes: [{ id: 'generate', model_sources: [source] }],
+  }, { hasEntryFile: () => false, hasGeneratorFile: () => true }, 'repository'), /destination/i)
+
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'process', type: 'process', entry: 'processor.js',
+    nodes: [{ id: 'run', model_sources: [{ ...source, destination: '.' }] }],
+  }, { hasEntryFile: () => true, hasGeneratorFile: () => false }, 'repository'), /only for model nodes/i)
+})
+
+test('validateInstallManifest accepts shared groups with private sources', () => {
+  const mod = loadModule()
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'shared-model',
+    generator_class: 'Generator',
+    weight_groups: [{
+      id: 'base',
+      model_sources: [{
+        id: 'base', provider: 'huggingface', repo_id: 'org/base',
+        destination: '.', checks: ['base.bin'],
+      }],
+    }],
+    nodes: [
+      { id: 'base-node', weight_groups: ['base'] },
+      {
+        id: 'adapter-node',
+        weight_groups: ['base'],
+        model_sources: [{
+          id: 'adapter', provider: 'huggingface', repo_id: 'org/adapter',
+          destination: '.', checks: ['adapter.bin'],
+        }],
+      },
+    ],
+  }, { hasEntryFile: () => false, hasGeneratorFile: () => true }, 'repository'))
+})
+
+test('validateInstallManifest rejects unsafe shared-weight contracts', () => {
+  const mod = loadModule()
+  const group = {
+    id: 'base',
+    model_sources: [{
+      id: 'base', provider: 'huggingface', repo_id: 'org/base',
+      destination: '.', checks: ['base.bin'],
+    }],
+  }
+  const files = { hasEntryFile: () => true, hasGeneratorFile: () => true }
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'unknown', generator_class: 'Generator',
+    weight_groups: [group], nodes: [{ id: 'generate', weight_groups: ['missing'] }],
+  }, files, 'repository'), /unknown weight group/i)
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'reserved', generator_class: 'Generator',
+    weight_groups: [group], nodes: [{ id: '_shared', weight_groups: ['base'] }],
+  }, files, 'repository'), /reserved/i)
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'process', type: 'process', entry: 'processor.py', weight_groups: [group],
+    nodes: [{ id: 'run' }],
+  }, files, 'repository'), /only for model extensions/i)
+})
+
+test('python process setup failures are treated as fatal', () => {
+  const mod = loadModule()
+
+  assert.equal(mod.isSetupFailureFatal({ isProcess: true, isPythonProcess: true }), true)
+  assert.equal(mod.isSetupFailureFatal({ isProcess: true, isPythonProcess: false }), false)
+  assert.equal(mod.isSetupFailureFatal({ isProcess: false, isPythonProcess: false }), true)
+})
+
+test('extension updates reject model/process type changes that would leave stale registration', () => {
+  const mod = loadModule()
+
+  assert.doesNotThrow(() => mod.assertCompatibleExtensionUpdateType(
+    { id: 'pixal3d' },
+    { id: 'pixal3d', type: 'model' },
+  ))
+  assert.doesNotThrow(() => mod.assertCompatibleExtensionUpdateType(
+    { id: 'mesh-tool', type: 'process' },
+    { id: 'mesh-tool', type: 'process' },
+  ))
+  assert.throws(
+    () => mod.assertCompatibleExtensionUpdateType(
+      { id: 'pixal3d', type: 'model' },
+      { id: 'pixal3d', type: 'process' },
+    ),
+    /Uninstall the existing extension first/,
+  )
+})
+
+test('existing extension replacement fails closed on unreadable or invalid manifests', () => {
+  const mod = loadModule()
+  const nextManifest = {
+    id: 'pixal3d',
+    type: 'model',
+    generator_class: 'Generator',
+  }
+  const files = {
+    hasEntryFile: () => false,
+    hasGeneratorFile: () => true,
+  }
+
+  assert.throws(
+    () => mod.validateExistingExtensionReplacement(
+      '{broken json',
+      nextManifest,
+      files,
+      'existing extension folder',
+    ),
+    /manifest\.json is unreadable or invalid.*Uninstall it first/,
+  )
+  assert.throws(
+    () => mod.validateExistingExtensionReplacement(
+      JSON.stringify({ id: 'pixal3d', type: 'model' }),
+      nextManifest,
+      { ...files, hasGeneratorFile: () => false },
+      'existing extension folder',
+    ),
+    /referenced runtime files are invalid.*Uninstall it first.*generator\.py missing/,
+  )
+  assert.throws(
+    () => mod.validateExistingExtensionReplacement(
+      JSON.stringify({
+        id: 'another-extension',
+        type: 'model',
+        generator_class: 'Generator',
+      }),
+      nextManifest,
+      files,
+      'existing extension folder',
+    ),
+    /existing manifest identifies "another-extension".*Uninstall it first/,
+  )
+})
+
+test('existing extension replacement accepts a validated type-compatible manifest', () => {
+  const mod = loadModule()
+
+  assert.deepEqual(
+    mod.validateExistingExtensionReplacement(
+      JSON.stringify({
+        id: 'pixal3d',
+        type: 'model',
+        generator_class: 'OldGenerator',
+      }),
+      {
+        id: 'pixal3d',
+        type: 'model',
+        generator_class: 'NewGenerator',
+      },
+      {
+        hasEntryFile: () => false,
+        hasGeneratorFile: () => true,
+      },
+      'existing extension folder',
+    ),
+    {
+      id: 'pixal3d',
+      isProcess: false,
+      isPythonProcess: false,
+      entryFile: 'processor.js',
+      hasNodes: false,
+    },
+  )
+})
+
+test('interrupted list entries preserve safe manifest metadata while becoming corrupted', () => {
+  const mod = loadModule()
+  const extension = {
+    type: 'process',
+    id: 'mesh-tool',
+    name: 'Mesh Tool',
+    entry: 'processor.js',
+    nodes: [{ id: 'simplify' }],
+  }
+
+  assert.deepEqual(
+    mod.markExtensionInstallationInterrupted(extension, true),
+    {
+      ...extension,
+      corrupted: true,
+      manifestError: 'incomplete',
+    },
+  )
+  assert.equal(mod.markExtensionInstallationInterrupted(extension, false), extension)
+})
+
+test('expectedModelIds derives composite IDs and preserves legacy flat IDs', () => {
+  const mod = loadModule()
+
+  assert.deepEqual(
+    mod.expectedModelIds({
+      id: 'pixal3d',
+      type: 'model',
+      nodes: [{ id: 'generate' }, { id: 'preview' }, { id: 'generate' }],
+    }),
+    ['pixal3d/generate', 'pixal3d/preview'],
+  )
+  assert.deepEqual(mod.expectedModelIds({ id: 'legacy-model' }), ['legacy-model'])
+  assert.deepEqual(
+    mod.expectedModelIds({ id: 'mesh-process', type: 'process', nodes: [{ id: 'run' }] }),
+    [],
+  )
+})
+
+test('validateExtensionReloadPayload accepts a complete compatible response', () => {
+  const mod = loadModule()
+  const payload = {
+    reloaded: true,
+    models: ['other/generate', 'pixal3d/generate'],
+    errors: { 'other/broken': 'unrelated failure' },
+  }
+
+  assert.deepEqual(
+    mod.validateExtensionReloadPayload(payload, 'pixal3d', ['pixal3d/generate']),
+    payload,
+  )
+})
+
+test('validateExtensionReloadPayload rejects missing expected model IDs', () => {
+  const mod = loadModule()
+
+  assert.throws(
+    () => mod.validateExtensionReloadPayload(
+      { reloaded: true, models: ['other/generate'], errors: {} },
+      'pixal3d',
+      ['pixal3d/generate'],
+    ),
+    /missing model ID pixal3d\/generate/,
+  )
+})
+
+test('validateExtensionReloadPayload rejects extension and node errors', () => {
+  const mod = loadModule()
+
+  assert.throws(
+    () => mod.validateExtensionReloadPayload(
+      { reloaded: true, models: [], errors: { pixal3d: 'manifest invalid' } },
+      'pixal3d',
+      ['pixal3d/generate'],
+    ),
+    /pixal3d: manifest invalid/,
+  )
+  assert.throws(
+    () => mod.validateExtensionReloadPayload(
+      { reloaded: true, models: [], errors: { 'pixal3d/generate': 'venv not found' } },
+      'pixal3d',
+      ['pixal3d/generate'],
+    ),
+    /pixal3d\/generate: venv not found/,
+  )
+})
+
+test('validateExtensionReloadPayload rejects malformed responses', () => {
+  const mod = loadModule()
+  const malformed = [
+    null,
+    {},
+    { reloaded: false, models: [], errors: {} },
+    { reloaded: true, models: 'pixal3d/generate', errors: {} },
+    { reloaded: true, models: [], errors: [] },
+    { reloaded: true, models: [], errors: { pixal3d: 123 } },
+  ]
+
+  for (const payload of malformed) {
+    assert.throws(
+      () => mod.validateExtensionReloadPayload(payload, 'pixal3d', ['pixal3d/generate']),
+      /malformed response/,
+    )
+  }
+})
+
+test('validateExtensionQuarantinePayload requires target model IDs to be absent', () => {
+  const mod = loadModule()
+  const quarantined = {
+    reloaded: true,
+    models: ['other/generate'],
+    errors: { 'pixal3d/generate': 'interrupted runtime registration' },
+  }
+
+  assert.deepEqual(
+    mod.validateExtensionQuarantinePayload(
+      quarantined,
+      'pixal3d',
+      ['pixal3d/generate'],
+    ),
+    quarantined,
+  )
+  assert.throws(
+    () => mod.validateExtensionQuarantinePayload(
+      {
+        reloaded: true,
+        models: ['pixal3d/generate'],
+        errors: {},
+      },
+      'pixal3d',
+      ['pixal3d/generate'],
+    ),
+    /Runtime quarantine failed.*pixal3d\/generate/,
+  )
+})
+
+test('incompleteInstallRecoveryAction chooses restore, removal, or no-op', () => {
+  const mod = loadModule()
+
+  assert.equal(mod.incompleteInstallRecoveryAction({
+    destinationExists: true,
+    destinationIncomplete: true,
+    backupExists: true,
+  }), 'restore-backup')
+  assert.equal(mod.incompleteInstallRecoveryAction({
+    destinationExists: true,
+    destinationIncomplete: true,
+    backupExists: false,
+  }), 'remove-incomplete')
+  assert.equal(mod.incompleteInstallRecoveryAction({
+    destinationExists: false,
+    destinationIncomplete: false,
+    backupExists: true,
+  }), 'restore-backup')
+  assert.equal(mod.incompleteInstallRecoveryAction({
+    destinationExists: true,
+    destinationIncomplete: false,
+    backupExists: true,
+  }), 'none')
+})
+
+test('managed model node ids reject portable aliases before installation', () => {
+  const { validateInstallManifest } = loadModule()
+  const opts = { hasGeneratorFile: () => true, hasEntryFile: () => true }
+  for (const ids of [['Fast', 'fast'], ['fast', 'fast']]) {
+    const manifest = {
+      id: 'demo', type: 'model', generator_class: 'Generator',
+      weight_groups: [{ id: 'base', model_sources: [{ id: 'main', provider: 'huggingface', repo_id: 'org/base', destination: '.', checks: ['weights.bin'] }] }],
+      nodes: ids.map((id) => ({ id, weight_groups: ['base'] })),
+    }
+    assert.throws(() => validateInstallManifest(manifest, opts, 'test'), /portable-unique/)
+  }
+})
+
+test('validateInstallManifest validates weight variants and keeps them off process nodes', () => {
+  const mod = loadModule()
+  const files = { hasEntryFile: () => true, hasGeneratorFile: () => true }
+  const weightVariants = {
+    param: 'quant',
+    options: [{ id: 'Q4', include_prefixes: ['dit/model_Q4.gguf'], checks: ['dit/model_Q4.gguf'] }],
+  }
+  const paramsSchema = [{ id: 'quant', type: 'select', options: [{ value: 'Q4' }] }]
+  assert.doesNotThrow(() => mod.validateInstallManifest({
+    id: 'quantized', generator_class: 'Generator', params_schema: paramsSchema,
+    nodes: [{ id: 'generate', hf_repo: 'org/model', weight_variants: weightVariants }],
+  }, files, 'repository'))
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'quantized', generator_class: 'Generator',
+    nodes: [{ id: 'generate', hf_repo: 'org/model', weight_variants: weightVariants }],
+  }, files, 'repository'), /must name a params_schema entry/)
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'quantized', generator_class: 'Generator', params_schema: paramsSchema,
+    nodes: [{ id: 'generate', weight_variants: weightVariants }],
+  }, files, 'repository'), /requires hf_repo/)
+  assert.throws(() => mod.validateInstallManifest({
+    id: 'proc', type: 'process', entry: 'processor.js',
+    nodes: [{ id: 'run', hf_repo: 'org/model', weight_variants: weightVariants }],
+  }, files, 'repository'), /weight_variants is supported only for model nodes/)
+})
+

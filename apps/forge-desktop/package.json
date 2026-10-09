@@ -1,0 +1,136 @@
+{
+  "name": "modly",
+  "version": "0.4.3",
+  "description": "Local AI-powered 3D mesh generation from images",
+  "main": "./out/main/index.js",
+  "author": "Modly",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/build-builtins.mjs && electron-vite dev",
+    "build": "node scripts/build-builtins.mjs && electron-vite build",
+    "preview": "electron-vite preview",
+    "prepare": "node scripts/setup-hooks.mjs",
+    "prepare-resources": "node scripts/download-python-embed.js",
+    "test": "npm run test:py && npm run test:node",
+    "test:py": "node scripts/run-pytests.mjs",
+    "test:node": "node --test --experimental-strip-types --experimental-loader ./scripts/node-ts-extensionless-loader.mjs src/shared/types/assetLibrary.test.ts src/areas/generate/assetLibraryProjection.test.ts src/areas/generate/assetLibraryService.test.ts src/areas/generate/assetLibraryUi.test.ts src/areas/generate/orcaSlicerLink.test.ts electron/main/artifact-registry-service.test.ts electron/main/extension-path-guard.test.ts electron/preload/artifact-registry-preload.test.ts && node --test electron/main/*.test.mjs src/**/*.test.mjs",
+    "package": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run build && npm run prepare-resources && electron-builder",
+    "package:mac": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run build && npm run prepare-resources && electron-builder --mac --arm64",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
+    "@mkkellogg/gaussian-splats-3d": "^0.4.7",
+    "@react-three/drei": "^9.120.0",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/postprocessing": "^2.19.1",
+    "@xyflow/react": "^12.10.2",
+    "axios": "^1.7.9",
+    "electron-updater": "^6.8.3",
+    "esbuild": "^0.28.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tar": "^7.5.9",
+    "three": "^0.171.0",
+    "three-mesh-bvh": "^0.9.9",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/tar": "^7.0.87",
+    "@types/three": "^0.171.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "cross-env": "^10.1.0",
+    "electron": "^42.11.1",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.61.1",
+    "vite": "^7.0.0"
+  },
+  "overrides": {
+    "esbuild": "^0.28.0"
+  },
+  "build": {
+    "appId": "com.modly.app",
+    "productName": "Modly",
+    "directories": {
+      "output": "dist"
+    },
+    "afterPack": "scripts/after-pack.js",
+    "files": [
+      "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "api",
+        "to": "api",
+        "filter": [
+          "**/*",
+          "!.venv/**/*",
+          "!__pycache__/**/*",
+          "!**/build/**/*",
+          "!**/*.pyd",
+          "!**/*.egg-info/**/*"
+        ]
+      },
+      {
+        "from": "out/builtin-extensions",
+        "to": "builtin-extensions"
+      }
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "lightningpixel",
+      "repo": "modly"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "icon": "resources/icons/icon.ico",
+      "extraResources": [
+        {
+          "from": "resources/python-embed",
+          "to": "python-embed"
+        }
+      ]
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "resources/icons/icon.icns",
+      "artifactName": "${productName}-${version}-arm64.${ext}",
+      "identity": null,
+      "category": "public.app-category.graphics-design",
+      "extraResources": [
+        {
+          "from": "resources/python-embed",
+          "to": "python-embed"
+        }
+      ]
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "resources/icons/icon.png",
+      "extraResources": [
+        {
+          "from": "resources/python-embed",
+          "to": "python-embed"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "mesh-remesher",
+  "name": "Mesh Remesher",
+  "type": "process",
+  "entry": "processor.py",
+  "version": "1.0.0",
+  "author": "Modly",
+  "description": "Regularizes mesh topology with isotropic remeshing. Quad mode is quad-dominant cleanup, not character retopology.",
+  "nodes": [
+    {
+      "id": "remesh",
+      "name": "Remesh",
+      "input": "mesh",
+      "output": "mesh",
+      "params_schema": [
+        {
+          "id": "mode",
+          "label": "Mode",
+          "type": "select",
+          "default": "triangle",
+          "options": [
+            { "value": "triangle", "label": "Triangle" },
+            { "value": "quad",     "label": "Quad-Dominant" },
+            { "value": "none",     "label": "None" }
+          ],
+          "tooltip": "Triangle produces a clean uniform triangulation. Quad-Dominant attempts more regular polygon flow for cleanup, but it is not character-oriented retopology. None passes the mesh through unchanged."
+        },
+        {
+          "id": "target_edge_length",
+          "label": "Target Edge Length",
+          "type": "float",
+          "default": 0.0,
+          "min": 0.0,
+          "max": 1.0,
+          "step": 0.001,
+          "tooltip": "Target edge length in world units. Set to 0 for automatic (uses average edge length of the input mesh)."
+        }
+      ]
+    }
+  ]
+}
