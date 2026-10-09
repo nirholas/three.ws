@@ -106,47 +106,98 @@ cd ios && npm install && npm run sync
 
 ## 5. On a Mac: archive, sign, upload
 
+### Once per Mac: signing
+
 ```bash
-cd ios && npm run open        # opens native/App/App.xcodeproj
+cd ios && npm install && npm run open   # opens native/App/App.xcodeproj
 ```
 
-In Xcode:
+Capacitor 8 resolves its plugins through Swift Package Manager, so there is no
+`.xcworkspace` and no CocoaPods step: `App.xcodeproj` is the whole project.
 
 1. Select the **App** target, Signing & Capabilities, choose the team. Confirm
    Associated Domains lists `applinks:three.ws` and Push Notifications is
    present; both come from `App/App.entitlements`. App Groups should list
    `group.ws.three.app` and Keychain Sharing `ws.three.shared`, which are what
    the Agent glance widget reads.
-1b. Select the **GlanceWidgetExtension** target and choose the same team. It
+2. Select the **GlanceWidgetExtension** target and choose the same team. It
    needs the same App Group and Keychain Sharing entries; both expand from
    `DEVELOPMENT_TEAM`, so nothing else has to be typed. A build with no team on
    this target fails to sign the .appex and the archive is rejected.
-1c. Select the **ShareExtension** target and choose the same team. It needs
+3. Select the **ShareExtension** target and choose the same team. It needs
    only the App Group, which is where it parks shared photos and models for the
    app. Without the group the extension still appears in the share sheet but
    the app never finds what was shared.
-2. Set the marketing version and build number. `MARKETING_VERSION` is `1.0`
-   and `CURRENT_PROJECT_VERSION` is `1` in the project file; the build number
-   must increase on every upload.
-3. Replace the placeholder app icon in `App/Assets.xcassets` per
-   [`ASSETS.md`](ASSETS.md). Xcode rejects an archive with a missing icon.
-4. Product > Archive, then Distribute App > App Store Connect > Upload.
+4. Check the app icon per [`ASSETS.md`](ASSETS.md); `npm run check:ios-icons`
+   at the repo root confirms the catalog is complete. Xcode rejects an archive
+   with a missing icon.
 
-Capacitor 8 resolves its plugins through Swift Package Manager, so there is no
-`.xcworkspace` and no CocoaPods step: `App.xcodeproj` is the whole project.
+Skip all four on a build Mac with no Xcode account by using an App Store
+Connect API key instead (below): automatic signing then creates and fetches
+the profiles itself.
 
-Headless alternative once signing is configured, for a Mac build machine or
-Xcode Cloud:
+### Every upload: one command
+
+From the repo root:
 
 ```bash
-xcodebuild -project native/App/App.xcodeproj -scheme App \
-  -configuration Release -archivePath build/App.xcarchive archive
-xcodebuild -exportArchive -archivePath build/App.xcarchive \
-  -exportOptionsPlist ExportOptions.plist -exportPath build/export
+APPLE_TEAM_ID=<team id> npm run ios:release
 ```
 
-`ExportOptions.plist` does not exist yet; it needs the real team ID and
-provisioning profile name, so it is written at the same time as step 1.
+That is [`../scripts/release.mjs`](../scripts/release.mjs), and it runs, in
+order:
+
+1. `scripts/check-ios-app.mjs`, the structural check (targets, plugins, privacy
+   manifests, entitlements, build settings). A red one is a build Apple would
+   reject or a feature that is silently dead on device.
+2. `npm ci` and `npx cap sync ios` in `ios/`, which write the gitignored
+   `capacitor.config.json`, `config.xml` and shell bundle the archive copies.
+   An archive made without them launches to a blank screen.
+3. `xcodebuild archive`, Release, automatic signing for `APPLE_TEAM_ID`.
+4. `xcodebuild -exportArchive` with an `ExportOptions.plist` it writes itself
+   (method `app-store-connect`, destination `upload`), which sends the build
+   straight to App Store Connect. No Transporter step.
+
+The build number is the UTC time of the run, `YYMMDD.HMM` (for example
+`261009.1907`), so it rises on every upload without anyone tracking the last
+one. All three targets read it from the same build setting, which App Store
+Connect requires of an app and its extensions.
+
+| Flag | Effect |
+|---|---|
+| `--dry-run` | Validates everything, writes `ExportOptions.plist`, prints every command. Runs on Linux too: `APPLE_TEAM_ID=<team id> npm run ios:release:dry` |
+| `--marketing-version 1.1` | Sets `CFBundleShortVersionString` for this build. Bump it for each App Store release; TestFlight builds can share one. |
+| `--build-number N` | Overrides the timestamp build number. |
+| `--export-only` | Writes the `.ipa` to `ios/native/App/build/export` instead of uploading. |
+| `--skip-sync` | Skips `npm ci` and `cap sync`, for a rerun right after a sync. |
+| `--carplay` | Signs with `App/App-CarPlay.entitlements`. Only after Apple grants the entitlement; see [`CARPLAY.md`](CARPLAY.md). |
+
+For a build Mac with no Xcode account, create an App Store Connect API key
+(Users and Access, Integrations, App Store Connect API, role **App Manager**),
+download its `.p8` once, and set all three alongside the team id. They can live
+in the repo-root `.env.local`, which the script reads and git ignores:
+
+```bash
+APPLE_TEAM_ID=<team id>
+ASC_KEY_ID=<key id>
+ASC_ISSUER_ID=<issuer id>
+ASC_KEY_PATH=/path/to/AuthKey_<key id>.p8
+```
+
+Setting only some of the three fails before anything builds.
+
+### Or: Xcode Cloud
+
+The project is ready for it as checked in: the **App** scheme is shared
+(`App.xcodeproj/xcshareddata`), so Xcode Cloud can see it, and
+[`../native/App/ci_scripts/ci_post_clone.sh`](../native/App/ci_scripts/ci_post_clone.sh)
+installs Node, runs the structural check and `cap sync` before the build.
+
+In Xcode, Integrate, Create Workflow: product **App**, start condition on
+`main` (or a `release/*` branch), action **Archive** for iOS, post-action
+**TestFlight Internal Testing**. Xcode Cloud numbers builds itself. To sign a
+cloud build with CarPlay once the grant exists, add the environment variable
+`THREEWS_CARPLAY=1` to the workflow.
 
 ## 6. TestFlight, then review
 
@@ -170,4 +221,6 @@ provisioning profile name, so it is written at the same time as step 1.
 - [ ] An off-site link opens the Safari sheet and returns to the app
 - [ ] Account deletion is reachable in-app (guideline 5.1.1)
 - [ ] No white flash between launch screen and first paint
-- [ ] Value-moving surfaces open in Safari, per `REVIEW-RISK.md`
+- [ ] Value-moving surfaces open in Safari, signed in, per `REVIEW-RISK.md`: tap Launch on `/create` or Buy credits on `/credits`, choose Open in Safari, and Safari lands on the same page under the same account
+- [ ] Privacy answers in App Store Connect match `App/PrivacyInfo.xcprivacy` (see `../publish/listing.md`)
+- [ ] `/api/auth/handoff` is live: `curl -sI 'https://three.ws/api/auth/handoff?next=%2Flaunch'` answers `302` with `location: https://three.ws/launch`

@@ -153,6 +153,7 @@ section(() => {
 	const callers = {
 		takeShare: read('src/shared/share-target.js'),
 		setBadge: read('ios/src/native-bridge.js'),
+		openInSafari: read('ios/src/native-bridge.js'),
 	};
 	for (const [m, js] of Object.entries(callers)) {
 		if (!methods.includes(m)) fail(`the web calls ThreeWsApp.${m}, which the plugin does not declare`);
@@ -179,6 +180,92 @@ section(() => {
 	if (!read('api/_lib/notify.js').includes('sendApnsToUser')) fail('api/_lib/notify.js does not fan out to APNs');
 	if (!read('ios/src/native-bridge.js').includes('pushNotificationActionPerformed')) fail('the bridge does not route a tapped push');
 	return 'push is wired from the app delegate through the device endpoint to the notification fan-out';
+});
+
+// ------------------------------------------------- upload readiness ---
+
+// Required reason APIs (ITMS-91053). App Store Connect refuses a build whose
+// binary calls one of these without a manifest naming the category. Each row
+// maps a call to its category; the plugin rows cover Capacitor plugins that
+// Swift Package Manager links straight into the app and that ship no manifest.
+const REASON_APIS = [
+	{ category: 'NSPrivacyAccessedAPICategoryFileTimestamp', swift: /creationDate|contentModificationDate|modificationDate|attributesOfItem|\bstat\(/ },
+	{ category: 'NSPrivacyAccessedAPICategoryUserDefaults', swift: /UserDefaults/ },
+	{ category: 'NSPrivacyAccessedAPICategorySystemBootTime', swift: /systemUptime|mach_absolute_time/ },
+	{ category: 'NSPrivacyAccessedAPICategoryDiskSpace', swift: /volumeAvailableCapacity|systemFreeSize|systemSize\b/ },
+	{ category: 'NSPrivacyAccessedAPICategoryActiveKeyboards', swift: /activeInputModes/ },
+];
+const PLUGIN_REASONS = {
+	'@capacitor/preferences': 'NSPrivacyAccessedAPICategoryUserDefaults',
+	'@capacitor/filesystem': 'NSPrivacyAccessedAPICategoryFileTimestamp',
+};
+
+section(() => {
+	const targets = [
+		{ name: 'App', dir: 'ios/native/App/App', group: 'App' },
+		{ name: 'ShareExtension', dir: 'ios/native/App/ShareExtension', group: 'ShareExtension' },
+	];
+	const iosDeps = Object.keys(JSON.parse(read('ios/package.json') || '{}').dependencies || {});
+	for (const t of targets) {
+		const manifest = read(`${t.dir}/PrivacyInfo.xcprivacy`);
+		if (!manifest) continue;
+		// Membership in the target's Resources phase is what puts the file in
+		// the bundle; a manifest on disk that no phase copies is not uploaded.
+		const targetBlock = pbx.match(new RegExp(`/\\* ${t.name} \\*/ = \\{\\n\\t\\t\\tisa = PBXNativeTarget;[\\s\\S]*?\\n\\t\\t\\};`))?.[0] || '';
+		const resId = targetBlock.match(/(\w{24}) \/\* Resources \*\//)?.[1];
+		const phase = resId && pbx.match(new RegExp(`${resId} /\\* Resources \\*/ = \\{\\n\\t\\t\\tisa = PBXResourcesBuildPhase;[\\s\\S]*?\\n\\t\\t\\};`))?.[0];
+		if (!phase?.includes('PrivacyInfo.xcprivacy in Resources')) fail(`${t.dir}/PrivacyInfo.xcprivacy is not in the ${t.name} target's Resources phase`);
+		if (!/<key>NSPrivacyTracking<\/key>\s*<(true|false)\/>/.test(manifest)) fail(`${t.dir}/PrivacyInfo.xcprivacy does not declare NSPrivacyTracking`);
+
+		const sources = readdirSync(join(REPO, t.dir)).filter((f) => f.endsWith('.swift'));
+		// SharedInbox.swift lives with the extension but is compiled into both binaries.
+		if (!sources.includes('SharedInbox.swift')) sources.push('../ShareExtension/SharedInbox.swift');
+		const swift = sources.map((f) => read(`${t.dir}/${f}`).replace(/^\s*\/\/.*$/gm, '')).join('\n');
+		const needed = new Set(REASON_APIS.filter((r) => r.swift.test(swift)).map((r) => r.category));
+		if (t.name === 'App') for (const [dep, category] of Object.entries(PLUGIN_REASONS)) if (iosDeps.includes(dep)) needed.add(category);
+		for (const category of needed) {
+			const entry = manifest.match(new RegExp(`<string>${category}</string>\\s*<key>NSPrivacyAccessedAPITypeReasons</key>\\s*<array>\\s*<string>[0-9A-F]{4}\\.\\d</string>`));
+			if (!entry) fail(`${t.name} calls a ${category.replace('NSPrivacyAccessedAPICategory', '')} API but ${t.dir}/PrivacyInfo.xcprivacy gives no reason for it (ITMS-91053)`);
+		}
+	}
+	return 'the app and the share extension each bundle a privacy manifest covering every required reason API they call';
+});
+
+section(() => {
+	// CarPlay is granted per app. codesign refuses an archive whose entitlements
+	// name a capability its provisioning profile lacks, so the key lives in an
+	// opt-in file and the default one must never carry it.
+	const key = 'com.apple.developer.carplay-voice-based-conversation';
+	const keys = (xml) => [...xml.replace(/<!--[\s\S]*?-->/g, '').matchAll(/<key>([^<]+)<\/key>\s*(<[\s\S]*?)(?=\s*<key>|\s*<\/dict>\s*<\/plist>)/g)].map((m) => [m[1], m[2].replace(/\s+/g, '')]);
+	const base = keys(read('ios/native/App/App/App.entitlements'));
+	const carplay = keys(read('ios/native/App/App/App-CarPlay.entitlements'));
+	if (base.some(([k]) => k === key)) fail(`App.entitlements carries ${key}; an archive signed before Apple grants it fails codesign`);
+	if (!carplay.some(([k]) => k === key)) fail(`App-CarPlay.entitlements does not carry ${key}`);
+	const rest = JSON.stringify(carplay.filter(([k]) => k !== key));
+	if (rest !== JSON.stringify(base)) fail('App-CarPlay.entitlements has drifted from App.entitlements; apart from the CarPlay key they must be identical');
+	const selectors = [...pbx.matchAll(/THREEWS_APP_ENTITLEMENTS = ([^;]+);/g)].map((m) => m[1]);
+	if (selectors.length !== 2 || selectors.some((s) => s !== 'App/App.entitlements')) {
+		fail('the App target must default THREEWS_APP_ENTITLEMENTS to App/App.entitlements in Debug and Release');
+	}
+	if ((pbx.match(/CODE_SIGN_ENTITLEMENTS = "\$\(THREEWS_APP_ENTITLEMENTS\)";/g) || []).length !== 2) {
+		fail('the App target does not sign with $(THREEWS_APP_ENTITLEMENTS), so the release script cannot opt into CarPlay');
+	}
+	if (!read('ios/scripts/release.mjs').includes('App/App-CarPlay.entitlements')) fail('ios/scripts/release.mjs has no way to sign with App-CarPlay.entitlements');
+	return 'CarPlay is opt-in at signing time, so a build without the grant still archives';
+});
+
+section(() => {
+	// The app and every extension it embeds must carry the same build number,
+	// or App Store Connect rejects the upload (ITMS-90473).
+	const builds = new Set([...pbx.matchAll(/CURRENT_PROJECT_VERSION = ([^;]+);/g)].map((m) => m[1]));
+	if (builds.size !== 1) fail(`CURRENT_PROJECT_VERSION differs between targets: ${[...builds].join(', ')}`);
+	for (const plist of ['ios/native/App/App/Info.plist', 'ios/native/App/ShareExtension/Info.plist', 'apple/GlanceWidget/Info.plist']) {
+		const xml = read(plist);
+		if (!/<key>CFBundleVersion<\/key>\s*<string>\$\(CURRENT_PROJECT_VERSION\)<\/string>/.test(xml)) fail(`${plist} hardcodes CFBundleVersion instead of $(CURRENT_PROJECT_VERSION), so the release script cannot bump it`);
+		if (!/<key>CFBundleShortVersionString<\/key>\s*<string>\$\(MARKETING_VERSION\)<\/string>/.test(xml)) fail(`${plist} hardcodes CFBundleShortVersionString instead of $(MARKETING_VERSION)`);
+	}
+	if (!/<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\/>/.test(appPlist)) fail('Info.plist does not answer ITSAppUsesNonExemptEncryption, so every TestFlight build waits on the export compliance question');
+	return 'every target shares one build number and version, set from the build settings the release script overrides';
 });
 
 // ------------------------------------------------------- quick actions ---

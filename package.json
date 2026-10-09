@@ -509,6 +509,8 @@
 		"check:windows-widget": "node scripts/check-windows-widget.mjs",
 		"check:windows-widget:live": "node scripts/check-windows-widget.mjs --live",
 		"ios:open": "npm --prefix ios run open",
+		"ios:release": "node ios/scripts/release.mjs",
+		"ios:release:dry": "node ios/scripts/release.mjs --dry-run",
 		"clean:worktrees": "node scripts/clean-deploy-worktrees.mjs",
 		"prep:worktree": "node scripts/prepare-deploy-worktree.mjs",
 		"check:browser-graph": "node scripts/check-browser-graph.mjs",

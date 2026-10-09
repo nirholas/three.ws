@@ -704,6 +704,11 @@ export async function payEvm({ accept, resourceUrl, walletName, onStatus, reques
 // Single entry point for the paywall controller. Routes a wallet button to the
 // correct chain-specific payer based on the network of the matching `accept`.
 export async function pay({ accept, resourceUrl, walletName, onStatus, origin, request }) {
+	// Inside the three.ws iOS app, payments open in Safari (ios/src/native-bridge.js
+	// shows the sheet that takes the visitor there).
+	if (globalThis.threeWsNative?.requireSafari?.() === true) {
+		throw Object.assign(new Error('Payments continue in Safari.'), { code: 'native_handoff' });
+	}
 	if (isSolanaNetwork(accept?.network)) {
 		return paySolana({ accept, resourceUrl, walletName, onStatus, origin, request });
 	}

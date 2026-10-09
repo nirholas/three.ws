@@ -806,6 +806,8 @@
 					saml_error: 'Something went wrong completing single sign-on.',
 					account_deleted: 'This account has been deleted.',
 					rate_limited: 'Too many attempts. Please try again in a moment.',
+					handoff_expired:
+						'That link from the three.ws app has expired. Sign in here to continue where you left off.',
 				};
 				const errCode = params.get('error');
 				if (errEl && errCode && SSO_MESSAGES[errCode]) {

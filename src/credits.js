@@ -11,6 +11,7 @@
 import { getAdapter } from './onchain/adapters/index.js';
 import { resolveTokenProgramId } from './shared/spl-token-program.js';
 import { solToUsd, getTokenPriceUsd } from './shared/usd-price.js';
+import { leaveAppForPayment } from './shared/native-handoff.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -431,6 +432,7 @@ async function buildThreeTransfer({ web3, spl, conn, from, to, amount, mintStr, 
 }
 
 async function doDeposit() {
+	if (leaveAppForPayment()) return;
 	const btn = $('deposit-btn');
 	const amount = Number($('amount').value);
 	if (!(amount > 0)) return setStatus('Enter an amount greater than zero.', 'err');

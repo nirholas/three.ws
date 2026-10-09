@@ -639,6 +639,12 @@ export const limits = {
 	// code; anything faster is answered `slow_down` by the handler first.
 	cliLinkIp: (ip) =>
 		getLimiter('cli:link:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	// iOS app to Safari session handoff (api/auth/handoff.js). Minting is one
+	// tap on a payment, launch or trade surface, so 30 per 10 min per user is
+	// far above a real person and keeps a hijacked WebView from filling the
+	// table with live codes.
+	sessionHandoffUser: (userId) =>
+		getLimiter('auth:handoff:user', { limit: 30, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
 	cliPoll: (deviceHash) =>
 		getLimiter('cli:poll', { limit: 240, window: '10 m', local: true }).limit(deviceHash),
 	// Open inference network (api/nodes/*). Node registration is an idempotent

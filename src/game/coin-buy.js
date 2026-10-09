@@ -23,6 +23,7 @@ import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/
 import { createSafetyPanel } from '../shared/safety-panel.js';
 import { createSmartMoneyPanel } from '../shared/smart-money-panel.js';
 import { proxiedImageURL } from '../ipfs.js';
+import { leaveAppForPayment } from '../shared/native-handoff.js';
 
 const WSOL = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = {
@@ -134,6 +135,7 @@ function friendlyTradeError(err, mode = 'buy') {
  */
 export function openBuyModal(coin, opts = {}) {
 	if (!coin?.mint) return;
+	if (leaveAppForPayment()) return;
 	if (_open) {
 		if (_open.coin?.mint === coin.mint) { _open.focus(); return; }
 		_open.close();

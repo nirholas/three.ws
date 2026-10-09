@@ -5306,6 +5306,10 @@
 			"dest": "/api/auth/extension-token.js"
 		},
 		{
+			"src": "/api/auth/handoff",
+			"dest": "/api/auth/handoff.js"
+		},
+		{
 			"src": "/api/auth/([^/]+)",
 			"dest": "/api/auth/[action]?action=$1"
 		},

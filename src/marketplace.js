@@ -29,6 +29,7 @@ import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { resizedImageUrl } from './shared/image-url.js';
+import { leaveAppForPayment } from './shared/native-handoff.js';
 ensureStateKitStyles();
 
 const API = '/api';
@@ -2025,6 +2026,7 @@ function renderSubscriptionTiers(agent) {
 }
 
 async function initiateSubscription(planId, btn) {
+	if (leaveAppForPayment()) return;
 	if (!currentUserId) {
 		location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 		return;
@@ -7221,6 +7223,7 @@ function shortMintLabel(mint) {
 
 
 async function openTimePassFlow(agentId, skill, durationHours, btn) {
+	if (leaveAppForPayment()) return;
 	if (!detailState?.agent || detailState.agent.id !== agentId) {
 		alert('Agent not loaded; refresh and try again.');
 		return;
@@ -7297,6 +7300,7 @@ async function openTrialFlow(agentId, skill, btn) {
 }
 
 async function openPurchaseFlow(agentId, skill) {
+	if (leaveAppForPayment()) return;
 	if (!detailState?.agent || detailState.agent.id !== agentId) {
 		alert('Agent not loaded; refresh and try again.');
 		return;
@@ -7372,6 +7376,7 @@ async function createPendingPurchase(agentId, skill, durationHours = null) {
 let pendingAssetPurchase = null; // { item_type, item_id, label, price }
 
 function openAssetPurchaseFlow(asset) {
+	if (leaveAppForPayment()) return;
 	const confirmBtn = $('payment-confirm-btn');
 	const skillName = $('payment-skill-name');
 	const agentName = $('payment-agent-name');

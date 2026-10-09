@@ -73,6 +73,9 @@ function _degradedConfirm() {
  * @returns {Promise<boolean>}
  */
 export async function ensureRiskAck(opts) {
+	// Checked here as well as in public/risk-ack.js so the degraded confirm()
+	// path below cannot run a payment inside the iOS app either.
+	if (globalThis.threeWsNative?.requireSafari?.(undefined, { context: opts?.context ?? 'real-funds' }) === true) return false;
 	let m;
 	try {
 		m = await _mod();

@@ -3,13 +3,10 @@
 <plist version="1.0">
 <dict>
 	<!--
-		The entitlements every build signs with. CarPlay is NOT here: Apple grants
-		it per app, and codesign refuses to sign an archive whose entitlements
-		name a capability its provisioning profile lacks, so carrying the key
-		before the grant breaks every TestFlight upload. App-CarPlay.entitlements
-		is this file plus the CarPlay key; the THREEWS_APP_ENTITLEMENTS build
-		setting picks between them (the carplay flag of ios/scripts/release.mjs), and
-		scripts/check-ios-app.mjs keeps the two files identical apart from it.
+		App.entitlements plus the CarPlay grant. Selected through the
+		THREEWS_APP_ENTITLEMENTS build setting once Apple has granted CarPlay;
+		every other key must match App.entitlements exactly, which
+		scripts/check-ios-app.mjs enforces.
 	-->
 
 	<!--
@@ -35,6 +32,15 @@
 	<key>aps-environment</key>
 	<string>development</string>
 
+	<!--
+		CarPlay, voice-based conversational category (iOS 26.4 and later). This
+		is what puts three.ws Drive on the car screen. Apple grants it per app
+		on request (https://developer.apple.com/carplay/). Sign with this file
+		only once the grant is on the App ID and in the provisioning profile:
+		the carplay flag of ios/scripts/release.mjs. See ios/docs/CARPLAY.md.
+	-->
+	<key>com.apple.developer.carplay-voice-based-conversation</key>
+	<true/>
 	<!--
 		The Agent glance home screen widget. The App Group holds the last card
 		the widget downloaded, so it keeps painting when the phone is offline,

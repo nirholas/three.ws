@@ -1411,6 +1411,8 @@
 					// Signed out (or already upgraded) → let the link navigate.
 					if (!user || ['pro', 'team', 'enterprise'].includes(user.plan)) return;
 					e.preventDefault();
+					// In the iOS app, plans are bought on three.ws in Safari.
+					if (window.threeWsNative?.requireSafari?.() === true) return;
 					openModal();
 				});
 

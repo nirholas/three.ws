@@ -24,6 +24,7 @@
 
 import { log } from './log.js';
 import { showToast } from '../ui-helpers.js';
+import { leaveAppForPayment } from './native-handoff.js';
 
 export const USDC_MAINNET_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
@@ -702,6 +703,7 @@ async function pollConfirm(reference, windowMs = 60_000) {
 // ── Skill purchase flows ────────────────────────────────────────────────────
 
 export async function openPurchaseFlow(agentId, skill) {
+	if (leaveAppForPayment()) return;
 	ensureModal();
 	const agent = cfg.getAgent();
 	if (!agent || agent.id !== agentId) { alert('Agent not loaded; refresh and try again.'); return; }
@@ -742,6 +744,7 @@ export async function openPurchaseFlow(agentId, skill) {
 }
 
 export async function openTimePassFlow(agentId, skill, durationHours, btn) {
+	if (leaveAppForPayment()) return;
 	ensureModal();
 	const agent = cfg.getAgent();
 	if (!agent || agent.id !== agentId) { alert('Agent not loaded; refresh and try again.'); return; }
@@ -816,6 +819,7 @@ export async function openTrialFlow(agentId, skill, btn) {
 let pendingAssetPurchase = null;
 
 export function openAssetPurchaseFlow(asset) {
+	if (leaveAppForPayment()) return;
 	ensureModal();
 	const confirmBtn = $('payment-confirm-btn');
 	const skillName = $('payment-skill-name');
@@ -1228,6 +1232,7 @@ let pendingSubscription = null;
  * @param {{ id: string, name: string, price_usd: number, interval: string, perks?: string[] }} tier
  */
 export async function openSubscribeFlow(agentId, tier) {
+	if (leaveAppForPayment()) return;
 	ensureModal();
 	const agent = cfg.getAgent();
 	if (!agent || agent.id !== agentId) { alert('Agent not loaded; refresh and try again.'); return; }
