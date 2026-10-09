@@ -6,7 +6,8 @@
 // alarms within minutes if money leaves anyway — a compromised key, a bug, or a
 // path the assertions don't cover.
 //
-// Every 10 min, for each ring wallet:
+// Every 10 min, for every role wallet and the next budget's worth of the
+// registry (walked round-robin across runs, see RUN_BUDGET_MS):
 //   1. getSignaturesForAddress(limit 100, until=<persisted cursor>) — only
 //      signatures newer than the last scan. Cursor persisted per wallet so RPC
 //      stays bounded and each tx is classified exactly once.
@@ -37,6 +38,7 @@ import { env } from '../_lib/env.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';
+import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
 import { ringAllowedAddresses, ringRoleWallets } from '../_lib/x402/ring-allowlist.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -49,6 +51,23 @@ const SOL_RESIDUAL_FLOOR_LAMPORTS = 5_000;
 // Fee-book divergence: on-chain observed fees vs task 05's audit rollup.
 const FEE_DIVERGENCE_THRESHOLD = 0.20;
 const CANONICAL_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+// Run shape. The registry holds every fresh-worker payer ever provisioned (2,006
+// enabled on 2026-10-09), and a wallet costs a cursor read plus an RPC call, so a
+// full pass took 600-900 s against a 300 s maxDuration. The economy tick also
+// fires this route every minute on top of its own */10 schedule, and nothing
+// stopped a second run while the first was still going: production carried about
+// eight overlapping full scans at all times, each re-reading the same wallets and
+// burning the RPC quota every other Solana read depends on. So a run now holds a
+// lease that doubles as the native cadence, stops starting wallets inside a
+// budget well under maxDuration, and the registry is walked round-robin from
+// where the last run stopped. The role wallets, which hold the money, are read
+// on every run.
+const LEASE_KEY = 'cron:x402-ring-leak-scan:lease';
+const LEASE_SECONDS = 9 * 60;
+const OFFSET_KEY = 'cron:x402-ring-leak-scan:offset';
+const RUN_BUDGET_MS = 200_000;
+const SCAN_CONCURRENCY = 4;
 
 // ── Pure classification (exported for tests) ──────────────────────────────────
 
@@ -330,16 +349,60 @@ function dayOf(blockTime, nowMs) {
 
 // ── Wallets to scan ───────────────────────────────────────────────────────────
 
-/** The ring wallets that actually hold/move funds: the role wallets + registry. */
+/** The ring wallets to scan: the role wallets that hold the money, and the registry. */
 async function ringScanWallets() {
-	const out = new Set();
-	const roles = await ringRoleWallets();
-	for (const pk of Object.values(roles)) if (pk) out.add(pk);
+	const roles = Object.values(await ringRoleWallets()).filter(Boolean);
+	let registry = [];
 	try {
-		const rows = await withDbRetry(() => sql`SELECT pubkey FROM x402_ring_wallets WHERE enabled = true`);
-		for (const r of rows) if (r?.pubkey) out.add(r.pubkey);
-	} catch { /* env-derived set stands */ }
-	return [...out];
+		const rows = await withDbRetry(() => sql`SELECT pubkey FROM x402_ring_wallets WHERE enabled = true ORDER BY pubkey`);
+		registry = rows.map((r) => r?.pubkey).filter(Boolean);
+	} catch { /* role wallets alone still get scanned */ }
+	return { roles, registry };
+}
+
+/**
+ * Order one run's work: every role wallet, then the registry rotated to start at
+ * `offset` so successive budget-bounded runs cover all of it in turn. Pure.
+ * @param {string[]} roles
+ * @param {string[]} registry
+ * @param {number} offset
+ * @returns {{ roles: string[], rotation: string[], start: number }}
+ */
+export function scanPlan(roles, registry, offset) {
+	const roleList = [...new Set((roles || []).filter(Boolean))];
+	const roleSet = new Set(roleList);
+	const rest = [...new Set((registry || []).filter(Boolean))].filter((w) => !roleSet.has(w));
+	const n = Number.isFinite(Number(offset)) ? Math.trunc(Number(offset)) : 0;
+	const start = rest.length ? ((n % rest.length) + rest.length) % rest.length : 0;
+	return { roles: roleList, rotation: [...rest.slice(start), ...rest.slice(0, start)], start };
+}
+
+/**
+ * Scan `queue` with `concurrency` workers, never STARTING a wallet once
+ * `budgetMs` has passed. A wallet already started always finishes, so its cursor
+ * is saved. Workers take wallets in queue order, so the ones started form a
+ * prefix and `started` is where the next run picks up.
+ * @param {string[]} queue
+ * @param {(wallet: string) => Promise<any>} scanOne
+ * @param {{ budgetMs: number, concurrency: number, now?: () => number }} opts
+ * @returns {Promise<{ results: any[], started: number }>}
+ */
+export async function scanWithinBudget(queue, scanOne, { budgetMs, concurrency, now = Date.now }) {
+	const deadline = now() + budgetMs;
+	const results = [];
+	let next = 0;
+	const worker = async () => {
+		while (next < queue.length && now() < deadline) {
+			const wallet = queue[next++];
+			try {
+				results.push(await scanOne(wallet));
+			} catch (err) {
+				results.push({ wallet, error: err?.message || 'scan_failed' });
+			}
+		}
+	};
+	await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, queue.length)) }, worker));
+	return { results, started: next };
 }
 
 // ── Per-wallet scan ───────────────────────────────────────────────────────────
@@ -519,6 +582,12 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 
+	// One run per cadence window, whoever fires it. The lease is never released:
+	// its TTL IS the cadence, and the budget below keeps a run well inside it.
+	if (!(await acquireLock(LEASE_KEY, LEASE_SECONDS))) {
+		return json(res, 200, { ok: true, skipped: true, reason: 'lease_held' });
+	}
+
 	const runId = randomUUID();
 	const nowMs = Date.now();
 	await ensureSchema();
@@ -530,26 +599,36 @@ export default wrapCron(async (req, res) => {
 		network: 'mainnet', commitment: 'confirmed',
 	});
 
-	const [allowed, wallets] = await Promise.all([ringAllowedAddresses(), ringScanWallets()]);
+	const [allowed, wallets, offset] = await Promise.all([
+		ringAllowedAddresses(),
+		ringScanWallets(),
+		cacheGet(OFFSET_KEY).catch(() => 0),
+	]);
 	const usdcMint = env.X402_ASSET_MINT_SOLANA;
+	const plan = scanPlan(wallets.roles, wallets.registry, Number(offset) || 0);
 
-	if (wallets.length === 0) {
+	if (plan.roles.length + plan.rotation.length === 0) {
 		return json(res, 200, { ok: true, run_id: runId, skipped: true, reason: 'no_ring_wallets_configured' });
 	}
 
 	const feeByDay = new Map();
-	const results = [];
+	const scanOne = (wallet) => scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, runId, feeByDay });
+	const startedAt = Date.now();
+	const roleRun = await scanWithinBudget(plan.roles, scanOne, { budgetMs: RUN_BUDGET_MS, concurrency: SCAN_CONCURRENCY });
+	const rotationRun = await scanWithinBudget(plan.rotation, scanOne, {
+		budgetMs: Math.max(0, RUN_BUDGET_MS - (Date.now() - startedAt)),
+		concurrency: SCAN_CONCURRENCY,
+	});
+	if (plan.rotation.length) {
+		await cacheSet(OFFSET_KEY, (plan.start + rotationRun.started) % plan.rotation.length, 7 * 24 * 3600).catch(() => {});
+	}
+
+	const results = [...roleRun.results, ...rotationRun.results];
 	let leaks = 0;
 	let delegations = 0;
-	for (const wallet of wallets) {
-		try {
-			const s = await scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, runId, feeByDay });
-			results.push(s);
-			leaks += s.leaks || 0;
-			delegations += s.delegations || 0;
-		} catch (err) {
-			results.push({ wallet, error: err?.message || 'scan_failed' });
-		}
+	for (const s of results) {
+		leaks += s.leaks || 0;
+		delegations += s.delegations || 0;
 	}
 
 	await accrueObservedFee(feeByDay);
@@ -558,7 +637,9 @@ export default wrapCron(async (req, res) => {
 	return json(res, 200, {
 		ok: true,
 		run_id: runId,
-		wallets: wallets.length,
+		wallets: plan.roles.length + plan.rotation.length,
+		scanned_wallets: results.length,
+		deferred_wallets: plan.rotation.length - rotationRun.started,
 		allowed_set_size: allowed.size,
 		leaks,
 		delegations,
