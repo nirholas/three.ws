@@ -196,6 +196,9 @@ function buildWorkerRequest(request) {
 		if (Number.isFinite(Number(params?.resolution))) body.resolution = Math.round(Number(params.resolution));
 		if (params?.tier) body.tier = params.tier;
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		// The worker clamps both (512 to 4096 px, 50k to 2M faces).
+		if (Number.isFinite(Number(params?.texture_size))) body.texture_size = Math.round(Number(params.texture_size));
+		if (Number.isFinite(Number(params?.decimation_target))) body.decimation_target = Math.round(Number(params.decimation_target));
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',

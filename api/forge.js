@@ -2141,6 +2141,10 @@ async function startJobWithBody(req, res, body) {
 							// the tier (draft 512, standard and high 1024).
 							resolution: opts.resolution ?? undefined,
 							tier: tier.id,
+							// Bake overrides. Absent, the resolution preset decides
+							// (512: 2048 px and 300k faces, 1024 and 1536: 4096 px).
+							texture_size: opts.textureSize ?? undefined,
+							decimation_target: opts.targetPolycount ?? undefined,
 						},
 					} : {
 						mode: 'trellis',

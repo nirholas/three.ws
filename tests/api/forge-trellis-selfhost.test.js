@@ -20,6 +20,7 @@ import { createRegenProvider } from '../../api/_providers/gcp.js';
 
 const VARS = [
 	'MODEL_TRELLIS_URL',
+	'MODEL_TRELLIS2_URL',
 	'GCP_RECONSTRUCTION_KEY',
 	'NVIDIA_API_KEY',
 	'HF_TOKEN',
@@ -326,5 +327,62 @@ describe('gcp provider — trellis quality forwarding', () => {
 		} finally {
 			globalThis.fetch = origFetch;
 		}
+	});
+});
+
+describe('gcp provider — trellis2 mode wire contract', () => {
+	it('forwards resolution, seed and the bake overrides to the TRELLIS.2 worker', async () => {
+		process.env.MODEL_TRELLIS2_URL = 'https://trellis2.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		let sent = null;
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			expect(url).toBe('https://trellis2.example.run.app/infer');
+			sent = JSON.parse(opts.body);
+			return new Response(JSON.stringify({ task_id: 'task-t2', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		const provider = createRegenProvider();
+		await provider.submit({
+			mode: 'trellis2',
+			sourceUrl: 'https://three.ws/cdn/photo.png',
+			params: {
+				images: ['https://three.ws/cdn/photo.png'],
+				resolution: 1536,
+				seed: 7,
+				tier: 'standard',
+				texture_size: 2048,
+				decimation_target: 300000,
+			},
+		});
+		expect(sent).toMatchObject({
+			images: ['https://three.ws/cdn/photo.png'],
+			resolution: 1536,
+			seed: 7,
+			tier: 'standard',
+			texture_size: 2048,
+			decimation_target: 300000,
+		});
+	});
+
+	it('leaves the bake overrides to the resolution preset when absent', async () => {
+		process.env.MODEL_TRELLIS2_URL = 'https://trellis2.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		let sent = null;
+		globalThis.fetch = vi.fn(async (_url, opts) => {
+			sent = JSON.parse(opts.body);
+			return new Response(JSON.stringify({ task_id: 'task-t3', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		await createRegenProvider().submit({
+			mode: 'trellis2',
+			sourceUrl: 'https://three.ws/cdn/photo.png',
+			params: { images: ['https://three.ws/cdn/photo.png'], tier: 'draft' },
+		});
+		expect(sent).not.toHaveProperty('texture_size');
+		expect(sent).not.toHaveProperty('decimation_target');
 	});
 });
