@@ -49,11 +49,21 @@ The resolved user id is then compared against `agent_identities.user_id`. The th
 
 Recovery differs: it computes the caller's relationship to the agent (owner, guardian, beneficiary) and authorizes per action. See [Recovery](#recovery-guardians-threshold-and-inheritance).
 
+#### Bearer scope: `wallet:write`
+
+A session cookie carries every scope. A bearer token carries only what it was granted, and on the capabilities, intents, recovery, and Solana guard surfaces any write (every method other than `GET`, `HEAD`, and `OPTIONS`) from a bearer token needs the `wallet:write` scope. The check is [`assertBearerMaySpend`](../api/_lib/spend-scope.js) and runs while the caller is being resolved, before the owner gate. A bearer without the scope gets:
+
+| Status | `error` | Meaning |
+|---|---|---|
+| `403` | `insufficient_scope` | The token is valid but was not granted `wallet:write` |
+
+Reads still pass with a `wallet:read` token. Orders, Treasury Autopilot, and Portfolio do not run this check today, so any valid bearer token for the owner can call them.
+
 ### CSRF
 
 Every state-changing request passes through [`api/_lib/csrf.js`](../api/_lib/csrf.js).
 
-- **Bearer callers are exempt.** The token is itself the proof of intent, and browsers do not attach it automatically.
+- **Bearer callers are exempt** when the bearer is what authenticated them: the request carries no session cookie, or the bearer token resolves to the same account as the cookie. The token is itself the proof of intent, and browsers do not attach it automatically. A request that carries a session cookie plus a bearer header for a different account (or an invalid one) is checked like a cookie caller, because the cookie is what the server authenticates first.
 - **Cookie callers must double-submit.** Fetch a token from `GET /api/csrf-token` and echo it in the `X-CSRF-Token` header. Tokens are bound to the user id, expire after one hour, and are consumed on use, so each mutation needs a fresh one.
 
 Failures are `403 csrf_missing` (header absent) and `403 csrf_invalid` (wrong user, expired, or already consumed).
@@ -515,9 +525,11 @@ All writes are owner-gated and CSRF-gated. `:intentId` must be a UUID.
 
 ### The intent model
 
-Triggers: `on_tip_received` (optional `min_sol`), `on_income`, `on_balance_below` (required `threshold_sol`), `on_schedule` (`cadence` of `daily` or `weekly`, `weekday` 0 through 6, `hour` 0 through 23 UTC), `on_launch_matching` (needs a base58 `creator` and/or a `max_mcap_usd`, optional `min_mcap_usd`), and `on_stream_started`.
+Triggers: `on_tip_received` (optional `min_sol`), `on_income`, `on_balance_below` (required `threshold_sol`), `on_schedule` (`cadence` of `daily` or `weekly`, `weekday` 0 through 6, `hour` 0 through 23 UTC), `on_launch_matching` (needs a base58 `creator` and/or a `max_mcap_usd`, optional `min_mcap_usd`), `on_stream_started`, `credits_below` (required `threshold_usd`, the owner's account credits), and `on_mail_received` (optional `from_contains` and `subject_contains` filters, matched case-insensitively). A further trigger, `on_automation`, is fired only by the v1 automation engine, never by the sweep.
 
-Actions: `tip`, `transfer`, `withdraw`, `split_income` (move SOL: take `pct` with an `of` basis of `tip`, `income`, or `balance`, or a fixed `amount_sol`, or for a withdraw an `above_sol` floor, plus a `destination`), `buy` and `snipe` (need `amount_sol`, plus a `mint` unless the trigger is `on_launch_matching`, with an optional `slippage_pct` clamped to 0 through 50 and defaulting to 5), `freeze` (no parameters, the kill switch), and `notify` (optional `message`, `channel` of `email` or `log`).
+Actions: `tip`, `transfer`, `withdraw`, `split_income` (move SOL: take `pct` with an `of` basis of `tip`, `income`, or `balance`, or a fixed `amount_sol`, or for a withdraw an `above_sol` floor, plus a `destination`), `buy` and `snipe` (need `amount_sol`, plus a `mint` unless the trigger is `on_launch_matching`, with an optional `slippage_pct` clamped to 0 through 50 and defaulting to 5), `freeze` (no parameters, the kill switch), `notify` (optional `message`, `channel` of `email` or `log`), and `fund_inference` (top up the owner's account credits from the agent's USDC: `amount_usdc` from 0.1 to 1000, at most once per rule per UTC day).
+
+Some pairings are refused: `fund_inference` runs only on `credits_below` or `on_schedule`, a `credits_below` rule can only `fund_inference` or `notify`, and an `on_mail_received` rule can only `notify` or `freeze`, because an inbound email is untrusted input and must never move funds.
 
 A tip-back to whoever just tipped needs no destination: with `on_tip_received` plus a `tip` action the engine fills in the tipper at fire time and marks `to_tipper`.
 
@@ -525,7 +537,9 @@ Owner caps live in `limits`: `per_action_usd`, `daily_usd`, `total_usd`. They ar
 
 Every rolling ceiling a fire answers to (the rule's `daily_usd` and `total_usd`, and the wallet policy's own `daily_usd`) is reserved in the same statement that claims the execution row, under a per-agent lock, counting in-flight spends as spent. Two intents firing in the same sweep, or two overlapping sweeps, therefore cannot both spend headroom only one of them had.
 
-Validation failures are `422` with a precise code: `bad_trigger`, `bad_action`, `needs_threshold`, `needs_filter`, `needs_amount`, `needs_pct`, `needs_mint`, or `needs_destination`.
+Validation failures are `422` with a precise code: `bad_trigger`, `bad_action`, `bad_pairing`, `needs_threshold`, `needs_filter`, `needs_amount`, `needs_pct`, `needs_mint`, or `needs_destination`.
+
+A `buy` or `snipe` swaps through Jupiter, and the quote request is built from validated parts: the mint must be a real Solana address and the slippage a bounded integer, so a malformed mint ends the fire with `status: "error"` and the reason in its note instead of reaching the quote.
 
 ### GET /intents
 
@@ -808,7 +822,7 @@ Refusal reasons: `not_found`, `kill_switch`, `disarmed`, `no_rules`, `no_wallet`
 
 A cycle that ran returns `{ "ran": true, "trigger": "manual", "dryRun": false, "results": [ … ] }`, one entry per due rule, each stamped with its `last_status` and `last_note`. A rule whose weekday does not match today is reported as skipped rather than silently omitted. An unexpected failure is `500 run_failed`.
 
-The `dca` and `buyback` rules swap through Jupiter, and the engine treats the two halves of that call differently. The quote is an idempotent read, so a 429, a 5xx, or a network failure is retried up to three times with jittered backoff inside a 15 second per-attempt deadline, while a 4xx (no route for this pair) is taken as the answer and the rule pauses with `no_route` and the reason in its `last_note`. Building the swap returns an unsigned transaction, so it is retried once, and only on a 5xx or network failure (`swap_failed` otherwise). Signing and broadcasting are never retried.
+The `dca` and `buyback` rules swap through Jupiter, and the engine treats the two halves of that call differently. The quote query is built from validated parts (the output mint must be a real Solana address, slippage an integer from 0 to 10000 bps, every value URL-encoded), so no field can rewrite another. The quote is an idempotent read, so a 429, a 5xx, or a network failure is retried up to three times with jittered backoff inside a 15 second per-attempt deadline, while a 4xx (no route for this pair) is taken as the answer and the rule pauses with `no_route` and the reason in its `last_note`. Building the swap returns an unsigned transaction, so it is retried once, and only on a 5xx or network failure (`swap_failed` otherwise). Signing and broadcasting are never retried.
 
 ## Portfolio: valuation, P&L, and risk
 

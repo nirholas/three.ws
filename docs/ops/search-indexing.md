@@ -29,6 +29,14 @@ Every public URL falls into one of these, and the failure modes are different:
    works, but only if the controller sets the head tags. `src/seo-meta.js`
    exists for exactly that (`setCanonical`, `markNoindex`).
 
+   `/m/:id` is the exception that no longer starts empty:
+   `server/creation-head.mjs` rewrites the shell's head per creation for every
+   User-Agent (title, description, canonical, a `summary_large_image` card whose
+   image is the PNG render of the model, and `3DModel` JSON-LD), so a reader that
+   never runs the page script still gets the creation's own head. Any lookup miss
+   or timeout serves the untouched shell, and `src/model-page.js` fills it in as
+   before. [seo.md](../seo.md) covers that render path in full.
+
 `/avatars/:id` and `/agents/:id` are the interesting case: a browser gets the
 SPA shell, and a crawler UA is rewritten by `vercel.json` to a server-rendered
 page instead (`api/avatar-detail-og.js`, `api/agent-detail-og.js`). Those two
@@ -80,8 +88,9 @@ differs has no preferred version to point at.
   `<img>`, a definition list of facts (creator, category, rig state, fork count,
   publication date for an avatar; skills, ERC-8004 identity, home URL for an
   agent), tag chips linking into `/gallery` or `/agents`, and a footer of
-  related surfaces. Plus `3DModel` / `SoftwareApplication` JSON-LD and a
-  `BreadcrumbList`. No `<noscript>`, because nothing hides in it any more.
+  related surfaces. Plus `3DModel` / `SoftwareApplication` JSON-LD (built by
+  [`api/_lib/creation-jsonld.js`](../../api/_lib/creation-jsonld.js), the same
+  builder `/m/:id` and `/forge/share/:id` use) and a `BreadcrumbList`. No `<noscript>`, because nothing hides in it any more.
 - **The self-redirect is emitted only for crawlers that never index.**
   `isSearchCrawler()` splits indexing crawlers (Googlebot, bingbot, Applebot,
   GPTBot, ClaudeBot, PerplexityBot, and the rest) from link unfurlers

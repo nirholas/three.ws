@@ -318,8 +318,10 @@ the exact cost.
 |-----------|----------|
 | Missing `src` and `id`, or invalid `lod`/`textureSize`/`morphs` | `400 invalid_request` |
 | `src` not on a three.ws origin | `400 untrusted_source` |
+| Source redirected off a three.ws origin, to plain `http`, or more than 3 times (every hop is re-checked, never followed blindly) | `400 untrusted_src` |
 | Avatar/upstream not found | `404 source_not_found` |
 | Source over 50 MB | `413 too_large` |
+| Source did not answer, or stalled mid-download, within 30 s | `504 source_timeout` |
 | Upstream fetch failed | `502 upstream_unreachable` |
 | Transcode pipeline threw | `500 transcode_failed` |
 

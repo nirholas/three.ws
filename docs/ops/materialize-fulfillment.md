@@ -85,7 +85,7 @@ configured()   false hides the adapter from the registry entirely
 submit(order, assets)       → { providerOrderId, status, leadTimeDays, note, state }
 status(providerOrderId)     → { status | null, trackingNumber, carrier, note, state }
 cancel(order, reason)       → { ok, note, state }
-verifyWebhook(raw, headers) → { ok, deliveryId, reason }
+verifyWebhook(raw, headers) → { ok, deliveryId, bodyDeliveryId?, reason }
 parseWebhook(payload)       → { providerOrderId, status, trackingNumber, carrier, note, state }
 ```
 
@@ -168,7 +168,10 @@ Three properties, enforced in this order:
    `print_webhook_deliveries` is a unique-key insert and happens *before* the
    payload is interpreted, so even a delivery we end up not applying is
    recorded and cannot be replayed. A duplicate answers `200 {duplicate:true}`;
-   a 4xx would make the provider retry forever.
+   a 4xx would make the provider retry forever. A provider's delivery-id header
+   is not covered by the signature, so an adapter also returns
+   `bodyDeliveryId`, derived from the signed bytes, and the route claims that
+   too: a captured body replayed under a fresh header id is still a duplicate.
 3. **Ordering.** A report the state machine refuses is written to the timeline
    as a provider event carrying the refusal, and answered `200
    {applied:false}`.
@@ -178,16 +181,17 @@ hash, so "the same event twice" is still one row.
 
 ## The reconciliation sweep
 
-[api/cron/print-orders-sync.js](../../api/cron/print-orders-sync.js), hourly at
-`:17` (registered in `vercel.json`; Cloud Scheduler is synced by
-`scripts/create-gcp-scheduler.mjs` at deploy time).
+[api/cron/print-orders-sync.js](../../api/cron/print-orders-sync.js), every 15
+minutes (registered in `vercel.json`; every deploy creates the missing Cloud
+Scheduler job through `npm run deploy:gcp:sync-crons`, which runs
+`scripts/create-gcp-scheduler.mjs --missing-only`).
 
 Webhooks are the fast path and are not sufficient: a delivery gets lost, a
 callback queue backs up, and the manual lane has no webhook at all. Without the
 sweep, the worst failure a physical product has goes unnoticed, which is a
 finished order sitting in `printing` until the buyer asks.
 
-Two passes, deliberately separate:
+Four passes, deliberately separate:
 
 - **Reconcile.** Poll every order a configured adapter still owns and apply the
   answer through the state machine. A provider with no news moves nothing, so
@@ -196,10 +200,20 @@ Two passes, deliberately separate:
   sitting on.
 - **Stall.** Page the operator once for any order more than `lead_time_days + 2`
   old, then stamp `stall_alerted_at` so the next sweep stays quiet for 24 hours.
+- **Screen.** Run the fabrication gate on every paid order sitting in
+  `screening`: clear it for submission, or move it to `rejected` and tell the
+  operators. It runs here rather than in the payment request because it makes a
+  model call.
+- **Attest.** Backfill the QR and retry the Solana memo for every certificate
+  whose proof never landed, `PRINT_CERT_RETRY_BATCH` (default 10) per tick and
+  up to `PRINT_CERT_MAX_ATTEMPTS` (default 8) per certificate. A mainnet
+  certificate still waiting on the owner approval counts as `refused`, not
+  `failed`.
 
-Read the response: `{ open, polled, applied, stalled, alerted, failures }`. A
-non-empty `failures` array names the orders whose lane could not be reached and
-why.
+Read the response: `{ open, polled, applied, stalled, alerted,
+screening_pending, screened, cluster, certificates, failures }`. A non-empty
+`failures` array names the orders whose lane could not be reached (or whose
+screening or attestation pass threw) and why.
 
 ## The operator channel
 

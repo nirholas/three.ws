@@ -52,6 +52,10 @@ Code: page [pages/trade-room.html](../pages/trade-room.html), controller
 | Ghost-copy | Side column | [Ghost-copy](./ghost-copy.md) this trader with a paper budget. |
 | Copy trades | Side column | The copy panel on the trader's profile. See [Copy trading](./copy-trading.md). |
 | Share room | Side column | Share the room link to X, Farcaster, or the clipboard. |
+| Call a duel | Side column | Opens [/duels](https://three.ws/duels) filtered to the duels this trader is in, where you call the winner. See [Trader duels](./trader-duels.md). |
+
+The lobby links to [Trader duels](https://three.ws/duels) and the
+[leaderboard](https://three.ws/leaderboard) beside its room grid.
 
 Nothing in a room holds funds, asks for a key, or signs on your behalf.
 

@@ -148,8 +148,13 @@ The monitor reports both legs. Read them differently:
   nothing on a tick where every chain is current. The first pass itself walks
   chains worst backlog first, with a never-crawled chain ahead of everything
   and a caught-up chain ranked by how long its cursor has stood still, so a
-  chain that errors on every tick (which keeps reporting the zero backlog its
-  last good crawl left) is not sorted to the back of the sweep forever.
+  chain that errors on every tick is not sorted to the back of the sweep
+  forever. A tick that reads the head but fails to advance the cursor still
+  banks the real backlog (`head_block`, `blocks_behind`) without touching the
+  cursor's age, so a chain stuck on a dead lane shows the blocks it is missing
+  instead of the zero its last good crawl left. When a chain's cursor age is
+  stale, the health detail names that stalest chain beside the age, separately
+  from the chain with the worst backlog.
 
 A leg that is reaching every agent and recording nothing counts as `down`, not
 as fresh. That shape (every cursor current, zero events) is what a crashing
@@ -161,7 +166,12 @@ Cursor age is blind to a second shape, because the Solana sweep stamps its
 account cannot hold the oldest-first queue head forever). A wedged agent then
 looks exactly as fresh as a healthy one. So the monitor also scores the **share
 of Solana cursors carrying an error**: 5% reads as `degraded`, 25% as `down`
-(`SOLANA_ERROR_RATE_DEGRADED` and `SOLANA_ERROR_RATE_DOWN`).
+(`SOLANA_ERROR_RATE_DEGRADED` and `SOLANA_ERROR_RATE_DOWN`). A provider
+brownout must not read as hundreds of broken agents, so the sweep carries a
+breaker: after `SOLANA_SWEEP_RPC_BREAKER` (5) consecutive RPC-fabric failures it
+stops dispatching for the tick and leaves the rest of the batch untouched at the
+head of the oldest-first queue for the next one. Any success resets the count,
+and errors that are about the agent itself never count toward it.
 
 The failure those thresholds were built for is the retention wall. Each leg
 resumes from the last signature or block it recorded; when the RPC answering the

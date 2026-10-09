@@ -73,7 +73,8 @@ category; the mapping (`TYPE_CATEGORY`) lives in
 | Creations | `creations` | `forge_complete`, `forge_failed` |
 | Companion | `companion` | `companion_delivery` |
 | (no tab yet) | `knock` | `knock_received` |
-| Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map |
+| (no tab yet) | `mail` | `mail_received` |
+| Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map (the agent-inference `inference_topup` and `inference_budget_exhausted` land here this way) |
 
 `print_update` is the single type Materialize uses for a physical order's whole
 lifecycle, quoted through delivered, and it sits with purchases because the
@@ -86,11 +87,12 @@ Three details worth knowing:
 - **Tab filtering is client-side** over the pages already fetched. The API's
   own `?type=` parameter filters server-side by a single exact type (e.g.
   `?type=pump_alert`), not by category.
-- **`knock` is a preference category without a tab.** The preference center
-  lists it ("Knocks at your door") and the server gates delivery on it, but
-  the page's own copy of the map has no entry for `knock_received`, so on
-  `/notifications` a knock is filtered under **Account** rather than a tab of
-  its own.
+- **`knock` and `mail` are preference categories without a tab.** The
+  preference center lists them ("Knocks at your door", "Agent mail") and the
+  server gates delivery on them, but the page's own copy of the map has no
+  entry for `knock_received` or `mail_received`, so on `/notifications` both
+  are filtered under **Account** rather than a tab of their own. Mail the spam
+  filter holds back never notifies at all.
 
 ## The avatar channel: delivered in person
 
@@ -99,8 +101,8 @@ of those lands while you are on the site, the corner companion (the avatar
 that already walks your pages) turns to you, plays a gesture, and says it out
 loud, with a link straight to the thing that happened.
 
-`avatar` is a real delivery channel next to `in_app`, `push`, `email`, and
-`telegram`. It is gated by the same per-category matrix, edited in the same
+`avatar` is a real delivery channel next to `in_app`, `push`, `email`,
+`telegram`, and `discord`. It is gated by the same per-category matrix, edited in the same
 place (`/dashboard/settings`), and measured in the same funnel.
 
 **What gets announced.** By default: **Sales & earnings**, **Creations**,
@@ -108,7 +110,8 @@ place (`/dashboard/settings`), and measured in the same funnel.
 landing, a generation finishing while you waited, a message your companion
 triaged as worth hearing, someone who paid your price to reach you, and
 anything touching your account are worth an interruption. Purchases, social,
-in person, and market alerts are off by default because they are frequent.
+in person, market alerts, and agent mail are off by default because they are
+frequent.
 Every one of them is a toggle, so an inbox that should speak up more (or not
 at all) is two clicks away. The defaults live in `DEFAULTS` in
 [api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js).
@@ -183,7 +186,10 @@ shared nav on every page and is deliberately cheap:
   load), a one-time banner offers Web Push if it is supported, configured,
   not yet subscribed, and not previously declined. Push plumbing lives in
   [src/push-notifications.js](../src/push-notifications.js) and
-  [public/push-sw.js](../public/push-sw.js).
+  [public/push-sw.js](../public/push-sw.js). Inside the three.ws iOS app the
+  same calls register with Apple Push Notification service instead (the
+  WebView runs no service worker), and the bell also fires a `threews:unread`
+  window event with the count so the app can keep its icon badge in step.
 
 ## The notification center: /notifications
 
@@ -317,14 +323,18 @@ curl -s -X PUT 'https://three.ws/api/notifications/preferences' \
 ```
 
 GET returns
-`{ categories, channels, type_categories, prefs, push: { subscribed_devices } }`:
+`{ categories, channels, type_categories, prefs, push: { subscribed_devices, ios_devices }, gateways: { telegram, discord } }`:
 the categories from the table above, the channels (`in_app`, `push`, `email`,
-`telegram`, `avatar`), the type-to-category map (so a browser client can
-resolve a category without a round trip per notification), and the caller's
-resolved matrix. PUT stores a
-sparse override; unknown categories, channels, and keys are dropped, and the
-response echoes the re-resolved matrix. The body also accepts
-`telegram_chat_id` (digits, settable and clearable) for the Telegram channel.
+`telegram`, `discord`, `avatar`), the type-to-category map (so a browser client
+can resolve a category without a round trip per notification), the caller's
+resolved matrix, the push device count (browsers plus iPhones enrolled through
+the iOS app, with the iPhones also counted alone), and how many chats paired
+through the Telegram and Discord chat gateways have notifications on. The
+`telegram` and `discord` channels deliver to those paired chats. PUT returns
+`{ ok: true, prefs }`: it stores a sparse override, unknown categories,
+channels, and keys are dropped, and `prefs` is the re-resolved matrix. The
+body also accepts `telegram_chat_id` (digits, settable and clearable) for the
+Telegram channel.
 
 Delivery gating notes, all enforced in
 [api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js):
