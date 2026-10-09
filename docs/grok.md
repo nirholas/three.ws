@@ -3,7 +3,8 @@
 Give Grok a 3D studio and a body. One remote MCP server lets Grok Bot, Grok
 connectors and the xAI API turn text or an image into a textured 3D model, a
 rigged animation-ready avatar, or a named 3D persona that lip-syncs its replies.
-It is free: no account, no payment, no API key.
+The studio is free: no account, no payment, no API key. Sign in once and the
+same URL also manages your three.ws agents, never your wallet.
 
 **Live page and demo:** [three.ws/grok](/grok)
 
@@ -11,7 +12,7 @@ It is free: no account, no payment, no API key.
 |---|---|
 | **URL** | `https://three.ws/api/mcp-grok` |
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
-| **Auth** | None |
+| **Auth** | None for the studio. OAuth 2.1 or a connector API key adds your agent tools. |
 | **Protocol** | MCP `2025-06-18` |
 | **Tools** | The full free studio: the same fourteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
 
@@ -83,6 +84,41 @@ Add `allowed_tools` (`allowed_tool_names` in the Python SDK) to expose only the
 tools a task needs, for example `["search_catalog", "forge_free", "check_job"]`.
 A complete, zero-dependency Node script that also collects slow renders lives in
 [examples/grok-remote-mcp](../examples/grok-remote-mcp/README.md).
+
+## Sign in to add your agents
+
+The URL works anonymously. To let Grok also manage the agents on your account,
+connect it with a credential and the same URL lists more tools:
+
+- **OAuth 2.1:** use `https://three.ws/api/mcp-grok?auth=oauth` as the connector
+  URL. That URL answers an anonymous request with a `401` and the protected
+  resource metadata at
+  `/.well-known/oauth-protected-resource/api/mcp-grok`, which is what makes an MCP
+  client start sign-in. After consent the connector holds a token for this
+  server only.
+- **API key:** create a key at [three.ws/dashboard](/dashboard) and send it as
+  the bearer token. A key lists only the tools its scopes allow.
+
+A bearer that does not verify (expired, revoked, minted for another server) gets
+the same `401` challenge instead of a silent anonymous session, so the client
+re-authenticates.
+
+| Signed-in tool | What it does |
+|---|---|
+| `create_agent`, `identity_check`, `call_agent` | Create an agent, read its identity, send another agent a message. |
+| `attach_avatar_to_agent` | Give an agent a body you just generated. |
+| `remember`, `recall` | Read and write an agent's memory. |
+| `list_available_skills`, `list_custom_skills`, `get_custom_skill`, `create_custom_skill`, `update_custom_skill`, `import_community_skill` | Prompt-only agent skills. |
+| `list_my_avatars`, `get_avatar`, `get_embed_code`, `render_avatar_image` | Your avatar library and its embed code. |
+
+**It never moves funds.** A core tool is listed here only when it is on this
+allowlist, outside the financial tier of the shared tool policy, not scoped to
+wallet, payment or trade, and not priced on `/api/mcp`. A tool call runs only
+if that caller's `tools/list` shows it, so a token holding a wallet scope still
+cannot reach a wallet tool through this URL. Wallet, payment and launch actions
+stay in the browser at [three.ws/dashboard](/dashboard). Your
+[MCP tool settings](/mcp-tools) can switch any listed tool off. This surface
+lists no widget templates and no `ui://` resources, since Grok renders none.
 
 ## What Grok gets
 

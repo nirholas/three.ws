@@ -85,6 +85,34 @@ describe('judgeServer', () => {
 		expect(judgeServer(r)).toHaveLength(1);
 	});
 
+	describe('a server that is open and upgrades on sign-in', () => {
+		const upgradeable = (modes) => ({
+			...base,
+			expects: { anonymous: true, oauth: true, apiKey: true },
+			signIn: 'http://localhost:3000/api/mcp-grok?auth=oauth',
+			modes,
+		});
+
+		it('passes when the sign-in URL challenges correctly and a key adds tools', () => {
+			const r = upgradeable({ anonymous: { ok: true, tools: 18 }, oauth: { failures: [] }, apiKey: { ok: true, tools: 34 } });
+			expect(judgeServer(r)).toEqual([]);
+		});
+
+		it('fails when signing in adds no tools', () => {
+			const r = upgradeable({ anonymous: { ok: true, tools: 18 }, oauth: { failures: [] }, apiKey: { ok: true, tools: 18 } });
+			expect(judgeServer(r)[0]).toMatch(/no more than the 18/);
+		});
+
+		it('fails when the sign-in URL does not start OAuth', () => {
+			const r = upgradeable({
+				anonymous: { ok: true, tools: 18 },
+				oauth: { failures: ['unauthenticated initialize answered 200, an OAuth client needs 401 to start sign-in'] },
+				apiKey: { skipped: 'x' },
+			});
+			expect(judgeServer(r)[0]).toMatch(/^sign-in URL: unauthenticated initialize answered 200/);
+		});
+	});
+
 	it('fails a protected server that serves an anonymous MCP client', () => {
 		const r = { ...base, expects: { anonymous: false, oauth: true }, modes: { anonymous: { ok: true, tools: 3 }, oauth: { failures: [] }, apiKey: { skipped: 'x' } } };
 		expect(judgeServer(r)[0]).toMatch(/requires auth/);

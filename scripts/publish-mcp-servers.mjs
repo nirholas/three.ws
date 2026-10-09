@@ -136,6 +136,8 @@ const SERVERS = [
 	{ key: 'remote-bazaar', manifest: 'server-bazaar.json' },
 	// Free, non-crypto 3D Studio (api/mcp-studio.js) for the OpenAI Apps SDK.
 	{ key: 'remote-studio', manifest: 'server-studio.json' },
+	// The free studio plus signed-in agent tools for Grok Bot (api/mcp-grok.js).
+	{ key: 'remote-grok', manifest: 'server-grok.json' },
 ];
 
 const args = process.argv.slice(2);

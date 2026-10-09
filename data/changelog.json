@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "Splitting a model into parts says plainly when it cannot read an FBX",
+			"summary": "The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Remesh reads FBX files, and stylize says plainly when it cannot",
 			"summary": "The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.",
 			"tags": ["improvement", "fix"],
@@ -29223,6 +29232,13 @@
 			"summary": "When an app such as Grok Bot asks to connect to your three.ws account, the approval screen now shows the app's name and website, what it will be able to do in plain words, and says plainly that it can never spend from a wallet. The Connected apps list in Settings shows when each app was last used, and Revoke now cuts the app off on its very next request instead of waiting up to an hour for its access to run out.",
 			"tags": ["feature", "security"],
 			"link": "/dashboard/settings"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "One Grok Bot connector for 3D and your agents",
+			"summary": "https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Sign the same URL in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, or give it an API key, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading or launch tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.",
+			"tags": ["feature"],
+			"link": "/docs/grok"
 		}
 	]
 }

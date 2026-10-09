@@ -21,6 +21,11 @@
 //               authorization server metadata supports PKCE S256. An
 //               invalid bearer must earn the same challenge (re-auth path).
 //
+// A server that works anonymously AND upgrades on sign-in (/api/mcp-grok)
+// names its sign-in URL in the manifest's `signIn` field. The oauth checks run
+// against that URL, and an API key must list more tools than an anonymous
+// client sees, since the account's tools are what signing in is for.
+//
 // Records initialize, tools/list count, prompts/list count, and one free
 // tools/call where a free tool exists (search_catalog, getting_started).
 // No paid tool is ever called and no payment header is ever sent.
@@ -393,6 +398,14 @@ export function judgeServer(r) {
 		if (http.initialize && !/application\/json|text\/event-stream/.test(http.initialize.contentType)) {
 			failures.push(`initialize answered content-type ${http.initialize.contentType}`);
 		}
+		if (r.signIn) {
+			if (modes.oauth?.error) failures.push(modes.oauth.error);
+			for (const f of modes.oauth?.failures || []) failures.push(`sign-in URL: ${f}`);
+			const k = modes.apiKey;
+			if (k?.ok && a.ok && !(k.tools > a.tools)) {
+				failures.push(`signing in with an API key listed ${k.tools} tools, no more than the ${a.tools} an anonymous client sees`);
+			}
+		}
 	} else {
 		if (modes.anonymous.ok) failures.push('anonymous MCP client was served on a server that requires auth');
 		for (const f of modes.oauth?.failures || []) failures.push(f);
@@ -412,6 +425,7 @@ async function probeServer(server, { base, timeout, apiKey }) {
 	const url = serverUrlFor(server.endpoint, base);
 	const expects = authExpectations(server.auth);
 	const r = { name: server.name, endpoint: server.endpoint, url, auth: server.auth, expects, http: {}, modes: {} };
+	if (expects.anonymous && expects.oauth && server.signIn) r.signIn = serverUrlFor(server.signIn, base);
 	const guard = async (label, fn) => {
 		try {
 			return await fn();
@@ -432,6 +446,7 @@ async function probeServer(server, { base, timeout, apiKey }) {
 
 	r.modes.anonymous = await runMode(url, { headers: {}, timeout });
 	if (!expects.anonymous) r.modes.oauth = await guard('oauth', () => probeChallenge(url, { timeout }));
+	else if (r.signIn) r.modes.oauth = await guard('oauth', () => probeChallenge(r.signIn, { timeout }));
 	if (!apiKey) r.modes.apiKey = { skipped: 'THREE_WS_API_KEY is not set' };
 	else r.modes.apiKey = await runMode(url, { headers: { authorization: `Bearer ${apiKey}` }, timeout });
 

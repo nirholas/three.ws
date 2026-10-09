@@ -7,7 +7,9 @@
 // Parameterized by the tool surface it serves (SURFACES in ./dispatch.js):
 //   api/mcp-studio.js   surface 'full'     every tool, both widgets
 //   api/mcp-chatgpt.js  surface 'chatgpt'  generation tools, model viewer only
-//   api/mcp-grok.js     surface 'grok'     every tool, for Grok Bot and the xAI API
+//   api/mcp-grok.js     surface 'grok'     every tool, for Grok Bot and the xAI API,
+//                                          plus the account's agent tools once
+//                                          the caller signs in
 // Per-caller caps key on an install token (?install=, minted free at
 // POST /api/mcp-studio/install) when one is present, else on the surface's own
 // subject (ChatGPT subject, Grok session), else the IP. A capped caller gets a
@@ -16,8 +18,10 @@
 // platform-wide circuit breaker, so a second door never doubles the free GPU
 // budget.
 //
-// There is no OAuth and no payment path anywhere in this server: generation runs
+// There is no payment path anywhere in this server: generation runs
 // operator-funded over /api/forge, whose server-side keys cover provider cost.
+// Only the grok surface reads a credential (signedInAccount below), and only to
+// add the account's agent tools; the free tools never need one.
 // Abuse protection is real: a per-IP transport cap plus a per-IP generation burst
 // and hourly quota (../_lib/rate-limit.js), enforced whenever Redis is healthy.
 // Because every studio tool routes through a zero-cost free lane, these
@@ -27,7 +31,10 @@
 import { randomUUID } from 'node:crypto';
 import { cors, wrap, readJson, setRateLimitHeaders } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { dispatch, PROTOCOL_VERSION } from './dispatch.js';
+import { dispatch, PROTOCOL_VERSION, surfaceServesAccounts } from './dispatch.js';
+import { authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { acceptedAudiences, mcpResourceFor } from '../_lib/mcp-resources.js';
+import { send401 } from '../_mcp/auth.js';
 import { TOOL_NAMES } from './tools.js';
 import { resolveInstallToken } from '../_lib/mcp-studio-installs.js';
 
@@ -160,7 +167,47 @@ export function callerSubject(surface, body, req) {
 	return null;
 }
 
+// `?auth=oauth` on the connector URL asks for sign-in: an MCP client only
+// starts OAuth when a server answers 401, and an anonymous request here is
+// otherwise served, so a connector set to OAuth 2.1 needs a URL that refuses it.
+export const SIGN_IN_PARAM = 'auth';
+
+function wantsSignIn(req) {
+	try {
+		return new URL(req.url || '/', 'http://localhost').searchParams.get(SIGN_IN_PARAM) === 'oauth';
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * The account a request on an account-serving surface signed in as. Returns
+ * { account } (null when anonymous) or { refused: true } after answering 401:
+ * a bearer that does not verify (expired, revoked, wrong audience) is refused
+ * rather than quietly served anonymously, so the client re-authenticates
+ * instead of losing its account tools without a word.
+ */
+export async function signedInAccount(req, res, surfacePath) {
+	const bearer = extractBearer(req);
+	const refuse = (message) => {
+		// A browser MCP client cannot start OAuth off a header it may not read.
+		const exposed = res.getHeader('access-control-expose-headers');
+		res.setHeader('access-control-expose-headers', exposed ? `${exposed}, www-authenticate` : 'www-authenticate');
+		send401(res, message, { req, resourcePath: surfacePath });
+		return { refused: true };
+	};
+	if (!bearer) {
+		if (wantsSignIn(req)) return refuse('sign in to add your three.ws agent tools to this connector');
+		return { account: null };
+	}
+	const account = await authenticateBearer(bearer, { audience: acceptedAudiences(mcpResourceFor(surfacePath)) });
+	if (!account) return refuse('missing or invalid access token');
+	return { account };
+}
+
 export function studioHandler({ surface = 'full' } = {}) {
+	const servesAccounts = surfaceServesAccounts(surface);
+	const surfacePath = `/api/mcp-${surface}`;
 	return wrap(async (req, res) => {
 		if (cors(req, res, { methods: 'GET,HEAD,POST,OPTIONS', origins: '*', payments: false })) return;
 
@@ -190,6 +237,20 @@ export function studioHandler({ surface = 'full' } = {}) {
 		const batch = Array.isArray(body) ? body : [body];
 		if (batch.length > 16) return rpcError(res, 400, -32600, 'batch too large (max 16)');
 
+		let account = null;
+		if (servesAccounts) {
+			const signIn = await signedInAccount(req, res, surfacePath);
+			if (signIn.refused) return;
+			account = signIn.account;
+			// The same per-account flood guard /api/mcp applies to these tools.
+			if (account) {
+				const userRl = await limits.mcpUser(account.userId);
+				if (!userRl.success) {
+					return capped(res, userRl, { what: 'Too many requests for this three.ws account', id: null, installed: true });
+				}
+			}
+		}
+
 		// Generation quota, burst then hourly, per IP. Applied only when the request
 		// actually calls a generation tool, so discovery is never throttled by it.
 		if (callsGenerationTool(body)) {
@@ -197,9 +258,9 @@ export function studioHandler({ surface = 'full' } = {}) {
 			// the surface's own subject, which beats the IP. An unknown or malformed
 			// token resolves to null and the caller is keyed exactly as without one.
 			const installKey = await resolveInstallToken(installParam(req));
-			const subject = installKey || callerSubject(surface, body, req);
+			const subject = installKey || (account?.userId ? `acct:${account.userId}` : null) || callerSubject(surface, body, req);
 			const id = batch.find((m) => m && m.id !== undefined)?.id ?? null;
-			const installed = Boolean(installKey);
+			const installed = Boolean(installKey || account?.userId);
 			if (subject) {
 				const pool = await limits.studioGenPoolHourly(ip);
 				if (!pool.success) return capped(res, pool, { what: 'The free 3D studio is at capacity for this network right now (300 generations per hour across every installation behind one IP)', id, installed });
@@ -221,7 +282,7 @@ export function studioHandler({ surface = 'full' } = {}) {
 
 		const responses = [];
 		for (const msg of batch) {
-			const r = await dispatch(msg, auth, req, { surface });
+			const r = await dispatch(msg, auth, req, { surface, account });
 			if (r !== null) responses.push(r);
 		}
 

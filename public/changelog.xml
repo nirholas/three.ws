@@ -55,6 +55,14 @@
 			<description>Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.</description>
 		</item>
 		<item>
+			<title>One Grok Bot connector for 3D and your agents</title>
+			<link>https://three.ws/docs/grok</link>
+			<guid isPermaLink="false">2026-10-09:One Grok Bot connector for 3D and your agents</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Sign the same URL in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, or give it an API key, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading or launch tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.</description>
+		</item>
+		<item>
 			<title>Paired coins: launch a coin on Robinhood Chain that trades against up to five assets at once</title>
 			<link>https://three.ws/markets/robinhood/paired</link>
 			<guid isPermaLink="false">2026-10-09:Paired coins: launch a coin on Robinhood Chain that trades against up to five assets at once</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.</description>
+		</item>
+		<item>
+			<title>Splitting a model into parts says plainly when it cannot read an FBX</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-10-09:Splitting a model into parts says plainly when it cannot read an FBX</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The part splitter never could read FBX files, but it used to accept one anyway and then fail with an unexplained error. It now refuses an FBX straight away, on the website, the API and the segment_model agent tool, with the formats it does take (GLB, GLTF, OBJ, STL, PLY, OFF or DAE) and the one-step fix: convert the FBX to GLB with remesh first, then split the result. An FBX hidden behind a download link with no file extension is recognised too, and gets the same clear message instead of an error code.</description>
 		</item>
 		<item>
 			<title>The desktop companion, CLI and MCP server now work with just the bridge token</title>

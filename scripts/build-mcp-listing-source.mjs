@@ -164,6 +164,16 @@ const OVERLAY = {
 			"Free: auto-rig this GLB for animation.",
 		],
 	},
+	"io.github.nirholas/threews-grok": {
+		tagline: "One connector URL for Grok Bot: free text/image to 3D with shareable links, plus your agents once signed in. Never spends.",
+		category: "3d",
+		tags: ["grok","text-to-3d","free","avatars","agents"],
+		examplePrompts: [
+			"Make a 3D model of a reusable rocket booster and send me the viewer link and the GLB.",
+			"Forge a friendly robot avatar and attach it to my agent as its body.",
+			"Remember for my support agent that our office hours are 9 to 5 UTC.",
+		],
+	},
 	"io.github.nirholas/threews-agent": {
 		tagline: "Give your agent an x402 wallet: discover, pay for, and earn from services in USDC, bounded by spend caps.",
 		category: "payments",

@@ -13,6 +13,8 @@ import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
 import { CATALOG_TOOL_CATALOG, CATALOG_TOOLS } from './catalog-tools.js';
 import { finishCall, gateCall, listForRequest } from '../_mcp/policy.js';
+import { accountToolCatalog, callAccountTool, isAccountTool } from './account-tools.js';
+import { env } from '../_lib/env.js';
 
 // The @three-ws/mcp-policy server id for the free studio.
 const POLICY_SERVER = 'threews-3d-studio-free';
@@ -40,6 +42,20 @@ const BASE_INSTRUCTIONS = [
 	'refine_model(glb_url, instruction) iterates on a generated model in plain language ("make it metallic") and keeps',
 	'a version lineage you can branch or revert. If a result comes back with status "pending", the model is still',
 	'rendering: call check_job(job_id) after the suggested wait to collect it.',
+];
+
+// /api/mcp-grok also serves the account's agent tools (./account-tools.js) to a
+// caller that signs in. Which half of the sentence the model reads depends on
+// whether this request carried a valid credential.
+const GROK_SIGNED_IN_INSTRUCTIONS = [
+	'This connector is signed in to a three.ws account, so it can also manage the account\'s agents:',
+	'create_agent, attach_avatar_to_agent (give an agent a generated body), remember and recall (agent memory), the',
+	'custom skill tools, list_my_avatars and get_embed_code. It can never move funds: wallet, payment and launch',
+	'actions happen only in a browser at https://three.ws/dashboard, so tell the user that when they ask for one.',
+];
+const GROK_ANONYMOUS_INSTRUCTIONS = [
+	'To also manage a three.ws account\'s agents, reconnect with a three.ws connector API key as the bearer token, or',
+	'sign in with OAuth 2.1 at https://three.ws/api/mcp-grok?auth=oauth.',
 ];
 
 // ChatGPT drops a tool call still open at 60 s, and a generation takes one to
@@ -103,17 +119,33 @@ const PERSONA_INSTRUCTIONS = [
 //            review for an exception.
 //   grok     /api/mcp-grok: every tool of the full surface for Grok Bot and the
 //            xAI Responses API, with a per-call budget and instructions that
-//            hand out links in place of the widgets Grok does not render.
-//            ./handler.js keys its generation caps on the MCP session, because
-//            every Grok user reaches us from xAI's shared egress.
+//            hand out links in place of the widgets Grok does not render, so
+//            it lists no widget templates and no ui:// resources. A caller
+//            that signs in (OAuth 2.1 or a connector key, ./handler.js) also
+//            gets the account's agent tools (./account-tools.js), never a
+//            value-moving one. ./handler.js keys its generation caps on the
+//            MCP session, because every Grok user reaches us from xAI's
+//            shared egress.
 // check_job and the persona tools stay out of the generation quota on both; see
 // ./handler.js callsGenerationTool. look_at_model renders frames server-side, so
 // it rides that quota.
+// A tool descriptor without the Apps SDK keys that bind it to a widget
+// template, for a surface whose host renders none.
+function withoutWidgetMeta(catalog) {
+	return catalog.map((tool) => {
+		if (!tool._meta) return tool;
+		const meta = Object.fromEntries(Object.entries(tool._meta).filter(([key]) => !key.startsWith('openai/')));
+		const { _meta: _dropped, ...rest } = tool;
+		return Object.keys(meta).length ? { ...rest, _meta: meta } : rest;
+	});
+}
+
 const SURFACES = {
 	full: {
 		server: 'mcp-studio',
 		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
 		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		widgets: true,
 		personas: true,
 		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS].join(' '),
 	},
@@ -121,21 +153,31 @@ const SURFACES = {
 		server: 'mcp-chatgpt',
 		catalog: [...TOOL_CATALOG],
 		tools: { ...TOOLS },
+		widgets: true,
 		personas: false,
 		instructions: [...BASE_INSTRUCTIONS, ...CHATGPT_INSTRUCTIONS].join(' '),
 		callBudgetMs: CHATGPT_CALL_BUDGET_MS,
 	},
 	grok: {
 		server: 'mcp-grok',
-		catalog: [...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
+		catalog: withoutWidgetMeta([...TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG]),
 		tools: { ...TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		widgets: false,
 		personas: true,
+		accounts: true,
 		instructions: [...BASE_INSTRUCTIONS, ...CATALOG_INSTRUCTIONS, ...PERSONA_INSTRUCTIONS, ...GROK_INSTRUCTIONS].join(' '),
+		signedInInstructions: GROK_SIGNED_IN_INSTRUCTIONS.join(' '),
+		anonymousInstructions: GROK_ANONYMOUS_INSTRUCTIONS.join(' '),
 		callBudgetMs: GROK_CALL_BUDGET_MS,
 	},
 };
 
 export const SURFACE_NAMES = Object.keys(SURFACES);
+
+/** Does this surface serve the account's agent tools to a signed-in caller? */
+export function surfaceServesAccounts(name) {
+	return Boolean(Object.hasOwn(SURFACES, name) && SURFACES[name].accounts);
+}
 
 function surfaceOf(name) {
 	return Object.hasOwn(SURFACES, name) ? SURFACES[name] : SURFACES.full;
@@ -154,7 +196,8 @@ export function toolsFor(name = 'full') {
 // The Apps SDK widget resources: the model viewer every generation tool renders,
 // and the living-body persona widget the embodiment tools render. _meta (incl.
 // the CSP) is built per call so the storage origin always tracks env.
-function widgetResources(personas = true) {
+function widgetResources({ widgets = true, personas = true } = {}) {
+	if (!widgets) return [];
 	const all = [
 		{
 			uri: COMPONENT_URI,
@@ -232,8 +275,14 @@ async function onToolCall(params, auth, started, req, surface) {
 	}
 }
 
-export async function dispatch(msg, auth, req, { surface: surfaceName = 'full' } = {}) {
+// `account` is the signed-in principal on a surface that serves accounts
+// (./handler.js), or null. Studio tools always run as the anonymous `auth`, so
+// signing in never changes what a free tool does; only the account tools see
+// the account.
+export async function dispatch(msg, auth, req, { surface: surfaceName = 'full', account = null } = {}) {
 	const surface = surfaceOf(surfaceName);
+	const signedIn = Boolean(surface.accounts && account?.userId);
+	const origin = env.APP_ORIGIN || 'https://three.ws';
 	const started = Date.now();
 	const id = msg.id;
 	const isNotification = id === undefined;
@@ -242,23 +291,53 @@ export async function dispatch(msg, auth, req, { surface: surfaceName = 'full' }
 		const method = msg.method;
 
 		if (method === 'initialize') {
+			const accountNote = surface.accounts ? [signedIn ? surface.signedInInstructions : surface.anonymousInstructions] : [];
 			return ok(id, {
 				protocolVersion: PROTOCOL_VERSION,
 				serverInfo: SERVER_INFO,
-				capabilities: { tools: { listChanged: false }, resources: { listChanged: false, subscribe: false }, logging: {} },
-				instructions: surface.instructions,
+				capabilities: {
+					tools: { listChanged: false },
+					...(surface.widgets ? { resources: { listChanged: false, subscribe: false } } : {}),
+					logging: {},
+				},
+				instructions: [surface.instructions, ...accountNote].join(' '),
 			});
 		}
 		if (method === 'ping') return ok(id, {});
 		if (method === 'notifications/initialized') return null;
-		if (method === 'tools/list') return ok(id, { tools: await listForRequest(POLICY_SERVER, surface.catalog, auth, req) });
-		if (method === 'tools/call') return ok(id, await onToolCall(msg.params, auth, started, req, surface));
+		if (method === 'tools/list') {
+			const studio = await listForRequest(POLICY_SERVER, surface.catalog, auth, req);
+			if (!signedIn) return ok(id, { tools: studio });
+			return ok(id, { tools: [...studio, ...(await accountToolCatalog(account, req))] });
+		}
+		if (method === 'tools/call') {
+			const name = msg.params?.name;
+			if (surface.accounts && !Object.hasOwn(surface.tools, name) && isAccountTool(name)) {
+				if (!signedIn) {
+					throw rpcError(-32002, `${name} manages a three.ws account and needs a signed-in connector`, {
+						reason: 'sign_in_required',
+						tool: name,
+						oauth_url: `${origin}/api/mcp-grok?auth=oauth`,
+						docs: `${origin}/docs/grok`,
+					});
+				}
+				const response = await callAccountTool(msg, account, req);
+				if (response) return response;
+				throw rpcError(-32002, `${name} is not available to this connector: its scopes or your MCP tool settings leave it off`, {
+					reason: 'tool_not_granted',
+					tool: name,
+					settings: `${origin}/mcp-tools`,
+					docs: `${origin}/docs/mcp`,
+				});
+			}
+			return ok(id, await onToolCall(msg.params, auth, started, req, surface));
+		}
 		if (method === 'resources/list') {
-			return ok(id, { resources: widgetResources(surface.personas).map(({ text: _t, ...r }) => r) });
+			return ok(id, { resources: widgetResources(surface).map(({ text: _t, ...r }) => r) });
 		}
 		if (method === 'resources/read') {
 			const uri = msg.params?.uri;
-			const res = widgetResources(surface.personas).find((r) => r.uri === uri);
+			const res = widgetResources(surface).find((r) => r.uri === uri);
 			if (!res) throw rpcError(-32602, `unknown resource: ${uri}`);
 			return ok(id, { contents: [{ uri: res.uri, mimeType: res.mimeType, text: res.text, _meta: res._meta }] });
 		}
