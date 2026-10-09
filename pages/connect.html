@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="connect.meta_title">Connect three.ws to Claude, ChatGPT, Cursor &amp; VS Code · three.ws</title>
-	<meta name="description" content="Add three.ws to your AI client in two clicks. One connector URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools: 3D generation, agents, wallets and x402 payments. Sign in once, no API key to copy."  data-i18n-attr="content:connect.meta_description"/>
+	<title data-i18n="connect.meta_title">Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor &amp; VS Code · three.ws</title>
+	<meta name="description" content="Add three.ws to your AI client in two clicks. One connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools: 3D generation, agents, wallets and x402 payments. Sign in once, no API key to copy."  data-i18n-attr="content:connect.meta_description"/>
 	<link rel="canonical" href="https://three.ws/connect" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -16,13 +16,13 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Connect three.ws to your AI client"  data-i18n-attr="content:connect.meta_og_title"/>
-	<meta property="og:description" content="One URL gives Claude, ChatGPT, Cursor, VS Code or Claude Code the three.ws MCP tools. Sign in once, no key to copy."  data-i18n-attr="content:connect.meta_og_description"/>
+	<meta property="og:description" content="One URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools. Sign in once, no key to copy."  data-i18n-attr="content:connect.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/connect" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Connect+three.ws+to+Claude%2C+ChatGPT%2C+Cursor+%26+VS+Code&amp;d=Add+three.ws+to+your+AI+client+in+two+clicks%3A+one+connector+URL+gives+Claude%2C+ChatGPT%2C+Cursor%2C+VS+Code+or+Claude+Code+the+three.ws+MCP+tools+for+3D+generation&amp;p=%2Fconnect" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Connect+three.ws+to+Claude%2C+ChatGPT%2C+Grok+Bot%2C+Cursor+%26+VS+Code&amp;d=Add+three.ws+to+your+AI+client+in+two+clicks%3A+one+connector+URL+gives+Claude%2C+ChatGPT%2C+Grok+Bot%2C+Cursor%2C+VS+Code+or+Claude+Code+the+three.ws+MCP+tools+for+3D+generation&amp;p=%2Fconnect" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Connect three.ws to your AI client"  data-i18n-attr="content:connect.meta_twitter_title"/>
-	<meta name="twitter:description" content="One URL, two clicks: three.ws MCP tools in Claude, ChatGPT, Cursor, VS Code and Claude Code."  data-i18n-attr="content:connect.meta_twitter_description"/>
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Connect+three.ws+to+Claude%2C+ChatGPT%2C+Cursor+%26+VS+Code&amp;d=Add+three.ws+to+your+AI+client+in+two+clicks%3A+one+connector+URL+gives+Claude%2C+ChatGPT%2C+Cursor%2C+VS+Code+or+Claude+Code+the+three.ws+MCP+tools+for+3D+generation&amp;p=%2Fconnect" />
+	<meta name="twitter:description" content="One URL, two clicks: three.ws MCP tools in Claude, ChatGPT, Grok Bot, Cursor, VS Code and Claude Code."  data-i18n-attr="content:connect.meta_twitter_description"/>
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Connect+three.ws+to+Claude%2C+ChatGPT%2C+Grok+Bot%2C+Cursor+%26+VS+Code&amp;d=Add+three.ws+to+your+AI+client+in+two+clicks%3A+one+connector+URL+gives+Claude%2C+ChatGPT%2C+Grok+Bot%2C+Cursor%2C+VS+Code+or+Claude+Code+the+three.ws+MCP+tools+for+3D+generation&amp;p=%2Fconnect" />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 	<meta property="og:locale" content="en_US" />
 	<meta property="og:image:alt" content="Connect three.ws to your AI client" />
@@ -153,6 +153,12 @@
 
 		.cn-cloud-actions { margin: 0 0 12px; }
 		.cn-url-second { margin-top: 8px; }
+		.cn-fields { display: grid; gap: 8px; margin: 0 0 14px; }
+		.cn-field { display: flex; align-items: stretch; border: 1px solid var(--stroke); border-radius: 10px; background: var(--surface-1, rgba(255,255,255,0.03)); overflow: hidden; }
+		.cn-field[hidden] { display: none; }
+		.cn-field-label { flex: none; width: 150px; display: flex; align-items: center; padding: 0 12px; font-size: 0.72rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); border-right: 1px solid var(--stroke); }
+		.cn-field-value { flex: 1; min-width: 0; margin: 0; padding: 12px 14px; font-size: 0.92rem; color: var(--ink-bright, var(--ink)); overflow-x: auto; white-space: nowrap; }
+		.cn-field .cn-btn { border-radius: 0; border-width: 0 0 0 1px; }
 		.cn-note a { text-decoration: underline; text-underline-offset: 3px; }
 
 		/* ── worth knowing ──────────────────────────────────────────────── */
@@ -167,6 +173,9 @@
 
 		@media (max-width: 640px) {
 			.cn-hero { padding-top: 26px; }
+			.cn-field { flex-wrap: wrap; }
+			.cn-field-label { width: 100%; padding: 8px 14px 0; border-right: 0; }
+			.cn-field .cn-btn { flex: 1 0 100%; border-width: 1px 0 0 0; }
 			.cn-url { flex-wrap: wrap; }
 			.cn-url-label { display: none; }
 			.cn-url code { flex-basis: 100%; }
@@ -178,7 +187,7 @@
 			.cn-server, .cn-btn, .cn-tab { transition: none; }
 		}
 	</style>
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Connect three.ws to an AI client","description":"Add the three.ws MCP server to Claude, ChatGPT, Cursor, VS Code or Claude Code with one connector URL and a single sign-in.","url":"https://three.ws/connect","step":[{"@type":"HowToStep","name":"Pick a server","text":"Choose which hosted three.ws MCP server to connect. The default three.ws server carries the core tools."},{"@type":"HowToStep","name":"Add it to your client","text":"Use the one-click link for Claude, Cursor or VS Code, or paste the connector URL into ChatGPT or any MCP client."},{"@type":"HowToStep","name":"Sign in","text":"Your client opens three.ws sign-in. Approve the permissions and the tools appear. No API key to copy."}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"HowTo","name":"Connect three.ws to an AI client","description":"Add the three.ws MCP server to Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code with one connector URL and a single sign-in.","url":"https://three.ws/connect","step":[{"@type":"HowToStep","name":"Pick a server","text":"Choose which hosted three.ws MCP server to connect. The default three.ws server carries the core tools."},{"@type":"HowToStep","name":"Add it to your client","text":"Use the one-click link for Claude, Cursor or VS Code, or paste the connector URL into ChatGPT, Grok Bot (as a custom MCP connector) or any MCP client."},{"@type":"HowToStep","name":"Sign in","text":"Your client opens three.ws sign-in. Approve the permissions and the tools appear. No API key to copy."}]}</script>
 
 	<meta property="og:site_name" content="three.ws">
 </head>
@@ -234,6 +243,7 @@
 			<div class="cn-tabs" role="tablist" aria-label="AI clients">
 				<button type="button" class="cn-tab" role="tab" id="tab-claude" aria-controls="panel-claude" data-client="claude" data-i18n="connect.claude">Claude</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-chatgpt" aria-controls="panel-chatgpt" data-client="chatgpt" data-i18n="connect.chatgpt">ChatGPT</button>
+				<button type="button" class="cn-tab" role="tab" id="tab-grok" aria-controls="panel-grok" data-client="grok" data-i18n="connect.grok_bot">Grok Bot</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-claude-code" aria-controls="panel-claude-code" data-client="claude-code" data-i18n="connect.claude_code">Claude Code</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-cursor" aria-controls="panel-cursor" data-client="cursor" data-i18n="connect.cursor">Cursor</button>
 				<button type="button" class="cn-tab" role="tab" id="tab-vscode" aria-controls="panel-vscode" data-client="vscode" data-i18n="connect.vs_code">VS Code</button>
@@ -265,6 +275,37 @@
 					<li data-i18n-html="connect.in_a_new_chat_open_the_menu">In a new chat, open the <kbd>+</kbd> menu, choose <strong>Developer mode</strong>, and tick three.ws.</li>
 				</ol>
 				<p class="cn-src" data-i18n-html="connect.steps_follow_openai_s_developer_mode_guide">Steps follow <a href="https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta" target="_blank" rel="noopener">OpenAI's developer mode guide</a>. Its labels change often: if these drift, <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener">tell us</a>.</p>
+			</div>
+
+			<div class="cn-panel" role="tabpanel" id="panel-grok" aria-labelledby="tab-grok" tabindex="0" hidden>
+				<p class="cn-panel-lede" data-i18n-html="connect.grok_bot_adds_custom_mcp_servers_as_connectors">Grok Bot adds custom MCP servers as <strong>connectors</strong>. There is no pre-filled link: enter these three settings. They follow the server you picked in step 1.</p>
+				<div class="cn-fields">
+					<div class="cn-field">
+						<span class="cn-field-label" data-i18n="connect.grok_transport">Transport</span>
+						<code class="cn-field-value">Streamable HTTP</code>
+					</div>
+					<div class="cn-field">
+						<span class="cn-field-label" data-i18n="connect.url_2">Server URL</span>
+						<code class="cn-field-value" id="cn-grok-url">https://three.ws/api/mcp</code>
+						<button type="button" class="cn-btn" data-variant="primary" data-copy-target="cn-grok-url" data-i18n="connect.copy_url_2">Copy URL</button>
+					</div>
+					<div class="cn-field">
+						<span class="cn-field-label" data-i18n="connect.grok_authentication">Authentication</span>
+						<code class="cn-field-value" id="cn-grok-auth">OAuth</code>
+					</div>
+					<div class="cn-field" id="cn-grok-signin-row" hidden>
+						<span class="cn-field-label" data-i18n="connect.grok_oauth_url">OAuth URL</span>
+						<code class="cn-field-value" id="cn-grok-signin"></code>
+						<button type="button" class="cn-btn" data-copy-target="cn-grok-signin" data-i18n="connect.copy_url_3">Copy URL</button>
+					</div>
+				</div>
+				<ol class="cn-list">
+					<li data-i18n-html="connect.grok_step_open_connectors">In Grok Bot, open the connectors settings and add a <strong>custom MCP</strong> connector.</li>
+					<li data-i18n="connect.grok_step_enter_fields">Set the transport to Streamable HTTP, paste the URL above, and choose the authentication shown above. The free servers need none. Every other server uses OAuth: sign in to three.ws when Grok Bot asks. On the Grok server, use the OAuth URL instead to add your agents.</li>
+					<li data-i18n="connect.grok_step_ask">Start a task and ask for a 3D model or an avatar. Grok Bot calls the three.ws tools on your behalf.</li>
+				</ol>
+				<p class="cn-note" data-i18n-html="connect.grok_localhost_note">Use the public <code>https://three.ws</code> URL only. A <code>localhost</code> or private-network URL never works, because Grok Bot connects from xAI's cloud, not from your machine.</p>
+				<p class="cn-src" data-i18n-html="connect.grok_own_allowance">Grok Bot shares one network address with other hosted agents. For your own generation allowance, <a href="#cn-cloud">generate a private connector URL</a> below. The full walkthrough is on the <a href="/grok">Grok page</a>.</p>
 			</div>
 
 			<div class="cn-panel" role="tabpanel" id="panel-claude-code" aria-labelledby="tab-claude-code" tabindex="0" hidden>
@@ -389,7 +430,8 @@
 	<script type="module">
 		const PROD_ORIGIN = 'https://three.ws';
 		const DEFAULT_ENDPOINT = `${PROD_ORIGIN}/api/mcp`;
-		const CLIENTS = ['claude', 'chatgpt', 'claude-code', 'cursor', 'vscode', 'other'];
+		const GROK_ENDPOINT = `${PROD_ORIGIN}/api/mcp-grok`;
+		const CLIENTS = ['claude', 'chatgpt', 'grok', 'claude-code', 'cursor', 'vscode', 'other'];
 
 		const serversEl = document.getElementById('cn-servers');
 		const noteEl = document.getElementById('cn-servers-note');
@@ -486,6 +528,10 @@
 			const slug = slugFor(server);
 			const name = displayName(server);
 			urlEl.textContent = url;
+			document.getElementById('cn-grok-url').textContent = url;
+			document.getElementById('cn-grok-auth').textContent = authPill(server).tone === 'free' ? 'None' : 'OAuth';
+			document.getElementById('cn-grok-signin').textContent = server.signIn || '';
+			document.getElementById('cn-grok-signin-row').hidden = !server.signIn;
 
 			const claude = new URL('https://claude.ai/customize/connectors');
 			claude.searchParams.set('modal', 'add-custom-connector');
@@ -643,12 +689,14 @@
 						name: s.name,
 						endpoint: s.endpoint,
 						auth: s.auth,
+						signIn: typeof s.signIn === 'string' && s.signIn.startsWith('https://') ? s.signIn : null,
 						description: s.description,
 						tools: counts.get(s.endpoint),
 					}));
 				if (!state.servers.length) throw new Error('empty');
 				const asked = new URLSearchParams(location.search).get('server');
 				const initial = state.servers.find((s) => slugFor(s) === asked)
+					|| (detectClient() === 'grok' && state.servers.find((s) => s.endpoint === GROK_ENDPOINT))
 					|| state.servers.find((s) => s.endpoint === DEFAULT_ENDPOINT)
 					|| state.servers[0];
 				state.selected = initial;
