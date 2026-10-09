@@ -113,7 +113,7 @@ const PERSONA_INSTRUCTIONS = [
 //            examples, and any MCP host that renders the inline living body,
 //            plus the free asset catalog tools (./catalog-tools.js), the only
 //            place a keyless MCP client can reach them.
-//   chatgpt  /api/mcp-chatgpt: the eight tools in ./tools.js and the
+//   chatgpt  /api/mcp-chatgpt: the nine tools in ./tools.js and the
 //            model-viewer widget only. The persona widget frames the hosted
 //            embodiment page, which requires frameDomains, and OpenAI's app
 //            guidelines reserve frame domains for embedding an essential

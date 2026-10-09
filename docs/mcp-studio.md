@@ -29,9 +29,9 @@ generation quota:
 
 | URL | Serves | Use it for |
 |---|---|---|
-| `https://three.ws/api/mcp-studio` | all fourteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-studio` | all fifteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
 | `https://three.ws/api/mcp-chatgpt` | the nine 3D tools and the model viewer | the ChatGPT plugin directory listing |
-| `https://three.ws/api/mcp-grok` | all fourteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
+| `https://three.ws/api/mcp-grok` | all fifteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 
 The ChatGPT surface leaves out the three catalog tools, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
 frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app
@@ -77,18 +77,18 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-`tools/list` returns exactly **fourteen** tools, and they split five ways:
+`tools/list` returns exactly **fifteen** tools, and they split five ways:
 
 - **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
   `rig_mesh`, `forge_avatar`, `refine_model`), in the table below.
-- **One collector**, `check_job`, also in the table below.
+- **Two collectors**, `check_job` and `get_job`, also in the table below.
 - **One inspector**, `look_at_model`, also in the table below.
 - **Three asset catalog reads** (`search_catalog`, `get_catalog_item`,
   `get_item_source`), in **Ready-made assets** below.
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All fourteen are free and keyless.
+All fifteen are free and keyless.
 
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
@@ -100,6 +100,8 @@ the creation, copying the model into our storage, recording the row and running
 the quality gate, and it can route failed work to another provider. Later checks
 of the same job are served from the done-frame cache, which is exactly why it is
 not idempotent either. It still never counts against the generation quota.
+`get_job` carries the same annotations, because its first look at a finished job
+saves the model in the same way.
 `look_at_model` is genuinely read-only and idempotent,
 but it renders frames server-side, so it rides the same per-IP generation
 quota as the six generators.
@@ -112,7 +114,7 @@ quota as the six generators.
 | `rig_mesh` | Rig a 3D model for animation | `glb_url` | rigged GLB |
 | `forge_avatar` | Generate a rigged, animation-ready avatar | `prompt?` / `image_url?`, `allow_non_humanoid?` | rigged GLB avatar |
 | `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?` | refined GLB + version lineage |
-| `check_job` | Check a pending 3D generation and collect it | `job_id` | GLB model, or an updated pending state |
+| `check_job` | Check a pending 3D generation | `job_id` | GLB model, or an updated pending state |
 | `get_job` | Get the status of a 3D job | `job_id` | `status`, `progress`, `eta_seconds`, asset links when done, error and remedy when failed |
 | `look_at_model` | Look at a 3D model | `glb_url`, `views?` (up to 6 of `front`, `three-quarter`, `side`, `back`, `top`, `bottom`; default three-quarter, front, side, back), `size?` (128 to 1024 px, default 512) | rendered frames as images, plus geometry stats (triangles, materials, textures) and a plain reading of them |
 

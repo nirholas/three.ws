@@ -13,7 +13,7 @@ import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
 // look_at_model (renders frames of an existing model). (also get_job, its machine-readable twin). PERSONA adds the three
 // embodiment tools from api/_mcp-studio/persona-tools.js (which render the
 // living-body embed). CATALOG adds the three free asset catalog reads
-// (api/_mcp-studio/catalog-tools.js) on the full surface only, for the fourteen
+// (api/_mcp-studio/catalog-tools.js) on the full surface only, for the fifteen
 // /api/mcp-studio advertises in total.
 const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'get_job', 'look_at_model'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
