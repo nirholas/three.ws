@@ -42,10 +42,14 @@ vi.mock('../api/_lib/csrf.js', () => ({
 }));
 
 // ── db ──────────────────────────────────────────────────────────────────────
-const sqlState = { queue: [], calls: [] };
+// The marketplace "balance is promised to bidders" lookup is answered from its
+// own slot so it never consumes a row a test queued for the idempotency path.
+const sqlState = { queue: [], calls: [], listing: [] };
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
-		sqlState.calls.push({ query: strings.join('?'), values });
+		const query = strings.join('?');
+		sqlState.calls.push({ query, values });
+		if (query.includes('FROM agent_listings')) return sqlState.listing;
 		return sqlState.queue.length ? sqlState.queue.shift() : [];
 	}),
 	isDbUnavailableError: () => false,
@@ -167,6 +171,7 @@ function queueAgentRow() {
 beforeEach(() => {
 	sqlState.queue = [];
 	sqlState.calls = [];
+	sqlState.listing = [];
 	connState.sent = 0;
 	connState.confirmErr = null;
 	recoverState.calls = 0;
@@ -208,6 +213,17 @@ describe('handleWithdraw — validation + safety', () => {
 		const body = parse(res);
 		expect(body.error).toBe('daily_exceeded');
 		expect(body.detail.daily_usd).toBe(5);
+		expect(recoverState.calls).toBe(0);
+		expect(connState.sent).toBe(0);
+	});
+
+	it('refuses with 409 while the balance is promised to an open marketplace bid, without touching the key', async () => {
+		queueAgentRow();
+		sqlState.listing = [{ id: 'listing-1' }];
+		const res = mockRes();
+		await handleWithdraw(mockReq({ asset: 'SOL', amount: 0.1, destination: Keypair.generate().publicKey.toBase58() }), res, 'agent-1');
+		expect(res.statusCode).toBe(409);
+		expect(parse(res).error).toBe('balance_listed');
 		expect(recoverState.calls).toBe(0);
 		expect(connState.sent).toBe(0);
 	});

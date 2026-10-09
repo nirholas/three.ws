@@ -16,6 +16,16 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '127.0.0.1',
 }));
 
+// A caller-supplied NIM host is reached only through the DNS-pinned SSRF fetch,
+// never the global fetch. The guard itself stays real (private targets are still
+// refused below); only the outbound pinned call is captured so the suite stays
+// offline and can assert what a caller's host receives.
+const pinnedFetch = vi.fn();
+vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	fetchSafePublicUrlPinned: (...a) => pinnedFetch(...a),
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 // MODEL_TRELLIS_URL is cleared too, and never set: it points at our own async
 // Cloud Run TRELLIS worker, and api/forge-nim.js deliberately does not read it.
@@ -274,10 +284,12 @@ describe('POST /api/forge-nim — configuration & SSRF', () => {
 		expect(calls.length).toBe(0); // never reached the network
 	});
 
-	it('accepts a public https baseUrl override', async () => {
+	it('accepts a public https baseUrl override through the pinned fetch, without the platform key', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-platform-secret';
 		const glb = fakeGlb(16);
-		const fetchMock = vi.fn(async () => jsonResponse({ artifacts: [{ base64: glb.toString('base64') }] }));
+		const fetchMock = vi.fn();
 		globalThis.fetch = fetchMock;
+		pinnedFetch.mockReset().mockResolvedValue(jsonResponse({ artifacts: [{ base64: glb.toString('base64') }] }));
 		const { body } = await dispatch(
 			makeReq({
 				body: { mode: 'image', image: 'data:image/png;base64,iVBORw0KGgo=', baseUrl: 'https://my-nim.example.com' },
@@ -285,7 +297,12 @@ describe('POST /api/forge-nim — configuration & SSRF', () => {
 			makeRes(),
 		);
 		expect(body.ok).toBe(true);
-		expect(fetchMock.mock.calls[0][0]).toBe('https://my-nim.example.com/v1/infer');
+		expect(fetchMock).not.toHaveBeenCalled();
+		const [url, init] = pinnedFetch.mock.calls[0];
+		expect(url).toBe('https://my-nim.example.com/v1/infer');
+		const headerNames = Object.keys(init.headers || {}).map((k) => k.toLowerCase());
+		expect(headerNames).not.toContain('authorization');
+		expect(JSON.stringify(init)).not.toContain('nvapi-platform-secret');
 	});
 });
 

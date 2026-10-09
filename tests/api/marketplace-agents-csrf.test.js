@@ -22,6 +22,9 @@ vi.mock('../../api/_lib/auth.js', () => ({
 		const h = req?.headers?.authorization || '';
 		return h.startsWith('Bearer ') ? h.slice(7) : null;
 	}),
+	// Mirrors api/_lib/auth.js: csrf.js keys the bearer exemption on whether a
+	// session cookie is present to ride along on a cross-site request.
+	hasSessionCookie: vi.fn((req) => /(?:^|;\s*)(?:__Host-)?sid=/.test(req?.headers?.cookie || '')),
 }));
 
 const sqlQueue = [];
@@ -163,5 +166,18 @@ describe('/api/marketplace/agents writes require a CSRF token', () => {
 		);
 		expect(res.statusCode).toBe(200);
 		expect(json.data).toEqual({ bookmarked: true });
+	});
+
+	it('does not exempt a session cookie that carries a junk bearer header alongside it', async () => {
+		authState.bearer = null; // the bearer authenticates as nobody
+		const { res, json } = await invoke(
+			makeReq('POST', `/api/marketplace/agents/${AGENT_ID}/bookmark`, {
+				headers: { cookie: '__Host-sid=victim-session', authorization: 'Bearer x' },
+			}),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(403);
+		expect(json.error).toBe('csrf_missing');
+		expect(sqlCalls).toHaveLength(0);
 	});
 });

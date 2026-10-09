@@ -20,7 +20,7 @@
 // tests/vanity-wasm-grinder.test.js covers the grind loop itself (stop signal,
 // exhaustion). This file covers the orchestration around it.
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { execFile } from 'node:child_process';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -283,13 +283,48 @@ describe('GCE MIG shard resolution', () => {
 		expect(new Set(names.map((n) => hashShardIndex(n, 8))).size).toBeGreaterThan(1);
 	});
 
-	it('falls back to shard 0 off GCE rather than blocking on the metadata server', async () => {
+	// The metadata server is simulated: this suite also runs on Google-hosted
+	// machines (Cloud Workstations, Cloud Build), where the real one answers and
+	// the "off GCE" branch would never be exercised.
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('falls back to shard 0 off GCE, where the metadata host does not resolve', async () => {
 		const { resolveGceShardIndex } = await import('../workers/vanity-grinder/gce-shard.mjs');
+		vi.stubGlobal('fetch', vi.fn(async () => {
+			throw new TypeError('fetch failed');
+		}));
+		const resolved = await resolveGceShardIndex(4, () => {});
+		expect(resolved).toEqual({ index: 0, source: 'unavailable', instance: '' });
+	});
+
+	it('bounds a hung metadata probe instead of blocking the run', async () => {
+		const { resolveGceShardIndex } = await import('../workers/vanity-grinder/gce-shard.mjs');
+		vi.stubGlobal('fetch', vi.fn((url, init) => new Promise((_, reject) => {
+			init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+		})));
 		const t0 = performance.now();
 		const resolved = await resolveGceShardIndex(4, () => {});
 		expect(resolved.source).toBe('unavailable');
 		expect(resolved.index).toBe(0);
-		// The metadata probe is bounded; a hung DNS lookup must not stall a run.
 		expect(performance.now() - t0).toBeLessThan(15_000);
+	});
+
+	it('degrades to the name hash on GCE when the group listing is refused', async () => {
+		const { resolveGceShardIndex, hashShardIndex } = await import('../workers/vanity-grinder/gce-shard.mjs');
+		const name = 'vanity-grinder-x7k2';
+		const metadata = {
+			'instance/name': name,
+			'instance/attributes/created-by': 'projects/1/zones/us-central1-a/instanceGroupManagers/vanity-grinder',
+			'instance/service-accounts/default/token': JSON.stringify({ access_token: 'sa-token' }),
+		};
+		vi.stubGlobal('fetch', vi.fn(async (url) => {
+			const key = String(url).split('/computeMetadata/v1/')[1];
+			if (key in metadata) return new Response(metadata[key], { status: 200 });
+			return new Response('permission denied', { status: 403 });
+		}));
+		const resolved = await resolveGceShardIndex(4, () => {});
+		expect(resolved).toEqual({ index: hashShardIndex(name, 4), source: 'name-hash', instance: name });
 	});
 });

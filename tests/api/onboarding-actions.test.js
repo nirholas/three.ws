@@ -25,6 +25,9 @@ vi.mock('../../api/_lib/auth.js', () => ({
 		const header = req?.headers?.authorization || '';
 		return header.startsWith('Bearer ') ? header.slice(7) : null;
 	}),
+	// Mirrors api/_lib/auth.js: csrf.js keys the bearer exemption on whether a
+	// session cookie is present to ride along on a cross-site request.
+	hasSessionCookie: vi.fn((req) => /(?:^|;\s*)(?:__Host-)?sid=/.test(req?.headers?.cookie || '')),
 	hasScope: vi.fn((scope, want) => String(scope || '').split(/[\s,]+/).includes(want)),
 }));
 

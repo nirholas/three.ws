@@ -13,6 +13,7 @@ import {
 	deriveRuleLabel,
 	MINT_TARGETED_KINDS,
 	AGENT_TARGETED_KINDS,
+	MARKET_TARGETED_KINDS,
 	THRESHOLD_KINDS,
 } from '../api/_lib/pump-alert-eval.js';
 
@@ -205,6 +206,12 @@ describe('kind classification constants', () => {
 	it('partitions kinds correctly', () => {
 		expect(MINT_TARGETED_KINDS).toEqual(['price_above', 'price_below', 'whale_buy']);
 		expect(AGENT_TARGETED_KINDS).toEqual(['new_mint']);
-		expect(THRESHOLD_KINDS).toEqual(['price_above', 'price_below', 'whale_buy']);
+		// A prediction-market outcome crossing a probability threshold targets a
+		// market, not a mint or an agent, and carries a threshold like the price kinds.
+		expect(MARKET_TARGETED_KINDS).toEqual(['market_price']);
+		expect(THRESHOLD_KINDS).toEqual(['price_above', 'price_below', 'whale_buy', 'market_price']);
+		// Every targeted kind belongs to exactly one target family.
+		const targeted = [...MINT_TARGETED_KINDS, ...AGENT_TARGETED_KINDS, ...MARKET_TARGETED_KINDS];
+		expect(new Set(targeted).size).toBe(targeted.length);
 	});
 });

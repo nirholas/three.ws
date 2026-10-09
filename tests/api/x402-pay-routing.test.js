@@ -36,12 +36,17 @@ vi.mock('../../api/_lib/db.js', () => ({ sql: vi.fn(async () => []), isDbUnavail
 
 // No shared platform wallet configured + no dev keypair file → loadAgentKeypair()
 // throws config-missing, which is the deterministic outcome we assert for the
-// fallback path (the warn must already have fired before this throws).
-vi.mock('node:fs', () => ({
-	readFileSync: () => {
-		throw new Error('no dev keypair');
-	},
-}));
+// fallback path (the warn must already have fired before this throws). Only the
+// dev test-wallet read is refused: repo data the import graph loads at module
+// time (data/plans.json via api/payments/_config.js) still reads from disk.
+vi.mock('node:fs', async (importOriginal) => {
+	const actual = await importOriginal();
+	const readFileSync = (file, ...rest) => {
+		if (String(file).includes('x402-test-wallets')) throw new Error('no dev keypair');
+		return actual.readFileSync(file, ...rest);
+	};
+	return { ...actual, readFileSync, default: { ...actual, readFileSync } };
+});
 
 delete process.env.X402_AGENT_SOLANA_SECRET_BASE58;
 

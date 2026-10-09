@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const agentGuardIp = vi.fn();
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: { agentGuardIp: (...a) => agentGuardIp(...a) },
+	clientIp: (req) => req.socket?.remoteAddress || '0.0.0.0',
 }));
 vi.mock('../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://localhost:3000', ISSUER: 'http://t', MCP_RESOURCE: 'http://t' },

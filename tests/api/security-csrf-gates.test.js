@@ -160,8 +160,15 @@ vi.mock('../../api/_lib/validate.js', async (importOriginal) => ({
 	parse: vi.fn((schema, data) => schema.parse(data)),
 }));
 
+// api/agents.js bills inference through credits.js, which reaches the $THREE
+// token config at import time, so the mint + decimals must be present here.
 vi.mock('../../api/_lib/env.js', () => ({
-	env: { APP_ORIGIN: 'http://localhost:3000', ADMIN_ADDRESSES: new Set() },
+	env: {
+		APP_ORIGIN: 'http://localhost:3000',
+		ADMIN_ADDRESSES: new Set(),
+		THREE_TOKEN_MINT: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+		THREE_TOKEN_DECIMALS: 6,
+	},
 }));
 
 vi.mock('../../api/_lib/sentry.js', () => ({

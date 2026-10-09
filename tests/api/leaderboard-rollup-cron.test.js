@@ -10,11 +10,16 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+// Ranking queries answer from sqlMock; composable fragments (the `launches`
+// metric builds its `limit N` clause with sql`...` before the main query, via
+// api/_lib/launch-counts.js) are inert and must not consume a queued result.
 const sqlMock = vi.fn(async () => []);
+const isFragment = (strings) => !/^\s*(with|select)\b/i.test(strings.join(''));
+const sql = (strings, ...values) => (isFragment(strings) ? { fragment: true } : sqlMock(strings, ...values));
 const unlockBadge = vi.fn(async () => true);
 
 vi.mock('../../api/_lib/db.js', () => ({
-	sql: sqlMock,
+	sql,
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 	isStoragePressured: async () => ({ pressured: false }),

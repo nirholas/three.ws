@@ -18,10 +18,16 @@ vi.mock('../../api/_lib/auth.js', async () => {
 });
 
 // ── SQL mock ──────────────────────────────────────────────────────────────
-const sqlState = { queue: [], calls: [] };
+// by-agent also reads the agent's non-Solana launches from
+// fixed_supply_launches (the main query plus its where/join fragment). Those
+// answer from their own slot so they never consume a row queued for the
+// pump.fun mint, stats, or burns reads.
+const sqlState = { queue: [], calls: [], fixedSupply: [] };
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
-		sqlState.calls.push({ query: strings.join('?'), values });
+		const query = strings.join('?');
+		sqlState.calls.push({ query, values });
+		if (/fixed_supply_launches|\bf\.agent_id\b/.test(query)) return sqlState.fixedSupply;
 		if (sqlState.queue.length === 0) return [];
 		return sqlState.queue.shift();
 	}),
@@ -155,7 +161,7 @@ function pumpAction(action) {
 }
 function resetAll() {
 	authState.session = null; authState.bearer = null;
-	sqlState.queue = []; sqlState.calls = [];
+	sqlState.queue = []; sqlState.calls = []; sqlState.fixedSupply = [];
 	mockPumpAgentOffline.create.mockClear();
 	mockPumpAgentOffline.acceptPayment.mockClear();
 	mockPumpAgentOffline.withdraw.mockClear();
