@@ -951,9 +951,36 @@ async function buyToken({ ctx, intent, discriminator, mint, lamports, slippagePc
 	});
 }
 
+// Build the Jupiter quote query from validated parts. The mint was interpolated
+// raw, so a mint string carrying `&slippageBps=10000` or `&amount=` rewrote the
+// quote the agent then signed. A mint must be a real base58 pubkey, slippage a
+// bounded integer, and every value is encoded.
+export function jupiterQuoteParams({ outputMint, lamports, slippageBps }) {
+	let mint;
+	try {
+		mint = new PublicKey(String(outputMint)).toBase58();
+	} catch {
+		mint = null;
+	}
+	if (!mint || mint !== outputMint) {
+		throw Object.assign(new Error('output mint is not a valid Solana address'), { code: 'invalid_mint' });
+	}
+	const bps = Math.trunc(Number(slippageBps));
+	if (!Number.isFinite(bps) || bps < 0 || bps > 10_000) {
+		throw Object.assign(new Error('slippage must be 0-10000 bps'), { code: 'invalid_slippage' });
+	}
+	return new URLSearchParams({
+		inputMint: WSOL_MINT,
+		outputMint: mint,
+		amount: BigInt(lamports).toString(),
+		slippageBps: String(bps),
+		swapMode: 'ExactIn',
+	}).toString();
+}
+
 async function swapSolToToken({ keypair, lamports, outputMint, slippageBps, conn }) {
 	const { VersionedTransaction } = await import('@solana/web3.js');
-	const qUrl = `${JUPITER_BASE}/quote?inputMint=${WSOL_MINT}&outputMint=${outputMint}&amount=${lamports.toString()}&slippageBps=${slippageBps}&swapMode=ExactIn`;
+	const qUrl = `${JUPITER_BASE}/quote?${jupiterQuoteParams({ outputMint, lamports, slippageBps })}`;
 	const qRes = await fetchWithTimeout(qUrl, {}, 15_000);
 	if (!qRes.ok) throw Object.assign(new Error(`no swap route (${qRes.status})`), { code: 'no_route' });
 	const quote = await qRes.json();

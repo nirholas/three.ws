@@ -566,11 +566,38 @@ async function tokenUiBalance(conn, owner, mint) {
  * Jupiter, returning the signature. Throws on devnet, no route, or any failure —
  * the executor turns that into an honest pause, never a guess.
  */
+// Build the Jupiter quote query from validated parts. The mint was interpolated
+// raw, so a mint string carrying `&slippageBps=10000` or `&amount=` rewrote the
+// quote the agent then signed. A mint must be a real base58 pubkey, slippage a
+// bounded integer, and every value is encoded.
+export function jupiterQuoteParams({ outputMint, lamports, slippageBps }) {
+	let mint;
+	try {
+		mint = new PublicKey(String(outputMint)).toBase58();
+	} catch {
+		mint = null;
+	}
+	if (!mint || mint !== outputMint) {
+		throw Object.assign(new Error('output mint is not a valid Solana address'), { code: 'invalid_mint' });
+	}
+	const bps = Math.trunc(Number(slippageBps));
+	if (!Number.isFinite(bps) || bps < 0 || bps > 10_000) {
+		throw Object.assign(new Error('slippage must be 0-10000 bps'), { code: 'invalid_slippage' });
+	}
+	return new URLSearchParams({
+		inputMint: WSOL_MINT,
+		outputMint: mint,
+		amount: BigInt(lamports).toString(),
+		slippageBps: String(bps),
+		swapMode: 'ExactIn',
+	}).toString();
+}
+
 async function swapSolToToken({ keypair, lamports, outputMint, slippageBps, network, conn }) {
 	if (network !== 'mainnet') {
 		throw Object.assign(new Error('token swaps are mainnet-only — this wallet is on devnet'), { code: 'devnet_no_swap' });
 	}
-	const qUrl = `${JUPITER_BASE}/quote?inputMint=${WSOL_MINT}&outputMint=${outputMint}&amount=${lamports.toString()}&slippageBps=${slippageBps}&swapMode=ExactIn`;
+	const qUrl = `${JUPITER_BASE}/quote?${jupiterQuoteParams({ outputMint, lamports, slippageBps })}`;
 	// The quote is an idempotent GET: a 429/5xx/network blip is retried with
 	// jittered backoff inside the same 15s per-attempt deadline. A 4xx (no route
 	// for this pair) is an answer and comes straight back as `no_route`, which the
