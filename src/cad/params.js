@@ -9,7 +9,7 @@
 //     WIDTH = 80  # Overall width [40..160 mm]
 //     WALL = 2.4  # Wall thickness [1.2..6 mm]
 //
-// parseDesign() reads those lines into slider definitions, and applyParams()
+// The parser reads those lines into slider definitions, and the applier
 // rewrites only the value on each matching line. Nothing else in the program is
 // ever touched, so what the sliders build is exactly the source a user sees and
 // downloads.

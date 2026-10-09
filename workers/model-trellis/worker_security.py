@@ -7,11 +7,11 @@ file lives in each worker directory; keep them byte-identical when editing.
 
 It provides three primitives that every worker needs:
 
-  1. ``require_api_key`` — constant-time bearer-token check (timing-safe).
-  2. ``fetch_remote_bytes`` — SSRF-hardened HTTP(S) fetch of caller-supplied
+  1. ``require_api_key`` - constant-time bearer-token check (timing-safe).
+  2. ``fetch_remote_bytes`` - SSRF-hardened HTTP(S) fetch of caller-supplied
      URLs: https-only, DNS resolution with private/loopback/link-local/metadata
      IP rejection, per-hop redirect re-validation, and a bounded response size.
-  3. ``safe_error`` — turns an exception into an opaque, correlation-id-tagged
+  3. ``safe_error`` - turns an exception into an opaque, correlation-id-tagged
      message safe to persist/return to callers, after logging the full
      traceback server-side only.
 """
@@ -141,7 +141,7 @@ def fetch_remote_bytes(
 
     Hardening applied:
       * https-only (unless ``allow_http``).
-      * every URL — including each redirect target — is DNS-resolved and
+      * every URL - including each redirect target - is DNS-resolved and
         rejected if it maps to a private/loopback/link-local/metadata address.
       * redirects are followed manually (max ``_MAX_REDIRECTS``) so each hop is
         re-validated; httpx's own redirect following is disabled.
