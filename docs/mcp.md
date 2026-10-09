@@ -1086,6 +1086,175 @@ Every prompt that can move funds ends with the same rules: show the recipient, a
 
 ---
 
+## Use cases
+
+Each guided prompt is a workflow written as the calls an agent makes, in order. Read it as a script: the goal in one line, then the exact tool calls (`name()`) and resource reads (`three://...`) the prompt drives. A step marked **spends money** moves funds or bills credits, and always waits for an explicit yes from you first. Every other step is read-only or creates a record without moving funds. The tool names here are checked against the live `tools/list` of all four servers by `tests/mcp-use-cases-doc.test.js`, so this section cannot name a tool that no longer exists.
+
+Where a flow's executing venue (swaps, launches, perps, lending, predictions) is not enabled on the MCP server yet, the prompt does the research with the tools that exist and sends you to the web page where you confirm the action yourself.
+
+### `get-started`
+
+Goal: learn what a server does and pick the best next step. Server: all four (the first call is the same everywhere).
+
+1. `getting_started()` to summarize what the server can do.
+2. Read `three://me`. If you are not signed in, connect with OAuth or an API key from `/dashboard/api-keys`, then stop.
+3. Read `three://agents` to list your agents with their Solana addresses.
+4. Pick a next prompt from the ones the server lists.
+
+### `create-agent`
+
+Goal: create an agent with a persona and model, then give it a body. Server: `mcp`.
+
+1. Read `three://models` and confirm the model you want is available.
+2. `identity_check()` to catch a look-alike of an existing public agent.
+3. Review the name, persona and model with the user.
+4. `create_agent()` to create the agent with a custodial Solana wallet. Moves no funds.
+5. Read `three://agents/{agentId}` for the new agent's page URL and Solana address.
+6. `list_my_avatars()`, then `attach_avatar_to_agent()` with the avatar you pick.
+
+### `setup-wallet`
+
+Goal: provision, review and fund an agent's Solana wallet. Server: `mcp-agent`.
+
+1. Read `three://agents/{agentId}/wallet`.
+2. `provision_wallet()` if the wallet has no address yet. Moves no funds.
+3. `wallet_status()` for the address, SOL and USDC balances and the spending caps.
+4. Review the guard settings (daily and per-transaction limits, withdraw allowlist, freeze switch) on the wallet page.
+5. Fund it by sending SOL or USDC on Solana to the address yourself. The agent never sends funds from here.
+6. Subscribe to `three://agents/{agentId}/wallet` with `resources/subscribe` to be notified of transfers.
+
+### `trade`
+
+Goal: research a Solana token and decide whether to trade it. Server: `mcp`. Swap execution is not enabled on MCP yet: the last step sends you to the wallet page, where you confirm the swap yourself.
+
+1. `token_snapshot()` for price, liquidity, market cap and holders.
+2. `pumpfun_token_intel()` for creator history and risk flags.
+3. `oracle_coin()` for the conviction score and its reasons.
+4. Read `three://agents/{agentId}/wallet` for the balance, trade limits and freeze state.
+5. Summarize the risks and the case for and against before any trade talk.
+
+### `launch-token`
+
+Goal: plan a token launch grounded in current data. Server: `mcp`. Launching from MCP is not enabled yet: you review and sign the launch on `/launch`.
+
+1. Read `three://launches` to see what the account launched before and flag a repeated name or symbol.
+2. `pumpfun_recent_graduations()` to see what recently graduated launches have in common.
+3. Read `three://agents/{agentId}/wallet` and check there is enough SOL for the launch fee.
+4. Show the name, symbol, description, image, launching wallet and cost, and wait for the yes.
+5. Confirm on the launch page, then read `three://launches` again to see it landed.
+
+### `hire-agent`
+
+Goal: find an agent or paid service for a task and pay for it with a capped call. Servers: `mcp-agent` (full flow), `mcp` and `mcp-bazaar` (find, then hand off).
+
+On `mcp-agent`:
+
+1. `find_services()` with the task, three best matches with price and network, Solana first.
+2. `wallet_status()` to confirm the balance and caps cover the price.
+3. Show the service, resource URL, exact price and paying wallet, and wait for the yes.
+4. `pay_and_call()` with the resource URL and `max_usd` set to the quoted price. **Spends money.**
+5. Show the result and the payment receipt.
+
+On `mcp`: read `three://marketplace`, pick a fit, then `call_agent()` with the agent id and a brief. **Spends money** when the agent is priced or the trial is used up. On `mcp-bazaar`: `search_services()`, then `get_service()` for the exact price, networks and input schema, then hand off to `mcp-agent` to pay.
+
+### `sell-a-skill`
+
+Goal: price a capability and publish it as a paid service. Server: `mcp-agent`.
+
+1. Read `three://agents/{agentId}` for its skills and existing prices.
+2. Read `three://marketplace` to see what comparable skills charge.
+3. Read `three://agents/{agentId}/wallet` to confirm which wallet receives revenue.
+4. Agree on name, description, price per call in USDC, the https endpoint and the network.
+5. `monetize_endpoint()` to publish the listing. Moves no funds; buyers pay per call.
+
+### `review-costs`
+
+Goal: find the single biggest saving in an agent's monthly spend. Server: `mcp`.
+
+1. Read `three://agents/{agentId}/usage` for LLM calls, tokens and cost per model, tool calls and the credit balance.
+2. Read `three://models` for current prices per million tokens.
+3. Read `three://me` for the daily MCP quota and what is left.
+4. Show a model, calls, tokens and cost table and name the one change that saves the most.
+
+### `setup-automations`
+
+Goal: put an agent on autopilot with every automation simulated first. Server: `mcp`.
+
+1. Read `three://agents/{agentId}/intents` and `three://agents/{agentId}/orders` to start from what is running.
+2. Read `three://agents/{agentId}/wallet` for the balance, limits and freeze state.
+3. `oracle_watch_status()`, then `oracle_arm_watch()` in simulate mode so it only logs what it would buy. Live mode **spends money**: show the per-trade cap and daily budget and wait for the yes.
+4. `trader_leaderboard()` to pick a leader, then `copy_subscribe()` with a per-trade cap and daily budget. Non-custodial: it creates intents you act on from the dashboard.
+5. Standing wallet intents are created on the wallet page, where you confirm each one.
+
+### `setup-dca`
+
+Goal: start a recurring buy of a token. Servers: `mcp` (with research), `mcp-agent`.
+
+1. Read `three://agents/{agentId}/dca` for plans already running.
+2. Read `three://agents/{agentId}/wallet` for the balance and limits.
+3. `token_snapshot()` on the token to accumulate (on `mcp`).
+4. Propose an amount and period and show the total committed over three months.
+5. Start the plan on `/recurring`, where you sign the spending permission yourself, then read `three://agents/{agentId}/dca` to confirm it is active. **Spends money** once the plan runs.
+
+### `explore-marketplace`
+
+Goal: browse paid skills and services with prices and trials. Servers: `mcp`, `mcp-agent`, `mcp-bazaar`.
+
+1. Read `three://marketplace`.
+2. Group the skills by what they do and show the best options with price and trial uses.
+3. List agent-to-agent services by completion count and rating.
+4. On `mcp`, offer `call_agent()` for a short test request. **Spends money** unless a free trial covers it.
+
+### `explore-x402`
+
+Goal: find an x402 service for a capability and see exactly how to pay. Servers: `mcp-bazaar`, `mcp-agent`, `mcp`.
+
+On `mcp-bazaar`: `search_services()` with the capability, Solana first, then `get_service()` for the price, networks, recipient and input schema. On `mcp-agent`: `find_services()`, show the pick with its exact price, wait for the yes, then `pay_and_call()` with `max_usd` set to the quoted price. **Spends money.** On `mcp`: read `three://x402/services` and hand off to `mcp-agent` to pay.
+
+### `earn-yield`
+
+Goal: find yield for idle agent funds. Server: `mcp`. Lending is not enabled on MCP yet, so nothing moves from here.
+
+1. Read `three://agents/{agentId}/wallet` and show what is idle.
+2. `crypto_data()` with the DefiLlama provider to compare pool APYs for the assets held, Solana first.
+3. Summarize the two best options and their risks.
+
+### `perps`
+
+Goal: research a perpetual futures setup. Server: `mcp`. Perps are not enabled on MCP yet, so no position opens from here.
+
+1. Read `three://agents/{agentId}/wallet` for collateral and limits.
+2. `crypto_data()` for spot price and recent volatility, and `token_snapshot()` for Solana tokens.
+3. Summarize the setup, the liquidation risk at 2x and 5x, and what would invalidate it.
+
+### `predictions`
+
+Goal: research a prediction-market question. Server: `mcp`. Prediction markets are not enabled on MCP yet, so no position is placed from here.
+
+1. Read `three://agents/{agentId}/wallet` for the balance and limits.
+2. `crypto_data()` for the data behind the question, then give a probability estimate with reasoning.
+
+### `embed-avatar`
+
+Goal: put an agent's live 3D avatar on a website. Server: `mcp`.
+
+1. Read `three://agents/{agentId}` and check it has an avatar; if not, `list_my_avatars()` and `attach_avatar_to_agent()`.
+2. `get_embed_code()` with the agent id, choosing a size and autorotate.
+3. `render_avatar()` to preview it in chat.
+4. Paste the snippet and check it with the embed doctor at `/embed-doctor`.
+
+### `generate-3d`
+
+Goal: turn a text prompt into a textured, optionally rigged model saved to your library. Server: `mcp-3d`.
+
+1. `direct_prompt()` to sharpen the idea into a generation prompt.
+2. `text_to_3d()` with the prompt. **Spends money** at the tier price shown in `tools/list`; state it first.
+3. `generation_status()` with the job id until a GLB comes back.
+4. `auto_rig_model()` for characters so they can be animated.
+5. `save_avatar()` with the GLB URL and a name, then read `three://assets/{id}` for the saved asset.
+
+---
+
 ## Rate limits
 
 | Scope            | Limit                    |

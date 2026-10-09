@@ -29188,6 +29188,13 @@
 			"summary": "pump.fun's October program update changed where creator rewards land: newer trades leave the creator fee on the coin's bonding curve or pool until someone sweeps it into the creator's vault. Without handling that, those rewards were invisible to a claim and read as already claimed on coin pages. Every claim on three.ws now sweeps your coins first and collects everything in the same transaction, from your wallet, an agent wallet or the automatic claimer. Reward balances, coin pages and earnings history count the held fees as unclaimed, fee-sharing changes and distributions no longer fail on unswept fees, and the biggest buy a coin ever sees (the one that completes its curve) is now reported at its full size in trade feeds and whale alerts. The automatic claimer for agent sniper wallets also had a bug that stopped every claim; that is fixed.",
 			"tags": ["improvement", "fix"],
 			"link": "/launch"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "A paid call that fails after payment now tells you to retry, not to pay again",
+			"summary": "If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.",
+			"tags": ["improvement", "docs"],
+			"link": "/docs/x402"
 		}
 	]
 }

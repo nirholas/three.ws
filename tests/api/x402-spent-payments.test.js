@@ -86,6 +86,12 @@ vi.mock('../../api/_lib/db.js', async (importActual) => {
 	return { ...actual, sql: fakeSql };
 });
 
+const recordSiwxPayment = vi.fn();
+vi.mock('../../api/_lib/siwx-server.js', async (importActual) => {
+	const actual = await importActual();
+	return { ...actual, recordSiwxPayment };
+});
+
 vi.mock('@coinbase/x402', () => ({ createCdpAuthHeaders: vi.fn(async () => ({})) }));
 
 let paidEndpoint;
@@ -105,7 +111,7 @@ const HANDLER_BAZAAR = {
 	schema: { type: 'object' },
 };
 
-function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
+function mockReqRes({ method = 'GET', headers = {}, url = ROUTE, body = null } = {}) {
 	const lowerHeaders = {};
 	for (const [k, v] of Object.entries(headers)) lowerHeaders[k.toLowerCase()] = v;
 	const req = Object.assign(new Readable({ read() {} }), {
@@ -115,6 +121,10 @@ function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
 		connection: { remoteAddress: '127.0.0.1' },
 		socket: { remoteAddress: '127.0.0.1' },
 	});
+	if (body !== null) {
+		req.rawBody = Buffer.from(JSON.stringify(body));
+		req.body = body;
+	}
 	req.push(null);
 	const chunks = [];
 	const resHeaders = {};
@@ -144,8 +154,9 @@ function mockReqRes({ method = 'GET', headers = {}, url = ROUTE } = {}) {
 	return { req, res };
 }
 
-function paymentHeader({ salt = 'a' } = {}) {
+function paymentHeader({ salt = 'a', paymentId = null } = {}) {
 	const payload = {
+		...(paymentId ? { extensions: { 'payment-identifier': { info: { required: false, id: paymentId } } } } : {}),
 		x402Version: 2,
 		scheme: 'exact',
 		network: BASE,
@@ -197,6 +208,8 @@ beforeEach(() => {
 	auditEvents.length = 0;
 	verifyPayment.mockReset();
 	settlePayment.mockReset();
+	recordSiwxPayment.mockReset();
+	recordSiwxPayment.mockResolvedValue(undefined);
 	verifyPayment.mockImplementation(async () => ({
 		paymentPayload: {},
 		requirement: {
@@ -319,5 +332,147 @@ describe('paidEndpoint() durable spent-payment guard', () => {
 		expect(res.statusCode).toBe(200);
 		expect(JSON.parse(res.body)).toMatchObject({ ok: true });
 		expect(res.getHeader('x-payment-response')).toBeTruthy();
+	});
+});
+
+describe('paidEndpoint() failure after settlement', () => {
+	const streamOnce = () => {
+		let calls = 0;
+		return {
+			calls: () => calls,
+			handler: async ({ res }) => {
+				calls++;
+				if (calls === 1) throw new Error('upstream exploded');
+				res.setHeader('content-type', 'application/octet-stream');
+				res.write('GOOD');
+				res.end();
+			},
+		};
+	};
+
+	it('tells a buyer they were charged and may retry, then serves the retry without a second charge', async () => {
+		const h = streamOnce();
+		const failed = await callPaid(h.handler, { spec: { streaming: true } });
+
+		expect(failed.statusCode).toBe(500);
+		const body = JSON.parse(failed.body);
+		expect(body).toMatchObject({
+			paid: true,
+			retry_safe: true,
+			settlement: { transaction: '0xdeadbeef', network: BASE },
+		});
+		expect(body.message).toBe(
+			'You were charged; repeat this exact request with the same payment to get your result.',
+		);
+		expect([...spentRows.values()][0].outcome).toBe('failed_after_settle');
+
+		cacheMod._resetMemoryStore();
+		verifyPayment.mockClear();
+		settlePayment.mockClear();
+		const retried = await callPaid(h.handler, { spec: { streaming: true } });
+
+		expect(retried.statusCode).toBe(200);
+		expect(retried.body).toBe('GOOD');
+		expect(retried.getHeader('x-payment-response')).toBeTruthy();
+		expect(h.calls()).toBe(2);
+		expect(verifyPayment).not.toHaveBeenCalled();
+		expect(settlePayment).not.toHaveBeenCalled();
+		expect([...spentRows.values()][0].outcome).toBe('delivered');
+	});
+
+	it('still answers 409 for a call that completed, even after a failed attempt was retried', async () => {
+		const h = streamOnce();
+		await callPaid(h.handler, { spec: { streaming: true } });
+		cacheMod._resetMemoryStore();
+		await callPaid(h.handler, { spec: { streaming: true } });
+
+		cacheMod._resetMemoryStore();
+		const replay = await callPaid(h.handler, { spec: { streaming: true } });
+		expect(replay.statusCode).toBe(409);
+		expect(JSON.parse(replay.body)).toMatchObject({ error: 'payment_replayed' });
+		expect(h.calls()).toBe(2);
+	});
+
+	it('stops offering retries once they are used up and says to contact support', async () => {
+		let calls = 0;
+		const alwaysFails = async () => {
+			calls++;
+			throw new Error('still broken');
+		};
+		let last;
+		for (let i = 0; i < 4; i++) {
+			cacheMod._resetMemoryStore();
+			last = await callPaid(alwaysFails, { spec: { streaming: true } });
+		}
+		expect(calls).toBe(4);
+		expect(JSON.parse(last.body)).toMatchObject({ paid: true, retry_safe: false });
+
+		cacheMod._resetMemoryStore();
+		const after = await callPaid(alwaysFails, { spec: { streaming: true } });
+		expect(calls).toBe(4);
+		expect(after.statusCode).toBe(409);
+		expect(JSON.parse(after.body)).toMatchObject({
+			error: 'payment_retries_exhausted',
+			paid: true,
+			retry_safe: false,
+		});
+	});
+
+	it('marks siwx_record_failed as paid and retry-safe, and the retry succeeds', async () => {
+		recordSiwxPayment.mockRejectedValueOnce(new Error('neon hiccup'));
+		const spec = { siwx: { statement: 'Access the paid good' } };
+		const failed = await callPaid(async () => ({ ok: true }), { spec });
+
+		expect(failed.statusCode).toBe(502);
+		expect(JSON.parse(failed.body)).toMatchObject({
+			error: 'siwx_record_failed',
+			paid: true,
+			retry_safe: true,
+			settlement: { transaction: '0xdeadbeef' },
+		});
+
+		cacheMod._resetMemoryStore();
+		settlePayment.mockClear();
+		const retried = await callPaid(async () => ({ ok: true }), { spec });
+		expect(retried.statusCode).toBe(200);
+		expect(JSON.parse(retried.body)).toMatchObject({ ok: true });
+		expect(settlePayment).not.toHaveBeenCalled();
+	});
+});
+
+describe('paidEndpoint() idempotency over POST bodies', () => {
+	async function callPost(body, handler) {
+		const endpoint = makeEndpoint(handler, { method: 'POST' });
+		const { req, res } = mockReqRes({
+			method: 'POST',
+			body,
+			headers: { 'x-payment': paymentHeader({ paymentId: 'pay_post_body_00000001' }), 'content-type': 'application/json' },
+		});
+		await endpoint(req, res);
+		return res;
+	}
+
+	it('does not serve one body\'s cached response to a different body under the same payment identifier', async () => {
+		let ran = 0;
+		const handler = async ({ req }) => ({ ran: ++ran, echo: req.body });
+		const first = await callPost({ q: 'one' }, handler);
+		expect(first.statusCode).toBe(200);
+
+		const second = await callPost({ q: 'two' }, handler);
+		expect(second.statusCode).toBe(409);
+		expect(second.getHeader('x-x402-idempotent')).toBe('conflict');
+		expect(second.body).not.toContain('"one"');
+		expect(ran).toBe(1);
+	});
+
+	it('still replays the cached response for the identical body', async () => {
+		let ran = 0;
+		const handler = async () => ({ ran: ++ran });
+		const first = await callPost({ q: 'same' }, handler);
+		const again = await callPost({ q: 'same' }, handler);
+
+		expect(first.statusCode).toBe(200);
+		expect(again.statusCode).toBe(200);
+		expect(ran).toBe(1);
 	});
 });

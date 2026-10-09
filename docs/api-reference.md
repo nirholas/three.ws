@@ -8544,6 +8544,9 @@ Session cookie required; writes must be same-site. `POST` answers `201` with `{ 
 | `forbidden` | 403 | write from another origin |
 | `not_found` | 404 | token or agent is not the caller's |
 | `too_many_tokens` | 409 | 12 live tokens already |
+| `payment_replayed` | 409 | An x402 payment proof that already bought its result is being used again | No | Pay again to buy it a second time; to re-read a result you already paid for, use the receipt or sign in with the paying wallet |
+| any code, with `paid: true` and `retry_safe: true` | 500, 502 | An x402 call failed AFTER your payment settled. You were charged and the work was not delivered. The body carries `settlement.transaction`, `retries_left` and `retry_until` | Yes, with the same payment | Repeat the exact request with the same `X-PAYMENT` header. Do not pay again ([x402](/docs/x402)) |
+| `payment_retries_exhausted`, or `paid: true` with `retry_safe: false` | 409, 5xx | A paid call kept failing and the proof used up its retries | No | Contact support with `settlement.transaction`; you were charged and it will be made right |
 | `rate_limited` | 429 | over the per-account write limit |
 
 ## Trading guidance API
