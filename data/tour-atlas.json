@@ -1319,7 +1319,7 @@
 			},
 			"consoleErrors": 1,
 			"consoleSamples": [
-				"TypeError: Failed to fetch\n    at Zl.load (https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js:17:506510)\n    at Ru.load (https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js:528:4494)\n    at https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/mo"
+				"TypeError: Failed to fetch\n    at Zl.load (https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js:17:506510)\n    at Ru.load (https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js:528:4494)\n    at https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/mo"
 			],
 			"notes": [
 				"anchored by the director's generic fallback, not a curated selector for this page"

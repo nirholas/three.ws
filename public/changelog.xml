@@ -39,12 +39,28 @@
 			<description>How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.</description>
 		</item>
 		<item>
+			<title>Launch a Paired Coin</title>
+			<link>https://three.ws/launch/paired</link>
+			<guid isPermaLink="false">2026-10-08:Launch a Paired Coin</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.</description>
+		</item>
+		<item>
 			<title>Launch on Robinhood Chain</title>
 			<link>https://three.ws/launch/robinhood</link>
 			<guid isPermaLink="false">2026-10-08:Launch on Robinhood Chain</guid>
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.</description>
+		</item>
+		<item>
+			<title>Paired Coins</title>
+			<link>https://three.ws/markets/robinhood/paired</link>
+			<guid isPermaLink="false">2026-10-08:Paired Coins</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.</description>
 		</item>
 		<item>
 			<title>three.ws x DEXTools</title>
@@ -103,6 +119,14 @@
 			<description>When the community roster behind Coin Clash is unavailable, the arena no longer goes dark. Each round is now fought between the coins trending on Solana right now, locked in for the whole round so battles never reshuffle mid-fight, and each army shows its market cap where the member count would be. Enlisting, rallying and war records work exactly as before.</description>
 		</item>
 		<item>
+			<title>Coin pages keep their Markets table when the listing sources are busy</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-10-08:Coin pages keep their Markets table when the listing sources are busy</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.</description>
+		</item>
+		<item>
 			<title>Community sentiment readings are back on coin pages and the Oracle</title>
 			<link>https://three.ws/oracle</link>
 			<guid isPermaLink="false">2026-10-08:Community sentiment readings are back on coin pages and the Oracle</guid>
@@ -157,6 +181,14 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Every 3D model page now tells whoever reads the link exactly what it is. A model shared from three.ws unfurls on X as a large card showing a render of the model itself instead of a stock image, with its own title and description. Model, avatar and agent pages also describe themselves in a machine-readable form that search engines and AI assistants like Grok can read: the 3D file, a picture of it, who made it, when, and the terms it is shared under. So when someone asks Grok what a three.ws link is, it can answer from the model rather than guess.</description>
+		</item>
+		<item>
+			<title>Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-08:Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Adding the 3D Studio, agent wallet, x402 Bazaar or IBM Granite MCP server to an AI client with sign-in (Grok Bot, claude.ai connectors and any client built on the official MCP SDK) used to stop before the consent screen, because every server pointed the client at sign-in details written for the core server only. Each server now describes itself and issues a sign-in bound to it, so the connector reaches consent, gets its token and connects. Existing connections keep working. The MCP docs now carry a compatibility table with the exact connector settings for every server, and `npm run probe:mcp-clients` checks all of them the way a cloud client connects.</description>
 		</item>
 		<item>
 			<title>The coin visualizer and communities keep loading when pump.fun throttles us</title>

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-08T04:53:02.081Z",
+	"generated_at": "2026-10-09T02:41:54.975Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3831,
+	"total": 3835,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -52,9 +52,29 @@
 		{
 			"date": "2026-10-08",
 			"type": "launch",
+			"title": "Launch a Paired Coin",
+			"summary": "Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.",
+			"link": "/launch/paired",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
 			"title": "Launch on Robinhood Chain",
 			"summary": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
 			"link": "/launch/robinhood",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "Paired Coins",
+			"summary": "Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.",
+			"link": "/markets/robinhood/paired",
 			"tags": [
 				"launch"
 			]
@@ -132,6 +152,16 @@
 		{
 			"date": "2026-10-08",
 			"type": "update",
+			"title": "Coin pages keep their Markets table when the listing sources are busy",
+			"summary": "When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.",
+			"link": "/coins",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
 			"title": "Community sentiment readings are back on coin pages and the Oracle",
 			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
 			"link": "/oracle",
@@ -198,6 +228,16 @@
 			"link": "/creations",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector",
+			"summary": "Adding the 3D Studio, agent wallet, x402 Bazaar or IBM Granite MCP server to an AI client with sign-in (Grok Bot, claude.ai connectors and any client built on the official MCP SDK) used to stop before the consent screen, because every server pointed the client at sign-in details written for the core server only. Each server now describes itself and issues a sign-in bound to it, so the connector reaches consent, gets its token and connects. Existing connections keep working. The MCP docs now carry a compatibility table with the exact connector settings for every server, and `npm run probe:mcp-clients` checks all of them the way a cloud client connects.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1520,49 +1560,6 @@
 			"link": "/legal/tos",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-16",
-			"type": "update",
-			"title": "Deploy your agent on-chain with Solana's new transaction v1",
-			"summary": "Minting an agent to Solana now uses the new transaction v1 format whenever your wallet supports it, from the agent deploy button, the registration wizard (vanity addresses included), and /deploy-onchain. On /deploy-onchain that turns a Genesis-shape deploy from two wallet transactions into one: the asset is created and registered in the Metaplex Agent Registry atomically, so there is no half-finished deploy if something fails in between. Each deploy spells out its compute, account data, and priority fee limits instead of relying on defaults, and three.ws checks that the transaction that landed on-chain is the exact version it prepared before recording your agent. Wallets that have not added v1 yet keep working exactly as before, and a deployed agent now shows which transaction format it used.",
-			"link": "/deploy-onchain",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-09-16",
-			"type": "update",
-			"title": "GitHub fee claims now say what they actually prove",
-			"summary": "A GitHub fee claim on pump.fun proves that a GitHub account collected creator fees routed to it. It does not prove that person built the coin, owns the linked repository, or backs the project. Claim cards on /pumpfun used to read as a developer endorsing a coin even when the account was a lookalike name, the coin had no GitHub link at all, or one fee account was shared by several coins and the card simply picked the biggest one. Every claim now carries one of five labels: verified repository, verified creator wallet, identity mismatch, unverified, or unresolved pooled withdrawal. Only the two verified labels get trade buttons or count toward a coin's reputation score, mismatches are flagged in red, and the Telegram claims channel follows the same rules.",
-			"link": "/pumpfun",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-16",
-			"type": "update",
-			"title": "pump.fun agent skills now launch holder-reward coins",
-			"summary": "The pump.fun launch, swap and fee skills that agents use on three.ws now run on version 2 of the pump.fun SDK. Launching a coin can now turn on holder rewards, which sends every creator fee to the coin's holders instead of the launcher, permanently. Cashback launches were retired by pump.fun, so the skill now refuses them up front with a clear message instead of handing back a transaction that would fail after you sign it. The fee skill also recognizes holder-reward coins and explains where their fees go rather than trying to collect them.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-15",
-			"type": "launch",
-			"title": "Atomic - Solana V1 Inspector",
-			"summary": "A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.",
-			"link": "/atomic",
-			"tags": [
-				"launch"
 			]
 		}
 	]

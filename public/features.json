@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-08T04:53:01.983Z",
+	"generated_at": "2026-10-09T02:41:54.930Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1918,6 +1918,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/launch/paired",
+					"title": "Launch a Paired Coin",
+					"description": "Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.",
+					"added": "2026-10-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/launch/robinhood",
 					"title": "Launch on Robinhood Chain",
 					"description": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
@@ -3192,6 +3202,16 @@
 					"title": "Portfolio universe",
 					"description": "Every asset a Robinhood Chain portfolio may hold, priced live: tokenized equities, crypto majors and chain-native tokens with on-chain liquidity, 24h volume, price change and the NAV premium against each equity's Chainlink feed. Sortable and filterable by asset class.",
 					"added": "2026-09-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/markets/robinhood/paired",
+					"title": "Paired Coins",
+					"description": "Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.",
+					"added": "2026-10-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

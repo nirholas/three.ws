@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-08T04:53:02.009Z",
+	"generated_at": "2026-10-09T02:41:54.946Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,9 +49,29 @@
 		{
 			"date": "2026-10-08",
 			"type": "launch",
+			"title": "Launch a Paired Coin",
+			"summary": "Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.",
+			"link": "/launch/paired",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
 			"title": "Launch on Robinhood Chain",
 			"summary": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
 			"link": "/launch/robinhood",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "Paired Coins",
+			"summary": "Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.",
+			"link": "/markets/robinhood/paired",
 			"tags": [
 				"launch"
 			]
@@ -129,6 +149,16 @@
 		{
 			"date": "2026-10-08",
 			"type": "update",
+			"title": "Coin pages keep their Markets table when the listing sources are busy",
+			"summary": "When both of our exchange-listing sources were rate-limited, a coin page's Markets table could show an error for coins only one of them lists. It now falls back to the coin's live DEX trading pairs, found by its contract address, with each pair's venue, chain, price, 24h volume and a link to trade it.",
+			"link": "/coins",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
 			"title": "Community sentiment readings are back on coin pages and the Oracle",
 			"summary": "pump.fun moved the feed of community callouts that our sentiment pulse reads, so every reading had been failing with an unavailable error. The pulse now reads the new feed, so launch pages, the Oracle and the sentiment_pulse MCP tool score real community commentary again, up to 100 callouts per coin.",
 			"link": "/oracle",
@@ -195,6 +225,16 @@
 			"link": "/creations",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "update",
+			"title": "Signing in to the 3D Studio, wallet, Bazaar and IBM MCP servers works from any connector",
+			"summary": "Adding the 3D Studio, agent wallet, x402 Bazaar or IBM Granite MCP server to an AI client with sign-in (Grok Bot, claude.ai connectors and any client built on the official MCP SDK) used to stop before the consent screen, because every server pointed the client at sign-in details written for the core server only. Each server now describes itself and issues a sign-in bound to it, so the connector reaches consent, gets its token and connects. Existing connections keep working. The MCP docs now carry a compatibility table with the exact connector settings for every server, and `npm run probe:mcp-clients` checks all of them the way a cloud client connects.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix"
 			]
 		},
 		{

@@ -1131,6 +1131,12 @@ URL: https://three.ws/launch
 
 The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.
 
+### Launch a Paired Coin
+
+URL: https://three.ws/launch/paired
+
+Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.
+
 ### Launch on Robinhood Chain
 
 URL: https://three.ws/launch/robinhood
@@ -1904,6 +1910,12 @@ Describe a portfolio in a sentence and get a real basket of Robinhood Chain asse
 URL: https://three.ws/markets/robinhood/portfolios/universe
 
 Every asset a Robinhood Chain portfolio may hold, priced live: tokenized equities, crypto majors and chain-native tokens with on-chain liquidity, 24h volume, price change and the NAV premium against each equity's Chainlink feed. Sortable and filterable by asset class.
+
+### Paired Coins
+
+URL: https://three.ws/markets/robinhood/paired
+
+Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.
 
 ### Crypto News
 
