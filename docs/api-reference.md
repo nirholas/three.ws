@@ -6776,9 +6776,9 @@ Scores are written exclusively by the authoritative game server (through the wor
 }
 ```
 
-An event nobody has played yet is an empty board (`top: []`, `players: 0`) with a `200`, not an error: render the "no runs yet" state rather than a failure. `404 no_event` means no event is configured at all, which is what the live deployment answers between events.
+An event nobody has played yet is an empty board (`top: []`, `players: 0`) with a `200`, not an error: render the "no runs yet" state rather than a failure. The board keeps answering `200` after an event ends (with `live: false`), for as long as `public/event.json` still names that event. `404 no_event` means no event is configured at all, which is what the live deployment answers once the finished event is retired from `public/event.json` and before the next one is scheduled.
 
-<!-- runnable: 404 answers no_event whenever no event window is open in public/event.json -->
+<!-- runnable: no the status follows the event calendar in public/event.json (200 while an event is configured, 404 no_event once it is retired), so no single status is a stable contract -->
 ```bash
 curl -s 'https://three.ws/api/play/event-leaderboard?limit=10'
 ```

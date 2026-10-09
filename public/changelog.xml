@@ -7,20 +7,20 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The desktop companion, CLI and MCP server now work with just the bridge token</title>
+			<link>https://three.ws/companion</link>
+			<guid isPermaLink="false">2026-10-09:The desktop companion, CLI and MCP server now work with just the bridge token</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The companion bridge token is the one credential the desktop app, the companion command line and its MCP server are given, but the feed, marking a message as spoken, replying, reading contacts and checking sources all refused it, so pasting the token into the desktop app said it was wrong and an agent asking what you had heard got turned away. Those calls now accept the bridge token and only ever show the messages and contacts of the person it belongs to. It still cannot connect sources, edit contacts, change settings or rotate itself; those stay behind your signed-in account, and they now say so plainly instead of answering as if the token were wrong.</description>
+		</item>
+		<item>
 			<title>Chart Companion</title>
 			<link>https://three.ws/chart-companion</link>
 			<guid isPermaLink="false">2026-10-08:Chart Companion</guid>
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.</description>
-		</item>
-		<item>
-			<title>DEXTools integration guide</title>
-			<link>https://three.ws/docs/dextools</link>
-			<guid isPermaLink="false">2026-10-08:DEXTools integration guide</guid>
-			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.</description>
 		</item>
 		<item>
 			<title>Docs · Chart Companion</title>
@@ -37,6 +37,14 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.</description>
+		</item>
+		<item>
+			<title>Docs · three.ws for Grok</title>
+			<link>https://three.ws/docs/grok</link>
+			<guid isPermaLink="false">2026-10-08:Docs · three.ws for Grok</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.</description>
 		</item>
 		<item>
 			<title>Launch a Paired Coin</title>
@@ -61,6 +69,14 @@
 			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.</description>
+		</item>
+		<item>
+			<title>three.ws for Grok</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-10-08:three.ws for Grok</guid>
+			<pubDate>Thu, 08 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.</description>
 		</item>
 		<item>
 			<title>three.ws x DEXTools</title>

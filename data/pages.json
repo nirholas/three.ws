@@ -520,6 +520,14 @@
 					"added": "2026-07-25"
 				},
 				{
+					"path": "/grok",
+					"title": "three.ws for Grok",
+					"description": "One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-10-08"
+				},
+				{
 					"path": "/nvidia",
 					"title": "three.ws on NVIDIA",
 					"description": "three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.",
@@ -860,14 +868,6 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-28"
-				},
-				{
-					"path": "/docs/dextools",
-					"title": "DEXTools integration guide",
-					"description": "How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.",
-					"priority": 0.5,
-					"changefreq": "monthly",
-					"added": "2026-10-08"
 				},
 				{
 					"path": "/docs/portal",
@@ -4069,6 +4069,12 @@
 					"title": "Docs · 3D Studio MCP (free)",
 					"description": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",
 					"added": "2026-07-14"
+				},
+				{
+					"path": "/docs/grok",
+					"title": "Docs · three.ws for Grok",
+					"description": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
+					"added": "2026-10-08"
 				},
 				{
 					"path": "/docs/chatgpt-ar",

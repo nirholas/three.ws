@@ -366,6 +366,12 @@ URL: https://three.ws/openai
 
 three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation.
 
+### three.ws for Grok
+
+URL: https://three.ws/grok
+
+One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.
+
 ### three.ws on NVIDIA
 
 URL: https://three.ws/nvidia
@@ -623,12 +629,6 @@ npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D chara
 URL: https://three.ws/docs/brownout
 
 Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.
-
-### DEXTools integration guide
-
-URL: https://three.ws/docs/dextools
-
-How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.
 
 ### How Portal builds a 3D world from a URL
 
@@ -3076,6 +3076,12 @@ How the three.ws prompt library works: the setup tiers behind each prompt, the l
 URL: https://three.ws/docs/mcp-studio
 
 The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.
+
+### Docs · three.ws for Grok
+
+URL: https://three.ws/docs/grok
+
+Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.
 
 ### Docs · AR in ChatGPT
 

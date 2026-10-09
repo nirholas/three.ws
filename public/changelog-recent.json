@@ -1,30 +1,30 @@
 {
-	"generated_at": "2026-10-09T02:41:54.975Z",
+	"generated_at": "2026-10-09T02:58:06.112Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3835,
+	"total": 3837,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "The desktop companion, CLI and MCP server now work with just the bridge token",
+			"summary": "The companion bridge token is the one credential the desktop app, the companion command line and its MCP server are given, but the feed, marking a message as spoken, replying, reading contacts and checking sources all refused it, so pasting the token into the desktop app said it was wrong and an agent asking what you had heard got turned away. Those calls now accept the bridge token and only ever show the messages and contacts of the person it belongs to. It still cannot connect sources, edit contacts, change settings or rotate itself; those stay behind your signed-in account, and they now say so plainly instead of answering as if the token were wrong.",
+			"link": "/companion",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-08",
 			"type": "launch",
 			"title": "Chart Companion",
 			"summary": "Paste any DEXTools pair and a 3D agent watches the live chart with you, reacting to every real swap: cheering whale buys, flinching at dumps, calling streaks and new highs, each reaction linked to its transaction. Turn on its voice, bring your own three.ws agent, embed it with one iframe, or add it to OBS as a transparent stream overlay.",
 			"link": "/chart-companion",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-08",
-			"type": "launch",
-			"title": "DEXTools integration guide",
-			"summary": "How three.ws works with DEXTools: DEXTools charts on every coin page, any pair rendered as a live 3D scene, the embeddable Social Boost card, and how to paste a DEXTools link to get an embed snippet.",
-			"link": "/docs/dextools",
 			"tags": [
 				"launch"
 			]
@@ -45,6 +45,16 @@
 			"title": "Docs · DEXTools integration",
 			"summary": "How three.ws and DEXTools connect: the /dextools hub, the embed builder that turns any DEXTools pair link into a 3D scene or Social Boost card snippet, the framable Boost on DEXTools card, and the counted redirect and public totals behind every visit three.ws sends to a DEXTools pair page.",
 			"link": "/docs/dextools",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "Docs · three.ws for Grok",
+			"summary": "Connect Grok Bot, Grok connectors or the xAI API to the free three.ws remote MCP server at /api/mcp-grok: text and image to 3D, rigged avatars, and a named 3D persona that lip-syncs its replies, with no account, payment or API key.",
+			"link": "/docs/grok",
 			"tags": [
 				"launch"
 			]
@@ -75,6 +85,16 @@
 			"title": "Paired Coins",
 			"summary": "Coins on Robinhood Chain that trade against up to five assets at once: tokenized stocks, WETH, stablecoins and chain coins, each in its own bonding curve with liquidity locked forever. Live pools priced in dollars, charts per pool, every trade, a buy and sell ticket, and the AI agents that launched them.",
 			"link": "/markets/robinhood/paired",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-08",
+			"type": "launch",
+			"title": "three.ws for Grok",
+			"summary": "One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.",
+			"link": "/grok",
 			"tags": [
 				"launch"
 			]
@@ -1538,28 +1558,6 @@
 			"link": "/docs/launchpad",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-09-16",
-			"type": "update",
-			"title": "A cleaner launchpad for your 3D agent's coin, with rewards you claim right here",
-			"summary": "three.ws/launch is rebuilt around one flow: pick one of your 3D agents, name the coin, and launch it on pump.fun from your wallet or from the agent's own wallet. The coin's metadata links your agent's page and 3D body, a live preview and cost panel show exactly what you will pay (including a 1% three.ws fee on the dev buy), and a new My coins tab shows unclaimed creator rewards and claims them in one click, no pump.fun app needed. Launches now fit in a single transaction thanks to pump.fun's lookup table, and larger ones, like USDC-paired coins with a dev buy, use Solana transaction v1 automatically when your wallet supports it. This also fixes launches that were failing because an on-chain buyback program stopped accepting new agents.",
-			"link": "/launch",
-			"tags": [
-				"feature",
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-16",
-			"type": "update",
-			"title": "A flat 1% fee on trades made through three.ws",
-			"summary": "Trades that three.ws builds or runs for you now carry a 1% fee, paid in the same transaction as the trade: buys and sells in the coin trade window, trades from your agent's wallet, and trades your agents make through strategies, mirror trading, orders, market making and sniping. The fee is shown before you confirm, both in the trade window and in the agent wallet's trade tab. Trades you make on other apps are not affected, and three.ws's own agents are never charged.",
-			"link": "/legal/tos",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

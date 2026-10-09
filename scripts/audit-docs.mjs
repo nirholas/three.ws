@@ -351,6 +351,10 @@ const UNPUBLISHED_DOCS = new Map([
 	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
 	['ibm-community-doc-freshness-post', 'internal: source draft of an IBM Community post'],
 	['ibm-community-long-running-mcp-tools-post', 'internal: source draft of an IBM Community post'],
+	['ibm-community-long-running-mcp-tools-thread', 'internal: discussion-thread draft for the IBM Community user group, companion to its post'],
+	['ibm-community-doc-freshness-thread', 'internal: discussion-thread draft for the IBM Community user group, companion to its post'],
+	['ibm-community-any-skeleton-animation-post', 'internal: source draft of an IBM Community post'],
+	['ibm-community-any-skeleton-animation-thread', 'internal: discussion-thread draft for the IBM Community user group, companion to its post'],
 	[
 		'ibm-community-governed-agents-thread',
 		'internal: discussion-thread draft for the IBM Community user group, held until POST /api/guardian/assess answers on production',
@@ -383,6 +387,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['pump-fun-mcp-edge', 'owner-gated: names a crypto project other than $THREE'],
 	['pump-launch-repos', 'owner-gated: names a crypto project other than $THREE'],
 	['pump-platform-fee', 'owner-gated: names a crypto project other than $THREE'],
+	['pons-launch', 'owner-gated: names a crypto project other than $THREE'],
 	['robinhood-chain-markets', 'owner-gated: names a crypto project other than $THREE'],
 	['solana-pumpfun', 'owner-gated: names a crypto project other than $THREE'],
 	['syndication', 'internal: distribution mechanics for the announcements feed'],

@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-20",
+	"updated": "2026-10-09",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -436,6 +436,31 @@
 					}
 				},
 				"expect": "no curated listing copy"
+			}
+		},
+		{
+			"id": "audit-mcp-surfaces",
+			"script": "scripts/build-mcp-surfaces.mjs",
+			"npm": "audit:mcp-surfaces",
+			"title": "MCP resource and prompt listings",
+			"protects": "Every hosted MCP server's registry manifest (server*.json) and the public directory at public/.well-known/mcp.json list exactly the resources, resource templates and guided prompts that server really serves.",
+			"why": "Registries and MCP clients decide what a server offers from these listings before they ever connect. The lists are generated from api/_mcp/resources.js and api/_mcp/prompts.js, so a prompt or resource added, renamed or removed in code leaves the published manifests advertising things that do not exist, or hiding things that do, until someone remembers to regenerate. This check fails when any committed listing no longer matches what the code serves.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The public MCP directory advertising no guided prompts for the main server while the code still serves them.",
+				"violation": {
+					"json": [
+						{
+							"file": "public/.well-known/mcp.json",
+							"pointer": "servers.0.prompts",
+							"set": []
+						}
+					]
+				},
+				"expect": "MCP resource/prompt listings are stale"
 			}
 		},
 		{
@@ -1605,6 +1630,22 @@
 					]
 				},
 				"expect": "is declared but"
+			}
+		},
+		{
+			"id": "check-xai-models",
+			"script": "scripts/check-xai-models.mjs",
+			"npm": "check:xai-models",
+			"title": "Grok model catalog matches xAI",
+			"protects": "Every Grok model id in GROK_MODELS (api/_lib/chat-models.js) is one xAI still serves, every chat model xAI serves is catalogued, and each catalogued price, context window, image input, tool calling and reasoning-effort set matches xAI's own figures.",
+			"why": "xAI ships new model ids often and retires old ones in batches. A retired id in the catalog turns the Grok rung of every LLM failover chain into a guaranteed error, a new id nobody catalogued is a better or cheaper model no one on the platform can pick, and llm-pricing.js meters Grok spend from the catalog's prices, so a stale price is a wrong spend ledger. It reads the xAI models API when GROK_API_KEY or XAI_API_KEY is set and xAI's public model docs otherwise, and exits 2 rather than 1 when neither source can be read, so an outage is never reported as drift.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "The thing under test is what xAI serves today, read from its models API or its public model docs. There is no offline input whose mutation proves anything about a third party's live catalog, and the comparison never sends a prompt or spends a token."
 			}
 		},
 		{
