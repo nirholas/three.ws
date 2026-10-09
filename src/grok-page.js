@@ -385,8 +385,11 @@ async function loadTools() {
 
 const STRIP_COUNT = 6;
 
+// The render endpoint fetches the GLB server side, so it needs an absolute URL.
+// A same-origin path (a dev proxy) cannot be rendered; use the concept image.
 function posterFor(item) {
 	const glb = item.web_glb_url || item.glb_url;
+	if (!/^https?:\/\//.test(glb) && item.preview_image_url) return item.preview_image_url;
 	return `/api/render/glb?glbUrl=${encodeURIComponent(glb)}`;
 }
 
