@@ -20,6 +20,7 @@ Routing is free-first and health-aware, exactly as in Forge. Because the free NV
 2. **TRELLIS (self-host)**, our own Cloud Run GPU worker, a native single-hop image-to-3D lane (image to TRELLIS to GLB), zero vendor cost.
 3. **Hunyuan3D (self-host)**, our own high-poly reconstruction worker, strong on people and organic subjects. Its licence excludes the EU, the UK and South Korea, so requests from those countries (or an unknown country) skip it.
 4. **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR.
+5. **Modly TripoSG** and **Modly Hunyuan3D Mini Turbo (self-host)**, our Modly worker (`workers/modly/`). Both return clean, repaired geometry at the tier's face budget but no textures, so they sit below every textured lane. Pick one explicitly when you want shape only, for example to retexture or stylize afterwards. Mini Turbo follows the same territory rule as Hunyuan3D; Modly TripoSG serves every region. If the Modly worker is down when you submit, the same photo goes to TRELLIS.2, then TRELLIS.
 
 If a self-host worker accepts your job and then fails it, the job moves to the next lane on its own and you keep watching the same progress screen. The last rung is **TripoSG (self-host)**: it only takes over when every textured lane is down, and it returns the shape without textures (the progress screen tells you when that happens), so an outage costs you color rather than the whole model.
 

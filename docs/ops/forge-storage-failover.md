@@ -57,7 +57,8 @@ because those blame the object and the fallback would be wrong.
 
 Only ours. `backendAcceptsInlineViews` in
 [api/_lib/forge-tiers.js](../../api/_lib/forge-tiers.js) is true exactly for the
-backends whose `provider` is `gcp` (`trellis_selfhost`, `hunyuan3d`, `triposg`),
+backends whose `provider` is `gcp` (`trellis2`, `trellis_selfhost`, `hunyuan3d`,
+`modly`, `modly_hunyuan`, `triposg`),
 and it is derived from the registry rather than a hand-written list, so a backend
 added later is classified by what it is.
 

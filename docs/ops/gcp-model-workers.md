@@ -24,6 +24,8 @@ result_* }` — and authenticate with one shared bearer secret.
 | `trellis2`          | `workers/model-trellis2` | `model-trellis2` | `image`  | Default image→3D lane. TRELLIS.2 (MIT): PBR GLB with alpha, `resolution` 512/1024/1536, meshopt packed. Weights staged by `workers/model-trellis2/stage_weights.sh`. |
 | `trellis_selfhost`  | `workers/model-trellis`  | `model-trellis`  | `image`  | Native single-hop image→3D (Microsoft TRELLIS). Accepts user photos and the FLUX-synthesized view for text prompts. Textured GLB. |
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
+| `modly`             | `workers/modly`          | `model-modly`    | `image`  | TripoSG through Modly's headless backend (MIT). Single photo to untextured GLB, repaired and decimated to the tier's face budget. Weights staged by `workers/modly/stage_weights.sh`. |
+| `modly_hunyuan`     | `workers/modly`          | `model-modly`    | `image`  | Hunyuan3D 2 Mini Turbo on the same worker. Untextured. A Tencent lane: never routed to a restricted or unknown territory (`api/_lib/forge-territory.js`). |
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
 
 All three are `provider: 'gcp'`, `free: true`. `model-trellis` pins one
@@ -89,6 +91,7 @@ faked.
 | `MODEL_TRELLIS2_URL`    | `trellis2`             | Cloud Run URL of `model-trellis2`. Unset means the lane is skipped. |
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
+| `MODEL_MODLY_URL`       | `modly`, `modly_hunyuan` | Cloud Run URL of `model-modly`. Unset means both Modly lanes are skipped. |
 | `GCP_TRIPOSG_URL`       | `sketch`, `triposg`    | Cloud Run URL of `model-triposg`. Serves the sketch lane and the last-resort, untextured photo rung of the poll-time failover. |
 | `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `model-rig` (the env name predates the engine swap that retired the old `unirig` service). Required for rigging: it is the only `rerig` backend, so without it the provider reports the mode unsupported rather than submitting anywhere. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
 | `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager; `model-rig`'s `API_KEY` references the same secret). |
