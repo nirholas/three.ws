@@ -9,6 +9,8 @@ without ever being able to spend.
 
 **Live page and demo:** [three.ws/grok](/grok)
 
+**Connector reference** (exact fields per sign-in mode, the result and job contracts, limits, troubleshooting): [Grok Bot connector reference](./grok-bot.md)
+
 | | |
 |---|---|
 | **URL** | `https://three.ws/api/mcp-grok` |

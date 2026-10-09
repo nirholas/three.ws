@@ -4023,6 +4023,14 @@
 					"added": "2026-10-08"
 				},
 				{
+					"path": "/docs/grok-bot",
+					"title": "Docs · Grok Bot connector reference",
+					"description": "Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/docs/mcp-solana-memo-media",
 					"title": "Docs · Solana Memo Media MCP",
 					"description": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",

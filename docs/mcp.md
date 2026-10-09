@@ -155,7 +155,7 @@ Ready-to-submit listing packages for each directory, plus the canonical metadata
 
 Deep dives — every tool, argument, env var, and example:
 
-- **Hosted remote:** [3D Studio (free)](./mcp-studio.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
+- **Hosted remote:** [3D Studio (free)](./mcp-studio.md) · [Grok Bot connector](./grok-bot.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
 - **Runs against your machine:** [Blender MCP](./blender-mcp.md) drives the Blender installed on your own computer, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.
 - **Install-and-run:** each npm server ships its usage guide (tools, arguments, env vars, examples) in its package README on [npmjs.com/org/three-ws](https://www.npmjs.com/org/three-ws). The [MCP Tools Catalog](./mcp-tools.md) maps every tool to its server and price.
 - **Solana Memo Media:** [full guide](./mcp-solana-memo-media.md) for validating and rendering data URI images embedded in SPL Memo instructions.
@@ -295,6 +295,10 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 
 This uses the standalone npm package, which handles OAuth locally. The `--url` flag lets you point at a local dev server.
 
+### Grok Bot
+
+Grok Bot connects from xAI's cloud as a custom MCP connector: transport Streamable HTTP, server URL `https://three.ws/api/mcp-grok`, authentication None for the free studio, a connector key for your agents, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth`. The [Grok Bot connector reference](./grok-bot.md) has the exact fields for each mode, which server to pick, the result and job contracts, the limits, and a fix for every failure the connector probe reports.
+
 ### Any MCP-compatible client
 
 Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The server is stateless, so no session setup is needed beyond the `initialize` handshake. `initialize` returns an `Mcp-Session-Id` header; echo it on later requests, as the MCP SDKs do, so your calls are attributed to your client in the platform's [client analytics](./ops/mcp-clients.md). It holds no state, and a request without it is served the same way.
@@ -346,7 +350,7 @@ What every hosted server does on the wire, so a connector never fails silently:
 
 - `initialize` answers JSON (`application/json`) and negotiates protocol version `2025-06-18` whatever version the client opens with; every current MCP SDK accepts it.
 - A `GET` with `accept: text/event-stream` answers a `405` with an `Allow` header where there is no server-to-client stream, a `401` with the OAuth challenge when the caller is unauthenticated, or the event stream itself (resource subscriptions on an authenticated core, 3D Studio, wallet or Bazaar connection, and the pump.fun feed).
-- These servers are stateless and issue no `Mcp-Session-Id`, so a connector has no session to echo, resume or tear down; every request stands alone.
+- `initialize` issues an `Mcp-Session-Id` (`grk_…` on `/api/mcp-grok`, `mcs_…` on the core, 3D, free studio, agent wallet, Bazaar and IBM servers) that a connector echoes on later requests. The servers hold no state on it: a request without it is served the same way. `/api/mcp-grok` also keys its free generation caps on it ([limits](./grok-bot.md#rate-limits-and-install-tokens)).
 - An unauthenticated or expired-token request on a protected server gets `401` with `WWW-Authenticate: Bearer resource_metadata="…", resource="…"` naming that server, so the connector can sign in again on its own.
 - On the free 3D Studio (`/api/mcp-studio` and `/api/mcp-grok`), a `tools/call` that carries `_meta.progressToken` from a client that accepts `text/event-stream` is answered as an event stream: `notifications/progress` while the job runs, then the result. Without a token it answers plain JSON.
 

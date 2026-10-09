@@ -93,7 +93,7 @@ const TEMPLATE = `
 		<li data-i18n-html="connect.grok_step_use">Ask for 3D in any task, or attach the server with <code>@</code> and its name. Grok Bot runs on its own cloud computer, so it can save the GLB to its files or run the request on a schedule.</li>
 	</ol>
 	<p class="gc-callout" role="note" data-i18n-html="connect.grok_localhost_never_works"><strong>Use the public URL.</strong> Grok Bot connects from xAI's cloud, not from your computer, so a <code>localhost</code> or private-network URL never works. The three.ws URLs above are public.</p>
-	<p class="gc-src" id="gc-source" data-i18n-html="connect.grok_source">Grok Bot is in beta and its connector screen still changes: if these steps drift, <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener">tell us</a>. See what Grok Bot can do with it, live, at <a href="/grok">three.ws/grok</a>, and read the full guide, with the xAI API and Grok connectors, at <a href="/docs/grok">three.ws for Grok</a>.</p>
+	<p class="gc-src" id="gc-source" data-i18n-html="connect.grok_source">Grok Bot is in beta and its connector screen still changes: if these steps drift, <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener">tell us</a>. See what Grok Bot can do with it, live, at <a href="/grok">three.ws/grok</a>, read the full guide, with the xAI API and Grok connectors, at <a href="/docs/grok">three.ws for Grok</a>, and fix a connection that fails with the <a href="/docs/grok-bot#troubleshooting">connector reference</a>.</p>
 `;
 
 async function copyFrom(btn, source) {
