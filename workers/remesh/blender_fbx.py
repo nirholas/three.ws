@@ -1,5 +1,5 @@
 """
-Headless Blender → FBX converter for the remesh worker.
+Headless Blender FBX bridge for the remesh worker (GLB to FBX, and FBX to GLB).
 
 trimesh and assimp cannot write FBX with a skeleton: trimesh has no FBX
 exporter at all, and pyassimp/assimp's FBX writer does not round-trip armatures,
@@ -13,13 +13,22 @@ We run this as a one-shot subprocess (never in-process in the FastAPI worker):
 data across operations. A fresh process per conversion gives a clean scene,
 thread safety under the worker's concurrency, and reclaimed memory on exit.
 
+It also runs the other direction. trimesh has no FBX *reader* either ("File
+type: fbx not supported"), so an FBX the caller hands in is imported here and
+written back out as a GLB that the trimesh pipelines can read. An output path
+ending in `.glb` selects that mode.
+
 Usage:
-    python blender_fbx.py <input> <output.fbx> [--static]
+    python blender_fbx.py <input> <output.fbx|output.glb> [--static]
 
 `--static` skips animation baking — used when the upstream geometry op
 (simplify/repair) has already discarded any rig, so the FBX is a plain mesh.
 
 On success, prints `FACE_COUNT:<n>` to stdout (polygons across all mesh objects).
+An input that imports no mesh polygons at all (an ASCII FBX, which Blender's
+importer refuses, or a file holding only cameras, lights or bones) exits with
+status 3 and an `IMPORT_EMPTY:` line on stderr, so the worker can tell the
+caller what was wrong with the file instead of reporting an internal error.
 """
 
 from __future__ import annotations
@@ -52,6 +61,15 @@ def _leave(code: int, message: str = "") -> None:
 # importer and has no OFF importer, so the worker bridges those through a
 # trimesh-written GLB before calling us.
 _IMPORTERS = {".glb", ".gltf", ".fbx", ".obj", ".stl", ".ply"}
+
+# Output suffixes this script writes. `.fbx` is the export the worker offers to
+# callers; `.glb` is the bridge that lets trimesh read an FBX input.
+_EXPORTERS = {".fbx", ".glb"}
+
+# Exit status for an import that produced no mesh polygons. Distinct from the
+# generic failure (1) and bad usage (2) so the worker can report it as a problem
+# with the caller's file rather than with the service.
+EXIT_IMPORT_EMPTY = 3
 
 
 def _reset_scene() -> None:
@@ -115,22 +133,53 @@ def _export_fbx(path: Path, static: bool) -> None:
     )
 
 
+def _export_glb(path: Path) -> None:
+    """Write the imported scene as a single binary glTF for trimesh to read.
+
+    Modifiers are applied so what trimesh sees matches what Blender displays.
+    Animation is skipped: every consumer of this bridge is a geometry pipeline
+    that flattens the scene and drops any rig anyway."""
+    _enable_addon("io_scene_gltf2")
+    bpy.ops.export_scene.gltf(
+        filepath=str(path),
+        export_format="GLB",
+        use_selection=False,
+        export_apply=True,
+        export_animations=False,
+    )
+
+
 def main() -> None:
     args = sys.argv[1:]
     static = "--static" in args
     positional = [a for a in args if not a.startswith("--")]
     if len(positional) != 2:
-        _leave(2, "usage: blender_fbx.py <input> <output.fbx> [--static]")
+        _leave(2, "usage: blender_fbx.py <input> <output.fbx|output.glb> [--static]")
 
     in_path = Path(positional[0])
     out_path = Path(positional[1])
     if in_path.suffix.lower() not in _IMPORTERS:
         _leave(2, f"blender_fbx: cannot import '{in_path.suffix}'")
+    if out_path.suffix.lower() not in _EXPORTERS:
+        _leave(2, f"blender_fbx: cannot export '{out_path.suffix}'")
 
     _reset_scene()
-    _import_source(in_path)
+    try:
+        _import_source(in_path)
+    except RuntimeError as exc:
+        # Blender's importers raise RuntimeError for a file they cannot parse
+        # (an ASCII FBX, a pre-7.1 binary FBX, a truncated download). That is a
+        # problem with the input, not with this process.
+        reason = str(exc).strip().splitlines()
+        _leave(EXIT_IMPORT_EMPTY, f"IMPORT_EMPTY: {reason[-1] if reason else 'import failed'}")
     faces = _face_count()
-    _export_fbx(out_path, static)
+    if faces == 0:
+        _leave(EXIT_IMPORT_EMPTY, "IMPORT_EMPTY: the file contains no mesh polygons")
+
+    if out_path.suffix.lower() == ".glb":
+        _export_glb(out_path)
+    else:
+        _export_fbx(out_path, static)
 
     if not out_path.exists() or out_path.stat().st_size == 0:
         _leave(1, "blender_fbx: exporter produced no output")
