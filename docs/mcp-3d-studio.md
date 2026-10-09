@@ -52,8 +52,8 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 
 | Tool                                                                | What it does                                                                                         |
 | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `remesh_model(mesh_url, operation?, target_faces?, output_format?)` | Repair, simplify (quadric decimation), or convert format (incl. FBX with skeleton for Unity/Unreal). |
-| `stylize_model(mesh_url, style?, resolution?, output_format?)`      | One-pass geometric restyle: `voxel`, `brick` (LEGO-like), `voronoi` lattice, `lowpoly`.              |
+| `remesh_model(mesh_url, operation?, target_faces?, output_format?)` | Repair, simplify (quadric decimation), or convert format (incl. FBX with skeleton for Unity/Unreal). Reads GLB/GLTF/OBJ/STL/PLY/OFF/DAE and binary FBX 7.1+. |
+| `stylize_model(mesh_url, style?, resolution?, output_format?)`      | One-pass geometric restyle: `voxel`, `brick` (LEGO-like), `voronoi` lattice, `lowpoly`. Reads GLB/GLTF/OBJ/STL/PLY/OFF/DAE; convert an FBX with `remesh_model` first. |
 | `segment_model(mesh_url, method?, max_parts?, …)`                   | Split into named, separable parts (each a node) + a parts manifest.                                  |
 | `retexture_model(mesh_url, prompt, num_views?, texture_size?)`      | Paint a fresh texture from a prompt (SDXL + ControlNet depth, multi-view back-projection).           |
 | `retexture_region(mesh_url, mask_url, prompt?, color?, …)`          | Magic-brush: repaint only a masked UV region, feathering the seam.                                   |

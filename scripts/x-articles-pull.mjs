@@ -149,16 +149,22 @@ async function main() {
 	const articles = posts.filter((p) => p.article).map((p) => describe(p, me.username));
 	console.log(`@${me.username}: ${posts.length} posts read (oldest ${posts.at(-1)?.created_at ?? 'none'}), ${articles.length} Articles`);
 
+	// The snapshot is rewritten after every Article, so a run cut short by a
+	// long rate-limit wait still leaves everything it already collected.
+	await mkdir(OUT_DIR, { recursive: true });
+	const file = path.join(OUT_DIR, `${me.username}-articles-${new Date().toISOString().slice(0, 10)}.json`);
+	const save = (complete) =>
+		writeFile(file, `${JSON.stringify({ source: 'x-api-v2', handle: me.username, fetchedAt: new Date().toISOString(), complete, timelinePostsRead: posts.length, articles }, null, '\t')}\n`);
+	await save(!WITH_REPLIES);
+
 	if (WITH_REPLIES) {
 		for (const article of articles) {
 			Object.assign(article, await readerResponse(client, article, me.id));
+			await save(false);
 			console.log(`  ${article.created_at.slice(0, 10)}  ${String(article.replies.length).padStart(3)} replies  ${String(article.quotes.length).padStart(3)} quotes  ${article.title}`);
 		}
+		await save(true);
 	}
-
-	await mkdir(OUT_DIR, { recursive: true });
-	const file = path.join(OUT_DIR, `${me.username}-articles-${new Date().toISOString().slice(0, 10)}.json`);
-	await writeFile(file, `${JSON.stringify({ source: 'x-api-v2', handle: me.username, fetchedAt: new Date().toISOString(), timelinePostsRead: posts.length, articles }, null, '\t')}\n`);
 	console.log(`wrote ${path.relative(REPO_ROOT, file)}`);
 }
 

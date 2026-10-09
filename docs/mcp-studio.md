@@ -443,6 +443,9 @@ The endpoint still enforces real per-IP abuse protection (`api/_lib/rate-limit.j
   per-user `openai/subject` ChatGPT sends with each tool call, and one IP is
   held to 300 generations / hour in total. Without the subject the caps key on
   the IP as above.
+- **Cloud agents (install tokens):** see [Install tokens](#install-tokens-a-budget-for-cloud-agents)
+  below. A connector URL carrying `?install=<token>` gets its own burst and
+  hourly budget instead of sharing its egress IP's.
 - **Persona writes:** 20 / minute / IP (`create_agent_persona`, `persona_say`;
   `get_agent_persona` is a read and rides the transport cap)
 - **Transport:** 300 requests / minute / IP (discovery, never throttled by the
@@ -463,6 +466,47 @@ limiter outage is exactly when an unbounded global spend would do real damage.
 Any accidental paid-lane spend is still fail-closed one layer further down in
 `/api/gpt-forge` (the ChatGPT-dedicated clone of `/api/forge`; see the note under
 Environment).
+
+### Install tokens: a budget for cloud agents
+
+Grok Bot, the xAI API and other hosted agents call from a shared cloud egress, so a
+per-IP cap would ration every user behind that IP as one caller. An **install
+token** gives each installation its own identity: free, anonymous, no account.
+
+Mint one (10 per hour per IP; only its SHA-256 is stored):
+
+```bash
+curl -s -X POST https://three.ws/api/mcp-studio/install
+# {"token":"inst_...","connector_url":"https://three.ws/api/mcp-studio?install=inst_...",
+#  "grok_connector_url":"https://three.ws/api/mcp-grok?install=inst_...", ...}
+```
+
+Paste `connector_url` (or `grok_connector_url` for Grok) as the connector URL.
+[/connect](/connect) has a "Connector URL for cloud agents" panel that mints one
+through the same endpoint. Keep the URL private: whoever holds it spends that
+installation's budget.
+
+How it is keyed, in order: install token, then the surface's own identity (ChatGPT
+subject, Grok `Mcp-Session-Id`), then the IP. A missing, malformed or unknown token
+changes nothing: the caller is keyed exactly as before. One IP is still held to 300
+generations per hour across all its tokens, and the platform-wide breaker applies
+to every caller, token or not.
+
+A capped call returns HTTP 429 with a JSON-RPC error (code `-32029`) whose message
+names the limit, when it resets and how to lift it, and a `Retry-After` header. The
+same facts are in `error.data` (`retry_after`, `resets_at`, `remedy`):
+
+```json
+{"jsonrpc":"2.0","id":1,"error":{"code":-32029,
+ "message":"Generation burst limit reached (4 generations per minute per caller). It resets in 60 seconds (at 03:33 UTC). This installation's budget refills at the reset time. For a larger budget connect the account server https://three.ws/api/mcp (OAuth sign-in).",
+ "data":{"error":"rate_limited","retry_after":60,"resets_at":"2026-10-09T03:33:13.169Z",
+  "remedy":{"install_token_endpoint":"POST https://three.ws/api/mcp-studio/install","connector_url_template":"https://three.ws/api/mcp-studio?install=<token>","account_server":"https://three.ws/api/mcp"}}}}
+```
+
+Code: [`api/mcp-studio/install.js`](../api/mcp-studio/install.js),
+[`api/_lib/mcp-studio-installs.js`](../api/_lib/mcp-studio-installs.js), the keying in
+[`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js). Tests:
+`tests/mcp-studio-install.test.js`.
 
 ## Safety
 

@@ -245,11 +245,12 @@ Every hosted server is checked the way a cloud MCP client (Grok Bot, claude.ai c
 
 ```bash
 npm run probe:mcp-clients                                   # production
-npm run probe:mcp-clients -- --base http://localhost:3000   # your dev server
+PUBLIC_APP_ORIGIN=http://localhost:3741 PORT=3741 node --env-file=.env.local server/index.mjs &
+npm run probe:mcp-clients -- --base http://localhost:3741   # a local server
 npm run probe:mcp-clients -- --only mcp-studio --json probe.json
 ```
 
-The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-known/mcp.json), calls only free tools (`search_catalog`, `getting_started`), never sends a payment, and exits non-zero when any server fails. Set `THREE_WS_API_KEY` to include the API key mode. The latest production run is committed at [`prompts/x-grok/_generated/connector-probe.json`](../prompts/x-grok/_generated/connector-probe.json).
+A local server must set `PUBLIC_APP_ORIGIN` to its own origin, otherwise its OAuth challenge names `https://three.ws` and the probe (like any SDK client) correctly refuses it. The probe reads its server list from [`/.well-known/mcp.json`](../public/.well-known/mcp.json), calls only free tools (`search_catalog`, `getting_started`), never sends a payment, and exits non-zero when any server fails. Set `THREE_WS_API_KEY` to include the API key mode. The latest production run is committed at [`prompts/x-grok/_generated/connector-probe.json`](../prompts/x-grok/_generated/connector-probe.json).
 
 | Server | URL | Transport | Works unattended with | Grok Bot custom MCP connector |
 |---|---|---|---|---|

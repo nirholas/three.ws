@@ -16,5 +16,36 @@
       "WebSearch",
       "NotebookEdit"
     ]
+  },
+  "skillOverrides": {
+    "okx-agent-chat": "user-invocable-only",
+    "okx-agent-identity": "user-invocable-only",
+    "okx-agent-payments-protocol": "user-invocable-only",
+    "okx-agent-task": "user-invocable-only",
+    "okx-agentic-wallet": "user-invocable-only",
+    "okx-ai-guide": "user-invocable-only",
+    "okx-ai-support": "user-invocable-only",
+    "okx-audit-log": "user-invocable-only",
+    "okx-dapp-discovery": "user-invocable-only",
+    "okx-defi-invest": "user-invocable-only",
+    "okx-defi-portfolio": "user-invocable-only",
+    "okx-dex-bridge": "user-invocable-only",
+    "okx-dex-market": "user-invocable-only",
+    "okx-dex-signal": "user-invocable-only",
+    "okx-dex-social": "user-invocable-only",
+    "okx-dex-strategy": "user-invocable-only",
+    "okx-dex-swap": "user-invocable-only",
+    "okx-dex-token": "user-invocable-only",
+    "okx-dex-trenches": "user-invocable-only",
+    "okx-dex-ws": "user-invocable-only",
+    "okx-growth-competition": "user-invocable-only",
+    "okx-how-to-play": "user-invocable-only",
+    "okx-onchain-gateway": "user-invocable-only",
+    "okx-security": "user-invocable-only",
+    "okx-task-watch": "user-invocable-only",
+    "okx-wallet-portfolio": "user-invocable-only",
+    "metamask-agent-wallet": "user-invocable-only",
+    "metamask-agent-workflows": "user-invocable-only",
+    "query-onchain-data": "user-invocable-only"
   }
 }

@@ -231,6 +231,21 @@ curl -s 'https://three.ws/api/forge-remesh?job=<job_id>'
 drop it to remesh and convert in one pass (see
 [3d-asset-pipeline.md](3d-asset-pipeline.md)).
 
+`mesh_url` can point at a GLB, GLTF, OBJ, STL, PLY, OFF, DAE or binary FBX
+(7.1 or later). That makes remesh the way in for an FBX: stylize does not read
+FBX (`/api/forge-stylize` answers `400 unsupported_mesh_format`), so convert it
+to GLB first and stylize the result.
+
+```bash
+# FBX in, GLB out, ready for /api/forge-stylize.
+curl -sX POST https://three.ws/api/forge-remesh \
+  -H 'content-type: application/json' \
+  -d '{"mesh_url":"https://.../character.fbx","operation":"convert","output_format":"glb"}'
+```
+
+A job that fails because of the file itself (an ASCII FBX, a corrupt one)
+reports `status: "failed"` with an `error` that says what to re-export.
+
 ## Examples
 
 Forge's read and generate surface is plain HTTP. No key is required for the free lanes.
