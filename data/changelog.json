@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "The iPhone app is ready for TestFlight",
+			"summary": "The three.ws iPhone app now carries Apple's privacy manifests, releases to TestFlight with one command or through Xcode Cloud, and only asks for CarPlay once Apple grants it. Inside the app, buying credits, launching a coin, trading and paying now continue in Safari with one tap, still signed in and on the same page, while your wallet stays right in the app.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Forge Workflows: chain 3D tools into one run",
 			"summary": "A visual workflow builder for the Forge. Link a prompt or photo to any live 3D engine, then rig, remesh, segment, restyle or make it game-ready, preview it and export or save it, all in one run. Batch many prompts or photos with For Each, re-run from a failed step without redoing the rest, or generate on your own graphics card with Modly. Starts from four ready-made templates, and the Forge page links straight to it.",
 			"tags": ["feature"],

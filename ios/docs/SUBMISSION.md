@@ -37,8 +37,13 @@ step 3 is blocked on it.
    create the group `group.ws.three.app`.
 3. Fill the listing from [`../publish/listing.md`](../publish/listing.md).
 4. Answer the content rights, age rating, and privacy questionnaires. The
-   privacy answers must match what the app actually collects; the camera,
-   photos, location and identifiers sections all apply.
+   privacy answers must match the app's privacy manifest row for row; the table
+   in [`../publish/listing.md`](../publish/listing.md) is the manifest, already
+   translated into App Store Connect's categories.
+5. Under App Review Information, Sign-In Information, give the reviewer an
+   account made for review alone: register it on `/register`, keep it empty of
+   real funds, and never reuse the production QA login, which other tooling
+   signs into. Paste the reviewer notes from the listing.
 
 ## 3. Wire the Team ID into production
 

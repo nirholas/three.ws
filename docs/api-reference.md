@@ -4267,6 +4267,50 @@ Authentication is covered in detail in the [Authentication documentation](authen
 | `/api/auth/privy/verify`    | POST     | Verify a Privy auth token, create session |
 | `/api/auth/wallets`         | GET      | List wallets linked to current user   |
 | `/api/auth/wallets`         | POST     | Link a new wallet                     |
+| `/api/auth/handoff`         | POST     | Mint a single-use code that signs Safari in as this session (iOS app) |
+| `/api/auth/handoff`         | GET      | Exchange that code in Safari for a session cookie and land on the page |
+
+### Session handoff to Safari (iOS app)
+
+The three.ws iOS app opens payments, coin launches and trading in Safari rather
+than in its WebView (see [`ios/docs/REVIEW-RISK.md`](../ios/docs/REVIEW-RISK.md)).
+Safari has its own cookie jar, so the app carries the session across with a
+short-lived code.
+
+```
+POST /api/auth/handoff
+Content-Type: application/json
+
+{ "next": "/launch?mint=..." }
+```
+
+Requires a browser session and a same-site `Origin`. `next` must be a path on
+three.ws (it starts with `/`, is not `//`, carries no backslash or control
+character, and is at most 2048 characters). Rate limited to 30 codes per user
+per 10 minutes.
+
+```json
+{
+  "url": "https://three.ws/api/auth/handoff?code=Qm9...&next=%2Flaunch%3Fmint%3D...",
+  "expires_at": "2026-10-09T19:01:00.000Z"
+}
+```
+
+The code is single-use and expires after 60 seconds; only its SHA-256 is
+stored. Errors: `401 unauthenticated`, `403` (cross-site origin),
+`400 invalid_next`, `429`.
+
+```
+GET /api/auth/handoff?code=<code>&next=<path>
+```
+
+Opened by Safari, never called with `fetch`. On a valid code it consumes it,
+replaces any session Safari already had with one for the code's user, and
+answers `302` to the path stored at mint time. A used, expired or malformed code
+redirects to `/login?error=handoff_expired&next=<path>`, so the visitor signs in
+and still lands where they were going. Without `code` it is a plain `302` to
+`next`: the app always opens Safari through this endpoint, because universal
+links would route a bare `https://three.ws/...` URL straight back into the app.
 
 ---
 
