@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>three.ws Forge for desktop · Image to 3D on your own GPU · three.ws</title>
+	<meta name="description" content="Download three.ws Forge, the desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn images into 3D models with open-source generators on your own GPU or the three.ws cloud, chain mesh tools in node workflows, import free CC0 models and publish to your three.ws account." />
+	<link rel="canonical" href="https://three.ws/forge-desktop" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws Forge for desktop" />
+	<meta property="og:description" content="The desktop 3D studio: image to 3D on your own GPU or the three.ws cloud, node workflows, a free CC0 library and one-click publishing." />
+	<meta property="og:url" content="https://three.ws/forge-desktop" />
+	<meta property="og:image" content="https://three.ws/forge-desktop/forge-generate.webp" />
+	<meta property="og:image:alt" content="three.ws Forge with a model open in its 3D viewport" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="three.ws Forge for desktop" />
+	<meta name="twitter:description" content="The desktop 3D studio: image to 3D on your own GPU or the three.ws cloud, node workflows, a free CC0 library and one-click publishing." />
+	<meta name="twitter:image" content="https://three.ws/forge-desktop/forge-generate.webp" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<link rel="stylesheet" href="/src/forge-desktop.css" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"three.ws Forge","applicationCategory":"DesignApplication","operatingSystem":"Windows 10+, macOS 12+ (Apple silicon), Linux","description":"Desktop 3D studio: image to 3D on your own GPU or the three.ws cloud, node-based mesh workflows, a CC0 object library and publishing to three.ws.","url":"https://three.ws/forge-desktop","license":"https://opensource.org/licenses/MIT","isBasedOn":"https://github.com/lightningpixel/modly","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}]}</script>
+</head>
+<body class="fd-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="fd">
+		<section class="fd-hero" aria-labelledby="fdTitle">
+			<div class="fd-hero__copy">
+				<p class="fd-eyebrow"><span class="fd-eyebrow__mark" aria-hidden="true"></span>three.ws Forge for desktop</p>
+				<h1 id="fdTitle">A 3D studio that runs on your machine.</h1>
+				<p class="fd-lede">Turn a photo into a 3D model with open-source generators on your own GPU, or hand it to the three.ws cloud when you have no GPU at all. Clean it up, run it through a node workflow, and publish it to your three.ws account in one click.</p>
+
+				<!-- Filled by src/forge-desktop.js from https://three.ws/releases/forge/release.json -->
+				<div id="fdGet" class="fd-get" data-state="loading" aria-live="polite">
+					<div class="fd-get__skeleton" aria-hidden="true">
+						<span class="fd-sk fd-sk--btn"></span>
+						<span class="fd-sk fd-sk--line"></span>
+					</div>
+				</div>
+
+				<p class="fd-credit">Free and open source. Based on <a href="https://github.com/lightningpixel/modly" rel="noopener" target="_blank">Modly</a> by <a href="https://github.com/lightningpixel" rel="noopener" target="_blank">Lightning Pixel</a> (MIT license).</p>
+			</div>
+
+			<figure class="fd-shot" aria-labelledby="fdShotCaption">
+				<div class="fd-shot__tabs" role="tablist" aria-label="Screens">
+					<button type="button" role="tab" class="fd-tab" id="fdTab-generate" aria-controls="fdShotImg" aria-selected="true" data-shot="generate">Generate</button>
+					<button type="button" role="tab" class="fd-tab" id="fdTab-library" aria-controls="fdShotImg" aria-selected="false" tabindex="-1" data-shot="library">Library</button>
+					<button type="button" role="tab" class="fd-tab" id="fdTab-publish" aria-controls="fdShotImg" aria-selected="false" tabindex="-1" data-shot="publish">Publish</button>
+					<button type="button" role="tab" class="fd-tab" id="fdTab-settings" aria-controls="fdShotImg" aria-selected="false" tabindex="-1" data-shot="settings">Account</button>
+				</div>
+				<div class="fd-shot__frame" id="fdShotImg" role="tabpanel" aria-labelledby="fdTab-generate">
+					<img src="/forge-desktop/forge-generate.webp" width="1600" height="960" alt="three.ws Forge with an armchair from the CC0 library open in the 3D viewport" decoding="async" />
+				</div>
+				<figcaption id="fdShotCaption" class="fd-shot__caption">The viewport, with Import, Export, Publish, Smooth and Decimate on the toolbar.</figcaption>
+			</figure>
+		</section>
+
+		<section class="fd-section" aria-labelledby="fdWhatTitle">
+			<h2 id="fdWhatTitle" class="fd-h2">What is inside</h2>
+			<ul class="fd-features">
+				<li class="fd-feature">
+					<span class="fd-feature__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></span>
+					<h3 class="fd-h3">Your GPU or ours</h3>
+					<p>Install open-source generators such as Hunyuan3D, TripoSG and TRELLIS from the Extensions tab and run them locally, with no queue and no upload. The three.ws cloud generator is built in for machines without a GPU, and takes a photo, a text prompt or a sketch.</p>
+				</li>
+				<li class="fd-feature">
+					<span class="fd-feature__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7.5 6h9M6.3 8.2l4.4 7.6M17.7 8.2l-4.4 7.6"/></svg></span>
+					<h3 class="fd-h3">Node workflows</h3>
+					<p>Chain generation, mesh repair, remeshing, smoothing, optimization, auto-rigging and export in a visual graph, save it, and run it again on the next image.</p>
+				</li>
+				<li class="fd-feature">
+					<span class="fd-feature__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z"/><path d="M12 22V12M12 12l8.66-5M12 12L3.34 7"/></svg></span>
+					<h3 class="fd-h3">The CC0 library</h3>
+					<p>Search the <a href="/objects">three.ws object library</a> from the Import menu and drop a public-domain model into the viewport as a starting point, a reference or a workflow input.</p>
+				</li>
+				<li class="fd-feature">
+					<span class="fd-feature__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+					<h3 class="fd-h3">Publish in one click</h3>
+					<p>Sign in once through your browser. Publish sends the open model to your account as a shareable 3D page you can embed, rig or give to an agent.</p>
+				</li>
+			</ul>
+		</section>
+
+		<section class="fd-section" id="fd-downloads" aria-labelledby="fdDlTitle" hidden>
+			<div class="fd-section__head">
+				<h2 id="fdDlTitle" class="fd-h2">All downloads</h2>
+				<p id="fdDlMeta" class="fd-muted"></p>
+			</div>
+			<div class="fd-table-wrap">
+				<table class="fd-table">
+					<thead><tr><th scope="col">Platform</th><th scope="col">File</th><th scope="col">Size</th><th scope="col">SHA-256</th></tr></thead>
+					<tbody id="fdDlRows"></tbody>
+				</table>
+			</div>
+			<div id="fdNotes" class="fd-notes"></div>
+			<details id="fdUnsigned" class="fd-details" hidden>
+				<summary>Opening an unsigned build</summary>
+				<div id="fdUnsignedBody" class="fd-details__body"></div>
+			</details>
+		</section>
+
+		<section class="fd-section" id="fd-source" aria-labelledby="fdSrcTitle">
+			<div class="fd-section__head">
+				<h2 id="fdSrcTitle" class="fd-h2">Run it from source</h2>
+				<p class="fd-muted">Needs Node.js 20 or later and Git. The first launch builds Forge's Python environment, which takes a few minutes.</p>
+			</div>
+			<div class="fd-code">
+				<pre id="fdSrcCode"><code>git clone --depth 1 https://github.com/nirholas/three.ws
+cd three.ws/apps/forge-desktop
+npm install
+npm run prepare-resources
+npm run dev</code></pre>
+				<button type="button" class="fd-btn fd-btn--sm fd-code__copy" data-copy="#fdSrcCode">Copy</button>
+			</div>
+			<p class="fd-muted fd-small"><code>prepare-resources</code> downloads a standalone Python for your platform so Forge never depends on the one your system ships. The <a href="https://github.com/nirholas/three.ws/tree/main/apps/forge-desktop" rel="noopener" target="_blank">source and build guide</a> covers packaging your own installer.</p>
+		</section>
+
+		<section class="fd-section" aria-labelledby="fdReqTitle">
+			<h2 id="fdReqTitle" class="fd-h2">System requirements</h2>
+			<dl class="fd-reqs">
+				<div><dt>Windows</dt><dd>Windows 10 or 11, 64-bit</dd></div>
+				<div><dt>macOS</dt><dd>macOS 12 Monterey or later on Apple silicon (M1 and newer)</dd></div>
+				<div><dt>Linux</dt><dd>64-bit Ubuntu 20.04+, Debian 11+, Fedora 39+ or another current glibc distribution</dd></div>
+				<div><dt>Local generation</dt><dd>An NVIDIA GPU (CUDA), an AMD Radeon GPU (ROCm, on Windows and Linux) or Apple silicon. Each model in the Extensions tab lists its VRAM needs.</dd></div>
+				<div><dt>Cloud generation</dt><dd>Any of the above, no GPU needed. Uses your three.ws plan.</dd></div>
+			</dl>
+		</section>
+
+		<aside class="fd-foot" aria-label="Related tools and credits">
+			<p>Prefer the browser? <a href="/workbench">Workbench</a> runs the same kind of workflow in a tab, <a href="/forge">Forge</a> generates on three.ws servers, and <a href="/modly">three.ws/modly</a> connects to Modly running on your computer.</p>
+			<p class="fd-credit">three.ws Forge is based on <a href="https://github.com/lightningpixel/modly" rel="noopener" target="_blank">Modly</a> by <a href="https://github.com/lightningpixel" rel="noopener" target="_blank">Lightning Pixel</a>, used under the MIT license. three.ws is not affiliated with Lightning Pixel. Read the <a href="/docs/forge-desktop">Forge desktop guide</a>.</p>
+		</aside>
+		<div id="fdToast" class="fd-toast" role="status" aria-live="polite" hidden></div>
+	</main>
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+
+	<script type="module" src="/src/forge-desktop.js"></script>
+</body>
+</html>

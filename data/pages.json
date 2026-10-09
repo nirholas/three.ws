@@ -750,6 +750,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/forge-desktop",
+					"title": "three.ws Forge for Desktop",
+					"description": "Download three.ws Forge, the free desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn a photo into a 3D model with open-source generators on your own GPU or the three.ws cloud, chain repair, remeshing, rigging and export in node workflows, import free CC0 models and publish to your three.ws account in one click. Based on Modly (MIT).",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/forge/workflows",
 					"title": "Forge Workflows: Chain 3D Tools into One Run",
 					"description": "A visual workflow builder for the Forge. Link a prompt or a photo to any live 3D engine, then remesh, rig, segment, restyle or make it game-ready, preview it inline, export the GLB and save it to your library, all in one run. Batch many prompts with ForEach, re-run from a failed step without redoing the rest, or generate on your own GPU with Modly. Starts from four templates.",
