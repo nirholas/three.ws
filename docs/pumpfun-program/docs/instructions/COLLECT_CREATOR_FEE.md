@@ -1,6 +1,6 @@
 # Collect Creator Fee
 
-> **Note:** These instructions only apply to coins that do **not** have a `sharing_config` — i.e. single-creator-recipient coins. Once a coin's creator vault has been migrated to a `sharing_config`, fees must be distributed through the Pump Fees program instead, and both instructions below will fail.
+> **Note:** These instructions only apply to coins that do **not** have a `sharing_config` - i.e. single-creator-recipient coins. Once a coin's creator vault has been migrated to a `sharing_config`, fees must be distributed through the Pump Fees program instead, and both instructions below will fail.
 
 Coin creators accrue fees in two separate vaults:
 
