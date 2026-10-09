@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title >MCP Clients · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		.mc-wrap { width: 100%; min-width: 0; box-sizing: border-box; max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.mc-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 0.5rem; }
+		.mc-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.75rem; max-width: 74ch; line-height: 1.65; }
+
+		.mc-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; align-items: center; }
+		.mc-controls label { font-size: 12px; color: rgba(255,255,255,0.45); }
+		.mc-controls select, .mc-controls button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.mc-controls select:hover, .mc-controls button:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.09); }
+		.mc-controls button:active { transform: translateY(1px); }
+		.mc-controls select:focus-visible, .mc-controls button:focus-visible, .mc-defs summary:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+		.mc-controls button[disabled] { opacity: 0.5; cursor: progress; }
+		.mc-stamp { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+		.mc-note { padding: 2.5rem 1.5rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); line-height: 1.75; }
+		.mc-note code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+		.mc-note.bad { background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.18); }
+		.mc-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
+		.mc-note a { color: var(--accent-violet-strong); }
+		.mc-note button { font: inherit; font-size: 13px; margin-top: 1rem; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06); color: #e2e8f0; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard); }
+		.mc-note button:hover { background: rgba(255,255,255,0.11); }
+		.mc-note button:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+
+		.mc-section { margin-bottom: 2.5rem; }
+		.mc-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+		.mc-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
+
+		.mc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
+		.mc-cell { padding: 1rem 1.15rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.mc-cell:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.045); }
+		.mc-cell-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; }
+		.mc-cell-value { font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.15; }
+		.mc-cell-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 0.4rem; line-height: 1.5; }
+
+		.mc-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+		.mc-bar-row { display: grid; grid-template-columns: minmax(96px, 170px) 1fr minmax(150px, 220px); gap: 0.85rem; align-items: center; font-size: 12.5px; }
+		.mc-bar-label { color: rgba(255,255,255,0.8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.mc-bar-row.unknown .mc-bar-label { color: rgba(255,255,255,0.4); }
+		.mc-bar-track { position: relative; height: 20px; border-radius: 6px; background: rgba(255,255,255,0.04); overflow: hidden; }
+		.mc-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 6px; transition: width var(--duration-slow) var(--ease-standard); }
+		.mc-bar-count { text-align: right; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.7); white-space: nowrap; }
+
+		.mc-chart { border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); padding: 1rem 1rem 0.5rem; }
+		.mc-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+		.mc-chart text { fill: rgba(255,255,255,0.4); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+		.mc-chart .grid { stroke: rgba(255,255,255,0.07); stroke-width: 1; }
+		.mc-chart rect.col { transition: opacity var(--duration-fast) var(--ease-standard); }
+		.mc-chart g.day:hover rect.col { opacity: 0.8; }
+		.mc-legend { display: flex; gap: 1.1rem; font-size: 11.5px; color: rgba(255,255,255,0.5); margin: 0.6rem 0 0.4rem; flex-wrap: wrap; }
+		.mc-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.4rem; vertical-align: -1px; }
+
+		.mc-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		.mc-table th, .mc-table td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+		.mc-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; white-space: nowrap; }
+		.mc-table tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
+		.mc-table tbody tr:hover { background: rgba(255,255,255,0.035); }
+		.mc-table td.num, .mc-table th.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+		.mc-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+		.mc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+		.mc-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+		.mc-chip { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); white-space: nowrap; font-variant-numeric: tabular-nums; }
+		.mc-detail { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.7; margin: 0.75rem 0 0; max-width: 84ch; }
+		.mc-detail b { color: rgba(255,255,255,0.8); font-weight: 600; }
+		.mc-banner { padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
+
+		.mc-defs { border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); padding: 0.25rem 1.15rem; }
+		.mc-defs summary { cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.7); padding: 0.75rem 0; border-radius: 6px; }
+		.mc-defs summary:hover { color: #fff; }
+		.mc-defs dl { margin: 0 0 1rem; display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 0.6rem 1.25rem; font-size: 12.5px; line-height: 1.65; }
+		.mc-defs dt { color: rgba(255,255,255,0.8); font-weight: 600; }
+		.mc-defs dd { margin: 0; color: rgba(255,255,255,0.5); }
+
+		.mc-skeleton { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.035) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.035) 75%); background-size: 200% 100%; animation: mc-shimmer 1.4s ease-in-out infinite; }
+		.mc-skeleton.cell { height: 96px; }
+		.mc-skeleton.bar { height: 20px; margin-bottom: 0.5rem; }
+		@keyframes mc-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (max-width: 560px) {
+			.mc-bar-row { grid-template-columns: 1fr; gap: 0.3rem; }
+			.mc-bar-count { text-align: left; }
+			.mc-defs dl { grid-template-columns: 1fr; gap: 0.15rem 0; }
+			.mc-defs dd { margin-bottom: 0.6rem; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.mc-skeleton { animation: none; }
+			.mc-bar-fill, .mc-chart rect.col { transition: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="mc-wrap">
+		<h1 class="mc-title">MCP Clients</h1>
+		<p class="mc-sub">
+			Which AI clients use the hosted three.ws MCP servers. Every MCP <code>initialize</code> names its
+			client; each session and tool call is counted against it. Only the client name, version, auth kind
+			and tool names are stored, never request bodies, arguments or IPs. Raw sessions expire after 30
+			days, the daily aggregates stay. Internal tooling, not a public surface.
+		</p>
+
+		<div class="mc-controls">
+			<label for="mc-window">Window</label>
+			<select id="mc-window">
+				<option value="7">Last 7 days</option>
+				<option value="30" selected>Last 30 days</option>
+				<option value="90">Last 90 days</option>
+				<option value="365">Last 365 days</option>
+			</select>
+			<button id="mc-refresh" type="button">Refresh</button>
+			<span class="mc-stamp" id="mc-stamp"></span>
+		</div>
+
+		<div id="mc-content" aria-live="polite" aria-busy="true"></div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/mcp-clients.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

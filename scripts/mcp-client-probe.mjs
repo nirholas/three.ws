@@ -47,7 +47,7 @@ import { checkResourceAllowed, resourceUrlFromServerUrl } from '@modelcontextpro
 import { LATEST_PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/sdk/types.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const CLIENT_INFO = { name: 'three-ws-connector-probe', version: '1.0.0' };
+const CLIENT_INFO = { name: 'probe', version: '1.0.0' };
 
 // Free tools a probe may call: read-only, no GPU, no spend. First match wins.
 const FREE_CALLS = [

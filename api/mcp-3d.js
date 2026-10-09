@@ -6,6 +6,7 @@
 // OAuth/x402 auth, rate limiting, and transport plumbing. Registered with the
 // MCP Registry as io.github.nirholas/three-ws-3d-studio (see server-3d.json).
 import { cors, readJson, wrap } from './_lib/http.js';
+import { issueSession, trackMcp } from './_lib/mcp-clients.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js';
 import { priceBatch, isDiscoveryOnlyBatch } from './_lib/mcp-batch-price.js';
@@ -130,7 +131,9 @@ export default wrap(async (req, res) => {
 		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+		const issuedSessionId = issueSession(res, body);
 		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		trackMcp({ surface: 'mcp-3d', req, body, responses, auth, issuedSessionId });
 	} finally {
 		await releaseProof();
 	}

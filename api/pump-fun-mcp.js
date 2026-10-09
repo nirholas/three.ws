@@ -58,6 +58,7 @@ import { pumpTradesFromEvents } from '../src/pump/trade-events.js';
 import { getSolPriceUsd } from '../src/shared/usd-price.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from './_lib/ipfs-pin.js';
+import { issueSession, trackMcp } from './_lib/mcp-clients.js';
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
@@ -1949,9 +1950,20 @@ export default wrap(async (req, res) => {
 			return res.end();
 		}
 
-		return json(res, 200, isBatch ? responses : responses[0], {
+		const issuedSessionId = issueSession(res, body);
+		const gate = gateAuthPromise ? await gateAuthPromise : null;
+		const authSource = gate?.x402Ctx
+			? 'x402'
+			: gate?.principal?.startsWith('apikey:')
+				? 'apikey'
+				: gate?.principal
+					? 'oauth'
+					: null;
+		const sent = json(res, 200, isBatch ? responses : responses[0], {
 			'mcp-protocol-version': PROTOCOL_VERSION,
 		});
+		trackMcp({ surface: 'pump-fun-mcp', req, body, responses, auth: { source: authSource }, issuedSessionId });
+		return sent;
 	} finally {
 		await releaseProof();
 	}

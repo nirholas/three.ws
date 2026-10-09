@@ -5,6 +5,7 @@
 // text/event-stream opens the server-to-client stream that carries
 // notifications/resources/updated for resources/subscribe (api/_mcp/resources.js).
 import { cors, readJson, wrap } from './_lib/http.js';
+import { issueSession, trackMcp } from './_lib/mcp-clients.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { settlePayment, encodePaymentResponseHeader } from './_lib/x402-spec.js';
 import { x402AmountForTool } from './_lib/pump-pricing.js';
@@ -123,7 +124,9 @@ export default wrap(async (req, res) => {
 		res.statusCode = 200;
 		res.setHeader('content-type', 'application/json; charset=utf-8');
 		res.setHeader('mcp-protocol-version', PROTOCOL_VERSION);
+		const issuedSessionId = issueSession(res, body);
 		res.end(JSON.stringify(Array.isArray(body) ? responses : (responses[0] ?? null)));
+		trackMcp({ surface: 'mcp', req, body, responses, auth, issuedSessionId });
 	} finally {
 		await releaseProof();
 	}

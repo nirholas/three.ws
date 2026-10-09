@@ -1526,6 +1526,7 @@ Contributors: `npm run audit:mcp-safety` enforces this. It parses each tool's ha
 - [3D Studio MCP (free)](/docs/mcp-studio): the no-auth, no-payment 3D generation server
 - [Spatial MCP](/docs/spatial-mcp): returning live 3D scenes as native MCP responses
 - [x402](/docs/x402): the USDC micropayment rail behind the paid tools
+- [MCP client analytics](ops/mcp-clients.md): every server issues an `Mcp-Session-Id` on `initialize`; echo it on later requests so your calls are counted under your client name
 
 ---
 

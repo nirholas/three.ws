@@ -2044,6 +2044,10 @@
 			"dest": "/forge-funnel.html"
 		},
 		{
+			"src": "/mcp-clients/?",
+			"dest": "/mcp-clients.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},

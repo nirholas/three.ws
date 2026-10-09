@@ -162,6 +162,10 @@ WHERE c.relkind = 'r' AND n.nspname = 'public'
 ORDER BY pg_total_relation_size(c.oid) DESC LIMIT 20;
 ```
 
+## MCP client sessions
+
+Raw `mcp_client_sessions` rows are deleted 30 days after their last call. The daily aggregates (`mcp_client_daily`, `mcp_client_tool_daily`) are kept. See [mcp-clients.md](mcp-clients.md).
+
 ## See also
 
 - `api/cron/db-retention.js` — the cron
