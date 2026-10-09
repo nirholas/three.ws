@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-09",
+			"title": "Agent MCP: price an x402 payment with pay_quote before pay_and_call spends it",
+			"summary": "The Agent MCP server now has a pay_quote tool. It asks a paid x402 endpoint what it charges without paying, and shows who gets paid, how much, in which token and on which chain, which wallet pays, the per-call limit, and anything that would stop the payment. pay_and_call needs the quote_id it returns plus an explicit confirm_payment, so an assistant always shows you the price before your agent wallet pays. One approval pays one call. Before this, turning pay_and_call on still left it refusing every call, because the quote step it requires did not exist.",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-09",
 			"title": "Funding an agent's inference from its wallet now needs the signed real-funds agreements",
 			"summary": "Topping up an agent's inference credits, switching on its automatic top-up, and provisioning an inference API key all send real USDC out of the agent's wallet. They now ask for the same signed Terms of Service, Risk Disclosure and Agent Wallet Agreement as every other real-funds action, on the page and on the API alike. Previews and switching the automatic top-up off stay open, since nothing moves.",
 			"tags": [

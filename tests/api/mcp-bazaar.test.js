@@ -92,6 +92,8 @@ describe('x402 Bazaar MCP', () => {
 			'browse_services',
 			'get_service',
 			'bazaar_service_details',
+			// Live three:// resources (three://x402/services and friends), read-only.
+			'read_resource',
 		]);
 	});
 

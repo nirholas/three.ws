@@ -10,15 +10,54 @@ import { describe, it, expect } from 'vitest';
 import { TOOL_CATALOG, TOOLS } from '../../api/_mcpagent/catalog.js';
 
 describe('agent-wallet MCP catalog', () => {
-	it('leads with the free getting_started tool, then the wallet toolset', () => {
+	it('leads with the free getting_started tool, then the wallet, marketplace and prediction toolsets', () => {
 		expect(TOOL_CATALOG.map((t) => t.name)).toEqual([
 			'getting_started',
+			// Wallet and x402 (api/_mcpagent/tools.js)
 			'wallet_status',
 			'find_services',
+			'pay_quote',
 			'pay_and_call',
 			'provision_wallet',
 			'monetize_endpoint',
+			'read_resource',
+			// Agent marketplace (api/_mcpagent/marketplace-tools.js)
+			'browse_marketplace',
+			'browse_public_agents',
+			'get_listing',
+			'get_marketplace_history',
+			'preview_marketplace_action',
+			'create_marketplace_listing',
+			'delist_marketplace_listing',
+			'place_bid',
+			'buy_now',
+			'get_my_bids',
+			'get_received_bids',
+			'accept_marketplace_bid',
+			'reject_marketplace_bid',
+			'withdraw_marketplace_bid',
+			'get_agent_transfer',
+			'resume_agent_transfer',
+			// Prediction markets (api/_mcpagent/predictions-tools.js)
+			'predictions_events',
+			'predictions_event',
+			'predictions_positions',
+			'predictions_open_preview',
+			'predictions_open',
+			'predictions_close_preview',
+			'predictions_close',
+			'predictions_redeem_preview',
+			'predictions_redeem',
+			'predictions_watch',
 		]);
+	});
+
+	it('quotes with the same arguments pay_and_call spends with', () => {
+		const quote = { resource_url: 'https://a.test/x', method: 'POST', body: { q: 1 }, max_usd: 0.05 };
+		expect(TOOLS.pay_quote.validate({ ...quote })).toBe(true);
+		expect(TOOLS.pay_and_call.validate({ ...quote })).toBe(true);
+		expect(TOOLS.pay_quote.validate({ resource_url: 'not a url' })).toBe(false);
+		expect(TOOLS.pay_quote.validate({})).toBe(false);
 	});
 
 	it('gives every catalog entry a handler in the dispatch map', () => {

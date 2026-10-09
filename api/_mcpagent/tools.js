@@ -1,9 +1,12 @@
 // threews-agent MCP: "add a wallet to Claude."
 //
-// Three tools turn a Claude (or any MCP client) into an autonomous economic
+// These tools turn a Claude (or any MCP client) into an autonomous economic
 // agent on the live x402 network:
 //   * wallet_status   what the agent's wallet holds and is allowed to spend
 //   * find_services   discover paid services it can call
+//   * pay_quote       price one paid endpoint without paying: the confirmation
+//                       table (recipient, amount, token, chain) and anything
+//                       that would block the payment
 //   * pay_and_call     pay an x402 endpoint in USDC from the user's own wallet
 //                       and return the result, bounded by spending caps
 //
@@ -11,6 +14,10 @@
 // the agent spends THAT user's wallet, and it is hard-gated by
 // THREEWS_AGENT_PAY_ENABLED on the server. When spend is disabled it degrades
 // to returning the exact payment requirements + a pay link rather than failing.
+// The tool policy (@three-ws/mcp-policy, row `pay_and_call`) also keeps it off
+// until the session enables the x402 group, and then refuses it without the
+// quote_id pay_quote returned for the same resource_url plus
+// confirm_payment: true, so the user sees the price before anything is signed.
 import { limits } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
@@ -33,6 +40,7 @@ import {
 	MonetizeError,
 } from '../_lib/agent-paid-services.js';
 import { currentSignatureFor, agreementRequirement } from '../_lib/real-funds-agreement.js';
+import { probePrice, selectRail } from '../_lib/pay/probe.js';
 import { readResourceToolResult } from '../_mcp/resources.js';
 
 function rpcError(code, message, data) {
@@ -171,6 +179,50 @@ async function requestDevnetAirdrop(address) {
 	}
 }
 
+function chainLabel(network) {
+	if (typeof network !== 'string') return 'unknown chain';
+	if (network.startsWith('solana')) return `Solana (${network})`;
+	if (network === 'eip155:8453' || network === 'base') return `Base (${network})`;
+	return network;
+}
+
+function quoteRefusal(resource, reason, text, extra = {}) {
+	return {
+		content: [{ type: 'text', text: `${text} Nothing was paid.` }],
+		structuredContent: { ok: false, reason, resource, ...extra },
+		isError: true,
+	};
+}
+
+// What would stop pay_and_call from settling this price automatically. `hard`
+// blockers make pay_and_call fail after the user approves, so the quote itself
+// fails and no preview id is issued for a payment that cannot happen. A signed-
+// out caller or a server with spend off is not a hard blocker: pay_and_call
+// answers both with the manual pay link, which the quote already carries.
+function payBlockers({ auth, spendEnabled, wallet, priceUsd, perCallLimit }) {
+	if (!auth.userId) {
+		return [{ code: 'auth_required', hard: false, message: 'Sign in to three.ws to pay from your agent wallet; until then use the pay link.' }];
+	}
+	if (!spendEnabled) {
+		return [{ code: 'spend_disabled', hard: false, message: 'Autonomous spending is not enabled on this server; use the pay link to pay manually.' }];
+	}
+	const out = [];
+	if (!hasScope(auth.scope, 'wallet:write')) {
+		out.push({ code: 'insufficient_scope', hard: true, message: 'This connection lacks the wallet:write scope. Re-authorize with it granted.' });
+	}
+	if (wallet && !wallet.provisioned) {
+		out.push({ code: 'no_wallet', hard: true, message: 'No agent wallet is provisioned for this account. Run provision_wallet first.' });
+	}
+	if (perCallLimit != null && priceUsd > perCallLimit) {
+		out.push({ code: 'over_per_call_limit', hard: true, message: `The price $${priceUsd} is above the per-call limit of $${perCallLimit}.` });
+	}
+	const usdc = wallet?.balances?.usdc;
+	if (typeof usdc === 'number' && priceUsd > usdc) {
+		out.push({ code: 'insufficient_usdc', hard: true, message: `The wallet holds ${usdc} USDC, less than the $${priceUsd} price.` });
+	}
+	return out;
+}
+
 export const toolDefs = [
 	{
 		name: 'wallet_status',
@@ -231,7 +283,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. Feed a resource into pay_and_call to actually use it.',
+			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. To use one, price it with pay_quote, show the user the result, then pay with pay_and_call.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -284,6 +336,118 @@ export const toolDefs = [
 		},
 	},
 	{
+		name: 'pay_quote',
+		title: 'Price an x402 payment without paying',
+		// Probes the endpoint for its 402 challenge and reads the wallet; never
+		// signs or moves anything. Prices can change between calls.
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: true,
+		},
+		description:
+			"Price a paid x402 endpoint WITHOUT paying: asks the resource for its payment challenge and returns the confirmation table pay_and_call would settle from the signed-in user's agent wallet (recipient, amount, token, chain), the per-call limit that applies, the wallet balance, and anything that would block the payment. Show the table to the user; pay_and_call needs the quote_id this returns, for the same resource_url, and confirm_payment: true after a clear yes.",
+		inputSchema: {
+			type: 'object',
+			properties: {
+				resource_url: {
+					type: 'string',
+					format: 'uri',
+					description: 'The x402 endpoint you intend to pay with pay_and_call.',
+				},
+				method: { type: 'string', enum: ['GET', 'POST'], default: 'GET' },
+				body: { type: 'object', description: 'JSON body for POST requests, as pay_and_call will send it.' },
+				max_usd: {
+					type: 'number',
+					minimum: 0,
+					description: 'The ceiling you will pass to pay_and_call, so the quote checks the price against it.',
+				},
+			},
+			required: ['resource_url'],
+			additionalProperties: false,
+		},
+		async handler(args, auth) {
+			await enforce(limits.mcpAgent, auth);
+			const resource = args.resource_url;
+			const method = args.method || 'GET';
+
+			const probe = await probePrice(resource, { method, body: args.body ?? null });
+			if (probe.kind === 'error') {
+				return quoteRefusal(resource, probe.code, `Could not price ${resource}: ${probe.message}.`);
+			}
+			// The payer signs Solana exact-scheme payments only, so the Solana rail
+			// is the one this quote has to describe.
+			const rail = probe.kind === 'priced' ? selectRail(probe.rails, 'solana') : null;
+			if (probe.kind === 'priced' && !rail) {
+				const offered = [...new Set(probe.rails.map((r) => r.network).filter(Boolean))];
+				return quoteRefusal(
+					resource,
+					'no_solana_rail',
+					`${resource} does not accept payment on Solana (it offers ${offered.join(', ') || 'no readable network'}), and the three.ws agent wallet pays on Solana.`,
+					{ networks: offered },
+				);
+			}
+			if (rail && rail.amount_usd == null) {
+				return quoteRefusal(resource, 'unreadable_price', `${resource} sent a payment challenge whose amount could not be read.`);
+			}
+			const priceUsd = rail ? rail.amount_usd : 0;
+
+			const canReadWallet =
+				Boolean(auth.userId) && (hasScope(auth.scope, 'wallet:read') || hasScope(auth.scope, 'wallet:write'));
+			const wallet = canReadWallet ? await getUserWalletStatus(auth.userId) : null;
+			const capPerCall = wallet?.caps?.max_per_call_usdc ?? null;
+			const callerCap = typeof args.max_usd === 'number' && args.max_usd > 0 ? args.max_usd : null;
+			const limitsKnown = [capPerCall, callerCap].filter((v) => v != null);
+			const perCallLimit = limitsKnown.length ? Math.min(...limitsKnown) : null;
+			const spendEnabled = resolveSpendEnabled();
+			const blockers = payBlockers({ auth, spendEnabled, wallet, priceUsd, perCallLimit });
+			const hard = blockers.filter((b) => b.hard);
+
+			const token = rail ? (rail.usdc ? 'USDC' : String(rail.asset ?? 'unknown token')) : null;
+			const lines = [`Payment preview for ${method} ${resource} (nothing was paid):`];
+			if (rail) {
+				lines.push(
+					`  Recipient: ${rail.pay_to ?? 'not stated by the service'}`,
+					`  Amount: ${priceUsd} ${token}`,
+					`  Token: ${token}${rail.asset ? ` (${rail.asset})` : ''}`,
+					`  Chain: ${chainLabel(rail.network)}`,
+				);
+			} else {
+				lines.push('  This endpoint did not ask for payment, so pay_and_call would call it and pay nothing.');
+			}
+			if (wallet?.provisioned) {
+				lines.push(`  From: ${wallet.address} (${wallet.balances?.usdc ?? '?'} USDC)`);
+			}
+			if (perCallLimit != null) lines.push(`  Per-call limit: $${perCallLimit}`);
+			for (const b of blockers) lines.push(`  ${b.hard ? 'Blocked' : 'Note'}: ${b.message}`);
+			if (!auth.userId || !spendEnabled) lines.push(`  Pay manually: ${payLink(resource)}`);
+
+			return {
+				content: [{ type: 'text', text: lines.join('\n') }],
+				structuredContent: {
+					ok: hard.length === 0,
+					resource,
+					method,
+					free: !rail,
+					recipient: rail?.pay_to ?? null,
+					amount_usd: priceUsd,
+					amount_atomics: rail?.amount_atomics ?? '0',
+					token,
+					asset: rail?.asset ?? null,
+					network: rail?.network ?? null,
+					from: wallet?.provisioned ? wallet.address : null,
+					balance_usdc: wallet?.balances?.usdc ?? null,
+					per_call_limit_usd: perCallLimit,
+					spend_enabled: spendEnabled,
+					blockers: blockers.map(({ code, message }) => ({ code, message })),
+					...(!auth.userId || !spendEnabled ? { pay_link: payLink(resource) } : {}),
+				},
+				...(hard.length ? { isError: true } : {}),
+			};
+		},
+	},
+	{
 		name: 'pay_and_call',
 		title: 'Pay an x402 service and return its result',
 		// Spends the user's USDC: an irreversible transfer, so destructive.
@@ -294,7 +458,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
+			"Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. Call pay_quote for the same resource_url first and pay only after the user approves its table. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
 		inputSchema: {
 			type: 'object',
 			properties: {

@@ -16,11 +16,20 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 export const RESOURCE_DESCRIPTION =
 	'three.ws Agent MCP: Streamable HTTP (MCP 2025-06-18) that gives an assistant a real on-chain ' +
 	'wallet on the x402 network: wallet_status (address, USDC and SOL balance, spend caps), ' +
-	'find_services (search the live facilitator network for paid services), pay_and_call (call a ' +
-	'paid x402 endpoint and settle the USDC payment from the signed-in user own three.ws agent ' +
-	'wallet, bounded by their caps), provision_wallet, and monetize_endpoint (list your own paid ' +
-	'service). Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana ' +
-	'mainnet, no API key. Operated by three.ws.';
+	'find_services (search the live facilitator network for paid services), pay_quote (price a paid ' +
+	'endpoint without paying), pay_and_call (call a paid x402 endpoint and settle the USDC payment ' +
+	'from the signed-in user own three.ws agent wallet, bounded by their caps), provision_wallet, ' +
+	'monetize_endpoint (list your own paid service) and read_resource (live three:// resources). ' +
+	'An agent marketplace with USDC escrow on Solana: browse_marketplace, browse_public_agents, ' +
+	'get_listing, get_marketplace_history, preview_marketplace_action, create_marketplace_listing, ' +
+	'delist_marketplace_listing, place_bid, buy_now, get_my_bids, get_received_bids, ' +
+	'accept_marketplace_bid, reject_marketplace_bid, withdraw_marketplace_bid, get_agent_transfer and ' +
+	'resume_agent_transfer. Prediction markets settled in USDC on Solana: predictions_events, ' +
+	'predictions_event, predictions_positions, predictions_open_preview, predictions_open, ' +
+	'predictions_close_preview, predictions_close, predictions_redeem_preview, predictions_redeem and ' +
+	'predictions_watch. Every money-moving tool needs its preview first and an explicit confirm flag. ' +
+	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +
+	'API key. Operated by three.ws.';
 
 // Endpoint-level v2 bazaar discovery entry, shaped exactly like the validator
 // expects (see api/_lib/x402-spec.js, bazaarExtension). The advertised example
@@ -75,7 +84,7 @@ function agentBazaarExtension() {
 			params: {
 				type: 'object',
 				description:
-					'For tools/call: { name, arguments }. Tool names: getting_started (free), wallet_status, find_services, pay_and_call, provision_wallet, monetize_endpoint, see tools/list.',
+					'For tools/call: { name, arguments }. Tool names: getting_started (free), wallet_status, find_services, pay_quote, pay_and_call, provision_wallet, monetize_endpoint, read_resource, plus the marketplace and prediction-market tools, see tools/list.',
 			},
 		},
 	};

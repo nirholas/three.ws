@@ -1305,7 +1305,7 @@
 			"name": "find_services",
 			"title": "Find paid services the agent can call",
 			"descHead": "Search the live x402 facilitator network for paid services (HTTP APIs an",
-			"descHash": "0a3c1fdcaf27",
+			"descHash": "96a31531545e",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1331,7 +1331,7 @@
 			"name": "pay_and_call",
 			"title": "Pay an x402 service and return its result",
 			"descHead": "Call a paid x402 endpoint and settle the USDC payment automatically from",
-			"descHash": "590dd66c69e6",
+			"descHash": "a0fb0d23ab91",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -1339,6 +1339,19 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "9c9654820288"
+		},
+		{
+			"name": "pay_quote",
+			"title": "Price an x402 payment without paying",
+			"descHead": "Price a paid x402 endpoint WITHOUT paying: asks the resource for its pay",
+			"descHash": "169881373481",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "b61b0648b6a8"
 		},
 		{
 			"name": "provision_wallet",

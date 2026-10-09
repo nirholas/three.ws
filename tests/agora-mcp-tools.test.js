@@ -4,7 +4,7 @@
  * node:test suites (packages/agora-mcp/test/*.test.mjs) for the write-tool
  * early-reject paths; this suite complements them with:
  *
- *   1. the tool-surface contract for ALL nine tools (name/title/description/
+ *   1. the tool-surface contract for ALL eleven tools (name/title/description/
  *      inputSchema/handler + read-only vs write annotations), and
  *   2. the READ tools' real shaping/filtering logic, driven with `apiRequest`
  *      mocked at the HTTP boundary (never a mock in shipped code) so profession /
@@ -28,14 +28,19 @@ import { def as passport } from '../packages/agora-mcp/src/tools/passport.js';
 import { def as pulse } from '../packages/agora-mcp/src/tools/pulse.js';
 import { def as citizens } from '../packages/agora-mcp/src/tools/citizens.js';
 
-const READ_TOOLS = new Set(['agora_board', 'agora_pulse', 'agora_citizens', 'agora_passport', 'agora_professions']);
+// agora_quote_register and agora_quote_task are the previews the spend tools
+// (agora_register, agora_post_task) are gated on: read-only, nothing signed.
+const READ_TOOLS = new Set([
+	'agora_board', 'agora_pulse', 'agora_citizens', 'agora_passport', 'agora_professions',
+	'agora_quote_register', 'agora_quote_task',
+]);
 const WRITE_TOOLS = new Set(['agora_register', 'agora_claim_task', 'agora_complete_task', 'agora_post_task']);
 
 beforeEach(() => {
 	vi.mocked(apiRequest).mockReset();
 });
 
-describe('tool surface — all nine tools', () => {
+describe('tool surface: all eleven tools', () => {
 	it('exposes exactly the expected tool names', () => {
 		const names = TOOLS.map((t) => t.name).sort();
 		expect(names).toEqual(

@@ -18,6 +18,9 @@ const EXPECTED = {
 	list_entities: { write: false },
 	list_macros: { write: false },
 	call_service: { write: true },
+	// run_macro's dry run as its own read-only tool: the preview the policy
+	// requires before run_macro, so it stays callable while run_macro is off.
+	preview_macro: { write: false },
 	run_macro: { write: true },
 };
 
@@ -50,8 +53,9 @@ describe('the tool surface', () => {
 			if (expected.write) {
 				expect(tool.annotations.destructiveHint, `${tool.name} moves a physical object`).toBe(true);
 			} else {
-				// The spec ignores destructiveHint when readOnlyHint is true.
-				expect(tool.annotations.destructiveHint, `${tool.name} is read-only`).toBeUndefined();
+				// The spec ignores destructiveHint when readOnlyHint is true, so a
+				// read tool may omit it or state false, but never claim true.
+				expect(tool.annotations.destructiveHint, `${tool.name} is read-only`).not.toBe(true);
 			}
 		}
 	});
