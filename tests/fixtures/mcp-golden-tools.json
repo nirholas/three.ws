@@ -769,15 +769,15 @@
 			"name": "paired_launch",
 			"title": "Launch a paired coin from an agent wallet",
 			"descHead": "Launch the coin paired_launch_quote priced, signed by the agent's custod",
-			"descHash": "df948cf84507",
+			"descHash": "5f9437f56897",
 			"annotations": "ref:MONEY",
-			"schemaHash": "66aa37c1fb27"
+			"schemaHash": "078d8f529f65"
 		},
 		{
 			"name": "paired_launch_quote",
 			"title": "Quote a paired-coin launch",
 			"descHead": "Price a paired-coin launch from an agent's own EVM wallet on Robinhood C",
-			"descHash": "40f4057bb885",
+			"descHash": "a954f2319d75",
 			"annotations": "ref:WRITE",
 			"schemaHash": "fc7a3d9fec58"
 		},

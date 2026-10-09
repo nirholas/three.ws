@@ -151,6 +151,21 @@ describe.each(CATALOGS)('%s: tools/list catalog', (label, catalog, serverId) => 
 		}
 	});
 
+	it('never asks for a preview id under a name the policy does not check', () => {
+		// The policy injects its id argument into each gated schema at list time,
+		// named after the preview tool (quote_id for a *quote* tool, preview_id
+		// otherwise). A schema that declares the OTHER name makes clients send an
+		// id the policy ignores (paired_launch once required preview_id while the
+		// policy checked quote_id, so it was uncallable as documented).
+		const byName = new Map(catalog.map((t) => [t.name, t]));
+		for (const [name, row] of Object.entries(POLICY[serverId])) {
+			const tool = byName.get(name);
+			if (!tool || !row.previewTool) continue;
+			const other = /quote/.test(row.previewTool) ? 'preview_id' : 'quote_id';
+			expect(Object.keys(tool.inputSchema?.properties || {}), `${name} declares ${other}`).not.toContain(other);
+		}
+	});
+
 	it('never leaks internal fields onto the wire', () => {
 		for (const tool of catalog) {
 			for (const field of FORBIDDEN_WIRE_FIELDS) {

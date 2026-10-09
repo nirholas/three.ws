@@ -7,7 +7,7 @@
 // api/v1/robinhood/paired-*), so ownership, signer mode, spend ceilings and the
 // audit trail are identical on both surfaces.
 //
-// paired_launch_quote is the preview: the policy layer stamps a preview_id on
+// paired_launch_quote is the preview: the policy layer stamps a quote_id on
 // its result, and paired_launch refuses without that id, confirm_launch: true,
 // and the same launch arguments the quote priced. See docs/paired-coins.md.
 
@@ -162,7 +162,7 @@ export const toolDefs = [
 		scope: 'wallet:read',
 		annotations: WRITE,
 		description:
-			"Price a paired-coin launch from an agent's own EVM wallet on Robinhood Chain without signing anything: the pools and their dollar opening values, the launch fee, gas, the optional opening buy and its fill, the USD total, and anything blocking it (an unfunded wallet, the agent's spend ceiling). Show the result to the owner; paired_launch needs the preview_id this returns.",
+			"Price a paired-coin launch from an agent's own EVM wallet on Robinhood Chain without signing anything: the pools and their dollar opening values, the launch fee, gas, the optional opening buy and its fill, the USD total, and anything blocking it (an unfunded wallet, the agent's spend ceiling). Show the result to the owner; paired_launch needs the quote_id this returns.",
 		inputSchema: { type: 'object', properties: LAUNCH_PROPS, required: ['agent_id', 'markets', 'name', 'symbol'], additionalProperties: false },
 		async handler(args, auth) {
 			if (!auth?.userId) return needsAccount();
@@ -183,15 +183,15 @@ export const toolDefs = [
 		scope: 'wallet:write',
 		annotations: MONEY,
 		description:
-			"Launch the coin paired_launch_quote priced, signed by the agent's custodial EVM wallet on Robinhood Chain under its spend ceilings. Requires the quote's preview_id, the same launch arguments, and confirm_launch: true, which you may only send after the owner explicitly approved the quote. Returns the coin address, transaction and coin page.",
+			"Launch the coin paired_launch_quote priced, signed by the agent's custodial EVM wallet on Robinhood Chain under its spend ceilings. Requires the quote_id from paired_launch_quote, the same launch arguments, and confirm_launch: true, which you may only send after the owner explicitly approved the quote. Returns the coin address, transaction and coin page.",
 		inputSchema: {
 			type: 'object',
 			properties: {
 				...LAUNCH_PROPS,
-				preview_id: { type: 'string', description: 'From paired_launch_quote.' },
+				quote_id: { type: 'string', description: 'From paired_launch_quote.' },
 				confirm_launch: { type: 'boolean', description: 'Must be true, and only after the owner said yes to the quote.' },
 			},
-			required: ['agent_id', 'markets', 'name', 'symbol', 'preview_id', 'confirm_launch'],
+			required: ['agent_id', 'markets', 'name', 'symbol', 'quote_id', 'confirm_launch'],
 			additionalProperties: false,
 		},
 		async handler(args, auth) {

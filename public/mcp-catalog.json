@@ -13561,7 +13561,7 @@
 		{
 			"name": "paired_launch",
 			"title": "Launch a paired coin from an agent wallet",
-			"description": "Launch the coin paired_launch_quote priced, signed by the agent's custodial EVM wallet on Robinhood Chain under its spend ceilings. Requires the quote's preview_id, the same launch arguments, and confirm_launch: true, which you may only send after the owner explicitly approved the quote. Returns the coin address, transaction and coin page.",
+			"description": "Launch the coin paired_launch_quote priced, signed by the agent's custodial EVM wallet on Robinhood Chain under its spend ceilings. Requires the quote_id from paired_launch_quote, the same launch arguments, and confirm_launch: true, which you may only send after the owner explicitly approved the quote. Returns the coin address, transaction and coin page.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
@@ -13661,7 +13661,7 @@
 						],
 						"additionalProperties": false
 					},
-					"preview_id": {
+					"quote_id": {
 						"type": "string",
 						"description": "From paired_launch_quote."
 					},
@@ -13675,7 +13675,7 @@
 					"markets",
 					"name",
 					"symbol",
-					"preview_id",
+					"quote_id",
 					"confirm_launch"
 				],
 				"additionalProperties": false
@@ -13685,7 +13685,7 @@
 		{
 			"name": "paired_launch_quote",
 			"title": "Quote a paired-coin launch",
-			"description": "Price a paired-coin launch from an agent's own EVM wallet on Robinhood Chain without signing anything: the pools and their dollar opening values, the launch fee, gas, the optional opening buy and its fill, the USD total, and anything blocking it (an unfunded wallet, the agent's spend ceiling). Show the result to the owner; paired_launch needs the preview_id this returns.",
+			"description": "Price a paired-coin launch from an agent's own EVM wallet on Robinhood Chain without signing anything: the pools and their dollar opening values, the launch fee, gas, the optional opening buy and its fill, the USD total, and anything blocking it (an unfunded wallet, the agent's spend ceiling). Show the result to the owner; paired_launch needs the quote_id this returns.",
 			"server": {
 				"id": "three.ws",
 				"title": "three.ws",
