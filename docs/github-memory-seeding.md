@@ -177,6 +177,13 @@ variables on the API service:
 | `GITHUB_OAUTH_CLIENT_ID` | The OAuth app's client ID, sent on the authorize redirect |
 | `GITHUB_OAUTH_CLIENT_SECRET` | The client secret, used for the code exchange and for revoking the grant on disconnect |
 
+The OAuth callback only completes in the signed-in browser that started the
+connect: a callback that arrives with no session is sent back to
+`/settings?tab=connected-accounts&github=error`, and one whose session is a
+different account than the signed state answers `403 session_mismatch`. That
+stops a connect link started on one account from binding someone else's GitHub
+to it.
+
 The app requests `read:user` and `public_repo`, both read-only, and the access
 token is encrypted with a key derived from `JWT_SECRET` before it is stored, so
 rotating `JWT_SECRET` invalidates stored tokens (users reconnect) rather than
@@ -195,7 +202,11 @@ unaffected: no other feature depends on these variables.
 ## API
 
 All three calls are owner-only: the session (or bearer) user must own the
-agent. The two mutations (POST and DELETE) additionally require the standard
+agent. A bearer caller (API key or OAuth token) also needs the memory scope that
+matches the verb: `memory:read` for the GET, `memory:write` for the POST and
+DELETE, the same scopes the memory MCP tools require. A bearer without it
+answers `403 insufficient_scope` before GitHub is read or any memory is
+touched. The two mutations (POST and DELETE) additionally require the standard
 CSRF token in `x-csrf-token` when the caller authenticates with a session
 cookie: without it they answer `403 csrf_missing` and change nothing. Bearer
 callers are exempt, because a bearer token is not attached automatically by a
@@ -276,6 +287,7 @@ because no API can delete a personal access token using that token.
 | Code | HTTP | Meaning |
 |---|---|---|
 | `unauthorized` | 401 | Sign-in required |
+| `insufficient_scope` | 403 | A bearer caller lacks `memory:read` (GET) or `memory:write` (POST, DELETE) |
 | `csrf_missing` / `csrf_invalid` | 403 | A cookie-authenticated POST or DELETE arrived without a valid `x-csrf-token` |
 | `not_found` | 404 | No such agent, or it is not yours (a malformed id also answers 404, never a 500) |
 | `not_connected` | 412 | Connect GitHub first; the response carries `connect_url` |

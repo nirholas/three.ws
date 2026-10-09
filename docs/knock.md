@@ -256,10 +256,16 @@ a 404, not a 403: an id on its own should not confirm that a knock exists.
 | `POST /api/knock/escrowed` | on-chain escrow | Knock on a door that takes escrowed knocks, where the money only moves if you get an answer. |
 | `POST /api/knock/escrow-sync` | none | Re-read one escrow on-chain and update the cached state on its delivered knock. Open to anybody: it can only write back what the program already recorded. |
 | `GET /api/knock/reply?id=&token=` | receipt token | What became of a knock you sent. |
-| `GET /api/knock/settings` | session | Your door, your totals, your block list. |
-| `PATCH /api/knock/settings` | session | Change any of it. |
-| `GET /api/knock/inbox` | session | The knocks your door has taken. |
-| `PATCH /api/knock/inbox/<id>` | session | Reply, mark read, dismiss, block. |
+| `GET /api/knock/settings` | session, or a bearer with `profile` | Your door, your totals, your block list. |
+| `PATCH /api/knock/settings` | session, or a bearer with `profile` (plus `wallet:write` to change a payout wallet) | Change any of it. |
+| `GET /api/knock/inbox` | session or bearer | The knocks your door has taken. |
+| `PATCH /api/knock/inbox/<id>` | session or bearer | Reply, mark read, dismiss, block. |
+
+A bearer is an API key or OAuth access token. A cookie session carries every
+scope; a bearer holds only what it was granted, and `/api/knock/settings`
+answers `403 insufficient_scope` when it lacks `profile`. Moving the payout
+(`pay_to_solana` or `pay_to_base`) needs `wallet:write` as well, because it
+redirects every future paid knock.
 
 Error codes are stable and mean what they say: `no_door`, `door_closed`,
 `door_full` (429, retryable tomorrow), `message_too_long`, `message_too_short`,

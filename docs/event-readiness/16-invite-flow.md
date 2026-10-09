@@ -4,8 +4,8 @@ Everyone at the event arrives through one link, and everyone who has fun should 
 
 ## Where the code lives
 
-- Deep-link contract: `coinWorldUrl()` in `src/fits-lib.js` (tested in `tests/fits-lib.test.js`); canonical URL emission in `src/game/coincommunities.js` (`history.replaceState` in `enter()`, which keeps exactly `coin`, `name`, `symbol`, `image`, `tier` for a holders world, and `ui`; a bare `coin` link now resolves its name, symbol and image through `_fetchCoinIdentity` before the rewrite, so the canonical link is always complete)
-- OG image for /play links: `api/play-og.js` (GET-only since the fleet hardening pass; any other verb is refused before the satori render); house OG patterns: `api/page-og.js`, `api/og-leaderboard.js`
+- Deep-link contract: `coinWorldUrl()` in `src/fits-lib.js` (tested in `tests/fits-lib.test.js`); canonical URL emission in `src/game/coincommunities.js` (`history.replaceState` in `enter()`, which keeps exactly `coin`, `name`, `symbol`, `image`, `tier` for a holders world, and `ui`; any link that arrives short of a full identity, including a complete share link since it carries no market cap, resolves name, symbol, image and market cap through `_fetchCoinIdentity` before the rewrite, so the canonical link is always complete)
+- OG image for /play links: `api/play-og.js` (GET-only since the fleet hardening pass; any other verb is refused before the satori render). Its coin lookup is a self-call on the configured origin from `api/_lib/self-origin.js`, never the request's `host` or `x-forwarded-host`; outside production a loopback host is honored, so hitting the endpoint on `npm run dev` renders against the local server. House OG patterns: `api/page-og.js`, `api/og-leaderboard.js`
 - HUD mount + share precedent: `src/game/coincommunities-ui.js` and the build-share sheet. Do not confuse this with the friend invites in `src/game/friends-panel.js`, which are a social-graph request, not a world link
 - QR: `qrcode` is already a dependency (`src/wallet-deposit.js` and `src/marketplace.js` render with it); use it, no new encoder
 

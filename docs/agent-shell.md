@@ -31,9 +31,11 @@ claims it.
 - The agent reacts to work done through the ⌘K palette — it waves and comments
   when a forge finishes or a digest arrives (`tws:palette-action` DOM events,
   mirrored onto the agent bus as `action:taken`).
-- Auto-summon is polite: it waits for `load` + idle, skips visitors with
-  `prefers-reduced-motion` or `Save-Data`, skips full-screen 3D/camera routes
-  (`/play`, `/tour`, `/scan`, …), and never re-summons after the visitor closes
+- Auto-summon is polite: it waits for `load`, then for the main thread to go
+  1.2 seconds without a long task (giving up after 20 seconds rather than
+  landing on a busy page), skips visitors with `prefers-reduced-motion` or
+  `Save-Data`, skips full-screen 3D/camera routes (`/play`, `/tour`, `/scan`,
+  `/create/selfie`, …), and never re-summons after the visitor closes
   the companion. A page opts out with `data-walk-auto="off"` on its `html`
   element. The existing nav "Walk" toggle keeps working exactly as before.
 
@@ -51,7 +53,7 @@ verbs and runs them in place against the real public APIs — no account needed:
 | --- | --- | --- |
 | `forge <prompt>` (also `make`, `generate`, `imagine`) | `forge a bronze dragon statue` | `POST /api/forge` on the free text→3D lane, polls to completion, returns open/download/refine links for the real GLB |
 | `digest` (also `briefing`, `what happened today`) | `digest` | `GET /api/news/digest` — the last 24h clustered into narratives, rendered as rows |
-| `price <coin>` or `$ticker` | `price btc`, `$sol` | `GET /api/coin/markets` + `/detail`, falling back to pump.fun token search |
+| `price <coin>` (also `quote`) or `$ticker` | `price btc`, `$sol` | `GET /api/coin/markets` + `/detail`, falling back to pump.fun token search |
 | `ask <question>` (or any query of ten or more characters ending in `?`) | `ask what is x402?` | `POST /api/chat`: the site agent's answer streamed into the panel; honors the free lane's `retry_after` backoff when it's at capacity |
 
 Grammar rules: commands are strict verb-first parses — a bare verb (`forge`)

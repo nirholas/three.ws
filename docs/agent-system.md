@@ -12,7 +12,7 @@ A plain 3D viewer loads a GLB file and renders it. An agent is a viewer plus a b
 - **Avatar** — a Three.js 3D model with the Empathy Layer on top: continuous emotion blending, morph target control, gaze direction, and one-shot gestures all run per-frame.
 - **Memory** — a typed, ranked store of what the agent knows and has experienced, backed by `localStorage` and optionally synced to `/api/agent-memory`.
 - **Skills** — modular capabilities, each with a handler function, animation hint, and voice template. Skills are what the agent can *do*: wave, validate a model, remember something, sign an action with a wallet.
-- **Runtime** — an LLM-driven tool-loop (`runtime/index.js`) that reads user input, calls Claude with a set of tools, executes the tool calls through `SceneController`, and emits the result as speech.
+- **Runtime**: an LLM-driven tool-loop (`runtime/index.js`) that reads user input, sends it to the model with a set of tools, executes the tool calls through `SceneController`, and emits the result as speech.
 
 The viewer layer (`viewer.js`) knows nothing about agents. The agent layer wraps the viewer through `SceneController` (`runtime/scene.js`), which provides the clean surface area the runtime and skills need: `playClipByName`, `lookAt`, `setExpression`, `loadGLB`.
 
@@ -90,13 +90,13 @@ protocol.recent('speak', 5); // last 5 speak actions
    - `manifest.instructions` (the agent's persona and rules)
    - A `<memory>` block with relevant entries from the memory store, up to `manifest.memory.maxTokens` (default 8192) tokens
    - A skill context block listing available skills and their descriptions
-4. The provider (`AnthropicProvider`) calls `POST /v1/messages` (or a proxy URL) with the system prompt, conversation history, and available tools.
+4. The provider (`AnthropicProvider`) streams an Anthropic-shape Messages request with the system prompt, conversation history, and available tools. It posts to `proxyURL` when one is set; otherwise, when the config carries an `agentId` and `apiOrigin` and no key, to `<apiOrigin>/api/llm/anthropic?agent=<id>`, the hosted proxy that routes free and paid models server-side (the default model is the free `google/gemma-4-31b-it:free`); and only with an explicit Anthropic `apiKey` does it call `https://api.anthropic.com/v1/messages` directly.
 5. If Claude returns **tool calls**, each one is dispatched through `_dispatchTool()`. Skill-provided tools take priority over built-ins; unknown tool names throw.
 6. Tool results are appended to the conversation as a `user`-role `tool_result` message, and the loop iterates again.
 7. The loop runs for at most `MAX_TOOL_ITERATIONS = 8` iterations. If the model returns a plain text response with no tool calls, the loop ends.
 8. The final text is returned from `send()`. If `voice: true` was passed, TTS speaks it before resolving.
 
-**NullProvider:** When `brain.provider` is `"none"` in the manifest (or no API key is configured), `NullProvider` is used instead. It always returns `{ text: '', toolCalls: [] }`. The agent still loads, the avatar still emotes, and skills still execute — but the LLM never generates responses. This is useful for testing avatar behavior without an API key.
+**NullProvider:** When `brain.provider` is `"none"` in the manifest, `NullProvider` is used instead (any other value except `anthropic` throws). It always returns `{ text: '', toolCalls: [] }`. The agent still loads, the avatar still emotes, and skills still execute, but the LLM never generates responses. This is useful for testing avatar behavior without an API key.
 
 ```js
 const runtime = new Runtime({
@@ -273,7 +273,7 @@ Beyond single gestures, an agent can carry named **routines**: sequences of gest
 
 ## 6. Agent Memory
 
-`agent-memory.js` implements a typed, ranked key-value store. It persists to `localStorage` immediately and optionally syncs to `/api/agent-memory` asynchronously (localStorage is always authoritative).
+`agent-memory.js` implements a typed, ranked key-value store. It persists to `localStorage` immediately and optionally syncs to `/api/agent-memory` asynchronously (localStorage is always authoritative). Every sync and search call is prefixed with the store's `apiOrigin` option: empty (relative) on three.ws's own pages, and the three.ws origin when an `<agent-3d>` embed runs on another site, so those calls never land on the host page's origin. The file-based `Memory.load({ apiOrigin })` in `src/memory/index.js` and the runtime's `providerConfig.apiOrigin` follow the same rule.
 
 ### Memory types
 
@@ -318,7 +318,7 @@ When `localStorage` quota is exceeded, the store prunes expired entries first, t
 
 ## 8. Skills
 
-Skills extend what an agent can do. Every built-in capability is itself a skill: `greet`, `present-model`, `validate-model`, `remember`, `think`, `sign-action`, `help`.
+Skills extend what an agent can do. Every built-in capability is itself a skill: `greet`, `present-model`, `validate-model`, `remember`, `think`, `sign-action`, `help`. On top of those seven, the `AgentSkills` constructor registers the domain skill families that live in the `src/agent-skills-*.js` modules (token trading, launching and watching, swaps, Blinks, NFTs, scene control, sentiment and market intel, and agent and agent-to-agent payments).
 
 Each skill definition (`SkillDef`) has:
 - `name` — unique identifier
@@ -337,7 +337,9 @@ When a skill executes, `AgentSkills.perform()` emits `perform-skill` (so the ava
 Skills loaded from a manifest bundle go through `SkillRegistry` (`skills/index.js`), which enforces trust modes:
 - `any` — any skill installs without restriction
 - `owned-only` — `manifest.author` must match the `ownerAddress` element attribute or backend record
-- `whitelist` — only explicitly approved skill URIs load
+- `whitelist`: accepted as a mode, but the allowlist check is not wired yet, so today it installs like `any`
+
+A bundle's `sandboxPolicy: "trusted-main-thread"` is only a request. Handlers run in the worker sandbox unless `SkillRegistry.mayRunOnMainThread()` grants the main thread, which it does only for a bundle served from a trusted origin (by default the page's own; `<agent-3d>` passes `mainThreadOrigins` with the page's origin and the origin that served its script) and never under `any` trust. A refused request logs a warning and the skill still runs, sandboxed.
 
 Skill dependencies are resolved recursively. A skill can declare `dependencies: ['wave', 'look-at']` and the registry will install them in order before registering the dependent skill.
 
@@ -354,6 +356,7 @@ For the full skill bundle format, see [SKILL_SPEC.md](../specs/SKILL_SPEC.md).
 | Provider | Class | Key requirement | Notes |
 |---------|-------|----------------|-------|
 | `browser` (default) | `BrowserTTS` | None | Uses `window.speechSynthesis`. Free, offline-capable, voice quality varies by OS. |
+| `neural` | `NeuralTTS` | None | In-browser Kokoro 82M via HeadTTS (WebGPU, WASM fallback), loaded lazily on first speak. Free, no audio leaves the device, and its phoneme timings drive lip-sync. |
 | `elevenlabs` | `ElevenLabsTTS` | `voiceId` required; `apiKey` or `proxyURL` | Streaming MP3 via MediaSource (with Safari buffered fallback). Higher quality, requires server-side key management via proxy. |
 | `none` | — | — | TTS disabled. |
 
@@ -366,9 +369,10 @@ An ElevenLabs config also carries `agentId`, the agent the voice belongs to. `Ru
 | Provider | Notes |
 |---------|-------|
 | `browser` (default) | Uses `window.SpeechRecognition` or `window.webkitSpeechRecognition`. Chrome/Edge only. Silently fails if unavailable. |
+| `whisper` | `WhisperSTT` (`runtime/whisper-stt.js`): on-device recognition in any browser with WebAssembly, Firefox and Safari included. A voice-activity detector cuts one utterance, then transformers.js transcribes it (Moonshine for English, Whisper base for other languages; models cached by the browser after the first download). If on-device decoding fails it posts the audio to `/api/asr`; where the browser cannot capture audio or run WebAssembly, the factory returns `BrowserSTT` instead. |
 | `none` | STT disabled. |
 
-STT starts listening when `runtime.listen()` is called, which the UI typically triggers on mic button press. Interim results fire `voice:transcript` events with `final: false`; the final transcript fires with `final: true` and the runtime feeds it into `send()`.
+STT starts listening when `runtime.listen()` is called, which the UI typically triggers on mic button press. Interim results fire `voice:transcript` events with `final: false`; the final transcript fires with `final: true` and the runtime feeds it into `send()`. Recognizers that do work before any text exists (the `whisper` model downloading, an utterance decoding) report it as `voice:stt-status` events and through the `onStatus` callback of `listen()`, so the UI can say what is happening on a slow first load.
 
 ---
 
@@ -484,7 +488,7 @@ These are debug-only globals. Do not rely on them in production code — use dep
 const hasSpeech = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 ```
 
-STT silently no-ops on unsupported browsers (Firefox, Safari). Check this before relying on voice input.
+The `browser` STT provider silently no-ops on unsupported browsers (Firefox, Safari). Check this before relying on voice input, or set `voice.stt.provider` to `whisper`, which recognizes on-device in those browsers.
 
 **Inspecting memory:**
 
@@ -512,7 +516,7 @@ Quick reference for where each piece of the system lives:
 | `src/runtime/providers.js` | `AnthropicProvider`, `NullProvider` |
 | `src/runtime/scene.js` | `SceneController` — wraps Viewer with agent-facing API |
 | `src/runtime/tools.js` | `BUILTIN_TOOLS` definitions and handlers |
-| `src/runtime/speech.js` | `BrowserTTS`, `ElevenLabsTTS`, `BrowserSTT` |
+| `src/runtime/speech.js` | `BrowserTTS`, `ElevenLabsTTS`, `BrowserSTT`, and the `createTTS` / `createSTT` factories (`NeuralTTS` lives in `neural-tts.js`, `WhisperSTT` in `whisper-stt.js`) |
 | `src/manifest.js` | Manifest loading and normalization |
 | `src/skills/index.js` | `SkillRegistry` with trust modes and dep resolution |
 | `src/memory/index.js` | File-based memory backend (frontmatter `.md` files) |

@@ -38,7 +38,7 @@ There are two distinct problems: **finding** an endpoint and **paying** it.
 
 - For **Solana**, the wallet can only sign serialized transactions, so the module posts the challenge's `accept` to `/api/x402-checkout?action=prepare` (`api/x402-checkout.js`), gets back a partially-signed SPL `transferChecked`, has Phantom add the buyer's signature, then `?action=encode`s it into the `X-PAYMENT` header.
 - For **Base / EVM**, the wallet signs an EIP-3009 `transferWithAuthorization` typed-data message locally — no server prep needed.
-- For an **agent wallet** (signed-in three.ws users only), no browser wallet is involved at all. The modal lists your agents with their live USDC balances (from `/api/x402-pay?agents=1`), and picking one sends the payment through `POST /api/x402-pay`: the server decrypts the agent's custodial key (audit-logged), enforces the agent's per-call/daily spend policy *before* signing, builds and settles the SPL transfer, and streams progress back. Underfunded agents render disabled with their exact balance; the option pays Solana USDC only, and never appears on third-party merchant embeds (the session cookie doesn't travel cross-origin).
+- For an **agent wallet** (signed-in three.ws users only), no browser wallet is involved at all. The modal lists your agents with their live USDC balances (from `/api/x402-pay?agents=1`), and picking one sends the payment through `POST /api/x402-pay`: the server decrypts the agent's custodial key (audit-logged), enforces the agent's per-call/daily spend policy *before* signing, builds and settles the SPL transfer, and streams progress back. Underfunded agents render disabled with their exact balance; the option pays Solana USDC only, and never appears on third-party merchant embeds (the session cookie doesn't travel cross-origin). Called with a bearer API key or OAuth token instead of a session, `POST /api/x402-pay` requires the `wallet:write` scope and answers `403 insufficient_scope` without it; a `wallet:read` credential can still list balances.
 
 Either way the signed payload is base64-encoded into `X-PAYMENT`, the gated request is retried once, and the unlocked result plus the decoded `X-PAYMENT-RESPONSE` receipt come back.
 
@@ -103,12 +103,12 @@ You get back a `402 Payment Required` whose JSON body (and a base64 mirror in th
 ```jsonc
 {
   "scheme": "exact",
-  "network": "solana",                                  // or "eip155:8453" for Base
+  "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",  // Solana mainnet; "eip155:8453" for Base
   "amount": "1000",                                     // 6-decimal atomic USDC → $0.001
   "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC mint
   "payTo": "<recipient address>",
   "maxTimeoutSeconds": 60,
-  "extra": { "name": "USD Coin", "decimals": 6, "feePayer": "<sponsor>" }
+  "extra": { "name": "USDC", "decimals": 6, "feePayer": "<sponsor>" }
 }
 ```
 
@@ -120,7 +120,7 @@ Read it like a receipt-in-advance:
 - **`extra.feePayer`** is the sponsor that co-signs the Solana transaction so your SOL is untouched. It is optional: an accept with no `feePayer` is the **self-pay** contract, where you cover the network fee yourself. The modal says so on the approve step ("you cover the network fee on this one") rather than letting the wallet popup be the first you hear of it.
 - **`maxTimeoutSeconds`** bounds how long your signed authorization is valid — your one safety net against a stale payment lingering.
 
-A single endpoint can list several `accepts` (e.g. Base *and* Solana). You — or your wallet — pick whichever network you hold funds on.
+A single endpoint can list several `accepts` (e.g. Base *and* Solana). You, or your wallet, pick whichever network you hold funds on. A Base entry may also appear twice: the plain EIP-3009 one, and a sibling marked `extra.assetTransferMethod: "permit2"` for SDK clients that use the gas-sponsored Permit2 path. The browser modal always signs the EIP-3009 entry and skips the Permit2 sibling.
 
 ---
 
@@ -222,7 +222,9 @@ If the result looks wrong but you were charged, note: x402 has **single-shot, no
 - **"Payment module failed to load (x402.js)"** on a Bazaar card — the drop-in script 404'd or didn't evaluate, so `window.X402` is undefined. Reload the page; check the network tab for the `/x402.js` request.
 - **Wallet button is disabled** — that wallet isn't detected, or no `accept` matches its network. Install the extension (Phantom for Solana, MetaMask/Coinbase for Base) and reload, or pick the other rail.
 - **"Not enough USDC — you need X but your wallet holds Y"** — the balance pre-check caught a shortfall before you signed. Top up the wallet on the shown network (the error links your address on the explorer) and retry. The check is fail-open: if your balance can't be read, payment still proceeds.
-- **"Payments are temporarily paused while we top up the wallet that settles them"**: a `503 settlement_unavailable`, the sponsor wallet is under its SOL reserve or the fee budget is spent. Nothing was charged and the error is marked retryable; try again shortly.
+- **"Payments are temporarily paused while we top up the wallet that settles them"**: a `503 settlement_unavailable`, the sponsor wallet that pays network fees is under its SOL reserve. (The daily fee budget only paces the platform's own autonomous traffic; a paying customer's settle is admitted past it.) Nothing was charged and the error is marked retryable; try again shortly.
+- **"... rewrote the payment transaction before signing ..."**: your Solana wallet changed the prepared transaction (a different transfer, a swapped fee payer, or an unknown program), so it can no longer settle and nothing was sent. Phantom's default transaction protection is not the cause: its Lighthouse guard instructions are accepted. Turn off transaction modification in the wallet, or pay with a different Solana wallet.
+- **"Your wallet could not display this payment request"**: the wallet refused to open its approval window. Nothing was signed or charged; unlock or update the wallet and retry, or pay with the other token.
 - **"Endpoint did not return 402 (got 200/404…)"** — you pointed `pay()` at a free or non-x402 URL. Confirm the endpoint actually challenges with `curl -i <url>` (Step 3).
 - **402 but "no `accepts` array could be found"** — a proxy stripped the body *and* the `payment-required` header, or the seller's challenge is malformed. Try the endpoint's own canonical URL; if it's third-party, the seller's 402 is non-compliant.
 - **Signature rejected at settle on Base** — almost always a wrong EIP-712 domain. Base USDC's domain name is `"USD Coin"` at version `"2"`; a seller advertising anything else produces a payload the facilitator rejects. Nothing you can fix as a buyer — report it to the provider.

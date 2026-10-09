@@ -57,9 +57,12 @@ All four live under the agent. `:id` is the agent's UUID.
 | `PATCH` | `/api/agents/:id/bundles/:bundleId` | owner | Rename, reprice, or change its skills |
 | `DELETE` | `/api/agents/:id/bundles/:bundleId` | owner | Deactivate it (nothing is deleted) |
 
-Owner calls need a session cookie (plus the `x-csrf-token` header that
-[`src/api.js`](../src/api.js) attaches automatically in the browser) or a bearer
-token. The two `GET`s are public on purpose: they read only aggregate counts and
+Owner calls need a signed-in session cookie plus the `x-csrf-token` header that
+[`src/api.js`](../src/api.js) attaches automatically in the browser (outside the
+browser, mint one from `GET /api/csrf-token` with the same cookie). Bearer tokens
+and API keys are not accepted on these owner calls: without a session they answer
+`401 unauthorized`, and a session that does not own the agent gets
+`403 forbidden`. The two `GET`s are public on purpose: they read only aggregate counts and
 the agent's own list prices, both of which the marketplace already publishes per
 skill. No buyer identity and no row-level history ever leaves the handler.
 
@@ -116,8 +119,8 @@ produces a number that means nothing.
 ### Publish
 
 ```bash
-curl -s -X POST "https://three.ws/api/agents/$AGENT_ID/bundles" \
-  -H "authorization: Bearer $THREE_WS_TOKEN" \
+curl -s -X POST "https://three.ws/api/agents/$AGENT_ID/bundles" --cookie "$JAR" \
+  -H "x-csrf-token: $CSRF" \
   -H "content-type: application/json" \
   -d '{
     "name": "Research starter pack",
@@ -164,7 +167,9 @@ trusted), EVM by the submitted tx hash. On a confirmed verdict the handler write
 one `skill_purchases` row per skill with `kind = 'bundle'` and `amount = 0`, which
 is what [`hasSkillAccess()`](../api/_lib/skill-access.js) reads, and records a
 single bundle-level revenue event so one bundle sale is never counted as N skill
-sales in GMV.
+sales in GMV. That event is marked `settled_to_wallet`: the buyer paid the
+creator's payout wallet directly, so the sale counts as income already held and
+never as a balance withdrawable from the platform treasury.
 
 **Reach today:** the builder, the two public `GET`s, and this checkout are live.
 The buyer-facing *browser* surface is not: no marketplace or agent-profile view

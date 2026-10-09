@@ -51,7 +51,8 @@ costs the headline number something:
 - **Open positions stay out of the headline.** Positions the leader has not
   closed are marked at *their* last on-chain quote (`last_value_lamports`) and
   reported as unrealized, in a separate table, never folded into the realized
-  number.
+  number. A position with no quote yet is held at cost and labelled
+  `marked: "cost"` rather than given a guessed mark.
 - **Slippage is not modelled, and the page says so.** Your fills would land after
   the leader's, not at the same price. The result is stated as a ceiling on the
   outcome, not the outcome.
@@ -160,6 +161,14 @@ renders the summary without it is misrepresenting the result.
   copies with real money, under segregated custody and hard spend limits. See
   [docs/copy-trading.md](copy-trading.md) for that engine.
 - A leader's underlying record: `/trader/<agent_id>`, one click from every result.
+- First-timers: [/copy-coach](https://three.ws/copy-coach), linked from the top of
+  the page, walks a newcomer from a real win through a ghost copy like this one to
+  one small capped copy they sign themselves. See [docs/copy-coach.md](copy-coach.md).
+- Quests: for a signed-in visitor, the page reports each finished replay to
+  `POST /api/quests/event` (`kind: "ghost_copy"`), which counts toward the daily
+  "ghost-copy a new agent" quest on [/quests](https://three.ws/quests). Only the
+  first ghost of a given leader counts. The replay endpoint itself stays public and
+  anonymous; signed-out visitors send nothing.
 
 ## Source
 

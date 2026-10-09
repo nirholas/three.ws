@@ -37,8 +37,8 @@ Response (`200`):
   "agent_id": "persona_8f2a1c9d4be6f70a1b2c",
   "glb_url": "https://…/personas/persona_8f2a1c9d4be6f70a1b2c.glb",
   "viewer_url": "https://three.ws/viewer?src=…",
-  "profile_url": "https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c",
-  "embed_html": "<iframe src=\"https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c\" width=\"480\" height=\"640\" …></iframe>",
+  "profile_url": "https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c&glb=…&name=Nova+Scout&state=idle",
+  "embed_html": "<iframe src=\"https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c&glb=…&name=Nova+Scout&state=idle\" width=\"480\" height=\"640\" …></iframe>",
   "reload_url": "https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4be6f70a1b2c",
   "voice": "nova",
   "rigged": true,
@@ -51,7 +51,9 @@ Response (`200`):
 - **`embed_html`** is the real one-tag embed — drop it into any page and the body
   renders, idles, lip-syncs, and emotes (the same embodiment component the 3D
   Studio uses).
-- **`profile_url`** is the hosted presence page the iframe frames.
+- **`profile_url`** is the hosted presence page the iframe frames. It carries the
+  persona id plus the persisted GLB URL, the display name and `state=idle`, so the
+  page renders the body without a second lookup.
 - **`rigged`** is `true` when the auto-rig succeeded. A model that can't be
   skeleton-rigged (e.g. a non-humanoid prop) falls back to the un-rigged mesh and
   `rigged` is `false` — never a broken T-pose.

@@ -36,9 +36,13 @@ Every entry has its own page at `/spotlight/<entry id>`. That is where the
 write-up is actually readable (the index can only show three clamped lines of
 it), and it is the one place an entry is edited after it is created:
 
-- the agent standing in 3D, live from its own GLB, with its still image held
-  underneath until the viewer has painted so a model that fails to load degrades
-  to the avatar rather than an empty stage,
+- the agent standing in 3D, live from its own GLB. Its still image holds the
+  stage until `<agent-3d>` fires `agent:ready` (the body is already standing in
+  its idle by then), and the two swap in the same frame, so exactly one avatar
+  is ever on screen. If the viewer fails to boot (`agent:error`) it is removed
+  and the still stays, so a model that fails to load degrades to the avatar
+  picture rather than an empty stage
+  ([`revealWhenReady()` in `src/spotlight-shared.js`](../src/spotlight-shared.js)),
 - the full write-up as real paragraphs,
 - a facts panel read live off the agent on every request: skills, conversations,
   on-chain actions, network, upvotes, views,

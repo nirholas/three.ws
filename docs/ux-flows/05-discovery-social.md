@@ -11,7 +11,8 @@ Routing recap (from `vercel.json`):
 | `/animations` | `pages/animations.html` | `src/animations-gallery.js` |
 | `/characters` | `public/characters.html` | `src/characters.js` |
 | `/community` | `pages/community.html` | inline live-activity module in page |
-| `/walk` | `pages/walk.html` | `src/walk.js` (+ `src/community/coin-world-boot.js`) |
+| `/walk` | `pages/walk-landing.html` | landing page; its "Try it now" opens `/walk/app` (`pages/walk-embed.html` → `src/walk-embed.js`) |
+| `/temporary` | `pages/temporary.html` | `src/walk.js` (+ `src/community/coin-world-boot.js`) |
 | `/irl` | `pages/irl.html` | `src/irl.js` (+ `src/irl/*`, `src/irl-net.js`) |
 | `/irl/sign` | `pages/irl-sign.html` | `src/irl-sign.js` |
 | `/irl-privacy` | `pages/irl-privacy.html` | (static content) |
@@ -117,8 +118,8 @@ Routing recap (from `vercel.json`):
 
 ---
 
-### Walk — `/walk`
-- **Source:** `pages/walk.html` (inline boot), `src/walk.js`, `src/community/coin-world-boot.js`
+### Walk: `/temporary` (the full world)
+- **Source:** `pages/temporary.html` (inline boot, titled "Drive Your Avatar"), `src/walk.js`, `src/community/coin-world-boot.js`. `/walk` itself is a marketing landing (`pages/walk-landing.html`) whose "Try it now" and "Start walking" buttons open `/walk/app`, the chrome-less embed build (`pages/walk-embed.html` → `src/walk-embed.js`) that has no multiplayer, no AR passthrough and no HUD; the flow below is the full `src/walk.js` world.
 - **Entry point:** `/src/walk.js` loaded as module. Splash overlay "Loading avatar…" shows while the scene boots. URL params: `?avatar=`, `?avatarUrl=`, `?name=`, `?coin=`, `?ui=hidden`, `?handle=`, `?agent=`.
 - **Prerequisites / gates:** None to play (solo mode works offline). **Camera permission** requested only on AR-button tap (`navigator.mediaDevices.getUserMedia`, not on load). Auth only needed to list personal avatars in the picker. No motion/geolocation. WebGL required for full render.
 - **Steps (6 required + many optional):**

@@ -1,4 +1,4 @@
-# What the site's load numbers are, and the four rules that keep them there
+# What the site's load numbers are, and the rules that keep them there
 
 `/play` has [its own boot-cost document](./play-boot-performance.md) because a coin world is a special case: a WebGL renderer, a physics solver and a multiplayer room all have to start before anything is playable. This document covers everything else. Every ordinary page on three.ws is a static HTML document plus a module graph, and the cost of opening one is almost entirely decided by four questions:
 
@@ -127,7 +127,7 @@ Our lib output is not an npm dependency. It is the file a browser downloads from
 
 A `renderChunk` pass that runs esbuild with `minifyWhitespace: true` (and identifiers and syntax left alone, since Vite's own pass already handled those) took the shipped bundle from **4,244,387 bytes to 3,433,103** raw, and from **1,031,741 to 853,007** gzipped at `gzip -9`. That is 811,284 fewer bytes, 19.1%. On the homepage, `agent-3d.js` was 2,293ms of script evaluation and two long tasks of 1,299ms and 526ms.
 
-Measure the right file. `dist-lib/` also holds `agent-3d.umd.cjs`, which is naturally smaller (2,761,457 bytes) because it is a different format, and quoting it makes the win look better than it is. [scripts/publish-lib.mjs](../scripts/publish-lib.mjs) mirrors the **ES** build, `dist-lib/agent-3d.js`, to `/agent-3d/<version>/`, so that is the file a browser downloads.
+Measure the right file. `dist-lib/` also holds `agent-3d.umd.cjs`, which is naturally smaller (2,761,457 bytes) because it is a different format, and quoting it makes the win look better than it is. [scripts/publish-lib.mjs](../scripts/publish-lib.mjs) mirrors the **ES** build, `dist-lib/agent-3d.js`, to the moving channels (`/agent-3d/latest/`, `/agent-3d/<major>/`, `/agent-3d/<major>.<minor>/`), so that is the file a browser downloads. A pinned `/agent-3d/<version>/` directory is never rebuilt: its bytes come from the write-once release archive recorded in `data/agent-3d-releases.json`, so a minifier change reaches pinned embedders only when a new version is cut with `npm run release:lib`.
 
 **Do not "simplify" this away by trusting `build.minify`.** Check the byte count of `dist-lib/agent-3d.js` after any change to the lib config; a jump back over 4 MB means the plugin stopped running.
 
@@ -218,6 +218,8 @@ function setChipPrompt(chip, text) {
 ```
 
 **Any node whose text becomes dynamic loses its `data-i18n` at the point it becomes dynamic.** Not later, not in a cleanup pass. `src/i18n.js` uses the same guard for `data-auth-name` in the nav.
+
+Since 2026-09-30 `applyCatalog` also backs this up on its own: `primeOwnership()` records what each annotated element held when the runtime first saw it, and a pass skips any element whose content now matches neither that, nor the runtime's own last write, nor the English source string, because the page wrote it. That catches writers that never opted out, but it is a safety net, not the contract. Removing the attribute at the write is still the rule, because it is explicit and does not depend on the boot order of the page's scripts.
 
 ### That fixed the revert. It did not fix the growth.
 

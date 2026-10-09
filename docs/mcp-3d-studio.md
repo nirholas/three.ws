@@ -7,8 +7,8 @@ MCP server, registered separately as **`io.github.nirholas/threews-3d-studio`**.
 
 - **Endpoint:** `https://three.ws/api/mcp-3d`
 - **Transport:** Streamable HTTP (MCP `2025-06-18`, JSON-RPC 2.0)
-- **Auth:** OAuth 2.1 (same three.ws authorization server as `/api/mcp`) or x402
-- **Backends:** Microsoft TRELLIS image→3D + FLUX text→image (Replicate, platform-keyed); Meshy / Tripo native geometry (BYOK); Make-It-Animatable auto-rig (self-hosted GPU worker); IBM Granite (watsonx.ai) for prompt direction + material generation
+- **Auth:** OAuth 2.1 (same three.ws authorization server as `/api/mcp`) or x402. The server is its own OAuth resource, `https://three.ws/api/mcp-3d`, described at `https://three.ws/.well-known/oauth-protected-resource/api/mcp-3d`, so stock MCP SDK connectors can sign in; tokens minted for `/api/mcp` are accepted here too
+- **Backends:** image→3D on the self-hosted GCP reconstruction worker when configured, else Microsoft TRELLIS on Replicate; text→image on the free lanes first (FLUX on NVIDIA NIM, Vertex AI Imagen) with Replicate FLUX as the paid backstop; Meshy / Tripo / Rodin / Stability native geometry (BYOK); Make-It-Animatable auto-rig (self-hosted GPU worker); IBM Granite (watsonx.ai) for prompt direction + material generation
 
 ## The pipeline
 
@@ -75,6 +75,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `grade_sim_readiness(glb_url, hash?)` | Free: can this GLB be dropped into a physics simulator (MuJoCo, Isaac, Bullet, a game engine) and behave? Returns `simulation_ready`, `needs_scale`, `needs_repair`, or `unusable`, plus the measurements behind the verdict. |
 | `anchor_provenance(glb_url, creator?, prompt?, …)` | Issue a signed content credential for a generated GLB and anchor its hash on Solana, so anyone can later check authenticity for free. |
 | `verify_provenance(glb_url, hash?)` | Free: recompute the model’s content hash, check the signed credential and its on-chain anchor, and answer `verified`, `tampered`, or `unknown`. |
+| `read_resource(uri?, format?)` | Free: read a live `three://` resource (`three://me`, `three://agents`, `three://agents/<id>`, `three://models`, `three://assets/<id>`) for clients that render tools but not MCP resources. Omit `uri` to list what you can read. |
 | `validate_spatial_response(artifact)` | Free: check a structured-content payload against the open [Spatial MCP](./spatial-mcp.md) artifact shape before you ship it. |
 | `x402_preflight(origin, network?)` | Read-only, free: fetch an x402 seller's signed payability attestation from `<origin>/.well-known/x402-preflight`, verify its ed25519 signature, expiry, and subject, and answer whether that seller can actually settle before you pay it. An attestation that does not verify is reported as unverified, never as health. Spec: [`specs/x402-preflight.md`](../specs/x402-preflight.md). |
 
@@ -98,6 +99,7 @@ derivation scheme).
 | Tool                                              | What it does                                                                                                                                       |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `persona_identity(persona_id, network?)`           | Read-only: wallet address, live SOL/USDC balance, ERC-8004-style reputation, token holdings, a resolved SNS nameplate, and the visual tiers below.    |
+| `persona_payment_preview(persona_id, to, usdc, session_id?, network?)` | Read-only: the paying wallet and its live USDC balance, the recipient, the balance afterwards, session spend against the cap, and every rule that would refuse the transfer (`would_execute` plus `blockers`). Moves nothing; show it, get a yes, then call `persona_tip` or `persona_send`. |
 | `persona_tip(persona_id, to, usdc, session_id?, memo?, network?, confirm?)`  | Send a small USDC tip from the persona's own wallet. Real, irreversible on-chain settlement.                                       |
 | `persona_send(persona_id, to, usdc, session_id?, memo?, network?, confirm?)` | The general-purpose USDC send from the persona's own wallet. Same guardrails as `persona_tip`.                                     |
 
@@ -110,6 +112,10 @@ derivation scheme).
   `session_id` (or a persona+UTC-day bucket when omitted).
 - **Confirmation threshold** — $0.25 USDC by default. Above it, the call must
   carry `confirm: true` or it returns `confirmation_required`.
+- **Owner only.** A persona created by a signed-in three.ws account moves funds
+  only for that account: any other caller gets `not_owner`, because the
+  `persona_id` travels in every shared embodiment URL. A persona minted with no
+  account keeps the `persona_id`-as-capability model it was created under.
 
 Settlement rides the same MEV-aware execution engine every other outbound
 transfer on the platform uses — no mocked transfer, ever. USDC is the only
@@ -138,22 +144,33 @@ timestamp.
 `text_to_3d` / `image_to_3d` take three optional axes (see
 [`api/_lib/forge-tiers.js`](../api/_lib/forge-tiers.js)):
 
-- **`tier`** — `draft` (~12k poly, fast), `standard` (~30k, default), `high`
-  (~200k + PBR, slower). Honoured by poly-aware backends; on the TRELLIS default
-  it's recorded as provenance.
-- **`path`** — `image` (FLUX→TRELLIS reference-image reconstruction, the
-  platform-keyed default) or `geometry` (native text/image→mesh, cleaner
-  topology).
-- **`backend`** — force a specific engine; defaults to the best for the path.
+- **`tier`**: `draft` (~12k poly, fast), `standard` (~30k, default), `high`
+  (~200k + PBR, slower). Honoured by poly-aware engines; on the default image
+  engine it's recorded as provenance.
+- **`path`**: `image` (reference-image reconstruction, the platform-keyed
+  default) or `geometry` (native text/image→mesh, cleaner topology, BYOK).
+- **`backend`**: a three.ws engine name; `auto` (the default) picks the best
+  engine for the path. Responses report the engine under the same branded
+  name. Legacy vendor ids are still accepted as hidden aliases, and an engine
+  that does not serve the chosen path is ignored.
 
-| Backend     | Path(s)         | Key       | Notes                                |
-| ----------- | --------------- | --------- | ------------------------------------ |
-| `trellis`   | image           | platform  | Fast default. No poly target.        |
-| `meshy`     | geometry, image | **BYOK**  | Native text→geometry, quad topology. |
-| `tripo`     | geometry, image | **BYOK**  | Cleanest quad topology.              |
-| `hunyuan3d` | image           | self-host | High-poly, image-conditioned (GCP).  |
+| Engine               | Runs on   | Path(s)         | Key      | Notes                                         |
+| -------------------- | --------- | --------------- | -------- | --------------------------------------------- |
+| `three-image`        | platform  | image           | platform | The default. No poly target.                  |
+| `three-geometry`     | Meshy     | geometry, image | **BYOK** | Native text→geometry, quad topology.          |
+| `three-geometry-pro` | Tripo     | geometry, image | **BYOK** | Cleanest quad topology.                       |
+| `three-sculpt`       | Rodin     | geometry, image | **BYOK** | High-poly detail.                             |
+| `three-instant`      | Stability | image           | **BYOK** | Fast single-image.                            |
+| `three-detail`       | platform  | image           | platform | Poly-aware; reconstructs on the platform lane. |
 
-When no `backend` is named, the resolver walks the free lanes first: the tier's named free engine (the self-hosted TRELLIS worker at `draft` and `standard`, the self-hosted Hunyuan3D worker at `high`), then the per-path fallback chain (self-host TRELLIS, self-host Hunyuan3D, the free HuggingFace Spaces lane, and last the free NVIDIA NIM TRELLIS lane, which is text-only). The paid Replicate `trellis` lane is the standing default only when no free lane is live on the deployment. Lane health is consulted, so a cold or down free worker is skipped for the next healthy one before submit.
+The image path on this server always reconstructs on the platform provider: the
+self-hosted GCP reconstruction worker when `GCP_RECONSTRUCTION_KEY` and
+`GCP_RECONSTRUCTION_URL` are set, otherwise TRELLIS on Replicate. The free-lane
+walk of `/api/forge` (self-host TRELLIS and Hunyuan3D, the HuggingFace Spaces
+lane, NVIDIA NIM, with failover between them) is not wired into this server, so
+the HuggingFace engine is deliberately not selectable here. Free text→3D over
+MCP is the `forge_free` tool on the [free 3D Studio](./mcp-studio.md)
+(`/api/mcp-studio`).
 
 **BYOK note:** the geometry backends (Meshy/Tripo) have no platform key. Supply
 your own via the `x-forge-provider-key` request header (or a key stored on your
@@ -201,7 +218,7 @@ For tool calls there are two lanes:
 | `stylize_model`, `remesh_model`, `segment_model`         | $0.02                       |
 | `capture_scene`, `anchor_provenance`                    | $0.05                                     |
 | `remove_background`, `pose_model`, `apply_animation`, `direct_prompt`, `generate_material` | $0.01 |
-| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `grade_sim_readiness`, `x402_preflight`, the persona tools, `validate_spatial_response`, `getting_started` | free |
+| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `grade_sim_readiness`, `x402_preflight`, the persona tools (including `persona_payment_preview`), `read_resource`, `validate_spatial_response`, `getting_started` | free |
 
 Payment settles only after the work succeeds — a wholesale failure costs
 nothing, and the same signed payment cannot be replayed.
@@ -229,11 +246,11 @@ as a live orbitable artifact, then `auto_rig_model` → `apply_animation(animati
 
 | Env                                                 | Purpose                                                                               | Default                          |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------- |
-| `REPLICATE_API_TOKEN`                               | Required. Powers reconstruction, rigging, remesh, retexture.                          | —                                |
+| `REPLICATE_API_TOKEN`                               | Replicate lane for reconstruction, rigging, remesh, retexture, and the paid text→image backstop. Required for any mode with no GCP worker configured. | unset |
 | `REPLICATE_RECONSTRUCT_MODEL`                       | image→3D model.                                                                       | `firtoz/trellis`                 |
-| `REPLICATE_TXT2IMG_MODEL`                           | text→image model for `text_to_3d`.                                                    | `black-forest-labs/flux-schnell` |
-| `REPLICATE_RERIG_MODEL`                             | Auto-rig model. Without it, `auto_rig_model` reports "not configured".                | —                                |
-| `GCP_RECONSTRUCTION_URL` / `GCP_RECONSTRUCTION_KEY` | Optional self-host backend (Hunyuan3D, masked region retexture).                      | —                                |
+| `REPLICATE_TXT2IMG_MODEL`                           | Replicate text→image model for `text_to_3d`, used only after the free lanes (`NVIDIA_API_KEY` for NIM FLUX, `GOOGLE_CLOUD_PROJECT` for Vertex Imagen). | `black-forest-labs/flux-schnell` |
+| `REPLICATE_RERIG_MODEL`                             | Replicate auto-rig model, used when no GCP rig worker is configured. Without either, `auto_rig_model` reports "not configured". | unset |
+| `GCP_RECONSTRUCTION_KEY` + per-mode worker URLs     | Self-hosted GCP workers, preferred over Replicate for every mode whose URL is set: `GCP_RECONSTRUCTION_URL` (reconstruct), `GCP_UNIRIG_URL` (rig), `GCP_REMESH_URL`, `GCP_STYLIZE_URL`, `GCP_SEGMENT_URL`, `GCP_TEXTURE_URL` (retexture; required for `retexture_region`), `GCP_REMBG_URL`, `GCP_VIDEO2SCENE_URL` (`capture_scene`). | unset |
 | `WATSONX_API_KEY` / `WATSONX_PROJECT_ID`            | Enable `direct_prompt` + `generate_material`.                                         | —                                |
 | `APP_ORIGIN`                                        | Origin used to load the animation manifest for `list_animations` / `apply_animation`. | request host                     |
 | `MCP_POSE_PREVIEW_BASE`                             | Base URL for `pose_model` preview links.                                              | `https://three.ws/pose`          |
@@ -255,6 +272,10 @@ The manifest is [`server-3d.json`](../server-3d.json). Publish with the
 mcp-publisher login github
 mcp-publisher publish --file server-3d.json
 ```
+
+Or let the repo's publisher do it alongside the other servers, under the
+`remote-3d` key: `npm run publish:mcp:dry`, then
+`npm run publish:mcp -- --only remote-3d`.
 
 ## Local development
 

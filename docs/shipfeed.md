@@ -156,6 +156,8 @@ three.ws/changelog/2026-08-27-text-to-3d-... · 2026-08-27 · #fix #infra
 
 The footer is best-effort by design: if GitHub cannot be read at that moment, the announcement goes out without it rather than not going out. Entries are keyed by date and title, and repeats of one key within a batch are collapsed before sending, so a duplicated line in `data/changelog.json` never reaches the channel twice.
 
+The same cron also replies to the @trythreews X thread with every entry that passes `data/changelog-x-filter.json` (no wallet, payment, key, outage or security internals, and nothing that is only a fix). That lane is isolated from Telegram, so one failing never blocks the other, and its tweets carry no provenance footer: just the title, summary and changelog link inside the 280-character budget.
+
 **The raw commit feed** (`/api/cron/commit-feed-push`, every 5 minutes) reads its headline from the same parser, so a scoped commit now says "Feature · resilience" rather than "feat(resilience)", and it skips commits the classifier calls noise: merges, `chore(deps):` bumps, and lockfile-only changes. A skipped commit still advances the lane's state, so nothing is ever re-read, and the tick reports `{ posted, skipped }` so the drop is visible in the logs rather than silent.
 
 ---

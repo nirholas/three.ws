@@ -176,12 +176,20 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   published either, but market cap ÷ price recovers it exactly. The lookup by
   Solana mint (`?contract=`) has no fallback: CoinPaprika is addressed by coin
   id, not by mint.
-- **Exchange listings** (`/api/coin/tickers`) — CoinGecko `/coins/{id}/tickers`
-  → CoinPaprika `/coins/{id}/markets`. Derivatives venues are filtered out (the
-  CoinGecko endpoint it stands in for is spot-only, and perps would otherwise
-  head the table by volume). Spread and ±2% order-book depth don't exist in this
-  feed, so the client drops those three columns rather than render a wall of
-  em-dashes.
+- **Exchange listings** (`/api/coin/tickers`): CoinGecko `/coins/{id}/tickers`
+  → CoinPaprika `/coins/{id}/markets` → the coin's DEX pairs from DexScreener's
+  keyless token index. Derivatives venues are filtered out of the CoinPaprika
+  rung (the CoinGecko endpoint it stands in for is spot-only, and perps would
+  otherwise head the table by volume). The DEX rung covers coins CoinPaprika
+  does not list (young DEX-only tokens above all): the page passes the contract
+  addresses it already holds from `/api/coin/detail` as `?contracts=` (up to 8,
+  EVM or base58), and the handler keeps only pairs where the coin is the base
+  token, ranked by 24h volume, cached and single-flighted like the CoinPaprika
+  rung. DexScreener has no pagination, so page 1 is the whole answer. Without
+  contracts, or with nothing trading, the 502 stands. The response's `source`
+  names the rung that answered (`coingecko`, `coinpaprika`, `dexscreener`).
+  Spread and ±2% order-book depth don't exist in either backup feed, so the
+  client drops those three columns rather than render a wall of empty cells.
 - **Price chart** (`/api/coin/ohlc`) — CoinGecko `market_chart`, backed up for
   BTC/ETH/SOL by exchange candles (Kraken OHLC → Coinbase Exchange) — real trade
   prints, so they lead — and for **every other coin** by DefiLlama's coins
@@ -608,7 +616,7 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | Endpoint                | Upstream                                                   | Cache        |
 | ----------------------- | ---------------------------------------------------------- | ------------ |
 | `/api/coin/detail`      | CoinGecko `/coins/{id}` or `/coins/solana/contract/{mint}` (with community + developer blocks) | 60 s |
-| `/api/coin/tickers`     | CoinGecko `/coins/{id}/tickers` (exchange listings, ±2% depth) | 120 s     |
+| `/api/coin/tickers`     | CoinGecko `/coins/{id}/tickers` (exchange listings, ±2% depth), CoinPaprika markets, then DexScreener pairs when `contracts=` is passed | 120 s     |
 | `/api/coin/ohlc`        | CoinGecko `/coins/{id}/market_chart`                       | 120 s        |
 | `/api/coin/pool`        | Top-pool lookup by token address (feeds the pool-keyed chart embeds: DEXTools, GeckoTerminal) | 60 s + 300 s CDN |
 | `/api/coin/markets`     | CoinGecko `/coins/markets` (optional `category=`), `/search` | 60 s / 300 s |

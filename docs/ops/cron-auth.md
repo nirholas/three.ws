@@ -34,6 +34,13 @@ the line is directly internet-invokable. The edge gate makes that omission
 survivable: mounted ahead of the route table in `server/index.mjs`, it refuses
 the request before any handler is imported.
 
+It decides what counts as a cron path on the same view of the URL the API
+dispatcher routes on (`apiSegments` in `server/route-resolve.mjs`): empty
+segments dropped and each segment percent-decoded. Matching the raw string let
+`/api//cron/x` and `/api/%63ron/x` slip past this gate while still dispatching
+to `api/cron/x.js`; both are gated now, and a path that will not decode is
+treated as gated rather than waved through.
+
 It accepts two credentials, permanently. This is defense in depth, not a
 migration with a cutover:
 
@@ -68,7 +75,8 @@ itself is a 401, not a pass.
 Covered by `tests/server-cron-edge-auth.test.js`, which verifies real RS256
 signatures against a locally generated key set: a forged token, a wrong
 audience, a wrong issuer, a wrong service account, an unverified email, and an
-expired token are each refused, and a genuine one is accepted.
+expired token are each refused, and a genuine one is accepted. It also pins the
+path spellings above (doubled slashes, a percent-encoded `cron`) as gated.
 
 ## Attaching the OIDC token (the fleet-wide step)
 
@@ -112,6 +120,12 @@ gcloud logging read \
 
 The sync reads `CRON_SECRET` from `--env-file`, then `process.env`, then the
 live Cloud Run service, so on an authenticated machine step 2 needs no argument.
+
+Every deploy also runs `npm run deploy:gcp:sync-crons`
+(`create-gcp-scheduler.mjs --missing-only`), which creates a job for each newly
+declared cron and never touches an existing one. It does not pass `--oidc`, so
+after the migration a cron added later starts on the Bearer secret, which the
+edge still accepts. Re-run step 3 to move it onto the token.
 
 **Rollback** is one command and needs nothing else: `node
 scripts/create-gcp-scheduler.mjs` (no `--oidc`) puts the Bearer secret back on

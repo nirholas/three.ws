@@ -198,6 +198,8 @@ curl -X POST https://three.ws/api/home/plan \
 ```
 
 Admin session only. Sending `"limits": {}` clears the override and returns the account to its plan.
+(For a bearer token rather than a session, `GET /api/home/plan` needs the `home:read` scope and
+every `POST` needs `home:act`, the same capability-to-scope rule the per-home routes apply.)
 An unknown dimension is dropped rather than stored, so a typo in a form cannot install a limit
 nothing reads. A dimension the deal did not mention keeps its plan value.
 
@@ -347,9 +349,15 @@ connected home and proves on screen that the row stays, is labelled paused, keep
 and can be made live again.
 
 ```bash
-HOME_E2E_API_PORT=8171 HOME_E2E_WEB_PORT=3031 HOME_LIVE=1 HOME_LIVE_NAME=plan19 \
+HOME_E2E_ENC_KEY="$(node scripts/read-service-env.mjs '^WALLET_ENCRYPTION_KEY$' --raw)" \
+  HOME_E2E_API_PORT=8171 HOME_E2E_WEB_PORT=3031 HOME_LIVE=1 HOME_LIVE_NAME=plan19 \
   npx playwright test --config playwright.home.config.js tests/e2e/home-plan.spec.js
 ```
+
+`HOME_E2E_ENC_KEY` (or an exported `WALLET_ENCRYPTION_KEY`) has to be the key bound to the
+database in `.env.local`: [`api/_lib/secret-box.js`](../api/_lib/secret-box.js) refuses any other
+writer with `secret_box_key_mismatch`, and the global setup checks the binding before the first
+browser opens. [`tests/e2e/README.md`](../tests/e2e/README.md) has the details.
 
 The journeys pause by clicking the button, never by posting to `/api/home/plan` directly: that
 route is CSRF-guarded like every other state change, so a raw request would have to mint a token

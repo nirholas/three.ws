@@ -8,7 +8,7 @@ client. Registered with the MCP Registry as
 - **Endpoint:** `https://three.ws/api/mcp-bazaar`
 - **Transport:** Streamable HTTP (MCP `2025-06-18`)
 - **Auth:** OAuth 2.1 (same three.ws authorization server as `/api/mcp`) or x402
-- **Data:** live `/discovery/resources` from the configured x402 facilitators — no cached or synthetic listings
+- **Data:** live `/discovery/resources` from the configured x402 facilitators, never synthetic listings. `search_services` scores against an in-process copy of the merged catalog that is refreshed at most every 60 seconds (`BAZAAR_CATALOG_TTL_MS`); `browse_services`, `get_service` and `bazaar_service_details` query the facilitators on every call
 
 ## Tools
 
@@ -18,6 +18,7 @@ client. Registered with the MCP Registry as
 | `browse_services(type?, network?, max_price_usdc?, limit?)` | List services without a query — "what can I pay for?". |
 | `get_service(resource_url, tool_name?)` | Full payment requirements (price, asset, network, recipient), input/output schema, and a ready pay link. |
 | `bazaar_service_details(resource_url, tool_name?)` | Live price only: cheapest across networks plus a per-network breakdown. Built for price tracking on a schedule. |
+| `read_resource(uri?, format?)` | Reads a `three://` resource (see below) for clients that show tools but not resources. Omit `uri` to list what you can read; `format: "markdown"` returns a readable rendering. |
 | `getting_started(section?)` | Free, no auth or payment. An overview of the server, its tools, and how to connect. Call this first. |
 
 `type` is `http` (paid HTTP APIs) or `mcp` (paid MCP tools). `network` is a
@@ -58,6 +59,21 @@ missing label and a missing sample stay distinguishable.
 
 Use `get_service` instead when you also need the input/output schema and a pay
 link. `bazaar_service_details` deliberately omits both to stay cheap to poll.
+
+## Resources and prompts
+
+The server also publishes the shared three.ws MCP resources and guided prompts
+(full reference: [Resources](./mcp.md#resources) and
+[Guided prompts](./mcp.md#guided-prompts)). On this server that is:
+
+- **Resources:** `three://me` (your credential, scopes and daily quota),
+  `three://x402/services` (the live x402 service catalog) and
+  `three://marketplace` (paid agent skills and agent services). The last two are
+  public.
+- **Prompts:** `get-started`, `hire-agent(task)`, `explore-marketplace` and
+  `explore-x402(capability)`.
+
+`resources/list` and `prompts/list` on the endpoint are the authoritative lists.
 
 ## Use on claude.ai
 

@@ -28,13 +28,13 @@ Two GETs are worth calling out because the pattern is easy to get wrong: `/api/v
 Every write accepts either form of credential:
 
 - **Session cookie**, as the browser does it. A one-time CSRF token is then required in `X-CSRF-Token`; get one from `GET /api/csrf-token`. A missing or stale token is `403 csrf_missing` / `403 csrf_invalid`.
-- **API key** (`Authorization: Bearer sk_live_...`), for scripts and servers. Bearer callers are CSRF-exempt because the token is itself the proof of intent. See [authentication.md](authentication.md) for minting one.
+- **API key** (`Authorization: Bearer sk_live_...`), for scripts and servers. Bearer callers are CSRF-exempt because the token is itself the proof of intent. The four routes that move funds (`deposit`, `redeem`, `trade`, `claim-fees`) additionally require the key to hold the `wallet:write` scope; a key without it gets `403 insufficient_scope` and nothing moves (the check is [`assertBearerMaySpend`](../api/_lib/spend-scope.js), the same gate as the [agent wallet API](agent-wallet-api.md)). Opening a vault and the owner's `PATCH` need no extra scope. See [authentication.md](authentication.md) for minting a key.
 
 Every write is also rate limited per user at 30 per minute, and the limiter fails closed: if the shared limiter backend is unreachable in production the write is refused rather than silently uncapped.
 
 Every write additionally requires the caller's account to have signed the real-funds agreements (Terms of Service, Risk Disclosure, Agent Wallet Agreement). Opening a vault, resuming a paused one, depositing, redeeming, owner-trading and claiming fees each call `requireRealFundsAgreement` before anything is built, so an unsigned account gets `403 risk_ack_required` with a `sign_url`, over a session and an API key alike, and nothing moves. Signing once at [/legal/agreements](https://three.ws/legal/agreements) covers all of them; devnet is exempt, and no `GET` is ever gated. See [risk-acknowledgment.md](risk-acknowledgment.md).
 
-The examples below use an API key in `$API_KEY`.
+The examples below use an API key in `$API_KEY`, granted `wallet:write` for the spending calls.
 
 ## Opening a vault
 

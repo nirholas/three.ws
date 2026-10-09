@@ -25,7 +25,7 @@ Everything scriptable is in [solana-mobile/scripts/](../solana-mobile/scripts/).
 4. **Add a dApp**, filling every field from the repo rather than from memory, so the portal and git never drift:
    - identity and URLs: [solana-mobile/publish/config.yaml](../solana-mobile/publish/config.yaml)
    - listing text: [solana-mobile/publish/listing/](../solana-mobile/publish/listing/) (long description, short description, what's-new, Seeker features)
-   - media: [solana-mobile/publish/media/](../solana-mobile/publish/media/) (icon, banner, and feature graphic are committed; screenshots are not, see below)
+   - media: [solana-mobile/publish/media/](../solana-mobile/publish/media/) (icon, banner, feature graphic, Editor's Choice card, and the five carousel screenshots are all committed, see [Listing media](#listing-media))
 
    Completing this mints the **App NFT**. The portal matches later uploads to this app by Android package name, `ws.three.app`.
 5. Settings → API keys → create one. Store it in the owner's password manager; it never goes in the repo.
@@ -68,7 +68,7 @@ DAPP_STORE_API_KEY='<portal API key>' \
 
 [scripts/publish.sh](../solana-mobile/scripts/publish.sh) checks that assetlinks is reachable, refuses a `versionCode` it already shipped from this machine, passes the API key over stdin so it never appears in a process listing, uploads the APK, mints the release NFT, and submits for review. If the upload dies part way through, resume it with `npx --no-install dapp-store resume --release-id <id>` rather than starting over.
 
-For a later release, bump `appVersionCode` and `appVersion` in [solana-mobile/twa/twa-manifest.json](../solana-mobile/twa/twa-manifest.json) (or pass `VERSION_CODE` / `VERSION_NAME`), then repeat steps 3 and 5. The store rejects a reused `versionCode`.
+For a later release, bump `appVersionCode` and `appVersion` in [solana-mobile/twa/twa-manifest.json](../solana-mobile/twa/twa-manifest.json) (or pass `VERSION_CODE` / `VERSION_NAME`), then repeat steps 3 and 5. The store rejects a reused `versionCode`. The manifest already reads `1.1.0` / versionCode 2 for the next release, which adds the Agent glance home screen widget ([native widgets](./native-widgets.md)); its status is tracked at the top of [solana-mobile/README.md](../solana-mobile/README.md).
 
 Releases are run locally by the owner. This repo does not use GitHub Actions.
 
