@@ -119,8 +119,10 @@ export function errorFromResponse(res, data, what) {
 	return new StepError(msg(`${what} failed (HTTP ${res.status}).`), { code: data?.error || `http_${res.status}` });
 }
 
+// A time-based estimate only while the job is inside its ETA. Past it, the bar
+// switches to an honest "taking longer" readout instead of parking at 95%.
 function estimateProgress(elapsedSec, etaSec) {
-	if (!(etaSec > 0) || !(elapsedSec >= 0)) return null;
+	if (!(etaSec > 0) || !(elapsedSec >= 0) || elapsedSec > etaSec) return null;
 	return Math.min(95, Math.round((elapsedSec / etaSec) * 100));
 }
 
@@ -210,14 +212,54 @@ export async function uploadGlb(blob, { signal } = {}) {
 	return presignAndPut('/api/scene-glb-upload', blob, 'model/gltf-binary', { signal, what: 'The model upload' });
 }
 
-/** A mesh value as a public https URL, uploading local bytes when needed. */
+// The processing workers fetch the model themselves, so the URL they get must be
+// public http(s), short enough for the API (2048 chars) and not on this machine.
+const WORKER_URL_MAX = 2048;
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '0.0.0.0']);
+
+function workerReachable(url) {
+	if (typeof url !== 'string' || url.length > WORKER_URL_MAX) return false;
+	try {
+		const u = new URL(url);
+		return (u.protocol === 'https:' || u.protocol === 'http:') && !LOCAL_HOSTS.has(u.hostname);
+	} catch {
+		return false;
+	}
+}
+
+async function fetchMeshBlob(url, signal) {
+	let res;
+	try {
+		res = await fetch(new URL(url, location.href), { signal });
+	} catch (err) {
+		if (signal?.aborted) throw err;
+		throw new StepError('Could not read the model from the previous step. Run that step again.', { code: 'network' });
+	}
+	if (!res.ok) throw new StepError(`The model from the previous step is no longer available (HTTP ${res.status}). Run that step again.`, { code: 'gone' });
+	return res.blob();
+}
+
+/**
+ * A mesh value as a URL a processing worker can fetch. Local bytes (a model made
+ * on the user's GPU), same-origin paths and over-long signed links are uploaded
+ * to three.ws storage first.
+ */
 async function publicMeshUrl(mesh, { signal, progress }) {
 	if (!mesh) throw new StepError('No model arrived from the previous step.', { code: 'no_input' });
-	if (mesh.url) return mesh.url;
-	if (!mesh.blob) throw new StepError('The previous step produced no model.', { code: 'no_input' });
+	if (mesh.publicUrl) return mesh.publicUrl;
+	if (workerReachable(mesh.url)) return mesh.url;
+	let blob = mesh.blob;
+	if (!blob && mesh.url) {
+		if (!/^(https?:|blob:|\/)/i.test(mesh.url)) {
+			throw new StepError('The engine returned the model in private storage. Run Generate again with Run fresh.', { code: 'unreachable_url' });
+		}
+		progress({ label: 'Fetching the model', pct: null });
+		blob = await fetchMeshBlob(mesh.url, signal);
+	}
+	if (!blob) throw new StepError('The previous step produced no model.', { code: 'no_input' });
 	progress({ label: 'Uploading the model', pct: null });
-	mesh.url = await uploadGlb(mesh.blob, { signal });
-	return mesh.url;
+	mesh.publicUrl = await uploadGlb(blob, { signal });
+	return mesh.publicUrl;
 }
 
 async function imageBlob(image, signal) {

@@ -197,6 +197,7 @@ function buildShell() {
 	app.textContent = '';
 	app.append(toolbar, h('div', { class: 'fw-body' }, els.palette, els.canvasWrap, els.inspector), els.linear);
 	app.dataset.state = 'ready';
+	app.removeAttribute('aria-busy');
 }
 
 // ── Commit / history ────────────────────────────────────────────────────────

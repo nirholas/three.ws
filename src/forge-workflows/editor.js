@@ -272,8 +272,9 @@ export function createEditor(root, opts) {
 				bar.classList.toggle('is-indeterminate', p?.pct == null);
 				bar.firstChild.style.transform = `scaleX(${p?.pct != null ? p.pct / 100 : 1})`;
 				prog.querySelector('.fw-progress-label').textContent = progressText(p, s);
-			} else {
+			} else if (!prog.hidden) {
 				prog.hidden = true;
+				prog.querySelector('.fw-progress-label').textContent = '';
 			}
 		}
 	}
@@ -694,7 +695,11 @@ export function progressText(p, s) {
 	if (!p) return s?.total > 1 ? `Item ${(s.running?.iter ?? 0) + 1} of ${s.total}` : 'Starting';
 	const parts = [p.label || 'Working'];
 	if (p.pct != null) parts.push(`${p.estimate ? '~' : ''}${p.pct}%`);
-	if (p.elapsed != null) parts.push(p.eta ? `${p.elapsed}s of ~${p.eta}s` : `${p.elapsed}s`);
+	if (p.elapsed != null) {
+		if (!p.eta) parts.push(`${p.elapsed}s`);
+		else if (p.elapsed > p.eta) parts.push(`${p.elapsed}s, taking longer than usual`);
+		else parts.push(`${p.elapsed}s of ~${p.eta}s`);
+	}
 	if (s?.total > 1) parts.push(`item ${(s.running?.iter ?? 0) + 1}/${s.total}`);
 	return parts.join(' · ');
 }

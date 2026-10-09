@@ -32,8 +32,8 @@ export const TEMPLATES = [
 					node('t_prompt', 'prompt', 40, 120, { text: 'a friendly cartoon robot standing upright, arms at its sides' }),
 					node('t_gen', 'generate', 320, 120, { mode: 'text', engine: 'auto', tier: 'draft' }),
 					node('t_rig', 'rig', 600, 120),
-					node('t_prev', 'preview', 880, 40),
-					node('t_exp', 'export', 880, 240, { format: 'glb', filename: 'rigged-character' }),
+					node('t_prev', 'preview', 880, 220),
+					node('t_exp', 'export', 880, 20, { format: 'glb', filename: 'rigged-character' }),
 				],
 				[
 					edge('t_e1', 't_prompt', 'text', 't_gen', 'prompt'),
@@ -70,8 +70,8 @@ export const TEMPLATES = [
 				[
 					node('b_each', 'forEach', 40, 120, { mode: 'image' }),
 					node('b_gen', 'generate', 320, 120, { mode: 'image', engine: 'auto', tier: 'draft' }),
-					node('b_prev', 'preview', 600, 40),
-					node('b_save', 'save', 600, 240, { destination: 'library', name: 'Batch model', visibility: 'unlisted' }),
+					node('b_prev', 'preview', 600, 220),
+					node('b_save', 'save', 600, 0, { destination: 'library', name: 'Batch model', visibility: 'unlisted' }),
 				],
 				[
 					edge('b_e1', 'b_each', 'item', 'b_gen', 'image'),
@@ -93,8 +93,8 @@ export const TEMPLATES = [
 					node('g_gen', 'generate', 300, 120, { mode: 'image', engine: 'auto', tier: 'draft' }),
 					node('g_rem', 'remesh', 560, 120, { mode: 'triangle', operation: 'full', targetFaces: 50000 }),
 					node('g_game', 'gameready', 820, 120, { topology: 'quad', polyBudget: 15000 }),
-					node('g_prev', 'preview', 1080, 40),
-					node('g_exp', 'export', 1080, 240, { format: 'glb', filename: 'game-asset' }),
+					node('g_prev', 'preview', 1080, 220),
+					node('g_exp', 'export', 1080, 20, { format: 'glb', filename: 'game-asset' }),
 				],
 				[
 					edge('g_e1', 'g_img', 'image', 'g_gen', 'image'),

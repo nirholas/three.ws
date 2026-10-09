@@ -111,6 +111,15 @@ export const NAV_GROUPS = [
 						desc: 'Photo → mesh through a visual workflow: remesh, rig, smooth, decimate, export',
 					},
 					{
+						title: 'Forge Workflows',
+						href: '/forge/workflows',
+						badge: 'New',
+						badgeTone: 'live',
+						// A node editor is a power-user surface, so it stays off the lite menu.
+						tier: 'advanced',
+						desc: 'Chain prompt or photo to 3D, rig, remesh, restyle and export into one run',
+					},
+					{
 						title: 'CAD Forge',
 						href: '/cad',
 						badge: 'New',

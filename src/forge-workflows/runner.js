@@ -85,6 +85,7 @@ export function createRunner({ types, executors, onChange = () => {} }) {
 			onChange(state);
 		} catch (err) {
 			// A rendering error must not break the run; surface it for debugging.
+			// eslint-disable-next-line no-console
 			console.error('[forge-workflows] state listener failed', err);
 		}
 	}
