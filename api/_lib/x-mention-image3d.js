@@ -60,7 +60,8 @@ export function cleanSubject(raw) {
 	const words = raw.trim();
 	if (!words || words.length > 60 || !/^[A-Za-z][A-Za-z -]*$/.test(words)) return '';
 	if (!checkPromptSafety(words).allowed) return '';
-	return shortenPrompt(words, SUBJECT_MAX).replace(/\.\.\.$/, '');
+	const bare = words.replace(/^(an?|the|some|my|your)\s+/i, '');
+	return bare ? shortenPrompt(bare, SUBJECT_MAX).replace(/\.\.\.$/, '') : '';
 }
 
 /**
@@ -102,6 +103,29 @@ export function composeImage3dReply(kind, { subject = null, link = '' } = {}) {
 	let text = build(subject || 'picture');
 	if (weightedLength(text) > X_POST_MAX_WEIGHT) text = build('picture');
 	return text;
+}
+
+const POSTER_PROBE_MS = 90_000;
+
+/**
+ * Whether the rendered poster can actually be fetched. The render service
+ * refuses some meshes (a size cap) and a reply must not promise a picture it
+ * cannot attach, so an unrenderable poster becomes a link-only reply.
+ */
+export async function posterRenders(url, { fetchImpl = fetch, timeoutMs = POSTER_PROBE_MS } = {}) {
+	try {
+		const res = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
+		const ok = res.ok && String(res.headers.get('content-type') || '').startsWith('image/');
+		await res.arrayBuffer();
+		return ok;
+	} catch {
+		return false;
+	}
+}
+
+async function withRenderedPoster(reply, probe = posterRenders) {
+	if (!reply.mediaUrl || (await probe(reply.mediaUrl))) return reply;
+	return { ...reply, mediaUrl: null };
 }
 
 function successReply({ base, subject, glbUrl, creationId }) {
@@ -158,7 +182,7 @@ export function isOwnImage(args, authorId) {
  * Handle one recorded `image3d` mention end to end.
  *
  * @param {{ tweetId: string, authorId: string, args: object, dryRun?: boolean }} event `args` is the parser's image3d args
- * @param {{ base?: string, budgetMs?: number, deliver?: Function, fetchImpl?: Function, describe?: Function, persist?: Function, startForge?: Function, pollJob?: Function, now?: () => number }} [deps]
+ * @param {{ base?: string, budgetMs?: number, deliver?: Function, fetchImpl?: Function, describe?: Function, persist?: Function, startForge?: Function, pollJob?: Function, probeMedia?: Function, now?: () => number }} [deps]
  */
 export async function handleImage3d(event, deps = {}) {
 	const { tweetId, authorId, args = {} } = event;
@@ -229,7 +253,7 @@ export async function handleImage3d(event, deps = {}) {
 	}
 
 	const finalId = result.creation_id || creationId;
-	const reply = successReply({ base, subject, glbUrl: result.glb_url, creationId: finalId });
+	const reply = await withRenderedPoster(successReply({ base, subject, glbUrl: result.glb_url, creationId: finalId }), deps.probeMedia);
 	const sent = await recordAndDeliver({ tweetId, reply, dryRun, deliver: deps.deliver, reason: 'image3d_done', creationId: finalId });
 	return done('reply', { decision: sent.decision, text: reply.text, mediaUrl: reply.mediaUrl, link: reply.link, creationId: finalId, reason: 'image3d_done' });
 }
@@ -265,7 +289,7 @@ export async function finishPendingImage3d({ limit = 10 } = {}, deps = {}) {
 		let reply;
 		let reason;
 		if (status?.status === 'done' && status.glb_url) {
-			reply = successReply({ base, subject, glbUrl: status.glb_url, creationId: status.creation_id || row.creation_id });
+			reply = await withRenderedPoster(successReply({ base, subject, glbUrl: status.glb_url, creationId: status.creation_id || row.creation_id }), deps.probeMedia);
 			reason = 'image3d_done_late';
 		} else if (status?.status === 'failed' || probeError?.code === 'unknown_job' || overdue) {
 			reply = failureReply({ base, subject });

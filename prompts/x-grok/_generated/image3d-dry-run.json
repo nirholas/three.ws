@@ -15,7 +15,7 @@
       "outcome": "reply",
       "decision": "reply",
       "reason": "image3d_done_late",
-      "wouldReply": "Here is your a shoe in 3D. Spin it around: https://three.ws/m/d24462ff-cce8-415d-b99c-f4f63614b824",
+      "wouldReply": "Here is your shoe in 3D. Spin it around: https://three.ws/m/d24462ff-cce8-415d-b99c-f4f63614b824",
       "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fd24462ff-cce8-415d-b99c-f4f63614b824.glb&width=1024&height=1024",
       "mediaCheck": {
         "status": 200,
@@ -47,8 +47,9 @@
       "wouldReply": "Here is your three running shoes in 3D. Spin it around: https://three.ws/m/271c4aef-5091-4dcd-b3fb-3d9b4edfc716",
       "mediaUrl": "https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F271c4aef-5091-4dcd-b3fb-3d9b4edfc716.glb&width=1024&height=1024",
       "mediaCheck": {
-        "status": 0,
-        "error": "The operation was aborted due to timeout"
+        "status": 413,
+        "contentType": "application/json",
+        "note": "production render cap is 10 MB and this GLB is 11.5 MB; the 25 MB cap landed in 11914b4c8 and is pending deploy. Until then the reply drops the media and sends the link only (posterRenders probe)."
       },
       "link": "https://three.ws/m/271c4aef-5091-4dcd-b3fb-3d9b4edfc716",
       "linkCheck": {

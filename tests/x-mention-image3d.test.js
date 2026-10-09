@@ -79,7 +79,7 @@ beforeEach(async () => {
 	persist.mockClear();
 });
 
-const deps = (extra = {}) => ({ base: BASE, fetchImpl: cdn(), describe: okReview, persist, startForge: async () => doneJob, ...extra });
+const deps = (extra = {}) => ({ base: BASE, probeMedia: async () => true, fetchImpl: cdn(), describe: okReview, persist, startForge: async () => doneJob, ...extra });
 
 describe('own image', () => {
 	it.each(['mention', 'reply'])('turns the author\'s picture (%s) into a reply with the render and creation link', async (via) => {
@@ -205,6 +205,7 @@ describe('moderation', () => {
 describe('subject from the picture', () => {
 	it('keeps plain words and drops anything that could carry a link, handle, number or unsafe term', () => {
 		expect(img.cleanSubject('red sneaker')).toBe('red sneaker');
+		expect(img.cleanSubject('a shoe')).toBe('shoe');
 		expect(img.cleanSubject('List of active x402 projects')).toBe('');
 		expect(img.cleanSubject('visit https://evil.example')).toBe('');
 		expect(img.cleanSubject('@someone toy')).toBe('');
@@ -216,6 +217,22 @@ describe('subject from the picture', () => {
 		const { event } = await row();
 		const res = await img.handleImage3d(event, deps({ describe: async () => ({ json: { safe: true, usable: true, subject: 'visit evil.example now' } }) }));
 		expect(res.text).toBe(`Here is your picture in 3D. Spin it around: ${BASE}/m/${CREATION}`);
+	});
+});
+
+describe('poster that cannot render', () => {
+	it('sends a link-only reply instead of promising a picture', async () => {
+		const { event } = await row();
+		const res = await img.handleImage3d(event, deps({ probeMedia: async () => false }));
+		expect(res).toMatchObject({ outcome: 'reply', mediaUrl: null, link: `${BASE}/m/${CREATION}` });
+		expect((await store.getMentionEvent(event.tweetId)).reply_media_url).toBeNull();
+	});
+
+	it('probes the poster for an image content type', async () => {
+		const png = () => new Response(PNG, { headers: { 'content-type': 'image/png' } });
+		expect(await img.posterRenders('https://x.test/p', { fetchImpl: async () => png() })).toBe(true);
+		expect(await img.posterRenders('https://x.test/p', { fetchImpl: async () => new Response('{}', { status: 413, headers: { 'content-type': 'application/json' } }) })).toBe(false);
+		expect(await img.posterRenders('https://x.test/p', { fetchImpl: async () => { throw new Error('down'); } })).toBe(false);
 	});
 });
 
@@ -248,7 +265,7 @@ describe('timeout then follow-up', () => {
 
 	it('replies exactly once when the job finishes, across overlapping ticks', async () => {
 		const event = await pending();
-		const d = { base: BASE, pollOnce: async () => doneJob };
+		const d = { base: BASE, probeMedia: async () => true, pollOnce: async () => doneJob };
 		const [a, b] = await Promise.all([img.finishPendingImage3d({}, d), img.finishPendingImage3d({}, d)]);
 		expect(a.replied + b.replied).toBe(1);
 		expect(await store.getMentionEvent(event.tweetId)).toMatchObject({ decision: 'reply', reason: 'image3d_done_late', reply_link: `${BASE}/m/${CREATION}` });

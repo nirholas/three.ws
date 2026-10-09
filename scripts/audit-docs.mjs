@@ -283,6 +283,7 @@ if (!explicitFiles.length) {
 //               a commit, so registering one is a decision, never a default.
 const UNPUBLISHED_DOCS = new Map([
 	['x-mention-bot', 'internal: operator runbook for the dry-run X mention bot safety rules, public once the bot goes live'],
+	['x-mention-image3d', 'internal: operator notes for the dry-run X image-to-3D reply, public once the bot goes live'],
 	['agora', 'internal: strategy framing, not a reader-facing product doc'],
 	['announce-voice', 'internal: the voice contract announcement packs are written and gated against'],
 	['announcement-factory', 'internal: the marketing machinery that fills the X content queue, like x-content-pipeline'],
