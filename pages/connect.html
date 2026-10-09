@@ -151,6 +151,10 @@
 			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
 		}
 
+		.cn-cloud-actions { margin: 0 0 12px; }
+		.cn-url-second { margin-top: 8px; }
+		.cn-note a { text-decoration: underline; text-underline-offset: 3px; }
+
 		/* ── worth knowing ──────────────────────────────────────────────── */
 		.cn-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
 		.cn-fact { padding: 15px 16px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); }
@@ -320,6 +324,31 @@
 				</div>
 				<p class="cn-src" data-i18n-html="connect.every_hosted_server_with_its_auth_and">Every hosted server, with its auth and resources, is listed machine-readably at <a href="/.well-known/mcp.json">/.well-known/mcp.json</a>.</p>
 			</div>
+		</section>
+
+		<section class="cn-step" aria-labelledby="cn-cloud">
+			<div class="cn-step-head">
+				<div>
+					<h2 id="cn-cloud">Connector URL for cloud agents</h2>
+					<p>Grok Bot, the xAI API and other hosted agents share one network address, so they share one generation allowance unless each installation has its own. Get a free, anonymous token: no account.</p>
+				</div>
+			</div>
+			<div class="cn-cloud-actions">
+				<button type="button" class="cn-btn" id="cn-cloud-mint">Generate my connector URL</button>
+			</div>
+			<div id="cn-cloud-result" hidden>
+				<div class="cn-url">
+					<span class="cn-url-label">Grok</span>
+					<code id="cn-cloud-grok"></code>
+					<button type="button" class="cn-btn" data-copy-target="cn-cloud-grok">Copy URL</button>
+				</div>
+				<div class="cn-url cn-url-second">
+					<span class="cn-url-label">Studio</span>
+					<code id="cn-cloud-studio"></code>
+					<button type="button" class="cn-btn" data-copy-target="cn-cloud-studio">Copy URL</button>
+				</div>
+			</div>
+			<p class="cn-note" id="cn-cloud-note" role="status" aria-live="polite">Keep the URL private: whoever holds it spends your installation's budget. <a href="/docs/mcp-studio">How install tokens work</a>.</p>
 		</section>
 
 		<section class="cn-step" aria-labelledby="cn-step3">
@@ -513,6 +542,39 @@
 			showClient(tabs[next].dataset.client, true);
 			tabs[next].focus();
 		});
+
+		// ── connector URL for cloud agents: a real token from the real endpoint ──
+		(function cloudConnector() {
+			const mintBtn = document.getElementById('cn-cloud-mint');
+			const result = document.getElementById('cn-cloud-result');
+			const note = document.getElementById('cn-cloud-note');
+			const grokEl = document.getElementById('cn-cloud-grok');
+			const studioEl = document.getElementById('cn-cloud-studio');
+			mintBtn.addEventListener('click', async () => {
+				mintBtn.disabled = true;
+				mintBtn.textContent = 'Generating...';
+				note.dataset.tone = '';
+				try {
+					const res = await fetch('/api/mcp-studio/install', { method: 'POST' });
+					const data = await res.json().catch(() => ({}));
+					if (!res.ok || !data.connector_url) {
+						const wait = data.retry_after ? ` Try again in ${Math.ceil(data.retry_after / 60)} min.` : ' Try again in a moment.';
+						throw new Error(res.status === 429 ? `This network has minted its 10 tokens for the hour.${wait}` : `Could not create a token.${wait}`);
+					}
+					grokEl.textContent = data.grok_connector_url;
+					studioEl.textContent = data.connector_url;
+					result.hidden = false;
+					mintBtn.textContent = 'Generate another';
+					note.textContent = 'Paste the Grok URL as a custom MCP connector in Grok Bot, or the Studio URL in any other client. Keep it private: whoever holds it spends your budget.';
+				} catch (err) {
+					note.dataset.tone = 'error';
+					note.textContent = err.message;
+					mintBtn.textContent = 'Generate my connector URL';
+				} finally {
+					mintBtn.disabled = false;
+				}
+			});
+		})();
 
 		// ── shareable state: /connect?client=cursor&server=three-ws-3d-studio-free ──
 		function writeQuery() {

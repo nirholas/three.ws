@@ -872,6 +872,11 @@ export const limits = {
 	// what stops a forged subject per call from escaping the limits entirely.
 	studioGenPoolHourly: (ip) =>
 		getLimiter('studio:gen:pool:hourly', { limit: 300, window: '1 h' }).limit(ip),
+	// Minting a free install token (POST /api/mcp-studio/install): one tiny insert,
+	// but unbounded minting would let one caller escape every per-caller cap, so it
+	// is capped per IP. Tokens still share studioGenPoolHourly per IP.
+	studioInstallCreate: (ip) =>
+		getLimiter('studio:install:create', { limit: 10, window: '1 h' }).limit(ip),
 	// Cheap per-IP cap on studio transport/discovery (initialize, tools/list,
 	// ping, resources). Bounds discovery floods without touching the generation
 	// budget. Non-critical: a missing-Redis misconfig degrades gracefully.
@@ -1078,6 +1083,22 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
+	// CAD Forge (api/cad): a design is up to four LLM completions (write plus
+	// repair rounds) and as many sandboxed kernel builds on workers/cad-forge, so
+	// it is the heaviest anonymous action here and capped like the diorama
+	// composer: per IP plus a global hourly breaker, critical so a Redis outage
+	// fails closed. Rebuilds (slider moves on an existing design) skip the LLM and
+	// cost one build, so they get a looser bucket of their own.
+	cadForgeIp: (ip) =>
+		getLimiter('cad:forge:ip', { limit: 12, window: '10 m', critical: true }).limit(ip),
+	cadForgeGlobal: () =>
+		getLimiter('cad:forge:global', {
+			limit: Math.max(60, Number(process.env.CAD_FORGE_GLOBAL_HOURLY) || 400),
+			window: '1 h',
+			critical: true,
+		}).limit('global'),
+	cadRebuildIp: (ip) =>
+		getLimiter('cad:rebuild:ip', { limit: 90, window: '10 m', critical: true }).limit(ip),
 	// Portal (api/portal): fetches a caller-supplied website once and builds a
 	// walkable world from it. The spend is other people's bandwidth rather than
 	// ours, which is exactly why it is capped: a build is one origin request plus

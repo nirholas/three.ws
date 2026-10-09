@@ -1238,10 +1238,10 @@
 		{
 			"name": "remesh_model",
 			"title": "Remesh, simplify, repair, or convert a 3D model",
-			"descHead": "Process an existing GLB/OBJ/STL/PLY mesh: fix holes and degenerate geome",
-			"descHash": "47b083320257",
+			"descHead": "Process an existing GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE mesh: fix holes and",
+			"descHash": "a8b3ca1d4a5e",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
-			"schemaHash": "c0c577c37614"
+			"schemaHash": "ee7335f4b61a"
 		},
 		{
 			"name": "remove_background",
@@ -1289,7 +1289,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
-			"schemaHash": "4fd28829ddac"
+			"schemaHash": "786f1efee28d"
 		},
 		{
 			"name": "text_to_3d",

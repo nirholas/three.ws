@@ -323,6 +323,15 @@ create table if not exists oauth_refresh_tokens (
 create index if not exists oauth_refresh_user on oauth_refresh_tokens(user_id) where revoked_at is null;
 create index if not exists oauth_refresh_expiry on oauth_refresh_tokens(expires_at);
 
+-- Revoking a connected app records a cutoff so its in-flight access tokens die
+-- on the next request (api/_lib/auth.js revokeClientGrant / authenticateBearer).
+create table if not exists oauth_client_revocations (
+    user_id    uuid        not null references users(id) on delete cascade,
+    client_id  text        not null references oauth_clients(client_id) on delete cascade,
+    revoked_at timestamptz not null default now(),
+    primary key (user_id, client_id)
+);
+
 -- ── Developer API keys (for server-to-server MCP usage) ─────────────────────
 create table if not exists api_keys (
     id              uuid primary key default gen_random_uuid(),

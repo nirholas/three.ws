@@ -26,6 +26,7 @@ process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
 
 vi.mock('../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
+vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: async () => true }));
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
 vi.mock('../api/_lib/streaks.js', () => ({ recordDailyActivity: vi.fn(async () => {}) }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
@@ -38,7 +39,7 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 }));
 
 // ── in-memory stand-in for the three oauth tables ────────────────────────────
-const db = { clients: [], codes: [], refresh: [] };
+const db = { clients: [], codes: [], refresh: [], revocations: [] };
 const statements = [];
 
 function future(seconds) {
@@ -103,10 +104,21 @@ const sqlMock = vi.fn(async (strings, ...values) => {
 	}
 	if (text.startsWith('update oauth_refresh_tokens set revoked_at = now() where user_id')) {
 		const [userId, clientId] = values;
+		const hit = [];
 		for (const r of db.refresh) {
-			if (r.user_id === userId && r.client_id === clientId && !r.revoked_at) r.revoked_at = new Date().toISOString();
+			if (r.user_id === userId && r.client_id === clientId && !r.revoked_at) { r.revoked_at = new Date().toISOString(); hit.push({ id: r.id }); }
 		}
+		return hit;
+	}
+	if (text.startsWith('insert into oauth_client_revocations')) {
+		const [userId, clientId] = values;
+		db.revocations = db.revocations.filter((r) => !(r.user_id === userId && r.client_id === clientId));
+		db.revocations.push({ user_id: userId, client_id: clientId, revoked_at: Date.now() });
 		return [];
+	}
+	if (text.startsWith('select 1 from oauth_client_revocations')) {
+		const [userId, clientId, iat] = values;
+		return db.revocations.filter((r) => r.user_id === userId && r.client_id === clientId && r.revoked_at >= iat * 1000).slice(0, 1).map(() => ({ '?column?': 1 }));
 	}
 	throw new Error(`unmodeled query: ${text}`);
 });
@@ -127,7 +139,7 @@ vi.mock('../api/_lib/auth.js', async () => {
 });
 
 const { default: handler } = await import('../api/oauth/[action].js');
-const { csrfTokenFor, verifyAccessToken } = await import('../api/_lib/auth.js');
+const { csrfTokenFor, verifyAccessToken, authenticateBearer } = await import('../api/_lib/auth.js');
 const { sha256, sha256Base64Url } = await import('../api/_lib/crypto.js');
 
 // ── request/response doubles ─────────────────────────────────────────────────
@@ -234,6 +246,7 @@ beforeEach(async () => {
 	db.clients.length = 0;
 	db.codes.length = 0;
 	db.refresh.length = 0;
+	db.revocations.length = 0;
 	statements.length = 0;
 	sqlMock.mockClear();
 	getSessionUser.mockReset();
@@ -251,6 +264,28 @@ describe('GET /oauth/authorize', () => {
 		expect(res.body).toContain('Read your avatars');
 		expect(res.body).toContain('See your name and email');
 		expect(res.body).not.toContain('Store and forget');
+	});
+
+	it('names the asking app, its host, and that it can never spend', async () => {
+		seedClient({ name: 'Grok Bot', client_uri: 'https://grok.example/bot', redirect_uris: ['https://cb.grok.example/cb'] });
+		const res = await call('authorize', { query: authorizeQuery({ redirect_uri: 'https://cb.grok.example/cb' }) });
+		expect(res.body).toContain('Authorize <b>Grok Bot</b>');
+		expect(res.body).toContain('Site: grok.example');
+		expect(res.body).toContain('can never spend from a wallet');
+		expect(res.body).toContain('/dashboard/settings#connected-apps');
+	});
+
+	it('does not claim a client cannot spend when the grant carries wallet:write', async () => {
+		seedClient({ scope: 'avatars:read wallet:write' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('can never spend');
+		expect(res.body).toContain('asking to spend from your agent wallet');
+	});
+
+	it('escapes a hostile client name', async () => {
+		seedClient({ name: '<img src=x onerror=alert(1)>' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).not.toContain('<img src=x');
 	});
 
 	it('allows the client origin in form-action so the post-consent 302 is not blocked', async () => {
@@ -602,6 +637,38 @@ describe('POST /oauth/revoke', () => {
 		expect(res.json().error).toBe('invalid_client');
 		expect(res.getHeader('www-authenticate')).toMatch(/^Basic realm="oauth"/);
 		expect(db.refresh[0].revoked_at).toBeNull();
+	});
+});
+
+describe('DELETE /oauth/grants (connected apps)', () => {
+	it('kills an access token already in flight on the very next request', async () => {
+		seedClient();
+		const { access_token } = await issueTokens();
+		const audience = RESOURCE;
+		expect(await authenticateBearer(access_token, { audience })).toMatchObject({ userId: 'user-1', clientId: 'mcp_test_client' });
+
+		const res = await call('grants', { method: 'DELETE', query: { client_id: 'mcp_test_client' } });
+		expect(res.statusCode).toBe(200);
+		expect(res.json()).toEqual({ client_id: 'mcp_test_client', revoked: 1 });
+		expect(db.refresh[0].revoked_at).toBeTruthy();
+		expect(await authenticateBearer(access_token, { audience })).toBeNull();
+	});
+
+	it('accepts a token minted after the person authorizes the app again', async () => {
+		seedClient();
+		const first = await issueTokens();
+		await call('grants', { method: 'DELETE', query: { client_id: 'mcp_test_client' } });
+		await new Promise((r) => setTimeout(r, 1100));
+		const second = await issueTokens();
+		expect(await authenticateBearer(first.access_token, { audience: RESOURCE })).toBeNull();
+		expect(await authenticateBearer(second.access_token, { audience: RESOURCE })).not.toBeNull();
+	});
+
+	it('leaves other apps on the account working', async () => {
+		seedClient();
+		const { access_token } = await issueTokens();
+		await call('grants', { method: 'DELETE', query: { client_id: 'mcp_other' } });
+		expect(await authenticateBearer(access_token, { audience: RESOURCE })).not.toBeNull();
 	});
 });
 

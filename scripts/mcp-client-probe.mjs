@@ -499,7 +499,8 @@ async function main() {
 	if (args.json) {
 		const out = resolve(process.cwd(), args.json);
 		mkdirSync(dirname(out), { recursive: true });
-		writeFileSync(out, `${JSON.stringify(report, null, '\t')}\n`);
+		// Server error bodies are quoted verbatim; the repo bans em and en dashes in committed text.
+		writeFileSync(out, `${JSON.stringify(report, null, '\t').replace(/[\u2013\u2014]/g, '-')}\n`);
 		console.log(`wrote ${args.json}`);
 	}
 	const failed = results.filter((r) => !r.pass).length;

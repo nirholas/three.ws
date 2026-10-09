@@ -286,6 +286,36 @@ export function extractBearer(req) {
 }
 
 // Returns { userId, scope, source: 'oauth'|'apikey', clientId?, apiKeyId? } or null.
+// Access tokens are stateless JWTs, so revoking a connected app also records a
+// cutoff per (user, client). A token issued at or before the cutoff is dead on
+// its next use; a token minted after the person re-authorizes the app is not.
+async function isGrantRevoked(payload) {
+	const rows = await sql`
+		select 1 from oauth_client_revocations
+		where user_id = ${payload.sub} and client_id = ${payload.client_id}
+			and revoked_at >= to_timestamp(${payload.iat})
+		limit 1
+	`;
+	return rows.length > 0;
+}
+
+// Revoke everything one client holds for one user: its refresh tokens and, via
+// the cutoff row, every access token already in flight. Returns how many
+// refresh tokens were revoked.
+export async function revokeClientGrant({ userId, clientId }) {
+	const revoked = await sql`
+		update oauth_refresh_tokens set revoked_at = now()
+		where user_id = ${userId} and client_id = ${clientId} and revoked_at is null
+		returning id
+	`;
+	await sql`
+		insert into oauth_client_revocations (user_id, client_id, revoked_at)
+		values (${userId}, ${clientId}, now())
+		on conflict (user_id, client_id) do update set revoked_at = excluded.revoked_at
+	`;
+	return revoked.length;
+}
+
 export async function authenticateBearer(token, { audience } = {}) {
 	if (!token) return null;
 	// API keys are prefixed with `sk_live_` (or `sk_test_`) — short-circuit.
@@ -309,6 +339,7 @@ export async function authenticateBearer(token, { audience } = {}) {
 		// token_use prevents a future token type (e.g. an id/refresh JWT) from
 		// being replayed against resource endpoints.
 		if (payload.token_use !== 'access') return null;
+		if (payload.client_id && await isGrantRevoked(payload)) return null;
 		return {
 			userId: payload.sub,
 			scope: payload.scope || '',

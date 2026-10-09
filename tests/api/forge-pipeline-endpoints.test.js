@@ -249,6 +249,31 @@ describe('forge-stylize', () => {
 		expect(parse(res).error).toBe('invalid_mesh_url');
 	});
 
+	it('refuses an FBX mesh with a 400 naming the formats that work, before queuing a job', async () => {
+		submitted.length = 0;
+		const res = await call(stylize, {
+			method: 'POST',
+			url: '/api/forge-stylize',
+			body: { mesh_url: 'https://cdn.example/rig.FBX?sig=abc', style: 'voxel' },
+		});
+		expect(res.statusCode).toBe(400);
+		expect(parse(res).error).toBe('unsupported_mesh_format');
+		expect(parse(res).message).toContain('GLB, GLTF, OBJ, STL, PLY, OFF or DAE');
+		// The worker has no FBX reader, so a queued job could only fail later.
+		expect(submitted).toHaveLength(0);
+	});
+
+	it('still accepts a DAE mesh', async () => {
+		submitted.length = 0;
+		const res = await call(stylize, {
+			method: 'POST',
+			url: '/api/forge-stylize',
+			body: { mesh_url: 'https://cdn.example/scene.dae', style: 'voxel' },
+		});
+		expect(res.statusCode).toBe(202);
+		expect(submitted).toHaveLength(1);
+	});
+
 	it('answers 502, not 500, when the worker poll faults', async () => {
 		providerState.statusThrows = true;
 		const res = await call(stylize, { url: `/api/forge-stylize?job=${JOB}` });

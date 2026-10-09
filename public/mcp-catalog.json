@@ -16312,7 +16312,7 @@
 		{
 			"name": "remesh_model",
 			"title": "Remesh, simplify, repair, or convert a 3D model",
-			"description": "Process an existing GLB/OBJ/STL/PLY mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal — a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status.",
+			"description": "Process an existing GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal: a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status.",
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -16337,7 +16337,7 @@
 					"mesh_url": {
 						"type": "string",
 						"format": "uri",
-						"description": "Public https URL of the source mesh (GLB/OBJ/FBX/STL/PLY)."
+						"description": "Public https URL of the source mesh (GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE; FBX must be binary, 7.1 or later)."
 					},
 					"operation": {
 						"type": "string",
@@ -16739,7 +16739,7 @@
 		{
 			"name": "stylize_model",
 			"title": "Apply a one-click geometric stylization filter to a 3D model",
-			"description": "Transform any GLB/OBJ/STL/PLY mesh into a stylized variant with a single geometry pass — no model inference, fast and cheap. Styles: \"voxel\" (blocky cubes on a grid), \"brick\" (voxels + studs, LEGO-like), \"voronoi\" (open strut-and-node lattice shell), \"lowpoly\" (decimated + hard flat-shaded facets). Source color is preserved where the style allows. Returns a job_id to poll with generation_status; typically completes in 10–40 seconds.",
+			"description": "Transform any GLB/GLTF/OBJ/STL/PLY/OFF/DAE mesh into a stylized variant with a single geometry pass: no model inference, fast and cheap. FBX is not accepted; convert it to GLB with remesh_model first. Styles: \"voxel\" (blocky cubes on a grid), \"brick\" (voxels + studs, LEGO-like), \"voronoi\" (open strut-and-node lattice shell), \"lowpoly\" (decimated + hard flat-shaded facets). Source color is preserved where the style allows. Returns a job_id to poll with generation_status; typically completes in 10–40 seconds.",
 			"server": {
 				"id": "threews-3d-studio",
 				"title": "3D Studio",
@@ -16764,7 +16764,7 @@
 					"mesh_url": {
 						"type": "string",
 						"format": "uri",
-						"description": "Public https URL of the source mesh (GLB/OBJ/FBX/STL/PLY)."
+						"description": "Public https URL of the source mesh (GLB/GLTF/OBJ/STL/PLY/OFF/DAE; not FBX)."
 					},
 					"style": {
 						"type": "string",

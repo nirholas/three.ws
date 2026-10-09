@@ -21,6 +21,7 @@ import { limits } from '../../_lib/rate-limit.js';
 import { assertSafePublicUrl, fetchSafePublicUrlPinned, MaxBytesExceededError } from '../../_lib/ssrf-guard.js';
 import { createRegenProvider as createReplicateProvider } from '../../_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from '../../_providers/gcp.js';
+import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from '../../_lib/stylize-input.js';
 import { BYOK_PROVIDER_FACTORIES, isByokGeometryBackend } from '../../_providers/byok-registry.js';
 import { textToImage } from '../text-to-image.js';
 import {
@@ -1259,14 +1260,14 @@ export const toolDefs = [
 		title: 'Remesh, simplify, repair, or convert a 3D model',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Process an existing GLB/OBJ/STL/PLY mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal — a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status.',
+			'Process an existing GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal: a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status.',
 		inputSchema: {
 			type: 'object',
 			properties: {
 				mesh_url: {
 					type: 'string',
 					format: 'uri',
-					description: 'Public https URL of the source mesh (GLB/OBJ/FBX/STL/PLY).',
+					description: 'Public https URL of the source mesh (GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE; FBX must be binary, 7.1 or later).',
 				},
 				operation: {
 					type: 'string',
@@ -1337,8 +1338,9 @@ export const toolDefs = [
 		title: 'Apply a one-click geometric stylization filter to a 3D model',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Transform any GLB/OBJ/STL/PLY mesh into a stylized variant with a single geometry pass — ' +
-			'no model inference, fast and cheap. Styles: "voxel" (blocky cubes on a grid), "brick" ' +
+			'Transform any GLB/GLTF/OBJ/STL/PLY/OFF/DAE mesh into a stylized variant with a single geometry pass: ' +
+			'no model inference, fast and cheap. FBX is not accepted; convert it to GLB with remesh_model first. ' +
+			'Styles: "voxel" (blocky cubes on a grid), "brick" ' +
 			'(voxels + studs, LEGO-like), "voronoi" (open strut-and-node lattice shell), "lowpoly" ' +
 			'(decimated + hard flat-shaded facets). Source color is preserved where the style allows. ' +
 			'Returns a job_id to poll with generation_status; typically completes in 10–40 seconds.',
@@ -1348,7 +1350,7 @@ export const toolDefs = [
 				mesh_url: {
 					type: 'string',
 					format: 'uri',
-					description: 'Public https URL of the source mesh (GLB/OBJ/FBX/STL/PLY).',
+					description: 'Public https URL of the source mesh (GLB/GLTF/OBJ/STL/PLY/OFF/DAE; not FBX).',
 				},
 				style: {
 					type: 'string',
@@ -1382,6 +1384,9 @@ export const toolDefs = [
 					],
 					isError: true,
 				};
+			}
+			if (isFbxMeshUrl(args.mesh_url)) {
+				return { content: [{ type: 'text', text: `Error: ${STYLIZE_FBX_MESSAGE}` }], isError: true };
 			}
 			const provider = regenProvider('stylize');
 			const style = args.style || 'voxel';
