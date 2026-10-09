@@ -32,6 +32,7 @@ import { sql } from './db.js';
 import { selfOrigin } from './self-origin.js';
 import { weightedLength, X_POST_MAX_WEIGHT } from './x-text-weight.js';
 import { updateDecision } from './x-mention-store.js';
+import { claimForAuthor, withClaimNote } from './x-creation-claim.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { startForge, pollJob, pollOnce, directPrompt } from '../_mcp-studio/gpt-forge-client.js';
 import { posterPngUrl, RENDER_MAX_GLB_BYTES } from '../_mcp-studio/asset-links.js';
@@ -135,6 +136,7 @@ export async function attributeCreation({ creationId, authorId }) {
 		where id = ${creationId} and x_author_id is null
 		returning id
 	`;
+	if (rows.length > 0) await claimForAuthor(authorId).catch((err) => console.warn('[x-mention-make] claim for linked author failed:', err?.message));
 	return rows.length > 0;
 }
 
@@ -187,6 +189,7 @@ async function directedPrompt(prompt, deps) {
  * `deliver({ text, mediaUrl, inReplyToTweetId })` resolves to the new post id.
  */
 async function finalize({ tweetId, reply, dryRun, deliver, reason, creationId, error }) {
+	await withClaimNote(reply, { tweetId });
 	const base = {
 		decision: 'reply',
 		reason,

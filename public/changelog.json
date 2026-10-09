@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T16:04:25.131Z",
+	"generated_at": "2026-10-09T16:56:49.147Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "CAD Forge",
 			"summary": "Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.",
 			"link": "/cad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Claim your X creations",
+			"summary": "Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.",
+			"link": "/x/claim",
 			"tags": [
 				"launch"
 			]
@@ -117,6 +127,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Claim the 3D models the bot made for you on X",
+			"summary": "Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.",
+			"link": "/x/claim",
+			"tags": [
+				"feature"
 			]
 		},
 		{

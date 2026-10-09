@@ -15,6 +15,14 @@
 			<description>Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.</description>
 		</item>
 		<item>
+			<title>Claim your X creations</title>
+			<link>https://three.ws/x/claim</link>
+			<guid isPermaLink="false">2026-10-09:Claim your X creations</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.</description>
+		</item>
+		<item>
 			<title>Docs · CAD Forge (text to parametric CAD)</title>
 			<link>https://three.ws/docs/cad-forge</link>
 			<guid isPermaLink="false">2026-10-09:Docs · CAD Forge (text to parametric CAD)</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.</description>
+		</item>
+		<item>
+			<title>Claim the 3D models the bot made for you on X</title>
+			<link>https://three.ws/x/claim</link>
+			<guid isPermaLink="false">2026-10-09:Claim the 3D models the bot made for you on X</guid>
+			<pubDate>Fri, 09 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.</description>
 		</item>
 		<item>
 			<title>Cloud agents get their own free 3D budget with a connector link</title>

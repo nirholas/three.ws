@@ -85,3 +85,14 @@ A `make`, `avatar` or `image3d` mention whose 3D job outlives the bounded wait i
 The `image3d` intent is routed to `handleImage3d()` in `handleMention` (dry run, same budget and per-author limits as any reply); only `make` and `launch` still answer with help (`handler_not_built`).
 
 Going live stays the separate owner step.
+
+## Claiming what the bot made
+
+A creation made from a mention belongs to the system bot account (`users.service_account`, email `x-mentions@forge.three.ws`, no credentials, created on first use) and carries `forge_creations.x_author_id`, the author's numeric X id. [`api/_lib/x-creation-claim.js`](../api/_lib/x-creation-claim.js) moves it to a person only when that person's verified X link (`social_connections.provider_uid`) equals the creation's `x_author_id`:
+
+- **On link.** The OAuth callback in [`api/auth/x/[action].js`](../api/auth/x/%5Baction%5D.js) calls `claimForUser` after an owner link. A claim failure never fails the link.
+- **On a new creation.** If the author had already linked, `attributeCreation` hands the creation over at once.
+- **On the page.** [`/x/claim`](/x/claim) lists claimable creations and claims them through `GET` and `POST /api/x/claim` (signed in, CSRF on the write). Signed out it explains and links sign-in; with no X link it offers Link X; with nothing waiting it points to the library.
+- **Replies.** Every success reply gets one line: `Saved to your library.` for a linked author, `Claim it: <origin>/x/claim` for an unlinked one. The line is skipped if it would push the post past the length limit.
+
+Each move writes a row to `x_creation_claims` (migration `20261009213000_x_creation_claims.sql`) with the creation, the X id, the user and the source (`link`, `claim_page` or `mention`).

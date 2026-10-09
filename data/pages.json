@@ -537,6 +537,14 @@
 					"added": "2026-10-08"
 				},
 				{
+					"path": "/x/claim",
+					"title": "Claim your X creations",
+					"description": "Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-09"
+				},
+				{
 					"path": "/nvidia",
 					"title": "three.ws on NVIDIA",
 					"description": "three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.",

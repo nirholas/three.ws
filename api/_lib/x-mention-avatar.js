@@ -31,6 +31,7 @@ import { updateDecision } from './x-mention-store.js';
 import { fetchXImage, XMediaError, xProfileImageUrl } from './x-media-image.js';
 import { persistImageBytes } from './image-persist.js';
 import { describeImageJson } from './vision.js';
+import { withClaimNote } from './x-creation-claim.js';
 import { attributeCreation, creationLink, makeBudgetMs, makeGiveUpMs } from './x-mention-make.js';
 import { startForge, startRig, pollJob, pollOnce } from '../_mcp-studio/gpt-forge-client.js';
 import { posterPngUrl } from '../_mcp-studio/asset-links.js';
@@ -112,6 +113,7 @@ function studioReply(kind, base) {
 }
 
 async function recordAndDeliver({ tweetId, reply, dryRun, deliver, reason, creationId, error }) {
+	await withClaimNote(reply, { tweetId });
 	const fields = {
 		decision: 'reply', reason, replyText: reply.text, replyMediaUrl: reply.mediaUrl || undefined,
 		replyLink: reply.link || undefined, creationId: creationId || undefined, error: error || undefined, dryRun,

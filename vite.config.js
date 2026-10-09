@@ -701,6 +701,7 @@ const appConfig = {
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
 				connect: resolve(__dirname, 'pages/connect.html'),
 				grok: resolve(__dirname, 'pages/grok.html'),
+				'x-claim': resolve(__dirname, 'pages/x-claim.html'),
 				awesome: resolve(__dirname, 'pages/awesome.html'),
 				prompts: resolve(__dirname, 'pages/prompts.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
@@ -1874,6 +1875,8 @@ const appConfig = {
 					// same way vercel.json does or the route 404s only in dev.
 					'/ar': resolve(root, 'public/ar-forge.html'),
 					'/ar/': resolve(root, 'public/ar-forge.html'),
+					'/x/claim': resolve(root, 'pages/x-claim.html'),
+					'/x/claim/': resolve(root, 'pages/x-claim.html'),
 					'/daily': resolve(root, 'pages/daily.html'),
 					'/daily/': resolve(root, 'pages/daily.html'),
 					'/irl/sign': resolve(root, 'pages/irl-sign.html'),

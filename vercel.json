@@ -2430,6 +2430,10 @@
 			"dest": "/x-pricing.html"
 		},
 		{
+			"src": "/x/claim/?",
+			"dest": "/x-claim.html"
+		},
+		{
 			"src": "/home-next/?",
 			"status": 301,
 			"headers": {

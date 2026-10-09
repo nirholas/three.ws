@@ -29,6 +29,7 @@ import { updateDecision } from './x-mention-store.js';
 import { fetchXImage, XMediaError } from './x-media-image.js';
 import { persistImageBytes } from './image-persist.js';
 import { describeImageJson } from './vision.js';
+import { withClaimNote } from './x-creation-claim.js';
 import { attributeCreation, creationLink, shortenPrompt, makeBudgetMs, makeGiveUpMs } from './x-mention-make.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { startForge, pollJob, pollOnce } from '../_mcp-studio/gpt-forge-client.js';
@@ -139,6 +140,7 @@ function failureReply({ base, subject }) {
 }
 
 async function recordAndDeliver({ tweetId, reply, dryRun, deliver, reason, creationId, error }) {
+	await withClaimNote(reply, { tweetId });
 	const fields = {
 		decision: 'reply', reason, replyText: reply.text, replyMediaUrl: reply.mediaUrl || undefined,
 		replyLink: reply.link || undefined, creationId: creationId || undefined, error: error || undefined, dryRun,

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T16:04:25.152Z",
+	"generated_at": "2026-10-09T16:56:49.168Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3866,
+	"total": 3868,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "CAD Forge",
 			"summary": "Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel: STEP, STL, GLB and a drawing sheet, live dimension sliders, true-scale AR and one-click printing.",
 			"link": "/cad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "launch",
+			"title": "Claim your X creations",
+			"summary": "Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.",
+			"link": "/x/claim",
 			"tags": [
 				"launch"
 			]
@@ -120,6 +130,16 @@
 			"tags": [
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "Claim the 3D models the bot made for you on X",
+			"summary": "Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.",
+			"link": "/x/claim",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1525,27 +1545,6 @@
 			"title": "Queued posts can quote an earlier post",
 			"summary": "A post in the @trythreews content queue can now name an earlier post to quote, so a follow-up can add the detail the original left out instead of repeating it. The first use quotes the $THREE token MCP announcement with the numbers behind the MCP Tool Catalog: 321 tools across 42 servers, 293 of them free, and 215 whose read-only label is checked against the source on every build.",
 			"link": "/mcp-tools",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "Repeat visits stop downloading the app's code twice",
-			"summary": "Every page tells your browser which code it is about to need so it can start fetching early. On a return visit that head start was being thrown away: our offline helper answered those same requests a second time, Chrome refused to match the two, and each file was requested twice while the developer console filled with a warning per file, well over a hundred on a heavy page like the Club. The offline helper now leaves that code to the browser's own cache, which already keeps it for a year, and clears out the duplicate copy it had stored on your device. Return visits load with one request per file and a quiet console.",
-			"link": null,
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "update",
-			"title": "The @trythreews account now posts three times a day, every day",
-			"summary": "The reviewed content queue that runs the @trythreews account moved to three posts a day, eight hours apart, on every day of the week including weekends. It used to hold its flagship slot for weekdays and pack all three posts into an eight-hour afternoon window, which meant a weekend could only ever carry two. Three posts went out under the new cadence today: the $THREE token MCP server, Forge Max, and the free object library. The Forge Max post also gained a check that proves the high-quality tier is a real, gated lane before it can be published, rather than only proving its page loads.",
-			"link": "/changelog",
 			"tags": [
 				"improvement"
 			]

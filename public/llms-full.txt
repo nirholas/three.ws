@@ -378,6 +378,12 @@ URL: https://three.ws/grok
 
 One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key.
 
+### Claim your X creations
+
+URL: https://three.ws/x/claim
+
+Models and avatars the three.ws bot made for you on X wait here. Link the same X account and every one of them moves into your library.
+
 ### three.ws on NVIDIA
 
 URL: https://three.ws/nvidia

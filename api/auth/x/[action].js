@@ -29,6 +29,7 @@ import { resolveScopeSet } from '../../_lib/x-scopes.js';
 
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 import { isUuid } from '../../_lib/validate.js';
+import { claimForUser } from '../../_lib/x-creation-claim.js';
 // ── Signed-cookie PKCE state ─────────────────────────────────────────────────
 
 const STATE_COOKIE = '__Host-xoa';
@@ -136,7 +137,7 @@ export function decryptToken(ciphertext) {
 // Surfaces that start a connect for their own flow and want the browser back on
 // them. An allowlist, never a raw path, so the parameter cannot become an open
 // redirect.
-const RETURN_SURFACES = new Set(['/fee-bridge', '/settings/connections']);
+const RETURN_SURFACES = new Set(['/fee-bridge', '/settings/connections', '/x/claim']);
 
 function resolveReturnTo(value) {
 	return typeof value === 'string' && RETURN_SURFACES.has(value) ? value : null;
@@ -383,6 +384,13 @@ async function handleCallback(req, res) {
 			disconnected_at = NULL,
 			updated_at      = now()
 	`;
+
+	// Anything the mention bot made for this X account while it was unlinked
+	// moves into the library now. A failure here must not fail the link itself:
+	// the /x/claim page offers the same move again.
+	await claimForUser(userId, { source: 'link' }).catch((err) =>
+		console.warn('[x-oauth] claiming bot creations failed:', err?.message),
+	);
 
 	return redirect(res, successRedirect);
 }
