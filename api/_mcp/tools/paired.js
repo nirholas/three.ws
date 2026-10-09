@@ -235,7 +235,7 @@ export const toolDefs = [
 		group: 'launch',
 		tier: 'write',
 		scope: 'wallet:write',
-		annotations: WRITE,
+		annotations: MONEY,
 		description: "Collect every quote asset an agent has earned in paired-coin swap fees, in one transaction into the agent's own wallet. Costs a little ETH gas; moves nothing out of the agent's control.",
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 		async handler(args, auth) {
