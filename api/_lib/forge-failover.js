@@ -56,14 +56,21 @@ export const MAX_FAILOVER_HOPS = 3;
 // 2026-09-18..28 worker outage, which took Hunyuan3D and TRELLIS self-host
 // down together, ended roughly 400 photo jobs a day in a hard failure while
 // the TripoSG worker sat healthy.
-const ASYNC_REDISPATCH_ORDER = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'trellis', 'triposg'];
+//
+// The Modly lanes (workers/modly) are geometry-only too, so they sit with
+// TripoSG at the tail, ahead of it: the Modly worker repairs the mesh and
+// decimates it to the tier's budget, and it is a separate service, so it still
+// serves when the TripoSG sketch worker is the one that is down.
+const ASYNC_REDISPATCH_ORDER = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'trellis', 'modly', 'modly_hunyuan', 'triposg'];
 
 // Lanes a CLIENT can retry with a fresh POST, per input mode. A fresh POST may
 // ride blocking lanes too, so HuggingFace joins here; NVIDIA only serves text.
 // TripoSG is absent: its public lane is sketch-only, so a fresh photo POST
 // naming it would be refused. It serves photos only as the poll-time rung.
-const SUGGESTION_ORDER_IMAGE = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis'];
-const SUGGESTION_ORDER_TEXT = ['nvidia', 'trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis'];
+// The Modly lanes are public image lanes, so they close both lists: untextured
+// geometry is the last thing to suggest, never the first.
+const SUGGESTION_ORDER_IMAGE = ['trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis', 'modly', 'modly_hunyuan'];
+const SUGGESTION_ORDER_TEXT = ['nvidia', 'trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'trellis', 'modly', 'modly_hunyuan'];
 
 function client(override) {
 	return override || getRedis();
@@ -181,6 +188,18 @@ export async function submitFailoverJob({ backend, imageUrl, prompt, tierId, pat
 			mode: 'trellis2',
 			sourceUrl: imageUrl,
 			params: { images: [imageUrl], tier: tier.id },
+		});
+		return { extJobId: job.extJobId, handle: encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId }) };
+	}
+
+	if (backend === 'modly' || backend === 'modly_hunyuan') {
+		const { createRegenProvider } = await import('../_providers/gcp.js');
+		// The Modly worker (workers/modly); the mode picks TripoSG or Hunyuan3D 2
+		// Mini Turbo, and the poly budget becomes its decimate target.
+		const job = await createRegenProvider().submit({
+			mode: backend,
+			sourceUrl: imageUrl,
+			params: { images: [imageUrl], tier: tier.id, target_polycount: tier.polycount },
 		});
 		return { extJobId: job.extJobId, handle: encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId }) };
 	}

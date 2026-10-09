@@ -296,6 +296,50 @@ export const BACKENDS = Object.freeze({
 		free: true,
 		blurb: 'Free native image→3D on our own TRELLIS worker — single-hop reconstruction (image → TRELLIS → GLB), textured GLB, no vendor cost.',
 	}),
+	modly: Object.freeze({
+		id: 'modly',
+		label: 'Modly TripoSG (self-host)',
+		vendor: 'VAST AI TripoSG via Modly · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// Our own Modly worker (workers/modly on Cloud Run, Modly by Lightning
+		// Pixel, MIT) running VAST AI's TripoSG (MIT code and weights). It is a
+		// geometry engine: the GLB is an untextured mesh, which the worker then
+		// decimates to the tier's poly budget through Modly's mesh optimizer, so
+		// the tier's polycount is a real target here. One worker serves this lane
+		// and modly_hunyuan; MODEL_MODLY_URL gates both.
+		requiresEnv: Object.freeze(['MODEL_MODLY_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: true,
+		userImages: true,
+		baseEta: 60,
+		// Scale-to-zero worker: a cold instance copies its weights, starts Modly
+		// and runs one warm-up generation before it takes the request.
+		coldStartSeconds: 120,
+		credits: null,
+		free: true,
+		blurb: 'Free image to 3D geometry on our own Modly worker running TripoSG: clean, watertight shapes at your poly budget, no vendor cost. Untextured; retexture or stylize after.',
+	}),
+	modly_hunyuan: Object.freeze({
+		id: 'modly_hunyuan',
+		label: 'Modly Hunyuan3D Mini Turbo (self-host)',
+		vendor: 'Tencent Hunyuan3D 2 Mini Turbo via Modly · self-host',
+		paths: Object.freeze(['image']),
+		byok: false,
+		provider: 'gcp',
+		// The same Modly worker as `modly`, running Tencent's Hunyuan3D 2 Mini
+		// Turbo (0.6B, few-step). Untextured geometry decimated to the tier's
+		// budget. A Tencent model, so it is in TENCENT_LANES and never served to
+		// the EU, the UK, South Korea or an unknown country (forge-territory.js).
+		requiresEnv: Object.freeze(['MODEL_MODLY_URL', 'GCP_RECONSTRUCTION_KEY']),
+		polyControl: true,
+		userImages: true,
+		baseEta: 45,
+		coldStartSeconds: 120,
+		credits: null,
+		free: true,
+		blurb: 'Free fast image to 3D geometry on our own Modly worker running Hunyuan3D 2 Mini Turbo, decimated to your poly budget, no vendor cost. Untextured; retexture or stylize after.',
+	}),
 	triposg: Object.freeze({
 		id: 'triposg',
 		label: 'TripoSG',
@@ -436,7 +480,9 @@ export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
 // of a paid engine. First configured + capable lane wins, and our OWN GPU workers
 // come first so the platform leans on the credits we control before any external
 // free lane: self-hosted TRELLIS.2, then self-hosted TRELLIS v1, then self-hosted
-// Hunyuan3D, then the free HuggingFace Spaces lane. The two Tencent lanes are
+// Hunyuan3D, then the free HuggingFace Spaces lane, then our self-hosted Modly
+// worker (TripoSG, then Hunyuan3D 2 Mini Turbo), which returns untextured
+// geometry and so ranks below every textured lane. The Tencent lanes are
 // dropped for requests from the EU, the UK, South Korea or an unknown country. The free NVIDIA NIM TRELLIS
 // lane trails as the final health-gated fallthrough so a text prompt still
 // returns a model when every GPU worker (and HuggingFace) is cold or down — this
@@ -445,7 +491,7 @@ export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
 // submission filters it out and stops at HuggingFace, exactly as before. Every
 // entry is env-gated, so the list degrades cleanly on partial deployments.
 export const FREE_FALLBACK_FOR_PATH = Object.freeze({
-	image: Object.freeze(['trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'nvidia']),
+	image: Object.freeze(['trellis2', 'trellis_selfhost', 'hunyuan3d', 'huggingface', 'modly', 'modly_hunyuan', 'nvidia']),
 });
 
 // Realism subject classes. The two self-host PBR lanes have different strengths:
@@ -744,6 +790,35 @@ export function backendIsConfigured(backendId) {
 	if (!b) return false;
 	if (b.byok) return true;
 	return b.requiresEnv.every((name) => Boolean(readEnv(name)));
+}
+
+// The self-host image lanes the forge handler drives through one async GCP
+// block (api/forge.js, api/gpt-forge.js): the two TRELLIS workers and the two
+// Modly lanes, which share one worker (workers/modly).
+export const MODLY_LANES = Object.freeze(['modly', 'modly_hunyuan']);
+const SELF_HOST_IMAGE_LANES = Object.freeze(['trellis2', 'trellis_selfhost', ...MODLY_LANES]);
+
+export function isSelfHostImageLane(backendId) {
+	return SELF_HOST_IMAGE_LANES.includes(backendId);
+}
+
+// Human name for a self-host image lane in a designed "not configured" error.
+export function selfHostLaneName(backendId) {
+	return MODLY_LANES.includes(backendId) ? BACKENDS[backendId].label : 'Self-hosted TRELLIS';
+}
+
+// Where a self-host image lane retries when its worker is down, before the
+// handler leaves the self-host block for Hunyuan3D or the reconstruct chain.
+// A Modly lane goes to TRELLIS.2, then TRELLIS v1 (the two Modly lanes share a
+// worker, so one never rescues the other); TRELLIS.2 goes to TRELLIS v1. Null
+// when no configured lane is left. Both TRELLIS lanes are territory-free.
+export function nextSelfHostImageLane(backendId) {
+	const after = MODLY_LANES.includes(backendId)
+		? ['trellis2', 'trellis_selfhost']
+		: backendId === 'trellis2'
+			? ['trellis_selfhost']
+			: [];
+	return after.find((id) => backendIsConfigured(id)) || null;
 }
 
 // Estimated wall-clock seconds for a (backend, path, tier) combination —

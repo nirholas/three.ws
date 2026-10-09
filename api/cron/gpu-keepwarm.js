@@ -60,6 +60,28 @@ export const KEEPWARM_LANES = [
 		reason: 'us-central1 L4 grant is shared with trellis, rig and hunyuan3d; a warm floor here is a quota decision',
 	},
 	{
+		// One Modly worker (workers/modly) serves both Modly lanes, so warming
+		// either id keeps modly and modly_hunyuan resident together; both are
+		// listed so each routed lane can be named in FORGE_KEEPWARM_LANES. Its cold
+		// start is the fleet's longest (weights copy, Modly start and a warm-up
+		// generation, BACKENDS.modly.coldStartSeconds), but these are late fallback
+		// lanes, so the shared us-central1 L4 grant goes to the default lanes first.
+		id: 'modly',
+		urlEnv: 'MODEL_MODLY_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		reason: 'us-central1 L4 grant is shared with the default image lanes; a warm floor here is a quota decision',
+	},
+	{
+		id: 'modly_hunyuan',
+		urlEnv: 'MODEL_MODLY_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		reason: 'same Modly worker as the modly lane; warming either keeps both resident',
+	},
+	{
 		id: 'hunyuan3d',
 		urlEnv: 'GCP_HUNYUAN3D_URL',
 		region: 'us-central1',

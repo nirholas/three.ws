@@ -81,6 +81,10 @@ import {
 	backendAcceptsInlineViews,
 	buildCatalog,
 	selfhostQualityForTier,
+	MODLY_LANES,
+	isSelfHostImageLane,
+	selfHostLaneName,
+	nextSelfHostImageLane,
 } from './_lib/forge-tiers.js';
 import {
 	laneHealthSnapshot,
@@ -1886,8 +1890,8 @@ async function startJobWithBody(req, res, body) {
 					// creates its own provider. We deliberately do NOT build a Replicate
 					// client here: creating one would 503 on a deployment that has no
 					// REPLICATE_API_TOKEN, breaking an explicitly-chosen free engine.
-				} else if (backendId === 'trellis2' || backendId === 'trellis_selfhost') {
-					// Driven by the dedicated self-host TRELLIS lane below, which builds
+				} else if (isSelfHostImageLane(backendId)) {
+					// Driven by the dedicated self-host image lane below, which builds
 					// its own GCP provider. Same reasoning as huggingface, never build a
 					// Replicate client here, or a deployment without REPLICATE_API_TOKEN
 					// would 503 on an explicitly-chosen free self-hosted engine.
@@ -2113,7 +2117,11 @@ async function startJobWithBody(req, res, body) {
 		// sketch lane: returns a poll token that routes back through the gcp provider's
 		// status(). Reached on an explicit pick OR as the preferred free image lane
 		// (FREE_FALLBACK_FOR_PATH) when MODEL_TRELLIS_URL is configured.
-		if (backendId === 'trellis2' || backendId === 'trellis_selfhost') {
+		//
+		// The Modly lanes (workers/modly: TripoSG, Hunyuan3D 2 Mini Turbo) ride the
+		// same block. They are explicit picks or late free fallbacks, and when their
+		// worker is down the request retries on TRELLIS.2, then TRELLIS v1.
+		if (isSelfHostImageLane(backendId)) {
 			let gcp;
 			try {
 				gcp = createGcpProvider();
@@ -2121,17 +2129,29 @@ async function startJobWithBody(req, res, body) {
 				return json(res, 501, {
 					error: 'backend_unconfigured',
 					backend: backendId,
-					message: 'Self-hosted TRELLIS is not configured on this deployment.',
+					message: `${selfHostLaneName(backendId)} is not configured on this deployment.`,
 				});
 			}
 
 			let job;
 			let selfHostTrellisFailed = false;
 			// TRELLIS.2 leads; when it is unavailable the same request retries on the
-			// TRELLIS v1 worker, which holds the same reference views.
+			// TRELLIS v1 worker, which holds the same reference views. A Modly lane
+			// retries on TRELLIS.2 first.
 			for (;;) {
 				try {
-					job = await gcp.submit(backendId === 'trellis2' ? {
+					job = await gcp.submit(MODLY_LANES.includes(backendId) ? {
+						mode: backendId,
+						sourceUrl: referenceImageUrl,
+						params: {
+							images: views,
+							seed: opts.seed ?? undefined,
+							// The worker maps the tier to its sampler budget and decimates
+							// the mesh to this face count after a repair pass.
+							tier: tier.id,
+							target_polycount: opts.targetPolycount ?? tier.polycount,
+						},
+					} : backendId === 'trellis2' ? {
 						mode: 'trellis2',
 						sourceUrl: referenceImageUrl,
 						params: {
@@ -2183,7 +2203,7 @@ async function startJobWithBody(req, res, body) {
 							error: 'backend_unconfigured',
 							backend: backendId,
 							message:
-								'Self-hosted TRELLIS is not configured on this deployment (the worker URL is not set).',
+								`${selfHostLaneName(backendId)} is not configured on this deployment (the worker URL is not set).`,
 						});
 					}
 					// A genuine config/input fault surfaces as-is. An upstream blip (the
@@ -2196,10 +2216,11 @@ async function startJobWithBody(req, res, body) {
 					if (!isUpstreamUnavailable(err)) throw err;
 					await markLaneUnhealthy(backendId);
 					console.warn(
-						`[forge] self-host TRELLIS lane unavailable (${err?.providerStatus || err?.code}); failing over to the next image lane`,
+						`[forge] self-host ${backendId} lane unavailable (${err?.providerStatus || err?.code}); failing over to the next image lane`,
 					);
-					if (backendId === 'trellis2' && backendIsConfigured('trellis_selfhost')) {
-						backendId = 'trellis_selfhost';
+					const nextLane = nextSelfHostImageLane(backendId);
+					if (nextLane) {
+						backendId = nextLane;
 						continue;
 					}
 					selfHostTrellisFailed = true;
@@ -2528,7 +2549,7 @@ async function startJobWithBody(req, res, body) {
 		// token tag so polling re-resolves the caller's key (not the platform one).
 		// Either way the upstream id is what the store keys on.
 		const jobHandle =
-			backendId === 'hunyuan3d' || backendId === 'trellis2' || backendId === 'trellis_selfhost'
+			backendId === 'hunyuan3d' || isSelfHostImageLane(backendId)
 				? encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId })
 				: backendId === 'replicate_byok'
 					? encodeJobToken({ provider: 'replicate_byok', kind: null, taskId: job.extJobId })

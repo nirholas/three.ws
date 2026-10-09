@@ -55,6 +55,8 @@ const LANE_LABELS = {
 	trellis: 'Fast',
 	trellis2: 'TRELLIS.2',
 	trellis_selfhost: 'TRELLIS',
+	modly: 'Modly TripoSG',
+	modly_hunyuan: 'Modly Hunyuan',
 	meshy: 'Meshy',
 	tripo: 'Tripo',
 	rodin: 'Rodin',

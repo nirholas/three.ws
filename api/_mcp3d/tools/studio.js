@@ -329,6 +329,8 @@ const INTERNAL_TO_ENGINE = Object.freeze({
 	nvidia: 'three-image',
 	trellis2: 'three-image',
 	trellis_selfhost: 'three-image',
+	modly: 'three-image',
+	modly_hunyuan: 'three-image',
 	huggingface: 'three-image',
 	replicate_byok: 'three-image',
 	meshy: 'three-geometry',
