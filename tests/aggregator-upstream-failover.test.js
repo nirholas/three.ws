@@ -7,8 +7,9 @@
 // even though the platform keeps a priority-ordered pool of six more endpoints
 // for exactly this case (api/_lib/solana/connection.js).
 //
-// The rule under test: a retryable failure (429, unreachable, 5xx) walks the
-// provider's alternate hosts; a caller-fault failure (4xx) never does; and a
+// The rule under test: a retryable failure (429, unreachable, 5xx, and a
+// pooled host's own 401/403) walks the provider's alternate hosts; a
+// caller-fault failure (any other 4xx) never does; and a
 // provider that declares no alternates behaves exactly as before, with one
 // attempt and no extra cost.
 //
@@ -108,6 +109,48 @@ describe('aggregator upstream failover', () => {
 				apiKey: null,
 			}),
 		).rejects.toMatchObject({ status: 400, code: 'upstream_error' });
+		expect(seen).toEqual(['primary.invalid']);
+	});
+
+	it('falls over when a pooled host refuses with 401 or 403', async () => {
+		for (const status of [401, 403]) {
+			resetUpstreamHealth();
+			const seen = [];
+			vi.stubGlobal(
+				'fetch',
+				vi.fn(async (input) => {
+					seen.push(hostOf(input));
+					return seen.length === 1 ? reply(status, { error: 'key rejected' }) : reply(200, { ok: true });
+				}),
+			);
+
+			const out = await executeUpstream({
+				provider: providerWithPool(['https://backup-a.invalid']),
+				endpoint,
+				query: {},
+				apiKey: null,
+			});
+
+			expect(out).toEqual({ ok: true });
+			expect(seen).toEqual(['primary.invalid', 'backup-a.invalid']);
+		}
+	});
+
+	it('surfaces a 403 unchanged for a provider with no alternates', async () => {
+		const seen = [];
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (input) => {
+				seen.push(hostOf(input));
+				return reply(403, { error: 'forbidden' });
+			}),
+		);
+
+		const provider = { id: 'single', name: 'Single host', base: 'https://primary.invalid', requiresKey: false, applyKey: () => {} };
+		await expect(executeUpstream({ provider, endpoint, query: {}, apiKey: null })).rejects.toMatchObject({
+			status: 403,
+			code: 'upstream_error',
+		});
 		expect(seen).toEqual(['primary.invalid']);
 	});
 
