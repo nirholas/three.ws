@@ -74,7 +74,7 @@ mirror_repo() { # <repo> <revision> <dest prefix> <path regex>
 }
 
 mirror_repo "$TRIPOSG_REPO" "$TRIPOSG_REV" "${DEST}/triposg/generate" \
-  '^(model_index\.json|LICENSE|(feature_extractor_dinov2|image_encoder_dinov2|scheduler|transformer|vae)/.+\.(json|safetensors))$'
+  '^(model_index\.json|(feature_extractor_dinov2|image_encoder_dinov2|scheduler|transformer|vae)/.+\.(json|safetensors))$'
 mirror_repo "$HUNYUAN_REPO" "$HUNYUAN_REV" "${DEST}/hunyuan3d-mini-turbo/generate" \
   '^(config\.json|LICENSE|NOTICE|hunyuan3d-(dit|vae)-v2-mini-turbo/(config\.yaml|model\.fp16\.safetensors))$'
 echo "modly weights staged at ${DEST}"

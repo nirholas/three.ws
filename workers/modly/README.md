@@ -207,8 +207,9 @@ the Hunyuan3D 2 Mini family the Turbo lane already serves; TRELLIS.2 GGUF
 ## Licences
 
 - **Modly**: MIT, Copyright (c) 2026 Lightning Pixel. `/app/licenses/MODLY-LICENSE`.
-- **TripoSG**: MIT (code and weights). `/app/licenses/TRIPOSG-LICENSE`; the weight
-  repo's LICENSE is staged beside the weights.
+- **TripoSG**: MIT (code and weights). `/app/licenses/TRIPOSG-LICENSE` is the
+  source repo's licence; the weight repo declares MIT in its model card and ships
+  no separate licence file.
 - **Hunyuan3D 2**: Tencent Hunyuan 3D 2.0 Community License. It does not apply in
   the European Union, the United Kingdom or South Korea, so `modly_hunyuan` is in
   `TENCENT_LANES` (`api/_lib/forge-territory.js`) and is never routed for a caller
