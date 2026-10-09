@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>CAD Forge · Describe a part, get real CAD · three.ws</title>
+	<meta name="description" content="Describe a mechanical part and get real parametric CAD: a build123d program checked by the OpenCascade kernel, with STEP, STL, GLB and drawing downloads, live dimension sliders, and true-scale AR." />
+	<link rel="canonical" href="https://three.ws/cad" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="CAD Forge · three.ws" />
+	<meta property="og:description" content="One sentence becomes a dimensioned, manufacturable part: STEP for engineers, STL for printers, sliders for everyone." />
+	<meta property="og:url" content="https://three.ws/cad" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=CAD+Forge&amp;d=Describe+a+part%2C+get+real+parametric+CAD%3A+STEP%2C+STL%2C+drawings+and+live+dimension+sliders.&amp;p=%2Fcad" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="CAD Forge · three.ws" />
+	<meta name="twitter:description" content="One sentence becomes a dimensioned, manufacturable part: STEP for engineers, STL for printers, sliders for everyone." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=CAD+Forge&amp;d=Describe+a+part%2C+get+real+parametric+CAD%3A+STEP%2C+STL%2C+drawings+and+live+dimension+sliders.&amp;p=%2Fcad" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="CAD Forge, three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/cad/cad.css" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"CAD Forge","applicationCategory":"DesignApplication","operatingSystem":"Any","description":"Describe a mechanical part and get real parametric CAD checked by the OpenCascade kernel, with STEP, STL, GLB and drawing downloads.","url":"https://three.ws/cad","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}]}</script>
+</head>
+<body class="cad-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="cad">
+		<!-- ── /cad: create + gallery ─────────────────────────────────────── -->
+		<section id="cadHome" class="cad-home" aria-labelledby="cadHeroTitle">
+			<div class="cad-hero">
+				<p class="cad-eyebrow"><span class="cad-eyebrow__mark" aria-hidden="true"></span>CAD Forge</p>
+				<h1 id="cadHeroTitle">Describe a part. Get real CAD.</h1>
+				<p class="cad-lede">Not a mesh guess: a parametric <a href="https://github.com/gumyr/build123d" rel="noopener" target="_blank">build123d</a> program that the OpenCascade kernel has accepted, with exact dimensions you can change, STEP for engineers and STL for printers.</p>
+
+				<form id="cadForm" class="cad-form" autocomplete="off">
+					<label for="cadPrompt" class="cad-sr">Describe the part</label>
+					<textarea id="cadPrompt" rows="3" placeholder="A wall bracket for a 25 mm pipe with two M5 countersunk holes, 4 mm thick"></textarea>
+					<div class="cad-form__foot">
+						<span class="cad-hint">Name the part, the key sizes, and how it mounts. <kbd>Ctrl</kbd> <kbd>Enter</kbd> to forge.</span>
+						<button id="cadSubmit" type="submit" class="cad-btn cad-btn--primary">
+							<span class="cad-btn__label">Forge part</span>
+							<span class="cad-btn__spinner" aria-hidden="true"></span>
+						</button>
+					</div>
+				</form>
+				<p id="cadOffline" class="cad-notice" hidden>CAD Forge is not available on this deployment right now. Recent parts below still open, measure and download.</p>
+				<div id="cadExamples" class="cad-chips" aria-label="Example parts"></div>
+				<div id="cadProgress" class="cad-progress-host" hidden></div>
+
+				<ul class="cad-proof" aria-label="What you get">
+					<li><strong>Kernel-checked</strong><span>Every part is built on OpenCascade before you see it. Errors go back to the writer until it builds.</span></li>
+					<li><strong>Parametric</strong><span>Key dimensions become sliders. Each configuration rebuilds and gets its own link.</span></li>
+					<li><strong>Yours to keep</strong><span>Download STEP, STL, GLB, a drawing sheet, and the Python program itself.</span></li>
+				</ul>
+			</div>
+
+			<section class="cad-gallery" aria-labelledby="cadGalleryTitle">
+				<div class="cad-gallery__head">
+					<h2 id="cadGalleryTitle">Recently forged</h2>
+					<a class="cad-link" href="/docs/cad-forge">How CAD Forge works</a>
+				</div>
+				<div id="cadGallery" class="cad-grid"></div>
+				<div id="cadGalleryStatus" class="cad-empty" hidden></div>
+			</section>
+		</section>
+
+		<!-- ── /cad/:id: one design ───────────────────────────────────────── -->
+		<section id="cadDesign" class="cad-design" hidden aria-labelledby="cadTitle">
+			<div id="cadDesignError" class="cad-empty cad-empty--page" hidden></div>
+			<div id="cadDesignBody" class="cad-design__body">
+				<div class="cad-stage">
+					<div id="cadViewTools" class="cad-tools" role="toolbar" aria-label="View">
+						<div class="cad-seg">
+							<button id="cadModeModel" type="button" aria-pressed="true">3D</button>
+							<button id="cadModeDrawing" type="button" aria-pressed="false">Drawing</button>
+						</div>
+						<label class="cad-toggle"><input id="cadEdges" type="checkbox" checked /> Edges</label>
+						<label class="cad-toggle"><input id="cadDims" type="checkbox" checked /> Dimensions</label>
+						<button id="cadReframe" type="button" class="cad-icon-btn" aria-label="Reframe the part" title="Reframe">
+							<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+						</button>
+					</div>
+					<div id="cadViewport" class="cad-viewport" role="img" aria-label="Interactive 3D view of the part. Drag to orbit, scroll to zoom."></div>
+					<div id="cadDrawing" class="cad-drawing" hidden><img id="cadDrawingImg" alt="Engineering drawing: front, right, top and isometric views" /></div>
+					<p id="cadViewportError" class="cad-viewport__error" hidden>The 3D view could not start in this browser. The downloads and drawing still work.</p>
+					<span id="cadRebuilding" class="cad-badge" hidden>Rebuilding on the kernel</span>
+				</div>
+
+				<aside class="cad-panel">
+					<header class="cad-panel__head">
+						<a class="cad-back" href="/cad">CAD Forge</a>
+						<h1 id="cadTitle" class="cad-title"></h1>
+						<p id="cadSummary" class="cad-summary"></p>
+						<blockquote class="cad-asked"><span>Asked for</span> <q id="cadAsked"></q></blockquote>
+						<div id="cadMeta" class="cad-meta"></div>
+						<p id="cadLineage" class="cad-lineage" hidden></p>
+					</header>
+
+					<section id="cadParamsSection" class="cad-section" aria-labelledby="cadParamsTitle">
+						<div class="cad-section__head">
+							<h2 id="cadParamsTitle">Dimensions</h2>
+							<button id="cadReset" type="button" class="cad-link">Reset</button>
+						</div>
+						<div id="cadParams" class="cad-params"></div>
+						<p id="cadParamError" class="cad-inline-error" role="alert" hidden></p>
+					</section>
+
+					<section class="cad-section" aria-labelledby="cadMeasureTitle">
+						<h2 id="cadMeasureTitle">Measurements</h2>
+						<dl id="cadMetrics" class="cad-metrics"></dl>
+						<h3 class="cad-sub">Mass if made solid in</h3>
+						<div id="cadMass" class="cad-masses"></div>
+					</section>
+
+					<section id="cadAdjustmentsSection" class="cad-section" hidden aria-labelledby="cadAdjTitle">
+						<h2 id="cadAdjTitle">Kernel adjustments</h2>
+						<ul id="cadAdjustments" class="cad-adjustments"></ul>
+					</section>
+
+					<section class="cad-section" aria-labelledby="cadFilesTitle">
+						<h2 id="cadFilesTitle">Files</h2>
+						<div id="cadDownloads" class="cad-downloads"></div>
+						<div class="cad-actions">
+							<a id="cadAr" class="cad-btn" href="#">View in your space</a>
+							<a id="cadPrint" class="cad-btn" href="#">Print it</a>
+							<a id="cadScene" class="cad-btn cad-btn--ghost" href="#">Open in Scene Studio</a>
+							<button id="cadCopyLink" type="button" class="cad-btn cad-btn--ghost">Copy link</button>
+						</div>
+					</section>
+
+					<section class="cad-section" aria-labelledby="cadRefineTitle">
+						<h2 id="cadRefineTitle">Refine</h2>
+						<form id="cadRefine" class="cad-refine">
+							<label for="cadRefineInput" class="cad-sr">Describe a change</label>
+							<input id="cadRefineInput" type="text" maxlength="600" placeholder="Add a cable slot in the back, make the walls 3 mm" />
+							<button id="cadRefineSubmit" type="submit" class="cad-btn cad-btn--primary">Refine</button>
+						</form>
+						<div id="cadRefineProgress" class="cad-progress-host" hidden></div>
+					</section>
+
+					<section class="cad-section" aria-labelledby="cadCodeTitle">
+						<div class="cad-section__head">
+							<h2 id="cadCodeTitle">Program</h2>
+							<button id="cadCopyCode" type="button" class="cad-link">Copy</button>
+						</div>
+						<p class="cad-note">Plain Python. Runs anywhere with <code>pip install build123d bd_warehouse</code>, including <a href="https://github.com/earthtojake/text-to-cad" rel="noopener" target="_blank">text-to-cad</a>, which uses the same kernel.</p>
+						<pre class="cad-code"><code id="cadCode"></code></pre>
+					</section>
+				</aside>
+			</div>
+		</section>
+		<div id="cadToast" class="cad-toast" role="status" aria-live="polite" hidden></div>
+	</main>
+
+	<script type="module" src="/src/cad/main.js"></script>
+</body>
+</html>

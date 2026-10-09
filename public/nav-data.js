@@ -101,6 +101,13 @@ export const NAV_GROUPS = [
 						desc: 'Upload a photo (up to 4 angles) → textured GLB of the object',
 					},
 					{
+						title: 'CAD Forge',
+						href: '/cad',
+						badge: 'New',
+						badgeTone: 'live',
+						desc: 'Describe a part → real parametric CAD: STEP, STL, drawings and live dimension sliders',
+					},
+					{
 						title: 'Describe it to 3D',
 						href: '/create/prompt',
 						badge: 'Live',

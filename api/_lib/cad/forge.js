@@ -91,6 +91,20 @@ export async function forgeDesign({ prompt, baseCode = null, onEvent = () => {},
 	onEvent({ stage: 'writing', attempt: 1 });
 	let written = await writeImpl({ user: baseCode ? refineMessage(prompt, baseCode) : generateMessage(prompt), track, deadline });
 	const attempts = [];
+	let fallback = null;
+	const finished = (w, build, tries) => {
+		const meta = parseDesign(w.code);
+		return {
+			code: w.code,
+			title: meta.title || titleFromPrompt(prompt),
+			summary: meta.summary,
+			params: meta.params,
+			build,
+			attempts: tries,
+			model: w.model,
+			provider: w.provider,
+		};
+	};
 
 	for (let attempt = 1; attempt <= MAX_REPAIRS + 1; attempt++) {
 		if (!written.code) {
@@ -99,18 +113,27 @@ export async function forgeDesign({ prompt, baseCode = null, onEvent = () => {},
 			onEvent({ stage: 'building', attempt });
 			const build = await buildImpl(written.code);
 			if (build?.ok) {
-				const meta = parseDesign(written.code);
+				const design = finished(written, build, [...attempts, { attempt, ok: true }]);
+				// Several solids that never touch are almost always a feature left
+				// floating (a lip modeled beside the plate instead of on it). Ask
+				// once for a connected part, keeping this build as the answer if
+				// the request really meant several bodies or the repair fails.
+				const solids = build.metrics?.solids || 1;
+				if (solids > 1 && !fallback && attempt <= MAX_REPAIRS && deadline - Date.now() > 60_000) {
+					fallback = design;
+					const error = { kind: 'result', message: `The part built as ${solids} separate solids that do not touch. Unless the request asked for separate pieces, every feature must overlap or touch the main body so it is one connected solid.`, line: null };
+					attempts.push({ attempt, error });
+					onEvent({ stage: 'repairing', attempt: attempt + 1, error });
+					try {
+						written = await writeImpl({ user: repairMessage({ request: prompt, code: written.code, error }), track, deadline });
+					} catch {
+						onEvent({ stage: 'built', attempt });
+						return design;
+					}
+					continue;
+				}
 				onEvent({ stage: 'built', attempt });
-				return {
-					code: written.code,
-					title: meta.title || titleFromPrompt(prompt),
-					summary: meta.summary,
-					params: meta.params,
-					build,
-					attempts: [...attempts, { attempt, ok: true }],
-					model: written.model,
-					provider: written.provider,
-				};
+				return design;
 			}
 			attempts.push({ attempt, error: build?.error || { kind: 'unknown', message: 'Build failed.' } });
 		}
@@ -123,6 +146,10 @@ export async function forgeDesign({ prompt, baseCode = null, onEvent = () => {},
 			: await writeImpl({ user: baseCode ? refineMessage(prompt, baseCode) : generateMessage(prompt), track, deadline });
 	}
 
+	if (fallback) {
+		onEvent({ stage: 'built', attempt: fallback.attempts.length });
+		return { ...fallback, attempts };
+	}
 	const last = attempts[attempts.length - 1]?.error;
 	throw new CadForgeError(
 		'design_failed',

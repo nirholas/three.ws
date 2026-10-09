@@ -28,23 +28,11 @@
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { getSessionUser } from './_lib/auth.js';
-import { CadForgeError, buildProgram, cadWorkerConfigured, forgeDesign } from './_lib/cad/forge.js';
-import {
-	bumpViews,
-	cadStoreEnabled,
-	getDesign,
-	getLineage,
-	getVariant,
-	listDesigns,
-	newDesignId,
-	saveDesign,
-	saveVariant,
-	uploadArtifacts,
-} from './_lib/cad/store.js';
-import { MAX_PROMPT_LEN, applyParams, paramsKey } from '../src/cad/params.js';
+import { CadForgeError } from './_lib/cad/forge.js';
+import { bumpViews, getDesign, getLineage, getVariant, listDesigns } from './_lib/cad/store.js';
+import { UUID_RE, cadAvailable, cleanPrompt, createDesign, loadParent, publicDesign, rebuildVariant } from './_lib/cad/service.js';
+import { applyParams } from '../src/cad/params.js';
 
-const SITE = process.env.PUBLIC_BASE_URL || 'https://three.ws';
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VARIANT_RE = /^[0-9a-z]{1,16}$/;
 const KEEPALIVE_MS = 15_000;
 
@@ -61,21 +49,6 @@ export default wrap(async (req, res) => {
 	if (body.action === 'rebuild') return handleRebuild(req, res, body);
 	return json(res, 400, { error: 'unknown_action', message: 'action must be "generate" or "rebuild".' });
 });
-
-function unavailable(res) {
-	return json(res, 503, {
-		error: 'cad_unavailable',
-		message: 'CAD Forge is not configured on this deployment.',
-	});
-}
-
-function designUrl(id, key) {
-	return `${SITE}/cad/${id}${key ? `?v=${key}` : ''}`;
-}
-
-function publicDesign(design) {
-	return { ...design, url: designUrl(design.id) };
-}
 
 async function handleGet(req, res) {
 	const url = new URL(req.url, 'http://x');
@@ -120,7 +93,7 @@ async function handleGet(req, res) {
 		return json(
 			res,
 			200,
-			{ designs, available: cadStoreEnabled() && cadWorkerConfigured() },
+			{ designs, available: cadAvailable() },
 			{ 'cache-control': 'public, max-age=20, s-maxage=60' },
 		);
 	}
@@ -151,20 +124,33 @@ function openStream(res) {
 	return { send, close };
 }
 
-async function handleGenerate(req, res, body) {
-	const prompt = String(body.prompt ?? '').slice(0, MAX_PROMPT_LEN).trim();
-	if (prompt.length < 3) {
-		return json(res, 400, { error: 'prompt_required', message: 'Describe the part you need.' });
+function sendError(res, err, stream) {
+	const known = err instanceof CadForgeError;
+	if (!known) console.error('[cad] request failed:', err?.message);
+	const status = known ? err.status : 500;
+	const out = {
+		error: known ? err.code : 'internal_error',
+		message: known ? err.message : 'Something went wrong building this part. Try again.',
+		...(known && err.code === 'design_failed' ? { lastError: err.detail?.lastError || null } : {}),
+		...(known && err.code === 'rebuild_failed' ? { buildError: err.detail || null } : {}),
+	};
+	if (stream) {
+		stream.send('error', { status, ...out });
+		stream.close();
+		return;
 	}
-	if (!cadWorkerConfigured() || !cadStoreEnabled()) return unavailable(res);
+	return json(res, status, out);
+}
 
-	let parent = null;
-	if (body.parentId != null) {
-		if (!UUID_RE.test(String(body.parentId))) {
-			return json(res, 400, { error: 'invalid_parent', message: 'Malformed parent design id.' });
-		}
-		parent = await getDesign(String(body.parentId));
-		if (!parent) return json(res, 404, { error: 'parent_not_found', message: 'The design you are refining no longer exists.' });
+async function handleGenerate(req, res, body) {
+	let prompt;
+	let parent;
+	try {
+		prompt = cleanPrompt(body.prompt);
+		if (!cadAvailable()) throw new CadForgeError('cad_unavailable', 'CAD Forge is not configured on this deployment.', 503);
+		parent = await loadParent(body.parentId);
+	} catch (err) {
+		return sendError(res, err, null);
 	}
 
 	const ip = clientIp(req);
@@ -173,37 +159,16 @@ async function handleGenerate(req, res, body) {
 	const globalRl = await limits.cadForgeGlobal();
 	if (!globalRl.success) return rateLimited(res, globalRl, 'CAD Forge is at capacity. Try again shortly.');
 
-	const sessionUser = await getSessionUser(req).catch(() => null);
-	const baseCode = parent ? applyParams(parent.code, body.values || {}).code : null;
+	const user = await getSessionUser(req).catch(() => null);
 	const stream = body.stream === true ? openStream(res) : null;
-
 	try {
-		const forged = await forgeDesign({
+		const payload = await createDesign({
 			prompt,
-			baseCode,
-			track: { userId: sessionUser?.id ?? null },
+			parent,
+			values: body.values,
+			user,
 			onEvent: (event) => stream?.send('stage', event),
 		});
-		stream?.send('stage', { stage: 'saving' });
-		const id = newDesignId();
-		const files = await uploadArtifacts(`cad/${id}`, forged.build.artifacts);
-		const saved = await saveDesign({
-			id,
-			parentId: parent?.id || null,
-			title: forged.title,
-			summary: forged.summary,
-			prompt,
-			code: forged.code,
-			params: forged.params,
-			metrics: forged.build.metrics,
-			files,
-			adjustments: forged.build.adjustments || [],
-			model: forged.model,
-			userId: sessionUser?.id ?? null,
-		});
-		if (!saved) throw new CadForgeError('save_failed', 'The part built but could not be saved. Try again.', 500);
-		const design = publicDesign({ ...saved, creatorUsername: sessionUser?.username || null });
-		const payload = { design, attempts: forged.attempts.length };
 		if (stream) {
 			stream.send('done', payload);
 			stream.close();
@@ -211,61 +176,23 @@ async function handleGenerate(req, res, body) {
 		}
 		return json(res, 201, payload);
 	} catch (err) {
-		const known = err instanceof CadForgeError;
-		if (!known) console.error('[cad] generate failed:', err?.message);
-		const status = known ? err.status : 500;
-		const out = {
-			error: known ? err.code : 'internal_error',
-			message: known ? err.message : 'Something went wrong building this part. Try again.',
-			...(known && err.code === 'design_failed' ? { lastError: err.detail?.lastError || null } : {}),
-		};
-		if (stream) {
-			stream.send('error', { status, ...out });
-			stream.close();
-			return;
-		}
-		return json(res, status, out);
+		return sendError(res, err, stream);
 	}
 }
 
 async function handleRebuild(req, res, body) {
-	const id = String(body.id ?? '');
-	if (!UUID_RE.test(id)) return json(res, 400, { error: 'invalid_id', message: 'Malformed design id.' });
-	if (!cadWorkerConfigured() || !cadStoreEnabled()) return unavailable(res);
-	const design = await getDesign(id);
-	if (!design) return json(res, 404, { error: 'not_found', message: 'No design with that id.' });
-
-	const { code, applied } = applyParams(design.code, body.values || {});
-	const key = paramsKey(applied);
-	const cached = await getVariant(id, key);
-	if (cached) return json(res, 200, { variant: { ...cached, url: designUrl(id, key) }, cached: true });
-
-	const rl = await limits.cadRebuildIp(clientIp(req));
-	if (!rl.success) return rateLimited(res, rl, 'Rebuilding too fast. Give it a moment.');
-
-	let build;
 	try {
-		build = await buildProgram(code);
-	} catch (err) {
-		if (err instanceof CadForgeError) return json(res, err.status, { error: err.code, message: err.message });
-		throw err;
-	}
-	if (!build?.ok) {
-		return json(res, 422, {
-			error: 'rebuild_failed',
-			message: 'These values do not make a valid part. Try values closer to the original.',
-			buildError: build?.error || null,
+		const { variant, cached } = await rebuildVariant({
+			id: body.id,
+			values: body.values,
+			beforeBuild: async () => {
+				const rl = await limits.cadRebuildIp(clientIp(req));
+				if (!rl.success) throw Object.assign(new CadForgeError('rate_limited', 'Rebuilding too fast. Give it a moment.', 429), { rl });
+			},
 		});
+		return json(res, 200, { variant, cached });
+	} catch (err) {
+		if (err?.rl) return rateLimited(res, err.rl, err.message);
+		return sendError(res, err, null);
 	}
-	const files = await uploadArtifacts(`cad/${id}/v/${key}`, build.artifacts);
-	const variant = await saveVariant({
-		designId: id,
-		key,
-		values: applied,
-		metrics: build.metrics,
-		files,
-		adjustments: build.adjustments || [],
-	});
-	if (!variant) return json(res, 500, { error: 'save_failed', message: 'The part rebuilt but could not be saved. Try again.' });
-	return json(res, 200, { variant: { ...variant, url: designUrl(id, key) }, cached: false });
 }

@@ -830,6 +830,7 @@ const appConfig = {
 				flow: resolve(__dirname, 'pages/flow.html'),
 				symphony: resolve(__dirname, 'pages/symphony.html'),
 				diorama: resolve(__dirname, 'pages/diorama.html'),
+				cad: resolve(__dirname, 'pages/cad.html'),
 				receipts: resolve(__dirname, 'pages/receipts.html'),
 				fits: resolve(__dirname, 'pages/fits.html'),
 				viability: resolve(__dirname, 'pages/viability.html'),
@@ -1722,6 +1723,8 @@ const appConfig = {
 					'/ui-juice/': resolve(root, 'pages/ui-juice.html'),
 					'/diorama': resolve(root, 'pages/diorama.html'),
 					'/diorama/': resolve(root, 'pages/diorama.html'),
+					'/cad': resolve(root, 'pages/cad.html'),
+					'/cad/': resolve(root, 'pages/cad.html'),
 					'/trader': resolve(root, 'pages/trader.html'),
 					'/trader/': resolve(root, 'pages/trader.html'),
 					'/trade-rooms': resolve(root, 'pages/trade-room.html'),
@@ -2423,6 +2426,12 @@ const appConfig = {
 					// /coin/:id  → global coin detail page (CoinGecko slug or Solana mint)
 					else if (!filePath && /^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path))
 						filePath = resolve(root, 'pages/coin.html');
+					// /cad/:id  → CAD Forge design page (cad_designs uuid)
+					else if (
+						!filePath &&
+						/^\/cad\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/?$/.test(path)
+					)
+						filePath = resolve(root, 'pages/cad.html');
 					// /m/:id  → model detail page (forge_creations uuid)
 					else if (
 						!filePath &&

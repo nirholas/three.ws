@@ -1208,6 +1208,14 @@
 			"dest": "/diorama.html"
 		},
 		{
+			"src": "/cad/?",
+			"dest": "/cad.html"
+		},
+		{
+			"src": "/cad/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/?",
+			"dest": "/cad.html"
+		},
+		{
 			"src": "/api/strategies/(.*)",
 			"dest": "/api/strategies"
 		},
