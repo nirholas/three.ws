@@ -84,10 +84,14 @@ const TYPE_FRAMES_PER_CHAR = 2;
 // can carry as a modifier comes after the steps that use it that way: `hold`
 // after `press` (a held key is `{ "press": "w", "hold": 2000 }`), and
 // `caption` last, because any step may carry a caption as well as its action.
-export const STEP_KINDS = ['goto', 'click', 'hover', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'hold', 'caption'];
+export const STEP_KINDS = ['goto', 'click', 'hover', 'upload', 'type', 'press', 'expect', 'read', 'drag', 'scroll', 'wait', 'hold', 'caption'];
 
 // The steps that can cause a request, and so may carry `awaits`.
-const ACTIONS = ['click', 'press', 'type'];
+const ACTIONS = ['click', 'press', 'type', 'upload'];
+
+// A file a scenario hands to the page lives in the repository, under data/ or
+// public/, so every machine that reviews the post runs it with the same bytes.
+const UPLOAD_PATH = /^(?:data|public)\/(?!.*(?:^|\/)\.\.(?:\/|$))[\w./-]+\.(?:png|jpe?g|webp|gif|glb|gltf|obj|stl|mp3|wav|mp4)$/i;
 
 export const stepKind = (step) => STEP_KINDS.find((kind) => step && Object.hasOwn(step, kind)) || null;
 
@@ -137,6 +141,10 @@ export function scenarioProblems(scenario) {
 			case 'click':
 			case 'hover':
 				if (!targetOf(step[kind])) problems.push(`${at}: ${kind} needs the visible text of the control, or { "selector": "..." }`);
+				break;
+			case 'upload':
+				if (!UPLOAD_PATH.test(String(step.upload))) problems.push(`${at}: upload needs a repository path under data/ or public/, such as "data/x-content/inputs/photo.png"`);
+				if (!targetOf(step.into)) problems.push(`${at}: upload needs "into": the visible text of the control that opens the file picker, or { "selector": "..." }`);
 				break;
 			case 'type':
 				if (typeof step.type !== 'string' || !step.type) problems.push(`${at}: type needs the text to type`);
@@ -206,6 +214,11 @@ export function proofProblems(item, root, now = Date.now()) {
 	else {
 		const file = resolve(root, reel.path);
 		if (existsSync(file) && sha256File(file) !== proof.video.sha256) problems.push(`${reel.path} is not the file the proof filmed`);
+	}
+	for (const upload of proof.uploads || []) {
+		const file = resolve(root, upload.path);
+		if (!existsSync(file)) problems.push(`${upload.path}, the file the run uploaded, is missing`);
+		else if (sha256File(file) !== upload.sha256) problems.push(`${upload.path} is not the file the run uploaded; prove it again`);
 	}
 	if (proof.video && proof.video.motion < MIN_MOTION) {
 		problems.push(`only ${Math.round(proof.video.motion * 100)}% of the reel's frames change; film an action, or post a still instead`);
@@ -641,6 +654,28 @@ const STEPS = {
 		await take.pointer('rest');
 		return `clicked${await settleResponse(take, step, index, run, pending)}`;
 	},
+	// The pointer clicks the control that opens the file picker, on film, and
+	// the picker is answered with a file from the repository, exactly as a
+	// person choosing that file would. The bytes are recorded in the proof.
+	async upload(take, step, index, run) {
+		const file = resolve(run.root, step.upload);
+		if (!existsSync(file)) throw new Error(`${step.upload} does not exist`);
+		const at = await centreOf(await locate(take, step.into));
+		await take.moveTo(at.x, at.y);
+		const pending = armResponse(take, step);
+		const chooser = take.page.waitForEvent('filechooser', { timeout: 10_000 });
+		chooser.catch(() => {});
+		await take.pointer('ripple', at.x, at.y, RIPPLE_FRAMES * take.frameMs);
+		await take.page.mouse.click(at.x, at.y);
+		const picker = await chooser.catch(() => {
+			throw new Error(`clicking "${targetOf(step.into)}" opened no file picker`);
+		});
+		await picker.setFiles(file);
+		await take.frames(RIPPLE_FRAMES);
+		await take.pointer('rest');
+		run.uploads.push({ path: step.upload, sha256: sha256File(file) });
+		return `uploaded ${step.upload}${await settleResponse(take, step, index, run, pending)}`;
+	},
 	async hover(take, step) {
 		const at = await centreOf(await locate(take, step.hover));
 		await take.moveTo(at.x, at.y);
@@ -756,13 +791,13 @@ const BROWSER_ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-uns
 // Runs the scenario against the live product. With `film` false no frame is
 // captured, which is the fast path a review uses to confirm the feature still
 // works and still shows the facts the reel shows.
-export async function runScenario(scenario, { film = true, stamp = '', framesDir = null, failureShot = null } = {}) {
+export async function runScenario(scenario, { film = true, stamp = '', framesDir = null, failureShot = null, root = process.cwd() } = {}) {
 	const { chromium } = await import('playwright');
 	const format = FORMATS[scenario.format || 'landscape'];
 	const fps = scenario.fps || DEFAULT_FPS;
 	const size = { width: Math.round(format.width * format.scale), height: Math.round(format.height * format.scale), page: Math.round((format.height - format.bar) * format.scale) };
 	const browser = await chromium.launch({ args: BROWSER_ARGS });
-	const run = { passed: true, steps: [], facts: {}, saw: [], responses: [], cuts: [], frames: 0, changes: 0, fps, width: size.width, height: size.height };
+	const run = { root, passed: true, steps: [], facts: {}, saw: [], responses: [], uploads: [], cuts: [], frames: 0, changes: 0, fps, width: size.width, height: size.height };
 	try {
 		const context = await browser.newContext({ viewport: { width: format.width, height: format.height - format.bar }, deviceScaleFactor: format.scale, reducedMotion: 'no-preference' });
 		const bar = await Bar.open(context, format, stamp);
@@ -873,7 +908,7 @@ export async function proveItem(item, { root, film = true, now = Date.now(), fai
 	const stamp = item.scenario.stamp === false ? '' : `live on ${host}${version?.commit ? ` @ ${version.commit}` : ''}, ${day}`;
 	const framesDir = film ? mkdtempSync(join(tmpdir(), `reel-${item.id}-`)) : null;
 	try {
-		const run = await runScenario(item.scenario, { film, stamp, framesDir, failureShot });
+		const run = await runScenario(item.scenario, { film, stamp, framesDir, failureShot, root });
 		const proof = {
 			id: item.id,
 			scenarioHash: scenarioHash(item.scenario),
@@ -884,6 +919,7 @@ export async function proveItem(item, { root, film = true, now = Date.now(), fai
 			facts: run.facts,
 			saw: run.saw,
 			responses: run.responses,
+			...(run.uploads.length ? { uploads: run.uploads } : {}),
 			cuts: run.cuts,
 			video: null,
 		};

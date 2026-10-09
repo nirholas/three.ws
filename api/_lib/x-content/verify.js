@@ -368,7 +368,7 @@ export function factDrift(item, proof, facts) {
 
 async function scenarioProbe(item, root) {
 	const proof = loadProof(root, item.id);
-	const run = await runScenario(item.scenario, { film: false });
+	const run = await runScenario(item.scenario, { film: false, root });
 	if (!run.passed) {
 		const failed = run.steps.find((step) => !step.ok);
 		return { ok: false, detail: `step ${failed.index} (${failed.kind} ${failed.target}): ${failed.detail}` };

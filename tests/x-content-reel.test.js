@@ -137,6 +137,17 @@ describe('scenario', () => {
 		expect(problems).toMatch(/step 12: needs one of/);
 	});
 
+	it('hands the page a file from the repository, never one from outside it', () => {
+		const upload = (step) => scenarioProblems({ steps: [{ goto: 'https://three.ws/image-to-3d' }, step, { expect: '1 of 6 views' }] }).join('\n');
+		expect(stepKind({ upload: 'data/x-content/inputs/photo.png', into: 'FRONT' })).toBe('upload');
+		expect(upload({ upload: 'data/x-content/inputs/photo.png', into: 'FRONT', awaits: '/api/forge-upload' })).toBe('');
+		expect(upload({ upload: 'public/x-media/a/photo.jpg', into: { selector: '.view-slot' } })).toBe('');
+		expect(upload({ upload: '/etc/passwd', into: 'FRONT' })).toMatch(/step 2: upload needs a repository path/);
+		expect(upload({ upload: 'data/../../secret.png', into: 'FRONT' })).toMatch(/step 2: upload needs a repository path/);
+		expect(upload({ upload: 'src/forge.js', into: 'FRONT' })).toMatch(/step 2: upload needs a repository path/);
+		expect(upload({ upload: 'data/x-content/inputs/photo.png' })).toMatch(/step 2: upload needs "into"/);
+	});
+
 	it('films every format at even dimensions with room for the bar', () => {
 		for (const format of Object.values(FORMATS)) {
 			expect((format.width * format.scale) % 2).toBe(0);
@@ -189,6 +200,18 @@ describe('proof', () => {
 		const dir = sandbox();
 		writeFileSync(join(dir, reelPath('galaxy-search')), Buffer.from('a different file'));
 		expect(proofProblems(item(), dir, NOW).join('\n')).toMatch(/is not the file the proof filmed/);
+	});
+
+	it('is void once the file the run uploaded is swapped', () => {
+		const photo = Buffer.from('the photo the run uploaded');
+		const uploaded = proof({ uploads: [{ path: 'data/x-content/inputs/photo.png', sha256: sha256(photo) }] });
+		const dir = sandbox(uploaded);
+		expect(proofProblems(item(), dir, NOW).join('\n')).toMatch(/the file the run uploaded, is missing/);
+		mkdirSync(join(dir, 'data/x-content/inputs'), { recursive: true });
+		writeFileSync(join(dir, 'data/x-content/inputs/photo.png'), photo);
+		expect(proofProblems(item(), dir, NOW)).toEqual([]);
+		writeFileSync(join(dir, 'data/x-content/inputs/photo.png'), Buffer.from('a different photo'));
+		expect(proofProblems(item(), dir, NOW).join('\n')).toMatch(/is not the file the run uploaded/);
 	});
 
 	it('refuses a reel in which almost nothing moves', () => {
