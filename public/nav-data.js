@@ -105,6 +105,10 @@ export const NAV_GROUPS = [
 						href: '/cad',
 						badge: 'New',
 						badgeTone: 'live',
+						// Everything tier: the lite menu sits at its 30-link scannable
+						// ceiling (tests/onboarding-tier.test.js), and a parametric CAD
+						// tool is a specialist's first stop, not a newcomer's.
+						tier: 'advanced',
 						desc: 'Describe a part → real parametric CAD: STEP, STL, drawings and live dimension sliders',
 					},
 					{
