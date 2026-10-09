@@ -187,7 +187,7 @@ stills; it never reports a recording that did not happen.
 3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to six images of the same object from different angles (front, back, left, right, top, three-quarter); each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
 5. Click Generate. A real elapsed-driven progress line runs against the catalog's ETA estimate for the chosen path, tier, and engine.
-6. When the model lands, orbit it in the viewer, view it in AR, download it in any of seven formats (see [Download formats](#download-formats)), or run the post-generation tools (stylize, optimize, Game-Ready retopology, split). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
+6. When the model lands, orbit it in the viewer, view it in AR, download it in any of seven formats (see [Download formats](#download-formats)), or run the post-generation tools (stylize, optimize with in-browser repair, smoothing and decimation (see [Mesh tools](#mesh-tools-repair-smooth-decimate)), Game-Ready retopology, split). Send it to a 3D printer from the format menu's slicer rows (see [Open in a slicer](#open-in-a-3d-printing-slicer)). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
 7. Keep going on the same result: **Rig for animation** adds a humanoid skeleton (POST `/api/forge?action=rig`) and hands off to Pose Studio or IRL placement; **Restyle materials** re-skins the surface with a free-text instruction or a preset chip (chrome, wood, gold, neon, marble, rust) via `/api/material-studio`, keeping the mesh untouched; **Iterate** makes a shape-changing edit from a plain-language instruction ("make the helmet red", "add a backpack") via `/api/forge-iterate` (the same conversational core the `refine_model` MCP tool uses) and keeps every version in a branchable lineage strip; **Place IRL** opens `/irl?avatar=<glb_url>` to anchor the model in AR at a real-world location.
 
 ## Download formats
@@ -246,6 +246,62 @@ curl -sX POST https://three.ws/api/forge-remesh \
 
 A job that fails because of the file itself (an ASCII FBX, a corrupt one)
 reports `status: "failed"` with an `error` that says what to re-export.
+
+## Mesh tools: repair, smooth, decimate
+
+The **Optimize** panel under a finished model, and the **Edit mesh** section
+on every model page at `/m/<id>`, edit the mesh in your browser. Nothing is
+uploaded: the GLB is read with glTF-Transform and the work runs in a Web
+Worker, so the page stays responsive on a 500k-triangle model.
+
+| Operation | What it does | Controls |
+|---|---|---|
+| Repair | Welds coincident vertices, removes collapsed, zero-area and duplicate faces, makes winding consistent across each shell, flips shells that face inward, and rebuilds normals with hard edges split at the crease angle. | Crease angle (0 to 180 degrees, default 60) |
+| Smooth | Taubin (volume-preserving, the default) or plain Laplacian smoothing. Vertices that share a position move together, so UV seams never tear, and UVs, textures and materials are untouched. Open borders can be pinned. | Method, iterations (1 to 50), strength lambda (0.05 to 1), keep open borders fixed |
+| Decimate | meshoptimizer simplification to a target, preserving UV seams first and relaxing them only if the budget cannot otherwise be reached. | Keep percentage or an exact target triangle count, with a live "before to after" preview |
+
+Every edit reports what it did in numbers (vertices welded, faces re-wound,
+points moved, shape error) and the before and after triangle count. Edits
+stack: each one starts from the previous result, the breadcrumb shows the
+chain, **Undo** (or Ctrl+Z inside the panel) steps back one edit, and
+**Reset to original** returns to the stored model. The viewer and the
+Download button follow the edited mesh, and **Download GLB** in the panel
+saves it with the edit chain in the filename.
+
+Browser formats (GLB, OBJ, STL, PLY, USDZ) export the edited mesh. Server
+work (quad remesh, low-poly, FBX and 3MF conversion, and the slicer files
+below) starts from the saved model, because the edit only exists in your
+browser; the format menu says so instead of silently converting the original.
+
+## Open in a 3D-printing slicer
+
+The format menu's **Open in OrcaSlicer** and **Open in Bambu Studio** rows,
+and the **3D print** action on a model page, send a saved model straight to a
+slicer. The slicer downloads a print-ready file from
+`/api/slicer/<id>/model.stl` (or `/<N>mm/model.3mf`): Z-up, in millimetres,
+resting on the bed and centred on the plate. A model whose real size is 10 to
+250 mm keeps it; anything else arrives with a 100 mm longest edge, and the
+model page's size picker (50 to 200 mm) asks for an exact size. The full
+route contract is in [api-reference.md](api-reference.md#slicer-file-get-apisliceridmodelstl).
+
+| Slicer | How it opens | Notes |
+|---|---|---|
+| OrcaSlicer | `orcaslicer://open?file=<url>` | Opens the file directly. |
+| Bambu Studio | `bambustudio://open?file=<url>` | Asks you to trust three.ws the first time. |
+| PrusaSlicer | Download STL, then File > Import | Its `prusaslicer://` handler only accepts Printables and Thingiverse links, so there is no direct button. |
+
+If nothing happens after a click (the slicer is not installed, or the browser
+blocked the handler), the panel says so and offers the install page plus
+**Download STL** and **Download 3MF** links, which work with every slicer.
+The slicer rows appear once the model is saved, and they always send the
+saved model: mesh tool edits are local, so after an edit the row reports
+"sent (saved model, not your edits)". To print an edit, download it as STL
+from the format menu and import it into the slicer by hand.
+
+```bash
+# The same file the slicer receives, at a 120 mm longest edge.
+curl -sLo model.stl https://three.ws/api/slicer/<id>/120mm/model.stl
+```
 
 ## Examples
 

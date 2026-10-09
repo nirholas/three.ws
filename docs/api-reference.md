@@ -2135,6 +2135,51 @@ model's creator through the in-app bell (`comment` type, social category) when
 the model has an attributed creator. Authors can delete their own comments
 only.
 
+### Slicer file: `GET /api/slicer/:id/model.stl`
+
+```
+GET /api/slicer/<uuid>/model.stl          → binary STL, auto-sized
+GET /api/slicer/<uuid>/model.3mf          → 3MF package with colour
+GET /api/slicer/<uuid>/<N>mm/model.stl    → longest edge exactly N mm (5 to 500)
+GET /api/slicer/<uuid>/<N>mm/model.3mf
+If-None-Match: "<etag>"                    # optional: 304 when unchanged
+→ 200 content-type: model/stl | model/3mf
+      content-disposition: attachment; filename="<prompt-slug>[-Nmm].stl"
+      x-slicer-size-mm: 77.6 x 20.1 x 100.0
+      x-slicer-scale: real | auto | requested
+      etag: "slc-<hash>"
+```
+
+A finished public or unlisted creation, converted on the fly into a file a
+3D-printing slicer opens ready to slice. The path ends in a literal
+`model.stl` and carries no query string on purpose: the "Open in OrcaSlicer"
+and "Open in Bambu Studio" deep links (`orcaslicer://open?file=<url>`,
+`bambustudio://open?file=<url>`) hand the slicer this URL, and slicers pick
+the importer from the last path segment. Any HTTP client can use it the same
+way, with CORS open to every origin.
+
+The file is print-ready, not just converted: rotated from glTF's Y-up to the
+slicer's Z-up, in millimetres, resting on the bed at Z = 0 and centred on the
+plate. A model whose real size is 10 to 250 mm keeps it (`x-slicer-scale:
+real`); anything else is scaled to a 100 mm longest edge (`auto`); a `<N>mm`
+segment sets the longest edge exactly (`requested`). Geometry comes from the
+same loader and exporters as the Materialize print API, capped at 1.5 million
+triangles.
+
+Responses are immutable per id, format and size: `cache-control: public,
+max-age=3600, s-maxage=86400, stale-while-revalidate=604800` plus a strong
+ETag. Conversions (cache misses) are rate limited to 30 per 5 minutes per IP.
+Errors: `400 validation_error` (id not a UUID, format not stl/3mf, size out of
+range), `404 creation_not_found` (missing, unfinished or private), `413
+too_large` / `too_complex` (over the size or triangle cap), `422
+invalid_model` / `no_geometry`, `502 fetch_failed` (the stored GLB could not
+be read), `429` with `retry-after`.
+
+```bash
+curl -sLo helmet.stl https://three.ws/api/slicer/<uuid>/model.stl
+curl -sLo helmet-80mm.3mf https://three.ws/api/slicer/<uuid>/80mm/model.3mf
+```
+
 ### Agent-forged gallery feed — `GET /api/forged`
 
 ```
