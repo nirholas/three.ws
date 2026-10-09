@@ -17,6 +17,7 @@ the image every dependency is present and nothing is skipped.
 
 from __future__ import annotations
 
+import asyncio
 import io
 import os
 import shutil
@@ -378,6 +379,82 @@ for label, kwargs in (
         check(f"request rejects bad {label}", True)
 
 
+# -- input format detection ----------------------------------------------------
+# trimesh 4.x reads DAE (through pycollada) but has no FBX reader at all, so FBX
+# input is routed through Blender. The bytes decide, not just the URL: an
+# extensionless URL used to fall back to the glTF parser and fail opaquely.
+
+FBX_MAGIC_HEAD = remesh.FBX_BINARY_MAGIC + b"\x00" * 16
+check("binary FBX magic routes to the FBX bridge whatever the URL says",
+      remesh._sniff_suffix(FBX_MAGIC_HEAD, ".bin") == ".fbx")
+check("binary FBX behind an extensionless URL routes to the FBX bridge",
+      remesh._sniff_suffix(FBX_MAGIC_HEAD, "") == ".fbx")
+check("a GLB keeps its URL suffix", remesh._sniff_suffix(b"glTF\x02\x00\x00\x00", ".glb") == ".glb")
+check("a DAE keeps its URL suffix", remesh._sniff_suffix(b"<?xml version", ".dae") == ".dae")
+check("an unknown suffix falls back to glb", remesh._sniff_suffix(b"glTF", ".bin") == ".glb")
+for label, head in (
+    ("ASCII FBX", b"; FBX 7.4.0 project file\n"),
+    ("ASCII FBX with a BOM and leading blank line", b"\xef\xbb\xbf\n; FBX 7.3.0 project file\n"),
+):
+    try:
+        remesh._sniff_suffix(head, ".fbx")
+        check(f"{label} is refused with a fix", False, "accepted")
+    except remesh.InputFormatError as exc:
+        check(f"{label} is refused with a fix", "binary FBX" in str(exc) and "GLB" in str(exc), str(exc))
+
+_dae_bytes = trimesh.exchange.dae.export_collada(trimesh.creation.box())
+_dae_mesh = remesh._load_concatenated(_dae_bytes, ".dae")
+check("DAE input loads through pycollada", len(_dae_mesh.faces) == 12, str(len(_dae_mesh.faces)))
+check("DAE input loads in the textured loader", len(remesh._load_textured(_dae_bytes, ".dae").faces) == 12)
+
+
+def run_with_bytes(data: bytes, url: str, **overrides):
+    """Drive the real _run_processing (sniff, meshopt decode, FBX bridge,
+    pipelines, export) on in-memory bytes, standing in only for the network."""
+    params = {"remesh_mode": "triangle", "operation": "convert", "target_faces": 50_000,
+              "output_format": "glb", "texture_size": 1024, "task_id": "smoke"}
+    params.update(overrides)
+    real_fetch = remesh.fetch_remote_bytes
+    remesh.fetch_remote_bytes = lambda *_a, **_k: data
+    try:
+        return remesh._run_processing(
+            url, params["remesh_mode"], params["operation"], params["target_faces"],
+            params["output_format"], params["texture_size"], params["task_id"],
+        )
+    finally:
+        remesh.fetch_remote_bytes = real_fetch
+
+
+_dae_artifacts, _dae_meta = run_with_bytes(_dae_bytes, "https://example.com/model.dae")
+_dae_out = trimesh.load(io.BytesIO(_dae_artifacts[0].data), file_type="glb", force="mesh")
+check("a DAE converts end to end to GLB", _dae_meta["face_count"] == 12 and len(_dae_out.faces) == 12,
+      str(_dae_meta))
+
+try:
+    run_with_bytes(b"; FBX 7.4.0 project file\n", "https://example.com/model")
+    check("an ASCII FBX job fails as an input error", False, "accepted")
+except remesh.InputFormatError:
+    check("an ASCII FBX job fails as an input error", True)
+
+
+async def _run_task_on(data: bytes, url: str) -> dict:
+    remesh._sem = asyncio.Semaphore(1)
+    remesh._tasks["input-error"] = {"task_id": "input-error", "status": "queued"}
+    real_fetch = remesh.fetch_remote_bytes
+    remesh.fetch_remote_bytes = lambda *_a, **_k: data
+    try:
+        await remesh._process("input-error", url, "triangle", "full", 50_000, "glb", 1024)
+    finally:
+        remesh.fetch_remote_bytes = real_fetch
+    return remesh._tasks.pop("input-error")
+
+
+_task = asyncio.run(_run_task_on(b"; FBX 7.4.0 project file\n", "https://example.com/model.fbx"))
+check("an input error reaches the caller verbatim, not as an opaque ref",
+      _task["status"] == "failed" and _task.get("error_kind") == "input"
+      and "ASCII FBX" in _task["error"] and "internal error" not in _task["error"], str(_task))
+
+
 # -- quad remesh (needs the quadriflow binary) -------------------------------
 
 if shutil.which(remesh.QUADRIFLOW_BIN) or os.path.isfile(remesh.QUADRIFLOW_BIN):
@@ -534,9 +611,12 @@ if has_bpy:
         )
 
         fbx_path = Path(tmp) / "rigged.fbx"
-        faces = remesh._blender_to_fbx(glb_path, fbx_path, static=False)
+        faces = remesh._blender_convert(glb_path, fbx_path, static=False)
         check("blender_fbx exported an FBX", fbx_path.exists() and fbx_path.stat().st_size > 0)
         check("blender_fbx reported a face count", faces > 0, str(faces))
+        source_faces = len(trimesh.load(str(glb_path), force="mesh").faces)
+        check("rigged FBX carries only the source mesh, no bone-display sphere",
+              faces == source_faces, f"{faces} faces exported, source has {source_faces}")
 
         verify = subprocess.run(
             [sys.executable, str(Path(__file__).parent / "verify_fbx.py"), str(fbx_path)],
@@ -549,7 +629,7 @@ if has_bpy:
         )
 
         static_path = Path(tmp) / "static.fbx"
-        remesh._blender_to_fbx(glb_path, static_path, static=True)
+        remesh._blender_convert(glb_path, static_path, static=True)
         check("blender_fbx --static exported an FBX", static_path.stat().st_size > 0)
 
         artifacts, meta = remesh._convert_to_fbx_preserving_rig(
@@ -558,6 +638,46 @@ if has_bpy:
         check("fbx convert emits one artifact", len(artifacts) == 1 and artifacts[0].name == "smoke.fbx")
         check("fbx convert reports a face count", meta["face_count"] > 0, str(meta))
         check("fbx convert reports no quads and no bake", meta["quad_ratio"] == 0.0 and meta["textured"] is False)
+
+        # FBX *input*. trimesh has no FBX reader, so every path except the
+        # rig-preserving FBX-to-FBX convert used to fail with "File type: fbx
+        # not supported". Blender now bridges it to a GLB first.
+        fbx_bytes = fbx_path.read_bytes()
+        bridged = remesh._fbx_to_glb(fbx_bytes)
+        bridged_mesh = trimesh.load(io.BytesIO(bridged), file_type="glb", force="mesh")
+        check("an FBX bridges to a GLB trimesh can read", len(bridged_mesh.faces) == source_faces,
+              f"{len(bridged_mesh.faces)} faces, source has {source_faces}")
+
+        for label, url, overrides, fmt in (
+            ("FBX to GLB convert", "https://example.com/rigged.fbx", {}, "glb"),
+            ("FBX repair to OBJ", "https://example.com/rigged.fbx",
+             {"operation": "repair", "output_format": "obj"}, "obj"),
+            ("FBX behind an extensionless URL", "https://example.com/download?sig=abc", {}, "glb"),
+        ):
+            arts, info = run_with_bytes(fbx_bytes, url, **overrides)
+            out = trimesh.load(io.BytesIO(arts[0].data), file_type=fmt, force="mesh")
+            check(f"{label} produces real geometry", len(out.faces) > 0 and info["face_count"] > 0,
+                  f"{len(out.faces)} faces, {info}")
+
+        arts, info = run_with_bytes(fbx_bytes, "https://example.com/rigged.fbx", output_format="fbx")
+        refbx_path = Path(tmp) / "refbx.fbx"
+        refbx_path.write_bytes(arts[0].data)
+        reverify = subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "verify_fbx.py"), str(refbx_path)],
+            capture_output=True, text=True,
+        )
+        check("FBX to FBX convert keeps the skeleton", reverify.returncode == 0,
+              (reverify.stdout + reverify.stderr)[-600:])
+
+        corrupt = Path(tmp) / "corrupt.fbx"
+        corrupt.write_bytes(remesh.FBX_BINARY_MAGIC + b"\x1a\x00" + os.urandom(256))
+        try:
+            remesh._blender_convert(corrupt, Path(tmp) / "corrupt.glb", static=True)
+            check("a corrupt FBX fails as an input error", False, "converted")
+        except remesh.InputFormatError as exc:
+            check("a corrupt FBX fails as an input error", "FBX" in str(exc), str(exc))
+            check("the input error does not leak container paths", "/tmp" not in str(exc) and tmp not in str(exc),
+                  str(exc))
 
 
 # ── meshopt-compressed input ─────────────────────────────────────────────────

@@ -90,7 +90,13 @@ def _import_source(path: Path) -> None:
     suffix = path.suffix.lower()
     if suffix in (".glb", ".gltf"):
         _enable_addon("io_scene_gltf2")
-        bpy.ops.import_scene.gltf(filepath=str(path), import_pack_images=True)
+        # disable_bone_shape: the importer otherwise builds an 80-face
+        # "Icosphere" to draw bones in the viewport. It parks it in a hidden
+        # collection, but the FBX exporter writes hidden objects too, so every
+        # rigged GLB came out of this script carrying a stray sphere mesh.
+        bpy.ops.import_scene.gltf(
+            filepath=str(path), import_pack_images=True, disable_bone_shape=True,
+        )
     elif suffix == ".fbx":
         _enable_addon("io_scene_fbx")
         bpy.ops.import_scene.fbx(filepath=str(path))
@@ -166,10 +172,11 @@ def main() -> None:
     _reset_scene()
     try:
         _import_source(in_path)
-    except RuntimeError as exc:
-        # Blender's importers raise RuntimeError for a file they cannot parse
-        # (an ASCII FBX, a pre-7.1 binary FBX, a truncated download). That is a
-        # problem with the input, not with this process.
+    except Exception as exc:  # noqa: BLE001
+        # Blender's importers raise RuntimeError for a file they report as
+        # unreadable (an ASCII FBX, a pre-7.1 binary FBX) and whatever the parser
+        # hit for a corrupt one (struct.error, ValueError on a truncated
+        # download). Either way the problem is the input, not this process.
         reason = str(exc).strip().splitlines()
         _leave(EXIT_IMPORT_EMPTY, f"IMPORT_EMPTY: {reason[-1] if reason else 'import failed'}")
     faces = _face_count()

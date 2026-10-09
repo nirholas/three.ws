@@ -2,7 +2,7 @@
  * /api/forge-stylize — one-click geometric stylization for the forge pipeline.
  *
  *   POST /api/forge-stylize  {
- *     mesh_url: string,
+ *     mesh_url: string,                    // GLB/GLTF/OBJ/STL/PLY/OFF/DAE; FBX is a 400
  *     style?: "voxel"|"brick"|"voronoi"|"lowpoly",
  *     resolution?: number,                 // style-specific density (clamped)
  *     output_format?: "glb"|"obj"|"stl"|"ply"
@@ -20,6 +20,7 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
+import { isFbxMeshUrl, STYLIZE_FBX_MESSAGE } from './_lib/stylize-input.js';
 
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.
@@ -64,6 +65,9 @@ async function startJob(req, res) {
 			error: 'invalid_mesh_url',
 			message: err instanceof SsrfError ? `mesh_url rejected: ${err.message}` : 'mesh_url must be a public https URL.',
 		});
+	}
+	if (isFbxMeshUrl(meshUrl)) {
+		return json(res, 400, { error: 'unsupported_mesh_format', message: STYLIZE_FBX_MESSAGE });
 	}
 
 	// Object.hasOwn, not a bare truthy lookup: `STYLE_BOUNDS[k]` is truthy for

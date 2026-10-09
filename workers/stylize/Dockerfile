@@ -20,9 +20,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
+# GL/OpenMP/BLAS runtime for open3d and trimesh. No libassimp: nothing in this
+# image loads it (trimesh 4.x has no assimp loader, DAE input goes through
+# pycollada, and FBX input is refused).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 libglib2.0-0 libgomp1 \
-        libassimp-dev libassimp5 \
         libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
