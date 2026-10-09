@@ -9,6 +9,7 @@
 //         | { type: 'apikey', key, prefix, scope, key_id }
 //         | null,
 //     stdio_key: { key, prefix, key_id, scope } | null,   // for @three-ws/*-mcp stdio packages
+//     connector_key: { key, prefix, key_id, scope, user_id } | null,   // Grok Bot's spend-free connector secret
 //     oauth_clients: { [origin]: { client_id, redirect_uri } },
 //     tools: { [serverSlug]: { tiers: ['read','write'], enabled: [toolName...] } },
 //   }
@@ -24,7 +25,7 @@ import { credentialsPath, systemEnv } from './paths.js';
 export const DEFAULT_ORIGIN = 'https://three.ws';
 
 function emptyStore() {
-	return { version: 1, origin: DEFAULT_ORIGIN, account: null, auth: null, stdio_key: null, oauth_clients: {}, tools: {} };
+	return { version: 1, origin: DEFAULT_ORIGIN, account: null, auth: null, stdio_key: null, connector_key: null, oauth_clients: {}, tools: {} };
 }
 
 export function readStore(env = systemEnv()) {

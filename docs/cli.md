@@ -46,12 +46,25 @@ npx three-ws setup --clients print
 
 | Flag | Values |
 |---|---|
-| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `codex`, `gemini`, `hermes`, `print` |
+| `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `codex`, `gemini`, `hermes`, `grok-bot`, `print` |
+| `--connector-key` | With `grok-bot`: mint a spend-free API key for Grok Bot's Bot secret |
+| `--no-copy` | With `grok-bot`: do not copy the server URL to the clipboard |
 | `--servers` | Server names from `npx three-ws mcp list --available` |
 | `--packages` | Also add stdio `@three-ws/*-mcp` packages |
 | `--project` | Write project-scoped config in the current directory |
 | `--proxy` | Route every server through the local proxy, so your tool choices apply in every client |
 | `--yes` | Never prompt; take the defaults |
+
+### Grok Bot
+
+Grok Bot is configured in xAI's cloud, so `setup` cannot write a file for it. `--clients grok-bot` runs the part the CLI can do, with no sign-in for the free studio:
+
+```bash
+npx three-ws setup --client grok-bot
+npx three-ws setup --client grok-bot --connector-key   # key for your agents, never spends
+```
+
+It prints the fields Grok Bot's custom MCP connector asks for (name `three-ws`, transport Streamable HTTP, server URL `https://three.ws/api/mcp-grok`, authentication None or API key), the one-line chat prompt that adds the same server, copies the URL to the clipboard where a clipboard tool exists, and verifies the public URL with a live `tools/list`. The command exits 1 if that verification fails. With `--connector-key` it signs in if needed (requesting `agents:write`), mints a `connector` preset key once through `POST /api/api-keys`, stores it in the credential file, and prints it for the Bot secret field. Revoke it any time on [Dashboard → API](/dashboard/api). The full Grok setup is in [three.ws for Grok](./grok.md) and the [Grok Bot guide](./grok-bot.md).
 
 ### Where each client's config lives
 

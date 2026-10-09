@@ -38,7 +38,7 @@ function say(ctx, text) {
  * Sign in by the chosen mode. `mode` null means ask (or default to OAuth when
  * prompting is not allowed). Returns the whoami payload.
  */
-export async function signIn(ctx, { mode = null, financial = false } = {}) {
+export async function signIn(ctx, { mode = null, financial = false, extraScopes = [] } = {}) {
 	const { origin, env } = ctx;
 	let chosen = mode;
 	if (!chosen && canPrompt(ctx)) {
@@ -71,6 +71,7 @@ export async function signIn(ctx, { mode = null, financial = false } = {}) {
 		const me = await loginDevice({
 			origin,
 			financial,
+			extraScopes,
 			env,
 			onCode: (link, opened) => {
 				say(ctx, '');
@@ -88,6 +89,7 @@ export async function signIn(ctx, { mode = null, financial = false } = {}) {
 	const me = await loginOAuth({
 		origin,
 		financial,
+		extraScopes,
 		env,
 		onUrl: (url, opened) => {
 			if (!opened) {

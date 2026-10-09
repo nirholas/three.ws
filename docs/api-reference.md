@@ -4293,6 +4293,8 @@ Requires a browser session.
 | `spend` | Move funds: pay, trade, launch, withdraw, publish paid services |
 | `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`, `memory:write`, `agents:read`, `wallet:read`, `wallet:write`, `services:write` | Fine-grained scopes; the coarse ones expand into these |
 
+`POST /api/api-keys` (the route the `three-ws` CLI uses with an OAuth or API-key bearer) accepts the same `preset: "connector"` and omits `scope`; a bearer must itself hold the fine scopes the preset expands to (`avatars:*`, `memory:*`, `agents:*`, `wallet:read`) or it answers `403 insufficient_scope`. The new key is returned as `data.token`.
+
 A `connector` key asking for `spend` or any scope outside its three answers `400 validation_error`. At authentication a connector key has every spend-capable scope removed, so value-moving MCP tools answer JSON-RPC `-32003` and spend routes answer `insufficient_scope`. Keys created before scopes existed keep the power they had. See [Key scopes and the AI agent preset](./mcp.md#key-scopes-and-the-ai-agent-preset).
 
 **Response** (`201`)

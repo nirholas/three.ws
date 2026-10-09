@@ -29288,6 +29288,13 @@
 			"summary": "The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.",
 			"tags": ["improvement"],
 			"link": "/grok"
+		},
+		{
+			"date": "2026-10-09",
+			"title": "One command sets up Grok Bot",
+			"summary": "Run npx three-ws setup --client grok-bot to get the exact connector fields for Grok Bot, the server URL copied to your clipboard, and a live check that the public URL answers. Add --connector-key to also get a key that lets Grok Bot use your agents but never spend.",
+			"tags": ["feature"],
+			"link": "/docs/cli"
 		}
 	]
 }

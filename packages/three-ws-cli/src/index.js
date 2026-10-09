@@ -6,7 +6,9 @@ export { readStore, writeStore, updateStore, resolveOrigin, mask, DEFAULT_ORIGIN
 export { credentialsPath, configDir, systemEnv } from './paths.js';
 export { bearerFor, authorizeInBrowser, discover, pkcePair } from './oauth.js';
 export { deviceLogin, startLink, pollLink } from './device.js';
-export { loginKey, loginOAuth, loginDevice, logout, whoami, currentIdentity, ensureStdioKey, scopesFor } from './auth.js';
+export { loginKey, loginOAuth, loginDevice, logout, whoami, currentIdentity, ensureStdioKey, ensureConnectorKey, scopesFor } from './auth.js';
+export { REMOTE_CLIENTS, getRemoteClient } from './clients/remote.js';
+export { copyText } from './clipboard.js';
 export { CLIENTS, PRINT_CLIENT, getClient, detectClients, readServers, writeServer, removeServer } from './clients/index.js';
 export { hostedServers, stdioPackages, slugForPath, loadDirectory, loadCatalog } from './servers.js';
 export { buildEntry, buildPackageEntry, proxyInvocation, usesProxy } from './entries.js';

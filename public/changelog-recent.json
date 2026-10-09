@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-09T04:16:21.332Z",
+	"generated_at": "2026-10-09T04:16:42.903Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3859,
+	"total": 3860,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -143,6 +143,16 @@
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "One command sets up Grok Bot",
+			"summary": "Run npx three-ws setup --client grok-bot to get the exact connector fields for Grok Bot, the server URL copied to your clipboard, and a live check that the public URL answers. Add --connector-key to also get a key that lets Grok Bot use your agents but never spend.",
+			"link": "/docs/cli",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1541,17 +1551,6 @@
 			"tags": [
 				"feature",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-18",
-			"type": "update",
-			"title": "Choose your chart everywhere a coin is charted, now including DEXTools",
-			"summary": "Every place three.ws draws a coin's price chart now lets you switch to the chart you trust. The Trade Terminal at /trades and Mission Control used to show only the platform's own live candles; both now have a source bar with DexScreener, Birdeye, GMGN, DEXTools and GeckoTerminal one click away, the same choice already offered on coin pages and launch pages. DEXTools is new on all four. Your pick is remembered and follows you from coin to coin, the bar works from the keyboard with the arrow keys, and each chart comes with a link that opens the same market on the provider's own site. If a provider cannot draw a coin yet, or its chart is blocked by your browser or network, you get a plain explanation with a retry and a working alternative instead of an empty box.",
-			"link": "/trades",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

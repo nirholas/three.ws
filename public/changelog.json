@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-09T04:16:21.310Z",
+	"generated_at": "2026-10-09T04:16:42.879Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -140,6 +140,16 @@
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-09",
+			"type": "update",
+			"title": "One command sets up Grok Bot",
+			"summary": "Run npx three-ws setup --client grok-bot to get the exact connector fields for Grok Bot, the server URL copied to your clipboard, and a live check that the public URL answers. Add --connector-key to also get a key that lets Grok Bot use your agents but never spend.",
+			"link": "/docs/cli",
+			"tags": [
+				"feature"
 			]
 		},
 		{

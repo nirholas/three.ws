@@ -11,6 +11,8 @@ import { CLIENTS, PRINT_CLIENT, detectClients, getClient } from '../clients/inde
 import { verifyServers, ensureSelections, applyToClients } from '../configure.js';
 import { usesProxy, buildEntry } from '../entries.js';
 import { VERSION } from '../http.js';
+import { REMOTE_CLIENTS, getRemoteClient } from '../clients/remote.js';
+import { allRemote, setupRemoteOnly, connectRemote, renderRemote, remoteJson } from './remote.js';
 
 function list(value) {
 	if (!value) return null;
@@ -28,6 +30,10 @@ function pickServers(all, requested) {
 
 export async function setup(ctx) {
 	const { flags, origin, env } = ctx;
+	// Cloud-configured clients (Grok Bot) have no file to write and need no account
+	// for the free studio, so a request for only those skips sign-in entirely.
+	const requestedIds = list(flags.clients) || [];
+	if (allRemote(requestedIds)) return setupRemoteOnly(ctx, requestedIds);
 	const interactive = canPrompt(ctx);
 	if (interactive) p.intro(`${c.bold('three.ws')} setup ${c.dim(`v${VERSION} · ${origin}`)}`);
 
@@ -77,22 +83,26 @@ export async function setup(ctx) {
 	const detected = detectClients(env);
 	let clients;
 	let printOnly = false;
+	let remoteIds = [];
 	const requestedClients = list(flags.clients);
 	if (requestedClients) {
 		printOnly = requestedClients.includes('print');
-		clients = requestedClients.filter((id) => id !== 'print').map(getClient);
+		remoteIds = requestedClients.filter((id) => getRemoteClient(id));
+		clients = requestedClients.filter((id) => id !== 'print' && !getRemoteClient(id)).map(getClient);
 	} else if (interactive) {
 		const chosen = answer(await p.multiselect({
 			message: detected.length ? 'Write the config into which clients?' : 'No MCP clients found on this machine. Write a config for which ones anyway?',
 			options: [
 				...CLIENTS.map((cl) => ({ value: cl.id, label: cl.label, hint: detected.includes(cl) ? tildify(cl.configPath(env, { project: flags.project })) : 'not detected' })),
+				...REMOTE_CLIENTS.map((cl) => ({ value: cl.id, label: cl.label, hint: cl.hint })),
 				{ value: 'print', label: 'Print the JSON instead', hint: 'for any other MCP client' },
 			],
 			initialValues: detected.length ? detected.map((cl) => cl.id) : ['print'],
 			required: true,
 		}));
 		printOnly = chosen.includes('print');
-		clients = chosen.filter((id) => id !== 'print').map(getClient);
+		remoteIds = chosen.filter((id) => getRemoteClient(id));
+		clients = chosen.filter((id) => id !== 'print' && !getRemoteClient(id)).map(getClient);
 	} else {
 		clients = detected;
 		printOnly = !detected.length;
@@ -128,6 +138,10 @@ export async function setup(ctx) {
 	spin?.stop('Verified with live tool calls');
 	const liveTools = Object.fromEntries(results.filter((r) => r.ok).map((r) => [r.server.slug, r.tools]));
 
+	// 5b. Cloud-configured clients: verify the public URL and print the fields.
+	const remote = [];
+	for (const id of remoteIds) remote.push(await connectRemote(ctx, getRemoteClient(id), { keyed: Boolean(flags['connector-key']) }));
+
 	// 6. Write.
 	const apiKey = mode === 'apikey' ? readStore(env).auth.key : null;
 	const writes = applyToClients({ clients, servers, packages, mode, apiKey, stdioKey, liveTools, forceProxy: Boolean(flags.proxy), project: Boolean(flags.project), origin, env });
@@ -143,8 +157,9 @@ export async function setup(ctx) {
 			servers: results.map((r) => ({ slug: r.server.slug, url: r.server.url, ok: r.ok, tools: r.ok ? r.total : null, enabled: r.ok ? r.enabled : null, error: r.error || null })),
 			clients: writes.map((w) => ({ id: w.client.id, file: w.file, servers: w.servers, error: w.error })),
 			...(printed ? { print: { mcpServers: printed } } : {}),
+			...(remote.length ? { remote: remoteJson(remote) } : {}),
 		});
-		return results.every((r) => r.ok) && writes.every((w) => !w.error) ? 0 : 1;
+		return results.every((r) => r.ok) && writes.every((w) => !w.error) && remote.every((r) => r.verify.ok) ? 0 : 1;
 	}
 
 	line('');
@@ -173,8 +188,9 @@ export async function setup(ctx) {
 		line(c.bold('Add this to any MCP client:'));
 		printJson({ mcpServers: printed });
 	}
+	renderRemote(remote);
 	line('');
-	const failed = results.filter((r) => !r.ok).length + writes.filter((w) => w.error).length;
+	const failed = results.filter((r) => !r.ok).length + writes.filter((w) => w.error).length + remote.filter((r) => !r.verify.ok).length;
 	if (interactive) {
 		if (failed) p.outro(c.yellow(`${failed} step${failed === 1 ? '' : 's'} failed above. Fix it and run \`three-ws setup\` again; finished steps are kept.`));
 		else p.outro(`Done. Restart your client${writes.length === 1 ? '' : 's'} to load the tools. ${c.dim('Check anytime: three-ws status')}`);

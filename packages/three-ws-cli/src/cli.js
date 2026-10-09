@@ -44,7 +44,9 @@ ${c.bold('Sign-in options')} (setup, login)
   --financial           Also request the scopes that let tools spend from your agent wallet
 
 ${c.bold('Setup options')}
-  --clients a,b         claude-code, claude-desktop, cursor, windsurf, vscode, codex, gemini, hermes, print
+  --clients a,b         claude-code, claude-desktop, cursor, windsurf, vscode, codex, gemini, hermes, grok-bot, print
+  --connector-key       With grok-bot: mint a spend-free API key for Grok Bot's Bot secret
+  --no-copy             Do not copy the grok-bot server URL to the clipboard
   --servers a,b         Server slugs or paths (default: /mcp, the unified server with every tool)
   --packages a,b        Also add stdio @three-ws/*-mcp packages
   --project             Write project-scoped config (.mcp.json, .cursor/, .vscode/, .gemini/) in this directory
@@ -93,6 +95,8 @@ const OPTIONS = {
 	financial: { type: 'boolean' },
 	clients: { type: 'string' },
 	client: { type: 'string' },
+	'connector-key': { type: 'boolean' },
+	'no-copy': { type: 'boolean' },
 	servers: { type: 'string' },
 	packages: { type: 'string' },
 	project: { type: 'boolean' },

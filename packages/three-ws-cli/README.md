@@ -1,6 +1,6 @@
 # three-ws
 
-Connect any MCP client to [three.ws](https://three.ws) in one command. `three-ws` signs you in, writes the hosted three.ws MCP servers into every client it finds (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI, Hermes), and verifies each one with a live `tools/list`.
+Connect any MCP client to [three.ws](https://three.ws) in one command. `three-ws` signs you in, writes the hosted three.ws MCP servers into every client it finds (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI, Hermes), prints the connector fields for Grok Bot, and verifies each one with a live `tools/list`.
 
 ```bash
 npx three-ws setup
@@ -26,6 +26,26 @@ npx three-ws status
 npx three-ws create "Nova" --description "A deep-space guide."   # an agent with its own Solana wallet
 npx three-ws launch --agent <id> --name Nova --symbol NOVA      # prefilled, you sign on three.ws/launch
 ```
+
+## Grok Bot
+
+Grok Bot's MCP configuration lives in xAI's cloud, so there is no file to write. `setup` handles the rest: it picks the Grok connector (`https://three.ws/api/mcp-grok`), copies the URL to your clipboard when a clipboard tool exists, prints the exact fields for Grok Bot's custom MCP connector, and runs a real `tools/list` against the public URL to prove it answers from outside.
+
+```bash
+npx three-ws setup --client grok-bot                    # free 3D studio, no account, no key
+npx three-ws setup --client grok-bot --connector-key    # also mint a key so Grok Bot can use your agents
+npx three-ws setup --clients cursor,grok-bot --yes      # local clients and Grok Bot in one run
+```
+
+```
+Grok Bot (cloud connector, nothing to write locally)
+  Name            three-ws
+  Transport       Streamable HTTP
+  Server URL      https://three.ws/api/mcp-grok
+  Authentication  None
+```
+
+`--connector-key` signs you in, mints one key with the `connector` preset (read, generate and edit agents, never spend), stores it in the credential file, and reuses it on later runs. Paste it as a Bot secret. `--no-copy` skips the clipboard. A `localhost` origin is flagged, because Grok Bot connects from xAI's cloud. Full walkthrough: [three.ws/docs/grok](https://three.ws/docs/grok).
 
 Sign-in is a browser OAuth flow by default. `--device` approves a code from any browser, and `--key sk_live_...` (or `THREE_WS_API_KEY`) uses an API key from [Dashboard → API](https://three.ws/dashboard/api). Tools that move funds are off unless you sign in with `--financial` and enable them.
 
