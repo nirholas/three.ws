@@ -75,6 +75,30 @@ and DINOv2 reference encoder carry their own upstream licenses (BSD-3 and Apache
 2.0 respectively). No weights or model code are redistributed by the platform;
 only generated GLBs are returned to callers.
 
+### Territory rule (EU, UK and South Korea are excluded)
+
+The agreement covers the worldwide territory **excluding the European Union,
+the United Kingdom and South Korea** (Section 1.l), and Section 5.c forbids using
+the model, or its output, outside that territory. The platform enforces this on
+the server, not in the client:
+
+- The requester's country comes from the edge geo header (`clientCountry` in
+  `api/_lib/client-geo.js`), never from a request body field.
+- `api/_lib/forge-territory.js` holds the restricted set (the 27 EU member
+  states, GB and KR) and `laneAllowedInTerritory`. An unknown or malformed
+  country is treated as restricted (fail closed).
+- Both Tencent-model lanes are gated: `hunyuan3d` (this worker) and
+  `huggingface` (a Spaces chain that runs Hunyuan3D-2 and 2.1). Auto routing,
+  poll-time failover, the failover suggestions and the prompt-to-avatar plan
+  all filter through it, and an explicit `backend=hunyuan3d` or
+  `backend=huggingface` request from a restricted country answers `403
+  region_restricted` with the lanes that remain open.
+- TRELLIS.2 (MIT, `workers/model-trellis2/`) is the default image-to-3D lane
+  everywhere, and the only one of the two families that serves the restricted
+  regions.
+
+The Notice file the agreement requires is in [`NOTICE`](NOTICE).
+
 ## Endpoints
 
 `POST /infer`, `POST /reconstruct`, `GET /tasks/{id}`, `GET /jobs/{id}` require

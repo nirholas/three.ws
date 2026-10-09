@@ -22,6 +22,7 @@ import { finalizeReconstructStage, pollRiggingStage } from '../_lib/reconstruct-
 import { finalizeAutoRigStage } from '../_lib/auto-rig.js';
 import { isAllowedProviderResultUrl } from '../_lib/provider-result-url.js';
 import { generateReferenceImage } from '../_lib/forge-reference-image.js';
+import { requestTerritory } from '../_lib/forge-territory.js';
 import { planPromptAvatarLanes, promptAvatarImagePrompt } from '../_lib/prompt-avatar.js';
 import { laneHealthSnapshot } from '../_lib/forge-lane-health.js';
 
@@ -1135,6 +1136,7 @@ const handleReconstruct = wrap(async (req, res) => {
 			platform: reconstructCandidates.filter((c) => !BYOK_REGEN_PROVIDERS.includes(c.name)),
 			byok: reconstructCandidates.filter((c) => BYOK_REGEN_PROVIDERS.includes(c.name)),
 			health: await promptLaneHealth(),
+			country: requestTerritory(req),
 		})
 		: reconstructCandidates.map((c) => ({ ...c, mode: 'reconstruct', lane: c.name, params: {} }));
 
@@ -1289,7 +1291,7 @@ const handleReconstruct = wrap(async (req, res) => {
 // and failing it minutes later. Best-effort: no telemetry keeps the plan order.
 async function promptLaneHealth() {
 	try {
-		return (await laneHealthSnapshot(['hunyuan3d', 'trellis_selfhost'])).byId;
+		return (await laneHealthSnapshot(['trellis2', 'hunyuan3d', 'trellis_selfhost'])).byId;
 	} catch (err) {
 		console.warn('[avatars] prompt lane health skipped:', err?.message);
 		return {};

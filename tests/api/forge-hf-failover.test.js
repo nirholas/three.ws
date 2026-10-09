@@ -29,27 +29,27 @@ describe('laneAfterHfFailure', () => {
 		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
 		process.env.NVIDIA_API_KEY = 'nv';
-		expect(laneAfterHfFailure({})).toBe('hunyuan3d');
-		expect(laneAfterHfFailure({ userImages: true })).toBe('hunyuan3d');
+		expect(laneAfterHfFailure({country: 'US' })).toBe('hunyuan3d');
+		expect(laneAfterHfFailure({ userImages: true, country: 'US' })).toBe('hunyuan3d');
 	});
 
 	it('sends a text prompt to the free NVIDIA lane when no self-host worker is wired', () => {
 		process.env.NVIDIA_API_KEY = 'nv';
-		expect(laneAfterHfFailure({ userImages: false })).toBe('nvidia');
+		expect(laneAfterHfFailure({ userImages: false, country: 'US' })).toBe('nvidia');
 	});
 
 	it('never sends a photo to the text-only NVIDIA lane', () => {
 		process.env.NVIDIA_API_KEY = 'nv';
-		expect(laneAfterHfFailure({ userImages: true })).toBeNull();
+		expect(laneAfterHfFailure({ userImages: true, country: 'US' })).toBeNull();
 	});
 
 	it('keeps an explicitly chosen HuggingFace engine on its designed busy state', () => {
 		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example.run.app';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
-		expect(laneAfterHfFailure({ explicit: true })).toBeNull();
+		expect(laneAfterHfFailure({ explicit: true, country: 'US' })).toBeNull();
 	});
 
 	it('has nowhere to go when nothing else is configured', () => {
-		expect(laneAfterHfFailure({})).toBeNull();
+		expect(laneAfterHfFailure({country: 'US' })).toBeNull();
 	});
 });

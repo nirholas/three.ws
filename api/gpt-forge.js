@@ -163,6 +163,11 @@ import {
 	submitFailoverJob,
 	MAX_FAILOVER_HOPS,
 } from './_lib/forge-failover.js';
+import {
+	laneAllowedInTerritory,
+	requestTerritory,
+	isTencentLane,
+} from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
@@ -839,8 +844,8 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 // hop to one visibly instead of looping its countdown on the same dead Spaces.
 // The lane always holds reference views by now (uploaded, or synthesized from
 // the prompt), so the suggestions are scoped to image-capable lanes.
-function hfLaneBusy(res) {
-	const retryBackends = retryBackendSuggestions({ attempted: ['huggingface'], hasImage: true });
+function hfLaneBusy(res, country = null) {
+	const retryBackends = retryBackendSuggestions({ attempted: ['huggingface'], hasImage: true, country });
 	res.setHeader('retry-after', '30');
 	return json(res, 503, {
 		error: 'provider_busy',
@@ -886,6 +891,10 @@ async function runHfImageLane({
 	opts = null,
 	cacheKey = null,
 }) {
+	// The Spaces chain runs Hunyuan3D, so the lane is closed to the EU, the UK,
+	// South Korea and unknown countries. false means "could not serve" and every
+	// caller already falls through to the next lane.
+	if (!laneAllowedInTerritory('huggingface', requestTerritory(req))) return false;
 	let provider;
 	try {
 		const mod = await import('./_providers/huggingface.js');
@@ -1164,7 +1173,11 @@ async function startJob(req, res) {
 	// tier below High (see freeLaneCandidates). An image submission with no guidance
 	// prompt classifies to null and keeps the default order.
 	const subjectClass = classifyForgeSubject(prompt);
-	let backendId = resolveBackendId({ path, tier, backend: body?.backend, userImages: isImageMode, subjectClass });
+	// Requester country, resolved from the edge geo header (never a body field).
+	// Lanes that run a Tencent model are not routed for the EU, the UK, South
+	// Korea or an unknown country (api/_lib/forge-territory.js).
+	const country = requestTerritory(req);
+	let backendId = resolveBackendId({ path, tier, backend: body?.backend, userImages: isImageMode, subjectClass, country });
 	// Tracks whether the free NVIDIA NIM lane has already been attempted this
 	// request, so the paid-lane fallback below never retries a lane that just
 	// failed (draft already tries nvidia first; standard/high reach it only as a
@@ -1200,11 +1213,23 @@ async function startJob(req, res) {
 	// platform works with zero setup; Meshy/Tripo/Rodin stay fully selectable the
 	// moment a key is present or a backend is explicitly chosen.
 	const backendExplicit = Boolean(body?.backend && BACKENDS[body.backend]);
+	// An explicitly named lane is honoured everywhere except where its model
+	// licence excludes the requester's territory. Say so, and name the lane that
+	// serves the same request there, instead of silently swapping the engine.
+	if (backendExplicit && !laneAllowedInTerritory(body.backend, country)) {
+		return json(res, 403, {
+			error: 'region_restricted',
+			backend: body.backend,
+			message:
+				'This engine is not available in your region because its model licence excludes it. Use the default engine, which is available everywhere.',
+			retry_backends: retryBackendSuggestions({ hasImage: isImageMode, country }),
+		});
+	}
 	if (path === 'geometry' && !backendExplicit) {
 		const defaultByok = BACKENDS[backendId]?.byok;
 		if (defaultByok && !(await resolveProviderKey(req, body, defaultByok))) {
 			path = 'image';
-			backendId = resolveBackendId({ path, tier, userImages: isImageMode, subjectClass });
+			backendId = resolveBackendId({ path, tier, userImages: isImageMode, subjectClass, country });
 		}
 	}
 
@@ -1218,7 +1243,7 @@ async function startJob(req, res) {
 	// reused below to decide an honest cold-start ETA without a second probe.
 	if (!backendExplicit && (path === 'image' || path === 'sketch')) {
 		try {
-			const candidates = freeLaneCandidates(path, tier.id, isImageMode, subjectClass);
+			const candidates = freeLaneCandidates(path, tier.id, isImageMode, subjectClass, country);
 			if (candidates.length) {
 				const snap = await laneHealthSnapshot(candidates);
 				const healthAware = resolveBackendIdWithHealth({
@@ -1227,6 +1252,7 @@ async function startJob(req, res) {
 					userImages: isImageMode,
 					health: snap.statusMap,
 					subjectClass,
+					country,
 				});
 				if (BACKENDS[healthAware]) backendId = healthAware;
 			}
@@ -1873,7 +1899,7 @@ async function startJob(req, res) {
 					// creates its own provider. We deliberately do NOT build a Replicate
 					// client here: creating one would 503 on a deployment that has no
 					// REPLICATE_API_TOKEN, breaking an explicitly-chosen free engine.
-				} else if (backendId === 'trellis_selfhost') {
+				} else if (backendId === 'trellis2' || backendId === 'trellis_selfhost') {
 					// Driven by the dedicated self-host TRELLIS lane below, which builds
 					// its own GCP provider. Same reasoning as huggingface, never build a
 					// Replicate client here, or a deployment without REPLICATE_API_TOKEN
@@ -2020,71 +2046,91 @@ async function startJob(req, res) {
 		// sketch lane: returns a poll token that routes back through the gcp provider's
 		// status(). Reached on an explicit pick OR as the preferred free image lane
 		// (FREE_FALLBACK_FOR_PATH) when MODEL_TRELLIS_URL is configured.
-		if (backendId === 'trellis_selfhost') {
+		if (backendId === 'trellis2' || backendId === 'trellis_selfhost') {
 			let gcp;
 			try {
 				gcp = createGcpProvider();
 			} catch {
 				return json(res, 501, {
 					error: 'backend_unconfigured',
-					backend: 'trellis_selfhost',
+					backend: backendId,
 					message: 'Self-hosted TRELLIS is not configured on this deployment.',
 				});
 			}
 
 			let job;
 			let selfHostTrellisFailed = false;
-			try {
-				job = await gcp.submit({
-					mode: 'trellis',
-					sourceUrl: referenceImageUrl,
-					params: {
-						images: views,
-						seed: opts.seed ?? undefined,
-						// Tier-scaled sampler/export budgets: this is where standard/high
-						// actually buy more quality on our own GPU (steps, kept geometry,
-						// texture resolution) instead of only a bigger advertised polycount.
-						quality: selfhostQualityForTier(tier.id),
-						// Background pre-matting via the worker's sibling rembg service
-						// (RMBG-2/isnet). A busy background (the classroom behind the
-						// subject) separates poorly in TRELLIS's internal cutout and bleeds
-						// into the fused geometry; a clean alpha cutout of every view before
-						// fusion removes that.
-						//
-						// This used to be gated to real user photos, on the reasoning that a
-						// text→3D reference is "already synthesized on a plain background".
-						// Measured on 2026-09-08, that premise is false: plain is not
-						// transparent, and the reconstruction fuses the plain backdrop in as
-						// geometry (a figure standing on a full-footprint slab, and twice no
-						// figure at all). Same change and same evidence as api/forge.js; see
-						// prompts/quality-bar/_generated/10/pass-2026-09-08/. draft stays
-						// fast (single view, no matte), and a rembg miss still falls back to
-						// the original image rather than failing the generation.
-						matte: tier.id !== 'draft',
-					},
-				});
-			} catch (err) {
-				if (err?.code === 'mode_unconfigured') {
-					return json(res, 501, {
-						error: 'backend_unconfigured',
-						backend: 'trellis_selfhost',
-						message:
-							'Self-hosted TRELLIS is not configured on this deployment (MODEL_TRELLIS_URL is not set).',
+			// TRELLIS.2 leads; when it is unavailable the same request retries on the
+			// TRELLIS v1 worker, which holds the same reference views.
+			for (;;) {
+				try {
+					job = await gcp.submit(backendId === 'trellis2' ? {
+						mode: 'trellis2',
+						sourceUrl: referenceImageUrl,
+						params: {
+							images: views,
+							seed: opts.seed ?? undefined,
+							// Voxel resolution: an explicit request value, else the worker maps
+							// the tier (draft 512, standard and high 1024).
+							resolution: opts.resolution ?? undefined,
+							tier: tier.id,
+						},
+					} : {
+						mode: 'trellis',
+						sourceUrl: referenceImageUrl,
+						params: {
+							images: views,
+							seed: opts.seed ?? undefined,
+							// Tier-scaled sampler/export budgets: this is where standard/high
+							// actually buy more quality on our own GPU (steps, kept geometry,
+							// texture resolution) instead of only a bigger advertised polycount.
+							quality: selfhostQualityForTier(tier.id),
+							// Background pre-matting via the worker's sibling rembg service
+							// (RMBG-2/isnet). A busy background (the classroom behind the
+							// subject) separates poorly in TRELLIS's internal cutout and bleeds
+							// into the fused geometry; a clean alpha cutout of every view before
+							// fusion removes that.
+							//
+							// This used to be gated to real user photos, on the reasoning that a
+							// text→3D reference is "already synthesized on a plain background".
+							// Measured on 2026-09-08, that premise is false: plain is not
+							// transparent, and the reconstruction fuses the plain backdrop in as
+							// geometry (a figure standing on a full-footprint slab, and twice no
+							// figure at all). Same change and same evidence as api/forge.js; see
+							// prompts/quality-bar/_generated/10/pass-2026-09-08/. draft stays
+							// fast (single view, no matte), and a rembg miss still falls back to
+							// the original image rather than failing the generation.
+							matte: tier.id !== 'draft',
+						},
 					});
+				} catch (err) {
+					if (err?.code === 'mode_unconfigured') {
+						return json(res, 501, {
+							error: 'backend_unconfigured',
+							backend: backendId,
+							message:
+								'Self-hosted TRELLIS is not configured on this deployment (the worker URL is not set).',
+						});
+					}
+					// A genuine config/input fault surfaces as-is. An upstream blip (the
+					// worker is cold, restarting, throttled, or briefly unreachable) must
+					// not fail a request another lane can serve: cool this lane so the next
+					// request skips it, then fail over below to our other self-host worker
+					// (Hunyuan3D) or the standing reconstruct chain (which free-firsts to HF
+					// and only then the paid lane). We already hold the reference views, so
+					// the next lane reconstructs from exactly the same input.
+					if (!isUpstreamUnavailable(err)) throw err;
+					await markLaneUnhealthy(backendId);
+					console.warn(
+						`[forge] self-host TRELLIS lane unavailable (${err?.providerStatus || err?.code}); failing over to the next image lane`,
+					);
+					if (backendId === 'trellis2' && backendIsConfigured('trellis_selfhost')) {
+						backendId = 'trellis_selfhost';
+						continue;
+					}
+					selfHostTrellisFailed = true;
 				}
-				// A genuine config/input fault surfaces as-is. An upstream blip (the
-				// worker is cold, restarting, throttled, or briefly unreachable) must
-				// not fail a request another lane can serve: cool this lane so the next
-				// request skips it, then fail over below to our other self-host worker
-				// (Hunyuan3D) or the standing reconstruct chain (which free-firsts to HF
-				// and only then the paid lane). We already hold the reference views, so
-				// the next lane reconstructs from exactly the same input.
-				if (!isUpstreamUnavailable(err)) throw err;
-				await markLaneUnhealthy('trellis_selfhost');
-				console.warn(
-					`[forge] self-host TRELLIS lane unavailable (${err?.providerStatus || err?.code}); failing over to the next image lane`,
-				);
-				selfHostTrellisFailed = true;
+				break;
 			}
 
 			if (!selfHostTrellisFailed) {
@@ -2138,7 +2184,11 @@ async function startJob(req, res) {
 			// HuggingFace Spaces lane and only then the paid Replicate account. Falls
 			// through (no return) into the lane blocks below; provenance reports the
 			// lane that actually runs, so the failover is never silent.
-			if (process.env.GCP_HUNYUAN3D_URL && process.env.GCP_RECONSTRUCTION_KEY) {
+			if (
+				process.env.GCP_HUNYUAN3D_URL &&
+				process.env.GCP_RECONSTRUCTION_KEY &&
+				laneAllowedInTerritory('hunyuan3d', country)
+			) {
 				backendId = 'hunyuan3d';
 				provider = createGcpProvider();
 			} else {
@@ -2172,7 +2222,7 @@ async function startJob(req, res) {
 				return;
 			// Failover instead of a dead end: see laneAfterHfFailure for why an
 			// auto-routed request lands here while our own GPU worker is healthy.
-			const nextLane = laneAfterHfFailure({ explicit: backendExplicit, userImages: isImageMode });
+			const nextLane = laneAfterHfFailure({ explicit: backendExplicit, userImages: isImageMode, country });
 			if (nextLane === 'hunyuan3d') {
 				console.warn('[forge] free HuggingFace lane could not serve this request; failing over to self-hosted Hunyuan3D');
 				backendId = 'hunyuan3d';
@@ -2183,7 +2233,7 @@ async function startJob(req, res) {
 				if (await runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opts, cacheKey })) return;
 			}
 			if (backendId === 'huggingface') {
-				return hfLaneBusy(res);
+				return hfLaneBusy(res, country);
 			}
 		}
 
@@ -2337,7 +2387,7 @@ async function startJob(req, res) {
 
 			// Fallback #2: self-hosted Hunyuan3D Cloud Run worker, when wired.
 			const hunyuanUrl = process.env.GCP_HUNYUAN3D_URL;
-			if (!job && hunyuanUrl && process.env.GCP_RECONSTRUCTION_KEY) {
+			if (!job && hunyuanUrl && process.env.GCP_RECONSTRUCTION_KEY && laneAllowedInTerritory('hunyuan3d', country)) {
 				console.warn(
 					`[forge] platform TRELLIS lane unavailable (${submitErr?.providerStatus || submitErr?.code}); degrading ${mode3d} to self-hosted Hunyuan3D`,
 				);
@@ -2399,7 +2449,7 @@ async function startJob(req, res) {
 		// token tag so polling re-resolves the caller's key (not the platform one).
 		// Either way the upstream id is what the store keys on.
 		const jobHandle =
-			backendId === 'hunyuan3d' || backendId === 'trellis_selfhost'
+			backendId === 'hunyuan3d' || backendId === 'trellis2' || backendId === 'trellis_selfhost'
 				? encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId })
 				: backendId === 'replicate_byok'
 					? encodeJobToken({ provider: 'replicate_byok', kind: null, taskId: job.extJobId })
@@ -3064,7 +3114,7 @@ async function pollJob(req, res, jobId) {
 		const redispatchable =
 			platformLaneFailed && hop < MAX_FAILOVER_HOPS && meta?.preview_image_url && meta?.path !== 'sketch';
 		if (redispatchable) {
-			const nextLane = await pickRedispatchLane({ attempted });
+			const nextLane = await pickRedispatchLane({ attempted, country: requestTerritory(req) });
 			if (nextLane) {
 				try {
 					const submitted = await submitFailoverJob({
@@ -3125,7 +3175,7 @@ async function pollJob(req, res, jobId) {
 		const suggestions =
 			meta?.path === 'sketch'
 				? []
-				: retryBackendSuggestions({ attempted, hasImage: Boolean(meta?.preview_image_url) });
+				: retryBackendSuggestions({ attempted, hasImage: Boolean(meta?.preview_image_url), country: requestTerritory(req) });
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',

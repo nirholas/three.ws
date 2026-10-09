@@ -161,33 +161,33 @@ describe('retryBackendSuggestions', () => {
 		process.env.HF_TOKEN = 'hf';
 		process.env.REPLICATE_API_TOKEN = 'r8';
 
-		const all = retryBackendSuggestions({ hasImage: true });
+		const all = retryBackendSuggestions({ hasImage: true, country: 'US' });
 		expect(all).toEqual(['trellis_selfhost', 'huggingface', 'trellis']);
 
-		const minusFailed = retryBackendSuggestions({ hasImage: true, attempted: ['trellis_selfhost'] });
+		const minusFailed = retryBackendSuggestions({ hasImage: true, attempted: ['trellis_selfhost'], country: 'US' });
 		expect(minusFailed).toEqual(['huggingface', 'trellis']);
 	});
 
 	it('offers the text-only NVIDIA lane for text jobs but never for photo input', () => {
 		process.env.NVIDIA_API_KEY = 'nv';
-		expect(retryBackendSuggestions({ hasImage: false })).toEqual(['nvidia']);
-		expect(retryBackendSuggestions({ hasImage: true })).toEqual([]);
+		expect(retryBackendSuggestions({ hasImage: false, country: 'US' })).toEqual(['nvidia']);
+		expect(retryBackendSuggestions({ hasImage: true, country: 'US' })).toEqual([]);
 	});
 
 	it('returns [] when nothing is configured — the caller omits the retry affordance', () => {
-		expect(retryBackendSuggestions({ hasImage: true })).toEqual([]);
+		expect(retryBackendSuggestions({ hasImage: true, country: 'US' })).toEqual([]);
 	});
 });
 
 describe('pickRedispatchLane', () => {
 	it('returns null with no configured async lane', async () => {
-		expect(await pickRedispatchLane({ attempted: [] })).toBeNull();
+		expect(await pickRedispatchLane({ attempted: [], country: 'US' })).toBeNull();
 	});
 
 	it('skips attempted lanes even when configured', async () => {
 		process.env.MODEL_TRELLIS_URL = 'https://model-trellis.example';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
-		expect(await pickRedispatchLane({ attempted: ['trellis_selfhost'] })).toBeNull();
+		expect(await pickRedispatchLane({ attempted: ['trellis_selfhost'], country: 'US' })).toBeNull();
 	});
 
 	it('skips lanes the health snapshot marks down', async () => {
@@ -195,12 +195,12 @@ describe('pickRedispatchLane', () => {
 		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
 		laneHealth.mockResolvedValue({ byId: { trellis_selfhost: { status: 'down' } } });
-		expect(await pickRedispatchLane({ attempted: [] })).toBe('hunyuan3d');
+		expect(await pickRedispatchLane({ attempted: [], country: 'US' })).toBe('hunyuan3d');
 
 		laneHealth.mockResolvedValue({
 			byId: { trellis_selfhost: { status: 'down' }, hunyuan3d: { status: 'down' } },
 		});
-		expect(await pickRedispatchLane({ attempted: [] })).toBeNull();
+		expect(await pickRedispatchLane({ attempted: [], country: 'US' })).toBeNull();
 	});
 
 	it('falls through to the geometry-only TripoSG lane once every textured lane is down', async () => {
@@ -213,8 +213,8 @@ describe('pickRedispatchLane', () => {
 		laneHealth.mockResolvedValue({
 			byId: { trellis_selfhost: { status: 'down' }, hunyuan3d: { status: 'down' } },
 		});
-		expect(await pickRedispatchLane({ attempted: [] })).toBe('triposg');
-		expect(await pickRedispatchLane({ attempted: ['hunyuan3d', 'trellis_selfhost'] })).toBe('triposg');
+		expect(await pickRedispatchLane({ attempted: [], country: 'US' })).toBe('triposg');
+		expect(await pickRedispatchLane({ attempted: ['hunyuan3d', 'trellis_selfhost'], country: 'US' })).toBe('triposg');
 	});
 
 	it('never prefers the untextured TripoSG lane over a live textured one', async () => {
@@ -222,18 +222,18 @@ describe('pickRedispatchLane', () => {
 		process.env.GCP_TRIPOSG_URL = 'https://triposg.example';
 		process.env.REPLICATE_API_TOKEN = 'r8_test';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
-		expect(await pickRedispatchLane({ attempted: [] })).toBe('hunyuan3d');
+		expect(await pickRedispatchLane({ attempted: [], country: 'US' })).toBe('hunyuan3d');
 		// Paid textured TRELLIS still outranks it when configured.
-		expect(await pickRedispatchLane({ attempted: ['hunyuan3d'] })).toBe('trellis');
-		expect(await pickRedispatchLane({ attempted: ['hunyuan3d', 'trellis'] })).toBe('triposg');
-		expect(await pickRedispatchLane({ attempted: ['hunyuan3d', 'trellis', 'triposg'] })).toBeNull();
+		expect(await pickRedispatchLane({ attempted: ['hunyuan3d'], country: 'US' })).toBe('trellis');
+		expect(await pickRedispatchLane({ attempted: ['hunyuan3d', 'trellis'], country: 'US' })).toBe('triposg');
+		expect(await pickRedispatchLane({ attempted: ['hunyuan3d', 'trellis', 'triposg'], country: 'US' })).toBeNull();
 	});
 
 	it('keeps TripoSG out of the fresh-retry suggestions (its public lane is sketch-only)', () => {
 		process.env.GCP_TRIPOSG_URL = 'https://triposg.example';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
-		expect(retryBackendSuggestions({ hasImage: true })).not.toContain('triposg');
-		expect(retryBackendSuggestions({ hasImage: false })).not.toContain('triposg');
+		expect(retryBackendSuggestions({ hasImage: true, country: 'US' })).not.toContain('triposg');
+		expect(retryBackendSuggestions({ hasImage: false, country: 'US' })).not.toContain('triposg');
 	});
 
 	it('falls back to the first configured candidate when the health snapshot throws', async () => {
@@ -243,10 +243,10 @@ describe('pickRedispatchLane', () => {
 		process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.example';
 		process.env.GCP_RECONSTRUCTION_KEY = 'k';
 		laneHealth.mockRejectedValue(new Error('telemetry down'));
-		expect(await pickRedispatchLane({ attempted: [] })).toBe('trellis_selfhost');
+		expect(await pickRedispatchLane({ attempted: [], country: 'US' })).toBe('trellis_selfhost');
 		// The fallback respects the attempted filter: candidates[0] is the first
 		// UNATTEMPTED configured lane, not the first lane in the static order.
-		expect(await pickRedispatchLane({ attempted: ['trellis_selfhost'] })).toBe('hunyuan3d');
+		expect(await pickRedispatchLane({ attempted: ['trellis_selfhost'], country: 'US' })).toBe('hunyuan3d');
 	});
 });
 

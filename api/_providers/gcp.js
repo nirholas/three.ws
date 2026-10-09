@@ -12,6 +12,7 @@
 //                  Native single-image→3D via Microsoft TRELLIS. Standard task
 //                  shape: POST /infer → { task_id }  GET /tasks/:id → result_gcs_url.
 //
+//   trellis2     → MODEL_TRELLIS2_URL       (workers/model-trellis2)
 //   hunyuan      → GCP_HUNYUAN3D_URL        (workers/model-hunyuan3d)
 //                  Image→3D via Tencent Hunyuan3D-2 (shape DiT + multiview
 //                  paint). Same standard task shape as the TRELLIS worker:
@@ -96,6 +97,10 @@ function serviceUrlForMode(mode) {
 			// the avatar pipeline's `reconstruct` (face-only, /reconstruct + /jobs/:id);
 			// this worker speaks the standard /infer + /tasks/:id task shape.
 			return readEnv('MODEL_TRELLIS_URL');
+		case 'trellis2':
+			// Self-hosted Microsoft TRELLIS.2 image→3D worker (workers/model-trellis2),
+			// the default image lane. Same /infer + /tasks/:id task shape.
+			return readEnv('MODEL_TRELLIS2_URL');
 		case 'hunyuan':
 			// Self-hosted Hunyuan3D-2 image→3D worker (workers/model-hunyuan3d).
 			// Same standard /infer + /tasks/:id task shape as the TRELLIS worker.
@@ -172,6 +177,24 @@ function buildWorkerRequest(request) {
 		// otherwise defaults matte off for every tier below `max`, so the free/
 		// default lane is unchanged unless we explicitly request it here.
 		if (params?.matte === true) body.matte = true;
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'trellis2') {
+		// Self-hosted TRELLIS.2 image→3D (workers/model-trellis2). One reference
+		// view in, a PBR GLB with alpha out. `resolution` (512, 1024 or 1536) is
+		// the voxel resolution; absent, the worker maps `tier` to one.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos, body_type: params?.bodyType || 'neutral' };
+		if (Number.isFinite(Number(params?.resolution))) body.resolution = Math.round(Number(params.resolution));
+		if (params?.tier) body.tier = params.tier;
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
@@ -416,6 +439,7 @@ function buildWorkerRequest(request) {
 const MODE_ETA = {
 	reconstruct: 120,
 	trellis: 60,
+	trellis2: 75,
 	// 50-step shape diffusion + multiview paint on the L4: much heavier than
 	// TRELLIS's single pass.
 	hunyuan: 300,
@@ -522,7 +546,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// primary view only (report 1 so a multi-view request is never
 			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				mode === 'hunyuan'
+				mode === 'hunyuan' || mode === 'trellis2'
 					? 1
 					: (mode === 'reconstruct' || mode === 'trellis') && Array.isArray(workerReq.body.images)
 						? workerReq.body.images.length

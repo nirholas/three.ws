@@ -53,6 +53,7 @@ const LANE_LABELS = {
 	nvidia: 'free NVIDIA NIM',
 	huggingface: 'free Hunyuan3D',
 	trellis: 'Fast',
+	trellis2: 'TRELLIS.2',
 	trellis_selfhost: 'TRELLIS',
 	meshy: 'Meshy',
 	tripo: 'Tripo',

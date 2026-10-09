@@ -48,6 +48,18 @@ export const KEEPWARM_LANES = [
 		reason: 'us-central1 L4 grant is 3 and trellis+rig floors hold 2; warming this would cap the trellis lane at its floor',
 	},
 	{
+		id: 'trellis2',
+		urlEnv: 'MODEL_TRELLIS2_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		// The default image lane for every tier. Not warmed by default for the same
+		// reason as its siblings: the us-central1 L4 grant is shared, and a warm
+		// floor here is a quota decision (docs/ops/gcp-credits-plan.md), made with
+		// FORGE_KEEPWARM_LANES=trellis2 once the grant allows it.
+		reason: 'us-central1 L4 grant is shared with trellis, rig and hunyuan3d; a warm floor here is a quota decision',
+	},
+	{
 		id: 'hunyuan3d',
 		urlEnv: 'GCP_HUNYUAN3D_URL',
 		region: 'us-central1',

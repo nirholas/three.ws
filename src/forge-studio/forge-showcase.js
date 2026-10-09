@@ -91,6 +91,7 @@ const ENGINE_LABELS = {
 	nvidia: 'Free',
 	huggingface: 'Hunyuan3D',
 	trellis: 'Fast',
+	trellis2: 'TRELLIS.2',
 	trellis_selfhost: 'TRELLIS',
 	meshy: 'Meshy',
 	tripo: 'Tripo',

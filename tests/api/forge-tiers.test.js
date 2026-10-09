@@ -54,36 +54,36 @@ describe('forge-tiers — NVIDIA NIM backend registration', () => {
 		it('falls to the paid TRELLIS last resort only when no free image lane is configured', () => {
 			delete process.env.NVIDIA_API_KEY;
 			delete process.env.HF_TOKEN;
-			expect(resolveBackendId({ path: 'image', tier: 'draft' })).toBe('trellis');
-			expect(resolveBackendId({ path: 'image', tier: 'standard' })).toBe('trellis');
-			expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('trellis');
+			expect(resolveBackendId({ path: 'image', tier: 'draft', country: 'US' })).toBe('trellis');
+			expect(resolveBackendId({ path: 'image', tier: 'standard', country: 'US' })).toBe('trellis');
+			expect(resolveBackendId({ path: 'image', tier: 'high', country: 'US' })).toBe('trellis');
 		});
 
 		it('routes draft and standard tiers to the free NIM lane when configured', () => {
 			process.env.NVIDIA_API_KEY = 'nvapi-test';
-			expect(resolveBackendId({ path: 'image', tier: 'draft' })).toBe('nvidia');
-			expect(resolveBackendId({ path: 'image', tier: 'standard' })).toBe('nvidia');
+			expect(resolveBackendId({ path: 'image', tier: 'draft', country: 'US' })).toBe('nvidia');
+			expect(resolveBackendId({ path: 'image', tier: 'standard', country: 'US' })).toBe('nvidia');
 		});
 
 		it('routes the high tier to the free textured engine, geometry stays BYOK Meshy', () => {
 			process.env.NVIDIA_API_KEY = 'nvapi-test';
 			process.env.HF_TOKEN = 'hf_test';
 			// High is free-for-us too — the higher-quality HuggingFace engine, not paid Replicate.
-			expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('huggingface');
-			expect(resolveBackendId({ path: 'geometry', tier: 'draft' })).toBe('meshy');
-			expect(resolveBackendId({ path: 'geometry', tier: 'standard' })).toBe('meshy');
+			expect(resolveBackendId({ path: 'image', tier: 'high', country: 'US' })).toBe('huggingface');
+			expect(resolveBackendId({ path: 'geometry', tier: 'draft', country: 'US' })).toBe('meshy');
+			expect(resolveBackendId({ path: 'geometry', tier: 'standard', country: 'US' })).toBe('meshy');
 		});
 	});
 
 	it('stays selectable at any tier when explicitly named', () => {
 		delete process.env.NVIDIA_API_KEY;
-		expect(resolveBackendId({ path: 'image', tier: 'standard', backend: 'nvidia' })).toBe('nvidia');
-		expect(resolveBackendId({ path: 'image', tier: 'high', backend: 'nvidia' })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', backend: 'nvidia', country: 'US' })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'high', backend: 'nvidia', country: 'US' })).toBe('nvidia');
 	});
 
 	it('keeps other backends selectable on the draft tier even when NIM is the default', () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		expect(resolveBackendId({ path: 'image', tier: 'draft', backend: 'trellis' })).toBe('trellis');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', backend: 'trellis', country: 'US' })).toBe('trellis');
 	});
 
 	it('surfaces the backend in the public catalog with honest estimates', () => {
@@ -98,14 +98,13 @@ describe('forge-tiers — NVIDIA NIM backend registration', () => {
 		const draftEst = nv.estimates.image.find((e) => e.tier === 'draft');
 		expect(draftEst.eta_seconds).toBeGreaterThan(0);
 		expect(draftEst.credits).toBeNull();
-		// The tier-aware default map advertises a free engine for every tier. With
-		// only NVIDIA + HuggingFace configured (no self-host worker) in this test,
-		// HuggingFace — an image-intermediate, reference-capable lane — outranks
-		// NVIDIA's native text-only preview at every tier, matching the
-		// photoreal-reference-by-default policy.
-		expect(cat.default_backend_for_tier.draft.image).toBe('huggingface');
-		expect(cat.default_backend_for_tier.standard.image).toBe('huggingface');
-		expect(cat.default_backend_for_tier.high.image).toBe('huggingface');
+		// The catalog is CDN-cached and country-agnostic, so it advertises the
+		// fail-closed default: a Tencent-model lane (HuggingFace Spaces) is never
+		// listed as a tier default because the requester's territory is unknown.
+		// With only NVIDIA + HuggingFace configured, NVIDIA is the one lane left.
+		expect(cat.default_backend_for_tier.draft.image).toBe('nvidia');
+		expect(cat.default_backend_for_tier.standard.image).toBe('nvidia');
+		expect(cat.default_backend_for_tier.high.image).toBe('nvidia');
 	});
 
 	// NVIDIA's hosted TRELLIS preview is text-only (rejects every user-image
@@ -114,18 +113,18 @@ describe('forge-tiers — NVIDIA NIM backend registration', () => {
 	it('routes photo submissions to the standing image backend, not the text-only free lane', () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		// Photo uploads at draft and standard must route to trellis (NVIDIA is text-only).
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true })).toBe('trellis');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true })).toBe('trellis');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true, country: 'US' })).toBe('trellis');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' })).toBe('trellis');
 		// Prompt-only drafts and standard requests still get the free lane.
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('nvidia');
-		expect(resolveBackendId({ path: 'image', tier: 'draft' })).toBe('nvidia');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false })).toBe('nvidia');
-		expect(resolveBackendId({ path: 'image', tier: 'standard' })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false, country: 'US' })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', country: 'US' })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false, country: 'US' })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', country: 'US' })).toBe('nvidia');
 	});
 
 	it('honors an explicit nvidia selection in resolution (the handler owns the rejection)', () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		expect(resolveBackendId({ path: 'image', tier: 'draft', backend: 'nvidia', userImages: true })).toBe('nvidia');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', backend: 'nvidia', userImages: true, country: 'US' })).toBe('nvidia');
 	});
 
 	it('declares the text-only capability in the public catalog', () => {
@@ -189,7 +188,7 @@ describe('forge-tiers — HuggingFace free image lane', () => {
 
 	it('stays selectable when explicitly named on the image path with photos', () => {
 		expect(
-			resolveBackendId({ path: 'image', tier: 'standard', backend: 'huggingface', userImages: true }),
+			resolveBackendId({ path: 'image', tier: 'standard', backend: 'huggingface', userImages: true, country: 'US' }),
 		).toBe('huggingface');
 	});
 
@@ -200,17 +199,17 @@ describe('forge-tiers — HuggingFace free image lane', () => {
 	it('becomes the auto default for photo submissions and the high tier when configured', () => {
 		process.env.HF_TOKEN = 'hf_test';
 		delete process.env.NVIDIA_API_KEY;
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true })).toBe('huggingface');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true })).toBe('huggingface');
-		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('huggingface');
-		expect(resolveBackendId({ path: 'image', tier: 'high', userImages: true })).toBe('huggingface');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true, country: 'US' })).toBe('huggingface');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' })).toBe('huggingface');
+		expect(resolveBackendId({ path: 'image', tier: 'high', country: 'US' })).toBe('huggingface');
+		expect(resolveBackendId({ path: 'image', tier: 'high', userImages: true, country: 'US' })).toBe('huggingface');
 	});
 
 	it('falls back to the paid lane only when no free engine is configured', () => {
 		delete process.env.HF_TOKEN;
 		delete process.env.NVIDIA_API_KEY;
-		expect(resolveBackendId({ path: 'image', tier: 'standard' })).toBe('trellis');
-		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('trellis');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', country: 'US' })).toBe('trellis');
+		expect(resolveBackendId({ path: 'image', tier: 'high', country: 'US' })).toBe('trellis');
 	});
 });
 

@@ -22,6 +22,7 @@
 // The face pipeline (gcp `reconstruct` mode) is never a candidate here.
 
 import { BACKENDS } from './forge-tiers.js';
+import { laneAllowedInTerritory } from './forge-territory.js';
 
 // Composition cues appended to the user's own words. They say nothing about
 // style, so "an anime ninja" stays anime and "a photoreal chef" stays photoreal;
@@ -56,7 +57,7 @@ export function promptAvatarImagePrompt(prompt) {
 // accepted and the job would then fail on the worker, which costs the user the
 // whole wait. A lane that is merely in a failure cooldown keeps its place, since
 // one failed job (often a bad input) is not an outage.
-export function planPromptAvatarLanes({ platform = [], byok = [], health = {} } = {}) {
+export function planPromptAvatarLanes({ platform = [], byok = [], health = {}, country = null } = {}) {
 	const byName = new Map(platform.filter((p) => p?.instance).map((p) => [p.name, p.instance]));
 	const plan = [];
 	const gcp = byName.get('gcp');
@@ -75,13 +76,21 @@ export function planPromptAvatarLanes({ platform = [], byok = [], health = {} } 
 		params: { tier: PROMPT_AVATAR_TIER, path: 'image' },
 	});
 
-	if (gcp && supports(gcp, 'hunyuan')) plan.push(selfHost('hunyuan', 'hunyuan3d'));
+	// TRELLIS.2 leads: MIT licensed, served in every region. Two Tencent lanes
+	// exist, self-host Hunyuan3D and the HuggingFace Spaces chain running it, and
+	// both are dropped for the EU, the UK, South Korea and an unknown country.
+	if (gcp && supports(gcp, 'trellis2')) plan.push(selfHost('trellis2', 'trellis2'));
+	if (gcp && supports(gcp, 'hunyuan') && laneAllowedInTerritory('hunyuan3d', country)) {
+		plan.push(selfHost('hunyuan', 'hunyuan3d'));
+	}
 	if (gcp && supports(gcp, 'trellis')) plan.push(selfHost('trellis', 'trellis_selfhost'));
 	// Replicate's reconstruct model is TRELLIS (generic image→3D), and the HF
 	// Spaces chain is Hunyuan3D / TRELLIS / TripoSR: both keep the whole figure.
 	for (const name of ['replicate', 'huggingface']) {
 		const instance = byName.get(name);
-		if (instance) plan.push({ name, instance, mode: 'reconstruct', lane: name, params: {} });
+		if (instance && laneAllowedInTerritory(name, country)) {
+			plan.push({ name, instance, mode: 'reconstruct', lane: name, params: {} });
+		}
 	}
 	for (const p of byok) {
 		if (p?.instance) plan.push({ name: p.name, instance: p.instance, mode: 'reconstruct', lane: p.name, params: {} });

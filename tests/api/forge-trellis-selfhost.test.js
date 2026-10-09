@@ -86,8 +86,8 @@ describe('forge-tiers — self-hosted TRELLIS routing precedence', () => {
 		process.env.HF_TOKEN = 'hf_test'; // HF also live — TRELLIS must still win the photo default
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		// Draft/standard photo uploads route to our self-hosted TRELLIS, ahead of HF.
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true })).toBe('trellis_selfhost');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true, country: 'US' })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: true, country: 'US' })).toBe('trellis_selfhost');
 	});
 
 	it('leads text prompts with the self-host photoreal reference pipeline too; high stays on self-host TRELLIS', () => {
@@ -99,24 +99,24 @@ describe('forge-tiers — self-hosted TRELLIS routing precedence', () => {
 		// image-intermediate lane too — NVIDIA's native single-hop text→mesh
 		// preview skips the photoreal reference image, so it is no longer a
 		// named tier default anywhere (see forge-tiers.js FREE_DEFAULT_FOR_TIERS).
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('trellis_selfhost');
-		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false, country: 'US' })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false, country: 'US' })).toBe('trellis_selfhost');
 		// High names our self-host Hunyuan3D engine; unconfigured here, so the
 		// candidate walk falls to the self-host TRELLIS lane.
-		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('trellis_selfhost');
+		expect(resolveBackendId({ path: 'image', tier: 'high', country: 'US' })).toBe('trellis_selfhost');
 	});
 
 	it('degrades cleanly to HuggingFace when the worker URL is absent', () => {
 		// No MODEL_TRELLIS_URL → trellis_selfhost unconfigured → HF serves photos.
 		process.env.HF_TOKEN = 'hf_test';
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true })).toBe('huggingface');
+		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: true, country: 'US' })).toBe('huggingface');
 	});
 
 	it('stays explicitly selectable (the handler owns any rejection)', () => {
 		// Even unconfigured, an explicit pick is honored at resolution time.
 		expect(
-			resolveBackendId({ path: 'image', tier: 'standard', backend: 'trellis_selfhost', userImages: true }),
+			resolveBackendId({ path: 'image', tier: 'standard', backend: 'trellis_selfhost', userImages: true, country: 'US' }),
 		).toBe('trellis_selfhost');
 	});
 });
@@ -229,11 +229,12 @@ describe('forge-tiers — self-host TRELLIS per-tier quality budgets', () => {
 		expect(selfhostQualityForTier(undefined)).toBe(SELFHOST_TRELLIS_QUALITY.standard);
 	});
 
-	it('names hunyuan3d for the high tier and keeps huggingface only as fallback', async () => {
+	it('names trellis2 for the high tier and keeps hunyuan3d and huggingface only as fallback', async () => {
 		const { FREE_DEFAULT_FOR_TIERS, FREE_FALLBACK_FOR_PATH } = await import(
 			'../../api/_lib/forge-tiers.js'
 		);
-		expect(FREE_DEFAULT_FOR_TIERS.high.image).toBe('hunyuan3d');
+		expect(FREE_DEFAULT_FOR_TIERS.high.image).toBe('trellis2');
+		expect(FREE_FALLBACK_FOR_PATH.image).toContain('hunyuan3d');
 		expect(FREE_FALLBACK_FOR_PATH.image).toContain('huggingface');
 	});
 });
