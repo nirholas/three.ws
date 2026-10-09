@@ -9,9 +9,12 @@ The mesh passes through unchanged, so the node can sit in the middle of a
 workflow. Its text output is the new model's page URL, and the same URL is
 written to Modly's run log.
 
-It pairs with the [three.ws Cloud generator](../three-ws/) in this folder:
-that extension generates meshes on three.ws GPUs, this one publishes any mesh,
-including ones Modly generated on your own GPU.
+Use this node to publish any GLB from any generator, including meshes Modly
+made on your own GPU with its local models. The [three.ws Cloud
+extension](../three-ws/) in this folder also has a `publish` node; that one is
+meant as the last step of a three.ws chain (generate, rig or remesh on three.ws
+GPUs, then publish). Install this standalone node when you only want
+publishing, or when the rest of your workflow runs locally.
 
 Modly is MIT licensed, by [Lightning Pixel](https://github.com/lightningpixel).
 
