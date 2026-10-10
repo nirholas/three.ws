@@ -18,9 +18,9 @@ import {
 } from '../api/_lib/notify-prefs.js';
 
 describe('category model', () => {
-	it('exposes the nine display categories and five channels', () => {
+	it('exposes the eleven display categories and six channels', () => {
 		expect(CATEGORIES.map((c) => c.key)).toEqual([
-			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'companion', 'knock', 'mail', 'account',
+			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'companion', 'knock', 'mail', 'approvals', 'account',
 		]);
 		expect(CHANNELS).toEqual(['in_app', 'push', 'email', 'telegram', 'discord', 'avatar']);
 	});

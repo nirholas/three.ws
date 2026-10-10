@@ -124,7 +124,7 @@ describe('insertNotification: a muted in_app category', () => {
 
 		const out = await insertNotification(USER, 'dm_received', { actor: 'bob' });
 
-		expect(out).toEqual({ id: null, in_app: false });
+		expect(out).toEqual({ id: null, in_app: false, delivered: { push: 0 } });
 		expect(inboxInserts()).toHaveLength(0);
 		expect(sendPushToUser).not.toHaveBeenCalled();
 		expect(funnelEvents()).toEqual([]);
