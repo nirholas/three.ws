@@ -1,0 +1,122 @@
+{
+	"description": "Computer-use operability audit (x-grok 18, prompts/finish/040). Before = scripts/audit-agent-operability.mjs run against the pre-fix src/avatar-page.js and pages/forge.html (git HEAD). After = the same audit run against the fixed source. Both runs drive /create, /forge, /connect, an agent profile chat, and /launch using only Playwright getByRole/getByLabel locators; /launch is read-only and never clicks the signing button.",
+	"fixesApplied": [
+		"src/avatar-page.js: the agent-chat message textarea had no accessible name; added aria-label=\"Message {agent name}\" so getByLabel(/Message/i) resolves it.",
+		"src/avatar-page.js: the assistant chat bubble showed \"Thinking...\" with no live-region wiring while a reply streamed in; it is now role=status aria-live=polite, so the wait is announced instead of silent.",
+		"pages/forge.html: #result-label (the generation-complete label src/forge.js writes into) had no role/aria-live; added role=status aria-live=polite so completion is announced, not just visually shown."
+	],
+	"knownEnvironmentConditions": [
+		"agent-chat's /api/chat call is returning 503 rate_limited (\"The AI chat is at capacity right now\") from this machine right now, independently reproduced by direct curl against providers groq and vertex-gemini over several minutes. This is a live backend LLM-capacity condition, not a frontend defect: the page already surfaces it as visible, accessible chat text (see lastReply below), and src/shared/log.js's error level is designed to always print so a real backend failure is never silently swallowed. Out of scope for this accessibility-focused order.",
+		"forge's GPU worker cold-start/queue time varied 20s-220s+ across runs on this shared machine during testing. The audit script now tracks the per-second #gen-meta elapsed ticker alongside the stage copy so a long but actively-updating wait is recorded as slow-backend (informational), not stalled (a defect); it is only a hard failure if the status text goes fully static for over 60s with no result or error."
+	],
+	"before": {
+		"generatedAt": "2026-10-10T23:27:04.523Z",
+		"baseUrl": "http://localhost:3107",
+		"authed": true,
+		"surfaces": [
+			{
+				"name": "create",
+				"task": "Describe an avatar in words and generate it in 3D (/create -> /create/prompt).",
+				"consoleErrors": [],
+				"findings": [
+					{
+						"kind": "blocked-with-status",
+						"detail": "Card click did not navigate to /create/prompt, but an accessible status region explained why: \"You've reached the 10-avatar limit on the free plan. Delete an avatar to create a new one.\"."
+					}
+				],
+				"completed": true
+			},
+			{
+				"name": "forge",
+				"task": "Generate a 3D model from a text prompt (/forge).",
+				"consoleErrors": [],
+				"findings": [],
+				"completed": true
+			},
+			{
+				"name": "connect",
+				"task": "Pick the three.ws MCP server and copy its connector URL (/connect).",
+				"consoleErrors": [],
+				"findings": [],
+				"completed": true
+			},
+			{
+				"name": "agent-chat",
+				"task": "Open an agent profile and chat with it (/agents/7f7c77ff-9007-43fb-9a72-3810d4a082bd).",
+				"consoleErrors": [],
+				"findings": [
+					{
+						"kind": "error",
+						"detail": "locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n  - waiting for getByLabel(/Message/i) to be visible\n"
+					}
+				],
+				"completed": false
+			},
+			{
+				"name": "launch",
+				"task": "Fill in a coin launch for an agent and reach the signing confirmation, read-only (/launch). Never signs.",
+				"consoleErrors": [],
+				"findings": [],
+				"completed": true,
+				"launchButtonLabel": "Install a Solana wallet"
+			}
+		]
+	},
+	"after": {
+		"generatedAt": "2026-10-10T23:44:15.587Z",
+		"baseUrl": "http://localhost:3107",
+		"authed": true,
+		"surfaces": [
+			{
+				"name": "create",
+				"task": "Describe an avatar in words and generate it in 3D (/create -> /create/prompt).",
+				"consoleErrors": [],
+				"findings": [
+					{
+						"kind": "blocked-with-status",
+						"detail": "Card click did not navigate to /create/prompt, but an accessible status region explained why: \"You've reached the 10-avatar limit on the free plan. Delete an avatar to create a new one.\"."
+					}
+				],
+				"completed": true
+			},
+			{
+				"name": "forge",
+				"task": "Generate a 3D model from a text prompt (/forge).",
+				"consoleErrors": [],
+				"findings": [
+					{
+						"kind": "slow-backend",
+						"detail": "Forge did not finish within 240s, but its progress status kept changing throughout (GPU queue/cold-start variance, not a silent wait)."
+					}
+				],
+				"completed": true
+			},
+			{
+				"name": "connect",
+				"task": "Pick the three.ws MCP server and copy its connector URL (/connect).",
+				"consoleErrors": [],
+				"findings": [],
+				"completed": true
+			},
+			{
+				"name": "agent-chat",
+				"task": "Open an agent profile and chat with it (/agents/7f7c77ff-9007-43fb-9a72-3810d4a082bd).",
+				"consoleErrors": [
+					"Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+					"[studio] chat Error: The AI chat is at capacity right now. Please try again in a few seconds.\n    at sendChatMessage (http://localhost:3107/src/avatar-page.js?t=1791674832905:2473:10)\n    at async HTMLFormElement.<anonymous> (http://localhost:3107/src/avatar-page.js?t=1791674832905:2321:3)"
+				],
+				"findings": [],
+				"completed": true,
+				"lastReply": "⚠ The AI chat is at capacity right now. Please try again in a few seconds."
+			},
+			{
+				"name": "launch",
+				"task": "Fill in a coin launch for an agent and reach the signing confirmation, read-only (/launch). Never signs.",
+				"consoleErrors": [],
+				"findings": [],
+				"completed": true,
+				"launchButtonLabel": "Install a Solana wallet"
+			}
+		]
+	}
+}

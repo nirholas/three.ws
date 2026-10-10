@@ -757,7 +757,7 @@ function renderShell(glbUrl) {
 							</div>
 						</div>
 						<form class="av-chat-form" id="av-chat-form">
-							<textarea class="av-chat-input" id="av-chat-input" placeholder="Say something…" rows="1" autocomplete="off"></textarea>
+							<textarea class="av-chat-input" id="av-chat-input" placeholder="Say something…" rows="1" autocomplete="off" aria-label="Message ${esc(avatar.name)}"></textarea>
 							<button type="button" class="av-chat-mic" id="av-chat-mic" aria-label="Dictate (voice input)" title="Dictate via microphone">🎤</button>
 							<button type="submit" class="av-chat-send" id="av-chat-send">Send</button>
 						</form>
@@ -2440,7 +2440,9 @@ async function sendChatMessage(text) {
 	// never random). Scoped to this agent inside the engine.
 	moodEngine.observeChat(chatAgentId(), text, 'user');
 
-	const assistantNode = appendChatMessage('assistant', '');
+	const assistantNode = appendChatMessage('assistant', 'Thinking…');
+	assistantNode.setAttribute('role', 'status');
+	assistantNode.setAttribute('aria-live', 'polite');
 	const cursor = document.createElement('span');
 	cursor.className = 'av-chat-cursor';
 	assistantNode.appendChild(cursor);
