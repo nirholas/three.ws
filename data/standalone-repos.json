@@ -21,7 +21,8 @@
 				"validation",
 				"optimization",
 				"webgl"
-			]
+			],
+			"hold": "names a third-party crypto project in its README or docs; needs owner approval before it is pushed to a new repo"
 		},
 		{
 			"repo": "agent-guards",
@@ -557,9 +558,10 @@
 			"agent-payments-sdk": "names third-party crypto projects or data providers; overlay commit needs owner approval",
 			"packages/glb-tools": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
 			"avatar-sdk": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
-			"packages/notifications-mcp": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
-			"packages/portfolio-mcp": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
-			"packages/x402-mcp": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo"
+			"packages/notifications-mcp": "names a third-party crypto project in its README or docs; needs owner approval before it is pushed to a new repo",
+			"packages/portfolio-mcp": "names a third-party crypto project in its README or docs; needs owner approval before it is pushed to a new repo",
+			"packages/x402-mcp": "names a third-party crypto project in its README or docs; needs owner approval before it is pushed to a new repo",
+			"packages/x402-fetch": "names a third-party crypto project in its README or docs; needs owner approval before it is pushed to a new repo"
 		}
 	}
 }

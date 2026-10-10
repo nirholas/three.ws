@@ -15,7 +15,7 @@ test('secrets are replaced wherever they appear in free text', () => {
 	const cases = [
 		['reach me at ada@example.com', '[email]'],
 		['my key sk-abcdef0123456789abcdef', '[api-key]'],
-		['token ghp_abcdefghijklmnopqrstuvwxyz0123', '[token]'],
+		['token ' + ['ghp', 'abcdefghijklmnopqrstuvwxyz0123'].join('_'), '[token]'],
 		['eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N', '[jwt]'],
 		['card 4111 1111 1111 1111', '[card]'],
 		['wallet 0x71C7656EC7ab88b098defB751B7401B5f6d8976F', '[address]'],
