@@ -50,6 +50,9 @@ export const STATUS_GROUPS = Object.freeze({
 export const VENUES = Object.freeze({
 	jupiter: { label: 'Token swaps (Jupiter)', auto: true },
 	wallet_transfer: { label: 'Transfers to addresses this wallet has paid before', auto: true },
+	// A live trade or standing order a squad coordinator paused on
+	// (api/_lib/team-chat/runner.js). It signs from the team's Trader wallet.
+	team_trade: { label: 'Team trades from the policy agent wallet', auto: true },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -235,6 +238,7 @@ export function publicApproval(row, { now = Date.now(), withLink = true } = {}) 
 const EXECUTORS = {
 	wallet_intent: async () => (await import('./wallet-intents.js')).executeApprovedIntentAction,
 	strategy: async () => (await import('./agent-strategy-runtime.js')).executeApprovedStrategyAction,
+	team_chat: async () => (await import('./team-chat/approval-executor.js')).executeTeamChatApproval,
 };
 
 export function hasExecutor(source) {

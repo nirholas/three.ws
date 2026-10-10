@@ -5623,6 +5623,14 @@
 			"dest": "/api/club/tips-stream"
 		},
 		{
+			"src": "/api/teams/([^/]+)/chat(?:/.*)?",
+			"dest": "/api/team-chat"
+		},
+		{
+			"src": "/api/team-chat/?",
+			"dest": "/api/team-chat"
+		},
+		{
 			"src": "/api/teams/([^/]+)/members/([^/]+)",
 			"dest": "/api/teams/[id]"
 		},
