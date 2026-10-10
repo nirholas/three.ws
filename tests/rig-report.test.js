@@ -87,6 +87,13 @@ describe('detectConvention fingerprints', () => {
 		expect(c.label).toBe('MikuMikuDance (PMX/PMD)');
 	});
 
+	it('identifies a Source engine rig and ranks it above plain Biped', () => {
+		const c = detectConvention(ctx(['ValveBiped.Bip01_Pelvis', 'ValveBiped.Bip01_L_UpperArm', 'ValveBiped.Bip01_Head1']));
+		expect(c.id).toBe('source');
+		expect(detectConvention(ctx(['ValveBipedBip01_Pelvis'])).id).toBe('source');
+		expect(detectConvention(ctx(['Bip01 Pelvis', 'Bip01 L UpperArm'])).id).toBe('biped');
+	});
+
 	it('does not claim MMD for a Latin-named rig', () => {
 		expect(detectConvention(ctx(['Hips', 'Spine', 'LeftArm', 'RightArm'])).id).not.toBe('mmd');
 	});

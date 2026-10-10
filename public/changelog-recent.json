@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-10T22:36:14.215Z",
+	"generated_at": "2026-10-10T23:11:17.227Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3957,
+	"total": 3958,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -653,6 +653,17 @@
 			"link": "/docs/papertrade",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks",
+			"summary": "Source engine (ValveBiped) skeletons now map to the shared animation library and Rig Doctor names them as their own convention, so 16 rig conventions are recognised. 3ds Max Biped finger chains and toes now map too, which restores hand animation on those rigs. The browser GLB check now rejects truncated files before upload, matching the server. The Money Pulse counters roll over to the right unit near $1k and $1M instead of showing $1000 or 1000.0k, and the URL scheme and model-host guards gained regression tests.",
+			"link": "/rig-doctor",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -1529,17 +1540,6 @@
 			"link": "/spotlight",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-01",
-			"type": "update",
-			"title": "Pinned agent-3d embeds keep working after every update",
-			"summary": "If you embedded the 3D avatar component with a pinned version and an integrity hash, as our docs recommend for production, the embed could stop loading after one of our updates: the file behind a version that is promised never to change was being rebuilt each time we shipped, so its fingerprint changed and browsers refused to run it. A released version is now frozen for good, every update serves exactly the same file under it, and the build fails if any hash in our docs, skills or code snippets ever disagrees with the file it points to. Version 1.5.2 is frozen as it is served today; if your page pins an older hash for 1.5.2, update it once from /agent-3d/1.5.2/integrity.json.",
-			"link": "/docs/web-component",
-			"tags": [
-				"fix",
-				"sdk"
 			]
 		}
 	]

@@ -280,6 +280,61 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	// 3ds Max Biped numbers its fingers: one digit is the finger at segment 1, two
+	// digits are the finger then the segment minus one. Both the space spelling
+	// and the underscore spelling three.js produces at runtime must resolve.
+	describe('3ds Max Biped fingers and toes', () => {
+		const FINGERS = [
+			['Finger0', 'Thumb1'], ['Finger01', 'Thumb2'], ['Finger02', 'Thumb3'],
+			['Finger1', 'Index1'], ['Finger11', 'Index2'], ['Finger12', 'Index3'],
+			['Finger2', 'Middle1'], ['Finger21', 'Middle2'], ['Finger22', 'Middle3'],
+			['Finger3', 'Ring1'], ['Finger31', 'Ring2'], ['Finger32', 'Ring3'],
+			['Finger4', 'Pinky1'], ['Finger41', 'Pinky2'], ['Finger42', 'Pinky3'],
+		];
+		const cases = [];
+		for (const prefix of ['Bip01', 'Bip001']) {
+			for (const sep of [' ', '_']) {
+				for (const [side, long] of [['L', 'Left'], ['R', 'Right']]) {
+					for (const [raw, canon] of FINGERS) {
+						cases.push([`${prefix}${sep}${side}${sep}${raw}`, `${long}Hand${canon}`]);
+					}
+					cases.push([`${prefix}${sep}${side}${sep}Toe0`, `${long}ToeBase`]);
+				}
+			}
+		}
+		it.each(cases)('maps %s → %s', (input, expected) => {
+			expect(canonicalizeBoneName(input)).toBe(expected);
+		});
+		it('never crosses sides', () => {
+			for (const [input, expected] of cases) {
+				const side = /[\s_]([LR])[\s_]/.exec(input)[1];
+				expect(expected.startsWith(side === 'L' ? 'Left' : 'Right')).toBe(true);
+				expect(canonicalizeBoneName(input)).toBe(expected);
+			}
+		});
+	});
+
+	// Source engine (Valve) skeletons: `ValveBiped.Bip01_*` in a raw glTF,
+	// `ValveBipedBip01_*` after three.js sanitizes the node name at runtime.
+	describe('Source engine ValveBiped bones', () => {
+		const BONES = [
+			['Pelvis', 'Hips'], ['Spine', 'Spine'], ['Spine1', 'Spine1'], ['Spine2', 'Spine2'],
+			['Spine4', 'Spine2'], ['Neck1', 'Neck'], ['Head1', 'Head'],
+			['L_Clavicle', 'LeftShoulder'], ['L_UpperArm', 'LeftArm'], ['L_Forearm', 'LeftForeArm'], ['L_Hand', 'LeftHand'],
+			['L_Thigh', 'LeftUpLeg'], ['L_Calf', 'LeftLeg'], ['L_Foot', 'LeftFoot'],
+			['R_Clavicle', 'RightShoulder'], ['R_UpperArm', 'RightArm'], ['R_Forearm', 'RightForeArm'], ['R_Hand', 'RightHand'],
+			['R_Thigh', 'RightUpLeg'], ['R_Calf', 'RightLeg'], ['R_Foot', 'RightFoot'],
+			['L_Finger01', 'LeftHandThumb2'], ['R_Finger42', 'RightHandPinky3'],
+		];
+		const cases = [];
+		for (const prefix of ['ValveBiped.', 'ValveBiped']) {
+			for (const [raw, canon] of BONES) cases.push([`${prefix}Bip01_${raw}`, canon]);
+		}
+		it.each(cases)('maps %s → %s', (input, expected) => {
+			expect(canonicalizeBoneName(input)).toBe(expected);
+		});
+	});
+
 	// Autodesk HumanIK / MotionBuilder / Maya — every joint sits behind a
 	// character or subject namespace (`Character1:Hips`, `subject:LeftArm`),
 	// optionally nested (`char:ns:Hips`). The stems are already canonical, so

@@ -119,6 +119,11 @@ export const CONVENTIONS = [
 		evidence: 'pelvis / thigh_l / clavicle_l mannequin naming',
 	},
 	{
+		id: 'source', label: 'Source engine (ValveBiped)', schema: 'custom',
+		test: (ctx) => ctx.joints.some((n) => /^ValveBiped\.?Bip\d+/i.test(n)),
+		evidence: 'ValveBiped.Bip01_* joint prefix',
+	},
+	{
 		id: 'biped', label: '3ds Max Biped', schema: 'custom',
 		test: (ctx) => ctx.joints.some((n) => /^Bip\d+[\s_]/i.test(n)),
 		evidence: 'Bip01/Bip001 joint prefix',

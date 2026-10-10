@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T22:36:14.191Z",
+	"generated_at": "2026-10-10T23:11:17.126Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -650,6 +650,17 @@
 			"link": "/docs/papertrade",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks",
+			"summary": "Source engine (ValveBiped) skeletons now map to the shared animation library and Rig Doctor names them as their own convention, so 16 rig conventions are recognised. 3ds Max Biped finger chains and toes now map too, which restores hand animation on those rigs. The browser GLB check now rejects truncated files before upload, matching the server. The Money Pulse counters roll over to the right unit near $1k and $1M instead of showing $1000 or 1000.0k, and the URL scheme and model-host guards gained regression tests.",
+			"link": "/rig-doctor",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

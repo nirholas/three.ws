@@ -511,6 +511,14 @@
 			<description>three.ws now reads Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM. Ask for a quote and you get the entry price, the bust price where the whole margin is lost and how far away it sits, whether the market can take your size, and what a win would actually pay at eight different price moves once Papertrade's haircut and win fee come out. Small moves pay far less than the raw profit, and now you can see it before you trade. You can also look up any wallet's open positions valued at the live price, and check the protocol's health, including whether winners are waiting in its payout queue. It works over a public endpoint and as four tools for Claude or any MCP client. It only reads: you still trade on Papertrade from your own wallet.</description>
 		</item>
 		<item>
+			<title>Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks</title>
+			<link>https://three.ws/rig-doctor</link>
+			<guid isPermaLink="false">2026-10-10:Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Source engine (ValveBiped) skeletons now map to the shared animation library and Rig Doctor names them as their own convention, so 16 rig conventions are recognised. 3ds Max Biped finger chains and toes now map too, which restores hand animation on those rigs. The browser GLB check now rejects truncated files before upload, matching the server. The Money Pulse counters roll over to the right unit near $1k and $1M instead of showing $1000 or 1000.0k, and the URL scheme and model-host guards gained regression tests.</description>
+		</item>
+		<item>
 			<title>Run your agents on your own desktop</title>
 			<link>https://three.ws/docs/desktop-local-runtime</link>
 			<guid isPermaLink="false">2026-10-10:Run your agents on your own desktop</guid>

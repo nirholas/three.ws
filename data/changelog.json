@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-10",
+			"title": "Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks",
+			"summary": "Source engine (ValveBiped) skeletons now map to the shared animation library and Rig Doctor names them as their own convention, so 16 rig conventions are recognised. 3ds Max Biped finger chains and toes now map too, which restores hand animation on those rigs. The browser GLB check now rejects truncated files before upload, matching the server. The Money Pulse counters roll over to the right unit near $1k and $1M instead of showing $1000 or 1000.0k, and the URL scheme and model-host guards gained regression tests.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/rig-doctor"
+		},
+		{
+			"date": "2026-10-10",
 			"title": "Calmer homepage first visit: one corner card at a time, full agent descriptions, language in the footer",
 			"summary": "A first visit used to stack three cards in the bottom-right corner over the hero avatar. The search-shortcut hint now goes first and the \"Have you tried\" suggestion waits until it is dismissed. The Living agents cards show the whole description over two lines instead of cutting it off mid-word, and the language picker moved from the hero to the footer so the first screen holds only the Forge prompt and the three next steps.",
 			"tags": [
