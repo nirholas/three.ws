@@ -5314,6 +5314,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/github-growth",
+					"title": "Docs · GitHub growth kit",
+					"description": "The discovery layer every public repository carries: star and share links, AGENTS.md and llms.txt for AI agents, community health files, tuned settings, and the profile catalog that lists every repo.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/docs/agent-skills",
 					"title": "Docs · The three.ws Agent Skills pack",
 					"description": "Portable skill folders that teach any Claude surface (Claude Code, the Claude apps, the Agent SDK) how to use three.ws: 3D creation, wallets, and paid services. The 3D subset is cross-platform-safe and needs no credentials.",

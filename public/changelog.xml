@@ -71,6 +71,14 @@
 			<description>Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.</description>
 		</item>
 		<item>
+			<title>Docs · GitHub growth kit</title>
+			<link>https://three.ws/docs/github-growth</link>
+			<guid isPermaLink="false">2026-10-10:Docs · GitHub growth kit</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The discovery layer every public repository carries: star and share links, AGENTS.md and llms.txt for AI agents, community health files, tuned settings, and the profile catalog that lists every repo.</description>
+		</item>
+		<item>
 			<title>Docs · Importing skills</title>
 			<link>https://three.ws/docs/skill-import</link>
 			<guid isPermaLink="false">2026-10-10:Docs · Importing skills</guid>
@@ -301,6 +309,14 @@
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.</description>
+		</item>
+		<item>
+			<title>Every public repo is now easier to find, trust and share</title>
+			<link>https://three.ws/docs/github-growth</link>
+			<guid isPermaLink="false">2026-10-10:Every public repo is now easier to find, trust and share</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>All public repositories on the nirholas GitHub account now carry the same discovery layer: a star and share section, an AGENTS.md and llms.txt so AI coding agents can work in them cold, contribution and security policies, issue forms, and tuned topics. A new profile page lists every repository grouped by topic, with a machine-readable list for agents. Package mirrors keep the same layer on every sync.</description>
 		</item>
 		<item>
 			<title>Every three.ws package now has its own home, docs site and agent-readable guide</title>

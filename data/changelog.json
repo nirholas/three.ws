@@ -29640,6 +29640,16 @@
 				"feature"
 			],
 			"link": "/commerce"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Every public repo is now easier to find, trust and share",
+			"summary": "All public repositories on the nirholas GitHub account now carry the same discovery layer: a star and share section, an AGENTS.md and llms.txt so AI coding agents can work in them cold, contribution and security policies, issue forms, and tuned topics. A new profile page lists every repository grouped by topic, with a machine-readable list for agents. Package mirrors keep the same layer on every sync.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/github-growth"
 		}
 	]
 }

@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { pagesUrl } from './standalone-enrich.mjs';
+import { applyBadges, applyGrowthBlock, badgeRow, growthBlock } from './repo-growth-kit.mjs';
 
 const SITE = 'https://three.ws';
 const MONOREPO = 'https://github.com/nirholas/three.ws';
@@ -77,7 +78,11 @@ export function ecosystemFooter({ pkg, slug, dir }) {
 
 export function decorateReadme(readme, ctx) {
 	const stripped = fixLicenseFooter(readme).replace(/<!-- three\.ws:ecosystem -->[\s\S]*?<!-- \/three\.ws:ecosystem -->\n?/g, '');
-	return stripped.replace(/\s*$/, '\n\n') + ecosystemFooter(ctx);
+	const name = ctx.slug.split('/')[1];
+	const files = new Set(['AGENTS.md', 'llms.txt', 'llms-full.txt']);
+	const badged = applyBadges(stripped, badgeRow({ name, hasLicense: true }));
+	const grown = applyGrowthBlock(badged, growthBlock({ name, description: ctx.pkg.description || '', files, readme: badged }));
+	return grown.replace(/\s*$/, '\n\n') + ecosystemFooter(ctx);
 }
 
 const AI_CRAWLERS = ['GPTBot', 'ChatGPT-User', 'OAI-SearchBot', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot', 'PerplexityBot', 'Google-Extended', 'Applebot-Extended', 'CCBot'];

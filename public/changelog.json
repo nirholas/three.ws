@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T21:02:24.858Z",
+	"generated_at": "2026-10-10T21:47:55.288Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -82,6 +82,16 @@
 			"title": "Docs · Funded launch intents",
 			"summary": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
 			"link": "/docs/launch-intents",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · GitHub growth kit",
+			"summary": "The discovery layer every public repository carries: star and share links, AGENTS.md and llms.txt for AI agents, community health files, tuned settings, and the profile catalog that lists every repo.",
+			"link": "/docs/github-growth",
 			"tags": [
 				"launch"
 			]
@@ -385,6 +395,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Every public repo is now easier to find, trust and share",
+			"summary": "All public repositories on the nirholas GitHub account now carry the same discovery layer: a star and share section, an AGENTS.md and llms.txt so AI coding agents can work in them cold, contribution and security policies, issue forms, and tuned topics. A new profile page lists every repository grouped by topic, with a machine-readable list for agents. Package mirrors keep the same layer on every sync.",
+			"link": "/docs/github-growth",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
