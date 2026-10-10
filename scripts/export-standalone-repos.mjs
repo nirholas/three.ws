@@ -441,9 +441,12 @@ function autoTargets() {
 	return out;
 }
 
-config.targets = [...config.targets, ...autoTargets()];
+config.targets = [...config.targets, ...autoTargets()].map((t) => {
+	const hold = t.hold || config.auto?.hold?.[t.source];
+	return hold ? { ...t, hold } : t;
+});
 
-const targets = config.targets.filter((t) => (value('--target') ? t.repo === value('--target') : !t.hold));
+const targets = config.targets.filter((t) => (value('--target') ? t.repo === value('--target') && !t.hold : !t.hold));
 if (!targets.length) throw new Error(`unknown target: ${value('--target')}`);
 mkdirSync(OUT, { recursive: true });
 const tok = flag('--publish') ? token() : null;
