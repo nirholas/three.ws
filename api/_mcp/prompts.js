@@ -124,7 +124,7 @@ export const PROMPTS = [
 				'',
 				numbered([
 					`Call ${ctx.tool('getting_started')} and summarize in three lines what this server can do.`,
-					`Read ${ctx.resource('three://me')}. If it says I am not signed in, explain how to connect with OAuth or an API key from ${ORIGIN}/dashboard/api-keys, then stop.`,
+					`Read ${ctx.resource('three://me')}. If it says I am not signed in, explain how to connect with OAuth or an API key from ${ORIGIN}/dashboard/api, then stop.`,
 					ctx.hasResource('three://agents') && `Read ${ctx.resource('three://agents')} and list my agents by name with their Solana address.`,
 					`Suggest the single best next step for me from these guided prompts: ${next.join(', ')}.`,
 				]),
@@ -572,7 +572,7 @@ const UNATTENDED_PROMPTS = [
 			const accountTools = ['list_my_agents', 'create_agent', 'recall'].filter((n) => ctx.has(n)).map((n) => ctx.tool(n));
 			const account = accountTools.length
 				? `Signed in, this connector also manages the account's agents with ${accountTools.join(', ')} and more. It can never move funds.`
-				: "To also manage a three.ws account's agents, reconnect with a connector API key from https://three.ws/dashboard/api-keys or sign in with OAuth 2.1.";
+				: "To also manage a three.ws account's agents, reconnect with a connector API key from https://three.ws/dashboard/api or sign in with OAuth 2.1.";
 			const guided = UNATTENDED_PROMPTS.filter((p) => p.name !== 'agent-get-started' && p.available(ctx)).map((p) => `\`${p.name}\``);
 			return [
 				'Tell me what three.ws can do for an autonomous agent like you, then run one small real example so I see the links.',

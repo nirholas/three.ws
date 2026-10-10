@@ -1110,7 +1110,7 @@ curl -s https://three.ws/api/mcp \
   | jq -r '.result.contents[0].text' | head -20
 ```
 
-Account resources need a bearer token (an API key from [/dashboard/api-keys](https://three.ws/dashboard/api-keys) with `agents:read`):
+Account resources need a bearer token (an API key from [/dashboard/api](https://three.ws/dashboard/api) with `agents:read`):
 
 ```bash
 curl -s https://three.ws/api/mcp \
@@ -1190,7 +1190,7 @@ Where a flow's executing venue (swaps, launches, perps, lending, predictions) is
 Goal: learn what a server does and pick the best next step. Server: all four (the first call is the same everywhere).
 
 1. `getting_started()` to summarize what the server can do.
-2. Read `three://me`. If you are not signed in, connect with OAuth or an API key from `/dashboard/api-keys`, then stop.
+2. Read `three://me`. If you are not signed in, connect with OAuth or an API key from `/dashboard/api`, then stop.
 3. Read `three://agents` to list your agents with their Solana addresses.
 4. Pick a next prompt from the ones the server lists.
 

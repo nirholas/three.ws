@@ -488,7 +488,7 @@ curl -s https://three.ws/api/mcp -H 'content-type: application/json' \
 ```
 
 ```json
-{"jsonrpc":"2.0","id":1,"error":{"code":-32001,"message":"three://me is account data: sign in with three.ws OAuth or an API key to read it","data":{"uri":"three://me","hint":"Connect this server with OAuth, or send Authorization: Bearer sk_live_... from /dashboard/api-keys."}}}
+{"jsonrpc":"2.0","id":1,"error":{"code":-32001,"message":"three://me is account data: sign in with three.ws OAuth or an API key to read it","data":{"uri":"three://me","hint":"Connect this server with OAuth, or send Authorization: Bearer sk_live_... from /dashboard/api."}}}
 ```
 
 `-32001` means "authenticate or grant a scope first"; `-32002` is MCP's "resource not found." Someone else's resource answers exactly like a missing one, "so a URI cannot be used to probe which ids exist."

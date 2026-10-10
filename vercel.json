@@ -2549,6 +2549,34 @@
 			"status": 301
 		},
 		{
+			"src": "/dashboard/api-keys/?",
+			"headers": {
+				"Location": "/dashboard/api"
+			},
+			"status": 301
+		},
+		{
+			"src": "/create-selfie/?",
+			"headers": {
+				"Location": "/create/selfie"
+			},
+			"status": 301
+		},
+		{
+			"src": "/marketplace-analytics/?",
+			"headers": {
+				"Location": "/marketplace/analytics"
+			},
+			"status": 301
+		},
+		{
+			"src": "/avatars/?",
+			"headers": {
+				"Location": "/gallery"
+			},
+			"status": 301
+		},
+		{
 			"src": "/dashboard-classic/memory",
 			"headers": {
 				"Location": "/dashboard/agents"

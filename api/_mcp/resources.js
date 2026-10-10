@@ -72,7 +72,7 @@ function assertAccess(def, auth, uri) {
 	if (!auth?.userId) {
 		throw rpcError(AUTH_REQUIRED, `${uri} is account data: sign in with three.ws OAuth or an API key to read it`, {
 			uri,
-			hint: 'Connect this server with OAuth, or send Authorization: Bearer sk_live_... from /dashboard/api-keys.',
+			hint: 'Connect this server with OAuth, or send Authorization: Bearer sk_live_... from /dashboard/api.',
 		});
 	}
 	throw rpcError(AUTH_REQUIRED, `${uri} requires one of these scopes: ${def.access.join(', ')}`, {
