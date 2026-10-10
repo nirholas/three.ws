@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-10T20:52:15.832Z",
+	"generated_at": "2026-10-10T21:02:24.880Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3935,
+	"total": 3940,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -82,6 +82,16 @@
 		{
 			"date": "2026-10-10",
 			"type": "launch",
+			"title": "Docs · Funded launch intents",
+			"summary": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
+			"link": "/docs/launch-intents",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
 			"title": "Docs · Importing skills",
 			"summary": "Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.",
 			"link": "/docs/skill-import",
@@ -135,6 +145,16 @@
 			"title": "Docs · Web Domains",
 			"summary": "Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.",
 			"link": "/docs/domains",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs: Agent Commerce",
+			"summary": "Let an agent invoice in USDC, SOL or $THREE with a Solana Pay link and QR verified on-chain, send money with a preview and confirm, sell and buy offers with fulfillment released on payment, and propose limit changes only the owner can approve. REST, MCP and webhook reference.",
+			"link": "/docs/agent-commerce",
 			"tags": [
 				"launch"
 			]
@@ -274,6 +294,16 @@
 		{
 			"date": "2026-10-10",
 			"type": "update",
+			"title": "Agents can now send invoices, sell things, buy from each other and ask for higher limits",
+			"summary": "Your agent can bill anyone in USDC, SOL or $THREE. Each invoice gets a share page, a Solana Pay link and a QR code that any Solana wallet can scan, and three.ws watches the chain to mark it paid, part-paid or expired on its own, with notifications, webhooks and a receipt. Paid invoices show up in your agent's earnings next to skill sales and creator fees. Agents can also list things for sale and buy from each other with a quote first and an explicit confirm, and the goods are only released once the payment is verified. Sending money takes a preview and a confirm, and goes to your approvals unless the address is on your allowlist. An agent can read its own spending limits and propose changes, but only you can approve them, after confirming it is you. Manage it all on the new Commerce page.",
+			"link": "/commerce",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
 			"title": "Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels",
 			"summary": "Fifteen new tools for Claude or any MCP client, plus a portfolio API at /api/v1/agents/:id/portfolio. An agent can read its own valued Solana portfolio with cost basis and risk flags, its net-worth history (now recorded hourly) and its profit and loss broken down by where it came from. It can check its launch sniper, and arm it only after you have seen the exact budget, per-trade size, limits and network in a preview and said yes; turning it off is one call. It can subscribe to signal feeds in paper mode, and create, list and delete pump alert rules, including a new kind that fires on any new launch matching your filters: a name pattern, a market cap band, a minimum safety score, the creator's track record and risk flags to avoid. Alerts reach you on the bell, by push, and in any Telegram or Discord chat you have paired. Agents can also challenge another agent to a points-only duel, accept one, read a duel and browse the open markets, with every result counted on the duels leaderboard.",
 			"link": "/docs/mcp",
@@ -363,6 +393,17 @@
 		{
 			"date": "2026-10-10",
 			"type": "update",
+			"title": "Every three.ws package now has its own home, docs site and agent-readable guide",
+			"summary": "Each SDK and MCP server is mirrored to its own GitHub repository with a documentation site, install command, topics for search, an AGENTS.md and llms.txt so coding agents can use it, plus contributing, security and issue templates. Find them all in the standalone repositories list.",
+			"link": "/docs/start-here",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
 			"title": "Import skills from any registry, safely",
 			"summary": "Agents can now take skills from outside three.ws. Point the new Import Skills page at any public GitHub repository of SKILL.md files or any registry manifest, browse by category (DeFi, intelligence, social, infrastructure, security, data) with install counts, and install in two steps: a scan you read, then your approval. Every skill is pinned to the exact commit it was read at, licence-checked (skills that do not permit reuse are never offered), and scanned for hidden instructions, secret grabbing, data leaks and hardcoded payout addresses. Skills that ask to spend, sign or send messages need a second yes and can never move funds on their own. Updates never apply silently: you see the diff and approve it. You can also fork any skill and publish your own for everyone to import, from the page or from any MCP client.",
 			"link": "/skills/import",
@@ -379,6 +420,17 @@
 			"link": "/launch/uniswap",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Launch a coin from a quote the agent wallet pays, with a creator-fee picker and a live status",
+			"summary": "Agents can now launch a coin from a priced quote. Pick the quote asset and a creator fee, see the full fee lines and what a coin could earn, then fund it from the agent's own wallet and confirm it in the approvals inbox. Only a signed-in browser can fund or confirm, so an API key can never spend. Every launch walks the same stages (quote, paid, submitted, confirmed, indexed) and replays safely if you retry. A devnet dry run lets you rehearse the whole thing with no real funds, and the command line prints the quote and tracks the stage with npx three-ws agent launch --intent.",
+			"link": "/launch/intents",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1491,57 +1543,6 @@
 			"link": "/docs/experiments-autonomous-trading",
 			"tags": [
 				"docs"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "Experiment write-up: how many new agents ever launch a coin?",
-			"summary": "Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.",
-			"link": "/docs/experiments-agent-launch-funnel",
-			"tags": [
-				"docs"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "Photo to 3D keeps going when its main engines go down",
-			"summary": "When a photo-to-3D job fails partway through, it already moves to the next engine on its own. Until now that only worked while another textured engine was up, so when the two main engines failed together last week, photo generations stopped completely. There is now one more rung: our own TripoSG engine takes over the job and delivers the shape of your model without textures, and the progress screen tells you when that happens. You get a model you can work with instead of an error, and whenever a textured engine is up, it is still used first.",
-			"link": "/image-to-3d",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "See what every agent has earned",
-			"summary": "Agent profiles, avatar pages and coin pages now show an Earned card: lifetime creator fees from the coins the agent launched, in SOL with USD beside it, what has been claimed and what is still waiting, a per-coin breakdown and every recorded claim with its Solscan link, plus income from selling its skills and services. The figures come from a snapshot refreshed twice an hour, and are also readable over MCP.",
-			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "See where every $100 paid in $THREE goes",
-			"summary": "The $THREE page now shows, for paid compute, marketplace sales, scarcity mints, spins and copy-trading fees, how every $100 splits between the seller, the treasury that funds buybacks, and holder rewards. The numbers are read live from the same config the payment code enforces, and the treasury and holder-rewards wallets are listed with their live $THREE and USDC balances, or marked not yet published. The platform never burns $THREE. The page also follows your light or dark theme now.",
-			"link": "/three-token",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "Sell your whole agent as a paid API",
-			"summary": "Flip one switch on your agent's Earn tab, set a price per call and a short description, and your agent becomes a pay-per-call API anyone can use. Buyers pay in USDC on Solana straight to your agent's own wallet, so there is nothing to withdraw, and they talk to exactly the agent you configured. Agents on sale are listed in the x402 catalog and discovery feed so other agents can find and hire them.",
-			"link": null,
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -4069,6 +4069,21 @@ curl -s 'https://three.ws/api/v1/pump/launches?limit=10'
 
 ---
 
+### Funded launch intents
+
+Quote a launch, fund it from the agent wallet, confirm it in the approvals inbox, and poll its stage (`quote`, `paid`, `submitted`, `confirmed`, `indexed`).
+
+| Method and path | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/pump/pairs` | none | Quote assets a launch can pair with, fee schedule and creator-fee rule. |
+| `POST /api/pump/launch-intents` | session or bearer | Create an intent and its quote. |
+| `GET /api/pump/launch-intents/:id` | session or bearer | Read an intent and its stage. |
+| `POST /api/pump/launch-intents/:id/pay` | session only | Record the funding proof, once, replayable. |
+| `POST /api/pump/launch-intents/:id/confirm` | session only | Ask the owner to approve the launch. |
+| `POST /api/pump/launch-intents/:id/dry-run` | session or bearer | Simulate the launch without sending it. |
+
+Full flow, errors and configuration: [launch-intents.md](launch-intents.md).
+
 ### Whales
 
 Whale / large-buy detection across pump.fun — **facts only**: which wallets

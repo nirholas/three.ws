@@ -6626,6 +6626,14 @@
 					"added": "2026-08-21"
 				},
 				{
+					"path": "/docs/launch-intents",
+					"title": "Docs · Funded launch intents",
+					"description": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/docs/pill-mascot",
 					"title": "Docs · Rigging the pump.fun pill mascot",
 					"description": "How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.",

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-10",
+			"title": "Launch a coin from a quote the agent wallet pays, with a creator-fee picker and a live status",
+			"summary": "Agents can now launch a coin from a priced quote. Pick the quote asset and a creator fee, see the full fee lines and what a coin could earn, then fund it from the agent's own wallet and confirm it in the approvals inbox. Only a signed-in browser can fund or confirm, so an API key can never spend. Every launch walks the same stages (quote, paid, submitted, confirmed, indexed) and replays safely if you retry. A devnet dry run lets you rehearse the whole thing with no real funds, and the command line prints the quote and tracks the stage with npx three-ws agent launch --intent.",
+			"tags": ["feature", "improvement"],
+			"link": "/launch/intents"
+		},
+		{
+			"date": "2026-10-10",
 			"title": "Sign in with Telegram, link devices with one-time codes, and prove payout wallets with a signature",
 			"summary": "You can now sign in to three.ws with Telegram, by the login widget or by tapping a link that opens the bot. Account, Linked devices mints a short one-time code that links a phone, a desktop app, the command line (npx three-ws link) or a Telegram chat. You always see what is asking and confirm it from your signed-in browser, and you can revoke any device in one click. Agents and owners can attach a Solana or EVM wallet by signing a message. Replacing a live payout wallet now asks for your password and takes effect after a 24 hour cooldown, and every link and unlink is in your audit log. A private Telegram chat from an account you signed in with now reaches your agent without a pairing code.",
 			"tags": ["feature", "security"],
