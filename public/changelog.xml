@@ -263,6 +263,14 @@
 			<description>Every API key now sits on a developer plan: Free, Builder, Scale or Enterprise, each with a monthly call quota, a per-minute burst ceiling, a concurrency ceiling and a webhook cap, all enforced on every /api/v1 call rather than only recorded. Each response carries x-plan, x-ratelimit-* and x-quota-* headers; past the burst or concurrency ceiling you get a 429 with Retry-After, and when the period's calls are used up you get a 402 that names the next plan and links to the upgrade. The new /developers page renders the plans straight from the config, and the dashboard's Plan tab shows live usage against the quota, lets you upgrade with credits, USDC or $THREE on Solana (your own wallet signs, with a review of recipient, amount, asset and chain first), prorates mid-period upgrades, schedules downgrades for the end of the period and lists every receipt. Revoking a key now takes effect immediately on every server. Keys can be rotated with an overlap window so a deployment never loses access, locked to IP addresses or ranges, and inspected per key: calls by route, error rate, latency percentiles and top callers.</description>
 		</item>
 		<item>
+			<title>Every MCP tool now has its own page, and the tool counts are measured, not typed</title>
+			<link>https://three.ws/mcp-tools</link>
+			<guid isPermaLink="false">2026-10-10:Every MCP tool now has its own page, and the tool counts are measured, not typed</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.</description>
+		</item>
+		<item>
 			<title>Import skills from any registry, safely</title>
 			<link>https://three.ws/skills/import</link>
 			<guid isPermaLink="false">2026-10-10:Import skills from any registry, safely</guid>
@@ -12524,7 +12532,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-07-30:MCP Tool Catalog</guid>
 			<pubDate>Thu, 30 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.</description>
+			<description>Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.</description>
 		</item>
 		<item>
 			<title>Recipe: build a whole asset pack in parallel</title>

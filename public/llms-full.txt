@@ -4714,7 +4714,7 @@ Add three.ws to your AI client in two clicks: one connector URL gives Claude, Ch
 
 URL: https://three.ws/mcp-tools
 
-Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.
+Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.
 
 ### Docs · The 10 SOL trading experiment
 

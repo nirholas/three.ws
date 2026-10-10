@@ -25,6 +25,24 @@ page explains how the servers are grouped and how the paid ones charge.
 
 ---
 
+## How the totals are calculated
+
+The totals are computed, never typed. At build time `npm run build:mcp-catalog` imports the exact catalog each hosted endpoint serves, and loads every stdio package in-process and asks it for `tools/list`, `resources/list` and `prompts/list` over an in-memory MCP transport. The result is [`/tools.json`](/tools.json) and [`/mcp-catalog.json`](/mcp-catalog.json), currently <!-- mcp-count:all.tools -->631<!-- /mcp-count --> tools (<!-- mcp-count:all.uniqueTools -->543<!-- /mcp-count --> unique names) on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. At request time [`/api/mcp-census`](/api/mcp-census) recounts the hosted endpoints from the running code and reports whether they still match the build.
+
+- **tools**: every tool a server can serve, including financial-tier tools the policy hides until a session enables them.
+- **resources, templates, prompts**: the matching `*/list` entries, prompts rendered against that server's own catalog.
+- **unique**: distinct tool names. `/api/mcp-chatgpt` and `/api/mcp-grok` serve subsets of `/api/mcp-studio`, so per-server figures overlap.
+
+Every tool declares all four annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) and a description with a "Use this when..." line; `tests/mcp-tool-quality.test.js` fails otherwise, and `tests/mcp-prompt-references.test.js` fails when a prompt names a tool, resource or prompt that does not exist. Run both with `npm run test:mcp-surface`.
+
+**Quoting a count in a doc.** Wrap it in a marker: `<!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count -->`. The key is `<scope>.<field>`: scope is `all`, `hosted`, `stdio` or a server id from `/tools.json`; field is `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`, `free` or `paid`. `npm run check:mcp-counts` (part of `npm run gate`) fails on a marker that disagrees with the census and on an unmarked "N tools" in a living doc that is about a server; `npm run check:mcp-counts -- --fix` rewrites marker values. Add `<!-- mcp-count-ignore -->` to a line whose number is not about a three.ws server.
+
+## Per-tool pages and releases
+
+Every tool has a page at `/mcp-tools/<server>/<tool>` with its schema, an example call (curl, JSON-RPC body, client config), its price and hints. Free, read-only tools served over HTTP have a try-it form that calls the live endpoint. [`/mcp-tools#releases`](/mcp-tools#releases) shows which tools each release added, built from git history into [`/mcp-tool-history.json`](/mcp-tool-history.json).
+
+---
+
 ## How paid MCP tools charge
 
 The paid servers follow the MCP v2 transport convention: a `tools/call` made
@@ -140,6 +158,7 @@ generation lane**; the rest are paid and quote their price in the
 | Bazaar MCP | `api/mcp-bazaar.js` | x402 service discovery — see [x402 bazaar](mcp-x402-bazaar.md). |
 | IBM MCP | `api/ibm-mcp.js` | watsonx / Granite integration — see [IBM](ibm.md). |
 | pump.fun MCP | `api/pump-fun-mcp.js` | Launch/trade tools — see [Solana pump.fun](solana-pumpfun.md). |
+| Viewer Control | `api/chat/mcp.js` | Drives a live model viewer (wireframe, lighting, screenshots, load a model); tools in `api/_lib/viewer-mcp-tools.js`. |
 
 ## $THREE only
 

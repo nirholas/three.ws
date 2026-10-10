@@ -6,8 +6,8 @@
 	"totals": {
 		"all": {
 			"servers": 51,
-			"tools": 631,
-			"uniqueTools": 543,
+			"tools": 635,
+			"uniqueTools": 547,
 			"resources": 24,
 			"uniqueResources": 11,
 			"templates": 21,
@@ -17,8 +17,8 @@
 		},
 		"hosted": {
 			"servers": 10,
-			"tools": 367,
-			"uniqueTools": 324,
+			"tools": 371,
+			"uniqueTools": 328,
 			"resources": 22,
 			"uniqueResources": 9,
 			"templates": 21,
@@ -58,9 +58,9 @@
 			"title": "Agent Wallet",
 			"endpoint": "/api/mcp-agent",
 			"transport": "remote",
-			"tools": 100,
-			"defaultOn": 74,
-			"readOnly": 45,
+			"tools": 104,
+			"defaultOn": 78,
+			"readOnly": 49,
 			"destructive": 26,
 			"resources": 6,
 			"templates": 9,
@@ -2637,6 +2637,46 @@
 			"page": "https://three.ws/mcp-tools/mcp-agent/perps_limits"
 		},
 		{
+			"name": "papertrade_markets",
+			"server": "mcp-agent",
+			"title": "List Papertrade markets",
+			"category": "perps",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": "Call this first to see what can be traded.",
+			"page": "https://three.ws/mcp-tools/mcp-agent/papertrade_markets"
+		},
+		{
+			"name": "papertrade_quote",
+			"server": "mcp-agent",
+			"title": "Quote a Papertrade position",
+			"category": "perps",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/papertrade_quote"
+		},
+		{
+			"name": "papertrade_account",
+			"server": "mcp-agent",
+			"title": "Read a Papertrade wallet",
+			"category": "perps",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/papertrade_account"
+		},
+		{
+			"name": "papertrade_protocol",
+			"server": "mcp-agent",
+			"title": "Check Papertrade protocol health",
+			"category": "perps",
+			"safety": "read",
+			"price": 0,
+			"whenToUse": null,
+			"page": "https://three.ws/mcp-tools/mcp-agent/papertrade_protocol"
+		},
+		{
 			"name": "token_search",
 			"server": "mcp-agent",
 			"title": "Search Solana tokens",
@@ -4303,7 +4343,7 @@
 			"category": "launch",
 			"safety": "write",
 			"price": 0,
-			"whenToUse": "Call this before launching a coin, pass the returned uri to the launch-agent endpoint or the studio launch flow.",
+			"whenToUse": "Call this before launching a coin — pass the returned uri to the launch-agent endpoint or the studio launch flow.",
 			"page": "https://three.ws/mcp-tools/pump-fun-mcp/pumpfun_upload_metadata"
 		},
 		{
@@ -4489,7 +4529,7 @@
 		{
 			"name": "restyle_material",
 			"server": "three-ws-mcp-server",
-			"title": "Restyle a 3D model’s materials, AI PBR restyle or seeded colorway variants",
+			"title": "Restyle a 3D model’s materials — AI PBR restyle or seeded colorway variants",
 			"category": "utility",
 			"safety": "write",
 			"price": 0.05,
@@ -4519,7 +4559,7 @@
 		{
 			"name": "agent_hire_discover",
 			"server": "three-ws-mcp-server",
-			"title": "Agent hire, discover ($0.01)",
+			"title": "Agent hire — discover ($0.01)",
 			"category": "utility",
 			"safety": "read",
 			"price": 0.01,
@@ -4723,7 +4763,7 @@
 			"category": "intelligence",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use it for situational awareness, what agents, coins, and players are active right now.",
+			"whenToUse": "Use it for situational awareness — what agents, coins, and players are active right now.",
 			"page": "https://three.ws/mcp-tools/activity-mcp/get_feed_events"
 		},
 		{
@@ -4753,7 +4793,7 @@
 			"category": "agents",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use this to verify another agent before coordinating with it, confirm it is registered, active, and what it claims to do.",
+			"whenToUse": "Use this to verify another agent before coordinating with it — confirm it is registered, active, and what it claims to do.",
 			"page": "https://three.ws/mcp-tools/agenc-mcp/get_agent"
 		},
 		{
@@ -4773,7 +4813,7 @@
 			"category": "x402",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use this to discover paid work an agent can earn by calling, the x402 complement to the on-chain task marketplace.",
+			"whenToUse": "Use this to discover paid work an agent can earn by calling — the x402 complement to the on-chain task marketplace.",
 			"page": "https://three.ws/mcp-tools/agenc-mcp/query_x402_services"
 		},
 		{
@@ -4993,7 +5033,7 @@
 			"category": "intelligence",
 			"safety": "read",
 			"price": 0,
-			"whenToUse": "Use this to review what fired; pair it with list_alert_rules, whose `recent_deliveries` shows per-channel send outcomes, to see both what fired and how it was delivered.",
+			"whenToUse": "Use this to review what fired; pair it with list_alert_rules, whose `recent_deliveries` shows per-channel send outcomes — to see both what fired and how it was delivered.",
 			"page": "https://three.ws/mcp-tools/alerts-mcp/get_alert_history"
 		},
 		{

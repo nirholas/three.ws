@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T20:09:17.485Z",
+	"generated_at": "2026-10-10T20:39:45.768Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -333,6 +333,17 @@
 				"sdk",
 				"security",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Every MCP tool now has its own page, and the tool counts are measured, not typed",
+			"summary": "The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.",
+			"link": "/mcp-tools",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -16597,7 +16608,7 @@
 			"date": "2026-07-30",
 			"type": "launch",
 			"title": "MCP Tool Catalog",
-			"summary": "Every MCP tool three.ws publishes, searchable in one place: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Generated from the source of each tool, so it never drifts from what the servers serve.",
+			"summary": "Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.",
 			"link": "/mcp-tools",
 			"tags": [
 				"launch"

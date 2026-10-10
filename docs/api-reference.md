@@ -217,6 +217,18 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 
 ---
 
+## MCP Census API
+
+### Count every MCP tool, resource and prompt
+
+`GET /api/mcp-census` (public, no auth, rate limited per IP) returns how many tools, resources, resource templates and prompts each three.ws MCP server serves. The hosted endpoints are counted by the running server from the same catalogs it answers `tools/list` from. The stdio npm packages cannot load inside the API runtime, so their rows come from the build's [`/tools.json`](https://three.ws/tools.json).
+
+```bash
+curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
+```
+
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->631<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+
 ## Asset Catalog API
 
 One search across every ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library. **No authentication, no API key, no payment.** Open CORS, cached at the edge for 5 minutes.

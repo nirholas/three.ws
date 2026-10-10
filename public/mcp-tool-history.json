@@ -792,6 +792,10 @@
 					"offer_list",
 					"order_book",
 					"order_preview",
+					"papertrade_account",
+					"papertrade_markets",
+					"papertrade_protocol",
+					"papertrade_quote",
 					"perps_account",
 					"perps_action_preview",
 					"perps_collateral_deposit",
@@ -984,9 +988,9 @@
 			},
 			"removed": {},
 			"counts": {
-				"added": 258,
+				"added": 262,
 				"removed": 0,
-				"total": 631
+				"total": 635
 			}
 		}
 	]

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-10T20:09:17.507Z",
+	"generated_at": "2026-10-10T20:39:45.789Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3932,
+	"total": 3933,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -336,6 +336,17 @@
 				"sdk",
 				"security",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Every MCP tool now has its own page, and the tool counts are measured, not typed",
+			"summary": "The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.",
+			"link": "/mcp-tools",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1529,17 +1540,6 @@
 			"link": "/docs/ios-app",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "The language menu now offers 69 languages",
-			"summary": "The language menu grew from 14 languages to 69, each one fully translated. 55 more pages now follow the language you pick, including Hood Desk, Portfolios, Fee Bridge, Agent Cards, Connect, the CLI sign-in approval, Motion, Docs World and the legal pages. Their titles, headings, buttons and the text shown when a page is shared all translate, and so does the sitemap, so you can find every page on three.ws in your own language.",
-			"link": "/sitemap",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]
