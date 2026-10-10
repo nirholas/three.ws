@@ -39,7 +39,7 @@
 			import {
 				createStage, loadAvatar, loadClips, startLoop,
 				fireSplash, fireShockwave,
-				mountChrome,
+				mountChrome, PX_PER_UNIT,
 			} from './_lib.js';
 
 			mountChrome('Wrecking-ball entrance');
@@ -51,6 +51,10 @@
 			const stage  = createStage(canvas);
 			const { avatar, mixer, rootBone, baseRootPos } = await loadAvatar();
 			stage.scene.add(avatar);
+			// Her body lies along the rope with her feet at its end, so the
+			// rope stops at the top of her head.
+			const box = new THREE.Box3().setFromObject(avatar);
+			const heightPx = (box.max.y - box.min.y) * PX_PER_UNIT;
 
 			const A = await loadClips(mixer, {
 				falling: '/animations/clips/falling.json',
@@ -61,15 +65,21 @@
 			A.falling.play();
 			let current = A.falling;
 
-			// Pendulum: pivot at top-right, swings through a 100° arc.
-			let phase = 'swing'; // swing → strike → recover → dangle
+			// Pendulum: the pivot sits up and to the right of the button, far
+			// enough out that the rope meets the button at about 45° below the
+			// pivot, and the rope is exactly long enough to reach it. She starts
+			// level with the pivot at the right edge and swings down into it.
+			let phase = 'swing'; // swing → recover → dangle
 			let pivotPx = { x: 0, y: 0 };
 			let length  = 0;
 			let t0 = 0;
 
 			function recalc() {
-				pivotPx = { x: window.innerWidth * 0.92, y: 60 };
-				length  = Math.min(window.innerHeight * 0.55, 460);
+				const c = ctaCenterPx();
+				const y = 60;
+				const x = Math.min(c.x + (c.y - y), window.innerWidth * 0.92);
+				pivotPx = { x, y };
+				length  = Math.hypot(c.x - x, c.y - y);
 			}
 			recalc();
 			window.addEventListener('resize', recalc);
@@ -79,11 +89,12 @@
 				return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 			}
 
-			// Map t∈[0,1] to a swing angle that starts horizontal-right (90°)
-			// and decelerates into the strike at impact angle (≈ where the
-			// pendulum reaches the CTA).
+			// Map t∈[0,1] to a swing angle that starts level to the right of
+			// the pivot and decelerates into the strike at the impact angle,
+			// where the end of the rope reaches the CTA. Angles are measured
+			// from straight down, positive to the right.
 			function swingAngle(t) {
-				const start = -Math.PI / 2 + 0.4;  // ~71° right of straight-down
+				const start = Math.PI / 2;
 				const end   = computeImpactAngle();
 				const e = 1 - (1 - t) * (1 - t);
 				return start + (end - start) * e;
@@ -112,13 +123,14 @@
 				const py = pivotPx.y + Math.cos(angle) * length;
 				const w  = stage.domToWorld(px, py);
 				avatar.position.set(w.x, w.y, 0);
-				// Tilt the agent to match the rope direction.
-				avatar.rotation.z = -angle;
-				// Update rope visual.
+				// Tilt the agent so her head points up the rope at the pivot.
+				avatar.rotation.z = angle;
+				// Update rope visual. CSS rotates clockwise, which swings a
+				// downward rope to the left, hence the negated angle.
 				ropeEl.style.left = `${pivotPx.x}px`;
 				ropeEl.style.top  = `${pivotPx.y}px`;
-				ropeEl.style.height = `${length - 30}px`;
-				ropeEl.style.transform = `rotate(${angle}rad)`;
+				ropeEl.style.height = `${Math.max(length - heightPx, 0)}px`;
+				ropeEl.style.transform = `rotate(${-angle}rad)`;
 			}
 
 			startLoop(stage.renderer, stage.scene, stage.camera, mixer, () => {

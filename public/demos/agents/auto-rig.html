@@ -250,7 +250,7 @@
 
 		<script type="module">
 			import * as THREE from 'three';
-			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { createGLTFLoader } from './_lib.js';
 			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 			import { Client } from 'https://esm.sh/@gradio/client@1.7.1';
 
@@ -351,7 +351,7 @@
 				if (file.name.toLowerCase().endsWith('.glb')) {
 					const url = URL.createObjectURL(file);
 					try {
-						const gltf = await new GLTFLoader().loadAsync(url);
+						const gltf = await createGLTFLoader().loadAsync(url);
 						viewerIn.setRoot(gltf.scene);
 						setStatus('Mesh loaded. Ready to rig.');
 					} catch (err) {
@@ -442,7 +442,7 @@
 					if (!finalFile?.url) throw new Error(finalStatus || 'Space returned no file.');
 
 					spinMsg.textContent = 'Loading rigged GLB…';
-					const gltf = await new GLTFLoader().loadAsync(finalFile.url);
+					const gltf = await createGLTFLoader().loadAsync(finalFile.url);
 
 					// Add a skeleton helper so the new bones are visible
 					gltf.scene.traverse(o => {

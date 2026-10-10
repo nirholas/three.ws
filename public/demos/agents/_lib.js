@@ -4,6 +4,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 export const PX_PER_UNIT = 120;
 
@@ -55,10 +56,14 @@ export function createStage(canvas) {
 	return { renderer, scene, camera, resize, domToWorld };
 }
 
+// Platform avatars ship EXT_meshopt_compression, which GLTFLoader refuses
+// to read without a decoder, so every demo loads through this.
+export function createGLTFLoader() {
+	return new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+}
+
 export async function loadAvatar(url = '/avatars/cz.glb') {
-	const gltf = await new Promise((res, rej) =>
-		new GLTFLoader().load(url, res, undefined, rej),
-	);
+	const gltf = await createGLTFLoader().loadAsync(url);
 	const avatar = gltf.scene;
 	let rootBone = null;
 	avatar.traverse(n => {

@@ -405,9 +405,8 @@
 
 		<script type="module">
 			import * as THREE from 'three';
-			import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
 			import { SkeletonHelper } from 'three';
-			import { createStage, mountChrome } from './_lib.js';
+			import { createStage, createGLTFLoader, mountChrome } from './_lib.js';
 			import { FaceMocap }       from '/src/face-mocap.js';
 			import { FaceMocapOverlay } from '/src/face-mocap-overlay.js';
 
@@ -436,9 +435,7 @@
 					});
 				}
 
-				const gltf = await new Promise((res, rej) =>
-					new GLTFLoader().load(url, res, undefined, rej),
-				);
+				const gltf = await createGLTFLoader().loadAsync(url);
 				avatar = gltf.scene;
 
 				rootBone = null;

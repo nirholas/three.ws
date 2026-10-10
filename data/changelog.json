@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-10",
+			"title": "The 3D agent demos show their agent again",
+			"summary": "Every page in the agent interaction lab had stopped drawing its 3D character, so the demos showed only text and buttons. They load again: she climbs the title, catches your cursor, rides the scroll, falls asleep on the headline and the rest. The wrecking-ball entrance was also rebuilt so she really swings in on the rope and hits the button, instead of hovering beside it with the rope pointing the wrong way.",
+			"tags": [
+				"fix"
+			],
+			"link": "/demos/agents"
+		},
+		{
+			"date": "2026-10-10",
 			"title": "Approve or deny your agent's requests from Telegram and Discord",
 			"summary": "When your agent asks before a transfer or a trade, the request now lands in your paired Telegram or Discord chat with the full confirmation table (recipient, amount, asset, chain, risk notes and deadline) and Approve and Deny buttons. Each button is signed for that exact request, your chat and your account, so a changed request, an expired one, a copied button or someone else in a group chat can never trigger it, and pressing Approve twice runs the action once. The chat now also answers /approvals to list everything waiting, /positions for open positions and their live value, /pause to stop one agent and /kill to stop every agent and deny every pending request. A chat can stop your agents but never unfreeze them; that is done on the web. Forwarded messages are never treated as instructions.",
 			"tags": ["feature", "security"],
