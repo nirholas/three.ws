@@ -442,9 +442,12 @@ async function build() {
 }
 
 const { catalog, toolsIndex } = await build();
+// Tool descriptions are authored in many files; the published feeds must never carry the dashes
+// the repo bans, so normalize at the single point where they are serialized.
+const plain = (json) => json.replace(/\s?[\u2014\u2013]\s?/g, ' - ').replace(/[\u2018\u2019]/g, "'");
 const outputs = [
-	[OUT, `${JSON.stringify(catalog, null, '\t')}\n`],
-	[TOOLS_OUT, `${JSON.stringify(toolsIndex, null, '\t')}\n`],
+	[OUT, plain(`${JSON.stringify(catalog, null, '\t')}\n`)],
+	[TOOLS_OUT, plain(`${JSON.stringify(toolsIndex, null, '\t')}\n`)],
 ];
 
 if (process.argv.includes('--check')) {
