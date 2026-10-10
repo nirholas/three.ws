@@ -10,7 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { TOOL_CATALOG, TOOLS } from '../../api/_mcpagent/catalog.js';
 
 describe('agent-wallet MCP catalog', () => {
-	it('leads with the free getting_started tool, then the wallet, marketplace, prediction and perps toolsets', () => {
+	it('leads with the free getting_started tool, then the wallet, marketplace, prediction, perps and Papertrade toolsets', () => {
 		expect(TOOL_CATALOG.map((t) => t.name)).toEqual([
 			'getting_started',
 			// Wallet and x402 (api/_mcpagent/tools.js)
@@ -21,6 +21,8 @@ describe('agent-wallet MCP catalog', () => {
 			'provision_wallet',
 			'monetize_endpoint',
 			'read_resource',
+			'get_linked_accounts',
+			'set_external_wallet',
 			// Agent marketplace (api/_mcpagent/marketplace-tools.js)
 			'browse_marketplace',
 			'browse_public_agents',
@@ -62,6 +64,11 @@ describe('agent-wallet MCP catalog', () => {
 			'perps_order_cancel',
 			'perps_flatten',
 			'perps_limits',
+			// Papertrade synthetic perps on HyperEVM (api/_mcpagent/papertrade-tools.js)
+			'papertrade_markets',
+			'papertrade_quote',
+			'papertrade_account',
+			'papertrade_protocol',
 			// Solana trading (api/_mcpagent/trading-tools.js over api/_lib/trading-tools/registry.js)
 			'token_search',
 			'get_price',
@@ -91,6 +98,35 @@ describe('agent-wallet MCP catalog', () => {
 			'duel_accept',
 			'duel_details',
 			'duel_markets',
+			// Agent commerce (api/_mcpagent/commerce-tools.js)
+			'invoice_create',
+			'invoice_details',
+			'invoice_list',
+			'invoice_verify',
+			'invoice_cancel',
+			'agent_send_preview',
+			'agent_send',
+			'offer_list',
+			'agent_sell',
+			'agent_buy',
+			'agent_buy_confirm',
+			'spending_check',
+			'spending_setup',
+			// Resting orders and DCA (api/_mcpagent/orders-tools.js)
+			'order_preview',
+			'limit_order_create',
+			'stop_order_create',
+			'trailing_order_create',
+			'ladder_order_create',
+			'oco_order_create',
+			'limit_order_list',
+			'limit_order_cancel',
+			'limit_order_history',
+			'order_book',
+			'dca_preview',
+			'dca_create',
+			'dca_list',
+			'dca_cancel',
 		]);
 	});
 

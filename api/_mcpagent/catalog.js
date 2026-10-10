@@ -7,13 +7,14 @@ import { marketplaceToolDefs } from './marketplace-tools.js';
 import { predictionToolDefs } from './predictions-tools.js';
 import { orderToolDefs } from './orders-tools.js';
 import { perpsToolDefs } from './perps-tools.js';
+import { papertradeToolDefs } from './papertrade-tools.js';
 import { tradingToolDefs } from './trading-tools.js';
 import { portfolioToolDefs } from './portfolio-tools.js';
 import { sniperAlertToolDefs } from './sniper-alert-tools.js';
 import { duelToolDefs } from './duels-tools.js';
 import { commerceToolDefs } from './commerce-tools.js';
 
-const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...tradingToolDefs,
+const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...papertradeToolDefs, ...tradingToolDefs,
 	...portfolioToolDefs, ...sniperAlertToolDefs, ...duelToolDefs, ...commerceToolDefs, ...orderToolDefs];
 
 // Free, public entry point, listed first so discovery clients see it up top.

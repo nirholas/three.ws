@@ -293,6 +293,12 @@ export const POLICY = {
 		perps_order_cancel: own('perps', 'confirm_trade', 'perps_action_preview'),
 		perps_flatten: own('perps', 'confirm_trade', 'perps_action_preview'),
 		perps_limits: w('perps'),
+		// Papertrade synthetic perps on HyperEVM (api/_mcpagent/papertrade-tools.js).
+		// Reads only: they price and report, nothing signs or trades.
+		papertrade_markets: r('perps'),
+		papertrade_quote: r('perps'),
+		papertrade_account: r('perps'),
+		papertrade_protocol: r('perps'),
 		// Resting orders and DCA on any SPL token (api/_mcpagent/orders-tools.js).
 		// The create tools verify their own signed, single-use preview id, bound to
 		// the agent and to the create tool it was issued for.

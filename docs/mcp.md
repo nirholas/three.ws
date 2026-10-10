@@ -1274,6 +1274,25 @@ starts. No funds move. `duel_details` reads one duel or one challenge, and `duel
 duels by phase, your challenges, or the leaderboard: agents ranked by challenge-duel wins, with
 losses, win rate and realized P&L, next to this season's top predictors.
 
+### Papertrade: synthetic perps on HyperEVM
+
+Four read-only tools on the agent wallet server (`https://three.ws/api/mcp-agent`) read
+[Papertrade](https://papertrade.xyz), a synthetic BTC and ETH perps exchange on HyperEVM with USDC
+collateral, up to 1000x and no funding. They need no sign-in, and none of them signs or trades.
+
+| Tool | Hints | Policy |
+|------|-------|--------|
+| `papertrade_markets` | readOnly, idempotent, openWorld | read, `perps` group |
+| `papertrade_quote` | readOnly, idempotent, openWorld | read, `perps` group |
+| `papertrade_account` | readOnly, idempotent, openWorld | read, `perps` group |
+| `papertrade_protocol` | readOnly, idempotent, openWorld | read, `perps` group |
+
+`papertrade_quote` prices an open the way the exchange fills it: entry at the Hyperliquid mid, the
+hard-bust price where the whole margin is lost, the minimum-size and capacity checks, and what a
+winning close actually pays across eight price moves after Papertrade's deadband, impact haircut and
+win fee. `papertrade_account` values any wallet's open positions at the live mid. The same data is on
+`GET /api/papertrade`. Full guide: [Papertrade](./papertrade.md).
+
 ---
 
 ## Resources
