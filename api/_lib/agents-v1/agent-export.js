@@ -47,10 +47,10 @@ export async function exportAgent(agent) {
 	]);
 	// Spend limits live on the backing wallet intent; read them so a re-import
 	// keeps the same ceilings instead of falling back to defaults.
-	const limits = new Map();
+	const spendLimits = new Map();
 	for (const r of automations.filter((x) => x.intent_id)) {
 		const full = await getAutomation(agent.user_id, r.id).catch(() => null);
-		if (full?.limits && Object.keys(full.limits).length) limits.set(r.id, full.limits);
+		if (full?.limits && Object.keys(full.limits).length) spendLimits.set(r.id, full.limits);
 	}
 	return {
 		format: EXPORT_FORMAT,
@@ -73,7 +73,7 @@ export async function exportAgent(agent) {
 			action: r.action_config,
 			triggerOnce: r.trigger_once,
 			enabled: r.enabled,
-			...(limits.has(r.id) ? { limits: limits.get(r.id) } : {}),
+			...(spendLimits.has(r.id) ? { limits: spendLimits.get(r.id) } : {}),
 		})),
 		customSkills: skills.map(exportSkill),
 	};

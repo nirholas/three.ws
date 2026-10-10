@@ -10116,3 +10116,81 @@ const { agents } = await res.json();
 - [x402](/docs/x402): how the paid `/api/x402/*` endpoints settle in USDC
 - [Payment sessions](/docs/payment-sessions): the buyer side, letting an agent spend a budget without holding a key
 - [Authentication](/docs/authentication): SIWE, sessions, API keys, and scopes
+
+## Agents API (v1)
+
+`/api/v1` is the stable, key-friendly face of the agent platform: create and
+run agents, chat with them, start autonomous runs, manage automations and skills,
+and receive signed webhooks, all with one bearer key. The full machine-readable
+contract is in [/openapi.json](/openapi.json) under the tags `Agents API` and
+`Agents API: webhooks`.
+
+**Auth.** `Authorization: Bearer <key>` with an API key from
+`/dashboard/api`, or a signed-in session (writes then need the CSRF token).
+Scopes: `agents:read` for GETs, `agents:write` for everything that changes
+state. Anything that moves funds (a `swap` or `transfer` automation, a run with
+`budgetUsd`) additionally needs `wallet:write` and an explicit `confirm: true`;
+an import never spends on its own.
+
+**Envelope.** Every response is `{ "data": …, "meta": { "requestId", "timestamp" } }`
+(`meta.nextCursor` on lists; pass it back as `cursor`, or `before` for message
+history). Errors are `{ "error": { "code", "message", "details" }, "meta" }`.
+
+| Status | `error.code` | Meaning |
+|---|---|---|
+| 400 | `invalid_parameter`, `bad_json`, `validation_error` | Body or query failed validation; `details` names the field |
+| 401 | `unauthorized` | No or invalid key/session |
+| 403 | `insufficient_scope`, `csrf_invalid`, `confirmation_required` | Key lacks the scope (`details.required`), CSRF missing, or a spend was not confirmed |
+| 404 | `not_found` | Unknown id, not yours, or not a UUID |
+| 405 | `method_not_allowed` | Known path, wrong method |
+| 409 | `conflict` | State forbids it, for example cancelling a finished run |
+| 422 | `idempotency_key_reused` | Same `Idempotency-Key` sent with a different body |
+| 429 | `rate_limited` | Honor `Retry-After` |
+
+**Idempotency.** Send `Idempotency-Key: <unique string>` on any POST/PATCH. A
+retry with the same key and body replays the stored response for 24 hours and
+adds `Idempotent-Replayed: true`.
+
+### Routes
+
+| Resource | Routes |
+|---|---|
+| Agents | `GET/POST /agents`, `GET/PATCH/DELETE /agents/:id`, `POST /agents/:id/start`, `POST /agents/:id/stop`, `GET /agents/:id/export`, `POST /agents/import` |
+| Chat | `POST /agents/:id/messages` (body `{ "message" }`, waits for the reply), `GET /agents/:id/messages` |
+| Runs | `POST/GET /agents/:id/runs`, `GET/PATCH /runs/:id` (`action: pause\|resume`, budgets can only rise), `POST /runs/:id/cancel`, `GET /runs/:id/steps`, `GET /runs/:id/events` (SSE, resumable with `Last-Event-ID`) |
+| Automations | `POST/GET /automations`, `GET /agents/:id/automations`, `GET/PATCH/DELETE /automations/:id`, `POST /automations/:id/trigger` |
+| Skills | `GET /skills`, `GET /skills/community[/:slug]`, `GET/POST /agents/:id/skills/custom`, `POST /agents/:id/skills/custom/import`, `GET/PATCH/DELETE /agents/:id/skills/custom/:skillId` |
+| Webhooks | `GET/POST /webhooks`, `GET/PATCH/DELETE /webhooks/:id`, `POST /webhooks/:id/rotate-secret`, `POST /webhooks/:id/test`, `GET /webhooks/:id/deliveries`, `GET /webhooks/deliveries/:id`, `POST /webhooks/deliveries/:id/replay`, `GET /webhooks/events` |
+| Other | `GET /strategies[/:id]`, `GET /models`, `GET /me` |
+
+Passing `schedule` (a cron expression) to `POST /agents/:id/runs` creates an
+automation that starts the run on that schedule and returns it.
+
+### Example
+
+```bash
+KEY=sk_live_…            # agents:read agents:write
+curl -s https://three.ws/api/v1/agents \
+  -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
+  -H 'idempotency-key: create-scout-1' \
+  -d '{"name":"Scout","systemPrompt":"Be terse."}'
+
+curl -s https://three.ws/api/v1/agents/$AGENT/messages \
+  -H "authorization: Bearer $KEY" -H 'content-type: application/json' \
+  -d '{"message":"What changed on-chain today?"}'
+
+curl -N https://three.ws/api/v1/runs/$RUN/events -H "authorization: Bearer $KEY"
+```
+
+### Webhooks
+
+Events: `run.finished`, `automation.fired`, `message.received`,
+`approval.needed` (agent-scoped, so an endpoint pinned to one agent receives
+only that agent's) plus the account events listed by `GET /webhooks/events`.
+URLs must be HTTPS and resolve to a public address. Deliveries follow the
+[Standard Webhooks](https://www.standardwebhooks.com) headers; see
+[developer-platform.md](developer-platform.md#delivery-format-and-signature-verification)
+for verification code. A failed delivery retries after 30s, 2m, 10m, 30m, 1h, 3h
+and 8h (8 attempts total) and every attempt is kept in the delivery log; replay
+a delivery from the log or the `/dashboard/developers` page. The signing secret
+(`whsec_…`) is shown once at creation and on `rotate-secret`.

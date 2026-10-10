@@ -466,7 +466,7 @@ Deliveries are `POST` requests in the
 | `content-type` | `application/json` |
 | `webhook-id` | unique event ID (`evt_…`), stable across retries |
 | `webhook-timestamp` | unix epoch seconds |
-| `webhook-signature` | `v1,{base64url HMAC-SHA256}` |
+| `webhook-signature` | `v1,{spec signature} v1,{legacy signature}`, space separated; accept either |
 | `user-agent` | `three.ws-webhooks/1.0` |
 
 Body:
@@ -481,7 +481,7 @@ Body:
 ```
 
 The signature is HMAC-SHA256 over `` `${id}.${timestamp}.${rawBody}` `` keyed
-with your `whsec_` secret, encoded as unpadded base64url. Verify it against the
+with your `whsec_` secret. The spec signature decodes the secret as base64 and encodes the result as base64; the legacy signature keys on the secret string and encodes base64url. Official Standard Webhooks libraries verify the first. Verify it against the
 **raw** request body, before any JSON parsing:
 
 ```js
@@ -499,7 +499,7 @@ function verifyWebhook(secret, headers, rawBody) {
 
 Delivery behavior, exactly as implemented:
 
-- Up to **3 attempts** with exponential backoff, 10-second timeout per attempt.
+- Up to **8 attempts**: the first immediately, then after 30 seconds, 2 minutes, 10 minutes, 30 minutes, 1 hour, 3 hours and 8 hours. 10-second timeout per attempt. Every attempt is logged and any delivery can be replayed (`POST /api/v1/webhooks/deliveries/:id/replay`, or the replay button on `/dashboard/developers`); a replay keeps the event id and payload.
 - Redirects are **not followed**; a 3xx is recorded as a failure
   (`redirect_not_followed`).
 - Response bodies are stored truncated to 1024 characters for the deliveries

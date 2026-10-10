@@ -15,6 +15,7 @@ import { env } from './_lib/env.js';
 import { cors, json, method, wrap } from './_lib/http.js';
 import { providerCatalog } from './v1/_providers.js';
 import { PAID_SERVICES } from './_lib/service-catalog/services/index.js';
+import { agentsV1Paths, AGENTS_V1_TAGS } from './_lib/agents-v1/openapi.js';
 
 // Single source of truth for the protocol list on every paid operation. Each
 // entry is one supported payment protocol; per-network payment lanes (Base /
@@ -263,6 +264,7 @@ export default wrap(async (req, res) => {
 						'rendered live from the provider registry (api/v1/_providers.js). See /crypto-api ' +
 						'and docs/api-reference.md § Unified API.',
 				},
+				...AGENTS_V1_TAGS,
 			],
 			components: {
 				securitySchemes: {
@@ -300,6 +302,7 @@ export default wrap(async (req, res) => {
 				// Projected from the service catalog, spread before the hand-authored
 				// operations below so a richer hand-written entry always wins.
 				...catalogPaidPaths(),
+				...agentsV1Paths(),
 				'/api/mcp': {
 					post: {
 						operationId: 'mcp_call',

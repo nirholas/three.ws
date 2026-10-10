@@ -29600,6 +29600,13 @@
 			"summary": "The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.",
 			"tags": ["feature", "improvement"],
 			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "A complete REST API for agents, with signed webhooks",
+			"summary": "Everything you can do with an agent in the app now works over plain HTTP with one API key: create and edit agents, start and stop them, chat, start runs and watch them live, schedule automations and fire them on demand, manage skills, and export or import an agent. Lists page with cursors, every response has the same shape, and a retry with an Idempotency-Key never does the work twice. Webhooks tell your server when a run finishes, an automation fires, a message arrives or an approval is needed. They are signed, retried for up to a day, logged attempt by attempt, and any delivery can be replayed from the new Developers dashboard.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/api-reference"
 		}
 	]
 }
