@@ -15,6 +15,7 @@ import {
 } from './index.js';
 import { standingsRoutes } from './standings-routes.js';
 import { forecasterRoutes } from './forecaster-routes.js';
+import { stakingRoutes } from './staking/routes.js';
 
 /** Typed seam errors become the v1 envelope; anything else propagates. */
 async function guarded(fn) {
@@ -103,6 +104,7 @@ export function publicRoutes(prefix = '/event-markets') {
 		{ method: 'GET', path: `${prefix}/:slug/history`, name: 'event_markets.history', auth: 'public', handler: historyRoute },
 		{ method: 'GET', path: `${prefix}/:slug/picks`, name: 'event_markets.picks', auth: 'required', handler: picksRoute },
 		{ method: 'POST', path: `${prefix}/:slug/pick`, name: 'event_markets.pick', auth: 'required', handler: pickRoute },
+		...stakingRoutes(prefix),
 		{ method: 'DELETE', path: `${prefix}/:slug/pick`, name: 'event_markets.withdraw', auth: 'required', handler: withdrawRoute },
 		{ method: 'POST', path: prefix, name: 'event_markets.create', auth: 'required', handler: adminCreate },
 		{ method: 'PATCH', path: `${prefix}/:slug`, name: 'event_markets.edit', auth: 'required', handler: adminEdit },

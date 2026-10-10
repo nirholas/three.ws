@@ -3,6 +3,7 @@
 import { attachLiveOdds } from './market-live.js';
 import { h, api, ApiError, SOURCE_LABELS, seriesColor, pct, countdown, when, initials, profileHref, statusLabel } from './common.js';
 import { agentsPanel } from './forecasting.js';
+import { stakingPanel } from './staking-panel.js';
 
 const root = document.getElementById('em-root');
 const live = document.getElementById('em-live');
@@ -175,7 +176,14 @@ function rulePanel(m) {
 	return h('section', { class: 'em-panel', 'aria-labelledby': 'em-h-rule' },
 		h('h2', { id: 'em-h-rule' }, 'How it resolves'),
 		h('p', { class: 'em-rule' }, m.resolution_text),
-		h('p', { class: 'em-note' }, 'Picks are free-to-play points. Nothing is staked and no funds move. Implied odds are the share of crowd points on each entrant.'));
+		h('p', { class: 'em-note' }, 'Picks are free-to-play points. Free picks never move funds. Where staking is offered it is a separate panel and never changes these standings. Implied odds are the share of crowd points on each entrant.'));
+}
+
+function stakeSlot() {
+	S.staking ??= stakingPanel({
+		slug, getMarket: () => S.market, signedIn: () => S.viewer !== null, requireSignIn: ensureSignedIn, toast, announce,
+	});
+	return S.staking.el;
 }
 
 function sharePanel(m) {
@@ -315,7 +323,7 @@ function render() {
 		...banners(m),
 		h('div', { class: 'em-layout' },
 			h('div', null, entrantsPanel(m), chartPanel(m)),
-			h('div', null, clockPanel(m), rulePanel(m), S.agents ??= agentsPanel(slug), sharePanel(m))));
+			h('div', null, clockPanel(m), stakeSlot(), rulePanel(m), S.agents ??= agentsPanel(slug), sharePanel(m))));
 	root.removeAttribute('aria-busy');
 	if (focus) [...root.querySelectorAll('.em-ent')].find((e) => e.querySelector('.nm')?.textContent === focus)?.querySelector('button')?.focus();
 	startClock();

@@ -160,7 +160,7 @@ d('event_markets_stake on a local validator', () => {
 		const p0 = await pool(poolId);
 		const preview = previewStake({ totals: p0.totals, feeBps: p0.feeBps, buybackShareBps: p0.buybackShareBps }, 1, 777_777n);
 		await stake(b, poolId, 1, 777_777n);
-		await waitUntil(p0.lockTs);
+		await lockNow(poolId);
 		await send([build.resolve(program, { resolver: resolver.publicKey, poolId, mint, winningOutcome: 1, treasuryOwner: treasuryOwner.publicKey, buybackOwner: buybackOwner.publicKey })], [resolver]);
 		const stakeTotal = 2_000_003n + 777_777n;
 		const before = await bal(mint, b.publicKey);
@@ -216,11 +216,11 @@ d('event_markets_stake on a local validator', () => {
 		const [a, stranger] = await Promise.all([funded(mint, 1_000_000n), funded(mint, 0n)]);
 		const poolId = await newPool({ outcomes: 2, lockIn: 18, voidIn: 20 });
 		await stake(a, poolId, 0, 250_000n);
-		expect(await fails([build.voidExpired(program, { poolId })], [stranger])).toBe('NotExpired');
+		expect(await fails([build.voidExpired(program, { poolId })], [])).toBe('NotExpired');
 		const p = await pool(poolId);
 		await waitUntil(p.voidAfterTs);
 		expect(await fails([build.resolve(program, { resolver: resolver.publicKey, poolId, mint, winningOutcome: 0, treasuryOwner: treasuryOwner.publicKey, buybackOwner: buybackOwner.publicKey })], [resolver])).toBe('Expired');
-		await send([build.voidExpired(program, { poolId })], [stranger]);
+		await send([build.voidExpired(program, { poolId })], []);
 		await send([build.refund(program, { owner: a.publicKey, poolId, mint })], [a]);
 		expect(await bal(mint, a.publicKey)).toBe(1_000_000n);
 	}, 120_000);
