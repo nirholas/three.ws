@@ -123,7 +123,9 @@ export async function vertexRequestHeaders() {
 // Issue an Anthropic Messages request against Vertex and return the raw Response
 // (streaming or not), so callers can pass the SSE body through unchanged or read
 // the JSON. `body` is a first-party-shaped Anthropic body including `model`.
-export async function vertexAnthropicMessages(body, { stream = false } = {}) {
+// An optional caller `signal` aborts the whole request, body included, for
+// callers that hold a deadline across a long stream.
+export async function vertexAnthropicMessages(body, { stream = false, signal = null } = {}) {
 	const url = vertexMessagesUrl(body.model, { stream });
 	const headers = await vertexRequestHeaders();
 	const headersCtrl = new AbortController();
@@ -133,7 +135,7 @@ export async function vertexAnthropicMessages(body, { stream = false } = {}) {
 			method: 'POST',
 			headers,
 			body: JSON.stringify(toVertexBody(body)),
-			signal: headersCtrl.signal,
+			signal: signal ? AbortSignal.any([headersCtrl.signal, signal]) : headersCtrl.signal,
 		});
 	} finally {
 		clearTimeout(headersTimer);

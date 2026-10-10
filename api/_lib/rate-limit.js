@@ -1138,6 +1138,21 @@ export const limits = {
 		}).limit('global'),
 	cadRebuildIp: (ip) =>
 		getLimiter('cad:rebuild:ip', { limit: 90, window: '10 m', critical: true }).limit(ip),
+	// Anatomy (api/anatomy): one generation streams up to two long Claude
+	// completions (write plus one repair), so it is capped per IP with a global
+	// hourly breaker, critical so a Redis outage fails closed. Publishing a spec
+	// an agent wrote itself costs no model call, only a row, so it gets a looser
+	// bucket of its own.
+	anatomyIp: (ip) =>
+		getLimiter('anatomy:ip', { limit: 12, window: '10 m', critical: true }).limit(ip),
+	anatomyGlobal: () =>
+		getLimiter('anatomy:global', {
+			limit: Math.max(60, Number(process.env.ANATOMY_GLOBAL_HOURLY) || 400),
+			window: '1 h',
+			critical: true,
+		}).limit('global'),
+	anatomyPublishIp: (ip) =>
+		getLimiter('anatomy:publish:ip', { limit: 60, window: '10 m', critical: true }).limit(ip),
 	// Portal (api/portal): fetches a caller-supplied website once and builds a
 	// walkable world from it. The spend is other people's bandwidth rather than
 	// ours, which is exactly why it is capped: a build is one origin request plus
