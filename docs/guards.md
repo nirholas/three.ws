@@ -192,6 +192,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Wardrobe catalog integrity | `npm run audit:garments` | Every garment validates and its GLB hash matches its manifest. |
 | Rig coverage | `npm run audit:rig-coverage` | How well the canonicalizer maps skeletons actually stored in production. |
 | Service wallet configuration | `npm run audit:service-wallets` | Balances, floors, and whether the advertised x402 fee payer matches the real secret. |
+| Solana swap route liveness | `npm run check:trading-routes` | Each swap aggregator still quotes, builds, passes the outflow guard and simulates on mainnet, with nothing signed. |
 | Fleet wallet flows | `npm run audit:wallet-flows` | Where the platform's SOL is, where it went, and whether any is leaking. |
 | Relayer balances | `npm run check:relayer-balances` | Every configured Solana signer is above its documented minimum. |
 | LLM spend metering | `npm run audit:llm-metering` | Every LLM lane that spends money reports a real cost, never exactly $0 and never an unknown. |

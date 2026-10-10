@@ -43,6 +43,11 @@ export const CATEGORIES = [
 		description: 'Pump.fun rules, token signals and the perps thresholds you set on your agents.',
 	},
 	{
+		key: 'markets',
+		label: 'Event markets',
+		description: 'You are an entrant in an event market, with your odds and your share kit.',
+	},
+	{
 		key: 'creations',
 		label: 'Creations',
 		description: 'A 3D generation you started finished (or failed) while you were away.',
@@ -131,6 +136,7 @@ const TYPE_CATEGORY = {
 	// An agent's purchase was paid, verified on-chain and its goods delivered.
 	commerce_order_delivered: 'purchases',
 
+	event_market_entrant: 'markets',
 	remix: 'social',
 	reply: 'social',
 	comment: 'social',
@@ -143,6 +149,8 @@ const TYPE_CATEGORY = {
 	quest_complete: 'social',
 	// Another owner challenged your agent to a duel, or answered your challenge.
 	duel_challenge: 'social',
+	// An agent you follow placed an Event Markets pick (api/_lib/event-markets/forecasters.js).
+	event_market_agent_pick: 'social',
 
 	irl_interaction: 'irl',
 	irl_reply: 'irl',
@@ -218,6 +226,7 @@ const DEFAULTS = {
 	// Only unattended completions notify (api/cron/forge-finalize.js), so email
 	// defaulting on is the feature, not spam: the user left the page and asked
 	// to hear back.
+	markets:   { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: false },
 	creations: { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
 	// The companion category exists to be spoken: a message the visitor's own
 	// companion triaged as worth hearing (api/_lib/companion/triage.js). Email
@@ -331,6 +340,7 @@ export function sanitizePrefs(body) {
 // the in-app inbox read identically. Only $THREE is ever referenced.
 
 const PUSH_COPY = {
+	event_market_entrant:     (p) => ['You are in a market', `${p.outcome_label || 'You'} ${p.even_prior ? 'is an entrant in' : `is at ${Math.round((p.probability || 0) * 100)}% in`} "${p.title || 'a market'}". Open your kit.`],
 	skill_purchased:          (p) => ['You made a sale 💵', `Payment received for "${p.skill || 'a skill'}"`],
 	skill_purchase_confirmed: (p) => ['Purchase confirmed ✅', `Your purchase of "${p.skill || 'a skill'}" is confirmed`],
 	skill_gift_received:      (p) => ['You got a gift 🎁', p.from ? `${p.from} gifted you "${p.skill || 'a skill'}"` : `You received "${p.skill || 'a skill'}" as a gift`],
@@ -351,6 +361,7 @@ const PUSH_COPY = {
 	agent_review:             (p) => ['New review ⭐', p.actor ? `${p.actor} reviewed your agent` : 'Your agent received a review'],
 	quest_complete:           (p) => ['Quest complete 🏆', p.mission ? `You finished "${p.mission}"${p.gold ? ` — earned ${p.gold} gold` : ''}` : 'You finished a quest'],
 	duel_challenge:           (p) => ['Duel challenge ⚔️', p.summary || 'Another agent challenged yours to a trading duel'],
+	event_market_agent_pick:  (p) => [`${p.agent_name || 'An agent you follow'} made a call`, p.market_title ? `Picked ${p.outcome_label || 'an entrant'} in "${p.market_title}"` : 'A new pick is up on Event Markets'],
 	royalty_paid:             (p) => ['Royalty earned 💰', p.usd ? `A fork paid you $${Number(p.usd).toFixed(3)} in royalties` : (p.sol ? `A fork paid you ${Number(p.sol).toFixed(4)} SOL in royalties` : 'A fork of your avatar paid you a royalty')],
 	irl_interaction:          (p) => ['Met in person 📍', p.message ? `“${p.message}”` : 'Someone interacted with your agent in person'],
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],

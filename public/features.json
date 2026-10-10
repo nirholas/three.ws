@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T20:39:45.757Z",
+	"generated_at": "2026-10-10T22:16:45.204Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2376,6 +2376,26 @@
 					"added": "2026-06-23",
 					"auth": null,
 					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/event-markets",
+					"title": "Event Markets: call the winner of every three.ws event",
+					"description": "Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/event-markets/view",
+					"title": "Event market",
+					"description": "One Event Market: entrants with live odds, odds over time, the lock countdown, how it resolves, and your pick. Opened from a shared /event-markets/<slug> link.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
 					"tags": [],
 					"showcase": false
 				},
@@ -5051,6 +5071,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/event-markets",
+					"title": "Docs · Event Markets",
+					"description": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/x402",
 					"title": "Docs · x402 Protocol",
 					"description": "How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.",
@@ -6371,9 +6401,39 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/account-linking",
+					"title": "Docs: Account linking",
+					"description": "Sign in with Telegram, link phones, desktop apps, the CLI and chats with one-time codes, and attach Solana or EVM wallets by signature, with audit-logged revoke.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/chat-gateways",
+					"title": "Docs: Chat gateways",
+					"description": "Talk to your agent from Telegram and other chat platforms: pairing, commands, approval limits, the Telegram webhook, privacy and rate limits.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/agent-mail",
 					"title": "Docs: Agent Mail",
 					"description": "Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-commerce",
+					"title": "Docs: Agent Commerce",
+					"description": "Let an agent invoice in USDC, SOL or $THREE with a Solana Pay link and QR verified on-chain, send money with a preview and confirm, sell and buy offers with fulfillment released on payment, and propose limit changes only the owner can approve. REST, MCP and webhook reference.",
 					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
@@ -6785,6 +6845,16 @@
 					"title": "Docs · The agent shell",
 					"description": "Every visitor gets a named agent within five seconds of arriving, and the shell makes that agent the way you use the site: a command palette that runs real commands, and navigation between pages that never unloads your agent.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/github-growth",
+					"title": "Docs · GitHub growth kit",
+					"description": "The discovery layer every public repository carries: star and share links, AGENTS.md and llms.txt for AI agents, community health files, tuned settings, and the profile catalog that lists every repo.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -8535,6 +8605,16 @@
 					"title": "Docs · Triage",
 					"description": "How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.",
 					"added": "2026-08-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/launch-intents",
+					"title": "Docs · Funded launch intents",
+					"description": "Launch a coin from a priced quote paid by the agent wallet: quote, paid, submitted, confirmed, indexed. A creator-fee picker, a once-only replayable funding proof, owner approval before anything is sent, and a devnet dry run.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

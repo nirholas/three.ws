@@ -93,6 +93,10 @@ Before writing a single line of code, answer these questions internally:
 
 Read before you write; match existing patterns; wire every path end to end (routing, data, state, UI, errors); delete dead code; search npm/GitHub/`package.json` before writing anything non-trivial; design every UI state (loading, empty, error, populated, overflow) with accessibility and responsive behavior; improve the adjacent platform, not just the ticket. Load the `engineering-standards` skill (`.claude/skills/engineering-standards/SKILL.md`) before building any non-trivial feature or UI.
 
+### Bug fixes are test-first (owner directive 2026-10-10)
+
+Never fix a bug straight from a diagnosis. First write a test that reproduces it, run it, and confirm it fails for the reason the bug report gives (not a typo or setup error). Then fix the code, rerun, and confirm the test passes. Commit the test with the fix so the bug cannot return unnoticed. Put it beside the existing tests for that module (`tests/*.test.js`, or the worker's own suite). Only skip when the bug is genuinely untestable (pure visual/CSS, external outage); say so in one line in the report.
+
 ## Definition of done
 
 A feature is NOT done until ALL of these are true:

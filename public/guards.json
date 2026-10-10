@@ -1782,6 +1782,22 @@
 				},
 				"expect": "/guards"
 			}
+		},
+		{
+			"id": "check-trading-routes",
+			"script": "scripts/check-trading-routes.mjs",
+			"npm": "check:trading-routes",
+			"title": "Solana swap route liveness",
+			"protects": "Every swap aggregator behind swap_quote and swap_execute still quotes, builds, passes the wallet-outflow guard and simulates on mainnet, with nothing signed.",
+			"why": "A router that changes its transaction shape would otherwise surface as a refused or failing swap in front of a user. The guard catches it read-only, before anyone signs.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Quotes and simulates against live aggregators and a mainnet RPC for a funded wallet's public key."
+			}
 		}
 	],
 	"exempt": [

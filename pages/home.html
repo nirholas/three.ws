@@ -48,6 +48,7 @@
 	<link rel="stylesheet" href="/buttons.css" />
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/economy-ticker.css" />
+	<link rel="stylesheet" href="/src/event-markets/event-markets.css" />
 	<link rel="stylesheet" href="/home.css" />
 	<noscript><style>.reveal{opacity:1!important;transform:none!important}.hero-text>*{opacity:1!important;transform:none!important}</style></noscript>
 	<!-- Deferred, and placed BEFORE the agent-3d module: defer scripts and module
@@ -85,6 +86,7 @@
 
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <main id="main-content" tabindex="-1">
+<div id="em-ticker" class="em-ticker" role="region" aria-label="Live event markets" hidden></div>
 <section class="hero">
 	<div class="hero-text">
 		<a class="eyebrow" href="/forge" data-i18n-html="home.eyebrow" data-i18n-attr="aria-label:home.eyebrow_aria" aria-label="New: Text to 3D is live — open the Forge">New · Text&nbsp;→&nbsp;3D is live — type a prompt, get a model <span class="eyebrow-arrow" aria-hidden="true">→</span></a>
@@ -3478,6 +3480,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	</div>
 </section>
 
+<div id="em-strip" data-heading="Live now: call the winner" style="max-width:1100px;margin:0 auto;padding:0 1rem 2rem"></div>
+
 </main>
 
 <!-- ── FOOTER ─────────────────────────────────────────────────────── -->
@@ -3647,6 +3651,8 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 </script>
 
 <script type="module" src="/src/home-live-agents.js"></script>
+<script type="module" src="/src/event-markets/mount-strip.js"></script>
+<script type="module" src="/src/event-markets/ticker.js"></script>
 <script type="module" src="/src/api-playground.js"></script>
 <script type="module" src="/src/economy-ticker.js"></script>
 <script type="module" src="/src/home-sniper.js"></script>

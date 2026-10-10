@@ -29659,6 +29659,33 @@
 				"docs"
 			],
 			"link": "/docs/github-growth"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Every Arena tournament, platform event, build round and bounty now gets a prediction market automatically",
+			"summary": "A cron opens a \"Who wins X?\" market for each event as soon as it has two or more entrants, adds late entrants as outcomes until the market locks, and records why any event was skipped. Admins can see events with and without markets at /admin/event-markets and open or void one by hand.",
+			"tags": [
+				"feature"
+			],
+			"link": "/admin/event-markets"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Event Markets now settle themselves from our own data",
+			"summary": "When an Arena tournament, event, launch cohort, build round or bounty finishes, its market resolves on its own from three.ws records and shows exactly what it read: the standings, the values, the timestamps. Ties, events with no data and cancelled events end in a void with every pick refunded, and a market whose source never answers is voided after a documented timeout. Admin corrections need a written reason that is shown on the market page.",
+			"tags": [
+				"feature"
+			],
+			"link": "/event-markets"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Event Markets get their own pages and share cards",
+			"summary": "Browse live, closing-soon and resolved markets, open any market to see every entrant's odds, the odds over time, the lock countdown and how it resolves, then make your call without leaving the page. Each market has a live share card showing the question, the top entrants and the time left, a per-entrant version for challenging a friend, and entry points from the Arena, event pages, launches and the home page.",
+			"tags": [
+				"feature"
+			],
+			"link": "/event-markets"
 		}
 	]
 }

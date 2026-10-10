@@ -1,0 +1,15 @@
+{
+	"$comment": "Timeouts and batch size for the Event Markets resolution cron (api/_lib/event-markets/lifecycle.js). A market whose source has not produced a result this many hours after resolves_at is voided and every pick refunded. Documented in docs/event-markets.md, section How markets resolve.",
+	"batch_limit": 100,
+	"timeout_hours": {
+		"arena_tournament": 72,
+		"event_leaderboard": 72,
+		"launch_cohort": 48,
+		"build_round": 336,
+		"bounty": 720,
+		"custom": 168
+	},
+	"void_reasons": {
+		"resolution_timeout": "The data source did not produce a result before the timeout, so the market was voided and every pick refunded."
+	}
+}

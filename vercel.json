@@ -40,7 +40,7 @@
 		"{api/agents/networth,api/avatars/from-forge,api/pay/execute,api/pay/simulate,api/cron/launcher-claimer,api/cron/fee-bridge,api/seed/synthesize,api/cron/x402-ring-tick}.js": {
 			"maxDuration": 60
 		},
-		"{api/club/tips-stream,api/feed-stream,api/pump/trades-stream,api/oracle/stream,api/oracle/action-stream,api/sniper/stream,api/sniper/room-stream,api/sniper/radar-stream,api/agent-screen-stream}.js": {
+		"{api/club/tips-stream,api/feed-stream,api/pump/trades-stream,api/oracle/stream,api/oracle/action-stream,api/event-markets/stream,api/sniper/stream,api/sniper/room-stream,api/sniper/radar-stream,api/agent-screen-stream}.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
 		},
@@ -1389,6 +1389,22 @@
 			"dest": "/agent-invoice.html"
 		},
 		{
+			"src": "/event-markets/leaderboard/?",
+			"dest": "/event-markets-leaderboard.html"
+		},
+		{
+			"src": "/event-markets/?",
+			"dest": "/event-markets.html"
+		},
+		{
+			"src": "/event-markets/view/?",
+			"dest": "/event-market.html"
+		},
+		{
+			"src": "/event-markets/([a-z0-9][a-z0-9-]{1,78})/?",
+			"dest": "/api/event-market-share?m=$1"
+		},
+		{
 			"src": "/duels/?",
 			"dest": "/duels.html"
 		},
@@ -2177,6 +2193,10 @@
 			"dest": "/mcp-clients.html"
 		},
 		{
+			"src": "/admin/event-markets/?",
+			"dest": "/event-markets-admin.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},
@@ -2571,6 +2591,10 @@
 			"dest": "/x-pricing.html"
 		},
 		{
+			"src": "/admin/event-market-announcements/?",
+			"dest": "/event-market-announcements.html"
+		},
+		{
 			"src": "/x/claim/?",
 			"dest": "/x-claim.html"
 		},
@@ -2578,10 +2602,6 @@
 			"src": "/home-next/?",
 			"status": 301,
 			"headers": {
-		{
-			"src": "/admin/event-market-announcements/?",
-			"dest": "/event-market-announcements.html"
-		},
 				"Location": "/"
 			}
 		},
@@ -7338,6 +7358,26 @@
 			"schedule": "*/15 * * * *"
 		},
 		{
+			"path": "/api/cron/event-markets-rollup",
+			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-open",
+			"schedule": "*/10 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-forecasters",
+			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-feed",
+			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/event-markets-resolve",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/agent-portfolio-snapshots",
 			"schedule": "23 * * * *"
 		},
@@ -7348,10 +7388,10 @@
 		{
 			"path": "/api/cron/agent-invoice-watch",
 			"schedule": "* * * * *"
-		}
-	]
-}
 		},
 		{
 			"path": "/api/cron/event-market-announce",
 			"schedule": "*/15 * * * *"
+		}
+	]
+}

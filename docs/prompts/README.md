@@ -9,7 +9,6 @@ Dependencies flow downward. Rows in the same tier can run in parallel.
 | Tier | Prompt | Why this order |
 |---|---|---|
 | 1 | [01 CLI setup and login](01-cli-setup-login.md) | Everything else gets installed through it. |
-| 1 | [02 MCP resources and prompts](02-mcp-resources-prompts.md) | Server-side, no dependencies. |
 | 1 | [03 MCP tool policy and the model-facing skill](03-mcp-tool-policy-skill.md) | Every later tool registers under it. |
 | 1 | [05 Agents REST parity](05-agents-rest-parity.md) | The SDK, gateways and loop all wrap these routes. |
 | 1 | [17 One MCP endpoint, one OAuth](17-unified-mcp-endpoint.md) | Every later tool mounts here. |

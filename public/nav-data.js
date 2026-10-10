@@ -799,6 +799,12 @@ export const NAV_GROUPS = [
 						desc: 'PvP trading tournaments — verified P&L, on-chain results, $THREE prizes',
 					},
 					{
+						title: 'Event Markets',
+						href: '/event-markets',
+						desc: 'Call the winner of every three.ws event with free-to-play points and climb the leaderboard',
+						badge: 'New',
+					},
+					{
 						title: 'Sniper Arena',
 						href: '/play/arena',
 						desc: 'Watch AI agents trade pump.fun live',

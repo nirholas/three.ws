@@ -1,0 +1,46 @@
+{
+	"$comment": "Every constant behind Event Markets scoring, seasons, fairness and rewards. Read by api/_lib/event-markets/scoring.js and shown on /event-markets/leaderboard, so the page can never quote a number the code does not use.",
+	"scoring": {
+		"min_win_multiplier": 0.1,
+		"max_win_multiplier": 10
+	},
+	"badges": {
+		"streak_target": 5,
+		"upset_probability_below": 0.25,
+		"season_top_n": 10
+	},
+	"seasons": {
+		"length": "quarter",
+		"min_calls_to_rank": 3
+	},
+	"fairness": {
+		"min_account_age_hours": 24,
+		"require_linked_wallet_or_verified_email": true,
+		"exclude_service_accounts": true
+	},
+	"rewards": {
+		"token": "$THREE",
+		"chain": "solana",
+		"settlement": "owner_approved",
+		"tiers": [
+			{
+				"from_rank": 1,
+				"to_rank": 1,
+				"three": 50000,
+				"perk": "Pro plan for a month and a Season Champion profile badge"
+			},
+			{
+				"from_rank": 2,
+				"to_rank": 3,
+				"three": 25000,
+				"perk": "Pro plan for a month"
+			},
+			{
+				"from_rank": 4,
+				"to_rank": 10,
+				"three": 10000,
+				"perk": "Season Top 10 profile badge"
+			}
+		]
+	}
+}

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T21:47:55.288Z",
+	"generated_at": "2026-10-10T22:16:45.217Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -72,6 +72,16 @@
 			"title": "Docs · Developer plans",
 			"summary": "Free, Builder, Scale and Enterprise API plans: monthly call quotas, burst and concurrency ceilings enforced on every v1 call with 429 and 402 responses, live usage in the dashboard, upgrades paid in credits, USDC or $THREE on Solana with proration and receipts, immediate key revocation, rotation with an overlap window, IP allowlists and per-key analytics.",
 			"link": "/docs/developer-plans",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · Event Markets",
+			"summary": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
+			"link": "/docs/event-markets",
 			"tags": [
 				"launch"
 			]
@@ -192,6 +202,26 @@
 			"title": "Domains",
 			"summary": "Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.",
 			"link": "/domains",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Event market",
+			"summary": "One Event Market: entrants with live odds, odds over time, the lock countdown, how it resolves, and your pick. Opened from a shared /event-markets/<slug> link.",
+			"link": "/event-markets/view",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Event Markets: call the winner of every three.ws event",
+			"summary": "Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.",
+			"link": "/event-markets",
 			"tags": [
 				"launch"
 			]
@@ -384,6 +414,46 @@
 				"sdk",
 				"security",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Event Market announcements draft themselves, and nothing posts until you approve it",
+			"summary": "When an Event Market opens, nears its lock, shifts, or resolves, a draft announcement now appears in a review queue with the market link and card. Entrants are tagged only where they linked their own X account, everyone else is named, and entrants who opted out are left alone. Approve a whole batch in one action, edit a draft, or dry-run the exact text that would go out. Posting is off until the owner turns it on, with a daily cap and one post per kind per market.",
+			"link": "/admin/event-market-announcements",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Event Markets get their own pages and share cards",
+			"summary": "Browse live, closing-soon and resolved markets, open any market to see every entrant's odds, the odds over time, the lock countdown and how it resolves, then make your call without leaving the page. Each market has a live share card showing the question, the top entrants and the time left, a per-entrant version for challenging a friend, and entry points from the Arena, event pages, launches and the home page.",
+			"link": "/event-markets",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Event Markets now settle themselves from our own data",
+			"summary": "When an Arena tournament, event, launch cohort, build round or bounty finishes, its market resolves on its own from three.ws records and shows exactly what it read: the standings, the values, the timestamps. Ties, events with no data and cancelled events end in a void with every pick refunded, and a market whose source never answers is voided after a documented timeout. Admin corrections need a written reason that is shown on the market page.",
+			"link": "/event-markets",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Every Arena tournament, platform event, build round and bounty now gets a prediction market automatically",
+			"summary": "A cron opens a \"Who wins X?\" market for each event as soon as it has two or more entrants, adds late entrants as outcomes until the market locks, and records why any event was skipped. Admins can see events with and without markets at /admin/event-markets and open or void one by hand.",
+			"link": "/admin/event-markets",
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -212,6 +212,32 @@ export function sendForgeCompleteEmail({ to, prompt, creationPath, previewImageU
 	return sendEmail({ to, ...renderForgeComplete({ prompt, creationPath, previewImageUrl }) });
 }
 
+// Event Markets: sent once to an entrant (with a verified address and the email
+// channel left on) when a market they are an outcome of opens.
+export function renderEventMarketEntrant({ title, outcomeLabel, probability, evenPrior, kitUrl }) {
+	const pct = `${Math.round(probability * 100)}%`;
+	const standing = evenPrior
+		? 'No one has picked yet, so the market starts as an even split.'
+		: `The crowd currently gives ${outcomeLabel} ${pct}.`;
+	return {
+		subject: `You're in a market: ${title}`,
+		html: layout("You're in a market", `
+    <p class="brand">three.ws</p>
+    <h1>You're in a market</h1>
+    <p><strong>${esc(outcomeLabel)}</strong> is an entrant in <strong>${esc(title)}</strong>. Anyone on three.ws can call who wins it. ${esc(standing)}</p>
+    <p>Your kit has a share card, ready-made post text, your link and live stats. Tell your followers to call it.</p>
+    <a class="btn" href="${esc(kitUrl)}">Open your kit</a>
+    <hr>
+    <p class="muted">Free to play: picks are points with no cash value. Turn these emails off in your <a href="${APP_URL}/settings/" style="color:#6a5cff">notification preferences</a>, or opt out of being featured in markets there.</p>
+  `),
+		text: `You're in a market: ${title}\n\n${outcomeLabel} is an entrant. ${standing}\n\nOpen your kit: ${kitUrl}\n\nManage notifications: ${APP_URL}/settings/`,
+	};
+}
+
+export function sendEventMarketEntrantEmail({ to, ...rest }) {
+	return sendEmail({ to, ...renderEventMarketEntrant(rest) });
+}
+
 // Approval inbox fallback (api/_lib/approvals.js): sent only when no push device
 // or paired chat reached the owner. Carries the full confirmation table so the
 // owner sees exactly what they would approve, and a signed deep link to it. The

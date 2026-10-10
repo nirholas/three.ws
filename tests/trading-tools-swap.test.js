@@ -13,6 +13,7 @@ import {
 import {
 	createTransferInstruction,
 	createTransferCheckedInstruction,
+	createCloseAccountInstruction,
 	getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 
@@ -243,6 +244,43 @@ describe('wallet outflow checks', () => {
 		const out = await decompileRouteTx([within], { conn, ownerPk: owner, inputMint: WSOL_MINT, providerFees: fee });
 		expect(out.instructions).toHaveLength(1);
 		expect(out.addressLookupTables).toEqual([]);
+	});
+});
+
+describe('wrapping SOL in a temporary account the transaction closes', () => {
+	const owner = Keypair.generate().publicKey;
+	const temp = Keypair.generate().publicKey;
+	const closeToOwner = () => createCloseAccountInstruction(temp, owner, owner);
+	const conn = { getAddressLookupTable: async () => ({ value: null }) };
+	const encode = (ixs) => {
+		const msg = new TransactionMessage({ payerKey: owner, recentBlockhash: Keypair.generate().publicKey.toBase58(), instructions: ixs }).compileToV0Message();
+		return Buffer.from(new VersionedTransaction(msg).serialize()).toString('base64');
+	};
+
+	it('counts a transfer into an account closed back to the owner as wrapped, not as outflow', () => {
+		const flows = walletOutflows([SystemProgram.transfer({ fromPubkey: owner, toPubkey: temp, lamports: 11_855_569 }), closeToOwner()], { ownerPk: owner, inputMint: WSOL_MINT });
+		expect(flows.lamports).toBe(0n);
+		expect(flows.wrapped).toBe(11_855_569n);
+		expect(flows.wrappedAccounts).toEqual([temp.toBase58()]);
+	});
+
+	it('still counts the same transfer as outflow when nothing closes the account to the owner', () => {
+		const flows = walletOutflows([SystemProgram.transfer({ fromPubkey: owner, toPubkey: temp, lamports: 5 })], { ownerPk: owner, inputMint: WSOL_MINT });
+		expect(flows.lamports).toBe(5n);
+		expect(flows.wrapped).toBe(0n);
+	});
+
+	it('passes a wrap within the swap input plus rent and refuses one above it', async () => {
+		const input = 10_000_000n;
+		const rent = 2_039_280n;
+		const ok = encode([SystemProgram.transfer({ fromPubkey: owner, toPubkey: temp, lamports: input + rent }), closeToOwner()]);
+		const out = await decompileRouteTx([ok], { conn, ownerPk: owner, inputMint: WSOL_MINT, inAmountRaw: String(input) });
+		expect(out.instructions).toHaveLength(2);
+		const over = encode([SystemProgram.transfer({ fromPubkey: owner, toPubkey: temp, lamports: input + rent + 1n }), closeToOwner()]);
+		await expect(decompileRouteTx([over], { conn, ownerPk: owner, inputMint: WSOL_MINT, inAmountRaw: String(input) })).rejects.toMatchObject({
+			code: 'unexpected_transfer',
+			detail: { over: [{ asset: 'SOL (wrapped)', moved: String(input + rent + 1n), disclosed: String(input + rent) }] },
+		});
 	});
 });
 

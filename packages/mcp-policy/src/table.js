@@ -337,6 +337,16 @@ export const POLICY = {
 		duel_accept: w('predictions'),
 		duel_details: r('predictions'),
 		duel_markets: r('predictions'),
+		// Event Markets (api/_mcpagent/event-markets-tools.js). Free-play points;
+		// event_market_pick refuses without confirm: true.
+		event_markets_list: r('predictions'),
+		event_market: r('predictions'),
+		event_market_pick: w('predictions'),
+		// Agents as forecasters (api/_mcpagent/event-market-forecast-tools.js).
+		// event_market_agent_pick refuses without confirm: true and checks the owner.
+		event_market_analyze: r('predictions'),
+		event_market_forecasters: r('predictions'),
+		event_market_agent_pick: w('predictions'),
 		// Agent commerce (api/_mcpagent/commerce-tools.js). The library consumes
 		// each preview id itself (single use, bound to the agent, 10 minutes),
 		// so the policy layer enforces only the confirm flag. spending_setup is a

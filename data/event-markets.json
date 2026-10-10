@@ -1,0 +1,15 @@
+{
+	"$comment": "Single source of truth for Event Markets points and odds. Picks are free-to-play points: no funds move. The season is the UTC calendar quarter of a market's locks_at. Read by api/_lib/event-markets/config.js and quoted by docs/event-markets.md.",
+	"points": {
+		"min_pick": 10,
+		"max_pick_per_market": 250,
+		"season_budget": 1000,
+		"season_budget_overrides": {}
+	},
+	"odds": {
+		"prior_points_per_outcome": 25
+	},
+	"season": {
+		"length": "calendar_quarter"
+	}
+}

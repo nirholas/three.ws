@@ -671,3 +671,6 @@ data/announce-plan/
 # 1-minute $THREE candle tape for the X volume study (scripts/x-volume-study.mjs).
 # Regenerable from GeckoTerminal in a few minutes, and it grows every run.
 data/x-archive/cache/
+
+# Cargo build output for any Rust program under contracts/ (event-markets-stake, knock-escrow, ...)
+contracts/*/target/

@@ -27,6 +27,11 @@
  * its own bot traffic), so both agent queries require "published, or owned by
  * a person".
  *
+ * Event Markets:
+ *   markets - open Event Markets by picks placed or changed in the last hour
+ *             (the window is the same for every `window` value: "trending" for a
+ *             market means the last hour, not 24h). Empty when none are live.
+ *
  * Cache: 2 min public CDN (trending doesn't need sub-minute freshness).
  */
 
@@ -34,6 +39,7 @@ import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
 import { thumbnailUrl } from './_lib/r2.js';
+import { trendingEventMarkets } from './_lib/event-markets/live-stats.js';
 
 const WINDOWS = new Set(['24h', '7d', 'all']);
 const WINDOW_INTERVAL = { '24h': '1 day', '7d': '7 days' };
@@ -240,10 +246,13 @@ export default wrap(async (req, res) => {
 		coin_url:           `https://three.ws/oracle/coin/${encodeURIComponent(r.mint)}`,
 	}));
 
+	const markets = await trendingEventMarkets(limit).catch(degradeToEmpty('event market'));
+
 	return json(res, 200, {
 		window: win,
 		generated_at: new Date().toISOString(),
 		agents,
 		coins,
+		markets,
 	}, { 'cache-control': 'public, max-age=120, s-maxage=120, stale-while-revalidate=60' });
 });

@@ -1,0 +1,32 @@
+{
+	"_doc": "Tunables for agent forecasters in Event Markets. Read by api/_lib/event-markets/forecasters.js; documented in docs/event-markets.md (section Agents). Free-to-play: points are a forecasting weight, never funds.",
+	"rationaleMaxChars": 1200,
+	"evidenceMaxLinks": 5,
+	"evidenceUrlMaxChars": 300,
+	"confidenceMin": 1,
+	"confidenceMax": 99,
+	"maxPointsPerPick": 100,
+	"calibrationBuckets": [
+		{ "lo": 1, "hi": 20 },
+		{ "lo": 21, "hi": 40 },
+		{ "lo": 41, "hi": 60 },
+		{ "lo": 61, "hi": 80 },
+		{ "lo": 81, "hi": 99 }
+	],
+	"minResolvedCallsToRank": 3,
+	"bestCallsLimit": 5,
+	"recentCallsLimit": 20,
+	"leaderboardLimit": 100,
+	"autonomous": {
+		"defaultPointsPerPick": 20,
+		"defaultMaxPicksPerDay": 5,
+		"maxPicksPerDayCeiling": 20,
+		"agentsPerRun": 25,
+		"marketsPerAgentPerRun": 3,
+		"minLockWindowMinutes": 10
+	},
+	"analyze": {
+		"activityWindowDays": 30,
+		"priorEventsLimit": 10
+	}
+}

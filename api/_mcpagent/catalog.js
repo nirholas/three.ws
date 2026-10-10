@@ -13,9 +13,11 @@ import { portfolioToolDefs } from './portfolio-tools.js';
 import { sniperAlertToolDefs } from './sniper-alert-tools.js';
 import { duelToolDefs } from './duels-tools.js';
 import { commerceToolDefs } from './commerce-tools.js';
+import { eventMarketToolDefs } from './event-markets-tools.js';
+import { eventMarketForecastToolDefs } from './event-market-forecast-tools.js';
 
 const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...papertradeToolDefs, ...tradingToolDefs,
-	...portfolioToolDefs, ...sniperAlertToolDefs, ...duelToolDefs, ...commerceToolDefs, ...orderToolDefs];
+	...portfolioToolDefs, ...sniperAlertToolDefs, ...duelToolDefs, ...commerceToolDefs, ...orderToolDefs, ...eventMarketToolDefs, ...eventMarketForecastToolDefs];
 
 // Free, public entry point, listed first so discovery clients see it up top.
 // Annotations: a static, local overview built at module load: read-only,

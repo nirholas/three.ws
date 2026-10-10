@@ -1717,6 +1717,13 @@ export const limits = {
 	// individual capability handlers add their own tighter ceilings on top when
 	// they fan out to a metered upstream (e.g. the shared aixbt key).
 	apiV1: (key) => getLimiter('api:v1', { limit: 120, window: '1 m' }).limit(key),
+	// Event Markets writes (picks, withdrawals, admin edits). A forecaster changes
+	// a pick a handful of times before lock; 30 per 5 minutes per account and 60
+	// per IP stop a script without touching a person reconsidering.
+	eventMarketWriteUser: (userId) =>
+		getLimiter('event-markets:write:user', { limit: 30, window: '5 m', critical: true }).limit(userId),
+	eventMarketWriteIp: (ip) =>
+		getLimiter('event-markets:write:ip', { limit: 60, window: '5 m', critical: true }).limit(ip),
 	// Auth-critical (see authIp/registerIp above): brute-forcing verification
 	// codes / spamming reset+verify emails must fail closed when Redis is down.
 	verifyEmailIp: (ip) =>

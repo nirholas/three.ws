@@ -26,6 +26,7 @@
 //   GET /api/pulse?view=stats            — aggregate money intelligence
 //   GET /api/pulse?view=marketplace      — marketplace commerce viability metrics
 //   GET /api/pulse?view=trading          — trading viability: activity, cost, realized P&L
+//   GET /api/pulse?view=event-markets   : Event Markets: live count, biggest mover, closing soon
 //   GET /api/pulse?view=graph&window=…   — money-flow topology: who paid whom, for what
 //   GET /api/pulse?view=agent-summary&agent_id=<id> — one wallet's lifetime summary
 //
@@ -41,6 +42,7 @@ import { cacheGet, cacheSet } from './_lib/cache.js';
 import { marketplaceFeeBps } from './_lib/marketplace-platform-fee.js';
 import { shapeTradingWindow, shapeTradingPnl, shapeTradingSeries, solFromLamports } from './_lib/pulse-trading.js';
 import { MARKET_PAID_KINDS } from './_lib/marketplace-kinds.js';
+import { pulseEventMarkets } from './_lib/event-markets/live-stats.js';
 
 // The custody categories that are safe to surface publicly. Everything else
 // (withdraw, vanity_swap, limit_change, key_recover) is owner-private and is
@@ -1187,6 +1189,17 @@ export default async function handler(req, res) {
 	const since = url.searchParams.get('since');
 
 	try {
+		if (view === 'event-markets') {
+			const cacheKey = 'pulse:event-markets';
+			let body = await cacheGet(cacheKey);
+			if (body === null) {
+				body = await pulseEventMarkets();
+				await cacheSet(cacheKey, body, 10);
+			}
+			res.setHeader('cache-control', 'public, max-age=10');
+			return json(res, 200, { data: body });
+		}
+
 		if (view === 'stats') {
 			const cacheKey = `pulse:stats:${network}`;
 			let body = await cacheGet(cacheKey);

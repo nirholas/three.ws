@@ -1929,6 +1929,21 @@
 					"added": "2026-06-23"
 				},
 				{
+					"path": "/event-markets",
+					"title": "Event Markets: call the winner of every three.ws event",
+					"description": "Live, closing-soon and resolved markets for every three.ws event. Free-to-play points, crowd-set odds, and shareable cards for each call.",
+					"priority": 0.8,
+					"changefreq": "hourly",
+					"added": "2026-10-10"
+				},
+				{
+					"path": "/event-markets/view",
+					"title": "Event market",
+					"description": "One Event Market: entrants with live odds, odds over time, the lock countdown, how it resolves, and your pick. Opened from a shared /event-markets/<slug> link.",
+					"indexable": false,
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/trending",
 					"title": "Trending: Top Agents & Coins on three.ws",
 					"description": "What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
@@ -4083,6 +4098,12 @@
 					"title": "Docs · Trust Primitives",
 					"description": "Cross-chain Agent Reputation: score any wallet, mint, or agent id (Solana or EVM) 0-100 from real on-chain evidence before your agent pays, trades, or delegates.",
 					"added": "2026-07-07"
+				},
+				{
+					"path": "/docs/event-markets",
+					"title": "Docs · Event Markets",
+					"description": "Free-to-play prediction markets over three.ws events: how markets open, how they resolve from our own data with stored evidence, and how points are scored.",
+					"added": "2026-10-10"
 				},
 				{
 					"path": "/docs/x402",
