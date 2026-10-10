@@ -5,10 +5,10 @@
 // streams and forwards text deltas as they arrive. Order is quality first,
 // the same chain the editorial writer uses (api/_lib/x-content/llm.js):
 //
-//   1. Claude on Vertex AI (Google credits, pre-approved in the operating rules)
+//   1. Claude on Vertex AI (Google credits), when the project is entitled
 //   2. Claude on the Anthropic API, when a key is configured
 //   3. Claude through OpenRouter
-//   4. Kimi K3 on NVIDIA NIM (free)
+//   4. Kimi K3, then Nemotron Ultra and Super, on NVIDIA NIM (free)
 //   5. the platform's general chain, non-streaming, so a request is never
 //      refused while any model answers
 //
@@ -22,6 +22,20 @@ import { recordEvent } from '../usage.js';
 export const ANATOMY_MODEL_DEFAULT = 'claude-opus-5';
 const FALLBACK_CLAUDE = 'claude-sonnet-5';
 const MAX_TOKENS = 16_000;
+// A healthy host starts streaming within seconds even on the long system
+// prompt. One that has not by now is queued or stalled, and waiting longer
+// would spend the whole request on it, so the ladder moves on.
+const FIRST_TOKEN_MS = 45_000;
+// Degenerate sampling (one token repeated forever) is a real failure mode of
+// some hosted models under load. It never becomes JSON, so it is cut off early.
+const DEGENERATE_WINDOW = 240;
+
+/** True when the tail of the text is one or two characters repeated. */
+export function isDegenerate(text) {
+	if (text.length < DEGENERATE_WINDOW + 60) return false;
+	const tail = text.slice(-DEGENERATE_WINDOW).replace(/\s+/g, '');
+	return tail.length > 0 && new Set(tail).size <= 2;
+}
 
 export class AnatomyWriterError extends Error {
 	constructor(message, failures = []) {
@@ -119,7 +133,10 @@ function anthropicBody(model, system, messages) {
 export function writerRungs(env = process.env) {
 	const rungs = [];
 	const primary = env.ANATOMY_MODEL || ANATOMY_MODEL_DEFAULT;
-	if (env.GOOGLE_CLOUD_PROJECT) {
+	// Vertex Claude needs Model Garden entitlement as well as a project; the
+	// shared VERTEX_CLAUDE_ENABLED flag (docs/ops/llm-lanes.md) says whether the
+	// project has it, so an unentitled deployment never spends a round trip here.
+	if (env.GOOGLE_CLOUD_PROJECT && (env.VERTEX_CLAUDE_ENABLED === '1' || env.VERTEX_CLAUDE_ENABLED === 'true')) {
 		for (const model of [...new Set([primary, FALLBACK_CLAUDE])]) {
 			rungs.push({
 				provider: 'vertex',
@@ -166,18 +183,24 @@ export function writerRungs(env = process.env) {
 			}),
 	});
 	if (env.OPENROUTER_API_KEY) {
-		rungs.push(
-			chat('openrouter', 'https://openrouter.ai/api/v1/chat/completions', env.OPENROUTER_API_KEY, `anthropic/${primary}`, {
-				headers: { 'http-referer': 'https://three.ws', 'x-title': 'three.ws Anatomy' },
-			}),
-		);
+		for (const model of [...new Set([primary, FALLBACK_CLAUDE])]) {
+			rungs.push(
+				chat('openrouter', 'https://openrouter.ai/api/v1/chat/completions', env.OPENROUTER_API_KEY, `anthropic/${model}`, {
+					headers: { 'http-referer': 'https://three.ws', 'x-title': 'three.ws Anatomy' },
+				}),
+			);
+		}
 	}
 	if (env.NVIDIA_API_KEY) {
-		rungs.push(
-			chat('nvidia', 'https://integrate.api.nvidia.com/v1/chat/completions', env.NVIDIA_API_KEY, 'moonshotai/kimi-k3', {
-				body: { chat_template_kwargs: { thinking: false, enable_thinking: false } },
-			}),
-		);
+		// Three separate NIM functions on one key: Kimi writes the best specs,
+		// the Nemotron pair answers when Kimi's host is queued or stalled.
+		for (const model of ['moonshotai/kimi-k3', 'nvidia/nemotron-3-ultra-550b-a55b', 'nvidia/nemotron-3-super-120b-a12b']) {
+			rungs.push(
+				chat('nvidia', 'https://integrate.api.nvidia.com/v1/chat/completions', env.NVIDIA_API_KEY, model, {
+					body: { chat_template_kwargs: { thinking: false, enable_thinking: false } },
+				}),
+			);
+		}
 	}
 	return rungs;
 }
@@ -196,8 +219,15 @@ export async function streamSpec({ system, messages, onDelta = () => {}, onReset
 		if (remaining < 20_000) break;
 		const started = Date.now();
 		let streamed = false;
+		let soFar = '';
+		let why = null;
 		const ctrl = new AbortController();
-		const timer = setTimeout(() => ctrl.abort(), remaining);
+		const abort = (reason) => {
+			why ??= reason;
+			ctrl.abort();
+		};
+		const timer = setTimeout(() => abort('timed out'), remaining);
+		const firstToken = setTimeout(() => abort(`no output in ${FIRST_TOKEN_MS / 1000}s`), Math.min(FIRST_TOKEN_MS, remaining));
 		try {
 			const res = await rung.open({ system, messages, signal: ctrl.signal, fetchImpl });
 			if (!res.ok || !res.body) {
@@ -206,7 +236,13 @@ export async function streamSpec({ system, messages, onDelta = () => {}, onReset
 			}
 			const reader = rung.kind === 'anthropic' ? readAnthropicStream : readChatStream;
 			const out = await reader(res.body, (piece) => {
+				if (!streamed) clearTimeout(firstToken);
 				streamed = true;
+				soFar += piece;
+				if (isDegenerate(soFar)) {
+					abort('degenerate output');
+					throw new Error('degenerate output');
+				}
 				onDelta(piece);
 			});
 			if (!out.text.trim()) throw new Error('empty completion');
@@ -222,10 +258,11 @@ export async function streamSpec({ system, messages, onDelta = () => {}, onReset
 			});
 			return { text: out.text, provider: rung.provider, model: rung.model, stopReason: out.stopReason };
 		} catch (err) {
-			failures.push(`${rung.provider}:${rung.model}: ${err?.name === 'AbortError' ? 'timed out' : err?.message}`);
+			failures.push(`${rung.provider}:${rung.model}: ${why || (err?.name === 'AbortError' ? 'timed out' : err?.message)}`);
 			if (streamed) onReset();
 		} finally {
 			clearTimeout(timer);
+			clearTimeout(firstToken);
 		}
 	}
 	if (failures.length) console.warn('[anatomy-writer] streaming ladder exhausted:', failures.join(' | '));

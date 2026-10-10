@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Anatomy · See how any machine works · three.ws</title>
+	<meta name="description" content="Describe a machine in one line and Claude builds it as an interactive isometric cutaway: real moving parts, fire, water and plasma shaders, an exploded view, a section cut and a guided tour." />
+	<link rel="canonical" href="https://three.ws/anatomy" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Anatomy · three.ws" />
+	<meta property="og:description" content="One line in, a working machine out: rotate it, cut it open, explode it and follow the physics step by step." />
+	<meta property="og:url" content="https://three.ws/anatomy" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Anatomy&amp;d=Describe+a+machine+in+one+line+and+watch+it+work%3A+moving+parts%2C+shaders+and+a+guided+tour.&amp;p=%2Fanatomy" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Anatomy · three.ws" />
+	<meta name="twitter:description" content="One line in, a working machine out: rotate it, cut it open, explode it and follow the physics step by step." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Anatomy&amp;d=Describe+a+machine+in+one+line+and+watch+it+work%3A+moving+parts%2C+shaders+and+a+guided+tour.&amp;p=%2Fanatomy" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Anatomy, three.ws" />
+	<meta name="twitter:site" content="@trythreews" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/src/anatomy/anatomy.css" />
+	<link rel="stylesheet" href="/src/anatomy/page.css" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Anatomy","applicationCategory":"EducationalApplication","operatingSystem":"Any","description":"Describe a machine in one line and get an interactive isometric cutaway with real moving parts, shader effects and a guided tour.","url":"https://three.ws/anatomy","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}]}</script>
+</head>
+<body class="anp-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="anp">
+		<!-- /anatomy: describe a machine, browse what others built -->
+		<section id="anpHome" class="anp-home" aria-labelledby="anpHeroTitle">
+			<div class="anp-hero">
+				<p class="anp-eyebrow"><span class="anp-eyebrow__mark" aria-hidden="true"></span>Anatomy</p>
+				<h1 id="anpHeroTitle">Describe a machine. Watch it work.</h1>
+				<p class="anp-lede">One line becomes an interactive isometric cutaway: the real moving parts in motion, fire, water and plasma rendered with live shaders, and a guided tour of the physics. Rotate it, cut it open, pull it apart.</p>
+
+				<form id="anpForm" class="anp-form" autocomplete="off">
+					<label for="anpPrompt" class="anp-sr">Describe the machine</label>
+					<textarea id="anpPrompt" rows="2" maxlength="600" placeholder="How a big airliner turbofan like the A380's makes thrust"></textarea>
+					<div class="anp-form__foot">
+						<span class="anp-hint">Name a machine and what you want to understand. <kbd>Ctrl</kbd> <kbd>Enter</kbd> to build.</span>
+						<button id="anpSubmit" type="submit" class="anp-btn anp-btn--primary">
+							<span class="anp-btn__label">Build it</span>
+							<span class="anp-btn__spinner" aria-hidden="true"></span>
+						</button>
+					</div>
+				</form>
+				<p id="anpFormError" class="anp-notice anp-notice--error" role="alert" hidden></p>
+				<div id="anpExamples" class="anp-chips" aria-label="Example machines"></div>
+
+				<ul class="anp-proof" aria-label="What you get">
+					<li><strong>Real motion</strong><span>Fans spin, pistons ride their cranks and valves open in time, each part moving on its own.</span></li>
+					<li><strong>Physics you can see</strong><span>Combustion, coolant, plasma and airflow drawn with WebGL shaders and animated flow paths.</span></li>
+					<li><strong>Take it apart</strong><span>Explode the assembly, slice a section, x-ray the casing, or follow the tour step by step.</span></li>
+				</ul>
+			</div>
+
+			<section class="anp-gallery" aria-labelledby="anpGalleryTitle">
+				<div class="anp-gallery__head">
+					<h2 id="anpGalleryTitle">Recently built</h2>
+					<form id="anpSearch" class="anp-search" role="search">
+						<label for="anpSearchInput" class="anp-sr">Search machines</label>
+						<input id="anpSearchInput" type="search" placeholder="Search machines" maxlength="80" />
+					</form>
+				</div>
+				<div id="anpGallery" class="anp-grid" aria-live="polite"></div>
+				<div id="anpGalleryStatus" class="anp-empty" hidden></div>
+			</section>
+
+			<section class="anp-agent" aria-labelledby="anpAgentTitle">
+				<div>
+					<h2 id="anpAgentTitle">Use it from your agent</h2>
+					<p>Anatomy ships as an open-source agent skill. Claude Code writes the spec itself, publishes it here and hands you the link. Type <code>/anatomy</code> followed by any machine.</p>
+				</div>
+				<pre class="anp-code"><code>cp -r .agents/skills/anatomy ~/your-project/.claude/skills/
+
+/anatomy explain how a big airliner turbofan engine like the A380's makes thrust, interactive</code></pre>
+				<p class="anp-agent__links"><a class="anp-link" href="https://github.com/nirholas/three.ws/tree/main/.agents/skills/anatomy" rel="noopener" target="_blank">The skill on GitHub</a><a class="anp-link" href="/docs/anatomy">Spec reference and API</a></p>
+			</section>
+		</section>
+
+		<!-- /anatomy/:id and a machine being written -->
+		<section id="anpDesign" class="anp-design" hidden aria-labelledby="anpTitle">
+			<header class="anp-bar">
+				<a class="anp-back" href="/anatomy" aria-label="All machines">
+					<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+					<span>Anatomy</span>
+				</a>
+				<div class="anp-bar__title">
+					<h1 id="anpTitle" class="anp-title"></h1>
+					<p id="anpSubtitle" class="anp-subtitle"></p>
+				</div>
+				<div id="anpStatus" class="anp-status" role="status" aria-live="polite" hidden>
+					<span class="anp-status__dot" aria-hidden="true"></span>
+					<span id="anpStatusText"></span>
+				</div>
+				<div class="anp-bar__actions">
+					<button id="anpCopyLink" type="button" class="anp-btn anp-btn--ghost" hidden>Copy link</button>
+					<button id="anpCopySpec" type="button" class="anp-btn anp-btn--ghost" hidden>Copy spec</button>
+					<a id="anpNew" class="anp-btn" href="/anatomy">New machine</a>
+				</div>
+			</header>
+			<p id="anpAsked" class="anp-asked" hidden></p>
+			<p id="anpWarn" class="anp-notice" hidden></p>
+			<div id="anpStage" class="anp-stage">
+				<div id="anpSkeleton" class="anp-skeleton" hidden>
+					<div class="anp-skeleton__iso" aria-hidden="true"><span></span><span></span><span></span></div>
+					<p id="anpSkeletonText">Claude is designing the machine. Parts appear here as they are written.</p>
+				</div>
+			</div>
+			<div id="anpDesignError" class="anp-empty anp-empty--page" hidden></div>
+		</section>
+		<div id="anpToast" class="anp-toast" role="status" aria-live="polite" hidden></div>
+	</main>
+
+	<script type="module" src="/src/anatomy/page.js"></script>
+</body>
+</html>
