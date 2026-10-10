@@ -9,7 +9,7 @@
 //        - on the owner's destination allowlist (active, past its cooldown):
 //          the agent signs it now, inside every spend cap;
 //        - not on it while the allowlist is off: it becomes an owner approval
-//          request (the /approvals inbox, push, Telegram) and is never a send;
+//          request in the approvals inbox, by push and by Telegram, and is never a send;
 //        - refused by an enforced allowlist, a frozen wallet, or a cap: it
 //          stops with the reason. Approval cannot lift any of those.
 //   A policy rule that says "ask me" also turns a would-be direct send into an
