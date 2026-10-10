@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-09T20:15:23.645Z",
+	"generated_at": "2026-10-10T04:22:51.104Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Live agent payments keep running when fee sponsorship pauses",
+			"summary": "When the wallet that covers Solana network fees for agent payments runs low, agents on three.ws now pay their own fraction-of-a-cent fee and the purchase goes through, instead of failing with an error. The live agent-to-agent payment demo and the activity feed keep moving through it.",
+			"link": "/agent-exchange",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-09",
 			"type": "launch",
