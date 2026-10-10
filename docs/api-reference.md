@@ -4127,6 +4127,75 @@ curl -s 'https://three.ws/api/pipeline?network=devnet'  | jq '.stages.recorder'
 
 ---
 
+## Strategy Objects API
+
+Strategy Objects are validated trade rule sets an agent can equip (entry filter,
+research gates, sizing with a price-impact cap, exits, risk caps, and an
+`ask`/`auto` mode). Full guide, schema, and examples:
+[docs/strategy-objects.md](strategy-objects.md).
+
+### Live match preview
+
+```
+POST /api/strategies/preview   { config, hours?: 1|6|24, network?: "mainnet"|"devnet" }
+```
+
+Public, read-only, 120 requests per IP per 5 minutes. Replays the recorded
+launches of the last `hours` (default 6) through the live entry filter and
+research gates. The config is normalized, not validated, so a half-edited config
+still previews. Returns `universe`, `passed_entry`, `passed_research`,
+`impact_blocked`, `matched`, `live_check` (cleared everything except
+firewall-only checks that history lacks), `would_buy`, `entry_rejects`,
+`blocked_by` (a map of gate key to how many coins it blocked), `sample`, `sol_usd`,
+`history_at`, and `caveats`. `502 preview_unavailable` when the history cannot be
+read.
+
+### Per-agent strategy runtime
+
+```
+GET    /api/agents/:id/strategies                       equips, live positions, kill state
+POST   /api/agents/:id/strategies                       { strategy_id, network }   equip
+POST   /api/agents/:id/strategies/unequip               { equip_id | strategy_id }
+POST   /api/agents/:id/strategies/toggle                { equip_id, active }
+POST   /api/agents/:id/strategies/kill                  toggle the owner's kill switch
+POST   /api/agents/:id/strategies/sweep                 evaluate this agent's equips now
+POST   /api/agents/:id/strategies/close                 { position_id }   sell one position now
+POST   /api/agents/:id/strategies/mode                  { equip_id, mode: "ask"|"auto" }
+GET    /api/agents/:id/strategies/decisions?decision=&limit=
+GET    /api/agents/:id/strategies/approvals?status=pending&limit=
+POST   /api/agents/:id/strategies/approve               { approval_id, payload_hash }
+POST   /api/agents/:id/strategies/deny                  { approval_id }
+```
+
+Owner only (session plus CSRF, or a bearer allowed to spend). On mainnet,
+equipping, resuming, switching to `auto`, sweeping, and approving require the
+real-funds agreement; pausing and switching to `ask` never do.
+
+- **decisions** returns `data.decisions[]`: one row per equip and coin with
+  `decision` (`blocked`, `approval`, `executed`, `skipped`, `failed`),
+  `check_name`, `reason`, `blocked_by`, `signature`, `seen_count`,
+  `strategy_name`, and `updated_at`. Filter with `decision=`.
+- **approvals** returns `data.approvals[]` with the exact `payload` the buy will
+  run, its `payload_hash`, `summary`, `amount`, `amount_usd`, `recipient_label`,
+  `risk_notes`, and `expires_at` (15 minutes after filing).
+- **approve** must carry the `payload_hash` you reviewed. It runs the buy once
+  with the original idempotency key after re-checking every guard, and returns
+  `data: { approval, already, executed, code, message }`. A guard that now
+  refuses answers `422` with `executed: false` and the reason; nothing is bought.
+
+### Compile a strategy from text
+
+```
+POST /api/sniper/compile   { agent_id, text, network? }
+```
+
+Session or bearer, agent you own. Returns the sniper rule set (`strategy`) plus
+`strategy_object` (the version 2 Strategy Object config) and `explanations[]`
+(`field`, `value`, `why`), with every money and risk knob clamped to the agent's
+trade guards and listed in `clamped`.
+
+---
+
 ## Trader Passport API
 
 A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a

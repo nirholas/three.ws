@@ -4,6 +4,9 @@
 //   • Owner of the viewed agent → manage the strategies THIS agent runs: the global
 //     kill switch (leash), each equip with its live P&L + positions, pause/unequip,
 //     "Run now", and "+ Equip a strategy" (from your library or the marketplace).
+//     Each equip also carries its buy mode (ask before each buy, or auto within
+//     caps), the pending approval requests ask mode files, and a decision log of
+//     which research check blocked or bought which coin.
 //   • Visitor → the strategies THIS agent's creator publishes (equip one with your
 //     own agent — the sibling primitive to mirroring), or a browse-the-library CTA.
 //   • Logged-out → the same discovery + a sign-in prompt.
@@ -16,6 +19,7 @@ import {
 	ensureStrategyStyles, esc, shortAddr, fmtSol, timeAgo, toast, configSummary,
 	openStrategyEditor, openEquipPicker, VIOLET,
 } from './strategy-forms.js';
+import { ensureRiskAck } from './risk-ack.js';
 
 const STYLE_ID = 'sop-panel-styles';
 function ensurePanelStyles() {
@@ -78,11 +82,68 @@ function ensurePanelStyles() {
 .sop-mp-body { flex: 1 1 auto; min-width: 0; }
 .sop-mp-name { font-size: var(--text-sm, .82rem); font-weight: 600; color: var(--ink-bright, #fff); }
 .sop-mp-sum { font-size: var(--text-2xs, .62rem); color: var(--ink-dim, #9a9a9a); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sop-mode { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: var(--text-2xs, .64rem); color: var(--ink-dim, #9a9a9a); flex-wrap: wrap; }
+.sop-seg { display: inline-flex; border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); border-radius: 999px; padding: 2px; }
+.sop-seg button { font: inherit; font-size: var(--text-2xs, .64rem); padding: 3px 10px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-dim, #9a9a9a); cursor: pointer; transition: background .16s, color .16s; }
+.sop-seg button:hover:not([aria-pressed="true"]) { color: var(--ink-bright, #fff); }
+.sop-seg button[aria-pressed="true"] { background: var(--wallet-accent-soft, rgba(139,92,246,.18)); color: ${VIOLET}; font-weight: 700; cursor: default; }
+.sop-seg button[data-mode="auto"][aria-pressed="true"] { background: rgba(74,222,128,.14); color: var(--success, #4ade80); }
+.sop-seg button:focus-visible { outline: 2px solid var(--wallet-focus, rgba(139,92,246,.7)); outline-offset: 1px; }
+.sop-seg button:disabled { opacity: .5; cursor: progress; }
+.sop-appr { border: 1px solid var(--warn, #fbbf24); border-radius: var(--radius-md, 10px); background: rgba(251,191,36,.05); padding: var(--space-sm, 10px) var(--space-md, 12px); animation: sop-in .24s ease both; }
+@keyframes sop-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sop-appr { animation: none; } }
+.sop-appr + .sop-appr { margin-top: 6px; }
+.sop-appr-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sop-appr-sum { font-size: var(--text-sm, .8rem); color: var(--ink-bright, #fff); font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.sop-appr-exp { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, .64rem); color: var(--warn, #fbbf24); white-space: nowrap; }
+.sop-appr-tbl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 8px 0; font-size: var(--text-2xs, .66rem); }
+.sop-appr-tbl dt { color: var(--ink-faint, #808080); }
+.sop-appr-tbl dd { margin: 0; color: var(--ink, #ddd); min-width: 0; overflow-wrap: anywhere; }
+.sop-appr-tbl a { color: ${VIOLET}; text-decoration: none; font-family: var(--font-mono, monospace); }
+.sop-appr-tbl a:hover { text-decoration: underline; }
+.sop-appr-notes { margin: 0 0 8px; padding-left: 16px; font-size: var(--text-2xs, .64rem); color: var(--ink-dim, #a8a8a8); line-height: 1.5; }
+.sop-appr-act { display: flex; gap: 6px; justify-content: flex-end; }
+.sop-log { border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-md, 10px); padding: 0 var(--space-md, 12px); }
+.sop-log > summary { cursor: pointer; padding: 9px 0; font-size: var(--text-xs, .72rem); color: var(--ink, #ddd); font-weight: 600; }
+.sop-log > summary:focus-visible { outline: 2px solid var(--wallet-focus, rgba(139,92,246,.7)); outline-offset: 2px; border-radius: 4px; }
+.sop-log-body { padding-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.sop-dec { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; align-items: baseline; font-size: var(--text-2xs, .66rem); padding: 5px 8px; border-radius: var(--radius-sm, 6px); background: var(--surface-1, rgba(255,255,255,.025)); }
+.sop-dec .sop-dot { align-self: center; }
+.sop-dec-main { min-width: 0; color: var(--ink, #ddd); overflow-wrap: anywhere; }
+.sop-dec-main a { color: ${VIOLET}; text-decoration: none; font-family: var(--font-mono, monospace); }
+.sop-dec-when { color: var(--ink-faint, #777); white-space: nowrap; }
+.sop-dec-why { grid-column: 2 / -1; color: var(--ink-dim, #9a9a9a); line-height: 1.4; }
+.sop-dot.blocked { background: var(--danger, #f87171); }
+.sop-dot.approval { background: var(--warn, #fbbf24); }
+.sop-dot.executed { background: var(--success, #4ade80); }
+.sop-dot.skipped { background: var(--ink-dim, #888); }
 `;
 	document.head.appendChild(s);
 }
 
 const LEASH_SVG = '<svg class="sop-leash-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+
+// Devnet equips trade test SOL, so the server waives the real-funds agreement for them.
+const isDevnet = (e) => String(e?.network || '').toLowerCase() === 'devnet';
+// Server errors come back as { error: code, error_description }.
+const errMsg = (j, fallback) => j?.error_description || j?.error?.message || (typeof j?.error === 'string' ? j.error.replace(/_/g, ' ') : '') || fallback;
+
+const DECISION_WORD = { blocked: 'Blocked', approval: 'Asked you', executed: 'Bought', skipped: 'Skipped', failed: 'Failed' };
+const CHECK_LABELS = {
+	min_holders: 'Minimum holders', max_top_holder_pct: 'Largest holder share', min_liquidity_sol: 'Minimum liquidity',
+	security_min_score: 'Firewall security score', require_no_mint_authority: 'Mint authority renounced',
+	require_no_freeze_authority: 'Freeze authority renounced', dev_max_launches: 'Creator launch count',
+	dev_min_graduated: 'Creator graduations', dev_block_sold: 'Creator has not sold', mode_ask: 'Ask mode',
+	approval_unavailable: 'Approval request', price_impact: 'Price impact',
+};
+
+function expiresIn(t) {
+	const ms = new Date(t).getTime() - Date.now();
+	if (!(ms > 0)) return 'expired';
+	const m = Math.floor(ms / 60000), sec = Math.floor((ms % 60000) / 1000);
+	return `${m}:${String(sec).padStart(2, '0')} left`;
+}
 
 export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 	if (!mount) return { destroy() {} };
@@ -90,6 +151,7 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 	const card = mount.closest('#ad-strategy-objects-card') || mount.parentElement;
 	const agentId = agent.id;
 	let alive = true;
+	let countdown = null;
 	const isLoggedIn = () => window.__authed !== false;
 	const root = document.createElement('div');
 	root.className = 'sop';
@@ -146,6 +208,10 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 						</div>
 					</div>
 					<div class="sop-perf">${perfLine(e.performance)}${e.last_fired_at ? `<span>last fired ${timeAgo(e.last_fired_at)}</span>` : ''}</div>
+					<div class="sop-mode"><span>Buys</span><span class="sop-seg" role="group" aria-label="Buy mode for ${esc(e.strategy_name)}">
+						<button type="button" data-mode="ask" aria-pressed="${modeOf(e) === 'ask'}" title="File an approval request for every match">Ask first</button>
+						<button type="button" data-mode="auto" aria-pressed="${modeOf(e) === 'auto'}" title="Buy every match within the agent's caps">Auto</button>
+					</span><span>${modeOf(e) === 'auto' ? 'buys matches on its own, within caps' : 'waits for your approval on every buy'}</span></div>
 					${ps.length ? `<div class="sop-pos">${ps.map(positionRow).join('')}</div>` : ''}
 				</div>`;
 			}).join('')
@@ -163,9 +229,136 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 				<div style="font-size:var(--text-2xs,.64rem);color:var(--ink-dim,#9a9a9a)">${d.equips.length} equipped</div>
 				<button class="sop-btn" data-act="run" ${d.killed ? 'disabled' : ''} title="Evaluate launches & positions now">↻ Run now</button>
 			</div>
+			<div id="sop-approvals" aria-live="polite"></div>
 			<div id="sop-equips">${equipsHtml}</div>
-			<div class="sop-add"><button class="sop-btn sop-btn-primary" data-act="equip" style="margin-top:4px">+ Equip a strategy</button> <a class="sop-btn" href="/strategies" style="text-decoration:none;display:inline-block">Open library</a></div>`;
+			<div class="sop-add"><button class="sop-btn sop-btn-primary" data-act="equip" style="margin-top:4px">+ Equip a strategy</button> <a class="sop-btn" href="/strategies" style="text-decoration:none;display:inline-block">Open library</a></div>
+			${d.equips.length ? '<details class="sop-log" id="sop-log"><summary>Decision log: what each check blocked or bought</summary><div class="sop-log-body" id="sop-log-body"></div></details>' : ''}`;
 		wireOwner(d);
+		if (d.equips.length) loadApprovals();
+	}
+
+	function modeOf(e) { return e.config?.mode === 'auto' ? 'auto' : 'ask'; }
+
+	// Pending ask-mode buys. Each card shows exactly what will be signed (coin,
+	// amount, chain, where the SOL goes, the research notes) and expires on its own.
+	async function loadApprovals() {
+		const host = root.querySelector('#sop-approvals');
+		if (!host) return;
+		let rows = [];
+		try {
+			const res = await apiFetch(`/api/agents/${agentId}/strategies/approvals?status=pending&limit=10`, { allowAnonymous: true });
+			if (!res.ok) throw new Error(errMsg(await res.json().catch(() => ({})), 'Could not load approval requests'));
+			rows = (await res.json()).data?.approvals || [];
+		} catch (err) {
+			if (err?.redirected || !alive) return;
+			host.innerHTML = `<div class="sop-err">${esc(err.message)} <button class="sop-btn" data-retry-appr>Retry</button></div>`;
+			host.querySelector('[data-retry-appr]')?.addEventListener('click', loadApprovals);
+			return;
+		}
+		if (!alive) return;
+		clearInterval(countdown);
+		if (!rows.length) { host.innerHTML = ''; return; }
+		host.innerHTML = `<div class="sop-h">Waiting for your approval (${rows.length})</div>${rows.map(approvalCard).join('')}`;
+		countdown = setInterval(() => {
+			if (!alive || !host.isConnected) { clearInterval(countdown); return; }
+			let anyLive = false;
+			host.querySelectorAll('[data-expires]').forEach((el) => {
+				const left = expiresIn(el.dataset.expires);
+				el.textContent = left;
+				if (left === 'expired') el.closest('.sop-appr')?.querySelector('[data-approve]')?.setAttribute('disabled', '');
+				else anyLive = true;
+			});
+			if (!anyLive) { clearInterval(countdown); loadApprovals(); }
+		}, 1000);
+		host.querySelectorAll('.sop-appr').forEach((cardEl) => {
+			const a = rows.find((r) => r.id === cardEl.dataset.id);
+			cardEl.querySelector('[data-approve]')?.addEventListener('click', (ev) => approve(a, ev.currentTarget));
+			cardEl.querySelector('[data-deny]')?.addEventListener('click', (ev) => deny(a, ev.currentTarget));
+		});
+	}
+
+	function approvalCard(a) {
+		const mint = a.payload?.mint || a.recipient;
+		const usd = a.amount_usd != null ? ` (about $${Number(a.amount_usd).toFixed(2)})` : '';
+		const notes = Array.isArray(a.risk_notes) ? a.risk_notes : [];
+		return `<div class="sop-appr" data-id="${esc(a.id)}">
+			<div class="sop-appr-h"><div class="sop-appr-sum">${esc(a.summary)}</div><span class="sop-appr-exp" data-expires="${esc(a.expires_at)}">${expiresIn(a.expires_at)}</span></div>
+			<dl class="sop-appr-tbl">
+				<dt>Amount</dt><dd>◎${fmtSol(a.amount)} SOL${usd}</dd>
+				<dt>Token</dt><dd><a href="/coin/${encodeURIComponent(mint)}" title="${esc(mint)}">${esc(shortAddr(mint, 6, 6))}</a></dd>
+				<dt>Chain</dt><dd>Solana ${a.network === 'devnet' ? 'devnet' : 'mainnet'}</dd>
+				<dt>Pays</dt><dd>${esc(a.recipient_label || shortAddr(a.recipient))}</dd>
+				<dt>Limits</dt><dd>${a.payload?.slippage_bps != null ? `${a.payload.slippage_bps / 100}% slippage` : ''}${a.payload?.max_price_impact_pct != null ? ` · ${a.payload.max_price_impact_pct}% max impact` : ''}</dd>
+			</dl>
+			${notes.length ? `<ul class="sop-appr-notes">${notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+			<div class="sop-appr-act">
+				<button type="button" class="sop-btn" data-deny>Deny</button>
+				<button type="button" class="sop-btn sop-btn-primary" data-approve>Approve and buy</button>
+			</div>
+		</div>`;
+	}
+
+	async function approve(a, btn) {
+		if (!a) return;
+		if (!(await ensureRiskAck({ context: 'strategy' }))) return;
+		const card = btn.closest('.sop-appr');
+		card?.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+		btn.textContent = 'Buying…';
+		try {
+			const res = await apiFetch(`/api/agents/${agentId}/strategies/approve`, {
+				method: 'POST', headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ approval_id: a.id, payload_hash: a.payload_hash }),
+			});
+			const j = await res.json().catch(() => ({}));
+			if (!res.ok && !j.data) throw new Error(errMsg(j, 'Could not approve'));
+			const r = j.data || {};
+			if (r.executed) toast(r.already ? 'Already approved' : 'Approved: the buy went through within your caps');
+			else toast(`Nothing was bought: ${r.message || r.code || 'the trade did not complete'}`);
+		} catch (err) { if (!err?.redirected) toast(err.message || 'Could not approve'); }
+		load();
+	}
+
+	async function deny(a, btn) {
+		if (!a) return;
+		btn.disabled = true;
+		try {
+			const res = await apiFetch(`/api/agents/${agentId}/strategies/deny`, {
+				method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ approval_id: a.id }),
+			});
+			if (!res.ok) throw new Error(errMsg(await res.json().catch(() => ({})), 'Could not deny'));
+			toast('Denied. This coin will not be asked about again.');
+		} catch (err) { if (!err?.redirected) toast(err.message || 'Could not deny'); }
+		loadApprovals();
+	}
+
+	async function loadDecisions() {
+		const body = root.querySelector('#sop-log-body');
+		if (!body) return;
+		body.innerHTML = '<div class="sop-sk" style="height:30px"></div><div class="sop-sk" style="height:30px"></div>';
+		try {
+			const res = await apiFetch(`/api/agents/${agentId}/strategies/decisions?limit=30`, { allowAnonymous: true });
+			if (!res.ok) throw new Error(errMsg(await res.json().catch(() => ({})), 'Could not load the decision log'));
+			const rows = (await res.json()).data?.decisions || [];
+			if (!alive) return;
+			body.innerHTML = rows.length
+				? rows.map(decisionRow).join('')
+				: '<div class="sop-empty" style="padding:12px"><strong>No decisions yet</strong>Each sweep (every 2 minutes, or Run now) records why a launch was bought, asked about, or blocked.</div>';
+		} catch (err) {
+			if (err?.redirected || !alive) return;
+			body.innerHTML = `<div class="sop-err">${esc(err.message)} <button class="sop-btn" data-retry-log>Retry</button></div>`;
+			body.querySelector('[data-retry-log]')?.addEventListener('click', loadDecisions);
+		}
+	}
+
+	function decisionRow(r) {
+		const check = r.check_name ? (CHECK_LABELS[r.check_name] || r.check_name.replace(/_/g, ' ')) : '';
+		const seen = r.seen_count > 1 ? ` · seen ${r.seen_count}×` : '';
+		return `<div class="sop-dec">
+			<span class="sop-dot ${esc(r.decision)}"></span>
+			<span class="sop-dec-main"><b>${DECISION_WORD[r.decision] || esc(r.decision)}</b> <a href="/coin/${encodeURIComponent(r.mint)}">${esc(shortAddr(r.mint))}</a>${r.strategy_name ? ` · ${esc(r.strategy_name)}` : ''}${check ? ` · ${esc(check)}` : ''}${r.signature ? ` <a href="https://solscan.io/tx/${esc(r.signature)}" target="_blank" rel="noopener" title="View on Solscan">↗</a>` : ''}</span>
+			<span class="sop-dec-when">${esc(timeAgo(r.updated_at))}${seen}</span>
+			${r.reason ? `<span class="sop-dec-why">${esc(r.reason)}</span>` : ''}
+		</div>`;
 	}
 
 	function wireOwner(d) {
@@ -175,19 +368,24 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 			load();
 		});
 		root.querySelector('[data-act="run"]')?.addEventListener('click', async (e) => {
-			const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Running…';
+			const btn = e.currentTarget;
+			// The sweep only needs the real-funds agreement when a mainnet equip is in it.
+			if (d.equips.some((x) => !isDevnet(x)) && !(await ensureRiskAck({ context: 'strategy' }))) return;
+			btn.disabled = true; btn.textContent = 'Running…';
 			try {
 				const res = await apiFetch(`/api/agents/${agentId}/strategies/sweep`, { method: 'POST' });
 				const j = await res.json().catch(() => ({}));
-				if (!res.ok) throw new Error(j?.error?.message || 'Run failed');
+				if (!res.ok) throw new Error(errMsg(j, 'Run failed'));
 				const all = (j.data?.results || []).flatMap((r) => r.results || []);
 				const exec = all.filter((r) => r.status === 'executed').length;
+				const asked = all.filter((r) => r.status === 'approval' && r.created).length;
 				const skip = all.filter((r) => r.status === 'skipped').length;
-				toast(all.length ? `Evaluated: ${exec} executed, ${skip} skipped` : 'No entries or exits this run');
+				toast(all.length ? `Evaluated: ${exec} bought, ${asked} waiting for you, ${skip} skipped` : 'No entries or exits this run');
 			} catch (err) { if (!err?.redirected) toast(err.message || 'Run failed'); }
 			load();
 		});
 		root.querySelector('[data-act="equip"]')?.addEventListener('click', () => openEquipFlow());
+		root.querySelector('#sop-log')?.addEventListener('toggle', (ev) => { if (ev.currentTarget.open) loadDecisions(); });
 		root.querySelectorAll('.sop-equip').forEach((row) => {
 			const equipId = row.dataset.equip;
 			const e = d.equips.find((x) => x.equip_id === equipId);
@@ -196,6 +394,17 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 				await postAction('toggle', { equip_id: equipId, active: !e.active }, e.active ? 'Strategy paused' : 'Strategy resumed');
 				load();
 			});
+			row.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', async () => {
+				const mode = b.dataset.mode;
+				if (mode === modeOf(e)) return;
+				if (mode === 'auto') {
+					if (!confirm(`Switch “${e.strategy_name}” to auto? It will buy every coin that passes its gates without asking, always inside this agent's spend policy.`)) return;
+					if (!isDevnet(e) && !(await ensureRiskAck({ context: 'strategy' }))) return;
+				}
+				row.querySelectorAll('[data-mode]').forEach((x) => { x.disabled = true; });
+				await postAction('mode', { equip_id: equipId, mode }, mode === 'auto' ? 'Auto: buys within caps without asking' : 'Ask first: every buy waits for your approval');
+				load();
+			}));
 			row.querySelector('[data-act="unequip"]')?.addEventListener('click', async () => {
 				if (!confirm(`Unequip “${e.strategy_name}”? Open positions stay yours to manage; no new entries start.`)) return;
 				await postAction('unequip', { equip_id: equipId }, 'Strategy unequipped');
@@ -209,9 +418,10 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 			const res = await apiFetch(`/api/agents/${agentId}/strategies/${action}`, {
 				method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}),
 			});
-			if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j?.error?.message || 'Action failed'); }
+			if (!res.ok) throw new Error(errMsg(await res.json().catch(() => ({})), 'Action failed'));
 			if (okMsg) toast(okMsg);
-		} catch (e) { if (!e?.redirected) toast(e.message || 'Action failed'); }
+			return true;
+		} catch (e) { if (!e?.redirected) toast(e.message || 'Action failed'); return false; }
 	}
 
 	// Owner "+ Equip": pick a strategy from your library (or create one), then equip it here.
@@ -325,5 +535,5 @@ export function mountStrategyPanel({ mount, agent, isOwner = false }) {
 	}
 
 	load();
-	return { destroy() { alive = false; mount.replaceChildren(); } };
+	return { destroy() { alive = false; clearInterval(countdown); mount.replaceChildren(); } };
 }

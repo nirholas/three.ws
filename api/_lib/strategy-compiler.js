@@ -484,7 +484,8 @@ function heuristicCompile(text) {
 	if (secScore) out.security_min_score = parseInt(secScore[1], 10);
 	if (/(?:renounced|revoked|no)\s*mint(?:\s*authority)?|mint\s*authority\s*(?:renounced|revoked|disabled)/.test(t)) out.require_no_mint_authority = true;
 	if (/(?:renounced|revoked|no)\s*freeze(?:\s*authority)?|freeze\s*authority\s*(?:renounced|revoked|disabled)/.test(t)) out.require_no_freeze_authority = true;
-	if (/(?:three\.ws|threews|platform)\s*launch/.test(t)) out.sources = ['three_ws_launch'];
+	// The number-word pass above has already turned "three.ws" into "3.ws".
+	if (/(?:three\.ws|3\.ws|threews|platform)\s*launch/.test(t)) out.sources = ['three_ws_launch'];
 	if (/\bauto(?:matically)?\b|without asking|no approval|don'?t ask/.test(t)) out.mode = 'auto';
 	else if (/\bask (?:me|first)|approval|approve each|confirm each/.test(t)) out.mode = 'ask';
 
