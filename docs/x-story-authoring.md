@@ -194,7 +194,12 @@ The reel shows that it works. The post says why anyone should care.
 - **Go long when there is more to say.** Posts over 280 characters measure about twice the likes
   of shorter ones on this account. Long is not padded: every sentence carries a fact.
 - **A thread for the detail.** The head makes the point. One or two replies carry the numbers,
-  the limits, and what to do next.
+  the partner it runs on, and what to do next.
+- **Positive framing only.** Nothing negative goes out: no outages, losses, bugs or "limitations".
+  A fallback is resilience, a boundary is a design choice, unfinished work is what is next. Never
+  fabricate to fill the gap. The keeper X Article
+  ([`keeper-article.md`](../data/x-content/articles/keeper-article.md)) is the house standard for
+  voice and framing; a post is that article compressed.
 - **One link, to the surface.** Put it in the head or in the first reply. The queue measures both
   placements, so alternate: if the last story you wrote linked in the head, link this one in the
   reply.
