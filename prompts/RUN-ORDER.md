@@ -1,6 +1,6 @@
 # Run order: which work order to paste next
 
-Everything open lives in [finish/](finish/) as 196 work orders, and since 2026-09-07 the
+Everything open lives in [finish/](finish/) as 159 work orders, and since 2026-09-07 the
 filenames carry the ranking: sort the folder by name and you are reading it in priority order,
 so you can open one, run it, and open the next without consulting anything. Every file in
 `finish/` is runnable; the context and log files that must never be run were moved out to
