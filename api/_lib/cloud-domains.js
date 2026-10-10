@@ -2,7 +2,7 @@
 // domain_* MCP tools and /api/domains.
 //
 // Authenticated as the Cloud Run runtime service account through
-// getGcpAccessToken (gcp-auth.js). Every call is a real request to the API;
+// getGcpAccessToken (gcp-auth.js). Every call is a real request to the API, and
 // nothing here is cached or faked. Callers that want caching wrap these (see
 // domains-service.js).
 //

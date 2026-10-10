@@ -9,7 +9,7 @@
 // risk notes. Approving:
 //
 //   1. requires the payload hash the owner was shown, so a screen that went
-//      stale (or a link someone edited) can never approve a different action;
+//      stale (or a link someone edited) can never approve a different action, and
 //   2. flips pending -> approved in ONE conditional UPDATE that also checks the
 //      expiry, so a double tap, a push tap racing a web click, or an approval
 //      after the deadline cannot execute twice or late;

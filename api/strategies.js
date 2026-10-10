@@ -355,7 +355,7 @@ async function handlePublish(req, res, auth, id) {
 	return json(res, 200, { data: publicStrategy(updated, perf.get(id), names.get(auth.userId)) });
 }
 
-// POST /api/strategies/preview { config, hours?, network? } — public and read-only:
+// POST /api/strategies/preview { config, hours?, network? }: public and read-only:
 // replays recorded launches through the live entry filter and research gates.
 async function handlePreview(req, res) {
 	const rl = await limits.strategyPreviewIp(clientIp(req));

@@ -395,7 +395,7 @@ async function evaluateEntries({ equip, agent, launches, nowMs, maxEntries = 3 }
 		if (sinceMin < config.risk.cooldown_minutes) return results;
 	}
 
-	// Concurrency — never exceed the strategy's max concurrent open positions. In
+	// Concurrency: never exceed the strategy's max concurrent open positions. In
 	// ask mode a pending approval holds a slot too, so the owner is never asked for
 	// more buys than the strategy may hold at once.
 	const [openCnt] = await sql`

@@ -1,6 +1,6 @@
 // GET /api/audit-log              — JSON list of the caller's audit events
 // GET /api/audit-log?format=csv   — CSV download (same data, last 90 days)
-// GET /api/audit-log?action_prefix=approval_  — only actions starting with the
+// GET /api/audit-log?action_prefix=approval_ : only actions starting with the
 //     prefix (the /approvals page's audit panel). Lowercase letters and _ only.
 //
 // Backs the "Action log" panel on /dashboard-next/account. Reads from the

@@ -309,7 +309,7 @@ async function handleClose(req, res, id) {
 	return json(res, 200, { data: result.data });
 }
 
-// POST mode — switch one equipped strategy between auto (buy within caps) and ask
+// POST mode: switch one equipped strategy between auto (buy within caps) and ask
 // (file an approval for every buy). Going to auto arms autonomous buying, so it
 // needs the real-funds agreement; going to ask never does.
 async function handleMode(req, res, id) {
@@ -352,7 +352,7 @@ async function handleApprovals(req, res, id) {
 	return json(res, 200, { data: { approvals: rows } });
 }
 
-// POST approve — the owner's explicit yes for one ask-mode buy. Executes the exact
+// POST approve: the owner's explicit yes for one ask-mode buy. Executes the exact
 // stored payload once, through every spend guard, at the moment of approval.
 async function handleApprove(req, res, id) {
 	const owned = await loadOwned(req, res, id);

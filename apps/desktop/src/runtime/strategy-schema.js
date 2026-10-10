@@ -1,4 +1,4 @@
-// Strategy Object config — the validated, versioned rule set behind a Strategy.
+// Strategy Object config: the validated, versioned rule set behind a Strategy.
 //
 // A strategy is NOT free text: it is a structured plan with a real schema. This
 // module is the single source of truth for that schema. It normalizes arbitrary
@@ -9,7 +9,7 @@
 //
 // Critically, the strategy's own caps (per-trade size, slippage, concurrency)
 // are ADDITIONAL constraints layered on top of the agent's server-side spend
-// policy — never a way around it. The runtime sizes a buy from `sizing.amount_sol`
+// policy: never a way around it. The runtime sizes a buy from `sizing.amount_sol`
 // but the trade still passes through the full guard + custody path, so a strategy
 // can never exceed the spend leash. Ever.
 //
@@ -81,7 +81,7 @@ export const STRATEGY_CONFIG_DEFAULTS = Object.freeze({
 	},
 });
 
-// Hard ceilings the schema enforces regardless of input — defensive bounds so a
+// Hard ceilings the schema enforces regardless of input: defensive bounds so a
 // stored config can never carry a nonsense number into the runtime.
 const BOUNDS = Object.freeze({
 	amount_sol: { min: 0.0001, max: 100 },
@@ -199,7 +199,7 @@ export function normalizeStrategyConfig(raw) {
 		},
 		exits: {
 			take_profit_pct: numOrNull(x.take_profit_pct, BOUNDS.take_profit_pct),
-			// stop_loss is mandatory and always present — default applied if absent/invalid.
+			// stop_loss is mandatory and always present: default applied if absent/invalid.
 			stop_loss_pct: clampNum(x.stop_loss_pct, d.exits.stop_loss_pct, BOUNDS.stop_loss_pct),
 			trailing_stop_pct: numOrNull(x.trailing_stop_pct, BOUNDS.trailing_stop_pct),
 			max_hold_minutes: intOrNull(x.max_hold_minutes, BOUNDS.max_hold_minutes),
@@ -272,7 +272,7 @@ export function validateStrategyConfig(raw) {
 		errors.push({ field: 'sizing.amount_sol', message: 'Per-trade size must be greater than 0 SOL.' });
 	}
 	if (!(config.exits.stop_loss_pct > 0)) {
-		errors.push({ field: 'exits.stop_loss_pct', message: 'A stop-loss is required — every strategy must define its downside.' });
+		errors.push({ field: 'exits.stop_loss_pct', message: 'A stop-loss is required: every strategy must define its downside.' });
 	}
 	if (
 		config.entry.min_market_cap_usd != null &&
@@ -299,7 +299,7 @@ export function validateStrategyConfig(raw) {
 
 /**
  * Evaluate one real launch against a strategy's entry conditions. Pure +
- * synchronous. Returns { pass, reasons } — reasons always explains the verdict
+ * synchronous. Returns { pass, reasons }: reasons always explains the verdict
  * (kept on rejections too, for the runtime's evaluation log).
  *
  * @param {object} config  normalized strategy config
@@ -314,11 +314,11 @@ export function matchesEntry(config, launch, nowMs) {
 
 	if (!launch || !launch.mint) return { pass: false, reasons: ['no_mint'] };
 
-	// Age gate — only act on genuinely recent launches.
+	// Age gate: only act on genuinely recent launches.
 	if (e.max_age_minutes != null && launch.created_at) {
 		const ageMin = (nowMs - Number(launch.created_at)) / 60000;
 		if (!Number.isFinite(ageMin) || ageMin < 0) {
-			// Clock skew / bad timestamp — treat as fresh, don't reject.
+			// Clock skew / bad timestamp: treat as fresh, don't reject.
 		} else if (ageMin > e.max_age_minutes) {
 			return { pass: false, reasons: [`too_old:${Math.round(ageMin)}m`] };
 		} else {
@@ -326,7 +326,7 @@ export function matchesEntry(config, launch, nowMs) {
 		}
 	}
 
-	// SOL-quote requirement — the agent wallet trades in SOL on this path.
+	// SOL-quote requirement: the agent wallet trades in SOL on this path.
 	if (e.require_sol_quote && launch.is_usdc_pair === true) {
 		return { pass: false, reasons: ['quote_not_sol'] };
 	}
@@ -472,7 +472,7 @@ export function evaluateResearchGates(config, report) {
 
 /**
  * Decide whether an open position should exit, given a live re-quote. Pure.
- * Returns { exit, reason } — reason ∈ take_profit|stop_loss|trailing_stop|timeout.
+ * Returns { exit, reason }: reason ∈ take_profit|stop_loss|trailing_stop|timeout.
  *
  * @param {object} config normalized config
  * @param {object} pos    { entry_lamports, peak_value_lamports, opened_at(ms) }
@@ -484,7 +484,7 @@ export function shouldExit(config, pos, currentValueLamports, nowMs) {
 	const entry = Number(pos.entry_lamports || 0);
 	const cur = Number(currentValueLamports || 0);
 
-	// Time-based exit is independent of price — check it even with no entry basis.
+	// Time-based exit is independent of price: check it even with no entry basis.
 	if (x.max_hold_minutes != null && pos.opened_at) {
 		const heldMin = (nowMs - Number(pos.opened_at)) / 60000;
 		if (heldMin >= x.max_hold_minutes) return { exit: true, reason: 'timeout' };

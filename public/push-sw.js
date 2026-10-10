@@ -9,7 +9,7 @@
 //   • notificationclick — focus or open the target URL (tagged ?source=push so
 //                      the app records a `returned` funnel event), and beacon a
 //                      `opened` event so sent→opened→returned is measurable.
-//   • approvals       — an approval push (api/_lib/approvals.js) gets Approve
+//   • approvals      : an approval push (api/_lib/approvals.js) gets Approve
 //                      and Deny buttons. Tapping one posts the decision with the
 //                      payload hash the notification showed, so the server only
 //                      executes that exact action, then shows the outcome. A
