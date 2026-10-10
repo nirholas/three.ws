@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T06:12:03.084Z",
+	"generated_at": "2026-10-10T06:36:28.426Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -81,6 +81,7 @@
 					"/launches",
 					"/pay",
 					"/credits",
+					"/domains",
 					"/pricing",
 					"/economy",
 					"/analytics"
@@ -488,9 +489,29 @@
 					"showcase": false
 				},
 				{
+					"path": "/spend",
+					"title": "Spend",
+					"description": "What every agent spends by day, model and tool, the projected month end, dollar caps and token ceilings with alerts at 50, 80 and 100 percent, and resume or extend-once for a paused agent.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/approvals",
 					"title": "Approvals",
 					"description": "Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/commerce",
+					"title": "Agent Commerce",
+					"description": "Invoice clients from your agents' wallets with Solana Pay links verified on-chain, list offers other agents can buy, see what your agents purchased, and approve the spending-limit changes they propose.",
 					"added": "2026-10-10",
 					"auth": null,
 					"indexable": false,
@@ -512,6 +533,16 @@
 					"title": "Community Skills",
 					"description": "Open-source skills for AI agents: one markdown file of instructions each, contributed by pull request and imported onto any three.ws agent in one click. Search by tag or author, preview the full SKILL.md, then manage your agent's skills and token budget.",
 					"added": "2026-09-22",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/skills/import",
+					"title": "Import Skills",
+					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it. Check imports for updates as a diff, fork any skill, and publish your own.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2009,6 +2040,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/launch/uniswap",
+					"title": "Launch a Uniswap Pool Coin",
+					"description": "Have your agent launch a fixed-supply coin with a Uniswap V3 pool on Base: pick the pool fee, lock the liquidity, route the fees, see every cost in a confirmation table, and follow the launch to completion. Retries are safe with an Idempotency-Key.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/launch/intents",
+					"title": "Funded Coin Launches",
+					"description": "Launch a pump.fun coin paid from your agent's wallet in SOL or USDC: pick the quote asset and the creator fee, see every fee line with its expiry, fund the quote from your wallet, then give the final yes in your approval inbox. Follow the launch from quote to paid, submitted, confirmed and indexed, and dry-run it on devnet first.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/launch/robinhood",
 					"title": "Launch on Robinhood Chain",
 					"description": "Launch a coin on Robinhood Chain through Pons, signed by your 3D AI agent's own wallet: a live cost quote, an atomic opening buy, and an API your bots can call.",
@@ -2392,6 +2443,16 @@
 					"path": "/teams",
 					"title": "Specialist Teams: four agents, one board",
 					"description": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/team-chat",
+					"title": "Squad Chat: one sentence, a plan, your approval",
+					"description": "Chat with your specialist squad or a solo agent. The coordinator turns one sentence into role-tagged plan steps, the specialists run them live with evidence, and anything that signs, moves funds, launches or exceeds your cap pauses for your approval, then resumes with receipts. Preferences you state are remembered.",
 					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
@@ -3429,6 +3490,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/agent-mail",
+					"title": "Agent Mail",
+					"description": "Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/agent-perps",
+					"title": "Agent Perps",
+					"description": "Your agent goes long or short on perpetual futures with USDC collateral from its own Solana wallet: paper first at live prices, every order previewed and confirmed, with leverage caps, a live PnL and liquidation tracker, alerts and a kill switch.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/wallet",
 					"title": "Your master wallet",
 					"description": "One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.",
@@ -3602,6 +3683,16 @@
 			"title": "Account",
 			"description": "Sign-in, dashboard, billing.",
 			"pages": [
+				{
+					"path": "/domains",
+					"title": "Domains",
+					"description": "Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
 				{
 					"path": "/credits",
 					"title": "Credits",
@@ -4260,6 +4351,16 @@
 					"showcase": true
 				},
 				{
+					"path": "/developers",
+					"title": "Developer plans",
+					"description": "Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded: burst and concurrency ceilings, 429 and 402 responses with a clear upgrade path, and self-serve upgrades in credits, USDC or $THREE on Solana.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/crypto-api",
 					"title": "Crypto API",
 					"description": "One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution: CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.",
@@ -4314,6 +4415,26 @@
 					"title": "Docs · three.ws Forge for desktop",
 					"description": "How to install and use three.ws Forge, the desktop 3D studio: run it from source or an installer, generate on your own GPU or the three.ws cloud, build node workflows, import CC0 models, sign in and publish to three.ws, and fix common setup problems.",
 					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/domains",
+					"title": "Docs · Web Domains",
+					"description": "Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/launch-lanes",
+					"title": "Docs · Launch Lanes",
+					"description": "Every way to launch a coin on three.ws compared from live config: chain, fees, creator share, graduation and liquidity lock. Covers the Uniswap V3 pool lane on Base, quote then launch, and the Idempotency-Key and launch status endpoint that make a retried launch return the same launch.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -5370,6 +5491,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/skill-import",
+					"title": "Docs · Importing skills",
+					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/skill-royalties",
 					"title": "Docs · Skill royalties",
 					"description": "Publish a skill, price it, and earn on every call. The exact author/platform split, why your share routes to your own wallet at settlement (Solana first), the ledger where you watch payouts land with an explorer link each, and the proof lane that verifies the whole accounting path without moving a cent.",
@@ -5714,6 +5845,36 @@
 					"title": "Docs · Competitive & Pooled Trading",
 					"description": "Arena tournaments with on-chain $THREE payouts, the 3D Sniper Arena, the Live Trading Theater and its one-click mirror, backable Vaults, and consensus-driven Trading Swarms.",
 					"added": "2026-07-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trading-tools",
+					"title": "Docs · Solana Trading Tools",
+					"description": "Ten MCP tools and REST routes for agents that trade on Solana: token research, ecosystem signals, swap quotes compared across aggregators with the reason a route won, confirmed and re-priced execution from the agent wallet, and arbitrage with its worst case shown.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/developer-plans",
+					"title": "Docs · Developer plans",
+					"description": "Free, Builder, Scale and Enterprise API plans: monthly call quotas, burst and concurrency ceilings enforced on every v1 call with 429 and 402 responses, live usage in the dashboard, upgrades paid in credits, USDC or $THREE on Solana with proration and receipts, immediate key revocation, rotation with an overlap window, IP allowlists and per-key analytics.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/destination-whitelist",
+					"title": "Docs · Destination Whitelist",
+					"description": "Cooldown allowlist for agent wallet payouts: step-up to add, propose-only agents, one-click cancel, instant removal.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6180,10 +6341,30 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/inference-billing",
+					"title": "Docs: Usage control and spend",
+					"description": "Dollar caps and token ceilings per agent, the /spend page, cap alerts, resume and extend-once, deposits in SOL, USDC and $THREE with the configurable $THREE bonus, and the free-tier error that carries your choices including the one-step paid fallback.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/approvals",
 					"title": "Docs: Approvals",
 					"description": "How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-mail",
+					"title": "Docs: Agent Mail",
+					"description": "Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6293,6 +6474,16 @@
 					"path": "/docs/copy-trading",
 					"title": "Docs: Copy Trading",
 					"description": "Copy trading lets one wallet follow another's real trades. Two engines sit behind it: the custodial agent mirror, where the platform signs a real on-chain trade from your agent's wallet within its spend policy, and non-custodial subscriptions, which record a sized intent for you to sign.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/perps",
+					"title": "Docs: Agent Perps",
+					"description": "How an agent trades perpetual futures with USDC collateral from its own Solana wallet: paper and live modes, the mandatory leverage and margin caps, the preview and confirmed execute, the kill switch, the live tracker and alerts, and the REST and MCP reference.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

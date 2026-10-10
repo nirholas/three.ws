@@ -81,7 +81,7 @@ PUT  /api/agents/:id/solana/limits      (CSRF-gated for cookie callers)
 | `per_tx_usd` | Ceiling on any single payment | `null` (uncapped) |
 | `daily_usd` | Rolling 24h ceiling on total outflow | `null` (uncapped) |
 | `per_counterparty_daily_usd` | Rolling 24h ceiling **per payee** | `null` (uncapped) |
-| `withdraw_allowlist` | If non-empty, owner withdraws may only target these addresses | `[]` |
+| `withdraw_allowlist` | Read-only view of the active [destination whitelist](./destination-whitelist.md). Edit it there: new addresses serve a cooldown and need step-up | `[]` |
 | `frozen` | The kill switch. Halts every autonomous path | `false` |
 | `require_capabilities` | Autonomous spends must present a covering scoped capability | `false` |
 

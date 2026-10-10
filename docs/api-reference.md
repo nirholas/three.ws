@@ -22,7 +22,7 @@ Authorization: Bearer sk_live_xxxxx
 
 Session cookies (set after SIWE or Privy login) are accepted on all endpoints that support Bearer auth.
 
-**API keys.** Create one at [Dashboard → API](https://three.ws/dashboard/api). A key starts with `sk_live_` and is shown exactly once: three.ws stores only its SHA-256 hash plus the first 14 characters as a visible prefix, so a lost key cannot be recovered, only replaced. Each key carries the scopes you chose when you made it, and a call outside them fails with `insufficient_scope`. Revoking a key takes effect on the next request, because keys are checked against the database on every call. Keep keys server-side; never ship one in a browser or mobile bundle.
+**API keys.** Create one at [Dashboard → API](https://three.ws/dashboard/api). A key starts with `sk_live_` and is shown exactly once: three.ws stores only its SHA-256 hash plus the first 14 characters as a visible prefix, so a lost key cannot be recovered, only replaced. Each key carries the scopes you chose when you made it, and a call outside them fails with `insufficient_scope`. Revoking a key takes effect on the next request: a key row is cached in memory for thirty seconds between database reads, and revoking, rotating or editing the allowlist of a key invalidates that cache entry at once, on every server instance, so the window a revoked key keeps working is bounded by the one-second invalidation refresh, not by the cache. Keep keys server-side; never ship one in a browser or mobile bundle.
 
 **OAuth tokens.** MCP clients and the [CLI](/docs/cli) sign in with OAuth instead of a key. Access tokens last one hour and refresh automatically. Revoking a client under [Dashboard → Settings → Connected apps](https://three.ws/dashboard/settings) stops its refresh token at once, so the client loses access when its current access token expires, within the hour.
 
@@ -65,6 +65,56 @@ Every limited response carries `RateLimit-Limit`, `RateLimit-Remaining` and `Rat
 ```
 
 If the body also has `"reason": "rate_limiter_unavailable"`, you did not hit a quota: the limiter itself was briefly unreachable and failed closed on a sensitive route. Wait `retry_after` seconds and retry as normal.
+
+### Developer plans and quotas
+
+Every call to the versioned API (`/api/v1/…`) is also held to the caller's developer plan: a monthly call quota, a burst ceiling and a concurrency ceiling, all enforced in the shared gateway rather than merely recorded. The four plans (Free, Builder, Scale, Enterprise) are defined once in `api/_lib/dev-plans/config.js`; `GET /api/v1/dev-plans` publishes that table, and the [/developers](https://three.ws/developers) page and the dashboard render it, so no document carries a typed number. The full guide, including upgrades, proration and payment, is [Developer plans](./developer-plans.md).
+
+**Headers.** Every `/api/v1` response carries the plan envelope:
+
+| Header | Meaning |
+| --- | --- |
+| `x-plan` | Plan id in force (`free`, `builder`, `scale`, `enterprise`) |
+| `x-ratelimit-limit`, `x-ratelimit-remaining`, `x-ratelimit-reset` | The plan's sliding one-minute burst window: ceiling, calls left, Unix seconds when it refills |
+| `x-quota-limit`, `x-quota-used`, `x-quota-remaining`, `x-quota-reset` | The period quota: included calls, calls made this period, calls left, Unix seconds when the period rolls over |
+| `x-concurrency-limit` | Calls the plan allows in flight at once |
+
+**Burst or concurrency exceeded: HTTP 429** with `Retry-After` (seconds) and `error` of `rate_limited` or `concurrency_limited`:
+
+```json
+{ "error": "rate_limited", "error_description": "the Free plan allows 60 calls per minute", "retry_after": 12, "plan": "free", "upgrade_url": "/developers" }
+```
+
+**Quota used up: HTTP 402** with `quota_exceeded`. The call that would exceed the quota is refused and not counted. The body names the limit, when it resets, the next plan up and where to upgrade:
+
+```json
+{
+	"error": "quota_exceeded",
+	"error_description": "the Free plan includes 10,000 calls per period and this period's calls are used up",
+	"plan": "free",
+	"limit": 10000,
+	"used": 10000,
+	"reset_at": "2026-11-09T12:00:00.000Z",
+	"upgrade_url": "/developers",
+	"manage_url": "/dashboard/developers#plan",
+	"next_plan": { "id": "builder", "name": "Builder", "included_calls": 250000, "price_usd": 29 }
+}
+```
+
+A signed-in browser session browsing its own dashboard is held to the burst and concurrency ceilings but spends no quota; only API keys and OAuth tokens consume included calls. `GET /api/v1/me/dev-plan` returns the caller's plan, period, live usage and the pro-rated quotes for every upgrade (a key asking about its own quota spends one call of it, as any v1 call does).
+
+**Plan endpoints**
+
+| Endpoint | Auth | Purpose |
+| --- | --- | --- |
+| `GET /api/v1/dev-plans` | none | The plan catalog, period length, `$THREE` discount and the calculation note, all read from the config |
+| `GET /api/v1/me/dev-plan` | session or key | Current plan, period, quota used and remaining, concurrency in flight, scheduled change, quotes and recent receipts |
+| `POST /api/v1/me/dev-plan/checkout` | session + CSRF | `{ "plan": "builder", "asset": "credits" \| "USDC" \| "THREE", "wallet"?: "<Solana address>" }`. Credits settle in the same request and return the receipt. USDC and `$THREE` return the checkout (recipient, amount, asset, chain `solana`, expiry) plus an unsigned transfer in `tx_base64` for the user's own wallet to sign; the server never holds or signs with a user key |
+| `POST /api/v1/me/dev-plan/confirm` | session + CSRF | `{ "checkout_id", "tx_signature" }`. Verifies the signed transfer on Solana and applies the plan. Answers `{ "status": "paid", "receipt" }`, or HTTP 202 `{ "status": "pending", "reason" }` while the chain is still confirming; the same signature always returns the same receipt |
+| `POST /api/v1/me/dev-plan/schedule` | session + CSRF | `{ "plan": "free" }` schedules a downgrade (or cancellation) for the end of the current period; scheduling the current plan again cancels it |
+| `GET /api/v1/me/dev-plan/receipts` | session or key | Receipts, newest first (`?limit=`, default 50) |
+
+Each plan also caps the number of webhook endpoints an account may register (`POST /api/developer/webhooks` and the agents API answer `402 limit_reached` past it, naming the plan, its cap and the upgrade link).
 
 ### Idempotency
 
@@ -3639,6 +3689,44 @@ curl -s 'https://three.ws/api/v1/gas?chains=1'
 
 ---
 
+## Solana Trading Tools API
+
+The REST face of the Solana trading tools: research, swap comparison and
+execution, and arbitrage. Each route is one entry in the tool registry
+(`api/_lib/trading-tools/registry.js`) that also serves the `threews-agent` MCP
+server, so the input schema, the guards and the refusal codes are the same on
+both surfaces. Full guide with every field explained: [Solana trading tools](./trading-tools.md).
+
+Responses use the versioned API envelope (`{ "data": …, "meta": { "requestId": … } }`).
+GET routes read the query string (arrays as a comma list); POST routes read a
+JSON body. A token argument takes a mint, a symbol, or `SOL` / `USDC`.
+
+| Method | Path | Auth | What it does |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/trading` | public | Every tool with its input schema. |
+| `GET` | `/api/v1/trading/tokens/search?query=&limit=` | public | Tokens ranked by liquidity, with price, market cap, holders and a safety read. |
+| `GET` | `/api/v1/trading/price?mint=` | public | Live USD and SOL price, 24h change, liquidity, volume, source. |
+| `GET` | `/api/v1/trading/indicators?mint=&indicators=&interval=&period=` | public | Indicators over live OHLCV candles. |
+| `GET` | `/api/v1/trading/signals?mint=` or `?window=&sections=` | public | One token's signals, or the Solana ecosystem view (macro, movers, anomalies) with inputs and `as_of`. |
+| `GET` | `/api/v1/trading/news?token=&category=&limit=` | public | The crypto news feed, filtered. |
+| `GET` | `/api/v1/trading/arbitrage/prices?token=&quote=&amount=` | public | Every venue's buy and sell price for a pair at this size. |
+| `GET` | `/api/v1/trading/arbitrage/quote?token=&quote=&amount=&accept_size_risk=` | public | Best two-leg route, worst case, verdict. Refused above $100 unless `accept_size_risk=true`, above $1000 always. |
+| `POST` | `/api/v1/trading/swap/quote` | optional; `wallet:read` with `agent_id` | Every aggregator side by side with net output, the winner and why. With `agent_id`: guard verdict, confirmation table, `quote_id` (five minutes). |
+| `POST` | `/api/v1/trading/swap/simulate` | `wallet:read` | Re-price, guard, build and simulate the quoted swap. Signs nothing. |
+| `POST` | `/api/v1/trading/swap/execute` | `wallet:trade` | Fill a confirmed quote from the agent wallet. Body `{ "quote_id", "confirm_swap": true }`. |
+
+```bash
+curl -s -X POST https://three.ws/api/v1/trading/swap/quote \
+  -H 'content-type: application/json' \
+  -d '{ "input_mint": "SOL", "output_mint": "USDC", "amount": 0.1, "dex": "auto" }'
+```
+
+`swap/execute` moves real funds. Show the user the `confirmation` table from
+`swap/quote` and send it only after a clear yes. A quote older than five
+minutes is refused (`410 quote_expired`), the route is re-priced at fill time
+and refused below the approved minimum (`409 quote_moved`), and each
+`quote_id` fills at most once.
+
 ## EVM Swap Quote API
 
 Read-only swap quotes over a keyless failover chain: ParaSwap, then KyberSwap,
@@ -4196,6 +4284,95 @@ trade guards and listed in `clamped`.
 
 ---
 
+## Agent portfolio
+
+An agent's valued Solana portfolio, its net-worth history and its P&L, in the
+versioned v1 envelope. Owner only: a session, or an API key or OAuth token with
+`wallet:read`. The same modules back the MCP tools `get_portfolio`,
+`get_balance_history` and `get_pnl` ([MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels)).
+
+```
+GET /api/v1/agents/:id/portfolio?network=mainnet
+GET /api/v1/agents/:id/portfolio/history?network=mainnet&days=30&max_points=120
+GET /api/v1/agents/:id/portfolio/pnl?network=mainnet
+```
+
+- **`/portfolio`**: SOL and every SPL holding valued in SOL and USD, FIFO cost
+  basis and unrealized P&L per holding, `attribution` (realized and unrealized
+  P&L by source: sniper, discretionary trades, strategies, x402 spend,
+  withdrawals), `metrics` and `risk_flags`. Each call records a net-worth
+  snapshot (at most one per agent and network every 15 minutes); the hourly
+  `/api/cron/agent-portfolio-snapshots` cron records one for every active agent.
+- **`/portfolio/history`**: `points` (recorded valuations over `days`, 1 to 365,
+  thinned to `max_points`, 2 to 500, first and last exact), `summary` (start,
+  end, change, peak, max drawdown) and `realized_curve` (exact cumulative
+  realized P&L per UTC day from closed trades).
+- **`/portfolio/pnl`**: `totals` (realized, unrealized, total, net worth, in SOL
+  and USD), `by_source`, `performance` (win rate, ROI, profit factor, drawdown,
+  Sharpe) and the top open `top_winners` and `top_losers`.
+
+```bash
+curl -s "https://three.ws/api/v1/agents/$AGENT_ID/portfolio/pnl?network=mainnet" \
+  -H "authorization: Bearer $THREE_WS_API_KEY"
+```
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `invalid_network` | `network` is not `mainnet` or `devnet` |
+| `400` | `invalid_parameter` | `days` or `max_points` out of range |
+| `401` | `unauthorized` | No session or bearer token |
+| `403` | `forbidden` | The agent belongs to another account |
+| `403` | `insufficient_scope` | The token lacks `wallet:read` |
+| `404` | `not_found` | No agent with that id, or an unknown sub-path |
+
+---
+
+## Pump alert rules API
+
+Per-user pump.fun alert rules, evaluated server-side against the live launch
+and trade stream, so they fire with no dashboard tab open. Session auth with a
+CSRF token (the pump dashboard), and the same store as the MCP tools
+`alert_rule_create`, `alert_rule_list` and `alert_rule_delete`.
+
+```
+GET    /api/alerts/rules
+POST   /api/alerts/rules         { kind, ...targeting, filters?, deliver_in_app?, webhook_url?, telegram_chat?, cooldown_seconds?, label? }
+PATCH  /api/alerts/rules/:id     { any field above, enabled? }
+DELETE /api/alerts/rules/:id
+```
+
+Kinds: `graduation`, `new_mint`, `price_above`, `price_below`, `whale_buy`,
+`market_price`, and `launch_match`. Up to 50 rules per user.
+
+**`launch_match`** fires once per new launch that coin intel has scored and that
+passes every filter set in `filters` (at least one is required, and the rule
+takes no `target_mint` or `target_agent`):
+
+| Filter | Type | Matches when |
+| ------ | ---- | ------------ |
+| `name_pattern` | string, up to 120 | The name or symbol matches, case-insensitive. `*` is any text, `\|` separates alternatives; nothing else is special. Without a `*`, an alternative matches anywhere. |
+| `min_market_cap_usd`, `max_market_cap_usd` | number | The market cap is inside the band. Min cannot exceed max. |
+| `min_safety_score` | 0 to 100 | The coin intel quality score is at least this. |
+| `min_creator_graduated` | integer | The creator's earlier launches that graduated are at least this. |
+| `max_creator_launches` | integer | The creator's earlier launches are at most this (skips serial launchers). |
+| `exclude_risk_flags` | array of `single_whale`, `low_diversity`, `sniped`, `dev_dumped`, `sell_pressure`, `bundle_launch` | None of these flags is set. |
+| `require_socials` | boolean | The launch lists at least one social link. |
+
+A filter whose data is missing on the launch (no market cap read yet) is a miss,
+never a pass. The alert payload carries the mint, name, symbol, creator, market
+cap, safety score, creator history, risk flags, the `matched` filters and a
+`/coin/:mint` link.
+
+**Delivery.** With `deliver_in_app` (the default) an alert reaches the owner
+through the platform notification fan-out as a `pump_alert`: the bell, Web Push,
+the iOS app, and every Telegram or Discord chat paired for notifications, each
+gated by the `alerts` preference category ([notifications](./notifications.md)).
+A `webhook_url` gets a signed Standard Webhooks POST, and a `telegram_chat` that
+is not already a paired chat gets a direct message. Each attempt is recorded per
+channel and returned as `recent_deliveries` on the rule.
+
+---
+
 ## Trader Passport API
 
 A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a
@@ -4474,13 +4651,67 @@ The plaintext `secret` is returned **only once**. Store it immediately: it canno
 
 ---
 
+### Rotate API key
+
+```
+POST /api/keys/:id/rotate
+```
+
+Requires a browser session and a CSRF token. Mints a replacement with the same name, scopes, preset, expiry, environment and IP allowlist, and keeps the old key answering for an overlap window so running deployments can swap credentials without a gap.
+
+**Body** (optional): `{ "overlap_hours": 24 }`, from `0` (the old key is revoked at once) to `168`. Default 24.
+
+**Response** (`201`)
+
+```json
+{
+	"key": { "id": "…", "name": "prod", "prefix": "sk_live_3f9a2b", "secret": "sk_live_…", "rotated_from": "…", "ip_allowlist": null },
+	"previous": { "id": "…", "overlap_until": "2026-10-11T12:00:00.000Z", "revoked": false }
+}
+```
+
+`secret` is shown once. When `overlap_until` passes, the old key reads as revoked on its next call. A key that was already rotated answers `409 already_rotated`; rotate its replacement instead.
+
+### Set an IP allowlist
+
+```
+PUT /api/keys/:id/allowlist
+```
+
+Requires a browser session and a CSRF token. `{ "ip_allowlist": ["203.0.113.0/24", "2001:db8::1"] }`: up to 64 IPv4 or IPv6 addresses or CIDR ranges. An empty array removes the allowlist. A call from an address outside the list fails with `401 unauthorized` before any scope or quota check. An invalid rule answers `400 validation_error` naming it; nothing is saved. The change takes effect on the key's next call.
+
+**Response:** `{ "id": "…", "ip_allowlist": ["203.0.113.0/24", "2001:db8::1"] }`
+
+### Key analytics
+
+```
+GET /api/keys/:id/analytics?days=7
+```
+
+Requires a browser session. `days` is 1, 7, 30 or 90. Calls, error rate and latency percentiles for one key, broken down by route and by calling address, from the same usage events that meter the quota.
+
+**Response**
+
+```json
+{
+	"key": { "id": "…", "name": "prod", "prefix": "sk_live_3f9a2b", "last_used_at": "…", "revoked_at": null, "rotated_to": null, "overlap_until": null, "ip_allowlist": null },
+	"analytics": {
+		"days": 7,
+		"totals": { "calls": 1842, "errors": 12, "error_rate": 0.0065, "p50_ms": 84, "p95_ms": 310, "p99_ms": 920, "last_call_at": "…" },
+		"by_route": [{ "route": "/api/v1/agents/:id/chat", "calls": 1200, "errors": 3, "p50_ms": 120, "p95_ms": 400, "p99_ms": 980 }],
+		"top_callers": [{ "ip": "203.0.113.7", "calls": 1700, "errors": 10, "last_call_at": "…" }],
+		"daily": [{ "day": "2026-10-04", "calls": 260, "errors": 2 }]
+	}
+}
+```
+
 ### Revoke API key
 
 ```
 DELETE /api/keys/:id
 ```
 
-Requires auth. Permanently revokes the key.
+Requires auth. Permanently revokes the key and invalidates its cache entry, so the very next call with it is refused.
 
 **Response:** `{ "ok": true }`
 
@@ -4798,6 +5029,23 @@ DELETE /api/approvals/policies?id=<uuid>
 ```
 
 The owner's inbox for actions an agent paused on because a spend rule is set to "Ask me". Reads take a session or bearer; every decision and rule change needs a session plus CSRF, so an agent credential can never approve its own request. Approve must carry the `payload_hash` of the action shown: a mismatch is `409 payload_mismatch`, a deep link that no longer matches is `409 link_mismatch`, a passed deadline is `410 expired`, and nothing runs in any of those cases. A repeat approve returns the current state with `idempotent: true` and never executes twice. Auto-approve rules name venues (`jupiter`, `wallet_transfer`) and a per-action cap of at most $1,000; first transfers to a new address and unpriced actions always ask. Full guide: [approvals.md](approvals.md).
+
+### Token ceilings, spend and the free-tier choices
+
+```
+GET    /api/agents/:id/token-budget
+PUT    /api/agents/:id/token-budget          { hourly?, daily?, per_run? }   whole tokens; null or omitted = no cap
+DELETE /api/agents/:id/token-budget
+POST   /api/agents/:id/token-budget/resume
+POST   /api/agents/:id/token-budget/extend   { window?, extra_tokens? }
+GET    /api/me/spend?days=30&agent=<uuid>
+```
+
+Per-agent hourly, daily and per-run token ceilings next to the dollar budget (`PATCH /api/agents/:id` with `inferenceBudget: { daily, monthly }`). Both are enforced before the model call on every metered surface; the token gate reserves the call's estimate in each capped window with one conditional upsert, so two calls racing for the last token admit exactly one. A refused call is `429 token_budget_exhausted` (the call that crossed the line) or `429 token_budget_paused` (every call after it) with `window`, `limit_tokens`, `ceiling_tokens`, `used_tokens`, `resets_at`, `retry_after_seconds`, `approval_id` and a `recover` block naming the resume, extend-once and raise calls. Hitting a ceiling stops the agent and its autopilot, sends `token_budget_paused`, and opens one extend-once approval in the [inbox](approvals.md) (venue `token_budget`, never auto-approved). `resume` is `409 still_capped` while the window is still full; `extend` opens and approves the extension in one call and is `409 already_extended` the second time for the same window (default size: half the cap, at least 1,000 tokens). Every cap raises `spend_cap_alert` once per window at 50 and 80 percent. Owner only: a session, or a bearer with `wallet:read` (or `profile`) to read and `wallet:write` to change, resume or extend.
+
+`GET /api/me/spend` is the read model behind [/spend](https://three.ws/spend): balance, month-to-date with `projected_usd` and `projected_from_week_usd`, a card per agent (dollar windows, token windows, pause), `by_day`, `by_model`, `by_tool`, and `alerts` at 50, 80 and 100 percent of any cap, from the same latches the notifications use. `days` is 1 to 90; bearer scopes `inference`, `wallet:read`, `wallet:write` or `profile`.
+
+When a free-model allowance is used up, `/api/brain/chat`, `POST /api/agents/:id/copilot`, `POST /api/v1/agents/:id/messages` and `/api/v1` answer `429 free_tier_exhausted` with `Retry-After` and a body carrying `reset_at`, `retry_after_seconds` and `choices`: `wait`, `top_up` (the `GET /api/credits` catalog and the `POST /api/credits/deposit` body), `bring_your_own_key` (`PATCH /api/user/provider-keys`), and, on the surfaces that can honor it, `paid_fallback`: resend the same request with `body_patch` (`{ "paid_fallback": true }`) merged in and it bills credits instead of the free tier, after the credit gate (`402 insufficient_credits` on an empty balance). Full guide: [inference-billing.md](inference-billing.md).
 
 ### Agent mail
 
@@ -9593,6 +9841,94 @@ Details: [docs/home-privacy.md](./home-privacy.md).
 
 ---
 
+## Agent self-signup, capabilities, stats and health
+
+Four keyless endpoints that let an autonomous agent onboard itself and find out what the platform is and whether it is up. Live status: [/status](/status).
+
+### Sign up an agent: `POST /api/v1/agents/signup`
+
+No email or browser. The agent signs a message with an Ed25519 key (a Solana wallet key works) and posts it. The response carries the new agent, its custodial wallets and an API key, **shown once**, plus a claim code for the human who will own it.
+
+The message is UTF-8, newline separated, no trailing newline:
+
+```
+three.ws agent signup v1
+public_key: <base58 public key>
+name: <requested agent name>
+timestamp: <unix seconds>
+nonce: <16-64 chars of A-Z a-z 0-9 _ ->
+```
+
+Body: `{ public_key, name, timestamp, nonce, signature }`, with the key and signature base58.
+
+```js
+import { ed25519 } from '@noble/curves/ed25519.js';
+import bs58 from 'bs58';
+
+const priv = ed25519.utils.randomSecretKey();
+const public_key = bs58.encode(ed25519.getPublicKey(priv));
+const name = 'Scout', timestamp = Math.floor(Date.now() / 1000), nonce = crypto.randomUUID().replaceAll('-', '');
+const message = ['three.ws agent signup v1', `public_key: ${public_key}`, `name: ${name}`, `timestamp: ${timestamp}`, `nonce: ${nonce}`].join('\n');
+const signature = bs58.encode(ed25519.sign(new TextEncoder().encode(message), priv));
+
+const res = await fetch('https://three.ws/api/v1/agents/signup', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ public_key, name, timestamp, nonce, signature }),
+});
+console.log((await res.json()).data);
+```
+
+A runnable version that also demonstrates replay and skew rejection: `node scripts/agent-signup-demo.mjs https://three.ws`.
+
+Response `data`: `agent` (`id`, `name`, `url`, `wallets.solana`, `wallets.evm`), `credentials` (`api_key`, shown once, scopes `read agents:read agents:write wallet:read`), `mode: "paper"`, `caps`, and `claim` (`code`, `expires_at`, `endpoint`).
+
+**Paper mode.** Until a human claims it the agent's wallet is frozen for autonomous spending, discretionary live trades are off (kill switch), perps run on the paper ledger, and the numeric caps are tight (about $5 a day, $1 a transaction). These are the platform's ordinary controls (`spend_limits`, `trade_limits`, `perps_limits`), so every spend path already honours them.
+
+**Guarantees.**
+
+| Rule | Behaviour |
+| --- | --- |
+| Clock window | The timestamp must be within 300 seconds of server time, else `400 clock_skew`. The message names the direction and gives `server_time` so the agent can resync. |
+| Replay | A nonce is accepted once per public key, enforced by a database unique key shared by every instance. A repeat is `409 replayed_nonce`. |
+| One agent per key | A second signup with the same key is `409 already_signed_up`. |
+| Rate limits | 5 an hour per IP and 10 an hour per public key, both fail closed. `429 rate_limited`. |
+| Bad input | `400 validation_error` or `invalid_encoding`; a signature that does not verify is `401 bad_signature`. |
+
+### Claim an agent: `POST /api/v1/agents/claim`
+
+A signed-in human (session, or an API key with `agents:write`) posts `{ "code": "claim_..." }`. The agent moves to their account, the agent's signup key is revoked, and the freeze and kill switch lift. The numeric caps and the live-perps lock stay until the owner raises them. Codes expire after 30 days (`410 claim_code_expired`); a used code is `409 already_claimed`.
+
+### What the platform offers: `GET /api/v1/capabilities`
+
+Every tool by group with its tier (`read`, `write`, `financial`), the confirm flag and preview tool a financial tool requires, the per-call price where it has one, the plan limits and API rate limits, and the approval rules. It is generated from the policy registry, so it cannot drift from what is enforced. Not to be confused with `/api/agents/capabilities`, which manages scoped session keys for one agent wallet.
+
+### Platform totals: `GET /api/stats`
+
+```json
+{ "stats": { "agents": { "value": 4401, "unit": "agents", "source": "agent_identities (not deleted)", "as_of": "2026-10-10T05:52:21Z" } }, "cache_ttl_seconds": 60 }
+```
+
+Keys: `agents`, `launches`, `volume_sol`, `earnings_paid` (payout count plus base units per currency mint), `active_strategies`. A figure that cannot be read returns `{ "available": false, "source", "as_of" }`, never zero. Cached for 60 seconds.
+
+### Readiness: `GET /api/health`
+
+Probes `database`, `rpc`, `worker` and `wallet` (a real encrypt/decrypt round trip of the key vault that seals agent wallets). Top-level `status` is the worst probe: `ok`, `degraded` or `down`. HTTP 200 for ok and degraded, 503 for down. `/api/healthz` is liveness only and always answers ok.
+
+---
+
+## Destination whitelist
+
+`/api/wallet-whitelist` manages the addresses an agent wallet may send to. New addresses serve a cooldown (default 24h, minimum 1h), adding or approving needs a single-use step-up grant, and machine principals (API keys, OAuth, MCP) can only propose. Full model, action table and runnable example: [Destination whitelist](./destination-whitelist.md).
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/wallet-whitelist?agent=<id>` | Entries, cooldown, enforcement state and available step-up methods |
+| POST | `/api/wallet-whitelist` | `action`: `add`, `approve`, `edit`, `remove`, `cancel`, `settings`, `stepup_code`, `stepup` |
+| GET | `/api/wallet-whitelist?cancel=<token>` | One-click cancel page linked from notifications |
+
+---
+
 ## Specialist teams
 
 A team is four role agents (Researcher, Entry, Trader, Launcher) under one spend policy, sharing a findings board. Concepts, the role table and the trade rule: [docs/teams.md](./teams.md). Page: [/teams](/teams).
@@ -9639,6 +9975,53 @@ es.addEventListener('finding', (e) => {
 });
 ```
 
+
+## Squad chat
+
+Talk to a specialist team or a solo agent in plain language. The coordinator turns one message into role-tagged plan steps, runs them, and pauses any step that signs, transfers, launches or exceeds the cap as an approval. Concepts, the trade rule and the injection guard: [docs/team-chat.md](./team-chat.md). Page: [/team-chat](/team-chat).
+
+Auth: the owner's session cookie (plus `x-csrf-token` on writes) or a bearer token. Live mode needs the real-funds agreement (`403 risk_ack_required`) and, for a bearer, a spend scope. Messages share a limit of 40 a minute per account (`429 rate_limited`).
+
+| Method | Path | Body or query | Returns |
+| --- | --- | --- | --- |
+| `GET` | `/api/team-chat` | | `{ data: [squad] }`: your teams (`kind: "team"`) and agents (`kind: "agent"`) |
+| `GET` | `/api/teams/:id/chat` | | `{ data: { squad, prefs, pref_keys, runs } }` |
+| `POST` | `/api/teams/:id/chat` | `{ message, mode?: "paper" \| "live" }` | `text/event-stream` |
+| `GET` | `/api/teams/:id/chat/runs/:runId` | | `{ data: { run, steps, events, last_event_id } }` |
+| `POST` | `/api/teams/:id/chat/approve` | `{ step_id, decision: "approve" \| "deny", payload_hash }` | `text/event-stream` ending in `end` |
+| `GET` | `/api/teams/:id/chat/stream` | `?run=<runId>&after=<eventId>` or `Last-Event-ID` | `text/event-stream` |
+| `GET` | `/api/teams/:id/chat/prefs` | | `{ data: [{ key, value, memory_id, content, updated_at }] }` |
+| `DELETE` | `/api/teams/:id/chat/prefs/:key` | | forgets `default_trade_sol`, `risk` or `venues` |
+
+`:id` is a team id, or an agent id for a solo squad.
+
+**Events.** `{ id, kind, step_id, payload, created_at }` where `kind` is `run`, `memory`, `plan`, `step`, `approval`, `note`, `summary`, `error` or `end`. Step statuses: `queued`, `running`, `needs_approval`, `executing`, `done`, `failed`, `skipped`, `denied`, `expired`. An approval carries `{ action, payload, payload_hash, summary, table, gate_reasons, risk_notes, expires_at, mirrored, inbox_url, handoff_url }`; `gate_reasons` is any of `signs`, `exceeds_cap`, `launches`, `transfers`. Approving must echo `payload_hash`; a changed action is `409 payload_mismatch` and nothing runs. Paper approvals simulate and never sign; live trades sign from the squad wallet and are mirrored into the [approval inbox](./approvals.md); launches and transfers hand off to the page where the owner signs.
+
+---
+
+## Agent perps
+
+Perpetual futures for one agent, with USDC collateral from its custodial Solana wallet. Paper mode (the default) fills at live venue prices on a platform ledger; live mode signs from the agent wallet and needs the owner to turn it on. Guards, order types, the kill switch, alerts and the venue contract: [docs/perps.md](./perps.md). Page: [/agent-perps](/agent-perps).
+
+Auth: market routes are public. Every other route is owner-only: session cookie (plus `x-csrf-token` on writes) or a bearer with `wallet:read` for reads and previews and `wallet:write` for executes and limit changes. Only a signed-in owner may loosen a limit, turn live on or resume after the kill switch (`403 owner_session_required`). All paths are under `/api/v1/agents/:id/perps`, take an optional `venue` (default `phoenix`), and agent routes take `mode` (`paper` or `live`).
+
+| Method | Path | Body or query | Returns |
+| --- | --- | --- | --- |
+| `GET` | `/markets` | `?kind=` | `{ data: { venue, markets: [...] } }`: mark, funding, open interest, max leverage, margin rates, fees |
+| `GET` | `/market/:symbol` | `?depth=20&trades=30&funding=48` | one market with its book, recent trades and funding history |
+| `GET` | `/account` | `?mode=` | `{ data: { mode, wallet, limits, guards, summary, account, alerts } }` |
+| `GET` | `/positions` | `?mode=&limit=50` | positions, resting orders, triggers and history |
+| `GET` | `/executions`, `/alerts` | `?mode=&limit=` | executes run for the agent (with signatures); recent alerts |
+| `GET` | `/stream` | `?mode=&interval=4` | `text/event-stream` of `frame` events (PnL, funding paid, liquidation distance per position), then `reconnect` after five minutes |
+| `GET` / `PUT` | `/limits` | `{ max_leverage?, max_margin_per_position_usd?, max_slippage_bps?, max_quote_move_bps?, live_enabled?, halted?, alert_*? }` | `{ data: { limits, guards } }` |
+| `POST` | `/order/preview` | `{ symbol, side, type, size? \| margin_usd + leverage, price?, trigger_price?, size_percent?, reduce_only?, slippage_bps? }` | a preview: `preview_id`, `expires_at`, the quote, `checks`, `blocked_by`, `executable` |
+| `POST` | `/deposit/preview`, `/withdraw/preview` | `{ amount_usd }` (withdraw also takes `"max"`) | a preview with from, to, amount, asset and chain |
+| `POST` | `/cancel/preview` | `{ order_id, kind? }` | a preview |
+| `POST` | `/flatten/preview` | | a preview of the kill switch: orders and triggers to cancel, positions to close |
+| `POST` | `/order`, `/deposit`, `/withdraw`, `/cancel`, `/flatten` | `{ preview_id, confirm_trade: true }` plus an `Idempotency-Key` header | the result with each step and its signature or paper fill |
+
+An execute is refused with `409 quote_moved` when an order's entry or liquidation price moved past the agent's `max_quote_move_bps` since the preview, with `400 confirmation_required` without `confirm_trade: true`, and with `400 idempotency_key_required` without the header. A repeated key returns the first result. Guard refusals: `live_disabled`, `risk_ack_required`, `perps_halted`, `trade_kill_switch`, `wallet_frozen`, `leverage_cap_exceeded`, `position_margin_exceeded`, `insufficient_collateral`, `slippage_too_high`.
+
 ---
 
 ## Pagination
@@ -9667,6 +10050,9 @@ Codes are lowercase snake_case: in the `error` field on most endpoints, in `erro
 | `not_found` | 404 | No such resource, or not visible to you | No | Check the id |
 | `conflict`, `idempotency_in_progress` | 409 | The resource already exists, or the same idempotent request is still running | Conflict no, in-progress yes | Read the existing resource, or retry shortly with the same `Idempotency-Key` |
 | `idempotency_key_reused` | 422 | The `Idempotency-Key` was already used with a different body | No | Use a new key for a new request |
+| `clock_skew` | 400 | A signed request's timestamp is more than 300s from server time; the message gives `server_time` | After resyncing | Fix your clock and sign again |
+| `bad_signature` | 401 | An Ed25519 signature does not match the message for that public key | No | Sign the exact message documented for the endpoint |
+| `replayed_nonce` | 409 | The nonce was already used for this key | No | Sign a fresh message with a new nonce |
 | `rate_limited` | 429 | Over the limit for this endpoint | Yes, after `Retry-After` | Back off for the stated seconds |
 | `internal_error` | 500 | An unexpected failure. The message is sanitized | Yes, with backoff | Report it with the `requestId` if it persists |
 | `upstream_error` | 502 | A third-party upstream failed | Yes, with backoff | Retry; nothing on your side to change |

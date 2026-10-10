@@ -561,6 +561,8 @@ async function remix() {
 	const before = headSpecProblems(item);
 	if (before.length) fail(`${id}: ${before.join('; ')}`);
 
+	// The art lanes call NVIDIA NIM, whose key lives on the Cloud Run service.
+	if (as === 'art') hydrateReviewEnv();
 	const { head: media } = await rebuildHead(item, { root, log: console.log });
 	const wasStatus = item.status;
 	if (['review', 'approved', 'paused'].includes(item.status)) item.status = 'draft';

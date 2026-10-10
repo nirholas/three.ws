@@ -67,6 +67,10 @@ import { checkTool, extractTools } from './lib/mcp-safety-check.mjs';
 //    signs with a real keypair.
 const EXEMPTIONS = new Map([
 	[
+		'launch_status:db-write',
+		'settleLaunch() copies a launch whose transaction already landed on chain into its own record (finalized or failed) so the next read is warm; the caller receives that record and nothing is signed or sent.',
+	],
+	[
 		'oracle_coin:db-write',
 		'scoreCoin(..., { persist: true }) caches the conviction verdict it just computed (upsertConviction/upsertNarrative, both non-fatal) so the next read is warm.',
 	],

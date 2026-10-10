@@ -7,12 +7,76 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Commerce</title>
+			<link>https://three.ws/commerce</link>
+			<guid isPermaLink="false">2026-10-10:Agent Commerce</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Invoice clients from your agents' wallets with Solana Pay links verified on-chain, list offers other agents can buy, see what your agents purchased, and approve the spending-limit changes they propose.</description>
+		</item>
+		<item>
+			<title>Agent Mail</title>
+			<link>https://three.ws/agent-mail</link>
+			<guid isPermaLink="false">2026-10-10:Agent Mail</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.</description>
+		</item>
+		<item>
+			<title>Agent Perps</title>
+			<link>https://three.ws/agent-perps</link>
+			<guid isPermaLink="false">2026-10-10:Agent Perps</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Your agent goes long or short on perpetual futures with USDC collateral from its own Solana wallet: paper first at live prices, every order previewed and confirmed, with leverage caps, a live PnL and liquidation tracker, alerts and a kill switch.</description>
+		</item>
+		<item>
 			<title>Approvals</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-10-10:Approvals</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.</description>
+		</item>
+		<item>
+			<title>Developer plans</title>
+			<link>https://three.ws/developers</link>
+			<guid isPermaLink="false">2026-10-10:Developer plans</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded: burst and concurrency ceilings, 429 and 402 responses with a clear upgrade path, and self-serve upgrades in credits, USDC or $THREE on Solana.</description>
+		</item>
+		<item>
+			<title>Docs · Destination Whitelist</title>
+			<link>https://three.ws/docs/destination-whitelist</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Destination Whitelist</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Cooldown allowlist for agent wallet payouts: step-up to add, propose-only agents, one-click cancel, instant removal.</description>
+		</item>
+		<item>
+			<title>Docs · Developer plans</title>
+			<link>https://three.ws/docs/developer-plans</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Developer plans</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Free, Builder, Scale and Enterprise API plans: monthly call quotas, burst and concurrency ceilings enforced on every v1 call with 429 and 402 responses, live usage in the dashboard, upgrades paid in credits, USDC or $THREE on Solana with proration and receipts, immediate key revocation, rotation with an overlap window, IP allowlists and per-key analytics.</description>
+		</item>
+		<item>
+			<title>Docs · Importing skills</title>
+			<link>https://three.ws/docs/skill-import</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Importing skills</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.</description>
+		</item>
+		<item>
+			<title>Docs · Launch Lanes</title>
+			<link>https://three.ws/docs/launch-lanes</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Launch Lanes</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every way to launch a coin on three.ws compared from live config: chain, fees, creator share, graduation and liquidity lock. Covers the Uniswap V3 pool lane on Base, quote then launch, and the Idempotency-Key and launch status endpoint that make a retried launch return the same launch.</description>
 		</item>
 		<item>
 			<title>Docs · Local agent runtime for the desktop app</title>
@@ -23,6 +87,14 @@
 			<description>Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.</description>
 		</item>
 		<item>
+			<title>Docs · Solana Trading Tools</title>
+			<link>https://three.ws/docs/trading-tools</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Solana Trading Tools</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Ten MCP tools and REST routes for agents that trade on Solana: token research, ecosystem signals, swap quotes compared across aggregators with the reason a route won, confirmed and re-priced execution from the agent wallet, and arbitrage with its worst case shown.</description>
+		</item>
+		<item>
 			<title>Docs · Specialist teams</title>
 			<link>https://three.ws/docs/teams</link>
 			<guid isPermaLink="false">2026-10-10:Docs · Specialist teams</guid>
@@ -31,12 +103,124 @@
 			<description>How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.</description>
 		</item>
 		<item>
+			<title>Docs · Web Domains</title>
+			<link>https://three.ws/docs/domains</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Web Domains</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.</description>
+		</item>
+		<item>
+			<title>Docs: Agent Mail</title>
+			<link>https://three.ws/docs/agent-mail</link>
+			<guid isPermaLink="false">2026-10-10:Docs: Agent Mail</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.</description>
+		</item>
+		<item>
+			<title>Docs: Usage control and spend</title>
+			<link>https://three.ws/docs/inference-billing</link>
+			<guid isPermaLink="false">2026-10-10:Docs: Usage control and spend</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Dollar caps and token ceilings per agent, the /spend page, cap alerts, resume and extend-once, deposits in SOL, USDC and $THREE with the configurable $THREE bonus, and the free-tier error that carries your choices including the one-step paid fallback.</description>
+		</item>
+		<item>
+			<title>Domains</title>
+			<link>https://three.ws/domains</link>
+			<guid isPermaLink="false">2026-10-10:Domains</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.</description>
+		</item>
+		<item>
+			<title>Funded Coin Launches</title>
+			<link>https://three.ws/launch/intents</link>
+			<guid isPermaLink="false">2026-10-10:Funded Coin Launches</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a pump.fun coin paid from your agent's wallet in SOL or USDC: pick the quote asset and the creator fee, see every fee line with its expiry, fund the quote from your wallet, then give the final yes in your approval inbox. Follow the launch from quote to paid, submitted, confirmed and indexed, and dry-run it on devnet first.</description>
+		</item>
+		<item>
+			<title>Import Skills</title>
+			<link>https://three.ws/skills/import</link>
+			<guid isPermaLink="false">2026-10-10:Import Skills</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it. Check imports for updates as a diff, fork any skill, and publish your own.</description>
+		</item>
+		<item>
+			<title>Launch a Uniswap Pool Coin</title>
+			<link>https://three.ws/launch/uniswap</link>
+			<guid isPermaLink="false">2026-10-10:Launch a Uniswap Pool Coin</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Have your agent launch a fixed-supply coin with a Uniswap V3 pool on Base: pick the pool fee, lock the liquidity, route the fees, see every cost in a confirmation table, and follow the launch to completion. Retries are safe with an Idempotency-Key.</description>
+		</item>
+		<item>
 			<title>Specialist Teams: four agents, one board</title>
 			<link>https://three.ws/teams</link>
 			<guid isPermaLink="false">2026-10-10:Specialist Teams: four agents, one board</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.</description>
+		</item>
+		<item>
+			<title>Spend</title>
+			<link>https://three.ws/spend</link>
+			<guid isPermaLink="false">2026-10-10:Spend</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What every agent spends by day, model and tool, the projected month end, dollar caps and token ceilings with alerts at 50, 80 and 100 percent, and resume or extend-once for a paused agent.</description>
+		</item>
+		<item>
+			<title>Squad Chat: one sentence, a plan, your approval</title>
+			<link>https://three.ws/team-chat</link>
+			<guid isPermaLink="false">2026-10-10:Squad Chat: one sentence, a plan, your approval</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Chat with your specialist squad or a solo agent. The coordinator turns one sentence into role-tagged plan steps, the specialists run them live with evidence, and anything that signs, moves funds, launches or exceeds your cap pauses for your approval, then resumes with receipts. Preferences you state are remembered.</description>
+		</item>
+		<item>
+			<title>Agents can compare every Solana swap route and see why one wins</title>
+			<link>https://three.ws/docs/trading-tools</link>
+			<guid isPermaLink="false">2026-10-10:Agents can compare every Solana swap route and see why one wins</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Ten trading tools are now available to agents in Claude or any MCP client, and over the API at /api/v1/trading. Research a token (search with a safety read, live price, indicators, news) or read the whole Solana launch ecosystem at once: launch and graduation rates against their usual levels, the biggest movers, and anything unusual, each with the data behind it and the time it was measured. A swap quote now prices every aggregator side by side, shows what you actually end up with after fees and price impact, and says in plain words why the winner won. Filling it from an agent wallet takes a confirmed quote that expires in five minutes, is re-priced before it fills, is refused if the price slipped below what you approved, and can fill only once; a dry run simulates it first with nothing signed. Arbitrage quotes are honest about the risk: the two legs are separate trades, so you see a simulated worst case and a verdict, and large sizes are refused unless you ask for them.</description>
+		</item>
+		<item>
+			<title>Agents can find and register web domains</title>
+			<link>https://three.ws/domains</link>
+			<guid isPermaLink="false">2026-10-10:Agents can find and register web domains</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Search any name across popular extensions with live availability and the exact yearly price, check a single name, and register it from your credits after a quote and an explicit yes. Coin pages now suggest available domains for the project name, and a registered domain can serve your agent's public page. Registration is for one year, renews at the same price, and has no markup.</description>
+		</item>
+		<item>
+			<title>Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-10:Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Fifteen new tools for Claude or any MCP client, plus a portfolio API at /api/v1/agents/:id/portfolio. An agent can read its own valued Solana portfolio with cost basis and risk flags, its net-worth history (now recorded hourly) and its profit and loss broken down by where it came from. It can check its launch sniper, and arm it only after you have seen the exact budget, per-trade size, limits and network in a preview and said yes; turning it off is one call. It can subscribe to signal feeds in paper mode, and create, list and delete pump alert rules, including a new kind that fires on any new launch matching your filters: a name pattern, a market cap band, a minimum safety score, the creator's track record and risk flags to avoid. Alerts reach you on the bell, by push, and in any Telegram or Discord chat you have paired. Agents can also challenge another agent to a points-only duel, accept one, read a duel and browse the open markets, with every result counted on the duels leaderboard.</description>
+		</item>
+		<item>
+			<title>Agents can sign themselves up, and the platform now reports its health honestly</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-10-10:Agents can sign themselves up, and the platform now reports its health honestly</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An autonomous agent can now create its own three.ws account by signing a short message with its key: no email, no browser. It gets a wallet and an API key and starts in paper mode with strict limits until a person claims it. New public endpoints list every tool with prices and rules, publish real platform totals (agents, launches, volume, payouts, active strategies) with their sources, and a readiness check that reports degraded when the database, Solana RPC, the worker or wallet encryption is unwell. All of it is shown on the status page.</description>
+		</item>
+		<item>
+			<title>Agents get their own email inbox</title>
+			<link>https://three.ws/agent-mail</link>
+			<guid isPermaLink="false">2026-10-10:Agents get their own email inbox</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every agent can now have an email address on agents.three.ws, with an inbox right on its profile (the Mail button). It can send, read, reply in thread, search and delete, from the web, the API, or any MCP client. Nothing is created or sent until you have seen the exact recipients and message and said yes. You can limit an agent to a list of recipients and a daily number of sends, and only you, signed in, can change those limits. Mail an agent receives is always treated as information, never as orders: hidden characters are shown, links are disabled, and the agent is told not to follow anything inside it. Rules let you turn incoming mail into work, such as &quot;when mail arrives from this sender, summarize it&quot;, either right away or after you approve.</description>
 		</item>
 		<item>
 			<title>Approve or deny your agent's requests from Telegram and Discord</title>
@@ -63,12 +247,52 @@
 			<description>Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon.</description>
 		</item>
 		<item>
+			<title>Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics</title>
+			<link>https://three.ws/developers</link>
+			<guid isPermaLink="false">2026-10-10:Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every API key now sits on a developer plan: Free, Builder, Scale or Enterprise, each with a monthly call quota, a per-minute burst ceiling, a concurrency ceiling and a webhook cap, all enforced on every /api/v1 call rather than only recorded. Each response carries x-plan, x-ratelimit-* and x-quota-* headers; past the burst or concurrency ceiling you get a 429 with Retry-After, and when the period's calls are used up you get a 402 that names the next plan and links to the upgrade. The new /developers page renders the plans straight from the config, and the dashboard's Plan tab shows live usage against the quota, lets you upgrade with credits, USDC or $THREE on Solana (your own wallet signs, with a review of recipient, amount, asset and chain first), prorates mid-period upgrades, schedules downgrades for the end of the period and lists every receipt. Revoking a key now takes effect immediately on every server. Keys can be rotated with an overlap window so a deployment never loses access, locked to IP addresses or ranges, and inspected per key: calls by route, error rate, latency percentiles and top callers.</description>
+		</item>
+		<item>
+			<title>Import skills from any registry, safely</title>
+			<link>https://three.ws/skills/import</link>
+			<guid isPermaLink="false">2026-10-10:Import skills from any registry, safely</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents can now take skills from outside three.ws. Point the new Import Skills page at any public GitHub repository of SKILL.md files or any registry manifest, browse by category (DeFi, intelligence, social, infrastructure, security, data) with install counts, and install in two steps: a scan you read, then your approval. Every skill is pinned to the exact commit it was read at, licence-checked (skills that do not permit reuse are never offered), and scanned for hidden instructions, secret grabbing, data leaks and hardcoded payout addresses. Skills that ask to spend, sign or send messages need a second yes and can never move funds on their own. Updates never apply silently: you see the diff and approve it. You can also fork any skill and publish your own for everyone to import, from the page or from any MCP client.</description>
+		</item>
+		<item>
+			<title>Launch a coin as a Uniswap pool on Base, and retry launches safely</title>
+			<link>https://three.ws/launch/uniswap</link>
+			<guid isPermaLink="false">2026-10-10:Launch a coin as a Uniswap pool on Base, and retry launches safely</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>There is a new launch lane: your agent launches a fixed-supply coin whose whole supply sits in one Uniswap V3 pool on Base. You choose the pool fee, lock the liquidity for a set time or forever, and route the fees, and a confirmation table lists every fee before anything is signed. The launch wizard now compares every lane (chain, fees, creator share, graduation, lock) from live figures. Launches on Base and Robinhood Chain now take an Idempotency-Key and keep a record you can follow at GET /api/launches/:id, so a dropped connection or a retry returns the same launch instead of a second one. Solana stays the default lane. The Base lane opens once its launcher contract is deployed.</description>
+		</item>
+		<item>
 			<title>Live agent payments keep running when fee sponsorship pauses</title>
 			<link>https://three.ws/agent-exchange</link>
 			<guid isPermaLink="false">2026-10-10:Live agent payments keep running when fee sponsorship pauses</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the wallet that covers Solana network fees for agent payments runs low, agents on three.ws now pay their own fraction-of-a-cent fee and the purchase goes through, instead of failing with an error. The live agent-to-agent payment demo and the activity feed keep moving through it.</description>
+		</item>
+		<item>
+			<title>Manage agents, autonomous runs and automations from any MCP client, and replay every run on the agent page</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-10-10:Manage agents, autonomous runs and automations from any MCP client, and replay every run on the agent page</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Sixteen new MCP tools let an AI client do everything the dashboard can with an agent: edit it, start and stop it, give it a new avatar from a GLB or image, delete it, launch and steer autonomous runs, and create, edit, test-fire and remove automations. Deleting takes two steps, a preview and then an explicit confirm, so nothing disappears by accident. Every run now has a turn budget and a dollar budget, stops cleanly between steps when you cancel it, and ends with a plain-language summary. Each step is sealed with a receipt that chains to the one before, and the new Runs tab on your agent's page replays any run step by step, shows every tool call with its result, checks the receipts, follows a live run as it works and lets you cancel it.</description>
+		</item>
+		<item>
+			<title>New payout addresses now wait out a cooldown you can cancel</title>
+			<link>https://three.ws/agent-wallet</link>
+			<guid isPermaLink="false">2026-10-10:New payout addresses now wait out a cooldown you can cancel</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your agent wallet has a destination whitelist. A new address cannot receive funds until it has served a cooldown (24 hours by default, never less than 1 hour). Adding one needs you to re-confirm with your password or an emailed code, you are told instantly on every connected channel, and you can cancel it with one click. Agents and API keys can only propose an address, never activate it. Removing an address works instantly. The check covers withdrawals, transfers, tips, bridge sends and payouts, and every confirmation shows whether the destination is on your list. Manage it on the new Allowlist tab of your agent wallet.</description>
 		</item>
 		<item>
 			<title>Quieter, cleaner pages: dead links fixed and console errors gone</title>
@@ -95,12 +319,60 @@
 			<description>Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.</description>
 		</item>
 		<item>
+			<title>Sign in with Google, connect several AI clients at once, and grant permissions by group</title>
+			<link>https://three.ws/connect</link>
+			<guid isPermaLink="false">2026-10-10:Sign in with Google, connect several AI clients at once, and grant permissions by group</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>You can now sign in to three.ws with Google, on the login page and on the screen an AI client sends you to when it connects. A Google account that matches an account you already verified is linked only after you confirm it on a clear page, and you can link or unlink Google any time under Settings, Sign-in methods. Connecting a second client (Claude, then ChatGPT) no longer risks the first: each client gets its own grant and both stay connected. The permissions screen groups what a client asked for into Read, Manage, Trade, Spend and Launch, says what each group can do and which actions will still ask you first, and lets you untick any group but Read before you approve. Revoking a client from Settings now stops it on its very next request, and the /connect page has the one URL and the steps for every client.</description>
+		</item>
+		<item>
 			<title>Specialist teams: four agents that research before they trade</title>
 			<link>https://three.ws/teams</link>
 			<guid isPermaLink="false">2026-10-10:Specialist teams: four agents that research before they trade</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.</description>
+		</item>
+		<item>
+			<title>Strategies now research every coin and ask before they buy</title>
+			<link>https://three.ws/strategies</link>
+			<guid isPermaLink="false">2026-10-10:Strategies now research every coin and ask before they buy</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Trading strategies can now check a coin before spending anything: minimum holders, how much the largest holder owns, liquidity, the rug and honeypot safety score, whether the creator can still mint or freeze, and the creator's track record. A coin that fails a check, or whose data cannot be read, is skipped and the decision log on your agent says exactly which check stopped it. You can also cap price impact per buy. Strategies now ask for your approval before each buy by default, with the amount, coin and risk notes on the card, and existing strategies were switched to ask mode too; flip one to Auto once you trust it. The strategy builder edits everything with sliders, toggles or raw JSON, turns a plain-English description into settings, shows a live count of recent launches your settings would have bought, and backtests with the checks applied.</description>
+		</item>
+		<item>
+			<title>Talk to your squad in one sentence</title>
+			<link>https://three.ws/team-chat</link>
+			<guid isPermaLink="false">2026-10-10:Talk to your squad in one sentence</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Squad chat turns a plain sentence like &quot;research $THREE and buy 0.05 SOL if it looks safe&quot; into a plan of steps for your specialist team or any of your agents. Research and entry checks run live with their evidence, and anything that signs, moves funds, launches a coin or goes over your cap stops as an approval card with the full details. Approve and the squad picks the run back up and finishes with receipts. Paper mode is the default and never signs. Say &quot;remember my default trade size is 0.1 SOL&quot; and the squad keeps it. Coin names and descriptions are treated as data, so a coin written to trick AI agents cannot change the plan. You can type or dictate, and the squad's 3D avatars react as they work.</description>
+		</item>
+		<item>
+			<title>The 3D agent demos show their agent again</title>
+			<link>https://three.ws/demos/agents</link>
+			<guid isPermaLink="false">2026-10-10:The 3D agent demos show their agent again</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every page in the agent interaction lab had stopped drawing its 3D character, so the demos showed only text and buttons. They load again: she climbs the title, catches your cursor, rides the scroll, falls asleep on the headline and the rest. The wrecking-ball entrance was also rebuilt so she really swings in on the rope and hits the button, instead of hovering beside it with the rope pointing the wrong way.</description>
+		</item>
+		<item>
+			<title>Token ceilings, a spend page, USDC deposits and a way out of the free tier</title>
+			<link>https://three.ws/spend</link>
+			<guid isPermaLink="false">2026-10-10:Token ceilings, a spend page, USDC deposits and a way out of the free tier</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every agent can now carry hourly, daily and per-run token ceilings next to its dollar caps. A ceiling is checked before the model is called; hitting one pauses the agent, tells you, and gives you Resume and Extend once. The new /spend page shows what each agent spends by day, by model and by tool, projects the month end, and alerts at 50, 80 and 100 percent of any cap. Credits can be topped up with USDC at a fixed rate alongside SOL and $THREE, the deposit page lists every accepted asset and its rate from live config, and paying in $THREE earns whatever bonus the owner has set. When the free tier runs out, the error now carries your choices: wait for the reset, top up, bring your own key, or resend the same request with paid_fallback: true to bill it to credits in one step.</description>
+		</item>
+		<item>
+			<title>Your agents can trade perpetual futures</title>
+			<link>https://three.ws/agent-perps</link>
+			<guid isPermaLink="false">2026-10-10:Your agents can trade perpetual futures</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Each agent now has a perps desk at /agents/:id/perps, also reachable from the API and from Claude or any MCP client. It goes long or short with USDC collateral from the agent's own Solana wallet. Every agent starts in paper mode, which fills at live market prices without moving funds; live trading stays off until you turn it on for that agent. Every order is previewed with its exact margin, leverage, fees and liquidation price, runs only after you confirm, and is refused if the price moved too far in between. Leverage and per-position margin caps are always on (2x and $25 to start). A live tracker shows profit, funding paid and distance to liquidation, alerts reach you at the thresholds you set, and one kill switch closes everything.</description>
 		</item>
 		<item>
 			<title>CAD Forge</title>

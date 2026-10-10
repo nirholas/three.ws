@@ -8700,7 +8700,7 @@ Image→3D is the same endpoint with `image_urls: ["https://…/front.png", …]
 
 ### From Claude, Cursor, or any MCP client
 
-The **3D Studio MCP server** at `https://three.ws/api/mcp-3d` exposes the full pipeline as 15 tools — `text_to_3d`, `image_to_3d`, `auto_rig_model`, `apply_animation`, `stylize_model`, `retexture_model`, `segment_model`, and more — so an AI assistant can generate, rig, and animate a model mid-conversation and render it as an inline interactive artifact. See [docs/mcp-3d-studio.md](docs/mcp-3d-studio.md).
+The **3D Studio MCP server** at `https://three.ws/api/mcp-3d` exposes the full pipeline as <!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> tools (`text_to_3d`, `image_to_3d`, `auto_rig_model`, `apply_animation`, `stylize_model`, `retexture_model`, `segment_model`, and more), so an AI assistant can generate, rig, and animate a model mid-conversation and render it as an inline interactive artifact. See [docs/mcp-3d-studio.md](docs/mcp-3d-studio.md).
 
 ### Pay-per-call for autonomous agents (x402)
 
@@ -9882,10 +9882,10 @@ Fifteen packages ship from this repo, all published to npm under the **`@three-w
 
 | Package | Run | What it does |
 | --- | --- | --- |
-| [`@three-ws/mcp-server`](mcp-server/) | [`npx -y @three-ws/mcp-server`](https://www.npmjs.com/package/@three-ws/mcp-server) | 16 tools: free text→3D (`forge_free`) + 15 paid x402: text/image→3D, rigging, pose, pump.fun, ERC-8004, vanity, AgenC, aixbt |
+| [`@three-ws/mcp-server`](mcp-server/) | [`npx -y @three-ws/mcp-server`](https://www.npmjs.com/package/@three-ws/mcp-server) | <!-- mcp-count:three-ws-mcp-server.tools -->25<!-- /mcp-count --> tools: <!-- mcp-count:three-ws-mcp-server.free -->5<!-- /mcp-count --> free (text→3D, crypto news, premium vanity browse) + <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> paid over x402: text/image→3D, rigging, refinement, pose, market data, agent reputation and hiring, vanity, name resolution |
 | [`@three-ws/avatar-agent`](packages/avatar-agent-mcp/) | [`npx -y @three-ws/avatar-agent`](https://www.npmjs.com/package/@three-ws/avatar-agent) | Spawn a textured GLB avatar with a Solana wallet, a voice, and pump.fun launch powers |
 | [`@three-ws/avatar-mcp`](packages/threews-avatar-mcp/) | [`npx -y @three-ws/avatar-mcp`](https://www.npmjs.com/package/@three-ws/avatar-mcp) | Render a live, rotatable on-chain avatar inline + a paste-anywhere embed (free) |
-| [`@three-ws/pumpfun-mcp`](packages/pumpfun-mcp/) | [`npx -y @three-ws/pumpfun-mcp`](https://www.npmjs.com/package/@three-ws/pumpfun-mcp) | 23 free, read-only pump.fun + Solana tools: no API key |
+| [`@three-ws/pumpfun-mcp`](packages/pumpfun-mcp/) | [`npx -y @three-ws/pumpfun-mcp`](https://www.npmjs.com/package/@three-ws/pumpfun-mcp) | <!-- mcp-count:pumpfun-mcp.free -->23<!-- /mcp-count --> free, read-only pump.fun + Solana tools: no API key |
 | [`@three-ws/three-token-mcp`](packages/three-token-mcp/) | [`npx -y @three-ws/three-token-mcp`](https://www.npmjs.com/package/@three-ws/three-token-mcp) | Price, hold, and burn **$THREE** on Solana: deflation as an agent primitive |
 | [`@three-ws/ibm-watsonx-mcp`](packages/ibm-watsonx-mcp/) | [`npx -y @three-ws/ibm-watsonx-mcp`](https://www.npmjs.com/package/@three-ws/ibm-watsonx-mcp) | IBM watsonx.ai Granite (chat, generate, embed, forecast) with your own IBM key |
 | [`@three-ws/ibm-x402-mcp`](packages/ibm-x402-mcp/) | [`npx -y @three-ws/ibm-x402-mcp`](https://www.npmjs.com/package/@three-ws/ibm-x402-mcp) | Pay-per-use IBM Granite: USDC on Solana, no IBM account required |
@@ -9996,7 +9996,7 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-The crons in `vercel.json` (126 entries on 2026-10-09) are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs). The table below is a selection of the notable jobs, each schedule quoted verbatim from `vercel.json`; that file is the complete list.
+The crons in `vercel.json` (132 entries on 2026-10-10) are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs). The table below is a selection of the notable jobs, each schedule quoted verbatim from `vercel.json`; that file is the complete list.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |

@@ -131,6 +131,10 @@ The selection is enforced whichever way you signed in. With a browser sign-in, s
 | Command | What it does |
 |---|---|
 | `setup` | Sign in, write servers into clients, verify with `tools/list` |
+| `--claude` / `--cursor` / `--codex` / `--vscode` / `--windsurf` | Non-interactive setup for one client; keeps secrets out of its config |
+| `doctor` | Diagnose Node, credentials, auth, client configs and server reachability |
+| `agent status` | Your agents with wallet address and balances |
+| `team` / `team status <id>` | Your teams and one team's detail |
 | `login` / `logout` | Sign in or switch accounts; `logout` also revokes the OAuth refresh token |
 | `status` / `whoami` | Account, plan, wallet balance, token expiry and every configured client |
 | `create [name]` | Create an agent with its own Solana wallet and public page |
@@ -144,6 +148,88 @@ The selection is enforced whichever way you signed in. With a browser sign-in, s
 | `provider use three-ws` / `provider show` | Point this machine's model clients at three.ws inference, billed to your credits |
 | `usage` | Credits, burn rate, days left and recent top-ups |
 | `ask "<prompt>"` | One completion through the active provider |
+
+## One command per client
+
+Name a client and the CLI does the whole setup without prompts: sign in, write the servers, verify them with a live `tools/list`.
+
+```bash
+npx three-ws --claude      # Claude Code, plus the three.ws skill
+npx three-ws --cursor
+npx three-ws --codex
+npx three-ws --vscode
+npx three-ws --windsurf
+npx three-ws --gemini
+```
+
+`--bob` and `--hermes` work the same way. Combine flags to set up several clients at once (`npx three-ws --cursor --vscode`), and add `--project` for config in the current directory, `--device` over SSH, or `--key sk_live_...` for CI.
+
+These flags write a launcher entry (`three-ws proxy <url>`) instead of a token. The OAuth token or API key stays in `~/.config/three-ws/credentials.json` (mode 600) and never appears in a client config file, so you can commit a project config safely. Running a command twice changes nothing the second time.
+
+With `--claude` the CLI also installs the three.ws skill at `~/.claude/skills/three-ws/SKILL.md`, so you can start Claude Code with:
+
+```bash
+claude "launch my agent"
+```
+
+### Hosted installers
+
+Two shell scripts do the same from a bare machine. `install` checks your OS and Node version, runs the CLI, and prints next steps. `claude` wires Claude Code and offers to start `claude "launch my agent"`.
+
+```bash
+curl -fsSL https://three.ws/cli/install | sh
+curl -fsSL https://three.ws/cli/claude | sh
+```
+
+Pass options after `--`: `curl -fsSL https://three.ws/cli/install | sh -s -- --cursor`. Both scripts need Linux or macOS (Windows: use WSL) and Node.js 20.12 or newer. They never use `sudo`, never edit your shell profile, never install Node for you, and never write a credential to disk themselves. Environment variables: `THREE_WS_VERSION` pins a CLI version and `THREE_WS_ORIGIN` points at another deployment.
+
+### Verify before you run
+
+Piping a script into a shell trusts whatever the server sends, so every script is published with a SHA-256 checksum and an ed25519 signature. Download, read, verify, then run:
+
+```bash
+mkdir three-ws-install && cd three-ws-install
+curl -fsSLO https://three.ws/cli/install.sh
+curl -fsSLO https://three.ws/cli/install.sh.sha256
+curl -fsSLO https://three.ws/cli/install.sh.sig
+curl -fsSLO https://three.ws/cli/signing-key.pem
+
+less install.sh                       # read it
+sha256sum -c install.sh.sha256        # checksum (macOS: shasum -a 256 -c install.sh.sha256)
+
+# signature (OpenSSL 3)
+openssl pkeyutl -verify -pubin -inkey signing-key.pem -rawin -in install.sh -sigfile install.sh.sig
+
+sh install.sh
+```
+
+Without OpenSSL 3, Node checks it:
+
+```bash
+node -e "const c=require('crypto'),f=require('fs');console.log(c.verify(null,f.readFileSync('install.sh'),c.createPublicKey(f.readFileSync('signing-key.pem')),f.readFileSync('install.sh.sig')))"
+```
+
+It prints `true` for an untouched script. The signing key's fingerprint (SHA-256 of its DER public key) is `662f5682e54fec906904b39937f8858a6c269b671fc335bff4b91c6a66a3f27d`, and the same key is committed in the repository at `public/cli/signing-key.pem`. Compare the two sources before trusting a key you downloaded from the same server as the script. The same steps work for `claude.sh`.
+
+Each script defines functions and calls `main` on its last line, so a download cut short runs nothing.
+
+## Check your setup
+
+```bash
+npx three-ws doctor
+```
+
+`doctor` finds a bad config before you do. It checks the Node version, the credential file and its permissions, that three.ws is reachable, that your sign-in is still valid (expired or revoked), each client's config (unparseable file, missing three.ws entry, a secret stored in plain text, a launcher missing from `PATH`), and a live `tools/list` for every configured server. Every problem comes with the command that fixes it. It exits 1 when anything fails, and `--json` prints the findings for scripts.
+
+## Agents and teams
+
+```bash
+npx three-ws agent status    # each agent, its wallet address and SOL / USDC balance
+npx three-ws team            # your teams
+npx three-ws team status <id-or-name>
+```
+
+Both are read-only.
 
 Global flags: `--json` for machine-readable output, `--origin <url>` (or `THREE_WS_ORIGIN`) to talk to another deployment, `--no-color`.
 

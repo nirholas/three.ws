@@ -67,7 +67,7 @@ category; the mapping (`TYPE_CATEGORY`) lives in
 |---|---|---|
 | Sales & earnings | `sales` | `skill_purchased`, `asset_purchased`, `sale`, `payment-earned`, `payment_received`, `referral_earned`, `referral_signup`, `referral_reward`, `pump_launch_filled`, `royalty_paid` |
 | Purchases | `purchases` | `skill_purchase_confirmed`, `asset_purchase_confirmed`, `skill_gift_received`, `skill_gift_sent`, `print_update` |
-| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete` |
+| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete`, `duel_challenge` (another owner challenged your agent to a duel, or answered your challenge) |
 | In person | `irl` | `irl_interaction`, `irl_reply` |
 | Market alerts | `alerts` | `pump_alert` |
 | Creations | `creations` | `forge_complete`, `forge_failed` |
@@ -75,7 +75,7 @@ category; the mapping (`TYPE_CATEGORY`) lives in
 | Approvals | `approvals` | `approval_requested` (see [Approvals](./approvals.md)) |
 | (no tab yet) | `knock` | `knock_received` |
 | (no tab yet) | `mail` | `mail_received` |
-| Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map (the agent-inference `inference_topup` and `inference_budget_exhausted` land here this way) |
+| Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map (the agent-inference `inference_topup` and `inference_budget_exhausted` land here this way), `token_budget_paused` and `spend_cap_alert` (the [spend page](./inference-billing.md) caps) |
 
 `print_update` is the single type Materialize uses for a physical order's whole
 lifecycle, quoted through delivered, and it sits with purchases because the

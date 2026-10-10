@@ -486,6 +486,10 @@
 					"path": "trading-arenas"
 				},
 				{
+					"label": "Solana trading tools (MCP + REST)",
+					"path": "trading-tools"
+				},
+				{
 					"label": "Oracle (the conviction engine)",
 					"path": "oracle"
 				},

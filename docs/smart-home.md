@@ -431,7 +431,7 @@ its version number:
 
 | Difference | Releases | How it is handled |
 |---|---|---|
-| The MCP endpoint moved. Through 2025.10 `mcp_server` served only the SSE transport at `/mcp_server/sse`; the Streamable HTTP endpoint at `/api/mcp` arrived later. | 2025.10 and older vs 2026.7 and newer | `connectHomeMcp` tries Streamable HTTP, and on a 404 falls back to SSE. It reports which transport answered (`transport`, `endpoint`). Before this, a 2025.10 house with a loaded `mcp_server` entry and 22 real tools was reported as having no MCP at all. |
+| The MCP endpoint moved. Through 2025.10 `mcp_server` served only the SSE transport at `/mcp_server/sse`; the Streamable HTTP endpoint at `/api/mcp` arrived later. | 2025.10 and older vs 2026.7 and newer | `connectHomeMcp` tries Streamable HTTP, and on a 404 falls back to SSE. It reports which transport answered (`transport`, `endpoint`). Before this, a 2025.10 house with a loaded `mcp_server` entry and 22 real tools was reported as having no MCP at all. <!-- mcp-count-ignore --> |
 | The exposure command was renamed from `homeassistant/expose_entity/set` to `homeassistant/expose_entity`. | older releases vs the whole supported range | The test harness sends the current name and falls back on `unknown_command`. Every release in the supported range answers to the current name, so the fallback covers only houses below the floor. |
 | The `mcp_server` config flow's `llm_hass_api` field is a multi-select. | whole supported range | The harness reads the flow's own `data_schema` and sends the shape it asks for, rather than assuming a string. |
 

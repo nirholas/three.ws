@@ -477,6 +477,13 @@ export const NAV_GROUPS = [
 						desc: 'Four 3D agents under one spend policy: a Researcher, an Entry scout, a Trader and a Launcher sharing one live findings board',
 					},
 					{
+						title: 'Squad Chat',
+						href: '/team-chat',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'Tell your squad what you want in one sentence: the coordinator plans it, the specialists run it live, and anything that signs waits for your yes',
+					},
+					{
 						title: 'Reputation Staking',
 						href: '/reputation/market',
 						badge: 'New',

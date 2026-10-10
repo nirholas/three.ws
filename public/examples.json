@@ -66,13 +66,15 @@
 			"id": "project:grok-remote-mcp",
 			"kind": "project",
 			"group": "Example projects",
-			"title": "grok-remote-mcp",
-			"description": "Grok generates a real 3D model through the free three.ws MCP server, using xAI's Responses API remote MCP tools. Zero dependencies.",
+			"title": "Grok makes a 3D model through three.ws",
+			"description": "Grok generates a real, downloadable 3D model (GLB) by calling the free three.ws MCP server through xAI's Responses API. xAI connects to the server and runs the tool calls on its side; this script only talks to api.x.ai. Zero dependencies, Node 20 or newer.",
 			"path": "examples/grok-remote-mcp",
-			"files": [],
-			"run": "cd examples/grok-remote-mcp && npm install && npm run start",
+			"files": [
+				"index.mjs"
+			],
+			"run": "node examples/grok-remote-mcp/index.mjs",
 			"runKind": "command",
-			"readme": null
+			"readme": "examples/grok-remote-mcp/README.md"
 		},
 		{
 			"id": "project:metamask-agent-wallet",

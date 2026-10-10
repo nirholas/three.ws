@@ -241,7 +241,7 @@ async function buildGif(item, { root, proof, probe }) {
 // The art is the image model's; the type, the lockup, and the product frame are
 // ours. The model is asked never to draw text, so nothing it invents can read as
 // a claim, and the real frame stays visible beside or inside it.
-const ART_STYLE = 'Cinematic key art for a technology launch. Deep pure black background, soft blue and violet rim light, faint volumetric haze, glossy reflective black floor, high detail, shallow depth of field. Leave the left third dark and empty for a headline. No text, no letters, no logos, no watermark, no user interface.';
+const ART_STYLE = 'Cinematic key art for a technology launch. Deep pure black background, soft blue and purple rim light, faint volumetric haze, glossy reflective black floor, high detail, shallow depth of field. Leave the left third dark and empty for a headline. No text, no letters, no logos, no watermark, no user interface.';
 
 const VERTEX_PROJECT = process.env.GOOGLE_CLOUD_PROJECT || 'aerial-vehicle-466722-p5';
 // Best first. Gemini 3 Pro Image is served only from the global endpoint.
@@ -277,24 +277,31 @@ async function vertexArt({ model, location }, prompt, source) {
 }
 
 // FLUX.1-dev on NVIDIA NIM, the platform's free image lane. It cannot take an
-// image, so its art is a backdrop and the real frame is inset on the card. Its
-// content filter answers some harmless prompts with a black frame, so a few
-// seeds are tried before the lane gives up.
+// image, so its art is a backdrop and the real frame is inset on the card.
+// Its content filter withholds every prompt containing "violet" (measured
+// 2026-10-10: the same prompt passes with "purple"), so the word is swapped
+// before sending. It still withholds the odd harmless prompt, so a few seeds
+// are tried, and a 5xx, which it returns often, is retried on the same seed.
+export const nimPrompt = (prompt) => prompt.replace(/\bviolet\b/gi, (word) => (word[0] === 'V' ? 'Purple' : 'purple'));
+
 async function nimArt(prompt) {
 	const key = process.env.NVIDIA_API_KEY;
 	if (!key) throw new Error('nim flux: NVIDIA_API_KEY is not set');
 	let last = 'no attempt';
 	for (const seed of [3, 11, 29, 47]) {
-		const response = await fetch('https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev', {
-			method: 'POST',
-			headers: { authorization: `Bearer ${key}`, accept: 'application/json', 'content-type': 'application/json' },
-			body: JSON.stringify({ prompt, mode: 'base', width: 1344, height: 768, seed, steps: 40, cfg_scale: 3.5 }),
-			signal: AbortSignal.timeout(120_000),
-		});
-		const data = await response.json().catch(() => ({}));
-		const artifact = data?.artifacts?.[0];
-		if (response.ok && artifact?.finishReason === 'SUCCESS' && artifact.base64) return Buffer.from(artifact.base64, 'base64');
-		last = response.ok ? `withheld (${artifact?.finishReason || 'empty'})` : `${response.status}`;
+		for (let attempt = 0; attempt < 3; attempt++) {
+			const response = await fetch('https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev', {
+				method: 'POST',
+				headers: { authorization: `Bearer ${key}`, accept: 'application/json', 'content-type': 'application/json' },
+				body: JSON.stringify({ prompt: nimPrompt(prompt), mode: 'base', width: 1344, height: 768, seed, steps: 40, cfg_scale: 3.5 }),
+				signal: AbortSignal.timeout(120_000),
+			});
+			const data = await response.json().catch(() => ({}));
+			const artifact = data?.artifacts?.[0];
+			if (response.ok && artifact?.finishReason === 'SUCCESS' && artifact.base64) return Buffer.from(artifact.base64, 'base64');
+			last = response.ok ? `withheld (${artifact?.finishReason || 'empty'})` : `${response.status}`;
+			if (response.status < 500) break;
+		}
 	}
 	throw new Error(`nim flux: ${last} on every seed`);
 }
@@ -343,7 +350,7 @@ async function buildArt(item, { root, proof, probe, log }) {
 	writeHead(root, path, buffer);
 	const alt = head.alt
 		? ensureGeneratedLabel(head.alt)
-		: `AI-generated key art ${art.grounded ? `made from a frame of ${label}` : `with a frame of ${label} filmed live in the corner`}, under the headline "${oneLine(head.headline)}".`;
+		: `AI-generated key art ${art.grounded ? `made from a frame of ${label}` : `with a frame of ${label} filmed live in the corner`}, under the headline "${oneLine(head.headline)}"${/[.!?]$/.test(oneLine(head.headline)) ? '' : '.'}`;
 	return {
 		path,
 		alt,

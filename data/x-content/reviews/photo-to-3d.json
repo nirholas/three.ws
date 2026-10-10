@@ -1,7 +1,7 @@
 {
 	"id": "photo-to-3d",
-	"contentHash": "da8486124083257944b7c0f50ac0f7d597d5ce4cc3bf31e6443c38e2ac74de95",
-	"reviewedAt": "2026-10-09T20:30:08.402Z",
+	"contentHash": "591fafb84d052b1ef10864293648f878ec6db815e281822ac3aaf9430e28086a",
+	"reviewedAt": "2026-10-10T06:46:01.347Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -151,21 +151,38 @@
 		"scores": {
 			"accuracy": 5,
 			"clarity": 5,
-			"specificity": 5,
+			"specificity": 4,
 			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [],
+		"issues": [
+			{
+				"severity": "minor",
+				"area": "specificity",
+				"quote": "replaces the guess with what the camera saw",
+				"problem": "The inference mechanism behind 'guess' is asserted rather than evidenced, though the multi-view capability itself is verified by the live page.",
+				"fix": "No change required; if polished, rephrase as 'so a second or third angle fills in what one photo cannot show.'"
+			},
+			{
+				"severity": "minor",
+				"area": "accuracy",
+				"quote": "Generated on a cloud GPU",
+				"problem": "The reel caption generalizes the verified wording 'NVIDIA-hosted generation plus our own self-hosted GPU workers' to 'cloud GPU'; harmless and broadly accurate, but the post text itself uses the exact verified phrasing, which is the right call.",
+				"fix": "None; post text is fine."
+			}
+		],
 		"rewrite": {
 			"posts": [
 				"One photo of a garden gnome went in, and a textured 3D model came out, viewable in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
 				"One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen.",
 				"The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or rebuild it to a polygon budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
 			],
-			"altText": []
+			"altText": [
+				"three.ws card on a black background with the headline \"One photo in. A 3D model out.\" Free, with no sign-up and no API key. Orbit it, then download the GLB. Beside it, a frame of three.ws/image-to-3d from the reel filmed live on the product."
+			]
 		},
-		"summary": "Every claim passes verification against the live page, the codebase, or the filmed run, and the reel frames confirm each caption and the gnome-to-model narrative with the wait honestly labelled as cut. Voice contract is obeyed throughout: no hashtags, emoji, dashes, or hype openers, a mechanism lead in the first post, one link, no tags to defend.",
+		"summary": "Every factual claim is backed by a passing verification against the live page, the source file, or the filmed run, and the reel frames and captions match the copy, including the labelled cut for the generation wait. Voice, length, and media all meet the standard; it ships as written.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

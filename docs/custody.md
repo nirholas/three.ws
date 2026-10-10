@@ -15,7 +15,7 @@ Limits live per agent and are owner-configurable from the wallet hub (API: `GET/
 
 - `daily_usd` — rolling 24-hour ceiling, summed over the custody event trail
 - `per_tx_usd` — single-transaction ceiling
-- `withdraw_allowlist` — destinations the wallet may withdraw to
+- `withdraw_allowlist` — destinations the wallet may send to, managed as the [destination whitelist](./destination-whitelist.md) (cooldown, step-up, instant removal)
 - Plus a trade-side daily SOL budget for trading agents
 
 Enforcement is uniform: the same policy module gates **every** outbound path — withdrawals, x402 payments, sniper buys, trades. A transaction that would breach a cap is refused with a structured `403` before signing; no funds move. Limits are opt-in (`null` means uncapped) — but they're hard once set. SPL tokens that can't be priced in USD are governed by the allowlist instead, so a price-feed outage can never strand your own withdrawal.

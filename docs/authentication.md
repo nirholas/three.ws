@@ -325,6 +325,48 @@ Once a user is signed in via Privy, they can connect a browser wallet and link i
 
 ---
 
+## Sign in with Google
+
+Google sign-in is a direct OpenID Connect authorization-code flow with PKCE, run by [api/auth/google/[action].js](../api/auth/google/[action].js) on top of the shared identity helpers in [api/_lib/identities.js](../api/_lib/identities.js). There is no third-party SDK in the browser: the login page links to `/api/auth/google/start`, the server sends the browser to Google, and Google sends it back to `/api/auth/google/callback`.
+
+### How the flow works
+
+1. `GET /api/auth/google/start?next=/dashboard` signs a flow cookie (`__Host-gsi`, ten minutes) holding a random `state`, a `nonce`, and a PKCE verifier, then redirects to Google's authorization endpoint with `code_challenge_method=S256`, `scope=openid email profile` and `prompt=select_account`.
+2. Google redirects to `/api/auth/google/callback?code=...&state=...`. The server rejects a `state` that does not match the flow cookie, exchanges the code for tokens with the verifier, and verifies the ID token against Google's published keys: signature, issuer, audience (the client id), expiry, and the `nonce` from the flow cookie.
+3. What happens next depends on the account:
+   - **The Google account is already linked.** The person is signed in and sent to `next`.
+   - **Not linked, and a three.ws account has the same email.** Only when Google says `email_verified` and the three.ws account verified that address too, the person sees a confirm page ("Link Google to your account?"). Nothing is linked until they choose **Link and sign in**, which posts to `/api/auth/google/confirm` with a signed five-minute cookie (`__Host-glink`) carrying the verified claims. "Not my account" changes nothing. An account whose email was never verified on three.ws is never linked by email (the same rule Privy, SAML and wallet sign-ins follow), so nobody can pre-register a stranger's address and catch their sign-in; that account's owner links Google from Settings instead, where their session proves ownership.
+   - **No account at all.** A new account is created from the verified claims, born `email_verified`, with no password. Google is its sign-in method until the person sets a password or links a wallet.
+4. Signing in creates a session and leaves every other session alone, so signing in from a second MCP client never signs the first out.
+
+`next` is checked by the same `safeNext` rule as the rest of the login page: a relative path on this site, never an external URL. The MCP authorization screen passes `next=/oauth/consent?...`, which is how a person goes Google, back to three.ws, straight to the consent screen.
+
+### Linking and unlinking from Settings
+
+[Settings, Sign-in methods](https://three.ws/dashboard/settings#sign-in-methods) lists every way into the account (password, email code, wallets, Google) and offers:
+
+- **Link Google** (`/api/auth/google/start?intent=link`, session required): the same round trip, ending with the Google account linked to the signed-in user. A Google account linked to a different three.ws account is refused with `identity_in_use`; a second, different Google account on the same user is refused with `already_linked` until the first is unlinked.
+- **Unlink** (`POST /api/auth/google/unlink`, session and CSRF required): needs a fresh proof the person at the keyboard owns the account, either `{ "password": "..." }` in the body or having just completed `/api/auth/google/start?intent=reauth`, which forces Google to ask for credentials again (`prompt=login`, `max_age=0`, and the callback checks `auth_time`) and sets a five-minute `__Host-reauth` cookie. Without either, the route answers `401 reauth_required`. Google can never be unlinked when it is the only sign-in method (`409 last_sign_in_method`).
+- **Status** (`GET /api/auth/google/status`): `{ configured, google, password, email_code, wallets, count, reauthenticated }`, which is what the card renders.
+
+### Error states
+
+A failed login lands on `/login?error=google_<code>` with a message the page explains: `google_cancelled` (you closed Google's prompt), `google_expired` (the ten-minute flow cookie ran out or the state did not match), `google_email_unverified` (Google does not vouch for that address), `google_unverified_account` (a three.ws account has that email but never verified it), `google_not_linked` (you chose "Not my account"), `google_identity_in_use`, `google_already_linked`, `google_invalid_token`, `google_exchange_failed`, `google_failed`, and `google_unavailable` (not configured on this deployment). A failed link or re-authentication lands back on the settings card with `?google=<code>` instead. Nothing ever surfaces as raw JSON in the address bar.
+
+### Configuration
+
+```env
+# A "Web application" OAuth client in the Google Cloud console (APIs & Services,
+# Credentials). Its authorized redirect URI must be exactly:
+#   https://<your origin>/api/auth/google/callback
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+```
+
+Both unset: `GET /api/config` reports `googleEnabled: false`, the login page shows no Google button, `/api/auth/google/start` sends a browser to `/login?error=google_unavailable` and answers an API caller `501 not_configured`. Nothing else changes.
+
+---
+
 ## Session Management
 
 Sessions are stored server-side in Postgres. The browser receives an opaque token in a secure cookie.
@@ -677,6 +719,10 @@ DATABASE_URL=postgresql://...
 # Privy (optional — needed only if you want social/email login)
 VITE_PRIVY_APP_ID=
 PRIVY_APP_ID=
+
+# Google sign-in (optional; see "Sign in with Google" above)
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
 
 # WalletConnect (optional — needed only for mobile wallet QR flow)
 VITE_WALLETCONNECT_PROJECT_ID=

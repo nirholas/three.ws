@@ -4621,12 +4621,12 @@
 		},
 		{
 			"id": "docs-world",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-10-01T08:50:23.737Z",
+			"notBefore": "2026-10-10T08:55:32.139Z",
 			"covers": [
 				"/docs/world"
 			],
@@ -4917,7 +4917,8 @@
 			"mentions": {},
 			"head": {
 				"as": "gif"
-			}
+			},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "drive-copilot",
@@ -15060,12 +15061,12 @@
 		},
 		{
 			"id": "photo-to-3d",
-			"status": "draft",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "clip",
-			"notBefore": "2026-10-10T00:00:00.000Z",
+			"notBefore": "2026-10-10T08:46:01.357Z",
 			"covers": [
 				"/image-to-3d"
 			],
@@ -15310,6 +15311,218 @@
 				"as": "card",
 				"headline": "One photo in.\nA 3D model out.",
 				"body": "Free, with no sign-up and no API key. Orbit it, then download the GLB."
+			}
+		},
+		{
+			"id": "avatar-embed-moves",
+			"status": "review",
+			"kind": "post",
+			"tier": 2,
+			"lane": "community",
+			"pattern": "clip",
+			"notBefore": "2026-10-11T00:00:00Z",
+			"covers": [
+				"/embed/avatar"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/embed/avatar?model=/avatars/michelle.glb&bg=dark&anim=idle",
+						"settle": 9000
+					},
+					{
+						"expect": "Animations",
+						"within": 45000
+					},
+					{
+						"hold": 1400,
+						"caption": "A three.ws avatar, live in an embed"
+					},
+					{
+						"click": "Animations",
+						"caption": "One click plays a move"
+					},
+					{
+						"hold": 500
+					},
+					{
+						"click": "Boxer Dance",
+						"caption": "Retargeted onto her rig in the browser"
+					},
+					{
+						"hold": 3400
+					},
+					{
+						"click": "Back Flip",
+						"caption": "A back flip"
+					},
+					{
+						"hold": 2600
+					},
+					{
+						"click": "Arm Flex",
+						"caption": "A flex"
+					},
+					{
+						"hold": 2400
+					},
+					{
+						"click": "Brag & Clap",
+						"caption": "Same library, any humanoid avatar"
+					},
+					{
+						"hold": 4200
+					}
+				]
+			},
+			"probes": [
+				{
+					"type": "scenario"
+				}
+			],
+			"posts": [
+				{
+					"text": "This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
+					"media": [
+						{
+							"path": "public/x-media/avatar-embed-moves/art.png",
+							"alt": "AI-generated key art: a glowing blue wireframe figure with arms spread on a dark stage, beside the headline \"Click a move. Your avatar does it.\" In the corner, a real frame filmed live on three.ws/embed/avatar shows an avatar mid move with the animation menu open.",
+							"derived": {
+								"as": "art",
+								"reel": "e306203bf019323ec543746c5cdaab30375c1a84fc1eb1689520bc871abcb54a",
+								"at": 12.2
+							},
+							"generated": {
+								"model": "nvidia-nim/black-forest-labs/flux.1-dev",
+								"prompt": "A glowing cyan wireframe humanoid figure frozen mid back flip above a dark stage, ribbons of light tracing its motion",
+								"source": null
+							}
+						}
+					]
+				},
+				{
+					"text": "The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live mocap.\n\nDrop one into your own page: three.ws/docs/embedding",
+					"media": [
+						{
+							"path": "public/x-media/avatar-embed-moves/reel.mp4",
+							"probe": {
+								"durationSec": 18,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "from a smile to a wink to surprise",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-embed.js",
+							"contains": "label: 'wink'"
+						}
+					]
+				},
+				{
+					"says": "a boxer dance, a back flip, a flex, a round of applause",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "public/animations/manifest.json",
+							"matches": "\"label\":\\s*\"Boxer Dance\""
+						},
+						{
+							"type": "file",
+							"path": "public/animations/manifest.json",
+							"matches": "\"label\":\\s*\"Back Flip\""
+						},
+						{
+							"type": "file",
+							"path": "public/animations/manifest.json",
+							"matches": "\"label\":\\s*\"Arm Flex\""
+						},
+						{
+							"type": "file",
+							"path": "public/animations/manifest.json",
+							"matches": "\"label\":\\s*\"Brag & Clap\""
+						}
+					]
+				},
+				{
+					"says": "Every clip is retargeted onto her own skeleton live in the browser",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/animation-retarget.js",
+							"contains": "Runtime animation retargeting"
+						}
+					]
+				},
+				{
+					"says": "the same library plays on any humanoid avatar you bring",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/glb-canonicalize.js",
+							"contains": "letting the\n// pre-baked Mixamo animation library play on any rig variant"
+						}
+					]
+				},
+				{
+					"says": "speak with lip sync",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-embed.js",
+							"contains": "drive audio-based lipsync onto the avatar's mouth morphs"
+						}
+					]
+				},
+				{
+					"says": "set any of the 52 ARKit face shapes",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-embed.js",
+							"contains": "Apply weight (0..1) to any ARKit-52 canonical morph by name"
+						}
+					]
+				},
+				{
+					"says": "turn her head toward something",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-embed.js",
+							"contains": "v1.avatar.lookAt"
+						}
+					]
+				},
+				{
+					"says": "hand her the webcam for live mocap",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "src/avatar-embed.js",
+							"contains": "Toggle webcam mocap"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"head": {
+				"as": "art",
+				"headline": "Click a move.\nYour avatar does it.",
+				"body": "Any humanoid avatar, a library of moves, retargeted live in your browser.",
+				"prompt": "A glowing cyan wireframe humanoid figure frozen mid back flip above a dark stage, ribbons of light tracing its motion",
+				"alt": "AI-generated key art: a glowing blue wireframe figure with arms spread on a dark stage, beside the headline \"Click a move. Your avatar does it.\" In the corner, a real frame filmed live on three.ws/embed/avatar shows an avatar mid move with the animation menu open."
 			}
 		}
 	]

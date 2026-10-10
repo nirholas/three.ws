@@ -220,6 +220,16 @@
 			.field-err.show {
 				display: block;
 			}
+			.authorize-note {
+				margin: 0 0 14px;
+				padding: 10px 12px;
+				border-radius: 10px;
+				background: rgba(106, 92, 255, 0.12);
+				border: 1px solid rgba(106, 92, 255, 0.35);
+				color: #c9c3ff;
+				font-size: 13px;
+				line-height: 1.45;
+			}
 			.err {
 				margin-top: 14px;
 				padding: 10px 12px;
@@ -352,6 +362,43 @@
 
 			/* ── Enterprise SSO (SAML) button ── */
 			.sso-btn { width: 100%; margin-top: 10px; }
+
+			/* ── Telegram magic-link modal ── */
+			.tg-modal {
+				position: fixed; inset: 0; z-index: 60;
+				display: flex; align-items: center; justify-content: center;
+				padding: 16px; background: rgba(0,0,0,0.6);
+				animation: tg-fade var(--duration-fast, 160ms) ease-out both;
+			}
+			.tg-modal[hidden] { display: none; }
+			@keyframes tg-fade { from { opacity: 0; } to { opacity: 1; } }
+			.tg-modal-card {
+				position: relative; width: 100%; max-width: 380px;
+				padding: 24px; border-radius: 14px;
+				background: #121214; border: 1px solid rgba(255,255,255,0.1);
+				box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+				display: flex; flex-direction: column; align-items: center; text-align: center;
+				animation: tg-rise var(--duration-base, 220ms) ease-out both;
+			}
+			@keyframes tg-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+			.tg-modal-close {
+				position: absolute; top: 10px; right: 10px; width: 32px; height: 32px;
+				border: none; border-radius: 8px; background: transparent; color: #888;
+				font-size: 20px; line-height: 1; cursor: pointer;
+				transition: background var(--duration-fast), color var(--duration-fast);
+			}
+			.tg-modal-close:hover, .tg-modal-close:focus-visible { background: rgba(255,255,255,0.06); color: #fff; outline: none; }
+			.tg-modal-title { margin: 0 0 6px; font-size: 17px; font-weight: 600; color: #fff; }
+			.tg-modal-sub { margin: 0 0 16px; font-size: 13px; line-height: 1.5; color: #999; }
+			.tg-modal-qr { border-radius: 10px; background: rgba(255,255,255,0.04); padding: 8px; margin-bottom: 12px; }
+			.tg-modal-qr[hidden] { display: none; }
+			.tg-modal-status { margin: 0 0 14px; min-height: 18px; font-size: 12.5px; color: #888; }
+			.tg-modal-status[data-tone="ok"] { color: #9fd09f; }
+			.tg-modal-status[data-tone="bad"] { color: #e0908f; }
+			.tg-modal-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+			.tg-modal-actions .privy-chain-btn { text-decoration: none; }
+			.tg-modal-actions .privy-chain-btn[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+			@media (prefers-reduced-motion: reduce) { .tg-modal, .tg-modal-card { animation: none; } }
 
 			/* ── No-wallet welcome banner ── */
 			.no-wallet-hint {
@@ -575,6 +622,10 @@
 				<h1 data-i18n="login.welcome_back">Welcome back</h1>
 				<p class="sub" data-i18n="login.sign_in_to_manage_your_avatars">Sign in to manage your avatars.</p>
 
+				<p class="authorize-note" id="authorize-note" hidden>
+					An app asked to connect to your three.ws account. Sign in with any method below, then review exactly what it may do before you authorize it.
+				</p>
+
 				<p class="no-wallet-hint" id="no-wallet-hint" data-i18n="login.no_wallet_needed_sign_in_with_your">
 					No wallet needed — sign in with your email below.
 				</p>
@@ -612,6 +663,20 @@
 					</div>
 					<p id="privy-inline-err" hidden></p>
 				</div>
+
+				<!-- Sign in with Google. Revealed by the script below only when a
+				     Google OAuth client is configured (GET /api/config → googleEnabled). -->
+				<button type="button" id="google-btn" class="privy-chain-btn sso-btn" hidden>
+					<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.23c0-.68-.06-1.36-.19-2.02H12v3.83h5.4a4.6 4.6 0 0 1-2 3.03v2.5h3.23c1.9-1.75 2.97-4.32 2.97-7.34z" fill="#4285F4"/><path d="M12 21.6c2.7 0 4.97-.9 6.63-2.43l-3.23-2.5c-.9.6-2.05.95-3.4.95-2.6 0-4.82-1.76-5.6-4.13H3.06v2.58A10 10 0 0 0 12 21.6z" fill="#34A853"/><path d="M6.4 13.49a6 6 0 0 1 0-3.83V7.08H3.06a10 10 0 0 0 0 8.99l3.34-2.58z" fill="#FBBC05"/><path d="M12 6.37c1.47 0 2.78.5 3.82 1.5l2.86-2.87A9.6 9.6 0 0 0 12 2.4a10 10 0 0 0-8.94 5.53l3.34 2.58c.78-2.37 3-4.14 5.6-4.14z" fill="#EA4335"/></svg>
+					<span data-i18n="login.continue_with_google">Continue with Google</span>
+				</button>
+
+				<!-- Sign in with Telegram. Revealed by src/telegram-login.js only when a
+				     bot token is configured (GET /api/config → telegramEnabled). -->
+				<button type="button" id="telegram-btn" class="privy-chain-btn sso-btn" hidden>
+					<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.64 6.8-1.63 7.7c-.12.55-.45.68-.9.42l-2.5-1.84-1.2 1.16c-.14.13-.25.25-.5.25l.17-2.52 4.6-4.16c.2-.18-.05-.28-.3-.1l-5.7 3.58-2.45-.76c-.53-.17-.54-.53.11-.79l9.58-3.69c.44-.16.83.11.69.76z" fill="#2AABEE"/></svg>
+					<span data-i18n="login.continue_with_telegram">Continue with Telegram</span>
+				</button>
 
 				<!-- Enterprise SSO (SAML). Revealed by the script below only when an
 				     identity provider is configured (GET /api/config → samlEnabled). -->
@@ -789,8 +854,24 @@
 				</div>
 			</div>
 		</footer>
+		<!-- Telegram sign-in: widget navigation or a one-time deep link, see src/telegram-login.js -->
+		<div id="telegram-modal" class="tg-modal" role="dialog" aria-modal="true" aria-labelledby="tg-modal-title" hidden>
+			<div class="tg-modal-card">
+				<button type="button" class="tg-modal-close" data-action="close" aria-label="Close">&times;</button>
+				<h2 id="tg-modal-title" class="tg-modal-title">Continue with Telegram</h2>
+				<p class="tg-modal-sub">Scan the code with your phone or open the link in Telegram. Send the message it prepares to <span data-slot="bot">the three.ws bot</span> and this page signs you in on its own.</p>
+				<canvas class="tg-modal-qr" data-slot="qr" width="180" height="180" aria-label="QR code for the Telegram sign-in link" hidden></canvas>
+				<p class="tg-modal-status" data-slot="status" role="status" aria-live="polite"></p>
+				<div class="tg-modal-actions">
+					<a class="privy-chain-btn" data-action="open-telegram" target="_blank" rel="noopener">Open in Telegram</a>
+					<a class="privy-chain-btn" data-action="widget">Use the Telegram login widget</a>
+					<button type="button" class="privy-chain-btn" data-action="refresh" hidden>Generate a new link</button>
+				</div>
+			</div>
+		</div>
 		<script type="module" src="/wallet-login.js"></script>
 		<script type="module" src="/src/privy-login.js"></script>
+		<script type="module" src="/src/telegram-login.js"></script>
 		<script type="module">
 			// Reveal the enterprise SSO button only when an IdP is configured, and
 			// surface any ?error / ?signed_out the SAML endpoints redirected back with.
@@ -808,7 +889,37 @@
 					rate_limited: 'Too many attempts. Please try again in a moment.',
 					handoff_expired:
 						'That link from the three.ws app has expired. Sign in here to continue where you left off.',
+					google_unavailable: 'Sign in with Google is not available right now. Use another method below.',
+					google_cancelled: 'Google sign-in was cancelled. Nothing changed.',
+					google_expired: 'That Google sign-in took too long. Please try again.',
+					google_failed: 'Google sign-in could not be completed. Please try again.',
+					google_exchange_failed: 'Google did not accept the sign-in. Please try again in a moment.',
+					google_invalid_token: 'Google sign-in could not be verified. Please try again.',
+					google_email_unverified:
+						'Google has not verified the email on that account. Verify it with Google, or sign in another way.',
+					google_unverified_account:
+						'An account with that email exists but has not verified it here. Sign in with its password, verify the email, then link Google from Settings.',
+					google_not_linked: 'Google was not linked. Sign in to your existing account another way.',
+					google_identity_in_use: 'That Google account is already linked to a different three.ws account.',
+					google_already_linked: 'A different Google account is already linked to that three.ws account.',
+					telegram_unavailable: 'Sign in with Telegram is not available right now. Use another method below.',
+					telegram_invalid_hash: 'Telegram sign-in could not be verified. Please try again.',
+					telegram_stale: 'That Telegram sign-in took too long. Please try again.',
+					telegram_replayed: 'That Telegram sign-in was already used. Please try again.',
+					telegram_expired: 'That Telegram sign-in expired. Please try again.',
+					telegram_not_linked: 'Telegram was not linked. Sign in to your existing account another way.',
+					telegram_identity_in_use: 'That Telegram account is already linked to a different three.ws account.',
+					telegram_already_linked: 'A different Telegram account is already linked to that three.ws account.',
+					telegram_cancelled: 'Telegram sign-in was cancelled. Nothing changed.',
+					telegram_failed: 'Telegram sign-in could not be completed. Please try again.',
 				};
+				// The MCP authorize path sends people here with next=/oauth/consent?...:
+				// say so, instead of presenting a sign-in page with no reason.
+				const nextParam = params.get('next') || '';
+				if (nextParam.startsWith('/oauth/consent')) {
+					const note = document.getElementById('authorize-note');
+					if (note) note.hidden = false;
+				}
 				const errCode = params.get('error');
 				if (errEl && errCode && SSO_MESSAGES[errCode]) {
 					errEl.textContent = SSO_MESSAGES[errCode];
@@ -820,12 +931,20 @@
 				}
 
 				const ssoBtn = document.getElementById('sso-btn');
+				const googleBtn = document.getElementById('google-btn');
 				if (!ssoBtn) return;
 				let cfg;
 				try {
 					cfg = await (await fetch('/api/config')).json();
 				} catch {
-					return; // config unreachable — leave SSO hidden
+					return; // config unreachable: leave Google and SSO hidden
+				}
+				if (googleBtn && cfg?.googleEnabled) {
+					googleBtn.hidden = false;
+					googleBtn.addEventListener('click', () => {
+						const next = window.__loginNext || params.get('next') || '/dashboard';
+						window.location.href = '/api/auth/google/start?next=' + encodeURIComponent(next);
+					});
 				}
 				if (!cfg?.samlEnabled) return;
 				if (cfg.samlLabel) {

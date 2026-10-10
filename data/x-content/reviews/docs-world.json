@@ -1,7 +1,7 @@
 {
 	"id": "docs-world",
-	"contentHash": "845d3f6cee792f9b02c9fe838a8d4bd0fb8660a65a48bb2511aca7f4b0b75a86",
-	"reviewedAt": "2026-10-09T17:13:41.808Z",
+	"contentHash": "231a35a96c09504be3fbbc2826434f4f66d26fdee69c9370630dbd04acff5260",
+	"reviewedAt": "2026-10-10T06:55:32.129Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -128,7 +128,7 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "19 steps passed against the live product, every claimed fact still holds (pages 313, pavilions 16)"
+				"detail": "19 steps passed against the live product, every claimed fact still holds (pages 317, pavilions 16)"
 			},
 			{
 				"kind": "probe:api",
@@ -160,9 +160,11 @@
 				"This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 16 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 				"Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
 			],
-			"altText": []
+			"altText": [
+				"Looping clip filmed live on three.ws/docs/world. On screen: The three.ws docs, built as a place / Every docs section is a pavilion on a ring."
+			]
 		},
-		"summary": "Every factual claim is verified against the live page, the filmed run (313 pages, 16 pavilions), and the wayfinder source, and the reel frames match each caption exactly, including the readable Forge page opening in-scene. The copy obeys the voice contract, opens on the mechanism, tags no one, and links the surface once, so it ships unchanged.",
+		"summary": "Every claim passed verification against the live page, the code, and the filmed run (313 pages, 16 pavilions), and the reel frames match the captions and copy at each stage. Voice contract is clean: no hashtags, emoji, dashes, or banned openers, one link, and the first line leads with the mechanism.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

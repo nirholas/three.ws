@@ -60,6 +60,69 @@ as the `/api/v1/agents/:id/predictions/*` routes and the `/predictions` pages.
 | `predictions_open`, `predictions_close`, `predictions_redeem` | financial | `wallet:write` | Execute with `agent_id`, the `preview_id`, and `confirm_trade: true`. |
 | `predictions_watch` | write | `wallet:write` | Alert when an outcome's probability crosses a threshold, in-app and optionally to Telegram or a webhook. Moves no funds. |
 
+### Perpetual futures
+
+Long or short perpetual futures with USDC collateral from an agent's own Solana
+wallet, over the same service (`api/_lib/perps/service.js`) as the
+`/api/v1/agents/:id/perps/*` routes and the `/agents/:id/perps` desk. Every
+agent starts in paper mode (live prices, no funds moved); live mode stays off
+until the owner turns it on, signed in. Guide: [Agent Perps](./perps.md).
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `perps_markets`, `perps_market_data` | read | none (an x402 payer needs no account) | Every market with mark, funding, open interest and max leverage; one market with its book, recent trades and funding history. |
+| `perps_account(agent_id)`, `perps_positions(agent_id)` | read | `wallet:read` | Mode, equity, collateral, leverage, limits and alerts; positions with unrealized PnL, funding paid and distance to liquidation, resting orders and triggers, history. |
+| `perps_order_preview` | read | `wallet:read` | Price a market, limit, take-profit or stop-loss order: size, entry, margin, account leverage, fees, liquidation price and every guard. Returns a `preview_id` (two minutes). Moves nothing. |
+| `perps_action_preview(action)` | read | `wallet:read` | The same for `deposit`, `withdraw`, `cancel` and `flatten`, with from, to, amount, asset and chain. Returns a `preview_id` (five minutes). |
+| `perps_order_execute`, `perps_collateral_deposit`, `perps_collateral_withdraw`, `perps_order_cancel`, `perps_flatten` | financial | `wallet:trade` | Execute with `agent_id`, the `preview_id`, `confirm_trade: true` and a unique `idempotency_key`. An order is refused if entry or liquidation moved past the agent's tolerance since the preview. |
+| `perps_limits(agent_id, ...)` | write | `wallet:read` to read, `wallet:write` or `wallet:trade` to change | Read the policy, tighten a cap, set alert thresholds, or halt. Loosening anything is refused here; the owner does that signed in. |
+
+### Solana trading
+
+Research, swap and arbitrage tools over one registry
+(`api/_lib/trading-tools/registry.js`) that also serves the `/api/v1/trading`
+REST routes, so both surfaces share the schema and the refusal codes. Guide:
+[Solana trading tools](./trading-tools.md).
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `token_search`, `get_price`, `get_indicators`, `get_news_feed` | read | none | Find a token by symbol or mint with a safety read; live price; technical indicators over live candles; the news feed for a token. |
+| `get_market_signals` | read | none | One token's live signal read, or with no mint the Solana ecosystem view: macro readings against their baselines, top movers, and anomalies with z-scores, each with its inputs and `as_of`. |
+| `arbitrage_prices`, `arbitrage_quote` | read | none | Cross-venue prices for a pair; the best two-leg route with a simulated worst case and a verdict. Legs are not atomic; refused above $100 unless `accept_size_risk`, and above $1000 always. Never executes. |
+| `swap_quote` | read | none, or `wallet:read` with `agent_id` | Every aggregator side by side with net output after fees and impact, which route won and why. With `agent_id`: the guard chain's verdict, the confirmation table, and a `quote_id` valid five minutes. |
+| `swap_simulate` | read | `wallet:read` | Re-price, run every guard, build and simulate the exact transaction. Signs nothing; the `quote_id` stays valid. |
+| `swap_execute` | financial | `wallet:trade` | Fill a `swap_quote` from the agent wallet with its `quote_id` and `confirm_swap: true`. Re-priced at fill time and refused below the approved minimum; one fill per quote. |
+
+### Portfolio, launch sniper, alerts and duels
+
+An agent's valued portfolio and P&L, control of its pump.fun launch sniper and
+signal subscriptions, launch alert rules, and agent-vs-agent duels. Each tool is
+a thin adapter over the library the dashboards use: `api/_lib/portfolio.js` and
+`api/_lib/portfolio-history.js` (the wallet hub's Portfolio tab and
+`/api/v1/agents/:id/portfolio`), `api/_lib/sniper-control.js` (the sniper
+dashboard), `api/_lib/signal-subscription-control.js` (`/signals`),
+`api/_lib/pump-alert-rules.js` (`/api/alerts/rules` and the pump dashboard), and
+`api/_lib/duel-challenges.js` with `api/_lib/trader-duels.js` (`/duels`).
+Full reference with examples: [MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels).
+
+| Tool | Tier (group) | Scope | What it does |
+|------|--------------|-------|--------------|
+| `get_portfolio(agent_id, network?, max_holdings?)` | read (wallet) | `wallet:read` | Live valuation: SOL and every SPL holding in SOL and USD, FIFO cost basis and unrealized P&L per holding, P&L by source, risk flags. Records a net-worth point. |
+| `get_balance_history(agent_id, network?, days?, max_points?)` | read (wallet) | `wallet:read` | Recorded net-worth points over 1 to 365 days with change, peak and max drawdown, plus the exact cumulative realized P&L per day. |
+| `get_pnl(agent_id, network?)` | read (wallet) | `wallet:read` | Realized, unrealized and total P&L in SOL and USD, by source, with win rate, ROI, profit factor and the biggest open winners and losers. |
+| `sniper_status(agent_id?, network?)` | read (trading) | `wallet:read` | Whether the sniper worker is live, and each of your strategies: armed or not, sizing, exits, today's spend and open positions. |
+| `sniper_activate_preview(...)` | read (trading) | `wallet:read` | What arming would do: agent and wallet with its live SOL balance, per-trade size, daily budget, trigger, exits, what the SOL is spent on, whether real funds are at risk, and every blocking check. Returns a `preview_id`. |
+| `sniper_activate(...)` | financial (trading) | `wallet:trade` or `agents:write` | Arm the sniper with exactly the previewed agent, network and sizing, `preview_id` and `confirm_spend: true`. Mainnet needs the signed real-funds agreement. |
+| `sniper_deactivate(agent_id, network?, kill?)` | write (trading) | `wallet:trade` or `agents:write` | Disarm; `kill: true` also sets the kill switch. Open positions stay under their exits. |
+| `sniper_subscribe(action, ...)` | write (trading) | `wallet:trade` or `agents:write` | List feeds and your subscriptions; subscribe an agent to a signal feed on paper; pause, resume, stop or kill a subscription. Live mode is owner-only on `/signals`. |
+| `alert_rule_create(kind, ...)` | write (intelligence) | `wallet:trade` or `agents:write` | Create a pump.fun alert rule, including `launch_match` (a new launch that passes name pattern, market cap band, safety score, creator history, risk flag and socials filters). Always delivers to you. |
+| `alert_rule_list(rule_id?)` | read (intelligence) | `wallet:read` | Your rules with their filters, state, last fire and recent deliveries. With `rule_id`, returns the `preview_id` `alert_rule_delete` needs. |
+| `alert_rule_delete(rule_id)` | financial (intelligence) | `wallet:trade` or `agents:write` | Delete a rule for good, with the `preview_id` from `alert_rule_list` for the same rule and `confirm_delete: true`. |
+| `duel_challenge(agent_id, opponent_agent_id, window?, message?)` | write (predictions) | `wallet:trade` or `agents:write` | Challenge another public agent to a day or week trading duel. The opponent's owner is notified. Free-play points, no funds. |
+| `duel_accept(challenge_id, response?)` | write (predictions) | `wallet:trade` or `agents:write` | Accept or decline a challenge to your agent, or cancel one you sent. Accepting opens the duel. |
+| `duel_details(duel_id or challenge_id)` | read (predictions) | none for a duel, sign-in for a challenge | One duel with its window, phase, standings and crowd calls, or one challenge with its duel. |
+| `duel_markets(view?, ...)` | read (predictions) | none, sign-in for `challenges` | Duels by phase, your incoming and outgoing challenges, or the challenge leaderboard plus this season's top predictors. |
+
 ### Resources and prompts
 
 This server also answers `resources/*` and `prompts/*`: the `three://` resources
@@ -82,7 +145,9 @@ the scope it needs, not a bare JSON-RPC error:
 ```
 
 The marketplace tools also use `agents:read` and `agents:write` (see the
-tables above). The three wallet scopes (`wallet:read`, `wallet:write`, `services:write`) are advertised
+tables above). `swap_execute` needs `wallet:trade`, the narrower grade of
+`wallet:write` that can swap but never send value out of the wallet; a
+`wallet:write` grant satisfies it. The three wallet scopes (`wallet:read`, `wallet:write`, `services:write`) are advertised
 in [`/.well-known/oauth-authorization-server`](https://three.ws/.well-known/oauth-authorization-server),
 may be requested by any client (including dynamically-registered ones), and are
 approved by name on the consent screen. Ask for them in the `scope` parameter of

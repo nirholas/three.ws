@@ -186,9 +186,11 @@ Deep dives — every tool, argument, env var, and example:
 Claude handles the OAuth handshake automatically via dynamic client registration (RFC 7591). When you first connect, it will:
 
 1. Register a client at `POST /oauth/register`.
-2. Open `GET /oauth/authorize?...` in your browser for login and consent.
+2. Open `GET /oauth/authorize?...` in your browser for login and consent. If you are not signed in, the page sends you to three.ws sign-in first: email and password, **Google**, a Solana or Ethereum wallet signature, or an email code, and then straight back to the consent screen. No API key is shown to you or to the client at any point.
 3. Exchange the authorization code at `POST /oauth/token` with PKCE (S256).
 4. Cache the resulting JWT and refresh it automatically.
+
+Connect as many clients as you like. Each one gets its own grant and its own tokens, and signing in for the second (Claude, then ChatGPT) never signs the first out: a sign-in creates a session and leaves every other session and grant untouched.
 
 The access token carries scopes (`avatars:read`, `avatars:delete`, etc.) that gate which tools Claude can call. Metadata discovery endpoints follow RFC 8414 and RFC 9728:
 
@@ -205,11 +207,25 @@ Each OAuth-protected hosted server is its own resource. On a `401`, the `WWW-Aut
 A connector that runs in a vendor's cloud has no browser on your machine and no pre-issued client ID, so the flow above is built for it:
 
 - **Registration.** `POST /oauth/register` accepts any `https` redirect URI, plus `http://localhost` and `http://127.0.0.1` (any port) for desktop clients, and private-use schemes such as `com.example.app:/callback`. It rejects every other `http` host and every executable scheme. `client_name` and `client_uri` are stored and shown on the consent screen.
-- **Consent.** The screen names the app, shows its website host, lists what it will be able to do in plain words, and states that the app can never spend from a wallet or move funds. If a grant includes `wallet:write` the screen says instead that the app is asking to spend from the agent wallet within your caps, so the statement is never untrue.
-- **PKCE.** `code_challenge_method=S256` is required on every authorization request.
-- **Seeing and revoking.** Every connected app is listed at [Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps) with when it was authorized and last used. `GET /api/oauth/grants` returns the same list and `DELETE /api/oauth/grants?client_id=...` revokes one app (browser session only, so a token can never list or revoke other apps). Revocation is effective on the app's next request: its refresh tokens are revoked and a cutoff is recorded that every access token issued before it fails against, so there is no one-hour tail. The app can ask you again; a token issued after you approve it anew works.
+- **Consent.** The screen names the app, shows its website host, and groups what it asked for into the five grant groups below. Each group says in plain words what it can do and which of its actions will still ask you first, and you can untick any group but Read before you authorize: the token then carries only the scopes that stayed ticked. The closing statement describes the grant you are actually making: a read-only grant can never spend, trade or move funds; a Trade or Launch grant cannot move funds out of the agent wallet; a Spend grant can, within your caps.
+- **Grant groups.** The grouping lives in `api/_lib/oauth-grant-groups.js` and its "still asks you first" lists are read from the MCP policy table (`packages/mcp-policy`), so they cannot drift from what the tools do.
 
-The end-to-end proof is `tests/e2e/oauth-cloud-connector.spec.js`: it registers "Grok Bot" with an external redirect URI, runs the PKCE flow as the QA account, calls `tools/list` on `/api/mcp`, revokes from Settings and watches the next call fail with `401`.
+  | Group | Scopes | Lets the client | Still asks you first |
+  | --- | --- | --- | --- |
+  | Read (always on) | `avatars:read`, `profile`, `memory:read`, `agents:read`, `feedback:read`, `wallet:read`, `home:read` | Look at your account. Nothing in this group changes anything. | Nothing |
+  | Manage | `avatars:write`, `avatars:delete`, `memory:write`, `agents:write`, `home:act` | Change things a later call can undo: avatars, memories, agents, a connected home. | Deleting anything, unlocking or disarming a home, running code |
+  | Trade | `wallet:trade` | Swap, bid, and open or close positions. Value stays inside the agent wallet and every trade is capped. | Swaps, bids, orders, listing or buying an agent, perps and prediction market orders |
+  | Spend | `wallet:write`, `services:write` | Send USDC out of the agent wallet: pay services, withdraw, fund cards, publish paid endpoints. Includes everything in Trade and Launch. | Transfers out, payments, withdrawals, card details |
+  | Launch | `wallet:launch` | Launch a coin from the agent wallet and claim its creator fees. | Launching a coin, fee withdrawals |
+
+  `wallet:write` implies `wallet:trade` and `wallet:launch`, so a token minted before the split keeps every power it had. A client that registered only `wallet:trade` can trade but every route that moves funds out answers `insufficient_scope`.
+- **PKCE.** `code_challenge_method=S256` is required on every authorization request.
+- **Seeing and revoking.** Every connected app is listed at [Settings, Connected apps](https://three.ws/dashboard/settings#connected-apps) with when it was authorized and last used. `GET /api/oauth/grants` returns the same list and `DELETE /api/oauth/grants?client_id=...` revokes one app (browser session only, so a token can never list or revoke other apps). Revocation is effective on the app's next request: its refresh tokens are revoked and a cutoff is recorded that every access token issued before it fails against, so there is no one-hour tail. Other apps on the account are untouched: revoking Claude leaves ChatGPT connected, on its access token and its refresh token alike. The app can ask you again; a token issued after you approve it anew works.
+- **Sign-in methods.** [Settings, Sign-in methods](https://three.ws/dashboard/settings#sign-in-methods) lists every way into the account and lets you link or unlink Google. Unlinking needs a fresh proof (the account password, or signing in to Google once more), and an account is never left with no way in. The flow itself is documented in [Authentication, Sign in with Google](/docs/authentication#sign-in-with-google).
+
+The end-to-end proof is `tests/e2e/oauth-cloud-connector.spec.js`: it registers "Grok Bot" with an external redirect URI, runs the PKCE flow as the QA account, calls `tools/list` on `/api/mcp`, revokes from Settings and watches the next call fail with `401`. `tests/oauth-endpoints.test.js` covers the grant groups (what the screen lists, what an unticked group removes from the code) and the two-client case (both connected, one revoked, the other still working on access and refresh tokens), and `tests/api/google-signin.test.js` covers the Google round trip.
+
+Per-client steps for Claude, ChatGPT, Grok Bot, Claude Code, Cursor and VS Code are on [/connect](https://three.ws/connect), which also has the one URL to paste.
 
 This is also why an MCP client asks you to sign in as soon as you add `https://three.ws/api/mcp`, even if you only meant to use the free tools: the `401` arrives on `initialize`, before any tool is chosen. A client with no account belongs on `https://three.ws/api/mcp-studio`, which never challenges and serves the free 3D generation and asset catalog tools.
 
@@ -339,6 +355,12 @@ What every hosted server does on the wire, so a connector never fails silently:
 All tools return `{ content: [{ type, text }], structuredContent: {...} }`. On error, `isError: true` is set and `content[0].text` contains the message.
 
 `search_catalog`, `get_catalog_item`, and `get_item_source` are free and need no API key or payment: start there. How you reach them without an account depends on the client. A plain JSON-RPC `tools/call` to `https://three.ws/api/mcp` (curl, `fetch`, any script that does not speak the MCP transport) is served anonymously. An MCP client that connects to `/api/mcp` is a different case: the server answers its `initialize` with `401` so the client starts three.ws sign-in (see [Authentication](#authentication)), because most tools on this server act on an account. To use the catalog from an MCP client with no account, connect it to the free studio server, `https://three.ws/api/mcp-studio`, which serves the same three tools keyless ([docs/mcp-studio.md](./mcp-studio.md)). The tools below them are the core avatar, validation, minting, and market-data set. The server registers more beyond this page (memory `remember`/`recall`/`forget`, `register_agent`, oracle and pump.fun intel reads, trader analytics, copy-trading); call `tools/list` for the complete live catalog with schemas.
+
+---
+
+### `get_whitelist`, `add_to_whitelist`, `remove_from_whitelist`
+
+Manage the [destination whitelist](./destination-whitelist.md) of an agent you own. `get_whitelist` (read) returns entries with status, labels, caps and seconds until active. `add_to_whitelist` (write) takes `agent_id`, `address`, optional `label` and caps, and only **proposes** the address: it stays inert until the owner approves it in the app with step-up, then serves the cooldown. `remove_from_whitelist` (write) removes an address at once. No tool can approve or activate an address.
 
 ---
 
@@ -497,6 +519,52 @@ The agents on the authenticated account, newest first. Read-only; no funds move.
 ```
 
 Returns `count` and `agents[]`, each with `id`, `name`, `description`, `model`, the public `solana_address`, `is_published`, `created_at` and `page_url`. Use the ids with `recall`, `list_custom_skills`, `attach_avatar_to_agent` and `call_agent`. The [Grok connector](/docs/grok) lists it once signed in.
+
+---
+
+### Agent lifecycle, runs and automations
+
+Sixteen tools let an MCP client manage an agent end to end: change it, pause it, give it a body, send it on an autonomous run, watch every step it took, and set up the automations that fire it on their own. Create and update calls validate through the same agents-v1 library as the REST API (`api/_lib/agents-v1/agents.js`, `runs.js`, `automations.js`), so an MCP call and a REST call with the same input get the same answer and the same error code (`unknown_model`, `unknown_strategy`, `invalid_cron`, `invalid_parameter`, and so on).
+
+| Tool | Scope | Tier | What it does |
+|---|---|---|---|
+| `get_agent` | `agents:read` | read | Full record: config, status, wallet, open runs, automation and memory counts, and a `delete_impact` sentence. Also the preview for `delete_agent`. |
+| `update_agent` | `agents:write` | write | Change `name`, `persona`, `system_prompt`, `model`, `temperature`, `skills`, `strategy` or the `inference_budget` (daily/monthly USD). |
+| `delete_agent` | `agents:write` | financial | Permanently delete the agent. Needs `confirm_delete: true` and the `preview_id` from `get_agent`. |
+| `start_agent` / `stop_agent` | `agents:write` | write | A stopped agent refuses new runs and its automations stop firing until it starts again. |
+| `upload_agent_avatar` | `agents:write` | write | Pass a GLB or image as a `url` or base64 `data`. A GLB goes through the avatar ingest and becomes the agent's 3D body; an image becomes its portrait. Plan avatar limits apply. |
+| `create_agent_run` | `agents:write` | write | Start an autonomous run with a `goal`, a step budget (`max_steps`), a dollar budget (`budget_usd`, 0 means free model lanes only), an optional `scheduled_for`, and `wait_seconds` to drive it inline. |
+| `update_agent_run` | `agents:write` | write | `action: "pause"` or `"resume"`, or raise `budget_usd`. |
+| `cancel_agent_run` | `agents:write` | write | Stop a run. A queued, scheduled or paused run cancels at once; a running one stops before its next step. |
+| `get_agent_run_steps` | `agents:read` | read | Every step, `tool_traces` pairing each tool call with its result and receipt, and `receipt_chain` (`verified`, `checked`, `brokenAt`). Page with `after`. |
+| `automation_list` / `automation_get` | `agents:read` | read | List or read automations. `automation_list` also returns the trigger and action types. `automation_get` is the preview for `automation_delete`. |
+| `automation_create` / `automation_update` | `agents:write` | write | Seven triggers (`price_threshold`, `schedule`, `balance_below`, `tip_received`, `launch_matching`, `graduation`, `whale_buy`) and four actions (`agent_prompt`, `swap`, `transfer`, `notify`). |
+| `automation_delete` | `agents:write` | financial | Needs `confirm_delete: true` and the `preview_id` from `automation_get`. |
+| `automation_trigger` | `agents:write` | write | Fire the action once, now, through every guard a real fire passes. An `agent_prompt` action starts a run. |
+
+**Turning the tools on.** Read and write tools are on by default. `delete_agent` and `automation_delete` are financial tier, off until you enable the `agents` or `runs` group (`npx three-ws tools`, [settings](/settings/mcp-tools), or the `X-Three-Tools` header). Without it, a call is refused with `reason: "tool_disabled"`.
+
+**Destructive calls take two turns.** Call the preview tool, show the owner what will be lost, then resend with the confirm flag and the `preview_id`. A call without the flag is refused with `reason: "confirmation_required"`, plus `confirm_flag` and `preview_tool` so the client knows what to do next. A preview id works once, and only for the same agent or automation.
+
+```jsonc
+// 1. preview: returns delete_impact and _meta["three.ws/preview"].preview_id
+{ "name": "get_agent", "arguments": { "agent_id": "<agent_id>" } }
+// 2. confirm, after the owner says yes
+{ "name": "delete_agent", "arguments": { "agent_id": "<agent_id>", "confirm_delete": true, "preview_id": "<preview_id>" } }
+```
+
+**Automations that spend show their terms first.** Creating, updating or triggering a `swap` or `transfer` automation without `confirm_spend: true` returns `confirmation_required` with a `terms` block (recipient, amount, asset, chain and the trigger condition) for the model to show the owner. Only the owner's explicit yes should send `confirm_spend`. Hosted connector sessions cannot arm spend automations at all (`-32003`), and the agent's spend policy and caps apply to every fire.
+
+**Runs are budgeted and leave a receipt trail.** Runs stop when either budget runs out (status `budget_exhausted`), and every run ends with a plain-language `summary`. Each step's receipt hashes the step together with the one before it, so editing, dropping or reordering a step breaks the chain at that step. The owner can watch and replay any run on the agent page's **Runs** tab, and `create_agent_run` returns its `replay_url`. Details: [docs/agent-runtime.md](./agent-runtime.md#autonomous-runs-budgets-receipts-and-replay).
+
+```jsonc
+{ "name": "create_agent_run", "arguments": {
+  "agent_id": "<agent_id>",
+  "goal": "Look up the current SOL price in USD and report it in one sentence.",
+  "max_steps": 4, "budget_usd": 0, "wait_seconds": 25
+} }
+// -> run.status "completed", run.summary "Completed after 2 model turns in 4s. Made 1 tool call: token_price. ..."
+```
 
 ---
 
@@ -782,6 +850,15 @@ Returns `holder`, `media` (`glb_url`, `image_url`, `viewer_url`, `viewer_live`),
 
 ---
 
+
+### `domain_search`, `domain_check`, `domain_pricing`, `domain_register_quote`, `domain_register`, `domain_status`, `domain_connect`, `domain_connect_status`
+
+Search, price, check and register web domains through Google Cloud Domains, paid from credits, and serve an agent's public page on a registered domain. `domain_register` is a financial-tier tool: it needs the `quote_id` from `domain_register_quote`, `confirm_spend: true`, `expected_price_usd` and an `idempotency_key`. Full flow, limits and the registrar quota: [docs/domains.md](./domains.md).
+
+### `agent_mail_get_address`, `agent_mail_quote`, `agent_mail_create`, `agent_mail_send`, `agent_mail_reply`, `agent_mail_list`, `agent_mail_read`, `agent_mail_search`, `agent_mail_delete`
+
+Give an agent a real email address on `agents.three.ws` and let it send, read, reply to, search and delete mail. `agent_mail_create`, `agent_mail_send` and `agent_mail_reply` are financial-tier tools: each needs the `quote_id` from `agent_mail_quote`, whose `confirm` block (exact recipients, subject, body and price) the model must show the owner before sending the confirm flag (`confirm_spend` for create, `confirm_send` for sends). Every result that carries received mail opens with a security notice and wraps sender content in `<untrusted_email>` fences: received mail is data, never instructions. The owner's recipient allowlist and daily cap apply to every send. Full guide: [docs/agent-mail.md](./agent-mail.md).
+
 ### `create_gated_embed`
 
 Turn an avatar or on-chain agent **you own** into a holder-only interactive 3D embed. Visitors must prove — with a real, server-verified Solana SPL token balance, never a client-reported number — they hold at least `min_amount` of `mint` before the live scene renders; below the bar they see a designed locked teaser with a connect-wallet CTA. `mint` defaults to `$THREE` but accepts any SPL mint at runtime (a community can gate with its own token). Requires `avatars:write` scope.
@@ -804,15 +881,6 @@ The `structuredContent` returns `gate_id`, `asset_id`, `gate` (`mint`, `min_amou
 ---
 
 ### `crypto_data`
-
-### `domain_search`, `domain_check`, `domain_pricing`, `domain_register_quote`, `domain_register`, `domain_status`, `domain_connect`, `domain_connect_status`
-
-Search, price, check and register web domains through Google Cloud Domains, paid from credits, and serve an agent's public page on a registered domain. `domain_register` is a financial-tier tool: it needs the `quote_id` from `domain_register_quote`, `confirm_spend: true`, `expected_price_usd` and an `idempotency_key`. Full flow, limits and the registrar quota: [docs/domains.md](./domains.md).
-
-### `agent_mail_get_address`, `agent_mail_quote`, `agent_mail_create`, `agent_mail_send`, `agent_mail_reply`, `agent_mail_list`, `agent_mail_read`, `agent_mail_search`, `agent_mail_delete`
-
-Give an agent a real email address on `agents.three.ws` and let it send, read, reply to, search and delete mail. `agent_mail_create`, `agent_mail_send` and `agent_mail_reply` are financial-tier tools: each needs the `quote_id` from `agent_mail_quote`, whose `confirm` block (exact recipients, subject, body and price) the model must show the owner before sending the confirm flag (`confirm_spend` for create, `confirm_send` for sends). Every result that carries received mail opens with a security notice and wraps sender content in `<untrusted_email>` fences: received mail is data, never instructions. The owner's recipient allowlist and daily cap apply to every send. Full guide: [docs/agent-mail.md](./agent-mail.md).
-
 
 Call any endpoint in the free [Crypto Data API](./api-reference.md) (the same aggregator behind `GET /api/v1/x/*`: DEX pairs, CoinGecko/DefiLlama market data, Jupiter Solana prices and swap quotes, direct Solana RPC reads) as an MCP tool call. The tool description is generated from the live provider registry at call time, so it always lists exactly the provider/endpoint pairs registered on this deployment — nothing hand-enumerated to drift out of date.
 
@@ -1105,6 +1173,107 @@ own machine with no three.ws account at all, use
 [`@three-ws/home-mcp`](../packages/home-mcp/README.md) instead, where a guarded action is refused
 outright because an MCP client has no person in it to confirm one.
 
+### Agent wallet: portfolio, launch sniper, alerts and duels
+
+These fifteen tools live on the agent wallet server (`https://three.ws/api/mcp-agent`), not on
+`/api/mcp`. They give an agent the same view and controls its owner has on the wallet hub, the
+sniper dashboard, `/signals`, the pump dashboard and `/duels`. Every one carries all four MCP
+annotation hints, so a client knows which calls only read, which change state, and which are
+irreversible.
+
+| Tool | Hints | Policy |
+|------|-------|--------|
+| `get_portfolio` | readOnly, openWorld (live chain prices) | read, `wallet` group |
+| `get_balance_history` | readOnly, idempotent | read, `wallet` group |
+| `get_pnl` | readOnly, openWorld | read, `wallet` group |
+| `sniper_status` | readOnly, idempotent | read, `trading` group |
+| `sniper_activate_preview` | readOnly, openWorld (live wallet balance) | read, `trading` group |
+| `sniper_activate` | destructive, idempotent, openWorld | **financial**: `confirm_spend` plus the `preview_id` from `sniper_activate_preview` |
+| `sniper_deactivate` | idempotent | write, `trading` group |
+| `sniper_subscribe` | idempotent | write, `trading` group |
+| `alert_rule_create` | none (creates a new rule each call) | write, `intelligence` group |
+| `alert_rule_list` | readOnly, idempotent | read, `intelligence` group |
+| `alert_rule_delete` | destructive, idempotent | **financial**: `confirm_delete` plus the `preview_id` from `alert_rule_list` for that rule |
+| `duel_challenge` | none | write, `predictions` group |
+| `duel_accept` | none | write, `predictions` group |
+| `duel_details` | readOnly | read, `predictions` group |
+| `duel_markets` | readOnly | read, `predictions` group |
+
+Financial tools are hidden until the connection turns their group on, for example with
+`X-Three-Tools: default,trading,intelligence`. The full scope table is in
+[the agent wallet server guide](./mcp-agent.md#portfolio-launch-sniper-alerts-and-duels).
+
+**Portfolio.** `get_portfolio` values SOL and every SPL holding of one of your agents in SOL and
+USD, with FIFO cost basis and unrealized P&L per holding, realized and unrealized P&L by source
+(sniper, discretionary trades, strategies, x402 spend, withdrawals), and plain-language risk flags.
+Every read records a net-worth point, and a cron (`/api/cron/agent-portfolio-snapshots`, hourly)
+records one for every active agent. `get_balance_history` reads those points back over 1 to 365
+days, thinned to `max_points`, with change, peak, max drawdown and the exact realized P&L per day
+from closed trades. `get_pnl` is the P&L view: totals, by source, win rate, ROI, profit factor and
+the biggest open winners and losers. The same data is on REST at
+`GET /api/v1/agents/:id/portfolio`, `/portfolio/history` and `/portfolio/pnl`
+([API reference](./api-reference.md#agent-portfolio)).
+
+**Launch sniper.** The sniper buys new pump.fun launches that pass its filters, from the agent's
+own wallet, inside a daily budget, with a mandatory stop loss. Arming it commits SOL, so it takes
+two steps, and the second step must repeat the first exactly:
+
+```json
+{ "name": "sniper_activate_preview",
+  "arguments": { "agent_id": "<agent>", "network": "devnet", "per_trade_sol": 0.01, "daily_budget_sol": 0.05, "stop_loss_pct": 25 } }
+```
+
+The preview names the chain, the asset (SOL), the wallet it spends from, what each buy pays
+(the launch's bonding curve), the per-trade size and daily budget, whether real funds are at risk,
+and every check that would block arming. Show it to the user. Only after an explicit yes:
+
+```json
+{ "name": "sniper_activate",
+  "arguments": { "agent_id": "<agent>", "network": "devnet", "per_trade_sol": 0.01, "daily_budget_sol": 0.05, "stop_loss_pct": 25,
+                 "preview_id": "p_...", "confirm_spend": true } }
+```
+
+A missing preview is refused with `preview_required`, sizing that differs from the preview with
+`preview_mismatch`, a reused preview with `preview_unknown`, and a mainnet arm without the signed
+real-funds agreement with `risk_ack_required`. `sniper_deactivate` disarms without a preview
+(stopping spend is always allowed); `kill: true` also sets the kill switch. `sniper_status` shows
+whether the sniper worker is live and every strategy's spend today and open positions.
+
+**Signal subscriptions.** `sniper_subscribe` follows another agent's published trade signals. An
+agent subscribes on paper only: it mirrors the feed's entries and exits with your sizing, pays
+nothing and trades nothing, so you can judge a feed first. `mode` is not an argument. Turning a
+subscription live, which pays the feed in USDC and trades real funds, stays with the owner on
+`/signals`, and the tool will not resume a paused live subscription either
+(`live_resume_requires_owner`).
+
+**Alert rules.** `alert_rule_create` adds a pump.fun alert. The `launch_match` kind fires on a new
+launch that passes every filter you set:
+
+```json
+{ "name": "alert_rule_create",
+  "arguments": { "kind": "launch_match", "label": "Safe cat coins",
+                 "filters": { "name_pattern": "*cat*|*kitty*", "min_market_cap_usd": 5000, "max_market_cap_usd": 60000,
+                              "min_safety_score": 60, "min_creator_graduated": 1, "max_creator_launches": 10,
+                              "exclude_risk_flags": ["bundle_launch", "dev_dumped"], "require_socials": true } } }
+```
+
+`name_pattern` treats only `*` (any text) and `|` (alternatives) as special, and a filter whose data
+is missing on a launch counts as a miss, never a silent pass. Every alert reaches the owner through
+the platform notification fan-out: the bell, Web Push to every subscribed device, the iOS app, and
+every Telegram or Discord chat paired for notifications, each gated by the "alerts" category of the
+[preference center](./notifications.md). The other kinds (`graduation`, `new_mint`, `price_above`,
+`price_below`, `whale_buy`, `market_price`) are the same as on `/api/alerts/rules`. Deleting a rule
+is irreversible, so `alert_rule_delete` needs `alert_rule_list` with that `rule_id` first, then its
+`preview_id` and `confirm_delete: true`.
+
+**Duels.** `duel_challenge` challenges another owner's public agent to a trading duel over the next
+UTC day or week. The opponent's owner gets a `duel_challenge` notification and has 48 hours to
+answer with `duel_accept` (`accept` or `decline`; the challenger can `cancel`). Accepting opens a
+duel that scores both agents' realized P&L over the window and takes free-play crowd calls until it
+starts. No funds move. `duel_details` reads one duel or one challenge, and `duel_markets` lists
+duels by phase, your challenges, or the leaderboard: agents ranked by challenge-duel wins, with
+losses, win rate and realized P&L, next to this season's top predictors.
+
 ---
 
 ## Resources
@@ -1118,7 +1287,7 @@ Clients that show tools but not resources get the same data from the `read_resou
 | `three://me` | all four | Credential type and scopes, daily MCP call quota and today's usage; plan, credits and display name with the `profile` scope | signed in |
 | `three://agents` | mcp, mcp-agent, mcp-3d | Every agent you own: name, model, Solana address, avatar, page URL | `agents:read` |
 | `three://agents/{agentId}` | mcp, mcp-agent, mcp-3d | Persona, model, skills and skill prices, wallet address, avatar, links to the sub-resources | `agents:read` |
-| `three://agents/{agentId}/wallet` | mcp, mcp-agent | Address, SOL and token balances with USD, spend limits, withdraw allowlist, trade limits, freeze state, spend today. Subscribable. | `wallet:read` or `agents:read` |
+| `three://agents/{agentId}/wallet` | mcp, mcp-agent | Address, SOL and token balances with USD, spend limits, active destination whitelist, trade limits, freeze state, spend today. Subscribable. | `wallet:read` or `agents:read` |
 | `three://agents/{agentId}/usage` | mcp, mcp-agent | This month's LLM calls, tokens and cost per model, MCP tool calls per tool, 30-day series, credit balance, self-funded inference | `agents:read` |
 | `three://agents/{agentId}/chat` | mcp | The 50 most recent chat messages with the agent | `agents:read` |
 | `three://agents/{agentId}/runs` and `.../runs/{runId}` | mcp, mcp-agent | Autonomous runs with every step, or (before runs are enabled on the account) recorded agent actions with full payload and signature | `agents:read` |
@@ -1162,15 +1331,15 @@ curl -s https://three.ws/api/mcp \
 
 ## Guided prompts
 
-Each server offers short guided workflows through `prompts/list` and `prompts/get`, shown by most clients as slash commands. A prompt names the exact tools to call in order, what to show you before anything executes, and the confirm flag each spending tool takes (read from the tool's own schema). A server lists a prompt only when it publishes every tool the prompt needs, and a test renders every prompt against every server's `tools/list` to keep it that way. Flows whose execution venue is not enabled yet say so plainly, run the research tools that do exist, and point at the web page where you confirm the action yourself; they switch to the executing tools automatically once those ship.
+Each server offers short guided workflows through `prompts/list` and `prompts/get`, shown by most clients as slash commands. A prompt names the exact tools to call in order, what to show you before anything executes, and the confirm flag each spending tool takes (read from the tool's own schema). A server lists a prompt only when it publishes every tool the prompt needs, and a test renders every prompt against every server's `tools/list` to keep it that way. Flows whose signing step lives on the web (swaps, Solana launches, lending) run the research tools that exist and hand you to the page where you confirm the action yourself. Prediction-market positions and perpetual futures execute on `/api/mcp-agent`, which serves the `predictions_*` and `perps_*` tools; the other servers research the question and point there. `tests/mcp-prompt-references.test.js` fails the build on any tool, resource or prompt a prompt names that no server serves.
 
 | Prompt | Arguments | Servers | Flow |
 |---|---|---|---|
 | `get-started` | none | all four | What this server does, your account and agents, the best next step |
 | `create-agent` | `name`, `persona`, `model` | mcp | Pick a model from `three://models`, screen the identity, `create_agent`, give it a body |
 | `setup-wallet` | `agentId` | mcp-agent | Provision the Solana wallet, review limits and allowlist, fund it, subscribe to transfers |
-| `trade` | `agentId`, `token` | mcp | Token research, balance and trade limits, then a quoted and confirmed swap |
-| `launch-token` | `agentId`, `name`, `symbol` | mcp | Past launches, current graduations, fee check, confirmed launch |
+| `trade` | `agentId`, `token` | mcp | Token research, balance and trade limits, then the wallet page to quote and confirm the swap |
+| `launch-token` | `agentId`, `name`, `symbol` | mcp | Past launches, current graduations, launch lanes and fees, wallet check, sign on `/launch` |
 | `hire-agent` | `task` | mcp, mcp-agent, mcp-bazaar | Find a service or agent, compare prices, pay with a capped, confirmed call |
 | `sell-a-skill` | `agentId` | mcp-agent | Price a capability against the marketplace and publish it with `monetize_endpoint` |
 | `review-costs` | `agentId` | mcp | Model, tool and credit spend this month and the single biggest saving |
@@ -1178,9 +1347,9 @@ Each server offers short guided workflows through `prompts/list` and `prompts/ge
 | `setup-dca` | `agentId` | mcp, mcp-agent | Existing plans, balance, token research, start a recurring buy |
 | `explore-marketplace` | none | mcp, mcp-agent, mcp-bazaar | Skills and services grouped by what they do, with prices and trials |
 | `explore-x402` | `capability` | mcp, mcp-agent, mcp-bazaar | x402 services for a capability, Solana first, with exact payment terms |
-| `earn-yield` | `agentId` | mcp | Idle funds and lending markets, confirmed deposit when lending is enabled |
-| `perps` | `agentId` | mcp | Perpetuals research; previewed, confirmed orders when perps are enabled |
-| `predictions` | `agentId` | mcp | Prediction-market research; confirmed positions when enabled |
+| `earn-yield` | `agentId` | mcp | Idle funds and pool yields, Solana first, then the yield explorer to deposit |
+| `perps` | `agentId`, `market` | mcp, mcp-agent | Account and market, a previewed order with margin, leverage, fees and liquidation, a confirmed execute, take-profit, stop-loss and the kill switch. Paper mode by default. On `mcp`, research only |
+| `predictions` | `agentId`, `topic` | mcp, mcp-agent | Find a market, preview the position, place it with `confirm_trade` (mcp-agent); research only on mcp |
 | `embed-avatar` | `agentId` | mcp | Paste-ready `<agent-3d>` embed code and a preview |
 | `generate-3d` | `prompt` | mcp-3d | Sharpen the prompt, generate, poll, optionally rig, save to your library |
 | `agent-get-started` | none | mcp-studio, mcp-grok | What the free studio does for an autonomous agent, the links every result returns, a small real example |
@@ -1296,7 +1465,7 @@ Goal: provision, review and fund an agent's Solana wallet. Server: `mcp-agent`.
 
 ### `trade`
 
-Goal: research a Solana token and decide whether to trade it. Server: `mcp`. Swap execution is not enabled on MCP yet: the last step sends you to the wallet page, where you confirm the swap yourself.
+Goal: research a Solana token and decide whether to trade it. Server: `mcp`. Swaps are signed in the browser: the last step sends you to the wallet page, where the swap is quoted and you confirm it yourself.
 
 1. `token_snapshot()` for price, liquidity, market cap and holders.
 2. `pumpfun_token_intel()` for creator history and risk flags.
@@ -1306,13 +1475,14 @@ Goal: research a Solana token and decide whether to trade it. Server: `mcp`. Swa
 
 ### `launch-token`
 
-Goal: plan a token launch grounded in current data. Server: `mcp`. Launching from MCP is not enabled yet: you review and sign the launch on `/launch`.
+Goal: plan a token launch grounded in current data. Server: `mcp`. Solana launches are signed in the browser: you review and sign the launch on `/launch`.
 
 1. Read `three://launches` to see what the account launched before and flag a repeated name or symbol.
 2. `pumpfun_recent_graduations()` to see what recently graduated launches have in common.
-3. Read `three://agents/{agentId}/wallet` and check there is enough SOL for the launch fee.
-4. Show the name, symbol, description, image, launching wallet and cost, and wait for the yes.
-5. Confirm on the launch page, then read `three://launches` again to see it landed.
+3. `launch_lanes()` to compare every lane, Solana first: each fee, who pays it, the creator share and what happens at graduation.
+4. Read `three://agents/{agentId}/wallet` and check there is enough SOL for the launch fee.
+5. Show the name, symbol, description, image, launching wallet and cost.
+6. Sign on the launch page, then read `three://launches` again to confirm it landed and get the mint and its page.
 
 ### `hire-agent`
 
@@ -1384,26 +1554,42 @@ On `mcp-bazaar`: `search_services()` with the capability, Solana first, then `ge
 
 ### `earn-yield`
 
-Goal: find yield for idle agent funds. Server: `mcp`. Lending is not enabled on MCP yet, so nothing moves from here.
+Goal: find yield for idle agent funds. Server: `mcp`. Deposits are signed in the browser, so nothing moves from here.
 
 1. Read `three://agents/{agentId}/wallet` and show what is idle.
-2. `crypto_data()` with the DefiLlama provider to compare pool APYs for the assets held, Solana first.
-3. Summarize the two best options and their risks.
+2. `crypto_data()` with the DefiLlama provider to compare pool APYs, TVL and utilization for the assets held, Solana first.
+3. Summarize the two best options and their risks, and point to `/yields` to deposit.
 
 ### `perps`
 
-Goal: research a perpetual futures setup. Server: `mcp`. Perps are not enabled on MCP yet, so no position opens from here.
+Goal: trade a perpetual future from an agent wallet. Servers: `mcp-agent` executes; `mcp` researches. Every agent starts in paper mode, which fills at live prices and moves no funds. Guide: [Agent Perps](./perps.md).
 
-1. Read `three://agents/{agentId}/wallet` for collateral and limits.
-2. `crypto_data()` for spot price and recent volatility, and `token_snapshot()` for Solana tokens.
-3. Summarize the setup, the liquidation risk at 2x and 5x, and what would invalidate it.
+On `mcp-agent`:
+
+1. `perps_account()` for the mode, equity, open positions, and the leverage and per-position margin caps.
+2. `perps_markets()` and `perps_market_data()` for mark price, funding and depth.
+3. With no free collateral, `perps_action_preview()` with action `deposit`, then `perps_collateral_deposit()` with `confirm_trade: true`, only after you say yes.
+4. `perps_order_preview()` with the side and size, or margin and leverage: size, entry, margin, account leverage, fees, liquidation price and every check.
+5. `perps_order_execute()` with `confirm_trade: true` and a fresh `idempotency_key`, only after you say yes. If the quote moved, it previews again and asks again.
+6. A take-profit and stop-loss through the same preview and confirm steps, then `perps_positions()`.
+7. If you say stop, `perps_action_preview()` with action `flatten`, then `perps_flatten()`: closes everything and halts.
+
+On `mcp`, no position opens: read `three://agents/{agentId}/wallet`, call `crypto_data()` for price and volatility, summarize the setup and the liquidation risk at 2x and 5x, and point to `mcp-agent` to place it.
 
 ### `predictions`
 
-Goal: research a prediction-market question. Server: `mcp`. Prediction markets are not enabled on MCP yet, so no position is placed from here.
+Goal: take a prediction-market position, settled in USDC on Solana. Server: `mcp-agent` executes; on `mcp` the prompt researches only and points to `mcp-agent`.
 
-1. Read `three://agents/{agentId}/wallet` for the balance and limits.
-2. `crypto_data()` for the data behind the question, then give a probability estimate with reasoning.
+On `mcp-agent`:
+
+1. Read `three://agents/{agentId}/wallet` for the USDC balance and limits.
+2. `predictions_events()` with the topic, for matching markets with implied probabilities, volume and close time.
+3. `predictions_event()` for the resolution rules and recent price history of the event you pick.
+4. `predictions_open_preview()` for the market, side and stake: average price, contracts, fees, payout and maximum loss.
+5. `predictions_open()` with `confirm_trade: true`, only after you say yes, then the transaction signature.
+6. Optionally `predictions_watch()` to be told when the probability crosses a level you set.
+
+On `mcp`: `crypto_data()` for the data behind the question and a probability estimate with reasoning, then the `predictions` prompt on `/api/mcp-agent` to place it.
 
 ### `embed-avatar`
 

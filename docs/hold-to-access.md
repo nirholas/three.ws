@@ -347,6 +347,7 @@ Unit coverage for the same behavior lives in `tests/forge-high-gate.test.js`,
 | `THREE_COMP_ACCOUNTS` | no | extra comped handles / emails / user ids, comma-separated (merged with the built-in allowlist) |
 | `THREE_TOKEN_MINT` | — | $THREE mint (defaults to the canonical CA) |
 | `THREE_TOKEN_DECIMALS` | — | token decimals (default 6) |
+| `THREE_CREDIT_BONUS_BPS` | no | bonus credits for paying credits in $THREE, in basis points of the deposit's USD value (default 0: no bonus). Read live by `creditBonusBps()` in `api/_lib/token/config.js`; surfaced as `credit_bonus_bps` and in `/api/credits` `deposit.assets[].bonus_bps` |
 | `SOLANA_RPC_URL` (+ provider keys) | — | RPC for on-chain balance reads (see `solana/connection.js`) |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | — | caches balance/tier lookups (optional, fail-safe) |
 

@@ -51,8 +51,8 @@ curl -s https://three.ws/api/mcp-grok \
   -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
   -H "Mcp-Session-Id: $SID" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
-# 14 tools: forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar, refine_model,
-# check_job, look_at_model, search_catalog, get_catalog_item, get_item_source,
+# the free studio tools: forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar,
+# refine_model, check_job, get_job, look_at_model, search_catalog, get_catalog_item, get_item_source,
 # create_agent_persona, get_agent_persona, persona_say
 ```
 
