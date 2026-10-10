@@ -7,8 +7,7 @@
 		"threejs",
 		"ai-agents",
 		"javascript",
-		"esm",
-		"zero-dependencies"
+		"esm"
 	],
 	"targets": [
 		{
@@ -72,6 +71,495 @@
 				"schema-validation",
 				"ajv"
 			]
+		},
+		{
+			"repo": "three-ws-agenc",
+			"source": "packages/agenc",
+			"topics": [
+				"agent-commerce",
+				"x402",
+				"agents"
+			]
+		},
+		{
+			"repo": "three-ws-agent-cli",
+			"source": "packages/agent-cli",
+			"topics": [
+				"cli",
+				"ai-agents",
+				"terminal"
+			]
+		},
+		{
+			"repo": "agent-sniper",
+			"source": "packages/agent-sniper",
+			"topics": [
+				"sdk",
+				"developer-tools"
+			],
+			"hold": "names third-party DEX projects; needs owner approval before it is committed to a new repo"
+		},
+		{
+			"repo": "agents-sdk",
+			"source": "packages/agents-sdk",
+			"topics": [
+				"sdk",
+				"developer-tools"
+			],
+			"hold": "imports ../../../solana-agent-sdk outside the package; not standalone yet"
+		},
+		{
+			"repo": "three-ws-assets-cli",
+			"source": "packages/assets-cli",
+			"topics": [
+				"cli",
+				"3d-assets",
+				"gltf"
+			]
+		},
+		{
+			"repo": "assistant-mcp",
+			"source": "packages/assistant-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-avatar-cli",
+			"source": "packages/avatar-cli",
+			"topics": [
+				"cli",
+				"3d-avatars",
+				"gltf"
+			]
+		},
+		{
+			"repo": "three-ws-brownout",
+			"source": "packages/brownout",
+			"topics": [
+				"resilience",
+				"fallback",
+				"agents"
+			]
+		},
+		{
+			"repo": "concierge-mcp",
+			"source": "packages/concierge-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-forge",
+			"source": "packages/forge",
+			"topics": [
+				"text-to-3d",
+				"generative-ai",
+				"glb"
+			]
+		},
+		{
+			"repo": "three-ws-guardian",
+			"source": "packages/guardian",
+			"topics": [
+				"security",
+				"agent-safety",
+				"guardrails"
+			]
+		},
+		{
+			"repo": "intel",
+			"source": "packages/intel",
+			"topics": [
+				"sdk",
+				"developer-tools"
+			],
+			"hold": "names third-party DEX projects; needs owner approval before it is committed to a new repo"
+		},
+		{
+			"repo": "three-ws-irl",
+			"source": "packages/irl",
+			"topics": [
+				"real-world",
+				"agents",
+				"location"
+			]
+		},
+		{
+			"repo": "three-ws-knock-sdk",
+			"source": "packages/knock-sdk",
+			"topics": [
+				"messaging",
+				"agents",
+				"sdk"
+			]
+		},
+		{
+			"repo": "marketplace-mcp",
+			"source": "packages/marketplace-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-mocap",
+			"source": "packages/mocap",
+			"topics": [
+				"motion-capture",
+				"animation",
+				"mediapipe"
+			]
+		},
+		{
+			"repo": "three-ws-motion",
+			"source": "packages/motion",
+			"topics": [
+				"animation",
+				"motion",
+				"clips"
+			]
+		},
+		{
+			"repo": "three-ws-names",
+			"source": "packages/names",
+			"topics": [
+				"naming",
+				"identity",
+				"agents"
+			]
+		},
+		{
+			"repo": "naming-mcp",
+			"source": "packages/naming-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "notifications-mcp",
+			"source": "packages/notifications-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-portal",
+			"source": "packages/portal",
+			"topics": [
+				"embed",
+				"web-component",
+				"agents"
+			]
+		},
+		{
+			"repo": "portfolio-mcp",
+			"source": "packages/portfolio-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-pose",
+			"source": "packages/pose",
+			"topics": [
+				"pose",
+				"skeleton",
+				"animation"
+			]
+		},
+		{
+			"repo": "three-ws-react",
+			"source": "packages/react",
+			"topics": [
+				"react",
+				"components",
+				"3d-viewer"
+			]
+		},
+		{
+			"repo": "three-ws-render",
+			"source": "packages/render",
+			"topics": [
+				"rendering",
+				"headless",
+				"screenshots"
+			]
+		},
+		{
+			"repo": "three-ws-reputation",
+			"source": "packages/reputation",
+			"topics": [
+				"reputation",
+				"trust",
+				"agents"
+			]
+		},
+		{
+			"repo": "three-ws-retarget",
+			"source": "packages/retarget",
+			"topics": [
+				"retargeting",
+				"animation",
+				"skeleton"
+			]
+		},
+		{
+			"repo": "scene-mcp",
+			"source": "packages/scene-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-see",
+			"source": "packages/see",
+			"topics": [
+				"computer-vision",
+				"vision",
+				"agents"
+			]
+		},
+		{
+			"repo": "three-ws-shipfeed",
+			"source": "packages/shipfeed",
+			"topics": [
+				"changelog",
+				"release-notes",
+				"feed"
+			]
+		},
+		{
+			"repo": "three-ws-sign-language",
+			"source": "packages/sign-language",
+			"topics": [
+				"accessibility",
+				"sign-language",
+				"animation"
+			]
+		},
+		{
+			"repo": "signals-mcp",
+			"source": "packages/signals-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-skill-license",
+			"source": "packages/skill-license",
+			"topics": [
+				"licensing",
+				"agent-skills",
+				"marketplace"
+			]
+		},
+		{
+			"repo": "solana-memo-media-mcp",
+			"source": "packages/solana-memo-media-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			],
+			"hold": "npm publish is awaiting owner approval; repo follows the registry entry"
+		},
+		{
+			"repo": "spatial-mcp",
+			"source": "packages/spatial-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-strategies",
+			"source": "packages/strategies",
+			"topics": [
+				"trading",
+				"agents",
+				"strategy"
+			]
+		},
+		{
+			"repo": "tutor-mcp",
+			"source": "packages/tutor-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-vanity",
+			"source": "packages/vanity",
+			"topics": [
+				"vanity",
+				"keypair",
+				"solana"
+			]
+		},
+		{
+			"repo": "vanity-mcp",
+			"source": "packages/vanity-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-viewer-presets",
+			"source": "packages/viewer-presets",
+			"topics": [
+				"viewer",
+				"lighting",
+				"presets"
+			]
+		},
+		{
+			"repo": "vision-mcp",
+			"source": "packages/vision-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
+		},
+		{
+			"repo": "three-ws-voice",
+			"source": "packages/voice",
+			"topics": [
+				"voice",
+				"tts",
+				"speech"
+			]
+		},
+		{
+			"repo": "vscode-3d",
+			"source": "packages/vscode-3d",
+			"topics": [
+				"vscode-extension",
+				"3d",
+				"gltf"
+			]
+		},
+		{
+			"repo": "three-ws-witness",
+			"source": "packages/witness",
+			"topics": [
+				"attestation",
+				"provenance",
+				"agents"
+			]
+		},
+		{
+			"repo": "x402-mcp",
+			"source": "packages/x402-mcp",
+			"topics": [
+				"mcp",
+				"mcp-server",
+				"model-context-protocol",
+				"claude",
+				"llm-tools"
+			]
 		}
-	]
+	],
+	"auto": {
+		"roots": [
+			"packages/*",
+			"sdk",
+			"solana-agent-sdk",
+			"agent-payments-sdk",
+			"walk-sdk",
+			"avatar-sdk"
+		],
+		"rename": {
+			"sdk": "three-ws-sdk",
+			"solana-agent-sdk": "solana-agent-sdk",
+			"walk-sdk": "three-ws-walk-sdk",
+			"avatar-sdk": "three-ws-avatar-sdk",
+			"packages/three-ws-cli": "three-ws-cli",
+			"packages/threews-avatar-mcp": "threews-avatar-mcp",
+			"packages/react": "three-ws-react"
+		},
+		"hold": {
+			"packages/agent-runtime": "names third-party crypto projects (lending, DEX, launch venue); needs owner approval before it is committed to a new repo",
+			"packages/agent-sniper": "built around third-party crypto projects (launch venue, NFT metadata, MEV bundles); needs owner approval",
+			"packages/brownout": "names third-party crypto data providers; needs owner approval",
+			"packages/concierge-mcp": "names a third-party crypto project; needs owner approval",
+			"packages/intel": "built around third-party crypto projects and DEX data; needs owner approval",
+			"packages/strategies": "names third-party crypto projects; needs owner approval",
+			"packages/vanity": "names a third-party crypto launch venue; needs owner approval",
+			"packages/vanity-mcp": "wraps the vanity package that names a third-party crypto launch venue; needs owner approval",
+			"packages/mcp-policy": "names a third-party crypto project in src/table.js; needs owner approval",
+			"sdk": "names a third-party NFT metadata project; needs owner approval",
+			"solana-agent-sdk": "built around a third-party DEX aggregator; needs owner approval",
+			"packages/vscode-3d": "VS Code extension, published through the editor marketplaces rather than as an npm repo",
+			"packages/activity-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/agora-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/alerts-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/avatar-agent-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/avatar-stream": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/clash-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/kol-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/metaplex-agent-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/onchain-agent-wallets": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/oracle-model": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/pumpfun-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/pumpfun-skills": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/three-token-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/three-ws-cli": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/threews-avatar-mcp": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/vscode-x402": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"agent-payments-sdk": "names third-party crypto projects or data providers; overlay commit needs owner approval",
+			"packages/glb-tools": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
+			"avatar-sdk": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
+			"packages/notifications-mcp": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
+			"packages/portfolio-mcp": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo",
+			"packages/x402-mcp": "names third-party crypto projects or wallets in its text or docs; needs owner approval before it is committed to a new repo"
+		}
+	}
 }
