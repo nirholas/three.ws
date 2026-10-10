@@ -1,5 +1,7 @@
 # x-grok 17: prove a Grok model drives three.ws end to end
 
+**Evolve status (2026-10-10):** Tasks 1-3 are built and verified: `scripts/xai-mcp-e2e.mjs`, npm script `e2e:xai-mcp`, unit tests (`tests/xai-mcp-e2e.test.js`, 13 passing) and the `docs/grok-bot.md` section. Step 0 re-derivation confirmed no `GROK_API_KEY`/`XAI_API_KEY` exists anywhere on this machine (not `process.env`, not `.env`/`.env.local`, not the `three-ws-api` Cloud Run service). DoD line 2 (dry run, no key) passes: `npm run e2e:xai-mcp -- --dry-run` prints a request matching xAI's current docs (`https://docs.x.ai/developers/tools/remote-mcp`) field for field, and the plain `npm run e2e:xai-mcp` run names order 927 as the owner of the missing key. DoD line 1 (live run against production) cannot be verified in this session: no xAI key exists to send. That gate is owned by order 927 (`prompts/finish/927-x-grok-46-owner-grok-api-key.md`), already open, and is also logged as row 33 of [_context/production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md). Leaving this file in place per the close-out rule for a line blocked on an owner action; retire it once order 927 supplies a key and `npm run e2e:xai-mcp` exits 0 against production.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now. Needs an xAI key: if none exists anywhere, build and dry-run it, and order 927 supplies the key.
 
 ## Operating clause (binding)
