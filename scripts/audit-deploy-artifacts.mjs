@@ -33,6 +33,13 @@
  *      and /.well-known/x402 answered 500 while local tests (on 2.14.0)
  *      stayed green.
  *
+ *   4. A workspace package.json that the lockfile does not describe. Renaming
+ *      or bumping a workspace (packages/*, the SDKs) without regenerating
+ *      package-lock.json leaves the local tree working, because the workspace
+ *      is a symlink, while npm ci in the image refuses the whole install. On
+ *      2026-10-10 the rename of packages/three-ws-cli to @three-ws/cli failed
+ *      the Docker step with "Missing: @three-ws/cli@0.1.1 from lock file".
+ *
  * Runs standalone (`node scripts/audit-deploy-artifacts.mjs`), as phase 1 of
  * scripts/build-vercel.mjs, and via tests/deploy-artifacts.test.js.
  */
@@ -328,6 +335,44 @@ export function findLockDrift({ lock, root = ROOT } = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// 6. Every workspace package.json matches its lockfile entry
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns each workspace whose package.json name or version differs from its
+ * package-lock.json entry, or that has no entry at all. npm ci rejects the
+ * install on any of these, so the image build would fail at the Docker step.
+ */
+export function findWorkspaceLockMismatch({ lock, pkg, root = ROOT } = {}) {
+	if (!lock) lock = JSON.parse(readFileSync(resolve(root, 'package-lock.json'), 'utf8'));
+	if (!pkg) pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+	const entries = lock.packages || {};
+	const mismatches = [];
+	for (const dir of pkg.workspaces || []) {
+		let manifest;
+		try {
+			manifest = JSON.parse(readFileSync(resolve(root, dir, 'package.json'), 'utf8'));
+		} catch {
+			continue;
+		}
+		const locked = entries[dir];
+		if (!locked) {
+			mismatches.push({ dir, name: manifest.name, version: manifest.version, locked: null });
+			continue;
+		}
+		if (locked.name !== manifest.name || locked.version !== manifest.version) {
+			mismatches.push({
+				dir,
+				name: manifest.name,
+				version: manifest.version,
+				locked: `${locked.name}@${locked.version}`,
+			});
+		}
+	}
+	return mismatches;
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
@@ -395,12 +440,23 @@ if (isMain) {
 		);
 	}
 
+	const workspaceDrift = findWorkspaceLockMismatch();
+	if (workspaceDrift.length) {
+		failed = true;
+		console.error(
+			`[audit:deploy] FAIL: ${workspaceDrift.length} workspace package.json(s) disagree with package-lock.json, so npm ci in the image will refuse to install (the @three-ws/cli rename). Run \`npm install --package-lock-only --ignore-scripts\` in the shared tree and commit package-lock.json:`,
+		);
+		for (const w of workspaceDrift) {
+			console.error(`  ${w.dir}  is ${w.name}@${w.version}, lockfile has ${w.locked ?? 'no entry'}`);
+		}
+	}
+
 	const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 	if (failed) {
 		console.error(`\n[audit:deploy] failed in ${elapsed}s`);
 		process.exit(1);
 	}
 	console.log(
-		`[audit:deploy] clean in ${elapsed}s: no committed symlinks, no unsatisfied peers, no undeclared api imports, install tree matches the lockfile, decoder assets ${distAssets.skipped ? 'skipped (no dist/)' : 'present'}`,
+		`[audit:deploy] clean in ${elapsed}s: no committed symlinks, no unsatisfied peers, no undeclared api imports, install tree and workspaces match the lockfile, decoder assets ${distAssets.skipped ? 'skipped (no dist/)' : 'present'}`,
 	);
 }

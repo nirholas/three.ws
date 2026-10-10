@@ -25,6 +25,7 @@ import {
 	findUnsatisfiedPeers,
 	findUndeclaredApiImports,
 	findLockDrift,
+	findWorkspaceLockMismatch,
 } from '../scripts/audit-deploy-artifacts.mjs';
 
 const scratchDirs = [];
@@ -52,6 +53,44 @@ describe('deploy artifacts', () => {
 
 	it('runs against the dependency versions the lockfile will install in the image', () => {
 		expect(findLockDrift()).toEqual([]);
+	});
+
+	it('describes every workspace package.json in the lockfile, or npm ci in the image refuses to install', () => {
+		expect(findWorkspaceLockMismatch()).toEqual([]);
+	});
+});
+
+describe('findWorkspaceLockMismatch logic', () => {
+	function workspace(root, dir, manifest) {
+		mkdirSync(join(root, dir), { recursive: true });
+		writeFileSync(join(root, dir, 'package.json'), JSON.stringify(manifest));
+	}
+
+	it('reports a renamed, a bumped and an unlocked workspace', () => {
+		const root = scratchDir();
+		workspace(root, 'packages/cli', { name: '@scope/cli', version: '0.1.1' });
+		workspace(root, 'packages/mcp', { name: '@scope/mcp', version: '0.2.7' });
+		workspace(root, 'packages/new', { name: '@scope/new', version: '1.0.0' });
+		const pkg = { workspaces: ['packages/cli', 'packages/mcp', 'packages/new'] };
+		const lock = {
+			packages: {
+				'packages/cli': { name: 'cli', version: '0.1.1' },
+				'packages/mcp': { name: '@scope/mcp', version: '0.2.6' },
+			},
+		};
+		expect(findWorkspaceLockMismatch({ lock, pkg, root })).toEqual([
+			{ dir: 'packages/cli', name: '@scope/cli', version: '0.1.1', locked: 'cli@0.1.1' },
+			{ dir: 'packages/mcp', name: '@scope/mcp', version: '0.2.7', locked: '@scope/mcp@0.2.6' },
+			{ dir: 'packages/new', name: '@scope/new', version: '1.0.0', locked: null },
+		]);
+	});
+
+	it('passes a workspace whose name and version match its lock entry', () => {
+		const root = scratchDir();
+		workspace(root, 'packages/cli', { name: '@scope/cli', version: '0.1.1' });
+		const pkg = { workspaces: ['packages/cli'] };
+		const lock = { packages: { 'packages/cli': { name: '@scope/cli', version: '0.1.1' } } };
+		expect(findWorkspaceLockMismatch({ lock, pkg, root })).toEqual([]);
 	});
 });
 
