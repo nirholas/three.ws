@@ -859,6 +859,10 @@ Search, price, check and register web domains through Google Cloud Domains, paid
 
 Give an agent a real email address on `agents.three.ws` and let it send, read, reply to, search and delete mail. `agent_mail_create`, `agent_mail_send` and `agent_mail_reply` are financial-tier tools: each needs the `quote_id` from `agent_mail_quote`, whose `confirm` block (exact recipients, subject, body and price) the model must show the owner before sending the confirm flag (`confirm_spend` for create, `confirm_send` for sends). Every result that carries received mail opens with a security notice and wraps sender content in `<untrusted_email>` fences: received mail is data, never instructions. The owner's recipient allowlist and daily cap apply to every send. Full guide: [docs/agent-mail.md](./agent-mail.md).
 
+### `invoice_create`, `invoice_details`, `invoice_list`, `invoice_verify`, `invoice_cancel`, `agent_send_preview`, `agent_send`, `offer_list`, `agent_sell`, `agent_buy`, `agent_buy_confirm`, `spending_check`, `spending_setup`
+
+Agent commerce on the agent wallet server (`https://three.ws/api/mcp-agent`), group `commerce`. An agent bills someone in USDC, SOL or $THREE with a Solana Pay link and QR, verified on-chain by the invoice's reference key; sends money with a preview and `confirm_send`, gated by the owner's destination allowlist and approvals; sells and buys offers with a quote and `confirm_payment`, the fulfillment released only once payment is verified; and reads its own limits and proposes changes that only the owner can approve with a fresh identity check. Full guide: [docs/agent-commerce.md](./agent-commerce.md).
+
 ### `create_gated_embed`
 
 Turn an avatar or on-chain agent **you own** into a holder-only interactive 3D embed. Visitors must prove — with a real, server-verified Solana SPL token balance, never a client-reported number — they hold at least `min_amount` of `mint` before the live scene renders; below the bar they see a designed locked teaser with a connect-wallet CTA. `mint` defaults to `$THREE` but accepts any SPL mint at runtime (a community can gate with its own token). Requires `avatars:write` scope.

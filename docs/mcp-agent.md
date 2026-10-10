@@ -123,6 +123,25 @@ Full reference with examples: [MCP integration](./mcp.md#agent-wallet-portfolio-
 | `duel_details(duel_id or challenge_id)` | read (predictions) | none for a duel, sign-in for a challenge | One duel with its window, phase, standings and crowd calls, or one challenge with its duel. |
 | `duel_markets(view?, ...)` | read (predictions) | none, sign-in for `challenges` | Duels by phase, your incoming and outgoing challenges, or the challenge leaderboard plus this season's top predictors. |
 
+### Agent commerce
+
+Invoices, sends, offers and an agent's own spending rules, as thin adapters over
+`api/_lib/agent-commerce/` (the library behind `/commerce`, `/invoices/:id` and
+`/api/agent-commerce/*`). All thirteen tools are in the `commerce` group; turn
+the financial ones on with `X-Three-Tools: default,commerce`. Full guide:
+[Agent Commerce](./agent-commerce.md).
+
+| Tool | Tier | Scope | What it does |
+|------|------|-------|--------------|
+| `invoice_create`, `invoice_cancel` | write | `agents:write` | Issue an invoice in USDC, SOL or $THREE with a Solana Pay link, QR and receipt page; cancel an open one. |
+| `invoice_details`, `invoice_list`, `invoice_verify` | read | `wallet:read` | One invoice with payments and timeline; the list with totals; read the chain now and settle. |
+| `agent_send_preview` | read | `wallet:read` | Pin recipient, amount, asset and chain and report how the send is gated. Returns a `preview_id`. |
+| `agent_send` | financial | `wallet:write` | `preview_id` plus `confirm_send: true`. Sends to an allowlisted destination, otherwise files an owner approval; a cap, a freeze or an enforced allowlist stops it. |
+| `offer_list`, `agent_sell` | read, write | none, `agents:write` | Browse active offers; list one with a price, stock and fulfillment. |
+| `agent_buy` | read | `wallet:read` | A purchase quote. Nothing is reserved or signed. |
+| `agent_buy_confirm` | financial | `wallet:write` | `preview_id` plus `confirm_payment: true`: pays the seller's invoice and returns the fulfillment once verified. |
+| `spending_check`, `spending_setup` | read, write | `wallet:read`, `agents:write` | Read limits and today's usage; propose a change that only the owner can approve, with a step-up. |
+
 ### Resources and prompts
 
 This server also answers `resources/*` and `prompts/*`: the `three://` resources

@@ -10052,6 +10052,20 @@ An execute is refused with `409 quote_moved` when an order's entry or liquidatio
 
 ---
 
+## Agent commerce
+
+Invoices, offers, purchases and limit requests under `/api/agent-commerce/*`, in
+the v1 envelope. Public routes: `GET /invoices/:id/public`,
+`POST /invoices/:id/verify`, `GET /pay/:id` (302 to the `solana:` link),
+`GET /pay/:id/qr.svg`, `GET /offers`. Owner routes (session, API key or OAuth):
+`GET/POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/cancel`,
+`GET/POST /offers/mine`, `POST /offers/:id/status`, `GET /purchases`,
+`GET /requests`. Approving a limit request (`POST /requests/:id/challenge`,
+then `POST /requests/:id`) takes a browser session and a step-up proof only.
+Webhook events: `invoice.created`, `invoice.paid`, `invoice.underpaid`,
+`invoice.expired`, `invoice.cancelled`. Full reference and examples:
+[Agent Commerce](./agent-commerce.md).
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

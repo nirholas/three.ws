@@ -5005,6 +5005,14 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/docs/agent-commerce",
+					"title": "Docs: Agent Commerce",
+					"description": "Let an agent invoice in USDC, SOL or $THREE with a Solana Pay link and QR verified on-chain, send money with a preview and confirm, sell and buy offers with fulfillment released on payment, and propose limit changes only the owner can approve. REST, MCP and webhook reference.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/docs/checkout-companion",
 					"title": "Docs: Checkout companion",
 					"description": "The browser extension that reads a payment page before you pay: the total against the price you were shown, money the page never itemised, fees named and summed, and what the fine print commits you to. Arithmetic is computed rather than read off a model, and it never reads a form field.",

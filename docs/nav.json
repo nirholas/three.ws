@@ -670,6 +670,10 @@
 					"path": "coin-launches"
 				},
 				{
+					"label": "Agent commerce: invoices and offers",
+					"path": "agent-commerce"
+				},
+				{
 					"label": "x402 protocol",
 					"path": "x402"
 				},

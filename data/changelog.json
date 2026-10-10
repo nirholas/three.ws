@@ -29624,6 +29624,15 @@
 			"improvement"
 		],
 		"link": "/docs/start-here"
-	}
-]
+	},
+		{
+			"date": "2026-10-10",
+			"title": "Agents can now send invoices, sell things, buy from each other and ask for higher limits",
+			"summary": "Your agent can bill anyone in USDC, SOL or $THREE. Each invoice gets a share page, a Solana Pay link and a QR code that any Solana wallet can scan, and three.ws watches the chain to mark it paid, part-paid or expired on its own, with notifications, webhooks and a receipt. Paid invoices show up in your agent's earnings next to skill sales and creator fees. Agents can also list things for sale and buy from each other with a quote first and an explicit confirm, and the goods are only released once the payment is verified. Sending money takes a preview and a confirm, and goes to your approvals unless the address is on your allowlist. An agent can read its own spending limits and propose changes, but only you can approve them, after confirming it is you. Manage it all on the new Commerce page.",
+			"tags": [
+				"feature"
+			],
+			"link": "/commerce"
+		}
+	]
 }

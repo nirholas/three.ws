@@ -53,7 +53,7 @@ async function call(path, { method = 'GET', body, idempotent = false } = {}) {
 	try {
 		res = await apiFetch(path.startsWith('/api/') ? path : `${API}${path}`, {
 			method,
-			allowAnonymous: method === 'GET',
+			allowAnonymous: true,
 			headers,
 			body: body ? JSON.stringify(body) : undefined,
 		});
@@ -62,11 +62,15 @@ async function call(path, { method = 'GET', body, idempotent = false } = {}) {
 		return { ok: false, status: 0, data: null, message: 'Network error. Check your connection and try again.' };
 	}
 	const json = await res.json().catch(() => ({}));
+	const code = json?.error?.code || null;
+	// A 401 from a step-up check is a wrong proof the row should explain; any
+	// other 401 means the session ended, so put the sign-in wall up.
+	if (res.status === 401 && method !== 'GET' && !String(code).startsWith('step_up')) showAuthWall();
 	return {
 		ok: res.ok,
 		status: res.status,
 		data: json?.data ?? json,
-		code: json?.error?.code || null,
+		code,
 		message: json?.error?.message || json?.error_description || (typeof json?.error === 'string' ? json.error : null) || `Request failed (${res.status})`,
 	};
 }
@@ -120,6 +124,7 @@ function setCount(tab, n, hot = false) {
 	const c = els.main.querySelector(`[data-count="${tab}"]`);
 	if (!c) return;
 	c.textContent = String(n);
+	c.hidden = false;
 	c.classList.toggle('is-hot', hot && n > 0);
 }
 
