@@ -4983,6 +4983,20 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/account-linking",
+					"title": "Docs: Account linking",
+					"description": "Sign in with Telegram, link phones, desktop apps, the CLI and chats with one-time codes, and attach Solana or EVM wallets by signature, with audit-logged revoke.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/chat-gateways",
+					"title": "Docs: Chat gateways",
+					"description": "Talk to your agent from Telegram and other chat platforms: pairing, commands, approval limits, the Telegram webhook, privacy and rate limits.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/agent-mail",
 					"title": "Docs: Agent Mail",
 					"description": "Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.",

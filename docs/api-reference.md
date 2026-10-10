@@ -4527,6 +4527,22 @@ Authentication is covered in detail in the [Authentication documentation](authen
 | `/api/auth/wallets`         | POST     | Link a new wallet                     |
 | `/api/auth/handoff`         | POST     | Mint a single-use code that signs Safari in as this session (iOS app) |
 | `/api/auth/handoff`         | GET      | Exchange that code in Safari for a session cookie and land on the page |
+| `/api/auth/telegram/magic`  | POST     | Start a Telegram deep-link sign-in or link; returns a deep link and poll secret |
+| `/api/auth/telegram/poll`   | GET      | Poll a magic link until the bot claims it |
+| `/api/auth/telegram/status` | GET      | Telegram link state for the signed-in account |
+| `/api/auth/telegram/unlink` | POST     | Unlink Telegram (password or fresh reauth) |
+| `/api/auth/link-codes/mint` | POST     | Mint a one-time code for a phone, desktop, CLI or Telegram chat |
+| `/api/auth/link-codes/claim`| POST     | Device side: claim a code (no login), returns a claim secret |
+| `/api/auth/link-codes/poll` | GET      | Device side: poll for the confirmed credential |
+| `/api/auth/link-codes/pending` | GET   | Owner side: pending claims awaiting confirmation |
+| `/api/auth/link-codes/decide` | POST   | Confirm or reject a claim, optionally narrowing scopes |
+| `/api/auth/link-codes/devices` | GET   | Linked devices |
+| `/api/auth/link-codes/revoke` | POST   | Revoke a linked device and its credential |
+| `/api/auth/external-wallet/challenge` | POST | Get a message to sign with a Solana or EVM wallet |
+| `/api/auth/external-wallet/verify` | POST | Verify the signature; link as owner or set the payout wallet |
+| `/api/auth/linked-accounts` | GET      | Everything linked to the account |
+
+See [account-linking.md](account-linking.md) for the flows, limits and errors.
 
 ### Session handoff to Safari (iOS app)
 

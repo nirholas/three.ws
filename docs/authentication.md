@@ -365,6 +365,10 @@ GOOGLE_OAUTH_CLIENT_SECRET=
 
 Both unset: `GET /api/config` reports `googleEnabled: false`, the login page shows no Google button, `/api/auth/google/start` sends a browser to `/login?error=google_unavailable` and answers an API caller `501 not_configured`. Nothing else changes.
 
+## Sign in with Telegram, link codes and external wallets
+
+Telegram sign-in (widget and deep-link magic link), one-time link codes for phones, desktop apps, the CLI and Telegram chats, and signed-message external wallets are documented in [account-linking.md](./account-linking.md).
+
 ---
 
 ## Session Management

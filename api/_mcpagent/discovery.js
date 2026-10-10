@@ -19,7 +19,9 @@ export const RESOURCE_DESCRIPTION =
 	'find_services (search the live facilitator network for paid services), pay_quote (price a paid ' +
 	'endpoint without paying), pay_and_call (call a paid x402 endpoint and settle the USDC payment ' +
 	'from the signed-in user own three.ws agent wallet, bounded by their caps), provision_wallet, ' +
-	'monetize_endpoint (list your own paid service) and read_resource (live three:// resources). ' +
+	'monetize_endpoint (list your own paid service), read_resource (live three:// resources), ' +
+	'get_linked_accounts (sign-in methods, wallets and linked devices) and set_external_wallet ' +
+	'(attach a Solana or EVM wallet proved by a signed message). ' +
 	'An agent marketplace with USDC escrow on Solana: browse_marketplace, browse_public_agents, ' +
 	'get_listing, get_marketplace_history, preview_marketplace_action, create_marketplace_listing, ' +
 	'delist_marketplace_listing, place_bid, buy_now, get_my_bids, get_received_bids, ' +

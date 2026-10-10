@@ -122,7 +122,7 @@ describe('threews-agent MCP', () => {
 			'provision_wallet',
 			'monetize_endpoint',
 			'read_resource',
-			'browse_marketplace',
+			'get_linked_accounts',
 		]);
 		// Every tool that moves funds is financial tier: hidden until the session
 		// turns its group on, so a default connection can never spend.

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-10",
+			"title": "Sign in with Telegram, link devices with one-time codes, and prove payout wallets with a signature",
+			"summary": "You can now sign in to three.ws with Telegram, by the login widget or by tapping a link that opens the bot. Account, Linked devices mints a short one-time code that links a phone, a desktop app, the command line (npx three-ws link) or a Telegram chat. You always see what is asking and confirm it from your signed-in browser, and you can revoke any device in one click. Agents and owners can attach a Solana or EVM wallet by signing a message. Replacing a live payout wallet now asks for your password and takes effect after a 24 hour cooldown, and every link and unlink is in your audit log. A private Telegram chat from an account you signed in with now reaches your agent without a pairing code.",
+			"tags": ["feature", "security"],
+			"link": "/dashboard/account"
+		},
+		{
+			"date": "2026-10-10",
 			"title": "Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics",
 			"summary": "Every API key now sits on a developer plan: Free, Builder, Scale or Enterprise, each with a monthly call quota, a per-minute burst ceiling, a concurrency ceiling and a webhook cap, all enforced on every /api/v1 call rather than only recorded. Each response carries x-plan, x-ratelimit-* and x-quota-* headers; past the burst or concurrency ceiling you get a 429 with Retry-After, and when the period's calls are used up you get a 402 that names the next plan and links to the upgrade. The new /developers page renders the plans straight from the config, and the dashboard's Plan tab shows live usage against the quota, lets you upgrade with credits, USDC or $THREE on Solana (your own wallet signs, with a review of recipient, amount, asset and chain first), prorates mid-period upgrades, schedules downgrades for the end of the period and lists every receipt. Revoking a key now takes effect immediately on every server. Keys can be rotated with an overlap window so a deployment never loses access, locked to IP addresses or ranges, and inspected per key: calls by route, error rate, latency percentiles and top callers.",
 			"tags": ["feature", "sdk", "security", "docs"],

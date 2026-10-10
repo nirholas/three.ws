@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-10T20:39:45.789Z",
+	"generated_at": "2026-10-10T20:52:15.832Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3933,
+	"total": 3935,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -242,6 +242,17 @@
 		{
 			"date": "2026-10-10",
 			"type": "update",
+			"title": "A complete REST API for agents, with signed webhooks",
+			"summary": "Everything you can do with an agent in the app now works over plain HTTP with one API key: create and edit agents, start and stop them, chat, start runs and watch them live, schedule automations and fire them on demand, manage skills, and export or import an agent. Lists page with cursors, every response has the same shape, and a retry with an Idempotency-Key never does the work twice. Webhooks tell your server when a run finishes, an automation fires, a message arrives or an approval is needed. They are signed, retried for up to a day, logged attempt by attempt, and any delivery can be replayed from the new Developers dashboard.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
 			"title": "Agents can compare every Solana swap route and see why one wins",
 			"summary": "Ten trading tools are now available to agents in Claude or any MCP client, and over the API at /api/v1/trading. Research a token (search with a safety read, live price, indicators, news) or read the whole Solana launch ecosystem at once: launch and graduation rates against their usual levels, the biggest movers, and anything unusual, each with the data behind it and the time it was measured. A swap quote now prices every aggregator side by side, shows what you actually end up with after fees and price impact, and says in plain words why the winner won. Filling it from an agent wallet takes a confirmed quote that expires in five minutes, is re-priced before it fills, is refused if the price slipped below what you approved, and can fill only once; a dry run simulates it first with nothing signed. Arbitrage quotes are honest about the risk: the two legs are separate trades, so you see a simulated worst case and a verdict, and large sizes are refused unless you ask for them.",
 			"link": "/docs/trading-tools",
@@ -448,6 +459,17 @@
 			"title": "Sign in with Google, connect several AI clients at once, and grant permissions by group",
 			"summary": "You can now sign in to three.ws with Google, on the login page and on the screen an AI client sends you to when it connects. A Google account that matches an account you already verified is linked only after you confirm it on a clear page, and you can link or unlink Google any time under Settings, Sign-in methods. Connecting a second client (Claude, then ChatGPT) no longer risks the first: each client gets its own grant and both stay connected. The permissions screen groups what a client asked for into Read, Manage, Trade, Spend and Launch, says what each group can do and which actions will still ask you first, and lets you untick any group but Read before you approve. Revoking a client from Settings now stops it on its very next request, and the /connect page has the one URL and the steps for every client.",
 			"link": "/connect",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Sign in with Telegram, link devices with one-time codes, and prove payout wallets with a signature",
+			"summary": "You can now sign in to three.ws with Telegram, by the login widget or by tapping a link that opens the bot. Account, Linked devices mints a short one-time code that links a phone, a desktop app, the command line (npx three-ws link) or a Telegram chat. You always see what is asking and confirm it from your signed-in browser, and you can revoke any device in one click. Agents and owners can attach a Solana or EVM wallet by signing a message. Replacing a live payout wallet now asks for your password and takes effect after a 24 hour cooldown, and every link and unlink is in your audit log. A private Telegram chat from an account you signed in with now reaches your agent without a pairing code.",
+			"link": "/dashboard/account",
 			"tags": [
 				"feature",
 				"security"
@@ -1518,26 +1540,6 @@
 			"title": "Sell your whole agent as a paid API",
 			"summary": "Flip one switch on your agent's Earn tab, set a price per call and a short description, and your agent becomes a pay-per-call API anyone can use. Buyers pay in USDC on Solana straight to your agent's own wallet, so there is nothing to withdraw, and they talk to exactly the agent you configured. Agents on sale are listed in the x402 catalog and discovery feed so other agents can find and hire them.",
 			"link": null,
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "Spotlight entries now show verified results, and success stories are opt-in",
-			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
-			"link": "/stories",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-30",
-			"type": "update",
-			"title": "The coming iPhone app gains notifications, a share sheet entry and quick actions",
-			"summary": "The three.ws iOS app, on its way to the App Store, now matches the Android app and goes further. Turn on notifications and sales, follows and remixes arrive on your iPhone with your unread count on the app icon, and a tap opens the page it is about. three.ws appears in the share sheet: share one to three photos and they wait in Create as the front, left and right views of a new 3D avatar, or share a .glb from Files to upload it. Press and hold the icon for Create avatar, Discover, My agents and Notifications.",
-			"link": "/docs/ios-app",
 			"tags": [
 				"feature"
 			]

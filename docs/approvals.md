@@ -213,7 +213,7 @@ The default is that every gated action asks you. An auto-approve rule is an
 explicit exception you create:
 
 - **venues**: which kinds of action it covers. `jupiter` (token swaps) and
-  `wallet_transfer` (transfers). A rule for swaps never covers transfers.
+  `wallet_transfer` (transfers). A rule for swaps never covers transfers. Payout wallet changes are also gated by an approval but can never be auto-approved: the request shows the old and new address, and the new wallet takes effect 24 hours after approval.
 - **max_usd**: the largest single action it covers, capped at $1,000 per
   action. Anything larger always asks.
 - **agent_id** (optional): limit it to one agent. **team_id** (optional):
