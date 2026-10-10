@@ -1,0 +1,785 @@
+/* Anatomy explorer (src/anatomy/runtime.js). Self-contained: it reads the
+   site tokens when they exist and falls back to its own palette so the same
+   stylesheet works inside three.ws pages and in standalone skill output. */
+
+.anx {
+	--anx-bg: #0b0e14;
+	--anx-panel: rgba(17, 21, 30, 0.92);
+	--anx-panel-solid: #11151e;
+	--anx-raise: rgba(255, 255, 255, 0.06);
+	--anx-raise-2: rgba(255, 255, 255, 0.1);
+	--anx-line: rgba(255, 255, 255, 0.09);
+	--anx-line-2: rgba(255, 255, 255, 0.16);
+	--anx-ink: #e9edf5;
+	--anx-dim: #8b95a8;
+	--anx-accent: #5eb0ff;
+	--anx-accent-ink: #04111f;
+	--anx-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+	--anx-font: var(--font-body, 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif);
+	--anx-display: var(--font-display, 'Space Grotesk', 'Inter', system-ui, sans-serif);
+	--anx-mono: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+	--anx-side: 320px;
+
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) var(--anx-side);
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	grid-template-areas:
+		'head head'
+		'stage side'
+		'tools side';
+	width: 100%;
+	height: 100%;
+	min-height: 420px;
+	background: var(--anx-bg);
+	color: var(--anx-ink);
+	font-family: var(--anx-font);
+	font-size: 14px;
+	line-height: 1.5;
+	border-radius: inherit;
+	overflow: hidden;
+	outline: none;
+	isolation: isolate;
+}
+
+.anx[data-anx-theme='light'] {
+	--anx-bg: #f5f6f8;
+	--anx-panel: rgba(255, 255, 255, 0.94);
+	--anx-panel-solid: #ffffff;
+	--anx-raise: rgba(13, 18, 32, 0.05);
+	--anx-raise-2: rgba(13, 18, 32, 0.09);
+	--anx-line: rgba(13, 18, 32, 0.09);
+	--anx-line-2: rgba(13, 18, 32, 0.16);
+	--anx-ink: #141a26;
+	--anx-dim: #5c6577;
+	--anx-accent: #1f6fff;
+	--anx-accent-ink: #ffffff;
+	--anx-shadow: 0 12px 36px rgba(20, 30, 50, 0.14);
+}
+
+.anx:focus-visible {
+	box-shadow: inset 0 0 0 2px var(--anx-accent);
+}
+
+.anx *,
+.anx *::before,
+.anx *::after {
+	box-sizing: border-box;
+}
+
+.anx.is-collapsed {
+	grid-template-columns: minmax(0, 1fr) 0;
+}
+
+.anx.is-collapsed .anx-side {
+	display: none;
+}
+
+.anx.is-fullscreen {
+	border-radius: 0;
+}
+
+/* ── header (standalone pages) ─────────────────────────────────────────── */
+
+.anx-header {
+	grid-area: head;
+	padding: 18px 20px 12px;
+	border-bottom: 1px solid var(--anx-line);
+}
+
+.anx-title {
+	margin: 0;
+	font-family: var(--anx-display);
+	font-size: 22px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+}
+
+.anx-subtitle {
+	margin: 4px 0 0;
+	color: var(--anx-dim);
+}
+
+/* ── stage ─────────────────────────────────────────────────────────────── */
+
+.anx-stage {
+	grid-area: stage;
+	position: relative;
+	min-height: 0;
+	overflow: hidden;
+	touch-action: none;
+}
+
+.anx-canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	cursor: grab;
+}
+
+.anx-canvas:active {
+	cursor: grabbing;
+}
+
+.anx-labels {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.anx-label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 2px 8px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 999px;
+	background: var(--anx-panel);
+	color: var(--anx-ink);
+	font-size: 11.5px;
+	font-weight: 500;
+	white-space: nowrap;
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	will-change: transform;
+	backdrop-filter: blur(6px);
+}
+
+.anx-label::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	bottom: -9px;
+	width: 1px;
+	height: 8px;
+	background: var(--anx-line-2);
+}
+
+.anx-label.is-active {
+	border-color: var(--anx-accent);
+	color: var(--anx-accent);
+}
+
+.anx-tooltip {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 4;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	padding: 7px 10px;
+	max-width: 240px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 8px;
+	background: var(--anx-panel-solid);
+	box-shadow: var(--anx-shadow);
+	pointer-events: none;
+	font-size: 12.5px;
+}
+
+.anx-tip-group {
+	color: var(--anx-dim);
+	font-size: 11.5px;
+}
+
+.anx-hint {
+	position: absolute;
+	left: 14px;
+	bottom: 12px;
+	color: var(--anx-dim);
+	font-size: 11.5px;
+	pointer-events: none;
+	opacity: 0.8;
+}
+
+.anx.is-touring .anx-hint {
+	display: none;
+}
+
+.anx-flash {
+	position: absolute;
+	top: 14px;
+	left: 50%;
+	z-index: 6;
+	transform: translateX(-50%);
+	padding: 8px 14px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 8px;
+	background: var(--anx-panel-solid);
+	box-shadow: var(--anx-shadow);
+	font-size: 13px;
+}
+
+/* ── tour card ─────────────────────────────────────────────────────────── */
+
+.anx-tour {
+	position: absolute;
+	left: 14px;
+	bottom: 14px;
+	z-index: 5;
+	width: min(400px, calc(100% - 28px));
+	padding: 14px 16px 12px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 12px;
+	background: var(--anx-panel);
+	box-shadow: var(--anx-shadow);
+	backdrop-filter: blur(10px);
+	animation: anx-rise 0.28s ease-out;
+}
+
+@keyframes anx-rise {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+.anx-tour-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.anx-tour-title {
+	margin: 4px 0 6px;
+	font-family: var(--anx-display);
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.anx-tour-body {
+	max-height: 34vh;
+	overflow-y: auto;
+	color: var(--anx-ink);
+	font-size: 13.5px;
+}
+
+.anx-tour-body p,
+.anx-ibody p,
+.anx-summary p {
+	margin: 0 0 8px;
+}
+
+.anx-tour-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 8px;
+}
+
+.anx-tour-nav {
+	display: flex;
+	gap: 6px;
+}
+
+.anx-dots {
+	display: flex;
+	gap: 5px;
+}
+
+.anx-dots span {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--anx-line-2);
+}
+
+.anx-dots span.is-on {
+	background: var(--anx-accent);
+	width: 16px;
+	border-radius: 3px;
+}
+
+/* ── toolbar ───────────────────────────────────────────────────────────── */
+
+.anx-toolbar {
+	grid-area: tools;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 14px;
+	padding: 8px 12px;
+	border-top: 1px solid var(--anx-line);
+	background: var(--anx-panel);
+}
+
+.anx-tgroup {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.anx-tgroup-end {
+	margin-left: auto;
+}
+
+.anx-ticon {
+	display: inline-flex;
+	color: var(--anx-dim);
+}
+
+.anx-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	min-width: 34px;
+	height: 34px;
+	padding: 0 8px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--anx-ink);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.anx-btn:hover:not(:disabled) {
+	background: var(--anx-raise-2);
+}
+
+.anx-btn:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.anx-btn:focus-visible,
+.anx-select:focus-visible,
+.anx-range:focus-visible,
+.anx-tab:focus-visible,
+.anx-pname:focus-visible,
+.anx-eye:focus-visible,
+.anx-step:focus-visible,
+.anx-cta:focus-visible {
+	outline: 2px solid var(--anx-accent);
+	outline-offset: 1px;
+}
+
+.anx-btn[aria-pressed='true'] {
+	background: color-mix(in srgb, var(--anx-accent) 16%, transparent);
+	border-color: color-mix(in srgb, var(--anx-accent) 40%, transparent);
+	color: var(--anx-accent);
+}
+
+.anx-btn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.anx-btn-sm {
+	min-width: 28px;
+	height: 28px;
+	padding: 0 4px;
+}
+
+.anx-btn-primary {
+	background: var(--anx-accent);
+	color: var(--anx-accent-ink);
+	padding: 0 12px;
+}
+
+.anx-btn-primary:hover:not(:disabled) {
+	background: color-mix(in srgb, var(--anx-accent) 86%, var(--anx-ink));
+}
+
+.anx-select {
+	height: 34px;
+	padding: 0 8px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 8px;
+	background: var(--anx-raise);
+	color: var(--anx-ink);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.anx-select:hover {
+	border-color: var(--anx-dim);
+}
+
+.anx-select option {
+	background: var(--anx-panel-solid);
+	color: var(--anx-ink);
+}
+
+.anx-range {
+	width: 96px;
+	accent-color: var(--anx-accent);
+	cursor: pointer;
+}
+
+.anx-range:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+/* ── side panel ────────────────────────────────────────────────────────── */
+
+.anx-side {
+	grid-area: side;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border-left: 1px solid var(--anx-line);
+	background: var(--anx-panel);
+}
+
+.anx-tabs {
+	display: flex;
+	gap: 4px;
+	padding: 8px 8px 0;
+	border-bottom: 1px solid var(--anx-line);
+}
+
+.anx-tab {
+	padding: 8px 12px;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	background: none;
+	color: var(--anx-dim);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.anx-tab:hover {
+	color: var(--anx-ink);
+}
+
+.anx-tab[aria-selected='true'] {
+	color: var(--anx-ink);
+	border-bottom-color: var(--anx-accent);
+}
+
+.anx-pane {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 6px 0 16px;
+	scrollbar-width: thin;
+}
+
+.anx-pad {
+	padding: 10px 14px;
+}
+
+.anx-muted {
+	color: var(--anx-dim);
+}
+
+.anx-pgroup + .anx-pgroup {
+	margin-top: 6px;
+}
+
+.anx-gtitle {
+	display: flex;
+	justify-content: space-between;
+	margin: 8px 14px 4px;
+	color: var(--anx-dim);
+	font-family: var(--anx-mono);
+	font-size: 10.5px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.anx-gtitle::after {
+	content: attr(data-count);
+	opacity: 0.7;
+}
+
+.anx-plist {
+	margin: 0;
+	padding: 0 6px;
+	list-style: none;
+}
+
+.anx-prow {
+	display: flex;
+	align-items: center;
+	border-radius: 7px;
+}
+
+.anx-prow:hover {
+	background: var(--anx-raise);
+}
+
+.anx-prow.is-selected {
+	background: color-mix(in srgb, var(--anx-accent) 14%, transparent);
+}
+
+.anx-prow.is-hidden .anx-pname {
+	opacity: 0.45;
+}
+
+.anx-pname {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	min-width: 0;
+	padding: 6px 8px;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	border-radius: 7px;
+}
+
+.anx-ptext {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.anx-swatch {
+	flex: none;
+	width: 10px;
+	height: 10px;
+	border-radius: 3px;
+	background: var(--c);
+	box-shadow: 0 0 0 1px var(--anx-line-2);
+}
+
+.anx-swatch.is-fx {
+	border-radius: 50%;
+	box-shadow: 0 0 8px var(--c);
+}
+
+.anx-count {
+	flex: none;
+	color: var(--anx-dim);
+	font-family: var(--anx-mono);
+	font-size: 11px;
+}
+
+.anx-moving {
+	flex: none;
+	display: inline-flex;
+	color: var(--anx-accent);
+}
+
+.anx-moving svg {
+	width: 13px;
+	height: 13px;
+}
+
+.anx-eye {
+	flex: none;
+	display: inline-flex;
+	padding: 6px 8px;
+	border: 0;
+	background: none;
+	color: var(--anx-dim);
+	cursor: pointer;
+	opacity: 0;
+	border-radius: 6px;
+}
+
+.anx-eye svg {
+	width: 15px;
+	height: 15px;
+}
+
+.anx-prow:hover .anx-eye,
+.anx-prow.is-hidden .anx-eye,
+.anx-eye:focus-visible {
+	opacity: 1;
+}
+
+.anx-eye:hover {
+	color: var(--anx-ink);
+}
+
+@media (hover: none) {
+	.anx-eye {
+		opacity: 1;
+	}
+}
+
+/* ── inspector ─────────────────────────────────────────────────────────── */
+
+.anx-inspector {
+	flex: none;
+	max-height: 46%;
+	overflow-y: auto;
+	padding: 12px 14px;
+	border-bottom: 1px solid var(--anx-line);
+	animation: anx-rise 0.2s ease-out;
+}
+
+.anx-ihead {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.anx-eyebrow {
+	color: var(--anx-dim);
+	font-family: var(--anx-mono);
+	font-size: 10.5px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.anx-ititle {
+	margin: 2px 0 0;
+	font-family: var(--anx-display);
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.anx-imeta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	margin: 8px 0;
+}
+
+.anx-imeta span {
+	padding: 2px 8px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 999px;
+	color: var(--anx-dim);
+	font-size: 11.5px;
+}
+
+.anx-ibody {
+	font-size: 13.5px;
+}
+
+/* ── tour list ─────────────────────────────────────────────────────────── */
+
+.anx-summary {
+	margin-bottom: 12px;
+	font-size: 13.5px;
+}
+
+.anx-cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	justify-content: center;
+	padding: 9px 14px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--anx-accent);
+	color: var(--anx-accent-ink);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.anx-cta:hover {
+	background: color-mix(in srgb, var(--anx-accent) 86%, var(--anx-ink));
+}
+
+.anx-steps {
+	margin: 4px 0 0;
+	padding: 0 6px;
+	list-style: none;
+}
+
+.anx-step {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 7px 8px;
+	border: 0;
+	border-radius: 7px;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.anx-step:hover {
+	background: var(--anx-raise);
+}
+
+.anx-step.is-active {
+	background: color-mix(in srgb, var(--anx-accent) 14%, transparent);
+}
+
+.anx-stepn {
+	flex: none;
+	display: inline-grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	border: 1px solid var(--anx-line-2);
+	border-radius: 50%;
+	color: var(--anx-dim);
+	font-family: var(--anx-mono);
+	font-size: 11px;
+}
+
+.anx-step.is-active .anx-stepn {
+	border-color: var(--anx-accent);
+	background: var(--anx-accent);
+	color: var(--anx-accent-ink);
+}
+
+/* ── narrow screens: panel becomes a sheet under the stage ─────────────── */
+
+@media (max-width: 760px) {
+	.anx {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(300px, 1fr) auto auto;
+		grid-template-areas:
+			'head'
+			'stage'
+			'tools'
+			'side';
+	}
+
+	.anx.is-collapsed {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.anx-side {
+		max-height: 46vh;
+		border-left: 0;
+		border-top: 1px solid var(--anx-line);
+	}
+
+	.anx-toolbar {
+		gap: 6px 8px;
+		padding: 6px 8px;
+	}
+
+	.anx-range {
+		width: 72px;
+	}
+
+	.anx-hint {
+		display: none;
+	}
+
+	.anx-tgroup-end {
+		margin-left: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.anx-tour,
+	.anx-inspector {
+		animation: none;
+	}
+}
