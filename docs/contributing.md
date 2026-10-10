@@ -229,6 +229,25 @@ is or who ships it.
 Auth: `gh` must be authenticated as the target owner (default `nirholas`; override
 with `--owner`) so it can create and push under that account.
 
+**What every mirror ships.** Besides the package, each sync generates the discovery
+layer from `scripts/lib/standalone-enrich.mjs`, so no mirror is a bare code dump:
+
+| Generated file | Audience |
+|---|---|
+| `AGENTS.md`, `llms.txt`, `llms-full.txt`, `glama.json` (MCP) | AI coding agents and MCP directories |
+| `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CITATION.cff`, issue forms, PR template | Contributors and security reporters |
+| `docs/` (README rendered with OG tags, JSON-LD, sitemap, robots, 404) | Search engines and humans, served by GitHub Pages from `main:/docs` |
+
+It also sets the repository topics (from the package keywords), description,
+homepage (`https://<owner>.github.io/<repo>/`), Discussions, Pages and
+vulnerability alerts over the API. A file the package already ships is kept, so a
+package overrides any generated file by committing its own. `--settings-only`
+re-applies the repository settings without pushing. `GH_PAT` authenticates both
+`git push` and `gh` when set, and never lands in a remote URL or process args.
+A package listed in `HOLD_NEW` keeps syncing if its repo exists, but its first
+repo is not created until the owner approves (it is built around another crypto
+project).
+
 ---
 
 ## Writing Tests

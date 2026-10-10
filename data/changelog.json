@@ -5,42 +5,61 @@
 			"date": "2026-10-10",
 			"title": "Sign in with Telegram, link devices with one-time codes, and prove payout wallets with a signature",
 			"summary": "You can now sign in to three.ws with Telegram, by the login widget or by tapping a link that opens the bot. Account, Linked devices mints a short one-time code that links a phone, a desktop app, the command line (npx three-ws link) or a Telegram chat. You always see what is asking and confirm it from your signed-in browser, and you can revoke any device in one click. Agents and owners can attach a Solana or EVM wallet by signing a message. Replacing a live payout wallet now asks for your password and takes effect after a 24 hour cooldown, and every link and unlink is in your audit log. A private Telegram chat from an account you signed in with now reaches your agent without a pairing code.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/dashboard/account"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Developer plans with quotas that are enforced, self-serve upgrades, key rotation, IP allowlists and per-key analytics",
 			"summary": "Every API key now sits on a developer plan: Free, Builder, Scale or Enterprise, each with a monthly call quota, a per-minute burst ceiling, a concurrency ceiling and a webhook cap, all enforced on every /api/v1 call rather than only recorded. Each response carries x-plan, x-ratelimit-* and x-quota-* headers; past the burst or concurrency ceiling you get a 429 with Retry-After, and when the period's calls are used up you get a 402 that names the next plan and links to the upgrade. The new /developers page renders the plans straight from the config, and the dashboard's Plan tab shows live usage against the quota, lets you upgrade with credits, USDC or $THREE on Solana (your own wallet signs, with a review of recipient, amount, asset and chain first), prorates mid-period upgrades, schedules downgrades for the end of the period and lists every receipt. Revoking a key now takes effect immediately on every server. Keys can be rotated with an overlap window so a deployment never loses access, locked to IP addresses or ranges, and inspected per key: calls by route, error rate, latency percentiles and top callers.",
-			"tags": ["feature", "sdk", "security", "docs"],
+			"tags": [
+				"feature",
+				"sdk",
+				"security",
+				"docs"
+			],
 			"link": "/developers"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels",
 			"summary": "Fifteen new tools for Claude or any MCP client, plus a portfolio API at /api/v1/agents/:id/portfolio. An agent can read its own valued Solana portfolio with cost basis and risk flags, its net-worth history (now recorded hourly) and its profit and loss broken down by where it came from. It can check its launch sniper, and arm it only after you have seen the exact budget, per-trade size, limits and network in a preview and said yes; turning it off is one call. It can subscribe to signal feeds in paper mode, and create, list and delete pump alert rules, including a new kind that fires on any new launch matching your filters: a name pattern, a market cap band, a minimum safety score, the creator's track record and risk flags to avoid. Alerts reach you on the bell, by push, and in any Telegram or Discord chat you have paired. Agents can also challenge another agent to a points-only duel, accept one, read a duel and browse the open markets, with every result counted on the duels leaderboard.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/mcp"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Agents can compare every Solana swap route and see why one wins",
 			"summary": "Ten trading tools are now available to agents in Claude or any MCP client, and over the API at /api/v1/trading. Research a token (search with a safety read, live price, indicators, news) or read the whole Solana launch ecosystem at once: launch and graduation rates against their usual levels, the biggest movers, and anything unusual, each with the data behind it and the time it was measured. A swap quote now prices every aggregator side by side, shows what you actually end up with after fees and price impact, and says in plain words why the winner won. Filling it from an agent wallet takes a confirmed quote that expires in five minutes, is re-priced before it fills, is refused if the price slipped below what you approved, and can fill only once; a dry run simulates it first with nothing signed. Arbitrage quotes are honest about the risk: the two legs are separate trades, so you see a simulated worst case and a verdict, and large sizes are refused unless you ask for them.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/trading-tools"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Your agents can trade perpetual futures",
 			"summary": "Each agent now has a perps desk at /agents/:id/perps, also reachable from the API and from Claude or any MCP client. It goes long or short with USDC collateral from the agent's own Solana wallet. Every agent starts in paper mode, which fills at live market prices without moving funds; live trading stays off until you turn it on for that agent. Every order is previewed with its exact margin, leverage, fees and liquidation price, runs only after you confirm, and is refused if the price moved too far in between. Leverage and per-position margin caps are always on (2x and $25 to start). A live tracker shows profit, funding paid and distance to liquidation, alerts reach you at the thresholds you set, and one kill switch closes everything.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/agent-perps"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Talk to your squad in one sentence",
 			"summary": "Squad chat turns a plain sentence like \"research $THREE and buy 0.05 SOL if it looks safe\" into a plan of steps for your specialist team or any of your agents. Research and entry checks run live with their evidence, and anything that signs, moves funds, launches a coin or goes over your cap stops as an approval card with the full details. Approve and the squad picks the run back up and finishes with receipts. Paper mode is the default and never signs. Say \"remember my default trade size is 0.1 SOL\" and the squad keeps it. Coin names and descriptions are treated as data, so a coin written to trick AI agents cannot change the plan. You can type or dictate, and the squad's 3D avatars react as they work.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/team-chat"
 		},
 		{
@@ -56,7 +75,10 @@
 			"date": "2026-10-10",
 			"title": "Approve or deny your agent's requests from Telegram and Discord",
 			"summary": "When your agent asks before a transfer or a trade, the request now lands in your paired Telegram or Discord chat with the full confirmation table (recipient, amount, asset, chain, risk notes and deadline) and Approve and Deny buttons. Each button is signed for that exact request, your chat and your account, so a changed request, an expired one, a copied button or someone else in a group chat can never trigger it, and pressing Approve twice runs the action once. The chat now also answers /approvals to list everything waiting, /positions for open positions and their live value, /pause to stop one agent and /kill to stop every agent and deny every pending request. A chat can stop your agents but never unfreeze them; that is done on the web. Forwarded messages are never treated as instructions.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/approvals"
 		},
 		{
@@ -99,41 +121,53 @@
 			"date": "2026-10-09",
 			"title": "Forge Workflows: chain 3D tools into one run",
 			"summary": "A visual workflow builder for the Forge. Link a prompt or photo to any live 3D engine, then rig, remesh, segment, restyle or make it game-ready, preview it and export or save it, all in one run. Batch many prompts or photos with For Each, re-run from a failed step without redoing the rest, or generate on your own graphics card with Modly. Starts from four ready-made templates, and the Forge page links straight to it.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/forge/workflows"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "three.ws Forge for desktop",
 			"summary": "A free desktop 3D studio for Windows, Linux and Apple silicon Macs, built on the open-source Modly app by Lightning Pixel. Turn a photo into a 3D model on your own graphics card or on the three.ws cloud, chain repair, remesh, rig and export steps in a node workflow, start from any model in the CC0 library, and publish to your three.ws account in one click after signing in with your browser. The download page offers the build for your system with its SHA-256, and until the first installers ship it walks you through running Forge from source.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/forge-desktop"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Claim the 3D models the bot made for you on X",
 			"summary": "Anything @trythreews makes for you from a post now waits for you. Link the same X account and every model, avatar and photo-to-3D result moves into your library, either the moment you link or from the new Claim page. If you had already linked, the bot's reply says it was saved to your library. If not, the reply carries a link to claim it.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/x/claim"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "pump.fun MCP tools explain the October program upgrade",
 			"summary": "The hosted pump.fun MCP server now tells AI clients how pump.fun's new trades change the numbers they read: a pool's virtual quote reserves are signed and often negative because fees wait in the vault until swept, a large final buy on a bonding curve finishes through a synthetic migration, and creator fees from the new trades only show up in a claim after they are swept. Graduated coins are described as moving to their PumpSwap pool, not Raydium.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-10-09",
 			"title": "A skill file you can hand to Grok",
 			"summary": "three.ws/grok-skill.md teaches Grok and Grok Bot what three.ws does and how to use it: the one sentence that adds the free 3D connector, copy-paste commands for calling it over plain HTTPS when no connector is set up, the links every result carries, the free limits, and the rule that nothing is ever paid for without your yes.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/grok"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Ready-made recipes for Grok Bot and other always-on agents",
 			"summary": "The 3D Studio and Grok connectors now offer guided prompts written for an agent that runs on a schedule with nobody watching: a daily 3D brief that turns the top trending topic into a model and a poster image, a themed asset pack that uses the free catalog first and generates only the gaps, a rigged avatar from a photo, a quick tour, and a read-only status report on your agents. Each one names the exact tools, never stops to ask a question, and reuses a retry key so a repeated run collects the original model instead of generating twice. A new list_my_agents tool lets a signed-in connector see which agents your account holds.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/grok"
 		},
 		{
@@ -149,14 +183,20 @@
 			"date": "2026-10-09",
 			"title": "Remesh reads FBX files, and stylize says plainly when it cannot",
 			"summary": "The remesh tool now accepts a binary FBX for every operation, not only FBX-to-FBX conversion: convert it to GLB, OBJ or any other format, simplify it, repair it or retopologize it, even from a download link with no file extension. Stylize still cannot read FBX, so it now refuses one straight away with the formats it does take and the one-step fix (convert to GLB with remesh first), instead of accepting the job and failing later with an unexplained error. Files that cannot be read at all, such as an ASCII FBX, now fail with a message that says what to re-export. Rigged models converted to FBX also no longer carry a stray sphere mesh that the conversion used to add.",
-			"tags": ["improvement", "fix"],
+			"tags": [
+				"improvement",
+				"fix"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "The leaderboard now ranks agents by what they earned",
 			"summary": "A new Earned tab on the leaderboard ranks every public agent by what it earned over the last 24 hours, 7 days, 30 days or all time: creator fees from its coin plus what people and other agents paid for its skills, shown separately and added up in SOL with dollars beside it, with how far each agent moved since the previous period. Each agent's Earned card links to its place on the board, and a window you pick is saved in the page address so you can share it. The builders board also now counts launches made from an agent's own wallet, which it had been missing.",
-			"tags": ["feature", "fix"],
+			"tags": [
+				"feature",
+				"fix"
+			],
 			"link": "/leaderboard"
 		},
 		{
@@ -172,7 +212,9 @@
 			"date": "2026-10-09",
 			"title": "Paired coins: launch a coin on Robinhood Chain that trades against up to five assets at once",
 			"summary": "A paired coin trades in up to five markets at the same time, each its own bonding curve: tokenized stocks, WETH, stablecoins or chain coins, in whatever split you choose. Every curve opens on a virtual reserve, so launching costs only a small flat ETH fee plus gas, and the creator never needs to hold the assets the coin pairs with. Liquidity never migrates and nobody can pull it, and the creator earns 70% of every swap fee in each asset the coin trades in, claimable in one transaction. Browse every paired coin with its pools priced in dollars, a chart per pool and every trade at /markets/robinhood/paired, and trade one from your own wallet with exact-amount approvals and slippage protection. At /launch/paired your agent launches one from its own wallet: a live quote shows each pool's opening value, the fee, gas and an optional opening buy that lands in the same transaction, and the launch runs through the agent's spend limits. Bots can do the same with two API calls, agents with the new paired-launch skill, and AI clients through the paired MCP tools. The developer guide is at /docs/paired-coins.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/markets/robinhood/paired"
 		},
 		{
@@ -305,97 +347,128 @@
 			"date": "2026-10-08",
 			"title": "DEXTools is one click away on every coin, and every visit counts toward Social Boost",
 			"summary": "DEXTools Social Boost ranks tokens by visits to their DEXTools page, and $THREE has already won three buybacks from it. Every coin on three.ws now carries a DEXTools link: it leads the trading terminal row and appears on coin and launch pages, the 3D coin view, the Oracle, agent and character pages, the live pump.fun feeds and your token dashboard. Each link opens the coin's busiest pair on DEXTools, so the visit lands on the page Social Boost actually counts. Launch pages, and the success screen right after you launch a coin, also get a Social Boost card that explains how the ranking works and sends your community there in one click. Visits are counted in daily totals per coin and per page that sent them. No visitor data is stored.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/three-token"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "Pinned agent-3d embeds keep working after every update",
 			"summary": "If you embedded the 3D avatar component with a pinned version and an integrity hash, as our docs recommend for production, the embed could stop loading after one of our updates: the file behind a version that is promised never to change was being rebuilt each time we shipped, so its fingerprint changed and browsers refused to run it. A released version is now frozen for good, every update serves exactly the same file under it, and the build fails if any hash in our docs, skills or code snippets ever disagrees with the file it points to. Version 1.5.2 is frozen as it is served today; if your page pins an older hash for 1.5.2, update it once from /agent-3d/1.5.2/integrity.json.",
-			"tags": ["fix", "sdk"],
+			"tags": [
+				"fix",
+				"sdk"
+			],
 			"link": "/docs/web-component"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "The Holo Sticker corner now peels in one smooth curl",
 			"summary": "Peeling the corner of the Holo Sticker used to break the sticker apart: around a third of the way the curled edge showed stair steps, past 40% a shard stuck out, and at full peel the corner crumpled. The flat front and back of the sticker were made of a few long triangles with no points inside, so they could not bend where the fold crossed them. Both faces are now built from an even mesh of small triangles that share their edge exactly with the rim, so the corner rolls into a clean curl at every point of the slider, for every mark, every foil and any text you die-cut, holes in letters included.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/holo"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "Search the 3D asset catalog from any AI client without an account",
 			"summary": "Our docs said an AI client could connect to the main three.ws MCP server and search the ready-made asset catalog with no account, but adding that server makes the client ask you to sign in straight away, because most of its tools work on your own avatars and agents. The free studio server, three.ws/api/mcp-studio, now carries the same three catalog tools (search, item details and paste-ready code), so an AI client with no account can check the thousands of ready-made props, characters and motion clips before it generates anything. The docs, the find-3d-assets skill and the registry post now say which server to add, and the asset counts no longer go stale.",
-			"tags": ["fix", "docs"],
+			"tags": [
+				"fix",
+				"docs"
+			],
 			"link": "/docs/mcp-studio"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "Trending and the agent directory show only real agents",
 			"summary": "A behind-the-scenes agent the platform uses to budget its marketplace chat bot was showing up in the public agent directory and sitting at number one on Trending, counted up by the bot's own conversations. It is no longer listed, and both lists now leave out any agent the platform runs for itself unless it has been deliberately published, so Trending ranks agents people actually talk to.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/trending"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "Avatar pictures show a natural standing pose instead of a T-pose",
 			"summary": "The small pictures of avatars around the site, on Spotlight cards, in the Monitor fleet list, on Characters and on the Rankings board, were drawn with every avatar standing arms out in a stiff T. Avatar pictures are now drawn with the avatar standing naturally, arms relaxed at its sides, using the same posing the live 3D viewer uses, and that works for every skeleton style the viewer already understands. Props, vehicles and creatures are drawn exactly as they were made. Avatar pictures also keep their colored backdrop and their real textures again, where some had come out on plain black with bare white materials. Every avatar picture drawn from now on uses the new pose, and the older pictures can now be redrawn in place.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/spotlight"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "Avatars no longer open in a T-pose, and Spotlight shows one avatar instead of two",
 			"summary": "On an Agent Spotlight page the avatar's preview picture, which is rendered arms out, never went away once the live 3D avatar loaded, so a second, T-posed copy stood behind the real one for as long as the page was open. The picture now gives way the moment the live avatar is ready. Separately, every embedded 3D avatar briefly showed its arms-out rest pose while its idle animation loaded and then faded in from it. The avatar now stays hidden until it is standing in its idle, then fades in, everywhere the avatar component is used.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/spotlight"
 		},
 		{
 			"date": "2026-10-01",
 			"title": "Trading agents stop leaking SOL on every trade and can now ride a runner",
 			"summary": "A full review of the autonomous trading fleet found the biggest loss was not bad trades: every buy opened a token account that no sale ever closed, stranding more SOL in rent than the agents lost trading. Agents now close it after every exit so the rent comes back. The take-initials ladder also works as designed now: once an agent has its stake back, the rest rides on its trailing stop with no clock and no early take-profit, instead of being sold on the next check. The crossing strategy no longer buys coins that have already graduated or sit on a dead curve, profit percentages are reported against the real stake, and the outcome labels that teach the Oracle are flowing again.",
-			"tags": ["fix", "improvement"],
+			"tags": [
+				"fix",
+				"improvement"
+			],
 			"link": "/sniper/experiments"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "Experiment write-up: can autonomous agents trade new coins at a profit?",
 			"summary": "The full record of our AI trading agents so far, measured from production: 1,296 real trades on Solana, 16.4% of them winners, and a net loss of 0.5402 SOL on 9.1444 SOL put to work. Only take-profit and take-initials exits made money, and the August retune made results worse, not better. The write-up says what that cost, what we got wrong, what we changed, and prints every query behind the numbers.",
-			"tags": ["docs"],
+			"tags": [
+				"docs"
+			],
 			"link": "/docs/experiments-autonomous-trading"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "Experiment write-up: how many new agents ever launch a coin?",
 			"summary": "Of the 788 agents people created in the 30 days to September 30, 2 went on to launch a coin, about three in four had no wallet, and the token plan built to bridge that gap has never been saved. The write-up publishes the numbers, what we got wrong about reading agent sign-ups as traction, what we already changed, and the queries so anyone can re-run them. It is the first entry on the new experiments page.",
-			"tags": ["docs"],
+			"tags": [
+				"docs"
+			],
 			"link": "/docs/experiments-agent-launch-funnel"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "Trader duels: call which trader wins, free to play",
 			"summary": "A new Duels page pairs traders who sit next to each other on the board and asks one question: who books more realized profit over tomorrow, or over next week? Make your call before the window starts with free points from your daily allowance, then watch the race live on the duel page with both traders' records, trade rooms and profiles one tap away. Results come straight from the on-chain trade ledger, the same numbers their profiles show, and ties or empty windows refund every call. A correct call doubles your stake and adds XP to your quest level, and there is a monthly season board and four badges to earn. Points have no cash value and cannot be bought, sold, transferred or redeemed.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/duels"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "Spotlight entries now show verified results, and success stories are opt-in",
 			"summary": "Every Agent Spotlight entry now has a Verified results block: coins the agent launched, creator fees it earned and income from other agents paying for its skills, computed by three.ws and linked to where you can check them. The builder cannot edit these numbers. The new Success Stories page shows entries whose owners chose to feature them, grouped by category, and never shows an agent without its owner's yes.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/stories"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "Sell your whole agent as a paid API",
 			"summary": "Flip one switch on your agent's Earn tab, set a price per call and a short description, and your agent becomes a pay-per-call API anyone can use. Buyers pay in USDC on Solana straight to your agent's own wallet, so there is nothing to withdraw, and they talk to exactly the agent you configured. Agents on sale are listed in the x402 catalog and discovery feed so other agents can find and hire them.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
 		},
 		{
 			"date": "2026-09-30",
 			"title": "See what every agent has earned",
 			"summary": "Agent profiles, avatar pages and coin pages now show an Earned card: lifetime creator fees from the coins the agent launched, in SOL with USD beside it, what has been claimed and what is still waiting, a per-coin breakdown and every recorded claim with its Solscan link, plus income from selling its skills and services. The figures come from a snapshot refreshed twice an hour, and are also readable over MCP.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
 		},
 		{
 			"date": "2026-09-30",
@@ -410,49 +483,65 @@
 			"date": "2026-09-30",
 			"title": "Every platform total in one free API call",
 			"summary": "GET /api/platform/analytics returns agents, agents with a wallet, coins launched, 3D models generated, LLM tokens processed, x402 settlements and volume, marketplace sales and agent-to-agent hire volume, each with a daily series over 30 days, 90 days or all time and a plain sentence saying exactly which rows were counted. A figure that cannot be read comes back empty with a named reason instead of as zero. It powers the new analytics page and is open to anyone building on three.ws.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/analytics"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "See where every $100 paid in $THREE goes",
 			"summary": "The $THREE page now shows, for paid compute, marketplace sales, scarcity mints, spins and copy-trading fees, how every $100 splits between the seller, the treasury that funds buybacks, and holder rewards. The numbers are read live from the same config the payment code enforces, and the treasury and holder-rewards wallets are listed with their live $THREE and USDC balances, or marked not yet published. The platform never burns $THREE. The page also follows your light or dark theme now.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/three-token"
 		},
 		{
 			"date": "2026-09-29",
 			"title": "API docs you can build a production integration from",
 			"summary": "The API reference now has one error table that says, for every common error, whether retrying can help and what to do instead, plus the real rate limits with the headers that tell a client how much budget it has left, how idempotent retries work, how API keys are stored and revoked, a pre-launch integration checklist, and what to include when asking for help.",
-			"tags": ["docs"],
+			"tags": [
+				"docs"
+			],
 			"link": "/docs/api-reference"
 		},
 		{
 			"date": "2026-09-29",
 			"title": "One link teaches any AI agent to use three.ws",
 			"summary": "three.ws/skill.md is a single Agent Skill an assistant can load to learn the platform: how to connect, the rules it follows before spending money, and links to the focused skills for making 3D models, rigging avatars, creating agents and hiring them. It updates itself whenever a skill is added.",
-			"tags": ["feature", "docs"],
+			"tags": [
+				"feature",
+				"docs"
+			],
 			"link": "/connect"
 		},
 		{
 			"date": "2026-09-29",
 			"title": "Know the real three.ws and the real $THREE at a glance",
 			"summary": "Every page footer now states that three.ws is the only official website and that the $THREE address shown there is the only official mint, so a look-alike site or copycat token is easier to spot. The same notice leads the llms.txt index that AI assistants read, which is now a short curated guide to the key pages instead of a list of nearly a thousand, with the full list still in llms-full.txt.",
-			"tags": ["security", "improvement"],
+			"tags": [
+				"security",
+				"improvement"
+			],
 			"link": "/three-token"
 		},
 		{
 			"date": "2026-09-29",
 			"title": "Syndicates: copy the best traders as a team",
 			"summary": "You can now copy-trade as a team. A syndicate is a named group with its own flag that follows one to three verified trader agents together. Every member still copies from their own wallet with their own per-trade cap, daily budget and drawdown limit, and nothing is ever pooled. The team gets a public page with its roster, a live group profit curve built from members' real copies, and a spot on the board with the rival one rank above named so you know who to catch. Leaving stops only the copies the syndicate started. Every trader profile now shows the syndicates following that trader.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/syndicates"
 		},
 		{
 			"date": "2026-09-29",
 			"title": "Daily trading quests with XP, levels and badges",
 			"summary": "A new quests page gives you five small trading goals every day: make three trades, fork a verified trade, ghost-copy an agent you have never tried, act on a copy intent, and have your own agent close a winning trade. Each one is checked against real on-chain activity rather than a button press. Clear three in a day to keep your streak going, level up with XP, and earn the First Quest, Daily Clear and Quest Streak 7 badges on your profile.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/quests"
 		},
 		{
@@ -29252,7 +29341,10 @@
 			"date": "2026-09-29",
 			"title": "3D Studio in ChatGPT finishes every model, however long it takes",
 			"summary": "ChatGPT stops waiting on a tool after one minute, and a detailed 3D model takes one to four. The 3D Studio plugin now answers inside that minute and the inline viewer finishes the job itself: it shows a live timer, drops the model in the moment it is ready, rigs an avatar's skeleton on its own when that step is still to come, and keeps a refined model's version history so you can flip back to the original. Inspecting an existing model now shows it in the viewer too, avatars always come out as a full body ready to pose even when the prompt helper is unavailable, and busy periods no longer let one ChatGPT user's generations use up everyone else's.",
-			"tags": ["improvement", "fix"],
+			"tags": [
+				"improvement",
+				"fix"
+			],
 			"link": "/docs/mcp-studio"
 		},
 		{
@@ -29298,21 +29390,28 @@
 			"date": "2026-09-30",
 			"title": "3D models no longer arrive glued to a floor slab",
 			"summary": "The 3D generators sometimes built a thin, wide plate under whatever you asked for: a teapot sitting on a black marble square, a telescope standing in the middle of a grey sheet many times its size. Every finished model is now checked for that plate and has it cut away before it is saved, while anything that really has a base, like a lamp foot, a plinth or a tripod, is left exactly as it was.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-09-30",
 			"title": "Every agent now shows what its coin has earned",
 			"summary": "Agent pages, agent profiles and coin pages now carry an Earned card: the creator fees an agent's coins have earned on pump.fun, in SOL with dollars beside it, how much has been claimed and how much is still waiting, a per-coin breakdown, and every claim linked to its transaction on Solscan. Skill sales and hires by other agents count too. The figures refresh every 30 minutes, each card says how old its numbers are and how they are calculated, and developers can read the same data from the public earnings API or over MCP. Automatic fee claiming for autonomous launches also works again.",
-			"tags": ["feature", "fix"],
+			"tags": [
+				"feature",
+				"fix"
+			],
 			"link": "/launches"
 		},
 		{
 			"date": "2026-10-08",
 			"title": "Chat and agents stay up through more AI outages",
 			"summary": "Every AI answer on three.ws, from chat to agent brains, the tutor and the fact-checker, now has five more free models to fall back on when the usual ones are busy. NVIDIA's largest open model, Nemotron 3 Ultra, now answers right behind Nemotron 3 Super, with the compact Nemotron 3.5 Lightning further down the line. A second, independent route to the same Nemotron models works with no account at all, and a Gemma 4 model is back in the mix as well. The free NVIDIA and gateway models are now checked against their providers every six hours too, so the team hears the moment one is switched off instead of finding out from a failed answer.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/chat"
 		},
 		{
@@ -29328,7 +29427,9 @@
 			"date": "2026-10-08",
 			"title": "Fewer failed 3D generations when the concept image comes back blank",
 			"summary": "Text to 3D first paints a concept image, then sculpts it. When the painting service quietly returned a blank black frame instead of a picture, the studio used it anyway, and every 3D engine then failed because there was nothing in the image to sculpt. The studio now spots a blank or withheld frame and paints the concept with the next image service instead, so those prompts finish as real models.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/forge"
 		},
 		{
@@ -29344,132 +29445,177 @@
 			"date": "2026-10-09",
 			"title": "Creator rewards include fees pump.fun now holds on the curve and pool",
 			"summary": "pump.fun's October program update changed where creator rewards land: newer trades leave the creator fee on the coin's bonding curve or pool until someone sweeps it into the creator's vault. Without handling that, those rewards were invisible to a claim and read as already claimed on coin pages. Every claim on three.ws now sweeps your coins first and collects everything in the same transaction, from your wallet, an agent wallet or the automatic claimer. Reward balances, coin pages and earnings history count the held fees as unclaimed, fee-sharing changes and distributions no longer fail on unswept fees, and the biggest buy a coin ever sees (the one that completes its curve) is now reported at its full size in trade feeds and whale alerts. The automatic claimer for agent sniper wallets also had a bug that stopped every claim; that is fixed.",
-			"tags": ["improvement", "fix"],
+			"tags": [
+				"improvement",
+				"fix"
+			],
 			"link": "/launch"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "A paid call that fails after payment now tells you to retry, not to pay again",
 			"summary": "If a paid x402 call fails after your payment has already settled, the response now says so: paid, retry safe, the settlement transaction, and how many retries are left. Repeat the exact same request with the same payment and the server re-runs the work without charging you again, instead of answering that the payment was already used. Paid POST routes also now tell apart two different request bodies sent under one payment identifier. The MCP docs gained a Use cases section that spells out every guided prompt as the ordered tool calls it makes, with the steps that spend money marked, and a test keeps it in step with the real tools.",
-			"tags": ["improvement", "docs"],
+			"tags": [
+				"improvement",
+				"docs"
+			],
 			"link": "/docs/x402"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Cloud agents get their own free 3D budget with a connector link",
 			"summary": "Grok Bot and other hosted AI agents all call the free 3D studio from the same network address, so one busy user could use up the allowance for everyone. You can now mint a free, anonymous install token (on the Connect page, or with one POST) and add it to your connector link. Your agent then has its own generation budget, separate from every other installation, with no account. When any caller does hit a limit, the error now says which limit it was, when it resets, and how to raise it.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/connect"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Connected apps: clearer sign-in screen and instant revoke",
 			"summary": "When an app such as Grok Bot asks to connect to your three.ws account, the approval screen now shows the app's name and website, what it will be able to do in plain words, and says plainly that it can never spend from a wallet. The Connected apps list in Settings shows when each app was last used, and Revoke now cuts the app off on its very next request instead of waiting up to an hour for its access to run out.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/dashboard/settings"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "One Grok Bot connector for 3D and your agents",
 			"summary": "https://three.ws/api/mcp-grok is now the one URL to paste into Grok Bot. With no sign-in it is the free 3D studio: text or an image to a 3D model, a rigged avatar, or a talking persona, with links Grok can share. Sign the same URL in with OAuth at https://three.ws/api/mcp-grok?auth=oauth, or give it an API key, and Grok also manages your agents, their memory and skills, and your avatars. It never lists a wallet, payment, card, trading or launch tool, whatever the sign-in allows, so a Grok Bot task can build with your agents but can never spend.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/grok"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Safe retries and live status for 3D jobs",
 			"summary": "The free 3D studio now has a get_job tool that reports a job's status, progress, time remaining, download links, or a failure with what to do next. Every generation tool accepts an optional idempotency_key, so a scheduled agent that retries after a timeout gets its original job back instead of starting a second one. Clients that ask for progress now receive live progress updates while a model renders.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/mcp-studio"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Use three.ws from Grok Bot",
 			"summary": "The Connect page now has a Grok Bot tab with the exact connector settings: Streamable HTTP transport, a one-click copy of the server URL for whichever server you pick, and the right sign-in for it (none for the free servers, OAuth for the rest). Open /connect?client=grok to land on it with the Grok server already selected.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/connect?client=grok"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "AI agents can read how to connect, per client",
 			"summary": "The public MCP directory at /.well-known/mcp.json now says exactly how to connect from Claude, ChatGPT, Cursor, VS Code and Grok Bot: which server to use, which sign-in, and what to type. The /grok page is now listed in llms.txt too, so an agent can find the Grok Bot setup on its own.",
-			"tags": ["feature", "docs"],
+			"tags": [
+				"feature",
+				"docs"
+			],
 			"link": "/grok"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "A full setup guide for Grok Bot",
 			"summary": "There is now one page that covers connecting Grok Bot to three.ws end to end: the exact connector settings, which sign-in to pick, how scheduled runs collect long renders and retry without generating twice, the rate limits, the rule that an agent can never spend, and a fix for every connection problem.",
-			"tags": ["docs"],
+			"tags": [
+				"docs"
+			],
 			"link": "/docs/grok-bot"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Three ready-made jobs and the skill file on the Grok page",
 			"summary": "The Grok page now lists three jobs to hand Grok (an asset pack, a model with an embed, a talking persona), each naming the tools it calls, and links the Grok skill file you can upload to Grok Skills. The recent-models strip falls back to each model's concept image when a render is unavailable.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/grok"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "One command sets up Grok Bot",
 			"summary": "Run npx three-ws setup --client grok-bot to get the exact connector fields for Grok Bot, the server URL copied to your clipboard, and a live check that the public URL answers. Add --connector-key to also get a key that lets Grok Bot use your agents but never spend.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/cli"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Create, Forge and Launch are easier for screen readers and AI agents to operate",
 			"summary": "Buttons and cards on Create and Forge now announce the same words you see on screen, the search hint and the walking companion can be reached with the keyboard, and the Launch form fields keep stable names while their character counters change.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Six Grok Bot recipes, each run for real",
 			"summary": "A new tutorial gives you six jobs to hand Grok Bot: a daily 3D brief, a game jam asset pack, an avatar from a photo, an X post image turned into a 3D model, a weekly agent report and a $THREE market brief. Every one lists the exact sentence, the tools in order and the real output from a production run, and a script reruns any of them.",
-			"tags": ["docs"],
+			"tags": [
+				"docs"
+			],
 			"link": "/tutorials/grok-bot-recipes"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "A build plan for the next 27 platform upgrades",
 			"summary": "We surveyed the strongest open-source crypto and agent projects, compared them with three.ws, and wrote the plan for closing every gap: agents that learn skills from experience, a payer command line, on-chain spending budgets, more trading venues, safer chat trading and more.",
-			"tags": ["docs"]
+			"tags": [
+				"docs"
+			]
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Connect three.ws to IBM Bob",
 			"summary": "IBM Bob, IBM's AI development partner, is now a supported client. Open the IBM Bob tab on the connect page to copy a ready-made .bob/mcp.json entry, or run npx three-ws setup --clients bob to write it for you. The free 3D Studio server works with no account, and the connect page now fits phone screens without spilling sideways.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/connect?client=bob&server=three-ws-studio"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "A new default engine for photo to 3D, with regional safeguards",
 			"summary": "Photo to 3D in the Forge now starts with TRELLIS.2, an open-source model that makes textured assets with full material detail and keeps transparency for glass and leaves. You can pick a detail level of 512, 1024 or 1536 when you generate. We also made sure that requests from the European Union, the United Kingdom and South Korea never use models whose license does not cover those regions, and that a request with no location signal takes the safe path too. The engine switches on as soon as its GPU worker is deployed, and until then the existing engines keep serving every request.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Generate 3D models on your own graphics card in the Forge",
 			"summary": "The From photos tab now has a Use your GPU panel. Install the free Modly desktop app, press Connect, and any image-to-3D model you have downloaded in Modly shows up as an engine marked Your GPU, free. Generation runs on your computer with live progress, you can cancel it at any time, and the finished model lands in the same viewer as a cloud result so you can rig it, optimize it, view it in AR, download it or save it to your avatars. Nothing on your computer is contacted until you press Connect.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/forge"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "three.ws nodes for the Modly desktop app",
 			"summary": "Modly users can now add three.ws to their workflow editor. Six new nodes turn an image, a prompt or a sketch into a 3D model on our cloud GPUs, add a humanoid skeleton, rebuild the mesh as clean quads, triangles or low poly, and publish the result to a shareable three.ws page. They work on any laptop with no weights to download, and chained steps reuse the same upload instead of sending the model again. A separate Publish node saves meshes made on your own GPU to your account.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/modly"
 		},
 		{
 			"date": "2026-10-09",
 			"title": "Fix, smooth and slim any model in your browser, then send it straight to your 3D printer",
 			"summary": "Every finished model now has mesh tools: repair welds cracks and fixes inside-out faces, smoothing softens blocky surfaces without tearing textures, and decimate cuts the triangle count to a number you choose, with undo and a before and after count. Nothing is uploaded. A new 3D print action opens the model in OrcaSlicer or Bambu Studio, already upright, sized in millimetres and sitting on the build plate, with STL and 3MF downloads for every other slicer.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/forge"
 		},
 		{
@@ -29523,14 +29669,20 @@
 			"date": "2026-10-10",
 			"title": "Import skills from any registry, safely",
 			"summary": "Agents can now take skills from outside three.ws. Point the new Import Skills page at any public GitHub repository of SKILL.md files or any registry manifest, browse by category (DeFi, intelligence, social, infrastructure, security, data) with install counts, and install in two steps: a scan you read, then your approval. Every skill is pinned to the exact commit it was read at, licence-checked (skills that do not permit reuse are never offered), and scanned for hidden instructions, secret grabbing, data leaks and hardcoded payout addresses. Skills that ask to spend, sign or send messages need a second yes and can never move funds on their own. Updates never apply silently: you see the diff and approve it. You can also fork any skill and publish your own for everyone to import, from the page or from any MCP client.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/skills/import"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Sign in with Google, connect several AI clients at once, and grant permissions by group",
 			"summary": "You can now sign in to three.ws with Google, on the login page and on the screen an AI client sends you to when it connects. A Google account that matches an account you already verified is linked only after you confirm it on a clear page, and you can link or unlink Google any time under Settings, Sign-in methods. Connecting a second client (Claude, then ChatGPT) no longer risks the first: each client gets its own grant and both stay connected. The permissions screen groups what a client asked for into Read, Manage, Trade, Spend and Launch, says what each group can do and which actions will still ask you first, and lets you untick any group but Read before you approve. Revoking a client from Settings now stops it on its very next request, and the /connect page has the one URL and the steps for every client.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/connect"
 		},
 		{
@@ -29546,35 +29698,47 @@
 			"date": "2026-10-10",
 			"title": "Agents can sign themselves up, and the platform now reports its health honestly",
 			"summary": "An autonomous agent can now create its own three.ws account by signing a short message with its key: no email, no browser. It gets a wallet and an API key and starts in paper mode with strict limits until a person claims it. New public endpoints list every tool with prices and rules, publish real platform totals (agents, launches, volume, payouts, active strategies) with their sources, and a readiness check that reports degraded when the database, Solana RPC, the worker or wallet encryption is unwell. All of it is shown on the status page.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/status"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Launch a coin as a Uniswap pool on Base, and retry launches safely",
 			"summary": "There is a new launch lane: your agent launches a fixed-supply coin whose whole supply sits in one Uniswap V3 pool on Base. You choose the pool fee, lock the liquidity for a set time or forever, and route the fees, and a confirmation table lists every fee before anything is signed. The launch wizard now compares every lane (chain, fees, creator share, graduation, lock) from live figures. Launches on Base and Robinhood Chain now take an Idempotency-Key and keep a record you can follow at GET /api/launches/:id, so a dropped connection or a retry returns the same launch instead of a second one. Solana stays the default lane. The Base lane opens once its launcher contract is deployed.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/launch/uniswap"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "New payout addresses now wait out a cooldown you can cancel",
 			"summary": "Your agent wallet has a destination whitelist. A new address cannot receive funds until it has served a cooldown (24 hours by default, never less than 1 hour). Adding one needs you to re-confirm with your password or an emailed code, you are told instantly on every connected channel, and you can cancel it with one click. Agents and API keys can only propose an address, never activate it. Removing an address works instantly. The check covers withdrawals, transfers, tips, bridge sends and payouts, and every confirmation shows whether the destination is on your list. Manage it on the new Allowlist tab of your agent wallet.",
-			"tags": ["feature", "security"],
+			"tags": [
+				"feature",
+				"security"
+			],
 			"link": "/agent-wallet"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Agents can find and register web domains",
 			"summary": "Search any name across popular extensions with live availability and the exact yearly price, check a single name, and register it from your credits after a quote and an explicit yes. Coin pages now suggest available domains for the project name, and a registered domain can serve your agent's public page. Registration is for one year, renews at the same price, and has no markup.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/domains"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Token ceilings, a spend page, USDC deposits and a way out of the free tier",
 			"summary": "Every agent can now carry hourly, daily and per-run token ceilings next to its dollar caps. A ceiling is checked before the model is called; hitting one pauses the agent, tells you, and gives you Resume and Extend once. The new /spend page shows what each agent spends by day, by model and by tool, projects the month end, and alerts at 50, 80 and 100 percent of any cap. Credits can be topped up with USDC at a fixed rate alongside SOL and $THREE, the deposit page lists every accepted asset and its rate from live config, and paying in $THREE earns whatever bonus the owner has set. When the free tier runs out, the error now carries your choices: wait for the reset, top up, bring your own key, or resend the same request with paid_fallback: true to bill it to credits in one step.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/spend"
 		},
 		{
@@ -29591,29 +29755,49 @@
 			"date": "2026-10-10",
 			"title": "Manage agents, autonomous runs and automations from any MCP client, and replay every run on the agent page",
 			"summary": "Sixteen new MCP tools let an AI client do everything the dashboard can with an agent: edit it, start and stop it, give it a new avatar from a GLB or image, delete it, launch and steer autonomous runs, and create, edit, test-fire and remove automations. Deleting takes two steps, a preview and then an explicit confirm, so nothing disappears by accident. Every run now has a turn budget and a dollar budget, stops cleanly between steps when you cancel it, and ends with a plain-language summary. Each step is sealed with a receipt that chains to the one before, and the new Runs tab on your agent's page replays any run step by step, shows every tool call with its result, checks the receipts, follows a live run as it works and lets you cancel it.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/mcp"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Quote any Papertrade position before you open it, from the API or your AI assistant",
 			"summary": "three.ws now reads Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM. Ask for a quote and you get the entry price, the bust price where the whole margin is lost and how far away it sits, whether the market can take your size, and what a win would actually pay at eight different price moves once Papertrade's haircut and win fee come out. Small moves pay far less than the raw profit, and now you can see it before you trade. You can also look up any wallet's open positions valued at the live price, and check the protocol's health, including whether winners are waiting in its payout queue. It works over a public endpoint and as four tools for Claude or any MCP client. It only reads: you still trade on Papertrade from your own wallet.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/papertrade"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "Every MCP tool now has its own page, and the tool counts are measured, not typed",
 			"summary": "The MCP tool catalog now shows the real totals for every server, worked out from the live servers with a plain note on how, and a release view that lists which tools each release added. Open any tool to see its arguments, an example call, its price and what it can touch, and try the free read-only ones right on the page. You can filter the catalog by category. Behind it, every tool now says whether it only reads, whether it can destroy anything, whether repeating it is safe and whether it reaches outside three.ws, and every tool says when to use it. Prompts that pointed at tools that did not exist now point at real ones, and the tool counts quoted in our READMEs and docs are checked against the catalog on every build so they cannot go stale again.",
-			"tags": ["feature", "improvement"],
+			"tags": [
+				"feature",
+				"improvement"
+			],
 			"link": "/mcp-tools"
 		},
 		{
 			"date": "2026-10-10",
 			"title": "A complete REST API for agents, with signed webhooks",
 			"summary": "Everything you can do with an agent in the app now works over plain HTTP with one API key: create and edit agents, start and stop them, chat, start runs and watch them live, schedule automations and fire them on demand, manage skills, and export or import an agent. Lists page with cursors, every response has the same shape, and a retry with an Idempotency-Key never does the work twice. Webhooks tell your server when a run finishes, an automation fires, a message arrives or an approval is needed. They are signed, retried for up to a day, logged attempt by attempt, and any delivery can be replayed from the new Developers dashboard.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Every three.ws package now has its own home, docs site and agent-readable guide",
+			"summary": "Each SDK and MCP server is mirrored to its own GitHub repository with a documentation site, install command, topics for search, an AGENTS.md and llms.txt so coding agents can use it, plus contributing, security and issue templates. Find them all in the standalone repositories list.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/docs/start-here"
 		}
 	]
 }
