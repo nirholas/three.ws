@@ -36,9 +36,9 @@ export function usesProxy({ client, server, mode, forceProxy = false }) {
 	return server.auth === 'required' && mode !== 'apikey';
 }
 
-export function buildEntry({ client, server, mode, apiKey = null, selection = null, liveTools = null, forceProxy = false, proxy = proxyInvocation() }) {
+export function buildEntry({ client, server, mode, apiKey = null, selection = null, liveTools = null, forceProxy = false, secretless = false, proxy = proxyInvocation() }) {
 	const needsAuth = server.auth === 'required';
-	if (needsAuth && mode === 'apikey' && !apiKey) throw new Error(`an API key is required to configure ${server.slug}`);
+	if (needsAuth && mode === 'apikey' && !apiKey && !secretless) throw new Error(`an API key is required to configure ${server.slug}`);
 
 	if (!usesProxy({ client, server, mode, forceProxy })) {
 		const headers = {};
@@ -52,7 +52,9 @@ export function buildEntry({ client, server, mode, apiKey = null, selection = nu
 	}
 
 	const env = {};
-	if (needsAuth && mode === 'apikey') env.THREE_WS_API_KEY = apiKey;
+	// secretless: the proxy reads the key from the owner-only credential store,
+	// so the client's config file never holds it.
+	if (needsAuth && mode === 'apikey' && !secretless) env.THREE_WS_API_KEY = apiKey;
 	return client.stdio({
 		command: proxy.command,
 		args: [...proxy.args, 'proxy', server.url, '--server', server.slug],

@@ -10,6 +10,7 @@ import { readStore, resolveOrigin } from './store.js';
 import { VERSION, ApiError } from './http.js';
 import { c, errorLine, line, printJson } from './ui.js';
 import { CancelledError } from './commands/common.js';
+import { clientsFromFlags } from './commands/quick.js';
 
 export const HELP = `${c.bold('three-ws')} ${c.dim(`v${VERSION}`)}: connect any MCP client to three.ws
 
@@ -20,9 +21,12 @@ ${c.bold('Commands')}
   setup                 Sign in, write the three.ws MCP servers into your clients, verify with tools/list
   login                 Sign in or switch accounts (OAuth by default)
   logout                Remove stored credentials and revoke the OAuth refresh token
+  doctor                Diagnose a broken setup: bad config, expired sign-in, unreachable server
   status                Account, plan, wallet balance, token expiry, and every configured client
   whoami                Print the signed-in account
   create [name]         Create an agent with its own Solana wallet and a public page
+  agent status [id]     Live state of your agents: wallet balance, page, body
+  team [status <id>]    Your specialist teams: roster, findings, last error
   launch                Fill in a coin for one of your agents, then review and sign it on three.ws/launch
   tools                 Choose which tool groups each server exposes (financial tools are off by default)
   mcp list              Show three.ws servers configured in each client (--available lists all servers)
@@ -42,6 +46,10 @@ ${c.bold('Sign-in options')} (setup, login)
   --device              Approve a code in any browser; yields an API key (works over SSH)
   --key [sk_live_...]   Use an API key (or set THREE_WS_API_KEY)
   --financial           Also request the scopes that let tools spend from your agent wallet
+
+${c.bold('One flag per client')} (whole setup, no prompts, no secrets in the client's config)
+  --claude --cursor --codex --vscode --windsurf --gemini --bob --hermes
+                        e.g. npx three-ws --claude; Claude Code also gets the three.ws skill
 
 ${c.bold('Setup options')}
   --clients a,b         claude-code, claude-desktop, cursor, windsurf, vscode, bob, codex, gemini, hermes, grok-bot, print
@@ -114,6 +122,14 @@ const OPTIONS = {
 	symbol: { type: 'string' },
 	image: { type: 'string' },
 	'initial-buy': { type: 'string' },
+	claude: { type: 'boolean' },
+	cursor: { type: 'boolean' },
+	codex: { type: 'boolean' },
+	vscode: { type: 'boolean' },
+	windsurf: { type: 'boolean' },
+	gemini: { type: 'boolean' },
+	bob: { type: 'boolean' },
+	hermes: { type: 'boolean' },
 };
 
 // `--key` alone (no value) means "prompt for it"; parseArgs needs a value for a
@@ -125,7 +141,11 @@ function normalizeArgv(argv) {
 export function parse(argv) {
 	const { values, positionals } = parseArgs({ args: normalizeArgv(argv), options: OPTIONS, allowPositionals: true, strict: true });
 	if (values.client && !values.clients) values.clients = values.client;
-	const [command = values.version ? 'version' : 'help', ...rest] = positionals;
+	const perClient = clientsFromFlags(values).length > 0;
+	// A per-client flag with no command is the whole setup for that client.
+	const fallback = values.version ? 'version' : perClient ? 'quick' : 'help';
+	let [command = fallback, ...rest] = positionals;
+	if (perClient && command === 'setup') command = 'quick';
 	return { command, positionals: rest, flags: values };
 }
 
@@ -136,6 +156,17 @@ const COMMANDS = {
 	status: async (ctx) => (await import('./commands/account.js')).status(ctx),
 	whoami: async (ctx) => (await import('./commands/account.js')).whoami(ctx),
 	tools: async (ctx) => (await import('./commands/tools.js')).tools(ctx),
+	quick: async (ctx) => (await import('./commands/quick.js')).quick(ctx),
+	doctor: async (ctx) => (await import('./commands/doctor.js')).doctor(ctx),
+	team: async (ctx) => (await import('./commands/live.js')).team(ctx),
+	agent: async (ctx) => {
+		const [sub, ...rest] = ctx.positionals;
+		const next = { ...ctx, positionals: rest };
+		if (sub === 'status') return (await import('./commands/live.js')).agentStatus(next);
+		if (sub === 'create') return (await import('./commands/agent.js')).create(next);
+		if (sub === 'launch') return (await import('./commands/agent.js')).launch(next);
+		throw new Error('usage: three-ws agent <status [id]|create [name]|launch>');
+	},
 	create: async (ctx) => (await import('./commands/agent.js')).create(ctx),
 	launch: async (ctx) => (await import('./commands/agent.js')).launch(ctx),
 	mcp: async (ctx) => (await import('./commands/mcp.js')).mcp(ctx),

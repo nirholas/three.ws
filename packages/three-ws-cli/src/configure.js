@@ -52,7 +52,7 @@ export function ensureSelections(servers, { financial = false, env = systemEnv()
  * Write each server (and stdio package) into each client. Returns one result
  * per client: { client, file, servers: [slug], error }.
  */
-export function applyToClients({ clients, servers, packages = [], mode, apiKey = null, stdioKey = null, liveTools = {}, forceProxy = false, project = false, origin, env = systemEnv() }) {
+export function applyToClients({ clients, servers, packages = [], mode, apiKey = null, stdioKey = null, liveTools = {}, forceProxy = false, secretless = false, project = false, origin, env = systemEnv() }) {
 	const store = readStore(env);
 	return clients.map((client) => {
 		const written = [];
@@ -68,6 +68,7 @@ export function applyToClients({ clients, servers, packages = [], mode, apiKey =
 					selection: store.tools?.[server.slug] || null,
 					liveTools: liveTools[server.slug] || null,
 					forceProxy,
+					secretless,
 				});
 				file = writeServer(client, server.slug, entry, env, opts);
 				written.push(server.slug);

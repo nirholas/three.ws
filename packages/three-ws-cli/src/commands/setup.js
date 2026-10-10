@@ -144,7 +144,7 @@ export async function setup(ctx) {
 
 	// 6. Write.
 	const apiKey = mode === 'apikey' ? readStore(env).auth.key : null;
-	const writes = applyToClients({ clients, servers, packages, mode, apiKey, stdioKey, liveTools, forceProxy: Boolean(flags.proxy), project: Boolean(flags.project), origin, env });
+	const writes = applyToClients({ clients, servers, packages, mode, apiKey, stdioKey, liveTools, forceProxy: Boolean(flags.proxy), secretless: Boolean(flags.secretless), project: Boolean(flags.project), origin, env });
 	const selections = readStore(env).tools || {};
 	const printed = printOnly
 		? Object.fromEntries(servers.map((s) => [s.slug, buildEntry({ client: PRINT_CLIENT, server: s, mode, apiKey, selection: selections[s.slug], liveTools: liveTools[s.slug], forceProxy: Boolean(flags.proxy) })]))
