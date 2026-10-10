@@ -343,6 +343,16 @@
 			ctaPrimary: { label: 'Open the Forge', href: '/forge' },
 		},
 		{
+			slug: 'grok-bot-recipes',
+			tier: 'middle',
+			title: 'Six Grok Bot recipes, proven not imagined',
+			blurb: 'Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post\'s image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.',
+			builds: 'Six real Grok Bot recipes with the exact tool calls and output each one returned',
+			time: '15 min',
+			previewModel: '/animations/robotexpressive.glb',
+			ctaPrimary: { label: 'Open /grok', href: '/grok' },
+		},
+		{
 			slug: 'upload-custom-glb',
 			tier: 'middle',
 			title: 'Upload a custom GLB avatar',

@@ -6117,6 +6117,14 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/tutorials/grok-bot-recipes",
+					"title": "Docs · Grok Bot recipes",
+					"description": "Six Grok Bot recipes run against production, not imagined: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief. Every output in the doc came from a real run.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/docs/tutorials/write-a-guard",
 					"title": "Docs · Write a repository guard",
 					"description": "Build a real guard end to end: write the checker, give it an npm script, register it in data/guards.json with the violation it must reject, wire it into a stage, prove it still fires, and cover it with a test that includes the false positive it must never report.",

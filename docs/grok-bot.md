@@ -451,6 +451,11 @@ from three-ws-grok and send me the links" is the whole setup.
 [MCP use cases](./mcp.md#use-cases) writes each prompt out as its calls. The
 prompts live in [`api/_mcp/prompts.js`](../api/_mcp/prompts.js).
 
+[Grok Bot recipes](./tutorials/grok-bot-recipes.md) runs six of them against
+production and shows the real output: a daily 3D brief, a game-jam asset
+pack, an avatar from a photo, an X post's image turned into a 3D model, a
+weekly agent report, and a $THREE market brief.
+
 ## Troubleshooting
 
 ### Check the connector the way Grok Bot does
