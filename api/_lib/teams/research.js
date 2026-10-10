@@ -85,12 +85,28 @@ export function scoreResearch({ safety, intel, smartMoney }) {
 	else if (score >= PASS_AT && safety?.verdict === 'allow' && intel && !smartMoney?.sybil_flag && !intel.dev_sold) verdict = 'pass';
 	else verdict = 'caution';
 
+	// The summary leads with reasons[0], so a downgraded verdict leads with what
+	// downgraded it rather than with a check that passed.
+	const cause = verdict === 'pass' ? null : downgradeCause({ safety, intel, smartMoney, score });
+	const ordered = cause ? [cause, ...reasons.filter((r) => r !== cause)] : reasons;
+
 	return {
 		verdict,
 		score,
 		subscores: { safety: safetyScore, quality, smart_money: smScore },
-		reasons: reasons.slice(0, 6),
+		reasons: ordered.slice(0, 6),
 	};
+}
+
+function downgradeCause({ safety, intel, smartMoney, score }) {
+	if (safety?.verdict && safety.verdict !== 'allow') {
+		return safety.reasons?.[0] || `The safety check returned ${safety.verdict}.`;
+	}
+	if (!intel) return 'No intelligence record yet: holder structure and bundle risk are unverified.';
+	if (intel.dev_sold) return 'The creator has sold.';
+	if (smartMoney?.sybil_flag) return 'Most buying comes from one linked wallet cluster.';
+	if (score < PASS_AT) return `Combined score ${score} is below the ${PASS_AT} needed to pass.`;
+	return null;
 }
 
 export function researchSummary({ verdict, score, reasons }) {

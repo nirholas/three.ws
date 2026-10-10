@@ -9441,6 +9441,54 @@ Details: [docs/home-privacy.md](./home-privacy.md).
 
 ---
 
+## Specialist teams
+
+A team is four role agents (Researcher, Entry, Trader, Launcher) under one spend policy, sharing a findings board. Concepts, the role table and the trade rule: [docs/teams.md](./teams.md). Page: [/teams](/teams).
+
+Auth: the session cookie (plus `x-csrf-token` on writes) or a bearer token. Reads of a public team are open to anyone; everything else needs the owner. Writes share a limit of 20 an hour, specialist runs 60 every 10 minutes (`429 rate_limited`).
+
+| Method | Path | Body or query | Returns |
+| --- | --- | --- | --- |
+| `GET` | `/api/teams` | | `{ data: [team summary] }`: id, name, status, network, member_count, last_finding_at, roster, page_url |
+| `POST` | `/api/teams` | `{ name, description?, network?: "mainnet" \| "devnet", is_public?, policy? }` | `201 { data: team }` with four provisioned members |
+| `GET` | `/api/teams/:id` | | `{ data: team }` |
+| `PATCH` | `/api/teams/:id` | `{ name?, description?, is_public?, status?: "active" \| "paused", policy? }` | `{ data: team }` |
+| `DELETE` | `/api/teams/:id` | | archives; the agents stay in the account |
+| `GET` | `/api/teams/:id/findings` | `?kind=&subject=&before=&limit=` (limit up to 100) | `{ data: [finding], next_before }` |
+| `GET` | `/api/teams/:id/findings/stream` | `?since=<ISO>` or `Last-Event-ID` | `text/event-stream` |
+| `POST` | `/api/teams/:id/run` | `{ action, role? \| member_id?, input }` | `{ data: result }` |
+| `POST` | `/api/teams/:id/repair` | | `{ data: { created, team } }`: provisions any missing role |
+| `POST` | `/api/teams/:id/members` | `{ agent_id, permissions? }` | `201 { data: { member_id } }`: add a custom specialist (max 4) |
+| `PATCH` | `/api/teams/:id/members/:memberId` | `{ permissions }` | narrows or restores a grant within the role ceiling |
+| `DELETE` | `/api/teams/:id/members/:memberId` | | removes a custom specialist |
+
+**Policy.** `per_trade_sol` (0.001 to 50, default 0.05), `daily_budget_sol` (0.001 to 500, default 0.25), `finding_ttl_seconds` (60 to 86400, default 900), `allow_caution` (default false), and `entry`: `min_quality_score` (0 to 100, default 60), `max_bundle_score` (0 to 1, default 0.5), `require_two_sided_market` (default true), `require_smart_money` (default false), `min_market_cap_usd` and `max_market_cap_usd` (null for no bound). The caps are mirrored onto the Trader agent's trade limits.
+
+**Run actions.**
+
+| `action` | Role | `input` | `data` |
+| --- | --- | --- | --- |
+| `research` | Researcher | `{ mint, refresh? }` | `{ reused, finding }`: reuses a live verdict unless `refresh` |
+| `scan` | Entry | `{ mint? }` | `{ scanned, setups, findings }`, or the one mint's verdict |
+| `trade` | Trader | `{ mint, side: "buy" \| "sell", amount, mode: "quote" \| "simulate" \| "live", slippageBps?, confirm? }` | `{ finding, research, outcome }` |
+| `launch` | Launcher | `{ name, symbol, description? }` | `{ finding, ready, blockers }`; the finding's `evidence.launch_url` opens the prefilled launchpad |
+
+`amount` is SOL for a buy and tokens (or `"max"`) for a sell. A `live` trade needs `confirm: true`, the real-funds agreement (`403 agreement_required` otherwise) and, for a bearer, the `wallet:write` scope. A run on a paused team is `409 paused`; on a team missing a role, `409 not_ready`. A member without the permission is `403 permission_denied`; a grant above the role ceiling is `403 permission_above_role`.
+
+**Finding.** `{ id, team_id, member_id, author_role, kind, subject, subject_kind, verdict, score, summary, evidence, cites, expires_at, receipt_id, created_at }`. `kind` is `research` (`pass`, `caution`, `avoid`), `entry_signal` (`setup`, `no_setup`), `trade` (`quoted`, `simulated`, `executed`, `refused`, `failed`) or `launch_prep` (`ready`, `blocked`). A trade finding's `cites` holds the research finding id it acted on, and its `evidence.research_source` is `reused` or `ran`.
+
+**Stream events.** `hello` `{ team_id, status, network, since }`, `finding` (a finding; the event id is its `created_at`, so a reconnect resumes), `status` `{ status }`, `gone` (archived or no longer visible), and a heartbeat comment every 15 seconds. The server ends a stream after about 280 seconds and `EventSource` reconnects with `Last-Event-ID`.
+
+```js
+const es = new EventSource(`/api/teams/${teamId}/findings/stream`, { withCredentials: true });
+es.addEventListener('finding', (e) => {
+  const f = JSON.parse(e.data);
+  console.log(f.author_role, f.kind, f.verdict, f.summary, f.cites);
+});
+```
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

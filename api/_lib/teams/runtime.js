@@ -490,7 +490,7 @@ function entryFinding(team, member, row, scored, strategy) {
 		verdict: setup ? 'setup' : 'no_setup',
 		score: quality,
 		summary: setup
-			? `Cleared the entry gates with a strategy score of ${scored.score}.`
+			? `Cleared the entry gates${quality != null ? ` at quality ${Math.round(quality)}/100` : ''}, strategy score ${Number(scored.score).toFixed(2)}.`
 			: `Did not clear the entry gates (${scored.reasons[0] || 'no reason recorded'}).`,
 		evidence: {
 			network: team.network,

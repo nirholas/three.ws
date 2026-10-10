@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T06:05:36.855Z",
+	"generated_at": "2026-10-10T06:12:03.140Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,26 @@
 			"title": "Docs · Local agent runtime for the desktop app",
 			"summary": "Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.",
 			"link": "/docs/desktop-local-runtime",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · Specialist teams",
+			"summary": "How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.",
+			"link": "/docs/teams",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Specialist Teams: four agents, one board",
+			"summary": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
+			"link": "/teams",
 			"tags": [
 				"launch"
 			]
@@ -97,6 +117,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Specialist teams: four agents that research before they trade",
+			"summary": "Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.",
+			"link": "/teams",
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T05:45:10.365Z",
+	"generated_at": "2026-10-10T06:12:03.084Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2389,6 +2389,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/teams",
+					"title": "Specialist Teams: four agents, one board",
+					"description": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/quests",
 					"title": "Daily Trading Quests",
 					"description": "Five trading quests that reset every UTC midnight: make three trades, fork a verified trade, ghost-copy a new agent, act on a copy intent, and let your agent close a winner. Scored from on-chain proof, rewarded with XP, levels and badges.",
@@ -4314,6 +4324,16 @@
 					"title": "Docs · Materialize: turn a generation into a real object",
 					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
 					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/desktop-local-runtime",
+					"title": "Docs · Local agent runtime for the desktop app",
+					"description": "Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -8164,6 +8184,16 @@
 					"title": "Docs · Syndicates",
 					"description": "How copy-trading syndicates work: founding around copyable leaders, joining with your own wallet and caps, how the group curve and rival standing are computed from real copies, and the full API.",
 					"added": "2026-09-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/teams",
+					"title": "Docs · Specialist teams",
+					"description": "How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

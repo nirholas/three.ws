@@ -1933,6 +1933,14 @@
 					"added": "2026-09-29"
 				},
 				{
+					"path": "/teams",
+					"title": "Specialist Teams: four agents, one board",
+					"description": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/quests",
 					"title": "Daily Trading Quests",
 					"description": "Five trading quests that reset every UTC midnight: make three trades, fork a verified trade, ghost-copy a new agent, act on a copy intent, and let your agent close a winner. Scored from on-chain proof, rewarded with XP, levels and badges.",
@@ -6318,6 +6326,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-29"
+				},
+				{
+					"path": "/docs/teams",
+					"title": "Docs · Specialist teams",
+					"description": "How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
 				},
 				{
 					"path": "/docs/trader-duels",

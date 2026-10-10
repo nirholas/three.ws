@@ -29458,6 +29458,15 @@
 				"feature"
 			],
 			"link": "/docs/desktop-local-runtime"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Specialist teams: four agents that research before they trade",
+			"summary": "Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.",
+			"tags": [
+				"feature"
+			],
+			"link": "/teams"
 		}
 	]
 }

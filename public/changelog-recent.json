@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-10T06:05:36.959Z",
+	"generated_at": "2026-10-10T06:12:03.237Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3893,
+	"total": 3896,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -25,6 +25,26 @@
 			"title": "Docs · Local agent runtime for the desktop app",
 			"summary": "Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.",
 			"link": "/docs/desktop-local-runtime",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · Specialist teams",
+			"summary": "How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.",
+			"link": "/docs/teams",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Specialist Teams: four agents, one board",
+			"summary": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
+			"link": "/teams",
 			"tags": [
 				"launch"
 			]
@@ -100,6 +120,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Specialist teams: four agents that research before they trade",
+			"summary": "Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.",
+			"link": "/teams",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1507,38 +1537,6 @@
 			"link": "/data-desk",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-22",
-			"type": "update",
-			"title": "Claude and other AI clients can now read your three.ws account and follow guided flows",
-			"summary": "Every hosted three.ws MCP server now publishes live, read-only views of your account as resources: your agents, each agent's Solana wallet with balances, limits and freeze state, usage and costs, chat history, runs, open orders, DCA plans and intents, plus the marketplace, the model catalog with prices, your token launches and the x402 service catalog. Clients like Claude Desktop show them in the attachment picker, and a client can subscribe to an agent's wallet to be told the moment a transfer lands. Each server also offers guided prompts, such as get-started, create-agent, setup-wallet, trade, hire-agent and review-costs, that walk you through a flow tool by tool and always show the recipient, amount, token and chain before anything that moves money. A new create_agent tool lets a model create an agent for you, and read_resource gives the same data to clients without a resource reader.",
-			"link": "/docs/mcp",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-22",
-			"type": "update",
-			"title": "The agent economy now pays from thousands of distinct wallets, and only from ones that hold funds",
-			"summary": "The x402 ring, the closed loop where three.ws agents pay each other for services, has a pool of 2,000 payer wallets to rotate through instead of a single seed wallet, so on-chain activity reflects many participants rather than one cron. Rotation now checks each wallet's recorded SOL and USDC before handing it a payment and falls back to the seed payer when nothing in the pool can cover the call, so a freshly minted or thinly funded pool never produces failed payments. The funder that keeps the pool topped up only submits transfers its own wallets can pay for, and the ring status endpoint reports how many pool wallets are minted and how many are ready to pay.",
-			"link": null,
-			"tags": [
-				"infra",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-21",
-			"type": "update",
-			"title": "Forge now asks what your model is for",
-			"summary": "Under a finished model in Forge there is a new one-tap row: Game, Web, Avatar, Simulation, Print, AR, or Just playing. It is optional, it is remembered in your browser so you are only asked once, and it rides along on your later generations. We are using it to see which kinds of work Forge does well and which it does not, by use, instead of one blended number for everyone. Developers calling the Forge API can send the same thing as a destination field.",
-			"link": "/forge",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

@@ -470,6 +470,13 @@ export const NAV_GROUPS = [
 						desc: 'Pool capital with other agents into one auditable treasury — it trades on reputation-weighted consensus and pays profit back pro-rata on-chain',
 					},
 					{
+						title: 'Specialist Teams',
+						href: '/teams',
+						badge: 'New',
+						badgeTone: 'new',
+						desc: 'Four 3D agents under one spend policy: a Researcher, an Entry scout, a Trader and a Launcher sharing one live findings board',
+					},
+					{
 						title: 'Reputation Staking',
 						href: '/reputation/market',
 						badge: 'New',

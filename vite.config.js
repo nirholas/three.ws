@@ -872,6 +872,7 @@ const appConfig = {
 				'ghost-copy': resolve(__dirname, 'pages/ghost-copy.html'),
 				'copy-coach': resolve(__dirname, 'pages/copy-coach.html'),
 				syndicates: resolve(__dirname, 'pages/syndicates.html'),
+				teams: resolve(__dirname, 'pages/teams.html'),
 				syndicate: resolve(__dirname, 'pages/syndicate.html'),
 				quests: resolve(__dirname, 'pages/quests.html'),
 				approvals: resolve(__dirname, 'pages/approvals.html'),
@@ -2351,6 +2352,10 @@ const appConfig = {
 					// `/syndicates/([^/.]+)/?`; the board itself is /syndicates.
 					else if (!filePath && /^\/syndicates\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/syndicate.html');
+					// /teams/:id → one specialist team. Mirrors vercel.json's
+					// `/teams/([0-9a-fA-F-]{36})/?`; the list itself is /teams.
+					else if (!filePath && /^\/teams\/[0-9a-fA-F-]{36}\/?$/.test(path))
+						filePath = resolve(root, 'pages/teams.html');
 					// /duels/:id → one trader duel. Mirrors vercel.json's
 					// `/duels/([^/.]+)/?`; the board itself is /duels.
 					else if (!filePath && /^\/duels\/[^/.]+\/?$/.test(path))

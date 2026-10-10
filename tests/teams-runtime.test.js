@@ -46,7 +46,7 @@ import {
 import {
 	POLICY_DEFAULTS, normalizeTeamPolicy, expiryFor, isLive, pickReusableResearch, traderClearance,
 } from '../api/_lib/teams/findings.js';
-import { scoreResearch } from '../api/_lib/teams/research.js';
+import { scoreResearch, researchSummary } from '../api/_lib/teams/research.js';
 
 // Synthetic 32-byte keys: valid Solana address shapes that are nobody's coin.
 const MINT = (n) => new PublicKey(Uint8Array.from({ length: 32 }, (_, i) => (i * 7 + n) & 255)).toBase58();
@@ -203,6 +203,16 @@ describe('research scoring', () => {
 		expect(r.score).toBe(90);
 		expect(r.verdict).toBe('caution');
 		expect(r.subscores).toEqual({ safety: 90, quality: null, smart_money: null });
+	});
+
+	it('leads a downgraded verdict with the reason it was downgraded', () => {
+		const safety = { verdict: 'allow', score: 95, reasons: ['Mint authority is revoked.'] };
+		const r = scoreResearch({ safety, intel: null, smartMoney: null });
+		expect(r.reasons[0]).toMatch(/No intelligence record yet/);
+		expect(researchSummary(r)).toBe(`Caution at 95/100. ${r.reasons[0]}`);
+		const sold = scoreResearch({ safety, intel: { ...goodIntel, dev_sold: true }, smartMoney: null });
+		expect(sold.reasons[0]).toBe('The creator has sold.');
+		expect(sold.reasons.filter((x) => x === 'The creator has sold.')).toHaveLength(1);
 	});
 });
 

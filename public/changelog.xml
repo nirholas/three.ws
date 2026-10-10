@@ -23,6 +23,22 @@
 			<description>Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.</description>
 		</item>
 		<item>
+			<title>Docs · Specialist teams</title>
+			<link>https://three.ws/docs/teams</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Specialist teams</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.</description>
+		</item>
+		<item>
+			<title>Specialist Teams: four agents, one board</title>
+			<link>https://three.ws/teams</link>
+			<guid isPermaLink="false">2026-10-10:Specialist Teams: four agents, one board</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.</description>
+		</item>
+		<item>
 			<title>Approve or deny your agent's requests from Telegram and Discord</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-10-10:Approve or deny your agent's requests from Telegram and Discord</guid>
@@ -77,6 +93,14 @@
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.</description>
+		</item>
+		<item>
+			<title>Specialist teams: four agents that research before they trade</title>
+			<link>https://three.ws/teams</link>
+			<guid isPermaLink="false">2026-10-10:Specialist teams: four agents that research before they trade</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.</description>
 		</item>
 		<item>
 			<title>CAD Forge</title>
