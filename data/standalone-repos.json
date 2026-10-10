@@ -1,0 +1,77 @@
+{
+	"owner": "nirholas",
+	"monorepo": "https://github.com/nirholas/three.ws",
+	"site": "https://three.ws",
+	"baseTopics": [
+		"three-ws",
+		"threejs",
+		"ai-agents",
+		"javascript",
+		"esm",
+		"zero-dependencies"
+	],
+	"targets": [
+		{
+			"repo": "glb-tools",
+			"source": "packages/glb-tools",
+			"topics": [
+				"glb",
+				"gltf",
+				"3d",
+				"mesh",
+				"validation",
+				"optimization",
+				"webgl"
+			]
+		},
+		{
+			"repo": "agent-guards",
+			"source": "packages/agent-guards",
+			"topics": [
+				"guardrails",
+				"agent-safety",
+				"policy",
+				"llm",
+				"tool-use",
+				"spend-limits"
+			]
+		},
+		{
+			"repo": "agent-memory",
+			"source": "packages/agent-memory",
+			"topics": [
+				"agent-memory",
+				"llm",
+				"memory",
+				"long-term-memory",
+				"rag",
+				"context"
+			]
+		},
+		{
+			"repo": "mcp-policy",
+			"source": "packages/mcp-policy",
+			"topics": [
+				"mcp",
+				"model-context-protocol",
+				"mcp-server",
+				"tool-policy",
+				"agent-safety",
+				"confirmation"
+			],
+			"hold": "names a third-party crypto project in src/table.js; needs owner approval before it is committed to a new repo"
+		},
+		{
+			"repo": "avatar-schema",
+			"source": "packages/avatar-schema",
+			"topics": [
+				"avatar",
+				"json-schema",
+				"3d-avatar",
+				"vrm",
+				"schema-validation",
+				"ajv"
+			]
+		}
+	]
+}
