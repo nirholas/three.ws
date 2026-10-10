@@ -222,6 +222,16 @@ which answered:
 | pump.fun's indexer | `GET /api/pump/coin?mint=…` | Mainnet, once pump.fun has indexed the coin. Carries the logo and 24h volume. |
 | The bonding curve itself | `GET /api/pump/curve?mint=…&network=…` | Every devnet coin, and any mainnet coin the indexer has not caught up to or cannot be reached for. Read straight off the cluster. |
 
+The widget asks the indexer with `&miss=empty`. Without that flag, a mint
+pump.fun has not indexed answers `404 coin_not_found`; with it, the same miss is
+a bodiless `204` (cached for 60 seconds). The widget then reads the curve and
+remembers the mint for the rest of the page session, so a launch page full of
+fresh coins does not print a red 404 per card on every refresh. Use the flag
+whenever your caller has its own fallback; leave it off when a miss is an error
+you want to see. `GET /api/agents/:id/solana/holdings` takes the same flag for
+an agent that has not provisioned a wallet yet: `404 not_found` by default,
+`204` with `?miss=empty`, which is what the wallet aura uses on its polling read.
+
 Two consequences worth knowing:
 
 - **A devnet coin is priced in SOL, not dollars, and badged `DEVNET`.** Devnet

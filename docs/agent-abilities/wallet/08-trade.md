@@ -74,8 +74,8 @@ curl 'https://three.ws/api/agents/<agent-id>/solana/holdings?network=mainnet'
 
 - `POST /api/agents/:id/solana/trade (preview:true = live quote; without preview = server-signed execution)`
 - `GET /api/agents/:id/solana/trade-history (unified discretionary + sniper feed, owner-only)`
-- `GET /api/agents/:id/solana/holdings (SOL balance + SPL token list, public read)`
-- `GET /api/pump/coin?mint= (coin name/symbol/image/graduation metadata, best-effort)`
+- `GET /api/agents/:id/solana/holdings (SOL balance + SPL token list, public read; 404 when the agent has no wallet, or 204 with ?miss=empty)`
+- `GET /api/pump/coin?mint= (coin name/symbol/image/graduation metadata, best-effort; 404 for a coin pump.fun has not indexed, or 204 with ?miss=empty)`
 - `Jupiter Lite price API with CoinGecko fallback (client-side SOL/USD for the ≈$ readout, 60s cache)`
 
 ## Related

@@ -987,9 +987,19 @@ async function handleHoldings(req, res, id) {
 	const rl = await limits.walletRead(isOwner ? auth.userId : clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	if (!address) return error(res, 404, 'not_found', 'agent has no solana wallet');
-
 	const url = new URL(req.url, 'http://x');
+	if (!address) {
+		// `?miss=empty` is for display surfaces that render a wallet-less agent as
+		// a dormant baseline (the wallet aura, which re-reads on a timer). There an
+		// unprovisioned wallet is an expected answer, so it gets a 204 instead of a
+		// 404 the browser prints to the console on every poll.
+		if (url.searchParams.get('miss') === 'empty') {
+			res.statusCode = 204;
+			return res.end();
+		}
+		return error(res, 404, 'not_found', 'agent has no solana wallet');
+	}
+
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const conn = solanaConnection(network);
 	const owner = new PublicKey(address);
