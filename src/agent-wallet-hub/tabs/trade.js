@@ -310,8 +310,8 @@ registerWalletTab({
 			renderAll();
 			let meta = null;
 			try {
-				const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
-				if (r.ok) meta = await r.json();
+				const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}&miss=empty`, { headers: { accept: 'application/json' } });
+				if (r.ok && r.status !== 204) meta = await r.json();
 			} catch { /* metadata is best-effort — the mint still trades */ }
 			if (destroyed || state.coin?.mint !== mint) return;
 			state.coin = {

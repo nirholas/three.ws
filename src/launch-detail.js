@@ -309,7 +309,10 @@ async function loadCoin() {
 	// Live pump.fun market — mainnet only (devnet has no pump.fun market data).
 	if (state.network !== 'mainnet') return null;
 	try {
-		return await fetchJson(`/api/pump/coin?mint=${encodeURIComponent(state.mint)}`);
+		// `miss=empty`: an unindexed coin is an expected 204 (no market card),
+		// not a 404 in the console.
+		const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(state.mint)}&miss=empty`, { signal: AbortSignal.timeout(8000) });
+		return r.ok && r.status !== 204 ? await r.json() : null;
 	} catch {
 		return null;
 	}

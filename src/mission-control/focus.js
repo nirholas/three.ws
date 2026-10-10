@@ -119,7 +119,9 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 	async function fetchCoin(mint, { retry = true } = {}) {
 		clearTimeout(coinRetryTimer);
 		try {
-			const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+			const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}&miss=empty`, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+			// 204: pump.fun has not indexed this mint. Expected, not an error.
+			if (r.status === 204) return null;
 			if (r.ok) return await r.json();
 			if (retry && r.status >= 500) {
 				const after = Math.min(60, Math.max(5, Number(r.headers.get('retry-after')) || 15)) * 1000;

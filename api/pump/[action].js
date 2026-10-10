@@ -4185,6 +4185,17 @@ async function handleCoin(req, res) {
 	const mint = (url.searchParams.get('mint') || '').trim();
 	if (!MINT_RE.test(mint))
 		return error(res, 400, 'invalid_mint', 'mint must be a base58 address');
+	// `?miss=empty` is for callers with their own fallback (the coin-status
+	// widget reads the bonding curve next): an unindexed coin is an expected
+	// answer there, not an error, so it gets a 204 instead of a 404 that every
+	// browser prints to the console once per card on every refresh.
+	const softMiss = url.searchParams.get('miss') === 'empty';
+	const notFound = () => {
+		if (!softMiss) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		res.setHeader('cache-control', 'public, max-age=60');
+		res.statusCode = 204;
+		return res.end();
+	};
 
 	const now = Date.now();
 	const hit = COIN_CACHE.get(mint);
@@ -4199,15 +4210,13 @@ async function handleCoin(req, res) {
 		// pump.fun returns 200 with an empty body for an unknown/unmigrated mint;
 		// pumpFetchJson reports that as ok:false with the 200 status. That is a
 		// real "coin not found", not an outage, so it never falls to last-good.
-		if (r.status >= 200 && r.status < 300) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		if (r.status >= 200 && r.status < 300) return notFound();
 		if (r.status === 0) return serveStaleCoin(res, mint, 504, 'upstream_timeout', 'pump.fun did not respond');
-		if (r.status === 404) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		if (r.status === 404) return notFound();
 		return serveStaleCoin(res, mint, 502, 'upstream_failed', `pump.fun returned ${r.status}`);
 	}
 	const parsed = r.body;
-	if (!parsed || typeof parsed !== 'object') {
-		return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
-	}
+	if (!parsed || typeof parsed !== 'object') return notFound();
 	const [body] = repairCoinImages([parsed]);
 	COIN_CACHE.set(mint, { at: now, body });
 	cacheSet(coinLkgKey(mint), { at: now, body }, COIN_LKG_TTL_S).catch(() => {});
