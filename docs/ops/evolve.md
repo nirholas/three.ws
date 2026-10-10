@@ -70,7 +70,7 @@ When the subscription hits its usage window the session ends with a limit error;
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `EVOLVE_MODEL` | `opus` | Model alias passed to `claude --model` |
+| `EVOLVE_MODEL` | `sonnet` | Model alias passed to `claude --model` |
 | `EVOLVE_EFFORT` | unset | Passed to `--effort` when set |
 | `EVOLVE_COOLDOWN_MIN` | `5` | Rest between sessions |
 | `EVOLVE_RUN_TIMEOUT_MIN` | `240` | A session running longer is stopped |
