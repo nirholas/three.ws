@@ -414,7 +414,7 @@ The agent's full configuration, system prompt included, canonicalized, ed25519-s
 	"issuer": "6Yb...",
 	"signed_at": "2026-08-11T12:00:00.000Z",
 	"verified": true,
-	"gatewayUrls": ["https://ipfs.io/ipfs/bafy..."],
+	"gatewayUrls": ["https://ipfs.filebase.io/ipfs/bafy..."],
 	"verifyUrl": "/api/manifest-verify?cid=bafy...",
 	"envelope": { "spec": "threews.agent.manifest.v1", "manifest": {} }
 }
@@ -8113,9 +8113,8 @@ curl -X POST https://three.ws/api/pinning/pin \
   "cid": "QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
   "gatewayUrl": "https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
   "gatewayUrls": [
-    "https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
-    "https://dweb.link/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
-    "https://w3s.link/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://ipfs.filebase.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
+    "https://4everland.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o",
     "https://gateway.pinata.cloud/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"
   ],
   "provider": "pinata"
@@ -8157,7 +8156,7 @@ curl "https://three.ws/api/pinning/status?cid=QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQ
   "pinned": true,
   "provider": "pinata",
   "unreachableProviders": [],
-  "gatewayUrls": ["https://ipfs.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"]
+  "gatewayUrls": ["https://ipfs.filebase.io/ipfs/QmYazpLPRXtuBsCQk64LpXohMxSGJa3RoQTx9fckJgPY9o"]
 }
 ```
 

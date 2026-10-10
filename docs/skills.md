@@ -78,7 +78,7 @@ Reference skills by URI in the agent's `manifest.json`. The runtime fetches and 
 
 The URI points at any host serving the four-file bundle. The repo ships a copyable starter at `examples/skills/wave/` (the same bundle Coach Leo's manifest references); host it on your own site or pin it to IPFS and reference that URI.
 
-URIs can be HTTPS, IPFS (`ipfs://`), or Arweave (`ar://`). IPFS URIs are resolved through a gateway fallback chain (dweb.link → ipfs.io → flk-ipfs.xyz, see `src/ipfs.js`).
+URIs can be HTTPS, IPFS (`ipfs://`), or Arweave (`ar://`). IPFS URIs are resolved through a gateway fallback chain (ipfs.filebase.io → 4everland.io → gateway.pinata.cloud, see `src/ipfs.js`).
 
 ### Via the web component attribute
 
