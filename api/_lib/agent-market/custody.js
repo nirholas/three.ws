@@ -17,6 +17,7 @@ import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 import { sql } from '../db.js';
+import { invalidateApiKey } from '../api-key-cache.js';
 import {
 	decryptSecret,
 	generateAgentWallet,
@@ -359,6 +360,14 @@ export async function swapKeys({ transfer, agent }) {
 // Each revocation is its own statement so one table's absence on an older
 // database cannot block the rest. Every column here is verified against the
 // migrations; a missing TABLE (42P01) is the only error tolerated.
+// A revoked key is cached for authentication; evict it so the revoke holds on
+// the very next call rather than at the end of the cache window.
+async function revokeKeys(update) {
+	const rows = await update;
+	await Promise.all(rows.map((r) => invalidateApiKey(r.id)));
+	return rows;
+}
+
 export function revocations(agentId, sellerId) {
 	return [
 		['wallet_capabilities', () => sql`UPDATE agent_wallet_capabilities SET revoked_at = now(), revoked_reason = 'marketplace_transfer', updated_at = now() WHERE agent_id = ${agentId} AND revoked_at IS NULL RETURNING id`],
@@ -397,8 +406,8 @@ export function revocations(agentId, sellerId) {
 		['external_txs', () => sql`UPDATE pending_external_txs SET status = 'expired', error = 'marketplace_transfer', updated_at = now() WHERE agent_id = ${agentId} AND status = 'prepared' RETURNING id`],
 		// API keys the seller minted for this agent: self-funded inference keys
 		// and the keys behind account links (CLI, chat gateways).
-		['inference_api_keys', () => sql`UPDATE api_keys SET revoked_at = now() WHERE revoked_at IS NULL AND id IN (SELECT api_key_id FROM inference_keys WHERE agent_id = ${agentId} AND user_id = ${sellerId}) RETURNING id`],
-		['link_api_keys', () => sql`UPDATE api_keys SET revoked_at = now() WHERE revoked_at IS NULL AND id IN (SELECT api_key_id FROM account_links WHERE agent_id = ${agentId} AND user_id = ${sellerId} AND api_key_id IS NOT NULL) RETURNING id`],
+		['inference_api_keys', () => revokeKeys(sql`UPDATE api_keys SET revoked_at = now() WHERE revoked_at IS NULL AND id IN (SELECT api_key_id FROM inference_keys WHERE agent_id = ${agentId} AND user_id = ${sellerId}) RETURNING id`)],
+		['link_api_keys', () => revokeKeys(sql`UPDATE api_keys SET revoked_at = now() WHERE revoked_at IS NULL AND id IN (SELECT api_key_id FROM account_links WHERE agent_id = ${agentId} AND user_id = ${sellerId} AND api_key_id IS NOT NULL) RETURNING id`)],
 		['account_links', () => sql`UPDATE account_links SET revoked_at = now() WHERE agent_id = ${agentId} AND user_id = ${sellerId} AND revoked_at IS NULL RETURNING id`],
 		['gateway_links', () => sql`UPDATE gateway_links SET default_agent_id = NULL WHERE default_agent_id = ${agentId} AND user_id = ${sellerId} RETURNING id`],
 		// Third-party credentials the seller connected for the agent.
@@ -467,6 +476,14 @@ export async function revokeSellerAccess({ transfer, agent }) {
 		meta.payments = { ...meta.payments, configured: false };
 		delete meta.payments.receiver;
 	}
+	// The seller's destination whitelist lives in its own table, not in meta: end
+	// every live entry (so the seller's payout addresses cannot keep receiving the
+	// buyer's funds) and drop the seller's cooldown and enforcement settings.
+	const whitelist = await runEach([
+		['destination_whitelist', () => sql`UPDATE destination_whitelist_entries SET status = 'removed', removed_at = now(), updated_at = now() WHERE agent_id = ${agent.id} AND status IN ('proposed', 'pending', 'active') RETURNING id`],
+		['destination_whitelist_settings', () => sql`DELETE FROM destination_whitelist_settings WHERE agent_id = ${agent.id} RETURNING agent_id`],
+	]);
+	Object.assign(revoked, whitelist);
 	await sql`
 		UPDATE agent_identities
 		SET meta = ${JSON.stringify(meta)}::jsonb,

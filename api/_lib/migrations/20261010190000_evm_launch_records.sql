@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS evm_launch_records (
 		CHECK (status IN ('pending', 'submitted', 'confirmed', 'finalized', 'failed')),
 	stages jsonb NOT NULL DEFAULT '[]'::jsonb,
 	tx_hash text,
+	context jsonb NOT NULL DEFAULT '{}'::jsonb,
 	token text,
 	result jsonb,
 	error jsonb,

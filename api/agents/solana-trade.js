@@ -27,7 +27,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
 import { solanaConnection, solanaPublicConnection } from '../_lib/agent-pumpfun.js';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { cacheSet } from '../_lib/cache.js';
 import { isRpcOutageError } from '../_lib/rpc-degrade.js';
 import { logAudit } from '../_lib/audit.js';
@@ -276,8 +276,8 @@ export async function handleTrade(req, res, id) {
 	// CSRF on the state-changing path only: a live preview/quote moves no funds and
 	// would otherwise burn a single-use token on every keystroke. Bearer callers exempt.
 	// A bearer may quote with any owner grant, but executing spends the wallet and
-	// needs wallet:write (a quote moves nothing, so v1 /swap/quote stays agents:read).
-	if (!parsed.preview) assertBearerMaySpend(auth.bearer, req);
+	// needs wallet:trade (a quote moves nothing, so v1 /swap/quote stays agents:read).
+	if (!parsed.preview) assertBearerMaySpend(auth.bearer, req, { kind: 'trade' });
 	if (!parsed.preview && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, network: parsed.network, context: 'trade' }))) return;
 	if (!parsed.preview && !(await requireCsrf(req, res, auth.userId))) return;
 
@@ -355,9 +355,14 @@ export function parseTradeRequest(body = {}) {
  * build() returns `{ instructions, addressLookupTables }`. Omitted, the trade
  * runs the launchpad path below (curve, then AMM), exactly as before.
  *
+ * `simulate` runs every guard exactly as an execute would, then builds the
+ * transaction for the agent's public key and runs it through the RPC's
+ * simulateTransaction instead of signing: no key is recovered, no custody row
+ * is written and nothing is sent. The order engine's simulate mode uses it.
+ *
  * @returns {Promise<{ status: number, data: object } | { status: number, error: { code: string, message: string, detail?: object } }>}
  */
-export async function runAgentTrade({ agentId, userId, meta, address, encryptedSecret, parsed, req = null, ownerInitiated = false, executor = null }) {
+export async function runAgentTrade({ agentId, userId, meta, address, encryptedSecret, parsed, req = null, ownerInitiated = false, executor = null, simulate = false }) {
 	const id = agentId;
 	const auth = { userId };
 	const fail = (status, code, message, detail) => ({ status, error: { code, message, ...(detail ? { detail } : {}) } });
@@ -551,6 +556,8 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		return fail(guardWarning.status || 403, guardWarning.code, guardWarning.message, guardWarning.detail);
 	}
 
+	if (simulate) return simulateAgentTrade({ executor, userId: auth.userId, side, readConn, network, mintPk, ownerPk, quote, slippageBps, solAmount, tokenAmountRaw, quotePayload, fail });
+
 	// Idempotency key; required for execute so a retry can't double-spend.
 	const idem = parsed.idempotencyKey;
 	if (!idem) return fail(400, 'validation_error', 'idempotency_key is required to execute a trade');
@@ -651,7 +658,7 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 	if (!confirmed) {
 		await updateCustodyEvent(claimId, { signature, meta: { confirm: 'unconfirmed' } }).catch(() => {});
 		logAudit({ userId: auth.userId, action: 'custody.trade_unconfirmed', resourceId: id, meta: { side, mint: mintStr, signature }, req });
-		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed; check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network) });
+		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed; check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network), custody_event_id: claimId });
 	}
 
 	await updateCustodyEvent(claimId, { status: 'confirmed', signature, usd: side === 'buy' ? usdValue ?? null : null, meta: execTelemetry ? { exec: execTelemetry } : undefined }).catch(() => {});
@@ -672,10 +679,47 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		status: 200,
 		data: {
 			replayed: false, signature, explorer: explorerTxUrl(signature, network),
+			custody_event_id: claimId,
 			...quotePayload,
 			filled: { in: quotePayload.in, expected_out: quotePayload.out, min_received: quotePayload.min_received },
 			new_balance_sol: newSol,
 			execution: execTelemetry,
+		},
+	};
+}
+
+// Build for the agent's public key and simulate on the RPC: the same
+// instructions an execute would sign (venue swap plus trade fee), with
+// signature checks off and a fresh blockhash, so the result says whether the
+// fill would land without touching the key or the ledger.
+async function simulateAgentTrade({ executor, userId, side, readConn, network, mintPk, ownerPk, quote, slippageBps, solAmount, tokenAmountRaw, quotePayload, fail }) {
+	let instructions;
+	let addressLookupTables = [];
+	try {
+		const buildArgs = { userId, side, conn: readConn, network, mintPk, ownerPk, quote, slippageBps, solAmount, tokenAmountRaw };
+		if (executor) ({ instructions, addressLookupTables } = await buildVenueTradeInstructions({ executor, ...buildArgs }));
+		else instructions = await buildTradeInstructions(buildArgs);
+	} catch (e) {
+		if (e?.status) return fail(e.status, e.code, e.message);
+		return fail(422, 'build_failed', 'could not build this trade; the market may have moved; try again');
+	}
+	let sim;
+	try {
+		const { blockhash } = await readConn.getLatestBlockhash('confirmed');
+		const message = new TransactionMessage({ payerKey: ownerPk, recentBlockhash: blockhash, instructions }).compileToV0Message(addressLookupTables);
+		sim = await readConn.simulateTransaction(new VersionedTransaction(message), { sigVerify: false, replaceRecentBlockhash: true });
+	} catch (e) {
+		if (isRpcOutageError(e)) return fail(503, 'rpc_unavailable', 'Solana RPC is temporarily unavailable, retry shortly');
+		return fail(502, 'simulate_failed', `the simulation could not run: ${(e?.message || 'unknown error').slice(0, 160)}`);
+	}
+	return {
+		status: 200,
+		data: {
+			simulated: true,
+			...quotePayload,
+			err: sim?.value?.err ?? null,
+			units_consumed: sim?.value?.unitsConsumed ?? null,
+			logs_tail: (sim?.value?.logs || []).slice(-6),
 		},
 	};
 }

@@ -340,6 +340,10 @@
 			"dest": "/agent-cards.html"
 		},
 		{
+			"src": "/agent-perps/?",
+			"dest": "/agent-perps.html"
+		},
+		{
 			"src": "/agent-mail/?",
 			"dest": "/agent-mail.html"
 		},
@@ -801,6 +805,26 @@
 			"dest": "/api/v1/agent-mail?id=$1"
 		},
 		{
+			"src": "/api/v1/agents/?",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/agents/import",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/agents/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/(messages|runs|automations|skills|export|start|stop)(/.*)?)?/?",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/(runs|automations|webhooks|skills|strategies)(/.*)?",
+			"dest": "/api/v1/rest"
+		},
+		{
+			"src": "/api/v1/me/?",
+			"dest": "/api/v1/rest"
+		},
+		{
 			"src": "/api/agents/([^/]+)/custom-skills/([^/]+)",
 			"dest": "/api/agents/[id]/custom-skills?id=$1&skill_id=$2"
 		},
@@ -1241,6 +1265,14 @@
 			"dest": "/teams.html"
 		},
 		{
+			"src": "/teams/([0-9a-fA-F-]{36})/chat/?",
+			"dest": "/team-chat.html"
+		},
+		{
+			"src": "/team-chat/?",
+			"dest": "/team-chat.html"
+		},
+		{
 			"src": "/teams/([0-9a-fA-F-]{36})/?",
 			"dest": "/teams.html"
 		},
@@ -1333,12 +1365,28 @@
 			"dest": "/quests.html"
 		},
 		{
+			"src": "/spend/?",
+			"dest": "/spend.html"
+		},
+		{
 			"src": "/approvals/?",
 			"dest": "/approvals.html"
 		},
 		{
 			"src": "/approvals/([^/.]+)/?",
 			"dest": "/approvals.html"
+		},
+		{
+			"src": "/commerce/?",
+			"dest": "/commerce.html"
+		},
+		{
+			"src": "/invoices/?",
+			"dest": "/commerce.html"
+		},
+		{
+			"src": "/invoices/([^/.]+)/?",
+			"dest": "/agent-invoice.html"
 		},
 		{
 			"src": "/duels/?",
@@ -1455,6 +1503,18 @@
 		{
 			"src": "/launch/paired/?",
 			"dest": "/launch-paired.html"
+		},
+		{
+			"src": "/launch/uniswap/?",
+			"dest": "/launch-uniswap.html"
+		},
+		{
+			"src": "/launch/intents/?",
+			"dest": "/launch-intent.html"
+		},
+		{
+			"src": "/launch/intents/([^/.]+)/?",
+			"dest": "/launch-intent.html"
 		},
 		{
 			"src": "/fear-greed/?",
@@ -2451,6 +2511,10 @@
 			"dest": "/smart-home-satellite.html"
 		},
 		{
+			"src": "/link-device/?",
+			"dest": "/link-device.html"
+		},
+		{
 			"src": "/cli/authorize/?",
 			"dest": "/cli-authorize.html"
 		},
@@ -2481,6 +2545,10 @@
 		{
 			"src": "/p/([a-z0-9-]+)/?",
 			"dest": "/p/index.html"
+		},
+		{
+			"src": "/developers/?",
+			"dest": "/developers.html"
 		},
 		{
 			"src": "/pricing/?",
@@ -3358,6 +3426,10 @@
 			"dest": "/api/inference/[action]?action=usage"
 		},
 		{
+			"src": "/api/me/spend/?",
+			"dest": "/api/spend/me"
+		},
+		{
 			"src": "/api/me/inference/provision/preview/?",
 			"dest": "/api/inference/[action]?action=provision-preview"
 		},
@@ -3434,6 +3506,14 @@
 			"dest": "/api/agents/paired/[action]?id=$1&action=$2"
 		},
 		{
+			"src": "/api/agents/([^/]+)/uniswap/([^/]+)",
+			"dest": "/api/agents/uniswap/[action]?id=$1&action=$2"
+		},
+		{
+			"src": "/api/launches/([^/]+)",
+			"dest": "/api/launches/[id]?id=$1"
+		},
+		{
 			"src": "/api/agents/([^/]+)/pons/([^/]+)",
 			"dest": "/api/agents/pons/[action]?id=$1&action=$2"
 		},
@@ -3463,6 +3543,10 @@
 		},
 		{
 			"src": "/api/agents/([^/]+)/usage",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/token-budget(/.*)?",
 			"dest": "/api/agents/[id]"
 		},
 		{
@@ -3642,6 +3726,90 @@
 			"dest": "/api/auth/x/[action]?action=callback"
 		},
 		{
+			"src": "/api/auth/google/start",
+			"dest": "/api/auth/google/[action]?action=start"
+		},
+		{
+			"src": "/api/auth/google/callback",
+			"dest": "/api/auth/google/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/google/confirm",
+			"dest": "/api/auth/google/[action]?action=confirm"
+		},
+		{
+			"src": "/api/auth/google/status",
+			"dest": "/api/auth/google/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/google/unlink",
+			"dest": "/api/auth/google/[action]?action=unlink"
+		},
+		{
+			"src": "/api/auth/telegram/start",
+			"dest": "/api/auth/telegram/[action]?action=start"
+		},
+		{
+			"src": "/api/auth/telegram/callback",
+			"dest": "/api/auth/telegram/[action]?action=callback"
+		},
+		{
+			"src": "/api/auth/telegram/magic",
+			"dest": "/api/auth/telegram/[action]?action=magic"
+		},
+		{
+			"src": "/api/auth/telegram/poll",
+			"dest": "/api/auth/telegram/[action]?action=poll"
+		},
+		{
+			"src": "/api/auth/telegram/status",
+			"dest": "/api/auth/telegram/[action]?action=status"
+		},
+		{
+			"src": "/api/auth/telegram/unlink",
+			"dest": "/api/auth/telegram/[action]?action=unlink"
+		},
+		{
+			"src": "/api/auth/link-codes/mint",
+			"dest": "/api/auth/link-codes/[action]?action=mint"
+		},
+		{
+			"src": "/api/auth/link-codes/claim",
+			"dest": "/api/auth/link-codes/[action]?action=claim"
+		},
+		{
+			"src": "/api/auth/link-codes/poll",
+			"dest": "/api/auth/link-codes/[action]?action=poll"
+		},
+		{
+			"src": "/api/auth/link-codes/pending",
+			"dest": "/api/auth/link-codes/[action]?action=pending"
+		},
+		{
+			"src": "/api/auth/link-codes/decide",
+			"dest": "/api/auth/link-codes/[action]?action=decide"
+		},
+		{
+			"src": "/api/auth/link-codes/devices",
+			"dest": "/api/auth/link-codes/[action]?action=devices"
+		},
+		{
+			"src": "/api/auth/link-codes/revoke",
+			"dest": "/api/auth/link-codes/[action]?action=revoke"
+		},
+		{
+			"src": "/api/auth/external-wallet/challenge",
+			"dest": "/api/auth/external-wallet/[action]?action=challenge"
+		},
+		{
+			"src": "/api/auth/external-wallet/verify",
+			"dest": "/api/auth/external-wallet/[action]?action=verify"
+		},
+		{
+			"src": "/api/auth/linked-accounts",
+			"dest": "/api/auth/linked-accounts"
+		},
+		{
 			"src": "/api/auth/saml/metadata",
 			"dest": "/api/auth/saml/[action]?action=metadata"
 		},
@@ -3780,6 +3948,22 @@
 		{
 			"src": "/api/pump/launch-og",
 			"dest": "/api/pump/launch-og.js"
+		},
+		{
+			"src": "/api/pump/pairs",
+			"dest": "/api/pump/pairs.js"
+		},
+		{
+			"src": "/api/pump/launch-intents",
+			"dest": "/api/pump/launch-intents.js"
+		},
+		{
+			"src": "/api/pump/launch-intents/([^/]+)",
+			"dest": "/api/pump/launch-intents.js?id=$1"
+		},
+		{
+			"src": "/api/pump/launch-intents/([^/]+)/([^/]+)",
+			"dest": "/api/pump/launch-intents.js?id=$1&action=$2"
 		},
 		{
 			"src": "/api/oracle/coin",
@@ -5467,6 +5651,10 @@
 			"dest": "/agent-cards.html"
 		},
 		{
+			"src": "/agents/[^/.]+/perps/?",
+			"dest": "/agent-perps.html"
+		},
+		{
 			"src": "/agents/[^/.]+/mail/?",
 			"dest": "/agent-mail.html"
 		},
@@ -6216,6 +6404,10 @@
 			"dest": "/mcp-tools.html"
 		},
 		{
+			"src": "/mcp-tools/[^/]+/[^/]+/?",
+			"dest": "/mcp-tool.html"
+		},
+		{
 			"src": "/connect/?",
 			"dest": "/connect.html"
 		},
@@ -6634,6 +6826,10 @@
 			"schedule": "*/5 * * * *"
 		},
 		{
+			"path": "/api/cron/domain-renewals",
+			"schedule": "17 6 * * *"
+		},
+		{
 			"path": "/api/cron/marketplace-escrow-sweep",
 			"schedule": "*/2 * * * *"
 		},
@@ -6660,6 +6856,14 @@
 		{
 			"path": "/api/cron/agent-automations",
 			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/webhook-deliveries",
+			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/whitelist-activate",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/cron/reconcile-decisions",
@@ -6800,10 +7004,6 @@
 		{
 			"path": "/api/cron/forge-finalize",
 			"schedule": "* * * * *"
-		},
-		{
-			"path": "/api/cron/domain-renewals",
-			"schedule": "17 6 * * *"
 		},
 		{
 			"path": "/api/llm/health",
@@ -7132,6 +7332,18 @@
 		{
 			"path": "/api/cron/duels-tick",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/agent-portfolio-snapshots",
+			"schedule": "23 * * * *"
+		},
+		{
+			"path": "/api/cron/perps-tick",
+			"schedule": "*/2 * * * *"
+		},
+		{
+			"path": "/api/cron/agent-invoice-watch",
+			"schedule": "* * * * *"
 		}
 	]
 }

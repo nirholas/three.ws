@@ -10,6 +10,7 @@
 // through: the team's policy agent, else its Trader, else the solo agent.
 
 import { sql } from '../db.js';
+import { publicUrlOrNull, thumbnailUrl } from '../r2.js';
 
 export const CHAT_ROLES = Object.freeze(['researcher', 'entry', 'trader', 'launcher']);
 
@@ -45,6 +46,8 @@ function shapeMember(row) {
 		name: row.name || 'Agent',
 		avatar_id: row.avatar_id || null,
 		wallet: row.meta?.solana_address || null,
+		model_url: row.storage_key ? publicUrlOrNull(row.storage_key) : null,
+		thumbnail_url: row.thumbnail_key ? thumbnailUrl(row.thumbnail_key) : null,
 		permissions: row.permissions || null,
 		status: row.status || 'active',
 	};
@@ -68,9 +71,10 @@ async function loadTeamSquad(id, userId) {
 	if (!team || team.owner_user_id !== userId) return null;
 	const rows = await sql`
 		select m.id as member_id, m.role, m.agent_id, m.permissions, m.status,
-		       a.name, a.avatar_id, a.meta
+		       a.name, a.avatar_id, a.meta, av.storage_key, av.thumbnail_key
 		from team_members m
 		join agent_identities a on a.id = m.agent_id and a.deleted_at is null
+		left join avatars av on av.id = a.avatar_id and av.deleted_at is null
 		where m.team_id = ${id} and m.status = 'active'
 		order by m.created_at
 	`;
@@ -96,11 +100,13 @@ async function loadTeamSquad(id, userId) {
 
 async function loadAgentSquad(id, userId) {
 	const [agent] = await sql`
-		select id, user_id, name, avatar_id, meta
-		from agent_identities where id = ${id} and deleted_at is null limit 1
+		select a.id, a.user_id, a.name, a.avatar_id, a.meta, av.storage_key, av.thumbnail_key
+		from agent_identities a
+		left join avatars av on av.id = a.avatar_id and av.deleted_at is null
+		where a.id = ${id} and a.deleted_at is null limit 1
 	`;
 	if (!agent || agent.user_id !== userId) return null;
-	const members = CHAT_ROLES.map((role) => shapeMember({ role, agent_id: agent.id, name: agent.name, avatar_id: agent.avatar_id, meta: agent.meta }));
+	const members = CHAT_ROLES.map((role) => shapeMember({ role, agent_id: agent.id, name: agent.name, avatar_id: agent.avatar_id, meta: agent.meta, storage_key: agent.storage_key, thumbnail_key: agent.thumbnail_key }));
 	return {
 		kind: 'agent',
 		id: agent.id,
@@ -162,7 +168,7 @@ export function publicSquad(squad) {
 		status: squad.status,
 		policy_agent_id: squad.policy_agent_id,
 		policy: squad.policy,
-		members: squad.members.map((m) => ({ role: m.role, agent_id: m.agent_id, name: m.name, avatar_id: m.avatar_id, wallet: m.wallet })),
+		members: squad.members.map((m) => ({ role: m.role, agent_id: m.agent_id, name: m.name, avatar_id: m.avatar_id, wallet: m.wallet, model_url: m.model_url, thumbnail_url: m.thumbnail_url })),
 		page_url: squad.kind === 'team' ? `/teams/${squad.id}` : `/agents/${squad.id}`,
 		chat_url: `/teams/${squad.id}/chat`,
 	};

@@ -1,5 +1,5 @@
-// Verify an on-chain SOL or $THREE transfer into the platform deposit wallet and
-// credit the depositor's prepaid balance (api/_lib/credits.js).
+// Verify an on-chain SOL, USDC or $THREE transfer into the platform deposit
+// wallet and credit the depositor's prepaid balance (api/_lib/credits.js).
 //
 // Trust model (server-authoritative — a client "I paid" claim is never trusted):
 //   1. The transaction is confirmed and didn't error on-chain.
@@ -26,12 +26,71 @@ import { solanaConnection } from './solana/connection.js';
 import { sql } from './db.js';
 import { env } from './env.js';
 import { creditAccount } from './credits.js';
-import { TOKEN_MINT, TOKEN_DECIMALS, treasuryWalletOrNull } from './token/config.js';
+import {
+	TOKEN_MINT,
+	TOKEN_DECIMALS,
+	TOKEN_SYMBOL,
+	treasuryWalletOrNull,
+	creditBonusBps,
+} from './token/config.js';
 import { getTokenPriceUsd } from './token/price.js';
 import { solanaMintUsdPrice } from './balances.js';
+import { USDC_CREDIT_RATE } from './pricing/catalog.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const LAMPORTS_PER_SOL = 1_000_000_000;
+
+// Circle's USDC mints per cluster (same table api/_lib/agent-usdc-transfer.js
+// pays from). Devnet is only reachable outside production, see network below.
+const USDC_MINT_BY_NETWORK = Object.freeze({
+	mainnet: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+	devnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+});
+const USDC_DECIMALS = 6;
+
+export const DEPOSIT_ASSETS = Object.freeze(['SOL', 'USDC', 'THREE']);
+
+/**
+ * Every asset the deposit wallet accepts, with how each one is priced. This is
+ * the single source the /api/credits payload and the deposit verifier share, so
+ * the credits page can only ever advertise an asset the verifier will credit.
+ * `rate.kind` is `fixed` (usd_per_unit is the published rate) or `live_price`
+ * (the mainnet quote at verification time). `bonus_bps` is extra credit on top
+ * of the USD value, from owner policy (THREE_CREDIT_BONUS_BPS); 0 means none.
+ * @param {'mainnet'|'devnet'} [network]
+ */
+export function depositAssetCatalog(network = 'mainnet') {
+	const net = network === 'devnet' ? 'devnet' : 'mainnet';
+	return [
+		{
+			asset: 'SOL',
+			label: 'SOL',
+			mint: SOL_MINT,
+			decimals: 9,
+			native: true,
+			rate: { kind: 'live_price', source: 'mainnet quote at verification' },
+			bonus_bps: 0,
+		},
+		{
+			asset: 'USDC',
+			label: 'USDC',
+			mint: USDC_MINT_BY_NETWORK[net],
+			decimals: USDC_DECIMALS,
+			native: false,
+			rate: { kind: 'fixed', usd_per_unit: USDC_CREDIT_RATE, source: 'published rate' },
+			bonus_bps: 0,
+		},
+		{
+			asset: 'THREE',
+			label: TOKEN_SYMBOL,
+			mint: TOKEN_MINT,
+			decimals: TOKEN_DECIMALS,
+			native: false,
+			rate: { kind: 'live_price', source: 'mainnet quote at verification' },
+			bonus_bps: creditBonusBps(),
+		},
+	];
+}
 
 /**
  * The single Solana address users send deposits to. Defaults to the existing x402
@@ -110,7 +169,7 @@ function lamportsCreditedTo(tx, owner) {
 
 /**
  * Verify a deposit transaction and credit the user's prepaid balance.
- * @param {{ user: object, asset: 'SOL'|'THREE', txSignature: string, network?: string }} args
+ * @param {{ user: object, asset: 'SOL'|'USDC'|'THREE', txSignature: string, network?: string }} args
  * @returns {Promise<object>} credit result for the API response
  */
 export async function verifyAndCreditDeposit({ user, asset, txSignature, network: requestedNetwork = 'mainnet' }) {
@@ -124,8 +183,8 @@ export async function verifyAndCreditDeposit({ user, asset, txSignature, network
 		throw depositError('the deposit wallet is not configured', 503, 'deposit_unavailable');
 
 	const assetU = String(asset || '').toUpperCase();
-	if (assetU !== 'SOL' && assetU !== 'THREE')
-		throw depositError('asset must be SOL or THREE', 400, 'bad_request');
+	if (!DEPOSIT_ASSETS.includes(assetU))
+		throw depositError(`asset must be one of ${DEPOSIT_ASSETS.join(', ')}`, 400, 'bad_request');
 	if (typeof txSignature !== 'string' || txSignature.length < 32 || txSignature.length > 128) {
 		throw depositError('a valid tx_signature is required', 400, 'bad_request');
 	}
@@ -214,6 +273,21 @@ export async function verifyAndCreditDeposit({ user, asset, txSignature, network
 		assetAmount = lamports;
 		amount = Number(lamports) / LAMPORTS_PER_SOL;
 		usd = amount * priceUsd;
+	} else if (assetU === 'USDC') {
+		// USDC is credited at the published fixed rate (pricing/catalog.js), never
+		// a quote: credits are USD-denominated and 1 USDC is $1.00 of credits.
+		const atomics = tokenCreditedTo(tx, { mint: USDC_MINT_BY_NETWORK[network], owner: sink });
+		if (atomics <= 0n) {
+			throw depositError(
+				'no USDC was received at the deposit wallet in this transaction',
+				422,
+				'no_funds_received',
+			);
+		}
+		priceUsd = USDC_CREDIT_RATE;
+		assetAmount = atomics;
+		amount = Number(atomics) / 10 ** USDC_DECIMALS;
+		usd = amount * priceUsd;
 	} else {
 		const atomics = tokenCreditedTo(tx, { mint: TOKEN_MINT, owner: sink });
 		if (atomics <= 0n) {
@@ -253,7 +327,7 @@ export async function verifyAndCreditDeposit({ user, asset, txSignature, network
 		userId: user.id,
 		amountUsd: usd,
 		kind: 'deposit',
-		refType: assetU === 'SOL' ? 'deposit_sol' : 'deposit_three',
+		refType: `deposit_${assetU.toLowerCase()}`,
 		refId: txSignature,
 		txSignature,
 		asset: assetU,
@@ -263,11 +337,43 @@ export async function verifyAndCreditDeposit({ user, asset, txSignature, network
 		meta: { slot: tx.slot ?? null, signer: matched, amount, network },
 	});
 
+	// Paying in $THREE earns the owner-configured bonus as a separate `grant`
+	// row on the same ledger, keyed on the deposit so a re-verify replays it
+	// instead of granting twice. The bonus is read at credit time, so a policy
+	// change applies to the next deposit and never rewrites an old one.
+	const bonusBps = assetU === 'THREE' ? creditBonusBps() : 0;
+	let bonusUsd = 0;
+	let balanceUsd = res.balanceUsd;
+	if (bonusBps > 0) {
+		bonusUsd = Math.round(usd * bonusBps) / 10_000;
+		bonusUsd = Math.round(bonusUsd * 1e6) / 1e6;
+		if (bonusUsd > 0) {
+			const bonus = await creditAccount({
+				userId: user.id,
+				amountUsd: bonusUsd,
+				kind: 'grant',
+				action: 'deposit.three_bonus',
+				refType: 'deposit_three_bonus',
+				refId: txSignature,
+				txSignature,
+				asset: assetU,
+				assetAmount: 0n,
+				priceUsd,
+				idempotencyKey: `${idempotencyKey}:bonus`,
+				meta: { bonus_bps: bonusBps, base_usd: usd, network },
+			});
+			balanceUsd = bonus.balanceUsd;
+			if (bonus.replay) bonusUsd = 0;
+		}
+	}
+
 	return {
 		ok: true,
 		replay: res.replay,
-		balance_usd: res.balanceUsd,
+		balance_usd: balanceUsd,
 		credited_usd: res.replay ? 0 : usd,
+		bonus_usd: res.replay ? 0 : bonusUsd,
+		bonus_bps: bonusBps,
 		usd,
 		asset: assetU,
 		amount,

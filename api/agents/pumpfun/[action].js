@@ -40,7 +40,9 @@ import { z } from 'zod';
 
 const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
 
-async function resolveAuth(req) {
+// `kind` names the grade of value movement the action performs (spend-scope.js):
+// buy, sell and swap are trades, launch is a launch, pay sends funds out.
+async function resolveAuth(req, { kind = 'spend' } = {}) {
 	const session = await getSessionUser(req);
 	if (session) {
 		// CSRF defense-in-depth for the cookie path: these handlers sign real
@@ -54,7 +56,7 @@ async function resolveAuth(req) {
 		}
 		return { userId: session.id };
 	}
-	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req, { kind });
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }
@@ -119,7 +121,7 @@ async function handleBuy(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req);
+	const auth = await resolveAuth(req, { kind: 'trade' });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -429,7 +431,7 @@ async function handleLaunch(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req);
+	const auth = await resolveAuth(req, { kind: 'launch' });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -1069,7 +1071,7 @@ async function handleSell(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req);
+	const auth = await resolveAuth(req, { kind: 'trade' });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -1289,7 +1291,7 @@ async function handleSwap(req, res, id) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req);
+	const auth = await resolveAuth(req, { kind: 'trade' });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);

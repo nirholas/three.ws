@@ -7,17 +7,17 @@
 // Base's. The Solana guard module (api/_lib/agent-trade-guards.js) is read,
 // never changed.
 //
-// Destinations have their own allowlist, because the Solana allowlist holds
-// base58 addresses: meta.evm_spend_limits.withdraw_allowlist holds checksummed
-// 0x addresses, one list for every EVM chain (an agent has one EVM address
-// across them). A transfer out of the EVM leg is refused unless its
-// destination is on that list; an empty list refuses every transfer.
+// Destinations come from the destination whitelist table (api/_lib/destination-whitelist.js),
+// one EVM list for every EVM chain (an agent has one EVM address across them).
+// A transfer out of the EVM leg is refused unless its destination is an ACTIVE
+// entry, so a newly added address serves its cooldown first; an empty list
+// refuses every transfer. Per-destination caps on the entry apply on top.
 
 import { getAddress, isAddress } from 'viem';
 
 import { sql } from '../db.js';
 import { getSpendLimits } from '../agent-trade-guards.js';
-import { logAudit } from '../audit.js';
+import { activeAddresses, evaluateDestination, replaceList } from '../destination-whitelist.js';
 import { EvmLegError } from './chains.js';
 
 export const MAX_EVM_ALLOWLIST = 25;
@@ -114,31 +114,31 @@ export async function getDailyEvmSpendUsd(agentId, chainKey) {
  */
 export async function enforceEvmSpend({ agentId, meta, chain, usdValue, destination = null, category }) {
 	const limits = getEvmSpendLimits(meta);
+	const outbound = category === 'transfer' || category === 'withdraw';
+	if (outbound) limits.withdraw_allowlist = (await activeAddresses(agentId, 'evm')).map(normalizeEvmAddress).filter(Boolean);
 	const spentTodayUsd = await getDailyEvmSpendUsd(agentId, chain.key);
 	const blocked = checkEvmSpend({ limits, usdValue, spentTodayUsd, destination, category, chainName: chain.name });
 	if (blocked) throw new EvmLegError(blocked.code, blocked.message, blocked.code === 'wallet_frozen' ? 423 : 422, blocked.detail);
+	if (outbound) await enforceEntryCaps({ agentId, destination, category, usdValue });
 	return { limits, spentTodayUsd };
 }
 
+async function enforceEntryCaps({ agentId, destination, category, usdValue }) {
+	const decision = await evaluateDestination({ agentId, destination, category, chain: 'evm' });
+	const entry = decision.state === 'active' ? decision.entry : null;
+	if (!entry || usdValue == null) return;
+	if (entry.per_tx_cap_usd != null && usdValue > entry.per_tx_cap_usd) {
+		throw new EvmLegError('destination_cap_exceeded', `That send is $${usdValue.toFixed(2)}, over the $${entry.per_tx_cap_usd.toFixed(2)} limit set for this destination.`, 422, { cap_usd: entry.per_tx_cap_usd, usd: usdValue });
+	}
+}
+
 /**
- * Replace the EVM allowlist (owner only). Records a limit_change custody row.
- * @returns {Promise<string[]>} the stored, checksummed list
+ * Replace the EVM allowlist (owner browser session only). Addresses new to the
+ * list serve the cooldown and need a step-up grant; removals are instant.
  */
-export async function setEvmAllowlist(agentId, userId, list, { req = null } = {}) {
+export async function setEvmAllowlist(agentId, actor, list, { req = null, grantId = null } = {}) {
 	if (!Array.isArray(list)) throw new EvmLegError('invalid_allowlist', 'allowlist must be an array of 0x addresses.');
 	const bad = list.filter((a) => !normalizeEvmAddress(a));
 	if (bad.length) throw new EvmLegError('invalid_address', `Not an EVM address: ${String(bad[0]).slice(0, 64)}`);
-	const [row] = await sql`SELECT id, user_id, meta FROM agent_identities WHERE id = ${agentId} AND deleted_at IS NULL`;
-	if (!row) throw new EvmLegError('not_found', 'agent not found', 404);
-	if (row.user_id !== userId) throw new EvmLegError('forbidden', 'not your agent', 403);
-	const prev = getEvmSpendLimits(row.meta).withdraw_allowlist;
-	const next = getEvmSpendLimits({ evm_spend_limits: { withdraw_allowlist: list } }).withdraw_allowlist;
-	const meta = { ...(row.meta || {}), evm_spend_limits: { withdraw_allowlist: next, updated_at: new Date().toISOString() } };
-	await sql`UPDATE agent_identities SET meta = ${JSON.stringify(meta)}::jsonb WHERE id = ${agentId}`;
-	await sql`
-		INSERT INTO agent_custody_events (agent_id, user_id, event_type, reason, chain, network, meta)
-		VALUES (${agentId}, ${userId}, 'limit_change', 'evm_allowlist_updated', 'evm', 'evm', ${JSON.stringify({ prev, next })}::jsonb)
-	`;
-	logAudit({ userId, action: 'custody.evm_allowlist_change', resourceId: agentId, meta: { prev, next }, req });
-	return next;
+	return replaceList({ agentId, actor, list, chain: 'evm', grantId, req });
 }

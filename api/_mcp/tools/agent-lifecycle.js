@@ -380,7 +380,7 @@ export const toolDefs = [
 		title: 'Edit an agent you own',
 		annotations: IDEMPOTENT_WRITE,
 		description:
-			'Change an agent\'s settings. Pass only the fields to change. Validated by the same code as the REST API: name (1-80 chars), persona (public one-liner, up to 500), system_prompt (up to 8000), model (an id from the model catalog that supports tools), temperature (0-2), skills (up to 30 skill ids), strategy (a strategy preset id, or null to clear), inference_budget ({ daily, monthly } credit caps in USD, or null to remove).',
+			'Change an agent\'s settings. Pass only the fields to change. Validated by the same code as the REST API: name (1-80 chars), persona (public one-liner, up to 500), system_prompt (up to 8000), model (an id from the model catalog that supports tools), temperature (0-2), skills (up to 30 skill ids), strategy (a strategy preset id, or null to clear), inference_budget ({ daily, monthly } credit caps in USD, or null to remove). Use this to rename an agent or change its persona, prompt, model, skills, strategy or inference budget.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -426,7 +426,7 @@ export const toolDefs = [
 		title: 'Delete an agent you own',
 		annotations: DESTRUCTIVE,
 		description:
-			'Delete an agent. Its open runs are cancelled, its automations are switched off, and its memories and logged actions are erased for good. Call get_agent first, show the user its delete_impact, and only after they clearly say yes call this with the preview_id and confirm_delete: true. Without confirm_delete the call is refused.',
+			'Delete an agent. Its open runs are cancelled, its automations are switched off, and its memories and logged actions are erased for good. Call get_agent first, show the user its delete_impact, and only after they clearly say yes call this with the preview_id and confirm_delete: true. Without confirm_delete the call is refused. Use this when the owner wants an agent gone for good; to pause it instead, use stop_agent.',
 		inputSchema: {
 			type: 'object',
 			properties: { agent_id: AGENT_ID },
@@ -447,7 +447,7 @@ export const toolDefs = [
 		title: 'Start an agent',
 		annotations: IDEMPOTENT_WRITE,
 		description:
-			'Set an agent to running. Its automations fire again, its strategy loop ticks again, and its paused runs can be resumed. Starting a running agent is a no-op.',
+			'Set an agent to running. Its automations fire again, its strategy loop ticks again, and its paused runs can be resumed. Starting a running agent is a no-op. Use this to bring a stopped agent back online after stop_agent.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 		scope: 'agents:write',
 		async handler(args, auth) {
@@ -463,7 +463,7 @@ export const toolDefs = [
 		title: 'Stop an agent',
 		annotations: IDEMPOTENT_WRITE,
 		description:
-			'Set an agent to stopped. Its automations stop firing, its strategy loop stops ticking, and its runs hold before their next step until it is started again. Nothing is deleted.',
+			'Set an agent to stopped. Its automations stop firing, its strategy loop stops ticking, and its runs hold before their next step until it is started again. Nothing is deleted. Use this to pause an agent without losing anything; start_agent resumes it.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 		scope: 'agents:write',
 		async handler(args, auth) {
@@ -479,7 +479,7 @@ export const toolDefs = [
 		title: 'Give an agent a 3D body or a portrait',
 		annotations: { ...WRITE, openWorldHint: true },
 		description:
-			'Upload a GLB or an image for an agent, from a public https url or inline data (a data: URI or base64, up to about 1.4 MB; use url for anything bigger). A GLB is saved to your avatar library through the normal avatar ingest, attached as the agent\'s 3D body, and auto-rigged in the background if it arrived static. A PNG, JPEG, WebP or GIF becomes the agent\'s portrait image. Pass exactly one of url or data.',
+			'Upload a GLB or an image for an agent, from a public https url or inline data (a data: URI or base64, up to about 1.4 MB; use url for anything bigger). A GLB is saved to your avatar library through the normal avatar ingest, attached as the agent\'s 3D body, and auto-rigged in the background if it arrived static. A PNG, JPEG, WebP or GIF becomes the agent\'s portrait image. Pass exactly one of url or data. Use this when the owner has a 3D model or a picture to give an agent its body or portrait.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -521,7 +521,7 @@ export const toolDefs = [
 		title: 'Give an agent a goal to pursue on its own',
 		annotations: WRITE,
 		description:
-			'Start an autonomous run: the agent works the goal through its read-only tool loop, one checkpointed step at a time. A run has a step budget (max_steps) and a dollar budget (budget_usd, credits spent on paid models; 0 keeps it on free model lanes and it can never spend a cent). Cancel takes effect between steps. When it ends it writes a plain-language summary, and every tool call it made is logged with a chained receipt (read them with get_agent_run_steps, or watch the replay on the agent page). Runs never sign or move funds.',
+			'Start an autonomous run: the agent works the goal through its read-only tool loop, one checkpointed step at a time. A run has a step budget (max_steps) and a dollar budget (budget_usd, credits spent on paid models; 0 keeps it on free model lanes and it can never spend a cent). Cancel takes effect between steps. When it ends it writes a plain-language summary, and every tool call it made is logged with a chained receipt (read them with get_agent_run_steps, or watch the replay on the agent page). Runs never sign or move funds. Use this when the owner wants an agent to work toward a goal on its own over several steps.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -567,7 +567,7 @@ export const toolDefs = [
 		title: 'Pause, resume, or raise the budget of a run',
 		annotations: WRITE,
 		description:
-			'Pause a live run, resume a paused one, or raise its dollar budget (budget_usd; a budget can only be raised). A finished run cannot be changed.',
+			'Pause a live run, resume a paused one, or raise its dollar budget (budget_usd; a budget can only be raised). A finished run cannot be changed. Use this to pause or resume a run in progress, or to give a run that is running out of budget more room.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -594,7 +594,7 @@ export const toolDefs = [
 		title: 'Cancel a run',
 		annotations: IDEMPOTENT_WRITE,
 		description:
-			'Cancel a run. A queued, scheduled or paused run ends now; a running one ends before its next step, so the cancel lands within one step. The run keeps its steps, receipts and summary.',
+			'Cancel a run. A queued, scheduled or paused run ends now; a running one ends before its next step, so the cancel lands within one step. The run keeps its steps, receipts and summary. Use this when a run should stop for good; to hold it and continue later, pause it with update_agent_run.',
 		inputSchema: { type: 'object', properties: { run_id: RUN_ID }, required: ['run_id'], additionalProperties: false },
 		scope: 'agents:write',
 		async handler(args, auth) {
@@ -614,7 +614,7 @@ export const toolDefs = [
 		title: 'Read a run step by step',
 		annotations: READ,
 		description:
-			'Read a run and its step trace: every model call, and every tool call paired with its result and a receipt. Receipts are sha256 digests chained step to step, and receipt_chain reports whether the chain recomputes cleanly (it does whenever no step was edited, dropped or reordered). Page with after (the last seq you have).',
+			'Read a run and its step trace: every model call, and every tool call paired with its result and a receipt. Receipts are sha256 digests chained step to step, and receipt_chain reports whether the chain recomputes cleanly (it does whenever no step was edited, dropped or reordered). Page with after (the last seq you have). Use this to see what a run did, check its receipts, or follow a live run step by step.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -651,7 +651,7 @@ export const toolDefs = [
 		title: 'List automations',
 		annotations: READ,
 		description:
-			'List automations: one agent\'s (pass agent_id) or every automation across your agents plus your account alert rules. Wallet rules and alert rules appear as the same shape with source wallet_intent or alert_rule.',
+			'List automations: one agent\'s (pass agent_id) or every automation across your agents plus your account alert rules. Wallet rules and alert rules appear as the same shape with source wallet_intent or alert_rule. Call this first to find the automation id that automation_get, automation_update, automation_delete and automation_trigger take.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, additionalProperties: false },
 		scope: 'agents:read',
 		async handler(args, auth) {
@@ -689,7 +689,7 @@ export const toolDefs = [
 		description:
 			`Wire an agent to a trigger. Validated by the same code as the REST API. ${TRIGGER_DOC} ${ACTION_DOC} ` +
 			'limits caps spend actions in USD: { perActionUsd, dailyUsd, totalUsd }. trigger_once switches it off after the first fire. ' +
-			'A swap or transfer spends from the agent wallet on its own: the first call returns the recipient, amount, asset and chain for the owner to approve, then call again with confirm_spend: true. Connector keys cannot create spending automations.',
+			'A swap or transfer spends from the agent wallet on its own: the first call returns the recipient, amount, asset and chain for the owner to approve, then call again with confirm_spend: true. Connector keys cannot create spending automations. Use this when the owner wants an agent to act on its own when a price, schedule, balance, tip, launch or whale event happens.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -735,7 +735,7 @@ export const toolDefs = [
 		title: 'Edit an automation',
 		annotations: IDEMPOTENT_WRITE,
 		description:
-			'Change an automation. trigger and action patches merge over the stored config (send a new type to replace it), and the result is re-validated with the same rules as automation_create. enabled switches it on or off. Changing a swap or transfer automation (anything but switching it off) shows the spend terms first and needs confirm_spend: true.',
+			'Change an automation. trigger and action patches merge over the stored config (send a new type to replace it), and the result is re-validated with the same rules as automation_create. enabled switches it on or off. Changing a swap or transfer automation (anything but switching it off) shows the spend terms first and needs confirm_spend: true. Use this to retune or switch an existing automation on or off instead of deleting and recreating it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -785,7 +785,7 @@ export const toolDefs = [
 		title: 'Delete an automation',
 		annotations: DESTRUCTIVE,
 		description:
-			'Delete an automation (or a wallet rule or alert rule listed as one). Call automation_get first, show the user what it does, and only after they say yes call this with the preview_id and confirm_delete: true. Runs it already started keep going; cancel them with cancel_agent_run.',
+			'Delete an automation (or a wallet rule or alert rule listed as one). Call automation_get first, show the user what it does, and only after they say yes call this with the preview_id and confirm_delete: true. Runs it already started keep going; cancel them with cancel_agent_run. Use this when an automation should be removed for good; to pause it, use automation_update with enabled: false.',
 		inputSchema: { type: 'object', properties: { automation_id: AUTOMATION_ID }, required: ['automation_id'], additionalProperties: false },
 		scope: 'agents:write',
 		async handler(args, auth) {
@@ -801,7 +801,7 @@ export const toolDefs = [
 		title: 'Fire an automation now',
 		annotations: { ...WRITE, destructiveHint: true, openWorldHint: true },
 		description:
-			'Run an automation\'s action right now, outside its trigger, once per call. It still passes every guard a real fire does (the agent must be running, spend policy and caps apply). An agent_prompt automation starts a run (driven inline for wait_seconds). A swap or transfer shows the spend terms first and needs confirm_spend: true.',
+			'Run an automation\'s action right now, outside its trigger, once per call. It still passes every guard a real fire does (the agent must be running, spend policy and caps apply). An agent_prompt automation starts a run (driven inline for wait_seconds). A swap or transfer shows the spend terms first and needs confirm_spend: true. Use this to test an automation, or to fire it once on demand without waiting for its trigger.',
 		inputSchema: {
 			type: 'object',
 			properties: { automation_id: AUTOMATION_ID, confirm_spend: { type: 'boolean' }, wait_seconds: WAIT },

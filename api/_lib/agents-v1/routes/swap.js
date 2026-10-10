@@ -201,9 +201,9 @@ export const ROUTES = [
 
 			if (pinned.mode === 'custodial') {
 				const p = ctx.principal;
-				if (p.source !== 'session' && !hasScope(p.scope, 'wallet:write')) {
-					throw apiError(403, 'insufficient_scope', 'Swapping from an agent wallet requires the "wallet:write" scope.', {
-						required: 'wallet:write',
+				if (p.source !== 'session' && !hasScope(p.scope, 'wallet:trade')) {
+					throw apiError(403, 'insufficient_scope', 'Swapping from an agent wallet requires the "wallet:trade" scope (wallet:write includes it).', {
+						required: 'wallet:trade',
 					});
 				}
 				requireConfirm(ctx.body, 'swapQuote', 'POST /api/v1/swap/quote');

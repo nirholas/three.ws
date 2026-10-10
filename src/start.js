@@ -12,6 +12,7 @@ import { TEMPLATES, TEMPLATES_BY_ID } from './templates.js';
 import { log } from './shared/log.js';
 import { apiFetch, noteSession } from './api.js';
 import { saveRemoteGlbToAccount } from './account.js';
+import { withPayoutStepUp } from './payout-step-up.js';
 
 const STORAGE_KEY = 'wz:state';
 const TOTAL_STEPS = 5;
@@ -283,6 +284,8 @@ async function apiJson(method, url, body) {
 	if (!r.ok) {
 		const err = new Error(j.error_description || j.error || `Server error ${r.status}`);
 		err.status = r.status;
+		err.code = j.error;
+		err.body = j;
 		throw err;
 	}
 	return j;
@@ -698,12 +701,22 @@ async function saveEarnSettings() {
 	if (wallet) {
 		const chain = detectChain(wallet) === 'ETH/BASE' ? 'base' : 'solana';
 		try {
-			await apiJson('POST', '/api/billing/payout-wallets', {
-				chain,
-				address: wallet,
-				agent_id: state.agentId,
-				is_default: true,
+			const r = await withPayoutStepUp(async (extra) => {
+				try {
+					const data = await apiJson('POST', '/api/billing/payout-wallets', {
+						chain,
+						address: wallet,
+						agent_id: state.agentId,
+						is_default: true,
+						...extra,
+					});
+					return { ok: true, status: 200, data };
+				} catch (err) {
+					if (isSignedOut(err)) throw err;
+					return { ok: false, status: err?.status || 0, data: err?.body || { error: err?.code, error_description: err?.message } };
+				}
 			});
+			if (!r.ok) problems.push(`the payout wallet (${r.data?.error_description || r.data?.error || 'save failed'})`);
 		} catch (err) {
 			if (isSignedOut(err)) throw err;
 			problems.push(`the payout wallet (${err.message})`);

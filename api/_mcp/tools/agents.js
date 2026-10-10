@@ -194,7 +194,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Create a new three.ws agent on your account: a named identity with a persona, a brain model, a custodial Solana wallet and a public page. Returns the agent id, its Solana address and its page URL. Read three://models (or read_resource uri "three://models") for the model ids. Creating an agent moves no funds; fund the wallet separately.',
+			'Create a new three.ws agent on your account: a named identity with a persona, a brain model, a custodial Solana wallet and a public page. Returns the agent id, its Solana address and its page URL. Read three://models (or read_resource uri "three://models") for the model ids. Creating an agent moves no funds; fund the wallet separately. Use this when the user wants a new agent; call list_my_agents first if they may already have one that fits.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -354,7 +354,8 @@ export const toolDefs = [
 			'ERC-8004 registration needs your browser wallet to sign, so this returns a ' +
 			'prepared registration_json plus a continue_url to finish in the browser. ' +
 			'Idempotent: an already-registered agent is returned as-is unless force:true. ' +
-			'Requires a signed-in three.ws account.',
+			'Requires a signed-in three.ws account. Use this after create_agent when the agent needs a ' +
+			'verifiable on-chain identity.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -449,7 +450,8 @@ export const toolDefs = [
 			'get_embed_code all resolve it). Chain register_agent next to mint the on-chain identity (ERC-8004 on ' +
 			'Base, or a Metaplex Agent Registry PDA on Solana) and anchor_provenance to credential the GLB itself — ' +
 			'together the agent has a body, an on-chain identity, and a verifiable authenticity record. Requires a ' +
-			'signed-in three.ws account; both the agent and the avatar must belong to the caller.',
+			'signed-in three.ws account; both the agent and the avatar must belong to the caller. Use this after saving ' +
+			'a rigged avatar, to make it the permanent body of one of your agents.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -561,7 +563,8 @@ export const toolDefs = [
 			'for impersonation and policy violations before it goes public. Uses IBM Granite ' +
 			'embeddings to find look-alike agents a name match would miss, and Granite Guardian ' +
 			'to screen the identity text. Returns a clear | review | block verdict with the ' +
-			'nearest neighbours and human-readable reasons.',
+			'nearest neighbours and human-readable reasons. Use this before creating or publishing an agent ' +
+			'to catch a name or description that copies an existing one.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -666,7 +669,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'List the agents on your account, newest first: id, name, description, brain model, public Solana address, whether the page is published and the page URL. Use the ids with recall, list_custom_skills, attach_avatar_to_agent and call_agent. Reads only; no funds move.',
+			'List the agents on your account, newest first: id, name, description, brain model, public Solana address, whether the page is published and the page URL. Use this first to get the agent ids that recall, list_custom_skills, attach_avatar_to_agent and call_agent need. Reads only; no funds move.',
 		inputSchema: {
 			type: 'object',
 			properties: {

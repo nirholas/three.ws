@@ -181,12 +181,25 @@ export default wrap(async (req, res) => {
 		SELECT address, chain, preferred_network
 		FROM agent_payout_wallets
 		WHERE user_id = ${userId} AND (agent_id = ${agent_id} OR agent_id IS NULL)
+		  AND approved_at IS NOT NULL AND effective_at <= now()
 		ORDER BY
 			CASE WHEN agent_id = ${agent_id} THEN 0 ELSE 1 END,
 			is_default DESC,
 			created_at DESC
 	`;
 	if (!wallets.length) {
+		// A replacement inside its cooldown, or one still waiting on the owner's
+		// approval, is not a payout wallet yet; say when it will be.
+		const [pending] = await sql`
+			SELECT address, chain, approved_at, effective_at FROM agent_payout_wallets
+			WHERE user_id = ${userId} AND (agent_id = ${agent_id} OR agent_id IS NULL)
+			ORDER BY effective_at ASC LIMIT 1
+		`;
+		if (pending) {
+			return error(res, 422, 'payout_wallet_pending', pending.approved_at
+				? `Your new payout wallet takes effect at ${new Date(pending.effective_at).toISOString()}; withdrawals resume then`
+				: 'Your payout wallet change is waiting for your approval in the inbox', { address: pending.address, chain: pending.chain, effective_at: pending.effective_at, approved: Boolean(pending.approved_at) });
+		}
 		return error(res, 422, 'no_payout_wallet', 'Configure a payout wallet before requesting a withdrawal');
 	}
 

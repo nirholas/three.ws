@@ -10,7 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { TOOL_CATALOG, TOOLS } from '../../api/_mcpagent/catalog.js';
 
 describe('agent-wallet MCP catalog', () => {
-	it('leads with the free getting_started tool, then the wallet, marketplace and prediction toolsets', () => {
+	it('leads with the free getting_started tool, then the wallet, marketplace, prediction and perps toolsets', () => {
 		expect(TOOL_CATALOG.map((t) => t.name)).toEqual([
 			'getting_started',
 			// Wallet and x402 (api/_mcpagent/tools.js)
@@ -49,6 +49,48 @@ describe('agent-wallet MCP catalog', () => {
 			'predictions_redeem_preview',
 			'predictions_redeem',
 			'predictions_watch',
+			// Perpetual futures (api/_mcpagent/perps-tools.js)
+			'perps_markets',
+			'perps_market_data',
+			'perps_account',
+			'perps_positions',
+			'perps_order_preview',
+			'perps_action_preview',
+			'perps_order_execute',
+			'perps_collateral_deposit',
+			'perps_collateral_withdraw',
+			'perps_order_cancel',
+			'perps_flatten',
+			'perps_limits',
+			// Solana trading (api/_mcpagent/trading-tools.js over api/_lib/trading-tools/registry.js)
+			'token_search',
+			'get_price',
+			'get_indicators',
+			'get_market_signals',
+			'get_news_feed',
+			'arbitrage_prices',
+			'arbitrage_quote',
+			'swap_quote',
+			'swap_simulate',
+			'swap_execute',
+			// Portfolio reads (api/_mcpagent/portfolio-tools.js)
+			'get_portfolio',
+			'get_balance_history',
+			'get_pnl',
+			// Launch sniper, signal subscriptions and alert rules (api/_mcpagent/sniper-alert-tools.js)
+			'sniper_status',
+			'sniper_activate_preview',
+			'sniper_activate',
+			'sniper_deactivate',
+			'sniper_subscribe',
+			'alert_rule_create',
+			'alert_rule_list',
+			'alert_rule_delete',
+			// Agent duels (api/_mcpagent/duels-tools.js)
+			'duel_challenge',
+			'duel_accept',
+			'duel_details',
+			'duel_markets',
 		]);
 	});
 

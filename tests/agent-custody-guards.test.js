@@ -10,10 +10,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
-const sqlState = { queue: [], calls: [] };
+const sqlState = { queue: [], calls: [], handler: null };
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
-		sqlState.calls.push({ query: strings.join('?'), values });
+		const query = strings.join('?');
+		sqlState.calls.push({ query, values });
+		const handled = sqlState.handler ? sqlState.handler(query, values) : undefined;
+		if (handled !== undefined) return handled;
 		return sqlState.queue.length ? sqlState.queue.shift() : [];
 	}),
 	isDbUnavailableError: () => false,
@@ -42,6 +45,21 @@ const {
 beforeEach(() => {
 	sqlState.queue = [];
 	sqlState.calls = [];
+	sqlState.handler = null;
+});
+
+// The destination allowlist is table-backed: serve the settings row and the
+// matching destination entry (if any) from the fake database.
+function serveAllowlist({ enforced = true, entry = null } = {}) {
+	sqlState.handler = (query) => {
+		if (query.includes('destination_whitelist_settings')) return [{ agent_id: 'a', cooldown_seconds: 86400, enforced, pending_change: null }];
+		if (query.includes('destination_whitelist_entries')) return entry ? [entry] : [];
+		return undefined;
+	};
+}
+const activeEntry = (address) => ({
+	id: 'e1', agent_id: 'a', chain: 'solana', address, address_key: address, label: 'Cold', status: 'active',
+	proposed_by: 'owner', activates_at: new Date(Date.now() - 1000).toISOString(), per_tx_cap_usd: null, daily_cap_usd: null,
 });
 
 // ── address validation ─────────────────────────────────────────────────────────
@@ -128,16 +146,17 @@ describe('enforceSpendLimit', () => {
 	});
 
 	it('blocks a withdraw to a non-allowlisted destination', async () => {
-		const allowed = Keypair.generate().publicKey.toBase58();
 		const other = Keypair.generate().publicKey.toBase58();
+		serveAllowlist({ entry: null });
 		await expect(
-			enforceSpendLimit({ agentId: 'a', limits: { ...noLimits, withdraw_allowlist: [allowed] }, category: 'withdraw', usdValue: 1, destination: other }),
-		).rejects.toMatchObject({ code: 'destination_not_allowed' });
+			enforceSpendLimit({ agentId: 'a', limits: noLimits, category: 'withdraw', usdValue: 1, destination: other }),
+		).rejects.toMatchObject({ code: 'destination_not_whitelisted' });
 	});
 
 	it('allows a withdraw to an allowlisted destination', async () => {
 		const allowed = Keypair.generate().publicKey.toBase58();
-		const r = await enforceSpendLimit({ agentId: 'a', limits: { ...noLimits, withdraw_allowlist: [allowed] }, category: 'withdraw', usdValue: 1, destination: allowed });
+		serveAllowlist({ entry: activeEntry(allowed) });
+		const r = await enforceSpendLimit({ agentId: 'a', limits: noLimits, category: 'withdraw', usdValue: 1, destination: allowed });
 		expect(r.ok).toBe(true);
 	});
 

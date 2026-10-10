@@ -44,6 +44,13 @@ const EXEMPT = {
 	'api/user/wallet/history.js': 'read-only history',
 };
 
+// Routes whose every money path runs through one api/_lib service that holds
+// the gate itself, so REST and MCP share a single enforcement point. The test
+// checks the named module really calls the gate.
+const DELEGATED = {
+	'api/_mcpagent/perps-tools.js': 'api/_lib/perps/service.js',
+};
+
 function walk(dir, out = []) {
 	for (const name of readdirSync(dir)) {
 		const full = join(dir, name);
@@ -84,6 +91,11 @@ describe('real-funds agreement coverage', () => {
 
 	it.each(keyRoutes.map((r) => [r.file, r]))('%s enforces the signed agreements or is exempt with a reason', (file, { src }) => {
 		if (EXEMPT[file]) return;
+		if (DELEGATED[file]) {
+			expect(src.includes(DELEGATED[file].replace(/^api\/_lib\//, '_lib/')), `${file} no longer imports ${DELEGATED[file]}`).toBe(true);
+			expect(GATE.test(readFileSync(join(ROOT, DELEGATED[file]), 'utf8')), `${DELEGATED[file]} no longer enforces the agreements`).toBe(true);
+			return;
+		}
 		expect(GATE.test(src), `${file} uses a custodial key but never calls requireRealFundsAgreement. Gate its money paths, or add it to EXEMPT with the reason none move funds.`).toBe(true);
 	});
 

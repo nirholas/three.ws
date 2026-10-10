@@ -7,6 +7,7 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, esc, relTime, formatUsdc, ApiError } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { withPayoutStepUp, cooldownNotice } from '../../payout-step-up.js';
 
 const USDC_MINTS = {
 	solana: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -635,13 +636,22 @@ function renderPayoutWalletPanel(wallet, agentId, host, me, agents, legacyWallet
 			btn.disabled = true;
 			btn.textContent = 'Saving...';
 			try {
-				await put('/api/monetization/wallet', {
-					agent_id: agentId,
-					evm_address: evm || undefined,
-					solana_address: sol || undefined,
-					preferred_network: network,
+				const saved = await withPayoutStepUp(async (extra) => {
+					try {
+						const data = await put('/api/monetization/wallet', {
+							agent_id: agentId,
+							evm_address: evm || undefined,
+							solana_address: sol || undefined,
+							preferred_network: network,
+							...extra,
+						});
+						return { ok: true, status: 200, data };
+					} catch (err) {
+						return { ok: false, status: err?.status || 0, data: err?.body || { error: err?.code, error_description: err?.message } };
+					}
 				});
-				toastMonetize('Payout wallet saved');
+				if (!saved.ok) throw Object.assign(new Error(saved.data?.error_description || saved.data?.error || 'Save failed'), { body: saved.data });
+				toastMonetize(cooldownNotice(saved.data?.wallets));
 			} catch (err) {
 				errorEl.textContent = err?.body?.error || err?.message || 'Save failed';
 			}
@@ -1260,9 +1270,17 @@ function openAddPayoutWalletModal({ panel, host, me, agents }) {
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Saving...';
 		try {
-			await post('/api/billing/payout-wallets', { chain, address, label: label || undefined });
+			const saved = await withPayoutStepUp(async (extra) => {
+				try {
+					const data = await post('/api/billing/payout-wallets', { chain, address, label: label || undefined, ...extra });
+					return { ok: true, status: 200, data };
+				} catch (err) {
+					return { ok: false, status: err?.status || 0, data: err?.body || { error: err?.code, error_description: err?.message } };
+				}
+			});
+			if (!saved.ok) throw Object.assign(new Error(saved.data?.error_description || saved.data?.error || 'Save failed.'), { body: saved.data });
 			close();
-			toastMonetize('Wallet saved');
+			toastMonetize(cooldownNotice(saved.data?.wallet));
 			renderSkeleton(host);
 			await loadAndRender(host, me, agents);
 		} catch (err) {

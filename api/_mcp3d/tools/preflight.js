@@ -189,7 +189,7 @@ export const toolDefs = [
 		title: 'Check whether an x402 seller can actually settle before paying it',
 		annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 		description:
-			'Before paying any x402 endpoint, check whether that seller can currently SETTLE what it charges. ' +
+			'Call this before paying any x402 endpoint to check whether that seller can currently SETTLE what it charges. ' +
 			'x402 tells you the price; it does not tell you whether the seller’s own fee wallet, facilitator and ' +
 			'payment rail can complete the transaction, and when they cannot you lose a signature and get a 502. ' +
 			'This fetches the seller’s signed payability attestation from /.well-known/x402-preflight, verifies the ' +

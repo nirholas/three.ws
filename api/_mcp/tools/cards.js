@@ -61,7 +61,7 @@ export const toolDefs = [
 		scope: 'wallet:read',
 		annotations: READ,
 		description:
-			'Search merchants an agent can buy a gift card or prepaid card from (for example a game store, a marketplace, food delivery, or a prepaid Visa). Returns merchant names with the countries and categories they sell in. Pass sandbox: true to list the provider\'s free test products, which run the whole purchase flow without moving funds.',
+			'Search merchants an agent can buy a gift card or prepaid card from (for example a game store, a marketplace, food delivery, or a prepaid Visa). Returns merchant names with the countries and categories they sell in. Pass sandbox: true to list the provider\'s free test products, which run the whole purchase flow without moving funds. Use this first when the owner wants to buy a gift or prepaid card, then pick a product with agent_card_search_gift_cards.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -87,7 +87,7 @@ export const toolDefs = [
 		scope: 'wallet:read',
 		annotations: READ,
 		description:
-			'Search card products with their denominations: fixed packages and/or an allowed range, currency, country and stock. Use a product id and one allowed amount with agent_card_quote.',
+			'Search card products with their denominations: fixed packages and/or an allowed range, currency, country and stock. Use this after agent_card_search_merchants to choose a product and an allowed amount, then pass both to agent_card_quote.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -117,7 +117,7 @@ export const toolDefs = [
 		scope: 'wallet:write',
 		annotations: WRITE,
 		description:
-			'Lock a price for one card: returns the total in USDC including fees, the Solana address it would be paid to, a quote_id valid for ten minutes, and a confirm table (recipient, amount, token, chain). Moves no funds. Show the confirm table to the owner before calling agent_card_create.',
+			'Lock a price for one card: returns the total in USDC including fees, the Solana address it would be paid to, a quote_id valid for ten minutes, and a confirm table (recipient, amount, token, chain). Moves no funds. Use this before agent_card_create, and show the confirm table to the owner before buying.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -139,7 +139,7 @@ export const toolDefs = [
 		scope: 'wallet:write',
 		annotations: MONEY,
 		description:
-			'Buy the card a quote describes, paying the quoted USDC from the agent wallet on Solana under the agent\'s spend limits and anomaly freeze. Requires a quote_id from agent_card_quote that is under ten minutes old and confirm_spend: true, which you may only send after the owner explicitly approved the quote\'s confirm table. Returns the card with its status and the payment signature.',
+			'Buy the card a quote describes, paying the quoted USDC from the agent wallet on Solana under the agent\'s spend limits and anomaly freeze. Requires a quote_id from agent_card_quote that is under ten minutes old and confirm_spend: true, which you may only send after the owner explicitly approved the quote\'s confirm table. Returns the card with its status and the payment signature. Use this after the owner said yes to the exact quote; follow the card afterwards with agent_card_status.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -158,7 +158,7 @@ export const toolDefs = [
 		tier: 'read',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'List the agent\'s cards, newest first, with masked numbers, status and what each cost. In-flight cards are refreshed from the provider.',
+		description: 'List the agent\'s cards, newest first, with masked numbers, status and what each cost. In-flight cards are refreshed from the provider. Use this to find a card id or see what the agent has bought; for one card with its full audit trail call agent_card_get.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -178,7 +178,7 @@ export const toolDefs = [
 		tier: 'read',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'One card with its audit trail (quotes, payment, status changes, reveals with who and when). Never includes the secret.',
+		description: 'One card with its audit trail (quotes, payment, status changes, reveals with who and when). Never includes the secret. Use this to answer who paid for, revealed, or changed a card and when; for the code or PIN itself go through agent_card_data and agent_card_reveal.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID, card_id: CARD_ID }, required: ['agent_id', 'card_id'], additionalProperties: false },
 	}, (a, p) => cards.getCard({ agentId: a.agent_id, principal: p, cardId: a.card_id })),
 
@@ -188,7 +188,7 @@ export const toolDefs = [
 		tier: 'read',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'Ask the provider for the card\'s current status (processing, delivered, failed, refunded) and update the record.',
+		description: 'Ask the provider for the card\'s current status (processing, delivered, failed, refunded) and update the record. Use this when a card is still processing, or to confirm it was delivered before revealing it.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID, card_id: CARD_ID }, required: ['agent_id', 'card_id'], additionalProperties: false },
 	}, (a, p) => cards.refreshCard({ agentId: a.agent_id, principal: p, cardId: a.card_id })),
 
@@ -198,7 +198,7 @@ export const toolDefs = [
 		tier: 'read',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'The card\'s remaining balance. When the provider does not report balances the answer is the face value of a delivered card, and says so.',
+		description: 'The card\'s remaining balance. When the provider does not report balances the answer is the face value of a delivered card, and says so. Use this before agent_card_withdraw, or when the owner asks how much is left on a card.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID, card_id: CARD_ID }, required: ['agent_id', 'card_id'], additionalProperties: false },
 	}, (a, p) => cards.cardBalance({ agentId: a.agent_id, principal: p, cardId: a.card_id })),
 
@@ -209,7 +209,7 @@ export const toolDefs = [
 		scope: 'wallet:write',
 		annotations: WRITE,
 		description:
-			'The masked card number, which secret fields exist (code, PIN, link) and redemption instructions, plus a single-use preview_id valid for five minutes. Required before agent_card_reveal. Does not expose the secret.',
+			'The masked card number, which secret fields exist (code, PIN, link) and redemption instructions, plus a single-use preview_id valid for five minutes. Call this before agent_card_reveal, which needs the preview_id it returns. Does not expose the secret.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID, card_id: CARD_ID }, required: ['agent_id', 'card_id'], additionalProperties: false },
 	}, (a, p) => cards.cardData({ agentId: a.agent_id, principal: p, cardId: a.card_id })),
 
@@ -222,7 +222,7 @@ export const toolDefs = [
 		scope: 'wallet:write',
 		annotations: MONEY,
 		description:
-			'Return the card number, PIN or redemption code. Requires the preview_id from agent_card_data and confirm_reveal: true after the owner agreed. The preview id works once; the stored encrypted copy is deleted by this call, and the reveal is logged with the actor and time. Treat the result as a secret: give it to the owner only, never post it anywhere.',
+			'Return the card number, PIN or redemption code. Requires the preview_id from agent_card_data and confirm_reveal: true after the owner agreed. The preview id works once; the stored encrypted copy is deleted by this call, and the reveal is logged with the actor and time. Treat the result as a secret: give it to the owner only, never post it anywhere. Use this when the owner asks for the code to redeem the card, and at no other time.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -244,7 +244,7 @@ export const toolDefs = [
 		previewTool: 'agent_card_get',
 		scope: 'wallet:write',
 		annotations: MONEY,
-		description: 'Cancel a card. Unpaid quotes can always be cancelled; whether a paid card can be depends on the provider, and the error says so when it cannot. Requires confirm_cancel: true.',
+		description: 'Cancel a card. Unpaid quotes can always be cancelled; whether a paid card can be depends on the provider, and the error says so when it cannot. Requires confirm_cancel: true. Use this when the owner no longer wants a quoted or pending card.',
 		inputSchema: {
 			type: 'object',
 			properties: { agent_id: AGENT_ID, card_id: CARD_ID, confirm_cancel: { type: 'boolean' } },
@@ -261,7 +261,7 @@ export const toolDefs = [
 		previewTool: 'agent_card_balance',
 		scope: 'wallet:write',
 		annotations: MONEY,
-		description: 'Move a prepaid card balance back to the agent wallet as USDC, where the provider supports it. Check agent_card_balance first and pass confirm_withdraw: true after the owner agreed.',
+		description: 'Move a prepaid card balance back to the agent wallet as USDC, where the provider supports it. Check agent_card_balance first and pass confirm_withdraw: true after the owner agreed. Use this to recover unspent value from a prepaid card into the agent wallet.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -280,7 +280,7 @@ export const toolDefs = [
 		tier: 'read',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'Whether the card provider needs the account holder to complete identity steps before cards can be bought.',
+		description: 'Whether the card provider needs the account holder to complete identity steps before cards can be bought. Use this before the first card purchase on an account; if steps are outstanding, get the link with agent_card_connect_link.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 	}, (a, p) => cards.connectStatus({ agentId: a.agent_id, principal: p })),
 
@@ -290,7 +290,7 @@ export const toolDefs = [
 		tier: 'write',
 		scope: 'wallet:write',
 		annotations: WRITE,
-		description: 'A browser link where the account holder completes the provider\'s identity steps. Give it to the owner; do not open it yourself.',
+		description: 'A browser link where the account holder completes the provider\'s identity steps. Give it to the owner; do not open it yourself. Use this when agent_card_connect reports identity steps still outstanding.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 	}, (a, p) => cards.connectLink({ agentId: a.agent_id, principal: p })),
 ];

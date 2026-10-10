@@ -1290,7 +1290,7 @@ Content-Type: application/json
 	const body = document.createElement('div');
 	body.innerHTML = `
 		<ul class="fm-bullets">
-			<li>15 MCP tools spanning avatar management, model analysis, Solana identity, and pump.fun intel.</li>
+			<li>MCP tools for avatar management, model analysis, Solana identity and market intel. Every tool, with its schema and price, is on <a href="/mcp-tools">/mcp-tools</a>.</li>
 			<li>API keys with scoped permissions: <code>avatars:read</code>, <code>avatars:write</code>, <code>profile</code>, and more.</li>
 			<li>Works with Claude Desktop, Cursor, VS Code, or any MCP-compatible client.</li>
 		</ul>

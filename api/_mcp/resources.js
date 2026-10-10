@@ -297,7 +297,7 @@ async function readWallet(ctx, { agentId }) {
 			require_capabilities: limits.require_capabilities,
 			updated_at: limits.updated_at,
 		},
-		withdraw_allowlist: limits.withdraw_allowlist || [],
+		withdraw_allowlist: await (await import('../_lib/destination-whitelist.js')).activeAddresses(row.id),
 		trade_limits: guards.getTradeLimits(row.meta || {}),
 		spend_policy: resolveSpendPolicy(row.meta || {}),
 	};
@@ -562,34 +562,21 @@ async function readRun(ctx, { agentId, runId }) {
 	};
 }
 
-// three://agents/{agentId}/orders  (api/agents/orders.js, api/_lib/orders.js)
+// three://agents/{agentId}/orders  (api/agents/orders.js, api/_lib/order-book.js)
 async function readOrders(ctx, { agentId }) {
 	const row = await ownedAgent(ctx, agentId);
 	const { listOrders } = await import('../_lib/orders.js');
-	const orders = await listOrders(row.id, { statuses: ['active', 'partial', 'firing'], limit: 100 });
-	return { agent_id: row.id, status: 'open', count: orders.length, orders };
+	const { bookEntry } = await import('../_lib/order-book.js');
+	const orders = await listOrders(row.id, { statuses: ['active', 'partial', 'firing', 'paused'], limit: 100 });
+	return { agent_id: row.id, status: 'open', count: orders.length, orders: orders.map(bookEntry) };
 }
 
-// three://agents/{agentId}/dca  (api/dca-strategies.js GET)
+// three://agents/{agentId}/dca  (api/agents/orders.js /dca, api/_lib/dca-unified.js)
 async function readDca(ctx, { agentId }) {
 	const row = await ownedAgent(ctx, agentId);
-	const strategies = await sql`
-		SELECT s.id, s.chain_id, s.token_in, s.token_out, s.token_out_symbol,
-		       s.amount_per_execution, s.period_seconds, s.slippage_bps, s.status,
-		       s.next_execution_at, s.last_execution_at, s.created_at, s.cancelled_at,
-		       s.paused_at, s.consecutive_failures, s.last_error,
-		       (SELECT json_build_object('tx_hash', e.tx_hash, 'amount_in', e.amount_in,
-		                                 'amount_out', e.amount_out, 'status', e.status,
-		                                 'executed_at', e.executed_at)
-		          FROM dca_executions e WHERE e.strategy_id = s.id
-		         ORDER BY e.executed_at DESC LIMIT 1) AS last_execution,
-		       (SELECT count(*)::int FROM dca_executions e
-		         WHERE e.strategy_id = s.id AND e.status = 'success') AS executions_total
-		  FROM dca_strategies s
-		 WHERE s.agent_id = ${row.id}
-		 ORDER BY s.created_at DESC
-	`;
-	return { agent_id: row.id, count: strategies.length, strategies };
+	const { listDca } = await import('../_lib/dca-unified.js');
+	const schedules = await listDca(row.id);
+	return { agent_id: row.id, count: schedules.length, schedules };
 }
 
 // three://agents/{agentId}/intents  (api/agents/wallet-intents.js)
@@ -933,7 +920,7 @@ export const RESOURCES = [
 		uriTemplate: 'three://agents/{agentId}/orders',
 		name: 'agent-orders',
 		title: 'Agent open orders',
-		description: 'An agent\'s open programmable orders (limit, stop, take-profit, trailing) with trigger prices, sizes and fill progress.',
+		description: 'An agent\'s resting order book (limit, stop, trailing, DCA, TWAP, ladder and OCO legs on any SPL token) with trigger prices, sizes, fill progress, the next fire time and the reason the last evaluation skipped.',
 		access: AGENT_SCOPES,
 		perAgent: true,
 		read: readOrders,
@@ -943,7 +930,7 @@ export const RESOURCES = [
 		uriTemplate: 'three://agents/{agentId}/dca',
 		name: 'agent-dca',
 		title: 'Agent DCA strategies',
-		description: 'An agent\'s dollar-cost-averaging strategies: pair, amount per execution, period, status, next run, and the latest execution.',
+		description: 'Every dollar-cost-averaging schedule an agent runs, on both rails (Solana agent wallet and EVM delegation): pair, amount per slice, period, status, next run and the latest execution.',
 		access: AGENT_SCOPES,
 		perAgent: true,
 		read: readDca,

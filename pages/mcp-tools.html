@@ -155,7 +155,7 @@
 		/* ── tool grid ──────────────────────────────────────────────────── */
 		.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
 		.mc-card {
-			display: flex; flex-direction: column; gap: 8px; text-align: left;
+			display: flex; flex-direction: column; gap: 8px; text-align: left; color: inherit; text-decoration: none;
 			padding: 15px 16px; font: inherit; cursor: pointer;
 			background: var(--surface-1, rgba(255,255,255,0.03));
 			border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px);
@@ -167,6 +167,7 @@
 		.mc-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 		/* Both are spans inside one cell, so they must be blocks or the mono name
 		   and the human title run together on a single line. */
+		.mc-cat { font-size: 0.7rem; color: var(--ink-dim); }
 		.mc-name { display: block; font: 600 0.92rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; }
 		.mc-title { display: block; font-size: 0.78rem; color: var(--ink-dim); margin-top: 3px; line-height: 1.35; }
 		.mc-desc {
@@ -211,25 +212,6 @@
 		.mc-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
 		.mc-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-		/* ── detail dialog ──────────────────────────────────────────────── */
-		dialog.mc-detail {
-			width: min(680px, calc(100vw - 32px)); max-height: min(84vh, 760px); padding: 0;
-			color: var(--ink); background: var(--bg-1); border: 1px solid var(--stroke-strong);
-			border-radius: var(--radius-lg, 14px);
-		}
-		dialog.mc-detail::backdrop { background: rgba(0,0,0,0.62); backdrop-filter: blur(3px); }
-		.mc-detail-in { padding: 20px 22px 24px; overflow-y: auto; max-height: inherit; }
-		.mc-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
-		.mc-detail-head h2 { margin: 0; font: 650 1.05rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); word-break: break-word; }
-		.mc-close { font: inherit; font-size: 1.4rem; line-height: 1; padding: 2px 8px; cursor: pointer; color: var(--ink-dim); background: transparent; border: 1px solid transparent; border-radius: 8px; }
-		.mc-close:hover { color: var(--ink); border-color: var(--stroke); }
-		.mc-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-		.mc-detail p.mc-detail-desc { font-size: 0.9rem; line-height: 1.6; color: var(--ink-dim); margin: 12px 0 18px; white-space: pre-wrap; }
-		.mc-kv { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-bottom: 18px; }
-		.mc-kv th, .mc-kv td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
-		.mc-kv th { font-weight: 500; color: var(--ink-dim); width: 40%; }
-		.mc-kv td { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); word-break: break-word; }
-		.mc-note { font-size: 0.82rem; line-height: 1.55; padding: 11px 13px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke); background: var(--surface-1, rgba(255,255,255,0.03)); color: var(--ink-dim); margin-bottom: 18px; }
 		.mc-snippet { position: relative; }
 		.mc-snippet pre {
 			margin: 0; padding: 13px 14px; overflow-x: auto; font-size: 0.78rem; line-height: 1.5;
@@ -237,7 +219,54 @@
 			background: var(--bg-0); border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
 		}
 		.mc-copy { position: absolute; top: 8px; right: 8px; font-size: 0.72rem; padding: 5px 10px; }
-		h3.mc-sub { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); margin: 0 0 8px; font-weight: 600; }
+
+		/* ── census ─────────────────────────────────────────────────────── */
+		.mc-stat dd small { display: block; margin-top: 2px; font-size: 0.72rem; font-weight: 500; color: var(--ink-dim); }
+		.mc-live { margin: 8px 0 0; font-size: 0.8rem; color: var(--ink-dim); display: flex; align-items: center; gap: 8px; min-height: 1.4em; }
+		.mc-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--stroke-strong); flex: none; }
+		.mc-live[data-state="match"]::before { background: var(--mc-read); }
+		.mc-live[data-state="drift"]::before { background: var(--mc-write); }
+		.mc-live a { color: inherit; text-underline-offset: 3px; }
+		.mc-method { margin: 10px 0 4px; font-size: 0.84rem; color: var(--ink-dim); }
+		.mc-method summary { cursor: pointer; width: fit-content; padding: 4px 0; color: var(--ink); text-underline-offset: 3px; }
+		.mc-method summary:hover { text-decoration: underline; }
+		.mc-method summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+		.mc-method p { max-width: 80ch; line-height: 1.6; margin: 8px 0 12px; }
+		.mc-table-wrap { overflow-x: auto; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); }
+		.mc-servers { width: 100%; border-collapse: collapse; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+		.mc-servers th, .mc-servers td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+		.mc-servers th:first-child, .mc-servers td:first-child { text-align: left; }
+		.mc-servers thead th { font-weight: 600; color: var(--ink-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+		.mc-servers td code { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink); }
+		.mc-servers tbody tr:hover { background: var(--surface-1, rgba(255,255,255,0.03)); }
+		.mc-servers button { font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+		.mc-servers button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		/* ── releases ───────────────────────────────────────────────────── */
+		.mc-releases { margin-top: 44px; }
+		.mc-releases h2 { margin: 0 0 6px; font-size: 1.15rem; color: var(--ink-bright, var(--ink)); }
+		.mc-releases-intro { margin: 0 0 16px; max-width: 74ch; font-size: 0.86rem; line-height: 1.6; color: var(--ink-dim); }
+		.mc-releases-intro a { color: inherit; }
+		.mc-release-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+		.mc-release { border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-1, rgba(255,255,255,0.03)); }
+		.mc-release summary { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; padding: 11px 14px; cursor: pointer; list-style: none; }
+		.mc-release summary::-webkit-details-marker { display: none; }
+		.mc-release summary:hover { background: var(--surface-2, rgba(255,255,255,0.05)); }
+		.mc-release summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+		.mc-release time { font: 600 0.88rem/1.3 var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, var(--ink)); }
+		.mc-delta { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+		.mc-delta.add { color: var(--mc-read); }
+		.mc-delta.rm { color: var(--mc-irreversible); }
+		.mc-release-total { font-size: 0.76rem; color: var(--ink-dim); margin-left: auto; }
+		.mc-release-body { padding: 4px 14px 14px; font-size: 0.82rem; }
+		.mc-release-note { margin: 0 0 10px; color: var(--ink-dim); line-height: 1.5; }
+		.mc-release-body h3 { margin: 10px 0 4px; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); font-weight: 600; }
+		.mc-release-body ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+		.mc-release-body li a, .mc-release-body li span { display: inline-block; padding: 2px 8px; border: 1px solid var(--stroke); border-radius: 999px; font: 0.76rem/1.5 var(--font-mono, ui-monospace, monospace); color: var(--ink); text-decoration: none; }
+		.mc-release-body li a:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.05)); }
+		.mc-release-body li a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mc-release-body li span { color: var(--ink-dim); text-decoration: line-through; }
+		.mc-release-server { margin-top: 8px; font-size: 0.74rem; color: var(--ink-dim); }
 
 		@media (max-width: 640px) {
 			.mc-controls { top: 0; }
@@ -256,16 +285,26 @@
 	<main class="mc-wrap">
 		<div class="mc-hero">
 			<h1 data-i18n="mcp_tools.mcp_tool_catalog">MCP Tool Catalog</h1>
-			<p data-i18n-html="mcp_tools.every_tool_three_ws_publishes_over_the">
+			<p data-i18n-html="mcp_tools.every_tool_three_ws_publishes_live">
 				Every tool three.ws publishes over the <a href="/docs/mcp">Model Context Protocol</a>, in one place:
 				what it does, which server hosts it, what it costs, and whether an AI client can run it without asking you first.
-				This page is generated from the source of every tool, so it cannot drift from what the servers actually serve.
-				The same data is machine-readable at <a href="/mcp-catalog.json"><code>/mcp-catalog.json</code></a>.
+				The build asks every server for its live <code>tools/list</code>, so this page cannot drift from what the servers actually serve.
+				Each tool has its own page with its schema, an example call and, for free read-only tools, a button that runs it.
+				The same data is machine-readable at <a href="/mcp-catalog.json"><code>/mcp-catalog.json</code></a> and <a href="/tools.json"><code>/tools.json</code></a>.
 			</p>
 			<p style="margin-top:10px" data-i18n-html="mcp_tools.connect_three_ws_to_claude_chatgpt_cursor"><a href="/connect">Connect three.ws to Claude, ChatGPT, Cursor or VS Code</a> in two clicks to use them.</p>
 		</div>
 
-		<dl class="mc-stats" id="mc-stats" aria-live="polite"></dl>
+		<section class="mc-census" aria-labelledby="mc-census-h">
+			<h2 id="mc-census-h" class="sr-only">How many tools, resources and prompts three.ws serves</h2>
+			<dl class="mc-stats" id="mc-stats" aria-live="polite"></dl>
+			<p class="mc-live" id="mc-live" role="status" aria-live="polite"></p>
+			<details class="mc-method" id="mc-method">
+				<summary>How these numbers are calculated</summary>
+				<p id="mc-method-text"></p>
+				<div class="mc-table-wrap"><table class="mc-servers" id="mc-servers"></table></div>
+			</details>
+		</section>
 
 		<div class="mc-controls">
 			<label class="mc-search">
@@ -287,6 +326,10 @@
 					<span class="mc-group-label" data-i18n="mcp_tools.price">Price</span>
 					<button type="button" class="mc-chip" data-filter="price" data-value="free" aria-pressed="false" data-i18n="mcp_tools.free">Free</button>
 					<button type="button" class="mc-chip" data-filter="price" data-value="paid" aria-pressed="false" data-i18n="mcp_tools.paid">Paid</button>
+				</div>
+				<div class="mc-group">
+					<span class="mc-group-label"><label for="mc-category">Category</label></span>
+					<select id="mc-category" class="mc-select"><option value="">All categories</option></select>
 				</div>
 				<div class="mc-group">
 					<span class="mc-group-label"><label for="mc-server" data-i18n="mcp_tools.server">Server</label></span>
@@ -349,11 +392,17 @@
 
 		<p class="mc-count" id="mc-count" role="status" aria-live="polite"></p>
 		<div class="mc-grid" id="mc-grid"></div>
-	</main>
 
-	<dialog class="mc-detail" id="mc-detail" aria-labelledby="mc-detail-name">
-		<div class="mc-detail-in" id="mc-detail-in"></div>
-	</dialog>
+		<section class="mc-releases" id="releases" aria-labelledby="mc-releases-h">
+			<h2 id="mc-releases-h">Releases</h2>
+			<p class="mc-releases-intro">
+				Which tools each release added or removed, from <a href="/mcp-tool-history.json"><code>/mcp-tool-history.json</code></a>.
+				Replaying every release from the first reproduces today's catalog exactly, and the build fails when it does not.
+			</p>
+			<ol class="mc-release-list" id="mc-release-list"></ol>
+			<button type="button" class="mc-btn" id="mc-release-more" hidden>Show older releases</button>
+		</section>
+	</main>
 
 	<script src="/brand.js" defer></script>
 	<script type="module">
@@ -363,11 +412,12 @@
 		const qEl = document.getElementById('mc-q');
 		const serverEl = document.getElementById('mc-server');
 		const resetEl = document.getElementById('mc-reset');
-		const dialog = document.getElementById('mc-detail');
-		const dialogIn = document.getElementById('mc-detail-in');
+		const categoryEl = document.getElementById('mc-category');
+		const liveEl = document.getElementById('mc-live');
 
-		const state = { q: '', safety: new Set(), price: new Set(), server: '' };
+		const state = { q: '', safety: new Set(), price: new Set(), server: '', category: '' };
 		let catalog = null;
+		let categoryLabel = new Map();
 
 		const esc = (s) =>
 			String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -386,7 +436,7 @@
 		};
 
 		const priceLabel = (price) =>
-			price.free ? 'Free' : `$${price.usd.toFixed(price.usd < 0.01 ? 3 : 2)}`;
+			price.free ? 'Free' : `$${price.usd >= 0.01 ? price.usd.toFixed(2) : String(+price.usd.toPrecision(2))}`;
 
 		// ── skeleton while the catalog loads ──────────────────────────────
 		function renderSkeleton() {
@@ -411,23 +461,80 @@
 			document.getElementById('mc-retry').addEventListener('click', load);
 		}
 
+		// ── census ────────────────────────────────────────────────────────
+		// Every number here is computed: the build asks each server for its
+		// tools/list, resources/list and prompts/list, and /api/mcp-census asks
+		// the running hosted endpoints again so the two can be compared.
+		const fmt = (n) => Number(n ?? 0).toLocaleString('en-US');
+
 		function renderStats() {
+			const t = catalog.census.totals.all;
 			const c = catalog.counts;
 			const cells = [
-				['Tools', c.tools, 'Every tool three.ws publishes over MCP'],
-				['Servers', c.servers, 'Hosted endpoints plus installable npm servers'],
-				['Read-only', c.read, SAFETY_BLURB.read],
-				['Writes', c.write, SAFETY_BLURB.write],
-				['Irreversible', c.irreversible, SAFETY_BLURB.irreversible],
-				['Free', c.free, 'No payment, wallet, or key required'],
-				['Paid', c.paid, 'Settled per call in USDC over x402'],
+				['Tools', fmt(t.tools), `${fmt(t.uniqueTools)} unique names`, 'Every tool every server serves. Some servers share a tool, so the unique count is the honest headline.'],
+				['Servers', fmt(t.servers), `${catalog.census.totals.hosted.servers} hosted, ${catalog.census.totals.stdio.servers} npm`, 'Hosted endpoints plus installable npm servers'],
+				['Resources', fmt(t.resources + t.templates), `${fmt(t.templates)} templates`, 'Readable resources (fixed URIs) plus resource templates (URIs with a placeholder)'],
+				['Prompts', fmt(t.prompts), `${fmt(t.uniquePrompts)} unique`, 'Guided workflows a client can list and run'],
+				['Read-only', fmt(c.read), null, SAFETY_BLURB.read],
+				['Irreversible', fmt(c.irreversible), null, SAFETY_BLURB.irreversible],
+				['Try in browser', fmt(c.tryIt), 'free, keyless reads', 'Free read-only tools on keyless endpoints: their pages can run them for you'],
 			];
 			statsEl.innerHTML = cells
 				.map(
-					([label, value, hint]) =>
-						`<div class="mc-stat" title="${esc(hint)}"><dt>${esc(label)}</dt><dd>${value}</dd></div>`,
+					([label, value, sub, hint]) =>
+						`<div class="mc-stat" title="${esc(hint)}"><dt>${esc(label)}</dt><dd>${value}${sub ? `<small>${esc(sub)}</small>` : ''}</dd></div>`,
 				)
 				.join('');
+			document.getElementById('mc-method-text').textContent = catalog.census.method;
+			renderServerTable();
+		}
+
+		function renderServerTable() {
+			const rows = catalog.census.servers;
+			document.getElementById('mc-servers').innerHTML =
+				'<thead><tr><th scope="col">Server</th><th scope="col">Transport</th><th scope="col">Tools</th><th scope="col">On by default</th><th scope="col">Read-only</th><th scope="col">Resources</th><th scope="col">Templates</th><th scope="col">Prompts</th></tr></thead><tbody>' +
+				rows
+					.map(
+						(r) =>
+							`<tr><td><button type="button" data-server="${esc(r.id)}" title="Show only ${esc(r.title)} tools"><code>${esc(r.endpoint || r.id)}</code></button></td>` +
+							`<td>${r.transport === 'remote' ? 'hosted' : 'npm'}</td><td>${r.tools}</td><td>${r.defaultOn}</td><td>${r.readOnly}</td>` +
+							`<td>${r.resources}</td><td>${r.templates}</td><td>${r.prompts}</td></tr>`,
+					)
+					.join('') +
+				'</tbody>';
+		}
+
+		document.getElementById('mc-servers').addEventListener('click', (event) => {
+			const btn = event.target.closest('button[data-server]');
+			if (!btn) return;
+			state.server = btn.dataset.server;
+			syncChips();
+			syncUrl();
+			render();
+			document.querySelector('.mc-controls').scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+
+		/** Compare the build's hosted figures with what the running servers serve now. */
+		async function renderLive() {
+			liveEl.textContent = 'Checking the live servers…';
+			liveEl.removeAttribute('data-state');
+			try {
+				const res = await fetch('/api/mcp-census', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`the census endpoint returned ${res.status}`);
+				const live = await res.json();
+				const h = live.totals.hosted;
+				const when = new Date(live.computedAt).toLocaleString();
+				if (live.matchesBuild) {
+					liveEl.dataset.state = 'match';
+					liveEl.innerHTML = `The ${h.servers} hosted servers report ${fmt(h.tools)} tools right now, the same as this page. <a href="/api/mcp-census">Live census</a>, computed ${esc(when)}.`;
+				} else {
+					liveEl.dataset.state = 'drift';
+					const changed = [...new Set(live.drift.map((d) => d.id))].join(', ');
+					liveEl.innerHTML = `The live hosted servers differ from this build on ${esc(changed)} (a deploy is rolling out). <a href="/api/mcp-census">See the live census</a>.`;
+				}
+			} catch (error) {
+				liveEl.textContent = `The live census could not be reached (${error.message}). The figures above are from the build.`;
+			}
 		}
 
 		function matches(tool) {
@@ -437,23 +544,22 @@
 				if (!state.price.has(bucket)) return false;
 			}
 			if (state.server && tool.server.id !== state.server) return false;
+			if (state.category && tool.category !== state.category) return false;
 			if (state.q) {
-				const hay = `${tool.name} ${tool.title ?? ''} ${tool.description ?? ''} ${tool.server.id} ${tool.server.title}`.toLowerCase();
+				const hay = `${tool.name} ${tool.title ?? ''} ${tool.description ?? ''} ${tool.server.id} ${tool.server.title} ${categoryLabel.get(tool.category) ?? ''}`.toLowerCase();
 				// Every term must appear somewhere, so "solana read" narrows sensibly.
 				return state.q.split(/\s+/).every((term) => hay.includes(term));
 			}
 			return true;
 		}
 
-		function cardHtml(tool, index) {
-			const desc = tool.description
-				? esc(tool.description)
-				: '<em>Composed at request time. Call tools/list on the server for the live text.</em>';
+		function cardHtml(tool) {
+			const desc = esc(tool.whenToUse || tool.description || '');
 			const price = tool.price.free
 				? '<span class="mc-badge mc-badge-free" title="No payment, no wallet, no key">Free</span>'
 				: `<span class="mc-badge mc-badge-price" title="Costs ${esc(priceLabel(tool.price))} USDC per call, settled over x402">${esc(priceLabel(tool.price))} USDC</span>`;
 			return (
-				`<button type="button" class="mc-card" data-index="${index}">` +
+				`<a class="mc-card" href="${esc(tool.page)}">` +
 				'<span class="mc-card-top"><span>' +
 				`<span class="mc-name">${esc(tool.name)}</span>` +
 				(tool.title ? `<span class="mc-title">${esc(tool.title)}</span>` : '') +
@@ -462,8 +568,10 @@
 				'<span class="mc-badges">' +
 				`<span class="mc-badge" data-safety="${tool.safety}" title="${esc(SAFETY_BLURB[tool.safety])}">${SAFETY_LABEL[tool.safety]}</span>` +
 				price +
+				(tool.tryIt ? '<span class="mc-badge mc-badge-free" title="Its page can run it in your browser">Try it</span>' : '') +
+				`<span class="mc-cat">${esc(categoryLabel.get(tool.category) ?? tool.category)}</span>` +
 				`<span class="mc-server">${esc(tool.server.title)}</span>` +
-				'</span></button>'
+				'</span></a>'
 			);
 		}
 
@@ -471,7 +579,7 @@
 
 		function render() {
 			visible = catalog.tools.filter(matches);
-			const anyFilter = Boolean(state.q || state.safety.size || state.price.size || state.server);
+			const anyFilter = Boolean(state.q || state.safety.size || state.price.size || state.server || state.category);
 			resetEl.hidden = !anyFilter;
 
 			if (!visible.length) {
@@ -491,107 +599,6 @@
 			grid.innerHTML = visible.map(cardHtml).join('');
 		}
 
-		// ── detail dialog ─────────────────────────────────────────────────
-		function openDetail(tool) {
-			const a = tool.annotations;
-			const hint = (v) => (v === null ? 'not declared' : String(v));
-			const tiers = tool.price.tiers
-				? tool.price.tiers.map((t) => `${t.id} $${t.usd.toFixed(2)}`).join(' · ')
-				: null;
-
-			const call = {
-				jsonrpc: '2.0',
-				id: 1,
-				method: 'tools/call',
-				params: { name: tool.name, arguments: {} },
-			};
-
-			// A bare curl at a paid tool answers 402, not data. Showing it without
-			// that step would send every reader down a dead end, so the snippet
-			// names the payment handshake instead of pretending it is free.
-			let snippet;
-			if (tool.server.transport !== 'remote') {
-				snippet = `${tool.server.endpoint}\n\n# then call ${tool.name} from your MCP client`;
-			} else {
-				const curl =
-					`curl -X POST https://three.ws${tool.server.endpoint} \\\n` +
-					`  -H 'content-type: application/json' \\\n` +
-					`  -d '${JSON.stringify(call)}'`;
-				snippet = tool.price.free
-					? curl
-					: `# ${tool.name} costs $${priceLabel(tool.price).replace('$', '')} USDC per call.\n` +
-						`# Called without payment it returns a PaymentRequired quote:\n${curl}\n\n` +
-						`# Settle the quote and retry with the payment in _meta, or let a\n` +
-						`# paying client do it for you:\n` +
-						`npx -y @three-ws/mcp-bridge --url https://three.ws${tool.server.endpoint}`;
-			}
-
-			dialogIn.innerHTML =
-				'<div class="mc-detail-head">' +
-				`<h2 id="mc-detail-name">${esc(tool.name)}</h2>` +
-				'<button type="button" class="mc-close" id="mc-close" aria-label="Close">&times;</button>' +
-				'</div>' +
-				(tool.title ? `<div class="mc-title">${esc(tool.title)}</div>` : '') +
-				`<p class="mc-detail-desc">${
-					tool.description
-						? esc(tool.description)
-						: 'This tool composes its description at request time. Call tools/list on the server for the live text.'
-				}</p>` +
-				`<div class="mc-note"><strong>${SAFETY_LABEL[tool.safety]}.</strong> ${SAFETY_BLURB[tool.safety]}</div>` +
-				'<h3 class="mc-sub">Details</h3>' +
-				'<table class="mc-kv"><tbody>' +
-				`<tr><th>Server</th><td>${esc(tool.server.title)}</td></tr>` +
-				`<tr><th>Endpoint</th><td>${esc(tool.server.endpoint ?? 'n/a')}</td></tr>` +
-				`<tr><th>Transport</th><td>${esc(tool.server.transport)}</td></tr>` +
-				`<tr><th>Auth</th><td>${esc(tool.server.auth)}</td></tr>` +
-				`<tr><th>Price</th><td>${esc(priceLabel(tool.price))}${tool.price.free ? '' : ' USDC'}${tiers ? ` (${esc(tiers)})` : ''}</td></tr>` +
-				`<tr><th>readOnlyHint</th><td>${hint(a.readOnlyHint)}</td></tr>` +
-				`<tr><th>destructiveHint</th><td>${hint(a.destructiveHint)}</td></tr>` +
-				`<tr><th>idempotentHint</th><td>${hint(a.idempotentHint)}</td></tr>` +
-				`<tr><th>openWorldHint</th><td>${hint(a.openWorldHint)}</td></tr>` +
-				`<tr><th>Source</th><td>${esc(tool.source)}</td></tr>` +
-				'</tbody></table>' +
-				'<h3 class="mc-sub">Call it</h3>' +
-				'<div class="mc-snippet">' +
-				`<pre><code>${esc(snippet)}</code></pre>` +
-				'<button type="button" class="mc-btn mc-copy" id="mc-copy">Copy</button>' +
-				'</div>';
-
-			document.getElementById('mc-close').addEventListener('click', () => dialog.close());
-			const copyBtn = document.getElementById('mc-copy');
-			copyBtn.addEventListener('click', async () => {
-				try {
-					await navigator.clipboard.writeText(snippet);
-					copyBtn.textContent = 'Copied';
-				} catch {
-					// Clipboard can be blocked by permissions; the text is selectable anyway.
-					copyBtn.textContent = 'Select and copy';
-				}
-				setTimeout(() => {
-					copyBtn.textContent = 'Copy';
-				}, 1600);
-			});
-
-			dialog.showModal();
-			setToolParam(tool.name);
-		}
-
-		/** Keep ?tool= in sync so one tool can be linked to directly. */
-		function setToolParam(name) {
-			const params = new URLSearchParams(location.search);
-			if (name) params.set('tool', name);
-			else params.delete('tool');
-			const qs = params.toString();
-			history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
-		}
-
-		dialog.addEventListener('close', () => setToolParam(null));
-
-		grid.addEventListener('click', (event) => {
-			const card = event.target.closest('.mc-card');
-			if (card) openDetail(visible[Number(card.dataset.index)]);
-		});
-
 		// ── filter wiring + shareable URL ─────────────────────────────────
 		function syncUrl() {
 			const params = new URLSearchParams();
@@ -599,6 +606,7 @@
 			if (state.safety.size) params.set('safety', [...state.safety].join(','));
 			if (state.price.size) params.set('price', [...state.price].join(','));
 			if (state.server) params.set('server', state.server);
+			if (state.category) params.set('category', state.category);
 			const qs = params.toString();
 			history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
 		}
@@ -607,6 +615,7 @@
 			const params = new URLSearchParams(location.search);
 			state.q = (params.get('q') ?? '').trim().toLowerCase();
 			state.server = params.get('server') ?? '';
+			state.category = params.get('category') ?? '';
 			for (const key of ['safety', 'price']) {
 				const raw = params.get(key);
 				if (raw) for (const v of raw.split(',').filter(Boolean)) state[key].add(v);
@@ -620,6 +629,7 @@
 				chip.setAttribute('aria-pressed', String(on));
 			}
 			serverEl.value = state.server;
+			categoryEl.value = state.category;
 		}
 
 		function clearFilters() {
@@ -627,6 +637,7 @@
 			state.safety.clear();
 			state.price.clear();
 			state.server = '';
+			state.category = '';
 			qEl.value = '';
 			syncChips();
 			syncUrl();
@@ -658,6 +669,12 @@
 
 		serverEl.addEventListener('change', () => {
 			state.server = serverEl.value;
+			syncUrl();
+			render();
+		});
+
+		categoryEl.addEventListener('change', () => {
+			state.category = categoryEl.value;
 			syncUrl();
 			render();
 		});
@@ -809,26 +826,100 @@
 				return;
 			}
 
+			// The old dialog deep link (?tool=name) now has a page of its own.
+			const linked = new URLSearchParams(location.search).get('tool');
+			const linkedTool = linked && catalog.tools.find((t) => t.name === linked);
+			if (linkedTool) {
+				location.replace(linkedTool.page);
+				return;
+			}
+
+			categoryLabel = new Map(catalog.categories.map((g) => [g.id, g.label]));
 			renderStats();
-			qEl.placeholder = `Search ${catalog.counts.tools} tools by name, description, or server…`;
+			renderLive();
+			qEl.placeholder = `Search ${catalog.counts.tools} tools by name, description, category or server…`;
 			serverEl.innerHTML =
 				'<option value="">All servers</option>' +
 				catalog.servers
 					.map((s) => `<option value="${esc(s.id)}">${esc(s.title)} (${s.tools})</option>`)
 					.join('');
+			categoryEl.innerHTML =
+				'<option value="">All categories</option>' +
+				catalog.categories
+					.map((g) => `<option value="${esc(g.id)}" title="${esc(g.summary)}">${esc(g.label)} (${g.tools})</option>`)
+					.join('');
 			readUrl();
 			syncChips();
 			render();
 			warmPolicyCounts();
-
-			const linked = new URLSearchParams(location.search).get('tool');
-			if (linked) {
-				const tool = catalog.tools.find((t) => t.name === linked);
-				// A stale or mistyped ?tool= must not silently swallow the deep link.
-				if (tool) openDetail(tool);
-				else countEl.textContent += ` (no tool named "${linked}")`;
-			}
+			if (linked) countEl.textContent += ` (no tool named "${linked}")`;
+			loadReleases();
 		}
+
+		// ── releases ──────────────────────────────────────────────────────
+		const RELEASES_SHOWN = 6;
+		let releases = [];
+
+		function releaseHtml(r, open) {
+			const pageOf = (server, name) => catalog.tools.find((t) => t.server.id === server && t.name === name)?.page;
+			const block = (groups, removed) =>
+				Object.entries(groups)
+					.map(
+						([server, names]) =>
+							`<div class="mc-release-server">${esc(server)}</div><ul>` +
+							names
+								.map((name) => {
+									const href = !removed && pageOf(server, name);
+									return href ? `<li><a href="${esc(href)}">${esc(name)}</a></li>` : `<li><span>${esc(name)}</span></li>`;
+								})
+								.join('') +
+							'</ul>',
+					)
+					.join('');
+			const c = r.counts;
+			return (
+				`<li><details class="mc-release" id="release-${esc(r.date)}"${open ? ' open' : ''}><summary>` +
+				`<time datetime="${esc(r.date)}">${esc(r.date)}</time>` +
+				(c.added ? `<span class="mc-delta add">+${c.added} added</span>` : '') +
+				(c.removed ? `<span class="mc-delta rm">${c.removed} removed</span>` : '') +
+				`<span class="mc-release-total">${fmt(c.total)} tools after</span></summary>` +
+				'<div class="mc-release-body">' +
+				(r.note ? `<p class="mc-release-note">${esc(r.note)}</p>` : '') +
+				(c.added ? `<h3>Added</h3>${block(r.added, false)}` : '') +
+				(c.removed ? `<h3>Removed</h3>${block(r.removed, true)}` : '') +
+				'</div></details></li>'
+			);
+		}
+
+		function renderReleases(all) {
+			const list = document.getElementById('mc-release-list');
+			const more = document.getElementById('mc-release-more');
+			const shown = all ? releases : releases.slice(0, RELEASES_SHOWN);
+			list.innerHTML = shown.map((r, i) => releaseHtml(r, i === 0)).join('');
+			more.hidden = all || releases.length <= RELEASES_SHOWN;
+		}
+
+		async function loadReleases() {
+			const list = document.getElementById('mc-release-list');
+			list.innerHTML = '<li class="mc-skeleton" aria-hidden="true"><div class="mc-shimmer w40"></div><div class="mc-shimmer w85"></div></li>';
+			try {
+				const res = await fetch('/mcp-tool-history.json', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`the server returned ${res.status}`);
+				releases = (await res.json()).releases.slice().reverse();
+			} catch (error) {
+				list.innerHTML = `<li class="mc-error"><p>The release history could not be loaded (${esc(error.message)}).</p><button type="button" class="mc-btn" id="mc-release-retry">Try again</button></li>`;
+				document.getElementById('mc-release-retry').addEventListener('click', loadReleases);
+				return;
+			}
+			if (!releases.length) {
+				list.innerHTML = '<li class="mc-empty"><p>No releases are recorded yet. The next catalog build records the first one.</p></li>';
+				return;
+			}
+			renderReleases(false);
+			if (location.hash.startsWith('#release-')) document.querySelector(location.hash)?.scrollIntoView();
+		}
+
+		document.getElementById('mc-release-more').addEventListener('click', () => renderReleases(true));
 
 		load();
 	</script>

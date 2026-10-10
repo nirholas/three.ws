@@ -86,7 +86,7 @@ export const toolDefs = [
 		title: 'Validate glTF/GLB model',
 		annotations: INSPECTION_ANNOTATIONS,
 		description:
-			'Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints: the authoritative answer to "is this file spec-compliant?". SSRF-hardened: only public https URLs are fetched.',
+			'Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns a structured report of errors, warnings, infos, and hints: the authoritative answer to "is this file spec-compliant?". SSRF-hardened: only public https URLs are fetched. Use this before shipping, minting, or embedding a model to catch spec errors; for size and structure stats call inspect_model.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -139,7 +139,7 @@ export const toolDefs = [
 		title: 'Inspect glTF/GLB model',
 		annotations: INSPECTION_ANNOTATIONS,
 		description:
-			'Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection, no optimization advice.',
+			'Parse a remote GLB or glTF and return structural stats: scene/node/mesh counts, vertex and triangle totals, material and texture summaries, extensions used. Pure inspection, no optimization advice. Use this to learn what a model contains; for ways to make it smaller call optimize_model, and for spec errors call validate_model.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -171,7 +171,7 @@ export const toolDefs = [
 		title: 'Suggest optimizations for a glTF/GLB model',
 		annotations: INSPECTION_ANNOTATIONS,
 		description:
-			'Inspect the model and return actionable suggestions for reducing size and draw-call overhead: triangle budget, Draco/Meshopt compression, oversized textures, KTX2 transcoding, non-indexed primitives, redundant materials, and more.',
+			'Inspect the model and return actionable suggestions for reducing size and draw-call overhead: triangle budget, Draco/Meshopt compression, oversized textures, KTX2 transcoding, non-indexed primitives, redundant materials, and more. Use this when a model is too heavy to load quickly on the web or on mobile; for raw counts without advice call inspect_model.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -204,7 +204,7 @@ export const toolDefs = [
 		title: 'Diff two glTF/GLB models',
 		annotations: INSPECTION_ANNOTATIONS,
 		description:
-			'Compare two remote GLB or glTF models and return what changed: geometry, hierarchy, materials, textures, skeletons, and animation clips, each classified as added, removed, renamed, moved, or modified, with renames detected by content hash rather than by name. Every change carries a severity (none, cosmetic, minor, major, breaking) so an agent can decide whether an optimized, rigged, or re-exported model is still safe to ship. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh.',
+			'Compare two remote GLB or glTF models and return what changed: geometry, hierarchy, materials, textures, skeletons, and animation clips, each classified as added, removed, renamed, moved, or modified, with renames detected by content hash rather than by name. Every change carries a severity (none, cosmetic, minor, major, breaking) so an agent can decide whether an optimized, rigged, or re-exported model is still safe to ship. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh. Use this after optimizing, rigging, or re-exporting a model to confirm the new version is still safe wherever the old one was used.',
 		inputSchema: {
 			type: 'object',
 			properties: {

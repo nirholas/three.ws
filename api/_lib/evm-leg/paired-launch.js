@@ -59,7 +59,7 @@ export const PAIRED_VENUE = 'paired';
 // approved), so a quote can still say how much to fund.
 const MEASURED_LAUNCH_GAS = 1_450_000n;
 const MEASURED_APPROVE_GAS = 60_000n;
-const GAS_HEADROOM_BPS = 13_000n;
+export const GAS_HEADROOM_BPS = 13_000n;
 // The launch carries a deadline so a transaction stuck in a mempool cannot
 // land long after the owner approved it.
 const DEADLINE_SECONDS = 600;
@@ -71,7 +71,7 @@ const IMAGE_PREFIX = 'paired/images';
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const IMAGE_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
-async function loadOwnedAgent(agentId, userId) {
+export async function loadOwnedAgent(agentId, userId) {
 	const [row] = await sql`
 		SELECT ai.id, ai.user_id, ai.name, ai.wallet_address, ai.meta, a.thumbnail_key, a.visibility
 		FROM agent_identities ai
@@ -99,7 +99,7 @@ export function sanitizeName(raw) {
 	return String(raw ?? '').replace(/[\p{Cc}\p{Cf}]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, LIMITS.name);
 }
 
-function httpsOrNull(value, label) {
+export function httpsOrNull(value, label) {
 	const text = String(value ?? '').trim();
 	if (!text) return null;
 	let url;
@@ -113,7 +113,7 @@ function httpsOrNull(value, label) {
 }
 
 /** The agent's avatar thumbnail, when public, as a default coin logo. */
-function defaultLogo(agent) {
+export function defaultLogo(agent) {
 	if (agent.visibility !== 'public' && agent.visibility !== 'unlisted') return null;
 	const url = agent.thumbnail_key ? thumbnailUrl(agent.thumbnail_key) : null;
 	return url && url.startsWith('https://') ? url : null;
@@ -125,7 +125,7 @@ function defaultLogo(agent) {
  * image always yields the same URL (which keeps the descriptor hash stable
  * between quote and launch).
  */
-async function hostImage(url) {
+export async function hostImage(url) {
 	// The logo link is user-supplied and the bytes are republished from our
 	// bucket, so every redirect hop is SSRF-checked.
 	const resp = await fetchUpstreamPublic(url, {}, { name: 'paired:logo', timeoutMs: 15_000, attempts: 2, okWhen: (r) => r.ok });
@@ -171,7 +171,7 @@ function buildDescriptor({ name, symbol, description, image, links, agent, walle
 	return { descriptor, bytes, hash, key, url: publicUrl(key) };
 }
 
-async function storeDescriptor(d) {
+export async function storeDescriptor(d) {
 	if (await headObject(d.key).catch(() => null)) return;
 	await putObject({ key: d.key, body: d.bytes, contentType: 'application/json' });
 }
@@ -198,7 +198,7 @@ function poolSize(allocations, index) {
 	return TOTAL_SUPPLY - assigned;
 }
 
-async function ethUsd() {
+export async function ethUsd() {
 	const id = nativePriceId(CHAIN);
 	if (!id) return null;
 	try {
@@ -208,7 +208,7 @@ async function ethUsd() {
 	}
 }
 
-const round2 = (n) => Math.round(n * 100) / 100;
+export const round2 = (n) => Math.round(n * 100) / 100;
 
 /**
  * Everything a launch needs except the signature. Shared by quote and launch
@@ -392,7 +392,7 @@ export async function quotePairedLaunch({ agentId, userId, input }) {
 	return out;
 }
 
-async function agentAccount(agent, userId, reason, meta) {
+export async function agentAccount(agent, userId, reason, meta) {
 	const pk = await recoverAgentKey(agent.meta.encrypted_wallet_key, { agentId: agent.id, userId, reason, meta: { chain: CHAIN.slug, ...meta } });
 	const account = privateKeyToAccount(pk);
 	if (getAddress(account.address) !== getAddress(agent.wallet_address)) {
@@ -401,11 +401,14 @@ async function agentAccount(agent, userId, reason, meta) {
 	return account;
 }
 
+const noStage = async () => {};
+
 /**
  * Sign and send a paired launch from the agent's custodial wallet. Returns the
- * new coin, its pairs, the transaction and the opening fill.
+ * new coin, its pairs, the transaction and the opening fill. `stage` reports
+ * progress to the launch record (api/_lib/evm-launch-records.js).
  */
-export async function launchPaired({ agentId, userId, input, req = null }) {
+export async function launchPaired({ agentId, userId, input, req = null, stage = noStage }) {
 	await assertPlatformSigningAllowed(agentId);
 	const agent = await loadOwnedAgent(agentId, userId);
 	const [p, price] = await Promise.all([prepare(agent, input), ethUsd()]);
@@ -414,6 +417,7 @@ export async function launchPaired({ agentId, userId, input, req = null }) {
 	const usd = spendUsd(p, price);
 	await enforceEvmSpend({ agentId, meta: agent.meta, chain: LEDGER_CHAIN, usdValue: usd, category: 'launch' });
 	await storeDescriptor(p.descriptor);
+	await stage('policy_checked', { detail: { spend_usd: usd } });
 
 	const custodyId = await recordCustodyEvent({
 		agentId,
@@ -436,6 +440,24 @@ export async function launchPaired({ agentId, userId, input, req = null }) {
 			opening_buy: p.devBuy ? { market: p.devBuy.market.quoteToken, raw: p.devBuy.quoteIn.toString() } : null,
 		},
 	});
+	const context = {
+		custody_id: custodyId,
+		agent_id: agentId,
+		user_id: userId,
+		name: p.name,
+		symbol: p.symbol,
+		image: p.image || null,
+		description: p.description || null,
+		wallet: p.address,
+		pairs: p.allocations.map((a) => ({ quote_token: a.quoteToken, symbol: a.symbol, weight_pct: a.weightBps / 100 })),
+		spend_usd: usd,
+		launch_fee_wei: p.launchFeeWei.toString(),
+		metadata_url: p.descriptor.url,
+		opening_buy: p.devBuy
+			? { market: p.devBuy.market.symbol, amount: formatUnits(p.devBuy.quoteIn, p.devBuy.market.decimals), tokens: formatUnits(p.devBuy.tokensOut, TOKEN_DECIMALS) }
+			: null,
+	};
+	await stage('reserved', { context });
 
 	let account;
 	try {
@@ -460,14 +482,27 @@ export async function launchPaired({ agentId, userId, input, req = null }) {
 			});
 			const approval = await client.waitForTransactionReceipt({ hash: approveHash, timeout: 60_000 });
 			if (approval.status !== 'success') throw new Error(`the ${p.devBuy.market.symbol} approval reverted`);
+			await stage('approved', { detail: { tx_hash: approveHash } });
 		}
 		hash = await wallet.sendTransaction({ to: launchpadAddress(), data: p.data, value: p.launchFeeWei, gas: p.gasLimit });
 	} catch (err) {
 		await updateCustodyEvent(custodyId, { status: 'failed', meta: { error: String(err.shortMessage || err.message).slice(0, 300) } });
 		throw new EvmLegError('send_failed', `The launch was not sent: ${err.shortMessage || err.message}`, 502);
 	}
+	await stage('submitted', { status: 'submitted', txHash: hash, detail: { explorer: explorerTx(CHAIN, hash) } });
 
 	const receipt = await client.waitForTransactionReceipt({ hash, timeout: 60_000 });
+	return finishPaired({ context, hash, receipt, stage, req });
+}
+
+/**
+ * Turn a mined launch transaction into the finished result: read the new coin
+ * off the receipt, settle the custody row, list the coin in the directory.
+ * Shared by the request that sent the launch and by settlePairedLaunch(), which
+ * finishes a launch whose request went away before the receipt arrived.
+ */
+async function finishPaired({ context, hash, receipt, stage = noStage, req = null }) {
+	const { custody_id: custodyId, agent_id: agentId, user_id: userId } = context;
 	if (receipt.status !== 'success') {
 		await updateCustodyEvent(custodyId, { status: 'failed', signature: hash, meta: { error: 'reverted' } });
 		throw new EvmLegError('launch_reverted', 'The launch transaction reverted on chain. Only gas was spent.', 502, {
@@ -482,6 +517,7 @@ export async function launchPaired({ agentId, userId, input, req = null }) {
 	}
 	const token = getAddress(launched.args.token);
 	await updateCustodyEvent(custodyId, { status: 'confirmed', signature: hash, meta: { token } });
+	await stage('confirmed', { status: 'confirmed', token, detail: { block: Number(receipt.blockNumber) } });
 
 	const coinPath = pairedCoinUrl(token);
 	await sql`
@@ -490,8 +526,8 @@ export async function launchPaired({ agentId, userId, input, req = null }) {
 			 creator_address, token_allocation, signatures, venue_url)
 		VALUES
 			(${agentId}, ${userId}, 'mainnet', ${CHAIN.slug}, ${PAIRED_VENUE}, ${token},
-			 ${p.name}, ${p.symbol}, ${p.image || null}, ${p.description || null},
-			 ${p.address}, ${(TOTAL_SUPPLY / 10n ** 18n).toString()}, ${JSON.stringify([hash])}::jsonb,
+			 ${context.name}, ${context.symbol}, ${context.image}, ${context.description},
+			 ${context.wallet}, ${(TOTAL_SUPPLY / 10n ** 18n).toString()}, ${JSON.stringify([hash])}::jsonb,
 			 ${`https://three.ws${coinPath}`})
 		ON CONFLICT (mint, network) DO NOTHING
 	`.catch((e) => console.error('[paired/launch] directory insert failed', e?.message));
@@ -505,19 +541,34 @@ export async function launchPaired({ agentId, userId, input, req = null }) {
 		chain_id: CHAIN.chainId,
 		venue: PAIRED_VENUE,
 		token,
-		name: p.name,
-		symbol: p.symbol,
-		pairs: p.allocations.map((a) => ({ quote_token: a.quoteToken, symbol: a.symbol, weight_pct: a.weightBps / 100 })),
+		name: context.name,
+		symbol: context.symbol,
+		pairs: context.pairs,
 		tx_hash: hash,
 		block: Number(receipt.blockNumber),
 		gas_used: receipt.gasUsed.toString(),
-		spent_eth: formatEther(p.launchFeeWei + receipt.gasUsed * receipt.effectiveGasPrice),
-		spent_usd: usd,
-		opening_buy: p.devBuy
-			? { market: p.devBuy.market.symbol, amount: formatUnits(p.devBuy.quoteIn, p.devBuy.market.decimals), tokens: formatUnits(p.devBuy.tokensOut, TOKEN_DECIMALS) }
-			: null,
-		urls: { coin: coinPath, explorer: explorerTx(CHAIN, hash), metadata: p.descriptor.url },
+		spent_eth: formatEther(BigInt(context.launch_fee_wei) + receipt.gasUsed * receipt.effectiveGasPrice),
+		spent_usd: context.spend_usd,
+		opening_buy: context.opening_buy,
+		urls: { coin: coinPath, explorer: explorerTx(CHAIN, hash), metadata: context.metadata_url },
 	};
+}
+
+/**
+ * Finish a record whose transaction was sent but whose request never saw the
+ * receipt. Returns null while the transaction is still unmined, { result } when
+ * the coin exists, or { error } when the launch reverted.
+ */
+export async function settlePairedLaunch(row) {
+	const receipt = await evmLegPublicClient(CHAIN)
+		.getTransactionReceipt({ hash: row.tx_hash })
+		.catch(() => null);
+	if (!receipt) return null;
+	try {
+		return { result: await finishPaired({ context: row.context, hash: row.tx_hash, receipt }) };
+	} catch (err) {
+		return { error: { code: err.code || 'launch_failed', message: err.message, ...(err.detail ? { detail: err.detail } : {}) } };
+	}
 }
 
 /** Swap fees this agent's wallet has earned as a paired-coin creator, per quote asset. */

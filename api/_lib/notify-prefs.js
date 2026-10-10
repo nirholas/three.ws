@@ -40,7 +40,7 @@ export const CATEGORIES = [
 	{
 		key: 'alerts',
 		label: 'Market alerts',
-		description: 'Pump.fun rules and token signals you configured.',
+		description: 'Pump.fun rules, token signals and the perps thresholds you set on your agents.',
 	},
 	{
 		key: 'creations',
@@ -61,6 +61,11 @@ export const CATEGORIES = [
 		key: 'mail',
 		label: 'Agent mail',
 		description: 'An email arrived in one of your agents\' inboxes (spam is held back and never notifies).',
+	},
+	{
+		key: 'orders',
+		label: 'Orders',
+		description: 'A limit, stop, trailing, ladder, OCO or DCA order on one of your agents filled, failed, or expired.',
 	},
 	{
 		key: 'approvals',
@@ -111,6 +116,10 @@ const TYPE_CATEGORY = {
 	referral_reward: 'sales',
 	pump_launch_filled: 'sales',
 	royalty_paid: 'sales',
+	// Agent commerce invoices (api/_lib/agent-commerce/invoices.js).
+	invoice_paid: 'sales',
+	invoice_underpaid: 'sales',
+	invoice_expired: 'sales',
 
 	skill_purchase_confirmed: 'purchases',
 	asset_purchase_confirmed: 'purchases',
@@ -119,6 +128,8 @@ const TYPE_CATEGORY = {
 	// Materialize: one type carries the whole print lifecycle, quoted through
 	// delivered. It is the buyer's own order, so it belongs with purchases.
 	print_update: 'purchases',
+	// An agent's purchase was paid, verified on-chain and its goods delivered.
+	commerce_order_delivered: 'purchases',
 
 	remix: 'social',
 	reply: 'social',
@@ -130,17 +141,22 @@ const TYPE_CATEGORY = {
 	dm_received: 'social',
 	agent_review: 'social',
 	quest_complete: 'social',
+	// Another owner challenged your agent to a duel, or answered your challenge.
+	duel_challenge: 'social',
 
 	irl_interaction: 'irl',
 	irl_reply: 'irl',
 
 	pump_alert: 'alerts',
+	perps_alert: 'alerts',
 
 	companion_delivery: 'companion',
 
 	knock_received: 'knock',
 
 	mail_received: 'mail',
+
+	order_update: 'orders',
 
 	forge_complete: 'creations',
 	forge_failed: 'creations',
@@ -153,6 +169,17 @@ const TYPE_CATEGORY = {
 	security_alert: 'account',
 	wallet_anomaly_frozen: 'account',
 	approval_requested: 'approvals',
+	// An agent proposed new spending limits; the owner decides with a step-up.
+	commerce_limits_request: 'approvals',
+	token_budget_paused: 'account',
+	spend_cap_alert: 'account',
+	whitelist_proposed: 'account',
+	whitelist_pending: 'account',
+	whitelist_active: 'account',
+	whitelist_cancelled: 'account',
+	whitelist_removed: 'account',
+	whitelist_edited: 'account',
+	whitelist_settings: 'account',
 };
 
 export function categoryForType(type) {
@@ -198,6 +225,9 @@ const DEFAULTS = {
 	companion: { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: true  },
 	knock:     { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
 	mail:      { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: false },
+	// An order fires while the owner is away by design, so the paired chat is on
+	// by default: it is where a trader expects to hear that a stop hit.
+	orders:    { in_app: true,  push: true,  email: false, telegram: true,  discord: false, avatar: false },
 	account:   { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
 	// Approvals reach for every paired surface by default: an unanswered request
 	// expires and the action never runs, so being reached is the feature. Email
@@ -248,8 +278,17 @@ export function mergeWithDefaults(stored) {
 	return out;
 }
 
+/**
+ * Destination-allowlist changes are the alarm that tells an owner a stolen session
+ * or injected agent is adding a payout address, so the preference matrix cannot
+ * mute them. They reach every connected channel regardless of category defaults.
+ */
+const ALWAYS_NOTIFY_TYPES = new Set(['whitelist_proposed', 'whitelist_pending', 'whitelist_active', 'whitelist_cancelled', 'whitelist_removed', 'whitelist_edited', 'whitelist_settings']);
+const ALWAYS_NOTIFY_CHANNELS = new Set(['in_app', 'push', 'telegram', 'discord']);
+
 /** Is `channel` enabled for the category that `type` belongs to? */
 export function channelEnabled(prefs, type, channel) {
+	if (ALWAYS_NOTIFY_TYPES.has(type) && ALWAYS_NOTIFY_CHANNELS.has(channel)) return true;
 	const cat = categoryForType(type);
 	const row = prefs?.categories?.[cat];
 	if (!row) return DEFAULTS[cat]?.[channel] ?? false;
@@ -311,13 +350,16 @@ const PUSH_COPY = {
 	dm_received:              (p) => ['New message 💬', p.actor ? `${p.actor} sent you a message` : 'You have a new message'],
 	agent_review:             (p) => ['New review ⭐', p.actor ? `${p.actor} reviewed your agent` : 'Your agent received a review'],
 	quest_complete:           (p) => ['Quest complete 🏆', p.mission ? `You finished "${p.mission}"${p.gold ? ` — earned ${p.gold} gold` : ''}` : 'You finished a quest'],
+	duel_challenge:           (p) => ['Duel challenge ⚔️', p.summary || 'Another agent challenged yours to a trading duel'],
 	royalty_paid:             (p) => ['Royalty earned 💰', p.usd ? `A fork paid you $${Number(p.usd).toFixed(3)} in royalties` : (p.sol ? `A fork paid you ${Number(p.sol).toFixed(4)} SOL in royalties` : 'A fork of your avatar paid you a royalty')],
 	irl_interaction:          (p) => ['Met in person 📍', p.message ? `“${p.message}”` : 'Someone interacted with your agent in person'],
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],
 	pump_alert:               (p) => ['Market alert 📈', p.summary || 'A token alert you configured just fired'],
+	perps_alert:              (p) => [p.title || 'Perps alert', p.summary || 'A perps threshold you set on your agent was crossed'],
 	companion_delivery:       (p) => [p.sender ? `${p.sender} 👋` : 'Your companion 👋', p.line || p.title || 'Something worth your attention just came in'],
 	mail_received:            (p) => [`${p.agent_name || 'Your agent'} got an email ✉️`, `${p.from_name || p.from || 'Someone'}: ${p.subject || '(no subject)'}`],
 	knock_received:           (p) => [p.sender ? `${p.sender} is at your door 🚪` : 'Someone is at your door 🚪', p.title || p.body || 'Someone paid to reach you'],
+	order_update:             (p) => [p.title || 'Order update', p.message || 'An order on your agent changed state'],
 	forge_complete:           (p) => ['Your 3D model is ready ✨', p.prompt ? `"${String(p.prompt).slice(0, 80)}" finished generating` : 'Your generation finished. Tap to view it'],
 	forge_failed:             (p) => ['Generation failed ⚠️', p.prompt ? `"${String(p.prompt).slice(0, 80)}" could not be generated. Tap to retry` : 'A generation could not be completed. Tap to retry'],
 	withdrawal_completed:     ()  => ['Withdrawal complete ✅', 'Your withdrawal has been sent'],
@@ -328,6 +370,15 @@ const PUSH_COPY = {
 	security_alert:           (p) => ['Security alert 🔒', p.message || 'A security-sensitive change was made to your account'],
 	wallet_anomaly_frozen:    (p) => ['Wallet auto-frozen 🛡️', p.summary || 'Your agent wallet was frozen after an unusual action — tap to approve or keep frozen'],
 	approval_requested:       (p) => ['Approval needed', [p.summary || 'An agent is waiting for your approval', p.confirmation].filter(Boolean).join('\n')],
+	token_budget_paused:      (p) => ['Agent paused: token ceiling', `${p.agent_name || 'Your agent'} hit its ${p.window === 'hour' ? 'hourly' : p.window === 'day' ? 'daily' : 'per-run'} token ceiling. Resume it or extend the ceiling once.`],
+	spend_cap_alert:          (p) => [`${Number(p.threshold) || 0}% of a spend cap used`, `${p.agent_name || 'Your agent'} has used ${Number(p.threshold) || 0}% of its ${p.window === 'month' ? 'monthly' : p.window === 'day' ? 'daily' : p.window === 'hour' ? 'hourly' : 'per-run'} ${p.cap === 'tokens' ? 'token' : 'spend'} cap.`],
+	whitelist_proposed: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
+	whitelist_pending: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
+	whitelist_active: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
+	whitelist_cancelled: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
+	whitelist_removed: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
+	whitelist_edited: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
+	whitelist_settings: (p) => ['Wallet allowlist', p.message || 'A wallet destination changed. Tap to review'],
 };
 
 export function pushPayloadFor(type, payload, notificationId) {

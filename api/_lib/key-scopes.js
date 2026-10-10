@@ -9,6 +9,15 @@
 //   agents:write  create and edit agents and their memory (a fine scope too)
 //   spend         move funds: pay x402, trade, launch, withdraw, publish paid services
 //
+// Value-moving fine scopes come in three grades, so an MCP client can be
+// approved for one kind of risk without the others (api/_lib/oauth-grant-groups.js
+// renders them as the trade / spend / launch groups on the consent screen):
+//
+//   wallet:trade   swap, bid, open and close positions: value stays in the wallet
+//   wallet:launch  launch a coin and claim its creator fees
+//   wallet:write   send, pay, withdraw, cards: value leaves the wallet, and it
+//                  IMPLIES the two above (a client that may spend may also trade)
+//
 // The coarse scopes expand into the fine scopes every existing route already
 // checks, at authentication time, so no route needed to learn a new name. A key
 // minted with the "connector" preset is additionally stripped of every
@@ -25,17 +34,35 @@ export const CONNECTOR_SCOPES = Object.freeze(['read', 'generate', 'agents:write
 
 // Fine scopes that let a credential move value (REST gate: wallet:write, see
 // spend-scope.js; services:write publishes paid endpoints earning to a wallet).
-export const SPEND_GRANTS = Object.freeze(['spend', 'wallet:write', 'services:write']);
+export const SPEND_GRANTS = Object.freeze(['spend', 'wallet:write', 'wallet:trade', 'wallet:launch', 'services:write']);
 
 const EXPANSION = Object.freeze({
 	read: ['avatars:read', 'memory:read', 'agents:read', 'wallet:read'],
 	generate: ['avatars:write'],
 	'agents:write': ['agents:write', 'memory:write'],
-	spend: ['wallet:write', 'services:write'],
+	spend: ['wallet:write', 'wallet:trade', 'wallet:launch', 'services:write'],
+});
+
+// Fine scopes that carry other fine scopes with them. Applied at check time
+// (auth.js hasScope, spend-scope.js) rather than at issue time, so a token
+// minted before wallet:trade existed, carrying wallet:write alone, keeps
+// reaching every trading tool it always reached.
+export const IMPLIED_SCOPES = Object.freeze({
+	'wallet:write': ['wallet:trade', 'wallet:launch'],
 });
 
 function tokens(scope) {
 	return String(scope || '').split(/\s+/).filter(Boolean);
+}
+
+/** The scope list plus everything each entry implies, deduplicated. */
+export function withImpliedScopes(scope) {
+	const out = new Set();
+	for (const t of Array.isArray(scope) ? scope : tokens(scope)) {
+		out.add(t);
+		for (const implied of IMPLIED_SCOPES[t] || []) out.add(implied);
+	}
+	return [...out];
 }
 
 /** A scope string with every coarse scope expanded into the fine scopes it implies. */

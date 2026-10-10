@@ -122,6 +122,21 @@ const cost = () =>
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 
+/** The lane comparison loads the first time its disclosure opens, so the Solana wizard never waits on it. */
+function wireLanePicker() {
+	const details = $('#lx-lanes');
+	if (!details) return;
+	details.addEventListener(
+		'toggle',
+		async () => {
+			if (!details.open) return;
+			const { mountLanePicker } = await import('./lane-picker.js');
+			mountLanePicker($('#lane-picker'), { current: 'pumpfun' });
+		},
+		{ once: true },
+	);
+}
+
 async function boot() {
 	const root = $('#launch-app');
 	const params = new URL(location.href).searchParams;
@@ -132,6 +147,7 @@ async function boot() {
 	}
 	applyPrefill(params);
 	renderShell(root);
+	wireLanePicker();
 	wireTabs(params.get('tab') === 'coins' ? 'coins' : 'create');
 	wireForm();
 	updateDerived();

@@ -51,7 +51,7 @@ export const toolDefs = [
 		title: 'List feedback',
 		annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 		description:
-			'What visitors reported is broken, grouped into one row per distinct problem, loudest first. Each row carries the severity, the subsystem, how many people hit it, and whether a recorded session exists that can be compiled into a failing test with get_feedback_repro. Admin only.',
+			'What visitors reported is broken, grouped into one row per distinct problem, loudest first. Each row carries the severity, the subsystem, how many people hit it, and whether a recorded session exists that can be compiled into a failing test with get_feedback_repro. Admin only. Use this to decide which visitor-reported bug to fix next.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -100,7 +100,7 @@ export const toolDefs = [
 		title: 'Compile a feedback report into a failing test',
 		annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 		description:
-			'Compile one feedback report into a runnable Playwright spec from the session the visitor actually recorded. The spec asserts the reported failure is GONE, so it is red while the bug exists and green once it is fixed: use it to reproduce the bug before changing anything, and to prove the change worked. Returns the spec source, the narrated steps, and a replay-confidence score. Admin only, read-only.',
+			'Compile one feedback report into a runnable Playwright spec from the session the visitor actually recorded. The spec asserts the reported failure is GONE, so it is red while the bug exists and green once it is fixed: Use it to reproduce the bug before changing anything, and to prove the change worked. Returns the spec source, the narrated steps, and a replay-confidence score. Admin only, read-only.',
 		inputSchema: {
 			type: 'object',
 			properties: {

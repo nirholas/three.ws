@@ -30,6 +30,7 @@ import { log } from './shared/log.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
+import { withPayoutStepUp } from './payout-step-up.js';
 ensureStateKitStyles();
 
 const API = '/api';
@@ -1841,15 +1842,17 @@ async function saveAvatarPrice(avatarId) {
 		// 1. Save the payout wallet first (if provided) so the price is sellable
 		//    the moment it's set. Server is idempotent on (user, chain, address).
 		if (payout) {
-			const r = await fetch(`${API}/billing/payout-wallets`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify({ address: payout, chain: 'solana', is_default: true }),
+			const r = await withPayoutStepUp(async (extra) => {
+				const res = await fetch(`${API}/billing/payout-wallets`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ address: payout, chain: 'solana', is_default: true, ...extra }),
+				});
+				return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
 			});
 			if (!r.ok && r.status !== 409) {
-				const j = await r.json().catch(() => ({}));
-				throw new Error(j.error_description || j.error || 'Failed to save payout wallet');
+				throw new Error(r.data.error_description || r.data.error || 'Failed to save payout wallet');
 			}
 		}
 
@@ -2188,15 +2191,17 @@ async function saveAgentPrice(agentId) {
 	setSaleStatus(status, 'Saving…');
 	try {
 		if (payout) {
-			const r = await fetch(`${API}/billing/payout-wallets`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify({ address: payout, chain: 'solana', is_default: true }),
+			const r = await withPayoutStepUp(async (extra) => {
+				const res = await fetch(`${API}/billing/payout-wallets`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ address: payout, chain: 'solana', is_default: true, ...extra }),
+				});
+				return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
 			});
 			if (!r.ok && r.status !== 409) {
-				const j = await r.json().catch(() => ({}));
-				throw new Error(j.error_description || j.error || 'Failed to save payout wallet');
+				throw new Error(r.data.error_description || r.data.error || 'Failed to save payout wallet');
 			}
 		}
 		const amount = Math.round(usd * 1_000_000);
@@ -3346,13 +3351,16 @@ function bindEarnTab() {
 		const btn = $('ws-save');
 		if (btn) btn.disabled = true;
 		try {
-			const r = await fetch(`${API}/billing/payout-wallets`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify({ address, chain, is_default: true }),
+			const r = await withPayoutStepUp(async (extra) => {
+				const res = await fetch(`${API}/billing/payout-wallets`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ address, chain, is_default: true, ...extra }),
+				});
+				return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
 			});
-			const j = await r.json();
+			const j = r.data;
 			if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
 			earnState.wallet = j.wallet;
 			earnState.loaded = false;
@@ -6496,6 +6504,8 @@ function bindSubmit() {
 			// Save payout wallet if provided
 			const payoutAddr = ($('sf-payout-wallet')?.value || '').trim();
 			if (payoutAddr && agentId) {
+				// A brand-new agent has no payout wallet yet, so this is a first
+				// wallet and never needs the payout step-up.
 				fetch(`${API}/billing/payout-wallets`, {
 					method: 'POST',
 					headers: { 'content-type': 'application/json' },

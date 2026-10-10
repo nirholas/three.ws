@@ -272,7 +272,8 @@ export const toolDefs = [
 			'nameplate if it holds a verified .sol name. Also returns the visual tiers (reputation tier, holdings tier, ' +
 			'muted-balance flag, verified name) the embodiment viewer maps onto the body — aura, cosmetic, muted state, ' +
 			'nameplate. Every persona has a wallet the moment it exists; a fresh persona legitimately reads as zero ' +
-			'balance / unranked reputation until it is funded or interacted with. No sign-in required.',
+			'balance / unranked reputation until it is funded or interacted with. No sign-in required. Use this to show who ' +
+			'a persona is on-chain or to check its balance before persona_payment_preview, persona_tip, or persona_send.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -289,7 +290,7 @@ export const toolDefs = [
 		title: "Preview a USDC payment from a persona's wallet (no funds move)",
 		annotations: READ_ANNOTATIONS,
 		description:
-			"Preview persona_tip or persona_send before it runs: the persona's wallet and live USDC balance, the recipient, " +
+			"Call this before persona_tip or persona_send to preview the transfer: the persona's wallet and live USDC balance, the recipient, " +
 			'the amount, the balance afterwards, the session spend so far against its cap, and every rule that would ' +
 			'refuse the transfer. Moves nothing. Show it to the user, get a clear yes, then call persona_tip or ' +
 			'persona_send with the same persona_id, to and usdc, the returned preview_id and confirm_send: true.',
@@ -316,7 +317,8 @@ export const toolDefs = [
 			'another agent for a good answer or hiring result. Real, irreversible on-chain settlement, hard-capped ' +
 			`at $${PERSONA_SPEND_CAPS.maxPerCallUsdc}/call and $${PERSONA_SPEND_CAPS.maxPerSessionUsdc} cumulative per session. ` +
 			`Amounts over $${PERSONA_SPEND_CAPS.confirmAboveUsdc} require confirm:true. Fails cleanly with the exact reason ` +
-			'(insufficient balance, over cap, confirmation required) — never a silent no-op.',
+			'(insufficient balance, over cap, confirmation required), never a silent no-op. Use this for a small thank-you ' +
+			'payment to another agent after persona_payment_preview; for general payments call persona_send instead.',
 		inputSchema: { type: 'object', properties: VALUE_INPUT_PROPS, required: ['persona_id', 'to', 'usdc'], additionalProperties: false },
 		async handler(args, auth) {
 			return handlePersonaValueOp(args, auth, { tool: 'persona_tip', verb: 'Tip' });
@@ -331,7 +333,9 @@ export const toolDefs = [
 			'behind persona-initiated payments (settling a hire, paying an invoice, funding another wallet). Real, ' +
 			`irreversible on-chain settlement, hard-capped at $${PERSONA_SPEND_CAPS.maxPerCallUsdc}/call and ` +
 			`$${PERSONA_SPEND_CAPS.maxPerSessionUsdc} cumulative per session. Amounts over $${PERSONA_SPEND_CAPS.confirmAboveUsdc} ` +
-			'require confirm:true. USDC is the only settlement asset here — any other mint is out of scope for this tool.',
+			'require confirm:true. USDC is the only settlement asset here; any other mint is out of scope for this tool. ' +
+			'Use this to settle a hire, pay an invoice, or fund another wallet after persona_payment_preview; for a small ' +
+			'thank-you tip call persona_tip instead.',
 		inputSchema: { type: 'object', properties: VALUE_INPUT_PROPS, required: ['persona_id', 'to', 'usdc'], additionalProperties: false },
 		async handler(args, auth) {
 			return handlePersonaValueOp(args, auth, { tool: 'persona_send', verb: 'Send' });

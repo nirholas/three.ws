@@ -135,6 +135,7 @@ export async function resolvePayoutAddress(agentId, chain) {
 		  ON pw.user_id = a.user_id
 		 AND pw.chain = ${chain}
 		 AND (pw.agent_id = a.id OR pw.is_default = true)
+		 AND pw.approved_at IS NOT NULL AND pw.effective_at <= now()
 		WHERE a.id = ${agentId} AND a.deleted_at IS NULL
 		ORDER BY (pw.agent_id IS NOT NULL) DESC, pw.is_default DESC, pw.created_at ASC
 		LIMIT 1

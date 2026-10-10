@@ -366,7 +366,7 @@ export function mountInferenceCredits(root, { agentId, compact = false, walletHr
 					${b ? '<button type="button" class="ic-btn" data-act="clear-budget">Remove</button>' : ''}
 					${state.editingBudget ? '<button type="button" class="ic-btn" data-act="cancel-budget">Cancel</button>' : ''}
 				</div>`
-			: `<p class="ic-note">${b.daily_usd != null ? `${budgetUsd(b.daily_usd)} a day` : 'No daily cap'} · ${b.monthly_usd != null ? `${budgetUsd(b.monthly_usd)} a month` : 'no monthly cap'}. Windows reset at 00:00 UTC.</p>`;
+			: `<p class="ic-note">${b.daily_usd != null ? `${budgetUsd(b.daily_usd)} a day` : 'No daily cap'} · ${b.monthly_usd != null ? `${budgetUsd(b.monthly_usd)} a month` : 'no monthly cap'}. Windows reset at 00:00 UTC. Token ceilings, usage by day, model and tool, and cap alerts live on the <a href="/spend?agent=${encodeURIComponent(agentId)}">spend page</a>.</p>`;
 		return `
 			<div class="ic-card">
 				<div class="ic-h"><span>Inference budget</span>${b && !state.editingBudget ? '<button type="button" class="ic-btn" data-act="edit-budget">Edit</button>' : ''}</div>

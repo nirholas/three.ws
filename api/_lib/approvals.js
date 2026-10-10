@@ -56,6 +56,19 @@ export const VENUES = Object.freeze({
 	// A live trade or standing order a squad coordinator paused on
 	// (api/_lib/team-chat/runner.js). It signs from the team's Trader wallet.
 	team_trade: { label: 'Team trades from the policy agent wallet', auto: true },
+	// A one-time raise of an agent's hourly, daily or per-run token ceiling
+	// (api/_lib/token-budgets.js). It moves no funds and is granted once per
+	// window, so the owner sees every one.
+	token_budget: { label: 'Token ceiling extensions', auto: false },
+	// An agent asking to change where its earnings are paid out
+	// (api/_lib/account-link/external-wallets.js). It moves no funds, but a
+	// new payout address is how a stolen key would drain future earnings, so
+	// it is never auto-approved and the address takes effect after a cooldown.
+	payout_wallet: { label: 'Payout wallet changes', auto: false },
+	// A pump.fun launch paid from the agent wallet through a funded launch
+	// intent (api/_lib/pump-funded-launch.js). It signs the create transaction
+	// and cannot be undone, so the owner answers every one.
+	pump_launch: { label: 'Coin launches from the agent wallet', auto: false },
 });
 
 // Ceiling on a single auto-approve policy. Anything bigger is a decision the
@@ -168,6 +181,8 @@ export function chainLabel(chain, network) {
  */
 export function confirmationTable(row) {
 	if (row.action_type === 'mail_rule_run') return mailRuleTable(row);
+	if (row.action_type === 'token_budget_extend') return tokenBudgetTable(row);
+	if (row.action_type === 'payout_wallet_set') return payoutWalletTable(row);
 	const usd = row.amount_usd != null && Number.isFinite(Number(row.amount_usd)) ? ` (~$${Number(row.amount_usd).toFixed(2)})` : '';
 	return [
 		{ key: 'recipient', label: 'Recipient', value: row.recipient_label ? `${row.recipient_label} (${shortAddr(row.recipient)})` : (row.recipient || 'n/a'), full: row.recipient || null },
@@ -187,6 +202,34 @@ function mailRuleTable(row) {
 		{ key: 'trigger', label: 'Email', value: `From ${p.from || 'unknown sender'}: ${p.subject || '(no subject)'}` },
 		{ key: 'instruction', label: 'Instruction', value: prompt.length > 160 ? `${prompt.slice(0, 160)}...` : prompt, full: prompt.length > 160 ? prompt : null },
 		{ key: 'spend', label: 'Spend', value: 'None: free model lanes, read-only tools' },
+	];
+}
+
+// A token ceiling extension moves nothing either: it names the window, the
+// ceiling it raises and by how much, and says plainly that credits still bill.
+function tokenBudgetTable(row) {
+	const p = row.payload || {};
+	const n = (v) => Number(v || 0).toLocaleString('en-US');
+	const window = p.window === 'hour' ? 'This hour' : p.window === 'day' ? 'Today (UTC)' : 'This run';
+	return [
+		{ key: 'agent', label: 'Agent', value: row.recipient_label || 'Agent' },
+		{ key: 'window', label: 'Window', value: `${window} (${p.window_key || 'current'})` },
+		{ key: 'ceiling', label: 'Ceiling', value: `${n(p.cap_tokens)} tokens` },
+		{ key: 'extension', label: 'Extension', value: `+${n(p.extra_tokens)} tokens, once` },
+		{ key: 'spend', label: 'Spend', value: 'No transfer: admitted model calls bill credits as usual' },
+	];
+}
+
+// A payout wallet change moves nothing today: it names the address earnings
+// will go to from now on, the one they go to today, and the cooldown.
+function payoutWalletTable(row) {
+	const p = row.payload || {};
+	return [
+		{ key: 'agent', label: 'Agent', value: p.agent_id ? `Agent ${String(p.agent_id).slice(0, 8)}` : 'Account default' },
+		{ key: 'recipient', label: 'New payout wallet', value: shortAddr(p.address), full: p.address || null },
+		{ key: 'previous', label: 'Current payout wallet', value: shortAddr(p.previous), full: p.previous || null },
+		{ key: 'chain', label: 'Chain', value: chainLabel(row.chain, row.network) },
+		{ key: 'effective', label: 'Takes effect', value: '24 hours after approval; withdrawals keep the current wallet until then' },
 	];
 }
 
@@ -257,6 +300,12 @@ const EXECUTORS = {
 	strategy: async () => (await import('./agent-strategy-runtime.js')).executeApprovedStrategyAction,
 	mail_rule: async () => (await import('./mail/rules.js')).executeApprovedMailRule,
 	team_chat: async () => (await import('./team-chat/approval-executor.js')).executeTeamChatApproval,
+	// An agent_send the owner's allowlist did not cover (api/_lib/agent-commerce/send.js).
+	agent_commerce: async () => (await import('./agent-commerce/send.js')).executeApprovedCommerceAction,
+	token_budget: async () => (await import('./token-budgets.js')).executeTokenBudgetExtension,
+	external_wallet: async () => (await import('./account-link/external-wallets.js')).executeApprovedPayoutWallet,
+	// A funded launch intent the owner confirmed (api/_lib/pump-funded-launch.js).
+	pump_funded_launch: async () => (await import('./pump-funded-launch.js')).executeApprovedFundedLaunch,
 };
 
 export function hasExecutor(source) {
@@ -322,7 +371,7 @@ export async function listAutoPolicies(userId) {
 export async function createAutoPolicy(userId, input, { req = null } = {}) {
 	const venues = [...new Set(Array.isArray(input.venues) ? input.venues : [])];
 	if (!venues.length || venues.some((v) => !VENUES[v]?.auto)) {
-		throw new ApprovalError(400, 'invalid_venue', `venues must be one or more of: ${Object.keys(VENUES).join(', ')}`);
+		throw new ApprovalError(400, 'invalid_venue', `venues must be one or more of: ${Object.keys(VENUES).filter((v) => VENUES[v].auto).join(', ')}`);
 	}
 	const maxUsd = Number(input.max_usd);
 	if (!Number.isFinite(maxUsd) || maxUsd <= 0 || maxUsd > AUTO_POLICY_MAX_USD) {

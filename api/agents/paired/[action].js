@@ -4,6 +4,7 @@
  * Routes (via vercel.json rewrites):
  *   POST /api/agents/:id/paired/quote   price, policy and funding check, signs nothing
  *   POST /api/agents/:id/paired/launch  launch the coin from the agent's wallet
+ *                                       (send an Idempotency-Key; follow GET /api/launches/:id)
  *   GET  /api/agents/:id/paired/fees    swap fees the agent has earned, per quote asset
  *   POST /api/agents/:id/paired/claim   claim every earned quote asset in one transaction
  *
@@ -23,6 +24,8 @@ import { EvmLegError } from '../../_lib/evm-leg/chains.js';
 import { PairedMarketError } from '../../_lib/paired-markets.js';
 import { MAX_MARKETS } from '../../_lib/paired-launchpad.js';
 import { LIMITS, claimPairedFees, launchPaired, pairedFeesFor, quotePairedLaunch } from '../../_lib/evm-leg/paired-launch.js';
+import { readIdempotencyKey, runLaunch, publicRecord } from '../../_lib/evm-launch-records.js';
+import { EVM_LEG_CHAINS } from '../../_lib/evm-leg/chains.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -34,7 +37,7 @@ async function resolveAuth(req) {
 		}
 		return { userId: session.id };
 	}
-	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req, { kind: 'launch' });
 	if (bearer) return { userId: bearer.userId };
 	return null;
 }
@@ -72,6 +75,18 @@ function failure(res, err) {
 	return serverError(res, 500, 'internal', err);
 }
 
+/** 201 for a new finished launch, 200 for a replayed one, 202 while it is still in flight. */
+function respondLaunch(res, { record, replayed }) {
+	if (replayed) res.setHeader('idempotent-replay', 'true');
+	res.setHeader('location', `/api/launches/${record.id}`);
+	const launch = publicRecord(record);
+	if (record.status === 'failed') {
+		return error(res, 409, record.error?.code || 'launch_failed', record.error?.message || 'the launch failed', { launch });
+	}
+	if (record.status !== 'finalized') return json(res, 202, { data: { launch_id: record.id, status: record.status, launch } });
+	return json(res, replayed ? 200 : 201, { data: { ...record.result, launch_id: record.id, launch } });
+}
+
 async function handle(req, res, id, action) {
 	const verbs = action === 'fees' ? ['GET'] : ['POST'];
 	if (cors(req, res, { methods: `${verbs.join(',')},OPTIONS`, credentials: true })) return;
@@ -96,9 +111,20 @@ async function handle(req, res, id, action) {
 			return json(res, 200, { data: await quotePairedLaunch({ agentId: id, userId: auth.userId, input: body }) });
 		}
 		if (!(await requireRealFundsAgreement(req, res, { userId: auth.userId, network: 'mainnet', context: 'paired-launch' }))) return;
-		return json(res, 201, { data: await launchPaired({ agentId: id, userId: auth.userId, input: body, req }) });
+		const key = readIdempotencyKey(req);
+		const run = await runLaunch({
+			lane: 'paired',
+			chain: EVM_LEG_CHAINS.robinhood.slug,
+			userId: auth.userId,
+			agentId: id,
+			key,
+			body,
+			execute: ({ stage }) => launchPaired({ agentId: id, userId: auth.userId, input: body, req, stage }),
+		});
+		return respondLaunch(res, run);
 	} catch (err) {
 		if (!(err instanceof PairedMarketError) && !(err instanceof EvmLegError)) console.error(`[paired/${action}]`, err);
+		if (err?.launchId) res.setHeader('location', `/api/launches/${err.launchId}`);
 		return failure(res, err);
 	}
 }

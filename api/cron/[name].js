@@ -79,6 +79,13 @@ import {
 	chargeStatusFor,
 	classifyChargeFailure,
 } from '../_lib/recurring.js';
+import {
+	adoptLegacyDcaStrategies,
+	claimEvmDca,
+	dueEvmDca,
+	recordEvmDcaFailure,
+	recordEvmDcaSuccess,
+} from '../_lib/dca-unified.js';
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
 
@@ -2813,14 +2820,6 @@ function dcaLog(level, event, fields = {}) {
 	else console.log(line);
 }
 
-async function insertDcaExecution(row) {
-	const keys = Object.keys(row);
-	const cols = keys.map((k) => `"${k}"`).join(', ');
-	const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-	const values = keys.map((k) => row[k]);
-	return sql(`INSERT INTO dca_executions (${cols}) VALUES (${placeholders})`, values);
-}
-
 function dcaIsTransient(err) {
 	// Network-level & RPC transport errors
 	const code = err?.code;
@@ -3057,28 +3056,22 @@ async function handleRunDca(req, res) {
 	const runId = globalThis.crypto?.randomUUID?.() ?? `run_${Date.now()}`;
 	dcaLog('info', 'tick_start', { run_id: runId });
 
-	// Fetch all due active strategies
+	// The schedules live in the unified order store (rail 'evm'). Adopt any row
+	// an older image wrote to the legacy table first, so a rollout never strands
+	// a schedule (api/_lib/dca-unified.js).
+	try {
+		const adopted = await adoptLegacyDcaStrategies();
+		if (adopted.strategies || adopted.executions) dcaLog('info', 'legacy_adopted', { run_id: runId, ...adopted });
+	} catch (err) {
+		dcaLog('error', 'legacy_adopt_failed', { run_id: runId, message: err?.message });
+	}
+
 	let strategies;
 	try {
-		strategies = await sql`
-			SELECT
-				s.id, s.delegation_id, s.chain_id,
-				s.token_in, s.token_out, s.amount_per_execution,
-				s.period_seconds, s.slippage_bps, s.agent_id, s.consecutive_failures,
-				ad.status AS delegation_status, ad.expires_at AS delegation_expires_at
-			FROM dca_strategies s
-			JOIN agent_delegations ad ON ad.id = s.delegation_id
-			WHERE s.status = 'active'
-			  AND s.next_execution_at <= NOW()
-			ORDER BY s.next_execution_at ASC
-			LIMIT 50
-		`;
+		strategies = await dueEvmDca(50);
 	} catch (err) {
 		if (isTableMissing(err)) {
-			dcaLog('info', 'tick_skip', {
-				run_id: runId,
-				reason: 'dca_strategies table not yet created',
-			});
+			dcaLog('info', 'tick_skip', { run_id: runId, reason: 'orders table not yet migrated' });
 			return json(res, 200, { ok: true, skipped: true, reason: 'table_not_ready' });
 		}
 		dcaLog('error', 'fetch_due_failed', { run_id: runId, message: err?.message });
@@ -3086,90 +3079,49 @@ async function handleRunDca(req, res) {
 	}
 
 	const results = [];
-	for (const strategy of strategies) {
-		const logCtx = { run_id: runId, strategy_id: strategy.id, chain_id: strategy.chain_id };
-
-		const execRow = {
-			strategy_id: strategy.id,
-			chain_id: strategy.chain_id,
-			amount_in: strategy.amount_per_execution,
-			slippage_bps_used: strategy.slippage_bps,
-			status: 'pending',
+	for (const order of strategies) {
+		const logCtx = { run_id: runId, strategy_id: order.id, chain_id: order.chain_id };
+		const period = Number(order.schedule?.interval_seconds) || 86400;
+		const strategy = {
+			id: order.id,
+			delegation_id: order.delegation_id,
+			chain_id: order.chain_id,
+			token_in: order.quote_mint,
+			token_out: order.mint,
+			amount_per_execution: order.amount_in_raw,
+			slippage_bps: order.slippage_bps,
 		};
 
 		// Check delegation is still alive before spending gas on a quote. The
 		// strategy pauses rather than dying: re-granting the permission and
 		// resuming is a two-click recovery, and the owner sees the exact reason.
-		if (strategy.delegation_status !== 'active') {
+		const expired = order.delegation_expires_at && new Date(order.delegation_expires_at) <= new Date();
+		if (order.delegation_status !== 'active' || expired) {
+			const code = order.delegation_status === 'revoked' ? 'delegation_revoked' : 'delegation_expired';
 			const failure = classifyChargeFailure({
-				code:
-					strategy.delegation_status === 'revoked'
-						? 'delegation_revoked'
-						: 'delegation_expired',
-				message: `delegation is ${strategy.delegation_status}`,
+				code,
+				message: order.delegation_status !== 'active' ? `delegation is ${order.delegation_status}` : 'delegation expiry has passed',
 			});
-			await sql`
-				UPDATE dca_strategies
-				SET status          = 'paused',
-				    paused_at       = NOW(),
-				    last_error      = ${failure.reason.slice(0, 500)},
-				    last_error_code = ${failure.code}
-				WHERE id = ${strategy.id}
-			`;
-			execRow.status = 'aborted';
-			execRow.error = failure.reason;
-			await insertDcaExecution(execRow).catch((e) =>
-				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
-			);
+			await recordEvmDcaFailure(order, {
+				code: failure.code,
+				reason: failure.reason,
+				aborted: true,
+				status: order.delegation_status !== 'active' ? 'paused' : 'expired',
+			}).catch((e) => dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }));
 			dcaLog('info', 'skipped', { ...logCtx, code: failure.code });
-			results.push({ id: strategy.id, skipped: true, code: failure.code });
-			continue;
-		}
-
-		if (new Date(strategy.delegation_expires_at) <= new Date()) {
-			const failure = classifyChargeFailure({
-				code: 'delegation_expired',
-				message: 'delegation expiry has passed',
-			});
-			await sql`
-				UPDATE dca_strategies
-				SET status          = 'expired',
-				    paused_at       = NOW(),
-				    last_error      = ${failure.reason.slice(0, 500)},
-				    last_error_code = ${failure.code}
-				WHERE id = ${strategy.id}
-			`;
-			execRow.status = 'aborted';
-			execRow.error = failure.reason;
-			await insertDcaExecution(execRow).catch((e) =>
-				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
-			);
-			dcaLog('info', 'skipped', { ...logCtx, code: failure.code });
-			results.push({ id: strategy.id, skipped: true, code: failure.code });
+			results.push({ id: order.id, skipped: true, code: failure.code });
 			continue;
 		}
 
 		// ── Idempotency claim ───────────────────────────────────────────────
-		// Atomically advance next_execution_at so a concurrent tick (or a retry
-		// of this tick) will not re-pick this row. We advance by period_seconds
-		// provisionally; on success we leave it; on failure we reset to NOW so
-		// the next tick retries it.
+		// Atomically advance next_fire_at so a concurrent tick (or a retry of
+		// this tick) will not re-pick this row. On failure the classifier decides
+		// whether the claim is released for a retry.
 		const nowIso = new Date().toISOString();
-		const provisionalNextIso = new Date(
-			Date.now() + strategy.period_seconds * 1000,
-		).toISOString();
-
-		const claim = await sql`
-			UPDATE dca_strategies
-			SET next_execution_at = ${provisionalNextIso}
-			WHERE id = ${strategy.id}
-			  AND status = 'active'
-			  AND next_execution_at <= ${nowIso}
-			RETURNING id
-		`;
-		if (claim.length === 0) {
+		const nextIso = new Date(Date.now() + period * 1000).toISOString();
+		if (!(await claimEvmDca(order, { nowIso, nextIso }))) {
 			dcaLog('info', 'claim_lost', { ...logCtx });
-			results.push({ id: strategy.id, skipped: true, reason: 'claim_lost' });
+			results.push({ id: order.id, skipped: true, reason: 'claim_lost' });
 			continue;
 		}
 
@@ -3177,27 +3129,11 @@ async function handleRunDca(req, res) {
 
 		try {
 			const { txHash, quoteAmountOut, divergenceBps } = await dcaOnPeriod(strategy);
-
-			execRow.tx_hash = txHash;
-			execRow.quote_amount_out = quoteAmountOut;
-			execRow.quote_divergence_bps = divergenceBps;
-			execRow.status = 'success';
-
-			await sql`
-				UPDATE dca_strategies
-				SET last_execution_at    = NOW(),
-				    consecutive_failures = 0,
-				    last_error           = NULL,
-				    last_error_code      = NULL
-				WHERE id = ${strategy.id}
-			`;
-
-			dcaLog('info', 'execute_success', {
-				...logCtx,
-				tx_hash: txHash,
-				divergence_bps: divergenceBps,
-			});
-			results.push({ id: strategy.id, txHash, quoteAmountOut });
+			await recordEvmDcaSuccess(order, { txHash, quoteAmountOut, divergenceBps }).catch((e) =>
+				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
+			);
+			dcaLog('info', 'execute_success', { ...logCtx, tx_hash: txHash, divergence_bps: divergenceBps });
+			results.push({ id: order.id, txHash, quoteAmountOut });
 		} catch (err) {
 			// One classifier decides what a failure means, shared with the
 			// subscription cron and with the API that renders it to the owner
@@ -3209,46 +3145,20 @@ async function handleRunDca(req, res) {
 			const applied = applyChargeFailure({
 				outcome,
 				platform,
-				consecutiveFailures: Number(strategy.consecutive_failures ?? 0),
+				consecutiveFailures: Number(order.consecutive_failures ?? 0),
 			});
-
-			execRow.status = chargeStatusFor(outcome);
-			execRow.error = reason;
-			execRow.quote_divergence_bps = err.divergenceBps ?? null;
 
 			// Release the idempotency claim only when the swap provably never went
 			// out AND another attempt is still allowed. Everything else keeps the
-			// advanced next_execution_at, so the period is consumed exactly once.
-			if (applied.retry) {
-				await sql`
-					UPDATE dca_strategies
-					SET next_execution_at    = ${nowIso},
-					    last_error           = ${reason.slice(0, 500)},
-					    last_error_code      = ${code},
-					    consecutive_failures = ${applied.consecutiveFailures}
-					WHERE id = ${strategy.id}
-				`.catch((e) => dcaLog('error', 'claim_release_failed', { ...logCtx, message: e?.message }));
-			} else if (applied.pause) {
-				await sql`
-					UPDATE dca_strategies
-					SET status               = 'paused',
-					    paused_at            = NOW(),
-					    last_error           = ${reason.slice(0, 500)},
-					    last_error_code      = ${code},
-					    consecutive_failures = ${applied.consecutiveFailures}
-					WHERE id = ${strategy.id}
-				`.catch((e) => dcaLog('error', 'pause_failed', { ...logCtx, message: e?.message }));
-			} else {
-				// A skipped period: the schedule stays active and unpenalised, but
-				// the owner still sees why nothing was bought this time.
-				await sql`
-					UPDATE dca_strategies
-					SET last_error           = ${reason.slice(0, 500)},
-					    last_error_code      = ${code},
-					    consecutive_failures = ${applied.consecutiveFailures}
-					WHERE id = ${strategy.id}
-				`.catch((e) => dcaLog('error', 'note_failure_failed', { ...logCtx, message: e?.message }));
-			}
+			// advanced next_fire_at, so the period is consumed exactly once.
+			await recordEvmDcaFailure(order, {
+				code,
+				reason,
+				aborted: chargeStatusFor(outcome) === 'aborted',
+				unconfirmed: chargeStatusFor(outcome) === 'unknown',
+				apply: { ...applied, nowIso },
+				divergenceBps: err.divergenceBps ?? null,
+			}).catch((e) => dcaLog('error', 'note_failure_failed', { ...logCtx, message: e?.message }));
 
 			dcaLog('error', 'execute_failed', {
 				...logCtx,
@@ -3259,13 +3169,8 @@ async function handleRunDca(req, res) {
 				paused: applied.pause,
 				will_retry_next_tick: applied.retry,
 			});
-			results.push({ id: strategy.id, error: reason, code, outcome });
+			results.push({ id: order.id, error: reason, code, outcome });
 		}
-
-		// Insert execution record regardless of outcome
-		await insertDcaExecution(execRow).catch((e) =>
-			dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
-		);
 	}
 
 	dcaLog('info', 'tick_done', { run_id: runId, processed: strategies.length });

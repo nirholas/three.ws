@@ -27,7 +27,16 @@ export const RESOURCE_DESCRIPTION =
 	'resume_agent_transfer. Prediction markets settled in USDC on Solana: predictions_events, ' +
 	'predictions_event, predictions_positions, predictions_open_preview, predictions_open, ' +
 	'predictions_close_preview, predictions_close, predictions_redeem_preview, predictions_redeem and ' +
-	'predictions_watch. Every money-moving tool needs its preview first and an explicit confirm flag. ' +
+	'predictions_watch. Perpetual futures with USDC collateral on Solana, paper or live: perps_markets, ' +
+	'perps_market_data, perps_account, perps_positions, perps_order_preview, perps_action_preview, ' +
+	'perps_order_execute, perps_collateral_deposit, perps_collateral_withdraw, perps_order_cancel, ' +
+	'perps_flatten and perps_limits. Resting orders and DCA on any SPL token: order_preview, limit_order_create, ' +
+	'stop_order_create, trailing_order_create, ladder_order_create, oco_order_create, limit_order_list, ' +
+	'limit_order_cancel, limit_order_history, order_book, dca_preview, dca_create, dca_list and dca_cancel. ' +
+	'Solana trading: token_search, get_price, get_indicators, get_market_signals, get_news_feed, ' +
+	'arbitrage_prices, arbitrage_quote, swap_quote (every aggregator compared on net output), swap_simulate ' +
+	'and swap_execute. ' +
+	'Every money-moving tool needs its preview first and an explicit confirm flag. ' +
 	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +
 	'API key. Operated by three.ws.';
 

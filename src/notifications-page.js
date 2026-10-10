@@ -21,16 +21,18 @@ const TYPE_CATEGORY = {
 	print_update: 'purchases',
 	remix: 'social', reply: 'social', comment: 'social', embed: 'social', mention: 'social',
 	fork: 'social', follow: 'social', dm_received: 'social', agent_review: 'social',
-	quest_complete: 'social',
+	quest_complete: 'social', duel_challenge: 'social',
 	irl_interaction: 'irl', irl_reply: 'irl',
-	pump_alert: 'alerts',
+	pump_alert: 'alerts', perps_alert: 'alerts',
 	companion_delivery: 'companion',
 	forge_complete: 'creations', forge_failed: 'creations',
 	withdrawal_completed: 'account', withdrawal_failed: 'account', payment_mismatch: 'account',
 	asset_payment_mismatch: 'account', skill_payment_mismatch: 'account', security_alert: 'account',
 	wallet_anomaly_frozen: 'account',
 	inference_topup: 'account', inference_budget_exhausted: 'account',
+	token_budget_paused: 'account', spend_cap_alert: 'account',
 	approval_requested: 'approvals',
+	order_update: 'orders',
 };
 function categoryOf(type) { return TYPE_CATEGORY[type] || 'account'; }
 

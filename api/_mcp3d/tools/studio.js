@@ -666,7 +666,7 @@ export const toolDefs = [
 		title: 'Generate a 3D model from a text prompt',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Turn a text description into a textured 3D model (GLB). Runs a fast text-to-image pass, then reconstructs a mesh from that image with the three.ws image engine. Returns a job_id (poll with generation_status) plus the intermediate preview image. Best results: a single, clearly described object — "a worn leather armchair", "a low-poly red fox", "a sci-fi helmet".',
+			'Turn a text description into a textured 3D model (GLB). Runs a fast text-to-image pass, then reconstructs a mesh from that image with the three.ws image engine. Returns a job_id (poll with generation_status) plus the intermediate preview image. Best results: a single, clearly described object, e.g. "a worn leather armchair", "a low-poly red fox", "a sci-fi helmet". Use this to make a new object from words; call image_to_3d instead when you already have a picture, and run auto_rig_model on the result when it needs to move.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -755,7 +755,7 @@ export const toolDefs = [
 		title: 'Reconstruct a 3D model from one or more images',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Reconstruct a textured 3D model (GLB) from a reference image using the three.ws image engine. Pass a single image_url, or image_urls (2–4 views of the SAME object from different angles — front/back/left/right) for multi-view reconstruction, which removes the back-of-object hallucination of single-image reconstruction. Returns a job_id to poll with generation_status, plus how many views were fused and which engine handled it. The cleaner the inputs — one subject, plain background, even lighting — the better the mesh.',
+			'Reconstruct a textured 3D model (GLB) from a reference image using the three.ws image engine. Pass a single image_url, or image_urls (2-4 views of the SAME object from different angles: front, back, left, right) for multi-view reconstruction, which removes the back-of-object hallucination of single-image reconstruction. Returns a job_id to poll with generation_status, plus how many views were fused and which engine handled it. The cleaner the inputs (one subject, plain background, even lighting), the better the mesh. Use this when you have a photo or render of the object; for a text idea call text_to_3d instead, and run remove_background first when the image has a busy background.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -904,7 +904,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Poll a text_to_3d or image_to_3d job by its job_id. While running it reports the status; when finished it returns the GLB download URL and an inline <model-viewer> artifact — display that text/html resource as an interactive 3D artifact.',
+			'Poll a text_to_3d or image_to_3d job by its job_id. While running it reports the status; when finished it returns the GLB download URL and an inline <model-viewer> artifact; display that text/html resource as an interactive 3D artifact. Call this after any studio tool returns a job_id (text_to_3d, image_to_3d, capture_scene, remesh_model, stylize_model, segment_model, retexture_model, retexture_region, auto_rig_model) and keep polling until it reports done or failed.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1037,8 +1037,8 @@ export const toolDefs = [
 			'dense geometry, and corrects drift across the whole clip, then returns a coloured .ply point ' +
 			'cloud. Pass a public https video URL (mp4/mov/webm). Returns a job_id — poll generation_status; ' +
 			'when finished it returns the point-cloud URL and an inline viewer artifact. Best with steady, ' +
-			'well-lit footage that orbits or walks through the space. This is geometry capture of a REAL ' +
-			'scene — distinct from text_to_3d/image_to_3d, which synthesize a single object mesh.',
+			'well-lit footage that orbits or walks through the space. Use this to capture the geometry of a REAL ' +
+			'scene from footage; text_to_3d and image_to_3d instead synthesize a single object mesh.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1204,7 +1204,7 @@ export const toolDefs = [
 		title: 'Remove the background from an image',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Strip the background from a photo or illustration with the three.ws background-removal engine. Returns a PNG with a transparent background — useful for preparing clean inputs before image_to_3d reconstruction.',
+			'Strip the background from a photo or illustration with the three.ws background-removal engine. Returns a PNG with a transparent background. Use this before image_to_3d when the source image has a cluttered background, since a clean cutout reconstructs into a cleaner mesh.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1263,7 +1263,7 @@ export const toolDefs = [
 		title: 'Remesh, simplify, repair, or convert a 3D model',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Process an existing GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal: a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status.',
+			'Process an existing GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE mesh: fix holes and degenerate geometry, reduce face count via quadric decimation, or convert to a different format (including FBX with skeleton for Unity/Unreal: a convert of a rigged GLB keeps its bones, skin weights, and blendshapes). Returns a clean GLB (or the requested format) job_id to poll with generation_status. Use this to repair, decimate, or convert a mesh before shipping it; for a stylized look call stylize_model, and for a new surface texture call retexture_model.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1346,7 +1346,8 @@ export const toolDefs = [
 			'Styles: "voxel" (blocky cubes on a grid), "brick" ' +
 			'(voxels + studs, LEGO-like), "voronoi" (open strut-and-node lattice shell), "lowpoly" ' +
 			'(decimated + hard flat-shaded facets). Source color is preserved where the style allows. ' +
-			'Returns a job_id to poll with generation_status; typically completes in 10–40 seconds.',
+			'Returns a job_id to poll with generation_status; typically completes in 10-40 seconds. ' +
+			'Use this for a quick voxel, brick, lattice, or low-poly look on an existing mesh; to change surface colour call retexture_model instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1426,7 +1427,7 @@ export const toolDefs = [
 		title: 'Split a 3D model into named, separable parts',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Segment a GLB/OBJ/STL/PLY mesh into meaningful parts with clean boundaries — head/torso/limbs on a character, body/wheels on a vehicle. Splits at physically disconnected shells and at concave creases (the minima rule), then names each part by region and tints it a distinct colour. Returns a GLB whose nodes ARE the parts (so each can be hidden, recoloured, replaced, or exported on its own) plus a parts manifest. Poll with generation_status; the result lists every part with its id, name, face count, and colour. Pass only_part to export a single part on its own.',
+			'Segment a GLB/OBJ/STL/PLY mesh into meaningful parts with clean boundaries: head/torso/limbs on a character, body/wheels on a vehicle. Splits at physically disconnected shells and at concave creases (the minima rule), then names each part by region and tints it a distinct colour. Returns a GLB whose nodes ARE the parts (so each can be hidden, recoloured, replaced, or exported on its own) plus a parts manifest. Poll with generation_status; the result lists every part with its id, name, face count, and colour. Pass only_part to export a single part on its own. Use this before hiding, recolouring, replacing, or exporting individual parts of a model; to repaint one area of the surface without splitting the mesh call retexture_region instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1526,7 +1527,7 @@ export const toolDefs = [
 		title: 'Paint a new texture onto a 3D model from a text prompt',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Generate a fresh texture for an untextured or poorly-textured GLB with the three.ws depth-guided multi-view texturing engine. Renders the mesh from 8 viewpoints, generates coherent texture views guided by your prompt, and back-projects them onto the UV atlas. Returns a job_id to poll with generation_status.',
+			'Generate a fresh texture for an untextured or poorly-textured GLB with the three.ws depth-guided multi-view texturing engine. Renders the mesh from 8 viewpoints, generates coherent texture views guided by your prompt, and back-projects them onto the UV atlas. Returns a job_id to poll with generation_status. Use this to repaint a whole model from a prompt; to change only one area call retexture_region instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1619,7 +1620,8 @@ export const toolDefs = [
 			'Real UV-space texture inpainting — fix a seam, recolour one panel, add a logo to a chest plate. ' +
 			"Supply mask_url: a UV-space mask PNG in the model's own UV layout where WHITE marks the area to " +
 			'repaint and black is preserved. Safe to run repeatedly — chain passes by feeding the previous ' +
-			'result GLB back in as mesh_url. Returns a job_id to poll with generation_status.',
+			'result GLB back in as mesh_url. Returns a job_id to poll with generation_status. ' +
+			'Use this to fix or recolour one area of an already textured model; to repaint the whole surface call retexture_model instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1746,7 +1748,7 @@ export const toolDefs = [
 		title: 'Auto-rig a static 3D model (skeleton + skin weights)',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Turn a static GLB mesh into an animation-ready character: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline. Pairs with text_to_3d / image_to_3d — generate a mesh, then rig it, then drive it with apply_animation or pose_model. Returns a job_id; poll generation_status for the rigged GLB.',
+			'Turn a static GLB mesh into an animation-ready character: adds a humanoid skeleton and per-vertex skin weights via the three.ws rig pipeline. Use this after text_to_3d or image_to_3d when the model should move: generate a mesh, rig it, then drive it with apply_animation or pose_model. Returns a job_id; poll generation_status for the rigged GLB.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1815,7 +1817,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic: the same prompt always yields the same pose. Same engine as the free local @three-ws/pose npm package. Pair with auto_rig_model to pose a rigged character.',
+			'Map a natural-language pose description to a deterministic pose-studio seed and the full Euler joint-rotation map for the three.ws humanoid mannequin, picked from the in-repo preset library. Returns the preset id, the complete pose (radians per joint), a stable seed, and a previewUrl on three.ws/pose. Deterministic: the same prompt always yields the same pose. Same engine as the free local @three-ws/pose npm package. Use this to pose a character rigged with auto_rig_model or to get a reproducible pose link from a description; for motion over time call apply_animation instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1863,7 +1865,7 @@ export const toolDefs = [
 		title: 'Optimize a rough idea into a 3D-generation prompt (IBM Granite)',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Rewrite a rough idea into an optimized text_to_3d prompt using IBM Granite. Returns one clean single-subject description plus structured directives (subject, style, materials, colors, detail) that produce cleaner meshes. Run before text_to_3d when a prompt is vague, conflicting, or multi-subject. Requires IBM watsonx.ai credentials on the server.',
+			'Rewrite a rough idea into an optimized text_to_3d prompt using IBM Granite. Returns one clean single-subject description plus structured directives (subject, style, materials, colors, detail) that produce cleaner meshes. Use this before text_to_3d when a prompt is vague, conflicting, or multi-subject. Requires IBM watsonx.ai credentials on the server.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -1930,7 +1932,7 @@ export const toolDefs = [
 		title: 'Generate a glTF PBR material from a description (IBM Granite)',
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Generate a physically-based (PBR) glTF 2.0 material from a text description using IBM Granite — base color, metallic, roughness, and emissive factors. Returns a pbrMetallicRoughness material object you can attach to a generated mesh. Requires IBM watsonx.ai credentials on the server.',
+			'Generate a physically-based (PBR) glTF 2.0 material from a text description using IBM Granite: base color, metallic, roughness, and emissive factors. Returns a pbrMetallicRoughness material object you can attach to a generated mesh. Use this to get material values for a mesh you are assembling yourself; to paint real texture images onto a model call retexture_model instead. Requires IBM watsonx.ai credentials on the server.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -2000,7 +2002,7 @@ export const toolDefs = [
 		// overwrites, so non-idempotent and non-destructive.
 		annotations: GENERATIVE_ANNOTATIONS,
 		description:
-			'Persist a generated GLB (e.g. the glb_url returned by generation_status) as a durable avatar in your three.ws library. The mesh is copied into our own storage so it survives the provider URL expiring, then registered as a named avatar you own. Returns avatar_id, slug, model_url, and a view_url. This is the bridge from the studio to the avatar system: after saving, get_avatar, render_avatar_image, embeds, and on-chain identity all work on the result. Requires you to be signed in.',
+			'Persist a generated GLB (e.g. the glb_url returned by generation_status) as a durable avatar in your three.ws library. The mesh is copied into our own storage so it survives the provider URL expiring, then registered as a named avatar you own. Returns avatar_id, slug, model_url, and a view_url. This is the bridge from the studio to the avatar system: after saving, get_avatar, render_avatar_image, embeds, and on-chain identity all work on the result. Use this after generation_status returns a finished glb_url worth keeping, since provider URLs expire. Requires you to be signed in.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -2153,7 +2155,7 @@ export const toolDefs = [
 		title: 'Mint a persistent, living agent persona from a rigged GLB',
 		annotations: PERSONA_CREATE_ANNOTATIONS,
 		description:
-			'Turn a generated GLB into a NAMED, persistent agent body — a "persona" the agent reuses across turns and across sessions. The mesh is copied into durable storage so the body survives the provider URL expiring, then registered under a stable persona_id. The returned text/html resource renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the capability — keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. No sign-in required.',
+			'Turn a generated GLB into a NAMED, persistent agent body: a "persona" the agent reuses across turns and across sessions. The mesh is copied into durable storage so the body survives the provider URL expiring, then registered under a stable persona_id. The returned text/html resource renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the capability: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. Use this once a rigged model should become a recurring character the agent speaks through; to keep a GLB in your avatar library instead call save_avatar. No sign-in required.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -2238,7 +2240,7 @@ export const toolDefs = [
 		title: 'Reload a persisted persona by id (continuity across sessions)',
 		annotations: PERSONA_READ_ANNOTATIONS,
 		description:
-			'Bring back a previously minted persona by its persona_id — the SAME body and identity, in a fresh session. Returns the persona name, its GLB, accumulated turn count, and the inline living-body artifact. Use this at the start of a conversation when the user returns to a named agent.',
+			'Bring back a previously minted persona by its persona_id: the SAME body and identity, in a fresh session. Returns the persona name, its GLB, accumulated turn count, and the inline living-body artifact. Use this when a conversation starts and the user returns to a named agent.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -2291,7 +2293,7 @@ export const toolDefs = [
 		title: 'Speak a reply through a persona: lip-sync + emotion + gesture',
 		annotations: PERSONA_SAY_ANNOTATIONS,
 		description:
-			"Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or override it). The returned text/html resource animates the body for this turn — display it alongside the spoken reply. This is the turn-by-turn embodiment hook.",
+			"Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or override it). The returned text/html resource animates the body for this turn; display it alongside the spoken reply. Use this whenever the persona speaks, on every turn, with the persona_id from create_agent_persona or get_agent_persona.",
 		inputSchema: {
 			type: 'object',
 			properties: {

@@ -471,11 +471,21 @@ registerWalletTab({
 			panel.innerHTML = `
 				<div class="awh-tr">
 					${!state.isOwner ? visitorBannerHtml() : state.signable === false ? lockedCardHtml() : tradeCardHtml()}
+					${state.isOwner ? perpsLinkHtml() : ''}
 					${holdingsCardHtml()}
 					${historyCardHtml()}
 				</div>`;
 			wireEvents();
 			renderSafety();
+		}
+
+		function perpsLinkHtml() {
+			return `<div class="awh-card">
+				<div class="awh-tr-banner awh-tr-banner--info" role="note">
+					<span aria-hidden="true">↕</span>
+					<span>Go long or short with leverage on perpetual futures, paper first at live prices. <a href="/agents/${encodeURIComponent(ctx.agentId)}/perps">Open perps →</a></span>
+				</div>
+			</div>`;
 		}
 
 		function visitorBannerHtml() {

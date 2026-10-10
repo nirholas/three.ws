@@ -113,7 +113,7 @@ export const toolDefs = [
 		title: 'Get Solana agent reputation',
 		annotations: ATTESTATION_READ_ANNOTATIONS,
 		description:
-			'Computed reputation summary for a Solana-registered three.ws agent. Returns total/verified feedback counts, score averages (raw + verified-only), validation pass/fail, task acceptance, and dispute counts. Verified score only includes feedback whose task was acknowledged on-chain by the agent owner. Priced at $0.001 USDC/call via x402 (pay-per-call; an OAuth bearer token bypasses payment).',
+			'Computed reputation summary for a Solana-registered three.ws agent. Returns total/verified feedback counts, score averages (raw + verified-only), validation pass/fail, task acceptance, and dispute counts. Verified score only includes feedback whose task was acknowledged on-chain by the agent owner. Priced at $0.001 USDC/call via x402 (pay-per-call; an OAuth bearer token bypasses payment). Use this for a quick trust read on a Solana agent; for the individual records behind it call solana_agent_attestations, and for identity plus reputation in one call use solana_agent_passport.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -136,7 +136,7 @@ export const toolDefs = [
 		title: 'List Solana agent attestations',
 		annotations: ATTESTATION_READ_ANNOTATIONS,
 		description:
-			'List recent on-chain attestations about a Solana-registered agent (feedback, validation, task offers, acceptances, disputes). Backed by the three.ws indexer for sub-100ms reads. Each row includes verified/disputed/revoked flags. Public; no auth required.',
+			'List recent on-chain attestations about a Solana-registered agent (feedback, validation, task offers, acceptances, disputes). Backed by the three.ws indexer for sub-100ms reads. Each row includes verified/disputed/revoked flags. Public; no auth required. Use this to audit the individual feedback, validation, and dispute records behind a Solana agent reputation score; for the computed summary call solana_agent_reputation.',
 		inputSchema: {
 			type: 'object',
 			properties: {

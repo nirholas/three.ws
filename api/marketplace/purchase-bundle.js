@@ -76,6 +76,7 @@ async function handleCreate(req, res) {
 	const [payoutRow] = await sql`
 		SELECT w.address FROM agent_payout_wallets w
 		WHERE w.agent_id = ${bundle.agent_id} AND w.chain = ${bundle.chain} AND w.is_default = true
+		  AND w.approved_at IS NOT NULL AND w.effective_at <= now()
 		ORDER BY w.created_at DESC LIMIT 1
 	`;
 	const [agentRow] = payoutRow ? [payoutRow] : await sql`

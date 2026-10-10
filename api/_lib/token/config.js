@@ -220,6 +220,15 @@ export function applySplit(totalAtomics, legs) {
 	return out;
 }
 
+/**
+ * Bonus credits granted on a $THREE credit deposit, in basis points of the
+ * deposit's USD value. Read live from env on every call so the owner can tune
+ * the policy without a deploy; 0 means no bonus row is written.
+ */
+export function creditBonusBps() {
+	return env.THREE_CREDIT_BONUS_BPS;
+}
+
 /** Public, non-secret config for clients to display and build transactions. */
 export function publicConfig() {
 	// Read path: surface treasury/rewards as null when unset rather than throwing.
@@ -239,6 +248,8 @@ export function publicConfig() {
 		// Retained for the user-invoked burn primitive only; no platform split burns.
 		burn_address: burnAddress(),
 		quote_ttl_seconds: env.THREE_QUOTE_TTL_S,
+		// Extra credits for paying in $THREE (bps of USD value); 0 = no bonus.
+		credit_bonus_bps: creditBonusBps(),
 		split_policies: Object.fromEntries(
 			Object.entries(SPLIT_POLICIES).map(([k, legs]) => [
 				k,

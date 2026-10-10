@@ -52,7 +52,7 @@ async function enforce(auth) {
 async function run(auth, { scope = null, signIn = true, agreement = false }, fn) {
 	await enforce(auth);
 	if (signIn && !auth.userId) return refusal('Sign in to three.ws to act on your agents.', 'auth_required', { signed_in: false });
-	if (scope && !hasScope(auth.scope, scope) && !(scope === 'wallet:read' && hasScope(auth.scope, 'wallet:write'))) {
+	if (scope && !hasScope(auth.scope, scope) && !(scope === 'wallet:read' && hasScope(auth.scope, 'wallet:trade'))) {
 		return refusal(`This action needs the ${scope} scope. Re-authorize with it granted.`, 'insufficient_scope', { required: scope });
 	}
 	if (agreement) {
@@ -101,7 +101,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: READ,
-		description: 'Search and browse live prediction-market events settled in USDC on Solana. Each event lists its outcomes with implied probabilities, volume, close time and resolution source.',
+		description: 'Search and browse live prediction-market events settled in USDC on Solana. Each event lists its outcomes with implied probabilities, volume, close time and resolution source. Use this to find an event and its id; open one with predictions_event for market ids and live prices.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -124,7 +124,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: READ,
-		description: 'Full detail for one event: every market with buy and sell prices, price history for the selected market, and the resolution rules. Use its market ids in predictions_open_preview and predictions_watch.',
+		description: 'Full detail for one event: every market with buy and sell prices, price history for the selected market, and the resolution rules. Use this to get the market ids predictions_open_preview and predictions_watch need, and to read the resolution rules before betting.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -156,7 +156,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: { ...READ, idempotentHint: false },
-		description: "Open and settled prediction positions held by an agent's wallet: cost, value, unrealized and realized PnL, claimable payouts, and recent fills.",
+		description: "Open and settled prediction positions held by an agent's wallet: cost, value, unrealized and realized PnL, claimable payouts, and recent fills. Use this to check PnL and find positions to sell with predictions_close_preview or claim with predictions_redeem_preview.",
 		inputSchema: { type: 'object', properties: { agent_id: agentIdProp }, required: ['agent_id'], additionalProperties: false },
 		handler: (args, auth) => run(auth, { scope: 'wallet:read' }, async () => {
 			const out = await agentPositions({ agentId: args.agent_id, userId: auth.userId });
@@ -176,7 +176,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: PREVIEW,
-		description: 'Price a buy of one outcome before placing it: expected contracts, average price, slippage, fees, payout, and every guard (limits, wallet balance, liquidity). Never moves funds. Returns the preview_id predictions_open requires.',
+		description: 'Price a buy of one outcome before placing it: expected contracts, average price, slippage, fees, payout, and every guard (limits, wallet balance, liquidity). Never moves funds. Returns the preview_id predictions_open requires. Call this before every predictions_open and show the user the result.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -214,9 +214,9 @@ export const predictionToolDefs = [
 		confirmFlag: 'confirm_trade',
 		previewTool: 'predictions_open_preview',
 		annotations: FINANCIAL,
-		description: 'Place the order a predictions_open_preview priced, spending USDC from the agent wallet on Solana. Requires confirm_trade: true and a fresh preview_id. Returns the transaction signature.',
+		description: 'Place the order a predictions_open_preview priced, spending USDC from the agent wallet on Solana. Use this after the user approves a predictions_open_preview; pass its fresh preview_id with confirm_trade: true. Returns the transaction signature.',
 		inputSchema: financialSchema,
-		handler: (args, auth) => run(auth, { scope: 'wallet:write', agreement: true }, async () => {
+		handler: (args, auth) => run(auth, { scope: 'wallet:trade', agreement: true }, async () => {
 			const r = await executeOpen({ agentId: args.agent_id, userId: auth.userId, previewId: args.preview_id, confirm: args.confirm_trade, source: 'mcp' });
 			return { content: [{ type: 'text', text: `Order placed: ${usd(r.stake_usd)} on ${r.side} in ${r.market_id}.\nSignature ${r.signature}\n${r.explorer}\n${r.note}` }], structuredContent: r };
 		}),
@@ -227,7 +227,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: PREVIEW,
-		description: 'Price selling some or all contracts of an open position: expected proceeds, average price, slippage and realized PnL. Never moves funds. Returns the preview_id predictions_close requires.',
+		description: 'Price selling some or all contracts of an open position: expected proceeds, average price, slippage and realized PnL. Never moves funds. Returns the preview_id predictions_close requires. Call this before every predictions_close and show the user the expected proceeds.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -260,9 +260,9 @@ export const predictionToolDefs = [
 		confirmFlag: 'confirm_trade',
 		previewTool: 'predictions_close_preview',
 		annotations: FINANCIAL,
-		description: 'Sell the contracts a predictions_close_preview priced. Requires confirm_trade: true and a fresh preview_id. Returns the transaction signature.',
+		description: 'Sell the contracts a predictions_close_preview priced. Use this to exit a position before it resolves, after the user approves that preview; pass its fresh preview_id with confirm_trade: true. Returns the transaction signature.',
 		inputSchema: financialSchema,
-		handler: (args, auth) => run(auth, { scope: 'wallet:write', agreement: true }, async () => {
+		handler: (args, auth) => run(auth, { scope: 'wallet:trade', agreement: true }, async () => {
 			const r = await executeClose({ agentId: args.agent_id, userId: auth.userId, previewId: args.preview_id, confirm: args.confirm_trade, source: 'mcp' });
 			return { content: [{ type: 'text', text: `Sell order placed for ${r.contracts} contracts.\nSignature ${r.signature}\n${r.explorer}\n${r.note}` }], structuredContent: r };
 		}),
@@ -273,7 +273,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: PREVIEW,
-		description: 'Check a resolved position and the payout it is owed. Never moves funds. Returns the preview_id predictions_redeem requires.',
+		description: 'Check a resolved position and the payout it is owed. Use this once an event has resolved, to see what a position can claim before predictions_redeem. Never moves funds. Returns the preview_id predictions_redeem requires.',
 		inputSchema: { type: 'object', properties: { agent_id: agentIdProp, position_id: { type: 'string', maxLength: 64 } }, required: ['agent_id', 'position_id'], additionalProperties: false },
 		handler: (args, auth) => run(auth, { scope: 'wallet:read' }, async () => {
 			const q = await previewRedeem({ agentId: args.agent_id, userId: auth.userId, positionId: args.position_id });
@@ -293,9 +293,9 @@ export const predictionToolDefs = [
 		confirmFlag: 'confirm_trade',
 		previewTool: 'predictions_redeem_preview',
 		annotations: FINANCIAL,
-		description: 'Claim the USDC payout of a winning resolved position into the agent wallet. Requires confirm_trade: true and a fresh preview_id from predictions_redeem_preview.',
+		description: 'Claim the USDC payout of a winning resolved position into the agent wallet. Use this after the event resolves in your favor and the user approves a predictions_redeem_preview; pass its fresh preview_id with confirm_trade: true.',
 		inputSchema: financialSchema,
-		handler: (args, auth) => run(auth, { scope: 'wallet:write', agreement: true }, async () => {
+		handler: (args, auth) => run(auth, { scope: 'wallet:trade', agreement: true }, async () => {
 			const r = await executeRedeem({ agentId: args.agent_id, userId: auth.userId, previewId: args.preview_id, confirm: args.confirm_trade, source: 'mcp' });
 			return { content: [{ type: 'text', text: `Redeemed ${usd(r.payout_usd)}.\nSignature ${r.signature}\n${r.explorer}` }], structuredContent: r };
 		}),
@@ -306,7 +306,7 @@ export const predictionToolDefs = [
 		group: 'predictions',
 		tier: 'write',
 		annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-		description: "Get notified when one outcome's implied probability crosses a threshold. Delivered in-app, and to Telegram or a webhook when given. Moves no funds.",
+		description: "Get notified when one outcome's implied probability crosses a threshold. Delivered in-app, and to Telegram or a webhook when given. Moves no funds. Use this to wait for a price level instead of polling predictions_event.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -321,7 +321,7 @@ export const predictionToolDefs = [
 			required: ['agent_id', 'market_id', 'direction', 'threshold'],
 			additionalProperties: false,
 		},
-		handler: (args, auth) => run(auth, { scope: 'wallet:write' }, async () => {
+		handler: (args, auth) => run(auth, { scope: 'wallet:trade' }, async () => {
 			await loadOwnedAgent(args.agent_id, auth.userId);
 			const w = await createWatch({ agentId: args.agent_id, userId: auth.userId, body: args });
 			const text = `Watching "${w.market?.title || w.market_id}": ${w.market?.side_label || w.side} ${w.direction} ${pct(w.threshold)} (now ${pct(w.current_probability)}). Watch id ${w.id}; remove it on the notifications page or DELETE /api/v1/agents/${args.agent_id}/predictions/watch/${w.id}.`;

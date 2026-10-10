@@ -171,7 +171,7 @@ export const toolDefs = [
 		title: 'Read one catalog item',
 		annotations: READ_ANNOTATIONS,
 		description:
-			'FREE, no account or payment. Read one three.ws catalog item in full by its id from search_catalog (for example "object:adjustable_wrench"): metadata, license, CDN urls, the site links that preview or edit it, related items of the same kind, and which source frameworks get_item_source can emit for it.',
+			'FREE, no account or payment. Read one three.ws catalog item in full by its id from search_catalog (for example "object:adjustable_wrench"): metadata, license, CDN urls, the site links that preview or edit it, related items of the same kind, and which source frameworks get_item_source can emit for it. Use this after search_catalog to inspect one result before you embed it; for paste-ready code call get_item_source instead.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -214,7 +214,8 @@ export const toolDefs = [
 		annotations: READ_ANNOTATIONS,
 		description:
 			'FREE, no account or payment. Returns working code that renders one three.ws catalog item on any site: the <agent-3d> web component (pinned to the exact published version with its SRI hash), the <model-viewer> tag our own browse grids use, plain three.js with GLTFLoader, or a React component. ' +
-			'Motion clips return three.js code that parses the clip JSON and plays it. Omit `framework` to get the one that fits the item best; pass `all` to get every variant at once.',
+			'Motion clips return three.js code that parses the clip JSON and plays it. Omit `framework` to get the one that fits the item best; pass `all` to get every variant at once. ' +
+			'Use this when you are ready to put a catalog item on a page or in an app; call get_catalog_item first if you still need its license or metadata.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

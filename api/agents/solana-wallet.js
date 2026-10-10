@@ -28,6 +28,7 @@ import { recordEvent } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { withDeadline, staleEnvelope } from '../_lib/rpc-degrade.js';
 import { logAudit } from '../_lib/audit.js';
+import { replaceSolanaList, activeAddresses, allowlistRow, getWhitelist } from '../_lib/destination-whitelist.js';
 import { explorerTxUrl } from '../_lib/avatar-wallet.js';
 import {
 	validateSolanaAddress, enforceSpendLimit, SpendLimitError, lamportsToUsd,
@@ -177,7 +178,7 @@ const _encryptSecret = (plaintext) => encryptSecret(plaintext);
 // whether the request is a no-funds simulation (the withdraw preview).
 async function resolveAuth(req, { spendCheck = true } = {}) {
 	const session = await getSessionUser(req);
-	if (session) return { userId: session.id };
+	if (session) return { userId: session.id, sessionId: session.sid || null };
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return null;
 	if (spendCheck) assertBearerMaySpend(bearer, req);
@@ -830,9 +831,10 @@ async function handleWithdraw(req, res, id) {
 			console.error('[agents/solana-wallet] simulation failed', e?.message);
 			return serverError(res, 502, 'simulation_failed', e);
 		}
+		const allowlist = await allowlistRow({ agentId: id, destination: dest.base58, category: 'withdraw', ownAddress: meta.solana_address });
 		return json(res, 200, {
 			data: {
-				simulated: true, asset, network, destination: dest.base58,
+				allowlist, simulated: true, asset, network, destination: dest.base58,
 				amount: humanAmount, lamports: lamports != null ? String(lamports) : null,
 				amount_raw: amountRaw != null ? String(amountRaw) : null,
 				usd: usdValue, note: priceNote,
@@ -1173,27 +1175,41 @@ async function handleLimits(req, res, id) {
 		// owner surface. A PUT may patch either or both: a `trade_limits` object
 		// updates the discretionary-trade caps (per-trade SOL, daily budget, breaker,
 		// kill switch); the top-level USD/allowlist keys update the spend policy.
-		const wantsSpend = ['daily_usd', 'per_tx_usd', 'per_counterparty_daily_usd', 'withdraw_allowlist', 'frozen'].some((k) => k in body);
+		const wantsSpend = ['daily_usd', 'per_tx_usd', 'per_counterparty_daily_usd', 'frozen'].some((k) => k in body);
 		let limitsOut = getSpendLimits(meta);
 		let tradeLimitsOut = getTradeLimits(meta);
+		let whitelistOut = null;
 		try {
+			// The legacy whole-list write follows the destination whitelist rules: new
+			// addresses serve the cooldown and need a step-up grant, removals are instant.
+			if (Array.isArray(body.withdraw_allowlist)) {
+				whitelistOut = await replaceSolanaList({
+					agentId: id,
+					actor: { kind: auth.sessionId ? 'owner' : 'api_key', userId: auth.userId, sessionId: auth.sessionId || null },
+					list: body.withdraw_allowlist,
+					grantId: typeof body.grant === 'string' ? body.grant : null,
+					req,
+				});
+			}
 			if (wantsSpend) limitsOut = await setSpendLimits(id, auth.userId, body, { req });
 			if (body.trade_limits && typeof body.trade_limits === 'object') {
 				tradeLimitsOut = await setTradeLimits(id, auth.userId, body.trade_limits, { req });
 			}
 		} catch (e) {
-			if (e?.status) return error(res, e.status, e.code || 'error', e.message);
+			if (e?.status) return error(res, e.status, e.code || 'error', e.message, e.extra);
 			throw e;
 		}
+		limitsOut = { ...limitsOut, withdraw_allowlist: await activeAddresses(id) };
 		const spentUsd = await getDailySpendUsd(id, network).catch(() => 0);
 		const spentLamports = await getDailySpendLamports(id, network).catch(() => 0n);
-		return json(res, 200, { data: { limits: limitsOut, trade_limits: tradeLimitsOut, spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
+		return json(res, 200, { data: { whitelist: whitelistOut, limits: limitsOut, trade_limits: tradeLimitsOut, spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
 	}
 
-	const limitsOut = getSpendLimits(meta);
+	const limitsOut = { ...getSpendLimits(meta), withdraw_allowlist: await activeAddresses(id) };
+	const whitelistView = await getWhitelist(id, auth.userId).catch(() => null);
 	const spentUsd = await getDailySpendUsd(id, network).catch(() => 0);
 	const spentLamports = await getDailySpendLamports(id, network).catch(() => 0n);
-	return json(res, 200, { data: { limits: limitsOut, trade_limits: getTradeLimits(meta), spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
+	return json(res, 200, { data: { whitelist: whitelistView, limits: limitsOut, trade_limits: getTradeLimits(meta), spend_policy: resolveSpendPolicy(meta), spent_today_usd: spentUsd, spent_today_sol: Number(spentLamports) / 1e9 } });
 }
 
 // ── natural-language spend policy ─────────────────────────────────────────────

@@ -259,7 +259,7 @@
 				</div>
 				<ol class="cn-list">
 					<li data-i18n-html="connect.click_the_button_above_check_the_name">Click the button above, check the name and URL, then click <strong>Add</strong>. Adding it by hand instead: <strong>Customize → Connectors</strong> (Settings → Connectors on some accounts), <strong>Add custom connector</strong>, paste the URL.</li>
-					<li data-i18n-html="connect.click_connect_and_sign_in_to_three">Click <strong>Connect</strong> and sign in to three.ws. Read the permissions before you approve.</li>
+					<li data-i18n-html="connect.click_connect_and_sign_in_to_three">Click <strong>Connect</strong> and sign in to three.ws with Google, your wallet, or your email. The permissions screen groups what Claude asked for into Read, Manage, Trade, Spend and Launch: untick any group you do not want it to have, then approve.</li>
 					<li data-i18n-html="connect.in_a_chat_open_the_menu_then">In a chat, open the <kbd>+</kbd> menu, then <strong>Connectors</strong>, and switch three.ws on for that conversation.</li>
 				</ol>
 				<p class="cn-src" data-i18n-html="connect.steps_follow_claude_s_own_guide_its">Steps follow <a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp" target="_blank" rel="noopener">Claude's own guide</a>. Its menus move: if these drift, <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener">tell us</a>.</p>
@@ -273,7 +273,7 @@
 				<ol class="cn-list">
 					<li data-i18n-html="connect.in_settings_apps_connectors_advanced_setting">In <strong>Settings → Apps &amp; Connectors → Advanced settings</strong>, turn on <strong>Developer mode</strong>.</li>
 					<li data-i18n-html="connect.back_in_apps_connectors_click_create_name">Back in <strong>Apps &amp; Connectors</strong>, click <strong>Create</strong>. Name it <code class="cn-name">three.ws</code>, paste the URL, choose <strong>OAuth</strong>, and create it.</li>
-					<li data-i18n="connect.sign_in_to_three_ws_when_chatgpt">Sign in to three.ws when ChatGPT asks, and approve the permissions.</li>
+					<li data-i18n="connect.sign_in_to_three_ws_when_chatgpt">Sign in to three.ws when ChatGPT asks, with Google, your wallet, or your email, and approve the permissions. If Claude is already connected it stays connected: each client has its own grant.</li>
 					<li data-i18n-html="connect.in_a_new_chat_open_the_menu">In a new chat, open the <kbd>+</kbd> menu, choose <strong>Developer mode</strong>, and tick three.ws.</li>
 				</ol>
 				<p class="cn-src" data-i18n-html="connect.steps_follow_openai_s_developer_mode_guide">Steps follow <a href="https://help.openai.com/en/articles/12584461-developer-mode-apps-and-full-mcp-connectors-in-chatgpt-beta" target="_blank" rel="noopener">OpenAI's developer mode guide</a>. Its labels change often: if these drift, <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener">tell us</a>.</p>
@@ -320,6 +320,11 @@
 					<li data-i18n-html="connect.run_the_command_add_to_share_it">Run the command. Add <code>--scope project</code> to share it with your team through <code>.mcp.json</code>.</li>
 					<li data-i18n-html="connect.in_claude_code_type_pick_the_server">In Claude Code, type <code>/mcp</code>, pick the server you just added and choose <strong>Authenticate</strong>.</li>
 				</ol>
+				<p class="cn-panel-lede" data-i18n-html="connect.or_let_one_script_do_all_of_it">Or let one command do all of it: it signs you in, writes the server and the three.ws skill, and keeps every key out of your config file. <a href="/docs/cli#verify-before-you-run">Read the script and check its signature first</a>.</p>
+				<div class="cn-snippet">
+					<div class="cn-snippet-head"><span data-i18n="connect.terminal">Terminal</span><button type="button" class="cn-btn" data-copy-target="cn-cc-quick" data-i18n="connect.copy">Copy</button></div>
+					<pre><code id="cn-cc-quick">npx three-ws --claude</code></pre>
+				</div>
 			</div>
 
 			<div class="cn-panel" role="tabpanel" id="panel-cursor" aria-labelledby="tab-cursor" tabindex="0" hidden>
@@ -425,7 +430,11 @@
 				</div>
 				<div class="cn-fact">
 					<h3 data-i18n="connect.revoke_it_any_time">Revoke it any time</h3>
-					<p data-i18n-html="connect.every_client_you_connect_appears_under_dashb">Every client you connect appears under <a href="/dashboard/settings">Dashboard → Settings → Connected apps</a>. Revoking one stops that client within an hour, when its current access token expires. Your agents and balances are untouched.</p>
+					<p data-i18n-html="connect.every_client_you_connect_appears_under_dashb">Every client you connect appears under <a href="/dashboard/settings#connected-apps">Dashboard → Settings → Connected apps</a>. Revoking one stops that client on its very next request. Your other clients, your agents and your balances are untouched.</p>
+				</div>
+				<div class="cn-fact">
+					<h3 data-i18n="connect.permissions_come_in_groups">Permissions come in groups</h3>
+					<p data-i18n-html="connect.the_consent_screen_groups_what_a_client">The consent screen groups what a client asked for into <strong>Read</strong>, <strong>Manage</strong>, <strong>Trade</strong>, <strong>Spend</strong> and <strong>Launch</strong>, says what each can do and which actions will still ask you first, and lets you untick any group but Read. A client you connect for reading can never trade or move funds. <a href="/docs/mcp#cloud-connectors-grok-bot-and-other-hosted-agents">What each group covers</a>.</p>
 				</div>
 				<div class="cn-fact">
 					<h3 data-i18n="connect.every_tool_is_labelled">Every tool is labelled</h3>

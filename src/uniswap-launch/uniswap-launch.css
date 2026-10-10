@@ -1,0 +1,82 @@
+/* /launch/uniswap: stage tracker and option cards. Layout, inputs, buttons and
+   the dialog come from paired.css (pc-*). */
+
+.ul-options {
+	display: grid;
+	gap: 0.5rem;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+.ul-option {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	padding: 0.65rem 0.75rem;
+	text-align: left;
+	border: 1px solid var(--cv-border);
+	border-radius: 10px;
+	background: transparent;
+	color: var(--cv-text);
+	font: inherit;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.ul-option small {
+	color: var(--cv-text-2);
+}
+.ul-option:hover {
+	border-color: var(--cv-accent-solid, currentColor);
+}
+.ul-option:focus-visible {
+	outline: 2px solid var(--cv-accent-solid, currentColor);
+	outline-offset: 2px;
+}
+.ul-option[aria-pressed='true'] {
+	border-color: var(--cv-accent-solid, currentColor);
+	background: var(--cv-surface-2, rgba(127, 127, 127, 0.1));
+}
+.ul-stages {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.5rem;
+}
+.ul-stages li {
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+	font-size: 0.9rem;
+}
+.ul-stages .dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--cv-border);
+	flex: none;
+}
+.ul-stages li.is-done .dot {
+	background: var(--cv-accent-solid, currentColor);
+}
+.ul-stages li.is-live .dot {
+	background: var(--cv-accent-solid, currentColor);
+	animation: ul-pulse 1.1s ease-in-out infinite;
+}
+.ul-stages li.is-todo {
+	color: var(--cv-text-2);
+}
+.ul-stages li.is-failed .dot {
+	background: #e5484d;
+}
+@keyframes ul-pulse {
+	50% {
+		opacity: 0.3;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.ul-option {
+		transition: none;
+	}
+	.ul-stages li.is-live .dot {
+		animation: none;
+	}
+}

@@ -49,12 +49,14 @@ const SCOPE_LABELS = {
 	'herald:announce': 'Post announcements through the Herald',
 	'wallet:read': 'See your agent wallet balance and spending caps',
 	'wallet:write': 'Spend USDC from your agent wallet, within your caps',
+	'wallet:trade': 'Swap, bid and open or close positions from your agent wallet, within your caps',
+	'wallet:launch': 'Launch coins from your agent wallet and claim their creator fees',
 	'services:write': 'Publish paid services that earn USDC to your agent wallet',
 	inference: 'Call models on your credits through the OpenAI-compatible endpoint',
 };
 // Scopes that let the key move money. The authorize page marks them so the
 // person sees the difference before they approve, not after.
-const FINANCIAL_SCOPES = new Set(['wallet:write', 'services:write']);
+const FINANCIAL_SCOPES = new Set(['wallet:write', 'wallet:trade', 'wallet:launch', 'services:write']);
 
 export function generateUserCode() {
 	let out = '';

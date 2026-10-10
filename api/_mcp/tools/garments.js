@@ -54,7 +54,8 @@ export const toolDefs = [
 			'skeleton, and validates it (including the 60% bind-coverage gate) before ' +
 			'publishing garment.glb + manifest.json + thumbnail. Runs asynchronously for ' +
 			'about 7 minutes; poll with garment_status. The finished piece appears in the ' +
-			'public catalog automatically and attaches to any humanoid avatar.',
+			'public catalog automatically and attaches to any humanoid avatar. Use this when ' +
+			'nothing in list_garment_catalog fits and the user wants a new wearable item made.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -115,7 +116,8 @@ export const toolDefs = [
 			'Poll a generate_garment job. While running, reports the pipeline stage. When ' +
 			'done, returns the published glb_url, manifest_url, thumbnail, measured bind ' +
 			'coverage, and the occluded body regions. At that point the garment is already ' +
-			'live in the wardrobe catalog.',
+			'live in the wardrobe catalog. Use this after generate_garment to follow the job ' +
+			'until it finishes.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -183,7 +185,8 @@ export const toolDefs = [
 		description:
 			'Fetch the public three.ws wardrobe catalog: every published garment manifest ' +
 			'(id, slot, name, GLB url, thumbnail, occluded regions). Any entry attaches to ' +
-			'any humanoid avatar via the additive wardrobe.',
+			'any humanoid avatar via the additive wardrobe. Use this to pick an existing ' +
+			'garment before generating a new one with generate_garment.',
 		inputSchema: {
 			type: 'object',
 			properties: {

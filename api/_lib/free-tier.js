@@ -174,8 +174,67 @@ export async function meterFreeModel(model, who) {
 	return consumeFreeMessage({ ...who, model });
 }
 
-/** The one JSON body every surface answers an exhausted allowance with. */
-export function freeTierErrorBody(err) {
+const CREDITS_URL = 'https://three.ws/credits';
+const BYOK_DOCS_URL = 'https://three.ws/docs/inference-billing#bring-your-own-key';
+
+/**
+ * The ways out of a spent allowance, in the order a client should offer them.
+ * Every choice is machine-actionable: `wait` carries the reset instant,
+ * `top_up` and `bring_your_own_key` carry the exact calls, and `paid_fallback`
+ * (present when the surface supports it) is the SAME request with
+ * `paid_fallback: true` merged into its body, which skips the free tier and
+ * bills the call to credits in one step. `requires_sign_in` marks the choices
+ * an anonymous caller must sign in for.
+ * @param {FreeTierExhaustedError} err
+ * @param {{ signedIn?: boolean, paidFallback?: { method: string, path: string }|null }} [ctx]
+ */
+export function freeTierChoices(err, { signedIn = false, paidFallback = null } = {}) {
+	const choices = [
+		{
+			action: 'wait',
+			description: 'Retry after the daily allowance resets.',
+			reset_at: err.resetAt,
+			retry_after_seconds: retryAfterSeconds(err.resetAt),
+		},
+		{
+			action: 'top_up',
+			description: 'Add prepaid credits, then resend with paid_fallback: true.',
+			url: CREDITS_URL,
+			catalog: { method: 'GET', path: '/api/credits' },
+			deposit: {
+				method: 'POST',
+				path: '/api/credits/deposit',
+				body: { asset: '<SOL|USDC|THREE>', tx_signature: '<signature>' },
+			},
+			requires_sign_in: !signedIn,
+		},
+		{
+			action: 'bring_your_own_key',
+			description: 'Store your own provider key; calls on it are billed by that provider, not metered here.',
+			url: BYOK_DOCS_URL,
+			set_key: { method: 'PATCH', path: '/api/user/provider-keys', body: { '<provider>': '<key>' } },
+			requires_sign_in: !signedIn,
+		},
+	];
+	if (paidFallback?.method && paidFallback?.path) {
+		choices.push({
+			action: 'paid_fallback',
+			description: 'Resend this request with body_patch merged in to bill it to credits now.',
+			method: paidFallback.method,
+			path: paidFallback.path,
+			body_patch: { paid_fallback: true },
+			bills: 'credits',
+			requires_sign_in: !signedIn,
+		});
+	}
+	return choices;
+}
+
+/**
+ * The one JSON body every surface answers an exhausted allowance with. `ctx`
+ * (see freeTierChoices) tells the body which choices this surface can honor.
+ */
+export function freeTierErrorBody(err, ctx = {}) {
 	return {
 		error: 'free_tier_exhausted',
 		error_description: err.message,
@@ -183,7 +242,9 @@ export function freeTierErrorBody(err) {
 		limit: err.limit,
 		used: err.used,
 		reset_at: err.resetAt,
+		retry_after_seconds: retryAfterSeconds(err.resetAt),
 		model: err.model || null,
+		choices: freeTierChoices(err, ctx),
 	};
 }
 

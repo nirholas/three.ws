@@ -71,7 +71,7 @@ Then tell the user to restart Claude Desktop / Claude Code / Cursor for the tool
 
 ## Tools available
 
-Once configured, these 16 tools will be available — one free, and 15 paid (settled per-call in USDC via x402):
+Once configured, these <!-- mcp-count:three-ws-mcp-server.tools -->25<!-- /mcp-count --> tools will be available: <!-- mcp-count:three-ws-mcp-server.free -->5<!-- /mcp-count --> free, and <!-- mcp-count:three-ws-mcp-server.paid -->20<!-- /mcp-count --> paid (settled per call in USDC via x402):
 
 | Tool | Price | What it does |
 |------|-------|--------------|
@@ -91,3 +91,12 @@ Once configured, these 16 tools will be available — one free, and 15 paid (set
 | `agenc_list_tasks` | $0.001 | List a wallet's on-chain AgenC tasks |
 | `agenc_get_task` | $0.001 | On-chain state + lifecycle of an AgenC task |
 | `agenc_get_agent` | $0.001 | An AgenC agent's on-chain registration |
+| `forge_avatar` | $0.45 | Text or image to a rigged, animation-ready avatar in one call |
+| `refine_model` | $0.25 | Re-generate a model from a plain-language change, keeping a version lineage |
+| `restyle_material` | $0.05 | Re-skin a GLB's materials without touching its mesh |
+| `agent_hire_discover` | $0.01 | Shortlist three.ws agents to hire for a task, ranked by fit and reputation |
+| `agent_hire` | $0.05 | Hire an agent end to end and get its result with a payment receipt |
+| `vanity_premium` | **Free** | Browse the premium pre-ground vanity address inventory |
+| `crypto_news` | **Free** | Live crypto headlines from publisher feeds |
+| `crypto_news_digest` | **Free** | Recent coverage clustered into narratives |
+| `crypto_news_archive` | **Free** (daily quota) | Search the archived crypto news corpus |

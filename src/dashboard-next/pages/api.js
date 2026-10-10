@@ -22,6 +22,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, put, esc, relTime, ApiError } from '../api.js';
 import { apiFetch } from '../../api.js';
 import { errorStateHTML, emptyStateHTML, skeletonHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { keyToolButtons, keyLifecycleTag, wireKeyTools } from './api-key-tools.js';
 
 // Scopes accepted by /api/keys: match API_KEY_SCOPES in api/_lib/api-keys.js exactly.
 const SCOPES = [
@@ -499,6 +500,16 @@ function renderKeys(host, state) {
 	host.querySelectorAll('[data-act="revoke"]').forEach((btn) => {
 		btn.addEventListener('click', () => confirmRevokeKey(state, btn.dataset.keyId, btn.dataset.keyName));
 	});
+	wireKeyTools(host, {
+		state,
+		toast,
+		openModal,
+		openKeyRevealModal,
+		rerender: () => {
+			renderKeys(document.querySelector('[data-section="keys"]'), state);
+			renderMcp(document.querySelector('[data-section="mcp"]'), state);
+		},
+	});
 }
 
 function renderKeysEmpty() {
@@ -523,6 +534,10 @@ export function keyStatus(k) {
 	if (k.revoked_at) return { label: 'Revoked', tag: 'danger', dead: true, at: k.revoked_at };
 	if (k.expires_at && new Date(k.expires_at) <= new Date())
 		return { label: 'Expired', tag: 'warn', dead: true, at: k.expires_at };
+	// A rotated key dies when its overlap window closes, with no revoked_at
+	// stamp: the deadline itself is what authentication checks.
+	if (k.overlap_until && new Date(k.overlap_until) <= new Date())
+		return { label: 'Retired', tag: 'warn', dead: true, at: k.overlap_until };
 	return { label: 'Active', tag: 'success', dead: false, at: null };
 }
 
@@ -549,7 +564,11 @@ export function renderKeysTable(keys) {
 							<td>${esc(k.name)}${k.preset === CONNECTOR_PRESET ? ' <span class="dn-tag success" title="Issued for an AI agent. This key can never spend.">AI agent</span>' : ''}</td>
 							<td><code class="dn-mono-sm">${esc(k.prefix)}…</code></td>
 							<td>
-								<span class="dn-tag ${st.tag}"${st.at ? ` title="${esc(st.label)} ${esc(relTime(st.at))}"` : ''}>${st.label}</span>
+								<div class="dn-key-status">
+									<span class="dn-tag ${st.tag}"${st.at ? ` title="${esc(st.label)} ${esc(relTime(st.at))}"` : ''}>${st.label}</span>
+									${keyLifecycleTag(k)}
+									${(k.ip_allowlist || []).length ? `<span class="dn-tag" title="${esc(k.ip_allowlist.join(', '))}">IP locked</span>` : ''}
+								</div>
 							</td>
 							<td>
 								<div class="dn-chip-row">
@@ -559,9 +578,12 @@ export function renderKeysTable(keys) {
 							<td><span class="dn-dim">${esc(relTime(k.created_at))}</span></td>
 							<td><span class="dn-dim">${k.last_used_at ? esc(relTime(k.last_used_at)) : 'never'}</span></td>
 							<td style="text-align:right">
-								${k.revoked_at
-									? '<span class="dn-dim">Revoked</span>'
-									: `<button class="dn-btn danger" data-act="revoke" data-key-id="${esc(k.id)}" data-key-name="${esc(k.name)}" aria-label="Revoke API key ${esc(k.name)}">Revoke</button>`}
+								<div class="dn-key-actions">
+									${keyToolButtons(k, st.dead)}
+									${k.revoked_at
+										? '<span class="dn-dim">Revoked</span>'
+										: `<button class="dn-btn danger" data-act="revoke" data-key-id="${esc(k.id)}" data-key-name="${esc(k.name)}" aria-label="Revoke API key ${esc(k.name)}">Revoke</button>`}
+								</div>
 							</td>
 						</tr>
 					`;

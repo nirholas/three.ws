@@ -1,0 +1,57 @@
+/* /link-device: the device side of a link code. Builds on cli-authorize.css. */
+
+.ld-field { display: grid; gap: var(--space-xs); margin-top: var(--space-md); }
+.ld-field label { font-size: var(--text-sm); color: var(--ink-dim); }
+.ld-kinds { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.ld-kind {
+	flex: 1 1 10rem;
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	background: var(--surface-2);
+	cursor: pointer;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.ld-kind:hover { border-color: var(--ink-dim); }
+.ld-kind:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); }
+.ld-kind input { accent-color: var(--accent); width: 1rem; height: 1rem; flex: none; }
+.ld-kind input:focus-visible { outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent)); outline-offset: 2px; }
+.ld-kind small { display: block; color: var(--ink-dim); font-size: var(--text-xs); }
+
+.ld-wait {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	margin-top: var(--space-md);
+	color: var(--ink-dim);
+	font-size: var(--text-sm);
+}
+.ld-pulse {
+	width: 0.6rem; height: 0.6rem; border-radius: 50%; flex: none;
+	background: var(--accent);
+	animation: ld-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ld-pulse { 0%, 100% { opacity: 0.35; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+
+.ld-secret {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-sm);
+	margin-top: var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	border: 1px dashed var(--stroke);
+	border-radius: var(--radius-md);
+	background: var(--surface-2);
+	font-family: var(--font-mono);
+	font-size: var(--text-sm);
+	overflow-wrap: anywhere;
+}
+.ld-secret code { flex: 1 1 12rem; }
+
+@media (prefers-reduced-motion: reduce) {
+	.ld-pulse { animation: none; opacity: 1; }
+}

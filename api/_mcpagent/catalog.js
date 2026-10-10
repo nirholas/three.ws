@@ -5,8 +5,16 @@ import { buildGettingStartedTool } from '../_lib/mcp-getting-started.js';
 import { toolDefs as walletToolDefs } from './tools.js';
 import { marketplaceToolDefs } from './marketplace-tools.js';
 import { predictionToolDefs } from './predictions-tools.js';
+import { orderToolDefs } from './orders-tools.js';
+import { perpsToolDefs } from './perps-tools.js';
+import { tradingToolDefs } from './trading-tools.js';
+import { portfolioToolDefs } from './portfolio-tools.js';
+import { sniperAlertToolDefs } from './sniper-alert-tools.js';
+import { duelToolDefs } from './duels-tools.js';
+import { commerceToolDefs } from './commerce-tools.js';
 
-const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs];
+const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...tradingToolDefs,
+	...portfolioToolDefs, ...sniperAlertToolDefs, ...duelToolDefs, ...commerceToolDefs, ...orderToolDefs];
 
 // Free, public entry point, listed first so discovery clients see it up top.
 // Annotations: a static, local overview built at module load: read-only,

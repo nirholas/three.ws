@@ -46,6 +46,8 @@ import {
 import { recordEvent } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
 import { meterFreeModel, FreeTierExhaustedError, freeTierErrorBody, retryAfterSeconds } from '../_lib/free-tier.js';
+import { assertInferenceAllowed, chargeInference } from '../_lib/inference-billing.js';
+import { randomUUID } from 'node:crypto';
 import { openrouterUsageFetch } from '../_lib/openrouter-usage.js';
 
 const WATSONX_HEADERS_TIMEOUT_MS = 45_000;
@@ -965,7 +967,7 @@ export function resolveBrain(providerKey) {
 // the same tuned timeout budget and never-error-while-a-free-route-can-answer
 // behaviour. The caller owns auth, rate limiting, and message validation; this
 // owns the transport. Resolve `plan` via resolveBrain() first.
-export async function streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId = null }) {
+export async function streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId = null, onMetered = null }) {
 	const { spec, primary, fallbackModel } = plan;
 
 	res.statusCode = 200;
@@ -1135,6 +1137,7 @@ export async function streamBrain(res, { plan, providerKey, messages, system, ma
 			// response has already ended, so it never adds latency to the turn.
 			const meterAttempt = (outcome) => {
 				if (!attempt.meter) return;
+				onMetered?.({ provider: attempt.meter.provider, model: attempt.meter.model, usage: outcome?.usage });
 				recordBrainSpend({
 					provider: attempt.meter.provider,
 					model: attempt.meter.model,
@@ -1287,11 +1290,39 @@ export default wrap(async function handler(req, res) {
 	// A free open model costs the caller nothing per message but draws one unit
 	// from the daily free-tier allowance (api/_lib/free-tier.js); a spent
 	// allowance is the same 429 body every message surface answers with.
-	const freeTier = await meterFreeTurn(res, providerKey, { userId, ip: userId ? null : clientIp(req) });
-	if (freeTier === false) return;
-	if (freeTier) res.setHeader('x-free-tier-remaining', String(freeTier.remaining));
+	// `paid_fallback: true` is the caller's one-step approval of the paid route
+	// (the choice the 429 body offers): skip the free tier, gate on credits,
+	// and bill every metered attempt of this turn to the account.
+	const paidFallback = body.paid_fallback === true && !!userId;
+	let onMetered = null;
+	if (paidFallback) {
+		try {
+			await assertInferenceAllowed({ userId });
+		} catch (err) {
+			if (!(err.status >= 400 && err.status < 500)) throw err;
+			return error(res, err.status, err.code, err.message);
+		}
+		onMetered = ({ provider, model, usage }) => {
+			if (!usage) return;
+			void chargeInference({
+				userId,
+				callId: randomUUID(),
+				inputTokens: usage.inputTokens ?? 0,
+				outputTokens: usage.outputTokens ?? 0,
+				provider,
+				model,
+			}).catch((err) => console.warn(`[brain:${providerKey}] paid fallback charge failed: ${err?.message}`));
+		};
+	} else {
+		const freeTier = await meterFreeTurn(res, providerKey, { userId, ip: userId ? null : clientIp(req) }, {
+			signedIn: !!userId,
+			paidFallback: { method: 'POST', path: '/api/brain/chat' },
+		});
+		if (freeTier === false) return;
+		if (freeTier) res.setHeader('x-free-tier-remaining', String(freeTier.remaining));
+	}
 
-	await streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId });
+	await streamBrain(res, { plan, providerKey, messages, system, maxTokens, userId, onMetered });
 });
 
 /**
@@ -1299,13 +1330,13 @@ export default wrap(async function handler(req, res) {
  * the allowance after the draw, null for a model the free tier does not cover,
  * or false after answering 429 on a spent allowance. Exported for tests.
  */
-export async function meterFreeTurn(res, providerKey, who) {
+export async function meterFreeTurn(res, providerKey, who, ctx = {}) {
 	try {
 		return await meterFreeModel(providerKey, who);
 	} catch (err) {
 		if (!(err instanceof FreeTierExhaustedError)) throw err;
 		res.setHeader('Retry-After', String(retryAfterSeconds(err.resetAt)));
-		error(res, 429, 'free_tier_exhausted', err.message, freeTierErrorBody(err));
+		error(res, 429, 'free_tier_exhausted', err.message, freeTierErrorBody(err, ctx));
 		return false;
 	}
 }

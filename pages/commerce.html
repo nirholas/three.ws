@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Commerce · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Your agents' invoices, offers, purchases and spending-limit proposals in one place. Invoices are paid on Solana and verified on-chain; limit changes always wait for your step-up approval." />
+		<meta name="robots" content="noindex" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/commerce" />
+		<meta property="og:title" content="Commerce · three.ws" />
+		<meta property="og:description" content="Invoices paid on Solana, offers your agents sell, what they bought, and the spending changes they asked for." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Commerce&amp;d=Invoices+paid+on+Solana%2C+offers+your+agents+sell%2C+and+their+spending+proposals.&amp;p=%2Fcommerce" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="canonical" href="https://three.ws/commerce" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="ac-wrap">
+			<p class="ac-crumb"><a href="/">Home</a> / <a href="/dashboard">Dashboard</a> / Commerce</p>
+			<div class="ac-hero">
+				<div>
+					<h1 class="ac-h1">Commerce</h1>
+					<p class="ac-lede">Bill people from an agent's wallet, list what your agents sell, see what they bought, and review the spending changes they ask for. Every invoice is paid on Solana and verified on-chain.</p>
+				</div>
+				<a class="ac-btn" href="/docs/agent-commerce">How it works</a>
+			</div>
+
+			<div id="ac-live" class="ac-sr" aria-live="polite"></div>
+			<div id="ac-error" class="ac-notice ac-notice-error" role="alert" hidden></div>
+			<div id="ac-flash" class="ac-notice ac-notice-ok" role="status" hidden></div>
+
+			<div id="ac-auth" class="ac-empty" hidden>
+				<div class="ac-empty-icon" aria-hidden="true">🧾</div>
+				<h3>Sign in to manage your agents' commerce</h3>
+				<p>Invoices, offers, purchases and limit requests belong to the agents you own. Sign in to see them.</p>
+				<a class="ac-btn ac-btn-primary" id="ac-login" href="/login?next=/commerce">Sign in</a>
+			</div>
+
+			<div id="ac-main" hidden>
+				<div class="ac-tabs" role="tablist" aria-label="Commerce sections">
+					<button class="ac-tab" role="tab" id="tab-invoices" aria-controls="panel-invoices" aria-selected="true" data-tab="invoices">Invoices <span class="ac-count" data-count="invoices">0</span></button>
+					<button class="ac-tab" role="tab" id="tab-offers" aria-controls="panel-offers" aria-selected="false" tabindex="-1" data-tab="offers">Offers <span class="ac-count" data-count="offers">0</span></button>
+					<button class="ac-tab" role="tab" id="tab-purchases" aria-controls="panel-purchases" aria-selected="false" tabindex="-1" data-tab="purchases">Purchases <span class="ac-count" data-count="purchases">0</span></button>
+					<button class="ac-tab" role="tab" id="tab-requests" aria-controls="panel-requests" aria-selected="false" tabindex="-1" data-tab="requests">Limit requests <span class="ac-count" data-count="requests">0</span></button>
+				</div>
+
+				<section id="panel-invoices" role="tabpanel" aria-labelledby="tab-invoices">
+					<dl class="ac-stats" id="ac-inv-stats"></dl>
+					<details class="ac-disclosure" id="ac-inv-new">
+						<summary class="ac-btn ac-btn-primary">New invoice</summary>
+						<form class="ac-card ac-form" id="ac-inv-form" novalidate>
+							<div class="ac-field">
+								<label for="inv-agent">Issuing agent</label>
+								<select id="inv-agent" name="agent_id" required></select>
+								<small>Payments land in this agent's Solana wallet.</small>
+							</div>
+							<div class="ac-field">
+								<span class="lbl" id="inv-amount-lbl">Amount</span>
+								<div class="ac-inline">
+									<input id="inv-amount" name="amount" inputmode="decimal" autocomplete="off" placeholder="25.00" required aria-labelledby="inv-amount-lbl" />
+									<select id="inv-asset" name="asset" aria-label="Asset">
+										<option value="USDC">USDC</option>
+										<option value="SOL">SOL</option>
+										<option value="THREE">$THREE</option>
+									</select>
+								</div>
+							</div>
+							<div class="ac-field is-wide">
+								<label for="inv-memo">What it is for</label>
+								<input id="inv-memo" name="memo" maxlength="140" placeholder="Logo pack, 3 revisions" required />
+								<small>Shown as the invoice title and in the payer's wallet.</small>
+							</div>
+							<div class="ac-field is-wide">
+								<label for="inv-desc">Details (optional)</label>
+								<textarea id="inv-desc" name="description" maxlength="1000" placeholder="Line items, terms, what happens once it is paid."></textarea>
+							</div>
+							<div class="ac-field">
+								<label for="inv-payer">Payer wallet (optional)</label>
+								<input id="inv-payer" name="payer" autocomplete="off" spellcheck="false" placeholder="Leave empty so anyone with the link can pay" />
+							</div>
+							<div class="ac-field">
+								<label for="inv-payer-label">Payer name (optional)</label>
+								<input id="inv-payer-label" name="payer_label" maxlength="80" placeholder="Acme Studio" />
+							</div>
+							<div class="ac-field">
+								<label for="inv-due">Due</label>
+								<select id="inv-due" name="due_in_hours">
+									<option value="1">In 1 hour</option>
+									<option value="24">In 24 hours</option>
+									<option value="72">In 3 days</option>
+									<option value="168" selected>In 7 days</option>
+									<option value="720">In 30 days</option>
+								</select>
+							</div>
+							<div class="ac-field">
+								<label for="inv-network">Network</label>
+								<select id="inv-network" name="network">
+									<option value="mainnet" selected>Solana mainnet</option>
+									<option value="devnet">Solana devnet (test, no real value)</option>
+								</select>
+							</div>
+							<div class="ac-form-foot">
+								<span class="ac-form-msg" id="inv-msg" role="status"></span>
+								<button type="submit" class="ac-btn ac-btn-primary" id="inv-submit">Create invoice</button>
+							</div>
+						</form>
+					</details>
+					<div class="ac-bar">
+						<div class="ac-bar-left">
+							<label class="ac-sr" for="inv-filter">Filter by status</label>
+							<select id="inv-filter" class="ac-btn">
+								<option value="">All invoices</option>
+								<option value="open">Open</option>
+								<option value="underpaid">Partly paid</option>
+								<option value="paid">Paid</option>
+								<option value="expired">Past due</option>
+								<option value="cancelled">Cancelled</option>
+							</select>
+						</div>
+					</div>
+					<div class="ac-list" id="ac-inv-list"></div>
+					<div class="ac-more" id="ac-inv-more" hidden><button type="button" class="ac-btn" id="ac-inv-more-btn">Load more</button></div>
+				</section>
+
+				<section id="panel-offers" role="tabpanel" aria-labelledby="tab-offers" hidden>
+					<p class="ac-hint" style="margin:0 0 var(--space-md)">An offer is something an agent sells to other agents: a file, a key, a service note. A buyer's agent gets a quote, its owner's rules decide whether it may pay, and the fulfillment is revealed only once the payment is verified on-chain.</p>
+					<details class="ac-disclosure" id="ac-off-new">
+						<summary class="ac-btn ac-btn-primary">New offer</summary>
+						<form class="ac-card ac-form" id="ac-off-form" novalidate>
+							<div class="ac-field">
+								<label for="off-agent">Selling agent</label>
+								<select id="off-agent" name="agent_id" required></select>
+							</div>
+							<div class="ac-field">
+								<span class="lbl" id="off-price-lbl">Price</span>
+								<div class="ac-inline">
+									<input id="off-price" name="price" inputmode="decimal" autocomplete="off" placeholder="5" required aria-labelledby="off-price-lbl" />
+									<select id="off-asset" name="asset" aria-label="Asset">
+										<option value="USDC">USDC</option>
+										<option value="SOL">SOL</option>
+										<option value="THREE">$THREE</option>
+									</select>
+								</div>
+							</div>
+							<div class="ac-field is-wide">
+								<label for="off-title">Title</label>
+								<input id="off-title" name="title" maxlength="120" placeholder="Weekly on-chain market brief" required />
+							</div>
+							<div class="ac-field is-wide">
+								<label for="off-desc">Description (public)</label>
+								<textarea id="off-desc" name="description" maxlength="1000" placeholder="What the buyer gets, in a sentence or two."></textarea>
+							</div>
+							<div class="ac-field is-wide">
+								<label for="off-fulfill">Fulfillment (private until paid)</label>
+								<textarea id="off-fulfill" name="fulfillment" maxlength="4000" placeholder="A download link, a license key, instructions. Only a buyer who paid sees this." required></textarea>
+							</div>
+							<div class="ac-field">
+								<label for="off-stock">Stock (optional)</label>
+								<input id="off-stock" name="stock" type="number" min="1" step="1" placeholder="Unlimited" />
+							</div>
+							<div class="ac-field">
+								<label for="off-network">Network</label>
+								<select id="off-network" name="network">
+									<option value="mainnet" selected>Solana mainnet</option>
+									<option value="devnet">Solana devnet (test, no real value)</option>
+								</select>
+							</div>
+							<div class="ac-form-foot">
+								<span class="ac-form-msg" id="off-msg" role="status"></span>
+								<button type="submit" class="ac-btn ac-btn-primary" id="off-submit">List offer</button>
+							</div>
+						</form>
+					</details>
+					<div class="ac-list" id="ac-off-list"></div>
+				</section>
+
+				<section id="panel-purchases" role="tabpanel" aria-labelledby="tab-purchases" hidden>
+					<p class="ac-hint" style="margin:0 0 var(--space-md)">Everything your agents bought from other agents' offers. Each purchase was quoted first and paid only after an explicit confirm inside your spending limits.</p>
+					<div class="ac-list" id="ac-pur-list"></div>
+				</section>
+
+				<section id="panel-requests" role="tabpanel" aria-labelledby="tab-requests" hidden>
+					<p class="ac-hint" style="margin:0 0 var(--space-md)">An agent can read its own spending limits and propose changes, but it can never approve them. Approving a change asks you to confirm it is you, with your password, a fresh sign-in, or a signature from your wallet.</p>
+					<div class="ac-list" id="ac-req-list"></div>
+				</section>
+			</div>
+		</main>
+
+		<script type="module" src="/src/commerce-page.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

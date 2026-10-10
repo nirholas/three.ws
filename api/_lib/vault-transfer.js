@@ -99,7 +99,7 @@ export async function depositToVault({ vault, backerAgent, userId, usdcAtomics, 
 	const transfer = await transferUsdcGuarded({
 		fromAgentId: backerAgent.id, fromUserId: userId, fromMeta: backerAgent.meta || {},
 		toAddress: vault.vault_address, usdc: atomicsToUsdcFloat(amount),
-		network, category: 'vault_back', idempotencyKey,
+		network, category: 'vault_back', idempotencyKey, destinationTrust: 'system',
 		rowMeta: { vault_id: vault.id, agent_id: vault.agent_id },
 	});
 	if (transfer.status === 'blocked') return { status: 'blocked', code: transfer.code, message: transfer.message || 'deposit blocked by the funding wallet spend policy' };

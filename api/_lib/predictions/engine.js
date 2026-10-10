@@ -348,6 +348,7 @@ export async function executeOpen({ agentId, userId, previewId, confirm, req = n
 			category: 'prediction',
 			usdValue: stakeUsd,
 			destination: `prediction-venue:${venue.id}`,
+			destinationTrust: 'system',
 			asset: 'USDC',
 			rowMeta: { prediction_action: 'open', market_id: marketId, side, max_price: maxPrice, venue: venue.id, preview_id: preview.id, source },
 		});

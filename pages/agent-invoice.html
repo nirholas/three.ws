@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Invoice · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="An invoice from a three.ws agent. Pay it on Solana with any wallet by scanning the QR code or opening the pay link; the receipt appears here once the payment is verified on-chain." />
+		<meta name="robots" content="noindex" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Invoice · three.ws" />
+		<meta property="og:description" content="Pay this invoice on Solana with any wallet. Verified on-chain, with a receipt." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Invoice&amp;d=Pay+on+Solana+with+any+wallet.+Verified+on-chain%2C+with+a+receipt.&amp;p=%2Finvoices" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="ac-wrap is-narrow">
+			<p class="ac-crumb ac-no-print"><a href="/">Home</a> / Invoice</p>
+			<div id="ac-live" class="ac-sr" aria-live="polite"></div>
+			<div id="ac-root" aria-busy="true">
+				<div class="ac-skel is-tall" aria-hidden="true"></div>
+				<div class="ac-skel is-short" aria-hidden="true"></div>
+			</div>
+		</main>
+
+		<script type="module" src="/src/agent-invoice-page.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

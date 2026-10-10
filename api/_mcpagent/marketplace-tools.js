@@ -119,7 +119,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'List whole agents currently for sale on three.ws: each with its persona summary, skills, reputation, buy-now price, top bid, bid count, whether its wallet balance is included, and time left. Read-only.',
+		description: 'List whole agents currently for sale on three.ws: each with its persona summary, skills, reputation, buy-now price, top bid, bid count, whether its wallet balance is included, and time left. Read-only. Use this to shop for an agent to buy; open one with get_listing for its bids and history before bidding.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -146,7 +146,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'Search published three.ws agents, listed-for-sale ones first, with each one\'s sale state (price, minimum bid, listing link) when it has a live listing. Read-only.',
+		description: 'Search published three.ws agents, listed-for-sale ones first, with each one\'s sale state (price, minimum bid, listing link) when it has a live listing. Read-only. Use this to search every published agent by name, not only those for sale; for the for-sale list with prices and time left call browse_marketplace.',
 		inputSchema: {
 			type: 'object',
 			properties: { q: { type: 'string', maxLength: 80 }, limit: { type: 'integer', minimum: 1, maximum: 48 }, cursor: { type: 'string' } },
@@ -168,7 +168,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'Full detail for one agent listing: what transfers, live wallet balance, reputation, trade history, every bid, the event history, and settlement progress if it sold. Read-only.',
+		description: 'Full detail for one agent listing: what transfers, live wallet balance, reputation, trade history, every bid, the event history, and settlement progress if it sold. Read-only. Use this before place_bid or buy_now to check what transfers, the live balance, and the bids already in.',
 		inputSchema: { type: 'object', properties: { listing_id: uuid }, required: ['listing_id'], additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { signIn: false }, async (user) => {
@@ -191,7 +191,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'The whole-agent marketplace event log (listed, bids, refunds, sales, settlement steps) for one agent or across the marketplace, newest first, with on-chain signatures. Read-only.',
+		description: 'The whole-agent marketplace event log (listed, bids, refunds, sales, settlement steps) for one agent or across the marketplace, newest first, with on-chain signatures. Read-only. Use this to audit what happened to an agent or the market over time; for the current state of one listing call get_listing.',
 		inputSchema: { type: 'object', properties: { agent_id: uuid, limit: { type: 'integer', minimum: 1, maximum: 200 } }, additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { signIn: false }, async () => {
@@ -209,7 +209,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'Build the confirmation table for a money-moving marketplace action WITHOUT doing it: recipient, amount, token, chain, fees, what transfers and any warnings. Show the table to the user, wait for a clear yes, then call the action tool with its confirm flag and this preview_id (valid ten minutes, one use). Actions: create_listing, delist, place_bid, buy_now, accept_bid, withdraw_bid; pass the same arguments the action tool will get.',
+		description: 'Build the confirmation table for a money-moving marketplace action WITHOUT doing it: recipient, amount, token, chain, fees, what transfers and any warnings. Call this before every money-moving marketplace action: show the table to the user, wait for a clear yes, then call the action tool with its confirm flag and this preview_id (valid ten minutes, one use). Actions: create_listing, delist, place_bid, buy_now, accept_bid, withdraw_bid; pass the same arguments the action tool will get.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -246,7 +246,7 @@ export const marketplaceToolDefs = [
 		confirmFlag: 'confirm_listing',
 		previewTool: PREVIEW_TOOL,
 		annotations: ann(false, true, false),
-		description: 'List one of your agents for sale: a minimum bid in USDC, an optional buy-now price (USDC and optionally $THREE), a duration, and whether its wallet balance and history transfer. Commits the agent: a buy-now or an accepted bid sells it. Requires a preview_id from preview_marketplace_action (action create_listing) and confirm_listing: true.',
+		description: 'List one of your agents for sale: a minimum bid in USDC, an optional buy-now price (USDC and optionally $THREE), a duration, and whether its wallet balance and history transfer. Commits the agent: a buy-now or an accepted bid sells it. Use this to put an agent up for sale, after the user approves a preview_marketplace_action (action create_listing) table; pass its preview_id with confirm_listing: true.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -283,7 +283,7 @@ export const marketplaceToolDefs = [
 		confirmFlag: 'confirm_delist',
 		previewTool: PREVIEW_TOOL,
 		annotations: ann(false, true, false),
-		description: 'Take your listing down and refund every open bid from escrow. Requires a preview_id from preview_marketplace_action (action delist) and confirm_delist: true.',
+		description: 'Take your listing down and refund every open bid from escrow. Use this to end a sale early, after the user approves a preview_marketplace_action (action delist) table; pass its preview_id with confirm_delist: true.',
 		inputSchema: {
 			type: 'object',
 			properties: { listing_id: uuid, preview_id: previewArg, confirm_delist: confirmArg('Must be true, after the user approved the preview.') },
@@ -308,7 +308,7 @@ export const marketplaceToolDefs = [
 		confirmFlag: 'confirm_bid',
 		previewTool: PREVIEW_TOOL,
 		annotations: ann(false, true, false),
-		description: 'Bid USDC on a listed agent. The bid is locked in the listing\'s escrow on Solana and refunded if it is rejected, withdrawn, or the listing ends without accepting it. From an agent wallet the escrow transfer happens now; from a connected wallet you get a transaction to sign. Requires a preview_id from preview_marketplace_action (action place_bid) and confirm_bid: true.',
+		description: 'Bid USDC on a listed agent. The bid is locked in the listing\'s escrow on Solana and refunded if it is rejected, withdrawn, or the listing ends without accepting it. From an agent wallet the escrow transfer happens now; from a connected wallet you get a transaction to sign. Use this to make an offer instead of paying the buy-now price, after the user approves a preview_marketplace_action (action place_bid) table; pass its preview_id with confirm_bid: true.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -319,7 +319,7 @@ export const marketplaceToolDefs = [
 			additionalProperties: false,
 		},
 		async handler(args, auth) {
-			return run(auth, { scope: 'wallet:write', pay: true }, async (user) => {
+			return run(auth, { scope: 'wallet:trade', pay: true }, async (user) => {
 				const blocked = await gate(user, args, 'place_bid', 'confirm_bid');
 				if (blocked) return blocked;
 				const r = await svc.placeBid(user, pick(args, 'place_bid'), { confirm: true, kind: 'bid' });
@@ -338,7 +338,7 @@ export const marketplaceToolDefs = [
 		confirmFlag: 'confirm_payment',
 		previewTool: PREVIEW_TOOL,
 		annotations: ann(false, true, false),
-		description: 'Pay a listing\'s buy-now price (USDC, or $THREE when the seller set one) into escrow; once it lands the sale settles and custody rotates to you: new wallet key, the seller\'s access revoked, ownership transferred. Requires a preview_id from preview_marketplace_action (action buy_now) and confirm_payment: true.',
+		description: 'Pay a listing\'s buy-now price (USDC, or $THREE when the seller set one) into escrow; once it lands the sale settles and custody rotates to you: new wallet key, the seller\'s access revoked, ownership transferred. Use this to buy at the listed price without waiting on the seller, after the user approves a preview_marketplace_action (action buy_now) table; pass its preview_id with confirm_payment: true.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -349,7 +349,7 @@ export const marketplaceToolDefs = [
 			additionalProperties: false,
 		},
 		async handler(args, auth) {
-			return run(auth, { scope: 'wallet:write', pay: true }, async (user) => {
+			return run(auth, { scope: 'wallet:trade', pay: true }, async (user) => {
 				const blocked = await gate(user, args, 'buy_now', 'confirm_payment');
 				if (blocked) return blocked;
 				const r = await svc.placeBid(user, pick(args, 'buy_now'), { confirm: true, kind: 'buy_now' });
@@ -366,7 +366,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'Every bid you placed on agent listings, with status, escrow and refund signatures. Read-only.',
+		description: 'Every bid you placed on agent listings, with status, escrow and refund signatures. Read-only. Use this to check whether your offers are still open, won, or refunded.',
 		inputSchema: { type: 'object', properties: {}, additionalProperties: false },
 		async handler(_args, auth) {
 			return run(auth, { scope: 'agents:read' }, async (user) => {
@@ -384,7 +384,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'Every bid on your agent listings, open ones first. Read-only.',
+		description: 'Every bid on your agent listings, open ones first. Read-only. Use this to review offers before accept_marketplace_bid or reject_marketplace_bid.',
 		inputSchema: { type: 'object', properties: {}, additionalProperties: false },
 		async handler(_args, auth) {
 			return run(auth, { scope: 'agents:read' }, async (user) => {
@@ -404,7 +404,7 @@ export const marketplaceToolDefs = [
 		confirmFlag: 'confirm_accept',
 		previewTool: PREVIEW_TOOL,
 		annotations: ann(false, true, false),
-		description: 'Accept an open bid on your listing. Final: escrow pays you (minus the platform fee), every other bid is refunded, and custody rotates to the buyer. Requires a preview_id from preview_marketplace_action (action accept_bid) and confirm_accept: true.',
+		description: 'Accept an open bid on your listing. Final: escrow pays you (minus the platform fee), every other bid is refunded, and custody rotates to the buyer. Use this to sell to one specific bidder, after the user approves a preview_marketplace_action (action accept_bid) table; pass its preview_id with confirm_accept: true.',
 		inputSchema: {
 			type: 'object',
 			properties: { bid_id: uuid, preview_id: previewArg, confirm_accept: confirmArg('Must be true, after the user approved the preview.') },
@@ -430,7 +430,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'write',
 		annotations: ann(false, false, true),
-		description: 'Reject an open bid on your listing; its escrowed funds go back to the bidder. Your listing stays up.',
+		description: 'Reject an open bid on your listing; its escrowed funds go back to the bidder. Your listing stays up. Use this to decline one offer without ending the sale; to end the sale and refund every bid call delist_marketplace_listing.',
 		inputSchema: { type: 'object', properties: { bid_id: uuid }, required: ['bid_id'], additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { scope: 'agents:write' }, async (user) => {
@@ -447,7 +447,7 @@ export const marketplaceToolDefs = [
 		confirmFlag: 'confirm_withdraw',
 		previewTool: PREVIEW_TOOL,
 		annotations: ann(false, true, false),
-		description: 'Withdraw one of your open bids; escrow refunds it to where it came from. Requires a preview_id from preview_marketplace_action (action withdraw_bid) and confirm_withdraw: true.',
+		description: 'Withdraw one of your open bids; escrow refunds it to where it came from. Use this to take back an offer you no longer want, after the user approves a preview_marketplace_action (action withdraw_bid) table; pass its preview_id with confirm_withdraw: true.',
 		inputSchema: {
 			type: 'object',
 			properties: { bid_id: uuid, preview_id: previewArg, confirm_withdraw: confirmArg('Must be true, after the user approved the preview.') },
@@ -455,7 +455,7 @@ export const marketplaceToolDefs = [
 			additionalProperties: false,
 		},
 		async handler(args, auth) {
-			return run(auth, { scope: 'wallet:write', pay: true }, async (user) => {
+			return run(auth, { scope: 'wallet:trade', pay: true }, async (user) => {
 				const blocked = await gate(user, args, 'withdraw_bid', 'confirm_withdraw');
 				if (blocked) return blocked;
 				const r = await svc.withdrawBid(user, args.bid_id, { confirm: true });
@@ -469,7 +469,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(true, false, false),
-		description: 'Step-by-step progress of an agent sale you are party to: seller payout, fee, key rotation, sweep, revocation, ownership, with signatures and any error. Read-only.',
+		description: 'Step-by-step progress of an agent sale you are party to: seller payout, fee, key rotation, sweep, revocation, ownership, with signatures and any error. Read-only. Use this after a buy or an accepted bid to confirm the agent fully changed hands; if a step failed, call resume_agent_transfer.',
 		inputSchema: { type: 'object', properties: { transfer_id: uuid }, required: ['transfer_id'], additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { scope: 'agents:read' }, async (user) => {
@@ -484,7 +484,7 @@ export const marketplaceToolDefs = [
 		group: 'marketplace',
 		tier: 'write',
 		annotations: ann(false, false, true),
-		description: 'Resume an agent sale whose settlement stopped on an error. Safe to repeat: every step is idempotent and no leg can pay twice. The sweep cron also retries on its own.',
+		description: 'Resume an agent sale whose settlement stopped on an error. Safe to repeat: every step is idempotent and no leg can pay twice. The sweep cron also retries on its own. Use this when get_agent_transfer shows a step stopped on an error and you do not want to wait for the cron.',
 		inputSchema: { type: 'object', properties: { transfer_id: uuid }, required: ['transfer_id'], additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { scope: 'agents:write' }, async (user) => {

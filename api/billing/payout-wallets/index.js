@@ -1,4 +1,6 @@
 import { sql } from '../../_lib/db.js';
+import { logAudit } from '../../_lib/audit.js';
+import { ExternalWalletError, payoutChangePolicy, stepUpProven } from '../../_lib/account-link/external-wallets.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, readJson, rateLimited } from '../../_lib/http.js';
 import { parse, isValidSolanaAddress, isValidEvmAddress } from '../../_lib/validate.js';
@@ -25,7 +27,8 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const wallets = await sql`
-			select id, agent_id, address, chain, is_default, created_at
+			select id, agent_id, address, chain, is_default, created_at, approved_at, effective_at, set_by,
+			       (approved_at is not null and effective_at <= now()) as live
 			from agent_payout_wallets
 			where user_id = ${user.id}
 			order by created_at desc
@@ -55,6 +58,19 @@ export default wrap(async (req, res) => {
 		if (!agent) return error(res, 404, 'not_found', 'agent not found');
 	}
 
+	// A default that replaces a live address goes through step-up and the
+	// cooldown (api/_lib/account-link/external-wallets.js); a non-default row
+	// is never paid, so it is approved at once.
+	let policy = { approvedAt: new Date().toISOString(), effectiveAt: new Date().toISOString(), replacing: false, previous: null };
+	if (is_default) {
+		try {
+			policy = await payoutChangePolicy({ userId: user.id, agentId: agent_id, chain, address, stepUp: await stepUpProven(req, user.id, body) });
+		} catch (e) {
+			if (e instanceof ExternalWalletError) return error(res, e.status, e.code, e.message, e.extra);
+			throw e;
+		}
+	}
+
 	let wallet;
 	if (is_default) {
 		// Clear existing defaults for (user, chain) in a transaction, then insert
@@ -63,17 +79,23 @@ export default wrap(async (req, res) => {
 				? sql`update agent_payout_wallets set is_default = false where user_id = ${user.id} and chain = ${chain} and agent_id = ${agent_id}`
 				: sql`update agent_payout_wallets set is_default = false where user_id = ${user.id} and chain = ${chain} and agent_id is null`;
 		const insert = sql`
-			insert into agent_payout_wallets (user_id, agent_id, address, chain, is_default)
-			values (${user.id}, ${agent_id}, ${address}, ${chain}, true)
-			returning id, agent_id, address, chain, is_default, created_at
+			insert into agent_payout_wallets (user_id, agent_id, address, chain, is_default, approved_at, effective_at, set_by)
+			values (${user.id}, ${agent_id}, ${address}, ${chain}, true, ${policy.approvedAt}, ${policy.effectiveAt}, 'owner')
+			on conflict (user_id, agent_id, chain) do update set
+				address = excluded.address, is_default = true, approved_at = excluded.approved_at,
+				effective_at = excluded.effective_at, set_by = excluded.set_by, approval_request_id = null
+			returning id, agent_id, address, chain, is_default, created_at, approved_at, effective_at
 		`;
 		const results = await sql.transaction([clearDefault, insert]);
 		[wallet] = results[1];
+		if (policy.replacing) logAudit({ userId: user.id, action: 'link_payout_wallet', resourceId: wallet.id, meta: { chain, address, previous: policy.previous, agent_id, actor: 'owner', effective_at: policy.effectiveAt, step_up: true }, req });
 	} else {
 		[wallet] = await sql`
-			insert into agent_payout_wallets (user_id, agent_id, address, chain, is_default)
-			values (${user.id}, ${agent_id}, ${address}, ${chain}, false)
-			returning id, agent_id, address, chain, is_default, created_at
+			insert into agent_payout_wallets (user_id, agent_id, address, chain, is_default, approved_at, effective_at, set_by)
+			values (${user.id}, ${agent_id}, ${address}, ${chain}, false, ${policy.approvedAt}, ${policy.effectiveAt}, 'owner')
+			on conflict (user_id, agent_id, chain) do update set
+				address = excluded.address, approved_at = excluded.approved_at, effective_at = excluded.effective_at, set_by = excluded.set_by
+			returning id, agent_id, address, chain, is_default, created_at, approved_at, effective_at
 		`;
 	}
 

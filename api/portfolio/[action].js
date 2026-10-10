@@ -19,6 +19,7 @@ import { getSessionUser, isSameSiteOrigin } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { logAudit } from '../_lib/audit.js';
+import { enforceDestinationAllowlist, SpendLimitError } from '../_lib/agent-trade-guards.js';
 import { sql } from '../_lib/db.js';
 import { getBalances, walletUsdTotal, invalidateBalances } from '../_lib/balances.js';
 import { recoverAgentKey, recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
@@ -286,6 +287,7 @@ async function sendEvm({ agent, asset, recipient, amount, memo, userId }) {
 		throw e;
 	}
 	const chainId = agent.chain_id || 8453;
+	await enforceDestinationAllowlist({ agentId: agent.id, meta: agent.meta, category: 'withdraw', destination: recipient, usdValue: null });
 
 	// loadOwnedAgent already proved this user owns the agent; pass the id through
 	// so the key-use and custody rows name the human who authorized the transfer.
@@ -329,6 +331,7 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 		throw e;
 	}
 	recipient = resolvedRecipient;
+	await enforceDestinationAllowlist({ agentId: agent.id, meta: agent.meta, category: 'withdraw', destination: recipient, usdValue: null });
 	const encryptedSecret = agent.meta?.encrypted_solana_secret;
 	if (!encryptedSecret) {
 		const e = new Error('agent has no Solana key');
@@ -448,6 +451,7 @@ async function handleSend(req, res) {
 
 		return json(res, 200, { ok: true, ...out });
 	} catch (e) {
+		if (e instanceof SpendLimitError) return error(res, e.status, e.code, e.message, { detail: e.detail });
 		if (e.code === 'validation_error') return error(res, 400, 'validation_error', e.message);
 		if (e.code === 'no_key') return error(res, 409, 'no_key', e.message);
 		if (e.code === 'no_rpc') return error(res, 503, 'no_rpc', e.message);

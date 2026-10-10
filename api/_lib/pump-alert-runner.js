@@ -13,6 +13,8 @@
 //   price_*     → pump.fun coins API (authoritative USD market cap)
 //   whale_buy   → pump.fun trades API (recent buys on the target mint)
 //   market_price → the prediction venue's live market price (api/_lib/predictions/)
+//   launch_match → pump_coin_intel (every new launch, scored by the coin-intel
+//                  worker within ~90s) + pump_coin_outcomes for creator history
 
 import { sql } from './db.js';
 import {
@@ -27,6 +29,8 @@ import {
 	buildNewMintPayload,
 	buildWhalePayload,
 	buildPricePayload,
+	launchMatchesRule,
+	buildLaunchMatchPayload,
 } from './pump-alert-eval.js';
 import { deliverAlert } from './alert-delivery.js';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
@@ -34,6 +38,8 @@ import { getVenue, sideProbability } from './predictions/index.js';
 
 const GRAD_WINDOW = '15 minutes';
 const NEW_MINT_WINDOW = '60 minutes';
+const LAUNCH_WINDOW = '15 minutes';
+const LAUNCHES_PER_RUN = 1500; // ~15 min of mainnet launches at today's rate
 const GRADS_PER_RUN = 100;
 const DELIVER_CAP = 5; // max events delivered per rule per run (storm guard)
 const MAX_PRICE_MINTS = 60; // distinct mints priced per run
@@ -66,7 +72,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 	let rules;
 	try {
 		rules = await sql`
-			SELECT id, user_id, kind, target_mint, target_agent, target_market, target_side, direction, threshold,
+			SELECT id, user_id, kind, target_mint, target_agent, target_market, target_side, direction, threshold, filters,
 			       deliver_in_app, webhook_url, webhook_secret, telegram_chat,
 			       cooldown_seconds, enabled, label
 			FROM pump_alert_rules
@@ -91,13 +97,14 @@ export async function runPumpAlertRules(now = Date.now()) {
 	const fireState = new Map(fireRows.map((f) => [f.rule_id, f]));
 
 	// Partition rules by kind.
-	const byKind = { graduation: [], new_mint: [], price: [], whale_buy: [], market_price: [] };
+	const byKind = { graduation: [], new_mint: [], price: [], whale_buy: [], market_price: [], launch_match: [] };
 	for (const r of rules) {
 		if (r.kind === 'graduation') byKind.graduation.push(r);
 		else if (r.kind === 'new_mint') byKind.new_mint.push(r);
 		else if (r.kind === 'price_above' || r.kind === 'price_below') byKind.price.push(r);
 		else if (r.kind === 'whale_buy') byKind.whale_buy.push(r);
 		else if (r.kind === 'market_price') byKind.market_price.push(r);
+		else if (r.kind === 'launch_match') byKind.launch_match.push(r);
 	}
 
 	const ctx = { now, solPrice: 0 };
@@ -108,6 +115,7 @@ export async function runPumpAlertRules(now = Date.now()) {
 		runPriceRules(byKind.price, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 		runWhaleRules(byKind.whale_buy, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 		runMarketPriceRules(byKind.market_price, fireState, report, ctx).catch((e) => bumpErr(report, e)),
+		runLaunchMatchRules(byKind.launch_match, fireState, report, ctx).catch((e) => bumpErr(report, e)),
 	]);
 
 	await pruneDeliveries();
@@ -168,6 +176,52 @@ async function runNewMintRules(rules, fireState, report, ctx) {
 		const matched = mints.filter((m) => newMintMatchesRule(rule, m));
 		if (!matched.length) continue;
 		const events = matched.map((m) => buildNewMintPayload(rule, m));
+		await deliverEventRule(rule, fireState.get(rule.id), events, report, ctx.now);
+	}
+}
+
+// ── launch_match (new launches passing a filter set) ─────────────────────────
+
+/**
+ * Every mainnet launch the coin-intel worker scored in the window, with its USD
+ * market cap at first sight and the creator's PRIOR launch and graduation
+ * counts (coins launched before this one only, so a serial launcher's tenth
+ * coin is judged on the nine before it).
+ */
+export async function loadRecentLaunches({ window = LAUNCH_WINDOW, limit = LAUNCHES_PER_RUN, solUsd = 0 } = {}) {
+	const rows = await sql`
+		SELECT i.mint, i.name, i.symbol, i.creator, i.first_seen_at, i.quality_score, i.risk_flags,
+		       (i.twitter IS NOT NULL OR i.telegram IS NOT NULL OR i.website IS NOT NULL) AS has_socials,
+		       (i.signals->>'mc_sol_first_seen')::numeric AS mc_sol,
+		       (SELECT count(*)::int FROM pump_coin_intel p
+		         WHERE p.creator = i.creator AND p.first_seen_at < i.first_seen_at) AS creator_launches,
+		       (SELECT count(*)::int FROM pump_coin_intel p JOIN pump_coin_outcomes o ON o.mint = p.mint AND o.graduated
+		         WHERE p.creator = i.creator AND p.first_seen_at < i.first_seen_at) AS creator_graduated
+		FROM pump_coin_intel i
+		WHERE i.network = 'mainnet' AND i.first_seen_at > now() - ${window}::interval
+		ORDER BY i.first_seen_at ASC
+		LIMIT ${limit}
+	`;
+	return rows.map((r) => ({
+		...r,
+		market_cap_usd: r.mc_sol != null && solUsd > 0 ? Number(r.mc_sol) * solUsd : null,
+	}));
+}
+
+async function runLaunchMatchRules(rules, fireState, report, ctx) {
+	if (!rules.length) return;
+	ctx.solPrice = ctx.solPrice || (await getSolPrice());
+	const launches = await loadRecentLaunches({ solUsd: ctx.solPrice });
+	if (!launches.length) return;
+
+	for (const rule of rules) {
+		report.evaluated++;
+		const events = [];
+		for (const l of launches) {
+			const held = launchMatchesRule(rule, l);
+			if (held) events.push(buildLaunchMatchPayload(rule, l, held));
+		}
+		if (!events.length) continue;
 		await deliverEventRule(rule, fireState.get(rule.id), events, report, ctx.now);
 	}
 }

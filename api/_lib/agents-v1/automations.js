@@ -556,7 +556,7 @@ export async function updateAutomation({ userId, id, body }) {
 			trigger_once = ${a.triggerOnce},
 			enabled = ${enabled},
 			intent_id = ${intentId},
-			state = CASE WHEN ${triggerChanged} THEN NULL ELSE state END,
+			state = CASE WHEN ${triggerChanged} THEN '{}'::jsonb ELSE state END,
 			updated_at = now()
 		WHERE id = ${row.id}
 		RETURNING *

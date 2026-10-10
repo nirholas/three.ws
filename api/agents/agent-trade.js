@@ -56,14 +56,14 @@ function normNetwork(n) {
 	return n === 'devnet' ? 'devnet' : 'mainnet';
 }
 
-// A bearer must hold wallet:write to trade; the read-only quote passes
+// A bearer must hold wallet:trade (or wallet:write, which implies it) to trade; the read-only quote passes
 // `spendCheck: false` because a preview moves nothing.
 async function resolveAuth(req, { spendCheck = true } = {}) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return null;
-	if (spendCheck) assertBearerMaySpend(bearer, req);
+	if (spendCheck) assertBearerMaySpend(bearer, req, { kind: 'trade' });
 	return { userId: bearer.userId };
 }
 

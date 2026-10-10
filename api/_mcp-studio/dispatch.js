@@ -235,6 +235,20 @@ function widgetResources({ widgets = true, personas = true } = {}) {
 	return personas ? all : all.filter((r) => r.uri !== PERSONA_COMPONENT_URI);
 }
 
+/**
+ * The resources/list payload a surface serves (no widget HTML bodies). The MCP
+ * census (api/_lib/mcp-census.js) counts these so the published totals match
+ * what each studio endpoint answers.
+ */
+export function resourcesForSurface(name = 'full') {
+	return widgetResources(surfaceOf(name)).map(({ text: _t, ...r }) => r);
+}
+
+/** Does this surface serve the guided prompts (api/_mcp/prompts.js)? */
+export function surfaceServesPrompts(name = 'full') {
+	return Boolean(surfaceOf(name).prompts);
+}
+
 const log = logger('mcp-studio');
 
 function ok(id, result) {

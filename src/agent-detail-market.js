@@ -41,6 +41,7 @@ import { log } from './shared/log.js';
 import { showToast } from './ui-helpers.js';
 import { seeInWorldHref, hasCustomAvatar } from './shared/agent-3d.js';
 import { mountSkillReviews } from './skill-reviews.js';
+import { withPayoutStepUp } from './payout-step-up.js';
 
 const API = '/api';
 const $ = (id) => document.getElementById(id);
@@ -453,15 +454,17 @@ async function saveAgentPrice(agentId) {
 	setSaleStatus(status, 'Saving…');
 	try {
 		if (payout) {
-			const r = await fetch(`${API}/billing/payout-wallets`, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				credentials: 'include',
-				body: JSON.stringify({ address: payout, chain: 'solana', is_default: true }),
+			const r = await withPayoutStepUp(async (extra) => {
+				const res = await fetch(`${API}/billing/payout-wallets`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ address: payout, chain: 'solana', is_default: true, ...extra }),
+				});
+				return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
 			});
 			if (!r.ok && r.status !== 409) {
-				const j = await r.json().catch(() => ({}));
-				throw new Error(j.error_description || j.error || 'Failed to save payout wallet');
+				throw new Error(r.data.error_description || r.data.error || 'Failed to save payout wallet');
 			}
 		}
 		const amount = Math.round(usd * 1_000_000);

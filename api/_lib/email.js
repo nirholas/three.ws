@@ -239,6 +239,46 @@ export function renderApprovalRequest({ agentName, summary, table, riskNotes = [
 	};
 }
 
+// Destination-allowlist alert. Sent beside the in-app, push, Telegram and Discord
+// notices so an owner who is away from their phone still sees a new payout
+// address arrive. The cancel link works without a session so one tap stops it.
+export function renderWhitelistNotice({ headline, agentName, entry = null, detail = '', cancelUrl = null, link }) {
+	const who = agentName || 'Your agent';
+	const rows = entry
+		? [['Address', entry.address], ['Chain', entry.chain], ['Label', entry.label], ['Available', entry.activates_at ? new Date(entry.activates_at).toUTCString() : null]].filter((r) => r[1])
+		: [];
+	const table = rows.map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#9a9ab0;white-space:nowrap">${esc(k)}</td><td style="padding:6px 0;font-family:ui-monospace,Menlo,monospace;word-break:break-all">${esc(v)}</td></tr>`).join('');
+	const cancel = cancelUrl ? `<a class="btn" href="${esc(cancelUrl)}">Cancel this address</a>` : '';
+	return {
+		subject: `${headline}: ${who}`,
+		html: layout('Wallet allowlist', `
+    <p class="brand">three.ws</p>
+    <h1>${esc(headline)}</h1>
+    <p>${esc(who)}${detail ? `: ${esc(detail)}` : ''}</p>
+    ${table ? `<table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">${table}</table>` : ''}
+    ${cancel}
+    <p><a href="${esc(link)}" style="color:#6a5cff">Review the allowlist</a></p>
+    <p class="muted">If you did not make this change, cancel it now and freeze the wallet from the allowlist page.</p>
+  `),
+		text: `${headline}\n\n${who}${detail ? `: ${detail}` : ''}\n${rows.map(([k, v]) => `${k}: ${v}`).join('\n')}\n${cancelUrl ? `\nCancel this address: ${cancelUrl}\n` : ''}\nReview the allowlist: ${link}\n\nIf you did not make this change, cancel it now and freeze the wallet.`,
+	};
+}
+
+// One-time code that re-authenticates the owner for a single allowlist change.
+export function renderStepUpCode({ code, expiresInMinutes = 10 }) {
+	return {
+		subject: `Your three.ws confirmation code: ${code}`,
+		html: layout('Confirmation code', `
+    <p class="brand">three.ws</p>
+    <h1>Confirm your allowlist change</h1>
+    <p style="font-size:28px;letter-spacing:6px;font-family:ui-monospace,Menlo,monospace;margin:16px 0">${esc(code)}</p>
+    <p>Enter this code in the wallet allowlist page. It works once and expires in ${esc(expiresInMinutes)} minutes.</p>
+    <p class="muted">Nobody from three.ws will ever ask for this code. If you did not request it, ignore this email and consider changing your password.</p>
+  `),
+		text: `Your three.ws confirmation code: ${code}\n\nIt works once and expires in ${expiresInMinutes} minutes. Nobody from three.ws will ask for it. If you did not request it, ignore this email.`,
+	};
+}
+
 export function sendApprovalRequestEmail({ to, ...rest }) {
 	return sendEmail({ to, ...renderApprovalRequest(rest) });
 }

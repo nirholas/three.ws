@@ -1,4 +1,8 @@
-// /credits: prepaid balance, deposit (SOL or $THREE into credits), and ledger.
+// /credits: prepaid balance, deposit (SOL, USDC or $THREE into credits), and ledger.
+//
+// The asset picker, each asset's rate and the $THREE bonus come from
+// /api/credits `deposit.assets` (live config); nothing about an asset or a
+// bonus percentage is typed into this file.
 //
 // Deposit flow reuses the platform Solana adapter (src/onchain/adapters): connect
 // + inline SIWS link (so the signing wallet is linked, which the deposit verifier
@@ -12,8 +16,6 @@ import { getAdapter } from './onchain/adapters/index.js';
 import { resolveTokenProgramId } from './shared/spl-token-program.js';
 import { solToUsd, getTokenPriceUsd } from './shared/usd-price.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
-
-const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 const $ = (id) => document.getElementById(id);
 const fmtUsd = (n) => `$${(Number(n) || 0).toFixed(2)}`;
@@ -33,6 +35,7 @@ function fmtUnitPrice(n) {
 let state = {
 	asset: 'SOL',
 	deposit: null,
+	assets: [],
 	prices: {},
 	ledgerCursor: null,
 	loadingMore: false,
@@ -66,6 +69,7 @@ const LEDGER_LABEL = {
 
 function ledgerActivity(row) {
 	if (row.kind === 'deposit') return `Deposit · ${row.asset || ''}`.trim();
+	if (row.kind === 'grant' && row.action === 'deposit.three_bonus') return 'Deposit bonus · $THREE';
 	if (row.kind === 'spend') return row.action ? `Spend · ${row.action}` : 'Spend';
 	if (row.kind === 'refund') return row.action ? `Refund · ${row.action}` : 'Refund';
 	return LEDGER_LABEL[row.kind] || row.kind;
@@ -221,35 +225,60 @@ function renderAll(data) {
 	renderLedgerMore();
 }
 
+function currentAsset() {
+	return state.assets.find((a) => a.asset === state.asset) || null;
+}
+
+// Amount presets per asset, in human units. Scaled off the asset's decimals and
+// pricing kind rather than its symbol so a newly accepted asset gets sane chips.
+function presetsFor(a) {
+	if (!a) return [];
+	if (a.native) return [0.05, 0.1, 0.25, 0.5, 1];
+	if (a.rate?.kind === 'fixed') return [5, 10, 25, 50, 100];
+	return [10000, 50000, 100000, 500000];
+}
+
+function unitPriceFor(a) {
+	if (!a) return null;
+	if (a.rate?.kind === 'fixed') return Number(a.rate.usd_per_unit) || null;
+	return state.prices[a.mint] ?? null;
+}
+
 async function loadPrices() {
 	// Best-effort live estimate; degrades silently to no number if blocked.
+	const a = currentAsset();
 	try {
-		const mint = state.asset === 'SOL' ? SOL_MINT : state.deposit?.three_mint;
-		if (!mint || state.prices[mint] != null) return updateEstimate();
-		if (state.asset === 'SOL') {
+		if (!a || a.rate?.kind === 'fixed' || state.prices[a.mint] != null) return updateEstimate();
+		if (a.native) {
 			// Shared five-feed SOL/USD chain (src/shared/usd-price.js), null when
 			// every feed is down; never a single-source or hardcoded rate.
 			const p = await solToUsd(1);
-			if (p > 0) state.prices[mint] = p;
+			if (p > 0) state.prices[a.mint] = p;
 		} else {
 			// Same shared chain as SOL, per mint: Jupiter -> DexScreener ->
 			// GeckoTerminal -> DefiLlama, each bounded. A single un-timed Jupiter
 			// call used to leave the estimate blank whenever Jupiter was slow.
-			const p = await getTokenPriceUsd(mint);
-			if (p > 0) state.prices[mint] = p;
+			const p = await getTokenPriceUsd(a.mint);
+			if (p > 0) state.prices[a.mint] = p;
 		}
 	} catch {
 		/* estimate is a nicety */
 	}
 	updateEstimate();
+	renderAssets();
+}
+
+function bonusPct(a) {
+	const bps = Number(a?.bonus_bps) || 0;
+	return bps > 0 ? bps / 100 : 0;
 }
 
 function updateEstimate() {
 	const amt = Number($('amount').value);
-	const mint = state.asset === 'SOL' ? SOL_MINT : state.deposit?.three_mint;
-	const price = state.prices[mint];
+	const a = currentAsset();
+	const price = unitPriceFor(a);
 	const el = $('estimate');
-	const unit = state.asset === 'SOL' ? 'SOL' : '$THREE';
+	const unit = a?.label || state.asset;
 	const fallback = 'Credited at the live USD value when your deposit confirms.';
 	el.textContent = '';
 	if (!(amt > 0)) {
@@ -260,29 +289,87 @@ function updateEstimate() {
 		el.textContent = fallback;
 		return;
 	}
+	const base = amt * price;
 	const strong = document.createElement('b');
-	strong.textContent = fmtUsd(amt * price);
+	strong.textContent = fmtUsd(base);
 	el.append('\u2248 ', strong, ' in credits');
+	const pct = bonusPct(a);
+	if (pct > 0) {
+		const bonus = document.createElement('b');
+		bonus.textContent = `+${fmtUsd((base * pct) / 100)}`;
+		el.append(' ', bonus, ` ${pct}% bonus for paying in ${unit}`);
+	}
+}
+
+// One line per accepted asset: its rate rule and bonus, straight from the
+// server catalog so the copy can never drift from what the verifier credits.
+function rateCopy(a) {
+	if (a.rate?.kind === 'fixed') {
+		return `1 ${a.label} = ${fmtUsd(a.rate.usd_per_unit)} of credits`;
+	}
+	const p = state.prices[a.mint];
+	return p > 0 ? `1 ${a.label} \u2248 ${fmtUnitPrice(p)}, live price` : 'live price at deposit';
+}
+
+function renderAssets() {
+	const seg = $('asset-seg');
+	const list = $('asset-rates');
+	if (!seg || !list) return;
+	const assets = state.assets;
+	if (!assets.length) {
+		list.innerHTML = '';
+		return;
+	}
+	if (!assets.some((a) => a.asset === state.asset)) state.asset = assets[0].asset;
+	seg.innerHTML = '';
+	list.innerHTML = '';
+	for (const a of assets) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.dataset.asset = a.asset;
+		btn.textContent = a.label;
+		btn.setAttribute('aria-pressed', String(a.asset === state.asset));
+		btn.addEventListener('click', () => setAsset(a.asset));
+		seg.appendChild(btn);
+
+		const li = document.createElement('li');
+		li.dataset.asset = a.asset;
+		if (a.asset === state.asset) li.classList.add('is-active');
+		const name = document.createElement('b');
+		name.textContent = a.label;
+		li.append(name, document.createTextNode(rateCopy(a)));
+		const pct = bonusPct(a);
+		if (pct > 0) {
+			const bonus = document.createElement('span');
+			bonus.className = 'bonus';
+			bonus.textContent = `+${pct}% bonus`;
+			li.append(' ', bonus);
+		}
+		list.appendChild(li);
+	}
 }
 
 function setAsset(asset) {
 	state.asset = asset;
-	for (const btn of document.querySelectorAll('.seg button')) {
+	const a = currentAsset();
+	for (const btn of document.querySelectorAll('#asset-seg button')) {
 		btn.setAttribute('aria-pressed', String(btn.dataset.asset === asset));
 	}
-	// Both asset variants ship in the HTML with their own catalog keys, so the
-	// swap is a visibility toggle and the copy stays localized.
-	for (const el of document.querySelectorAll('[data-asset-label], [data-asset-unit]')) {
-		el.hidden = (el.dataset.assetLabel || el.dataset.assetUnit) !== asset;
+	for (const li of document.querySelectorAll('#asset-rates li')) {
+		li.classList.toggle('is-active', li.dataset.asset === asset);
 	}
-	$('amount').step = asset === 'SOL' ? '0.001' : '1';
+	const label = a?.label || asset;
+	$('amount-label').textContent = `Amount (${label})`;
+	$('amount-unit').textContent = label;
+	const decimals = Number(a?.decimals ?? 9);
+	$('amount').step = a?.native ? '0.001' : a?.rate?.kind === 'fixed' ? '0.01' : '1';
+	$('amount').placeholder = decimals > 2 ? '0.0' : '0';
 	const quick = $('quick');
 	quick.innerHTML = '';
-	const presets = asset === 'SOL' ? [0.05, 0.1, 0.25, 0.5, 1] : [10000, 50000, 100000, 500000];
-	for (const p of presets) {
+	for (const p of presetsFor(a)) {
 		const b = document.createElement('button');
 		b.type = 'button';
-		b.textContent = asset === 'SOL' ? `${p} SOL` : `${fmtAmount(p, 0)}`;
+		b.textContent = a?.native || a?.rate?.kind === 'fixed' ? `${p} ${label}` : fmtAmount(p, 0);
 		b.addEventListener('click', () => {
 			$('amount').value = String(p);
 			updateEstimate();
@@ -342,8 +429,10 @@ async function refresh() {
 	}
 	const data = await r.json();
 	state.deposit = data.deposit;
+	state.assets = Array.isArray(data.deposit?.assets) ? data.deposit.assets : [];
 	showState('app');
 	renderAll(data);
+	renderAssets();
 	return data;
 }
 
@@ -375,17 +464,17 @@ async function buildSolTransfer({ web3, conn, from, to, amountSol }) {
 	return tx;
 }
 
-async function buildThreeTransfer({ web3, spl, conn, from, to, amount, mintStr, decimals }) {
+async function buildTokenTransfer({ web3, spl, conn, from, to, amount, mintStr, decimals, label }) {
 	const atomics = BigInt(Math.round(amount * 10 ** decimals));
 	if (atomics <= 0n) throw new Error('Enter an amount greater than zero.');
 	const owner = new web3.PublicKey(from);
 	const dest = new web3.PublicKey(to);
 	const mint = new web3.PublicKey(mintStr);
 
-	// $THREE is a Token-2022 mint, so every derivation and instruction below must
-	// target the mint's real owning program. The spl-token defaults (legacy
-	// TOKEN_PROGRAM_ID) derive the wrong ATAs and fail simulation with "incorrect
-	// program id for instruction".
+	// $THREE is a Token-2022 mint and USDC a legacy SPL mint, so every derivation
+	// and instruction below must target the mint's real owning program. The
+	// spl-token defaults (legacy TOKEN_PROGRAM_ID) derive the wrong ATAs for a
+	// Token-2022 mint and fail simulation with "incorrect program id for instruction".
 	const tokenProgramId = await resolveTokenProgramId(conn, mint, spl);
 	const ataArgs = [false, tokenProgramId, spl.ASSOCIATED_TOKEN_PROGRAM_ID];
 	const srcAta = await spl.getAssociatedTokenAddress(mint, owner, ...ataArgs);
@@ -395,11 +484,11 @@ async function buildThreeTransfer({ web3, spl, conn, from, to, amount, mintStr, 
 		conn.getAccountInfo(srcAta),
 		conn.getAccountInfo(dstAta),
 	]);
-	if (!srcInfo) throw new Error('This wallet holds no $THREE. Buy some first, then deposit.');
+	if (!srcInfo) throw new Error(`This wallet holds no ${label}. Fund it first, then deposit.`);
 	const held = BigInt((await conn.getTokenAccountBalance(srcAta)).value.amount);
 	if (held < atomics) {
 		throw new Error(
-			`Not enough $THREE. This wallet holds ${fmtAmount(Number(held) / 10 ** decimals)}.`,
+			`Not enough ${label}. This wallet holds ${fmtAmount(Number(held) / 10 ** decimals)}.`,
 		);
 	}
 
@@ -454,8 +543,10 @@ async function doDeposit() {
 		const conn = new web3.Connection(`${origin}/api/solana-rpc`, 'confirmed');
 		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
 
+		const a = currentAsset();
+		if (!a) throw new Error('Pick an asset to deposit.');
 		let tx;
-		if (state.asset === 'SOL') {
+		if (a.native) {
 			tx = await buildSolTransfer({
 				web3,
 				conn,
@@ -465,15 +556,16 @@ async function doDeposit() {
 			});
 		} else {
 			const spl = await import('@solana/spl-token');
-			tx = await buildThreeTransfer({
+			tx = await buildTokenTransfer({
 				web3,
 				spl,
 				conn,
 				from: address,
 				to: state.deposit.wallet,
 				amount,
-				mintStr: state.deposit.three_mint,
-				decimals: state.deposit.three_decimals || 6,
+				mintStr: a.mint,
+				decimals: Number(a.decimals) || 6,
+				label: a.label,
 			});
 		}
 		tx.feePayer = new web3.PublicKey(address);
@@ -534,8 +626,10 @@ async function verifyAndApply(txSignature, asset, attempt = 0) {
 	if (data.replay) {
 		setStatus(`Already credited. Balance ${fmtUsd(data.balance_usd)}.`, 'ok');
 	} else {
+		const label = currentAsset()?.label || asset;
+		const bonus = Number(data.bonus_usd) > 0 ? ` plus a ${fmtUsd(data.bonus_usd)} bonus` : '';
 		setStatus(
-			`Added ${fmtUsd(data.credited_usd)} (${fmtAmount(data.amount)} ${asset}). New balance ${fmtUsd(data.balance_usd)}.`,
+			`Added ${fmtUsd(data.credited_usd)} (${fmtAmount(data.amount)} ${label})${bonus}. New balance ${fmtUsd(data.balance_usd)}.`,
 			'ok',
 		);
 	}
@@ -588,9 +682,6 @@ async function copyDepositAddress() {
 }
 
 function wire() {
-	for (const btn of document.querySelectorAll('.seg button')) {
-		btn.addEventListener('click', () => setAsset(btn.dataset.asset));
-	}
 	$('amount').addEventListener('input', updateEstimate);
 	$('deposit-btn').addEventListener('click', doDeposit);
 	$('verify-btn').addEventListener('click', doManualVerify);
@@ -601,9 +692,9 @@ function wire() {
 
 async function main() {
 	wire();
-	setAsset('SOL');
 	try {
 		await refresh();
+		setAsset(state.asset);
 	} catch (err) {
 		showError(err?.message);
 	}

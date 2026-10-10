@@ -274,7 +274,7 @@ async function handleAgentBounty(req, res, { body, userId, agentId }) {
 	try {
 		// Enforces frozen / per-tx / daily-ceiling / allowlist uniformly (reads
 		// getSpendLimits(meta) internally), exactly like a trade or withdraw.
-		await enforceSpendLimit({ agentId, meta, category: 'irl_drop', usdValue, destination: escrowAddress, network: 'mainnet' });
+		await enforceSpendLimit({ agentId, meta, category: 'irl_drop', usdValue, destination: escrowAddress, network: 'mainnet', destinationTrust: 'system' });
 	} catch (e) {
 		if (e instanceof SpendLimitError) {
 			await sql_cancelUnfunded(drop.id);

@@ -138,6 +138,7 @@ async function resolveSellerPayout(sellerUserId, chain) {
 	const [row] = await sql`
 		SELECT address FROM agent_payout_wallets
 		WHERE user_id = ${sellerUserId} AND chain = ${chain} AND is_default = true
+		  AND approved_at IS NOT NULL AND effective_at <= now()
 		ORDER BY created_at ASC
 		LIMIT 1
 	`;

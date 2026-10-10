@@ -10,7 +10,7 @@ vi.mock('../api/_lib/db.js', () => ({ sql: vi.fn(async () => []) }));
 vi.mock('../api/_lib/sol-price.js', () => ({ solPriceUsd: vi.fn(async () => 100) }));
 vi.mock('../api/_lib/r2.js', () => ({ publicUrl: (k) => `https://cdn.example/${k}` }));
 
-const { windowRange, normalizeWindow, shapeTotals, earningsMethod, EARNINGS_WINDOWS } = await import(
+const { windowRange, normalizeWindow, shapeTotals, serviceIncomeUsd, earningsMethod, EARNINGS_WINDOWS } = await import(
 	'../api/_lib/agent-earnings.js'
 );
 
@@ -27,6 +27,8 @@ const totals = (over = {}) => ({
 	skill_sales_count: 0,
 	hires_usd: 0,
 	hires_count: 0,
+	invoices_usd: 0,
+	invoices_count: 0,
 	...over,
 });
 
@@ -74,6 +76,16 @@ describe('shapeTotals', () => {
 		expect(out.creator_fees).toEqual({ lamports: '1500000000', sol: 1.5, usd: 150 });
 		expect(out.service_income).toMatchObject({ usd: 50, sol: 0.5, skill_sales_count: 2, hires_count: 1 });
 		expect(out.total).toEqual({ sol: 2, usd: 200 });
+	});
+
+	it('counts paid invoices as service income next to skill sales and hires', () => {
+		const out = shapeTotals(
+			totals({ skill_sales_usd: 10, skill_sales_count: 1, hires_usd: 5, hires_count: 1, invoices_usd: 35, invoices_count: 2 }),
+			100,
+		);
+		expect(out.service_income).toMatchObject({ usd: 50, sol: 0.5, invoices_usd: 35, invoices_count: 2 });
+		expect(out.total).toEqual({ sol: 0.5, usd: 50 });
+		expect(serviceIncomeUsd(totals({ invoices_usd: 12.5 }))).toBe(12.5);
 	});
 
 	it('never invents a USD figure when the SOL price is unknown', () => {

@@ -647,7 +647,7 @@ describe('wallet endpoint (payout addresses)', () => {
 		// No agent-specific row: only a user-level (agent_id NULL) payout wallet,
 		// which is exactly the row withdrawals.js falls back to.
 		sqlState.queue.push([
-			{ id: 'w1', agent_id: null, address: SOL_ADDRESS, chain: 'solana', is_default: true, preferred_network: 'solana' },
+			{ id: 'w1', agent_id: null, address: SOL_ADDRESS, chain: 'solana', is_default: true, preferred_network: 'solana', approved_at: '2026-01-01T00:00:00Z', effective_at: '2026-01-01T00:00:00Z' },
 		]);
 
 		const { status, body } = await invoke(walletHandler, {
@@ -730,6 +730,10 @@ describe('wallet endpoint (payout addresses)', () => {
 		authState.session = session;
 
 		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
+		// The cooldown policy looks for a live wallet on each rail first: none,
+		// so both addresses are first wallets and go live at once with no step-up.
+		sqlState.queue.push([]); // no current solana payout wallet
+		sqlState.queue.push([]); // no current evm payout wallet
 		sqlState.queue.push([]); // clear solana default
 		sqlState.queue.push([{ id: 'w-sol', agent_id: agent.id, address: SOL_ADDRESS, chain: 'solana', is_default: true, preferred_network: 'solana' }]);
 		sqlState.queue.push([]); // clear base default
@@ -747,6 +751,27 @@ describe('wallet endpoint (payout addresses)', () => {
 		expect(body.resolved.evm_address).toBe(EVM_ADDRESS);
 		const upserts = sqlState.calls.filter((c) => c.query.includes('ON CONFLICT'));
 		expect(upserts).toHaveLength(2);
+	});
+
+	it('refuses to replace a live payout wallet without step-up, and says what it would replace', async () => {
+		const { agent, session } = createTestAgent();
+		authState.session = session;
+		const CURRENT = 'THREEsynthetic1111111111111111111111111111111';
+
+		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
+		sqlState.queue.push([{ id: 'w-old', agent_id: agent.id, address: CURRENT, chain: 'solana', is_default: true, approved_at: '2026-01-01T00:00:00Z', effective_at: '2026-01-01T00:00:00Z' }]);
+
+		const { status, body } = await invoke(walletHandler, {
+			method: 'PUT',
+			url: '/api/monetization/wallet',
+			body: { agent_id: agent.id, solana_address: SOL_ADDRESS },
+		});
+
+		expect(status).toBe(403);
+		expect(body.error).toBe('step_up_required');
+		expect(body.current_address).toBe(CURRENT);
+		expect(body.cooldown_hours).toBe(24);
+		expect(sqlState.calls.some((c) => c.query.includes('ON CONFLICT'))).toBe(false);
 	});
 
 	it('returns 404 when the agent does not exist', async () => {

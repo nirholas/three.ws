@@ -6,6 +6,9 @@
 // (order:<id>:slice:<n>) is the real double-spend backstop.
 
 import { sql } from '../../api/_lib/db.js';
+import { recordOrderEvent } from '../../api/_lib/orders.js';
+
+const SKIP_REFRESH_MS = 60_000;
 
 /**
  * Active/partial orders on this network: the sweep's work set, least-recently-seen
@@ -28,16 +31,18 @@ export async function getActiveOrders(network, limit = 500) {
 	`;
 }
 
-/** Expire orders past their deadline (active/partial only). Returns count. */
+/**
+ * Expire orders past their deadline (active/partial/paused). Returns the expired
+ * rows so the sweep can log an event and tell the owner.
+ */
 export async function expireOrders(network) {
-	const rows = await sql`
-		UPDATE orders SET status = 'expired', updated_at = now()
+	return sql`
+		UPDATE orders SET status = 'expired', cancel_reason = 'expired', updated_at = now()
 		WHERE network = ${network}
-		  AND status IN ('active', 'partial')
+		  AND status IN ('active', 'partial', 'paused')
 		  AND expires_at IS NOT NULL AND expires_at < now()
-		RETURNING id
+		RETURNING id, agent_id, user_id, mint, symbol, type, side, fill_count
 	`;
-	return rows.length;
 }
 
 /** Reset orders stuck in 'firing' (a crash mid-fire) back to their prior state. */
@@ -71,6 +76,89 @@ export async function releaseFire(orderId, status, error = null) {
 		UPDATE orders SET status = ${status}, last_error = ${error}, updated_at = now()
 		WHERE id = ${orderId} AND status = 'firing'
 	`;
+}
+
+/** Pin the route an order resolved to (launchpad | aggregator) the first time it prices. */
+export async function setRoute(orderId, route) {
+	await sql`UPDATE orders SET route = ${route} WHERE id = ${orderId}`;
+}
+
+// One history writer for the API and the worker (api/_lib/orders.js).
+export { recordOrderEvent };
+
+/**
+ * Record why this evaluation did not fill. The reason lives on the order (what
+ * the book shows now); an event row is written only when the reason CHANGES, so
+ * an order waiting on the same cap for a day leaves one history row, not 17,000.
+ * `holdUntil` backs the order off (venue breaker) until that time.
+ */
+export async function noteSkip(order, code, detail = null, { holdUntil = null } = {}) {
+	const d = detail ? String(detail).slice(0, 280) : null;
+	// The same reason seen again within a minute is not news: skip the write, so
+	// a 3-second sweep over a large book does not rewrite every row every pass.
+	const lastAt = order.last_skip_at ? new Date(order.last_skip_at).getTime() : 0;
+	if (order.last_skip_code === code && !holdUntil && Date.now() - lastAt < SKIP_REFRESH_MS) return;
+	order.last_skip_at = new Date().toISOString();
+	await sql`
+		UPDATE orders
+		SET last_skip_code = ${code}, last_skip_detail = ${d}, last_skip_at = now(),
+		    skip_count = skip_count + 1, hold_until = ${holdUntil}
+		WHERE id = ${order.id}
+	`;
+	if (order.last_skip_code !== code) {
+		await recordOrderEvent(order, 'skip', { code, detail: d });
+		order.last_skip_code = code;
+	}
+}
+
+/** A live quote that simply has not triggered: clear a stale skip reason. */
+export async function clearSkip(order) {
+	if (!order.last_skip_code) return;
+	await sql`UPDATE orders SET last_skip_code = NULL, last_skip_detail = NULL, hold_until = NULL WHERE id = ${order.id}`;
+	order.last_skip_code = null;
+}
+
+/**
+ * A DCA slice whose price sat outside the order's band is consumed, not
+ * retried: "buy every hour, only under X" skips that hour. The schedule keeps a
+ * skipped_slices count beside filled_slices, and the order finishes when the two
+ * reach `slices` (filled if anything bought, expired if the band never let it).
+ */
+export async function consumeSkippedSlice(order, { terminal, nextFireAt }) {
+	const schedule = { ...(order.schedule || {}), skipped_slices: Number(order.schedule?.skipped_slices || 0) + 1 };
+	const status = terminal ? (order.fill_count > 0 ? 'filled' : 'expired') : order.status;
+	await sql`
+		UPDATE orders
+		SET schedule = ${JSON.stringify(schedule)}::jsonb,
+		    next_fire_at = ${terminal ? null : nextFireAt},
+		    status = ${status},
+		    cancel_reason = ${terminal && order.fill_count === 0 ? 'band_never_reached' : null},
+		    updated_at = now()
+		WHERE id = ${order.id} AND status IN ('active', 'partial')
+	`;
+	order.schedule = schedule;
+	return status;
+}
+
+/** Every order in a ladder or OCO group (for re-basing ladder legs). */
+export async function getGroupOrders(groupId) {
+	return sql`SELECT id, status, sell_pct, size_tokens, group_leg, fill_count FROM orders WHERE group_id = ${groupId}`;
+}
+
+/**
+ * One OCO leg filled: cancel every other leg that can still fire, atomically,
+ * so the second leg never sells a bag the first one already sold. Returns the
+ * cancelled ids.
+ */
+export async function cancelGroupSiblings(order, reason) {
+	const rows = await sql`
+		UPDATE orders SET status = 'cancelled', cancel_reason = ${reason}, cancelled_at = now(), updated_at = now()
+		WHERE group_id = ${order.group_id} AND id <> ${order.id}
+		  AND status IN ('active', 'partial', 'paused')
+		RETURNING id, agent_id
+	`;
+	for (const r of rows) await recordOrderEvent(r, 'cancel', { code: reason, detail: `leg ${order.id} filled` });
+	return rows.map((r) => r.id);
 }
 
 /** Persist the per-sweep observation (last metric value + trailing high/low-water). */
@@ -123,13 +211,15 @@ export async function recordFillAndAdvance({ order, fill, terminal, terminalErro
 		const nextStatus = terminalError ? 'error' : (order.fill_count > 0 ? 'partial' : 'active');
 		await sql`
 			UPDATE orders SET status = ${nextStatus},
-			    last_error = ${(fill.detail || 'fill_failed').slice(0, 280)}, updated_at = now()
+			    last_error = ${(fill.detail || 'fill_failed').slice(0, 280)},
+			    consecutive_failures = consecutive_failures + 1, updated_at = now()
 			WHERE id = ${order.id} AND status = 'firing'
 		`;
 		return;
 	}
 
-	// Advance the schedule counter for dca/twap.
+	// Advance the schedule counter for dca/twap. A skipped (out-of-band) slice
+	// was already counted by consumeSkippedSlice.
 	let schedule = order.schedule || null;
 	if (schedule && (order.type === 'dca' || order.type === 'twap')) {
 		schedule = { ...schedule, filled_slices: (schedule.filled_slices || 0) + 1 };

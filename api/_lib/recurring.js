@@ -4,8 +4,10 @@
  * Two schedule kinds ride the same rails:
  *   - `agent_subscriptions`: a fixed USDC transfer per period, charged by the
  *     run-subscriptions cron through /api/permissions/redeem.
- *   - `dca_strategies`: a fixed USDC swap per period, executed by the run-dca
- *     cron through the same relayer.
+ *   - EVM DCA schedules: a fixed USDC swap per period, executed by the run-dca
+ *     cron through the same relayer. They live in the unified order store
+ *     (`orders` rows on network 'evm', see api/_lib/dca-unified.js); the
+ *     legacy `dca_strategies` table is only read once, to adopt old rows.
  *
  * Both used to treat every failure identically: pause the schedule and write a
  * raw error string. A one-off RPC blip therefore killed a schedule as

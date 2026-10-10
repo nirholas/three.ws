@@ -67,7 +67,7 @@ export function requireUser(ctx) {
 /**
  * Require a token scope. A browser session carries the whole account; a
  * wallet:write grant satisfies wallet:read, since a caller allowed to spend may
- * read what it is spending.
+ * read what it is spending (and wallet:trade, via hasScope's implication map).
  */
 export function requireScope(ctx, scope) {
 	const p = ctx?.principal;

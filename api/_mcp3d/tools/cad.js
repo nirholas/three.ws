@@ -141,7 +141,8 @@ export const toolDefs = [
 			'Rebuild a CAD Forge design (from cad_generate) at new parameter values, e.g. {"WIDTH": 120, "WALL": 3}. Runs the ' +
 			"design's own program on the OpenCascade kernel with no model involved, so the result is exact and repeatable. " +
 			'Values are clamped to each parameter\'s range. Returns fresh STEP, STL, GLB and drawing files and a link to this ' +
-			'configuration. Identical values return the cached build instantly.',
+			'configuration. Identical values return the cached build instantly. Use this to change the dimensions of an existing ' +
+			'cad_generate design without regenerating it; for a different shape call cad_generate with parent_id instead.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

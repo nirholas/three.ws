@@ -647,6 +647,24 @@ export const limits = {
 		getLimiter('auth:handoff:user', { limit: 30, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
 	cliPoll: (deviceHash) =>
 		getLimiter('cli:poll', { limit: 240, window: '10 m', local: true }).limit(deviceHash),
+	// Account linking (api/auth/telegram, api/auth/link-codes, api/auth/external-wallet).
+	// A magic link or a link code is one tap per device; 20 per 10 min per IP
+	// covers a flaky phone retrying and stops a script from filling the table.
+	// Polls are keyed on the request id and clear one every two seconds for
+	// the ten-minute life of a token. Claims from the device side are per IP.
+	// Wallet proofs are per user: a nonce burns on use, so retries are rare.
+	telegramMagicIp: (ip) =>
+		getLimiter('tg:magic:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	telegramMagicPoll: (id) =>
+		getLimiter('tg:magic:poll', { limit: 300, window: '10 m', local: true }).limit(id),
+	linkCodeUser: (userId) =>
+		getLimiter('link:code:user', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
+	linkCodeClaimIp: (ip) =>
+		getLimiter('link:code:claim:ip', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	linkCodePoll: (id) =>
+		getLimiter('link:code:poll', { limit: 300, window: '10 m', local: true }).limit(id),
+	externalWalletUser: (userId) =>
+		getLimiter('wallet:external', { limit: 20, window: '10 m', critical: true, degradeToMemory: true }).limit(userId),
 	// Open inference network (api/nodes/*). Node registration is an idempotent
 	// upsert an operator runs once per boot, so it gets a tight per-IP ceiling.
 	// The poll loop and result submission are the node's steady-state traffic:
@@ -939,6 +957,11 @@ export const limits = {
 	// Per-call x402 payments skip it: each of those already covered its own cost.
 	mcpMint3dUnpaidMainnet: (key) =>
 		getLimiter('mcp:mint3d:unpaid:mainnet', { limit: 5, window: '1 d', critical: true }).limit(key),
+	// Web domains. Every uncached search or check is a metered Cloud Domains
+	// request (300 a day per project), so a caller gets a small hourly budget and
+	// a registration attempt, which spends credits, a smaller one.
+	domainsLookup: (key) => getLimiter('domains:lookup', { limit: 40, window: '1 h' }).limit(key),
+	domainsRegister: (key) => getLimiter('domains:register', { limit: 10, window: '1 h', critical: true }).limit(key),
 	mcpMint3dUnpaidDevnet: (key) =>
 		getLimiter('mcp:mint3d:unpaid:devnet', { limit: 30, window: '1 h', critical: true }).limit(key),
 	// 3D Studio MCP. Generation submits a real GPU job on Replicate (text→image
@@ -957,11 +980,6 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
-	// Web domains. Every uncached search or check is a metered Cloud Domains
-	// request (300 a day per project), so a caller gets a small hourly budget and
-	// a registration attempt, which spends credits, a smaller one.
-	domainsLookup: (key) => getLimiter('domains:lookup', { limit: 40, window: '1 h' }).limit(key),
-	domainsRegister: (key) => getLimiter('domains:register', { limit: 10, window: '1 h', critical: true }).limit(key),
 	// Free generation lane (NVIDIA NIM TRELLIS draft). No Replicate/vendor spend,
 	// so it gets a much higher per-principal ceiling than the paid bucket and is
 	// NON-critical: a Redis outage must never deny a zero-cost generation (fail
@@ -2272,11 +2290,35 @@ export const limits = {
 	// owner clearing a backlog taps fast; it exists so a stuck client loop cannot
 	// hammer the decide path. Local: a decision is already idempotent in the DB.
 	approvalsUser: (userId) => getLimiter('approvals:user', { limit: 240, window: '5 m', local: true }).limit(userId),
+	// Destination allowlist (api/wallet-whitelist). Reads and edits per user, a tight
+	// lane for step-up attempts (password / code guessing), and a per-IP lane for the
+	// unauthenticated signed cancel link.
+	whitelistUser: (userId) => getLimiter('whitelist:user', { limit: 120, window: '5 m' }).limit(userId),
+	whitelistStepUp: (userId) => getLimiter('whitelist:stepup', { limit: 10, window: '10 m' }).limit(userId),
+	whitelistCancelIp: (ip) => getLimiter('whitelist:cancel-ip', { limit: 30, window: '10 m' }).limit(ip),
+	// Agent self-signup (api/v1/agents/signup.js). Creating an account mints
+	// wallets, so both lanes are tight and fail closed when Redis is down: a
+	// per-IP lane against one host spraying keys, and a per-public-key lane
+	// against one key hammering a signature it cannot get right.
+	agentSignupIp: (ip) => getLimiter('agent-signup:ip', { limit: 5, window: '1 h', critical: true }).limit(ip),
+	agentSignupKey: (publicKey) => getLimiter('agent-signup:key', { limit: 10, window: '1 h', critical: true }).limit(publicKey),
+	// Agent commerce (api/agent-commerce/[...route].js). The public invoice page
+	// and its verify button reach the chain, so they are capped per IP; owner
+	// writes per user; an approval decision checks a password or a signature, so
+	// it fails closed and stays tight against guessing.
+	commercePublic: (ip) => getLimiter('commerce:public', { limit: 120, window: '1 m' }).limit(ip),
+	commerceVerify: (ip) => getLimiter('commerce:verify', { limit: 20, window: '1 m' }).limit(ip),
+	commerceOwner: (userId) => getLimiter('commerce:owner', { limit: 120, window: '1 m' }).limit(userId),
+	commerceDecide: (userId) => getLimiter('commerce:decide', { limit: 10, window: '10 m', critical: true }).limit(userId),
 	// External skill import (api/skill-imports.js). Browse is served from a
 	// five-minute index cache; a scan or update check fetches upstream bytes and
 	// runs the Guardian pass, so those are capped per owner.
 	skillImportBrowseIp: (ip) => getLimiter('skill-import:browse:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
 	skillImportScanUser: (userId) => getLimiter('skill-import:scan:user', { limit: 40, window: '10 m' }).limit(userId),
+	// Developer plan burst ceiling (api/_lib/dev-plans/quota.js). One sliding
+	// minute per account; the limit comes from the plan config, so each plan
+	// gets its own bucket name and the memo in getLimiter keys on the limit too.
+	devPlanBurst: (planId, key, { limit }) => getLimiter(`devplan:burst:${planId}`, { limit, window: '1 m' }).limit(key),
 };
 
 // Fixed-window counters for limits.planApi. One small record per principal, so

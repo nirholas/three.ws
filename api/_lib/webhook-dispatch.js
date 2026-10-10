@@ -4,7 +4,14 @@
 // Signature (Standard Webhooks format):
 //   webhook-id:        the event ID, stable across retries and replays
 //   webhook-timestamp: unix epoch seconds of THIS attempt
-//   webhook-signature: v1,{base64url HMAC-SHA256 of `${id}.${timestamp}.${body}`}
+//   webhook-signature: two space-separated `v1,` signatures over
+//                      `${id}.${timestamp}.${body}` (signatureHeader):
+//     1. the spec signature: base64 HMAC-SHA256 keyed by the base64-decoded
+//        part of the secret after `whsec_`. The official Standard Webhooks
+//        libraries verify this one.
+//     2. the original three.ws signature: base64url HMAC-SHA256 keyed by the
+//        whole `whsec_...` string, which receivers built before the switch
+//        verify. The spec says a receiver accepts any listed signature.
 //
 // Delivery model (migration 20261010170000_agent_webhook_queue.sql):
 //   • Raising an event writes one webhook_deliveries row per matching endpoint
@@ -21,6 +28,7 @@
 //     `replay_of`, with the original event ID so receivers can deduplicate.
 
 import { sql } from './db.js';
+import { createHmac, randomBytes } from 'node:crypto';
 import { randomToken, hmacSha256 } from './crypto.js';
 import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from './ssrf.js';
 
@@ -69,6 +77,13 @@ const EVENT_TYPES = [
 	'automation.fired', // an automation's trigger matched and its action ran
 	'message.received', // a user message was added to an agent's thread
 	'approval.needed', // an agent action is waiting for the owner's approval
+	// Agent commerce invoices (api/_lib/agent-commerce/invoices.js, docs/agent-commerce.md).
+	// Each carries the invoice's public shape plus `agent_id` when an agent issued it.
+	'invoice.created',
+	'invoice.paid', // the verified on-chain total reached the amount due
+	'invoice.underpaid', // a verified payment landed but the total is still short
+	'invoice.expired', // the due date passed before it was paid in full
+	'invoice.cancelled',
 ];
 
 // Sent only by POST /api/v1/webhooks/:id/test, to that one endpoint, whatever
@@ -115,9 +130,31 @@ export function privateTargetsAllowed() {
 	return process.env.NODE_ENV !== 'production' && process.env.WEBHOOKS_ALLOW_PRIVATE_TARGETS === '1';
 }
 
-/** A fresh signing secret. */
+const LOCAL_HOST_RE = /^(localhost|.+\.localhost|host\.docker\.internal|127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|\[::1\])$/i;
+
+/** Loopback, RFC 1918 or a Docker host alias: what local testing may target. */
+function isLocalHost(hostname) {
+	return LOCAL_HOST_RE.test(hostname);
+}
+
+/**
+ * A fresh signing secret: `whsec_` plus 24 random bytes in standard base64, the
+ * form the Standard Webhooks libraries decode. Secrets issued before the switch
+ * are base64url; both still verify through the second signature.
+ */
 export function newWebhookSecret() {
-	return `whsec_${randomToken(24)}`;
+	return `whsec_${randomBytes(24).toString('base64')}`;
+}
+
+/** The `webhook-signature` header value for one attempt. */
+export async function signatureHeader(secret, eventId, timestamp, body) {
+	const content = `${eventId}.${timestamp}.${body}`;
+	// Buffer's base64 decoder also reads the base64url alphabet, so an older
+	// secret gets a spec signature too.
+	const keyBytes = Buffer.from(String(secret).replace(/^whsec_/, ''), 'base64');
+	const spec = createHmac('sha256', keyBytes).update(content).digest('base64');
+	const legacy = await hmacSha256(secret, content);
+	return `v1,${spec} v1,${legacy}`;
 }
 
 /** A fresh event ID. */
@@ -364,7 +401,9 @@ export async function webhookUrlProblem(raw) {
 	} catch {
 		return 'url is not a valid URL';
 	}
-	if (privateTargetsAllowed() && (parsed.protocol === 'http:' || parsed.protocol === 'https:')) return null;
+	// The local-testing switch admits a receiver on this machine or the LAN over
+	// plain http; a public host still has to be https.
+	if (privateTargetsAllowed() && isLocalHost(parsed.hostname) && (parsed.protocol === 'http:' || parsed.protocol === 'https:')) return null;
 	if (parsed.protocol !== 'https:') return 'Webhook URL must use HTTPS';
 	try {
 		validatePublicUrl(url, { allowHttp: false });
@@ -377,7 +416,7 @@ export async function webhookUrlProblem(raw) {
 
 async function deliver(url, secret, eventId, body) {
 	const timestamp = Math.floor(Date.now() / 1000);
-	const signature = await hmacSha256(secret, `${eventId}.${timestamp}.${body}`);
+	const signature = await signatureHeader(secret, eventId, timestamp, body);
 
 	// SSRF guard: the URL is developer-supplied, so resolve it and pin the
 	// connection to the validated public address(es). Without this, a webhook
@@ -414,7 +453,7 @@ async function deliver(url, secret, eventId, body) {
 					'content-type': 'application/json',
 					'webhook-id': eventId,
 					'webhook-timestamp': String(timestamp),
-					'webhook-signature': `v1,${signature}`,
+					'webhook-signature': signature,
 					'user-agent': 'three.ws-webhooks/1.0',
 				},
 				body,

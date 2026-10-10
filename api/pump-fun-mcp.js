@@ -1496,6 +1496,16 @@ export function listPumpFunTools() {
 }
 
 /**
+ * Every tool this server can serve, each flagged with whether it needs the
+ * pump.fun indexer. listPumpFunTools() is the subset live right now; the MCP
+ * census (api/_lib/mcp-census.js) publishes both numbers.
+ * @returns {Array<{ tool: object, indexer: boolean }>}
+ */
+export function listAllPumpFunTools() {
+	return TOOLS.map((tool) => ({ tool, indexer: INDEXER_TOOLS.has(tool.name) }));
+}
+
+/**
  * The raw handler for one tool, for a caller that authenticates the request
  * itself (the unified server at /mcp). Unlike callPumpFunTool this includes
  * the gated tools, so that caller owns their bearer-or-payment check and the

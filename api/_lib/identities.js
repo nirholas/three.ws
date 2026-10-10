@@ -7,10 +7,12 @@
 //
 // Three flows share one round trip to Google (api/auth/google/[action].js):
 //
-//   login   no session needed. The Google `sub` must already be linked to an
-//           account; an unlinked Google account is never turned into a new
-//           account or matched by email, so a Google account can only ever
-//           reach the three.ws account that deliberately linked it.
+//   login   no session needed. A Google `sub` that is already linked signs
+//           straight in. One that is not is matched by email only when Google
+//           vouches for the address (email_verified) AND the three.ws account
+//           holding it verified the same address itself, and even then the
+//           person confirms the link on a page of their own before it happens.
+//           With no such account, a new passwordless account is created.
 //   link    needs a session. Links the Google account to the signed-in user.
 //   reauth  needs a session. Proves the person at the keyboard can sign in to
 //           the Google account linked to this user right now (prompt=login,
@@ -62,13 +64,18 @@ export function googleRedirectUri() {
 
 // ── Signed cookies ───────────────────────────────────────────────────────────
 
-async function sign(payload) {
+/**
+ * HMAC-sign a payload for a short-lived identity cookie. `e` (unix seconds) is
+ * the expiry unsign enforces. Exported for the handler's own confirm cookie.
+ */
+export async function signIdentityPayload(payload) {
 	const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 	const sig = await hmacSha256(env.JWT_SECRET, `identity:${body}`);
 	return `${body}.${sig}`;
 }
 
-async function unsign(token) {
+/** The payload behind a cookie signIdentityPayload made, or null when forged or expired. */
+export async function unsignIdentityPayload(token) {
 	if (typeof token !== 'string') return null;
 	const dot = token.lastIndexOf('.');
 	if (dot <= 0) return null;
@@ -110,7 +117,7 @@ export async function startGoogleFlow({ intent, userId = null, next = null, logi
 	const nonce = randomToken(16);
 	const verifier = randomToken(32);
 	const challenge = await sha256Base64Url(verifier);
-	const flow = await sign({
+	const flow = await signIdentityPayload({
 		s: state,
 		n: nonce,
 		v: verifier,
@@ -141,7 +148,7 @@ export async function startGoogleFlow({ intent, userId = null, next = null, logi
 
 /** Read and check the flow cookie against the `state` Google sent back. */
 export async function readGoogleFlow(req, state) {
-	const payload = await unsign(readCookie(req, FLOW_COOKIE));
+	const payload = await unsignIdentityPayload(readCookie(req, FLOW_COOKIE));
 	if (!payload || typeof state !== 'string' || !constantTimeEquals(payload.s, state)) return null;
 	return { nonce: payload.n, verifier: payload.v, intent: payload.i, userId: payload.u || null, next: payload.x || null };
 }
@@ -303,13 +310,13 @@ export async function listSignInMethods(userId) {
 
 /** Cookie proving this user re-authenticated with a provider just now. */
 export async function reauthCookie(userId, provider) {
-	const token = await sign({ u: userId, p: provider, e: Math.floor(Date.now() / 1000) + REAUTH_TTL_SEC });
+	const token = await signIdentityPayload({ u: userId, p: provider, e: Math.floor(Date.now() / 1000) + REAUTH_TTL_SEC });
 	return cookie(REAUTH_COOKIE, token, REAUTH_TTL_SEC);
 }
 
 /** The provider the user re-authenticated with in the last five minutes, or null. */
 export async function readReauth(req, userId) {
-	const payload = await unsign(readCookie(req, REAUTH_COOKIE));
+	const payload = await unsignIdentityPayload(readCookie(req, REAUTH_COOKIE));
 	return payload && payload.u === userId ? payload.p : null;
 }
 
@@ -327,7 +334,7 @@ export async function unlinkIdentity({ userId, provider }) {
 			'last_sign_in_method',
 			`${provider} is the only way into this account. Set a password or link a wallet first`,
 			409,
-			{ settings_url: '/settings/connections#sign-in' },
+			{ settings_url: '/dashboard/settings#sign-in-methods' },
 		);
 	}
 	const rows = await sql`

@@ -68,7 +68,7 @@ export function usdcToAtomics(usdc) {
  */
 export async function transferUsdcGuarded({
 	fromAgentId, fromUserId, fromMeta, toAddress, usdc, amountAtomics = null,
-	network = 'mainnet', category = 'signal', idempotencyKey, rowMeta = {},
+	network = 'mainnet', category = 'signal', idempotencyKey, rowMeta = {}, destinationTrust = null,
 }) {
 	const net = network === 'devnet' ? 'devnet' : 'mainnet';
 	const amount = Number(usdc);
@@ -113,7 +113,7 @@ export async function transferUsdcGuarded({
 			agentId: fromAgentId, userId: fromUserId, meta: fromMeta,
 			limits: getSpendLimits(fromMeta), category, usdValue: amount,
 			destination: toAddress, network: net, asset: 'USDC',
-			rowMeta: { ...rowMeta, idempotency_key: idempotencyKey },
+			rowMeta: { ...rowMeta, idempotency_key: idempotencyKey }, destinationTrust,
 		});
 		reservationId = reservation.reservationId;
 	} catch (e) {

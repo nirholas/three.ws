@@ -10,6 +10,7 @@ import { renderError as renderAsyncError } from '/src/shared/async-state.js';
 import { log } from '../shared/log.js';
 import { safeUrl } from '../safe-url.js';
 import { resolveURI } from '../ipfs.js';
+import { withPayoutStepUp, cooldownNotice } from '../payout-step-up.js';
 
 function escapeHtml(s) {
 	return String(s == null ? '' : s)
@@ -3286,18 +3287,18 @@ async function renderMonetization(root) {
 		msgEl.style.color = '#888';
 		msgEl.textContent = 'Saving…';
 		try {
-			const r = await apiFetch('/api/billing/payout-wallets', {
-				method: 'POST',
-				credentials: 'include',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ address, chain, agent_id: agentId, is_default: true }),
+			const r = await withPayoutStepUp(async (extra) => {
+				const res = await apiFetch('/api/billing/payout-wallets', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ address, chain, agent_id: agentId, is_default: true, ...extra }),
+				});
+				return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
 			});
-			if (!r.ok) {
-				const d = await r.json().catch(() => ({}));
-				throw new Error(d.error_description || `HTTP ${r.status}`);
-			}
+			if (!r.ok) throw new Error(r.data.error_description || `HTTP ${r.status}`);
 			msgEl.style.color = '#888888';
-			msgEl.textContent = 'Saved ✓';
+			msgEl.textContent = cooldownNotice(r.data.wallet) === 'Payout wallet saved' ? 'Saved ✓' : cooldownNotice(r.data.wallet);
 			setTimeout(() => {
 				msgEl.textContent = '';
 			}, 2000);

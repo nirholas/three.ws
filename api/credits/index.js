@@ -1,5 +1,5 @@
 // GET /api/credits — the authenticated caller's prepaid credit balance, recent
-// ledger, where to deposit (SOL or $THREE), and what credits buy. Powers the
+// ledger, where to deposit (SOL, USDC or $THREE), and what credits buy. Powers the
 // /credits page and the in-app balance pill. Resolves a browser session cookie
 // OR a Bearer access token (so first-party clients and agents both read it).
 //
@@ -12,7 +12,7 @@ import { sql } from '../_lib/db.js';
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getCreditAccount, listLedger } from '../_lib/credits.js';
-import { depositWallet } from '../_lib/credit-deposit.js';
+import { depositWallet, depositAssetCatalog } from '../_lib/credit-deposit.js';
 import { TOKEN_MINT, TOKEN_SYMBOL, TOKEN_DECIMALS } from '../_lib/token/config.js';
 import { publicCatalog } from '../_lib/pricing/catalog.js';
 import { resolveUserTier, nextTier } from '../_lib/three-tier.js';
@@ -96,7 +96,12 @@ export default wrap(async (req, res) => {
 		deposit: {
 			wallet: depositWallet(),
 			network: 'mainnet',
-			accepts: ['SOL', 'THREE'],
+			// Every accepted asset with its mint, decimals, pricing rule and bonus,
+			// read from live config (credit-deposit.js + token/config.js). The
+			// credits page renders its asset picker and rate copy from this list;
+			// `accepts` keeps the legacy symbol array for older clients.
+			assets: depositAssetCatalog('mainnet'),
+			accepts: depositAssetCatalog('mainnet').map((a) => a.asset),
 			three_mint: TOKEN_MINT,
 			three_symbol: TOKEN_SYMBOL,
 			three_decimals: TOKEN_DECIMALS,

@@ -44,7 +44,8 @@ export default wrap(async (req, res) => {
 		const rlList = await limits.apiKeyList(user.id);
 		if (!rlList.success) return rateLimited(res, rlList);
 		const rows = await sql`
-			select id, name, prefix, scope, preset, last_used_at, expires_at, revoked_at, created_at
+			select id, name, prefix, scope, preset, last_used_at, expires_at, revoked_at, created_at,
+				ip_allowlist, rotated_from, rotated_to, overlap_until
 			from api_keys where user_id = ${user.id} order by created_at desc
 		`;
 		return json(res, 200, { keys: rows });

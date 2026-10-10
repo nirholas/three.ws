@@ -7,6 +7,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, patch, del, esc, relTime, initialsOf } from '../api.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
+import { loadLinkedDevices, loadPayoutWallets } from './account-linking.js';
 
 // Loading placeholder — a stack of shimmer rows sized for a table/list slot.
 function skelStack(count) {
@@ -33,7 +34,7 @@ const CHAIN_STYLES = {
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 
 const CATEGORY_BY_ACTION = [
-	[/^(link_wallet|unlink_wallet|set_primary_wallet|password_|email_|login|logout|session|revoke_oauth_token)/, 'Auth'],
+	[/^(link_wallet|unlink_wallet|set_primary_wallet|password_|email_|login|logout|session|revoke_oauth_token|link_|unlink_|reauth|register)/, 'Auth'],
 	[/^(avatar_|create_avatar|delete_avatar|upload_avatar)/,             'Avatar'],
 	[/^(widget_|embed_)/,                                                'Widget'],
 	[/^(payment_|invoice_|payout_|withdraw_|stripe_|x402_)/,             'Payment'],
@@ -118,6 +119,22 @@ async function copyToClipboard(text) {
 				<div data-slot="wallets">${skelStack(3)}</div>
 			</section>
 
+			<section class="dn-panel" id="payout-wallets" data-section="payout-wallets">
+				<div style="margin-bottom:14px">
+					<div class="dn-panel-title">Payout wallets</div>
+					<div class="dn-panel-sub" style="margin:0">Where earnings go, for the whole account or one agent. Proved with a signed message; changes to a live wallet need step-up and a cooldown.</div>
+				</div>
+				<div data-slot="payout-wallets">${skelStack(2)}</div>
+			</section>
+
+			<section class="dn-panel" id="linked-devices" data-section="linked-devices">
+				<div style="margin-bottom:14px">
+					<div class="dn-panel-title">Linked devices</div>
+					<div class="dn-panel-sub" style="margin:0">Phones, desktop apps, terminals and Telegram chats signed in with a one-time link code. Revoke any of them with one click.</div>
+				</div>
+				<div data-slot="linked-devices">${skelStack(3)}</div>
+			</section>
+
 			<section class="dn-panel" data-section="vanity">
 				<div style="display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:14px;flex-wrap:wrap">
 					<div>
@@ -192,6 +209,10 @@ async function copyToClipboard(text) {
 
 	snsPanelHost = snsHost;
 	await loadWallets(walletsHost);
+
+	loadLinkedDevices(main.querySelector('[data-slot="linked-devices"]'));
+	get('/api/agents?limit=100').then((r) => (Array.isArray(r?.agents) ? r.agents : Array.isArray(r) ? r : [])).catch(() => [])
+		.then((agents) => loadPayoutWallets(main.querySelector('[data-slot="payout-wallets"]'), agents));
 
 	const delegationConsoleHost = main.querySelector('[data-slot="delegation-console"]');
 	const delegationSection = main.querySelector('#delegation');

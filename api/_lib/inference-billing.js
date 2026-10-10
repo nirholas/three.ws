@@ -33,6 +33,7 @@ import {
 } from './pricing/catalog.js';
 import { insertNotification } from './notify.js';
 import { logAudit } from './audit.js';
+import { assertTokenBudget, settleTokenUsage, usdCapAlerts } from './token-budgets.js';
 
 export const INFERENCE_ACTION = 'inference.agent';
 export const INFERENCE_MODEL_ID = 'three-ws/agent';
@@ -217,7 +218,7 @@ export function exhaustedWindow(budget, spend) {
  * @returns {Promise<{ balanceUsd: number, budget: object|null, spend: object|null }>}
  * @throws {InferenceBillingError} 402 insufficient_credits | inference_budget_exhausted
  */
-export async function assertInferenceAllowed({ userId, agent = null }) {
+export async function assertInferenceAllowed({ userId, agent = null, runId = null, expectedTokens = 0 }) {
 	const acct = await getCreditAccount(userId);
 	if (acct.balanceUsd < MIN_BALANCE_TO_CALL_USD) {
 		throw new InferenceBillingError(
@@ -232,9 +233,9 @@ export async function assertInferenceAllowed({ userId, agent = null }) {
 			},
 		);
 	}
-	if (!agent) return { balanceUsd: acct.balanceUsd, budget: null, spend: null };
-	const { budget, spend } = await assertAgentBudget({ userId, agent });
-	return { balanceUsd: acct.balanceUsd, budget, spend };
+	if (!agent) return { balanceUsd: acct.balanceUsd, budget: null, spend: null, tokens: null };
+	const { budget, spend, tokens } = await assertAgentBudget({ userId, agent, runId, expectedTokens });
+	return { balanceUsd: acct.balanceUsd, budget, spend, tokens };
 }
 
 /**
@@ -246,10 +247,14 @@ export async function assertInferenceAllowed({ userId, agent = null }) {
  * @param {{ userId: string, agent: { id: string, name?: string, meta?: object } }} p
  * @returns {Promise<{ budget: object|null, spend: object|null }>}
  * @throws {InferenceBillingError} 402 inference_budget_exhausted
+ * @throws {TokenBudgetError} 429 token_budget_exhausted | token_budget_paused
  */
-export async function assertAgentBudget({ userId, agent }) {
+export async function assertAgentBudget({ userId, agent, runId = null, expectedTokens = 0 }) {
 	const budget = getInferenceBudget(agent?.meta);
-	if (!budget) return { budget: null, spend: null };
+	// The token ceilings (token-budgets.js) gate in the same breath, so every
+	// caller of this check inherits them: hourly, daily and per-run tokens.
+	const tokens = (await assertTokenBudget({ userId, agent, runId, expectedTokens })).reservation;
+	if (!budget) return { budget: null, spend: null, tokens };
 
 	const spend = await agentInferenceSpend(agent.id);
 	const window = exhaustedWindow(budget, spend);
@@ -277,7 +282,7 @@ export async function assertAgentBudget({ userId, agent }) {
 			},
 		);
 	}
-	return { budget, spend };
+	return { budget, spend, tokens };
 }
 
 /** A raised budget that actually readmits calls: double the old one, and never below 1.5x what is already spent. */
@@ -395,7 +400,9 @@ export async function resumeAfterBudgetChange(agentId, previousMeta) {
  *
  * `priceUsd` replaces the published-rate price for a call that named a paid
  * model and is billed at that model's list price; `billedModel` records the
- * model id the price is for.
+ * model id the price is for. `runId` books the tokens against a per-run
+ * ceiling and `reservedTokens` is what the gate reserved for this call
+ * (token-budgets.js), released here.
  *
  * @returns {Promise<{ chargedUsd: number, pricedUsd: number, balanceUsd: number, shortfallUsd: number, replay: boolean }>}
  */
@@ -411,7 +418,15 @@ export async function chargeInference({
 	model = null,
 	priceUsd = null,
 	billedModel = INFERENCE_MODEL_ID,
+	runId = null,
+	reservedTokens = 1,
 }) {
+	// Token ceilings settle on the real count whatever the dollar outcome: a
+	// call that ran consumed its tokens even when the balance fell short.
+	if (agentId) {
+		void settleTokenUsage({ agentId, runId, inputTokens, outputTokens, reservedTokens })
+			.then(() => usdCapAlerts({ userId, agentId }));
+	}
 	const pricedUsd =
 		Number.isFinite(priceUsd) && priceUsd > 0
 			? Math.max(INFERENCE_MIN_CALL_USD, Math.ceil(priceUsd * 1e6 - 1e-9) / 1e6)

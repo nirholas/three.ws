@@ -88,6 +88,24 @@ export function getPerpsLimits(meta) {
 const PATCHABLE = Object.keys(PERPS_LIMIT_DEFAULTS);
 
 /**
+ * Pure: the keys a patch would loosen. Turning live on, resuming after the kill
+ * switch and raising a cap are the owner's to do from a signed-in session; an
+ * API key, an OAuth client or an MCP caller may only tighten. Alert thresholds
+ * are not risk limits, so any caller may set them.
+ */
+export function loosenedPerpsKeys(prev, patch) {
+	const before = normalizePerpsLimits(prev);
+	const next = normalizePerpsLimits({ ...before, ...(patch && typeof patch === 'object' ? patch : {}) });
+	const out = [];
+	if (next.live_enabled && !before.live_enabled) out.push('live_enabled');
+	if (!next.halted && before.halted) out.push('halted');
+	for (const k of ['max_leverage', 'max_margin_per_position_usd', 'max_slippage_bps', 'max_quote_move_bps']) {
+		if (next[k] > before[k]) out.push(k);
+	}
+	return out;
+}
+
+/**
  * Persist a perps-limit patch (owner-only). Keys absent from `patch` keep their
  * value. Audited in the custody trail and the platform audit log.
  */

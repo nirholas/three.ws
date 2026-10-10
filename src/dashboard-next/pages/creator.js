@@ -32,6 +32,7 @@ import {
 // id → label and id → explorer mapping, so a Base settlement never links to a
 // Solana explorer. Pure string/data code, safe in the browser bundle.
 import { networkLabel, revenueTxUrl } from '../../../api/_lib/x402/revenue-networks.js';
+import { withPayoutStepUp, cooldownNotice } from '../../payout-step-up.js';
 
 const SOLANA_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
@@ -745,14 +746,23 @@ function renderPayoutPanel(host) {
 		const btn = panel.querySelector('[data-action="save"]');
 		btn.disabled = true; btn.textContent = 'Saving…';
 		try {
-			await put('/api/monetization/wallet', {
-				agent_id: STATE.agentId,
-				solana_address: solV || undefined,
-				evm_address: evmV || undefined,
-				preferred_network: netEl.value,
+			const saved = await withPayoutStepUp(async (extra) => {
+				try {
+					const data = await put('/api/monetization/wallet', {
+						agent_id: STATE.agentId,
+						solana_address: solV || undefined,
+						evm_address: evmV || undefined,
+						preferred_network: netEl.value,
+						...extra,
+					});
+					return { ok: true, status: 200, data };
+				} catch (err) {
+					return { ok: false, status: err?.status || 0, data: err?.body || { error: err?.code, error_description: err?.message } };
+				}
 			});
+			if (!saved.ok) throw Object.assign(new Error(saved.data?.error_description || saved.data?.error || 'Save failed'), { body: saved.data });
 			trackFunnelStep('creator', ANALYTICS_EVENTS.CREATOR_PAYOUT_CONFIGURED, { agent_id: STATE.agentId, network: netEl.value });
-			toast('Payout wallet saved');
+			toast(cooldownNotice(saved.data?.wallets));
 			await reloadAgentPricing(host);
 		} catch (err) {
 			errEl.textContent = err?.body?.error_description || err?.message || 'Save failed';

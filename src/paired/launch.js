@@ -10,6 +10,7 @@
 // with the agent's custodial key. Every number on screen came from a quote.
 
 import { ensureRiskAck } from '../shared/risk-ack.js';
+import { mountLanePicker } from '../launch/lane-picker.js';
 import { CLASS_LABELS, amount, classChip, esc, explainLoad, getJson, short, usd } from './common.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -43,6 +44,7 @@ const state = {
 	quoteSeq: 0,
 	launching: false,
 	launched: null,
+	attempt: null,
 };
 
 const suggestSymbol = (name) => String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
@@ -591,6 +593,26 @@ function confirmLaunch() {
 	$('#pl-go', dialog).focus();
 }
 
+/** One key per distinct request: a retry of the same body reuses it, an edit gets a new one. */
+function attemptFor(bodyJson) {
+	const agentId = state.form.agentId;
+	if (!state.attempt || state.attempt.bodyJson !== bodyJson || state.attempt.agentId !== agentId) {
+		state.attempt = { key: crypto.randomUUID(), bodyJson, agentId };
+	}
+	return state.attempt;
+}
+
+/** Follow GET /api/launches/:id until the launch is finalized or failed. */
+async function settle(launch) {
+	let rec = launch;
+	while (rec.status !== 'finalized' && rec.status !== 'failed') {
+		await new Promise((r) => setTimeout(r, 3000));
+		rec = await getJson(`/api/launches/${encodeURIComponent(rec.id)}`);
+	}
+	if (rec.status === 'failed') throw Object.assign(new Error(rec.error?.message || 'The launch failed.'), { code: rec.error?.code });
+	return rec.result;
+}
+
 async function launch() {
 	if (!(await ensureRiskAck({ context: 'paired-launch' }))) return;
 	state.launching = true;
@@ -600,16 +622,22 @@ async function launch() {
 		btn.textContent = 'Signing and sending…';
 		btn.classList.add('is-busy');
 	}
+	const bodyJson = JSON.stringify(requestBody());
+	const attempt = attemptFor(bodyJson);
 	try {
-		state.launched = await getJson(`/api/agents/${encodeURIComponent(state.form.agentId)}/paired/launch`, {
+		const data = await getJson(`/api/agents/${encodeURIComponent(attempt.agentId)}/paired/launch`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', accept: 'application/json' },
-			body: JSON.stringify(requestBody()),
+			headers: { 'content-type': 'application/json', accept: 'application/json', 'idempotency-key': attempt.key },
+			body: bodyJson,
 		});
+		state.launched = data.launch && data.launch.status !== 'finalized' ? await settle(data.launch) : data;
 		render();
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	} catch (err) {
-		state.quoteError = explainLoad(err);
+		if (err.status === 409 || err.code === 'launch_failed') state.attempt = null;
+		state.quoteError = /failed to fetch|network/i.test(err?.message || '')
+			? 'The connection dropped while launching. Press launch again: the same request is sent with the same key, so you get the same launch, never a second one.'
+			: explainLoad(err);
 		state.quote = null;
 		paintSummary();
 	} finally {
@@ -617,4 +645,5 @@ async function launch() {
 	}
 }
 
+mountLanePicker(document.getElementById('pl-lanes'), { current: 'paired' });
 boot();

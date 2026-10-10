@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title>Developer plans · three.ws</title>
+		<meta name="description" content="Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded. Pay in credits, USDC or $THREE on Solana." />
+		<meta property="og:title" content="Developer plans · three.ws" />
+		<meta property="og:description" content="API plans with enforced monthly quotas, burst and concurrency ceilings, 429 and 402 responses that say exactly what to do next, and self-serve upgrades in credits, USDC or $THREE." />
+		<meta property="og:url" content="https://three.ws/developers" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Developer+plans&amp;d=API+plans+with+enforced+monthly+quotas%2C+burst+and+concurrency+ceilings%2C+and+self-serve+upgrades+in+credits%2C+USDC+or+%24THREE.&amp;p=%2Fdevelopers" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Developer plans · three.ws" />
+		<meta name="twitter:description" content="API plans with enforced monthly quotas, burst and concurrency ceilings, and self-serve upgrades in credits, USDC or $THREE." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Developer+plans&amp;d=API+plans+with+enforced+monthly+quotas%2C+burst+and+concurrency+ceilings%2C+and+self-serve+upgrades+in+credits%2C+USDC+or+%24THREE.&amp;p=%2Fdevelopers" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<link rel="canonical" href="https://three.ws/developers" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/pricing.css" />
+		<link rel="stylesheet" href="/developers.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Developer plans","description":"Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded.","url":"https://three.ws/developers","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content">
+			<section class="pricing-hero">
+				<div class="eyebrow"><span class="eyebrow-dot"></span><span>Developer plans</span></div>
+				<h1>Quotas that are <em>enforced.</em></h1>
+				<p class="lead">
+					Every plan ships with a monthly call quota, a per-minute burst ceiling and a concurrency ceiling, and
+					the API holds you to all three. You never find out from an invoice: a 429 carries <code>Retry-After</code>,
+					a 402 names the plan above yours, and every response tells you where you stand.
+				</p>
+			</section>
+
+			<section class="dev-plans-section" aria-labelledby="dev-plans-heading">
+				<h2 id="dev-plans-heading" class="dev-plans-h2">Plans</h2>
+				<div class="pricing-tiers dev-plans-tiers" id="dev-plans" aria-busy="true">
+					<div class="pricing-tier-card dev-plans-skel" aria-hidden="true"></div>
+					<div class="pricing-tier-card dev-plans-skel" aria-hidden="true"></div>
+					<div class="pricing-tier-card dev-plans-skel" aria-hidden="true"></div>
+					<div class="pricing-tier-card dev-plans-skel" aria-hidden="true"></div>
+				</div>
+				<p class="dev-plans-note" id="dev-plans-note" aria-live="polite"></p>
+				<div class="dev-plans-error" id="dev-plans-error" hidden>
+					<p>The plan catalog did not load. It is served live from <code>/api/v1/dev-plans</code>; reload to try again.</p>
+					<button type="button" class="pricing-cta" id="dev-plans-retry">Reload plans</button>
+				</div>
+			</section>
+
+			<section class="dev-plans-section dev-plans-how" aria-labelledby="dev-how-heading">
+				<h2 id="dev-how-heading" class="dev-plans-h2">What enforcement looks like</h2>
+				<div class="dev-plans-how-grid">
+					<article class="dev-plans-how-card">
+						<h3>Every response says where you stand</h3>
+						<pre><code>x-plan: builder
+x-ratelimit-limit: <span data-plan-field="builder.burst_per_minute">…</span>
+x-ratelimit-remaining: 597
+x-ratelimit-reset: 1760099160
+x-quota-limit: <span data-plan-field="builder.included_calls">…</span>
+x-quota-used: 18204
+x-quota-remaining: <span data-plan-field="builder.remaining_example">…</span>
+x-quota-reset: 2026-11-09T00:00:00.000Z
+x-concurrency-limit: <span data-plan-field="builder.concurrent">…</span></code></pre>
+					</article>
+					<article class="dev-plans-how-card">
+						<h3>Over the burst or concurrency ceiling: 429</h3>
+						<pre><code>HTTP/1.1 429 Too Many Requests
+retry-after: 12
+
+{ "error": "rate_limited",
+  "plan": "free",
+  "upgrade_url": "/developers" }</code></pre>
+						<p>Back off for <code>Retry-After</code> seconds. The limiter is a sliding window, so a steady client never sees one.</p>
+					</article>
+					<article class="dev-plans-how-card">
+						<h3>Out of calls for the period: 402</h3>
+						<pre><code>HTTP/1.1 402 Payment Required
+
+{ "error": "quota_exceeded",
+  "plan": "free",
+  "used": <span data-plan-field="free.included_calls">…</span>, "limit": <span data-plan-field="free.included_calls">…</span>,
+  "reset_at": "2026-11-09T00:00:00.000Z",
+  "next_plan": { "id": "builder", "included_calls": <span data-plan-field="builder.included_calls">…</span>, "price_usd": <span data-plan-field="builder.price_usd">…</span> },
+  "upgrade_url": "/developers",
+  "manage_url": "/dashboard/developers#plan" }</code></pre>
+						<p>The refused call is not counted. Upgrade from the dashboard and the next call goes through.</p>
+					</article>
+					<article class="dev-plans-how-card">
+						<h3>Pay the way you already hold value</h3>
+						<ul>
+							<li><strong>Credits</strong> settle instantly from your balance and renew on their own.</li>
+							<li><strong>USDC</strong> on Solana, from your own wallet. The server never signs.</li>
+							<li><strong>$THREE</strong> at a <span data-plan-field="three_discount_pct">…</span>% discount, priced at the live quote.</li>
+						</ul>
+						<p>Upgrades mid-period are prorated to the days left. Downgrades and cancellations take effect at period end. Every payment gets a receipt.</p>
+					</article>
+				</div>
+			</section>
+
+			<section class="dev-plans-section dev-plans-cta-row">
+				<a href="/dashboard/api" class="pricing-cta primary">Create an API key</a>
+				<a href="/docs/api-reference#developer-plans-and-quotas" class="pricing-cta">Read the quota reference</a>
+				<a href="/dashboard/developers#plan" class="pricing-cta">Manage my plan</a>
+			</section>
+		</main>
+
+		<script type="module">
+			const grid = document.getElementById('dev-plans');
+			const note = document.getElementById('dev-plans-note');
+			const errBox = document.getElementById('dev-plans-error');
+			const fmtInt = (n) => Number(n).toLocaleString();
+			const fmtUsd = (n) => `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+			const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+			function tierCard(p, cat) {
+				const featured = p.id === 'builder';
+				const cta = p.contact_sales
+					? `<a href="mailto:hello@three.ws?subject=${encodeURIComponent(`${p.name} developer plan`)}" class="pricing-cta">Talk to us</a>`
+					: p.purchasable
+						? `<a href="${cat.manage_url}" class="pricing-cta${featured ? ' primary' : ''}">Upgrade to ${esc(p.name)}</a>`
+						: `<a href="/dashboard/api" class="pricing-cta">Create a key</a>`;
+				return `
+					<div class="pricing-tier-card${featured ? ' featured' : ''}" data-tier="${esc(p.id)}">
+						${featured ? '<span class="pricing-popular">Most popular</span>' : ''}
+						<div class="pricing-tier-name">${esc(p.name)}</div>
+						<div class="pricing-amount">${p.price_usd > 0 ? `${fmtUsd(p.price_usd)}<sub>/ ${cat.period_days} days</sub>` : '$0<sub>/ forever</sub>'}</div>
+						<div class="pricing-cycle-info">${p.price_usd > 0 ? `${fmtUsd(p.three_price_usd)} paid in $THREE` : 'No card, no wallet'}</div>
+						<ul class="pricing-features">
+							<li><strong>${fmtInt(p.included_calls)}</strong>&nbsp;API calls per period</li>
+							<li><strong>${fmtInt(p.burst_per_minute)}</strong>&nbsp;calls per minute</li>
+							<li><strong>${fmtInt(p.concurrent)}</strong>&nbsp;concurrent requests</li>
+							<li><strong>${fmtInt(p.webhooks)}</strong>&nbsp;webhook endpoints</li>
+							<li>${esc(p.tagline)}</li>
+						</ul>
+						${cta}
+					</div>`;
+			}
+
+			function fill(cat) {
+				const by = Object.fromEntries(cat.plans.map((p) => [p.id, p]));
+				const fields = {
+					'builder.burst_per_minute': fmtInt(by.builder.burst_per_minute),
+					'builder.included_calls': fmtInt(by.builder.included_calls),
+					'builder.remaining_example': fmtInt(by.builder.included_calls - 18204),
+					'builder.concurrent': fmtInt(by.builder.concurrent),
+					'builder.price_usd': String(by.builder.price_usd),
+					'free.included_calls': String(by.free.included_calls),
+					three_discount_pct: String(cat.three_discount_bps / 100),
+				};
+				document.querySelectorAll('[data-plan-field]').forEach((el) => {
+					const v = fields[el.dataset.planField];
+					if (v != null) el.textContent = v;
+				});
+			}
+
+			async function load() {
+				errBox.hidden = true;
+				grid.setAttribute('aria-busy', 'true');
+				try {
+					const r = await fetch('/api/v1/dev-plans', { headers: { accept: 'application/json' } });
+					if (!r.ok) throw new Error(`HTTP ${r.status}`);
+					const j = await r.json();
+					const cat = j.data || j;
+					grid.innerHTML = cat.plans.map((p) => tierCard(p, cat)).join('');
+					note.textContent = cat.calculation_note;
+					fill(cat);
+				} catch {
+					grid.innerHTML = '';
+					errBox.hidden = false;
+				} finally {
+					grid.removeAttribute('aria-busy');
+				}
+			}
+			document.getElementById('dev-plans-retry').addEventListener('click', load);
+			load();
+		</script>
+
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

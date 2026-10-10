@@ -17,7 +17,7 @@ vi.mock('../api/_lib/db.js', () => ({ sql: vi.fn(async () => []) }));
 vi.mock('../api/_lib/credits.js', () => ({ creditAccount: vi.fn() }));
 vi.mock('../api/_lib/token/price.js', () => ({ getTokenPriceUsd: vi.fn() }));
 vi.mock('../api/_lib/balances.js', () => ({ solanaMintUsdPrice: vi.fn() }));
-vi.mock('../api/_lib/token/config.js', () => ({ TOKEN_MINT: 'THREEsynthetic1111', TOKEN_DECIMALS: 6, treasuryWalletOrNull: () => null }));
+vi.mock('../api/_lib/token/config.js', () => ({ TOKEN_MINT: 'THREEsynthetic1111', TOKEN_DECIMALS: 6, TOKEN_SYMBOL: 'THREE', treasuryWalletOrNull: () => null, creditBonusBps: () => 0 }));
 
 const { verifyAndCreditDeposit } = await import('../api/_lib/credit-deposit.js');
 

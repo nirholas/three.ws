@@ -29,6 +29,8 @@ export const API_KEY_SCOPES = Object.freeze([
 	'herald:announce',
 	'wallet:read',
 	'wallet:write',
+	'wallet:trade',
+	'wallet:launch',
 	'services:write',
 	// Model calls on the OpenAI-compatible endpoint (/api/v1/chat/completions),
 	// billed to the account's credits. Keys minted by /api/me/inference/provision

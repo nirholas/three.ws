@@ -21,6 +21,7 @@ export async function resolvePayoutAddress(agentId, chain) {
 	const [wallet] = await sql`
 		select address from agent_payout_wallets
 		where agent_id = ${agentId} and chain = ${chain}
+		  and approved_at is not null and effective_at <= now()
 		order by is_default desc, created_at desc
 		limit 1
 	`;

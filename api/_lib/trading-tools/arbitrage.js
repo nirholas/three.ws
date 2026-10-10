@@ -16,16 +16,19 @@
 //                  the richest) with the expected profit after network fees.
 //                  It never executes: each leg is handed back as the exact
 //                  swap_quote arguments, so execution is two previewed,
-//                  confirmed swap_execute calls. The legs are not atomic; the
-//                  second one is re-priced when it is quoted, and the result
-//                  says so.
+//                  confirmed swap_execute calls. The legs are not atomic, so
+//                  the result carries the risk in numbers: a worst case built
+//                  from real quotes (leg 1 at its slippage floor, leg 2 re-sold
+//                  at its floor, and the spread closing to the weakest venue),
+//                  and a size cap it refuses above unless the caller accepts
+//                  the risk explicitly.
 
 import { jupiterQuote, jupiterVenueLabels } from '../token/jupiter.js';
 import { PUMP_PROGRAM_ID, PUMP_AMM_PROGRAM_ID } from '../solana/programs.js';
 import { fetchCexTicker } from '../cex-public.js';
 import { solPriceUsd } from '../sol-price.js';
 import { cacheWrap } from '../cache.js';
-import { ToolInputError, WSOL_MINT, USDC_MINT, resolveMint, tokenDecimals, tokenSearch } from './market.js';
+import { ToolInputError, WSOL_MINT, USDC_MINT, resolveMint, tokenDecimals, tokenSearch, getPrice } from './market.js';
 
 /** The most venues priced individually for one pair. */
 export const MAX_VENUES = 8;
@@ -39,6 +42,16 @@ const SLIPPAGE_BPS = 50;
 export const LEG_FEE_LAMPORTS = 5_000 + 100_000;
 
 const AGGREGATE_ID = 'auto';
+
+/**
+ * Slippage each leg is priced and executed at: the same default swap_quote
+ * uses, so the worst case below is the floor swap_execute would accept.
+ */
+export const ARB_LEG_SLIPPAGE_BPS = 100;
+/** arbitrage_quote refuses a size above this (USD) unless accept_size_risk is true. */
+export const ARB_SIZE_CAP_USD = 100;
+/** The size no override lifts: two unhedged legs are not a place for size. */
+export const ARB_HARD_CAP_USD = 1000;
 
 /** The venue id for a router label, as api/_lib/trading-tools/venues.js addresses it. */
 export function venueId(label) {
@@ -115,6 +128,19 @@ export async function discoverVenues({ inputMint, outputMint, amount, max = MAX_
 	return found.slice(0, max);
 }
 
+/**
+ * When discovery found no venue, tell an outage apart from a pair nothing can
+ * fill: an empty venue list during a router outage is not a market reading.
+ */
+async function assertRouterReachable({ inputMint, outputMint, amount }) {
+	const probe = await quoteOnce({ inputMint, outputMint, amount });
+	if (probe?.error) {
+		const e = new ToolInputError('router_unavailable', 'The venue router could not be reached, so no venue could be priced. This is an outage, not a market reading; try again in a minute.');
+		e.status = 503;
+		throw e;
+	}
+}
+
 async function resolvePair({ token, quote }) {
 	const base = await resolveMint(token);
 	const q = quote ? await resolveMint(quote) : WSOL_MINT;
@@ -175,6 +201,7 @@ export async function arbitragePrices({ token, quote = 'SOL', amount = 1 }) {
 	const pair = await resolvePair({ token, quote });
 	const amountIn = toAtomic(amount, pair.quoteDecimals);
 	const labels = await discoverVenues({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
+	if (!labels.length) await assertRouterReachable({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
 	const priced = await priceVenues(pair, amountIn, labels);
 
 	const venueRows = labels.map((label, i) => venueRow({
@@ -235,15 +262,116 @@ export function rankRoutes(candidates, amount, feeInQuote) {
 		.sort((a, b) => (b.net ?? b.gross) - (a.net ?? a.gross));
 }
 
+/** Apply a slippage floor in base units: what a leg is allowed to return at worst. */
+export function slippageFloor(atomic, bps) {
+	return (BigInt(atomic) * BigInt(10_000 - bps)) / 10_000n;
+}
+
+/**
+ * The size gate. Pure: the caller prices the size, this decides.
+ * @returns {{ ok: true, size_usd: number|null, cap_usd: number, hard_cap_usd: number, above_default_cap: boolean } | { ok: false, code: string, message: string }}
+ */
+export function checkArbSize({ sizeUsd, accept = false, cap = ARB_SIZE_CAP_USD, hardCap = ARB_HARD_CAP_USD }) {
+	const base = { cap_usd: cap, hard_cap_usd: hardCap };
+	if (sizeUsd == null || !Number.isFinite(sizeUsd)) {
+		return { ok: false, code: 'size_unpriced', message: 'Could not price this size in USD, so it cannot be checked against the size cap. Quote against SOL or USDC instead.', ...base };
+	}
+	if (sizeUsd > hardCap) {
+		return { ok: false, code: 'size_above_hard_cap', message: `$${sizeUsd.toFixed(2)} is above the $${hardCap} ceiling for an unhedged two-leg route. Split it or size down.`, ...base };
+	}
+	if (sizeUsd > cap && !accept) {
+		return {
+			ok: false,
+			code: 'size_above_cap',
+			message: `$${sizeUsd.toFixed(2)} is above the $${cap} default cap for a non-atomic route. Leg 2 can fail or reprice after leg 1 fills, leaving you holding the token. Pass accept_size_risk: true to quote up to $${hardCap}.`,
+			...base,
+		};
+	}
+	return { ok: true, size_usd: sizeUsd, above_default_cap: sizeUsd > cap, ...base };
+}
+
+/**
+ * The simulated worst case of a two-leg route, from real quotes. Pure.
+ *
+ * @param {object} o
+ * @param {number} o.amount            quote-token amount leg 1 pays
+ * @param {number|null} o.feeInQuote   both legs' network fees in the quote token
+ * @param {number} o.expectedOut       leg 2's expected proceeds at the quoted size
+ * @param {number} o.slippedOut        leg 2's quoted proceeds for leg 1's slippage-floor tokens on the sell venue
+ * @param {number|null} o.closedOut    the same tokens sold on the weakest venue that quoted (the spread closed)
+ * @param {number} o.slippageBps       the per-leg slippage floor
+ */
+export function worstCase({ amount, feeInQuote, expectedOut, slippedOut, closedOut, slippageBps }) {
+	const floor = (x) => (x == null ? null : x * (1 - slippageBps / 10_000));
+	const fees = feeInQuote ?? 0;
+	const slipped = floor(slippedOut);
+	const closed = floor(closedOut);
+	const worstOut = closed != null ? Math.min(slipped, closed) : slipped;
+	const net = (out) => (out == null ? null : out - Number(amount) - fees);
+	const worstNet = net(worstOut);
+	return {
+		scenarios: [
+			{ id: 'expected', description: 'Both legs fill at the quoted prices.', quote_out: expectedOut, net_profit: net(expectedOut) },
+			{
+				id: 'both_legs_slip',
+				description: `Leg 1 returns its ${slippageBps / 100}% slippage floor of tokens and leg 2 sells them at its own floor on the same venue.`,
+				quote_out: slipped,
+				net_profit: net(slipped),
+			},
+			closed != null
+				? {
+					id: 'spread_closes',
+					description: 'By the time leg 2 is quoted the spread has closed: the tokens sell at the weakest venue that quoted, at its slippage floor. This is also what you hold if leg 2 fails and you unwind later.',
+					quote_out: closed,
+					net_profit: net(closed),
+				}
+				: null,
+		].filter(Boolean),
+		worst_quote_out: worstOut,
+		worst_net_profit: worstNet,
+		max_loss: worstNet != null && worstNet < 0 ? -worstNet : 0,
+		max_loss_pct: worstNet != null && worstNet < 0 ? (-worstNet / Number(amount)) * 100 : 0,
+		fees_counted: feeInQuote != null,
+	};
+}
+
+/**
+ * The verdict an agent should act on. Pure. 'viable' only when the expected
+ * edge is positive AND the worst case loses less than the edge earns.
+ */
+export function arbVerdict({ expectedNet, worst }) {
+	if (expectedNet == null || expectedNet <= 0) return { verdict: 'unprofitable', reason: 'The expected profit does not clear both legs and their network fees.' };
+	if (worst.max_loss >= expectedNet) {
+		return { verdict: 'risk_exceeds_edge', reason: `The worst case loses ${worst.max_loss.toPrecision(4)}, at least as much as the expected edge of ${expectedNet.toPrecision(4)}. Skip it or size down.` };
+	}
+	return { verdict: 'viable', reason: 'The expected edge is positive and larger than the simulated worst-case loss. The legs are still separate transactions.' };
+}
+
+async function sizeInUsd(pair, amount) {
+	if (pair.quoteMint === USDC_MINT) return Number(amount);
+	if (pair.quoteMint === WSOL_MINT) {
+		const solUsd = await solPriceUsd().catch(() => null);
+		return solUsd ? Number(amount) * solUsd : null;
+	}
+	const p = await getPrice({ mint: pair.quoteMint }).catch(() => null);
+	return p?.price_usd ? Number(amount) * p.price_usd : null;
+}
+
 /**
  * The best two-leg route for a pair: buy on one venue, sell on another, with
- * the expected profit after both legs' network fees.
- * @param {{ token: string, quote?: string, amount?: number|string }} args
+ * the expected profit after both legs' network fees, the non-atomic risk and a
+ * simulated worst case. Refuses above ARB_SIZE_CAP_USD unless accept_size_risk.
+ * @param {{ token: string, quote?: string, amount?: number|string, accept_size_risk?: boolean }} args
  */
-export async function arbitrageQuote({ token, quote = 'SOL', amount = 1 }) {
+export async function arbitrageQuote({ token, quote = 'SOL', amount = 1, accept_size_risk: acceptSizeRisk = false }) {
 	const pair = await resolvePair({ token, quote });
 	const amountIn = toAtomic(amount, pair.quoteDecimals);
+	const size = checkArbSize({ sizeUsd: await sizeInUsd(pair, amount), accept: acceptSizeRisk === true });
+	if (!size.ok) {
+		throw new ToolInputError(size.code, size.message, { cap_usd: size.cap_usd, hard_cap_usd: size.hard_cap_usd, parameter: 'amount' });
+	}
 	const labels = await discoverVenues({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
+	if (!labels.length) await assertRouterReachable({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn });
 
 	const buys = await mapLimit(labels, QUOTE_CONCURRENCY, (l) => quoteOnce({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn, dexes: [l] }));
 	const buyable = labels.map((label, i) => ({ label, q: buys[i] })).filter((x) => x.q?.outAmount);
@@ -276,35 +404,83 @@ export async function arbitrageQuote({ token, quote = 'SOL', amount = 1 }) {
 	const best = scored[0];
 	const tokens = human(best.buy.tokens_atomic, pair.baseDecimals);
 
+	// Worst case, from fresh quotes at the slippage-floor token count: the same
+	// sell venue, and the weakest venue that quoted this buy's tokens.
+	const floorTokens = slippageFloor(best.buy.tokens_atomic, ARB_LEG_SLIPPAGE_BPS).toString();
+	const weakest = scored.filter((c) => c.buy.venue === best.buy.venue).sort((a, b) => a.sell.out - b.sell.out)[0];
+	const [slippedQ, closedQ] = await Promise.all([
+		quoteOnce({ inputMint: pair.base, outputMint: pair.quoteMint, amount: floorTokens, dexes: [best.sell.venue] }),
+		weakest && weakest.sell.venue !== best.sell.venue
+			? quoteOnce({ inputMint: pair.base, outputMint: pair.quoteMint, amount: floorTokens, dexes: [weakest.sell.venue] })
+			: null,
+	]);
+	if (!slippedQ?.outAmount) {
+		throw new ToolInputError('worst_case_unavailable', 'Could not re-quote leg 2 at its slippage floor, so the worst case cannot be shown. Nothing is quoted without it; try again in a moment.');
+	}
+	const worst = worstCase({
+		amount,
+		feeInQuote,
+		expectedOut: best.sell.out,
+		slippedOut: human(slippedQ.outAmount, pair.quoteDecimals),
+		closedOut: closedQ?.outAmount ? human(closedQ.outAmount, pair.quoteDecimals) : null,
+		slippageBps: ARB_LEG_SLIPPAGE_BPS,
+	});
+	const verdict = arbVerdict({ expectedNet: best.net ?? best.gross, worst });
+	const toUsd = (v) => (v == null ? null : pair.quoteMint === USDC_MINT ? v : pair.quoteMint === WSOL_MINT && solUsd ? v * solUsd : null);
+
 	return {
 		token: pair.base,
 		quote: pair.quoteMint,
 		amount_in: Number(amount),
+		size,
 		venues_quoted: labels.length,
 		profitable: best.net != null ? best.net > 0 : best.gross > 0,
+		...verdict,
 		expected: {
 			quote_out: best.sell.out,
 			gross_profit: best.gross,
 			network_fees: feeInQuote,
 			net_profit: best.net,
 			net_profit_pct: best.net != null ? (best.net / Number(amount)) * 100 : null,
-			net_profit_usd: best.net == null ? null : pair.quoteMint === USDC_MINT ? best.net : pair.quoteMint === WSOL_MINT && solUsd ? best.net * solUsd : null,
+			net_profit_usd: toUsd(best.net),
+		},
+		worst_case: {
+			...worst,
+			max_loss_usd: toUsd(worst.max_loss),
+			inputs: {
+				slippage_bps_per_leg: ARB_LEG_SLIPPAGE_BPS,
+				leg1_tokens_expected: tokens,
+				leg1_tokens_at_floor: human(floorTokens, pair.baseDecimals),
+				sell_venue: venueId(best.sell.venue),
+				weakest_venue: weakest && closedQ?.outAmount ? venueId(weakest.sell.venue) : null,
+				network_fee_lamports_per_leg: LEG_FEE_LAMPORTS,
+			},
+		},
+		risk: {
+			atomic: false,
+			summary: 'The two legs are separate transactions. Leg 1 can fill and leg 2 can then fail, reprice or be front-run, leaving you holding the token. Nothing here protects against that except sizing.',
+			factors: [
+				{ id: 'leg_gap', detail: 'Leg 2 is quoted and signed after leg 1 confirms; any price move in between is yours.' },
+				{ id: 'slippage', detail: `Each leg accepts up to ${ARB_LEG_SLIPPAGE_BPS / 100}% slippage; the worst case above prices both at that floor.` },
+				{ id: 'stranded_inventory', detail: 'If leg 2 fails you hold the leg 1 tokens; the spread_closes scenario is what they fetch at the weakest venue.' },
+				{ id: 'guards', detail: 'Each leg runs the full trade guard chain on its own (spend caps, price-impact breaker, rug firewall), so leg 2 can be refused after leg 1 filled.' },
+			],
 		},
 		legs: [
 			{
 				step: 1, action: 'buy', venue: venueId(best.buy.venue), venue_name: best.buy.venue,
 				pays: Number(amount), receives_tokens: tokens,
-				swap_quote: { input_mint: pair.quoteMint, output_mint: pair.base, amount: Number(amount), venue: venueId(best.buy.venue) },
+				swap_quote: { input_mint: pair.quoteMint, output_mint: pair.base, amount: Number(amount), dex: venueId(best.buy.venue), slippage_bps: ARB_LEG_SLIPPAGE_BPS },
 			},
 			{
 				step: 2, action: 'sell', venue: venueId(best.sell.venue), venue_name: best.sell.venue,
 				sells_tokens: tokens, receives: best.sell.out,
-				swap_quote: { input_mint: pair.base, output_mint: pair.quoteMint, amount: tokens, venue: venueId(best.sell.venue) },
+				swap_quote: { input_mint: pair.base, output_mint: pair.quoteMint, amount: tokens, dex: venueId(best.sell.venue), slippage_bps: ARB_LEG_SLIPPAGE_BPS },
 			},
 		],
 		alternatives: scored.slice(1, 4).map((c) => ({ buy_venue: venueId(c.buy.venue), sell_venue: venueId(c.sell.venue), gross_profit: c.gross, net_profit: c.net })),
 		execution:
-			'Not atomic. Execute leg 1 with swap_quote then swap_execute, then quote leg 2 fresh (the price will have moved) and execute it only if it still clears the fees. Each leg is a separate confirmed swap.',
+			'Not atomic. Execute leg 1 with swap_quote then swap_execute, then quote leg 2 fresh with the tokens leg 1 actually returned (the price will have moved) and execute it only if it still clears the fees. Each leg is a separate confirmed swap.',
 		quoted_at: new Date().toISOString(),
 	};
 }

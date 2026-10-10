@@ -55,6 +55,7 @@ export async function chargeSubscription(subscriptionId) {
 			ON payout.user_id = sp.creator_id
 		   AND payout.chain = cs.chain
 		   AND payout.is_default = true
+		   AND payout.approved_at IS NOT NULL AND payout.effective_at <= now()
 		WHERE cs.id = ${subscriptionId}
 		LIMIT 1
 	`;

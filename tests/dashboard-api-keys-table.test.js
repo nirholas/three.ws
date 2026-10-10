@@ -90,3 +90,36 @@ describe('renderKeysTable', () => {
 		expect(chips).toEqual(['avatars:read', 'agents:write']);
 	});
 });
+
+describe('rotation and allowlist in the table', () => {
+	function rowFor(key) {
+		const host = document.createElement('div');
+		host.innerHTML = renderKeysTable([key]);
+		return host.querySelector('tbody tr');
+	}
+
+	it('retires a rotated key once its overlap window closes', () => {
+		const k = { ...base, rotated_to: '3d3b1e8a-0000-4000-8000-000000000001', overlap_until: new Date(Date.now() - DAY).toISOString() };
+		expect(keyStatus(k)).toMatchObject({ label: 'Retired', dead: true });
+		const row = rowFor(k);
+		expect(row.classList.contains('dn-row-muted')).toBe(true);
+		expect(row.querySelector('[data-act="rotate"]')).toBeNull();
+		expect(row.querySelector('[data-act="analytics"]')).toBeTruthy();
+	});
+
+	it('keeps a key inside its overlap window active, labelled, and not rotatable again', () => {
+		const k = { ...base, rotated_to: '3d3b1e8a-0000-4000-8000-000000000001', overlap_until: new Date(Date.now() + DAY).toISOString() };
+		expect(keyStatus(k)).toMatchObject({ label: 'Active', dead: false });
+		const row = rowFor(k);
+		expect(row.textContent).toContain('Overlap');
+		expect(row.querySelector('[data-act="rotate"]')).toBeNull();
+		expect(row.querySelector('[data-act="revoke"]')).toBeTruthy();
+	});
+
+	it('offers rotate, allowlist and analytics on a live key and shows the allowlist count', () => {
+		const row = rowFor({ ...base, ip_allowlist: ['10.0.0.0/8', '203.0.113.7'] });
+		expect(row.querySelector('[data-act="rotate"]')).toBeTruthy();
+		expect(row.querySelector('[data-act="allowlist"]').textContent).toBe('IPs (2)');
+		expect(row.textContent).toContain('IP locked');
+	});
+});

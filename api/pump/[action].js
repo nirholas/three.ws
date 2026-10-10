@@ -178,8 +178,9 @@ function readLimit(url, fallback, max) {
 }
 
 // `spend: true` marks a handler that signs with an agent's custodial key; a
-// bearer must then hold wallet:write, not just any grant on the account.
-async function resolveAuth(req, { spend = false } = {}) {
+// bearer must then hold the scope for that kind of movement (spend-scope.js):
+// `kind: 'trade'` for a swap or a position, where value stays in the wallet.
+async function resolveAuth(req, { spend = false, kind = 'spend' } = {}) {
 	const session = await getSessionUser(req);
 	if (session) {
 		// CSRF defense-in-depth for the cookie path: these handlers sign real
@@ -195,7 +196,7 @@ async function resolveAuth(req, { spend = false } = {}) {
 	}
 	const bearer = await authenticateBearer(extractBearer(req));
 	if (!bearer) return null;
-	if (spend) assertBearerMaySpend(bearer, req);
+	if (spend) assertBearerMaySpend(bearer, req, { kind });
 	return { userId: bearer.userId };
 }
 
@@ -3695,7 +3696,7 @@ async function handleStrategyCloseAll(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const auth = await resolveAuth(req, { spend: true });
+	const auth = await resolveAuth(req, { spend: true, kind: 'trade' });
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
@@ -3801,7 +3802,7 @@ async function handleStrategyRun(req, res) {
 		// (cross-site cookie, bearer without wallet:write) is answered here.
 		let auth;
 		try {
-			auth = await resolveAuth(req, { spend: true });
+			auth = await resolveAuth(req, { spend: true, kind: 'trade' });
 		} catch (e) {
 			return error(res, e.status || 403, e.code || 'forbidden', e.message);
 		}

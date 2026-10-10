@@ -164,7 +164,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Retrieve the most relevant memories for a query from one of your agents. Ranks by relevance to the query blended with salience and recency, excluding expired memories. Returns an ordered list.',
+			'Retrieve the most relevant memories for a query from one of your agents. Ranks by relevance to the query blended with salience and recency, excluding expired memories. Returns an ordered list. Use this before answering when an agent should draw on what it already knows about the user or the work; to save a new fact call remember.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -248,7 +248,7 @@ export const toolDefs = [
 			idempotentHint: false,
 			openWorldHint: true,
 		},
-		description: 'Delete a memory you own by its id.',
+		description: 'Delete a memory you own by its id. Use this when a stored memory is wrong or outdated, or the user asks the agent to forget it; find the id with recall.',
 		inputSchema: {
 			type: 'object',
 			properties: {

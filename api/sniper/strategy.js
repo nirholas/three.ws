@@ -41,7 +41,7 @@ async function getSolBalance(address) {
 async function resolveUserId(req) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
-	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
+	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req, { kind: 'trade' });
 	if (bearer) return bearer.userId;
 	return null;
 }

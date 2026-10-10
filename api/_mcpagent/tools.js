@@ -30,6 +30,8 @@ import {
 	resolveSpendEnabled,
 } from '../_lib/x402-user-payer.js';
 import { getOrCreateAgentSolanaWallet, getSolanaAddressBalances } from '../_lib/agent-wallet.js';
+import { linkedAccountsFor } from '../auth/linked-accounts.js';
+import { ExternalWalletError, issueWalletChallenge, verifyWalletProof, setPayoutWallet } from '../_lib/account-link/external-wallets.js';
 import {
 	createPaidService,
 	validateTargetUrl,
@@ -283,7 +285,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. To use one, price it with pay_quote, show the user the result, then pay with pay_and_call.',
+			'Search the live x402 facilitator network for paid services (HTTP APIs and MCP tools). Returns each match with its price and resource URL. Use this when a task needs a paid API or tool you do not already have; to use a match, price it with pay_quote, show the user the result, then pay with pay_and_call.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -347,7 +349,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Price a paid x402 endpoint WITHOUT paying: asks the resource for its payment challenge and returns the confirmation table pay_and_call would settle from the signed-in user's agent wallet (recipient, amount, token, chain), the per-call limit that applies, the wallet balance, and anything that would block the payment. Show the table to the user; pay_and_call needs the quote_id this returns, for the same resource_url, and confirm_payment: true after a clear yes.",
+			"Price a paid x402 endpoint WITHOUT paying: asks the resource for its payment challenge and returns the confirmation table pay_and_call would settle from the signed-in user's agent wallet (recipient, amount, token, chain), the per-call limit that applies, the wallet balance, and anything that would block the payment. Use this before every pay_and_call: show the table to the user; pay_and_call needs the quote_id this returns, for the same resource_url, and confirm_payment: true after a clear yes.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -458,7 +460,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. Call pay_quote for the same resource_url first and pay only after the user approves its table. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
+			"Call a paid x402 endpoint and settle the USDC payment automatically from the signed-in user's three.ws agent wallet, bounded by spending caps. Returns the service's response. Requires sign-in. Use this after pay_quote for the same resource_url, and only once the user approves its table. If the per-call price exceeds max_usd (or the caps), the call is refused before any money moves.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -573,7 +575,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			'Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent: if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Requires sign-in; you can only provision wallets for agents on your own account.',
+			'Create (or return) the custodial Solana wallet for one of your agents so it can hold and earn USDC. Idempotent: if the agent already has a wallet, its address and live SOL/USDC balances are returned unchanged. On devnet you can request a 1 SOL airdrop for testing; mainnet wallets are never airdropped. Use this before monetize_endpoint, or whenever an agent needs an address to receive USDC. Requires sign-in; you can only provision wallets for agents on your own account.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -657,7 +659,7 @@ export const toolDefs = [
 			openWorldHint: true,
 		},
 		description:
-			"Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network; run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
+			"Put a price on an upstream API your agent already serves and publish it as an x402 endpoint other agents can pay to call. Use this when your agent already serves an API and you want other agents to pay per call for it. three.ws hosts the paywall, settles each buyer's USDC to your agent's own wallet, and proxies the call to your target_url. The listing becomes discoverable via find_services / the bazaar and callable by pay_and_call. Requires a provisioned wallet for the chosen network; run provision_wallet first if you haven't. Requires sign-in; you can only monetize agents on your own account.",
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -816,7 +818,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Read a live three.ws resource by URI: three://agents/<id>/wallet (balances, spend limits, allowlist, freeze state), three://wallets (every agent wallet), three://me, three://agents, .../usage, .../runs, .../orders, .../dca, .../intents, three://launches, three://marketplace and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering.',
+			'Read a live three.ws resource by URI: three://agents/<id>/wallet (balances, spend limits, allowlist, freeze state), three://wallets (every agent wallet), three://me, three://agents, .../usage, .../runs, .../orders, .../dca, .../intents, three://launches, three://marketplace and three://x402/services. Omit uri to list every resource you can read. Set format to markdown for a readable rendering. Use this for a one-call snapshot of account, wallet, or launch state when no dedicated tool covers it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -832,6 +834,109 @@ export const toolDefs = [
 		},
 		async handler(args, auth, req) {
 			return readResourceToolResult('mcp-agent', args, auth, req);
+		},
+	},
+	{
+		name: 'get_linked_accounts',
+		title: 'List everything linked to the account',
+		annotations: {
+			readOnlyHint: true,
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: false,
+		},
+		description:
+			"Everything attached to the signed-in user's three.ws account: sign-in methods (password, Google, Telegram), sign-in wallets, payout wallets with their status (active, cooldown with the time they take effect, or awaiting the owner's approval), devices linked with a link code (phones, desktop apps, CLIs, Telegram chats) and paired chat gateways. Read-only; addresses and ids only, never secrets. Call it before set_external_wallet to see what a change would replace.",
+		inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+		async handler(args, auth) {
+			await enforce(limits.mcpAgent, auth);
+			if (!auth.userId) return signInRequired('Sign in to three.ws to see what is linked to your account.');
+			if (!hasScope(auth.scope, 'wallet:read') && !hasScope(auth.scope, 'wallet:write') && !hasScope(auth.scope, 'agents:read')) {
+				return scopeRequired('wallet:read');
+			}
+			const linked = await linkedAccountsFor(auth.userId);
+			const lines = [
+				`Sign-in methods (${linked.sign_in.count}): ${[
+					linked.sign_in.password ? 'password' : null,
+					linked.sign_in.email_code ? 'email code' : null,
+					...linked.sign_in.identities.map((i) => `${i.provider}${i.display_name ? ` (${i.display_name})` : ''}`),
+					...linked.wallets.map((w) => `${w.chain} wallet ${w.address}`),
+				].filter(Boolean).join(', ') || 'none'}`,
+				`Payout wallets: ${linked.payout.wallets.length ? linked.payout.wallets.map((w) => `${w.chain} ${w.address}${w.agent_name ? ` for ${w.agent_name}` : ' (account default)'} [${w.status}${w.status === 'cooldown' ? ` until ${w.effective_at}` : ''}]`).join('; ') : 'none'}`,
+				`Linked devices: ${linked.devices.length ? linked.devices.map((d) => `${d.label} (${d.kind}${d.last_used_at ? `, used ${d.last_used_at}` : ''})`).join('; ') : 'none'}`,
+				`Paired chats: ${linked.chats.length ? linked.chats.map((c) => `${c.platform} ${c.chat_title || c.username || c.chat_id}`).join('; ') : 'none'}`,
+			];
+			return { content: [{ type: 'text', text: lines.join('\n') }], structuredContent: linked };
+		},
+	},
+	{
+		name: 'set_external_wallet',
+		title: 'Attach a wallet you control as a payout wallet',
+		annotations: {
+			readOnlyHint: false,
+			destructiveHint: false,
+			idempotentHint: false,
+			openWorldHint: false,
+		},
+		description:
+			"Set where an agent's earnings are paid out, to a Solana or EVM wallet the user controls, proved by a signed message. Two calls: first with chain, address and optionally agent_id to get the exact message to sign (a Sign-In with Solana or Sign-In with Ethereum message carrying a single-use nonce); then with chain, message and signature to prove it. The first payout wallet on a chain is live at once. Replacing one files an approval the owner decides from their inbox, and the new address takes effect 24 hours after approval; withdrawals and incoming payments keep the current wallet until then. Never signs anything and never moves funds. Sign-in wallets cannot be attached from here: that needs a signed-in browser session. Use this when the owner wants an agent's earnings paid out to a wallet they control.",
+		inputSchema: {
+			type: 'object',
+			properties: {
+				chain: { type: 'string', enum: ['solana', 'evm'], description: 'solana or evm (EVM payouts settle on Base).' },
+				address: { type: 'string', maxLength: 64, description: 'The wallet address. Needed for the first call.' },
+				agent_id: { type: 'string', maxLength: 64, description: 'Set the payout wallet for this agent instead of the account default.' },
+				message: { type: 'string', maxLength: 4000, description: 'The message the first call returned, signed by the wallet. Needed for the second call.' },
+				signature: { type: 'string', maxLength: 512, description: 'The signature over message: base58 for Solana, 0x hex for EVM.' },
+			},
+			required: ['chain'],
+			additionalProperties: false,
+		},
+		async handler(args, auth, req) {
+			await enforce(limits.mcpAgent, auth);
+			if (!auth.userId) return signInRequired('Sign in to three.ws to attach a wallet.');
+			if (!hasScope(auth.scope, 'wallet:write')) return scopeRequired('wallet:write');
+			const rl = await limits.externalWalletUser(auth.userId);
+			if (!rl.success) throw rpcError(-32000, 'rate_limited', { retry_after: Math.ceil((rl.reset - Date.now()) / 1000) });
+			try {
+				if (args.message && args.signature) {
+					const proof = await verifyWalletProof({ userId: auth.userId, chain: args.chain, message: args.message, signature: args.signature });
+					if (proof.role !== 'payout') {
+						return {
+							content: [{ type: 'text', text: 'That message names a sign-in wallet, which can only be attached from a signed-in browser session on three.ws.' }],
+							structuredContent: { ok: false, reason: 'session_required' },
+							isError: true,
+						};
+					}
+					const result = await setPayoutWallet({
+						userId: auth.userId, agentId: proof.agentId, chain: args.chain, address: proof.address, signatureHash: proof.signatureHash, actor: 'agent', req,
+					});
+					const text = {
+						unchanged: `${proof.address} is already the live payout wallet.`,
+						active: `Payout wallet set to ${proof.address}. It is live now.`,
+						cooldown: `Payout wallet set to ${proof.address}; it takes effect at ${result.wallet?.effective_at}.`,
+						awaiting_approval: `Approval requested: the owner decides from their three.ws inbox (request ${result.approval?.id}). Earnings keep going to ${result.previous} until they approve and the ${result.cooldown_hours}-hour cooldown runs.`,
+					}[result.outcome];
+					return { content: [{ type: 'text', text }], structuredContent: { ok: true, ...result } };
+				}
+				if (!args.address) throw rpcError(-32602, 'address is required for the first call, or message and signature for the second');
+				let agentName = null;
+				if (args.agent_id) {
+					const [agent] = await sql`select name from agent_identities where id = ${args.agent_id} and user_id = ${auth.userId} and deleted_at is null limit 1`;
+					if (!agent) return { content: [{ type: 'text', text: 'No such agent on this account.' }], structuredContent: { ok: false, reason: 'agent_not_found' }, isError: true };
+					agentName = agent.name;
+				}
+				const challenge = await issueWalletChallenge({ userId: auth.userId, chain: args.chain, address: args.address, role: 'payout', agentId: args.agent_id || null, agentName });
+				return {
+					content: [{ type: 'text', text: `Sign this message with ${challenge.address} and call set_external_wallet again with chain, message and signature before ${challenge.expires_at}:\n\n${challenge.message}` }],
+					structuredContent: { ok: true, step: 'challenge', ...challenge },
+				};
+			} catch (err) {
+				if (err instanceof ExternalWalletError) {
+					return { content: [{ type: 'text', text: err.message }], structuredContent: { ok: false, reason: err.code, ...(err.extra || {}) }, isError: true };
+				}
+				throw err;
+			}
 		},
 	},
 ];

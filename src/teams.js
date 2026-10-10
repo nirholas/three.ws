@@ -482,6 +482,7 @@ function paintChrome() {
 		const canToggle = t.status === 'active' || t.status === 'paused';
 		$('#tmHeadActions').innerHTML = `
 			${canToggle ? `<button class="tm-btn sm" type="button" id="tmToggle">${t.status === 'paused' ? 'Resume' : 'Pause'}</button>` : ''}
+			<a class="tm-btn sm primary" href="/teams/${esc(t.id)}/chat">Chat with squad</a>
 			<a class="tm-btn sm" href="#tmSettings">Settings</a>`;
 		$('#tmToggle')?.addEventListener('click', (e) => setStatus(t.status === 'paused' ? 'active' : 'paused', e.currentTarget));
 	}

@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-import { assertBearerMaySpend, SPEND_SCOPE } from '../api/_lib/spend-scope.js';
+import { assertBearerMaySpend, SPEND_SCOPE, TRADE_SCOPE, LAUNCH_SCOPE } from '../api/_lib/spend-scope.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -58,6 +58,23 @@ describe('assertBearerMaySpend', () => {
 
 	it('treats a request with no method as a write (fail closed)', () => {
 		expect(() => assertBearerMaySpend({ userId: 'u', scope: 'inference' }, {})).toThrow(/wallet:write/);
+	});
+
+	// The consent screen lets a person grant Trade or Launch without Spend. Those
+	// grades are narrower than wallet:write, and wallet:write still implies both
+	// so every token minted before the split keeps working.
+	it('lets wallet:trade trade but not move funds, and wallet:write do all three', () => {
+		expect(TRADE_SCOPE).toBe('wallet:trade');
+		expect(LAUNCH_SCOPE).toBe('wallet:launch');
+		const trader = { userId: 'u', scope: 'wallet:read wallet:trade' };
+		expect(assertBearerMaySpend(trader, post, { kind: 'trade' })).toBe(trader);
+		expect(() => assertBearerMaySpend(trader, post, { kind: 'launch' })).toThrow(/wallet:launch/);
+		expect(() => assertBearerMaySpend(trader, post)).toThrow(/wallet:write/);
+		const launcher = { userId: 'u', scope: 'wallet:launch' };
+		expect(assertBearerMaySpend(launcher, post, { kind: 'launch' })).toBe(launcher);
+		expect(() => assertBearerMaySpend(launcher, post, { kind: 'trade' })).toThrow(/wallet:trade/);
+		const spender = { userId: 'u', scope: 'wallet:write' };
+		for (const kind of ['spend', 'trade', 'launch']) expect(assertBearerMaySpend(spender, post, { kind })).toBe(spender);
 	});
 });
 
@@ -116,7 +133,7 @@ describe('every bearer-accepting spend route calls the gate', () => {
 
 	it('the trade and withdraw executors check scope only once the request is known to spend', () => {
 		const trade = readFileSync(path.join(ROOT, 'api/agents/solana-trade.js'), 'utf8');
-		expect(trade).toMatch(/if \(!parsed\.preview\) assertBearerMaySpend\(auth\.bearer, req\)/);
+		expect(trade).toMatch(/if \(!parsed\.preview\) assertBearerMaySpend\(auth\.bearer, req, \{ kind: 'trade' \}\)/);
 		const wallet = readFileSync(path.join(ROOT, 'api/agents/solana-wallet.js'), 'utf8');
 		expect(wallet).toMatch(/if \(!simulate\) assertBearerMaySpend\(auth\.bearer, req\)/);
 	});

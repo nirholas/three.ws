@@ -17,6 +17,10 @@
 //   service income  x402 skill sales (agent_revenue_events, USDC net of the
 //                   platform fee) and hires by other agents (agent_hires,
 //                   completed). USDC is valued 1:1 in USD.
+//   invoice income  agent commerce invoices paid on Solana mainnet
+//                   (agent_commerce_invoices, api/_lib/agent-commerce/), in
+//                   USDC, SOL or $THREE, valued in USD at the moment the
+//                   watcher verified the payment. Offer sales are invoices too.
 //
 // Windows: 'all' uses the lifetime creator-fee totals; '24h' sums the 30-minute
 // fee buckets of the last 24 hours; '7d' and '30d' sum UTC-day buckets (today
@@ -80,7 +84,8 @@ export function earningsMethod(window) {
 		`unclaimed is the creator vault balance read on-chain, claimed is earned minus unclaimed. ` +
 		`pump.fun reports fees per creator wallet, so a wallet counts toward an agent only when it is ` +
 		`that agent's own custodial wallet; coins paying any other wallet are listed but not counted. ` +
-		`Service income is x402 skill sales (net, USDC) plus completed hires by other agents, valued 1:1 in USD. ` +
+		`Service income is x402 skill sales (net, USDC) plus completed hires by other agents, valued 1:1 in USD, ` +
+		`plus invoices paid on Solana mainnet, valued in USD when the payment was verified. ` +
 		`Figures cover ${range}. SOL and USD are converted at one live SOL/USD price. Devnet coins are excluded.`
 	);
 }
@@ -135,7 +140,7 @@ async function creatorFeeRows(window, { agentId = null, publicOnly = false, back
 	`;
 }
 
-/** Skill sales (USDC net) and completed hires, per agent, for a window. */
+/** Skill sales (USDC net), completed hires and paid invoices, per agent, for a window. */
 async function serviceRows(window, { agentId = null, publicOnly = false, back = 0 } = {}) {
 	const range = windowRange(window, back);
 	const salesRange = range
@@ -145,10 +150,14 @@ async function serviceRows(window, { agentId = null, publicOnly = false, back = 
 		? sql`and coalesce(h.completed_at, h.created_at) >= ${range.start.toISOString()}
 		      and coalesce(h.completed_at, h.created_at) < ${range.end.toISOString()}`
 		: sql``;
+	const invoiceRange = range
+		? sql`and i.paid_at >= ${range.start.toISOString()} and i.paid_at < ${range.end.toISOString()}`
+		: sql``;
 	const salesAgent = agentId ? sql`and r.agent_id = ${agentId}` : sql``;
 	const hireAgent = agentId ? sql`and h.provider_agent_id = ${agentId}` : sql``;
+	const invoiceAgent = agentId ? sql`and i.agent_id = ${agentId}` : sql``;
 	const publicFilter = publicOnly ? sql`and ai.is_public = true` : sql``;
-	const [sales, hires] = await Promise.all([
+	const [sales, hires, invoices] = await Promise.all([
 		sql`
 			select r.agent_id, sum(r.net_amount)::text as atomics, count(*)::int as n
 			from agent_revenue_events r
@@ -163,13 +172,21 @@ async function serviceRows(window, { agentId = null, publicOnly = false, back = 
 			where h.status = 'completed' ${hireRange} ${hireAgent} ${publicFilter}
 			group by h.provider_agent_id
 		`,
+		sql`
+			select i.agent_id, coalesce(sum(i.paid_usd), 0)::float8 as usd, count(*)::int as n
+			from agent_commerce_invoices i
+			join agent_identities ai on ai.id = i.agent_id and ai.deleted_at is null
+			where i.status = 'paid' and i.network = 'mainnet' and i.paid_usd is not null
+			  ${invoiceRange} ${invoiceAgent} ${publicFilter}
+			group by i.agent_id
+		`,
 	]);
-	return { sales, hires };
+	return { sales, hires, invoices };
 }
 
 /**
  * Totals per agent for one window, as plain numbers, keyed by agent id.
- * @returns {Promise<Map<string, { creator_lamports: bigint, lifetime_lamports: bigint, claimed_lamports: bigint, unclaimed_lamports: bigint, refreshed_at: any, skill_sales_usd: number, skill_sales_count: number, hires_usd: number, hires_count: number }>>}
+ * @returns {Promise<Map<string, { creator_lamports: bigint, lifetime_lamports: bigint, claimed_lamports: bigint, unclaimed_lamports: bigint, refreshed_at: any, skill_sales_usd: number, skill_sales_count: number, hires_usd: number, hires_count: number, invoices_usd: number, invoices_count: number }>>}
  */
 async function totalsByAgent(window, opts) {
 	const [fees, service] = await Promise.all([creatorFeeRows(window, opts), serviceRows(window, opts)]);
@@ -187,6 +204,8 @@ async function totalsByAgent(window, opts) {
 				skill_sales_count: 0,
 				hires_usd: 0,
 				hires_count: 0,
+				invoices_usd: 0,
+				invoices_count: 0,
 			};
 			out.set(id, row);
 		}
@@ -210,6 +229,11 @@ async function totalsByAgent(window, opts) {
 		row.hires_usd = Number(h.usd) || 0;
 		row.hires_count = h.n;
 	}
+	for (const i of service.invoices) {
+		const row = get(i.agent_id);
+		row.invoices_usd = Number(i.usd) || 0;
+		row.invoices_count = i.n;
+	}
 	return out;
 }
 
@@ -219,7 +243,7 @@ async function totalsByAgent(window, opts) {
  */
 export function shapeTotals(t, price) {
 	const creatorSol = Number(t.creator_lamports) / 1e9;
-	const serviceUsd = t.skill_sales_usd + t.hires_usd;
+	const serviceUsd = serviceIncomeUsd(t);
 	const serviceSol = price > 0 ? serviceUsd / price : null;
 	const totalSol = creatorSol + (serviceSol ?? 0);
 	return {
@@ -233,6 +257,8 @@ export function shapeTotals(t, price) {
 			skill_sales_count: t.skill_sales_count,
 			hires_usd: round(t.hires_usd, 2),
 			hires_count: t.hires_count,
+			invoices_usd: round(t.invoices_usd || 0, 2),
+			invoices_count: t.invoices_count || 0,
 			usd: round(serviceUsd, 2),
 			sol: serviceSol == null ? null : round(serviceSol, 9),
 		},
@@ -243,7 +269,10 @@ export function shapeTotals(t, price) {
 	};
 }
 
-const rankKey = (t, price) => Number(t.creator_lamports) / 1e9 + (price > 0 ? (t.skill_sales_usd + t.hires_usd) / price : 0);
+/** Skill sales, hires and paid invoices, in USD. */
+export const serviceIncomeUsd = (t) => t.skill_sales_usd + t.hires_usd + (t.invoices_usd || 0);
+
+const rankKey = (t, price) => Number(t.creator_lamports) / 1e9 + (price > 0 ? serviceIncomeUsd(t) / price : 0);
 
 /** Ranked public agents for a window (only agents that earned something). */
 async function rankedAgents(window, price, back = 0) {
@@ -327,6 +356,8 @@ function emptyTotals() {
 		skill_sales_count: 0,
 		hires_usd: 0,
 		hires_count: 0,
+		invoices_usd: 0,
+		invoices_count: 0,
 	};
 }
 

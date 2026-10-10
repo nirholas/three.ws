@@ -17,6 +17,9 @@ import { PairedMarketError } from '../../_lib/paired-markets.js';
 import { MAX_MARKETS, launchpadConfig } from '../../_lib/paired-launchpad.js';
 import { pairedMarkets } from '../../_lib/paired-markets.js';
 import { pairedCoinDetail, pairedCoinList } from '../../_lib/paired-directory.js';
+import { runLaunch, publicRecord } from '../../_lib/evm-launch-records.js';
+import { EVM_LEG_CHAINS } from '../../_lib/evm-leg/chains.js';
+import { IDEMPOTENCY_KEY } from './launches.js';
 import { LIMITS, claimPairedFees, launchPaired, pairedFeesFor, quotePairedLaunch } from '../../_lib/evm-leg/paired-launch.js';
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true };
@@ -104,7 +107,7 @@ export const toolDefs = [
 		group: 'launch',
 		annotations: READ,
 		description:
-			'Every asset a paired coin on Robinhood Chain can trade against, read live from the launchpad: tokenized stocks (NVDA, TSLA, SPY…), WETH, stablecoins and chain coins, each with its class, live USD price and the dollar market cap a pool in it opens at. Also returns the launch fee, swap fee and the creator\'s share of fees.',
+			'Every asset a paired coin on Robinhood Chain can trade against, read live from the launchpad: tokenized stocks (NVDA, TSLA, SPY…), WETH, stablecoins and chain coins, each with its class, live USD price and the dollar market cap a pool in it opens at. Also returns the launch fee, swap fee and the creator\'s share of fees. Use this before paired_launch_quote to choose which markets a new coin should pair with.',
 		inputSchema: {
 			type: 'object',
 			properties: { class: { type: 'string', enum: ['rwa-equity', 'stablecoin', 'crypto-major', 'crypto-native'] } },
@@ -122,7 +125,7 @@ export const toolDefs = [
 		group: 'launch',
 		annotations: READ,
 		description:
-			'Paired coins on Robinhood Chain, newest first, with every pool (quote asset, weight, price, dollar market cap, % sold), the verified descriptor and the three.ws agent that launched it. Pass agent_id for one agent\'s coins.',
+			'Paired coins on Robinhood Chain, newest first, with every pool (quote asset, weight, price, dollar market cap, % sold), the verified descriptor and the three.ws agent that launched it. Pass agent_id for one agent\'s coins. Use this to browse launched paired coins; for one coin in full call paired_coin.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -141,7 +144,7 @@ export const toolDefs = [
 		title: 'Read a paired coin',
 		group: 'launch',
 		annotations: READ,
-		description: 'One paired coin in full: its pools priced in dollars, recent trades, per-pool candles, the verified descriptor and the launching agent.',
+		description: 'One paired coin in full: its pools priced in dollars, recent trades, per-pool candles, the verified descriptor and the launching agent. Use this when you have a coin address and need its live pools, trades, or price history.',
 		inputSchema: {
 			type: 'object',
 			properties: { address: ADDRESS, interval: { type: 'string', enum: ['1m', '5m', '15m', '1h', '4h', '1d'], default: '1h' } },
@@ -162,7 +165,7 @@ export const toolDefs = [
 		scope: 'wallet:read',
 		annotations: WRITE,
 		description:
-			"Price a paired-coin launch from an agent's own EVM wallet on Robinhood Chain without signing anything: the pools and their dollar opening values, the launch fee, gas, the optional opening buy and its fill, the USD total, and anything blocking it (an unfunded wallet, the agent's spend ceiling). Show the result to the owner; paired_launch needs the quote_id this returns.",
+			"Price a paired-coin launch from an agent's own EVM wallet on Robinhood Chain without signing anything: the pools and their dollar opening values, the launch fee, gas, the optional opening buy and its fill, the USD total, and anything blocking it (an unfunded wallet, the agent's spend ceiling). Use this before paired_launch and show the result to the owner; paired_launch needs the quote_id this returns.",
 		inputSchema: { type: 'object', properties: LAUNCH_PROPS, required: ['agent_id', 'markets', 'name', 'symbol'], additionalProperties: false },
 		async handler(args, auth) {
 			if (!auth?.userId) return needsAccount();
@@ -180,14 +183,15 @@ export const toolDefs = [
 		tier: 'financial',
 		confirmFlag: 'confirm_launch',
 		previewTool: 'paired_launch_quote',
-		scope: 'wallet:write',
+		scope: 'wallet:launch',
 		annotations: MONEY,
 		description:
-			"Launch the coin paired_launch_quote priced, signed by the agent's custodial EVM wallet on Robinhood Chain under its spend ceilings. Requires the quote_id from paired_launch_quote, the same launch arguments, and confirm_launch: true, which you may only send after the owner explicitly approved the quote. Returns the coin address, transaction and coin page.",
+			"Launch the coin paired_launch_quote priced, signed by the agent's custodial EVM wallet on Robinhood Chain under its spend ceilings. Requires the quote_id from paired_launch_quote, the same launch arguments, and confirm_launch: true, which you may only send after the owner explicitly approved the quote. Returns the coin address, transaction and coin page. Send an idempotency_key so a retry returns the same launch; follow it with launch_status. Use this after the owner approved a paired_launch_quote, to actually create the coin.",
 		inputSchema: {
 			type: 'object',
 			properties: {
 				...LAUNCH_PROPS,
+				idempotency_key: IDEMPOTENCY_KEY,
 				quote_id: { type: 'string', description: 'From paired_launch_quote.' },
 				confirm_launch: { type: 'boolean', description: 'Must be true, and only after the owner said yes to the quote.' },
 			},
@@ -206,7 +210,17 @@ export const toolDefs = [
 				};
 			}
 			try {
-				return ok(await launchPaired({ agentId: args.agent_id, userId: auth.userId, input: launchInput(args) }));
+				const input = launchInput(args);
+				const { record, replayed } = await runLaunch({
+					lane: 'paired',
+					chain: EVM_LEG_CHAINS.robinhood.slug,
+					userId: auth.userId,
+					agentId: args.agent_id,
+					key: args.idempotency_key || null,
+					body: input,
+					execute: ({ stage }) => launchPaired({ agentId: args.agent_id, userId: auth.userId, input, stage }),
+				});
+				return ok({ ...(record.result || {}), launch_id: record.id, status: record.status, replayed, launch: publicRecord(record) });
 			} catch (e) {
 				return failure(e);
 			}
@@ -218,7 +232,7 @@ export const toolDefs = [
 		group: 'launch',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'Swap fees an agent has earned as the creator of paired coins and can claim now, per quote asset.',
+		description: 'Swap fees an agent has earned as the creator of paired coins and can claim now, per quote asset. Use this to see what a creator agent can collect before calling paired_claim_fees.',
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 		async handler(args, auth) {
 			if (!auth?.userId) return needsAccount();
@@ -234,9 +248,9 @@ export const toolDefs = [
 		title: 'Claim paired-coin creator fees',
 		group: 'launch',
 		tier: 'write',
-		scope: 'wallet:write',
+		scope: 'wallet:launch',
 		annotations: MONEY,
-		description: "Collect every quote asset an agent has earned in paired-coin swap fees, in one transaction into the agent's own wallet. Costs a little ETH gas; moves nothing out of the agent's control.",
+		description: "Collect every quote asset an agent has earned in paired-coin swap fees, in one transaction into the agent's own wallet. Costs a little ETH gas; moves nothing out of the agent's control. Use this after paired_fees shows a claimable balance worth the gas.",
 		inputSchema: { type: 'object', properties: { agent_id: AGENT_ID }, required: ['agent_id'], additionalProperties: false },
 		async handler(args, auth) {
 			if (!auth?.userId) return needsAccount();

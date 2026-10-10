@@ -327,8 +327,9 @@ export async function getMarketData(symbol, { depth = 20, trades = 30, funding =
 	const market = await getMarket(symbol);
 	const [book, fills, fundingHistory] = await Promise.all([
 		orderbook(market.symbol, depth),
-		venueCall('read recent trades', () => client().api.trades().getMarketFills(market.symbol, { limit: trades })),
-		venueCall('read funding history', () => client().api.funding().getFundingRateHistory(market.symbol, { limit: funding })),
+		// A zero count skips that read: the venue refuses limit 0.
+		trades > 0 ? venueCall('read recent trades', () => client().api.trades().getMarketFills(market.symbol, { limit: trades })) : null,
+		funding > 0 ? venueCall('read funding history', () => client().api.funding().getFundingRateHistory(market.symbol, { limit: funding })) : null,
 	]);
 	const { params, ...pub } = market;
 	return {
@@ -601,6 +602,7 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 	let entry;
 	let feeRate;
 	let limitPrice;
+	let crossesBook = true;
 	let fill = null;
 	if (type === 'market') {
 		fill = estimateFill(isLong ? book.asks : book.bids, lot.size);
@@ -615,8 +617,8 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 		if (!(Number(price) > 0)) throw perpsError(400, 'price_required', 'A limit order needs a positive price.');
 		limitPrice = priceToTick(price, params, 'nearest');
 		entry = limitPrice;
-		const crosses = isLong ? book.best_ask != null && limitPrice >= book.best_ask : book.best_bid != null && limitPrice <= book.best_bid;
-		feeRate = crosses ? params.takerFee : params.makerFee;
+		crossesBook = isLong ? book.best_ask != null && limitPrice >= book.best_ask : book.best_bid != null && limitPrice <= book.best_bid;
+		feeRate = crossesBook ? params.takerFee : params.makerFee;
 	}
 
 	const notional = lot.size * entry;
@@ -665,6 +667,7 @@ export async function quoteOrder({ symbol, side, size, type, price = null, reduc
 		index_price: market.index_price,
 		entry_price: round(entry, 8),
 		limit_price: limitPrice,
+		crosses_book: crossesBook,
 		worst_book_price: fill?.worst_price ?? null,
 		slippage_bps: type === 'market' ? Number(slippageBps) : null,
 		notional_usd: round(notional, 4),

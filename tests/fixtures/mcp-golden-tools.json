@@ -114,6 +114,143 @@
 			"schemaHash": "765248cd3400"
 		}
 	],
+	"api/_mcp/tools/agent-lifecycle.js": [
+		{
+			"name": "automation_create",
+			"title": "Create an automation",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:WRITE",
+			"schemaHash": "7b8f2f915490"
+		},
+		{
+			"name": "automation_delete",
+			"title": "Delete an automation",
+			"descHead": "Delete an automation (or a wallet rule or alert rule listed as one). Cal",
+			"descHash": "d444565aa200",
+			"annotations": "ref:DESTRUCTIVE",
+			"schemaHash": "b6c3099b33b5"
+		},
+		{
+			"name": "automation_get",
+			"title": "Get one automation",
+			"descHead": "Read one automation: its trigger, action, spend limits, fire stats, next",
+			"descHash": "1ad4907e6a9b",
+			"annotations": "ref:READ",
+			"schemaHash": "b6c3099b33b5"
+		},
+		{
+			"name": "automation_list",
+			"title": "List automations",
+			"descHead": "List automations: one agent's (pass agent_id) or every automation across",
+			"descHash": "2c71c486e5d4",
+			"annotations": "ref:READ",
+			"schemaHash": "7ab89f1be2fa"
+		},
+		{
+			"name": "automation_trigger",
+			"title": "Fire an automation now",
+			"descHead": "Run an automation's action right now, outside its trigger, once per call",
+			"descHash": "10272e3ce4a3",
+			"annotations": {
+				"…": "dynamic",
+				"destructiveHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "534f2dd5628d"
+		},
+		{
+			"name": "automation_update",
+			"title": "Edit an automation",
+			"descHead": "Change an automation. trigger and action patches merge over the stored c",
+			"descHash": "c0f9512065dc",
+			"annotations": "ref:IDEMPOTENT_WRITE",
+			"schemaHash": "89982aa5080e"
+		},
+		{
+			"name": "cancel_agent_run",
+			"title": "Cancel a run",
+			"descHead": "Cancel a run. A queued, scheduled or paused run ends now; a running one ",
+			"descHash": "68ca2c246c93",
+			"annotations": "ref:IDEMPOTENT_WRITE",
+			"schemaHash": "b3a9342ff2bf"
+		},
+		{
+			"name": "create_agent_run",
+			"title": "Give an agent a goal to pursue on its own",
+			"descHead": "Start an autonomous run: the agent works the goal through its read-only ",
+			"descHash": "25f618b3a095",
+			"annotations": "ref:WRITE",
+			"schemaHash": "8d008e252a42"
+		},
+		{
+			"name": "delete_agent",
+			"title": "Delete an agent you own",
+			"descHead": "Delete an agent. Its open runs are cancelled, its automations are switch",
+			"descHash": "62c590df8a5a",
+			"annotations": "ref:DESTRUCTIVE",
+			"schemaHash": "736fbf527dd2"
+		},
+		{
+			"name": "get_agent",
+			"title": "Get one agent you own",
+			"descHead": "Read one of your agents: its settings, status, wallet, and everything de",
+			"descHash": "66e7cc3e67a1",
+			"annotations": "ref:READ",
+			"schemaHash": "736fbf527dd2"
+		},
+		{
+			"name": "get_agent_run_steps",
+			"title": "Read a run step by step",
+			"descHead": "Read a run and its step trace: every model call, and every tool call pai",
+			"descHash": "fafd19702ae5",
+			"annotations": "ref:READ",
+			"schemaHash": "c93bb07f095b"
+		},
+		{
+			"name": "start_agent",
+			"title": "Start an agent",
+			"descHead": "Set an agent to running. Its automations fire again, its strategy loop t",
+			"descHash": "bf5ba99f690b",
+			"annotations": "ref:IDEMPOTENT_WRITE",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "stop_agent",
+			"title": "Stop an agent",
+			"descHead": "Set an agent to stopped. Its automations stop firing, its strategy loop ",
+			"descHash": "ba4e41dc8122",
+			"annotations": "ref:IDEMPOTENT_WRITE",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "update_agent",
+			"title": "Edit an agent you own",
+			"descHead": "Change an agent's settings. Pass only the fields to change. Validated by",
+			"descHash": "a6b4dc11c9f1",
+			"annotations": "ref:IDEMPOTENT_WRITE",
+			"schemaHash": "cfa2a3171dfd"
+		},
+		{
+			"name": "update_agent_run",
+			"title": "Pause, resume, or raise the budget of a run",
+			"descHead": "Pause a live run, resume a paused one, or raise its dollar budget (budge",
+			"descHash": "0d359e3cfd8a",
+			"annotations": "ref:WRITE",
+			"schemaHash": "eb2588808687"
+		},
+		{
+			"name": "upload_agent_avatar",
+			"title": "Give an agent a 3D body or a portrait",
+			"descHead": "Upload a GLB or an image for an agent, from a public https url or inline",
+			"descHash": "6709bec87321",
+			"annotations": {
+				"…": "dynamic",
+				"openWorldHint": true
+			},
+			"schemaHash": "38cdebf7376d"
+		}
+	],
 	"api/_mcp/tools/agents.js": [
 		{
 			"name": "attach_avatar_to_agent",
@@ -145,7 +282,7 @@
 			"name": "create_agent",
 			"title": "Create an agent",
 			"descHead": "Create a new three.ws agent on your account: a named identity with a per",
-			"descHash": "0def9d44d0af",
+			"descHash": "ad331edb8b02",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -171,7 +308,7 @@
 			"name": "list_my_agents",
 			"title": "List my agents",
 			"descHead": "List the agents on your account, newest first: id, name, description, br",
-			"descHash": "bfaf03bfbad0",
+			"descHash": "dd1404d7fdfa",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -212,7 +349,7 @@
 			"name": "apply_animation",
 			"title": "Apply an animation preset to a rigged model",
 			"descHead": "Retarget a curated animation preset onto a caller-supplied rigged humano",
-			"descHash": "e42328286a5c",
+			"descHash": "636639a9dc26",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -251,7 +388,7 @@
 			"name": "text_to_animation",
 			"title": "Generate an animation from a text prompt and retarget it onto a model",
 			"descHead": "Generate a brand-new motion from a natural-language prompt (e.g. \"waving",
-			"descHash": "e69992039d1a",
+			"descHash": "26f14b37f6e3",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -265,8 +402,8 @@
 		{
 			"name": "delete_avatar",
 			"title": "Delete avatar",
-			"descHead": "Soft-delete an avatar you own. Requires avatars:delete scope.",
-			"descHash": "7e867ad19f8c",
+			"descHead": "Soft-delete an avatar you own. Requires avatars:delete scope. Use this w",
+			"descHash": "5a67c58facbe",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -279,7 +416,7 @@
 			"name": "get_avatar",
 			"title": "Get avatar",
 			"descHead": "Fetch a single avatar by id or by owner+slug. Returns metadata and a mod",
-			"descHash": "7d13b04e4e9a",
+			"descHash": "367e6b5214fd",
 			"annotations": "ref:READ_ANNOTATIONS",
 			"schemaHash": "613746a8df6f"
 		},
@@ -287,7 +424,7 @@
 			"name": "list_my_avatars",
 			"title": "List my avatars",
 			"descHead": "List the authenticated user's avatars. Returns id, name, slug, size, vis",
-			"descHash": "63b8ad84489b",
+			"descHash": "c2c643eb42b1",
 			"annotations": "ref:READ_ANNOTATIONS",
 			"schemaHash": "9e46bf1d5ddb"
 		},
@@ -315,8 +452,8 @@
 		{
 			"name": "search_public_avatars",
 			"title": "Search public avatars",
-			"descHead": "Search the public avatar gallery. Useful for finding characters to rende",
-			"descHash": "50269f56daf0",
+			"descHead": "Search the public avatar gallery. Use this to find characters to render ",
+			"descHash": "3fdaafcbe6ea",
 			"annotations": "ref:READ_ANNOTATIONS",
 			"schemaHash": "5d9b231c5a24"
 		}
@@ -326,7 +463,7 @@
 			"name": "agent_card_balance",
 			"title": "Card balance",
 			"descHead": "The card's remaining balance. When the provider does not report balances",
-			"descHash": "1042cbcebb7c",
+			"descHash": "ab9528965895",
 			"annotations": "ref:READ",
 			"schemaHash": "a37fd68b8f89"
 		},
@@ -334,7 +471,7 @@
 			"name": "agent_card_cancel",
 			"title": "Cancel a card",
 			"descHead": "Cancel a card. Unpaid quotes can always be cancelled; whether a paid car",
-			"descHash": "1f77ff50a645",
+			"descHash": "402233b5c5af",
 			"annotations": "ref:MONEY",
 			"schemaHash": "8399ee3ea864"
 		},
@@ -342,7 +479,7 @@
 			"name": "agent_card_connect",
 			"title": "Card provider verification status",
 			"descHead": "Whether the card provider needs the account holder to complete identity ",
-			"descHash": "a6475ea32a69",
+			"descHash": "803d7c2ba184",
 			"annotations": "ref:READ",
 			"schemaHash": "8507841da727"
 		},
@@ -350,7 +487,7 @@
 			"name": "agent_card_connect_link",
 			"title": "Card provider verification link",
 			"descHead": "A browser link where the account holder completes the provider's identit",
-			"descHash": "be6da8bf56ce",
+			"descHash": "df9a06755368",
 			"annotations": "ref:WRITE",
 			"schemaHash": "8507841da727"
 		},
@@ -358,7 +495,7 @@
 			"name": "agent_card_create",
 			"title": "Buy a card from the agent wallet",
 			"descHead": "Buy the card a quote describes, paying the quoted USDC from the agent wa",
-			"descHash": "ae3f1cfc82bd",
+			"descHash": "37ce2cf39011",
 			"annotations": "ref:MONEY",
 			"schemaHash": "99e6bfcd101a"
 		},
@@ -366,7 +503,7 @@
 			"name": "agent_card_data",
 			"title": "Card data and reveal preview",
 			"descHead": "The masked card number, which secret fields exist (code, PIN, link) and ",
-			"descHash": "26b38a1a23dd",
+			"descHash": "aab524ff3a94",
 			"annotations": "ref:WRITE",
 			"schemaHash": "a37fd68b8f89"
 		},
@@ -374,7 +511,7 @@
 			"name": "agent_card_get",
 			"title": "Get one agent card",
 			"descHead": "One card with its audit trail (quotes, payment, status changes, reveals ",
-			"descHash": "47bf1a48104b",
+			"descHash": "cef600cf7d30",
 			"annotations": "ref:READ",
 			"schemaHash": "a37fd68b8f89"
 		},
@@ -382,7 +519,7 @@
 			"name": "agent_card_list",
 			"title": "List agent cards",
 			"descHead": "List the agent's cards, newest first, with masked numbers, status and wh",
-			"descHash": "e3275cdf16b2",
+			"descHash": "eae98a28d255",
 			"annotations": "ref:READ",
 			"schemaHash": "422f49d7d24b"
 		},
@@ -390,7 +527,7 @@
 			"name": "agent_card_quote",
 			"title": "Quote a card purchase",
 			"descHead": "Lock a price for one card: returns the total in USDC including fees, the",
-			"descHash": "9a1704b94711",
+			"descHash": "95bb91c4aa0f",
 			"annotations": "ref:WRITE",
 			"schemaHash": "42512dca827d"
 		},
@@ -398,7 +535,7 @@
 			"name": "agent_card_reveal",
 			"title": "Reveal a card secret once",
 			"descHead": "Return the card number, PIN or redemption code. Requires the preview_id ",
-			"descHash": "1cc4d5cce8ba",
+			"descHash": "bb74d17ccfbc",
 			"annotations": "ref:MONEY",
 			"schemaHash": "196267a969e2"
 		},
@@ -406,7 +543,7 @@
 			"name": "agent_card_search_gift_cards",
 			"title": "Search gift and prepaid card products",
 			"descHead": "Search card products with their denominations: fixed packages and/or an ",
-			"descHash": "01b9275fca63",
+			"descHash": "9c2e1136f950",
 			"annotations": "ref:READ",
 			"schemaHash": "a4f0f024e84c"
 		},
@@ -414,7 +551,7 @@
 			"name": "agent_card_search_merchants",
 			"title": "Search card merchants",
 			"descHead": "Search merchants an agent can buy a gift card or prepaid card from (for ",
-			"descHash": "d7e76e330fc4",
+			"descHash": "2b332699b7c7",
 			"annotations": "ref:READ",
 			"schemaHash": "110265cbdf52"
 		},
@@ -422,7 +559,7 @@
 			"name": "agent_card_status",
 			"title": "Refresh a card from the provider",
 			"descHead": "Ask the provider for the card's current status (processing, delivered, f",
-			"descHash": "ce0fcdcc28eb",
+			"descHash": "07eb67a2e097",
 			"annotations": "ref:READ",
 			"schemaHash": "a37fd68b8f89"
 		},
@@ -430,7 +567,7 @@
 			"name": "agent_card_withdraw",
 			"title": "Withdraw a prepaid balance to USDC",
 			"descHead": "Move a prepaid card balance back to the agent wallet as USDC, where the ",
-			"descHash": "e324fe655042",
+			"descHash": "910a3c8703f3",
 			"annotations": "ref:MONEY",
 			"schemaHash": "2d69e4aed6ec"
 		}
@@ -458,7 +595,7 @@
 			"name": "create_custom_skill",
 			"title": "Write a custom skill for an agent",
 			"descHead": "Write a new prompt-only skill on one of your agents: markdown instructio",
-			"descHash": "acda6a0149c7",
+			"descHash": "9bc587a371a8",
 			"annotations": "ref:WRITE",
 			"schemaHash": "da4864989207"
 		},
@@ -466,7 +603,7 @@
 			"name": "delete_custom_skill",
 			"title": "Delete a custom skill",
 			"descHead": "Permanently delete a custom skill from your agent. Irreversible: a hand-",
-			"descHash": "9d62bcf0d0be",
+			"descHash": "2b2d194b2957",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -479,7 +616,7 @@
 			"name": "get_custom_skill",
 			"title": "Get one custom skill",
 			"descHead": "Read one custom skill on your agent, full text included, plus where it l",
-			"descHash": "4ccbf8fba8af",
+			"descHash": "3c3bbdcc2892",
 			"annotations": "ref:READ",
 			"schemaHash": "3757d27a1ff3"
 		},
@@ -487,7 +624,7 @@
 			"name": "import_community_skill",
 			"title": "Import a community skill onto an agent",
 			"descHead": "Install a community registry skill (see list_available_skills) on one of",
-			"descHash": "e15467043ad2",
+			"descHash": "b9e3f0225ae9",
 			"annotations": "ref:WRITE",
 			"schemaHash": "9f18b63cd440"
 		},
@@ -495,7 +632,7 @@
 			"name": "list_available_skills",
 			"title": "Browse community skills",
 			"descHead": "Search the public three.ws community skills registry: prompt-only skills",
-			"descHash": "8191ecf913f0",
+			"descHash": "bcc73a2e767f",
 			"annotations": "ref:READ",
 			"schemaHash": "5a2445aa2ecd"
 		},
@@ -503,7 +640,7 @@
 			"name": "list_custom_skills",
 			"title": "List an agent's custom skills",
 			"descHead": "List every prompt-only custom skill on one of your agents in install ord",
-			"descHash": "29e621018bb3",
+			"descHash": "7d8781a9bedf",
 			"annotations": "ref:READ",
 			"schemaHash": "235b5953bcf3"
 		},
@@ -511,9 +648,75 @@
 			"name": "update_custom_skill",
 			"title": "Edit or toggle a custom skill",
 			"descHead": "Edit a custom skill on your agent: rename it, rewrite its instructions, ",
-			"descHash": "bb2ba4d21984",
+			"descHash": "d2952cdfbb94",
 			"annotations": "ref:WRITE",
 			"schemaHash": "8eeb0fbab1ed"
+		}
+	],
+	"api/_mcp/tools/domains.js": [
+		{
+			"name": "domain_check",
+			"title": "Check one web domain",
+			"descHead": "One answer for one fully-qualified name: available or not, with a clear ",
+			"descHash": "c825ed9a3aa6",
+			"annotations": "ref:READ",
+			"schemaHash": "f3ac2146f00a"
+		},
+		{
+			"name": "domain_connect",
+			"title": "Connect a domain to an agent page",
+			"descHead": "Serve an agent's public page on a domain you registered here: creates th",
+			"descHash": "2421533d0856",
+			"annotations": "ref:WRITE",
+			"schemaHash": "90cd775ae53a"
+		},
+		{
+			"name": "domain_connect_status",
+			"title": "Check a connected domain",
+			"descHead": "Whether a connected domain is live: the certificate state, the DNS names",
+			"descHash": "2878fd9f409a",
+			"annotations": "ref:READ",
+			"schemaHash": "5a390848d5ae"
+		},
+		{
+			"name": "domain_pricing",
+			"title": "List domain TLD pricing",
+			"descHead": "The extensions Google Cloud Domains sells with their yearly registration",
+			"descHash": "f471a97f6ab8",
+			"annotations": "ref:READ",
+			"schemaHash": "3317b68691fa"
+		},
+		{
+			"name": "domain_register",
+			"title": "Register a domain (spends credits)",
+			"descHead": "Register the domain domain_register_quote priced, paying the exact yearl",
+			"descHash": "6ca717166401",
+			"annotations": "ref:MONEY",
+			"schemaHash": "55d848b7dc66"
+		},
+		{
+			"name": "domain_register_quote",
+			"title": "Quote a domain registration",
+			"descHead": "Price a domain registration without buying it: the exact yearly price, t",
+			"descHash": "8244aee3ff81",
+			"annotations": "ref:WRITE",
+			"schemaHash": "a360feac8341"
+		},
+		{
+			"name": "domain_search",
+			"title": "Search web domains",
+			"descHead": "Suggest web domains for a name across TLDs, live from Google Cloud Domai",
+			"descHash": "a519c94efd88",
+			"annotations": "ref:READ",
+			"schemaHash": "1684dd9c948b"
+		},
+		{
+			"name": "domain_status",
+			"title": "Poll a domain registration",
+			"descHead": "The state of a registration you started: registering, active (with its e",
+			"descHash": "c8f231ab5351",
+			"annotations": "ref:READ",
+			"schemaHash": "1f18b648f326"
 		}
 	],
 	"api/_mcp/tools/embed.js": [
@@ -521,7 +724,7 @@
 			"name": "create_gated_embed",
 			"title": "Create a token-gated embed",
 			"descHead": "Turn an avatar or on-chain agent you own into a holder-only interactive ",
-			"descHash": "085b4a883126",
+			"descHash": "efb608f2014b",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -534,7 +737,7 @@
 			"name": "get_embed_code",
 			"title": "Get embed code",
 			"descHead": "Return a ready-to-paste <iframe> embed snippet (plus shareable URL, oEmb",
-			"descHash": "757acd12b3f0",
+			"descHash": "1f4ee89ae450",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -549,7 +752,7 @@
 			"name": "get_feedback_repro",
 			"title": "Compile a feedback report into a failing test",
 			"descHead": "Compile one feedback report into a runnable Playwright spec from the ses",
-			"descHash": "31b006412fd0",
+			"descHash": "2529b7630065",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -562,7 +765,7 @@
 			"name": "list_feedback",
 			"title": "List feedback",
 			"descHead": "What visitors reported is broken, grouped into one row per distinct prob",
-			"descHash": "8a5b2ac8fc06",
+			"descHash": "b1a17231035e",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -613,12 +816,46 @@
 			"schemaHash": "9609ea7b118c"
 		}
 	],
+	"api/_mcp/tools/launches.js": [
+		{
+			"name": "launch_lanes",
+			"title": "Compare launch lanes",
+			"descHead": "Every way to launch a coin on three.ws, from live config: pump.fun and t",
+			"descHash": "f7728771165f",
+			"annotations": "ref:READ",
+			"schemaHash": "b3761fba59a0"
+		},
+		{
+			"name": "launch_status",
+			"title": "Read a launch",
+			"descHead": "The record of one EVM-lane launch (Uniswap lane or paired coin): its sta",
+			"descHash": "411f15389a6c",
+			"annotations": "ref:READ",
+			"schemaHash": "4b6572bfcfcb"
+		},
+		{
+			"name": "uniswap_launch",
+			"title": "Launch a coin with a Uniswap pool",
+			"descHead": "Launch the coin uniswap_launch_quote priced, signed by the agent's custo",
+			"descHash": "72e39985ebac",
+			"annotations": "ref:MONEY",
+			"schemaHash": "41e0bae64f26"
+		},
+		{
+			"name": "uniswap_launch_quote",
+			"title": "Quote a Uniswap-lane launch",
+			"descHead": "Price a fixed-supply coin launch with a Uniswap V3 pool on Base from an ",
+			"descHash": "d91fce44d418",
+			"annotations": "ref:WRITE",
+			"schemaHash": "ed92ecd8bb29"
+		}
+	],
 	"api/_mcp/tools/library.js": [
 		{
 			"name": "get_catalog_item",
 			"title": "Read one catalog item",
 			"descHead": "FREE, no account or payment. Read one three.ws catalog item in full by i",
-			"descHash": "0aa2b2e399fe",
+			"descHash": "b35972921fe4",
 			"annotations": "ref:READ_ANNOTATIONS",
 			"schemaHash": "7d00667a7c62"
 		},
@@ -639,12 +876,86 @@
 			"schemaHash": "f097cbda0f2e"
 		}
 	],
+	"api/_mcp/tools/mail.js": [
+		{
+			"name": "agent_mail_create",
+			"title": "Create the agent mailbox",
+			"descHead": "Use this once the owner approved a create quote. Provision the mailbox a",
+			"descHash": "de38e496aca9",
+			"annotations": "ref:MONEY",
+			"schemaHash": "51c349677348"
+		},
+		{
+			"name": "agent_mail_delete",
+			"title": "Delete an email",
+			"descHead": "Use this when the owner asks to remove a message. Move one message out o",
+			"descHash": "ffbd2ac9a8d8",
+			"annotations": "ref:DELETE",
+			"schemaHash": "123d03fb00f6"
+		},
+		{
+			"name": "agent_mail_get_address",
+			"title": "Get the agent email address",
+			"descHead": "The agent's email address and display name, or null when it has no mailb",
+			"descHash": "f5d7fcb6ef6e",
+			"annotations": "ref:READ",
+			"schemaHash": "8507841da727"
+		},
+		{
+			"name": "agent_mail_list",
+			"title": "List the agent inbox",
+			"descHead": "Use this to check the inbox or find a message id. List messages newest f",
+			"descHash": "743151b2d94c",
+			"annotations": "ref:READ",
+			"schemaHash": "c5b2c878c72f"
+		},
+		{
+			"name": "agent_mail_quote",
+			"title": "Quote a mailbox or a send",
+			"descHead": "Use this first whenever the owner asks to create a mailbox, send or repl",
+			"descHash": "1a80e314f7c8",
+			"annotations": "ref:WRITE",
+			"schemaHash": "97d8c1e23d2f"
+		},
+		{
+			"name": "agent_mail_read",
+			"title": "Read one email",
+			"descHead": "Use this to open a message from agent_mail_list or agent_mail_search. On",
+			"descHash": "8f6d5f70d751",
+			"annotations": "ref:READ",
+			"schemaHash": "bb83d8ebd81e"
+		},
+		{
+			"name": "agent_mail_reply",
+			"title": "Reply to an email",
+			"descHead": "Use this once the owner approved a reply quote. Send the reply an agent_",
+			"descHash": "d3c91ddc2737",
+			"annotations": "ref:MONEY",
+			"schemaHash": "91deea06c325"
+		},
+		{
+			"name": "agent_mail_search",
+			"title": "Search the agent mailbox",
+			"descHead": "Use this when the owner asks about mail from a sender or on a topic. Fin",
+			"descHash": "f87acd34be86",
+			"annotations": "ref:READ",
+			"schemaHash": "9819e87ec32f"
+		},
+		{
+			"name": "agent_mail_send",
+			"title": "Send an email",
+			"descHead": "Use this once the owner approved a send quote. Send exactly the draft an",
+			"descHash": "9e737cbb83cb",
+			"annotations": "ref:MONEY",
+			"schemaHash": "29b676065365"
+		}
+	],
 	"api/_mcp/tools/memory.js": [
 		{
 			"name": "forget",
 			"title": "Forget",
-			"descHead": "Delete a memory you own by its id.",
-			"descHash": "c7a3d36e6024",
+			"descHead": "Delete a memory you own by its id. Use this when a stored memory is wron",
+			"descHash": "1117dd4b6939",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -657,7 +968,7 @@
 			"name": "recall",
 			"title": "Recall",
 			"descHead": "Retrieve the most relevant memories for a query from one of your agents.",
-			"descHash": "2f63c3847d9b",
+			"descHash": "09ae2c4899cb",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -680,78 +991,12 @@
 			"schemaHash": "8033e83ac438"
 		}
 	],
-	"api/_mcp/tools/domains.js": [
-		{
-			"name": "domain_check",
-			"title": "Check one web domain",
-			"descHead": "One answer for one fully-qualified name: available or not, with a clear ",
-			"descHash": "6648209f239b",
-			"annotations": "ref:READ",
-			"schemaHash": "f3ac2146f00a"
-		},
-		{
-			"name": "domain_connect",
-			"title": "Connect a domain to an agent page",
-			"descHead": "Serve an agent's public page on a domain you registered here: creates th",
-			"descHash": "40bdfd435bb4",
-			"annotations": "ref:WRITE",
-			"schemaHash": "90cd775ae53a"
-		},
-		{
-			"name": "domain_connect_status",
-			"title": "Check a connected domain",
-			"descHead": "Whether a connected domain is live: the certificate state, the DNS names",
-			"descHash": "460ca38b913e",
-			"annotations": "ref:READ",
-			"schemaHash": "5a390848d5ae"
-		},
-		{
-			"name": "domain_pricing",
-			"title": "List domain TLD pricing",
-			"descHead": "The extensions Google Cloud Domains sells with their yearly registration",
-			"descHash": "7693f70918c9",
-			"annotations": "ref:READ",
-			"schemaHash": "3317b68691fa"
-		},
-		{
-			"name": "domain_register",
-			"title": "Register a domain (spends credits)",
-			"descHead": "Register the domain domain_register_quote priced, paying the exact yearl",
-			"descHash": "7e2697e2a4fd",
-			"annotations": "ref:MONEY",
-			"schemaHash": "55d848b7dc66"
-		},
-		{
-			"name": "domain_register_quote",
-			"title": "Quote a domain registration",
-			"descHead": "Price a domain registration without buying it: the exact yearly price, t",
-			"descHash": "1451c7595b98",
-			"annotations": "ref:WRITE",
-			"schemaHash": "a360feac8341"
-		},
-		{
-			"name": "domain_search",
-			"title": "Search web domains",
-			"descHead": "Suggest web domains for a name across TLDs, live from Google Cloud Domai",
-			"descHash": "6c8a2d58bccd",
-			"annotations": "ref:READ",
-			"schemaHash": "1684dd9c948b"
-		},
-		{
-			"name": "domain_status",
-			"title": "Poll a domain registration",
-			"descHead": "The state of a registration you started: registering, active (with its e",
-			"descHash": "f6cb05ee34ec",
-			"annotations": "ref:READ",
-			"schemaHash": "1f18b648f326"
-		}
-	],
 	"api/_mcp/tools/models.js": [
 		{
 			"name": "diff_models",
 			"title": "Diff two glTF/GLB models",
 			"descHead": "Compare two remote GLB or glTF models and return what changed: geometry,",
-			"descHash": "7258f23cf52e",
+			"descHash": "3abd7d623838",
 			"annotations": "ref:INSPECTION_ANNOTATIONS",
 			"schemaHash": "449d45d54027"
 		},
@@ -759,7 +1004,7 @@
 			"name": "inspect_model",
 			"title": "Inspect glTF/GLB model",
 			"descHead": "Parse a remote GLB or glTF and return structural stats: scene/node/mesh ",
-			"descHash": "f60800147b2e",
+			"descHash": "d1b154806706",
 			"annotations": "ref:INSPECTION_ANNOTATIONS",
 			"schemaHash": "508ba4931749"
 		},
@@ -767,7 +1012,7 @@
 			"name": "optimize_model",
 			"title": "Suggest optimizations for a glTF/GLB model",
 			"descHead": "Inspect the model and return actionable suggestions for reducing size an",
-			"descHash": "6aae82cc8273",
+			"descHash": "a595d2aa1602",
 			"annotations": "ref:INSPECTION_ANNOTATIONS",
 			"schemaHash": "508ba4931749"
 		},
@@ -775,7 +1020,7 @@
 			"name": "validate_model",
 			"title": "Validate glTF/GLB model",
 			"descHead": "Run the Khronos glTF-Validator against a remote GLB or glTF URL. Returns",
-			"descHash": "3fcb156b0641",
+			"descHash": "2898def8c018",
 			"annotations": "ref:INSPECTION_ANNOTATIONS",
 			"schemaHash": "ec4de14d2fb0"
 		}
@@ -785,7 +1030,7 @@
 			"name": "oracle_arm_watch",
 			"title": "Arm agent Oracle watch",
 			"descHead": "Arm your agent to automatically act on Oracle conviction signals. Once a",
-			"descHash": "d659c5146b5d",
+			"descHash": "705a0a080a47",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -798,7 +1043,7 @@
 			"name": "oracle_coin",
 			"title": "Oracle verdict for one coin",
 			"descHead": "Get Oracle's full conviction verdict for a specific pump.fun coin by min",
-			"descHash": "142eb41facc8",
+			"descHash": "7acfeda4eb48",
 			"annotations": "ref:LIVE_ANNOTATIONS",
 			"schemaHash": "e49439fea65e"
 		},
@@ -829,7 +1074,7 @@
 			"name": "paired_claim_fees",
 			"title": "Claim paired-coin creator fees",
 			"descHead": "Collect every quote asset an agent has earned in paired-coin swap fees, ",
-			"descHash": "e9bff3ce01a3",
+			"descHash": "cf4c469224e1",
 			"annotations": "ref:MONEY",
 			"schemaHash": "8507841da727"
 		},
@@ -837,7 +1082,7 @@
 			"name": "paired_coin",
 			"title": "Read a paired coin",
 			"descHead": "One paired coin in full: its pools priced in dollars, recent trades, per",
-			"descHash": "fd50022a9348",
+			"descHash": "ddc428ecad1f",
 			"annotations": "ref:READ",
 			"schemaHash": "f7b30b8cb101"
 		},
@@ -845,7 +1090,7 @@
 			"name": "paired_coins",
 			"title": "List paired coins",
 			"descHead": "Paired coins on Robinhood Chain, newest first, with every pool (quote as",
-			"descHash": "39f12de03d87",
+			"descHash": "0ab1face64cc",
 			"annotations": "ref:READ",
 			"schemaHash": "ea7713c2fc50"
 		},
@@ -853,7 +1098,7 @@
 			"name": "paired_fees",
 			"title": "Read paired-coin creator fees",
 			"descHead": "Swap fees an agent has earned as the creator of paired coins and can cla",
-			"descHash": "16f948364b37",
+			"descHash": "7d477074b919",
 			"annotations": "ref:READ",
 			"schemaHash": "8507841da727"
 		},
@@ -861,15 +1106,15 @@
 			"name": "paired_launch",
 			"title": "Launch a paired coin from an agent wallet",
 			"descHead": "Launch the coin paired_launch_quote priced, signed by the agent's custod",
-			"descHash": "5f9437f56897",
+			"descHash": "0910ddf4e02b",
 			"annotations": "ref:MONEY",
-			"schemaHash": "078d8f529f65"
+			"schemaHash": "42698a4df439"
 		},
 		{
 			"name": "paired_launch_quote",
 			"title": "Quote a paired-coin launch",
 			"descHead": "Price a paired-coin launch from an agent's own EVM wallet on Robinhood C",
-			"descHash": "a954f2319d75",
+			"descHash": "b5be0b3f1eb6",
 			"annotations": "ref:WRITE",
 			"schemaHash": "fc7a3d9fec58"
 		},
@@ -877,7 +1122,7 @@
 			"name": "paired_markets",
 			"title": "List paired-coin markets",
 			"descHead": "Every asset a paired coin on Robinhood Chain can trade against, read liv",
-			"descHash": "341c46d099c2",
+			"descHash": "0e963b69f4bd",
 			"annotations": "ref:READ",
 			"schemaHash": "8d68aaf97b18"
 		}
@@ -905,7 +1150,7 @@
 			"name": "pumpfun_creator_intel",
 			"title": "Pump.fun creator intel",
 			"descHead": "Reputation profile for a pump.fun creator wallet: prior launches, gradua",
-			"descHash": "11009779c558",
+			"descHash": "2746d433c6de",
 			"annotations": "ref:LIVE_FEED_ANNOTATIONS",
 			"schemaHash": "d70ded99f0a8"
 		},
@@ -921,7 +1166,7 @@
 			"name": "pumpfun_recent_graduations",
 			"title": "Recent pump.fun graduations",
 			"descHead": "Tokens that recently graduated from the bonding curve to PumpAMM, with c",
-			"descHash": "caf218a6cdd6",
+			"descHash": "0433a2e474b5",
 			"annotations": "ref:LIVE_FEED_ANNOTATIONS",
 			"schemaHash": "167128e5fd74"
 		},
@@ -929,7 +1174,7 @@
 			"name": "pumpfun_token_intel",
 			"title": "Pump.fun token intel",
 			"descHead": "Full intel on a pump.fun token: graduation status, bonding-curve progres",
-			"descHash": "d1119e50045e",
+			"descHash": "fb3507d32119",
 			"annotations": "ref:LIVE_FEED_ANNOTATIONS",
 			"schemaHash": "f98dc82b28e7"
 		}
@@ -939,7 +1184,7 @@
 			"name": "read_resource",
 			"title": "Read a three:// resource",
 			"descHead": "Read a live three.ws resource by URI: three://me (account, scopes, quota",
-			"descHash": "c2103458cb7d",
+			"descHash": "49e2506478db",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -967,7 +1212,7 @@
 			"name": "sign_text",
 			"title": "Sign text in ASL",
 			"descHead": "Compile English text into one continuous American Sign Language performa",
-			"descHash": "6636359a5774",
+			"descHash": "04b4183bbccf",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1038,7 +1283,7 @@
 			"name": "solana_agent_attestations",
 			"title": "List Solana agent attestations",
 			"descHead": "List recent on-chain attestations about a Solana-registered agent (feedb",
-			"descHash": "2c83176df84d",
+			"descHash": "145dbe959866",
 			"annotations": "ref:ATTESTATION_READ_ANNOTATIONS",
 			"schemaHash": "19470067c940"
 		},
@@ -1054,7 +1299,7 @@
 			"name": "solana_agent_reputation",
 			"title": "Get Solana agent reputation",
 			"descHead": "Computed reputation summary for a Solana-registered three.ws agent. Retu",
-			"descHash": "5c3aa420b75e",
+			"descHash": "3088aad5a068",
 			"annotations": "ref:ATTESTATION_READ_ANNOTATIONS",
 			"schemaHash": "72791cf29a31"
 		}
@@ -1105,7 +1350,7 @@
 			"name": "copy_subscribe",
 			"title": "Subscribe to copy a trader",
 			"descHead": "Set up non-custodial copy-trading: mirror a leader agent's future pump.f",
-			"descHash": "b126b5cdfc6b",
+			"descHash": "c905cc978279",
 			"annotations": "ref:WRITE",
 			"schemaHash": "4371f009b2b2"
 		},
@@ -1113,7 +1358,7 @@
 			"name": "sentiment_scout",
 			"title": "Sourced momentum candidates (Sentiment Scout)",
 			"descHead": "Surface pump.fun momentum candidates with evidence you can cite. Each ca",
-			"descHash": "e649a7dfcebe",
+			"descHash": "84ff05464b35",
 			"annotations": "ref:LIVE",
 			"schemaHash": "13a0e7cff817"
 		},
@@ -1121,7 +1366,7 @@
 			"name": "trade_receipt",
 			"title": "Why an agent took one trade",
 			"descHead": "Get the decision receipt for one pump.fun trade by an agent: the entry t",
-			"descHash": "71a32208cc0e",
+			"descHash": "5800d80c1e5e",
 			"annotations": "ref:LIVE",
 			"schemaHash": "bb36769e7ef4"
 		},
@@ -1129,7 +1374,7 @@
 			"name": "trader_leaderboard",
 			"title": "Top pump.fun traders",
 			"descHead": "Get the top pump.fun traders on three.ws ranked by composite TraderScore",
-			"descHash": "2cbf1024f3d6",
+			"descHash": "55d7904ce6a0",
 			"annotations": "ref:LIVE",
 			"schemaHash": "ab27ab6634a8"
 		},
@@ -1140,6 +1385,32 @@
 			"descHash": "aaff472b3eae",
 			"annotations": "ref:LIVE",
 			"schemaHash": "4dc84b2cce04"
+		}
+	],
+	"api/_mcp/tools/whitelist.js": [
+		{
+			"name": "add_to_whitelist",
+			"title": "Propose a wallet allowlist destination",
+			"descHead": "Propose an address for an agent wallet's allowlist, with an optional lab",
+			"descHash": "51f351c84dc7",
+			"annotations": "ref:WRITE",
+			"schemaHash": "b3174e6744c8"
+		},
+		{
+			"name": "get_whitelist",
+			"title": "Get wallet allowlist",
+			"descHead": "List the destinations an agent wallet may send funds to: each entry has ",
+			"descHash": "e4d0dc8fb800",
+			"annotations": "ref:READ",
+			"schemaHash": "43036da3cccd"
+		},
+		{
+			"name": "remove_from_whitelist",
+			"title": "Remove a wallet allowlist destination",
+			"descHead": "Remove a destination from an agent wallet's allowlist (or withdraw a pen",
+			"descHash": "fe24a9a8afbf",
+			"annotations": "ref:REMOVE",
+			"schemaHash": "5637c88ea250"
 		}
 	],
 	"api/_mcp3d/tools/ar.js": [
@@ -1267,7 +1538,7 @@
 			"name": "read_resource",
 			"title": "Read a three:// resource",
 			"descHead": "Read a live three.ws resource by URI: three://assets/<id> (a 3D asset wi",
-			"descHash": "a85752b643c5",
+			"descHash": "5847932b9ed4",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1312,7 +1583,7 @@
 			"name": "auto_rig_model",
 			"title": "Auto-rig a static 3D model (skeleton + skin weights)",
 			"descHead": "Turn a static GLB mesh into an animation-ready character: adds a humanoi",
-			"descHash": "832b32ab5642",
+			"descHash": "79510714529c",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "7009c009db7d"
 		},
@@ -1327,8 +1598,8 @@
 		{
 			"name": "create_agent_persona",
 			"title": "Mint a persistent, living agent persona from a rigged GLB",
-			"descHead": "Turn a generated GLB into a NAMED, persistent agent body — a \"persona\" t",
-			"descHash": "716809d092b0",
+			"descHead": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" th",
+			"descHash": "b068251d5fbe",
 			"annotations": "ref:PERSONA_CREATE_ANNOTATIONS",
 			"schemaHash": "7d650a9be810"
 		},
@@ -1336,7 +1607,7 @@
 			"name": "direct_prompt",
 			"title": "Optimize a rough idea into a 3D-generation prompt (IBM Granite)",
 			"descHead": "Rewrite a rough idea into an optimized text_to_3d prompt using IBM Grani",
-			"descHash": "1e1c7ac5025f",
+			"descHash": "44c3d0ab04b3",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "2d5958c4b914"
 		},
@@ -1344,7 +1615,7 @@
 			"name": "generate_material",
 			"title": "Generate a glTF PBR material from a description (IBM Granite)",
 			"descHead": "Generate a physically-based (PBR) glTF 2.0 material from a text descript",
-			"descHash": "50c812e688fc",
+			"descHash": "d6965a7cc161",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "e146204d56d4"
 		},
@@ -1352,7 +1623,7 @@
 			"name": "generation_status",
 			"title": "Check a 3D generation job",
 			"descHead": "Poll a text_to_3d or image_to_3d job by its job_id. While running it rep",
-			"descHash": "2fdc15375822",
+			"descHash": "944b73c61ad4",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1364,8 +1635,8 @@
 		{
 			"name": "get_agent_persona",
 			"title": "Reload a persisted persona by id (continuity across sessions)",
-			"descHead": "Bring back a previously minted persona by its persona_id — the SAME body",
-			"descHash": "04388b6c47b0",
+			"descHead": "Bring back a previously minted persona by its persona_id: the SAME body ",
+			"descHash": "0ab3fea59651",
 			"annotations": "ref:PERSONA_READ_ANNOTATIONS",
 			"schemaHash": "b8451da964a3"
 		},
@@ -1373,7 +1644,7 @@
 			"name": "image_to_3d",
 			"title": "Reconstruct a 3D model from one or more images",
 			"descHead": "Reconstruct a textured 3D model (GLB) from a reference image using the t",
-			"descHash": "cf4145f4d88b",
+			"descHash": "18627668f126",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "02b319a19d1c"
 		},
@@ -1381,7 +1652,7 @@
 			"name": "persona_say",
 			"title": "Speak a reply through a persona: lip-sync + emotion + gesture",
 			"descHead": "Make a persona PERFORM a reply: the body lip-syncs the text and shows th",
-			"descHash": "7ce7c147f8f6",
+			"descHash": "62a1a99f2feb",
 			"annotations": "ref:PERSONA_SAY_ANNOTATIONS",
 			"schemaHash": "497937ffa9cc"
 		},
@@ -1389,7 +1660,7 @@
 			"name": "pose_model",
 			"title": "Resolve a text prompt to a pose-studio seed + joint rotations",
 			"descHead": "Map a natural-language pose description to a deterministic pose-studio s",
-			"descHash": "c6138b729e0e",
+			"descHash": "5a8503d4c0d8",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1415,7 +1686,7 @@
 			"name": "remesh_model",
 			"title": "Remesh, simplify, repair, or convert a 3D model",
 			"descHead": "Process an existing GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE mesh: fix holes and",
-			"descHash": "a8b3ca1d4a5e",
+			"descHash": "068a75cf1c57",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "ee7335f4b61a"
 		},
@@ -1423,7 +1694,7 @@
 			"name": "remove_background",
 			"title": "Remove the background from an image",
 			"descHead": "Strip the background from a photo or illustration with the three.ws back",
-			"descHash": "3334882948e5",
+			"descHash": "bf91a5f62d4f",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "8f9aeb374747"
 		},
@@ -1431,7 +1702,7 @@
 			"name": "retexture_model",
 			"title": "Paint a new texture onto a 3D model from a text prompt",
 			"descHead": "Generate a fresh texture for an untextured or poorly-textured GLB with t",
-			"descHash": "6cc85e4e6fb7",
+			"descHash": "5c925d7099d9",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "c5702d76eb00"
 		},
@@ -1447,7 +1718,7 @@
 			"name": "save_avatar",
 			"title": "Save a generated GLB as a durable, named avatar",
 			"descHead": "Persist a generated GLB (e.g. the glb_url returned by generation_status)",
-			"descHash": "de0ef1a0a729",
+			"descHash": "dc9f83484330",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "ae4e2c32ab4f"
 		},
@@ -1455,7 +1726,7 @@
 			"name": "segment_model",
 			"title": "Split a 3D model into named, separable parts",
 			"descHead": "Segment a GLB/OBJ/STL/PLY mesh into meaningful parts with clean boundari",
-			"descHash": "be034074eec2",
+			"descHash": "7c316d3603b6",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "50169015a661"
 		},
@@ -1471,7 +1742,7 @@
 			"name": "text_to_3d",
 			"title": "Generate a 3D model from a text prompt",
 			"descHead": "Turn a text description into a textured 3D model (GLB). Runs a fast text",
-			"descHash": "8d96a3f07c0f",
+			"descHash": "acfd63a4c947",
 			"annotations": "ref:GENERATIVE_ANNOTATIONS",
 			"schemaHash": "764012918b1c"
 		}
@@ -1481,7 +1752,7 @@
 			"name": "find_services",
 			"title": "Find paid services the agent can call",
 			"descHead": "Search the live x402 facilitator network for paid services (HTTP APIs an",
-			"descHash": "96a31531545e",
+			"descHash": "a46c97044943",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1491,10 +1762,23 @@
 			"schemaHash": "85a78b392826"
 		},
 		{
+			"name": "get_linked_accounts",
+			"title": "List everything linked to the account",
+			"descHead": "Everything attached to the signed-in user's three.ws account: sign-in me",
+			"descHash": "2bbf802b8f35",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "b3761fba59a0"
+		},
+		{
 			"name": "monetize_endpoint",
 			"title": "Publish a paid endpoint to earn USDC",
 			"descHead": "Put a price on an upstream API your agent already serves and publish it ",
-			"descHash": "ee8468b7ec03",
+			"descHash": "4a2cd8ac83e6",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -1507,7 +1791,7 @@
 			"name": "pay_and_call",
 			"title": "Pay an x402 service and return its result",
 			"descHead": "Call a paid x402 endpoint and settle the USDC payment automatically from",
-			"descHash": "a0fb0d23ab91",
+			"descHash": "ed720e544661",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -1520,7 +1804,7 @@
 			"name": "pay_quote",
 			"title": "Price an x402 payment without paying",
 			"descHead": "Price a paid x402 endpoint WITHOUT paying: asks the resource for its pay",
-			"descHash": "169881373481",
+			"descHash": "1a29c54aec06",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1533,7 +1817,7 @@
 			"name": "provision_wallet",
 			"title": "Create the agent's wallet",
 			"descHead": "Create (or return) the custodial Solana wallet for one of your agents so",
-			"descHash": "406b15338ea6",
+			"descHash": "d414a8703513",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -1546,7 +1830,7 @@
 			"name": "read_resource",
 			"title": "Read a three:// resource",
 			"descHead": "Read a live three.ws resource by URI: three://agents/<id>/wallet (balanc",
-			"descHash": "7792a4be3775",
+			"descHash": "46a835aa5c14",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1554,6 +1838,19 @@
 				"openWorldHint": false
 			},
 			"schemaHash": "046b33e27fe6"
+		},
+		{
+			"name": "set_external_wallet",
+			"title": "Attach a wallet you control as a payout wallet",
+			"descHead": "Set where an agent's earnings are paid out, to a Solana or EVM wallet th",
+			"descHash": "09780b295e6e",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": false
+			},
+			"schemaHash": "da696b6d3185"
 		},
 		{
 			"name": "wallet_status",
@@ -1574,7 +1871,7 @@
 			"name": "bazaar_service_details",
 			"title": "Live price details for one x402 service",
 			"descHead": "Resolve the current live price of a single x402 service by its resource ",
-			"descHash": "ea7b6efc43d7",
+			"descHash": "5f76bda19781",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "8b343836306d"
 		},
@@ -1582,7 +1879,7 @@
 			"name": "browse_services",
 			"title": "Browse the x402 bazaar",
 			"descHead": "List paid agent services from the live x402 facilitator network without ",
-			"descHash": "87c59b46c02f",
+			"descHash": "469e1696f343",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "24d42c431f67"
 		},
@@ -1590,7 +1887,7 @@
 			"name": "get_service",
 			"title": "Get full details for one x402 service",
 			"descHead": "Resolve a single x402 service by its resource URL (and tool_name for MCP",
-			"descHash": "b38eb5052ab1",
+			"descHash": "15755fc623f9",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "8b343836306d"
 		},
@@ -1598,7 +1895,7 @@
 			"name": "read_resource",
 			"title": "Read a three:// resource",
 			"descHead": "Read a live three.ws resource by URI: three://x402/services (the x402 se",
-			"descHash": "46c1f2880c23",
+			"descHash": "414beb3724ec",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1611,7 +1908,7 @@
 			"name": "search_services",
 			"title": "Search the x402 bazaar",
 			"descHead": "Ranked search across the live x402 facilitator network for paid agent se",
-			"descHash": "7e71185f12b2",
+			"descHash": "c526468f075b",
 			"annotations": "ref:DISCOVERY_ANNOTATIONS",
 			"schemaHash": "b9757f337ea2"
 		}
@@ -1674,6 +1971,7 @@
 			"descHash": "2bdbb0bc0a3a",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1685,9 +1983,10 @@
 			"name": "get_holder_leaderboard",
 			"title": "$THREE holder leaderboard",
 			"descHead": "The public $THREE holder leaderboard, ranked by on-chain balance. $THREE",
-			"descHash": "4754b044edb1",
+			"descHash": "c99e6c703e37",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1702,6 +2001,7 @@
 			"descHash": "81281cff2892",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1713,9 +2013,10 @@
 			"name": "get_trending_agents",
 			"title": "Trending agents by activity",
 			"descHead": "The agents that are hot on three.ws right now, ranked by REAL chat activ",
-			"descHash": "739733564f70",
+			"descHash": "bb8bb8ef7e30",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1727,9 +2028,10 @@
 			"name": "get_trending_coins",
 			"title": "Trending coins by Oracle conviction",
 			"descHead": "The coins three.ws's Oracle has the highest conviction in right now, ran",
-			"descHash": "21babb465831",
+			"descHash": "cb0b91e21347",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1744,6 +2046,7 @@
 			"descHash": "64c82fb36d18",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1755,9 +2058,10 @@
 			"name": "get_task",
 			"title": "Get AgenC task detail + lifecycle",
 			"descHead": "Fetch one AgenC task by its PDA, or by (creator + taskId). Returns the t",
-			"descHash": "4319c9a90e90",
+			"descHash": "25f52040a6f4",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1769,9 +2073,10 @@
 			"name": "link_agent",
 			"title": "Link a three.ws identity to its AgenC agent id",
 			"descHead": "Resolve a three.ws identity to its canonical AgenC agent id and check wh",
-			"descHash": "7b9bfd0060eb",
+			"descHash": "ab1bf9f10c38",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1786,6 +2091,7 @@
 			"descHash": "1cb240d0a32c",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1800,6 +2106,7 @@
 			"descHash": "7e00badfc0a3",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1829,6 +2136,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -1858,6 +2166,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": false
 			},
@@ -1898,10 +2207,11 @@
 		{
 			"name": "agora_board",
 			"title": "Browse the Agora job board",
-			"descHead": "Browse the live Agora job board — the work an agent can claim and earn $",
-			"descHash": "5dbb1bdad754",
+			"descHead": "Browse the live Agora job board, the work an agent can claim and earn $T",
+			"descHash": "1f6980dd3dcf",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1916,6 +2226,7 @@
 			"descHash": "9c8f5bf601b4",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1926,10 +2237,11 @@
 		{
 			"name": "agora_claim_task",
 			"title": "Claim an open Agora task (on-chain)",
-			"descHead": "CLAIM an open job from the Agora board — a REAL on-chain AgenC claim sig",
-			"descHash": "0bb79da5c125",
+			"descHead": "CLAIM an open job from the Agora board, a REAL on-chain AgenC claim sign",
+			"descHash": "01695a91b6fc",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": true,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1940,10 +2252,11 @@
 		{
 			"name": "agora_complete_task",
 			"title": "Complete an Agora task with a proof (on-chain)",
-			"descHead": "COMPLETE a task you claimed and GET PAID — a REAL on-chain AgenC complet",
-			"descHash": "35535d8835f8",
+			"descHead": "COMPLETE a task you claimed and GET PAID, a REAL on-chain AgenC completi",
+			"descHash": "d707803d50d1",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": true,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1954,10 +2267,11 @@
 		{
 			"name": "agora_passport",
 			"title": "Get one Agora citizen passport",
-			"descHead": "Fetch one citizen's living passport — the full record of a participant i",
-			"descHash": "5427f717ba36",
+			"descHead": "Fetch one citizen's living passport, the full record of a participant in",
+			"descHash": "7fcbd2ef8470",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1972,6 +2286,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": true,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -1999,6 +2314,7 @@
 			"descHash": "65a97e8f01a0",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2013,6 +2329,7 @@
 			"descHash": "7b1f7e64a4a2",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2036,10 +2353,11 @@
 		{
 			"name": "agora_register",
 			"title": "Register as an Agora citizen (on-chain)",
-			"descHead": "JOIN AGORA as a citizen — a REAL on-chain AgenC registration signed by Y",
-			"descHash": "97f5aaecd553",
+			"descHead": "JOIN AGORA as a citizen, a REAL on-chain AgenC registration signed by YO",
+			"descHash": "125150ee8efc",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": true,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2054,6 +2372,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2083,6 +2402,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2097,6 +2417,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2111,6 +2432,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2122,7 +2444,7 @@
 			"name": "build_assistant_widget",
 			"title": "Build a paste-ready three.ws assistant widget embed",
 			"descHead": "Turn a config into a ready-to-embed three.ws assistant widget, a floatin",
-			"descHash": "4a9f57b922a5",
+			"descHash": "5503a0d2a256",
 			"annotations": {
 				"readOnlyHint": true,
 				"idempotentHint": true,
@@ -2140,6 +2462,7 @@
 			"descHash": "8899e9de8655",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -2154,6 +2477,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2168,6 +2492,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2182,6 +2507,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2196,6 +2522,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2210,6 +2537,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2239,6 +2567,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2268,6 +2597,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2297,6 +2627,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2311,6 +2642,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2325,6 +2657,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2339,6 +2672,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2353,6 +2687,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2379,7 +2714,7 @@
 			"name": "dress_avatar",
 			"title": "Apply accessories + pose to a spawned avatar",
 			"descHead": "Apply (or replace) accessories on a spawned avatar session and optionall",
-			"descHash": "4f872f43c5de",
+			"descHash": "7b05a5dc1271",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2394,9 +2729,10 @@
 			"name": "ens_sns_resolve",
 			"title": "Resolve ENS + SNS names to addresses",
 			"descHead": "Resolve a human-readable name to addresses across ENS (Ethereum) and SNS",
-			"descHash": "d21fbb09d443",
+			"descHash": "7d5c78db251e",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2408,7 +2744,7 @@
 			"name": "generate_avatar",
 			"title": "Generate a 3D avatar (Replicate text-to-3D)",
 			"descHead": "Generate a textured GLB from a text prompt or reference image URLs via R",
-			"descHash": "45560bafc5c4",
+			"descHash": "beeec3b860d8",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2423,9 +2759,10 @@
 			"name": "inspect_glb",
 			"title": "Inspect a GLB / glTF 3D model",
 			"descHead": "Fetch any GLB URL (or data: URL) and return a full structural breakdown:",
-			"descHash": "94974ec659b1",
+			"descHash": "9c4800d85ad1",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2437,9 +2774,10 @@
 			"name": "list_animations",
 			"title": "List three.ws pose presets + animation slots",
 			"descHead": "Return the three.ws pose preset catalog (T-pose, A-pose, wave, thinker, ",
-			"descHash": "3913dc7c8b98",
+			"descHash": "2e14eda5dd76",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2451,9 +2789,10 @@
 			"name": "list_avatars",
 			"title": "List three.ws default avatars + accessories",
 			"descHead": "Return the catalog of default 3D avatars (default, cz) and accessories (",
-			"descHash": "4a0549f53d96",
+			"descHash": "5fa167451554",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2465,9 +2804,10 @@
 			"name": "optimize_glb",
 			"title": "Optimize a GLB (dedup, prune, weld, Draco)",
 			"descHead": "Run a @gltf-transform/functions optimization pipeline on a GLB URL: dedu",
-			"descHash": "03c3982dd91d",
+			"descHash": "4d8c5d99a1ad",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2479,7 +2819,7 @@
 			"name": "pump_buy_quote",
 			"title": "Quote a token buy via Jupiter (no funds move)",
 			"descHead": "Quote a pump_buy before it runs: the SOL spent, the expected and minimum",
-			"descHash": "3775617cdf3f",
+			"descHash": "0dfd6aeb51ae",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -2494,7 +2834,7 @@
 			"name": "pump_buy",
 			"title": "Buy a Solana token via Jupiter (direct or Jito-bundled)",
 			"descHead": "Swap SOL → target mint via Jupiter aggregator. Direct mode = one tx sign",
-			"descHash": "2a5ec65bb978",
+			"descHash": "227376459e6e",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -2509,7 +2849,7 @@
 			"name": "pump_collect_preview",
 			"title": "Preview a creator-fee collection (no funds move)",
 			"descHead": "Preview pump_collect_fees before it runs: the live creator-fee vault bal",
-			"descHash": "e86ace5a4717",
+			"descHash": "00cf11587ce2",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -2524,7 +2864,7 @@
 			"name": "pump_collect_fees",
 			"title": "Atomic pump.fun creator-fee collection (Jito bundle)",
 			"descHead": "Collect a pump.fun coin's creator-fee vault and route the SOL to a safe ",
-			"descHash": "1a5094103629",
+			"descHash": "e7e908b8e4f3",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -2539,7 +2879,7 @@
 			"name": "pump_launch_preview",
 			"title": "Preview a coin launch (no funds move)",
 			"descHead": "Preview a pump_launch before it runs: the funder and creator addresses, ",
-			"descHash": "06581cb81fb3",
+			"descHash": "5ac14ae5e693",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -2554,7 +2894,7 @@
 			"name": "pump_launch",
 			"title": "Atomic pump.fun launch (Jito bundle, separate funder/creator)",
 			"descHead": "Launch a pump.fun token atomically via a Jito bundle. Funder pays its ow",
-			"descHash": "02787a83c6d1",
+			"descHash": "620d11b11386",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -2569,9 +2909,10 @@
 			"name": "pump_snapshot",
 			"title": "Live pump.fun / Solana token snapshot",
 			"descHead": "Live snapshot for a Solana token (SPL or pump.fun): USD price (Jupiter),",
-			"descHash": "c4bea0baa681",
+			"descHash": "739f1db99bea",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2583,9 +2924,10 @@
 			"name": "render_avatar",
 			"title": "Render a posed avatar (pose + camera + expression)",
 			"descHead": "Render an avatar GLB with a three.ws pose preset, camera orbit, and opti",
-			"descHash": "7c1ec5431ed9",
+			"descHash": "eaeef858038a",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2597,7 +2939,7 @@
 			"name": "spawn_avatar",
 			"title": "Spawn a 3D avatar session",
 			"descHead": "Spawn a 3D avatar from a curated default (preset=\"default\" or \"cz\") or f",
-			"descHash": "c3384eaadd16",
+			"descHash": "b62fe805b473",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2612,7 +2954,7 @@
 			"name": "speak",
 			"title": "Avatar speaks (TTS)",
 			"descHead": "Synthesize speech for an avatar session and return a base64 audio data U",
-			"descHash": "ac95949fb9db",
+			"descHash": "bf242a9b7c8d",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2627,9 +2969,10 @@
 			"name": "thumbnail_glb",
 			"title": "Render a GLB to a PNG thumbnail",
 			"descHead": "Render any public GLB URL to a PNG via three.ws's hosted three-light rig",
-			"descHash": "9f954ad41b72",
+			"descHash": "d0fd6a32712d",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2641,9 +2984,10 @@
 			"name": "validate_glb",
 			"title": "Validate a GLB / glTF against the Khronos spec",
 			"descHead": "Run the official Khronos gltf-validator against a GLB URL. Returns error",
-			"descHash": "d50330608926",
+			"descHash": "7a1f47413c60",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2655,9 +2999,10 @@
 			"name": "viewer_url",
 			"title": "Build a three.ws viewer URL + embed snippet",
 			"descHead": "Build a shareable https://three.ws/viewer?... URL that opens any GLB in ",
-			"descHash": "92579a5c4dfe",
+			"descHash": "be3995a2ec7c",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2669,9 +3014,10 @@
 			"name": "wallet_balance",
 			"title": "Read Solana wallet balances (SOL + SPL tokens)",
 			"descHead": "Return SOL balance and all SPL token balances (including Token-2022) for",
-			"descHash": "dfb87c21b60a",
+			"descHash": "c9de08138162",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2683,7 +3029,7 @@
 			"name": "wallet_create",
 			"title": "Create a Solana wallet (optionally vanity-grinded)",
 			"descHead": "Generate a Solana keypair locally. Optionally grind for a base58 prefix/",
-			"descHash": "a83887009551",
+			"descHash": "e3786b3f425c",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -2698,7 +3044,7 @@
 			"name": "wallet_send_preview",
 			"title": "Preview a SOL send (no funds move)",
 			"descHead": "Preview a wallet_send before it runs: the sender address, recipient, amo",
-			"descHash": "5a93d7e6b8ce",
+			"descHash": "7fb77d7002a3",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -2713,7 +3059,7 @@
 			"name": "wallet_send",
 			"title": "Send SOL on Solana mainnet",
 			"descHead": "Send SOL from the configured signer to a destination pubkey. The signer ",
-			"descHash": "7b8d0d5b7d25",
+			"descHash": "eb62535d1f46",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -2731,6 +3077,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2745,6 +3092,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2759,6 +3107,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2773,6 +3122,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2787,6 +3137,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2831,6 +3182,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -2890,6 +3242,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -2904,6 +3257,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2918,6 +3272,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2929,9 +3284,10 @@
 			"name": "enlist_faction",
 			"title": "Enlist in a Coin Clash faction",
 			"descHead": "Enlist the signer's wallet as a soldier in a Coin Clash faction and retu",
-			"descHash": "c2bf62757178",
+			"descHash": "848ee7b939e3",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -2946,6 +3302,7 @@
 			"descHash": "23cbf9d5938f",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2960,6 +3317,7 @@
 			"descHash": "1d0ba279475f",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2971,9 +3329,10 @@
 			"name": "rally_faction",
 			"title": "Rally power for a Coin Clash faction",
 			"descHead": "Rally for a Coin Clash faction by spending taps as battle power for the ",
-			"descHash": "de08c50debca",
+			"descHash": "d0cb1e6fd562",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -2988,6 +3347,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			}
@@ -3001,6 +3361,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			}
@@ -3014,6 +3375,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			}
@@ -3024,7 +3386,7 @@
 			"name": "cancel_subscription",
 			"title": "Stop a copy-trade subscription",
 			"descHead": "Stop following a leader: transitions the subscription to \"stopped\" so no",
-			"descHash": "3c97e4e427be",
+			"descHash": "53909f28a1f7",
 			"annotations": {
 				"readOnlyHint": false,
 				"idempotentHint": true,
@@ -3039,9 +3401,10 @@
 			"name": "create_subscription",
 			"title": "Follow a leader (create / update subscription)",
 			"descHead": "Follow a copy-trade leader from the authenticated account, defining how ",
-			"descHash": "e4803ddf0e6c",
+			"descHash": "67aa78b09d77",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3053,9 +3416,10 @@
 			"name": "get_earnings",
 			"title": "Copy-trade earnings & fees owed",
 			"descHead": "Read copy-trade performance-fee accounting. Without agent_id: the authen",
-			"descHash": "e002ec5962a0",
+			"descHash": "f3f15cf18cab",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3066,10 +3430,11 @@
 		{
 			"name": "get_executions",
 			"title": "List copy executions (intent inbox)",
-			"descHead": "List the authenticated account's copy executions — the sized, guard-chec",
-			"descHash": "cbe66041c82b",
+			"descHead": "List the authenticated account's copy executions: the sized, guard-check",
+			"descHash": "b4d5505d05d3",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3084,6 +3449,7 @@
 			"descHash": "70f853e46f6f",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3095,9 +3461,10 @@
 			"name": "record_execution",
 			"title": "Record acting on a copy intent",
 			"descHead": "Resolve a PENDING copy intent (from get_executions) by recording how you",
-			"descHash": "853880d7f5bf",
+			"descHash": "ff80131604a4",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3109,9 +3476,10 @@
 			"name": "update_subscription",
 			"title": "Update a copy-trade subscription",
 			"descHead": "Re-tune an existing copy-trade subscription by id. Pause it (stop new co",
-			"descHash": "1c612826a084",
+			"descHash": "8ebebaaa3683",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3126,6 +3494,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3140,6 +3509,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3154,6 +3524,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3183,6 +3554,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3197,6 +3569,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3211,6 +3584,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3252,9 +3626,10 @@
 			"name": "copy_smart_wallets",
 			"title": "Copy-trade smart wallet directory",
 			"descHead": "Browse the curated Smart Money directory for copy-trading: deduplicated ",
-			"descHash": "aadbfee4fb5b",
+			"descHash": "cc44d168a06a",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3266,9 +3641,10 @@
 			"name": "kol_leaderboard",
 			"title": "KOL trader leaderboard",
 			"descHead": "Rank the tracked key-opinion-leader (KOL) traders by realized performanc",
-			"descHash": "4eda74884ae4",
+			"descHash": "4294f3a63ee6",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3280,9 +3656,10 @@
 			"name": "kol_trades",
 			"title": "Recent KOL trades on a mint",
 			"descHead": "See which tracked KOL wallets have recently traded a specific mint. Retu",
-			"descHash": "5aaecc107a31",
+			"descHash": "6811cbba2591",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3294,9 +3671,10 @@
 			"name": "signal_feed",
 			"title": "Signal feed track record + recent signals",
 			"descHead": "Read one signal feed's public detail: the publisher's verified track rec",
-			"descHash": "e28d08215cd4",
+			"descHash": "1dbe0fb530b1",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3307,10 +3685,11 @@
 		{
 			"name": "smart_money_coin",
 			"title": "Smart-money score for a coin",
-			"descHead": "Assess a coin by WHO is net-buying it right now. Returns a 0–100 smart_m",
-			"descHash": "e779edb0c8bf",
+			"descHead": "Assess a coin by WHO is net-buying it right now. Returns a 0-100 smart_m",
+			"descHash": "bd15a62a37af",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3322,9 +3701,10 @@
 			"name": "wallet_intel",
 			"title": "Wallet reputation + smart-money card",
 			"descHead": "Pull one wallet's realized reputation, computed from its observed buys j",
-			"descHash": "8eb086935104",
+			"descHash": "cdeaf925d5c2",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3354,6 +3734,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3368,6 +3749,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3382,6 +3764,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3396,6 +3779,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3425,6 +3809,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3439,6 +3824,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3453,6 +3839,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3467,6 +3854,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3493,9 +3881,10 @@
 			"name": "agent_categories",
 			"title": "List agent marketplace categories",
 			"descHead": "List the agent marketplace categories with the count of published agents",
-			"descHash": "a80a3c66efee",
+			"descHash": "8a353c9245f5",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3507,9 +3896,10 @@
 			"name": "agent_detail",
 			"title": "Fetch a marketplace agent by id",
 			"descHead": "Fetch one published marketplace agent by its id, including its full deta",
-			"descHash": "d60282de0b42",
+			"descHash": "7cee2eefc0a0",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3521,9 +3911,10 @@
 			"name": "browse_agents",
 			"title": "Browse the agent marketplace",
 			"descHead": "Search and page the public three.ws agent marketplace. Filter by categor",
-			"descHash": "5b0feeada74f",
+			"descHash": "7df0de20ba52",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3534,10 +3925,11 @@
 		{
 			"name": "browse_skills",
 			"title": "Browse the skills catalog",
-			"descHead": "Search and page the public three.ws skills catalog — reusable tools and ",
-			"descHash": "cc6bca95f4db",
+			"descHead": "Search and page the public three.ws skills catalog: reusable tools and c",
+			"descHash": "7e37bb5127fb",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3549,9 +3941,10 @@
 			"name": "skill_categories",
 			"title": "List skills catalog categories",
 			"descHead": "List the skills catalog categories that have at least one public skill, ",
-			"descHash": "bc2eb1e5c29b",
+			"descHash": "930051638124",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3566,6 +3959,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3580,6 +3974,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -3594,6 +3989,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3608,6 +4004,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3650,6 +4047,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3707,6 +4105,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3718,9 +4117,10 @@
 			"name": "sns_resolve",
 			"title": "Resolve a .sol name to its owner wallet",
 			"descHead": "Resolve a Solana Name Service (.sol) name to the base58 wallet address t",
-			"descHash": "143cbd9389dd",
+			"descHash": "1b9061807428",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			}
@@ -3731,9 +4131,10 @@
 			"name": "sns_reverse",
 			"title": "Reverse-lookup a wallet to its primary .sol name",
 			"descHead": "Reverse-lookup a Solana wallet to the primary .sol name it has set as it",
-			"descHash": "49cbdc5064c0",
+			"descHash": "6cfaa6a8b327",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3745,9 +4146,10 @@
 			"name": "threews_availability",
 			"title": "Check if a *.threews.sol agent identity is available",
 			"descHead": "Check whether \"<label>.threews.sol\" is available to claim as a three.ws ",
-			"descHash": "98daa55f6136",
+			"descHash": "d55aa032d765",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3777,6 +4179,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3791,6 +4194,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3805,6 +4209,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3819,6 +4224,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3833,6 +4239,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -3862,6 +4269,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3876,6 +4284,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3889,7 +4298,8 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": {
-				"readOnlyHint": true,
+				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3934,6 +4344,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3948,6 +4359,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3958,8 +4370,8 @@
 		{
 			"name": "append_agent_action",
 			"title": "Append a signed action to the provenance ledger",
-			"descHead": "Record an action in an agent's append-only provenance ledger — the perma",
-			"descHash": "094f7fe192ca",
+			"descHead": "Record an action in an agent's append-only provenance ledger: the perman",
+			"descHash": "d8f32d509b55",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -3974,9 +4386,10 @@
 			"name": "list_agent_actions",
 			"title": "List an agent's action-provenance trail",
 			"descHead": "Read an agent's append-only action log, newest-first, cursor-paginated. ",
-			"descHash": "6590535dc231",
+			"descHash": "e54e5d2d6adc",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -3988,9 +4401,10 @@
 			"name": "query_action",
 			"title": "Fetch + verify one provenance action",
 			"descHead": "Fetch a single action from an agent's append-only log by its id, then ve",
-			"descHash": "626838234347",
+			"descHash": "38ed6c7b551e",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4002,7 +4416,7 @@
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
 			"descHead": "One sentence → a fully forged, exported 3D world, entirely server-side: ",
-			"descHash": "0216a43f7396",
+			"descHash": "e088076a4f1b",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -4017,7 +4431,7 @@
 			"name": "compose_scene",
 			"title": "Compose a 3D diorama plan from one sentence",
 			"descHead": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an ev",
-			"descHash": "16e0ce6f8327",
+			"descHash": "8d1a7603bb2e",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -4032,7 +4446,7 @@
 			"name": "export_scene",
 			"title": "Export a forged diorama as one GLB scene",
 			"descHead": "Merge an already-forged diorama (objects with real glbUrl values, e.g. f",
-			"descHash": "ddccc838e819",
+			"descHash": "d52c6020872e",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -4047,9 +4461,10 @@
 			"name": "get_scene",
 			"title": "Fetch a saved diorama by id",
 			"descHead": "Fetch one saved diorama (a fully-forged 3D world) by its id, including i",
-			"descHash": "37f599d1d667",
+			"descHash": "6c536ddaf730",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4061,9 +4476,10 @@
 			"name": "list_scenes",
 			"title": "List recent or featured dioramas",
 			"descHead": "Browse the public diorama gallery: the most recent saved worlds, or the ",
-			"descHash": "13f98cc2aaa2",
+			"descHash": "84eff011bb35",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4078,6 +4494,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4092,6 +4509,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4106,6 +4524,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4120,6 +4539,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -4134,6 +4554,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": false,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -4145,9 +4566,10 @@
 			"name": "decode_solana_memo_data_uri",
 			"title": "Decode a Solana memo data URI",
 			"descHead": "Decode and validate one base64 image data URI from a Solana memo. Only P",
-			"descHash": "9c057b11cc8d",
+			"descHash": "5ff401c1b836",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -4159,9 +4581,10 @@
 			"name": "extract_solana_memo_media",
 			"title": "Extract media from a Solana transaction memo",
 			"descHead": "Fetch a confirmed Solana transaction (legacy, v0, or v1), inspect top-le",
-			"descHash": "c1478d5211af",
+			"descHash": "33f6e5f7aa3f",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -4173,9 +4596,10 @@
 			"name": "find_solana_memo_media",
 			"title": "Find recent memo media for a Solana address",
 			"descHead": "Scan a Solana address's recent confirmed transactions and return only va",
-			"descHash": "0fedf5ff2ff8",
+			"descHash": "5dc9d776c967",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4187,9 +4611,10 @@
 			"name": "get_solana_memo_media_status",
 			"title": "Solana memo media capability",
 			"descHead": "Report the local decoding policy, recognized memo programs, and ordered ",
-			"descHash": "c9f6708400c9",
+			"descHash": "066123770cc2",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
@@ -4201,9 +4626,10 @@
 			"name": "three_balance",
 			"title": "Read a wallet's $THREE + SOL balance",
 			"descHead": "Return the $THREE and SOL balance for a Solana pubkey. If no pubkey is g",
-			"descHash": "f79639fcd1d7",
+			"descHash": "5bf36d60b610",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4215,7 +4641,7 @@
 			"name": "three_burn",
 			"title": "Burn $THREE on-chain (incinerator + treasury split)",
 			"descHead": "Burn a USD-denominated amount of the $THREE your wallet holds. Quotes US",
-			"descHash": "31d52b60bec9",
+			"descHash": "4ba8621fd209",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -4230,9 +4656,10 @@
 			"name": "three_price",
 			"title": "Live $THREE price (Jupiter) + USD→$THREE quote",
 			"descHead": "Return the live USD price of $THREE (Jupiter primary, Birdeye fallback).",
-			"descHash": "b589970ff915",
+			"descHash": "1842cc0b229b",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4244,7 +4671,7 @@
 			"name": "close_session",
 			"title": "Close a tutoring session (finalize invoice)",
 			"descHead": "Finalize a Pay-As-You-Learn tutoring session and return its itemized, at",
-			"descHash": "be4bf66b6acf",
+			"descHash": "7ae72f3140ec",
 			"annotations": {
 				"readOnlyHint": false,
 				"idempotentHint": true,
@@ -4259,9 +4686,10 @@
 			"name": "load_session",
 			"title": "Load a tutoring session ledger",
 			"descHead": "Read the running tab for a Pay-As-You-Learn tutoring session by its sess",
-			"descHash": "cc76a60f47f7",
+			"descHash": "495931104661",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4273,9 +4701,10 @@
 			"name": "vanity_appraise",
 			"title": "Appraise the rarity of a Solana address",
 			"descHead": "Appraise how rare a Solana address is: its detected vanity pattern, rari",
-			"descHash": "662f9cf8747a",
+			"descHash": "1d7eb1c9b3f3",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -4287,9 +4716,10 @@
 			"name": "vanity_board",
 			"title": "Browse the vanity grind-bounty board",
 			"descHead": "Browse the public grind-bounty board: vanity-address bounties requesters",
-			"descHash": "478e019e2380",
+			"descHash": "f0184ff1bfe7",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4301,9 +4731,10 @@
 			"name": "vanity_config",
 			"title": "Bounty market config: payout + asset metadata",
 			"descHead": "Read the grind-bounty market configuration: whether on-chain payouts are",
-			"descHash": "f42dd6079380",
+			"descHash": "bbb8788e7566",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4315,9 +4746,10 @@
 			"name": "vanity_gallery",
 			"title": "Browse the proof-of-grind rarity gallery",
 			"descHead": "Browse the public proof-of-grind gallery: rare Solana addresses people h",
-			"descHash": "947482b1ea36",
+			"descHash": "57f4dbf8241c",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4329,9 +4761,10 @@
 			"name": "vanity_leaderboard",
 			"title": "Top grinders by USDC earned",
 			"descHead": "Rank the worker fleet: the top grinders by total USDC earned from winnin",
-			"descHash": "5e03ddeb0723",
+			"descHash": "aa35a22b2d46",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4342,10 +4775,11 @@
 		{
 			"name": "vanity_open",
 			"title": "List claimable open bounties for workers",
-			"descHead": "List the open, unexpired bounties a grinding worker can race to claim — ",
-			"descHash": "45f3acbc46ae",
+			"descHead": "List the open, unexpired bounties a grinding worker can race to claim: t",
+			"descHash": "90a03bab5406",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4360,6 +4794,7 @@
 			"descHash": "a075580b128b",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": true,
 				"openWorldHint": true
 			},
@@ -4371,9 +4806,10 @@
 			"name": "vanity_stats",
 			"title": "Live grind-bounty market totals",
 			"descHead": "Get live totals for the grind-bounty market: how many bounties are open,",
-			"descHash": "ff50c0c21880",
+			"descHash": "6b00af040e3d",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4388,6 +4824,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4402,6 +4839,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4416,6 +4854,7 @@
 			"descHash": "dynamic",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4427,9 +4866,10 @@
 			"name": "find_services",
 			"title": "Find paid x402 services the agent can call",
 			"descHead": "Search the live x402 facilitator network (PayAI + Coinbase CDP bazaar) f",
-			"descHash": "244a81abb0d0",
+			"descHash": "43fc5aeee925",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4444,6 +4884,7 @@
 			"descHash": "278c58d6e1c4",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4455,7 +4896,7 @@
 			"name": "pay_and_call",
 			"title": "Pay an x402 endpoint in USDC or $THREE and return its result",
 			"descHead": "Call a paid x402 endpoint and settle the payment automatically, then ret",
-			"descHash": "bcbac82f6706",
+			"descHash": "0507a1984716",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": true,
@@ -4470,9 +4911,10 @@
 			"name": "x402_wallet",
 			"title": "The agent's x402 spending wallet (address + balance)",
 			"descHead": "Show a Solana wallet's address and live SOL + USDC balance. With no `add",
-			"descHash": "a9ff0cfff056",
+			"descHash": "b666aa4e7d0e",
 			"annotations": {
 				"readOnlyHint": true,
+				"destructiveHint": false,
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
@@ -4489,31 +4931,31 @@
 		{
 			"name": "get_coin_intel",
 			"descHead": "Full Coin Intelligence snapshot for a pump.fun mint. Returns every signa",
-			"descHash": "92ae6dd705fc",
+			"descHash": "0708befb6df5",
 			"schemaHash": "1e44fef7baab"
 		},
 		{
 			"name": "get_creator_profile",
-			"descHead": "All tokens by a creator wallet, with rug-pull risk flags.",
-			"descHash": "27d3d34ccb38",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "5b542e7c8f5b"
 		},
 		{
 			"name": "get_graduated_tokens",
-			"descHead": "Tokens that graduated from the bonding curve to their PumpSwap (pump_amm",
-			"descHash": "c5d541ec3a11",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "d99491585978"
 		},
 		{
 			"name": "get_king_of_the_hill",
-			"descHead": "Highest-market-cap token still on the bonding curve.",
-			"descHash": "7a0638e0198a",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "c434b866b535"
 		},
 		{
 			"name": "get_new_tokens",
-			"descHead": "Most recently launched pump.fun tokens.",
-			"descHash": "c78a259b6bdd",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "d99491585978"
 		},
 		{
@@ -4524,56 +4966,56 @@
 		},
 		{
 			"name": "get_token_details",
-			"descHead": "Full details for a specific pump.fun token by mint address.",
-			"descHash": "3cdcaa84cd2b",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "e0dbb69b2809"
 		},
 		{
 			"name": "get_token_holders",
-			"descHead": "Top holders of a token with concentration analysis (on-chain).",
-			"descHash": "6cda8906e5a4",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "09599c586dfe"
 		},
 		{
 			"name": "get_token_trades",
-			"descHead": "Recent buy/sell history for a token.",
-			"descHash": "49e53c8ada01",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "bbad04bed87b"
 		},
 		{
 			"name": "get_trending_tokens",
-			"descHead": "Top pump.fun tokens by market cap.",
-			"descHash": "1607cb010f0a",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "d99491585978"
 		},
 		{
 			"name": "kol_leaderboard",
-			"descHead": "Top KOL traders ranked by P&L for a given time window. Returns wallet, p",
-			"descHash": "0715582e0e3a",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "ae54414329b2"
 		},
 		{
 			"name": "pumpfun_bot_status",
-			"descHead": "Returns the configuration and health status of the pump.fun indexer back",
-			"descHash": "b0e6ffc92d6c",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "d6c5e29e0d65"
 		},
 		{
 			"name": "pumpfun_first_claims",
-			"descHead": "First-ever pump.fun creator fee claims in a time window: a cash-out sign",
-			"descHash": "8ded7617c657",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "f6849838d8b8"
 		},
 		{
 			"name": "pumpfun_list_claims",
-			"descHead": "List recent pump.fun fee-claim events for a creator wallet (on-chain, no",
-			"descHash": "5eeeab19ee14",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "ed5b74ae7e58"
 		},
 		{
 			"name": "pumpfun_quote_swap",
-			"descHead": "Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or ",
-			"descHash": "0c6ad3619605",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "6174606137d0"
 		},
 		{
@@ -4584,50 +5026,50 @@
 		},
 		{
 			"name": "pumpfun_vanity_mint",
-			"descHead": "Generate a Solana keypair whose address ends/starts with a vanity patter",
-			"descHash": "f0a0f5f8f511",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "ce380247af15"
 		},
 		{
 			"name": "pumpfun_watch_claims",
 			"descHead": "Return all pump.fun fee-claim events for a creator wallet within a look-",
-			"descHash": "96438f170ead",
+			"descHash": "dc3523aa6efa",
 			"schemaHash": "283c56cdfdde"
 		},
 		{
 			"name": "pumpfun_watch_whales",
-			"descHead": "Collect whale trades on a pump.fun token for a short window (max 10 s). ",
-			"descHash": "b223f04d331f",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "0a5483c9863c"
 		},
 		{
 			"name": "search_tokens",
-			"descHead": "Search pump.fun tokens by name, symbol, or mint address.",
-			"descHash": "b4f203b8db8f",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "a2944466551a"
 		},
 		{
 			"name": "sns_resolve",
-			"descHead": "Resolve a .sol Solana Name Service domain to its owner wallet address.",
-			"descHash": "2ce9fd692a97",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "49585a836add"
 		},
 		{
 			"name": "sns_reverseLookup",
-			"descHead": "Reverse-lookup a Solana wallet address to its primary .sol domain name.",
-			"descHash": "5355846929aa",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "dadc798918e6"
 		},
 		{
 			"name": "social_cashtag_sentiment",
-			"descHead": "Score social-post sentiment for a cashtag using a deterministic lexicon.",
-			"descHash": "bdba5408f63e",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "295c93dd416f"
 		},
 		{
 			"name": "social_x_post_impact",
-			"descHead": "Correlate an X (Twitter) post to a memecoin price impact. Fetches post m",
-			"descHash": "4e2f236362b7",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
 			"schemaHash": "94cccbaa0a63"
 		}
 	]

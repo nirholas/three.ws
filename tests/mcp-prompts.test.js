@@ -74,38 +74,45 @@ describe('every listed prompt renders against its server', () => {
 	}
 });
 
-describe('venue prompts switch on when their tools exist', () => {
-	// A synthetic catalog entry stands in for a venue tool a later build adds;
-	// the prompt must name it, and name the confirm flag its schema declares.
-	const withVenue = (...tools) => [...mainCatalog, ...tools];
-	const tool = (name, props = {}) => ({ name, description: name, inputSchema: { type: 'object', properties: props } });
-
-	it('trade uses swap_quote then swap_execute with its confirm flag', () => {
-		const catalog = withVenue(tool('swap_quote'), tool('swap_execute', { quote_id: { type: 'string' }, confirm_swap: { type: 'boolean' } }));
-		const out = renderPrompt('mcp', catalog, 'trade', { agentId: AGENT, token: 'THREEsynthetic1111' });
-		expect(out.tools).toEqual(expect.arrayContaining(['swap_quote', 'swap_execute']));
-		expect(out.messages[0].content.text).toContain('`confirm_swap: true`');
+describe('venue prompts run on the tools that exist and hand signing to the page that owns it', () => {
+	it('trade researches with live tools and hands the swap to the wallet page', () => {
+		const out = renderPrompt('mcp', mainCatalog, 'trade', { agentId: AGENT, token: 'THREEsynthetic1111' });
+		expect(out.tools).toEqual(expect.arrayContaining(['token_snapshot', 'read_resource']));
+		expect(out.messages[0].content.text).toContain(`/agents/${AGENT}/wallet#trade`);
 	});
 
-	it('trade without swap tools says execution is not enabled and points at the wallet page', () => {
-		const text = renderPrompt('mcp', mainCatalog, 'trade', { agentId: AGENT, token: 'x' }).messages[0].content.text;
-		expect(text).toMatch(/not enabled on this MCP server yet/);
-		expect(text).toContain(`/agents/${AGENT}/wallet#trade`);
+	it('launch-token compares the live launch lanes and sends signing to /launch', () => {
+		const out = renderPrompt('mcp', mainCatalog, 'launch-token', { agentId: AGENT, name: 'Synthetic', symbol: 'SYN' });
+		expect(out.tools).toContain('launch_lanes');
+		expect(out.messages[0].content.text).toContain('https://three.ws/launch');
 	});
 
-	it('perps, lending and predictions name their venue tools once present', () => {
-		const catalog = withVenue(
-			tool('perps_markets'),
-			tool('perps_order_preview'),
-			tool('perps_order_execute', { confirm_trade: { type: 'boolean' } }),
-			tool('lend_markets'),
-			tool('lend_deposit', { confirm_deposit: { type: 'boolean' } }),
-			tool('predictions_events'),
-			tool('predictions_open', { confirm_trade: { type: 'boolean' } }),
-		);
-		expect(renderPrompt('mcp', catalog, 'perps', { agentId: AGENT }).tools).toContain('perps_order_execute');
-		expect(renderPrompt('mcp', catalog, 'earn-yield', { agentId: AGENT }).messages[0].content.text).toContain('`confirm_deposit: true`');
-		expect(renderPrompt('mcp', catalog, 'predictions', { agentId: AGENT }).tools).toContain('predictions_open');
+	it('lending stays research-only and never names an execution tool', () => {
+		const out = renderPrompt('mcp', mainCatalog, 'earn-yield', { agentId: AGENT });
+		expect(out.tools).toEqual(expect.arrayContaining(['crypto_data', 'read_resource']));
+		expect(out.messages[0].content.text).toMatch(/do not move funds from here/i);
+	});
+
+	it('perps preview then execute with the confirm flag on mcp-agent, and point there from mcp', () => {
+		const out = renderPrompt('mcp-agent', agentCatalog, 'perps', { agentId: AGENT, market: 'SOL' });
+		expect(out.tools).toEqual(expect.arrayContaining(['perps_account', 'perps_markets', 'perps_order_preview', 'perps_order_execute']));
+		const text = out.messages[0].content.text;
+		expect(text).toContain('`confirm_trade: true`');
+		expect(text.indexOf('perps_order_preview')).toBeLessThan(text.indexOf('perps_order_execute'));
+		const main = renderPrompt('mcp', mainCatalog, 'perps', { agentId: AGENT });
+		expect(main.tools).toEqual(expect.arrayContaining(['crypto_data', 'read_resource']));
+		expect(main.messages[0].content.text).toContain('https://three.ws/api/mcp-agent');
+		expect(main.messages[0].content.text).not.toContain('perps_order_execute');
+		expect(main.messages[0].content.text).toMatch(/do not open positions from here/i);
+	});
+
+	it('predictions preview then place with the confirm flag on mcp-agent, and point there from mcp', () => {
+		const out = renderPrompt('mcp-agent', agentCatalog, 'predictions', { agentId: AGENT, topic: 'synthetic event' });
+		expect(out.tools).toEqual(expect.arrayContaining(['predictions_events', 'predictions_open_preview', 'predictions_open']));
+		expect(out.messages[0].content.text).toContain('`confirm_trade: true`');
+		const main = renderPrompt('mcp', mainCatalog, 'predictions', { agentId: AGENT }).messages[0].content.text;
+		expect(main).toContain('https://three.ws/api/mcp-agent');
+		expect(main).not.toContain('predictions_open');
 	});
 });
 

@@ -293,7 +293,7 @@ export function createRunner({ store, specialists, bridge = null, resolveSquad, 
 		const run = await store.createRun({ userId, squad, utterance: text, mode: mode === 'live' ? 'live' : 'paper', plan, planner: built.planner });
 		if (onCreated) await onCreated(run);
 		const rows = await store.insertSteps(run.id, steps);
-		await emit(run.id, null, 'run', { status: run.status, mode: run.mode, network: run.network, utterance: text, created_at: run.created_at });
+		await emit(run.id, null, 'run', { run_id: run.id, status: run.status, mode: run.mode, network: run.network, utterance: text, created_at: run.created_at });
 		await emit(run.id, null, 'memory', { entries: prefs.entries });
 		await emit(run.id, null, 'plan', { steps: rows.map(publicStep), notes: plan.notes, clarify: plan.clarify, planner: plan.planner });
 		if (!rows.length) {
@@ -361,7 +361,7 @@ export function createRunner({ store, specialists, bridge = null, resolveSquad, 
 		}
 		if (!waiting && run.status === 'awaiting_approval') {
 			await store.updateRun(run.id, { status: 'running' });
-			await emit(run.id, null, 'run', { status: 'running', mode: run.mode, network: run.network });
+			await emit(run.id, null, 'run', { run_id: run.id, status: 'running', mode: run.mode, network: run.network });
 		}
 		return waiting ? 'awaiting_approval' : 'running';
 	}

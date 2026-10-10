@@ -192,6 +192,7 @@ async function resolvePayto(userId, input) {
 		const rows = await sql`
 			select chain, address from agent_payout_wallets
 			where user_id = ${userId} and chain = any(${missing})
+			  and approved_at is not null and effective_at <= now()
 			order by is_default desc, created_at desc
 		`;
 		for (const c of missing) {

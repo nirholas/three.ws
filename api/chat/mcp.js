@@ -18,101 +18,11 @@ import { env } from '../_lib/env.js';
 import { authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { cors, method, readJson, wrap } from '../_lib/http.js';
 import { recordEvent, logger } from '../_lib/usage.js';
+import { VIEWER_TOOLS } from '../_lib/viewer-mcp-tools.js';
 
 const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: 'three-ws-viewer-mcp', version: '0.1.0' };
 const log = logger('chat-mcp');
-
-const VIEWER_TOOLS = [
-	{
-		name: 'setWireframe',
-		description: 'Toggle wireframe rendering on the currently loaded model.',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'boolean' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'setSkeleton',
-		description: 'Toggle the skeleton helper for rigged models.',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'boolean' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'setGrid',
-		description: 'Toggle the reference grid and axes helper.',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'boolean' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'setAutoRotate',
-		description: 'Toggle camera auto-rotation around the model.',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'boolean' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'setBgColor',
-		description: 'Set the viewer background color (CSS hex like "#001133").',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'string', pattern: '^#[0-9a-fA-F]{3,8}$' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'setTransparentBg',
-		description: 'Toggle transparent background.',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'boolean' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'setEnvironment',
-		description:
-			'Change the HDRI lighting. Known values: "None", "Neutral", "Venice Sunset", "Footprint Court (HDR Labs)".',
-		inputSchema: {
-			type: 'object',
-			properties: { value: { type: 'string' } },
-			required: ['value'],
-		},
-	},
-	{
-		name: 'takeScreenshot',
-		description: 'Capture a PNG screenshot of the viewport.',
-		inputSchema: { type: 'object', properties: {} },
-	},
-	{
-		name: 'loadModel',
-		description: 'Load a glTF or GLB model by URL.',
-		inputSchema: {
-			type: 'object',
-			properties: { url: { type: 'string', format: 'uri' } },
-			required: ['url'],
-		},
-	},
-	{
-		name: 'runValidation',
-		description: 'Run glTF validation on the loaded model.',
-		inputSchema: { type: 'object', properties: {} },
-	},
-	{
-		name: 'showMaterialEditor',
-		description: 'Open the material editor panel in the viewer.',
-		inputSchema: { type: 'object', properties: {} },
-	},
-];
 
 const TOOL_NAMES = new Set(VIEWER_TOOLS.map((t) => t.name));
 

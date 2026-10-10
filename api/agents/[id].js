@@ -184,6 +184,11 @@ export default wrap(async function handler(req, res) {
 		return mod.handleUsage(req, res, id);
 	}
 
+	if (sub === 'token-budget') {
+		const mod = await import('./_id/token-budget.js');
+		return mod.handleTokenBudget(req, res, id, action);
+	}
+
 	if (sub === 'memories') {
 		const mod = await import('./_id/_sub.js');
 		return mod.handleMemories(req, res, id, action);

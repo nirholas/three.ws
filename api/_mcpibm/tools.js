@@ -214,6 +214,7 @@ const gettingStartedTool = {
 const CHAT_DESCRIPTION =
 	'Chat completion powered by IBM Granite foundation models (default: ibm/granite-3-8b-instruct). ' +
 	'Send a conversation as role/content message pairs and receive the assistant reply with token usage. ' +
+	'Use this for open-ended conversation or free-form text generation; for code tasks call ibm_granite_code, and for structured JSON extraction call ibm_granite_analyze. ' +
 	'No IBM Cloud account required — pay $0.02 USDC per call via x402.';
 
 const chatTool = {
@@ -298,6 +299,7 @@ const chatTool = {
 const CODE_DESCRIPTION =
 	'Code generation, review, refactoring, and explanation via IBM Granite instruct models. ' +
 	'Provide a task type and code/prompt; receive the generated or reviewed code with explanation. ' +
+	'Use this when the input is source code or a request to write code; for general conversation call ibm_granite_chat instead. ' +
 	'No IBM Cloud account required — pay $0.025 USDC per call via x402.';
 
 const TASK_DESCRIPTIONS = {
@@ -392,6 +394,7 @@ const EMBED_DESCRIPTION =
 	'Generate embedding vectors for one or more texts using IBM Granite ' +
 	'(default: ibm/granite-embedding-278m-multilingual). Returns one float array per input, ' +
 	'suitable for semantic search, RAG retrieval, and similarity scoring. ' +
+	'Use this to index documents or compare texts by meaning; it returns vectors, not prose, so call ibm_granite_chat when you need a written answer. ' +
 	'Up to 64 texts per call. No IBM Cloud account required — pay $0.005 USDC per call via x402.';
 
 const embedTool = {
@@ -445,6 +448,7 @@ const ANALYZE_DESCRIPTION =
 	'Structured document analysis powered by IBM Granite: extract entities, sentiment, risk signals, ' +
 	'a concise summary, and recommended next steps from any text (contracts, reports, emails, code reviews, etc.). ' +
 	'Returns a machine-readable JSON analysis. ' +
+	'Use this when you need machine-readable fields (entities, sentiment, risks) from a document rather than the free-text reply ibm_granite_chat gives. ' +
 	'No IBM Cloud account required — pay $0.04 USDC per call via x402.';
 
 function buildAnalysisPrompt(analysis_type, language) {
@@ -597,6 +601,7 @@ const FORECAST_DESCRIPTION =
 	'Zero-shot time-series forecasting via IBM Granite TTM (Tiny Time Mixer). ' +
 	'Provide a numeric series with ISO-8601 timestamps and a cadence, receive the forecast horizon. ' +
 	'No training required. Suitable for revenue, traffic, sensor, energy, and financial series. ' +
+	'Use this to project a numeric series of at least 64 timestamped points forward; it returns numbers only, so pass the result to ibm_granite_analyze if you need commentary. ' +
 	'No IBM Cloud account required — pay $0.05 USDC per call via x402.';
 
 const FREQ_EXAMPLES = '1min, 5min, 15min, 30min, 1h, 2h, 4h, 12h, 1D, 1W, 1ME';

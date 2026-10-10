@@ -202,7 +202,8 @@ export const toolDefs = [
 			'real-world extents in meters, exact volume, centroid and inertia tensor at unit density, and how well a ' +
 			'single convex hull approximates the shape. Everything is derived from the mesh itself, never guessed. ' +
 			`Free and public: no account, no payment. Grader ${SIM_READINESS_VERSION}; spec at https://three.ws/docs/sim-readiness. ` +
-			'Pass glb_url (a public https .glb) or a known 64-char content hash.',
+			'Pass glb_url (a public https .glb) or a known 64-char content hash. Use this before importing a model into a ' +
+			'simulator or game engine; when the verdict is needs_repair, run remesh_model and grade it again.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

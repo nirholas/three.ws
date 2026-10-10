@@ -89,7 +89,7 @@ export const toolDefs = [
 		annotations: READ,
 		_meta: policy('read'),
 		description:
-			'Search the public three.ws community skills registry: prompt-only skills (a SKILL.md of instructions) anyone can contribute by pull request and import onto an agent in one call. Filter by free text, tag, or author. Each result carries slug, name, description, author, tags, version and an estimated token size. Import one with import_community_skill.',
+			'Search the public three.ws community skills registry: prompt-only skills (a SKILL.md of instructions) anyone can contribute by pull request and import onto an agent in one call. Filter by free text, tag, or author. Each result carries slug, name, description, author, tags, version and an estimated token size. Import one with import_community_skill. Use this to find a ready-made skill before writing one from scratch with create_custom_skill.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -120,7 +120,7 @@ export const toolDefs = [
 		annotations: WRITE,
 		_meta: policy('write'),
 		description:
-			'Install a community registry skill (see list_available_skills) on one of your agents as an editable prompt-only custom skill. From the next message on, the agent follows the skill in every chat, within its per-agent token budget. Returns the new skill and the updated budget. Installing the same skill twice returns already_installed with the existing skill_id.',
+			'Install a community registry skill (see list_available_skills) on one of your agents as an editable prompt-only custom skill. From the next message on, the agent follows the skill in every chat, within its per-agent token budget. Returns the new skill and the updated budget. Installing the same skill twice returns already_installed with the existing skill_id. Use this after list_available_skills when a registry skill fits; to write your own instead call create_custom_skill.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -144,7 +144,7 @@ export const toolDefs = [
 		annotations: READ,
 		_meta: policy('read'),
 		description:
-			`List every prompt-only custom skill on one of your agents in install order, with each skill's token size, whether it is injected into the prompt right now (skip_reason: disabled | over_budget), and the agent's budget (cap ${CUSTOM_SKILL_TOKEN_CAP} tokens). Imported skills report whether the registry has a newer revision.`,
+			`List every prompt-only custom skill on one of your agents in install order, with each skill's token size, whether it is injected into the prompt right now (skip_reason: disabled | over_budget), and the agent's budget (cap ${CUSTOM_SKILL_TOKEN_CAP} tokens). Imported skills report whether the registry has a newer revision. Use this to see what an agent already follows, and whether it all fits the budget, before adding or editing a skill.`,
 		inputSchema: {
 			type: 'object',
 			properties: { agent_id: agentId, include_content: { type: 'boolean', default: false, description: 'Return each skill\'s full text.' } },
@@ -167,7 +167,7 @@ export const toolDefs = [
 		annotations: READ,
 		_meta: policy('read'),
 		description:
-			'Read one custom skill on your agent, full text included, plus where it lands in the agent\'s token budget. Call this and show the user the skill before delete_custom_skill.',
+			'Read one custom skill on your agent, full text included, plus where it lands in the agent\'s token budget. Call this before delete_custom_skill and show the user the skill, or before update_custom_skill to see the text you are changing.',
 		inputSchema: {
 			type: 'object',
 			properties: { agent_id: agentId, skill_id: skillId },
@@ -183,7 +183,7 @@ export const toolDefs = [
 		annotations: WRITE,
 		_meta: policy('write'),
 		description:
-			`Write a new prompt-only skill on one of your agents: markdown instructions the agent follows whenever a message falls in the skill's domain. Up to ${CUSTOM_SKILL_MAX_CHARS} characters. Skills are injected oldest first inside a ${CUSTOM_SKILL_TOKEN_CAP}-token budget per agent; the response says whether this one fits.`,
+			`Write a new prompt-only skill on one of your agents: markdown instructions the agent follows whenever a message falls in the skill's domain. Up to ${CUSTOM_SKILL_MAX_CHARS} characters. Skills are injected oldest first inside a ${CUSTOM_SKILL_TOKEN_CAP}-token budget per agent; the response says whether this one fits. Use this when no registry skill fits (check list_available_skills) and the agent needs standing instructions of your own.`,
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -215,7 +215,7 @@ export const toolDefs = [
 		annotations: WRITE,
 		_meta: policy('write'),
 		description:
-			'Edit a custom skill on your agent: rename it, rewrite its instructions, retag it, enable or disable it (a disabled skill stays saved but is not injected), or pass resync:true to pull the latest registry revision of an imported skill (overwrites local edits).',
+			'Edit a custom skill on your agent: rename it, rewrite its instructions, retag it, enable or disable it (a disabled skill stays saved but is not injected), or pass resync:true to pull the latest registry revision of an imported skill (overwrites local edits). Use this to change a skill in place, including switching it off without deleting it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -248,7 +248,7 @@ export const toolDefs = [
 		annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
 		_meta: policy('financial', { confirmFlag: 'confirm_delete', previewTool: 'get_custom_skill' }),
 		description:
-			'Permanently delete a custom skill from your agent. Irreversible: a hand-written skill cannot be recovered. First call get_custom_skill, show the user the skill, and wait for a clear yes; then call this with confirm_delete: true. To stop a skill without losing it, use update_custom_skill with enabled:false instead.',
+			'Permanently delete a custom skill from your agent. Irreversible: a hand-written skill cannot be recovered. Use this when the user explicitly wants the skill gone for good. First call get_custom_skill, show the user the skill, and wait for a clear yes; then call this with confirm_delete: true. To stop a skill without losing it, use update_custom_skill with enabled:false instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {

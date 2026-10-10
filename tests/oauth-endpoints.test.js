@@ -741,3 +741,105 @@ describe('dispatcher', () => {
 		expect(res.statusCode).toBe(405);
 	});
 });
+
+// ── Grant groups on the consent screen ───────────────────────────────────────
+// The screen groups the requested scope into read / manage / trade / spend /
+// launch (api/_lib/oauth-grant-groups.js). Each group says what it can do and
+// which actions still ask the person first; any group but Read can be unticked
+// and the issued code then carries only what stayed ticked.
+
+describe('consent screen grant groups', () => {
+	it('lists each requested group with what it can do and what still asks first', async () => {
+		seedClient({ scope: 'avatars:read profile wallet:write wallet:read offline_access' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('name="grant_read"');
+		expect(res.body).toContain('name="grant_spend"');
+		expect(res.body).toContain('always on');
+		expect(res.body).toContain('Still asks you first:');
+		expect(res.body).toContain('withdrawals');
+		expect(res.body).toContain('Stay connected without signing in again');
+		// wallet:write implies trade and launch, and the screen says so.
+		expect(res.body).toContain('name="grant_trade"');
+		expect(res.body).toContain('name="grant_launch"');
+		expect(res.body).toContain('Included because Spend is ticked');
+		expect(res.body).not.toContain('name="grant_manage"');
+	});
+
+	it('says plainly that a read-only grant can never trade or move funds', async () => {
+		seedClient();
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).toContain('can never spend from a wallet, trade, or move funds');
+		expect(res.body).not.toContain('name="grant_trade"');
+	});
+
+	it('describes a trade-only grant as unable to move funds out', async () => {
+		seedClient({ scope: 'avatars:read wallet:trade' });
+		const res = await call('authorize', { query: authorizeQuery() });
+		expect(res.body).toContain('cannot move funds out of your agent wallet');
+		expect(res.body).toContain('asking to trade inside it');
+	});
+
+	it('issues a code without the groups the person unticked', async () => {
+		seedClient({ scope: 'avatars:read profile wallet:write memory:write offline_access' });
+		const res = await call('authorize', { method: 'POST', form: { ...authorizeQuery(), csrf: await csrf(), decision: 'allow', grant_read: 'on', grant_manage: 'on', grant_trade: 'on' } });
+		expect(res.statusCode).toBe(302);
+		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'memory:write', 'offline_access', 'profile', 'wallet:trade']);
+	});
+
+	it('keeps read and the connection scopes even when nothing was ticked', async () => {
+		seedClient({ scope: 'avatars:read profile wallet:write offline_access' });
+		const res = await call('authorize', { method: 'POST', form: { ...authorizeQuery(), csrf: await csrf(), decision: 'allow' } });
+		expect(res.statusCode).toBe(302);
+		expect(db.codes[0].scope.split(' ').sort()).toEqual(['avatars:read', 'offline_access', 'profile']);
+	});
+
+	it('never carries the grant tick boxes into the hidden OAuth parameters', async () => {
+		seedClient({ scope: 'avatars:read wallet:write' });
+		const res = await call('authorize', { query: authorizeQuery({ grant_spend: 'on' }) });
+		expect(res.body).not.toContain('type="hidden" name="grant_spend"');
+	});
+});
+
+// ── Two clients at once ───────────────────────────────────────────────────────
+// A person connects Claude, then ChatGPT. Both must stay connected, and revoking
+// one from Settings must stop that one on its next request without touching
+// the other, on access tokens and on refresh tokens alike.
+
+describe('two MCP clients on one account', () => {
+	async function connect(clientId) {
+		seedClient({ client_id: clientId, name: clientId });
+		const authorized = await call('authorize', { method: 'POST', form: { ...authorizeQuery({ client_id: clientId }), csrf: await csrf(), decision: 'allow' } });
+		const code = new URL(authorized.getHeader('location')).searchParams.get('code');
+		const res = await call('token', { method: 'POST', form: { grant_type: 'authorization_code', client_id: clientId, code, redirect_uri: 'https://client.example/cb', code_verifier: VERIFIER } });
+		expect(res.statusCode).toBe(200);
+		return res.json();
+	}
+
+	it('keeps the first client connected when a second one connects', async () => {
+		const first = await connect('mcp_first');
+		const second = await connect('mcp_second');
+		expect(await authenticateBearer(first.access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_first' });
+		expect(await authenticateBearer(second.access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
+		expect(db.refresh.filter((r) => !r.revoked_at)).toHaveLength(2);
+	});
+
+	it('revoking one client stops it immediately and leaves the other untouched', async () => {
+		const first = await connect('mcp_first');
+		const second = await connect('mcp_second');
+		const res = await call('grants', { method: 'DELETE', query: { client_id: 'mcp_first' } });
+		expect(res.json()).toEqual({ client_id: 'mcp_first', revoked: 1 });
+
+		expect(await authenticateBearer(first.access_token, { audience: RESOURCE })).toBeNull();
+		expect(await authenticateBearer(second.access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
+
+		const refreshFirst = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_first', refresh_token: first.refresh_token } });
+		expect(refreshFirst.statusCode).toBe(400);
+		// A revoked refresh token is treated as reuse: the whole chain is dead.
+		expect(['invalid_grant', 'refresh_reuse_detected']).toContain(refreshFirst.json().error);
+
+		const refreshSecond = await call('token', { method: 'POST', form: { grant_type: 'refresh_token', client_id: 'mcp_second', refresh_token: second.refresh_token } });
+		expect(refreshSecond.statusCode).toBe(200);
+		expect(await authenticateBearer(refreshSecond.json().access_token, { audience: RESOURCE })).toMatchObject({ clientId: 'mcp_second' });
+	});
+});

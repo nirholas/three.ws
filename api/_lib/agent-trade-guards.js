@@ -28,6 +28,8 @@ import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
 import { solUsdPrice } from './avatar-wallet.js';
 import { logAudit } from './audit.js';
+// The destination whitelist: cooldown-gated allowlist for every outbound category.
+import { evaluateDestination } from './destination-whitelist.js';
 // The wallet's behavioral immune system — an additive anomaly predicate layered on
 // top of the static caps in this file. See api/_lib/anomaly-events.js +
 // api/_lib/wallet-anomaly.js. Only referenced inside function bodies, so the
@@ -239,8 +241,11 @@ export async function setSpendLimits(agentId, userId, patch, { req = null } = {}
 			'per_counterparty_daily_usd' in patch
 				? patch.per_counterparty_daily_usd
 				: prev.per_counterparty_daily_usd,
-		withdraw_allowlist:
-			'withdraw_allowlist' in patch ? patch.withdraw_allowlist : prev.withdraw_allowlist,
+		// The allowlist lives in destination_whitelist_entries now, where a new
+		// address serves a cooldown (api/_lib/destination-whitelist.js). A patch can
+		// no longer write it through here, so no path can skip the cooldown by
+		// editing the limits blob.
+		withdraw_allowlist: prev.withdraw_allowlist,
 		frozen: 'frozen' in patch ? patch.frozen === true : prev.frozen,
 		require_capabilities:
 			'require_capabilities' in patch ? patch.require_capabilities === true : prev.require_capabilities,
@@ -741,6 +746,54 @@ export async function getCounterpartySpendUsd(
 	return Number(row?.usd || 0);
 }
 
+/**
+ * Destination gate for every send that is not a swap, a snipe or an x402 call
+ * (see EXEMPT_CATEGORIES in destination-whitelist.js). Refuses an address that
+ * is not on the agent's allowlist, one still in its cooldown, and one an agent
+ * only proposed, then applies the listed destination's own caps.
+ *
+ * `destinationTrust: 'system'` is set by server code, never by a request, for a
+ * destination the platform itself controls or that is bound to a quote the owner
+ * already confirmed (escrow, treasury, a verified provider invoice). It skips the
+ * gate; the numeric caps and policy rules still apply.
+ * @throws {SpendLimitError}
+ */
+export async function enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network = 'mainnet', destinationTrust = null }) {
+	if (destinationTrust === 'system') return null;
+	const dest = typeof destination === 'string' ? destination.trim() : '';
+	// Only the owner's withdraw is required to name a destination. A category
+	// that carries none (a treasury top-up decided by the platform) has nothing
+	// to check.
+	if (!dest && category !== 'withdraw') return null;
+	const decision = await evaluateDestination({ agentId, destination: dest, category, ownAddress: meta?.solana_address || null });
+	if (!decision.allowed) {
+		throw new SpendLimitError(decision.code, decision.message, {
+			category, destination: dest || null, state: decision.state, ...(decision.detail || {}),
+		});
+	}
+	const entry = decision.entry;
+	if (decision.state === 'active' && entry) {
+		if (entry.per_tx_cap_usd != null && usdValue != null && usdValue > entry.per_tx_cap_usd) {
+			throw new SpendLimitError(
+				'destination_cap_exceeded',
+				`That send is $${usdValue.toFixed(2)}, over the $${entry.per_tx_cap_usd.toFixed(2)} limit set for this destination${entry.label ? ` (${entry.label})` : ''}.`,
+				{ category, destination: dest, cap_usd: entry.per_tx_cap_usd, usd: usdValue },
+			);
+		}
+		if (entry.daily_cap_usd != null && usdValue != null) {
+			const sent = await getCounterpartySpendUsd(agentId, dest, network, 24);
+			if (sent + usdValue > entry.daily_cap_usd) {
+				throw new SpendLimitError(
+					'destination_daily_cap_exceeded',
+					`This would bring today's total to this destination${entry.label ? ` (${entry.label})` : ''} to $${(sent + usdValue).toFixed(2)}, over its $${entry.daily_cap_usd.toFixed(2)} daily limit.`,
+					{ category, destination: dest, cap_usd: entry.daily_cap_usd, spent_24h_usd: sent, usd: usdValue },
+				);
+			}
+		}
+	}
+	return decision;
+}
+
 // ── natural-language policy enforcement ───────────────────────────────────────
 // The owner-authored, code-enforced policy (meta.policy_rules) layered on top of
 // the numeric caps. A block here returns the HUMAN rule that caught the spend.
@@ -1035,6 +1088,7 @@ export async function enforceSpendLimit({
 	now,
 	network = 'mainnet',
 	stepUpApproved = false,
+	destinationTrust = null,
 }) {
 	// Fail closed: a caller that named neither the limits nor the meta gets the
 	// agent's REAL policy read from the row, never an empty default policy.
@@ -1054,17 +1108,8 @@ export async function enforceSpendLimit({
 		);
 	}
 
-	// 1. Withdraw allowlist — destination gate.
-	if (category === 'withdraw' && lim.withdraw_allowlist.length > 0) {
-		const dest = typeof destination === 'string' ? destination.trim() : '';
-		if (!dest || !lim.withdraw_allowlist.includes(dest)) {
-			throw new SpendLimitError(
-				'destination_not_allowed',
-				'That destination is not on this agent’s withdraw allowlist. Add it under Limits & Safety, or send to an allowed address.',
-				{ destination: dest || null, allowlist_size: lim.withdraw_allowlist.length },
-			);
-		}
-	}
+	// 1. Destination allowlist: every outbound category, cooldown-gated.
+	await enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network, destinationTrust });
 
 	// 2. Natural-language policy — the owner's English rules, deterministically
 	// enforced. Resolved from the explicit `policyRules` arg or the `meta` blob —
@@ -1177,6 +1222,10 @@ export async function reserveSpendUsd({
 	network = 'mainnet',
 	asset = 'USDC',
 	rowMeta = {},
+	destinationTrust = null,
+	// The owner answered this exact spend in the approval inbox. Lifts only a
+	// policy "ask me" verdict, as in enforceSpendLimit; every cap still runs.
+	stepUpApproved = false,
 }) {
 	// Fail closed, exactly as enforceSpendLimit does: the reserve is the layer that
 	// runs before any key is touched, so it is the layer that must never default to
@@ -1198,22 +1247,13 @@ export async function reserveSpendUsd({
 		);
 	}
 
-	// Withdraw allowlist — destination gate (same as enforceSpendLimit).
-	if (category === 'withdraw' && lim.withdraw_allowlist.length > 0) {
-		const dest = typeof destination === 'string' ? destination.trim() : '';
-		if (!dest || !lim.withdraw_allowlist.includes(dest)) {
-			throw new SpendLimitError(
-				'destination_not_allowed',
-				'That destination is not on this agent’s withdraw allowlist. Add it under Limits & Safety, or send to an allowed address.',
-				{ destination: dest || null, allowlist_size: lim.withdraw_allowlist.length },
-			);
-		}
-	}
+	// Destination allowlist: same gate as enforceSpendLimit, before a row is reserved.
+	await enforceDestinationAllowlist({ agentId, meta, category, destination, usdValue, network, destinationTrust });
 
 	// Natural-language policy — same deterministic evaluator as enforceSpendLimit,
 	// run BEFORE the row is reserved so a policy block never claims daily headroom.
 	const policy = policyRules || (meta ? getPolicyRules(meta) : null);
-	await enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits: lim, policyContext, userId, network });
+	await enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits: lim, policyContext, userId, network, stepUpApproved });
 
 	const hasUsd = typeof usdValue === 'number' && Number.isFinite(usdValue) && usdValue >= 0;
 
@@ -1367,14 +1407,10 @@ const CUSTODY_COLUMNS = [
 	'reason', 'status', 'idempotency_key', 'capability_id', 'meta',
 ];
 
-// The EVM leg names its chain in `network` ('base', 'robinhood'). The per-chain
-// spend ceilings sum rows by `chain`, so a row that left it at the 'solana'
-// default would never count against the EVM chain it actually spent on.
-const EVM_LEG_NETWORKS = new Set(['base', 'robinhood']);
-function custodyChain(e) {
-	if (e.chain) return e.chain;
-	return EVM_LEG_NETWORKS.has(e.network) ? e.network : 'solana';
-}
+// `chain` is a generated column derived from `network` (migration
+// 20260925210000_custody_chain.sql), so an EVM-leg writer names its chain in
+// `network` ('base', 'robinhood') and must never write `chain` itself: the
+// database refuses a non-default value for a generated column.
 
 /**
  * Write a row into the custody audit trail / spend ledger.
@@ -1386,7 +1422,7 @@ function custodyChain(e) {
 export async function recordCustodyEvent(e) {
 	const [row] = await sql`
 		INSERT INTO agent_custody_events
-			(agent_id, user_id, event_type, category, chain, network, asset,
+			(agent_id, user_id, event_type, category, network, asset,
 			 amount_lamports, amount_raw, usd, destination, signature,
 			 reason, status, idempotency_key, capability_id, meta)
 		VALUES (
@@ -1394,7 +1430,6 @@ export async function recordCustodyEvent(e) {
 			${e.userId ?? null},
 			${e.eventType},
 			${e.category ?? null},
-			${custodyChain(e)},
 			${e.network ?? 'mainnet'},
 			${e.asset ?? null},
 			${e.amountLamports != null ? String(e.amountLamports) : null},

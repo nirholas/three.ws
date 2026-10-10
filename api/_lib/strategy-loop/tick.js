@@ -324,6 +324,16 @@ async function gate({ agent, loopRow, loop }) {
 			});
 			return { outcome: 'paused', reason: 'inference_budget' };
 		}
+		if (err?.code === 'token_budget_exhausted' || err?.code === 'token_budget_paused') {
+			await enterPause({
+				agent,
+				loopRow,
+				reason: 'token_budget',
+				message: `${agent.name || 'This agent'} reached its ${err.detail?.window === 'hour' ? 'hourly' : 'daily'} token ceiling, so the strategy loop is paused until the ceiling resets, is extended once, or is raised.`,
+				until: err.detail?.resets_at ? new Date(err.detail.resets_at) : new Date(Date.now() + CREDIT_RECHECK_MS),
+			});
+			return { outcome: 'paused', reason: 'token_budget' };
+		}
 		throw err;
 	}
 

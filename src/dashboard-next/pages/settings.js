@@ -15,7 +15,10 @@
 //   DELETE /api/auth/sessions/:id           revoke one session
 //   DELETE /api/auth/sessions               revoke all others + rotate current
 //   GET  /api/oauth/grants                  { grants: [...] } apps holding a live refresh token
-//   DELETE /api/oauth/grants?client_id=     revoke one app
+//   DELETE /api/oauth/grants?client_id=     revoke one app, effective on its next request
+//   GET  /api/auth/google/status            { configured, google, password, wallets, count, reauthenticated }
+//   POST /api/auth/google/unlink            { password? } unlink Google (needs password or a fresh Google reauth)
+//   GET  /api/auth/google/start?intent=     link | reauth, a top-level navigation to Google and back
 //   GET  /api/notifications                 { notifications: [...], unread: N }
 //   POST /api/notifications/read-all
 //   GET  /api/billing/summary               { usage: { total_bytes, avatar_count, ... } }
@@ -115,10 +118,12 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, grantsResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp] =
+	const [sessionsResp, grantsResp, googleResp, telegramResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
 			safeGet('/api/oauth/grants'),
+			safeGet('/api/auth/google/status'),
+			safeGet('/api/auth/telegram/status'),
 			safeGet('/api/notifications?limit=20'),
 			safeGet('/api/notifications/preferences'),
 			safeGet('/api/avatars/mine?limit=24'),
@@ -129,10 +134,16 @@ async function loadContent(host) {
 		]);
 
 	const prefs = prefsResp.data?.prefs || prefsResp.data || {};
+	// Both status routes describe the same account; Telegram rides along on the
+	// Google response so the sign-in panel renders every method from one object.
+	const signInResp = googleResp.ok
+		? { ...googleResp, data: { ...googleResp.data, telegram: telegramResp.ok ? telegramResp.data : null } }
+		: googleResp;
 
 	host.innerHTML = '';
 	host.appendChild(renderTheme());
 	host.appendChild(renderSessions(sessionsResp, retry));
+	host.appendChild(renderSignInMethods(signInResp, retry));
 	host.appendChild(renderConnectedApps(grantsResp, retry));
 	host.appendChild(renderNotifications(notifResp, retry));
 	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
@@ -266,11 +277,296 @@ function renderSessions(resp, onRetry) {
 
 // ── Connected apps ─────────────────────────────────────────────────────────
 
+// ── Sign-in methods ────────────────────────────────────────────────────────
+// Google is the one linkable identity today (api/auth/google/[action].js).
+// Linking and re-authenticating are top-level navigations to Google and back,
+// which land here with ?google=<outcome>; unlinking is a fetch that needs a
+// fresh proof (the password, or having just re-authenticated with Google).
+
+const GOOGLE_OUTCOMES = {
+	linked: 'Google linked. You can now sign in with it.',
+	reauthenticated: 'Google confirmed. You can unlink it now.',
+	unavailable: 'Sign in with Google is not configured on this deployment.',
+	rate_limited: 'Too many attempts. Try again in a few minutes.',
+	not_linked: 'No Google account is linked yet.',
+	session_changed: 'Your session changed during the Google round trip. Try again.',
+	wrong_account: 'That is not the Google account linked to this three.ws account.',
+	identity_in_use: 'That Google account is already linked to a different three.ws account.',
+	already_linked: 'A different Google account is already linked. Unlink it first.',
+	cancelled: 'Google sign-in was cancelled. Nothing changed.',
+	expired: 'That Google round trip took too long. Try again.',
+	failed: 'Google could not complete that. Try again.',
+	exchange_failed: 'Google did not accept the request. Try again in a moment.',
+	invalid_token: 'Google returned something we could not verify. Try again.',
+	reauth_stale: 'Google did not ask for your password again. Try once more.',
+};
+
+// Telegram mirrors the Google shape (api/auth/telegram/[action].js): the
+// widget round trip lands back here with ?telegram=<outcome>, linking from a
+// desktop can instead use a one-time deep link the phone opens, and unlinking
+// needs the password or a fresh Telegram re-authentication.
+const TELEGRAM_OUTCOMES = {
+	linked: 'Telegram linked. You can now sign in with it, and a private chat with the bot resolves to this account.',
+	reauthenticated: 'Telegram confirmed. You can unlink it now.',
+	unavailable: 'Sign in with Telegram is not configured on this deployment.',
+	rate_limited: 'Too many attempts. Try again in a few minutes.',
+	not_linked: 'No Telegram account is linked yet.',
+	session_changed: 'Your session changed during the Telegram round trip. Try again.',
+	wrong_account: 'That is not the Telegram account linked to this three.ws account.',
+	identity_in_use: 'That Telegram account is already linked to a different three.ws account.',
+	already_linked: 'A different Telegram account is already linked. Unlink it first.',
+	cancelled: 'Telegram sign-in was cancelled. Nothing changed.',
+	expired: 'That Telegram round trip took too long. Try again.',
+	stale: 'That Telegram round trip took too long. Try again.',
+	replayed: 'That Telegram sign-in was already used. Try again.',
+	invalid_hash: 'Telegram returned something we could not verify. Try again.',
+	failed: 'Telegram could not complete that. Try again.',
+	reauth_stale: 'Telegram did not confirm it was you. Try once more.',
+};
+
+// Link Telegram from a desktop without leaving the page: a one-time deep link
+// (and QR) the phone opens; this page polls until the bot has seen it.
+async function linkTelegramByMagic(host, onRetry) {
+	const card = document.createElement('div');
+	card.setAttribute('role', 'status');
+	card.setAttribute('aria-live', 'polite');
+	card.style.cssText = 'margin:10px 0;padding:14px;border:1px solid var(--nxt-stroke);border-radius:var(--nxt-radius-sm);display:flex;gap:14px;align-items:center;flex-wrap:wrap';
+	card.innerHTML = `
+		<canvas data-slot="qr" width="132" height="132" aria-label="QR code for the Telegram link" style="border-radius:8px;background:rgba(255,255,255,0.04);padding:6px" hidden></canvas>
+		<div style="flex:1;min-width:200px">
+			<div style="font-size:13px;color:var(--nxt-ink)" data-slot="status">Preparing your link…</div>
+			<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+				<a class="dn-btn primary" data-action="open" target="_blank" rel="noopener" aria-disabled="true" style="padding:5px 10px;font-size:12px">Open in Telegram</a>
+				<button class="dn-btn" type="button" data-action="cancel" style="padding:5px 10px;font-size:12px">Cancel</button>
+			</div>
+		</div>`;
+	host.prepend(card);
+	const status = card.querySelector('[data-slot="status"]');
+	const open = card.querySelector('[data-action="open"]');
+	let timer = null;
+	let done = false;
+	const stop = () => { done = true; if (timer) clearTimeout(timer); card.remove(); };
+	card.querySelector('[data-action="cancel"]').addEventListener('click', stop);
+	let issued;
+	try {
+		issued = await post('/api/auth/telegram/magic', { intent: 'link' });
+	} catch (err) {
+		status.textContent = err?.message || 'Telegram linking is not available right now.';
+		return;
+	}
+	if (done) return;
+	open.href = issued.deep_link;
+	open.removeAttribute('aria-disabled');
+	status.textContent = `Open the link in Telegram and send the message it prepares${issued.bot_username ? ` to @${issued.bot_username}` : ''}. It works once and expires in ${Math.max(1, Math.round(issued.expires_in / 60))} minutes.`;
+	try {
+		const mod = await import('qrcode');
+		const canvas = card.querySelector('[data-slot="qr"]');
+		await (mod.default || mod).toCanvas(canvas, issued.deep_link, { width: 132, margin: 1, color: { dark: '#ffffffff', light: '#00000000' } });
+		canvas.hidden = false;
+	} catch {
+		// Deep link button still works without the QR.
+	}
+	const poll = async () => {
+		if (done) return;
+		let r;
+		try {
+			r = await get(`/api/auth/telegram/poll?id=${encodeURIComponent(issued.id)}&secret=${encodeURIComponent(issued.poll_secret)}`);
+		} catch (err) {
+			if (err?.status === 404 || err?.code === 'expired') {
+				status.textContent = 'That link expired. Close this and try again.';
+				return;
+			}
+			if (err?.status === 403 || err?.status === 409) {
+				status.textContent = TELEGRAM_OUTCOMES[err.code] || err.message || 'Telegram could not link that account.';
+				return;
+			}
+			timer = setTimeout(poll, 4000);
+			return;
+		}
+		if (r.status === 'completed') {
+			stop();
+			toast(`Telegram linked${r.telegram?.username ? ` as @${r.telegram.username}` : ''}`);
+			onRetry();
+			return;
+		}
+		if (r.status === 'expired') {
+			status.textContent = 'That link expired. Close this and try again.';
+			return;
+		}
+		timer = setTimeout(poll, 2000);
+	};
+	timer = setTimeout(poll, 2000);
+}
+
+function renderSignInMethods(resp, onRetry) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+	panel.id = 'sign-in-methods';
+	panel.setAttribute('aria-label', 'Sign-in methods');
+	panel.innerHTML = `
+		<div class="set-panel-head">
+			<div>
+				<div class="dn-panel-title">Sign-in methods</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Every way into this account. Link Google to sign in with one click, including when an app like Claude or ChatGPT asks to connect.</div>
+			</div>
+		</div>
+		<div data-slot="methods"></div>
+	`;
+	const host = panel.querySelector('[data-slot="methods"]');
+	const outcome = new URLSearchParams(location.search).get('google');
+	if (outcome && GOOGLE_OUTCOMES[outcome]) {
+		toast(GOOGLE_OUTCOMES[outcome]);
+		const clean = new URL(location.href);
+		clean.searchParams.delete('google');
+		history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
+	}
+	const tgOutcome = new URLSearchParams(location.search).get('telegram');
+	if (tgOutcome && TELEGRAM_OUTCOMES[tgOutcome]) {
+		toast(TELEGRAM_OUTCOMES[tgOutcome]);
+		const clean = new URL(location.href);
+		clean.searchParams.delete('telegram');
+		history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
+	}
+	if (!resp.ok) {
+		host.innerHTML = errorStateHTML({ title: "Couldn't load sign-in methods", body: 'We couldn’t reach the sign-in service. Check your connection and try again.' });
+		attachRetry(host, onRetry);
+		return panel;
+	}
+	const d = resp.data || {};
+	const row = (label, detail, action) => `
+		<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--nxt-stroke);flex-wrap:wrap">
+			<div style="flex:1;min-width:200px">
+				<div style="font-size:13.5px;color:var(--nxt-ink);font-weight:500">${label}</div>
+				<div style="font-size:12px;color:var(--nxt-ink-fade);margin-top:3px">${detail}</div>
+			</div>
+			${action || ''}
+		</div>`;
+	const parts = [];
+	if (d.password) parts.push(row('Password', 'Email and password sign-in.'));
+	if (d.email_code) parts.push(row('Email code', 'One-time code sent to your email.'));
+	if (d.wallets > 0) parts.push(row('Wallet', `${d.wallets} linked wallet${d.wallets === 1 ? '' : 's'} sign in with a signature.`));
+	if (d.google) {
+		const used = d.google.last_used_at ? ` · used ${esc(relTime(d.google.last_used_at))}` : '';
+		parts.push(row(
+			'Google',
+			`${esc(d.google.email || 'linked')}${used} · linked ${esc(relTime(d.google.linked_at))}`,
+			`<button class="dn-btn danger" data-action="unlink-google" style="padding:5px 10px;font-size:12px">Unlink</button>`,
+		));
+	} else if (d.configured) {
+		parts.push(row(
+			'Google',
+			'Not linked. Link it to sign in with Google, including on the authorization screen apps send you to.',
+			`<a class="dn-btn" href="/api/auth/google/start?intent=link" style="padding:5px 10px;font-size:12px">Link Google</a>`,
+		));
+	}
+	const tg = resp.telegram || {};
+	if (tg.telegram) {
+		const used = tg.telegram.last_used_at ? ` · used ${esc(relTime(tg.telegram.last_used_at))}` : '';
+		const who = tg.telegram.username ? `@${esc(tg.telegram.username)}` : esc(tg.telegram.display_name || 'linked');
+		parts.push(row(
+			'Telegram',
+			`${who}${used} · linked ${esc(relTime(tg.telegram.linked_at))}. A private chat with the bot answers as this account.`,
+			`<button class="dn-btn danger" data-action="unlink-telegram" style="padding:5px 10px;font-size:12px">Unlink</button>`,
+		));
+	} else if (tg.configured) {
+		parts.push(row(
+			'Telegram',
+			`Not linked. Link it to sign in with Telegram and to talk to ${tg.bot_username ? `@${esc(tg.bot_username)}` : 'the bot'} as this account.`,
+			`<div style="display:flex;gap:6px;flex-wrap:wrap">
+				<a class="dn-btn" href="/api/auth/telegram/start?intent=link" style="padding:5px 10px;font-size:12px">Link in browser</a>
+				<button class="dn-btn" type="button" data-action="link-telegram-phone" style="padding:5px 10px;font-size:12px">Link from phone</button>
+			</div>`,
+		));
+	}
+	host.innerHTML = parts.length ? parts.join('') : emptyStateHTML({ icon: '', title: 'No sign-in methods found', body: 'Set a password or link a wallet so you can always get back in.', compact: true });
+	const phoneBtn = host.querySelector('[data-action="link-telegram-phone"]');
+	if (phoneBtn) {
+		phoneBtn.addEventListener('click', () => {
+			phoneBtn.disabled = true;
+			linkTelegramByMagic(host, onRetry).finally(() => { phoneBtn.disabled = false; });
+		});
+	}
+	const unlinkTg = host.querySelector('[data-action="unlink-telegram"]');
+	if (unlinkTg) {
+		unlinkTg.addEventListener('click', async () => {
+			if (tg.count <= 1) {
+				toast('Telegram is the only way into this account. Set a password or link a wallet first.');
+				return;
+			}
+			let password = null;
+			if (!tg.reauthenticated) {
+				if (tg.password) {
+					password = prompt('Enter your password to unlink Telegram.');
+					if (!password) return;
+				} else if (confirm('To unlink, sign in with Telegram once more to prove it is you. Continue to Telegram?')) {
+					location.href = '/api/auth/telegram/start?intent=reauth';
+					return;
+				} else {
+					return;
+				}
+			}
+			unlinkTg.disabled = true;
+			unlinkTg.textContent = 'Unlinking…';
+			try {
+				await post('/api/auth/telegram/unlink', password ? { password } : {});
+				toast('Telegram unlinked');
+				onRetry();
+			} catch (err) {
+				if (err?.code === 'reauth_required') {
+					toast('That password did not match. Try again, or re-authenticate with Telegram.');
+				} else {
+					toast(err?.message || 'Failed to unlink');
+				}
+				unlinkTg.disabled = false;
+				unlinkTg.textContent = 'Unlink';
+			}
+		});
+	}
+	const unlinkBtn = host.querySelector('[data-action="unlink-google"]');
+	if (unlinkBtn) {
+		unlinkBtn.addEventListener('click', async () => {
+			if (d.count <= 1) {
+				toast('Google is the only way into this account. Set a password or link a wallet first.');
+				return;
+			}
+			let password = null;
+			if (!d.reauthenticated) {
+				if (d.password) {
+					password = prompt('Enter your password to unlink Google.');
+					if (!password) return;
+				} else if (confirm('To unlink, sign in with Google once more to prove it is you. Continue to Google?')) {
+					location.href = '/api/auth/google/start?intent=reauth';
+					return;
+				} else {
+					return;
+				}
+			}
+			unlinkBtn.disabled = true;
+			unlinkBtn.textContent = 'Unlinking…';
+			try {
+				await post('/api/auth/google/unlink', password ? { password } : {});
+				toast('Google unlinked');
+				onRetry();
+			} catch (err) {
+				if (err?.code === 'reauth_required') {
+					toast('That password did not match. Try again, or re-authenticate with Google.');
+				} else {
+					toast(err?.message || 'Failed to unlink');
+				}
+				unlinkBtn.disabled = false;
+				unlinkBtn.textContent = 'Unlink';
+			}
+		});
+	}
+	return panel;
+}
+
 const SCOPE_WORDS = {
 	profile: 'profile', offline_access: 'stay signed in', 'agents:read': 'read agents', 'agents:write': 'edit agents',
 	'avatars:read': 'read avatars', 'avatars:write': 'edit avatars', 'avatars:delete': 'delete avatars',
 	'memory:read': 'read memory', 'memory:write': 'write memory', 'wallet:read': 'read wallets', 'wallet:write': 'spend from wallets',
 	'services:write': 'sell services', 'home:read': 'read home', 'home:act': 'control home', 'feedback:read': 'read feedback',
+	'wallet:trade': 'trade from wallets', 'wallet:launch': 'launch coins',
 };
 
 function renderConnectedApps(resp, onRetry) {
@@ -282,7 +578,7 @@ function renderConnectedApps(resp, onRetry) {
 		<div class="set-panel-head">
 			<div>
 				<div class="dn-panel-title">Connected apps</div>
-				<div class="dn-panel-sub" style="margin:2px 0 0">Apps you signed in with three.ws: the desktop app, the CLI, and coding clients using your MCP tools. Revoking stops an app within an hour, when its current access expires.</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Apps you signed in with three.ws: the desktop app, the CLI, and coding clients using your MCP tools. Revoking takes effect on the app's very next request: its tokens stop working immediately, not when they expire.</div>
 			</div>
 		</div>
 		<div data-slot="grants-list"></div>
@@ -311,7 +607,7 @@ function renderConnectedApps(resp, onRetry) {
 		`).join('');
 		listHost.querySelectorAll('[data-action="revoke-grant"]').forEach((btn) => {
 			btn.addEventListener('click', async () => {
-				if (!confirm(`Revoke ${btn.dataset.name}? It will need to sign in again.`)) return;
+				if (!confirm(`Revoke ${btn.dataset.name}? It loses access immediately and will need to sign in again.`)) return;
 				btn.disabled = true;
 				btn.textContent = 'Revoking…';
 				try {

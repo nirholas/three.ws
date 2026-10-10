@@ -670,6 +670,7 @@ const appConfig = {
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
 				'smart-home-join': resolve(__dirname, 'pages/smart-home-join.html'),
 				'cli-authorize': resolve(__dirname, 'pages/cli-authorize.html'),
+				'link-device': resolve(__dirname, 'pages/link-device.html'),
 				'smart-home-plan': resolve(__dirname, 'pages/smart-home-plan.html'),
 				'smart-home-privacy': resolve(__dirname, 'pages/smart-home-privacy.html'),
 				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),
@@ -700,6 +701,7 @@ const appConfig = {
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
+				'mcp-tool': resolve(__dirname, 'pages/mcp-tool.html'),
 				connect: resolve(__dirname, 'pages/connect.html'),
 				grok: resolve(__dirname, 'pages/grok.html'),
 				'x-claim': resolve(__dirname, 'pages/x-claim.html'),
@@ -821,6 +823,7 @@ const appConfig = {
 				monitor: resolve(__dirname, 'pages/monitor.html'),
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
 				'agent-cards': resolve(__dirname, 'pages/agent-cards.html'),
+				'agent-perps': resolve(__dirname, 'pages/agent-perps.html'),
 				'agent-mail': resolve(__dirname, 'pages/agent-mail.html'),
 				wallet: resolve(__dirname, 'pages/wallet.html'),
 				guardian: resolve(__dirname, 'pages/guardian.html'),
@@ -875,9 +878,13 @@ const appConfig = {
 				'copy-coach': resolve(__dirname, 'pages/copy-coach.html'),
 				syndicates: resolve(__dirname, 'pages/syndicates.html'),
 				teams: resolve(__dirname, 'pages/teams.html'),
+				'team-chat': resolve(__dirname, 'pages/team-chat.html'),
 				syndicate: resolve(__dirname, 'pages/syndicate.html'),
 				quests: resolve(__dirname, 'pages/quests.html'),
 				approvals: resolve(__dirname, 'pages/approvals.html'),
+				commerce: resolve(__dirname, 'pages/commerce.html'),
+				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
+				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
 				duel: resolve(__dirname, 'pages/duel.html'),
 				fade: resolve(__dirname, 'pages/fade.html'),
@@ -975,6 +982,7 @@ const appConfig = {
 				'pump-visualizer': resolve(__dirname, 'pages/pump-visualizer.html'),
 				crypto: resolve(__dirname, 'pages/crypto.html'),
 				'crypto-api': resolve(__dirname, 'pages/crypto-api.html'),
+				'developers': resolve(__dirname, 'pages/developers.html'),
 				three: resolve(__dirname, 'pages/three.html'),
 				'three-live': resolve(__dirname, 'pages/three-live.html'),
 				'three-token': resolve(__dirname, 'pages/three-token.html'),
@@ -1016,7 +1024,10 @@ const appConfig = {
 				'paired-coins': resolve(__dirname, 'pages/paired-coins.html'),
 				'paired-coin': resolve(__dirname, 'pages/paired-coin.html'),
 				'launch-paired': resolve(__dirname, 'pages/launch-paired.html'),
+				'launch-uniswap': resolve(__dirname, 'pages/launch-uniswap.html'),
+				'launch-intent': resolve(__dirname, 'pages/launch-intent.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
+				domains: resolve(__dirname, 'pages/domains.html'),
 				payments: resolve(__dirname, 'pages/payments.html'),
 				'pay-simulator': resolve(__dirname, 'pages/pay-simulator.html'),
 				'x-pricing': resolve(__dirname, 'pages/x-pricing.html'),
@@ -1024,7 +1035,6 @@ const appConfig = {
 				status: resolve(__dirname, 'pages/status.html'),
 				xr: resolve(__dirname, 'pages/xr.html'),
 				temporary: resolve(__dirname, 'pages/temporary.html'),
-				domains: resolve(__dirname, 'pages/domains.html'),
 				irl: resolve(__dirname, 'pages/irl.html'),
 				daily: resolve(__dirname, 'pages/daily.html'),
 				'ar-studio': resolve(__dirname, 'pages/ar-studio.html'),
@@ -1805,6 +1815,10 @@ const appConfig = {
 					'/markets/robinhood/paired/': resolve(root, 'pages/paired-coins.html'),
 					'/launch/paired': resolve(root, 'pages/launch-paired.html'),
 					'/launch/paired/': resolve(root, 'pages/launch-paired.html'),
+					'/launch/uniswap': resolve(root, 'pages/launch-uniswap.html'),
+					'/launch/uniswap/': resolve(root, 'pages/launch-uniswap.html'),
+					'/launch/intents': resolve(root, 'pages/launch-intent.html'),
+					'/launch/intents/': resolve(root, 'pages/launch-intent.html'),
 					'/markets/robinhood/portfolios': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/': resolve(root, 'pages/hood-portfolios.html'),
 					'/markets/robinhood/portfolios/universe': resolve(root, 'pages/hood-portfolios-universe.html'),
@@ -2357,6 +2371,10 @@ const appConfig = {
 					// `/syndicates/([^/.]+)/?`; the board itself is /syndicates.
 					else if (!filePath && /^\/syndicates\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/syndicate.html');
+					// /teams/:id/chat → that squad's coordinator chat. Mirrors vercel.json's
+					// `/teams/([0-9a-fA-F-]{36})/chat/?`; the squad picker is /team-chat.
+					else if (!filePath && /^\/teams\/[0-9a-fA-F-]{36}\/chat\/?$/.test(path))
+						filePath = resolve(root, 'pages/team-chat.html');
 					// /teams/:id → one specialist team. Mirrors vercel.json's
 					// `/teams/([0-9a-fA-F-]{36})/?`; the list itself is /teams.
 					else if (!filePath && /^\/teams\/[0-9a-fA-F-]{36}\/?$/.test(path))
@@ -2370,6 +2388,17 @@ const appConfig = {
 					// vercel.json's `/approvals/([^/.]+)/?`.
 					else if (!filePath && /^\/approvals(\/[^/.]+)?\/?$/.test(path))
 						filePath = resolve(root, 'pages/approvals.html');
+					// /commerce and /invoices → the agent commerce console; /invoices/:id →
+					// the public invoice and receipt. Mirrors vercel.json.
+					else if (!filePath && /^\/(commerce|invoices)\/?$/.test(path))
+						filePath = resolve(root, 'pages/commerce.html');
+					else if (!filePath && /^\/invoices\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-invoice.html');
+					// /launch/intents/:id → one funded pump.fun launch intent (quote, funding,
+					// confirmation, stage tracker). Mirrors vercel.json's
+					// `/launch/intents/([^/.]+)/?`; the list itself is /launch/intents.
+					else if (!filePath && /^\/launch\/intents\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/launch-intent.html');
 					// /trade-rooms/:agentId → one leader's live trade room. Mirrors
 					// vercel.json's `/trade-rooms/([^/.]+)/?`.
 					else if (!filePath && /^\/trade-rooms\/[^/.]+\/?$/.test(path))
@@ -2384,6 +2413,9 @@ const appConfig = {
 					// /agents/:id/cards and /agent-cards → Agent Cards (gift + prepaid cards).
 					else if (!filePath && /^\/(agents\/[^/.]+\/cards|agent-cards)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-cards.html');
+					// /agents/:id/perps and /agent-perps → Agent Perps (perpetual futures).
+					else if (!filePath && /^\/(agents\/[^/.]+\/perps|agent-perps)\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-perps.html');
 					// /agents/:id/mail and /agent-mail → Agent Mail (the agent's inbox).
 					else if (!filePath && /^\/(agents\/[^/.]+\/mail|agent-mail)\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-mail.html');

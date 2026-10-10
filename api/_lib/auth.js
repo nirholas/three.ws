@@ -8,7 +8,10 @@ import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
 import { recordDailyActivity } from './streaks.js';
 import { clientIp } from './rate-limit.js';
-import { effectiveKeyScope } from './key-scopes.js';
+import { effectiveKeyScope, withImpliedScopes } from './key-scopes.js';
+import { getCachedKeyRow, rememberKeyRow, keyRevokedSinceCached, shouldTouchLastUsed } from './api-key-cache.js';
+import { ipAllowed } from './ip-allowlist.js';
+import { currentRequest } from './request-context.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -317,19 +320,38 @@ export async function revokeClientGrant({ userId, clientId }) {
 }
 
 // Returns { userId, scope, source: 'oauth'|'apikey', clientId?, apiKeyId? } or null.
-export async function authenticateBearer(token, { audience } = {}) {
+//
+// `ip` is the caller's address, used for the key's IP allowlist. Callers that
+// only hold a token (most of them) leave it out and the address is read from
+// the request context server/index.mjs opens around every API dispatch, so an
+// allowlisted key is enforced on every route, not only the ones that pass it.
+export async function authenticateBearer(token, { audience, ip } = {}) {
 	if (!token) return null;
 	// API keys are prefixed with `sk_live_` (or `sk_test_`) — short-circuit.
 	if (token.startsWith('sk_live_') || token.startsWith('sk_test_')) {
 		const hash = await sha256(token);
-		const rows = await sql`
-			select id, user_id, scope, preset, expires_at, revoked_at
-			from api_keys where token_hash = ${hash} limit 1
-		`;
-		const row = rows[0];
+		let row = getCachedKeyRow(hash);
+		if (row === undefined) {
+			const rows = await sql`
+				select id, user_id, scope, preset, expires_at, revoked_at, ip_allowlist, overlap_until
+				from api_keys where token_hash = ${hash} limit 1
+			`;
+			row = rows[0] ?? null;
+			rememberKeyRow(hash, row);
+		} else if (row && (await keyRevokedSinceCached(row.id))) {
+			// Revoked on this or another instance since the row was cached: the
+			// cache window must never outlive a revoke (api-key-cache.js).
+			return null;
+		}
 		if (!row || row.revoked_at) return null;
-		if (row.expires_at && new Date(row.expires_at) < new Date()) return null;
-		await sql`update api_keys set last_used_at = now() where id = ${row.id}`;
+		const now = new Date();
+		if (row.expires_at && new Date(row.expires_at) < now) return null;
+		// A rotated key keeps working through its overlap window, then stops.
+		if (row.overlap_until && new Date(row.overlap_until) < now) return null;
+		const ctxReq = ip ? null : currentRequest();
+		const callerIp = ip ?? (ctxReq ? clientIp(ctxReq) : null);
+		if (Array.isArray(row.ip_allowlist) && row.ip_allowlist.length && !ipAllowed(callerIp, row.ip_allowlist)) return null;
+		if (shouldTouchLastUsed(row.id)) await sql`update api_keys set last_used_at = now() where id = ${row.id}`;
 		// Coarse scopes expand to the fine ones every route checks, and a
 		// connector key is stripped of every spend-capable scope (key-scopes.js).
 		const { scope, connector } = effectiveKeyScope(row);
@@ -364,7 +386,7 @@ export async function authenticateBearer(token, { audience } = {}) {
 export async function getRequestUser(req, res) {
 	const session = await getSessionUser(req, res);
 	if (session) return session;
-	const bearer = await authenticateBearer(extractBearer(req));
+	const bearer = await authenticateBearer(extractBearer(req), { ip: clientIp(req) });
 	if (bearer) return { id: bearer.userId, source: 'bearer', scope: bearer.scope || '', ...(bearer.connector ? { connector: true } : {}) };
 	return null;
 }
@@ -425,8 +447,10 @@ export async function authenticatePrivy(req) {
 	}
 }
 
+// `wallet:write` satisfies `wallet:trade` and `wallet:launch` (key-scopes.js
+// IMPLIED_SCOPES): a credential allowed to move value out may also trade and launch.
 export function hasScope(granted, required) {
-	const g = new Set((granted || '').split(/\s+/).filter(Boolean));
+	const g = new Set(withImpliedScopes(granted));
 	return required.split(/\s+/).every((s) => g.has(s));
 }
 
@@ -444,4 +468,4 @@ export function requestUserHasScope(user, required) {
 
 // Re-exported for callers that import every auth helper from here; the gate
 // itself lives in spend-scope.js so a mocked auth.js cannot remove it.
-export { SPEND_SCOPE, assertBearerMaySpend } from './spend-scope.js';
+export { SPEND_SCOPE, TRADE_SCOPE, LAUNCH_SCOPE, assertBearerMaySpend } from './spend-scope.js';

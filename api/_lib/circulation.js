@@ -638,10 +638,10 @@ async function ensurePayoutWallet(agent) {
 	if (!agent.address) throw new Skip('seller has no custodial wallet');
 	await sql`
 		insert into agent_payout_wallets
-			(user_id, agent_id, address, chain, is_default, preferred_network)
-		values (${agent.userId}, ${agent.id}, ${agent.address}, 'solana', true, 'mainnet')
+			(user_id, agent_id, address, chain, is_default, preferred_network, approved_at, effective_at, set_by)
+		values (${agent.userId}, ${agent.id}, ${agent.address}, 'solana', true, 'mainnet', now(), now(), 'platform')
 		on conflict (user_id, agent_id, chain) do update set
-			address = excluded.address, is_default = true
+			address = excluded.address, is_default = true, approved_at = now(), effective_at = now(), set_by = 'platform'
 	`;
 }
 
@@ -1343,6 +1343,7 @@ async function actionBuyAsset(ctx) {
 	const [payoutRow] = await sql`
 		select address from agent_payout_wallets
 		where user_id = ${listing.owner_user_id} and chain = 'solana' and is_default = true
+		  and approved_at is not null and effective_at <= now()
 		order by created_at asc limit 1
 	`;
 	const payout = payoutRow?.address;

@@ -87,7 +87,7 @@ export const toolDefs = [
 		group: 'domains',
 		annotations: READ,
 		description:
-			'Suggest web domains for a name across TLDs, live from Google Cloud Domains. Each result gives availability, the yearly registration price and the renewal price (registrations are one year, so they are the same figure). Pass tlds to also check the exact name on those extensions (up to 6). Searches are cached and the registrar allows a limited number of live requests a day.',
+			'Suggest web domains for a name across TLDs, live from Google Cloud Domains. Each result gives availability, the yearly registration price and the renewal price (registrations are one year, so they are the same figure). Pass tlds to also check the exact name on those extensions (up to 6). Searches are cached and the registrar allows a limited number of live requests a day. Use this first when the owner wants a domain but has not settled on an exact name.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -114,7 +114,7 @@ export const toolDefs = [
 		group: 'domains',
 		annotations: READ,
 		description:
-			'One answer for one fully-qualified name: available or not, with a clear reason when it is not (already registered, or an extension the registrar does not sell), the exact yearly registration and renewal price, the WHOIS privacy modes the TLD supports and any notices a registration must acknowledge.',
+			'One answer for one fully-qualified name: available or not, with a clear reason when it is not (already registered, or an extension the registrar does not sell), the exact yearly registration and renewal price, the WHOIS privacy modes the TLD supports and any notices a registration must acknowledge. Use this when the owner has one exact name in mind, before domain_register_quote.',
 		inputSchema: {
 			type: 'object',
 			properties: { domain: { type: 'string', maxLength: 253, description: 'Fully-qualified name, like orbit.app.' } },
@@ -137,7 +137,7 @@ export const toolDefs = [
 		group: 'domains',
 		annotations: READ,
 		description:
-			'The extensions Google Cloud Domains sells with their yearly registration and renewal price, cheapest first. Served from a snapshot of the registrar (so it costs no live requests); the response says when it was taken. Filter with tld or max_price_usd. A specific name can price above its extension (premium names), so use domain_check for the exact figure.',
+			'The extensions Google Cloud Domains sells with their yearly registration and renewal price, cheapest first. Served from a snapshot of the registrar (so it costs no live requests); the response says when it was taken. Filter with tld or max_price_usd. A specific name can price above its extension (premium names), so use domain_check for the exact figure. Use this to compare extension prices or find TLDs under a budget without spending live registrar requests.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -159,7 +159,7 @@ export const toolDefs = [
 		scope: 'wallet:read',
 		annotations: WRITE,
 		description:
-			'Price a domain registration without buying it: the exact yearly price, the one-year term, the renewal terms for your auto_renew choice, the privacy mode, the notices that apply and your credit balance. It validates the registration with the registrar (validate-only), so a bad contact or an unavailable name fails here, before any spend. Show the result to the owner; domain_register needs the quote_id this returns.',
+			'Price a domain registration without buying it: the exact yearly price, the one-year term, the renewal terms for your auto_renew choice, the privacy mode, the notices that apply and your credit balance. It validates the registration with the registrar (validate-only), so a bad contact or an unavailable name fails here, before any spend. Show the result to the owner; domain_register needs the quote_id this returns. Call this before domain_register, once the owner has picked a name.',
 		inputSchema: {
 			type: 'object',
 			properties: { ...REGISTER_PROPS },
@@ -187,7 +187,7 @@ export const toolDefs = [
 		scope: 'wallet:write',
 		annotations: MONEY,
 		description:
-			'Register the domain domain_register_quote priced, paying the exact yearly price from your prepaid credits (refunded in full if the registrar fails). Requires the quote_id from the quote, the same domain/auto_renew/privacy, expected_price_usd from the quote, an idempotency_key (a retry returns the same registration, never a second charge) and confirm_spend: true, which you may only send after the owner explicitly approved the quote. Registration is asynchronous: poll domain_status until it is active.',
+			'Register the domain domain_register_quote priced, paying the exact yearly price from your prepaid credits (refunded in full if the registrar fails). Requires the quote_id from the quote, the same domain/auto_renew/privacy, expected_price_usd from the quote, an idempotency_key (a retry returns the same registration, never a second charge) and confirm_spend: true, which you may only send after the owner explicitly approved the quote. Registration is asynchronous: poll domain_status until it is active. Call this once the owner has approved a fresh domain_register_quote.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -229,7 +229,7 @@ export const toolDefs = [
 		group: 'domains',
 		scope: 'wallet:read',
 		annotations: READ,
-		description: 'The state of a registration you started: registering, active (with its expiry) or failed (credits refunded). Polls the registrar and settles the registration. Pass the registration id from domain_register or the domain name.',
+		description: 'The state of a registration you started: registering, active (with its expiry) or failed (credits refunded). Polls the registrar and settles the registration. Pass the registration id from domain_register or the domain name. Use this after domain_register to follow a registration until it is active or failed.',
 		inputSchema: {
 			type: 'object',
 			properties: { id: { type: 'string', format: 'uuid' }, domain: { type: 'string', maxLength: 253 } },
@@ -253,7 +253,7 @@ export const toolDefs = [
 		scope: 'agents:write',
 		annotations: WRITE,
 		description:
-			"Serve an agent's public page on a domain you registered here: creates the DNS zone and records, points the registration at it, issues a managed HTTPS certificate on the load balancer and routes the host to the agent. Idempotent. The domain must be an active registration on your account. Follow with domain_connect_status until the host is live.",
+			"Serve an agent's public page on a domain you registered here: creates the DNS zone and records, points the registration at it, issues a managed HTTPS certificate on the load balancer and routes the host to the agent. Idempotent. The domain must be an active registration on your account. Follow with domain_connect_status until the host is live. Use this after a registration turns active to put an agent's page on that domain.",
 		inputSchema: {
 			type: 'object',
 			properties: { domain: { type: 'string', maxLength: 253 }, agent_id: { type: 'string', format: 'uuid', description: 'Agent UUID (from list_my_agents).' } },
@@ -275,7 +275,7 @@ export const toolDefs = [
 		group: 'domains',
 		scope: 'agents:read',
 		annotations: READ,
-		description: 'Whether a connected domain is live: the certificate state, the DNS nameservers in use and the URL once HTTPS is serving. Promotes the host to live when its certificate turns active.',
+		description: 'Whether a connected domain is live: the certificate state, the DNS nameservers in use and the URL once HTTPS is serving. Promotes the host to live when its certificate turns active. Use this after domain_connect to check when the domain is serving over HTTPS.',
 		inputSchema: { type: 'object', properties: { domain: { type: 'string', maxLength: 253 } }, required: ['domain'], additionalProperties: false },
 		async handler(args, auth) {
 			if (!auth?.userId) return needsAccount();

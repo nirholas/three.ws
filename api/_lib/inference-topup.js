@@ -138,6 +138,7 @@ async function checkTopupPolicy({ agent, userId, amount, payTo }) {
 			usdValue: amount,
 			asset: 'USDC',
 			destination: payTo,
+			destinationTrust: 'system',
 		});
 	} catch (e) {
 		if (e instanceof SpendLimitError) throw spendLimitToTopupError(e);
@@ -338,6 +339,7 @@ async function runTopup(row) {
 			category: CUSTODY_CATEGORY,
 			usdValue: amount,
 			destination: row.pay_to,
+			destinationTrust: 'system',
 			asset: 'USDC',
 			rowMeta: {
 				topup_id: row.id,

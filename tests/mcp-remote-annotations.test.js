@@ -51,6 +51,12 @@ const CATALOGS = [
 //                       commit an agent or move USDC through marketplace escrow
 //   predictions_open, predictions_close, predictions_redeem
 //                       trade or settle prediction-market positions in USDC
+//   perps_order_execute, perps_collateral_deposit, perps_collateral_withdraw,
+//   perps_order_cancel, perps_flatten
+//                       trade perpetual futures or move USDC collateral
+//   sniper_activate     arms a launch sniper that spends SOL from the agent's
+//                       wallet on every launch that passes its filters
+//   alert_rule_delete   removes an alert rule and its delivery history for good
 // Acting on the physical world:
 //   home_activate       runs a scene or script in a real house, which moves
 //                       locks, covers and alarms
@@ -67,12 +73,16 @@ const DESTRUCTIVE_TOOLS = new Set([
 	'delete_avatar', 'forget', 'delete_custom_skill', 'delete_agent', 'automation_delete',
 	'pay_and_call', 'persona_tip', 'persona_send',
 	'agent_card_create', 'agent_card_reveal', 'agent_card_cancel', 'agent_card_withdraw',
-	'domain_register', 'paired_launch', 'paired_claim_fees', 'automation_trigger',
+	'domain_register', 'paired_launch', 'uniswap_launch', 'paired_claim_fees', 'automation_trigger',
 	'create_marketplace_listing', 'delist_marketplace_listing', 'place_bid', 'buy_now',
 	'accept_marketplace_bid', 'withdraw_marketplace_bid',
 	'predictions_open', 'predictions_close', 'predictions_redeem',
+	'sniper_activate', 'alert_rule_delete',
+	'perps_order_execute', 'perps_collateral_deposit', 'perps_collateral_withdraw', 'perps_order_cancel', 'perps_flatten',
 	'home_activate', 'home_call',
 	'agent_mail_create', 'agent_mail_send', 'agent_mail_reply',
+	'agent_send', 'agent_buy_confirm',
+	'swap_execute',
 ]);
 
 // Destructive tools the policy deliberately leaves in the write tier (on by

@@ -155,7 +155,8 @@ export const toolDefs = [
 			'bodies it contains, how many holes it has, its thinnest wall, its exact volume, and a 0-100 ' +
 			'printability score with named reasons. Also returns, per material, the smallest height the model ' +
 			'can be printed at and still hold its detail. Free, keyless, and read-only: nothing is ordered. ' +
-			'Pass a three.ws creation_id or any public glb_url.',
+			'Pass a three.ws creation_id or any public glb_url. Use this before print_quote to check whether a model ' +
+			'can be printed at all and how small it can go in each material.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -188,7 +189,8 @@ export const toolDefs = [
 			'exact volume it was computed from, finish, quantity break, shipping) plus a signed quote token ' +
 			'valid for 24 hours. Materials, size limits and lead times come from GET /api/print/catalog. This ' +
 			'tool does NOT place an order and moves no money: settle the token at POST /api/x402/print-order ' +
-			'when you have a shipping address. Free and keyless.',
+			'when you have a shipping address. Free and keyless. Use this after print_analyze says the model is printable, ' +
+			'when the user wants to know what a physical copy would cost.',
 		inputSchema: {
 			type: 'object',
 			properties: {

@@ -13,10 +13,12 @@
 //     renders every prompt on every server against tools/list to prove it.
 //   - Confirm flags are read from each tool's inputSchema (any `confirm*`
 //     boolean), so a prompt names the real flag the tool enforces today.
-//   - Flows whose executing tools belong to a venue that is not enabled yet
-//     (swaps, launches, perps, lending, predictions) check for those tools and,
-//     until they exist, say so plainly and route to the research tools and web
-//     surfaces that do exist.
+//   - Flows whose executing step is not an MCP tool (swaps, Solana launches,
+//     lending) research with the tools that exist and hand the signing step to
+//     the web surface that owns it. Predictions and perps execute on
+//     /api/mcp-agent, where the predictions_* and perps_* tools live, and point
+//     there from every other server. tests/mcp-prompt-references.test.js fails on any tool,
+//     resource or cross-server prompt a prompt names that does not exist.
 
 import { matchResource } from './resources.js';
 
@@ -59,13 +61,21 @@ function makeContext(server, catalog) {
 	const byName = new Map(catalog.map((t) => [t.name, t]));
 	const used = new Set();
 	const resources = new Set();
+	// Every tool name a prompt checks for, present or not, so a branch waiting on
+	// a tool nobody registered shows up in tests/mcp-prompt-references.test.js.
+	const probed = new Set();
+	const probe = (name) => {
+		probed.add(name);
+		return byName.has(name);
+	};
 	const ctx = {
 		server,
 		url: SERVER_URLS[server],
 		used,
 		resources,
-		has: (name) => byName.has(name),
-		hasAll: (...names) => names.every((n) => byName.has(n)),
+		probed,
+		has: (name) => probe(name),
+		hasAll: (...names) => names.map(probe).every(Boolean),
 		tool(name) {
 			if (!byName.has(name)) throw new Error(`prompt names tool ${name}, which ${server} does not publish`);
 			used.add(name);
@@ -184,7 +194,7 @@ export const PROMPTS = [
 	{
 		name: 'trade',
 		title: 'Research and trade a token',
-		description: 'Research a Solana token, check the agent\'s balance and limits, then quote and execute a swap with explicit confirmation.',
+		description: 'Research a Solana token and check the agent\'s balance and limits, then hand the swap to the wallet page where it is quoted and confirmed.',
 		arguments: [
 			{ name: 'agentId', description: 'The agent that trades.', required: true },
 			{ name: 'token', description: 'The token mint address to research or trade.', required: true },
@@ -192,7 +202,6 @@ export const PROMPTS = [
 		available: (ctx) => ctx.hasAll('token_snapshot', 'read_resource'),
 		render(args, ctx) {
 			const mint = args.token || '{mint}';
-			const canSwap = ctx.hasAll('swap_quote', 'swap_execute');
 			return [
 				`Research token ${mint} and, if I decide to, trade it from ${agentRef(args)}.`,
 				'',
@@ -202,9 +211,7 @@ export const PROMPTS = [
 					ctx.has('oracle_coin') && `Call ${ctx.tool('oracle_coin')} with mint "${mint}" for the conviction score and its reasons.`,
 					`Read ${ctx.resource(agentUri(args, '/wallet'))} for the balance, trade_limits (per-trade SOL, daily budget, max slippage) and whether the wallet is frozen.`,
 					'Summarize the risks and the case for and against, in five lines, before any trade talk.',
-					canSwap
-						? `If I want to trade: call ${ctx.tool('swap_quote')}, show me the input, output, price impact, fees and route, then call ${spendStep(ctx, 'swap_execute', 'execute that exact quote')}.`
-						: `Swap execution is not enabled on this MCP server yet. When I want to trade, send me to ${ORIGIN}/agents/${args.agentId || '{agentId}'}/wallet#trade, where the swap is quoted and I confirm it myself.`,
+					`Swaps are signed in the browser, not from MCP. When I want to trade, send me to ${ORIGIN}/agents/${args.agentId || '{agentId}'}/wallet#trade, where the swap is quoted against the limits above and I confirm it myself.`,
 				]),
 				'',
 				MONEY_RULES,
@@ -214,7 +221,7 @@ export const PROMPTS = [
 	{
 		name: 'launch-token',
 		title: 'Launch a token',
-		description: 'Prepare and launch a token from an agent, with the name, symbol and cost confirmed first.',
+		description: 'Plan a token launch from an agent: compare the launch lanes, check the wallet and confirm the name, symbol and cost, then sign it on the launch page.',
 		arguments: [
 			{ name: 'agentId', description: 'The agent that launches the token.', required: true },
 			{ name: 'name', description: 'Token name.', required: true },
@@ -222,18 +229,16 @@ export const PROMPTS = [
 		],
 		available: (ctx) => ctx.hasAll('pumpfun_recent_graduations', 'read_resource'),
 		render(args, ctx) {
-			const launchTool = ['launch_token_gasless', 'launch_fixed_supply_token'].find((n) => ctx.has(n));
 			return [
 				`Launch a token named "${args.name || '{name}'}" (${args.symbol || '{symbol}'}) from ${agentRef(args)}.`,
 				'',
 				numbered([
 					`Read ${ctx.resource('three://launches')} to see what this account has launched before, and flag a name or symbol that repeats one.`,
 					`Call ${ctx.tool('pumpfun_recent_graduations')} and summarize what recently graduated launches have in common, so the plan is grounded in current data.`,
+					ctx.has('launch_lanes') && `Call ${ctx.tool('launch_lanes')} and show me the Solana lanes first: every fee, who pays it, the creator share and what happens at graduation.`,
 					`Read ${ctx.resource(agentUri(args, '/wallet'))} and check there is enough SOL for the launch fee.`,
-					'Show me the name, symbol, description and image you plan to use, the launching wallet and the cost, and wait for my yes.',
-					launchTool
-						? `Call ${spendStep(ctx, launchTool, 'launch it')}, then read three://launches again and give me the mint and its page.`
-						: `Launching from MCP is not enabled on this server yet. Send me to ${ORIGIN}/launch, where I review and sign the launch myself, then read three://launches to confirm it landed.`,
+					'Show me the name, symbol, description and image you plan to use, the launching wallet and the cost.',
+					`Solana launches are signed in the browser, not from MCP. Send me to ${ORIGIN}/launch, where I review and sign the launch myself, then read three://launches again to confirm it landed and give me the mint and its page.`,
 				]),
 				'',
 				MONEY_RULES,
@@ -423,22 +428,17 @@ export const PROMPTS = [
 	{
 		name: 'earn-yield',
 		title: 'Earn yield',
-		description: 'Put idle agent funds to work in lending, with markets compared and every deposit confirmed.',
+		description: 'Compare lending and pool yields for an agent\'s idle funds, Solana first, and point to the yield explorer to deposit.',
 		arguments: [{ name: 'agentId', description: 'The agent whose funds to deploy.', required: true }],
 		available: (ctx) => ctx.hasAll('crypto_data', 'read_resource'),
 		render(args, ctx) {
-			const live = ctx.hasAll('lend_markets', 'lend_deposit');
 			return [
 				`Find yield for idle funds in ${agentRef(args)}.`,
 				'',
 				numbered([
 					`Read ${ctx.resource(agentUri(args, '/wallet'))} and show what is idle.`,
-					live
-						? `Call ${ctx.tool('lend_markets')} and compare supply APY, utilization and liquidity for the assets I hold, Solana markets first.`
-						: `Lending is not enabled on this MCP server yet. For research, call ${ctx.tool('crypto_data')} with provider "defillama" to compare pool APYs for the assets I hold, Solana first, and point me to ${ORIGIN}/yields for the full explorer.`,
-					live
-						? `Show me the market, amount, APY and withdrawal terms, then call ${spendStep(ctx, 'lend_deposit', 'deposit')}.`
-						: 'Do not move funds from here. Summarize the two best options and their risks.',
+					`Call ${ctx.tool('crypto_data')} with provider "defillama" to compare pool APYs, TVL and utilization for the assets I hold, Solana first.`,
+					`Summarize the two best options and their risks. Deposits are signed in the browser, not from MCP: point me to ${ORIGIN}/yields for the full explorer, and do not move funds from here.`,
 				]),
 				'',
 				MONEY_RULES,
@@ -448,22 +448,40 @@ export const PROMPTS = [
 	{
 		name: 'perps',
 		title: 'Trade perpetuals',
-		description: 'Research perpetual futures markets and, where enabled, open a position with a previewed, confirmed order.',
-		arguments: [{ name: 'agentId', description: 'The agent that trades.', required: true }],
-		available: (ctx) => ctx.hasAll('crypto_data', 'read_resource'),
+		description: 'Trade perpetual futures from an agent wallet on Solana: read the market and account, preview an order with its margin, leverage, fees and liquidation price, and place it only after confirmation. Paper mode fills at live prices. Where the perps tools are not served, research the setup and point to the server that has them.',
+		arguments: [
+			{ name: 'agentId', description: 'The agent that trades.', required: true },
+			{ name: 'market', description: 'The market to trade, for example SOL or BTC.', required: false },
+		],
+		available: (ctx) => ctx.hasAll('perps_markets', 'perps_account', 'perps_order_preview', 'perps_order_execute') || ctx.hasAll('crypto_data', 'read_resource'),
 		render(args, ctx) {
-			const live = ctx.hasAll('perps_markets', 'perps_order_preview', 'perps_order_execute');
+			const market = args.market || 'the market I name';
+			const live = ctx.hasAll('perps_markets', 'perps_account', 'perps_order_preview', 'perps_order_execute');
+			if (!live) {
+				return [
+					`Help ${agentRef(args)} research a perpetual futures setup on ${market}.`,
+					'',
+					numbered([
+						`Read ${ctx.resource(agentUri(args, '/wallet'))} for collateral and limits.`,
+						`Call ${ctx.tool('crypto_data')} for spot price and recent volatility${ctx.has('token_snapshot') ? `, and ${ctx.tool('token_snapshot')} for Solana tokens` : ''}.`,
+						'Summarize the setup, the liquidation risk at 2x and 5x, and what would invalidate it.',
+						`Orders are previewed and placed on ${elsewhere('mcp-agent', 'perps')}. Do not open positions from here.`,
+					]),
+					'',
+					MONEY_RULES,
+				].join('\n');
+			}
 			return [
-				`Help ${agentRef(args)} with perpetual futures.`,
+				`Help ${agentRef(args)} trade a perpetual future on ${market}.`,
 				'',
 				numbered([
-					`Read ${ctx.resource(agentUri(args, '/wallet'))} for collateral and limits.`,
-					live
-						? `Call ${ctx.tool('perps_markets')} and show funding, open interest and max leverage for the market I pick.`
-						: `Perpetuals are not enabled on this MCP server yet. For research, call ${ctx.tool('crypto_data')} for spot price and recent volatility of the asset I name, and ${ctx.has('token_snapshot') ? ctx.tool('token_snapshot') : 'the market data tools'} for Solana tokens.`,
-					live
-						? `Call ${ctx.tool('perps_order_preview')} and show me size, leverage, entry, liquidation price and fees. Then call ${spendStep(ctx, 'perps_order_execute', 'place exactly that order')}.`
-						: 'Do not open positions from here. Summarize the setup, the liquidation risk at 2x and 5x, and what would invalidate it.',
+					`Call ${ctx.tool('perps_account')} and show the mode (paper or live), equity, open positions, and the leverage and per-position margin caps.`,
+					`Call ${ctx.tool('perps_markets')}${ctx.has('perps_market_data') ? ` and ${ctx.tool('perps_market_data')} for ${market}` : ''}, and show mark price, funding and depth.`,
+					ctx.hasAll('perps_action_preview', 'perps_collateral_deposit') && `If there is no free collateral, preview a deposit with ${ctx.tool('perps_action_preview')} (action "deposit"), show me from, to, amount, asset and chain, and call ${spendStep(ctx, 'perps_collateral_deposit', 'move exactly that amount')}.`,
+					`Call ${ctx.tool('perps_order_preview')} with the side and size or margin and leverage I choose. Show me size, entry, margin, account leverage, fees and liquidation price, and every check.`,
+					`Call ${spendStep(ctx, 'perps_order_execute', 'place exactly that preview')} and a fresh idempotency_key. If it refuses because the quote moved, preview again and ask me again.`,
+					ctx.has('perps_positions') && `Offer a take-profit and a stop-loss through the same preview and confirm steps, and show the position with ${ctx.tool('perps_positions')}.`,
+					ctx.has('perps_flatten') && `If I say stop, preview the kill switch with action "flatten" and call ${spendStep(ctx, 'perps_flatten', 'close everything and halt')}.`,
 				]),
 				'',
 				MONEY_RULES,
@@ -473,22 +491,35 @@ export const PROMPTS = [
 	{
 		name: 'predictions',
 		title: 'Prediction markets',
-		description: 'Research prediction markets and, where enabled, take a position at a previewed price with confirmation.',
-		arguments: [{ name: 'agentId', description: 'The agent that trades.', required: true }],
-		available: (ctx) => ctx.hasAll('crypto_data', 'read_resource'),
+		description: 'Find a prediction market, price a position with a preview and take it with confirmation, settled in USDC on Solana. Where the predictions tools are not served, research the question and point to the server that has them.',
+		arguments: [
+			{ name: 'agentId', description: 'The agent that trades.', required: true },
+			{ name: 'topic', description: 'What the market is about, for example "SOL above $300 by December".', required: false },
+		],
+		available: (ctx) => ctx.has('read_resource') && (ctx.hasAll('predictions_events', 'predictions_open_preview', 'predictions_open') || ctx.has('crypto_data')),
 		render(args, ctx) {
-			const live = ctx.hasAll('predictions_events', 'predictions_open');
+			const topic = args.topic || 'the topic I name';
+			const live = ctx.hasAll('predictions_events', 'predictions_open_preview', 'predictions_open');
+			if (!live) {
+				return [
+					`Help ${agentRef(args)} think through a prediction market on ${topic}.`,
+					'',
+					numbered([
+						`Call ${ctx.tool('crypto_data')} for the prices and data behind the question, and give me a probability estimate with your reasoning.`,
+						`Positions are taken on ${elsewhere('mcp-agent', 'predictions')}. Do not place positions from here.`,
+					]),
+				].join('\n');
+			}
 			return [
-				`Help ${agentRef(args)} with prediction markets.`,
+				`Help ${agentRef(args)} take a prediction-market position on ${topic}.`,
 				'',
 				numbered([
-					`Read ${ctx.resource(agentUri(args, '/wallet'))} for the balance and limits.`,
-					live
-						? `Call ${ctx.tool('predictions_events')} and show the markets on the topic I name with prices, volume and resolution date.`
-						: `Prediction markets are not enabled on this MCP server yet. For research, call ${ctx.tool('crypto_data')} for the prices and data behind the question I ask about, and give me a probability estimate with your reasoning.`,
-					live
-						? `Show me the outcome, price, size and maximum loss, then call ${spendStep(ctx, 'predictions_open', 'take that position')}.`
-						: 'Do not place positions from here.',
+					`Read ${ctx.resource(agentUri(args, '/wallet'))} for the USDC balance and limits.`,
+					`Call ${ctx.tool('predictions_events')} with query "${topic}" and show the matching markets with implied probabilities, volume and close time.`,
+					ctx.has('predictions_event') && `For the event I pick, call ${ctx.tool('predictions_event')} and show the resolution rules and recent price history.`,
+					`Call ${ctx.tool('predictions_open_preview')} with the market, side and stake I choose. Show me the outcome, average price, contracts, fees, payout and maximum loss.`,
+					`Call ${spendStep(ctx, 'predictions_open', 'place exactly that preview')}, and report the transaction signature.`,
+					ctx.has('predictions_watch') && `Offer to call ${ctx.tool('predictions_watch')} so I hear when the probability crosses a level I set.`,
 				]),
 				'',
 				MONEY_RULES,
@@ -733,7 +764,26 @@ export function renderPrompt(server, catalog, name, args = {}) {
 		messages: [{ role: 'user', content: { type: 'text', text } }],
 		tools: [...ctx.used],
 		resources: [...ctx.resources],
+		probed: [...ctx.probed],
 	};
+}
+
+/**
+ * Every reference the prompt set makes on one server: the tool names each
+ * prompt checks for (whether or not the prompt is listed), and for each listed
+ * prompt, rendered with every argument filled, the tools and resources its text
+ * names. tests/mcp-prompt-references.test.js holds these against the live
+ * catalogs of every hosted server.
+ */
+export function promptReferences(server, catalog) {
+	const ctx = makeContext(server, catalog);
+	const listed = PROMPTS.filter((p) => p.available(ctx));
+	const rendered = listed.map((p) => {
+		const args = Object.fromEntries(p.arguments.map((a) => [a.name, `sample-${a.name}`]));
+		const r = renderPrompt(server, catalog, p.name, args);
+		return { name: p.name, tools: r.tools, resources: r.resources, probed: r.probed, text: r.messages[0].content.text };
+	});
+	return { probed: [...ctx.probed], listed: listed.map((p) => p.name), rendered };
 }
 
 /** Serve a prompts/* method, or return undefined when `method` is not one. */

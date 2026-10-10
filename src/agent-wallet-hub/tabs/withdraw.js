@@ -59,10 +59,6 @@ const WD_STYLE = `
 .awh-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom: var(--space-3,12px); }
 .awh-chip { font-size: var(--text-2xs,.6875rem); color: var(--ink,#e8e8e8); background: var(--surface-2,rgba(255,255,255,.06)); border:1px solid var(--stroke,rgba(255,255,255,.1)); border-radius: var(--radius-pill,999px); padding:3px 10px; }
 .awh-chip.alert { color: var(--warn,#fbbf24); border-color: color-mix(in srgb, var(--warn,#fbbf24) 30%, transparent); }
-.awh-allow { list-style:none; margin:0 0 10px; padding:0; }
-.awh-allow li { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--stroke,rgba(255,255,255,.06)); font-family: var(--font-mono,ui-monospace,monospace); font-size: var(--text-sm,.764rem); }
-.awh-allow .rm { appearance:none; background:transparent; border:0; color: var(--danger,#f87171); cursor:pointer; font-size:14px; line-height:1; padding:2px 6px; border-radius:6px; }
-.awh-allow .rm:hover { background: color-mix(in srgb, var(--danger,#f87171) 14%, transparent); }
 
 .awh-evs { list-style:none; margin:0; padding:0; }
 .awh-ev { display:flex; gap:11px; padding:10px 0; border-bottom:1px solid var(--stroke,rgba(255,255,255,.06)); font-size: var(--text-sm,.764rem); }
@@ -80,7 +76,7 @@ const WD_STYLE = `
 @media (prefers-reduced-motion: reduce) { .awh-skel-line, .awh-spin { animation:none; } }
 `;
 
-function injectStyle() {
+export function injectStyle() {
 	if (typeof document === 'undefined' || document.getElementById(WD_STYLE_ID)) return;
 	const tag = document.createElement('style');
 	tag.id = WD_STYLE_ID;
@@ -337,17 +333,21 @@ registerWalletTab({
 
 		function renderConfirm() {
 			const it = state.intent;
-			// Allowlist awareness: if the owner has set an allowlist, show whether this
-			// destination is on it. The server enforces the allowlist regardless — this
-			// is the in-form signal the audit flagged as missing.
-			const allow = Array.isArray(state.limits?.limits?.withdraw_allowlist)
-				? state.limits.limits.withdraw_allowlist
-				: null;
+			// Allowlist awareness: the server enforces the destination whitelist on every
+			// send; this row shows the same verdict before the owner confirms.
+			const wl = state.limits?.whitelist || null;
+			const entry = wl?.entries?.find((e) => e.address === it.destination) || null;
 			let destBadge = '';
-			if (allow && allow.length) {
-				destBadge = allow.includes(it.destination)
-					? '<span class="awh-dest-tag ok">✓ allowlisted</span>'
-					: '<span class="awh-dest-tag warn">⚠ not on allowlist — this will be rejected</span>';
+			if (entry?.status === 'active') {
+				destBadge = `<span class="awh-dest-tag ok">✓ allowlisted${entry.label ? `: ${esc(entry.label)}` : ''}</span>`;
+			} else if (entry?.status === 'pending') {
+				destBadge = '<span class="awh-dest-tag warn">⚠ cooling down: this will be rejected until it activates</span>';
+			} else if (entry?.status === 'proposed') {
+				destBadge = '<span class="awh-dest-tag warn">⚠ proposed, not approved: this will be rejected</span>';
+			} else if (wl?.enforced) {
+				destBadge = '<span class="awh-dest-tag warn">⚠ not on allowlist: this will be rejected</span>';
+			} else if (wl) {
+				destBadge = '<span class="awh-dest-tag">allowlist is off</span>';
 			}
 			return `
 				<div class="awh-card">
@@ -547,7 +547,6 @@ registerWalletTab({
 			}
 			const lim = state.limits.limits || {};
 			const spent = state.limits.spent_today_usd ?? 0;
-			const allow = Array.isArray(lim.withdraw_allowlist) ? lim.withdraw_allowlist : [];
 			const overDaily = lim.daily_usd != null && spent >= lim.daily_usd;
 			const frozen = lim.frozen === true;
 			return `
@@ -583,16 +582,7 @@ registerWalletTab({
 						<label for="awh-percp">Per-counterparty daily cap (USD) <span style="opacity:.6">(optional — how much may go to any single payee in 24h)</span></label>
 						<input class="awh-in" id="awh-percp" type="text" inputmode="decimal" placeholder="No limit" value="${lim.per_counterparty_daily_usd != null ? esc(lim.per_counterparty_daily_usd) : ''}">
 					</div>
-					<div class="awh-fld">
-						<label>Withdraw allowlist <span style="opacity:.6">(optional — restrict where funds can be swept)</span></label>
-						<ul class="awh-allow" id="awh-allow">
-							${allow.length ? allow.map((x) => `<li><span>${esc(x)}</span><button class="rm" type="button" data-a="${esc(x)}" aria-label="Remove ${esc(x)}">✕</button></li>`).join('') : '<li style="opacity:.6;border:0;">Any valid address allowed.</li>'}
-						</ul>
-						<div class="awh-row">
-							<input class="awh-in" id="awh-allow-add" autocomplete="off" spellcheck="false" placeholder="Add an address or name.sol">
-							<button class="awh-btn" id="awh-allow-btn" type="button">Add</button>
-						</div>
-					</div>
+					<p class="awh-note" style="margin:0 0 var(--space-3,12px);">Where funds may be sent is managed on the <a href="#whitelist" data-act="goto-allowlist">Allowlist</a> tab, with a cooldown on every new address.</p>
 					<div class="awh-err" id="awh-lim-err" role="alert" hidden></div>
 					<button class="awh-btn awh-btn--primary" id="awh-lim-save" type="button" style="width:100%;">Save limits</button>
 				</div>`;
@@ -604,7 +594,6 @@ registerWalletTab({
 			if (state.limits.error) return;
 
 			const lim = state.limits.limits || {};
-			const allowState = (Array.isArray(lim.withdraw_allowlist) ? lim.withdraw_allowlist : []).slice();
 			const errEl = panel.querySelector('#awh-lim-err');
 
 			// Freeze toggle — one tap, applied immediately (no Save). Freezing is the
@@ -628,28 +617,9 @@ registerWalletTab({
 				render();
 			});
 
-			function repaint() {
-				const ul = panel.querySelector('#awh-allow');
-				if (!ul) return;
-				ul.innerHTML = allowState.length
-					? allowState.map((x) => `<li><span>${esc(x)}</span><button class="rm" type="button" data-a="${esc(x)}" aria-label="Remove">✕</button></li>`).join('')
-					: '<li style="opacity:.6;border:0;">Any valid address allowed.</li>';
-				ul.querySelectorAll('.rm').forEach((b) => b.addEventListener('click', () => {
-					const i = allowState.indexOf(b.dataset.a);
-					if (i >= 0) allowState.splice(i, 1);
-					repaint();
-				}));
-			}
-			repaint();
-
-			panel.querySelector('#awh-allow-btn')?.addEventListener('click', async () => {
-				const inp = panel.querySelector('#awh-allow-add');
-				errEl.hidden = true;
-				const res = await resolveRecipient(inp.value.trim());
-				if (!res.address) { errEl.hidden = false; errEl.textContent = res.error || 'Invalid address.'; return; }
-				if (!allowState.includes(res.address)) allowState.push(res.address);
-				inp.value = '';
-				repaint();
+			panel.querySelector('[data-act="goto-allowlist"]')?.addEventListener('click', (ev) => {
+				ev.preventDefault();
+				ctx.openTab?.('whitelist');
 			});
 
 			panel.querySelector('#awh-lim-save')?.addEventListener('click', async () => {
@@ -664,7 +634,7 @@ registerWalletTab({
 				if (perCp != null && (!Number.isFinite(perCp) || perCp < 0)) { errEl.hidden = false; errEl.textContent = 'Per-counterparty cap must be a non-negative number.'; return; }
 				saveBtn.disabled = true;
 				saveBtn.innerHTML = '<span class="awh-spin"></span>Saving…';
-				const res = await call(`${base('limits')}?network=${ctx.getNetwork()}`, { method: 'PUT', body: { daily_usd: daily, per_tx_usd: perTx, per_counterparty_daily_usd: perCp, withdraw_allowlist: allowState } });
+				const res = await call(`${base('limits')}?network=${ctx.getNetwork()}`, { method: 'PUT', body: { daily_usd: daily, per_tx_usd: perTx, per_counterparty_daily_usd: perCp } });
 				if (destroyed) return;
 				if (!res.ok) {
 					saveBtn.disabled = false; saveBtn.textContent = 'Save limits';

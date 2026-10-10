@@ -89,12 +89,21 @@ export const TYPE_ICON = {
 	forge_complete:           '✨',
 	forge_failed:             '⚠️',
 	quest_complete:           '🏆',
+	duel_challenge:           '⚔️',
 	royalty_paid:             '💰',
 	companion_delivery:       '👋',
 	print_update:             '📦',
 	inference_topup:          '⚡',
 	inference_budget_exhausted: '⏸️',
+	token_budget_paused:      '⏸️',
+	spend_cap_alert:          '📈',
 	approval_requested:       '🛂',
+	commerce_limits_request:  '🛂',
+	invoice_paid:             '🧾',
+	invoice_underpaid:        '🧾',
+	invoice_expired:          '⌛',
+	commerce_order_delivered: '📦',
+	order_update:             '📊',
 };
 
 export function notifLabel(n) {
@@ -178,12 +187,32 @@ export function notifLabel(n) {
 			return p.message || `Your print order was updated${p.status ? `: ${String(p.status).replace(/_/g, ' ')}` : ''}`;
 		case 'pump_alert':
 			return p.summary || 'An alert rule fired';
+		case 'duel_challenge':
+			return p.summary || 'Another agent challenged yours to a trading duel';
+		case 'perps_alert':
+			return p.summary || `${p.agent_name || 'Your agent'} crossed a perps alert threshold`;
+		case 'order_update':
+			return p.message || p.title || 'An order on your agent changed state';
 		case 'inference_topup':
 			return `${p.source === 'intent' ? 'Auto top-up: ' : ''}${Number(p.amount_usdc) || 0} USDC from your agent's wallet added $${(Number(p.credits_usd) || 0).toFixed(2)} of credits`;
 		case 'inference_budget_exhausted':
 			return `${p.agent_name || 'Your agent'} used its ${p.window === 'monthly' ? 'monthly' : 'daily'} inference budget${p.automations_stopped ? ' and was stopped' : ''}. Raise it to resume`;
+		case 'token_budget_paused':
+			return `${p.agent_name || 'Your agent'} hit its ${p.window === 'hour' ? 'hourly' : p.window === 'day' ? 'daily' : 'per-run'} token ceiling${p.automations_stopped ? ' and was paused' : ''}. Resume it or extend the ceiling once`;
+		case 'spend_cap_alert':
+			return `${p.agent_name || 'Your agent'} has used ${Number(p.threshold) || 0}% of its ${p.window === 'month' ? 'monthly' : p.window === 'day' ? 'daily' : p.window === 'hour' ? 'hourly' : 'per-run'} ${p.cap === 'tokens' ? 'token' : 'spend'} cap`;
 		case 'approval_requested':
 			return `Approval needed: ${p.summary || `${p.agent_name || 'Your agent'} is waiting for your yes`}`;
+		case 'commerce_limits_request':
+			return `Approval needed: ${p.summary || `${p.agent_name || 'Your agent'} proposed new spending limits`}`;
+		case 'invoice_paid':
+			return `Invoice ${p.number || ''} paid: ${p.amount || ''} ${p.symbol || ''}`.replace(/\s+/g, ' ').trim();
+		case 'invoice_underpaid':
+			return `Invoice ${p.number || ''} part-paid: ${p.paid || '?'} of ${p.amount || '?'} ${p.symbol || ''} received`.replace(/\s+/g, ' ').trim();
+		case 'invoice_expired':
+			return `Invoice ${p.number || ''} expired unpaid`.replace(/\s+/g, ' ').trim();
+		case 'commerce_order_delivered':
+			return p.offer_title ? `"${p.offer_title}" was paid for and delivered to your agent` : 'Your agent\'s purchase was paid for and delivered';
 		case 'royalty_paid':
 			return p.usd
 				? `${p.actor || 'A fork of your avatar'} paid you $${Number(p.usd).toFixed(3)} in royalties`

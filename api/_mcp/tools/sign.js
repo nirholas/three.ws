@@ -100,7 +100,7 @@ export const toolDefs = [
 			openWorldHint: false,
 		},
 		description:
-			'Compile English text into one continuous American Sign Language performance for a 3D avatar. Words with a real sign are signed; everything else is fingerspelled, in the same clip. Returns the performed timeline (every word, whether it signed or spelled, the seconds it occupies, and where each spelled letter lands) plus a link that plays it on a live avatar. Set include_clip to also get the three.js AnimationClip document, keyed to the canonical humanoid skeleton, to retarget onto any rigged avatar and play.',
+			'Compile English text into one continuous American Sign Language performance for a 3D avatar. Words with a real sign are signed; everything else is fingerspelled, in the same clip. Returns the performed timeline (every word, whether it signed or spelled, the seconds it occupies, and where each spelled letter lands) plus a link that plays it on a live avatar. Set include_clip to also get the three.js AnimationClip document, keyed to the canonical humanoid skeleton, to retarget onto any rigged avatar and play. Use this to make an avatar sign a phrase; to check beforehand which words will be signed rather than spelled, call list_sign_vocabulary.',
 		inputSchema: {
 			type: 'object',
 			properties: {

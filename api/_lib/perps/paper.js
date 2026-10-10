@@ -319,6 +319,7 @@ async function commitPaperState(prev, next, { fills = [], newOrders = [], orderU
 				deposited_usd = ${next.deposited_usd}, withdrawn_usd = ${next.withdrawn_usd},
 				updated_at = now()
 			WHERE agent_id = ${a} AND venue = ${v} AND version = ${prev.version}
+			RETURNING version
 		`,
 	];
 	const symbols = new Set([...prev.positions.keys(), ...next.positions.keys()]);
@@ -364,13 +365,8 @@ async function commitPaperState(prev, next, { fills = [], newOrders = [], orderU
 			WHERE ${guard}
 		`);
 	}
-	const results = await sql.transaction(stmts);
-	const first = results[0];
-	const updated = Array.isArray(first) ? first.length : (first?.count ?? first?.rowCount ?? 0);
-	if (updated > 0) return true;
-	// The UPDATE returns no rows without RETURNING; read the token back to know who won.
-	const [row] = await sql`SELECT op_token FROM perps_paper_accounts WHERE agent_id = ${a} AND venue = ${v}`;
-	return row?.op_token === token;
+	const [won] = await sql.transaction(stmts);
+	return Array.isArray(won) && won.length > 0;
 }
 
 /**

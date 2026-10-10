@@ -6,8 +6,8 @@ import { getSessionUser } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { EVENT_TYPES, newWebhookSecret, selectEventTypes, webhookUrlProblem } from '../_lib/webhook-dispatch.js';
-
-const MAX_WEBHOOKS_PER_USER = 10;
+import { getDevSubscription } from '../_lib/dev-plans/subscription.js';
+import { DEV_PLAN_UPGRADE_URL } from '../_lib/dev-plans/config.js';
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
@@ -70,15 +70,18 @@ export default wrap(async function handler(req, res) {
 	const description =
 		typeof body.description === 'string' ? body.description.trim().slice(0, 200) : null;
 
-	const [{ count: existing }] = await sql`
-		select count(*)::int as count from developer_webhooks where user_id = ${user.id}
-	`;
-	if (existing >= MAX_WEBHOOKS_PER_USER) {
+	// The cap is the developer plan's (api/_lib/dev-plans/config.js).
+	const [[{ count: existing }], sub] = await Promise.all([
+		sql`select count(*)::int as count from developer_webhooks where user_id = ${user.id}`,
+		getDevSubscription(user.id),
+	]);
+	if (existing >= sub.plan.webhooks) {
 		return error(
 			res,
 			409,
 			'limit_reached',
-			`Maximum ${MAX_WEBHOOKS_PER_USER} webhooks per account`,
+			`The ${sub.plan.name} plan allows ${sub.plan.webhooks} webhooks per account; delete one or upgrade`,
+			{ plan: sub.planId, limit: sub.plan.webhooks, upgrade_url: DEV_PLAN_UPGRADE_URL },
 		);
 	}
 

@@ -801,11 +801,11 @@ async function executeRule(rule, ctx) {
 
 // Shared: enforce the spend policy, claim the period idempotently, run the spend,
 // finalize the custody row. `doSpend(lamports)` must return { signature }.
-async function gatedSpend({ ctx, rule, category, usd, lamports, rowMeta, doSpend }) {
+async function gatedSpend({ ctx, rule, category, usd, lamports, rowMeta, doSpend, destination = null }) {
 	const { agentId, ownerId, userId, network, dryRun } = ctx;
 	// Hard ceiling: clamp to the spend policy at execution time (server-side).
 	try {
-		await enforceSpendLimit({ agentId, meta: ctx.meta, category: 'autopilot', usdValue: usd, network });
+		await enforceSpendLimit({ agentId, meta: ctx.meta, category: 'autopilot', usdValue: usd, network, destination });
 	} catch (e) {
 		if (e instanceof SpendLimitError) return { status: 'paused', note: e.message, usd };
 		throw e;
@@ -959,7 +959,7 @@ async function execSweep(rule, ctx) {
 	const usd = (Number(lamports) / 1e9) * price;
 
 	return gatedSpend({
-		ctx, rule, category: 'autopilot', usd, lamports,
+		ctx, rule, category: 'autopilot', usd, lamports, destination,
 		rowMeta: { action: 'sweep', destination, threshold_sol: p.threshold_sol },
 		doSpend: (lams) => sendSol({ connection: ctx.conn, fromKeypair: ctx.keypair, to: destination, lamports: Number(lams), memo: 'autopilot:sweep', network }),
 	});

@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Spend · three.ws</title>
+		<meta name="description" content="See what every agent spends by day, model and tool, where the month is heading, and every cap it is close to. Set dollar and token ceilings, resume a paused agent, or extend a ceiling once." />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				--bg: #0d0d0d;
+				--bg-2: #141414;
+				--card: #181818;
+				--line: rgba(255,255,255,0.07);
+				--line-2: rgba(255,255,255,0.12);
+				--line-3: rgba(255,255,255,0.3);
+				--text: #e7e9ee;
+				--muted: rgba(231,233,238,0.6);
+				--dim: rgba(231,233,238,0.4);
+				--blue: #3b82f6;
+				--green: #22c55e;
+				--green-ink: #052e16;
+				--red: #ef4444;
+				--amber: #f59e0b;
+				--radius: 12px;
+				--skeleton-base: rgba(255,255,255,0.04);
+				--skeleton-sheen: rgba(255,255,255,0.08);
+				--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			[data-theme="light"] {
+				--bg: #f5f5f5;
+				--bg-2: #ffffff;
+				--card: #ffffff;
+				--line: rgba(0,0,0,0.07);
+				--line-2: rgba(0,0,0,0.12);
+				--line-3: rgba(0,0,0,0.3);
+				--text: #111;
+				--muted: rgba(0,0,0,0.6);
+				--dim: rgba(0,0,0,0.42);
+				--green: #15803d;
+				--green-ink: #ffffff;
+				--red: #dc2626;
+				--amber: #b45309;
+				--skeleton-base: rgba(0,0,0,0.04);
+				--skeleton-sheen: rgba(0,0,0,0.08);
+			}
+			*{box-sizing:border-box;margin:0;padding:0;}
+			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
+			a{color:inherit;}
+			.page-shell{max-width:980px;margin:0 auto;padding:0 16px 100px;}
+			.page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:48px 0 24px;flex-wrap:wrap;}
+			.page-hero h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;}
+			.page-hero p{color:var(--muted);margin-top:8px;font-size:14px;line-height:1.5;max-width:560px;}
+			.page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+			.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;background:var(--card);color:var(--text);border:1px solid var(--line-2);cursor:pointer;transition:border-color .15s,background .15s,transform .08s,opacity .15s;font-family:inherit;text-decoration:none;min-height:36px;}
+			.btn:hover{border-color:var(--line-3);}
+			.btn:active{transform:translateY(1px);}
+			.btn:disabled{opacity:.45;cursor:default;transform:none;}
+			.btn:focus-visible,select:focus-visible,input:focus-visible,.sp-tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+			.btn-primary{background:var(--green);border-color:var(--green);color:var(--green-ink);font-weight:600;}
+			.btn-primary:hover{border-color:var(--green);filter:brightness(1.08);}
+			.btn-danger{color:var(--red);}
+			.btn-danger:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent);}
+			.btn-sm{padding:6px 10px;font-size:12px;min-height:30px;}
+			.notice{border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.5;margin-bottom:16px;border:1px solid;}
+			.notice strong{font-weight:600;}
+			.notice-error{background:color-mix(in srgb,var(--red) 8%,transparent);border-color:color-mix(in srgb,var(--red) 30%,transparent);color:var(--red);}
+			.notice-ok{background:color-mix(in srgb,var(--green) 8%,transparent);border-color:color-mix(in srgb,var(--green) 30%,transparent);color:var(--green);}
+			.notice-warn{background:color-mix(in srgb,var(--amber) 9%,transparent);border-color:color-mix(in srgb,var(--amber) 32%,transparent);color:var(--amber);}
+			.notice-info{background:var(--bg-2);border-color:var(--line-2);color:var(--muted);}
+			select,input[type="number"]{font-family:inherit;font-size:13px;color:var(--text);background:var(--card);border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;min-height:36px;}
+			select:hover,input[type="number"]:hover{border-color:var(--line-3);}
+			.sp-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 18px;}
+			.sp-bar-left,.sp-bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+			.sp-bar label{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:8px;}
+			.sp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+			.sp-kpi{background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);padding:14px 16px;min-width:0;animation:enter .25s ease both;}
+			.sp-kpi-l{font-size:12px;color:var(--muted);font-weight:500;}
+			.sp-kpi-v{font-size:22px;font-weight:700;letter-spacing:-0.02em;margin-top:6px;font-variant-numeric:tabular-nums;word-break:break-word;}
+			.sp-kpi-s{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.4;}
+			.sp-kpi.is-warn .sp-kpi-v{color:var(--amber);}
+			.sp-kpi.is-bad .sp-kpi-v{color:var(--red);}
+			.sp-section{margin-top:36px;}
+			.sp-section>h2{font-size:18px;font-weight:700;letter-spacing:-0.01em;}
+			.sp-section>p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.55;max-width:640px;}
+			.sp-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+			.sp-cards{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
+			.sp-card{background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px;animation:enter .25s ease both;transition:border-color .2s,box-shadow .2s;}
+			.sp-card.is-focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent);}
+			@keyframes enter{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+			.sp-card-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+			.sp-card-head h3{font-size:15px;font-weight:600;flex:1;min-width:0;word-break:break-word;}
+			.sp-card-head h3 a{text-decoration:none;}
+			.sp-card-head h3 a:hover{text-decoration:underline;text-underline-offset:2px;}
+			.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--line-2);color:var(--muted);text-transform:capitalize;}
+			.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+			.pill-running{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent);}
+			.pill-paused,.pill-stopped{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent);}
+			.sp-pause{margin-top:12px;border-radius:10px;padding:12px 14px;background:color-mix(in srgb,var(--amber) 9%,transparent);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent);display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;line-height:1.5;}
+			.sp-pause-body{flex:1;min-width:220px;}
+			.sp-pause strong{color:var(--amber);font-weight:600;}
+			.sp-pause-actions{display:flex;gap:8px;flex-wrap:wrap;}
+			.sp-meters{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:14px;}
+			.sp-meter{min-width:0;}
+			.sp-meter-l{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);}
+			.sp-meter-l b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;}
+			.sp-track{position:relative;height:8px;border-radius:999px;background:var(--line-2);margin-top:6px;overflow:visible;}
+			.sp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--green);transition:width .4s ease;max-width:100%;}
+			.sp-fill.is-50{background:var(--blue);}
+			.sp-fill.is-80{background:var(--amber);}
+			.sp-fill.is-100{background:var(--red);}
+			.sp-mark{position:absolute;top:-3px;width:2px;height:14px;background:var(--line-3);border-radius:1px;}
+			.sp-mark[data-at="100"]{right:0;background:var(--red);}
+			.sp-meter-s{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim);margin-top:5px;font-variant-numeric:tabular-nums;}
+			.sp-meter-s .pct{font-weight:600;}
+			.sp-meter.is-80 .pct{color:var(--amber);}
+			.sp-meter.is-100 .pct{color:var(--red);}
+			.sp-empty-caps{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.5;}
+			.sp-form{margin-top:14px;padding:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+			.sp-field{display:flex;flex-direction:column;}
+			.sp-field label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+			.sp-field input{width:100%;}
+			.sp-field small{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4;}
+			.sp-form-foot{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+			.sp-form-msg{font-size:12px;color:var(--muted);}
+			.sp-form-msg.err{color:var(--red);}
+			.sp-form-msg.ok{color:var(--green);}
+			.sp-card-actions{display:flex;gap:8px;margin-left:auto;}
+			.sp-chart{margin-top:14px;background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px;}
+			.sp-chart-head{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+			.sp-bars{display:flex;align-items:flex-end;gap:3px;height:140px;margin-top:12px;}
+			.sp-col{flex:1;min-width:2px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative;}
+			.sp-col i{display:block;width:100%;border-radius:3px 3px 0 0;background:var(--blue);min-height:2px;transition:height .4s ease,opacity .15s;opacity:.85;}
+			.sp-col:hover i,.sp-col:focus-visible i{opacity:1;}
+			.sp-col.is-today i{background:var(--green);}
+			.sp-col.is-zero i{background:var(--line-2);}
+			.sp-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:8px;font-variant-numeric:tabular-nums;}
+			.sp-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);}
+			.sp-table th{text-align:left;font-weight:500;color:var(--muted);padding:9px 12px;background:var(--bg-2);border-bottom:1px solid var(--line);font-size:12px;}
+			.sp-table td{padding:9px 12px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;vertical-align:top;}
+			.sp-table tr:last-child td{border-bottom:0;}
+			.sp-table .num{text-align:right;white-space:nowrap;}
+			.sp-table .mono{font-family:var(--mono);font-size:12px;word-break:break-all;}
+			.sp-table .share{display:inline-block;height:6px;border-radius:999px;background:var(--blue);vertical-align:middle;margin-right:8px;min-width:2px;}
+			.sp-alerts{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+			.sp-alert{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card);border:1px solid var(--line-2);border-radius:10px;font-size:13px;line-height:1.45;animation:enter .25s ease both;}
+			.sp-alert-pct{font-weight:700;font-variant-numeric:tabular-nums;min-width:48px;}
+			.sp-alert.is-50 .sp-alert-pct{color:var(--blue);}
+			.sp-alert.is-80 .sp-alert-pct{color:var(--amber);}
+			.sp-alert.is-100 .sp-alert-pct{color:var(--red);}
+			.sp-alert-body{flex:1;min-width:0;}
+			.sp-alert-sub{font-size:12px;color:var(--dim);margin-top:2px;}
+			.sp-empty{text-align:center;padding:40px 20px;color:var(--muted);border:1px dashed var(--line-2);border-radius:var(--radius);margin-top:14px;}
+			.sp-empty-icon{font-size:30px;margin-bottom:10px;}
+			.sp-empty h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;}
+			.sp-empty p{font-size:13px;line-height:1.55;max-width:420px;margin:0 auto;}
+			.sp-empty .btn{margin-top:16px;}
+			.sp-auth{text-align:center;padding:110px 20px;}
+			.sp-auth h2{font-size:22px;font-weight:700;margin-bottom:12px;}
+			.sp-auth p{color:var(--muted);font-size:14px;margin:0 auto 24px;max-width:440px;line-height:1.55;}
+			.skeleton{background:var(--skeleton-base);background-image:linear-gradient(90deg,var(--skeleton-base) 0%,var(--skeleton-sheen) 50%,var(--skeleton-base) 100%);background-size:200% 100%;border-radius:6px;animation:shimmer 1.4s ease-in-out infinite;}
+			@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+			.sp-skel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;}
+			.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+			@media(max-width:760px){.sp-kpis{grid-template-columns:1fr 1fr;}}
+			@media(max-width:600px){
+				.page-hero{padding:32px 0 20px;}
+				.page-hero h1{font-size:24px;}
+				.sp-kpis{grid-template-columns:1fr;}
+				.sp-card-actions{width:100%;margin-left:0;}
+				.sp-card-actions .btn{flex:1;min-height:42px;}
+				.sp-table th:nth-child(n+4),.sp-table td:nth-child(n+4){display:none;}
+			}
+			@media(prefers-reduced-motion:reduce){
+				.sp-card,.sp-kpi,.sp-alert,.skeleton{animation:none;}
+				.sp-fill,.sp-col i{transition:none;}
+			}
+		</style>
+
+		<link rel="canonical" href="https://three.ws/spend">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:title" content="Spend · three.ws">
+		<meta property="og:description" content="See what every agent spends by day, model and tool, where the month is heading, and every cap it is close to.">
+		<meta property="og:url" content="https://three.ws/spend">
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Spend&amp;d=What+every+agent+spends%2C+where+the+month+is+heading%2C+and+every+cap+it+is+close+to.&amp;p=%2Fspend">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="630">
+		<meta property="og:locale" content="en_US">
+		<meta property="og:image:alt" content="Spend on three.ws">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:site" content="@trythreews">
+		<meta name="twitter:title" content="Spend · three.ws">
+		<meta name="twitter:description" content="See what every agent spends by day, model and tool, where the month is heading, and every cap it is close to.">
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Spend&amp;d=What+every+agent+spends%2C+where+the+month+is+heading%2C+and+every+cap+it+is+close+to.&amp;p=%2Fspend">
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Spend","description":"What every agent spends, where the month is heading, and every cap it is close to.","url":"https://three.ws/spend","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="page-shell">
+			<div class="page-hero">
+				<div>
+					<h1>Spend</h1>
+					<p>What every agent spends by day, model and tool, where the month is heading, and every cap it is close to. Set dollar and token ceilings here; a capped agent pauses and waits for you.</p>
+				</div>
+				<div class="page-actions">
+					<a href="/credits" class="btn">Top up credits</a>
+					<a href="/approvals" class="btn">Approvals</a>
+				</div>
+			</div>
+
+			<div id="sp-auth" class="sp-auth" hidden>
+				<h2>Sign in to see your spend</h2>
+				<p>Every model call and tool call your agents make is metered here, with the caps that stop them and the alerts that warn you first.</p>
+				<a href="/login?next=/spend" id="sp-login" class="btn">Sign in</a>
+			</div>
+
+			<div id="sp-error" class="notice notice-error" role="alert" hidden></div>
+			<div id="sp-flash" class="notice notice-ok" role="status" hidden></div>
+			<div id="sp-live" class="sr-only" aria-live="polite"></div>
+
+			<div id="sp-main" hidden>
+				<div class="sp-bar">
+					<div class="sp-bar-left">
+						<label>Agent
+							<select id="sp-agent" aria-label="Agent">
+								<option value="">All agents</option>
+							</select>
+						</label>
+						<label>Range
+							<select id="sp-range" aria-label="Range">
+								<option value="7">Last 7 days</option>
+								<option value="30" selected>Last 30 days</option>
+								<option value="90">Last 90 days</option>
+							</select>
+						</label>
+					</div>
+					<div class="sp-bar-right">
+						<button type="button" id="sp-refresh" class="btn btn-sm">Refresh</button>
+					</div>
+				</div>
+
+				<div id="sp-kpis" class="sp-kpis" aria-label="Totals"></div>
+
+				<section class="sp-section" aria-labelledby="sp-alerts-h">
+					<div class="sp-section-head">
+						<div>
+							<h2 id="sp-alerts-h">Cap alerts</h2>
+							<p>You are notified at 50, 80 and 100 percent of every daily, monthly, hourly and per-run cap. The same marks are shown here.</p>
+						</div>
+					</div>
+					<div id="sp-alerts" class="sp-alerts"></div>
+				</section>
+
+				<section class="sp-section" aria-labelledby="sp-agents-h">
+					<div class="sp-section-head">
+						<div>
+							<h2 id="sp-agents-h">Agents and caps</h2>
+							<p>Dollar caps stop model calls when the day or month is spent. Token ceilings count every input and output token per hour, per day and per run, and are checked before the model is called. A capped agent pauses; resume it, extend the ceiling once, or raise the cap.</p>
+						</div>
+					</div>
+					<div id="sp-agents" class="sp-cards"></div>
+				</section>
+
+				<section class="sp-section" aria-labelledby="sp-days-h">
+					<h2 id="sp-days-h">By day</h2>
+					<p>Model spend per UTC day across the selected agents.</p>
+					<div id="sp-days" class="sp-chart"></div>
+				</section>
+
+				<section class="sp-section" aria-labelledby="sp-models-h">
+					<h2 id="sp-models-h">By model</h2>
+					<p>Which models the credits went to, with the tokens each one consumed.</p>
+					<div id="sp-models"></div>
+				</section>
+
+				<section class="sp-section" aria-labelledby="sp-tools-h">
+					<h2 id="sp-tools-h">By tool</h2>
+					<p>Every metered tool and API your agents called, with how many calls succeeded.</p>
+					<div id="sp-tools"></div>
+				</section>
+			</div>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/spend-page.js"></script>
+	</body>
+</html>

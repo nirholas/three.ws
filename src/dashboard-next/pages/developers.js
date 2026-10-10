@@ -7,13 +7,14 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, patch, del, esc, relTime, ApiError } from '../api.js';
 import { emptyStateHTML, errorStateHTML, skeletonHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { renderPlanTab } from './developers-plan.js';
 
 const SCENES = ['full-body', 'upper-body', 'portrait', 'headshot'];
 const FORMATS = ['png', 'jpeg', 'webp'];
-const EVENT_TYPES = [
-	'avatar.created', 'avatar.updated', 'avatar.deleted', 'avatar.appearance.changed',
-	'agent.created', 'agent.updated', 'agent.deleted',
-];
+// The webhook event catalog (GET /api/v1/webhooks/events) and the caller's
+// agents, for the create form's event picker and agent scope.
+let webhookCatalog = null;
+let webhookAgents = [];
 
 let me = null;
 let avatars = [];
@@ -22,6 +23,8 @@ let apiKeys = [];
 let usageData = null;
 let usageDays = 30;
 let activeTab = 'render';
+const hashTab = location.hash.replace(/^#/, '');
+if (['render', 'webhooks', 'usage', 'plan', 'sdks', 'changelog'].includes(hashTab)) activeTab = hashTab;
 // Which data sources genuinely failed to load (vs. legitimately empty), so a
 // tab can show a recoverable error state with Retry instead of a false "empty".
 let loadErrors = { webhooks: false, usage: false };
@@ -66,14 +69,18 @@ let loadErrors = { webhooks: false, usage: false };
 });
 
 async function loadData() {
-	const [avRes, whRes, keyRes, usageRes] = await Promise.allSettled([
+	const [avRes, whRes, keyRes, usageRes, catRes, agRes] = await Promise.allSettled([
 		get('/api/avatars?limit=50&visibility=public'),
 		get('/api/developer/webhooks'),
 		get('/api/api-keys'),
 		get(`/api/developer/usage?days=${usageDays}`),
+		get('/api/v1/webhooks/events'),
+		get('/api/v1/agents?limit=100'),
 	]);
 	avatars   = avRes.status    === 'fulfilled' ? (avRes.value?.avatars ?? [])  : [];
 	webhooks  = whRes.status    === 'fulfilled' ? (whRes.value?.webhooks ?? []) : [];
+	webhookCatalog = catRes.status === 'fulfilled' ? catRes.value?.data ?? null : null;
+	webhookAgents  = agRes.status  === 'fulfilled' ? (agRes.value?.data ?? [])   : [];
 	apiKeys   = keyRes.status   === 'fulfilled' ? (keyRes.value?.data ?? [])    : [];
 	usageData = usageRes.status === 'fulfilled' ? usageRes.value : null;
 	loadErrors = {
@@ -88,6 +95,7 @@ const TABS = [
 	{ id: 'render',    label: 'Render API',  icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="16" height="14" rx="2"/><circle cx="7" cy="8" r="1.5"/><path d="M2 14l4-4 3 3 4-5 5 6"/></svg>' },
 	{ id: 'webhooks',  label: 'Webhooks',    icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l6 6M10 4l-6 6"/><path d="M10 10v7"/><circle cx="10" cy="10" r="2"/></svg>' },
 	{ id: 'usage',     label: 'Usage',       icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17V7l4 3 3-6 4 4 3-3v12H3z"/><path d="M3 17h14"/></svg>' },
+	{ id: 'plan',      label: 'Plan',        icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>' },
 	{ id: 'sdks',      label: 'SDKs',        icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M7 7h6M7 10h4M7 13h5"/></svg>' },
 	{ id: 'changelog', label: 'Changelog',   icon: '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h12M4 8h8M4 12h10M4 16h6"/></svg>' },
 ];
@@ -101,6 +109,7 @@ function renderTabs(nav) {
 		const btn = e.target.closest('.dev-tab');
 		if (!btn) return;
 		activeTab = btn.dataset.tab;
+		history.replaceState(null, '', `#${activeTab}`);
 		nav.querySelectorAll('.dev-tab').forEach(b => {
 			b.classList.toggle('is-active', b.dataset.tab === activeTab);
 			b.setAttribute('aria-selected', b.dataset.tab === activeTab);
@@ -125,6 +134,7 @@ function renderActiveTab(root) {
 		case 'render':    renderRenderTab(root);    break;
 		case 'webhooks':  renderWebhooksTab(root);  break;
 		case 'usage':     renderUsageTab(root);     break;
+		case 'plan':      renderPlanTab(root, { showToast }); break;
 		case 'sdks':      renderSDKsTab(root);      break;
 		case 'changelog': renderChangelogTab(root); break;
 	}
@@ -523,6 +533,65 @@ function sceneIcon(scene) {
 }
 
 // ── Webhooks Tab ────────────────────────────────────────────────────────────
+//
+// Endpoints are listed from /api/developer/webhooks (it carries the 7-day
+// tally); everything else goes through the v1 API (api/v1/rest.js): the event
+// catalog, create with an agent scope, test pings, secret rotation, the
+// paginated delivery log and replays. v1 answers { data, meta }.
+
+const DELIVERY_FILTERS = [
+	{ id: '',          label: 'All' },
+	{ id: 'failed',    label: 'Failed' },
+	{ id: 'pending',   label: 'Retrying' },
+	{ id: 'succeeded', label: 'Succeeded' },
+];
+
+function v1Error(err, fallback) {
+	return err?.body?.error?.message || err?.body?.error_description || err?.message || fallback;
+}
+
+function untilTime(iso) {
+	const s = Math.round((new Date(iso).getTime() - Date.now()) / 1000);
+	if (!Number.isFinite(s)) return '';
+	if (s <= 0) return 'due now';
+	if (s < 60) return `in ${s}s`;
+	const m = Math.round(s / 60);
+	return m < 60 ? `in ${m}m` : `in ${Math.round(m / 60)}h`;
+}
+
+function retryScheduleText() {
+	const secs = webhookCatalog?.retrySchedule ?? [];
+	if (!secs.length) return '';
+	const fmt = (s) => (s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`);
+	return `Failed deliveries retry with backoff (${secs.slice(0, 4).map(fmt).join(', ')}, and on) for up to ${webhookCatalog.maxAttempts} attempts.`;
+}
+
+function eventPickerHTML() {
+	if (!webhookCatalog) {
+		return `<p class="dev-panel-desc">The event list didn't load. <button class="dev-link-btn" id="wh-catalog-retry">Try again</button></p>`;
+	}
+	const group = (title, events) => events.length ? `
+		<div class="dev-event-group" data-group="${esc(title)}">
+			<div class="dev-event-group-title">${esc(title)}</div>
+			<div class="dev-event-grid">
+				${events.map(e => `<label class="dev-event-check" data-agent-scoped="${e.agentScoped}"><input type="checkbox" name="wh-events" value="${esc(e.type)}" checked /><span>${esc(e.type)}</span></label>`).join('')}
+			</div>
+		</div>` : '';
+	return group('Agent events', webhookCatalog.events.filter(e => e.agentScoped))
+		+ group('Account events', webhookCatalog.events.filter(e => !e.agentScoped));
+}
+
+function agentScopeHTML() {
+	return `
+		<label class="dev-field">
+			<span class="dev-field-label">Scope</span>
+			<select id="wh-agent" class="dev-input">
+				<option value="">Every agent, plus account events</option>
+				${webhookAgents.map(a => `<option value="${esc(a.id)}">${esc(a.name || 'Untitled agent')} only</option>`).join('')}
+			</select>
+			<span class="dev-field-hint">Scoped to one agent, the endpoint receives only that agent's runs, automations, messages and approvals.</span>
+		</label>`;
+}
 
 function renderWebhooksTab(root) {
 	const el = document.createElement('div');
@@ -532,7 +601,7 @@ function renderWebhooksTab(root) {
 		<div class="dev-webhooks-header">
 			<div>
 				<h2 class="dev-section-title">Webhooks</h2>
-				<p class="dev-section-desc">Get notified when avatars or agents are created, updated, or deleted. We sign every payload with HMAC-SHA256 using the Standard Webhooks format.</p>
+				<p class="dev-section-desc">Get a signed HTTPS POST when an agent run finishes, an automation fires, a message arrives or an approval is waiting, and when avatars or agents change. ${esc(retryScheduleText())}</p>
 			</div>
 			<button class="dn-btn primary" id="wh-create-btn">Create Webhook</button>
 		</div>
@@ -547,11 +616,10 @@ function renderWebhooksTab(root) {
 				<span class="dev-field-label">Description <span class="dev-field-opt">(optional)</span></span>
 				<input type="text" id="wh-desc" class="dev-input" placeholder="Production server" maxlength="200" />
 			</label>
+			${agentScopeHTML()}
 			<fieldset class="dev-field">
 				<legend class="dev-field-label">Events</legend>
-				<div class="dev-event-grid">
-					${EVENT_TYPES.map(e => `<label class="dev-event-check"><input type="checkbox" name="wh-events" value="${e}" checked /><span>${e}</span></label>`).join('')}
-				</div>
+				<div id="wh-events">${eventPickerHTML()}</div>
 			</fieldset>
 			<div class="dev-form-actions">
 				<button class="dn-btn ghost" id="wh-cancel">Cancel</button>
@@ -563,20 +631,26 @@ function renderWebhooksTab(root) {
 
 		<div class="dn-panel dev-wh-verify">
 			<h3 class="dev-panel-title">Verifying Signatures</h3>
-			<p class="dev-panel-desc">Every webhook delivery includes three headers for verification:</p>
-			<pre class="dev-code-inline"><code>webhook-id:        evt_abc123...         // unique event ID
-webhook-timestamp: 1716825600            // unix epoch seconds
-webhook-signature: v1,base64signature... // HMAC-SHA256</code></pre>
-			<p class="dev-panel-desc" style="margin-top:12px">Verify by computing <code>HMAC-SHA256(secret, "{webhook-id}.{webhook-timestamp}.{body}")</code> and comparing with the signature.</p>
-			<div class="dev-code-block"><pre><code>import crypto from 'crypto';
+			<p class="dev-panel-desc">Deliveries follow the Standard Webhooks format, so the official verifier libraries work as is. Every request carries three headers:</p>
+			<pre class="dev-code-inline"><code>webhook-id:        evt_abc123...            // unique event ID, the same on every retry
+webhook-timestamp: 1716825600               // unix epoch seconds
+webhook-signature: v1,&lt;sig&gt; v1,&lt;legacy&gt;   // HMAC-SHA256, accept if any one matches</code></pre>
+			<div class="dev-code-block"><pre><code>import { Webhook } from 'standardwebhooks';
+
+// rawBody is the exact request body string, read before JSON.parse.
+// verify() throws on a bad signature or a timestamp older than five minutes.
+const event = new Webhook(process.env.THREEWS_WEBHOOK_SECRET).verify(rawBody, req.headers);</code></pre></div>
+			<p class="dev-panel-desc" style="margin-top:12px">Without the library: the key is the secret after <code>whsec_</code>, base64-decoded. Compute <code>HMAC-SHA256(key, "{webhook-id}.{webhook-timestamp}.{body}")</code> in base64 and compare it with each <code>v1,</code> entry. Secrets containing <code>-</code> or <code>_</code> predate the switch; they still verify with the check below, and rotating one gives you a secret the libraries accept.</p>
+			<div class="dev-code-block"><pre><code>import crypto from 'node:crypto';
 
 function verify(secret, headers, body) {
+  const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
   const msg = \`\${headers['webhook-id']}.\${headers['webhook-timestamp']}.\${body}\`;
-  const expected = crypto.createHmac('sha256', secret).update(msg).digest('base64');
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(headers['webhook-signature'].replace('v1,', ''))
-  );
+  const expected = Buffer.from(crypto.createHmac('sha256', key).update(msg).digest('base64'));
+  return headers['webhook-signature'].split(' ').some((entry) => {
+    const sig = Buffer.from(entry.replace(/^v1,/, ''));
+    return sig.length === expected.length && crypto.timingSafeEqual(sig, expected);
+  });
 }</code></pre></div>
 		</div>
 	`;
@@ -584,6 +658,43 @@ function verify(secret, headers, body) {
 	root.appendChild(el);
 	renderWebhookList(el.querySelector('#wh-list'));
 	wireWebhookForm(el);
+}
+
+function webhookCardHTML(wh) {
+	const agent = wh.agent_id ? webhookAgents.find(a => a.id === wh.agent_id) : null;
+	const s = wh.stats_7d;
+	return `
+		<div class="dn-panel dev-wh-card" data-id="${esc(wh.id)}">
+			<div class="dev-wh-card-header">
+				<div class="dev-wh-card-info">
+					<div class="dev-wh-card-url">
+						<span class="dn-tag ${wh.active ? 'success' : ''}" style="font-size:11px">${wh.active ? 'Active' : 'Paused'}</span>
+						<code>${esc(wh.url)}</code>
+					</div>
+					${wh.description ? `<div class="dev-wh-card-desc">${esc(wh.description)}</div>` : ''}
+					${!wh.active && wh.disabled_reason ? `<div class="dev-wh-card-desc dev-text-danger">Switched off: ${esc(wh.disabled_reason)}</div>` : ''}
+				</div>
+				<div class="dev-wh-card-actions">
+					<button class="dev-wh-view-btn" data-action="deliveries" aria-expanded="false">View Deliveries</button>
+					<button class="dn-btn ghost" data-action="test" ${wh.active ? '' : 'disabled title="Resume the endpoint to send a test"'}>Send test</button>
+					<button class="dn-btn ghost" data-action="rotate">Rotate secret</button>
+					<button class="dn-btn ghost" data-action="toggle">${wh.active ? 'Pause' : 'Resume'}</button>
+					<button class="dn-btn ghost danger" data-action="delete">Delete</button>
+				</div>
+			</div>
+			<div class="dev-wh-card-meta">
+				<span class="dev-wh-meta-item">Scope: ${wh.agent_id ? `<span class="dn-tag">${esc(agent?.name || wh.agent_id.slice(0, 8))}</span>` : '<span class="dev-text-dim">every agent</span>'}</span>
+				<span class="dev-wh-meta-item">Events: ${wh.events?.length ? wh.events.map(e => `<span class="dn-tag">${esc(e)}</span>`).join(' ') : '<span class="dev-text-dim">all</span>'}</span>
+			</div>
+			${s ? `<div class="dev-wh-card-stats">
+				<span class="dev-wh-stat">${s.total} deliveries (7d)</span>
+				<span class="dev-wh-stat success">${s.succeeded} succeeded</span>
+				${s.failed > 0 ? `<span class="dev-wh-stat danger">${s.failed} failed</span>` : ''}
+				${s.pending > 0 ? `<span class="dev-wh-stat warn">${s.pending} retrying</span>` : ''}
+				${s.last_delivery_at ? `<span class="dev-wh-stat">Last: ${relTime(s.last_delivery_at)}</span>` : ''}
+			</div>` : ''}
+			<div class="dev-wh-deliveries" data-deliveries-for="${esc(wh.id)}" hidden></div>
+		</div>`;
 }
 
 function renderWebhookList(container) {
@@ -601,7 +712,7 @@ function renderWebhookList(container) {
 		container.innerHTML = emptyStateHTML({
 			icon: '🪝',
 			title: 'No webhooks yet',
-			body: 'Create a webhook to get real-time notifications when avatars or agents are created, updated, or deleted.',
+			body: 'Create a webhook to hear about finished runs, fired automations, new messages and pending approvals the moment they happen.',
 			actions: [{ label: 'Create webhook', id: 'wh-empty-create', primary: true }],
 			compact: true,
 		});
@@ -611,123 +722,244 @@ function renderWebhookList(container) {
 		return;
 	}
 
-	container.innerHTML = webhooks.map(wh => `
-		<div class="dn-panel dev-wh-card" data-id="${esc(wh.id)}">
-			<div class="dev-wh-card-header">
-				<div class="dev-wh-card-info">
-					<div class="dev-wh-card-url">
-						<span class="dn-tag ${wh.active ? 'success' : ''}" style="font-size:11px">${wh.active ? 'Active' : 'Paused'}</span>
-						<code>${esc(wh.url)}</code>
-					</div>
-					${wh.description ? `<div class="dev-wh-card-desc">${esc(wh.description)}</div>` : ''}
-				</div>
-				<div class="dev-wh-card-actions">
-					<button class="dev-wh-view-btn" data-id="${esc(wh.id)}">View Deliveries</button>
-					<button class="dn-btn ghost dev-wh-toggle" data-id="${esc(wh.id)}" data-active="${wh.active}">${wh.active ? 'Pause' : 'Resume'}</button>
-					<button class="dn-btn ghost danger dev-wh-delete" data-id="${esc(wh.id)}">Delete</button>
-				</div>
-			</div>
-			<div class="dev-wh-card-meta">
-				<span class="dev-wh-meta-item">Events: ${wh.events?.length ? wh.events.map(e => `<span class="dn-tag">${esc(e)}</span>`).join(' ') : '<span class="dev-text-dim">all</span>'}</span>
-			</div>
-			${wh.stats_7d ? `<div class="dev-wh-card-stats">
-				<span class="dev-wh-stat">${wh.stats_7d.total} deliveries</span>
-				<span class="dev-wh-stat success">${wh.stats_7d.succeeded} succeeded</span>
-				${wh.stats_7d.failed > 0 ? `<span class="dev-wh-stat danger">${wh.stats_7d.failed} failed</span>` : ''}
-				${wh.stats_7d.last_delivery_at ? `<span class="dev-wh-stat">Last: ${relTime(wh.stats_7d.last_delivery_at)}</span>` : ''}
-			</div>` : ''}
-			<div class="dev-wh-deliveries" data-deliveries-for="${esc(wh.id)}"></div>
+	container.innerHTML = webhooks.map(webhookCardHTML).join('');
+	container.querySelectorAll('.dev-wh-card').forEach(card => wireWebhookCard(card, container));
+}
+
+function wireWebhookCard(card, container) {
+	const id = card.dataset.id;
+	const wh = webhooks.find(w => w.id === id);
+	const slot = card.querySelector('.dev-wh-deliveries');
+	const on = (action, fn) => card.querySelector(`[data-action="${action}"]`)?.addEventListener('click', fn);
+
+	on('toggle', async () => {
+		try {
+			await patch(`/api/developer/webhooks/${id}`, { active: !wh.active });
+			wh.active = !wh.active;
+			if (wh.active) wh.disabled_reason = null;
+			renderWebhookList(container);
+		} catch (err) {
+			showToast(v1Error(err, 'Failed to update webhook'), 'danger');
+		}
+	});
+
+	on('delete', async () => {
+		const ok = await confirmModal({
+			title: 'Delete webhook',
+			body: 'This endpoint will stop receiving events immediately. This cannot be undone.',
+			confirmLabel: 'Delete webhook',
+			danger: true,
+		});
+		if (!ok) return;
+		try {
+			await del(`/api/developer/webhooks/${id}`);
+			webhooks = webhooks.filter(w => w.id !== id);
+			renderWebhookList(container);
+		} catch (err) {
+			showToast(v1Error(err, 'Failed to delete webhook'), 'danger');
+		}
+	});
+
+	on('rotate', async () => {
+		const ok = await confirmModal({
+			title: 'Rotate signing secret',
+			body: 'The current secret stops working immediately. Update your receiver with the new one right away.',
+			confirmLabel: 'Rotate secret',
+		});
+		if (!ok) return;
+		try {
+			const res = await post(`/api/v1/webhooks/${id}/rotate-secret`);
+			showSecretModal(res.data.secret);
+		} catch (err) {
+			showToast(v1Error(err, 'Failed to rotate the secret'), 'danger');
+		}
+	});
+
+	on('test', async (e) => {
+		const btn = e.currentTarget;
+		btn.disabled = true;
+		btn.textContent = 'Sending...';
+		try {
+			const { data } = await post(`/api/v1/webhooks/${id}/test`);
+			const ok = data.status === 'succeeded';
+			showToast(ok ? `Test delivered: your endpoint answered ${data.statusCode}` : `Test failed (${data.statusCode ?? data.error ?? 'no response'}); it will retry`, ok ? undefined : 'danger');
+			openDeliveryLog(card, wh, { refresh: true });
+		} catch (err) {
+			showToast(v1Error(err, 'Failed to send a test'), 'danger');
+		} finally {
+			btn.disabled = !wh.active;
+			btn.textContent = 'Send test';
+		}
+	});
+
+	on('deliveries', () => {
+		if (!slot.hidden) {
+			slot.hidden = true;
+			slot.innerHTML = '';
+			card.querySelector('[data-action="deliveries"]').textContent = 'View Deliveries';
+			card.querySelector('[data-action="deliveries"]').setAttribute('aria-expanded', 'false');
+			return;
+		}
+		openDeliveryLog(card, wh);
+	});
+}
+
+// The delivery log for one endpoint: status filter, cursor pages, and a
+// drill-down per delivery with every attempt, the payload, and Replay.
+function openDeliveryLog(card, wh, { refresh = false } = {}) {
+	const slot = card.querySelector('.dev-wh-deliveries');
+	const toggle = card.querySelector('[data-action="deliveries"]');
+	if (!slot.hidden && !refresh) return;
+	const state = { status: slot.dataset.status || '', items: [], nextCursor: null };
+	slot.hidden = false;
+	toggle.textContent = 'Hide Deliveries';
+	toggle.setAttribute('aria-expanded', 'true');
+
+	slot.innerHTML = `
+		<div class="dev-wh-log-bar" role="group" aria-label="Filter deliveries">
+			${DELIVERY_FILTERS.map(f => `<button class="dev-changelog-filter${f.id === state.status ? ' is-active' : ''}" data-filter="${f.id}" aria-pressed="${f.id === state.status}">${f.label}</button>`).join('')}
+			<button class="dev-wh-view-btn dev-wh-log-refresh" data-refresh aria-label="Refresh deliveries">Refresh</button>
 		</div>
-	`).join('');
+		<div class="dev-wh-delivery-list" data-rows></div>
+		<div class="dev-wh-log-more" data-more></div>`;
 
-	container.querySelectorAll('.dev-wh-toggle').forEach(btn => {
-		btn.addEventListener('click', async () => {
-			const id = btn.dataset.id;
-			const newActive = btn.dataset.active !== 'true';
-			try {
-				await patch(`/api/developer/webhooks/${id}`, { active: newActive });
-				const wh = webhooks.find(w => w.id === id);
-				if (wh) wh.active = newActive;
-				renderWebhookList(container);
-			} catch (err) {
-				showToast(err?.message || 'Failed to update webhook', 'danger');
-			}
-		});
-	});
+	const rows = slot.querySelector('[data-rows]');
+	const more = slot.querySelector('[data-more]');
 
-	container.querySelectorAll('.dev-wh-delete').forEach(btn => {
-		btn.addEventListener('click', async () => {
-			const id = btn.dataset.id;
-			const ok = await confirmModal({
-				title: 'Delete webhook',
-				body: 'This endpoint will stop receiving events immediately. This cannot be undone.',
-				confirmLabel: 'Delete webhook',
-				danger: true,
+	async function load({ append = false } = {}) {
+		if (!append) rows.innerHTML = skeletonHTML(3, 'row');
+		more.innerHTML = '';
+		const qs = new URLSearchParams({ limit: '20' });
+		if (state.status) qs.set('status', state.status);
+		if (append && state.nextCursor) qs.set('cursor', state.nextCursor);
+		try {
+			const res = await get(`/api/v1/webhooks/${wh.id}/deliveries?${qs}`);
+			state.items = append ? state.items.concat(res.data) : res.data;
+			state.nextCursor = res.meta?.nextCursor || null;
+			renderRows();
+		} catch (err) {
+			rows.innerHTML = errorStateHTML({
+				title: "Couldn't load deliveries",
+				body: esc(v1Error(err, 'The delivery log did not load.')),
 			});
-			if (!ok) return;
-			try {
-				await del(`/api/developer/webhooks/${id}`);
-				webhooks = webhooks.filter(w => w.id !== id);
-				renderWebhookList(container);
-			} catch (err) {
-				showToast(err?.message || 'Failed to delete webhook', 'danger');
-			}
+			rows.querySelector('[data-sk-retry]')?.addEventListener('click', () => load({ append }));
+		}
+	}
+
+	function renderRows() {
+		if (!state.items.length) {
+			rows.innerHTML = `<div class="dev-wh-log-empty">${state.status
+				? 'No deliveries match this filter in the log.'
+				: wh.active ? 'No deliveries yet. Use <strong>Send test</strong> to post a signed ping to your endpoint.' : 'No deliveries yet. Resume the endpoint to start receiving events.'}</div>`;
+			return;
+		}
+		rows.innerHTML = `
+			<div class="dev-wh-delivery-item dev-wh-delivery-head" aria-hidden="true">
+				<span>Event</span><span>Status</span><span>Attempts</span><span>Next / delivered</span><span>Created</span>
+			</div>
+			${state.items.map(deliveryRowHTML).join('')}`;
+		rows.querySelectorAll('[data-delivery]').forEach(btn => btn.addEventListener('click', () => toggleDeliveryDetail(btn, wh, () => load())));
+		more.innerHTML = state.nextCursor ? '<button class="dn-btn ghost" data-load-more>Load more</button>' : '';
+		more.querySelector('[data-load-more]')?.addEventListener('click', () => load({ append: true }));
+	}
+
+	slot.querySelectorAll('[data-filter]').forEach(btn => btn.addEventListener('click', () => {
+		state.status = btn.dataset.filter;
+		slot.dataset.status = state.status;
+		slot.querySelectorAll('[data-filter]').forEach(b => {
+			b.classList.toggle('is-active', b === btn);
+			b.setAttribute('aria-pressed', String(b === btn));
 		});
-	});
+		load();
+	}));
+	slot.querySelector('[data-refresh]').addEventListener('click', () => load());
+	load();
+}
 
-	container.querySelectorAll('.dev-wh-view-btn').forEach(btn => {
-		btn.addEventListener('click', async () => {
-			const id = btn.dataset.id;
-			const slot = container.querySelector(`[data-deliveries-for="${id}"]`);
-			if (!slot) return;
+const STATUS_CLASS = { succeeded: 'ok', failed: 'fail', pending: 'pending', delivering: 'pending' };
+const STATUS_LABEL = { succeeded: 'Delivered', failed: 'Failed', pending: 'Retrying', delivering: 'Sending' };
 
-			if (slot.dataset.loaded === 'true') {
-				slot.innerHTML = '';
-				slot.dataset.loaded = '';
-				btn.textContent = 'View Deliveries';
-				return;
-			}
+function deliveryRowHTML(d) {
+	const when = d.status === 'succeeded' && d.deliveredAt
+		? relTime(d.deliveredAt)
+		: (d.status === 'pending' && d.nextAttemptAt ? `retry ${untilTime(d.nextAttemptAt)}` : '');
+	const code = d.statusCode ? ` ${d.statusCode}` : '';
+	return `
+		<button class="dev-wh-delivery-item dev-wh-delivery-row" data-delivery="${esc(d.id)}" aria-expanded="false">
+			<span class="dev-wh-delivery-event" title="${esc(d.eventId)}">${esc(d.eventType)}${d.replayOf ? ' <span class="dn-tag">replay</span>' : ''}</span>
+			<span class="dev-wh-delivery-status ${STATUS_CLASS[d.status] || 'pending'}">${STATUS_LABEL[d.status] || esc(d.status)}${code}</span>
+			<span>${d.attemptCount}/${d.maxAttempts}</span>
+			<span class="dev-text-dim">${esc(when)}</span>
+			<span class="dev-text-dim">${relTime(d.createdAt)}</span>
+		</button>
+		<div class="dev-wh-delivery-detail" data-detail-for="${esc(d.id)}" hidden></div>`;
+}
 
-			btn.textContent = 'Loading...';
-			btn.disabled = true;
-
-			try {
-				const res = await get(`/api/developer/webhooks/${id}`);
-				const deliveries = res?.deliveries ?? [];
-				slot.dataset.loaded = 'true';
-				btn.textContent = 'Hide Deliveries';
-				btn.disabled = false;
-
-				if (!deliveries.length) {
-					slot.innerHTML = `<div class="dev-wh-delivery-list" style="padding:16px 0;color:var(--nxt-ink-dim);font-size:13px;text-align:center">No deliveries yet</div>`;
-					return;
-				}
-
-				slot.innerHTML = `<div class="dev-wh-delivery-list">
-					<div class="dev-wh-delivery-item" style="font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--nxt-ink-dim);border-bottom:1px solid var(--nxt-stroke)">
-						<span>Event</span><span>Event ID</span><span>Status</span><span>Time</span>
-					</div>
-					${deliveries.slice(0, 25).map(d => {
-						const ok = d.status_code && d.status_code >= 200 && d.status_code < 300;
-						const fail = d.status_code === null || d.status_code >= 400;
-						const statusClass = ok ? 'ok' : fail ? 'fail' : 'pending';
-						const statusText = d.status_code ? `${d.status_code}` : d.error ? 'Error' : 'Pending';
-						return `<div class="dev-wh-delivery-item">
-							<span class="dev-wh-delivery-event">${esc(d.event_type)}</span>
-							<span class="dev-wh-delivery-event" style="opacity:0.6">${esc((d.event_id || '').slice(0, 16))}</span>
-							<span class="dev-wh-delivery-status ${statusClass}">${statusText}</span>
-							<span style="color:var(--nxt-ink-dim)">${relTime(d.created_at)}</span>
-						</div>`;
-					}).join('')}
-					${deliveries.length > 25 ? `<div style="padding:8px 12px;font-size:12px;color:var(--nxt-ink-dim)">Showing 25 of ${deliveries.length} deliveries</div>` : ''}
-				</div>`;
-			} catch (err) {
-				btn.textContent = 'View Deliveries';
-				btn.disabled = false;
-				showToast(err?.message || 'Failed to load deliveries', 'danger');
-			}
+async function toggleDeliveryDetail(btn, wh, reload) {
+	const id = btn.dataset.delivery;
+	const panel = btn.parentElement.querySelector(`[data-detail-for="${CSS.escape(id)}"]`);
+	if (!panel.hidden) {
+		panel.hidden = true;
+		btn.setAttribute('aria-expanded', 'false');
+		return;
+	}
+	panel.hidden = false;
+	btn.setAttribute('aria-expanded', 'true');
+	panel.innerHTML = skeletonHTML(2, 'row');
+	try {
+		const { data: d } = await get(`/api/v1/webhooks/deliveries/${id}`);
+		panel.innerHTML = deliveryDetailHTML(d, wh);
+		panel.querySelector('[data-replay]')?.addEventListener('click', (e) => replayDelivery(e.currentTarget, d, reload));
+		panel.querySelector('[data-copy-payload]')?.addEventListener('click', function () {
+			copyText(JSON.stringify(d.payload, null, 2), this);
 		});
-	});
+	} catch (err) {
+		panel.innerHTML = `<p class="dev-wh-log-empty dev-text-danger">${esc(v1Error(err, 'This delivery did not load.'))}</p>`;
+	}
+}
+
+function deliveryDetailHTML(d, wh) {
+	const attempts = d.attempts.length ? d.attempts.map(a => `
+		<tr>
+			<td>#${a.n ?? '?'}</td>
+			<td>${a.at ? esc(new Date(a.at).toLocaleString()) : ''}</td>
+			<td class="dev-wh-delivery-status ${a.statusCode >= 200 && a.statusCode < 300 ? 'ok' : 'fail'}">${a.statusCode ?? esc(a.error || 'no response')}</td>
+			<td>${a.durationMs != null ? `${a.durationMs} ms` : ''}</td>
+			<td class="dev-wh-attempt-body">${a.responseBody ? `<code>${esc(a.responseBody.slice(0, 200))}</code>` : ''}</td>
+		</tr>`).join('') : '<tr><td colspan="5" class="dev-text-dim">Not attempted yet.</td></tr>';
+	return `
+		<div class="dev-wh-detail-grid">
+			<div><span class="dev-text-dim">Event ID</span><code>${esc(d.eventId)}</code></div>
+			<div><span class="dev-text-dim">Delivery ID</span><code>${esc(d.id)}</code></div>
+			${d.replayOf ? `<div><span class="dev-text-dim">Replay of</span><code>${esc(d.replayOf)}</code></div>` : ''}
+			${d.status === 'pending' && d.nextAttemptAt ? `<div><span class="dev-text-dim">Next attempt</span>${esc(new Date(d.nextAttemptAt).toLocaleString())} (${esc(untilTime(d.nextAttemptAt))})</div>` : ''}
+		</div>
+		<div class="dev-wh-detail-table-wrap">
+			<table class="dev-wh-attempts">
+				<thead><tr><th>Attempt</th><th>Time</th><th>Response</th><th>Took</th><th>Body</th></tr></thead>
+				<tbody>${attempts}</tbody>
+			</table>
+		</div>
+		<div class="dev-code-block dev-wh-payload"><pre><code>${esc(JSON.stringify(d.payload, null, 2))}</code></pre></div>
+		<div class="dev-wh-detail-actions">
+			<button class="dn-btn ghost" data-copy-payload>Copy payload</button>
+			<button class="dn-btn primary" data-replay ${wh.active ? '' : 'disabled title="Resume the endpoint to replay"'}>Replay</button>
+		</div>`;
+}
+
+async function replayDelivery(btn, d, reload) {
+	btn.disabled = true;
+	btn.textContent = 'Replaying...';
+	try {
+		const { data } = await post(`/api/v1/webhooks/deliveries/${d.id}/replay`);
+		const ok = data.status === 'succeeded';
+		showToast(ok ? `Replayed: your endpoint answered ${data.statusCode}` : `Replay queued (${STATUS_LABEL[data.status] || data.status}); it retries on the usual schedule`, ok ? undefined : 'danger');
+		reload();
+	} catch (err) {
+		showToast(v1Error(err, 'Replay failed'), 'danger');
+		btn.disabled = false;
+		btn.textContent = 'Replay';
+	}
 }
 
 async function reloadWebhooks(container) {
@@ -748,6 +980,29 @@ function wireWebhookForm(el) {
 	const cancelBtn = el.querySelector('#wh-cancel');
 	const saveBtn = el.querySelector('#wh-save');
 	const urlInput = el.querySelector('#wh-url');
+	const agentSelect = el.querySelector('#wh-agent');
+
+	// Scoped to one agent, account events never reach the endpoint, so their
+	// boxes are cleared and disabled instead of silently ignored by the API.
+	const syncScope = () => {
+		const scoped = Boolean(agentSelect.value);
+		el.querySelectorAll('.dev-event-check[data-agent-scoped="false"] input').forEach(input => {
+			input.disabled = scoped;
+			if (scoped) input.checked = false;
+		});
+		el.querySelector('.dev-event-group[data-group="Account events"]')?.classList.toggle('is-disabled', scoped);
+	};
+	agentSelect.addEventListener('change', syncScope);
+
+	el.querySelector('#wh-catalog-retry')?.addEventListener('click', async () => {
+		try {
+			webhookCatalog = (await get('/api/v1/webhooks/events')).data;
+			el.querySelector('#wh-events').innerHTML = eventPickerHTML();
+			syncScope();
+		} catch (err) {
+			showToast(v1Error(err, 'The event list still did not load'), 'danger');
+		}
+	});
 
 	createBtn.addEventListener('click', () => {
 		form.style.display = '';
@@ -770,25 +1025,28 @@ function wireWebhookForm(el) {
 		// than silently subscribing to everything.
 		if (!events.length) {
 			showToast('Select at least one event to subscribe to', 'danger');
-			el.querySelector('input[name="wh-events"]')?.focus();
+			el.querySelector('input[name="wh-events"]:not(:disabled)')?.focus();
 			return;
 		}
 
 		saveBtn.disabled = true;
 		saveBtn.textContent = 'Creating...';
 		try {
-			const res = await post('/api/developer/webhooks', { url, description: desc || undefined, events });
-			webhooks.unshift(res.webhook);
+			const res = await post('/api/v1/webhooks', {
+				url,
+				description: desc || undefined,
+				events,
+				agentId: agentSelect.value || undefined,
+			});
 			form.style.display = 'none';
 			createBtn.style.display = '';
-			renderWebhookList(el.querySelector('#wh-list'));
-
-			if (res.webhook.secret) {
-				showSecretModal(res.webhook.secret);
-			}
+			urlInput.value = '';
+			el.querySelector('#wh-desc').value = '';
+			await reloadWebhooks(el.querySelector('#wh-list'));
+			showSecretModal(res.data.secret);
 			showToast('Webhook created');
 		} catch (err) {
-			showToast(err?.body?.error_description || err?.message || 'Failed to create webhook', 'danger');
+			showToast(v1Error(err, 'Failed to create webhook'), 'danger');
 		} finally {
 			saveBtn.disabled = false;
 			saveBtn.textContent = 'Create';
@@ -831,7 +1089,7 @@ function showSecretModal(secret) {
 	overlay.innerHTML = `
 		<div class="dev-modal">
 			<h3 class="dev-modal-title">Webhook Secret</h3>
-			<p class="dev-modal-desc">Save this secret now — it won't be shown again. Use it to verify webhook signatures.</p>
+			<p class="dev-modal-desc">Save this secret now. It won't be shown again, and your receiver needs it to verify webhook signatures.</p>
 			<div class="dev-url-row">
 				<code class="dev-url-code dev-secret-code">${esc(secret)}</code>
 				<button class="dn-btn ghost dev-copy-btn" id="secret-copy">Copy</button>
@@ -1857,6 +2115,63 @@ function injectStyles() {
 .dev-wh-delivery-status.ok { color:#34d399; }
 .dev-wh-delivery-status.fail { color:#f87171; }
 .dev-wh-delivery-status.pending { color:#fbbf24; }
+
+.dev-wh-stat.warn { color:#fbbf24; }
+.dev-text-danger { color:var(--nxt-danger); }
+.dev-field-hint { display:block; font-size:12px; color:var(--nxt-ink-fade); margin-top:4px; }
+.dev-link-btn { background:none; border:0; padding:0; color:#6c8aff; font:inherit; cursor:pointer; text-decoration:underline; }
+.dev-link-btn:focus-visible { outline:2px solid var(--nxt-accent); outline-offset:2px; border-radius:2px; }
+.dev-event-group + .dev-event-group { margin-top:12px; }
+.dev-event-group-title {
+	font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+	color:var(--nxt-ink-dim); margin-bottom:6px;
+}
+.dev-event-group.is-disabled { opacity:0.45; }
+.dev-event-group.is-disabled .dev-event-check { cursor:not-allowed; }
+.dev-wh-log-bar { display:flex; gap:4px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+.dev-wh-log-refresh { margin-left:auto; }
+.dev-wh-log-empty { padding:16px 12px; color:var(--nxt-ink-dim); font-size:13px; text-align:center; }
+.dev-wh-log-more { display:flex; justify-content:center; padding-top:10px; }
+.dev-wh-log-more:empty { display:none; }
+.dev-wh-delivery-list .dev-wh-delivery-item { grid-template-columns:minmax(0,1.6fr) 110px 70px 110px 90px; }
+.dev-wh-delivery-head {
+	font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.04em;
+	color:var(--nxt-ink-dim);
+}
+.dev-wh-delivery-row {
+	width:100%; background:none; border:0; border-bottom:1px solid var(--nxt-border,rgba(255,255,255,0.04));
+	color:inherit; font:inherit; font-size:12px; text-align:left; cursor:pointer;
+	transition:background 0.15s;
+}
+.dev-wh-delivery-row:hover { background:var(--nxt-bg-2); }
+.dev-wh-delivery-row:focus-visible { outline:2px solid var(--nxt-accent); outline-offset:-2px; }
+.dev-wh-delivery-row[aria-expanded="true"] { background:var(--nxt-bg-2); }
+.dev-wh-delivery-detail {
+	padding:12px; background:var(--nxt-bg-2); border-bottom:1px solid var(--nxt-stroke);
+	animation:dev-wh-reveal 0.18s ease;
+}
+@keyframes dev-wh-reveal { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.dev-wh-detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px 16px; font-size:12px; margin-bottom:10px; }
+.dev-wh-detail-grid > div { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.dev-wh-detail-grid code { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dev-wh-detail-table-wrap { overflow-x:auto; }
+.dev-wh-attempts { width:100%; border-collapse:collapse; font-size:12px; }
+.dev-wh-attempts th { text-align:left; font-weight:600; color:var(--nxt-ink-dim); padding:6px 8px; border-bottom:1px solid var(--nxt-stroke); }
+.dev-wh-attempts td { padding:6px 8px; border-bottom:1px solid var(--nxt-border,rgba(255,255,255,0.04)); white-space:nowrap; }
+.dev-wh-attempt-body code { font-size:11px; white-space:normal; word-break:break-all; }
+.dev-wh-payload { margin-top:10px; max-height:260px; overflow:auto; }
+.dev-wh-detail-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+@media (max-width:720px) {
+	.dev-wh-delivery-list .dev-wh-delivery-item { grid-template-columns:minmax(0,1fr) 96px 52px; }
+	.dev-wh-delivery-list .dev-wh-delivery-item > :nth-child(4),
+	.dev-wh-delivery-list .dev-wh-delivery-item > :nth-child(5) { display:none; }
+}
+@media (prefers-reduced-motion:reduce) { .dev-wh-delivery-detail { animation:none; } }
+.dev-wh-card .dev-wh-card-actions { flex-wrap:wrap; justify-content:flex-end; flex-shrink:1; }
+@media (max-width:900px) {
+	.dev-wh-card .dev-wh-card-header { flex-direction:column; }
+	.dev-wh-card .dev-wh-card-actions { justify-content:flex-start; }
+}
 
 /* ── Changelog Tab ───────────────────────────────────────── */
 .dev-changelog-header {

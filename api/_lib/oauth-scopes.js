@@ -56,6 +56,12 @@ export const REGISTERABLE_SCOPES = Object.freeze([
 	'wallet:read',
 	'wallet:write',
 	'services:write',
+	// Narrower grades of wallet:write (key-scopes.js): a client approved for
+	// the "trade" consent group may swap, bid and open or close positions
+	// without being able to send funds out; "launch" may launch a coin and
+	// claim its fees. wallet:write implies both at check time.
+	'wallet:trade',
+	'wallet:launch',
 ]);
 
 // Scopes that exist on the authorization server but are NOT self-registerable:
