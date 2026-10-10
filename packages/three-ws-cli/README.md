@@ -3,7 +3,7 @@
 Connect any MCP client to [three.ws](https://three.ws) in one command. `three-ws` signs you in, writes the hosted three.ws MCP servers into every client it finds (Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, IBM Bob, Codex, Gemini CLI, Hermes), prints the connector fields for Grok Bot, and verifies each one with a live `tools/list`.
 
 ```bash
-npx three-ws setup
+npx @three-ws/cli setup
 ```
 
 Requires Node.js 20.12 or newer.
@@ -17,7 +17,7 @@ Using one client that supports remote connectors? [three.ws/connect](https://thr
 ## One command per client
 
 ```bash
-npx three-ws --claude     # also --cursor --codex --vscode --windsurf --gemini --bob --hermes
+npx @three-ws/cli --claude     # also --cursor --codex --vscode --windsurf --gemini --bob --hermes
 ```
 
 Signs in, writes the servers, verifies them, and installs the three.ws skill for Claude Code, with no prompts. The config gets a `three-ws proxy` launcher, never a token: credentials stay in `~/.config/three-ws/credentials.json` (mode 600). Running it again changes nothing. Then: `claude "launch my agent"`.
@@ -25,9 +25,9 @@ Signs in, writes the servers, verifies them, and installs the three.ws skill for
 Hosted installers: `curl -fsSL https://three.ws/cli/install | sh` and `curl -fsSL https://three.ws/cli/claude | sh`. Every script ships with a `.sha256` checksum and an ed25519 `.sig`; download, read and verify before running: [three.ws/docs/cli#verify-before-you-run](https://three.ws/docs/cli#verify-before-you-run).
 
 ```bash
-npx three-ws doctor              # bad config, expired sign-in, unreachable server, with the fix for each
-npx three-ws agent status        # agents, wallets and balances
-npx three-ws team                # your teams; `team status <id>` for one
+npx @three-ws/cli doctor              # bad config, expired sign-in, unreachable server, with the fix for each
+npx @three-ws/cli agent status        # agents, wallets and balances
+npx @three-ws/cli team                # your teams; `team status <id>` for one
 ```
 
 ### Clean-container check
@@ -41,15 +41,15 @@ bash packages/three-ws-cli/tests/container/run.sh
 ## Common commands
 
 ```bash
-npx three-ws setup --clients cursor,vscode --yes   # specific clients, no prompts
-npx three-ws setup --project                       # project-scoped config in this directory
-npx three-ws login --device                        # sign in over SSH
-npx three-ws link BCDF-GHJK                        # link this terminal with a code from /dashboard/account
-npx three-ws mcp list --available                  # every server and its name
-npx three-ws tools --server three-ws-main --enable financial
-npx three-ws status
-npx three-ws create "Nova" --description "A deep-space guide."   # an agent with its own Solana wallet
-npx three-ws launch --agent <id> --name Nova --symbol NOVA      # prefilled, you sign on three.ws/launch
+npx @three-ws/cli setup --clients cursor,vscode --yes   # specific clients, no prompts
+npx @three-ws/cli setup --project                       # project-scoped config in this directory
+npx @three-ws/cli login --device                        # sign in over SSH
+npx @three-ws/cli link BCDF-GHJK                        # link this terminal with a code from /dashboard/account
+npx @three-ws/cli mcp list --available                  # every server and its name
+npx @three-ws/cli tools --server three-ws-main --enable financial
+npx @three-ws/cli status
+npx @three-ws/cli create "Nova" --description "A deep-space guide."   # an agent with its own Solana wallet
+npx @three-ws/cli launch --agent <id> --name Nova --symbol NOVA      # prefilled, you sign on three.ws/launch
 ```
 
 ## Grok Bot
@@ -57,9 +57,9 @@ npx three-ws launch --agent <id> --name Nova --symbol NOVA      # prefilled, you
 Grok Bot's MCP configuration lives in xAI's cloud, so there is no file to write. `setup` handles the rest: it picks the Grok connector (`https://three.ws/api/mcp-grok`), copies the URL to your clipboard when a clipboard tool exists, prints the exact fields for Grok Bot's custom MCP connector, and runs a real `tools/list` against the public URL to prove it answers from outside.
 
 ```bash
-npx three-ws setup --client grok-bot                    # free 3D studio, no account, no key
-npx three-ws setup --client grok-bot --connector-key    # also mint a key so Grok Bot can use your agents
-npx three-ws setup --clients cursor,grok-bot --yes      # local clients and Grok Bot in one run
+npx @three-ws/cli setup --client grok-bot                    # free 3D studio, no account, no key
+npx @three-ws/cli setup --client grok-bot --connector-key    # also mint a key so Grok Bot can use your agents
+npx @three-ws/cli setup --clients cursor,grok-bot --yes      # local clients and Grok Bot in one run
 ```
 
 ```

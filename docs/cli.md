@@ -9,7 +9,7 @@ Requires Node.js 20.12 or newer.
 ## Quick start
 
 ```bash
-npx three-ws setup
+npx @three-ws/cli setup
 ```
 
 Setup walks through three steps:
@@ -35,13 +35,13 @@ Without `--financial`, tools that move funds are not granted, whatever the clien
 
 ```bash
 # Only Cursor and VS Code, only the main server and the free 3D studio, no prompts
-npx three-ws setup --clients cursor,vscode --servers three-ws-main,three-ws-studio --yes
+npx @three-ws/cli setup --clients cursor,vscode --servers three-ws-main,three-ws-studio --yes
 
 # Project-scoped config: writes .mcp.json, .cursor/mcp.json, .vscode/mcp.json, .bob/mcp.json, .gemini/settings.json here
-npx three-ws setup --project
+npx @three-ws/cli setup --project
 
 # Print the config instead of writing any file
-npx three-ws setup --clients print
+npx @three-ws/cli setup --clients print
 ```
 
 | Flag | Values |
@@ -49,7 +49,7 @@ npx three-ws setup --clients print
 | `--clients` | `claude-code`, `claude-desktop`, `cursor`, `windsurf`, `vscode`, `bob`, `codex`, `gemini`, `hermes`, `grok-bot`, `print` |
 | `--connector-key` | With `grok-bot`: mint a spend-free API key for Grok Bot's Bot secret |
 | `--no-copy` | With `grok-bot`: do not copy the server URL to the clipboard |
-| `--servers` | Server names from `npx three-ws mcp list --available` |
+| `--servers` | Server names from `npx @three-ws/cli mcp list --available` |
 | `--packages` | Also add stdio `@three-ws/*-mcp` packages |
 | `--project` | Write project-scoped config in the current directory |
 | `--proxy` | Route every server through the local proxy, so your tool choices apply in every client |
@@ -60,8 +60,8 @@ npx three-ws setup --clients print
 Grok Bot is configured in xAI's cloud, so `setup` cannot write a file for it. `--clients grok-bot` runs the part the CLI can do, with no sign-in for the free studio:
 
 ```bash
-npx three-ws setup --client grok-bot
-npx three-ws setup --client grok-bot --connector-key   # key for your agents, never spends
+npx @three-ws/cli setup --client grok-bot
+npx @three-ws/cli setup --client grok-bot --connector-key   # key for your agents, never spends
 ```
 
 It prints the fields Grok Bot's custom MCP connector asks for (name `three-ws`, transport Streamable HTTP, server URL `https://three.ws/api/mcp-grok`, authentication None or API key), the one-line chat prompt that adds the same server, copies the URL to the clipboard where a clipboard tool exists, and verifies the public URL with a live `tools/list`. The command exits 1 if that verification fails. With `--connector-key` it signs in if needed (requesting `agents:write`), mints a `connector` preset key once through `POST /api/api-keys`, stores it in the credential file, and prints it for the Bot secret field. Revoke it any time on [Dashboard → API](/dashboard/api). The full Grok setup is in [three.ws for Grok](./grok.md) and the [Grok Bot guide](./grok-bot.md).
@@ -96,13 +96,13 @@ Every client stores a server under the same name, which is also what `--servers`
 | `three-ws-pump-fun` | `https://three.ws/api/pump-fun-mcp` | None for reads |
 | `three-ws-ibm` | `https://three.ws/api/ibm-mcp` | Sign-in or x402 |
 
-`npx three-ws mcp list --available` prints the live list, which is the source of truth if this table and the directory ever disagree.
+`npx @three-ws/cli mcp list --available` prints the live list, which is the source of truth if this table and the directory ever disagree.
 
 ## Create an agent and launch its coin
 
 ```bash
-npx three-ws create "Nova" --description "A deep-space guide who explains orbital mechanics."
-npx three-ws launch --agent <agent-id> --name "Nova" --symbol NOVA
+npx @three-ws/cli create "Nova" --description "A deep-space guide who explains orbital mechanics."
+npx @three-ws/cli launch --agent <agent-id> --name "Nova" --symbol NOVA
 ```
 
 `create` makes the agent on your account and prints its public page and the Solana wallet three.ws minted for it. Pass `--avatar <id>` to use an avatar you already own as its 3D body; otherwise give it a body on its page. A name that imitates an existing public agent is refused with the reason, so pick a distinct one.
@@ -115,13 +115,13 @@ Every tool is labelled read, write or financial ([the catalog](/mcp-tools) shows
 
 ```bash
 # See and change the tool selection interactively
-npx three-ws tools
+npx @three-ws/cli tools
 
 # Turn financial tools on for the main server only
-npx three-ws tools --server three-ws-main --enable financial
+npx @three-ws/cli tools --server three-ws-main --enable financial
 
 # Back to the default
-npx three-ws tools --server three-ws-main --reset
+npx @three-ws/cli tools --server three-ws-main --reset
 ```
 
 The selection is enforced whichever way you signed in. With a browser sign-in, servers that need an account run through the local proxy (`three-ws proxy`), which also keeps your token fresh: `tools/list` returns only enabled tools, and a call to a disabled one is answered by the proxy with an error explaining how to enable it, without reaching the server. With an API key, the selection travels to the server in the `X-Three-Tools` header, and clients that support a tool allowlist get one written too. `--proxy` routes every server through the proxy regardless.
@@ -154,15 +154,15 @@ The selection is enforced whichever way you signed in. With a browser sign-in, s
 Name a client and the CLI does the whole setup without prompts: sign in, write the servers, verify them with a live `tools/list`.
 
 ```bash
-npx three-ws --claude      # Claude Code, plus the three.ws skill
-npx three-ws --cursor
-npx three-ws --codex
-npx three-ws --vscode
-npx three-ws --windsurf
-npx three-ws --gemini
+npx @three-ws/cli --claude      # Claude Code, plus the three.ws skill
+npx @three-ws/cli --cursor
+npx @three-ws/cli --codex
+npx @three-ws/cli --vscode
+npx @three-ws/cli --windsurf
+npx @three-ws/cli --gemini
 ```
 
-`--bob` and `--hermes` work the same way. Combine flags to set up several clients at once (`npx three-ws --cursor --vscode`), and add `--project` for config in the current directory, `--device` over SSH, or `--key sk_live_...` for CI.
+`--bob` and `--hermes` work the same way. Combine flags to set up several clients at once (`npx @three-ws/cli --cursor --vscode`), and add `--project` for config in the current directory, `--device` over SSH, or `--key sk_live_...` for CI.
 
 These flags write a launcher entry (`three-ws proxy <url>`) instead of a token. The OAuth token or API key stays in `~/.config/three-ws/credentials.json` (mode 600) and never appears in a client config file, so you can commit a project config safely. Running a command twice changes nothing the second time.
 
@@ -216,7 +216,7 @@ Each script defines functions and calls `main` on its last line, so a download c
 ## Check your setup
 
 ```bash
-npx three-ws doctor
+npx @three-ws/cli doctor
 ```
 
 `doctor` finds a bad config before you do. It checks the Node version, the credential file and its permissions, that three.ws is reachable, that your sign-in is still valid (expired or revoked), each client's config (unparseable file, missing three.ws entry, a secret stored in plain text, a launcher missing from `PATH`), and a live `tools/list` for every configured server. Every problem comes with the command that fixes it. It exits 1 when anything fails, and `--json` prints the findings for scripts.
@@ -224,9 +224,9 @@ npx three-ws doctor
 ## Agents and teams
 
 ```bash
-npx three-ws agent status    # each agent, its wallet address and SOL / USDC balance
-npx three-ws team            # your teams
-npx three-ws team status <id-or-name>
+npx @three-ws/cli agent status    # each agent, its wallet address and SOL / USDC balance
+npx @three-ws/cli team            # your teams
+npx @three-ws/cli team status <id-or-name>
 ```
 
 Both are read-only.
@@ -235,9 +235,9 @@ Global flags: `--json` for machine-readable output, `--origin <url>` (or `THREE_
 
 ## Troubleshooting
 
-- **A server returns 401.** The token is missing or expired. Run `npx three-ws login`, or `npx three-ws status` to see what the CLI has stored. Every 401 from a three.ws MCP server includes this hint in its body.
-- **A client does not show the tools.** Restart it; most clients read their MCP config only at startup. `npx three-ws mcp list` confirms the entry was written.
-- **Signing in over SSH.** Use `npx three-ws login --device` and approve the code from any browser.
+- **A server returns 401.** The token is missing or expired. Run `npx @three-ws/cli login`, or `npx @three-ws/cli status` to see what the CLI has stored. Every 401 from a three.ws MCP server includes this hint in its body.
+- **A client does not show the tools.** Restart it; most clients read their MCP config only at startup. `npx @three-ws/cli mcp list` confirms the entry was written.
+- **Signing in over SSH.** Use `npx @three-ws/cli login --device` and approve the code from any browser.
 - **Revoking access.** Every signed-in client and CLI session is listed under [Dashboard → Settings → Connected apps](/dashboard/settings).
 
 ## Related
