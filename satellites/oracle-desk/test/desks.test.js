@@ -32,7 +32,7 @@ function world(walletSol = 5) {
 	const counters = { launches: 0, graduations: 0, verdicts: 0, cleared: 0, blocked: 0, firewalled: 0, entries: 0, closed: 0 };
 	const ledger = new Ledger({ startLamports: walletSol * 1e9, walletLamports: walletSol * 1e9 });
 	const cfg = config();
-	const research = new Research({ bus, config: cfg, counters, state: {} });
+	const research = new Research({ bus, config: cfg, counters, state: {}, now: NOW - 3_600_000 });
 	const risk = new Risk({ bus, config: cfg, ledger, state: {} });
 	const audit = new Audit({ bus, research, state: {} });
 	return { bus, counters, ledger, cfg, research, risk, audit };

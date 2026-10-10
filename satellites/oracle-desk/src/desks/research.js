@@ -8,10 +8,10 @@
 import { evaluateSeat, makeSeat } from '../seats.js';
 
 export class Research {
-	constructor({ bus, config, counters, state }) {
+	constructor({ bus, config, counters, state, now = Date.now() }) {
 		this.bus = bus;
 		this.counters = counters;
-		this.seats = state.seats?.length ? state.seats : config.research.seats.map((d) => makeSeat(d, Date.now()));
+		this.seats = state.seats?.length ? state.seats : config.research.seats.map((d) => makeSeat(d, now));
 		this.killedBy = state.killedBy ?? {};
 		this.lastPass = [];
 	}
