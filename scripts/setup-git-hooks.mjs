@@ -122,6 +122,37 @@ try {
 	console.error(`[setup-git-hooks] could not verify the documented git remote: ${err.message}`);
 }
 
+// pre-commit: the same hard-rules guard, scoped to what is staged right now, so
+// a violation is stopped before it becomes a commit instead of being cleaned up
+// by follow-up commits after the push check rejects it. It honors
+// GIT_INDEX_FILE (git diff --cached reads the private index), so it judges only
+// the files being committed, never other agents' in-flight edits. Plumbing
+// commits (git commit-tree + update-ref) skip hooks by design; those callers
+// run \`node scripts/check-rules.mjs --staged\` themselves before commit-tree.
+const PRE_COMMIT_MARKER = 'three.ws pre-commit hook v1';
+const PRE_COMMIT = `#!/bin/sh
+# ${PRE_COMMIT_MARKER} (installed by scripts/setup-git-hooks.mjs; edits here are
+# overwritten on the next npm install, change the installer instead).
+# Blocks a commit whose staged lines break the CLAUDE.md hard rules.
+# Emergency bypass: SKIP_PUSH_CHECKS=1 git commit
+[ -n "$SKIP_PUSH_CHECKS" ] && exit 0
+command -v node >/dev/null 2>&1 || exit 0
+node scripts/check-rules.mjs --staged || {
+	echo >&2 ""
+	echo >&2 "pre-commit: staged lines break the CLAUDE.md hard rules. Fix them before committing."
+	exit 1
+}
+`;
+const preCommitPath = path.join(hooksDir, 'pre-commit');
+const preCommitExisting = existsSync(preCommitPath) ? readFileSync(preCommitPath, 'utf8') : '';
+if (preCommitExisting && !preCommitExisting.includes(PRE_COMMIT_MARKER)) {
+	console.error(`[setup-git-hooks] ${preCommitPath} exists and is not ours; not overwriting.`);
+} else if (preCommitExisting !== PRE_COMMIT) {
+	writeFileSync(preCommitPath, PRE_COMMIT);
+	chmodSync(preCommitPath, 0o755);
+	console.log(`[setup-git-hooks] installed pre-commit hook at ${path.relative(root, preCommitPath)}`);
+}
+
 const existing = existsSync(hookPath) ? readFileSync(hookPath, 'utf8') : '';
 if (existing.includes(MARKER)) {
 	if (existing === HOOK) process.exit(0); // current version already installed
