@@ -24,6 +24,24 @@ export function notificationText(type, payload, notificationId) {
 	return [p.title, p.body, url].filter(Boolean).join('\n');
 }
 
+/**
+ * An approval request bound for a paired chat is queued as {kind:'approval'}:
+ * the worker renders it from the row on file and signs its Approve and Deny
+ * buttons for that one link (./approval-buttons.js), so what the owner sees is
+ * always the request as it stands. It lives until the request's own deadline.
+ * A legacy chat id with no link keeps the plain text and the signed web link.
+ */
+function approvalRowFor(type, payload, target) {
+	if (type !== 'approval_requested' || !payload?.approval_id || !target.linkId) return null;
+	return {
+		kind: 'approval',
+		approvalId: payload.approval_id,
+		chatId: target.chatId,
+		linkId: target.linkId,
+		expiresAt: payload.expires_at ? new Date(payload.expires_at).toISOString() : new Date(Date.now() + NOTIFY_TTL_MS).toISOString(),
+	};
+}
+
 async function targetChats(userId, platforms, legacyTelegramChatId) {
 	const rows = await sql`
 		SELECT id, platform, chat_id FROM gateway_links
@@ -55,7 +73,7 @@ export async function queueChatNotifications({ userId, type, payload, notificati
 			platform: t.platform,
 			dedupeKey: `notify:${ref}:${t.linkId || t.chatId}`,
 			chatKey: `${t.platform}:${t.chatId}`,
-			payload: { kind: 'notify', chatId: t.chatId, linkId: t.linkId, type, text, expiresAt: new Date(Date.now() + NOTIFY_TTL_MS).toISOString() },
+			payload: approvalRowFor(type, payload, t) || { kind: 'notify', chatId: t.chatId, linkId: t.linkId, type, text, expiresAt: new Date(Date.now() + NOTIFY_TTL_MS).toISOString() },
 		});
 		if (inserted) queued[t.platform] = (queued[t.platform] || 0) + 1;
 	}

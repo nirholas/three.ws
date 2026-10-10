@@ -3,7 +3,11 @@
 The process behind every three.ws chat gateway. An agent owner pairs a Telegram
 or Discord chat with their account, then talks to their agent from that chat:
 plain messages, slash commands, voice notes and photos in, replies, trade
-previews with Approve / Cancel buttons, and account notifications out.
+previews with Approve / Cancel buttons, approval requests with signed Approve /
+Deny buttons, and account notifications out. From a paired chat the owner can
+also list pending approvals, read open positions, and pause or kill agents
+(`/approvals`, `/positions`, `/pause`, `/kill`; see
+[docs/approvals.md](../../docs/approvals.md#approving-from-telegram-and-discord)).
 
 The webhook receivers in the API only verify and queue. This worker does the
 work: it drains the `gateway_inbox` table, runs each delivery through the shared
@@ -49,6 +53,15 @@ api/_lib/gateway/notify.js (notifications) ────┘
   and edits their buttons away ("Expired. Ask your agent again for a fresh
   quote."), and once an hour it prunes finished rows older than
   `GATEWAY_PRUNE_KEEP_DAYS`.
+- **Approval requests are rendered at send time.** The notification fan-out
+  queues a `{kind:'approval'}` row per paired chat carrying only the request id
+  and the link. The drain loads the request as it stands, skips it if it was
+  decided or expired while queued, and sends the full confirmation table with
+  Approve and Deny buttons signed for that one link, presser and payload hash
+  ([api/_lib/gateway/approval-buttons.js](../../api/_lib/gateway/approval-buttons.js)).
+- **Forwards are never instructions.** Both adapters flag forwarded messages
+  (and Telegram posts made through another bot); the core runs no command for
+  them and never hands them to the agent.
 - **Privacy in logs.** Logs are one JSON line each with `severity` and `message`
   for Cloud Logging ([src/log.js](src/log.js)). Message text from chats never
   reaches a log: only ids, platforms and error codes.
@@ -67,7 +80,7 @@ api/_lib/gateway/notify.js (notifications) ────┘
 | [src/setup.js](src/setup.js) | Operator commands: register Discord slash commands, point the Telegram webhook, read the inbox, requeue a dead letter. |
 | [scripts/deploy-env.mjs](scripts/deploy-env.mjs) | Derives the Cloud Run environment from the live `three-ws-api` service at deploy time. |
 | [Dockerfile](Dockerfile), [cloudbuild.yaml](cloudbuild.yaml) | The image (built from the repo root) and the Cloud Build to Cloud Run pipeline. |
-| [tests/](tests) | Vitest suites for the drain loop, both adapters, the registry and the setup commands. |
+| [tests/](tests) | Vitest suites for the drain loop, both adapters, the registry, the setup commands, and approval requests in chat. |
 
 ## Configuration
 
@@ -199,7 +212,7 @@ registering, set the interactions endpoint in the Discord developer portal to
 cd workers/agent-gateway && npm test
 ```
 
-Four suites, 62 tests, about six seconds. They run against a real Postgres:
+Five suites, 87 tests, about eight seconds. They run against a real Postgres:
 PGlite carrying the gateway tables built from the two shipped migrations
 (`api/_lib/migrations/20260922180000_chat_gateways.sql` and
 `20260922190000_more_chat_gateways.sql`) executed verbatim
@@ -213,6 +226,7 @@ group-start updates; Discord commands, buttons and mentions).
 | `drain.test.js` | A queued `/help` answered through the real core; `/start` issuing a pairing code and storing only its hash; a duplicate delivery answered once; one row per chat at a time; held, renewed and expired leases; rows for a platform with no adapter left alone; `GATEWAY_CHAT_KEYS`; backoff then dead letter; a 429 `retry_after` honoured; a permanent refusal dead-lettered without an apology; a partially delivered turn never re-run; a timed-out turn; paired-chat approvals, strangers and `/new`; notifications delivered, or dropped when stale or unlinked; the preview sweep; start and graceful stop. |
 | `telegram-adapter.test.js` | Command parsing (including `/cmd@otherbot` in groups), update normalization, voice notes through `getFile`, the largest photo size, long replies split across messages, inline buttons added and removed, photos versus documents, late button presses, spoken replies, error mapping, and the polling guard that refuses to run while a webhook is set. |
 | `discord-adapter.test.js` | `/three` subcommands and top-level commands, button presses, mentions, audio and image attachments, the deferred reply filled first and then followups with mentions disabled, the "thinking..." placeholder removed when a command produced nothing, expired interaction tokens falling back to the channel API, notifications, audio uploads, and error mapping. |
+| `approval-buttons.test.js` | Approval requests end to end through the real inbox library ([api/_lib/approvals.js](../../api/_lib/approvals.js)) and its migration: callback data within 64 bytes and refused on any changed character, link, presser, deadline or verb; fan-out queueing and the drain sending the full table with two signed buttons; Approve executing once and editing the message; a replayed press never re-running; Deny; a payload rewritten after delivery, a payload edited under an unchanged hash, a forged button, an expired request, a stranger's press, a button replayed into another chat and an unpaired chat all failing closed; forwarded commands and a forwarded `/link` ignored; `/approvals`, `/positions`, `/pause` and `/kill` against real rows. The transfer executor is the one stub: it records each call so the replay cases can prove it ran once. |
 | `registry-setup.test.js` | Adapter selection by credentials and `GATEWAY_PLATFORMS`, the retry policy, config defaults and the malformed-number refusal, and the Discord and Telegram command sets `setup.js` registers. |
 
 ## Deploy

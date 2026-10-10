@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-10-10",
+			"title": "Approve or deny your agent's requests from Telegram and Discord",
+			"summary": "When your agent asks before a transfer or a trade, the request now lands in your paired Telegram or Discord chat with the full confirmation table (recipient, amount, asset, chain, risk notes and deadline) and Approve and Deny buttons. Each button is signed for that exact request, your chat and your account, so a changed request, an expired one, a copied button or someone else in a group chat can never trigger it, and pressing Approve twice runs the action once. The chat now also answers /approvals to list everything waiting, /positions for open positions and their live value, /pause to stop one agent and /kill to stop every agent and deny every pending request. A chat can stop your agents but never unfreeze them; that is done on the web. Forwarded messages are never treated as instructions.",
+			"tags": ["feature", "security"],
+			"link": "/approvals"
+		},
+		{
+			"date": "2026-10-10",
 			"title": "Approve your agents' payments from a notification",
 			"summary": "Set any agent spend rule to Ask me and the agent now waits for your yes instead of failing. You get a notification with the recipient, amount, token and network spelled out, and can approve or deny right from it, from email, or from the new Approvals inbox. Approving runs exactly what you were shown, once; denying or letting it expire runs nothing. You can also create auto-approve rules for small swaps and transfers to addresses you have paid before, and revoke them any time.",
 			"tags": [
@@ -29442,9 +29449,6 @@
 				"improvement"
 			],
 			"link": "/docs/cli"
-		}
-	]
-}
 		},
 		{
 			"date": "2026-10-10",
@@ -29454,3 +29458,6 @@
 				"feature"
 			],
 			"link": "/docs/desktop-local-runtime"
+		}
+	]
+}

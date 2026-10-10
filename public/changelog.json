@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T05:45:10.378Z",
+	"generated_at": "2026-10-10T06:05:36.855Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,27 @@
 			"link": "/approvals",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · Local agent runtime for the desktop app",
+			"summary": "Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.",
+			"link": "/docs/desktop-local-runtime",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Approve or deny your agent's requests from Telegram and Discord",
+			"summary": "When your agent asks before a transfer or a trade, the request now lands in your paired Telegram or Discord chat with the full confirmation table (recipient, amount, asset, chain, risk notes and deadline) and Approve and Deny buttons. Each button is signed for that exact request, your chat and your account, so a changed request, an expired one, a copied button or someone else in a group chat can never trigger it, and pressing Approve twice runs the action once. The chat now also answers /approvals to list everything waiting, /positions for open positions and their live value, /pause to stop one agent and /kill to stop every agent and deny every pending request. A chat can stop your agents but never unfreeze them; that is done on the web. Forwarded messages are never treated as instructions.",
+			"link": "/approvals",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -55,6 +76,27 @@
 			"link": "/gestures",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Run your agents on your own desktop",
+			"summary": "The three.ws desktop app can now run agents, strategies, limit orders and automations on your machine. Signing keys stay in your operating system keychain, paper strategies keep working with no account or cloud connection, and every live trade waits for your approval in a native window that shows the exact recipient, amount, asset and chain. A tray menu lists each agent with pause, kill and review, and the mascot shows when an agent is working, waiting for you or in trouble.",
+			"link": "/docs/desktop-local-runtime",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Set up your AI client with one command, and check it with doctor",
+			"summary": "Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.",
+			"link": "/docs/cli",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

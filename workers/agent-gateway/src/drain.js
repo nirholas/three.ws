@@ -16,6 +16,7 @@
 
 import { handleEvent } from '../../../api/_lib/gateway/core.js';
 import { previewText } from '../../../api/_lib/gateway/conversation.js';
+import { sendApprovalToChat } from '../../../api/_lib/gateway/approval-buttons.js';
 import * as inboxStore from '../../../api/_lib/gateway/store.js';
 import { classifyFailure, errorSummary } from './errors.js';
 import { log as defaultLog } from './log.js';
@@ -86,6 +87,8 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		deadLettered: 0,
 		notificationsSent: 0,
 		notificationsSkipped: 0,
+		approvalsSent: 0,
+		approvalsSkipped: 0,
 		previewsExpired: 0,
 	};
 	let stopping = false;
@@ -133,6 +136,27 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		stats.notificationsSent += 1;
 	}
 
+	/**
+	 * An approval request for one paired chat: rendered from the row on file at
+	 * send time with buttons signed for that link, or skipped when the chat was
+	 * unlinked or muted, or the request was decided or expired while queued.
+	 */
+	async function deliverApprovalRequest(row, adapter) {
+		const p = row.payload || {};
+		const skip = (why) => {
+			stats.approvalsSkipped += 1;
+			log.info('approval request not sent', { id: row.id, platform: row.platform, approvalId: p.approvalId, why });
+		};
+		if (p.expiresAt && Date.parse(p.expiresAt) <= Date.now()) return skip('expired');
+		const link = p.linkId ? await store.getLinkById(p.linkId) : null;
+		if (!link || link.revoked_at || link.notify === false || link.platform !== row.platform) return skip('chat unlinked or muted');
+		const { gw, counter } = trackDeliveries(adapter.gateway(null));
+		row.counter = counter;
+		const out = await sendApprovalToChat({ gw, link, approvalId: p.approvalId, chatId: p.chatId || link.chat_id });
+		if (!out.sent) return skip(out.reason);
+		stats.approvalsSent += 1;
+	}
+
 	async function runEvent(row, adapter) {
 		const event = adapter.normalize(row.payload);
 		if (!event) {
@@ -174,7 +198,10 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		}, renewEvery);
 		try {
 			if (!adapter) throw Object.assign(new Error(`no adapter for platform ${row.platform}`), { deadLetter: true });
-			const work = row.payload?.kind === 'notify' ? deliverNotification(row, adapter) : runEvent(row, adapter);
+			const kind = row.payload?.kind;
+			const work = kind === 'notify' ? deliverNotification(row, adapter)
+				: kind === 'approval' ? deliverApprovalRequest(row, adapter)
+					: runEvent(row, adapter);
 			await withTimeout(work, config.turnTimeoutMs);
 			await store.completeInbox(row.id);
 			stats.completed += 1;

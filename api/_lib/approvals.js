@@ -35,7 +35,7 @@ import { logAudit } from './audit.js';
 
 export const APPROVAL_STATUSES = Object.freeze(['pending', 'approved', 'executing', 'executed', 'failed', 'denied', 'expired']);
 export const DECISIONS = Object.freeze(['approve', 'deny']);
-export const DECISION_VIAS = Object.freeze(['web', 'push', 'telegram', 'mobile', 'email']);
+export const DECISION_VIAS = Object.freeze(['web', 'push', 'telegram', 'mobile', 'email', 'discord']);
 
 // Status groups the inbox filters by.
 export const STATUS_GROUPS = Object.freeze({

@@ -17,6 +17,10 @@
 // @property {string} [command]       a slash command, lowercased, without the slash
 // @property {string} [args]          everything after the command
 // @property {{ verb:'approve'|'cancel', previewId:string }} [action]  a button press
+// @property {{ verb:'approve'|'deny', approvalId:string, exp:number, mac:string }} [approvalAction]
+//                                    a signed Approve/Deny press on an approval request
+// @property {boolean} [forwarded]    the message was forwarded, or posted through
+//                                    another bot: someone else's words, never an instruction
 // @property {{ fetch:() => Promise<{buffer:Buffer, mimeType:string}> }} [voice]
 // @property {{ fetch:() => Promise<{buffer:Buffer, mimeType:string}>, caption?:string }} [photo]
 // @property {object} [messageRef]    the pressed message, for button events
@@ -36,6 +40,7 @@ import { normalizePairCode, formatPairCode } from './codes.js';
 import { COMMAND_HANDLERS, helpText } from './commands.js';
 import { converse } from './conversation.js';
 import { handleAction } from './approvals.js';
+import { handleApprovalPress } from './approval-buttons.js';
 import { transcribeVoice, describePhoto, MediaError } from './media.js';
 import { appOrigin } from './format.js';
 
@@ -112,7 +117,16 @@ async function textFromMedia(gw, event) {
 export async function handleEvent(event, gw) {
 	const link = await getLiveLink(event.platform, event.chatId);
 
+	if (event.approvalAction) return handleApprovalPress({ gw, event, link });
 	if (event.action) return handleAction({ gw, event, link });
+	// A forwarded message carries another person's words. Running it as a
+	// command (a forwarded /link would pair this chat to someone else's
+	// account), or handing it to the agent as the owner's request, would let
+	// anyone who gets a message in front of the owner steer their agent.
+	if (event.forwarded) {
+		if (!link || String(event.userId) !== String(link.platform_user_id)) return;
+		return gw.sendText(event.chatId, 'Forwarded messages are never treated as instructions, so your agent did not act on that. Type the request yourself if you want it done.');
+	}
 	if (event.command === 'start' || event.command === 'link') return cmdLink({ gw, event, link });
 	if (event.command === 'help') return gw.sendText(event.chatId, link ? helpText() : `${helpText()}\n\nThis chat is not paired yet: send /start to get a pairing code.`);
 

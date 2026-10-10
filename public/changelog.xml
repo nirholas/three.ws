@@ -15,6 +15,22 @@
 			<description>Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.</description>
 		</item>
 		<item>
+			<title>Docs · Local agent runtime for the desktop app</title>
+			<link>https://three.ws/docs/desktop-local-runtime</link>
+			<guid isPermaLink="false">2026-10-10:Docs · Local agent runtime for the desktop app</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.</description>
+		</item>
+		<item>
+			<title>Approve or deny your agent's requests from Telegram and Discord</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-10-10:Approve or deny your agent's requests from Telegram and Discord</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When your agent asks before a transfer or a trade, the request now lands in your paired Telegram or Discord chat with the full confirmation table (recipient, amount, asset, chain, risk notes and deadline) and Approve and Deny buttons. Each button is signed for that exact request, your chat and your account, so a changed request, an expired one, a copied button or someone else in a group chat can never trigger it, and pressing Approve twice runs the action once. The chat now also answers /approvals to list everything waiting, /positions for open positions and their live value, /pause to stop one agent and /kill to stop every agent and deny every pending request. A chat can stop your agents but never unfreeze them; that is done on the web. Forwarded messages are never treated as instructions.</description>
+		</item>
+		<item>
 			<title>Approve your agents' payments from a notification</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-10-10:Approve your agents' payments from a notification</guid>
@@ -45,6 +61,22 @@
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data.</description>
+		</item>
+		<item>
+			<title>Run your agents on your own desktop</title>
+			<link>https://three.ws/docs/desktop-local-runtime</link>
+			<guid isPermaLink="false">2026-10-10:Run your agents on your own desktop</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws desktop app can now run agents, strategies, limit orders and automations on your machine. Signing keys stay in your operating system keychain, paper strategies keep working with no account or cloud connection, and every live trade waits for your approval in a native window that shows the exact recipient, amount, asset and chain. A tray menu lists each agent with pause, kill and review, and the mascot shows when an agent is working, waiting for you or in trouble.</description>
+		</item>
+		<item>
+			<title>Set up your AI client with one command, and check it with doctor</title>
+			<link>https://three.ws/docs/cli</link>
+			<guid isPermaLink="false">2026-10-10:Set up your AI client with one command, and check it with doctor</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.</description>
 		</item>
 		<item>
 			<title>CAD Forge</title>
