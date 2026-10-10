@@ -1526,6 +1526,10 @@ export const limits = {
 		// a real answer from the keyless lane.
 		cryptoHoldersHeliusIp: (ip) =>
 			getLimiter('crypto-holders:helius:ip', { limit: 30, window: '1 h' }).limit(ip),
+		// The holders read costs three RPC calls even on the keyless lane, against
+		// free nodes the whole platform shares, so it gets a tighter per-IP burst
+		// than the family's 60/min.
+		cryptoHoldersIp: (ip) => getLimiter('crypto-holders:ip', { limit: 20, window: '1 m' }).limit(ip),
 	// Free Crypto Data API family (api/crypto/*). Keyless, no-account reads an agent
 	// makes mid-task (wallet portfolio, token snapshots). Some paths fan out to the
 	// keyed Helius/public-RPC upstreams, so a generous-but-bounded per-IP burst keeps

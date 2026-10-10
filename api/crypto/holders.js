@@ -46,8 +46,13 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const ip = clientIp(req);
-	const [ipRl, globalRl] = await Promise.all([limits.cryptoDataIp(ip), limits.cryptoDataGlobal()]);
+	const [ipRl, holdersRl, globalRl] = await Promise.all([
+		limits.cryptoDataIp(ip),
+		limits.cryptoHoldersIp(ip),
+		limits.cryptoDataGlobal(),
+	]);
 	if (!ipRl.success) return rateLimited(res, ipRl);
+	if (!holdersRl.success) return rateLimited(res, holdersRl);
 	if (!globalRl.success) return rateLimited(res, globalRl);
 
 	const url = new URL(req.url, 'http://localhost');

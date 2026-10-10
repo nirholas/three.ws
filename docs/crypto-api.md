@@ -841,7 +841,9 @@ surfaces can never contradict each other.
   `as_of` (when it was computed), and an `x-holders-stale: 1` header; with no
   last good copy, `503` + `Retry-After`. A throttled RPC is never reported as
   "no holders". Never `500`.
-- **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
+- **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers. This
+  endpoint allows 20 reads per minute per IP (inside the family's 60), because
+  every read costs several Solana RPC calls.
 
 ### Examples
 
