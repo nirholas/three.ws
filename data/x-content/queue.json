@@ -75,7 +75,9 @@
 			"lowerarm",
 			"Miku",
 			"SMPL",
-			"chibi"
+			"chibi",
+			"Quaternius",
+			"ambientCG"
 		],
 		"maximumLength": 1000
 	},
@@ -91,29 +93,78 @@
 	"items": [
 		{
 			"id": "genesis",
-			"status": "paused",
+			"status": "review",
 			"kind": "post",
+			"tier": 2,
 			"lane": "community",
 			"pattern": "mechanism",
-			"notBefore": "2026-09-17T14:07:00Z",
+			"notBefore": "2026-10-11T12:00:00Z",
+			"covers": [
+				"/genesis"
+			],
 			"source": {
 				"path": "docs/announcements/genesis.md"
 			},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the voice catalog the voice picker reads still answers",
+					"url": "https://three.ws/api/tts/voices",
+					"expect": {
+						"json": {
+							"path": "voices.length",
+							"min": 1
+						}
+					}
+				}
+			],
 			"posts": [
 				{
-					"text": "A sentence or a selfie becomes a rigged 3D agent holding its own custodial @solana wallet, a persona, and a voice. It walks and emotes on arrival: three.ws/genesis",
-					"textFrom": "docs/announcements/genesis.post.txt",
+					"text": "Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
 					"media": [
 						{
 							"path": "public/announce/img/genesis-hero.webp",
-							"alt": "The three.ws Genesis page signed in: describe an agent, upload a selfie, or remix a public avatar, and it becomes a rigged 3D agent with its own wallet and on-chain identity"
+							"alt": "The three.ws Genesis page: describe an agent, upload a selfie, or remix a public avatar, with example prompts, an optional name and persona, and a voice picker."
 						}
 					]
+				},
+				{
+					"text": "Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
 				}
 			],
 			"claims": [
 				{
-					"says": "custodial @solana wallet",
+					"says": "turns a sentence or a selfie into a working 3D agent",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/genesis",
+							"contains": "A prompt or a selfie becomes a living 3D agent"
+						}
+					]
+				},
+				{
+					"says": "The body is rigged before you see it",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "the avatar is only surfaced once it has a skeleton"
+						}
+					]
+				},
+				{
+					"says": "it walks and emotes on arrival",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/genesis",
+							"contains": "A rigged avatar that walks, idles and emotes"
+						}
+					]
+				},
+				{
+					"says": "its own custodial Solana wallet, a custodial EVM wallet",
 					"evidence": [
 						{
 							"type": "page",
@@ -123,35 +174,97 @@
 						{
 							"type": "file",
 							"path": "docs/genesis.md",
-							"contains": "custodial Solana"
+							"contains": "a custodial Solana wallet, a custodial EVM wallet"
 						}
 					]
 				},
 				{
-					"says": "a persona, and a voice",
+					"says": "a persona written from your description",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/genesis",
-							"contains": "Persona (optional) Voice"
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "synthesizes a structured"
+						},
+						{
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "system prompt from your description"
 						}
 					]
 				},
 				{
-					"says": "walks and emotes on arrival",
+					"says": "a voice you pick",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/genesis",
-							"contains": "A rigged avatar that walks, idles and emotes"
+							"contains": "Browser voice (default)"
+						}
+					]
+				},
+				{
+					"says": "paints a full-body reference image",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "full-body reference image"
+						}
+					]
+				},
+				{
+					"says": "reconstructs it into a textured mesh on our own Hunyuan3D GPU worker",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "self-hosted Hunyuan3D-2.1 GPU worker"
+						}
+					]
+				},
+				{
+					"says": "auto-rigs it with a humanoid skeleton",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "auto-rigged with a humanoid"
+						}
+					]
+				},
+				{
+					"says": "A selfie takes the face pipeline instead",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/genesis.md",
+							"contains": "Selfie** runs the face pipeline"
+						}
+					]
+				},
+				{
+					"says": "it writes the agent and its wallet to your account",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/genesis",
+							"contains": "Sign in to claim your agent and its wallet. Genesis writes to your account."
+						}
+					]
+				},
+				{
+					"says": "forks a public avatar into an agent you own",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/genesis",
+							"contains": "Fork a public avatar to own"
 						}
 					]
 				}
 			],
-			"mentions": {
-				"@solana": "Every Genesis agent is provisioned a custodial Solana wallet (POST /api/agents/:id/wallet/provision); Solana is the platform's home chain."
-			},
-			"tier": 2
+			"mentions": {}
 		},
 		{
 			"id": "rig-doctor",
@@ -788,86 +901,80 @@
 			"kind": "post",
 			"tier": 2,
 			"lane": "creation",
-			"pattern": "proof",
-			"notBefore": "2026-09-18T17:00:00Z",
+			"pattern": "mechanism",
+			"notBefore": "2026-10-13T12:00:00.000Z",
+			"covers": [
+				"/docs/agent-skills",
+				"/objects"
+			],
 			"source": {
 				"path": "docs/agent-skills.md"
 			},
-			"posts": [
-				{
-					"text": "Your AI can make 3D now.\n\nInstall our free 3D skills for Claude, then ask it for a chair.\n\nIt checks 3,500+ free 3D assets first. If nothing fits, it makes a new model from your words.\n\nNo account. No API key.\n\nthree.ws/docs/agent-skills",
-					"textFrom": "docs/announcements/ai-3d-skills.post.txt",
-					"media": [
-						{
-							"path": "public/x-media/ai-3d-skills/card.png",
-							"alt": "A three.ws card reading 'Your AI can make 3D now.' beside a browser window showing the free three.ws object library: a grid of CC0 3D models including an alarm clock, a ceramic vase, an American football and an arm chair, each with Preview, AR and Download buttons"
-						}
-					]
-				}
-			],
-			"claims": [
-				{
-					"says": "3,500+ free 3D assets",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/api/catalog?limit=1",
-							"contains": "\"total\":3961"
-						}
-					]
-				},
-				{
-					"says": "free 3D skills for Claude",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/agent-skills.md",
-							"contains": "Claude Code"
-						},
-						{
-							"type": "page",
-							"url": "https://three.ws/skills/3d-studio/generate-3d-model/SKILL.md",
-							"contains": "generate-3d-model"
-						}
-					]
-				},
-				{
-					"says": "It checks 3,500+ free 3D assets first",
-					"evidence": [
-						{
-							"type": "file",
-							"path": ".agents/skills/find-3d-assets/SKILL.md",
-							"contains": "Check here BEFORE generating a model from scratch"
-						}
-					]
-				},
-				{
-					"says": "it makes a new model from your words",
-					"evidence": [
-						{
-							"type": "file",
-							"path": ".agents/skills/generate-3d-model/SKILL.md",
-							"contains": "Turn a text prompt into a downloadable, textured 3D model"
-						}
-					]
-				},
-				{
-					"says": "No account. No API key.",
-					"evidence": [
-						{
-							"type": "file",
-							"path": ".agents/skills/find-3d-assets/SKILL.md",
-							"contains": "no account, no API key"
-						},
-						{
-							"type": "file",
-							"path": ".agents/skills/generate-3d-model/SKILL.md",
-							"contains": "no key, no account"
-						}
-					]
-				}
-			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/agent-skills",
+						"settle": 6000
+					},
+					{
+						"scroll": "The 3D-creation skills",
+						"ms": 1600,
+						"caption": "The 3D skills an agent can load"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"goto": "https://three.ws/objects",
+						"settle": 5000
+					},
+					{
+						"type": "chair",
+						"into": "Search objects",
+						"caption": "Step one: search the free library"
+					},
+					{
+						"expect": "24 of 24 shown",
+						"within": 20000
+					},
+					{
+						"scroll": 640,
+						"ms": 1500,
+						"caption": "Finished CC0 chairs, ready to download"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"scroll": 560,
+						"ms": 1800
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"goto": "https://three.ws/api/catalog?q=chair&limit=1",
+						"settle": 2500
+					},
+					{
+						"read": "total",
+						"match": "\"total\":\\s*(\\d+)"
+					},
+					{
+						"read": "license",
+						"match": "\"license\":\\s*\"(CC0)\""
+					},
+					{
+						"hold": 3600,
+						"caption": "The same search is one GET, no key"
+					}
+				]
+			},
 			"probes": [
+				{
+					"type": "scenario"
+				},
 				{
 					"type": "api",
 					"name": "the skills download is served",
@@ -903,7 +1010,153 @@
 						"status": 200
 					}
 				}
-			]
+			],
+			"posts": [
+				{
+					"text": "Before an AI agent asks a GPU to build a chair, it can check whether one already exists. The find-3d-assets skill searches more than 3,500 free assets first: CC0 props, rigged characters and motion clips, one GET, no account, no API key.\n\nA hit is a finished GLB with its license and a direct URL. Only when nothing fits does generate-3d-model write a new textured model from a sentence, on the free lane.",
+					"media": [
+						{
+							"path": "public/x-media/ai-3d-skills/reel.mp4",
+							"probe": {
+								"durationSec": 15.97,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
+						}
+					]
+				},
+				{
+					"text": "The order is the point. An existing asset is instant where a generation is GPU minutes, so the skill's own description tells the agent to look here before it generates.\n\nThe skills install as a Claude Code plugin, a project folder or a Claude project: three.ws/docs/agent-skills"
+				}
+			],
+			"claims": [
+				{
+					"says": "searches more than 3,500 free assets first",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "total",
+							"min": 3500
+						},
+						{
+							"type": "file",
+							"path": ".agents/skills/find-3d-assets/SKILL.md",
+							"contains": "Check here BEFORE generating a model from scratch"
+						}
+					]
+				},
+				{
+					"says": "The find-3d-assets skill searches",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "find-3d-assets"
+						}
+					]
+				},
+				{
+					"says": "CC0 props, rigged characters and motion clips",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "CC0 props, rigged characters, and the motion-clip library"
+						}
+					]
+				},
+				{
+					"says": "one GET, no account, no API key",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "GET /api/catalog"
+						},
+						{
+							"type": "file",
+							"path": ".agents/skills/find-3d-assets/SKILL.md",
+							"contains": "no account, no API key"
+						}
+					]
+				},
+				{
+					"says": "A hit is a finished GLB with its license and a direct URL",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "license",
+							"equals": "CC0"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/api/catalog?q=chair&limit=1",
+							"contains": "\"format\":\"glb\""
+						}
+					]
+				},
+				{
+					"says": "Only when nothing fits does generate-3d-model write a new textured model from a sentence, on the free lane",
+					"evidence": [
+						{
+							"type": "file",
+							"path": ".agents/skills/find-3d-assets/SKILL.md",
+							"contains": "If the catalog has no match, fall through to generate-3d-model"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "text → textured GLB on the free forge_free lane"
+						}
+					]
+				},
+				{
+					"says": "An existing asset is instant where a generation is GPU minutes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "an existing asset is instant where a generation is GPU minutes"
+						}
+					]
+				},
+				{
+					"says": "the skill's own description tells the agent to look here before it generates",
+					"evidence": [
+						{
+							"type": "file",
+							"path": ".agents/skills/find-3d-assets/SKILL.md",
+							"contains": "Check here BEFORE generating a model from scratch"
+						}
+					]
+				},
+				{
+					"says": "The skills install as a Claude Code plugin, a project folder or a Claude project",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "a) As a Claude Code plugin"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "b) Dropped into a project"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/agent-skills",
+							"contains": "c) Uploaded to a Claude app / project"
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"approvedBy": "policy"
 		},
 		{
 			"id": "forge-max",
@@ -1427,89 +1680,223 @@
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
-			"pattern": "mechanism",
-			"notBefore": "2026-09-21T12:00:00Z",
-			"source": {
-				"path": "docs/announcements/awesome.md",
-				"url": "https://three.ws/awesome"
+			"pattern": "walkthrough",
+			"notBefore": "2026-10-12T15:30:00.000Z",
+			"covers": [
+				"/awesome"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/awesome",
+						"settle": 6000
+					},
+					{
+						"read": "entries",
+						"match": "(\\d+) entries across \\d+ sections"
+					},
+					{
+						"read": "sections",
+						"match": "\\d+ entries across (\\d+) sections"
+					},
+					{
+						"read": "freeToUse",
+						"match": "FREE TO USE\\s*(\\d+)"
+					},
+					{
+						"hold": 1500,
+						"caption": "A curated list for giving an agent a body"
+					},
+					{
+						"scroll": "Search the list",
+						"ms": 900
+					},
+					{
+						"hold": 800
+					},
+					{
+						"click": {
+							"selector": "[data-tag=\"free\"]"
+						},
+						"caption": "Filter by tag. Here, only the free ones"
+					},
+					{
+						"expect": "24 of 152 entries"
+					},
+					{
+						"read": "shown",
+						"match": "(\\d+) of \\d+ entries"
+					},
+					{
+						"hold": 1800
+					},
+					{
+						"click": {
+							"selector": "[data-tag=\"cc0\"]"
+						},
+						"caption": "Tags stack: free and CC0"
+					},
+					{
+						"expect": "4 of 152 entries"
+					},
+					{
+						"read": "narrowed",
+						"match": "(\\d+) of \\d+ entries"
+					},
+					{
+						"hold": 1500
+					},
+					{
+						"scroll": 200,
+						"ms": 1800,
+						"caption": "Each card says why it is on the list"
+					},
+					{
+						"hold": 2800
+					}
+				]
 			},
+			"probes": [
+				{
+					"type": "scenario"
+				},
+				{
+					"type": "api",
+					"name": "the published list still holds more than 150 entries",
+					"url": "https://three.ws/awesome.json",
+					"expect": {
+						"json": {
+							"path": "counts.items",
+							"min": 150
+						}
+					}
+				},
+				{
+					"type": "api",
+					"name": "the published list still carries the cc0 tag the reel filters by",
+					"url": "https://three.ws/awesome.json",
+					"expect": {
+						"contains": "\"id\": \"cc0\""
+					}
+				}
+			],
 			"posts": [
 				{
-					"text": "Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
-					"textFrom": "docs/announcements/awesome.post.txt",
+					"text": "The Awesome 3D Agents list is live: more than 150 curated entries covering what it takes to give an AI agent a body, from generation and rigging to motion, faces, voice and web renderers.\n\nFilter by tag and the list narrows to match, and tags stack. Free plus CC0 leaves four asset libraries: Poly Haven, ambientCG, Kenney and Quaternius.",
 					"media": [
 						{
-							"path": "public/announce/img/awesome-hero.webp",
-							"alt": "The Awesome 3D Agents page on three.ws: a heading reading Everything you need to give an AI agent a body, counters for 152 entries, 15 sections, 121 free to use and 97 tags, a row of tag filters, and a grid of cards for projects such as TRELLIS, Hunyuan3D 2 and TripoSR, each with a one sentence description."
+							"path": "public/x-media/awesome/reel.mp4",
+							"probe": {
+								"durationSec": 12.5,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
+							"reel": true
 						}
 					]
 				},
 				{
-					"text": "Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative, so the list reads like a set of recommendations, not a directory."
+					"text": "Open source or free to use covers more than 120 of the entries. Every link is fetched and verified before it ships, and the Suggest an entry button opens a prefilled GitHub issue.\n\nthree.ws/awesome"
 				}
 			],
 			"claims": [
 				{
-					"says": "152 entries across 15 sections",
+					"says": "more than 150 curated entries",
 					"evidence": [
 						{
-							"type": "page",
-							"url": "https://three.ws/awesome",
-							"contains": "152 entries across 15 sections"
+							"type": "proof",
+							"fact": "entries",
+							"min": 150
 						}
 					]
 				},
 				{
-					"says": "121 of them free to use",
+					"says": "generation and rigging to motion, faces, voice and web renderers",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/awesome",
-							"contains": "FREE TO USE 121"
+							"contains": "Generation, rigging, motion, faces, voice, renderers, and the agent frameworks that drive them"
+						}
+					]
+				},
+				{
+					"says": "Filter by tag and the list narrows to match",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "shown",
+							"equals": "24"
+						}
+					]
+				},
+				{
+					"says": "tags stack",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "narrowed",
+							"equals": "4"
+						}
+					]
+				},
+				{
+					"says": "four asset libraries",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "narrowed",
+							"equals": "4"
+						}
+					]
+				},
+				{
+					"says": "more than 120 of the entries",
+					"evidence": [
+						{
+							"type": "proof",
+							"fact": "freeToUse",
+							"min": 120
+						}
+					]
+				},
+				{
+					"says": "Open source or free to use",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/awesome.html",
+							"contains": "Open source or free to use"
+						}
+					]
+				},
+				{
+					"says": "Every link is fetched and verified before it ships",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "awesome/README.md",
+							"contains": "Every link is fetched and verified before it ships"
+						}
+					]
+				},
+				{
+					"says": "the Suggest an entry button opens a prefilled GitHub issue",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "pages/awesome.html",
+							"contains": "Why%20it%20belongs"
 						}
 					]
 				}
 			],
 			"mentions": {},
-			"probes": [
-				{
-					"type": "api",
-					"name": "the published list serves 152 entries across 15 sections",
-					"url": "https://three.ws/awesome.json",
-					"expect": {
-						"json": {
-							"path": "counts.items",
-							"min": 152
-						}
-					}
-				},
-				{
-					"type": "api",
-					"name": "every entry ships the sentence that says why it is on the list",
-					"url": "https://three.ws/awesome.json",
-					"expect": {
-						"contains": "Structured latent generation that emits meshes"
-					}
-				},
-				{
-					"type": "browser",
-					"name": "the page renders the counters, the tag filters and the Markdown copy",
-					"steps": [
-						{
-							"goto": "https://three.ws/awesome"
-						},
-						{
-							"expect": "152 entries across 15 sections"
-						},
-						{
-							"expect": "Copy as Markdown"
-						},
-						{
-							"expect": "TRELLIS"
-						}
-					]
-				}
-			]
+			"approvedBy": "policy"
 		},
 		{
 			"id": "knock",

@@ -1,48 +1,97 @@
 {
 	"id": "awesome",
-	"contentHash": "66b2df0119e200367d67c1367f09144f2af4228e6a4cc283d08b09f470e0c514",
-	"reviewedAt": "2026-09-27T08:31:59.043Z",
+	"contentHash": "132fbfae917b82129a6c54b1cc31deef53dad747495770c0b636d8879c5d1a96",
+	"reviewedAt": "2026-10-10T04:41:31.374Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
-		"Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative, so the list reads like a set of recommendations, not a directory."
+		"The Awesome 3D Agents list is live: more than 150 curated entries covering what it takes to give an AI agent a body, from generation and rigging to motion, faces, voice and web renderers.\n\nFilter by tag and the list narrows to match, and tags stack. Free plus CC0 leaves four asset libraries: Poly Haven, ambientCG, Kenney and Quaternius.",
+		"Open source or free to use covers more than 120 of the entries. Every link is fetched and verified before it ships, and the Suggest an entry button opens a prefilled GitHub issue.\n\nthree.ws/awesome"
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
 			{
-				"claim": "152 entries across 15 sections",
-				"kind": "evidence:page",
-				"target": "https://three.ws/awesome",
+				"claim": "more than 150 curated entries",
+				"kind": "evidence:proof",
+				"target": "entries",
 				"ok": true,
-				"detail": "live page shows \"152 entries across 15 sections\""
+				"detail": "the run read entries = \"152\", at least 150"
 			},
 			{
-				"claim": "121 of them free to use",
+				"claim": "generation and rigging to motion, faces, voice and web renderers",
 				"kind": "evidence:page",
 				"target": "https://three.ws/awesome",
 				"ok": true,
-				"detail": "live page shows \"FREE TO USE 121\""
+				"detail": "live page shows \"Generation, rigging, motion, faces, voice, renderers, and the agent frameworks that drive them\""
+			},
+			{
+				"claim": "Filter by tag and the list narrows to match",
+				"kind": "evidence:proof",
+				"target": "shown",
+				"ok": true,
+				"detail": "the run read shown = \"24\""
+			},
+			{
+				"claim": "tags stack",
+				"kind": "evidence:proof",
+				"target": "narrowed",
+				"ok": true,
+				"detail": "the run read narrowed = \"4\""
+			},
+			{
+				"claim": "four asset libraries",
+				"kind": "evidence:proof",
+				"target": "narrowed",
+				"ok": true,
+				"detail": "the run read narrowed = \"4\""
+			},
+			{
+				"claim": "more than 120 of the entries",
+				"kind": "evidence:proof",
+				"target": "freeToUse",
+				"ok": true,
+				"detail": "the run read freeToUse = \"121\", at least 120"
+			},
+			{
+				"claim": "Open source or free to use",
+				"kind": "evidence:file",
+				"target": "pages/awesome.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Every link is fetched and verified before it ships",
+				"kind": "evidence:file",
+				"target": "awesome/README.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "the Suggest an entry button opens a prefilled GitHub issue",
+				"kind": "evidence:file",
+				"target": "pages/awesome.html",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "17 steps passed against the live product, every claimed fact still holds (entries 152, sections 15, freeToUse 121, shown 24, narrowed 4)"
 			},
 			{
 				"kind": "probe:api",
-				"target": "the published list serves 152 entries across 15 sections",
+				"target": "the published list still holds more than 150 entries",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "probe:api",
-				"target": "every entry ships the sentence that says why it is on the list",
+				"target": "the published list still carries the cc0 tag the reel filters by",
 				"ok": true,
 				"detail": "HTTP 200, expectations met"
-			},
-			{
-				"kind": "probe:browser",
-				"target": "the page renders the counters, the tag filters and the Markdown copy",
-				"ok": true,
-				"detail": "4 steps passed"
 			},
 			{
 				"kind": "link",
@@ -65,14 +114,14 @@
 		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Giving an agent a body means stitching a dozen fields together. Awesome 3D Agents is the map: 152 entries across 15 sections, 121 of them free to use. three.ws/awesome",
-				"Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative, so the list reads like a set of recommendations, not a directory."
+				"The Awesome 3D Agents list is live: more than 150 curated entries covering what it takes to give an AI agent a body, from generation and rigging to motion, faces, voice and web renderers.\n\nFilter by tag and the list narrows to match, and tags stack. Free plus CC0 leaves four asset libraries: Poly Haven, ambientCG, Kenney and Quaternius.",
+				"Open source or free to use covers more than 120 of the entries. Every link is fetched and verified before it ships, and the Suggest an entry button opens a prefilled GitHub issue.\n\nthree.ws/awesome"
 			],
 			"altText": [
-				"The Awesome 3D Agents page on three.ws: a heading reading Everything you need to give an AI agent a body, counters for 152 entries, 15 sections, 121 free to use and 97 tags, a row of tag filters, and a grid of cards for projects such as TRELLIS, Hunyuan3D 2 and TripoSR, each with a one sentence description."
+				""
 			]
 		},
-		"summary": "Both numeric claims verify against the live page and the screenshot matches them exactly, including the alt text. The draft wisely drops the unverified GitHub-format claim from the pack's thread, and the second post's characterization is backed by a passing probe; voice, length, and links all conform.",
+		"summary": "Every claim is backed by a passing proof or file check, and the run's numbers (152 entries, 121 free-to-use, 4 narrowed, 24 shown) match the copy exactly. The reel frames confirm the filtering behavior, the stacked tags, and all four named asset libraries, and the voice and link rules are satisfied. Ship it.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",

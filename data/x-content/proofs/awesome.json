@@ -1,0 +1,190 @@
+{
+	"id": "awesome",
+	"scenarioHash": "2e4a7965b5a270318b33fe1ce9842b63d92d9fff06df747bc01723dee1ea0172",
+	"ranAt": "2026-10-10T03:52:12.469Z",
+	"target": {
+		"commit": "ce1b779b0",
+		"revision": "three-ws-api-00486-4nx"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/awesome",
+			"detail": "loaded https://three.ws/awesome",
+			"ok": true,
+			"ms": 6873,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "entries",
+			"detail": "entries = \"152\"",
+			"ok": true,
+			"ms": 3,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "sections",
+			"detail": "sections = \"15\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "read",
+			"target": "freeToUse",
+			"detail": "freeToUse = \"121\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 6470,
+			"frames": 45
+		},
+		{
+			"index": 6,
+			"kind": "scroll",
+			"target": "Search the list",
+			"detail": "scrolled 362 px",
+			"ok": true,
+			"ms": 4100,
+			"frames": 27
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "800",
+			"detail": "800 ms",
+			"ok": true,
+			"ms": 4819,
+			"frames": 24
+		},
+		{
+			"index": 8,
+			"kind": "click",
+			"target": "[data-tag=\"free\"]",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3631,
+			"frames": 21
+		},
+		{
+			"index": 9,
+			"kind": "expect",
+			"target": "24 of 152 entries",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 26,
+			"frames": 0
+		},
+		{
+			"index": 10,
+			"kind": "read",
+			"target": "shown",
+			"detail": "shown = \"24\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 8308,
+			"frames": 54
+		},
+		{
+			"index": 12,
+			"kind": "click",
+			"target": "[data-tag=\"cc0\"]",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 3253,
+			"frames": 21
+		},
+		{
+			"index": 13,
+			"kind": "expect",
+			"target": "4 of 152 entries",
+			"detail": "appeared after 0.0 s",
+			"ok": true,
+			"ms": 25,
+			"frames": 0
+		},
+		{
+			"index": 14,
+			"kind": "read",
+			"target": "narrowed",
+			"detail": "narrowed = \"4\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 15,
+			"kind": "hold",
+			"target": "1500",
+			"detail": "1500 ms",
+			"ok": true,
+			"ms": 6754,
+			"frames": 45
+		},
+		{
+			"index": 16,
+			"kind": "scroll",
+			"target": "200",
+			"detail": "scrolled 200 px",
+			"ok": true,
+			"ms": 8055,
+			"frames": 54
+		},
+		{
+			"index": 17,
+			"kind": "hold",
+			"target": "2800",
+			"detail": "2800 ms",
+			"ok": true,
+			"ms": 12004,
+			"frames": 84
+		}
+	],
+	"facts": {
+		"entries": "152",
+		"sections": "15",
+		"freeToUse": "121",
+		"shown": "24",
+		"narrowed": "4"
+	},
+	"saw": [
+		"24 of 152 entries",
+		"4 of 152 entries"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": {
+		"path": "public/x-media/awesome/reel.mp4",
+		"sha256": "88c5cf3829d135e83e3c67a7a192a0139fcb2de997227dc2cfab49bcf7ba7d53",
+		"frames": 375,
+		"motion": 0.34,
+		"durationSec": 12.5,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

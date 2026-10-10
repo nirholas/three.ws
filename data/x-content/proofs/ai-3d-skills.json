@@ -1,0 +1,168 @@
+{
+	"id": "ai-3d-skills",
+	"scenarioHash": "53c8ff300272da1ed65e90214db7043e137868a163100c501da0576980363b48",
+	"ranAt": "2026-10-10T03:50:36.702Z",
+	"target": {
+		"commit": "ce1b779b0",
+		"revision": "three-ws-api-00486-4nx"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/docs/agent-skills",
+			"detail": "loaded https://three.ws/docs/agent-skills",
+			"ok": true,
+			"ms": 6847,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "scroll",
+			"target": "The 3D-creation skills",
+			"detail": "scrolled 4941 px",
+			"ok": true,
+			"ms": 7287,
+			"frames": 48
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "3000",
+			"detail": "3000 ms",
+			"ok": true,
+			"ms": 13340,
+			"frames": 90
+		},
+		{
+			"index": 4,
+			"kind": "goto",
+			"target": "https://three.ws/objects",
+			"detail": "loaded https://three.ws/objects",
+			"ok": true,
+			"ms": 9616,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "type",
+			"target": "chair",
+			"detail": "typed 5 characters",
+			"ok": true,
+			"ms": 3826,
+			"frames": 26
+		},
+		{
+			"index": 6,
+			"kind": "expect",
+			"target": "24 of 24 shown",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 125,
+			"frames": 0
+		},
+		{
+			"index": 7,
+			"kind": "scroll",
+			"target": "640",
+			"detail": "scrolled 640 px",
+			"ok": true,
+			"ms": 10922,
+			"frames": 45
+		},
+		{
+			"index": 8,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 14279,
+			"frames": 54
+		},
+		{
+			"index": 9,
+			"kind": "scroll",
+			"target": "560",
+			"detail": "scrolled 560 px",
+			"ok": true,
+			"ms": 16047,
+			"frames": 54
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "1800",
+			"detail": "1800 ms",
+			"ok": true,
+			"ms": 14465,
+			"frames": 54
+		},
+		{
+			"index": 11,
+			"kind": "goto",
+			"target": "https://three.ws/api/catalog?q=chair&limit=1",
+			"detail": "loaded https://three.ws/api/catalog?q=chair&limit=1",
+			"ok": true,
+			"ms": 3165,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "read",
+			"target": "total",
+			"detail": "total = \"3961\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 13,
+			"kind": "read",
+			"target": "license",
+			"detail": "license = \"CC0\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 14,
+			"kind": "hold",
+			"target": "3600",
+			"detail": "3600 ms",
+			"ok": true,
+			"ms": 12498,
+			"frames": 108
+		}
+	],
+	"facts": {
+		"total": "3961",
+		"license": "CC0"
+	},
+	"saw": [
+		"24 of 24 shown"
+	],
+	"responses": [],
+	"cuts": [
+		{
+			"afterStep": 4,
+			"seconds": 9.6
+		},
+		{
+			"afterStep": 11,
+			"seconds": 3.1
+		}
+	],
+	"video": {
+		"path": "public/x-media/ai-3d-skills/reel.mp4",
+		"sha256": "93b53bf8d2ab371fcfabae487e07ea21dbbd81096f18531d6aed36dae829cdc9",
+		"frames": 479,
+		"motion": 0.471,
+		"durationSec": 15.97,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}

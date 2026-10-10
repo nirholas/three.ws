@@ -1,64 +1,127 @@
 {
 	"id": "ai-3d-skills",
-	"contentHash": "3a17c911e9fde0cb3ce40c01b420644d46f4ad8eabe9d28a893aa02482572801",
-	"reviewedAt": "2026-10-09T02:57:13.467Z",
+	"contentHash": "0b04402eacee66568a4a1435c76f22ce41c9b64778b8fc0b0eca6c5549566efc",
+	"reviewedAt": "2026-10-10T04:29:57.068Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
-		"Your AI can make 3D now.\n\nInstall our free 3D skills for Claude, then ask it for a chair.\n\nIt checks 3,500+ free 3D assets first. If nothing fits, it makes a new model from your words.\n\nNo account. No API key.\n\nthree.ws/docs/agent-skills"
+		"Before an AI agent asks a GPU to build a chair, it can check whether one already exists. The find-3d-assets skill searches more than 3,500 free assets first: CC0 props, rigged characters and motion clips, one GET, no account, no API key.\n\nA hit is a finished GLB with its license and a direct URL. Only when nothing fits does generate-3d-model write a new textured model from a sentence, on the free lane.",
+		"The order is the point. An existing asset is instant where a generation is GPU minutes, so the skill's own description tells the agent to look here before it generates.\n\nThe skills install as a Claude Code plugin, a project folder or a Claude project: three.ws/docs/agent-skills"
 	],
 	"lint": [],
 	"verification": {
 		"ok": true,
 		"checks": [
 			{
-				"claim": "3,500+ free 3D assets",
-				"kind": "evidence:page",
-				"target": "https://three.ws/api/catalog?limit=1",
+				"claim": "searches more than 3,500 free assets first",
+				"kind": "evidence:proof",
+				"target": "total",
 				"ok": true,
-				"detail": "live page shows \"\"total\":3961\""
+				"detail": "the run read total = \"3961\", at least 3500"
 			},
 			{
-				"claim": "free 3D skills for Claude",
-				"kind": "evidence:file",
-				"target": "docs/agent-skills.md",
-				"ok": true,
-				"detail": "file supports the claim"
-			},
-			{
-				"claim": "free 3D skills for Claude",
-				"kind": "evidence:page",
-				"target": "https://three.ws/skills/3d-studio/generate-3d-model/SKILL.md",
-				"ok": true,
-				"detail": "live page shows \"generate-3d-model\""
-			},
-			{
-				"claim": "It checks 3,500+ free 3D assets first",
+				"claim": "searches more than 3,500 free assets first",
 				"kind": "evidence:file",
 				"target": ".agents/skills/find-3d-assets/SKILL.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "it makes a new model from your words",
-				"kind": "evidence:file",
-				"target": ".agents/skills/generate-3d-model/SKILL.md",
+				"claim": "The find-3d-assets skill searches",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
 				"ok": true,
-				"detail": "file supports the claim"
+				"detail": "live page shows \"find-3d-assets\""
 			},
 			{
-				"claim": "No account. No API key.",
+				"claim": "CC0 props, rigged characters and motion clips",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"CC0 props, rigged characters, and the motion-clip library\""
+			},
+			{
+				"claim": "one GET, no account, no API key",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"GET /api/catalog\""
+			},
+			{
+				"claim": "one GET, no account, no API key",
 				"kind": "evidence:file",
 				"target": ".agents/skills/find-3d-assets/SKILL.md",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "No account. No API key.",
+				"claim": "A hit is a finished GLB with its license and a direct URL",
+				"kind": "evidence:proof",
+				"target": "license",
+				"ok": true,
+				"detail": "the run read license = \"CC0\""
+			},
+			{
+				"claim": "A hit is a finished GLB with its license and a direct URL",
+				"kind": "evidence:page",
+				"target": "https://three.ws/api/catalog?q=chair&limit=1",
+				"ok": true,
+				"detail": "live page shows \"\"format\":\"glb\"\""
+			},
+			{
+				"claim": "Only when nothing fits does generate-3d-model write a new textured model from a sentence, on the free lane",
 				"kind": "evidence:file",
-				"target": ".agents/skills/generate-3d-model/SKILL.md",
+				"target": ".agents/skills/find-3d-assets/SKILL.md",
 				"ok": true,
 				"detail": "file supports the claim"
+			},
+			{
+				"claim": "Only when nothing fits does generate-3d-model write a new textured model from a sentence, on the free lane",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"text → textured GLB on the free forge_free lane\""
+			},
+			{
+				"claim": "An existing asset is instant where a generation is GPU minutes",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"an existing asset is instant where a generation is GPU minutes\""
+			},
+			{
+				"claim": "the skill's own description tells the agent to look here before it generates",
+				"kind": "evidence:file",
+				"target": ".agents/skills/find-3d-assets/SKILL.md",
+				"ok": true,
+				"detail": "file supports the claim"
+			},
+			{
+				"claim": "The skills install as a Claude Code plugin, a project folder or a Claude project",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"a) As a Claude Code plugin\""
+			},
+			{
+				"claim": "The skills install as a Claude Code plugin, a project folder or a Claude project",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"b) Dropped into a project\""
+			},
+			{
+				"claim": "The skills install as a Claude Code plugin, a project folder or a Claude project",
+				"kind": "evidence:page",
+				"target": "https://three.ws/docs/agent-skills",
+				"ok": true,
+				"detail": "live page shows \"c) Uploaded to a Claude app / project\""
+			},
+			{
+				"kind": "probe:scenario",
+				"target": "the filmed scenario",
+				"ok": true,
+				"detail": "14 steps passed against the live product, every claimed fact still holds (total 3961, license CC0)"
 			},
 			{
 				"kind": "probe:api",
@@ -98,28 +161,19 @@
 			"accuracy": 5,
 			"clarity": 5,
 			"specificity": 5,
-			"voice": 4,
+			"voice": 5,
 			"professionalism": 5,
 			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "voice",
-				"quote": "No account. No API key.",
-				"problem": "Sits close to the short-sentence drumbeat structure the voice contract warns reads as copywriting, though unlike a banned drumbeat each statement is a checkable fact verified in the skill files, not a bare adjective.",
-				"fix": "Optional: merge into 'No account or API key needed.' if a second pass is ever required; acceptable as shipped."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Your AI can make 3D now.\n\nInstall our free 3D skills for Claude, then ask it for a chair.\n\nIt checks 3,500+ free 3D assets first. If nothing fits, it makes a new model from your words.\n\nNo account. No API key.\n\nthree.ws/docs/agent-skills"
+				"Before an AI agent asks a GPU to build a chair, it can check whether one already exists. The find-3d-assets skill searches more than 3,500 free assets first: CC0 props, rigged characters and motion clips, one GET, no account, no API key.\n\nA hit is a finished GLB with its license and a direct URL. Only when nothing fits does generate-3d-model write a new textured model from a sentence, on the free lane.",
+				"The order is the point. An existing asset is instant where a generation is GPU minutes, so the skill's own description tells the agent to look here before it generates.\n\nThe skills install as a Claude Code plugin, a project folder or a Claude project: three.ws/docs/agent-skills"
 			],
-			"altText": [
-				"A three.ws card reading 'Your AI can make 3D now.' beside a browser window showing the free three.ws object library: a grid of CC0 3D models including an alarm clock, a ceramic vase, an American football and an arm chair, each with Preview, AR and Download buttons"
-			]
+			"altText": []
 		},
-		"summary": "Every claim passes verification: the live catalog holds 3,961 assets (supporting '3,500+'), the skill files confirm the catalog-first behavior, text-to-model generation, and the no-account no-key requirement, and the link serves HTTP 200. The image matches the copy (free library including an arm chair), alt text is accurate, and the only note is a minor style nudge on the 'No account. No API key.' closing, which is factual and verified rather than adjective copywriting.",
+		"summary": "Every claim passed verification against the live docs, the skill file, and a 14-step scenario run that read total 3,961 and license CC0, and the reel frames show exactly what each caption and the copy say, including the raw JSON with format glb, license CC0, and a direct URL. Voice, structure, and the single link all match the house contract, so this ships unchanged.",
 		"model": "nvidia:moonshotai/kimi-k3",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
