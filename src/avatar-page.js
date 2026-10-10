@@ -161,6 +161,10 @@ const MODEL_STORAGE_KEY = 'avatar_chat_model_v1';
 // ── Init ──────────────────────────────────────────────────────────────
 
 async function init() {
+	// A working share link from the first paint: the named one below replaces it
+	// once the entity resolves, and a page whose entity never resolves still has
+	// a button that goes somewhere.
+	setShareXHref('Check this out on three.ws');
 	({ agent, avatar } = await resolveEntity(entityId));
 	avatarId = avatar.id || '';
 	viewerOwns = mode === 'agent' ? !!agent.is_owner : !!avatar.owner_id;
@@ -1603,7 +1607,6 @@ function bindTabs() {
 
 function bindShareButtons() {
 	const linkBtn = $('share-link');
-	const twBtn = $('share-twitter');
 	if (linkBtn) {
 		linkBtn.addEventListener('click', async () => {
 			try {
@@ -1619,14 +1622,19 @@ function bindShareButtons() {
 			}
 		});
 	}
-	if (twBtn && avatar) {
-		const text =
+	if (avatar) {
+		setShareXHref(
 			mode === 'agent'
 				? `Meet "${avatar.name}", a 3D AI agent on three.ws`
-				: `Check out "${avatar.name}", a 3D avatar on three.ws`;
-		const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
-		twBtn.href = url;
+				: `Check out "${avatar.name}", a 3D avatar on three.ws`,
+		);
 	}
+}
+
+function setShareXHref(text) {
+	const twBtn = $('share-twitter');
+	if (!twBtn) return;
+	twBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
 }
 
 // ── Owner actions (Edit / Deploy on-chain / Launch Pump.fun) ─────────

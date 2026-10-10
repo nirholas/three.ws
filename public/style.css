@@ -849,9 +849,13 @@ header .site-wordmark .wordmark-logo {
 		transform var(--duration-base) var(--ease-standard);
 }
 
+/* Scale from the top-right corner rather than slide in from past the edge: a
+   translateX on the hidden panel left it 12px outside the viewport, widening
+   the page's scrollable area even while it was invisible. */
 .gui-wrap--hidden {
 	opacity: 0;
-	transform: translateX(12px);
+	transform: scale(0.97);
+	transform-origin: top right;
 	pointer-events: none !important;
 	visibility: hidden;
 }

@@ -85,9 +85,18 @@ function getHdriTexture() {
 		// three into a hard "module not found" build failure on older three. A
 		// runtime try/catch cannot rescue that: the failure is at build time.
 		// Revisit when the peer floor moves to >= 0.180.0.
-		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) =>
-			new RGBELoader().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`),
-		);
+		//
+		// The warning is avoidable without naming the new module: from r180
+		// RGBELoader is an empty `extends HDRLoader` shim, so its parent class IS
+		// HDRLoader, reachable at runtime. Before r180 the parent is
+		// DataTextureLoader, which leaves `parse()` to its subclass, so owning
+		// `parse` is what tells the two apart (class names do not survive
+		// minification). Old three keeps constructing RGBELoader itself.
+		_hdriPromise = import('three/addons/loaders/RGBELoader.js').then(({ RGBELoader }) => {
+			const parent = Object.getPrototypeOf(RGBELoader);
+			const HDR = Object.prototype.hasOwnProperty.call(parent?.prototype ?? {}, 'parse') ? parent : RGBELoader;
+			return new HDR().loadAsync(`${AR_LAUNCH_ORIGIN}/hdri/studio.hdr`);
+		});
 	}
 	return _hdriPromise;
 }
