@@ -653,6 +653,72 @@
 			},
 			"schemaHash": "755f21dddd24"
 		},
+	"api/_mcp/tools/domains.js": [
+		{
+			"name": "domain_check",
+			"title": "Check one web domain",
+			"descHead": "One answer for one fully-qualified name: available or not, with a clear ",
+			"descHash": "6648209f239b",
+			"annotations": "ref:READ",
+			"schemaHash": "f3ac2146f00a"
+		},
+		{
+			"name": "domain_connect",
+			"title": "Connect a domain to an agent page",
+			"descHead": "Serve an agent's public page on a domain you registered here: creates th",
+			"descHash": "40bdfd435bb4",
+			"annotations": "ref:WRITE",
+			"schemaHash": "90cd775ae53a"
+		},
+		{
+			"name": "domain_connect_status",
+			"title": "Check a connected domain",
+			"descHead": "Whether a connected domain is live: the certificate state, the DNS names",
+			"descHash": "460ca38b913e",
+			"annotations": "ref:READ",
+			"schemaHash": "5a390848d5ae"
+		},
+		{
+			"name": "domain_pricing",
+			"title": "List domain TLD pricing",
+			"descHead": "The extensions Google Cloud Domains sells with their yearly registration",
+			"descHash": "7693f70918c9",
+			"annotations": "ref:READ",
+			"schemaHash": "3317b68691fa"
+		},
+		{
+			"name": "domain_register",
+			"title": "Register a domain (spends credits)",
+			"descHead": "Register the domain domain_register_quote priced, paying the exact yearl",
+			"descHash": "7e2697e2a4fd",
+			"annotations": "ref:MONEY",
+			"schemaHash": "55d848b7dc66"
+		},
+		{
+			"name": "domain_register_quote",
+			"title": "Quote a domain registration",
+			"descHead": "Price a domain registration without buying it: the exact yearly price, t",
+			"descHash": "1451c7595b98",
+			"annotations": "ref:WRITE",
+			"schemaHash": "a360feac8341"
+		},
+		{
+			"name": "domain_search",
+			"title": "Search web domains",
+			"descHead": "Suggest web domains for a name across TLDs, live from Google Cloud Domai",
+			"descHash": "6c8a2d58bccd",
+			"annotations": "ref:READ",
+			"schemaHash": "1684dd9c948b"
+		},
+		{
+			"name": "domain_status",
+			"title": "Poll a domain registration",
+			"descHead": "The state of a registration you started: registering, active (with its e",
+			"descHash": "f6cb05ee34ec",
+			"annotations": "ref:READ",
+			"schemaHash": "1f18b648f326"
+		}
+	],
 		{
 			"name": "recall",
 			"title": "Recall",

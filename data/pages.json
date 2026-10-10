@@ -35,7 +35,7 @@
 			},
 			{
 				"title": "Economy and $THREE",
-				"paths": ["/three-token", "/three", "/three-launchpad", "/launch", "/launches", "/pay", "/credits", "/pricing", "/economy", "/analytics"]
+				"paths": ["/three-token", "/three", "/three-launchpad", "/launch", "/launches", "/pay", "/credits", "/domains", "/pricing", "/economy", "/analytics"]
 			},
 			{
 				"title": "Learn",
@@ -2920,6 +2920,14 @@
 			"description": "Sign-in, dashboard, billing.",
 			"pages": [
 				{
+					"path": "/domains",
+					"title": "Domains",
+					"description": "Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/credits",
 					"title": "Credits",
 					"description": "Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.",
@@ -3503,6 +3511,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-09"
+				},
+				{
+					"path": "/docs/domains",
+					"title": "Docs · Web Domains",
+					"description": "Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
 				},
 				{
 					"path": "/docs/materialize",

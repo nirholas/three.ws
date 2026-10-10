@@ -26,6 +26,7 @@ import {
 	escapeHtml as esc,
 } from './shared/coin-format.js';
 import { markNoindex } from './seo-meta.js';
+import { mountDomainSuggestions } from './domains/suggest-panel.js';
 
 const TIME_RANGES = [
 	{ label: '24H', days: 1 },
@@ -1163,6 +1164,7 @@ async function main() {
 	renderDevCom(coin);
 	renderAbout(coin);
 	renderLinks(coin);
+	mountDomainSuggestions($('cv-domains'), coin.name);
 	renderProvenance(coin, source);
 	// Chart, markets, and news stream in independently of the core profile.
 	// A remembered non-CoinGecko source mounts its terminal directly and defers

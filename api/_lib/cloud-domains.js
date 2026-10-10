@@ -124,15 +124,15 @@ async function call(path, { method = 'GET', body, query } = {}) {
 	};
 	// A write is never retried: a register that timed out may still have
 	// succeeded, and the caller resolves that through the idempotency key.
-	// A 4xx other than 429 is the API's answer about this request, so it comes
-	// back as a response to map; 429 and 5xx are transient and are retried.
+	// Every 4xx, 429 included, is the API's answer about this request, so it
+	// comes back as a response to map (a quota 429 is not worth retrying inside
+	// the call and must not trip the breaker); only 5xx is transient.
 	const res = await fetchUpstream(url, init, {
 		name: 'cloud-domains',
 		timeoutMs: 20_000,
 		attempts: method === 'GET' ? 3 : 1,
-		okWhen: (r) => r.ok || (r.status >= 400 && r.status < 500 && r.status !== 429),
+		okWhen: (r) => r.status < 500,
 	}).catch((err) => {
-		if (err?.status === 429) throw mapUpstreamError(429, null);
 		throw new CloudDomainsError(`Cloud Domains is unavailable: ${err?.message || 'network error'}`, { status: 502, code: 'domains_upstream_error' });
 	});
 	const text = await res.text();
@@ -193,5 +193,13 @@ export async function configureCustomDns(domainName, nameServers, { validateOnly
 			updateMask: 'customDns',
 			validateOnly,
 		},
+	});
+}
+
+/** Switch a registration between AUTOMATIC_RENEWAL and MANUAL_RENEWAL at the registrar. */
+export async function setRenewalMethod(domainName, method) {
+	return call(`${LOCATION}/registrations/${domainName}:configureManagementSettings`, {
+		method: 'POST',
+		body: { managementSettings: { preferredRenewalMethod: method }, updateMask: 'preferredRenewalMethod' },
 	});
 }

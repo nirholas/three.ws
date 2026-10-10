@@ -376,6 +376,28 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
 	const url = new URL(req.url, 'http://internal');
 	const pathname = url.pathname;
+// Custom domains. A host a user registered and connected here
+// (api/_lib/domain-connect.js, table web_domain_hosts) serves that agent's
+// public page at its root. Everything else on the host (assets, /api, the
+// agent page's own subpaths) resolves as on the apex, so the page works as it
+// does on three.ws. Only the root document is rewritten.
+app.use(async (req, res, next) => {
+	const host = String(req.headers.host || '').toLowerCase().split(':')[0];
+	if (!host || host === CANONICAL_HOST || host === WWW_HOST || host.endsWith('.run.app') || host === 'localhost') return next();
+	if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+	try {
+		const { agentForHost } = await import('../api/_lib/domain-connect.js');
+		const agentId = await agentForHost(host);
+		if (agentId && (req.path === '/' || req.path === '')) {
+			const q = req.url.indexOf('?');
+			req.url = `/agents/${agentId}${q === -1 ? '' : req.url.slice(q)}`;
+		}
+	} catch (err) {
+		console.error('[server] custom-domain lookup failed:', err?.message || err);
+	}
+	next();
+});
+
 	for (const route of phase1Routes) {
 		const m = route.re.exec(pathname);
 		if (!m) continue;

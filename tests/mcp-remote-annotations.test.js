@@ -40,6 +40,7 @@ const CATALOGS = [
 //   agent_card_create   buys a card or gift card with the agent's funds
 //   agent_card_reveal   exposes a card's secret number or code, once
 //   agent_card_cancel, agent_card_withdraw   close a card or pull its funds
+//   domain_register     buys a web domain from the user's credits, one year
 //   paired_launch       launches a coin and its opening buy on Robinhood Chain
 //   paired_claim_fees   signs and broadcasts the fee-collection transaction on
 //                       Robinhood Chain (marked destructive on 2026-10-09)
@@ -66,7 +67,7 @@ const DESTRUCTIVE_TOOLS = new Set([
 	'delete_avatar', 'forget', 'delete_custom_skill', 'delete_agent', 'automation_delete',
 	'pay_and_call', 'persona_tip', 'persona_send',
 	'agent_card_create', 'agent_card_reveal', 'agent_card_cancel', 'agent_card_withdraw',
-	'paired_launch', 'paired_claim_fees', 'automation_trigger',
+	'domain_register', 'paired_launch', 'paired_claim_fees', 'automation_trigger',
 	'create_marketplace_listing', 'delist_marketplace_listing', 'place_bid', 'buy_now',
 	'accept_marketplace_bid', 'withdraw_marketplace_bid',
 	'predictions_open', 'predictions_close', 'predictions_redeem',

@@ -957,6 +957,11 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
+	// Web domains. Every uncached search or check is a metered Cloud Domains
+	// request (300 a day per project), so a caller gets a small hourly budget and
+	// a registration attempt, which spends credits, a smaller one.
+	domainsLookup: (key) => getLimiter('domains:lookup', { limit: 40, window: '1 h' }).limit(key),
+	domainsRegister: (key) => getLimiter('domains:register', { limit: 10, window: '1 h', critical: true }).limit(key),
 	// Free generation lane (NVIDIA NIM TRELLIS draft). No Replicate/vendor spend,
 	// so it gets a much higher per-principal ceiling than the paid bucket and is
 	// NON-critical: a Redis outage must never deny a zero-cost generation (fail

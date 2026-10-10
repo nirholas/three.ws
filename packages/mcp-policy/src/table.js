@@ -157,6 +157,17 @@ export const POLICY = {
 		agent_card_connect: r('cards'),
 		agent_card_connect_link: w('cards'),
 		// Agent lifecycle, runs and automations (api/_mcp/tools/agent-lifecycle.js).
+		// Web domains (api/_mcp/tools/domains.js). Registration spends credits, so it
+		// is financial: domain_register_quote validates against the registrar and
+		// domain_register needs its quote_id and confirm_spend.
+		domain_search: r('domains'),
+		domain_check: r('domains'),
+		domain_pricing: r('domains'),
+		domain_register_quote: w('domains'),
+		domain_register: f('domains', 'confirm_spend', 'domain_register_quote', ['domain', 'auto_renew', 'privacy']),
+		domain_status: r('domains'),
+		domain_connect: w('domains'),
+		domain_connect_status: r('domains'),
 		// Deletes are financial-tier because they cannot be undone. Swap and
 		// transfer automations gate themselves: connector keys are refused, the
 		// bearer needs wallet:write, and the call needs confirm_spend after the

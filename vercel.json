@@ -2538,6 +2538,10 @@
 		},
 		{
 			"src": "/showcase/?",
+		{
+			"src": "/domains/?",
+			"dest": "/domains.html"
+		},
 			"dest": "/app.html"
 		},
 		{
@@ -5550,6 +5554,10 @@
 		{
 			"src": "/discover/a/sol/([A-Za-z0-9]+)",
 			"dest": "/api/discover-detail?kind=solana&asset=$1"
+		{
+			"src": "/api/domains/([^/]+)",
+			"dest": "/api/domains/[action]?action=$1"
+		},
 		},
 		{
 			"src": "/discover/avatar/([^/]+)",
@@ -6776,6 +6784,10 @@
 		{
 			"path": "/api/cron/forge-finalize",
 			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/domain-renewals",
+			"schedule": "17 6 * * *"
 		},
 		{
 			"path": "/api/llm/health",

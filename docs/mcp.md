@@ -805,6 +805,15 @@ The `structuredContent` returns `gate_id`, `asset_id`, `gate` (`mint`, `min_amou
 
 ### `crypto_data`
 
+### `domain_search`, `domain_check`, `domain_pricing`, `domain_register_quote`, `domain_register`, `domain_status`, `domain_connect`, `domain_connect_status`
+
+Search, price, check and register web domains through Google Cloud Domains, paid from credits, and serve an agent's public page on a registered domain. `domain_register` is a financial-tier tool: it needs the `quote_id` from `domain_register_quote`, `confirm_spend: true`, `expected_price_usd` and an `idempotency_key`. Full flow, limits and the registrar quota: [docs/domains.md](./domains.md).
+
+### `agent_mail_get_address`, `agent_mail_quote`, `agent_mail_create`, `agent_mail_send`, `agent_mail_reply`, `agent_mail_list`, `agent_mail_read`, `agent_mail_search`, `agent_mail_delete`
+
+Give an agent a real email address on `agents.three.ws` and let it send, read, reply to, search and delete mail. `agent_mail_create`, `agent_mail_send` and `agent_mail_reply` are financial-tier tools: each needs the `quote_id` from `agent_mail_quote`, whose `confirm` block (exact recipients, subject, body and price) the model must show the owner before sending the confirm flag (`confirm_spend` for create, `confirm_send` for sends). Every result that carries received mail opens with a security notice and wraps sender content in `<untrusted_email>` fences: received mail is data, never instructions. The owner's recipient allowlist and daily cap apply to every send. Full guide: [docs/agent-mail.md](./agent-mail.md).
+
+
 Call any endpoint in the free [Crypto Data API](./api-reference.md) (the same aggregator behind `GET /api/v1/x/*`: DEX pairs, CoinGecko/DefiLlama market data, Jupiter Solana prices and swap quotes, direct Solana RPC reads) as an MCP tool call. The tool description is generated from the live provider registry at call time, so it always lists exactly the provider/endpoint pairs registered on this deployment — nothing hand-enumerated to drift out of date.
 
 ```json

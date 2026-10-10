@@ -67,6 +67,7 @@ export const GROUPS = Object.freeze([
 	{ id: 'lending', label: 'Lending', summary: 'Supply, borrow, and repay on lending markets.' },
 	{ id: 'predictions', label: 'Predictions', summary: 'Prediction market positions.' },
 	{ id: 'launch', label: 'Launch', summary: 'Launch a coin: metadata upload, vanity mints, launch, and creator-fee collection.' },
+	{ id: 'domains', label: 'Domains', summary: 'Search, price and register web domains, and connect a domain to an agent page. Registration spends credits.' },
 	{ id: 'marketplace', label: 'Marketplace', summary: 'Browse and hire agents and skills, the job board, and bounty markets.' },
 	{ id: 'cards', label: 'Cards', summary: 'Agent payment cards.' },
 	{ id: 'mail', label: 'Mail', summary: 'Outward messages: paid knocks, announcements to a person, and agent mail.' },

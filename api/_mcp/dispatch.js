@@ -41,6 +41,13 @@ const PUBLIC_TOOLS = new Set([
 	'paired_markets',
 	'paired_coins',
 	'paired_coin',
+	// Web-domain lookups: the registrar's public availability and prices, no
+	// caller data. Per-caller hourly limits protect the registrar's daily quota.
+	'domain_search',
+	'domain_check',
+	'domain_pricing',
+	// The launch-lane comparison is live platform config, no caller data.
+	'launch_lanes',
 ]);
 
 export function isPublicTool(name) {

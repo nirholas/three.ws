@@ -1022,6 +1022,7 @@ const appConfig = {
 				status: resolve(__dirname, 'pages/status.html'),
 				xr: resolve(__dirname, 'pages/xr.html'),
 				temporary: resolve(__dirname, 'pages/temporary.html'),
+				domains: resolve(__dirname, 'pages/domains.html'),
 				irl: resolve(__dirname, 'pages/irl.html'),
 				daily: resolve(__dirname, 'pages/daily.html'),
 				'ar-studio': resolve(__dirname, 'pages/ar-studio.html'),

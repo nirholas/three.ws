@@ -895,3 +895,14 @@ JSON body (x402 block, monitor block) for subsystem truth.
 - `vercel.json` is now a **live config file consumed by server/index.mjs**
   (routes + crons) — do NOT delete it as "Vercel leftovers".
 - The `deploy` npm script still points at Vercel; superseded by `deploy:gcp`.
+
+## Web domains
+
+Agents register web domains through Google Cloud Domains and serve their public page on them. Product doc: [docs/domains.md](../domains.md). Code: `api/_lib/cloud-domains.js`, `api/_lib/domains-service.js`, `api/_lib/domain-connect.js`, `api/cron/domain-renewals.js`.
+
+- **Identity.** The API never calls Cloud Domains as its own runtime identity. It impersonates `three-ws-domains@aerial-vehicle-466722-p5.iam.gserviceaccount.com` through IAM Credentials `generateAccessToken`; the runtime account holds `roles/iam.serviceAccountTokenCreator` on that one account. No key exists for it. The account holds `roles/domains.admin`, `roles/dns.admin` and the custom role `threewsDomainConnect` (`compute.sslCertificates.create/delete/get/list`, `compute.targetHttpsProxies.get/setSslCertificates/use`, `compute.globalAddresses.get`, `compute.globalOperations.get`). `DOMAINS_ACCESS_TOKEN` overrides it for workstation scripts only.
+- **Quota.** `domains.googleapis.com` allows 300 sensitive requests per day and 100 per minute per project, and 20 registrations. The daily window resets about 07:00 UTC. A 3000/day increase was requested (preference `domains-sensitive-per-day`). `GET /api/domains/quota` shows the platform's approximate use.
+- **TLD snapshot.** `node scripts/refresh-domain-tlds.mjs` regenerates `data/domain-tlds.json` (about 150 candidate TLDs probed serially, around 3 minutes and 150 quota calls). Run it right after a quota reset, then commit the file.
+- **Connect procedure** (what `connectDomain` automates): Cloud DNS managed zone `tw-<sha12>` with `A` records for the apex and `www` at the named global address `three-ws-ip` (136.68.246.178); `configureDnsSettings` on the registration to the zone's nameservers; a Google-managed certificate `tw-<sha12>` created and attached to `three-ws-https-proxy` by replacing its certificate list under a Redis lock; the host becomes `live` when the certificate is `ACTIVE`. The proxy holds at most 15 certificates, one of which is `three-ws-cert`; past that `connect` answers `cert_capacity`. Express routes a `live` host's `/` to `/agents/<id>` ([server/index.mjs](../../server/index.mjs)).
+- **Renewals.** `/api/cron/domain-renewals` (daily, in `vercel.json`) debits credits 14 days before expiry and otherwise switches the name to manual renewal. After adding it, run `npm run deploy:gcp:sync-crons`.
+- **Rollback.** Detach a certificate with `gcloud compute target-https-proxies update three-ws-https-proxy --ssl-certificates=<remaining list> --global`; delete the `web_domain_hosts` row (or set status `failed`) to stop host routing.

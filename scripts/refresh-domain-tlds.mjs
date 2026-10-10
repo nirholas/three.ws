@@ -16,27 +16,14 @@
 import { writeFileSync } from 'node:fs';
 import { retrieveRegisterParameters, moneyToNumber } from '../api/_lib/cloud-domains.js';
 
-const CANDIDATES = `com net org info biz name mobi pro tel asia xyz online site store tech cloud app dev page art shop club live
-life studio media agency academy accountant actor adult africa ai airforce army attorney auction audio auto band bar bargains
-beer best bet bid bike bio black blog blue boutique build builders business buzz cab cafe camera camp capital car cards care
-career careers cash casino catering center ceo charity chat cheap church city claims cleaning click clinic clothing coach codes
-coffee community company computer condos construction consulting contact contractors cool coupons credit creditcard cricket
-cruises dance date dating deals degree delivery democrat dental dentist design diamonds digital direct directory discount
-doctor dog domains earth education email energy engineer engineering enterprises equipment estate events exchange expert
-exposed express fail faith family fan fans farm fashion film finance financial fish fishing fit fitness flights florist flowers
-football forsale foundation fun fund furniture futbol fyi gallery game games garden gift gifts gives glass global gmbh gold
-golf graphics gratis green gripe group guide guitars guru haus health healthcare help hockey holdings holiday home horse
-hospital host house how icu immo immobilien inc industries ink institute insure international investments io irish jewelry
-juegos kaufen kim kitchen kiwi land lawyer lease legal lgbt lighting limited limo link live loan loans lol love ltd luxury
-maison management market marketing mba media memorial men menu moda moe money mortgage movie navy network new news ninja
-nyc one onl organic page partners parts party pet photo photography photos pics pictures pink pizza place plumbing plus
-poker porn press productions promo properties property pub quest racing recipes red rehab reise reisen rent rentals repair
-report republican rest restaurant review reviews rich rip rocks rodeo run sale salon sarl school schule science security
-services sex sexy shiksha shoes show singles site ski soccer social software solar solutions soy space sport store stream
-studio study style sucks supplies supply support surf surgery systems tax taxi team tech technology tennis theater tips
-tires today tools top tours town toys trade trading training tube university uno vacations vegas ventures vet viajes video
-villas vin vip vision vodka vote voting voto voyage wang watch webcam website wedding wiki win wine work works world wtf
-xyz yoga zone co us uk de fr es it nl be ch at se no dk fi pl cz pt ie eu ca au nz jp in br mx ar cl`.split(/\s+/);
+const CANDIDATES = `com net org info biz name pro xyz online site store tech cloud app dev page art shop club live life studio media agency
+academy ai auto bar best blog blue build business buzz cafe capital cash center chat city click coach codes community company
+computer consulting cool dance deals design digital direct domains earth email energy events exchange expert express family
+fan farm finance fit fun fund fyi gallery game games global gold golf graphics green group guide guru health help holdings
+home host house inc industries ink io land link lol love ltd market marketing money network news ninja one partners party
+photo pics place plus press productions promo run sale school science services show social software solutions space support
+systems team technology today tools top town trade training tube vip wiki win work works world wtf zone co us uk de fr es it
+nl ch se ca au in`.split(/\s+/);
 
 const dryRun = process.argv.includes('--dry-run');
 const unique = [...new Set(CANDIDATES)];
