@@ -178,7 +178,7 @@ export async function setup(ctx) {
 		for (const w of writes) {
 			if (w.error) line(`  ${c.red(sym.fail)} ${w.client.label.padEnd(15)} ${w.error}`);
 			else {
-				const viaProxy = servers.some((s) => usesProxy({ client: w.client, server: s, mode, forceProxy: flags.proxy })) ? c.dim(' (OAuth via the three-ws proxy)') : '';
+				const viaProxy = servers.some((s) => usesProxy({ client: w.client, server: s, mode, forceProxy: flags.proxy })) ? c.dim(mode === 'apikey' ? ' (via the three-ws proxy; the key stays in the credential store)' : ' (OAuth via the three-ws proxy)') : '';
 				line(`  ${c.green(sym.ok)} ${w.client.label.padEnd(15)} ${tildify(w.file)} ${c.dim(`${w.servers.length} servers`)}${viaProxy}`);
 			}
 		}

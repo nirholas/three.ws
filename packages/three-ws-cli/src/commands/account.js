@@ -67,6 +67,8 @@ export function scanClients(env, origin) {
 		const files = [];
 		for (const project of scopes) {
 			const file = client.configPath(env, { project });
+			// Run from the home directory, the project file IS the user file.
+			if (project && file === client.configPath(env, { project: false })) continue;
 			try {
 				const servers = readServers(client, env, { project });
 				const names = Object.entries(servers).filter(([name, entry]) => isThreeWsEntry(name, entry, origin)).map(([name, entry]) => ({ name, entry, project }));

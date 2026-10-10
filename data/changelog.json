@@ -29432,6 +29432,16 @@
 				"fix"
 			],
 			"link": "/gestures"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Set up your AI client with one command, and check it with doctor",
+			"summary": "Run npx three-ws --claude (or --cursor, --codex, --vscode, --windsurf) and the CLI signs you in, connects three.ws and verifies it, with no prompts. Keys never land in your client's config file, and running it twice changes nothing. New installers at three.ws/cli/install and three.ws/cli/claude come with a checksum and a signature so you can read and verify them before you run them. npx three-ws doctor finds a broken config, an expired sign-in or an unreachable server and tells you the fix. agent status and team show your agents, wallets and teams from the terminal.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/cli"
 		}
 	]
 }

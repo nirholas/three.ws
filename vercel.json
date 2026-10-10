@@ -564,6 +564,31 @@
 			"dest": "/changelog/entry/index.html"
 		},
 		{
+			"src": "/cli/(install|claude)(?:\\.sh)?",
+			"headers": {
+				"content-type": "text/plain; charset=utf-8",
+				"cache-control": "public, max-age=300",
+				"x-content-type-options": "nosniff"
+			},
+			"dest": "/cli/$1.sh"
+		},
+		{
+			"src": "/cli/(install|claude)\\.sh\\.sha256",
+			"headers": {
+				"content-type": "text/plain; charset=utf-8",
+				"cache-control": "public, max-age=300"
+			},
+			"dest": "/cli/$1.sh.sha256"
+		},
+		{
+			"src": "/cli/signing-key\\.pem",
+			"headers": {
+				"content-type": "text/plain; charset=utf-8",
+				"cache-control": "public, max-age=3600"
+			},
+			"dest": "/cli/signing-key.pem"
+		},
+		{
 			"src": "/changelog\\.json",
 			"headers": {
 				"content-type": "application/json; charset=utf-8",

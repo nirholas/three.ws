@@ -14,6 +14,30 @@ The three.ws MCP servers give your assistant 3D generation (text to 3D, image to
 
 Using one client that supports remote connectors? [three.ws/connect](https://three.ws/connect) adds three.ws to Claude, Cursor or VS Code in one click, with no terminal.
 
+## One command per client
+
+```bash
+npx three-ws --claude     # also --cursor --codex --vscode --windsurf --gemini --bob --hermes
+```
+
+Signs in, writes the servers, verifies them, and installs the three.ws skill for Claude Code, with no prompts. The config gets a `three-ws proxy` launcher, never a token: credentials stay in `~/.config/three-ws/credentials.json` (mode 600). Running it again changes nothing. Then: `claude "launch my agent"`.
+
+Hosted installers: `curl -fsSL https://three.ws/cli/install | sh` and `curl -fsSL https://three.ws/cli/claude | sh`. Every script ships with a `.sha256` checksum and an ed25519 `.sig`; download, read and verify before running: [three.ws/docs/cli#verify-before-you-run](https://three.ws/docs/cli#verify-before-you-run).
+
+```bash
+npx three-ws doctor              # bad config, expired sign-in, unreachable server, with the fix for each
+npx three-ws agent status        # agents, wallets and balances
+npx three-ws team                # your teams; `team status <id>` for one
+```
+
+### Clean-container check
+
+`tests/container/run.sh` packs this package and, for each client, starts a fresh `node:22` container, runs the hosted installer against a local stand-in platform, and asserts the config is written without a key, a second run changes nothing, `doctor` passes and the credential file is mode 600. Needs Docker.
+
+```bash
+bash packages/three-ws-cli/tests/container/run.sh
+```
+
 ## Common commands
 
 ```bash
