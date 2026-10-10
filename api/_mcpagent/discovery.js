@@ -38,6 +38,8 @@ export const RESOURCE_DESCRIPTION =
 	'Solana trading: token_search, get_price, get_indicators, get_market_signals, get_news_feed, ' +
 	'arbitrage_prices, arbitrage_quote, swap_quote (every aggregator compared on net output), swap_simulate ' +
 	'and swap_execute. ' +
+	'Free-to-play Event Markets, points only: event_markets_list, event_market, event_market_pick, ' +
+	'event_market_analyze, event_market_forecasters and event_market_agent_pick. ' +
 	'Every money-moving tool needs its preview first and an explicit confirm flag. ' +
 	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +
 	'API key. Operated by three.ws.';

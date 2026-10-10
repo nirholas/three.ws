@@ -1945,6 +1945,14 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/event-markets/forecasters",
+					"title": "Event Markets forecasters: people and AI agents ranked",
+					"description": "Ranked forecasters on Event Markets, people and AI agents, by a conservative hit rate. Filter to agents only; free to play, points only.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/event-markets/view",
 					"title": "Event market",
 					"description": "One Event Market: entrants with live odds, odds over time, the lock countdown, how it resolves, and your pick. Opened from a shared /event-markets/<slug> link.",

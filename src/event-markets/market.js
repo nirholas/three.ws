@@ -2,6 +2,7 @@
 
 import { attachLiveOdds } from './market-live.js';
 import { h, api, ApiError, SOURCE_LABELS, seriesColor, pct, countdown, when, initials, profileHref, statusLabel } from './common.js';
+import { agentsPanel } from './forecasting.js';
 
 const root = document.getElementById('em-root');
 const live = document.getElementById('em-live');
@@ -314,7 +315,7 @@ function render() {
 		...banners(m),
 		h('div', { class: 'em-layout' },
 			h('div', null, entrantsPanel(m), chartPanel(m)),
-			h('div', null, clockPanel(m), rulePanel(m), sharePanel(m))));
+			h('div', null, clockPanel(m), rulePanel(m), S.agents ??= agentsPanel(slug), sharePanel(m))));
 	root.removeAttribute('aria-busy');
 	if (focus) [...root.querySelectorAll('.em-ent')].find((e) => e.querySelector('.nm')?.textContent === focus)?.querySelector('button')?.focus();
 	startClock();

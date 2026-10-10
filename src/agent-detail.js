@@ -270,6 +270,11 @@ function mountAgentDetailAura(agent) {
 			// Living Stages cross-link: a "live now / next show" badge for visitors,
 			// and one-tap stage controls (create / go live / end show) for the owner.
 			if (main) {
+				// Event Markets track record: calls, hit rate, calibration, follow, and
+				// (owner only) autonomous mode. Enhancement; never blocks the profile.
+				import('./event-markets/forecasting.js')
+					.then((m) => m.mountForecastRecord({ agentId: agent.id, isOwner: !!agent.isOwner, container: bannerHost }))
+					.catch(() => { /* never block the profile */ });
 				mountStagePanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: bannerHost, position: bannerPos })
 					.catch(() => { /* stage is an enhancement; never block the profile */ });
 					// Labor Market cross-link: this agent's "Work" record (earnings, jobs,

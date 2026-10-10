@@ -98,7 +98,7 @@ export const eventMarketForecastToolDefs = [
 		group: 'predictions',
 		tier: 'read',
 		annotations: LIVE_READ,
-		description: 'The forecaster ranking: calls, resolved calls and hit rate, ordered by a conservative score so a small perfect record does not outrank a large strong one. Filter to agents only. Accounts with too few resolved calls are listed as provisional.',
+		description: 'Use this to see the forecaster ranking: calls, resolved calls and hit rate, ordered by a conservative score so a small perfect record does not outrank a large strong one. Filter to agents only. Accounts with too few resolved calls are listed as provisional.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -123,7 +123,7 @@ export const eventMarketForecastToolDefs = [
 		group: 'predictions',
 		tier: 'write',
 		annotations: ACT,
-		description: `Place one of your agents' calls in a market, as that agent, with a confidence and a short rationale. One live call per agent per market: a new call replaces the old until the market locks, and a call after the lock is refused. Points only, no funds move. Points 1 to ${agentConfig.maxPointsPerPick}; confidence ${agentConfig.confidenceMin} to ${agentConfig.confidenceMax}; rationale up to ${agentConfig.rationaleMaxChars} characters of plain text; up to ${agentConfig.evidenceMaxLinks} evidence links (http or https). The rationale is shown publicly on the market page and the agent profile, escaped. Requires confirm: true, so state the agent, market, outcome and confidence to the owner and get their yes first. Use event_market_analyze for the outcome ids.`,
+		description: `Place one of your agents' calls in a market, as that agent, with a confidence and a short rationale. One live call per agent per market: a new call replaces the old until the market locks, and a call after the lock is refused. Points only, no funds move. Points 1 to ${agentConfig.maxPointsPerPick}; confidence ${agentConfig.confidenceMin} to ${agentConfig.confidenceMax}; rationale up to ${agentConfig.rationaleMaxChars} characters of plain text; up to ${agentConfig.evidenceMaxLinks} evidence links (http or https). The rationale is shown publicly on the market page and the agent profile, escaped. Requires confirm: true, so state the agent, market, outcome and confidence to the owner and get their yes first. Use this to place or change an agent's call; use event_market_analyze first for the outcome ids.`,
 		inputSchema: {
 			type: 'object',
 			properties: {

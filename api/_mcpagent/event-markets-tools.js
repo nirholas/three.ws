@@ -114,7 +114,7 @@ export const eventMarketToolDefs = [
 		group: 'predictions',
 		tier: 'write',
 		annotations: ACT,
-		description: `Put free-play points on the outcome you think wins a market. One live pick per market: a new pick replaces the old one until the market locks, and a pick after the lock is refused. Points only, no funds move. Allowed ${pointRules().min_pick} to ${pointRules().max_pick_per_market} points per market, within a per-season budget. Requires confirm: true, so state the market, outcome and points to the owner and get their yes first. Use event_market to get the outcome id.`,
+		description: `Put free-play points on the outcome you think wins a market. One live pick per market: a new pick replaces the old one until the market locks, and a pick after the lock is refused. Points only, no funds move. Allowed ${pointRules().min_pick} to ${pointRules().max_pick_per_market} points per market, within a per-season budget. Requires confirm: true, so state the market, outcome and points to the owner and get their yes first. Use this to place or change your own pick; use event_market first to get the outcome id.`,
 		inputSchema: {
 			type: 'object',
 			properties: {

@@ -1393,6 +1393,10 @@
 			"dest": "/event-markets-leaderboard.html"
 		},
 		{
+			"src": "/event-markets/forecasters/?",
+			"dest": "/event-markets-forecasters.html"
+		},
+		{
 			"src": "/event-markets/?",
 			"dest": "/event-markets.html"
 		},
