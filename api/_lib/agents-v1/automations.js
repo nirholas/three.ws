@@ -15,6 +15,7 @@
 // object (source 'wallet_intent' / 'alert_rule') and can be deleted through it.
 // A stopped agent (agent_identities.status) never fires.
 
+import { createHash } from 'node:crypto';
 import { CronExpressionParser } from 'cron-parser';
 import { sql } from '../db.js';
 import { apiError } from './http.js';
@@ -22,8 +23,10 @@ import {
 	createIntent,
 	deleteIntent,
 	fireIntentForAutomation,
+	getIntent,
 	listIntents,
 	normalizeIntent,
+	updateIntent,
 } from '../wallet-intents.js';
 import { fetchTokenPriceUsd } from '../market/token-market.js';
 import { getSolanaAddressBalances } from '../agent-wallet.js';
@@ -31,6 +34,7 @@ import { recentPumpLaunches } from '../pump-launch-feed.js';
 import { fetchRecentTrades } from '../pump-alert-runner.js';
 import { solPriceUsd } from '../sol-price.js';
 import { resolveSolanaRecipient } from '../../../src/solana/sns.js';
+import { dispatchWebhooks } from '../webhook-dispatch.js';
 
 export const TRIGGER_TYPES = Object.freeze([
 	'price_threshold',
@@ -331,12 +335,7 @@ export async function createAutomation({ agent, userId, body, source = 'api' }) 
 	const [{ n }] = await sql`SELECT count(*)::int AS n FROM agent_automations WHERE agent_id = ${agent.id}`;
 	if (n >= MAX_PER_AGENT) throw apiError(409, 'automation_limit', `An agent can hold at most ${MAX_PER_AGENT} automations.`);
 
-	if (a.action.type === 'transfer') {
-		const dest = await resolveSolanaRecipient(a.action.destination).catch(() => null);
-		const address = dest?.address || (BASE58_RE.test(a.action.destination) ? a.action.destination : null);
-		if (!address) throw bad('invalid_parameter', 'action.destination must be a Solana address or .sol name.', { parameter: 'action.destination' });
-		a.action.destination = address;
-	}
+	await resolveTransferDestination(a);
 
 	let intentId = null;
 	if (a.action.type !== 'agent_prompt') {
@@ -419,6 +418,185 @@ export async function deleteAutomation(userId, id) {
 	throw apiError(404, 'not_found', 'No automation with that id.');
 }
 
+/** Resolve a transfer destination (.sol name or address) in place, or throw. */
+async function resolveTransferDestination(a) {
+	if (a.action.type !== 'transfer') return;
+	const dest = await resolveSolanaRecipient(a.action.destination).catch(() => null);
+	const address = dest?.address || (BASE58_RE.test(a.action.destination) ? a.action.destination : null);
+	if (!address) throw bad('invalid_parameter', 'action.destination must be a Solana address or .sol name.', { parameter: 'action.destination' });
+	a.action.destination = address;
+}
+
+async function ownedAutomationRow(userId, id) {
+	const [row] = await sql`SELECT * FROM agent_automations WHERE id = ${id} AND user_id = ${userId} LIMIT 1`;
+	return row || null;
+}
+
+function limitsFromIntent(intent) {
+	const l = intent?.limits || {};
+	const out = {};
+	if (l.per_action_usd != null) out.perActionUsd = Number(l.per_action_usd);
+	if (l.daily_usd != null) out.dailyUsd = Number(l.daily_usd);
+	if (l.total_usd != null) out.totalUsd = Number(l.total_usd);
+	return out;
+}
+
+/**
+ * One automation the caller owns, with its spend limits and (for agent_prompt
+ * automations) the runs it started most recently. Wallet intents and alert
+ * rules resolve too, so every id automation_list returns can be read back.
+ */
+export async function getAutomation(userId, id) {
+	const row = await ownedAutomationRow(userId, id);
+	if (row) {
+		const [intent, runs] = await Promise.all([
+			row.intent_id ? getIntent(row.agent_id, row.intent_id) : null,
+			row.action_type === 'agent_prompt'
+				? sql`
+					SELECT id, status, summary, created_at, finished_at FROM agent_runs
+					WHERE automation_id = ${row.id} ORDER BY created_at DESC LIMIT 10
+				`
+				: [],
+		]);
+		return {
+			...serializeAutomation(row),
+			limits: limitsFromIntent(intent),
+			nextFireAt: row.trigger_type === 'schedule' && row.enabled ? nextScheduledAt(row).toISOString() : null,
+			recentRuns: runs.map((r) => ({ id: r.id, status: r.status, summary: r.summary, createdAt: r.created_at, finishedAt: r.finished_at })),
+		};
+	}
+	const [w] = await sql`
+		SELECT w.id, w.agent_id FROM agent_wallet_intents w
+		JOIN agent_identities i ON i.id = w.agent_id
+		WHERE w.id = ${id} AND i.user_id = ${userId}
+	`;
+	if (w) {
+		const intent = await getIntent(w.agent_id, w.id);
+		return { ...serializeIntent(intent), limits: limitsFromIntent(intent), nextFireAt: null, recentRuns: [] };
+	}
+	const [rule] = await sql`
+		SELECT r.*, f.last_fired_at FROM pump_alert_rules r
+		LEFT JOIN pump_alert_rule_fires f ON f.rule_id = r.id
+		WHERE r.id = ${id} AND r.user_id = ${userId}
+	`;
+	if (rule) return { ...serializeAlertRule(rule), limits: {}, nextFireAt: null, recentRuns: [] };
+	throw apiError(404, 'not_found', 'No automation with that id.');
+}
+
+/** Merge a partial trigger/action patch over the stored config; a new type replaces it. */
+function mergePart(stored, patch) {
+	if (patch == null) return stored;
+	if (typeof patch !== 'object') return patch;
+	if (patch.type && patch.type !== stored?.type) return patch;
+	return { ...stored, ...patch };
+}
+
+/**
+ * Update an automation the caller owns. The merged result is re-validated by
+ * normalizeAutomation, the same validator create uses, so a patch can never
+ * store a config create would refuse. Spend automations need `confirm: true`
+ * on every change except switching them off.
+ *
+ * @param {{ userId: string, id: string, body: object }} o
+ */
+export async function updateAutomation({ userId, id, body }) {
+	const patch = body && typeof body === 'object' ? body : {};
+	const row = await ownedAutomationRow(userId, id);
+	if (!row) {
+		await getAutomation(userId, id);
+		throw apiError(409, 'not_editable', 'Only automations created as automations can be edited here. Edit wallet rules from the agent wallet page and alert rules from /alerts, or delete and recreate them as an automation.');
+	}
+	const intent = row.intent_id ? await getIntent(row.agent_id, row.intent_id) : null;
+	const storedTrigger = row.trigger_config;
+	const storedAction = row.action_config;
+	const customTitle = row.title !== defaultTitle(storedTrigger, storedAction);
+	const raw = {
+		title: typeof patch.title === 'string' ? patch.title : customTitle ? row.title : undefined,
+		trigger: mergePart(storedTrigger, patch.trigger),
+		action: mergePart(storedAction, patch.action),
+		triggerOnce: typeof patch.triggerOnce === 'boolean' ? patch.triggerOnce : row.trigger_once,
+		limits: patch.limits && typeof patch.limits === 'object' ? { ...limitsFromIntent(intent), ...patch.limits } : limitsFromIntent(intent),
+	};
+	const a = normalizeAutomation(raw);
+	const enabled = typeof patch.enabled === 'boolean' ? patch.enabled : row.enabled;
+	const onlyDisabling = enabled === false && ['trigger', 'action', 'limits', 'title', 'triggerOnce'].every((k) => patch[k] === undefined);
+	if (SPEND_ACTIONS.has(a.action.type) && !onlyDisabling && patch.confirm !== true) {
+		throw apiError(400, 'confirmation_required', `This ${a.action.type} automation spends from the agent wallet on its own. Resend with "confirm": true to authorize the change.`, {
+			action: a.action,
+			trigger: a.trigger,
+			limits: a.limits,
+		});
+	}
+	await resolveTransferDestination(a);
+
+	let intentId = row.intent_id;
+	if (a.action.type === 'agent_prompt') {
+		if (intentId) await deleteIntent(row.agent_id, userId, intentId);
+		intentId = null;
+	} else {
+		const norm = normalizeIntent(backingIntentPayload(a, a.title));
+		if (!norm.ok) throw bad(norm.error, norm.message);
+		if (intentId && intent) {
+			const updated = await updateIntent(row.agent_id, userId, intentId, { intent: norm.intent, enabled });
+			if (updated?.error) throw bad(updated.error, updated.message);
+		} else {
+			const created = await createIntent(row.agent_id, userId, norm.intent, { sourceText: `v1 automation: ${a.title}` });
+			intentId = created.id;
+			if (!enabled) await updateIntent(row.agent_id, userId, intentId, { enabled: false });
+		}
+	}
+	const triggerChanged = canonicalTrigger(storedTrigger) !== canonicalTrigger(a.trigger);
+	const [next] = await sql`
+		UPDATE agent_automations SET
+			title = ${a.title},
+			trigger_type = ${a.trigger.type},
+			trigger_config = ${JSON.stringify(a.trigger)}::jsonb,
+			action_type = ${a.action.type},
+			action_config = ${JSON.stringify(a.action)}::jsonb,
+			trigger_once = ${a.triggerOnce},
+			enabled = ${enabled},
+			intent_id = ${intentId},
+			state = CASE WHEN ${triggerChanged} THEN NULL ELSE state END,
+			updated_at = now()
+		WHERE id = ${row.id}
+		RETURNING *
+	`;
+	return { ...serializeAutomation(next), limits: a.limits };
+}
+
+function canonicalTrigger(t) {
+	return JSON.stringify(Object.keys(t || {}).sort().map((k) => [k, t[k]]));
+}
+
+/**
+ * Fire an automation's action right now, outside its trigger. The fire key is
+ * unique per call, so the action runs once per request; it still passes every
+ * guard a triggered fire does (stopped agent, spend policy, intent caps).
+ * Spend actions need `confirm: true`.
+ */
+export async function triggerAutomation({ userId, id, confirm = false }) {
+	const row = await ownedAutomationRow(userId, id);
+	if (!row) {
+		await getAutomation(userId, id);
+		throw apiError(409, 'not_triggerable', 'Only automations created as automations can be fired on demand.');
+	}
+	if (!row.enabled) throw apiError(409, 'automation_disabled', 'This automation is switched off. Enable it first, then trigger it.');
+	const [agent] = await sql`SELECT status, deleted_at FROM agent_identities WHERE id = ${row.agent_id} LIMIT 1`;
+	if (!agent || agent.deleted_at) throw apiError(404, 'agent_not_found', 'Agent not found.');
+	if (agent.status === 'stopped') throw apiError(409, 'agent_stopped', 'This agent is stopped. Start it before triggering its automations.');
+	if (row.action_config?.mintFromEvent && !row.action_config?.mint) {
+		throw apiError(409, 'needs_event', 'This swap buys the coin its trigger event names, so it can only run when that event happens.');
+	}
+	if (SPEND_ACTIONS.has(row.action_type) && confirm !== true) {
+		throw apiError(400, 'confirmation_required', `Triggering this ${row.action_type} automation spends from the agent wallet now. Resend with "confirm": true to authorize it.`, {
+			action: row.action_config,
+		});
+	}
+	const result = await fireAutomation(row, { manual: true }, `manual:${Date.now()}`);
+	const [fresh] = await sql`SELECT * FROM agent_automations WHERE id = ${row.id}`;
+	return { result, automation: serializeAutomation(fresh) };
+}
+
 // ── evaluation ───────────────────────────────────────────────────────────────
 
 function cooledDown(row, now) {
@@ -474,6 +652,33 @@ function eventSummary(event) {
  * the same (automation, key) never executes twice.
  */
 export async function fireAutomation(row, event, key) {
+	const outcome = await runAutomationAction(row, event, key);
+	if (outcome.fired) {
+		// Keyed on the fire's own discriminator, so a sweep that retries the
+		// same trigger delivers automation.fired once.
+		await dispatchWebhooks({
+			userId: row.user_id,
+			agentId: row.agent_id,
+			eventType: 'automation.fired',
+			eventId: `evt_auto_${createHash('sha256').update(`${row.id}:${key}`).digest('hex').slice(0, 32)}`,
+			data: {
+				automation_id: row.id,
+				agent_id: row.agent_id,
+				title: row.title || null,
+				trigger: { type: row.trigger_type, key },
+				action: { type: row.action_type },
+				status: outcome.status,
+				run_id: outcome.runId || null,
+				signature: outcome.signature || null,
+				note: outcome.note || null,
+				event: event && typeof event === 'object' ? event : null,
+			},
+		});
+	}
+	return outcome;
+}
+
+async function runAutomationAction(row, event, key) {
 	const discriminator = `auto:${row.id}:${key}`;
 	if (row.action_type === 'agent_prompt') {
 		const { createRun } = await import('./runs.js');

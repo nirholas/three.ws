@@ -27,6 +27,8 @@ import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
 import { debitCredits } from '../credits.js';
 import { assertAgentBudget, InferenceBillingError } from '../inference-billing.js';
 import { AGENT_SYSTEM_NOTE, createAgentLoop, finalAnswer, initialLoopState, loopFinished } from '../agent-loop.js';
+import { stepReceipt, summarizeRun } from './run-receipts.js';
+import { dispatchWebhooks } from '../webhook-dispatch.js';
 
 const LEASE_SECONDS = 120;
 const TERMINAL = new Set(['completed', 'failed', 'cancelled', 'budget_exhausted']);
@@ -61,6 +63,7 @@ export function serializeRun(r) {
 		scheduledFor: r.scheduled_for,
 		result: r.result,
 		error: r.error,
+		summary: r.summary ?? null,
 		source: r.source,
 		automationId: r.automation_id,
 		cancelRequested: Boolean(r.cancel_requested_at),
@@ -83,6 +86,7 @@ export function serializeStep(s) {
 		usage: s.input_tokens == null && s.output_tokens == null ? null : { input: s.input_tokens, output: s.output_tokens },
 		costUsd: s.cost_micro_usd == null ? null : Number(s.cost_micro_usd) / 1e6,
 		latencyMs: s.latency_ms,
+		receipt: s.receipt ?? null,
 		at: s.created_at,
 	};
 }
@@ -220,17 +224,28 @@ async function lastSeq(runId) {
 
 async function insertSteps(runId, fromSeq, events) {
 	let seq = fromSeq;
+	let prev = null;
+	if (fromSeq > 0) {
+		const [p] = await sql`SELECT receipt FROM agent_run_steps WHERE run_id = ${runId} AND seq = ${fromSeq} LIMIT 1`;
+		prev = p?.receipt || null;
+	}
 	for (const e of events) {
 		seq += 1;
+		// Hash exactly what jsonb will hand back: a JSON round trip drops
+		// undefined and turns Dates into strings before the digest is taken.
+		const input = e.input == null ? null : JSON.parse(JSON.stringify(e.input));
+		const output = e.output == null ? null : JSON.parse(JSON.stringify(e.output));
+		const receipt = stepReceipt({ prev, runId, seq, kind: e.kind, tool: e.tool || null, input, output });
 		await sql`
 			INSERT INTO agent_run_steps
-				(run_id, seq, kind, provider, model, tool_name, input, output, input_tokens, output_tokens, cost_micro_usd, latency_ms)
+				(run_id, seq, kind, provider, model, tool_name, input, output, input_tokens, output_tokens, cost_micro_usd, latency_ms, receipt)
 			VALUES
 				(${runId}, ${seq}, ${e.kind}, ${e.provider || null}, ${e.model || null}, ${e.tool || null},
-				 ${e.input == null ? null : JSON.stringify(e.input)}::jsonb, ${e.output == null ? null : JSON.stringify(e.output)}::jsonb,
-				 ${e.inputTokens ?? null}, ${e.outputTokens ?? null}, ${e.costMicroUsd ?? null}, ${e.latencyMs ?? null})
+				 ${input == null ? null : JSON.stringify(input)}::jsonb, ${output == null ? null : JSON.stringify(output)}::jsonb,
+				 ${e.inputTokens ?? null}, ${e.outputTokens ?? null}, ${e.costMicroUsd ?? null}, ${e.latencyMs ?? null}, ${receipt})
 			ON CONFLICT (run_id, seq) DO NOTHING
 		`;
+		prev = receipt;
 	}
 	return seq;
 }
@@ -245,7 +260,24 @@ async function finalize(run, status, { result = null, error = null, note = null 
 	await insertSteps(run.id, await lastSeq(run.id), [
 		{ kind: status === 'completed' ? 'final' : status === 'failed' ? 'error' : 'status', output: { status, result, error, note } },
 	]);
-	return row;
+	const tally = await sql`
+		SELECT kind, tool_name, count(*)::int AS n,
+		       count(*) FILTER (WHERE kind = 'tool_result' AND output ? 'error' AND jsonb_typeof(output) = 'object')::int AS failed
+		FROM agent_run_steps WHERE run_id = ${run.id}
+		GROUP BY kind, tool_name
+	`;
+	const summary = summarizeRun(row, tally);
+	const [done] = await sql`UPDATE agent_runs SET summary = ${summary} WHERE id = ${run.id} RETURNING *`;
+	// The event ID is derived from the run, so a finalize that races another
+	// still delivers run.finished once per endpoint.
+	await dispatchWebhooks({
+		userId: done.user_id,
+		agentId: done.agent_id,
+		eventType: 'run.finished',
+		eventId: `evt_run_finished_${done.id}`,
+		data: serializeRun(done),
+	});
+	return done;
 }
 
 async function acquireLease(runId, owner) {
