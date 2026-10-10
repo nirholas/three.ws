@@ -1,6 +1,15 @@
 {
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
+	{
+		"date": "2026-10-10",
+		"title": "Event Market announcements draft themselves, and nothing posts until you approve it",
+		"summary": "When an Event Market opens, nears its lock, shifts, or resolves, a draft announcement now appears in a review queue with the market link and card. Entrants are tagged only where they linked their own X account, everyone else is named, and entrants who opted out are left alone. Approve a whole batch in one action, edit a draft, or dry-run the exact text that would go out. Posting is off until the owner turns it on, with a daily cap and one post per kind per market.",
+		"tags": [
+			"feature"
+		],
+		"link": "/admin/event-market-announcements"
+	},
 		{
 			"date": "2026-10-10",
 			"title": "Launch a coin from a quote the agent wallet pays, with a creator-fee picker and a live status",

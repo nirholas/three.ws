@@ -1,0 +1,8 @@
+{
+	"$comment": "Announcement lane numbers for Event Markets. Drafts only: posting is a separate, owner-approved step. oddsShiftPoints is how many points of the crowd's share the leader must gain since the market opened (or any change of leader) before a shift is worth a post, and only once minPicksForOddsShift picks exist.",
+	"lockingSoonHours": 24,
+	"oddsShiftPoints": 15,
+	"minPicksForOddsShift": 5,
+	"dailyCap": 4,
+	"topForecasters": 3
+}

@@ -2578,6 +2578,10 @@
 			"src": "/home-next/?",
 			"status": 301,
 			"headers": {
+		{
+			"src": "/admin/event-market-announcements/?",
+			"dest": "/event-market-announcements.html"
+		},
 				"Location": "/"
 			}
 		},
@@ -7347,3 +7351,7 @@
 		}
 	]
 }
+		},
+		{
+			"path": "/api/cron/event-market-announce",
+			"schedule": "*/15 * * * *"
