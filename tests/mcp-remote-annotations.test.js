@@ -72,6 +72,7 @@ const DESTRUCTIVE_TOOLS = new Set([
 	'accept_marketplace_bid', 'withdraw_marketplace_bid',
 	'predictions_open', 'predictions_close', 'predictions_redeem',
 	'home_activate', 'home_call',
+	'agent_mail_create', 'agent_mail_send', 'agent_mail_reply',
 ]);
 
 // Destructive tools the policy deliberately leaves in the write tier (on by

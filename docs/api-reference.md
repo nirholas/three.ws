@@ -4798,6 +4798,32 @@ DELETE /api/approvals/policies?id=<uuid>
 ```
 
 The owner's inbox for actions an agent paused on because a spend rule is set to "Ask me". Reads take a session or bearer; every decision and rule change needs a session plus CSRF, so an agent credential can never approve its own request. Approve must carry the `payload_hash` of the action shown: a mismatch is `409 payload_mismatch`, a deep link that no longer matches is `409 link_mismatch`, a passed deadline is `410 expired`, and nothing runs in any of those cases. A repeat approve returns the current state with `idempotent: true` and never executes twice. Auto-approve rules name venues (`jupiter`, `wallet_transfer`) and a per-action cap of at most $1,000; first transfers to a new address and unpriced actions always ask. Full guide: [approvals.md](approvals.md).
+
+### Agent mail
+
+```
+GET    /api/v1/agents/:id/mail
+POST   /api/v1/agents/:id/mail/quote          { action: "create"|"send"|"reply", ...draft }
+POST   /api/v1/agents/:id/mail/create         { quote_id, confirm_spend: true, local_part, display_name }
+POST   /api/v1/agents/:id/mail/send           { quote_id, confirm_send: true, to, cc, subject, text, attachments }
+POST   /api/v1/agents/:id/mail/reply          { quote_id, confirm_send: true, message_id, text, reply_all }
+GET    /api/v1/agents/:id/mail/messages?folder=inbox|sent|spam|all&limit=&cursor=
+GET    /api/v1/agents/:id/mail/search?q=&folder=
+GET    /api/v1/agents/:id/mail/messages/:msg
+POST   /api/v1/agents/:id/mail/messages/:msg/read   { read }
+DELETE /api/v1/agents/:id/mail/messages/:msg
+GET    /api/v1/agents/:id/mail/messages/:msg/attachments/:index
+GET    /api/v1/agents/:id/mail/settings
+PUT    /api/v1/agents/:id/mail/policy         { allowlist_enabled, allowlist, daily_send_cap }
+GET    /api/v1/agents/:id/mail/rules
+POST   /api/v1/agents/:id/mail/rules          { name, match_from, match_subject, mode: "approve"|"auto", prompt }
+PATCH  /api/v1/agents/:id/mail/rules/:rule
+DELETE /api/v1/agents/:id/mail/rules/:rule
+GET    /api/v1/agents/:id/mail/rule-events?limit=
+POST   /api/mail/inbound                      (mail provider webhook, signature verified)
+```
+
+An agent's mailbox on `agents.three.ws`. Creating a mailbox and every send or reply is quote then confirm: the quote returns the exact recipients and body bound to a ten-minute, single-use `quote_id`, and the confirm call must repeat the same draft with the confirm flag. Reads need `agents:read`; sends need `wallet:write`; the allowlist, daily cap and mail rules accept only a signed-in session (`403 owner_session_required` for an API key), so an agent cannot loosen its own limits. Received messages are returned with `direction: "in"` and are untrusted sender content. Full guide: [agent-mail.md](agent-mail.md).
 ---
 
 ## IRL API — presence, pins, money drops, world lines

@@ -2773,6 +2773,15 @@
 					"indexable": false
 				},
 				{
+					"path": "/agent-mail",
+					"title": "Agent Mail",
+					"description": "Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-10-10",
+					"indexable": false
+				},
+				{
 					"path": "/wallet",
 					"title": "Your master wallet",
 					"description": "One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.",
@@ -4855,6 +4864,14 @@
 					"description": "How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.",
 					"priority": 0.7,
 					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-mail",
+					"title": "Docs: Agent Mail",
+					"description": "Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
 				},
 				{
 					"path": "/docs/checkout-companion",

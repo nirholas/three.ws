@@ -340,6 +340,10 @@
 			"dest": "/agent-cards.html"
 		},
 		{
+			"src": "/agent-mail/?",
+			"dest": "/agent-mail.html"
+		},
+		{
 			"src": "/wallet",
 			"dest": "/wallet.html"
 		},
@@ -5453,6 +5457,10 @@
 		{
 			"src": "/agents/[^/.]+/cards/?",
 			"dest": "/agent-cards.html"
+		},
+		{
+			"src": "/agents/[^/.]+/mail/?",
+			"dest": "/agent-mail.html"
 		},
 		{
 			"src": "/agents/([^/.]+)/classic/?",

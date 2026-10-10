@@ -19,11 +19,18 @@
 // Delivery events (`email.delivered`, `email.bounced`, ...) update the status
 // of the outbound send they belong to; events for mail this feature did not
 // send (platform transactional email) match no row and are ignored.
+//
+// Local delivery: a send from one agent mailbox to another address on the
+// agents domain never leaves the platform. deliverLocal() stores it straight
+// into the recipient mailbox with provider 'local' and runs the same
+// notification, intent and mail-rule steps as provider mail, so agent to agent
+// mail works whether or not the domain's MX records are live.
 
 import { sql } from '../db.js';
 import { putObject } from '../r2.js';
 import { insertNotification } from '../notify.js';
 import { onMailReceived } from '../wallet-intents.js';
+import { evaluateMailRules } from './rules.js';
 import { mailDomain, MAX_INBOUND_ATTACHMENT_BYTES, MAX_INBOUND_TOTAL_BYTES } from './config.js';
 import { scoreInbound } from './spam.js';
 import { normalizeMessageId, normalizeSubject, parseAddress, parseReferences, threadCandidates } from './threading.js';
@@ -153,25 +160,97 @@ export async function ingestReceived({ provider, event }) {
 		stored.push({ mailbox: mb, row, verdict });
 
 		if (!verdict.isSpam) {
-			insertNotification(mb.user_id, 'mail_received', {
-				agent_id: mb.agent_id,
-				agent_name: mb.agent_name,
-				mailbox: mb.address,
+			await afterReceived(mb, {
+				id: row.id,
 				from: sender.address,
 				from_name: sender.name,
-				subject: String(email.subject || '').slice(0, 140),
-				message_id: row.id,
-				link: `/agents/${mb.agent_id}/mail?m=${row.id}`,
-			});
-			await onMailReceived(mb.agent_id, {
-				message_id: row.id,
-				from: sender.address,
 				subject: String(email.subject || ''),
+				text: email.text,
+				created_at: new Date().toISOString(),
 				spam_score: verdict.score,
 			});
 		}
 	}
 	return { stored };
+}
+
+/**
+ * Everything that follows a stored, non-spam received message: the owner's
+ * `mail_received` notification, the agent's `on_mail_received` wallet intents,
+ * and the owner's mail rules. Shared by provider and local delivery.
+ */
+async function afterReceived(mb, msg) {
+	insertNotification(mb.user_id, 'mail_received', {
+		agent_id: mb.agent_id,
+		agent_name: mb.agent_name,
+		mailbox: mb.address,
+		from: msg.from,
+		from_name: msg.from_name,
+		subject: msg.subject.slice(0, 140),
+		message_id: msg.id,
+		link: `/agents/${mb.agent_id}/mail?m=${msg.id}`,
+	});
+	await onMailReceived(mb.agent_id, {
+		message_id: msg.id,
+		from: msg.from,
+		subject: msg.subject,
+		spam_score: msg.spam_score,
+	});
+	await evaluateMailRules({ mailbox: mb, message: msg });
+}
+
+/** Active mailboxes, with their agent's name, for addresses on the agents domain. */
+export async function localMailboxes(addresses) {
+	const domain = mailDomain();
+	const local = [...new Set((addresses || []).map((a) => String(a).toLowerCase()))].filter((a) => a.endsWith(`@${domain}`));
+	if (!local.length) return [];
+	return sql`
+		select mb.*, a.name as agent_name
+		from agent_mailboxes mb join agent_identities a on a.id = mb.agent_id
+		where mb.address = any(${local}) and mb.status = 'active' and a.deleted_at is null
+	`;
+}
+
+/**
+ * Deliver an agent's outbound message to the agent mailboxes it addresses on
+ * the agents domain. `sent` is the sender's stored outbound row. Mail between
+ * two agents is authenticated by construction (it never left the platform), so
+ * it scores 0 and its auth results record that.
+ */
+export async function deliverLocal({ fromMailbox, sent, recipients }) {
+	const mailboxes = await localMailboxes(recipients);
+	const inReplyTo = sent.in_reply_to || null;
+	const references = sent.references_ids || [];
+	const delivered = [];
+	for (const mb of mailboxes) {
+		const threadId = await resolveThread(mb.id, { inReplyTo, references, subject: sent.subject, counterparty: fromMailbox.address });
+		const [row] = await sql`
+			insert into agent_mail_messages
+				(mailbox_id, direction, thread_id, from_address, from_name, to_addresses, cc_addresses, reply_to,
+				 subject, text_body, html_body, attachments, message_id, in_reply_to, references_ids, provider,
+				 provider_message_id, spam_score, spam_verdict, virus_verdict, auth_results)
+			values
+				(${mb.id}, 'in', coalesce(${threadId}::uuid, gen_random_uuid()), ${fromMailbox.address}, ${fromMailbox.display_name},
+				 ${sent.to_addresses}, ${sent.cc_addresses}, ${[]},
+				 ${sent.subject}, ${sent.text_body}, ${sent.html_body}, ${JSON.stringify(sent.attachments || [])}::jsonb,
+				 ${sent.message_id}, ${inReplyTo}, ${references}, 'local', ${`local:${sent.id}`},
+				 0, 'PASS', 'PASS', ${JSON.stringify({ local: true, spf: 'pass', dkim: 'pass', dmarc: 'pass' })}::jsonb)
+			on conflict do nothing
+			returning id, thread_id, created_at
+		`;
+		if (!row) continue;
+		delivered.push({ mailbox: mb.address, message_id: row.id });
+		await afterReceived(mb, {
+			id: row.id,
+			from: fromMailbox.address,
+			from_name: fromMailbox.display_name,
+			subject: sent.subject,
+			text: sent.text_body,
+			created_at: row.created_at,
+			spam_score: 0,
+		});
+	}
+	return delivered;
 }
 
 const DELIVERY_STATUS = {

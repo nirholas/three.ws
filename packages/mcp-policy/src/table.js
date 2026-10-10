@@ -188,6 +188,18 @@ export const POLICY = {
 		automation_update: w('runs'),
 		automation_delete: f('runs', 'confirm_delete', 'automation_get', ['automation_id']),
 		automation_trigger: w('runs'),
+		// Agent mail (api/_mcp/tools/mail.js). The service binds each quote to
+		// the exact draft it priced, so create, send and reply verify their own
+		// quote_id; the policy layer enforces enablement and the confirm flag.
+		agent_mail_get_address: r('mail'),
+		agent_mail_quote: w('mail'),
+		agent_mail_create: own('mail', 'confirm_spend', 'agent_mail_quote'),
+		agent_mail_send: own('mail', 'confirm_send', 'agent_mail_quote'),
+		agent_mail_reply: own('mail', 'confirm_send', 'agent_mail_quote'),
+		agent_mail_list: r('mail'),
+		agent_mail_read: r('mail'),
+		agent_mail_search: r('mail'),
+		agent_mail_delete: w('mail'),
 	},
 
 	// /api/mcp-agent

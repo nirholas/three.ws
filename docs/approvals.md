@@ -276,8 +276,11 @@ A source registers an executor in the `EXECUTORS` map in
 [api/_lib/approvals.js](../api/_lib/approvals.js). The contract:
 `executor(row)` receives the stored row, executes only `row.payload`, and
 returns `{ status: 'ok'|'error'|'paused'|'skipped', signature?, note?, usd? }`.
-Today the registered source is `wallet_intent` (agent transfers and swaps from
-wallet intents). Then call `createApprovalRequest()` where the source hits
+Registered sources include `wallet_intent` (agent transfers and swaps from
+wallet intents) and `mail_rule` (an [agent mail](./agent-mail.md) rule in
+`approve` mode: approving starts a read-only, zero-budget run on the email that
+matched, and its table names the agent, the email and the instruction with
+`Spend: None`). Then call `createApprovalRequest()` where the source hits
 its step-up gate, with an idempotency key derived from the action. Engines
 that execute inline (an auto-approved request) call `runApproved(row, run)`,
 which provides the same once-only and integrity guarantees.

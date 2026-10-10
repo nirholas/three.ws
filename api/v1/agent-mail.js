@@ -9,13 +9,25 @@
  *   GET    /api/v1/agents/:id/mail/address                  the address only
  *   POST   /api/v1/agents/:id/mail/quote                    { action: 'create', local_part?, display_name?, payment_source? }
  *                                                           { action: 'send', to, cc?, subject?, text, html?, attachments?, in_reply_to?, payment_source? }
+ *                                                           { action: 'reply', message_id, text, html?, reply_all?, attachments?, payment_source? }
  *   POST   /api/v1/agents/:id/mail/create                   { quote_id, confirm_spend: true }
  *   POST   /api/v1/agents/:id/mail/send                     { quote_id, confirm_send: true, ...the exact draft that was quoted }
+ *   POST   /api/v1/agents/:id/mail/reply                    { quote_id, confirm_send: true, message_id, text, html?, reply_all?, attachments? }
+ *   GET    /api/v1/agents/:id/mail/search                   ?q=&folder=all|inbox|sent|spam&limit=&cursor=
  *   GET    /api/v1/agents/:id/mail/messages                 ?folder=inbox|sent|spam|all&unread=1&q=&limit=&cursor= (alias: /mail/list)
  *   GET    /api/v1/agents/:id/mail/messages/:msg            one message (marks a received message read; ?mark_read=0 to peek)
  *   POST   /api/v1/agents/:id/mail/messages/:msg/read       { read: true|false }
- *   DELETE /api/v1/agents/:id/mail/messages/:msg
+ *   DELETE /api/v1/agents/:id/mail/messages/:msg          (alias: POST /mail/messages/:msg/delete)
  *   GET    /api/v1/agents/:id/mail/messages/:msg/attachments/:index   short-lived download URL
+ *
+ *   Owner controls (writes need a signed-in session; an API key can read them):
+ *   GET    /api/v1/agents/:id/mail/settings                 allowlist, daily cap, rules, usage
+ *   PUT    /api/v1/agents/:id/mail/policy                   { allowlist_enabled?, allowlist?, daily_send_cap? }
+ *   GET    /api/v1/agents/:id/mail/rules
+ *   POST   /api/v1/agents/:id/mail/rules                    { name, match_from, match_subject?, mode: approve|auto, prompt, enabled? }
+ *   PATCH  /api/v1/agents/:id/mail/rules/:rule              any of the fields above
+ *   DELETE /api/v1/agents/:id/mail/rules/:rule
+ *   GET    /api/v1/agents/:id/mail/rule-events              recent rule firings with their approval / run state
  *
  * Envelope (the v1 contract): success { data, meta: { requestId, timestamp } },
  * failure { error: { code, message, details }, meta }.
@@ -24,6 +36,10 @@
  * / OAuth token. Bearer callers need `agents:read` for reads, `agents:write`
  * for message state changes, and `wallet:write` for anything that quotes or
  * charges (provisioning and sending are metered).
+ *
+ * Received mail is untrusted data. Read routes return it as stored, with
+ * `untrusted: true` on every received message; the MCP tools additionally
+ * fence it for a model (api/_lib/mail/untrusted.js).
  */
 
 import { randomUUID } from 'node:crypto';
@@ -36,6 +52,10 @@ import * as mail from '../_lib/mail/service.js';
 const READ_SCOPE = 'agents:read';
 const WRITE_SCOPE = 'agents:write';
 const MONEY_SCOPE = 'wallet:write';
+// The allowlist, cap and rules guard what an agent may do with mail, so only
+// the owner in a browser session may change them; an agent holding the
+// owner's API key must not be able to loosen its own limits.
+const OWNER_SESSION = 'owner_session';
 
 function send(res, status, body) {
 	if (res.headersSent || res.writableEnded) return;
@@ -98,7 +118,13 @@ function quote(c) {
 	if (action === 'send') {
 		return mail.quoteSend({ userId: c.userId, agentId: c.agentId, draft: draftFrom(c.body), paymentSource: c.body.payment_source });
 	}
-	throw new mail.MailError(400, 'invalid_action', 'action must be "create" or "send".');
+	if (action === 'reply') {
+		return mail.quoteReply({
+			userId: c.userId, agentId: c.agentId, messageId: c.body.message_id, text: c.body.text, html: c.body.html,
+			replyAll: bool(c.body.reply_all), attachments: c.body.attachments, paymentSource: c.body.payment_source,
+		});
+	}
+	throw new mail.MailError(400, 'invalid_action', 'action must be "create", "send" or "reply".');
 }
 
 function list(c) {
@@ -107,6 +133,8 @@ function list(c) {
 		q: c.q('q') || '', limit: c.q('limit'), cursor: c.q('cursor'),
 	});
 }
+
+const remove = (c) => mail.deleteMessage({ userId: c.userId, agentId: c.agentId, messageId: c.params.msg });
 
 /** Route table: [method, pattern, scope, handler(ctx), status]. */
 const ROUTES = [
@@ -120,6 +148,13 @@ const ROUTES = [
 	['POST', 'send', MONEY_SCOPE, (c) => mail.sendMail({
 		userId: c.userId, agentId: c.agentId, quoteId: c.body.quote_id, draft: draftFrom(c.body), confirm: c.body.confirm_send,
 	}), 201],
+	['POST', 'reply', MONEY_SCOPE, (c) => mail.sendReply({
+		userId: c.userId, agentId: c.agentId, messageId: c.body.message_id, text: c.body.text, html: c.body.html,
+		replyAll: bool(c.body.reply_all), attachments: c.body.attachments, quoteId: c.body.quote_id, confirm: c.body.confirm_send,
+	}), 201],
+	['GET', 'search', READ_SCOPE, (c) => mail.searchMessages({
+		userId: c.userId, agentId: c.agentId, query: c.q('q'), folder: c.q('folder') || 'all', limit: c.q('limit'), cursor: c.q('cursor'),
+	})],
 	['GET', 'messages', READ_SCOPE, list],
 	['GET', 'list', READ_SCOPE, list],
 	['GET', 'messages/:msg', READ_SCOPE, (c) => mail.readMessage({
@@ -128,10 +163,18 @@ const ROUTES = [
 	['POST', 'messages/:msg/read', WRITE_SCOPE, (c) => mail.setRead({
 		userId: c.userId, agentId: c.agentId, messageId: c.params.msg, read: c.body.read !== false,
 	})],
-	['DELETE', 'messages/:msg', WRITE_SCOPE, (c) => mail.deleteMessage({ userId: c.userId, agentId: c.agentId, messageId: c.params.msg })],
+	['DELETE', 'messages/:msg', WRITE_SCOPE, remove],
+	['POST', 'messages/:msg/delete', WRITE_SCOPE, remove],
 	['GET', 'messages/:msg/attachments/:index', READ_SCOPE, (c) => mail.attachmentDownloadUrl({
 		userId: c.userId, agentId: c.agentId, messageId: c.params.msg, index: c.params.index,
 	})],
+	['GET', 'settings', READ_SCOPE, (c) => mail.getMailSettings({ userId: c.userId, agentId: c.agentId })],
+	['PUT', 'policy', OWNER_SESSION, (c) => mail.updateMailPolicy({ userId: c.userId, agentId: c.agentId, patch: c.body })],
+	['GET', 'rules', READ_SCOPE, (c) => mail.listMailRules({ userId: c.userId, agentId: c.agentId })],
+	['POST', 'rules', OWNER_SESSION, (c) => mail.createMailRule({ userId: c.userId, agentId: c.agentId, input: c.body }), 201],
+	['PATCH', 'rules/:rule', OWNER_SESSION, (c) => mail.updateMailRule({ userId: c.userId, agentId: c.agentId, ruleId: c.params.rule, input: c.body })],
+	['DELETE', 'rules/:rule', OWNER_SESSION, (c) => mail.deleteMailRule({ userId: c.userId, agentId: c.agentId, ruleId: c.params.rule })],
+	['GET', 'rule-events', READ_SCOPE, (c) => mail.listMailRuleEvents({ userId: c.userId, agentId: c.agentId, limit: c.q('limit') })],
 ].map(([m, pattern, scope, handler, status = 200]) => ({ method: m, parts: pattern.split('/').filter(Boolean), scope, handler, status }));
 
 /** Match method + segments. Returns { route, params }, { methodMismatch }, or null. */
@@ -159,7 +202,7 @@ export function matchRoute(method, segments) {
 export default async function handler(req, res) {
 	const ctx = { requestId: randomUUID() };
 	res.setHeader('x-request-id', ctx.requestId);
-	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
+	if (cors(req, res, { methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS', credentials: true })) return;
 
 	const { url, agentId, segments } = parseTarget(req);
 	const hit = matchRoute(req.method, segments);
@@ -172,8 +215,12 @@ export default async function handler(req, res) {
 		const principal = await resolvePrincipal(req);
 		if (!principal) return sendError(res, ctx, 401, 'unauthorized', 'Sign in or send a three.ws API key.');
 		const scope = hit.route.scope;
+		if (scope === OWNER_SESSION && principal.source !== 'session') {
+			return sendError(res, ctx, 403, 'owner_session_required', 'Mail allowlist, cap and rules can only be changed by the owner while signed in at three.ws, never with an API key.');
+		}
 		// A write scope implies its read scope, as it does everywhere else in v1.
 		const scoped =
+			scope === OWNER_SESSION ||
 			principal.source === 'session' ||
 			hasScope(principal.scope, scope) ||
 			(scope === READ_SCOPE && hasScope(principal.scope, WRITE_SCOPE));
@@ -184,13 +231,14 @@ export default async function handler(req, res) {
 		if (!rl.success) return sendError(res, ctx, 429, 'rate_limited', 'Too many requests. Slow down and retry shortly.');
 
 		let body = {};
-		if (req.method === 'POST' || req.method === 'DELETE') {
+		const writes = req.method !== 'GET';
+		if (writes) {
 			if (principal.source === 'session') {
 				const v = await checkCsrf(req, principal.userId);
 				if (!v.ok) return sendError(res, ctx, 403, v.code, v.message);
 			}
 		}
-		if (req.method === 'POST') {
+		if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
 			try {
 				body = (await readJson(req)) || {};
 			} catch (e) {

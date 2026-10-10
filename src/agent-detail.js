@@ -2769,6 +2769,14 @@ function mountOwnerBar(agent) {
 	dashLink.textContent = 'Manage Agents';
 	bar.appendChild(dashLink);
 
+	// The agent's email inbox, rules and sending limits (owner only).
+	const mailLink = el('a', {
+		class: 'ad-btn',
+		href: `/agents/${encodeURIComponent(agent.id)}/mail`,
+	});
+	mailLink.textContent = '✉ Mail';
+	bar.appendChild(mailLink);
+
 	// Deploy on-chain (only if not yet deployed). The persisted wire shape is
 	// snake_case (tx_hash); legacy client code wrote txHash. Accept both so a
 	// deployed agent never re-offers a second paid mint.

@@ -50,6 +50,9 @@ export const STATUS_GROUPS = Object.freeze({
 export const VENUES = Object.freeze({
 	jupiter: { label: 'Token swaps (Jupiter)', auto: true },
 	wallet_transfer: { label: 'Transfers to addresses this wallet has paid before', auto: true },
+	// An agent run a mail rule wants to start (api/_lib/mail/rules.js). It moves
+	// no funds, but the owner chose to see each one first, so it never auto-approves.
+	mail_rule: { label: 'Mail rule runs', auto: false },
 	// A live trade or standing order a squad coordinator paused on
 	// (api/_lib/team-chat/runner.js). It signs from the team's Trader wallet.
 	team_trade: { label: 'Team trades from the policy agent wallet', auto: true },
@@ -164,12 +167,26 @@ export function chainLabel(chain, network) {
  * identically by the page, the email and the chat text.
  */
 export function confirmationTable(row) {
+	if (row.action_type === 'mail_rule_run') return mailRuleTable(row);
 	const usd = row.amount_usd != null && Number.isFinite(Number(row.amount_usd)) ? ` (~$${Number(row.amount_usd).toFixed(2)})` : '';
 	return [
 		{ key: 'recipient', label: 'Recipient', value: row.recipient_label ? `${row.recipient_label} (${shortAddr(row.recipient)})` : (row.recipient || 'n/a'), full: row.recipient || null },
 		{ key: 'amount', label: 'Amount', value: `${fmtAmount(row.amount, row.asset)}${usd}` },
 		{ key: 'asset', label: 'Asset', value: row.asset || 'n/a' },
 		{ key: 'chain', label: 'Chain', value: chainLabel(row.chain, row.network) },
+	];
+}
+
+// A mail rule run moves nothing, so its table names what will run and on what
+// instead of a recipient and an amount.
+function mailRuleTable(row) {
+	const p = row.payload || {};
+	const prompt = String(p.prompt || '');
+	return [
+		{ key: 'agent', label: 'Agent', value: row.recipient_label || 'Agent' },
+		{ key: 'trigger', label: 'Email', value: `From ${p.from || 'unknown sender'}: ${p.subject || '(no subject)'}` },
+		{ key: 'instruction', label: 'Instruction', value: prompt.length > 160 ? `${prompt.slice(0, 160)}...` : prompt, full: prompt.length > 160 ? prompt : null },
+		{ key: 'spend', label: 'Spend', value: 'None: free model lanes, read-only tools' },
 	];
 }
 
@@ -238,6 +255,7 @@ export function publicApproval(row, { now = Date.now(), withLink = true } = {}) 
 const EXECUTORS = {
 	wallet_intent: async () => (await import('./wallet-intents.js')).executeApprovedIntentAction,
 	strategy: async () => (await import('./agent-strategy-runtime.js')).executeApprovedStrategyAction,
+	mail_rule: async () => (await import('./mail/rules.js')).executeApprovedMailRule,
 	team_chat: async () => (await import('./team-chat/approval-executor.js')).executeTeamChatApproval,
 };
 
