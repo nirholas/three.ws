@@ -136,6 +136,12 @@ function boostOne(repo) {
 		mkdirSync(join(full, '..'), { recursive: true });
 		writeFileSync(full, body);
 	}
+	for (const rel of Object.keys(added)) {
+		if (spawnSync('git', ['check-ignore', '-q', '--', rel], { cwd: dir }).status === 0) {
+			rmSync(join(dir, rel), { force: true });
+			delete added[rel];
+		}
+	}
 	const finalFiles = new Set([...files, ...Object.keys(added)]);
 	let readme = applyBadges(original, badgeRow({ name: repo.name, hasLicense: Boolean(license) }));
 	readme = applyGrowthBlock(readme, growthBlock({ name: repo.name, description, files: finalFiles, readme }));
