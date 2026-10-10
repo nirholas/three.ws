@@ -188,6 +188,10 @@ export function normalizeMarket(config, stats) {
 		open_interest_usd: oi != null && mark != null ? round(oi * mark, 2) : null,
 		volume_24h_usd: num(stats?.day_volume_usd),
 		max_leverage: p.maxLeverage,
+		// Margin as a fraction of notional: initial is one over max leverage,
+		// maintenance is the venue's maintenance share of that initial margin.
+		initial_margin_rate: p.maxLeverage > 0 ? round(1 / p.maxLeverage, 8) : null,
+		maintenance_margin_rate: p.maxLeverage > 0 ? round(p.maintenanceBps / 10_000 / p.maxLeverage, 8) : null,
 		taker_fee_rate: p.takerFee,
 		maker_fee_rate: p.makerFee,
 		min_size: p.sizeStep,
