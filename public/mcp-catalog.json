@@ -12859,8 +12859,8 @@
 		{
 			"name": "papertrade_quote",
 			"title": "Quote a Papertrade position",
-			"description": "Price a Papertrade open exactly as the exchange would fill it now: entry at the Hyperliquid mid, the hard-bust price where the whole margin is lost, capacity and minimum-size checks, and what a winning close actually pays across a ladder of moves (after the 0.2 bps deadband, impact haircut and win fee). Small moves keep a small share of the raw profit; show the user the ladder. Read only: it never opens anything.",
-			"whenToUse": null,
+			"description": "Price a Papertrade open exactly as the exchange would fill it now: entry at the Hyperliquid mid, the hard-bust price where the whole margin is lost, capacity and minimum-size checks, and what a winning close actually pays across a ladder of moves (after the 0.2 bps deadband, impact haircut and win fee). Small moves keep a small share of the raw profit; show the user the ladder. Read only: it never opens anything. Use this to size and price a Papertrade open before opening it.",
+			"whenToUse": "Use this to size and price a Papertrade open before opening it.",
 			"server": {
 				"id": "mcp-agent",
 				"title": "Agent Wallet",
@@ -12924,8 +12924,8 @@
 		{
 			"name": "papertrade_account",
 			"title": "Read a Papertrade wallet",
-			"description": "Any EVM wallet's Papertrade account from public chain-indexed state: balance, locked margin, queued payouts, lifetime deposits, realized PnL and fees, and every open position valued at the live mid (raw PnL, what a close would pay, bust price and how close the mark is to it).",
-			"whenToUse": null,
+			"description": "Any EVM wallet's Papertrade account from public chain-indexed state: balance, locked margin, queued payouts, lifetime deposits, realized PnL and fees, and every open position valued at the live mid (raw PnL, what a close would pay, bust price and how close the mark is to it). Use this to check the Papertrade balance and open positions.",
+			"whenToUse": "Use this to check the Papertrade balance and open positions.",
 			"server": {
 				"id": "mcp-agent",
 				"title": "Agent Wallet",
@@ -12966,8 +12966,8 @@
 		{
 			"name": "papertrade_protocol",
 			"title": "Check Papertrade protocol health",
-			"description": "Papertrade protocol health before sizing a trade: TVL, margin locked, the LP that pays winners, the payout queue (winners wait in it when the LP is short), lifetime volume and fees, the live win fee and whether the order relayer is ready.",
-			"whenToUse": null,
+			"description": "Papertrade protocol health before sizing a trade: TVL, margin locked, the LP that pays winners, the payout queue (winners wait in it when the LP is short), lifetime volume and fees, the live win fee and whether the order relayer is ready. Use this to check protocol health before sizing a Papertrade trade.",
+			"whenToUse": "Use this to check protocol health before sizing a Papertrade trade.",
 			"server": {
 				"id": "mcp-agent",
 				"title": "Agent Wallet",

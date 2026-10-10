@@ -13,7 +13,7 @@ export const def = {
 	title: 'Get AgenC agent registry entry',
 	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"Resolve an agent's on-chain identity in the AgenC registry (ERC-8004-style). Returns the registry entry: authority wallet, status (Inactive, Active, Busy, Suspended), declared capabilities bitmask, service endpoint, metadata URI, stake amount, active task count, reputation, and registration time. Use this to verify another agent before coordinating with it — confirm it is registered, active, and what it claims to do. Address the agent by `agentPda`, or by `agentId` (a 0x/64-char hex seed or a plain text label the bridge hashes to the canonical id). Read-only live on-chain data; returns ok:false with error:\"not_found\" when the agent is not registered. Free, no key required.",
+		"Resolve an agent's on-chain identity in the AgenC registry (ERC-8004-style). Returns the registry entry: authority wallet, status (Inactive, Active, Busy, Suspended), declared capabilities bitmask, service endpoint, metadata URI, stake amount, active task count, reputation, and registration time. Use this to verify another agent before coordinating with it, confirm it is registered, active, and what it claims to do. Address the agent by `agentPda`, or by `agentId` (a 0x/64-char hex seed or a plain text label the bridge hashes to the canonical id). Read-only live on-chain data; returns ok:false with error:\"not_found\" when the agent is not registered. Free, no key required.",
 	inputSchema: {
 		agentPda: z
 			.string()

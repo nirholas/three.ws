@@ -1967,8 +1967,8 @@
 		{
 			"name": "get_feed_events",
 			"title": "Site-wide activity feed",
-			"descHead": "The site-wide activity ticker — recent things that just happened across ",
-			"descHash": "2bdbb0bc0a3a",
+			"descHead": "The site-wide activity ticker, recent things that just happened across t",
+			"descHash": "c70b4ec489d3",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -2043,7 +2043,7 @@
 			"name": "get_agent",
 			"title": "Get AgenC agent registry entry",
 			"descHead": "Resolve an agent's on-chain identity in the AgenC registry (ERC-8004-sty",
-			"descHash": "64c82fb36d18",
+			"descHash": "2d999ac5365c",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -2103,7 +2103,7 @@
 			"name": "query_x402_services",
 			"title": "Query x402 services as AgenC tasks",
 			"descHead": "Browse the x402 service directory (the bazaar of paid HTTP endpoints and",
-			"descHash": "7e00badfc0a3",
+			"descHash": "f3f25740f998",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -5021,7 +5021,7 @@
 		{
 			"name": "pumpfun_upload_metadata",
 			"descHead": "Upload coin metadata (name, symbol, description, image) to IPFS and get ",
-			"descHash": "a205387e4ba5",
+			"descHash": "51f98da840d5",
 			"schemaHash": "327f71cfb7d4"
 		},
 		{

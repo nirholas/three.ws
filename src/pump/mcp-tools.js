@@ -724,7 +724,7 @@ export const TOOLS = [
 	{
 		name: 'pumpfun_upload_metadata',
 		description:
-			'Upload coin metadata (name, symbol, description, image) to IPFS and get back a pump.fun-ready metadata URI. Call this before launching a coin — pass the returned uri to the launch-agent endpoint or the studio launch flow. Requires a valid bearer token (API key). Image may be a public HTTPS URL or a base64 data URI (max 10 MB). The returned uri is a permanent ipfs:// link; the call is idempotent for the same content.',
+			'Upload coin metadata (name, symbol, description, image) to IPFS and get back a pump.fun-ready metadata URI. Call this before launching a coin: pass the returned uri to the launch-agent endpoint or the studio launch flow. Requires a valid bearer token (API key). Image may be a public HTTPS URL or a base64 data URI (max 10 MB). The returned uri is a permanent ipfs:// link; the call is idempotent for the same content.',
 		inputSchema: {
 			type: 'object',
 			properties: {

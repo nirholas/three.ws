@@ -983,7 +983,7 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 | Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->140<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
 | 3D Studio | `/api/mcp-3d` | <!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/threews-3d-studio` |
 | Free Studio | `/api/mcp-studio` |<!-- mcp-count:mcp-studio.tools -->15<!-- /mcp-count --> | None (operator-funded) | `io.github.nirholas/threews-3d-studio-free` |
-| Agent Wallet | `/api/mcp-agent` | <!-- mcp-count:mcp-agent.tools -->100<!-- /mcp-count --> | OAuth | `io.github.nirholas/threews-agent` |
+| Agent Wallet | `/api/mcp-agent` | <!-- mcp-count:mcp-agent.tools -->104<!-- /mcp-count --> | OAuth | `io.github.nirholas/threews-agent` |
 | Bazaar | `/api/mcp-bazaar` | <!-- mcp-count:mcp-bazaar.tools -->6<!-- /mcp-count --> | None / OAuth | `io.github.nirholas/threews-x402-bazaar` |
 | IBM Granite | `/api/ibm-mcp` | <!-- mcp-count:ibm-mcp.tools -->6<!-- /mcp-count --> | x402 or OAuth | `io.github.nirholas/ibm-x402-mcp-remote` |
 | pump.fun | `/api/pump-fun-mcp` | <!-- mcp-count:pump-fun-mcp.tools -->25<!-- /mcp-count --> | None (open CORS) | `io.github.nirholas/threews-pumpfun` |
@@ -1003,7 +1003,7 @@ Highlights below. Every tool on every server, with its schema, hints and price, 
 
 `forge_free` · `text_to_avatar` · `mesh_forge` · `rig_mesh` · `forge_avatar` · `refine_model` · `check_job` · `get_job` · `look_at_model` · `search_catalog` · `get_catalog_item` · `get_item_source` · `create_agent_persona` · `get_agent_persona` · `persona_say`
 
-#### `/api/mcp-agent`: Agent Wallet Tools (<!-- mcp-count:mcp-agent.tools -->100<!-- /mcp-count --> tools)
+#### `/api/mcp-agent`: Agent Wallet Tools (<!-- mcp-count:mcp-agent.tools -->104<!-- /mcp-count --> tools)
 
 The wallet core is `wallet_status` · `find_services` · `pay_and_call` · `provision_wallet` · `monetize_endpoint`; the rest of the server covers the agent's trading, strategy, portfolio, alert, commerce and lifecycle tools (full list on [/mcp-tools](https://three.ws/mcp-tools?server=mcp-agent)).
 

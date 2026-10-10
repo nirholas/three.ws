@@ -124,7 +124,7 @@ export async function buildRestyleMaterialTool() {
 
 	return {
 		name: TOOL_NAME,
-		title: 'Restyle a 3D model’s materials — AI PBR restyle or seeded colorway variants',
+		title: 'Restyle a 3D model’s materials: AI PBR restyle or seeded colorway variants',
 		description: TOOL_DESCRIPTION,
 		inputSchema: inputZodShape,
 		// Mints a fresh GLB (or set of GLBs) anchored to the source; never

@@ -114,7 +114,7 @@ export async function buildAgentHireDiscoverTool() {
 	);
 	return {
 		name: TOOL_NAME,
-		title: 'Agent hire — discover ($0.01)',
+		title: 'Agent hire: discover ($0.01)',
 		description: TOOL_DESCRIPTION,
 		inputSchema: inputZodShape,
 		// Read-only discovery: queries the live directory + on-chain reputation.

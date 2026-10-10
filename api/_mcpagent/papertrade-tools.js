@@ -86,7 +86,7 @@ export const papertradeToolDefs = [
 		group: 'perps',
 		tier: 'read',
 		annotations: READ,
-		description: 'Price a Papertrade open exactly as the exchange would fill it now: entry at the Hyperliquid mid, the hard-bust price where the whole margin is lost, capacity and minimum-size checks, and what a winning close actually pays across a ladder of moves (after the 0.2 bps deadband, impact haircut and win fee). Small moves keep a small share of the raw profit; show the user the ladder. Read only: it never opens anything.',
+		description: 'Price a Papertrade open exactly as the exchange would fill it now: entry at the Hyperliquid mid, the hard-bust price where the whole margin is lost, capacity and minimum-size checks, and what a winning close actually pays across a ladder of moves (after the 0.2 bps deadband, impact haircut and win fee). Small moves keep a small share of the raw profit; show the user the ladder. Read only: it never opens anything. Use this to size and price a Papertrade open before opening it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -109,7 +109,7 @@ export const papertradeToolDefs = [
 		group: 'perps',
 		tier: 'read',
 		annotations: READ,
-		description: 'Any EVM wallet\'s Papertrade account from public chain-indexed state: balance, locked margin, queued payouts, lifetime deposits, realized PnL and fees, and every open position valued at the live mid (raw PnL, what a close would pay, bust price and how close the mark is to it).',
+		description: 'Any EVM wallet\'s Papertrade account from public chain-indexed state: balance, locked margin, queued payouts, lifetime deposits, realized PnL and fees, and every open position valued at the live mid (raw PnL, what a close would pay, bust price and how close the mark is to it). Use this to check the Papertrade balance and open positions.',
 		inputSchema: {
 			type: 'object',
 			properties: { address: { type: 'string', pattern: '^0x[0-9a-fA-F]{40}$', description: 'The 0x wallet address that trades on Papertrade.' } },
@@ -127,7 +127,7 @@ export const papertradeToolDefs = [
 		group: 'perps',
 		tier: 'read',
 		annotations: READ,
-		description: 'Papertrade protocol health before sizing a trade: TVL, margin locked, the LP that pays winners, the payout queue (winners wait in it when the LP is short), lifetime volume and fees, the live win fee and whether the order relayer is ready.',
+		description: 'Papertrade protocol health before sizing a trade: TVL, margin locked, the LP that pays winners, the payout queue (winners wait in it when the LP is short), lifetime volume and fees, the live win fee and whether the order relayer is ready. Use this to check protocol health before sizing a Papertrade trade.',
 		inputSchema: { type: 'object', properties: {}, additionalProperties: false },
 		handler: (_args, auth) => run(auth, async () => {
 			const p = await papertrade.protocol();
