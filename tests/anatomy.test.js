@@ -200,4 +200,10 @@ describe('guide', () => {
 		expect(SPEC_GUIDE).toMatch(/opened with `"z"`/);
 		expect(OUTPUT_RULES).toMatch(/title, subtitle, summary, view, parts/);
 	});
+
+	it('ships the same guide in the agent skill', async () => {
+		const { readFileSync } = await import('node:fs');
+		const { renderReference, REFERENCE_PATH } = await import('../scripts/build-anatomy-skill.mjs');
+		expect(readFileSync(REFERENCE_PATH, 'utf8')).toBe(renderReference());
+	});
 });

@@ -5,7 +5,7 @@
 // prompt when a visitor asks /anatomy for a machine, and
 // scripts/build-anatomy-skill.mjs copies it into the agent skill's
 // reference.md, so Claude Code writing a spec by hand follows exactly the
-// rules the server enforces. tests/anatomy-guide.test.js fails if the two drift.
+// rules the server enforces. tests/anatomy.test.js fails if the two drift.
 //
 // Every field named here exists in src/anatomy/spec.js; the guide test checks
 // that every shape, motion and effect type the normalizer accepts is
