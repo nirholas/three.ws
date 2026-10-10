@@ -1342,6 +1342,15 @@
 			"description": "Experimental features actively shipping. Expect fast iteration.",
 			"pages": [
 				{
+					"path": "/anatomy",
+					"title": "Anatomy",
+					"description": "Describe a machine in one line and get an interactive isometric wireframe cutaway: rotate it, explode it, cut it open and click any part. Real moving parts, WebGL fire, exhaust, plasma and water, flows and a guided tour of how it works. Also an open agent skill.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-10-10",
+					"showcase": true
+				},
+				{
 					"path": "/globe",
 					"title": "Global Intel Globe",
 					"description": "A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.",
@@ -3684,6 +3693,14 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-10-09"
+				},
+				{
+					"path": "/docs/anatomy",
+					"title": "Docs · Anatomy (machines as interactive cutaways)",
+					"description": "How a one-line prompt becomes an interactive isometric cutaway: the spec format, progressive drawing while the model writes, the writer ladder, the /api/anatomy HTTP API and the open anatomy agent skill.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
 				},
 				{
 					"path": "/docs/diorama",

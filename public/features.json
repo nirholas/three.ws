@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T22:36:14.180Z",
+	"generated_at": "2026-10-10T23:45:00.466Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1672,6 +1672,16 @@
 			"title": "Labs",
 			"description": "Experimental features actively shipping. Expect fast iteration.",
 			"pages": [
+				{
+					"path": "/anatomy",
+					"title": "Anatomy",
+					"description": "Describe a machine in one line and get an interactive isometric wireframe cutaway: rotate it, explode it, cut it open and click any part. Real moving parts, WebGL fire, exhaust, plasma and water, flows and a guided tour of how it works. Also an open agent skill.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
 				{
 					"path": "/globe",
 					"title": "Global Intel Globe",
@@ -4535,6 +4545,16 @@
 					"title": "Docs · CAD Forge (text to parametric CAD)",
 					"description": "How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.",
 					"added": "2026-10-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/anatomy",
+					"title": "Docs · Anatomy (machines as interactive cutaways)",
+					"description": "How a one-line prompt becomes an interactive isometric cutaway: the spec format, progressive drawing while the model writes, the writer ladder, the /api/anatomy HTTP API and the open anatomy agent skill.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

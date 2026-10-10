@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-10",
+			"title": "Anatomy: describe a machine and explore it as an interactive 3D cutaway",
+			"summary": "Type a machine in one line, such as how an A380 turbofan makes thrust, and three.ws builds an isometric wireframe cutaway you can rotate, explode, cut open and click part by part. Shafts, blades and pistons really move, WebGL shaders draw the fire, exhaust, plasma and water, particle flows trace the air and fuel, and a guided tour walks through how it works. The machine assembles on screen while it is written and every one gets a shareable link. Agents can build them too with the open anatomy skill.",
+			"tags": [
+				"feature"
+			],
+			"link": "/anatomy"
+		},
+		{
+			"date": "2026-10-10",
 			"title": "Rig Doctor and the animation library now understand Source engine and 3ds Max Biped hands, plus tighter upload and number checks",
 			"summary": "Source engine (ValveBiped) skeletons now map to the shared animation library and Rig Doctor names them as their own convention, so 16 rig conventions are recognised. 3ds Max Biped finger chains and toes now map too, which restores hand animation on those rigs. The browser GLB check now rejects truncated files before upload, matching the server. The Money Pulse counters roll over to the right unit near $1k and $1M instead of showing $1000 or 1000.0k, and the URL scheme and model-host guards gained regression tests.",
 			"tags": [

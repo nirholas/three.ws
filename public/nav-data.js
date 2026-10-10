@@ -131,6 +131,16 @@ export const NAV_GROUPS = [
 						desc: 'Describe a part → real parametric CAD: STEP, STL, drawings and live dimension sliders',
 					},
 					{
+						title: 'Anatomy',
+						href: '/anatomy',
+						badge: 'New',
+						badgeTone: 'live',
+						// Everything tier for the same reason as CAD Forge: the lite menu
+						// is at its link ceiling.
+						tier: 'advanced',
+						desc: 'Describe a machine → an interactive cutaway with moving parts, fire, water and plasma',
+					},
+					{
 						title: 'Describe it to 3D',
 						href: '/create/prompt',
 						badge: 'Live',

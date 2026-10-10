@@ -984,6 +984,12 @@ How Robinhood Portfolios works: the manifest that makes a generated basket bindi
 
 Experimental features actively shipping. Expect fast iteration.
 
+### Anatomy
+
+URL: https://three.ws/anatomy
+
+Describe a machine in one line and get an interactive isometric wireframe cutaway: rotate it, explode it, cut it open and click any part. Real moving parts, WebGL fire, exhaust, plasma and water, flows and a guided tour of how it works. Also an open agent skill.
+
 ### Global Intel Globe
 
 URL: https://three.ws/globe
@@ -2736,6 +2742,12 @@ Turn 1 to 6 photos of an object into a textured GLB on the free self-hosted reco
 URL: https://three.ws/docs/cad-forge
 
 How a sentence becomes a kernel-checked build123d part: the write, build and repair loop, dimension parameters, the design page, the /api/cad HTTP API, the cad_generate and cad_rebuild MCP tools, and the sandbox that runs model-written code.
+
+### Docs · Anatomy (machines as interactive cutaways)
+
+URL: https://three.ws/docs/anatomy
+
+How a one-line prompt becomes an interactive isometric cutaway: the spec format, progressive drawing while the model writes, the writer ladder, the /api/anatomy HTTP API and the open anatomy agent skill.
 
 ### Docs · Diorama (text to world)
 

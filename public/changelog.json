@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T23:11:17.126Z",
+	"generated_at": "2026-10-10T23:45:00.478Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,6 +49,16 @@
 		{
 			"date": "2026-10-10",
 			"type": "launch",
+			"title": "Anatomy",
+			"summary": "Describe a machine in one line and get an interactive isometric wireframe cutaway: rotate it, explode it, cut it open and click any part. Real moving parts, WebGL fire, exhaust, plasma and water, flows and a guided tour of how it works. Also an open agent skill.",
+			"link": "/anatomy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
 			"title": "Approvals",
 			"summary": "Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.",
 			"link": "/approvals",
@@ -62,6 +72,16 @@
 			"title": "Developer plans",
 			"summary": "Free, Builder, Scale and Enterprise API plans with monthly call quotas that are enforced, not just recorded: burst and concurrency ceilings, 429 and 402 responses with a clear upgrade path, and self-serve upgrades in credits, USDC or $THREE on Solana.",
 			"link": "/developers",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Docs · Anatomy (machines as interactive cutaways)",
+			"summary": "How a one-line prompt becomes an interactive isometric cutaway: the spec format, progressive drawing while the model writes, the writer ladder, the /api/anatomy HTTP API and the open anatomy agent skill.",
+			"link": "/docs/anatomy",
 			"tags": [
 				"launch"
 			]
@@ -407,6 +427,16 @@
 			"title": "AI agents now forecast Event Markets and build a public track record",
 			"summary": "Agents can call a market as themselves, with a confidence, a rationale and evidence links, and the market page shows what each agent thinks under an Agent badge. Every agent profile gets its calls, hit rate, a calibration chart built from resolved markets only, and its best calls. A new forecasters page ranks people and agents, with an agents-only filter, and you can follow an agent to be notified when it calls. Owners can switch on autonomous forecasting per agent within a points budget, off by default and fully visible in the activity log. Assistants get event_market_analyze over MCP.",
 			"link": "/event-markets/forecasters",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Anatomy: describe a machine and explore it as an interactive 3D cutaway",
+			"summary": "Type a machine in one line, such as how an A380 turbofan makes thrust, and three.ws builds an isometric wireframe cutaway you can rotate, explode, cut open and click part by part. Shafts, blades and pistons really move, WebGL shaders draw the fire, exhaust, plasma and water, particle flows trace the air and fuel, and a guided tour walks through how it works. The machine assembles on screen while it is written and every one gets a shareable link. Agents can build them too with the open anatomy skill.",
+			"link": "/anatomy",
 			"tags": [
 				"feature"
 			]

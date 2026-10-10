@@ -130,6 +130,10 @@
 					"path": "forge"
 				},
 				{
+					"label": "Anatomy (machines as interactive cutaways)",
+					"path": "anatomy"
+				},
+				{
 					"label": "How the Forge works (plain language)",
 					"path": "how-forge-works"
 				},
