@@ -30,6 +30,10 @@ const CATALOGS = [
 //   forget              deletes a stored agent memory
 //   delete_custom_skill permanently removes a skill an owner may have written
 //                       by hand; gated on confirm_delete
+//   delete_agent        cancels an agent's runs and erases its memories and
+//                       action log; gated on confirm_delete
+//   automation_delete   removes an automation (or the wallet rule or alert
+//                       rule behind it); gated on confirm_delete
 // Moving money (an irreversible transfer or an on-chain transaction):
 //   pay_and_call        spends the user's USDC on an x402 endpoint
 //   persona_tip, persona_send   spend a persona's own USDC
@@ -39,6 +43,8 @@ const CATALOGS = [
 //   paired_launch       launches a coin and its opening buy on Robinhood Chain
 //   paired_claim_fees   signs and broadcasts the fee-collection transaction on
 //                       Robinhood Chain (marked destructive on 2026-10-09)
+//   automation_trigger  fires an automation now, and a swap or transfer
+//                       automation spends SOL from the agent wallet
 //   create_marketplace_listing, delist_marketplace_listing, place_bid,
 //   buy_now, accept_marketplace_bid, withdraw_marketplace_bid
 //                       commit an agent or move USDC through marketplace escrow
@@ -57,10 +63,10 @@ const CATALOGS = [
 // future home tool is genuinely read-only it belongs outside this set; anything
 // that reaches an actuator belongs inside it.
 const DESTRUCTIVE_TOOLS = new Set([
-	'delete_avatar', 'forget', 'delete_custom_skill',
+	'delete_avatar', 'forget', 'delete_custom_skill', 'delete_agent', 'automation_delete',
 	'pay_and_call', 'persona_tip', 'persona_send',
 	'agent_card_create', 'agent_card_reveal', 'agent_card_cancel', 'agent_card_withdraw',
-	'paired_launch', 'paired_claim_fees',
+	'paired_launch', 'paired_claim_fees', 'automation_trigger',
 	'create_marketplace_listing', 'delist_marketplace_listing', 'place_bid', 'buy_now',
 	'accept_marketplace_bid', 'withdraw_marketplace_bid',
 	'predictions_open', 'predictions_close', 'predictions_redeem',
@@ -69,10 +75,13 @@ const DESTRUCTIVE_TOOLS = new Set([
 
 // Destructive tools the policy deliberately leaves in the write tier (on by
 // default, no confirm flag). paired_claim_fees collects fees into the agent's
-// own wallet, so nothing leaves the owner's control. Every other destructive
-// tool must be financial tier: off until the session enables it, and refused
-// without its confirm flag.
-const DESTRUCTIVE_WRITE_TIER = new Set(['paired_claim_fees']);
+// own wallet, so nothing leaves the owner's control. automation_trigger gates
+// its own spend: an agent_prompt or notify fire moves nothing, and a swap or
+// transfer fire refuses connector keys, needs wallet:write, and needs
+// confirm_spend after the tool has shown recipient, amount, asset and chain.
+// Every other destructive tool must be financial tier: off until the session
+// enables it, and refused without its confirm flag.
+const DESTRUCTIVE_WRITE_TIER = new Set(['paired_claim_fees', 'automation_trigger']);
 
 // Internal/spec-only fields that must never leak into the tools/list wire
 // payload.
