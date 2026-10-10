@@ -7,13 +7,17 @@
 //   node scripts/export-standalone-repos.mjs --target glb-tools   one repo
 //   node scripts/export-standalone-repos.mjs --publish            also create/push/configure on GitHub
 //
-// The monorepo stays the source of truth: the export is one-way and a rebuild
-// overwrites the repository's main branch with the regenerated tree. Config is
+// The monorepo stays the source of truth. A repository that does not exist yet
+// is created from the regenerated tree. A repository that already has history is
+// never force-pushed: the export is cloned, the generated discovery files are
+// added on top as one ordinary commit (existing files such as the README are
+// kept), and the push must fast-forward. Config is
 // data/standalone-repos.json. --publish reads the token from GITHUB_TOKEN or the
 // file named by GITHUB_TOKEN_FILE; the token is passed per command and never
 // written to a remote URL or git config.
 
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,7 +43,7 @@ function meta(target) {
 		slug,
 		repoUrl: `https://github.com/${slug}`,
 		pagesUrl: `https://${config.owner}.github.io/${target.repo}/`,
-		topics: [...new Set([...target.topics, ...config.baseTopics, ...(pkg.keywords || []).map((k) => String(k).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))])].filter(topicOk).slice(0, 20),
+		topics: [...new Set([...target.topics, ...config.baseTopics, ...(Object.keys(pkg.dependencies || {}).length ? [] : ['zero-dependencies']), ...(pkg.keywords || []).map((k) => String(k).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))])].filter(topicOk).slice(0, 20),
 	};
 }
 
@@ -362,14 +366,38 @@ async function publish(target, m, dest, tok) {
 		if (made.status !== 201) throw new Error(`create ${m.slug} failed: ${made.status} ${made.json?.message}`);
 	} else if (exists.status !== 200) throw new Error(`lookup ${m.slug} failed: ${exists.status}`);
 
-	const git = (args) => execFileSync('git', args, { cwd: dest, stdio: 'pipe' }).toString();
-	rmSync(join(dest, '.git'), { recursive: true, force: true });
-	git(['init', '-b', 'main']);
-	git(['add', '--all']);
-	git(['-c', 'user.name=three.ws release builder', '-c', 'user.email=support@three.ws', 'commit', '-m', `feat: publish ${m.pkg.name} ${m.pkg.version} as a standalone repository with docs site and agent discovery files`]);
-	git(['remote', 'add', 'origin', `${m.repoUrl}.git`]);
 	const auth = `Authorization: Basic ${Buffer.from(`x-access-token:${tok}`).toString('base64')}`;
-	git(['-c', `http.extraheader=${auth}`, 'push', '--force', '-u', 'origin', 'main']);
+	const identity = ['-c', 'user.name=three.ws release builder', '-c', 'user.email=support@three.ws'];
+	const hasHistory = exists.status === 200 && (await gh('GET', `/repos/${m.slug}/commits?per_page=1`, null, tok)).status === 200;
+	let mode = 'created';
+	if (!hasHistory) {
+		const git = (args) => execFileSync('git', args, { cwd: dest, stdio: 'pipe' }).toString();
+		rmSync(join(dest, '.git'), { recursive: true, force: true });
+		git(['init', '-b', 'main']);
+		git(['add', '--all']);
+		git([...identity, 'commit', '-m', `feat: publish ${m.pkg.name} ${m.pkg.version} as a standalone repository with docs site and agent discovery files`]);
+		git(['remote', 'add', 'origin', `${m.repoUrl}.git`]);
+		git(['-c', `http.extraheader=${auth}`, 'push', '-u', 'origin', 'main']);
+	} else {
+		const work = mkdtempSync(join(tmpdir(), 'standalone-'));
+		try {
+			const git = (args) => execFileSync('git', args, { cwd: work, stdio: 'pipe' }).toString();
+			execFileSync('git', ['-c', `http.extraheader=${auth}`, 'clone', '--depth', '1', `${m.repoUrl}.git`, work], { stdio: 'pipe' });
+			// Add-only: files the repository already has (README, AGENTS.md, src) are kept.
+			// The docs site is regenerated whole because it is a build product.
+			rmSync(join(work, 'docs', 'index.html'), { force: true });
+			cpSync(dest, work, { recursive: true, force: false, errorOnExist: false, filter: (p) => !p.endsWith('/.git') });
+			for (const f of readdirSync(join(dest, 'docs'))) cpSync(join(dest, 'docs', f), join(work, 'docs', f), { recursive: true, force: true });
+			git(['add', '--all']);
+			if (git(['status', '--porcelain']).trim()) {
+				git([...identity, 'commit', '-m', `docs: add docs site, llms.txt, security policy, citation and issue templates for ${m.pkg.name} discovery`]);
+				git(['-c', `http.extraheader=${auth}`, 'push', 'origin', 'HEAD']);
+				mode = 'overlay';
+			} else mode = 'unchanged';
+		} finally {
+			rmSync(work, { recursive: true, force: true });
+		}
+	}
 
 	await gh('PATCH', `/repos/${m.slug}`, { description: String(m.pkg.description).slice(0, 350), homepage: m.pagesUrl, has_discussions: true }, tok);
 	const topics = await gh('PUT', `/repos/${m.slug}/topics`, { names: m.topics }, tok);
@@ -377,8 +405,43 @@ async function publish(target, m, dest, tok) {
 	for (const [name, color, description] of [['good first issue', '7057ff', 'Good for newcomers'], ['help wanted', '008672', 'Extra attention is needed']]) {
 		await gh('POST', `/repos/${m.slug}/labels`, { name, color, description }, tok);
 	}
-	return { topics: topics.status, pages: pages.status === 409 ? 'already enabled' : pages.status };
+	return { mode, topics: topics.status, pages: pages.status === 409 ? 'already enabled' : pages.status };
 }
+
+function topicsFor(pkg, dir) {
+	const t = new Set();
+	const text = `${pkg.name} ${pkg.description || ''}`.toLowerCase();
+	if (pkg.mcpName || /mcp/.test(pkg.name)) ['mcp', 'mcp-server', 'model-context-protocol', 'claude'].forEach((x) => t.add(x));
+	if (pkg.bin) t.add('cli');
+	if (/solana/.test(text)) t.add('solana');
+	if (/x402/.test(text)) ['x402', 'payments'].forEach((x) => t.add(x));
+	if (/glb|gltf|3d|avatar|three\.js|webgl|mesh/.test(text)) ['3d', 'gltf', 'webgl'].forEach((x) => t.add(x));
+	if (/agent/.test(text)) ['ai-agents', 'llm-tools'].forEach((x) => t.add(x));
+	return [...t].filter(topicOk);
+}
+
+function autoTargets() {
+	const auto = config.auto;
+	if (!auto) return [];
+	const listed = new Set(config.targets.map((t) => t.source));
+	const out = [];
+	for (const root of auto.roots) {
+		const dirs = root.endsWith('/*') ? readdirSync(join(REPO, root.slice(0, -2))).map((d) => `${root.slice(0, -2)}/${d}`) : [root];
+		for (const source of dirs) {
+			const pj = join(REPO, source, 'package.json');
+			if (!existsSync(pj) || listed.has(source)) continue;
+			const pkg = JSON.parse(readFileSync(pj, 'utf8'));
+			if (pkg.private || !existsSync(join(REPO, source, 'README.md'))) continue;
+			const dir = source.split('/').pop();
+			const repo = auto.rename?.[source] || (dir.includes('-') ? dir : `three-ws-${dir}`);
+			const hold = auto.hold?.[source];
+			out.push({ repo, source, topics: topicsFor(pkg, dir), ...(hold ? { hold } : {}) });
+		}
+	}
+	return out;
+}
+
+config.targets = [...config.targets, ...autoTargets()];
 
 const targets = config.targets.filter((t) => (value('--target') ? t.repo === value('--target') : !t.hold));
 if (!targets.length) throw new Error(`unknown target: ${value('--target')}`);
@@ -386,10 +449,17 @@ mkdirSync(OUT, { recursive: true });
 const tok = flag('--publish') ? token() : null;
 const report = [];
 for (const target of targets) {
-	const { m, dest } = await buildTree(target);
-	if (!flag('--skip-tests')) verify(target, dest);
-	const row = { repo: m.slug, version: m.pkg.version, topics: m.topics.length, files: readdirSync(dest).length, site: m.pagesUrl };
-	if (tok) Object.assign(row, await publish(target, m, dest, tok));
-	report.push(row);
+	try {
+		const { m, dest } = await buildTree(target);
+		if (!flag('--skip-tests')) verify(target, dest);
+		const row = { repo: m.slug, version: m.pkg.version, topics: m.topics.length, files: readdirSync(dest).length, site: m.pagesUrl };
+		if (tok) Object.assign(row, await publish(target, m, dest, tok));
+		report.push(row);
+	} catch (err) {
+		const secrets = tok ? [tok, Buffer.from(`x-access-token:${tok}`).toString('base64')] : [];
+		const detail = [String(err.message).split('\n')[0], err.stderr ? String(err.stderr).trim().split('\n').pop() : ''].filter(Boolean).join(' | ');
+		report.push({ repo: `${config.owner}/${target.repo}`, error: secrets.reduce((text, secret) => text.split(secret).join('***'), detail).slice(0, 300) });
+	}
 }
 console.table(report);
+if (report.some((r) => r.error)) process.exitCode = 1;
