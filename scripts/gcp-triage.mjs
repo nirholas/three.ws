@@ -289,6 +289,17 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `A cryptocurrency.cv AI route found every provider out (Groq daily token budget spent, Gemini and Vertex refused by the GCP billing hold "Lightning dunning decision is deny", OpenRouter out of credit) with no cached analysis to serve. Nothing in code is broken and no redeploy fixes it: the owner restores ONE provider (clear the billing hold on aerial-vehicle-466722-p5, top up OpenRouter, or move GROQ_API_KEY to a paid tier) and the routes recover on the next request. Confirm with: curl -s https://cryptocurrency.cv/api/narratives. ${RUNBOOK} §ccv-ai-providers-unavailable.`,
 	},
 	{
+		id: 'holders-rpc-exhausted-503',
+		// composeTokenHolders() returns upstream_down, and the handler answers 503,
+		// only when the mint read and every holder path (Helius, then keyless
+		// getTokenLargestAccounts) failed AND no last-good copy was cached for this
+		// mint+limit yet, overwhelmingly a brand-new/rarely-queried mint hit while
+		// every RPC lane is exhausted (healthz rpc_lanes), not a code fault.
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/crypto/holders',
+		class: 'self-healing',
+		action: `The free holder-distribution route exhausted Helius and the keyless RPC fallback for a mint with no cached last-good report, so it answered an honest 503 upstream_unavailable rather than a guess. Check healthz rpc_lanes/helius: this fires in bursts while every paid Solana RPC lane is cooling down (see ${RUNBOOK} "Every paid Solana RPC lane exhausted at once"). Investigate only if it persists after rpc_lanes reads ok. ${RUNBOOK} §solana-rpc.`,
+	},
+	{
 		id: 'watsonx-unconfigured-503',
 		test: (g) => g.status === 503 && (g.path === '/api/galaxy' || g.path.startsWith('/api/galaxy/')),
 		class: 'owner',

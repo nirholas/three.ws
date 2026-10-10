@@ -105,6 +105,12 @@ describe('gcp-triage HTTP classification', () => {
 		expect(finding.signature).toBe('pump-price-history-upstreams-502');
 		expect(finding.class).toBe('env-action');
 	});
+
+	it('classifies a holder-distribution RPC exhaustion 503 as self-healing', () => {
+		const [finding] = buildFindings([request({ status: 503, path: '/api/crypto/holders' })]);
+		expect(finding.signature).toBe('holders-rpc-exhausted-503');
+		expect(finding.class).toBe('self-healing');
+	});
 });
 
 describe('gcp-triage page failure summary', () => {

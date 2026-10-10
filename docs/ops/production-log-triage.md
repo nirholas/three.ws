@@ -911,6 +911,14 @@ ws error: Unexpected server response: 301
   `pump-curve-rpc-unavailable` (self-healing). Escalate it only when it persists
   after `healthz.rpc_lanes` shows at least one healthy lane; no transaction was
   broadcast and retrying cannot spend user funds.
+- **Holder-distribution symptom:** `HTTP 503 GET /api/crypto/holders` answers
+  `upstream_unavailable` when both holder paths (Helius, then keyless
+  `getTokenLargestAccounts`) fail for a mint with no last-good report cached
+  yet (24h TTL), common for a mint nobody queried before during a lane
+  outage. The monitor classifies this `holders-rpc-exhausted-503`
+  (self-healing). Escalate only if it persists after `rpc_lanes` reads ok;
+  [api/_lib/crypto-token-holders.js](../../api/_lib/crypto-token-holders.js)
+  is the composition logic if it does.
 
 ---
 
