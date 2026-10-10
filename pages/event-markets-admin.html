@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Event Markets Admin · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		.em-wrap { width: 100%; min-width: 0; box-sizing: border-box; max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.em-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 0.5rem; }
+		.em-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.75rem; max-width: 74ch; line-height: 1.65; }
+		.em-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; align-items: center; flex-wrap: wrap; }
+		.em-stamp { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-left: auto; font-variant-numeric: tabular-nums; }
+		.em-btn { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+		.em-btn:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.1); }
+		.em-btn:active { transform: translateY(1px); }
+		.em-btn:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+		.em-btn[disabled] { opacity: 0.5; cursor: progress; }
+		.em-btn.danger:hover { border-color: rgba(248,113,113,0.6); background: rgba(248,113,113,0.12); }
+		.em-note { padding: 2.5rem 1.5rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); line-height: 1.75; }
+		.em-note.bad { background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.18); }
+		.em-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
+		.em-note a { color: var(--accent-violet-strong, #a78bfa); }
+		.em-note code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+		.em-section { margin-bottom: 2.5rem; }
+		.em-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+		.em-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
+		.em-table-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; }
+		.em-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+		.em-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); font-weight: 600; padding: 10px 14px; background: rgba(255,255,255,0.02); }
+		.em-table td { padding: 11px 14px; border-top: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+		.em-table tr:hover td { background: rgba(255,255,255,0.025); }
+		.em-ev-title { font-weight: 600; overflow-wrap: anywhere; }
+		.em-muted { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 2px; }
+		.em-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: rgba(255,255,255,0.08); }
+		.em-pill.open { background: rgba(45,212,191,0.15); color: #5eead4; }
+		.em-pill.locked { background: rgba(240,169,59,0.15); color: #f6c26b; }
+		.em-pill.resolved { background: rgba(124,92,255,0.18); color: #c4b5fd; }
+		.em-pill.void, .em-pill.skip { background: rgba(248,113,113,0.14); color: #fca5a5; }
+		.em-pill.none { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); }
+		.em-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+		.em-skeleton { height: 46px; border-radius: 10px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: em-shimmer 1.4s linear infinite; }
+		@keyframes em-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		.em-toast { position: fixed; right: 1rem; bottom: 1rem; max-width: min(420px, calc(100vw - 2rem)); padding: 12px 16px; border-radius: 10px; background: #1a1a24; border: 1px solid rgba(255,255,255,0.16); font-size: 13px; line-height: 1.5; }
+		.em-toast.bad { border-color: rgba(248,113,113,0.5); }
+		@media (prefers-reduced-motion: reduce) { .em-skeleton { animation: none; } .em-btn { transition: none; } }
+	</style>
+</head>
+<body>
+	<div class="em-wrap">
+		<h1 class="em-title">Event Markets</h1>
+		<p class="em-sub">
+			Every event on the platform and whether it has a "Who wins?" market. The cron opens one as soon as an
+			event has a defined winner and two entrants, adds late entrants until picks lock, and logs every event
+			it declines with the reason. Open or void one by hand here. Points only, nothing on this page moves funds.
+			Internal tooling, not a public surface.
+		</p>
+		<div class="em-controls">
+			<button class="em-btn" id="em-refresh" type="button">Refresh</button>
+			<span class="em-stamp" id="em-stamp"></span>
+		</div>
+		<div id="em-content" aria-live="polite" aria-busy="true"></div>
+	</div>
+	<div id="em-toast-host" role="status" aria-live="polite"></div>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/event-markets-admin.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

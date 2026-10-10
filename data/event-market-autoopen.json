@@ -1,0 +1,10 @@
+{
+	"minEntrants": 2,
+	"maxOutcomes": 64,
+	"lockFractions": {
+		"arena_tournament": 0.1,
+		"event_leaderboard": 0.2
+	},
+	"bountyResolveGraceDays": 7,
+	"manualLockMinutes": 60
+}
