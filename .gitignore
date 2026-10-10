@@ -25,7 +25,13 @@ character-studio/public/loot-assets
 .mcp.json
 .claude/worktrees/
 # Auto-created symlinks → .agents/skills/* by scripts/setup-claude-skills.mjs
-.claude/skills/
+.claude/skills/*
+# Repo-owned operating skills live here for real (not symlinks); keep them tracked.
+!.claude/skills/deploy-runbook/
+!.claude/skills/self-unblock-playbook/
+!.claude/skills/changelog-and-docs/
+!.claude/skills/maintain-claude-md/
+!.claude/skills/engineering-standards/
 
 # Local env files
 .env.xspace

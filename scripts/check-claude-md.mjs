@@ -32,7 +32,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const md = readFileSync(path.join(root, 'CLAUDE.md'), 'utf8');
+const claudeMd = readFileSync(path.join(root, 'CLAUDE.md'), 'utf8');
+// Operating detail that was split out of CLAUDE.md to keep every session's base
+// context small. These skills are part of the brain, so they are held to the same claims.
+const operatingSkills = ['deploy-runbook', 'self-unblock-playbook', 'changelog-and-docs', 'maintain-claude-md', 'engineering-standards'];
+const md = [claudeMd, ...operatingSkills.map((n) => readFileSync(path.join(root, '.claude/skills', n, 'SKILL.md'), 'utf8'))].join('\n');
 const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
 const scripts = pkg.scripts || {};
 
@@ -86,7 +90,7 @@ for (const raw of missingPaths(md)) failures.push(`path \`${raw}\` is referenced
 
 // 3. Typography: the ban applies to the file that declares it. Only the lines
 // that name the banned characters may contain them.
-md.split('\n').forEach((line, i) => {
+claudeMd.split('\n').forEach((line, i) => {
 	if (/[—–]/.test(line) && !/em-dash|en-dash/.test(line)) {
 		failures.push(`line ${i + 1} contains an em/en-dash, which CLAUDE.md itself bans`);
 	}
