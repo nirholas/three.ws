@@ -13,6 +13,7 @@
 import { loadArticle } from './queue.js';
 import { readMedia } from './media.js';
 import { attachArticleMedia } from './articles.js';
+import { formatOf } from './formats.js';
 
 // X expires an uploaded media id after 24 hours; re-upload past this age.
 const MEDIA_ID_TTL_MS = 23 * 60 * 60 * 1000;
@@ -128,6 +129,7 @@ export async function publishItem({ item, client, root, state, store, account = 
 		kind: item.kind,
 		lane: item.lane,
 		pattern: item.pattern,
+		format: formatOf(item),
 		publishedAt: new Date(now).toISOString(),
 		text: item.kind === 'article' ? item.article.title : item.posts[0].text,
 		postIds: progress.postIds,

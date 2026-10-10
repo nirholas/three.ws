@@ -39,6 +39,45 @@ export const VIDEO_LIMITS = {
 
 export const MAX_ALT_TEXT = 1000;
 
+// X's animated GIF limits, beyond the 15 MB in MEDIA_TYPES.
+export const GIF_LIMITS = { maxWidth: 1280, maxHeight: 1080, maxFrames: 350, maxPixels: 300_000_000 };
+
+// Width, height and frame count straight from the GIF block structure, so the
+// limits are checked without decoding a pixel (and without sharp, which this
+// synchronous check cannot await). Returns null for a file that is not a GIF.
+export function gifInfo(buffer) {
+	if (buffer.length < 13 || buffer.toString('latin1', 0, 3) !== 'GIF') return null;
+	const width = buffer.readUInt16LE(6);
+	const height = buffer.readUInt16LE(8);
+	const flags = buffer[10];
+	let offset = 13 + (flags & 0x80 ? 3 * 2 ** ((flags & 0x07) + 1) : 0);
+	let frames = 0;
+	const skipSubBlocks = () => {
+		while (offset < buffer.length && buffer[offset] !== 0) offset += buffer[offset] + 1;
+		offset++;
+	};
+	while (offset < buffer.length) {
+		const block = buffer[offset];
+		if (block === 0x3b) break;
+		if (block === 0x21) {
+			offset += 2;
+			skipSubBlocks();
+		} else if (block === 0x2c) {
+			frames++;
+			const local = buffer[offset + 9];
+			offset += 10 + (local & 0x80 ? 3 * 2 ** ((local & 0x07) + 1) : 0);
+			offset++;
+			skipSubBlocks();
+		} else {
+			return { width, height, frames, truncated: true };
+		}
+	}
+	return { width, height, frames };
+}
+
+// Media an image model drew is labelled as such where the reader meets it.
+export const GENERATED_LABEL = /\bAI[- ]generated\b/i;
+
 export const CATEGORY = { image: 'tweet_image', gif: 'tweet_gif', video: 'tweet_video' };
 
 export function mediaType(path) {
@@ -65,6 +104,19 @@ export function mediaProblems(media, root) {
 		const alt = String(media.alt || '').trim();
 		if (!alt) problems.push(`${path}: needs alt text`);
 		if (alt.length > MAX_ALT_TEXT) problems.push(`${path}: alt text is ${alt.length} characters; X allows ${MAX_ALT_TEXT}`);
+		if (media.generated && !GENERATED_LABEL.test(alt)) problems.push(`${path}: an image model drew this, so its alt text must say "AI-generated"`);
+		if (media.generated && !media.generated.model) problems.push(`${path}: generated media must record the model that drew it`);
+		if (type.kind === 'gif') {
+			const gif = gifInfo(readFileSync(absolute));
+			const G = GIF_LIMITS;
+			if (!gif) problems.push(`${path}: is not a GIF file`);
+			else {
+				if (gif.truncated) problems.push(`${path}: the GIF is malformed`);
+				if (gif.width > G.maxWidth || gif.height > G.maxHeight) problems.push(`${path}: ${gif.width}x${gif.height} is over X's ${G.maxWidth}x${G.maxHeight} GIF limit`);
+				if (gif.frames > G.maxFrames) problems.push(`${path}: ${gif.frames} frames is over X's ${G.maxFrames} frame GIF limit`);
+				if (gif.width * gif.height * gif.frames > G.maxPixels) problems.push(`${path}: ${gif.width}x${gif.height} over ${gif.frames} frames is over X's ${G.maxPixels / 1e6} million pixel GIF limit`);
+			}
+		}
 		return problems;
 	}
 

@@ -13,6 +13,7 @@
 
 import { createHash, createHmac } from 'node:crypto';
 import { rankItems } from './priority.js';
+import { withFormats } from './formats.js';
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -178,6 +179,7 @@ export const tierOf = (item) => (TIERS.includes(Number(item.tier)) ? Number(item
 // tick already tried and could not send, so the slot falls to the next best.
 export function pickDue({
 	items,
+	allItems = items,
 	state,
 	now = Date.now(),
 	cadence: rawCadence = {},
@@ -191,7 +193,7 @@ export function pickDue({
 	quota = false,
 }) {
 	const cadence = { ...DEFAULT_CADENCE, ...rawCadence };
-	const published = [...(state?.published || [])].sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
+	const published = withFormats(state?.published, allItems).sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
 	const publishedIds = new Set(published.map((row) => row.id));
 	const inflight = state?.inflight || {};
 

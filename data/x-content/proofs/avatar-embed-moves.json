@@ -1,0 +1,127 @@
+{
+	"id": "avatar-embed-moves",
+	"scenarioHash": "09b9afa48ef1d91d4d06b47b454d1c2373b8e062fe079b614bf7ac115aa0110b",
+	"ranAt": "2026-10-10T05:43:04.520Z",
+	"target": {
+		"commit": "5af439bc0",
+		"revision": "three-ws-api-00487-7mt"
+	},
+	"passed": false,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/embed/avatar?model=/avatars/michelle.glb&bg=dark",
+			"detail": "loaded https://three.ws/embed/avatar?model=/avatars/michelle.glb&bg=dark",
+			"ok": true,
+			"ms": 20925,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "expect",
+			"target": "Animations",
+			"detail": "appeared after 0.7 s",
+			"ok": true,
+			"ms": 703,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "hold",
+			"target": "1600",
+			"detail": "1600 ms",
+			"ok": true,
+			"ms": 13808,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "press",
+			"target": "1",
+			"detail": "pressed 1",
+			"ok": true,
+			"ms": 1486,
+			"frames": 0
+		},
+		{
+			"index": 5,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 11227,
+			"frames": 0
+		},
+		{
+			"index": 6,
+			"kind": "press",
+			"target": "2",
+			"detail": "pressed 2",
+			"ok": true,
+			"ms": 1795,
+			"frames": 0
+		},
+		{
+			"index": 7,
+			"kind": "hold",
+			"target": "1000",
+			"detail": "1000 ms",
+			"ok": true,
+			"ms": 8578,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "press",
+			"target": "3",
+			"detail": "pressed 3",
+			"ok": true,
+			"ms": 1581,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "hold",
+			"target": "1400",
+			"detail": "1400 ms",
+			"ok": true,
+			"ms": 11252,
+			"frames": 0
+		},
+		{
+			"index": 10,
+			"kind": "click",
+			"target": "Animations",
+			"detail": "clicked",
+			"ok": true,
+			"ms": 6143,
+			"frames": 0
+		},
+		{
+			"index": 11,
+			"kind": "hold",
+			"target": "600",
+			"detail": "600 ms",
+			"ok": true,
+			"ms": 4854,
+			"frames": 0
+		},
+		{
+			"index": 12,
+			"kind": "click",
+			"target": "Boxer Dance",
+			"ok": false,
+			"detail": "no request to /animations/clips/av-boxer-dance.json answered within 60 s",
+			"ms": 64098,
+			"frames": 0
+		}
+	],
+	"facts": {},
+	"saw": [
+		"Animations"
+	],
+	"responses": [],
+	"cuts": [],
+	"video": null
+}

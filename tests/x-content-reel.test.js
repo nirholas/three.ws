@@ -191,9 +191,9 @@ describe('proof', () => {
 		expect(proofProblems(item(), sandbox(old), NOW).join('\n')).toMatch(/filmed 16 days ago/);
 	});
 
-	it('requires the head post to carry the reel that was filmed', () => {
+	it('requires a post to carry the reel that was filmed', () => {
 		const swapped = item({ posts: [{ text: item().posts[0].text, media: [{ path: 'public/x-media/galaxy-search/other.mp4', probe: PROBE }] }] });
-		expect(proofProblems(swapped, sandbox(), NOW).join('\n')).toMatch(/does not carry the reel/);
+		expect(proofProblems(swapped, sandbox(), NOW).join('\n')).toMatch(/no post carries the reel/);
 	});
 
 	it('notices a reel that was replaced after the run', () => {

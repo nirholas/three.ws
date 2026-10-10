@@ -210,7 +210,7 @@ export function proofProblems(item, root, now = Date.now()) {
 	const age = (now - Date.parse(proof.ranAt)) / 86_400_000;
 	if (age > PROOF_MAX_AGE_DAYS) problems.push(`the reel was filmed ${Math.floor(age)} days ago; the product moves, so film it again`);
 	const reel = (item.posts || []).flatMap((post) => post.media || []).find((media) => media.path === proof.video?.path);
-	if (!reel) problems.push(`the head post does not carry the reel ${proof.video?.path || ''}`);
+	if (!reel) problems.push(`no post carries the reel ${proof.video?.path || ''}`);
 	else {
 		const file = resolve(root, reel.path);
 		if (existsSync(file) && sha256File(file) !== proof.video.sha256) problems.push(`${reel.path} is not the file the proof filmed`);

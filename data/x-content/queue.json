@@ -32,6 +32,7 @@
 		"queueSimilarityLimit": 0.34,
 		"maximumSameLaneInARow": 2,
 		"maximumSamePatternInARow": 1,
+		"maximumSameFormatInARow": 1,
 		"glossary": [
 			"Hunyuan",
 			"Tripo",
@@ -4620,7 +4621,7 @@
 		},
 		{
 			"id": "docs-world",
-			"status": "review",
+			"status": "draft",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -4742,6 +4743,23 @@
 					"text": "This is the documentation, rebuilt as a place. More than 300 pages, and you read them by walking up to them.\n\nEvery docs section is a pavilion on a ring, 16 in all. Search a page from wherever you stand and a trail of arrows leads to the pavilion that holds it. Enter reads it there and then: the real page opens inside the scene, as text you can select and zoom.\n\nthree.ws/docs/world",
 					"media": [
 						{
+							"path": "public/x-media/docs-world/loop.gif",
+							"alt": "Looping clip filmed live on three.ws/docs/world. On screen: The three.ws docs, built as a place / Every docs section is a pavilion on a ring.",
+							"derived": {
+								"as": "gif",
+								"reel": "d59be7703de098a2dbaa92292e8b6577ca1103b4466c688bdd85d04c77d90834",
+								"from": 1.2,
+								"to": 7.2,
+								"width": 800,
+								"fps": 15
+							}
+						}
+					]
+				},
+				{
+					"text": "Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world.",
+					"media": [
+						{
 							"path": "public/x-media/docs-world/reel.mp4",
 							"probe": {
 								"durationSec": 18.67,
@@ -4754,9 +4772,6 @@
 							"reel": true
 						}
 					]
-				},
-				{
-					"text": "Same files as the classic docs, so the two can never drift apart. Walk with the arrow keys or the touch joystick, and pass any rigged GLB with ?avatar= to make it your body in the world."
 				}
 			],
 			"claims": [
@@ -4899,7 +4914,10 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"head": {
+				"as": "gif"
+			}
 		},
 		{
 			"id": "drive-copilot",
@@ -15042,7 +15060,7 @@
 		},
 		{
 			"id": "photo-to-3d",
-			"status": "approved",
+			"status": "draft",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -15119,6 +15137,20 @@
 					"text": "One photo of a garden gnome went in, and a textured 3D model came out, viewable in the browser with the garden cut away: three.ws/image-to-3d\n\nIt is free, with no sign-up and no API key. The free engines run on NVIDIA-hosted generation and our own self-hosted GPU workers, so the machine you upload from needs no GPU of its own. When the model lands, orbit it and download the GLB.",
 					"media": [
 						{
+							"path": "public/x-media/photo-to-3d/card.png",
+							"alt": "three.ws card on a black background with the headline \"One photo in. A 3D model out.\" Free, with no sign-up and no API key. Orbit it, then download the GLB. Beside it, a frame of three.ws/image-to-3d from the reel filmed live on the product.",
+							"derived": {
+								"as": "card",
+								"reel": "66aa5624fa5bce982bf99c37c65483f99841b51c9a18ded1e4f49b0261efe0c2",
+								"at": 14.5
+							}
+						}
+					]
+				},
+				{
+					"text": "One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen.",
+					"media": [
+						{
 							"path": "public/x-media/photo-to-3d/reel.mp4",
 							"probe": {
 								"durationSec": 15.4,
@@ -15131,9 +15163,6 @@
 							"reel": true
 						}
 					]
-				},
-				{
-					"text": "One photo leaves the back of the object to the model to guess. Photo mode takes up to 6 views of the same object and reconstructs them together, so a second or third angle replaces the guess with what the camera saw.\n\nThe reel uses a single public domain photo, and the wait for the model is cut and labelled on screen."
 				},
 				{
 					"text": "The result is a GLB you keep. From the same screen you can view it in AR in your own room, split it into selectable parts, or rebuild it to a polygon budget and export an engine-ready GLB and FBX.\n\nAgents get it too: the same pipeline is available to agents over MCP, so a bot can turn a photo into a model without opening the page."
@@ -15276,7 +15305,12 @@
 				}
 			],
 			"mentions": {},
-			"approvedBy": "policy"
+			"approvedBy": "policy",
+			"head": {
+				"as": "card",
+				"headline": "One photo in.\nA 3D model out.",
+				"body": "Free, with no sign-up and no API key. Orbit it, then download the GLB."
+			}
 		}
 	]
 }

@@ -166,6 +166,8 @@ export function claimProblems(item, { articleText = '' } = {}) {
 	return problems;
 }
 
+export const GIF_MIN_WIDTH = 600;
+
 // Media most likely to embarrass: soft upscales, crops that cut the subject,
 // alt text that says nothing, and a frame older than the product it shows.
 export async function mediaQualityProblems(post, root, { maxFrameAgeDays = 21, now = Date.now() } = {}) {
@@ -183,7 +185,10 @@ export async function mediaQualityProblems(post, root, { maxFrameAgeDays = 21, n
 			const meta = await sharp(resolve(root, media.path), { animated: type.kind === 'gif' }).metadata();
 			const width = meta.width;
 			const height = meta.pageHeight || meta.height;
-			if (width < 1200) problems.push({ rule: 'media', severity: 'blocking', message: `${media.path} is ${width}px wide; X renders it soft below 1200px` });
+			// X plays a GIF as a video, at most 1280 wide, so it is held to the
+			// width a clip reads at instead of the still-image bar.
+			const minWidth = type.kind === 'gif' ? GIF_MIN_WIDTH : 1200;
+			if (width < minWidth) problems.push({ rule: 'media', severity: 'blocking', message: `${media.path} is ${width}px wide; X renders it soft below ${minWidth}px` });
 			const ratio = width / height;
 			if (list.length === 1 && (ratio > 2 || ratio < 0.75)) {
 				problems.push({ rule: 'media', severity: 'major', message: `${media.path} is ${ratio.toFixed(2)}:1; X crops a single image outside 3:4 to 2:1 in the timeline` });

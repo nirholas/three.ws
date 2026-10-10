@@ -17,6 +17,10 @@
 //                                                            film, review, and release by policy where the queue allows it
 //   npm run x:content -- advance --ship                      and publish what is approved as bundles, so it goes out
 //                                                            without waiting for a deploy (needs X_CONTENT_BUNDLE_SECRET)
+//   npm run x:content -- remix <slug> --as card|gif|art|reel [--headline "..."] [--body "..."] [--at 6]
+//                                  [--from 2 --to 8] [--width 720] [--prompt "..."]
+//                                                            lead a filmed post with a black card, a GIF cut from
+//                                                            the reel, or AI key art; the reel moves to the first reply
 //   npm run x:content -- pause <slug>                        take a post back before it goes out
 //   npm run x:content -- review <slug> [--no-editor]      the editorial bar: lint, live fact checks, AI editor
 //   npm run x:content -- review --status review            review every item awaiting review
@@ -45,6 +49,8 @@ import { FORMATS, proofPath, proofProblems, proveItem, scoutPage } from '../api/
 import { approvalPolicy, policyBlockers, releaseDigest, vetoUntil } from '../api/_lib/x-content/approval.js';
 import { learnLifts, outcomesStore } from '../api/_lib/x-content/outcomes.js';
 import { browserProblem } from '../api/_lib/x-content/verify.js';
+import { FORMATS as FEED_FORMATS, HEAD_KINDS as HEAD_AS, formatMix, formatOf, headSpecProblems, withFormats } from '../api/_lib/x-content/formats.js';
+import { placeHead, rebuildHead } from './lib/x-heads.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DAY = 24 * 60 * 60_000;
@@ -60,7 +66,7 @@ loadEnvFile(resolve(root, '.env.local'));
 loadEnvFile(resolve(root, '.env'));
 
 const args = process.argv.slice(2);
-const VALUE_FLAGS = new Set(['--id', '--as', '--lane', '--pattern', '--out', '--captions', '--item', '--now', '--status', '--speed', '--format', '--shot', '--file']);
+const VALUE_FLAGS = new Set(['--id', '--as', '--lane', '--pattern', '--out', '--captions', '--item', '--now', '--status', '--speed', '--format', '--shot', '--file', '--headline', '--body', '--at', '--from', '--to', '--width', '--prompt', '--alt']);
 const positional = args.filter((arg, index) => !arg.startsWith('--') && !VALUE_FLAGS.has(args[index - 1]));
 const has = (flag) => args.includes(`--${flag}`);
 const option = (name, fallback = null) => {
@@ -130,6 +136,12 @@ async function plan() {
 
 	console.log('\nStock (approved, ready, not held), one slot per tier per day:');
 	for (const row of inventory(queue.items.filter((item) => !problems[item.id].length), state, root, now, cadence)) console.log(`  ${stockLabel(row)}${row.low ? '   LOW' : ''}`);
+	// The feed format each approved post would lead with, and the last few sent.
+	const approved = queue.items.filter((item) => item.status === 'approved' && !published.has(item.id));
+	const mix = formatMix(approved);
+	console.log(`  by format: ${FEED_FORMATS.map((format) => `${format} ${mix[format]}`).join(', ')}`);
+	const recent = withFormats(state.published, queue.items).slice(-6).map((row) => row.format || '?');
+	if (recent.length) console.log(`  last sent: ${recent.join(' > ')}   (at most ${queue.quality?.maximumSameFormatInARow ?? 'any'} of one format in a row)`);
 
 	// Items a kind slot owns are ranked for that slot, not for their tier.
 	const reserved = reservedKinds(cadence);
@@ -141,7 +153,7 @@ async function plan() {
 		const waiting = queue.items.filter((item) => group.match(item) && !published.has(item.id));
 		if (!waiting.length) continue;
 		console.log(`\n${group.label} by priority:`);
-		const ranked = rankItems(waiting, { lifts, published: state.published || [], quality: queue.quality, reviews, now });
+		const ranked = rankItems(waiting, { lifts, published: withFormats(state.published, queue.items), quality: queue.quality, reviews, now });
 		for (const row of ranked) {
 			const item = row.item;
 			const flags = [
@@ -151,7 +163,7 @@ async function plan() {
 				Date.parse(item.notBefore) > now ? `embargoed until ${item.notBefore}` : null,
 			].filter(Boolean);
 			const parts = Object.entries(row.parts).map(([key, value]) => `${key} ${value > 0 ? '+' : ''}${value}`).join(', ');
-			console.log(`  ${String(row.score).padStart(6)}  ${item.id.padEnd(26)} ${flags.length ? `[${flags.join('; ')}]` : 'ready'}`);
+			console.log(`  ${String(row.score).padStart(6)}  ${item.id.padEnd(26)} ${String(formatOf(item)).padEnd(7)} ${flags.length ? `[${flags.join('; ')}]` : 'ready'}`);
 			const outlook = row.volumeChance == null
 				? `predicted ${row.predictedLift}x the account median`
 				: `${Math.round(row.volumeChance * 100)}% chance of a volume response${row.volumeSignals.length ? `: ${row.volumeSignals.join(', ')}` : ''}`;
@@ -165,7 +177,7 @@ async function plan() {
 	}
 
 	const publishable = queue.items.filter((item) => !problems[item.id].length);
-	const next = pickDue({ items: publishable, state, now, cadence: queue.cadence, quality: queue.quality, seed, lifts, reviews, exclude: holds });
+	const next = pickDue({ items: publishable, allItems: queue.items, state, now, cadence: queue.cadence, quality: queue.quality, seed, lifts, reviews, exclude: holds });
 	console.log(`\nnow: ${next.item ? `${next.item.id} would fill slot ${next.slot.key} (${next.slot.kind ? `${next.slot.kind}, T${next.tier}` : `T${next.tier}`}${next.filledDown ? `, filling a T${next.slot.tier} slot` : ''}, score ${next.score})` : next.reason}`);
 }
 
@@ -435,18 +447,22 @@ function printProof(id, proof) {
 	if (proof.video) console.log(`  reel: ${proof.video.path}  ${proof.video.durationSec} s, ${proof.video.width}x${proof.video.height}, ${proof.video.frames} frames, ${Math.round(proof.video.motion * 100)}% changing`);
 }
 
-// Films one item. Returns the proof; the reel is put on the item's head post.
+// Films one item. Returns the proof. The reel leads the post unless the item
+// declares another head, which is then rebuilt from this reel (x-heads.mjs)
+// and the reel moves to the reply the head names.
 async function film(item, { filming = true } = {}) {
 	const failureShot = resolve(root, `node_modules/.cache/x-content/${item.id}-failure.png`);
 	mkdirSync(dirname(failureShot), { recursive: true });
 	const { proof, media } = await proveItem(item, { root, film: filming, failureShot });
 	printProof(item.id, proof);
 	if (!proof.passed) console.log(`  the page as it was when the step failed: ${relative(root, failureShot)}`);
-	// The reel replaces whatever led the post. Anything else the head carried
+	// The reel replaces whatever carried it before. Anything else on its post
 	// goes with it, because X allows a video no company on its post.
 	if (media) {
-		item.posts[0].media = [media];
-		console.log(`  recorded in ${proofPath(item.id)}`);
+		for (const post of item.posts) post.media = (post.media || []).filter((row) => row.path !== media.path);
+		const { head } = await placeHead(item, media, { root, log: console.log });
+		for (const post of item.posts) if (!post.media?.length) delete post.media;
+		console.log(`  recorded in ${proofPath(item.id)}${head ? `; head rebuilt as ${relative(root, resolve(root, head.path))}` : ''}`);
 	}
 	return proof;
 }
@@ -514,6 +530,46 @@ async function adopt() {
 	}
 	saveQueue(queue);
 	if (refused) process.exit(1);
+}
+
+// Changes what leads a filmed post, without filming it again. The head is built
+// from the reel on record, the reel moves to the reply the head names, and the
+// item goes back to draft, because a review only covers the bytes it saw:
+// `advance` reviews it again and releases it by policy.
+async function remix() {
+	const id = positional[1];
+	const usage = `Usage: remix <slug> [--as ${HEAD_AS.join('|')}] [--headline "Line one\\nLine two"] [--body "..."] [--at 6] [--from 2 --to 8] [--width 720] [--prompt "..."] [--alt "..."]\n       Without --as, rebuilds the head the item already declares.`;
+	if (!id) fail(usage);
+	const queue = loadQueue(root);
+	const item = queue.items.find((row) => row.id === id);
+	if (!item) fail(`${id} is not in the queue`);
+	const as = option('as') ?? item.head?.as;
+	if (!HEAD_AS.includes(as)) fail(usage);
+	await requireBrowser();
+	if (item.status === 'posted') fail(`${id} has already gone out`);
+	if (!item.scenario) fail(`${id} carries no scenario, so it has no reel to build a head from`);
+
+	const previous = item.head?.as === as ? item.head : {};
+	const text = (name) => option(name)?.replace(/\\n/g, '\n');
+	const number = (name) => (option(name) == null ? undefined : Number(option(name)));
+	const head = { ...previous, as };
+	for (const [key, value] of Object.entries({ headline: text('headline'), body: text('body'), prompt: text('prompt'), alt: text('alt'), at: number('at'), from: number('from'), to: number('to'), width: number('width') })) {
+		if (value !== undefined) head[key] = value;
+	}
+	if (as === 'reel') delete item.head;
+	else item.head = head;
+	const before = headSpecProblems(item);
+	if (before.length) fail(`${id}: ${before.join('; ')}`);
+
+	const { head: media } = await rebuildHead(item, { root, log: console.log });
+	const wasStatus = item.status;
+	if (['review', 'approved', 'paused'].includes(item.status)) item.status = 'draft';
+	saveQueue(queue);
+	const problems = validateItem({ ...item, status: 'review' }, root, { quality: queue.quality || {} });
+	console.log(`ok    ${id}: ${media ? `leads with ${media.path}${media.generated ? ` (AI-generated by ${media.generated.model})` : ''}` : 'leads with its reel again'}; ${wasStatus === item.status ? item.status : `${wasStatus} -> ${item.status}`}`);
+	if (media?.alt) console.log(`      alt: ${media.alt}`);
+	for (const problem of problems) console.log(`      fix: ${problem}`);
+	console.log(`      next: npm run x:content -- advance ${id}`);
 }
 
 async function pause() {
@@ -702,6 +758,6 @@ async function approve() {
 	if (blocked) process.exit(1);
 }
 
-const commands = { check, plan, run, review, approve, scout, prove, adopt, advance, pause, import: importSource, 'prepare-video': prepareVideo };
+const commands = { check, plan, run, review, approve, scout, prove, adopt, advance, remix, pause, import: importSource, 'prepare-video': prepareVideo };
 if (!commands[command]) fail(`Unknown command ${command}. Commands: ${Object.keys(commands).join(', ')}`);
 await commands[command]();

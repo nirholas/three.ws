@@ -13,6 +13,7 @@ import { MARKDOWN_ENTITY_BUDGET, markdownToContentState } from './articles.js';
 import { claimProblems, languageProblems } from './editorial.js';
 import { approvalProblems } from './review.js';
 import { proofProblems, scenarioProblems } from './reel.js';
+import { headProblems } from './formats.js';
 
 export const QUEUE_PATH = 'data/x-content/queue.json';
 export const STATUSES = ['draft', 'review', 'approved', 'paused', 'posted'];
@@ -219,6 +220,8 @@ export function validateItem(item, root, { quality = qualityAt(root), now = Date
 		if (!(item.probes || []).some((probe) => probe.type === 'scenario')) problems.push('scenario: declare { "type": "scenario" } in probes so every review runs it again');
 		if (['review', 'approved'].includes(item.status)) problems.push(...proofProblems(item, root, now).map((problem) => `proof: ${problem}`));
 	}
+	// A card, GIF, or key art in front of the reel has to be built from it.
+	problems.push(...headProblems(item, root).map((problem) => `head: ${problem}`));
 
 	// Approval is only real while a passing review covers these exact bytes.
 	if (item.status === 'approved') problems.push(...approvalProblems(item, root, now).map((problem) => `review: ${problem}`));
