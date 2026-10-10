@@ -503,6 +503,49 @@ can print under a failing server, what it means, and the fix:
 | `api key tools/list returned no tools` | The key connected but listed nothing. | Same as above: check the key's scopes and your MCP tool settings. |
 | `requested …, server answered … which no SDK client supports` | The server negotiated a protocol version current SDKs do not know. | Server-side defect; three.ws answers `2025-06-18` to every version a client opens with. |
 
+### Prove a real Grok model drives it (xAI Responses API)
+
+`npm run probe:mcp-clients` proves the connector itself works; it never calls
+a real Grok model. `scripts/xai-mcp-e2e.mjs` closes that gap: it sends an xAI
+Responses API request with `https://three.ws/api/mcp-grok` as a remote MCP
+tool and the instruction "find a ready-made chair in the three.ws catalog and
+give me its viewer link", then asserts the response contains an `mcp_call`
+output item for `search_catalog` and that the final text carries a
+`three.ws` viewer URL. With a `GROK_API_KEY` or `XAI_API_KEY` in the
+environment, `.env`/`.env.local`, or the `three-ws-api` Cloud Run service (read
+in that order, never printed), run it live with `npm run e2e:xai-mcp`:
+
+```text
+sending request (key from process.env, model grok-4.7, server mcp-grok)
+mcp_call items: 1 (search_catalog)
+final text:
+...
+PASSED: search_catalog called (name "search_catalog"), viewer link https://three.ws/...
+```
+
+With no key anywhere, run the dry run instead, which needs no key, sends
+nothing, and prints the exact request xAI's docs describe, field for field:
+
+```bash
+npm run e2e:xai-mcp -- --dry-run
+```
+
+```json
+{
+	"model": "grok-4.7",
+	"input": [{ "role": "user", "content": "Find a ready-made chair in the three.ws catalog and give me its viewer link." }],
+	"tools": [{ "type": "mcp", "server_url": "https://three.ws/api/mcp-grok", "server_label": "three-ws", "server_description": "three.ws: ready-made 3D/avatar catalog, generation, agents and personas." }]
+}
+```
+
+`--server mcp-studio` runs the same proof against the free studio server
+instead of the Grok-specific one; `--base`, `--model` and `--prompt` override
+the target and the ask. If the model connects but never calls the tool, that
+is a defect in our tool descriptions (every agent client reads the same
+descriptions), not a prompt to work around: tighten `search_catalog`'s
+description in [`api/_mcp/tools/library.js`](../api/_mcp/tools/library.js) and
+record the before/after in the commit.
+
 ### Errors a connected Grok Bot can see
 
 | Error | Meaning | Fix |
