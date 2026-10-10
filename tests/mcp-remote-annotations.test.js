@@ -51,6 +51,9 @@ const CATALOGS = [
 //                       commit an agent or move USDC through marketplace escrow
 //   predictions_open, predictions_close, predictions_redeem
 //                       trade or settle prediction-market positions in USDC
+//   sniper_activate     arms a launch sniper that spends SOL from the agent's
+//                       wallet on every launch that passes its filters
+//   alert_rule_delete   removes an alert rule and its delivery history for good
 // Acting on the physical world:
 //   home_activate       runs a scene or script in a real house, which moves
 //                       locks, covers and alarms
@@ -71,6 +74,7 @@ const DESTRUCTIVE_TOOLS = new Set([
 	'create_marketplace_listing', 'delist_marketplace_listing', 'place_bid', 'buy_now',
 	'accept_marketplace_bid', 'withdraw_marketplace_bid',
 	'predictions_open', 'predictions_close', 'predictions_redeem',
+	'sniper_activate', 'alert_rule_delete',
 	'home_activate', 'home_call',
 	'agent_mail_create', 'agent_mail_send', 'agent_mail_reply',
 ]);

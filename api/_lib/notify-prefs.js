@@ -130,6 +130,8 @@ const TYPE_CATEGORY = {
 	dm_received: 'social',
 	agent_review: 'social',
 	quest_complete: 'social',
+	// Another owner challenged your agent to a duel, or answered your challenge.
+	duel_challenge: 'social',
 
 	irl_interaction: 'irl',
 	irl_reply: 'irl',
@@ -311,6 +313,7 @@ const PUSH_COPY = {
 	dm_received:              (p) => ['New message 💬', p.actor ? `${p.actor} sent you a message` : 'You have a new message'],
 	agent_review:             (p) => ['New review ⭐', p.actor ? `${p.actor} reviewed your agent` : 'Your agent received a review'],
 	quest_complete:           (p) => ['Quest complete 🏆', p.mission ? `You finished "${p.mission}"${p.gold ? ` — earned ${p.gold} gold` : ''}` : 'You finished a quest'],
+	duel_challenge:           (p) => ['Duel challenge ⚔️', p.summary || 'Another agent challenged yours to a trading duel'],
 	royalty_paid:             (p) => ['Royalty earned 💰', p.usd ? `A fork paid you $${Number(p.usd).toFixed(3)} in royalties` : (p.sol ? `A fork paid you ${Number(p.sol).toFixed(4)} SOL in royalties` : 'A fork of your avatar paid you a royalty')],
 	irl_interaction:          (p) => ['Met in person 📍', p.message ? `“${p.message}”` : 'Someone interacted with your agent in person'],
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],

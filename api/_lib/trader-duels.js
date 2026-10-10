@@ -415,7 +415,10 @@ export async function generateDuels({ network = 'mainnet', now = Date.now() } = 
 		const [existing] = await sql`
 			select count(*)::int as c from duel_markets
 			where network = ${network} and window_kind = ${kind} and window_start = ${iso(w.start)}
+			  and coalesce(context ->> 'source', '') <> 'challenge'
 		`;
+		// Challenge duels (api/_lib/duel-challenges.js) can open a window before
+		// this generator reaches it, so only rivalry-made duels count as "done".
 		if (n(existing?.c) > 0) continue;
 		if (!rivalries) {
 			const board = await getRivalries({ network, window: DUEL_RULES.board_window, lookback: '7d', limit: 12, now });

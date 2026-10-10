@@ -21,7 +21,7 @@ const TYPE_CATEGORY = {
 	print_update: 'purchases',
 	remix: 'social', reply: 'social', comment: 'social', embed: 'social', mention: 'social',
 	fork: 'social', follow: 'social', dm_received: 'social', agent_review: 'social',
-	quest_complete: 'social',
+	quest_complete: 'social', duel_challenge: 'social',
 	irl_interaction: 'irl', irl_reply: 'irl',
 	pump_alert: 'alerts',
 	companion_delivery: 'companion',

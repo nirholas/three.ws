@@ -1078,6 +1078,107 @@ own machine with no three.ws account at all, use
 [`@three-ws/home-mcp`](../packages/home-mcp/README.md) instead, where a guarded action is refused
 outright because an MCP client has no person in it to confirm one.
 
+### Agent wallet: portfolio, launch sniper, alerts and duels
+
+These fifteen tools live on the agent wallet server (`https://three.ws/api/mcp-agent`), not on
+`/api/mcp`. They give an agent the same view and controls its owner has on the wallet hub, the
+sniper dashboard, `/signals`, the pump dashboard and `/duels`. Every one carries all four MCP
+annotation hints, so a client knows which calls only read, which change state, and which are
+irreversible.
+
+| Tool | Hints | Policy |
+|------|-------|--------|
+| `get_portfolio` | readOnly, openWorld (live chain prices) | read, `wallet` group |
+| `get_balance_history` | readOnly, idempotent | read, `wallet` group |
+| `get_pnl` | readOnly, openWorld | read, `wallet` group |
+| `sniper_status` | readOnly, idempotent | read, `trading` group |
+| `sniper_activate_preview` | readOnly, openWorld (live wallet balance) | read, `trading` group |
+| `sniper_activate` | destructive, idempotent, openWorld | **financial**: `confirm_spend` plus the `preview_id` from `sniper_activate_preview` |
+| `sniper_deactivate` | idempotent | write, `trading` group |
+| `sniper_subscribe` | idempotent | write, `trading` group |
+| `alert_rule_create` | none (creates a new rule each call) | write, `intelligence` group |
+| `alert_rule_list` | readOnly, idempotent | read, `intelligence` group |
+| `alert_rule_delete` | destructive, idempotent | **financial**: `confirm_delete` plus the `preview_id` from `alert_rule_list` for that rule |
+| `duel_challenge` | none | write, `predictions` group |
+| `duel_accept` | none | write, `predictions` group |
+| `duel_details` | readOnly | read, `predictions` group |
+| `duel_markets` | readOnly | read, `predictions` group |
+
+Financial tools are hidden until the connection turns their group on, for example with
+`X-Three-Tools: default,trading,intelligence`. The full scope table is in
+[the agent wallet server guide](./mcp-agent.md#portfolio-launch-sniper-alerts-and-duels).
+
+**Portfolio.** `get_portfolio` values SOL and every SPL holding of one of your agents in SOL and
+USD, with FIFO cost basis and unrealized P&L per holding, realized and unrealized P&L by source
+(sniper, discretionary trades, strategies, x402 spend, withdrawals), and plain-language risk flags.
+Every read records a net-worth point, and a cron (`/api/cron/agent-portfolio-snapshots`, hourly)
+records one for every active agent. `get_balance_history` reads those points back over 1 to 365
+days, thinned to `max_points`, with change, peak, max drawdown and the exact realized P&L per day
+from closed trades. `get_pnl` is the P&L view: totals, by source, win rate, ROI, profit factor and
+the biggest open winners and losers. The same data is on REST at
+`GET /api/v1/agents/:id/portfolio`, `/portfolio/history` and `/portfolio/pnl`
+([API reference](./api-reference.md#agent-portfolio)).
+
+**Launch sniper.** The sniper buys new pump.fun launches that pass its filters, from the agent's
+own wallet, inside a daily budget, with a mandatory stop loss. Arming it commits SOL, so it takes
+two steps, and the second step must repeat the first exactly:
+
+```json
+{ "name": "sniper_activate_preview",
+  "arguments": { "agent_id": "<agent>", "network": "devnet", "per_trade_sol": 0.01, "daily_budget_sol": 0.05, "stop_loss_pct": 25 } }
+```
+
+The preview names the chain, the asset (SOL), the wallet it spends from, what each buy pays
+(the launch's bonding curve), the per-trade size and daily budget, whether real funds are at risk,
+and every check that would block arming. Show it to the user. Only after an explicit yes:
+
+```json
+{ "name": "sniper_activate",
+  "arguments": { "agent_id": "<agent>", "network": "devnet", "per_trade_sol": 0.01, "daily_budget_sol": 0.05, "stop_loss_pct": 25,
+                 "preview_id": "p_...", "confirm_spend": true } }
+```
+
+A missing preview is refused with `preview_required`, sizing that differs from the preview with
+`preview_mismatch`, a reused preview with `preview_unknown`, and a mainnet arm without the signed
+real-funds agreement with `risk_ack_required`. `sniper_deactivate` disarms without a preview
+(stopping spend is always allowed); `kill: true` also sets the kill switch. `sniper_status` shows
+whether the sniper worker is live and every strategy's spend today and open positions.
+
+**Signal subscriptions.** `sniper_subscribe` follows another agent's published trade signals. An
+agent subscribes on paper only: it mirrors the feed's entries and exits with your sizing, pays
+nothing and trades nothing, so you can judge a feed first. `mode` is not an argument. Turning a
+subscription live, which pays the feed in USDC and trades real funds, stays with the owner on
+`/signals`, and the tool will not resume a paused live subscription either
+(`live_resume_requires_owner`).
+
+**Alert rules.** `alert_rule_create` adds a pump.fun alert. The `launch_match` kind fires on a new
+launch that passes every filter you set:
+
+```json
+{ "name": "alert_rule_create",
+  "arguments": { "kind": "launch_match", "label": "Safe cat coins",
+                 "filters": { "name_pattern": "*cat*|*kitty*", "min_market_cap_usd": 5000, "max_market_cap_usd": 60000,
+                              "min_safety_score": 60, "min_creator_graduated": 1, "max_creator_launches": 10,
+                              "exclude_risk_flags": ["bundle_launch", "dev_dumped"], "require_socials": true } } }
+```
+
+`name_pattern` treats only `*` (any text) and `|` (alternatives) as special, and a filter whose data
+is missing on a launch counts as a miss, never a silent pass. Every alert reaches the owner through
+the platform notification fan-out: the bell, Web Push to every subscribed device, the iOS app, and
+every Telegram or Discord chat paired for notifications, each gated by the "alerts" category of the
+[preference center](./notifications.md). The other kinds (`graduation`, `new_mint`, `price_above`,
+`price_below`, `whale_buy`, `market_price`) are the same as on `/api/alerts/rules`. Deleting a rule
+is irreversible, so `alert_rule_delete` needs `alert_rule_list` with that `rule_id` first, then its
+`preview_id` and `confirm_delete: true`.
+
+**Duels.** `duel_challenge` challenges another owner's public agent to a trading duel over the next
+UTC day or week. The opponent's owner gets a `duel_challenge` notification and has 48 hours to
+answer with `duel_accept` (`accept` or `decline`; the challenger can `cancel`). Accepting opens a
+duel that scores both agents' realized P&L over the window and takes free-play crowd calls until it
+starts. No funds move. `duel_details` reads one duel or one challenge, and `duel_markets` lists
+duels by phase, your challenges, or the leaderboard: agents ranked by challenge-duel wins, with
+losses, win rate and realized P&L, next to this season's top predictors.
+
 ---
 
 ## Resources

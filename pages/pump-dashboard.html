@@ -869,6 +869,7 @@
 										<option value="price_below" data-i18n="pump_dashboard.market_cap_falls_below">Market cap falls below</option>
 										<option value="whale_buy" data-i18n="pump_dashboard.whale_buy">Whale buy</option>
 										<option value="new_mint" data-i18n="pump_dashboard.new_launch_by_agent">New launch by agent</option>
+										<option value="launch_match">New launch matching filters</option>
 									</select>
 									<div class="pd-field-hint" id="pd-rule-kind-hint"></div>
 								</div>
@@ -891,6 +892,46 @@
 									</select>
 									<div class="pd-field-hint" id="pd-rule-agent-hint">Fires when this agent launches a coin through three.ws.</div>
 								</div>
+								<fieldset class="pd-rule-channels pd-rule-launch" id="pd-rule-launch-group" hidden>
+									<legend class="pd-rule-channels-title">Launch filters</legend>
+									<div class="pd-form-group">
+										<label for="pd-rule-lf-name">Name or ticker <span class="pd-muted">(optional)</span></label>
+										<input class="pd-input" type="text" id="pd-rule-lf-name" maxlength="120" placeholder="dog|cat or ai*" autocomplete="off" spellcheck="false" />
+										<div class="pd-field-hint">Case-insensitive. <code>|</code> separates alternatives, <code>*</code> is a wildcard.</div>
+									</div>
+									<div class="pd-rule-launch-grid">
+										<div class="pd-form-group">
+											<label for="pd-rule-lf-mcmin">Min market cap (USD)</label>
+											<input class="pd-input" type="number" id="pd-rule-lf-mcmin" min="0" step="100" inputmode="numeric" />
+										</div>
+										<div class="pd-form-group">
+											<label for="pd-rule-lf-mcmax">Max market cap (USD)</label>
+											<input class="pd-input" type="number" id="pd-rule-lf-mcmax" min="0" step="100" inputmode="numeric" />
+										</div>
+										<div class="pd-form-group">
+											<label for="pd-rule-lf-safety">Min safety score (0 to 100)</label>
+											<input class="pd-input" type="number" id="pd-rule-lf-safety" min="0" max="100" step="1" inputmode="numeric" />
+										</div>
+										<div class="pd-form-group">
+											<label for="pd-rule-lf-grads">Creator's graduated coins, at least</label>
+											<input class="pd-input" type="number" id="pd-rule-lf-grads" min="0" step="1" inputmode="numeric" />
+										</div>
+										<div class="pd-form-group">
+											<label for="pd-rule-lf-launches">Creator's earlier launches, at most</label>
+											<input class="pd-input" type="number" id="pd-rule-lf-launches" min="0" step="1" inputmode="numeric" />
+										</div>
+									</div>
+									<div class="pd-rule-launch-flags" role="group" aria-labelledby="pd-rule-lf-flags-title">
+										<div class="pd-field-hint" id="pd-rule-lf-flags-title">Skip launches flagged as</div>
+										<label class="pd-check"><input type="checkbox" data-lf-flag="dev_dumped" /> Dev dumped</label>
+										<label class="pd-check"><input type="checkbox" data-lf-flag="bundle_launch" /> Bundled launch</label>
+										<label class="pd-check"><input type="checkbox" data-lf-flag="sniped" /> Sniped</label>
+										<label class="pd-check"><input type="checkbox" data-lf-flag="single_whale" /> Single whale</label>
+										<label class="pd-check"><input type="checkbox" data-lf-flag="low_diversity" /> Low holder diversity</label>
+										<label class="pd-check"><input type="checkbox" data-lf-flag="sell_pressure" /> Sell pressure</label>
+									</div>
+									<label class="pd-check"><input type="checkbox" id="pd-rule-lf-socials" /> Require at least one social link</label>
+								</fieldset>
 								<div class="pd-form-group" id="pd-rule-threshold-group" hidden>
 									<label for="pd-rule-threshold" id="pd-rule-threshold-label" data-i18n="pump_dashboard.threshold">Threshold</label>
 									<input class="pd-input" type="number" id="pd-rule-threshold" min="0" step="any" />
@@ -903,6 +944,7 @@
 								<div class="pd-rule-channels">
 									<div class="pd-rule-channels-title">Delivery channels</div>
 									<label class="pd-check"><input type="checkbox" id="pd-rule-inapp" checked /> <span data-i18n="pump_dashboard.in_app_notification">In-app notification</span></label>
+									<div class="pd-field-hint pd-rule-inapp-hint">Also sent as a push to your devices and to the Telegram or Discord chats you paired, following your <a href="/dashboard/settings">notification preferences</a>.</div>
 									<div class="pd-form-group">
 										<label for="pd-rule-webhook" data-i18n-html="pump_dashboard.webhook_url_optional">Webhook URL <span class="pd-muted">(optional)</span></label>
 										<input class="pd-input" type="url" id="pd-rule-webhook" placeholder="https://your-server.com/pump-alerts" autocomplete="off" spellcheck="false" />
@@ -3008,6 +3050,11 @@
 				price_below: { icon: '\u{1F4C9}', label: 'Mcap below' },
 				whale_buy: { icon: '\u{1F40B}', label: 'Whale buy' },
 				new_mint: { icon: '\u{1F195}', label: 'New launch' },
+				launch_match: { icon: '\u{1F3AF}', label: 'Launch match' },
+			};
+			const LAUNCH_FLAG_LABELS = {
+				dev_dumped: 'dev dumped', bundle_launch: 'bundled', sniped: 'sniped',
+				single_whale: 'single whale', low_diversity: 'low diversity', sell_pressure: 'sell pressure',
 			};
 
 			let _ruleEditingId = null;
@@ -3192,6 +3239,19 @@
 						return 'When someone buys ≥ ' + escapeHtml(String(r.threshold)) + ' SOL of <span class="pd-mono">' + short(r.target_mint) + '</span>';
 					case 'new_mint':
 						return 'When this agent launches a new coin';
+					case 'launch_match': {
+						const f = r.filters || {};
+						const parts = [];
+						if (f.name_pattern) parts.push('named <span class="pd-mono">' + escapeHtml(f.name_pattern) + '</span>');
+						if (f.min_market_cap_usd != null) parts.push('mcap ≥ ' + usd(f.min_market_cap_usd));
+						if (f.max_market_cap_usd != null) parts.push('mcap ≤ ' + usd(f.max_market_cap_usd));
+						if (f.min_safety_score != null) parts.push('safety ≥ ' + escapeHtml(String(f.min_safety_score)));
+						if (f.min_creator_graduated != null) parts.push('creator with ≥ ' + escapeHtml(String(f.min_creator_graduated)) + ' graduated');
+						if (f.max_creator_launches != null) parts.push('creator with ≤ ' + escapeHtml(String(f.max_creator_launches)) + ' earlier launches');
+						if (Array.isArray(f.exclude_risk_flags) && f.exclude_risk_flags.length) parts.push('not ' + f.exclude_risk_flags.map((x) => escapeHtml(LAUNCH_FLAG_LABELS[x] || x)).join(', '));
+						if (f.require_socials) parts.push('with socials');
+						return 'When a new pump.fun coin launches' + (parts.length ? ': ' + parts.join(', ') : '');
+					}
 					default:
 						return '';
 				}
@@ -3271,6 +3331,7 @@
 				const agentGroup = $('pd-rule-agent-group');
 				const thrGroup = $('pd-rule-threshold-group');
 				const hint = $('pd-rule-kind-hint');
+				$('pd-rule-launch-group').hidden = kind !== 'launch_match';
 				scopeGroup.hidden = true;
 				mintGroup.hidden = true;
 				agentGroup.hidden = true;
@@ -3307,7 +3368,37 @@
 					agentGroup.hidden = false;
 					populateAgentOptions();
 					hint.textContent = 'Fires when the selected agent launches a new coin.';
+				} else if (kind === 'launch_match') {
+					hint.textContent = 'Fires for every new pump.fun launch that passes all of these filters, about 90 seconds after it launches, once coin intel has scored it.';
 				}
+			}
+
+			function readLaunchFilters() {
+				const f = {};
+				const name = $('pd-rule-lf-name').value.trim();
+				if (name) f.name_pattern = name;
+				const nums = { min_market_cap_usd: 'pd-rule-lf-mcmin', max_market_cap_usd: 'pd-rule-lf-mcmax', min_safety_score: 'pd-rule-lf-safety', min_creator_graduated: 'pd-rule-lf-grads', max_creator_launches: 'pd-rule-lf-launches' };
+				for (const [key, id] of Object.entries(nums)) {
+					const v = numOrNull($(id).value);
+					if (v != null) f[key] = v;
+				}
+				const flags = [...document.querySelectorAll('[data-lf-flag]:checked')].map((el) => el.dataset.lfFlag);
+				if (flags.length) f.exclude_risk_flags = flags;
+				if ($('pd-rule-lf-socials').checked) f.require_socials = true;
+				return f;
+			}
+
+			function writeLaunchFilters(f) {
+				f = f || {};
+				$('pd-rule-lf-name').value = f.name_pattern || '';
+				$('pd-rule-lf-mcmin').value = f.min_market_cap_usd != null ? f.min_market_cap_usd : '';
+				$('pd-rule-lf-mcmax').value = f.max_market_cap_usd != null ? f.max_market_cap_usd : '';
+				$('pd-rule-lf-safety').value = f.min_safety_score != null ? f.min_safety_score : '';
+				$('pd-rule-lf-grads').value = f.min_creator_graduated != null ? f.min_creator_graduated : '';
+				$('pd-rule-lf-launches').value = f.max_creator_launches != null ? f.max_creator_launches : '';
+				const ex = new Set(f.exclude_risk_flags || []);
+				document.querySelectorAll('[data-lf-flag]').forEach((el) => { el.checked = ex.has(el.dataset.lfFlag); });
+				$('pd-rule-lf-socials').checked = !!f.require_socials;
 			}
 
 			function buildRulePayload() {
@@ -3329,6 +3420,8 @@
 					p.threshold = numOrNull($('pd-rule-threshold').value);
 				} else if (kind === 'new_mint') {
 					p.target_agent = $('pd-rule-agent').value || null;
+				} else if (kind === 'launch_match') {
+					p.filters = readLaunchFilters();
 				}
 				return p;
 			}
@@ -3339,6 +3432,12 @@
 					if (!(p.threshold > 0)) return 'Enter a threshold greater than 0.';
 				}
 				if (p.kind === 'new_mint' && !p.target_agent) return 'Select an agent.';
+				if (p.kind === 'launch_match') {
+					if (!Object.keys(p.filters || {}).length) return 'Set at least one launch filter.';
+					const f = p.filters;
+					if (f.min_market_cap_usd != null && f.max_market_cap_usd != null && f.min_market_cap_usd > f.max_market_cap_usd) return 'Min market cap cannot exceed max market cap.';
+					if (f.min_safety_score != null && (f.min_safety_score < 0 || f.min_safety_score > 100)) return 'Safety score is between 0 and 100.';
+				}
 				if (p.kind === 'graduation') {
 					const scope = $('pd-rule-scope').value;
 					if (scope === 'mint' && !p.target_mint) return 'Enter a token mint address.';
@@ -3408,6 +3507,7 @@
 				$('pd-rule-webhook').value = r.webhook_url || '';
 				$('pd-rule-telegram').value = r.telegram_chat || '';
 				$('pd-rule-cooldown').value = r.cooldown_seconds || 300;
+				writeLaunchFilters(r.kind === 'launch_match' ? r.filters : null);
 				updateRuleFormFields();
 				// Agent options may load async; set the value once they're present.
 				const applyAgent = () => {
@@ -3433,6 +3533,7 @@
 				$('pd-rule-webhook').value = '';
 				$('pd-rule-telegram').value = '';
 				$('pd-rule-cooldown').value = '300';
+				writeLaunchFilters(null);
 				updateRuleFormFields();
 				$('pd-rule-form-title').textContent = 'New alert rule';
 				$('pd-rule-save').textContent = 'Create alert rule';
@@ -3447,6 +3548,8 @@
 					const el = $(id);
 					if (el) el.disabled = disabled;
 				});
+				const launchGroup = $('pd-rule-launch-group');
+				if (launchGroup) launchGroup.disabled = disabled;
 			}
 
 			async function deleteRule(id) {

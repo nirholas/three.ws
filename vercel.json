@@ -7124,6 +7124,10 @@
 		{
 			"path": "/api/cron/duels-tick",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/agent-portfolio-snapshots",
+			"schedule": "23 * * * *"
 		}
 	]
 }

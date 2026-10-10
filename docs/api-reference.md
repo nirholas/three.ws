@@ -4196,6 +4196,95 @@ trade guards and listed in `clamped`.
 
 ---
 
+## Agent portfolio
+
+An agent's valued Solana portfolio, its net-worth history and its P&L, in the
+versioned v1 envelope. Owner only: a session, or an API key or OAuth token with
+`wallet:read`. The same modules back the MCP tools `get_portfolio`,
+`get_balance_history` and `get_pnl` ([MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels)).
+
+```
+GET /api/v1/agents/:id/portfolio?network=mainnet
+GET /api/v1/agents/:id/portfolio/history?network=mainnet&days=30&max_points=120
+GET /api/v1/agents/:id/portfolio/pnl?network=mainnet
+```
+
+- **`/portfolio`**: SOL and every SPL holding valued in SOL and USD, FIFO cost
+  basis and unrealized P&L per holding, `attribution` (realized and unrealized
+  P&L by source: sniper, discretionary trades, strategies, x402 spend,
+  withdrawals), `metrics` and `risk_flags`. Each call records a net-worth
+  snapshot (at most one per agent and network every 15 minutes); the hourly
+  `/api/cron/agent-portfolio-snapshots` cron records one for every active agent.
+- **`/portfolio/history`**: `points` (recorded valuations over `days`, 1 to 365,
+  thinned to `max_points`, 2 to 500, first and last exact), `summary` (start,
+  end, change, peak, max drawdown) and `realized_curve` (exact cumulative
+  realized P&L per UTC day from closed trades).
+- **`/portfolio/pnl`**: `totals` (realized, unrealized, total, net worth, in SOL
+  and USD), `by_source`, `performance` (win rate, ROI, profit factor, drawdown,
+  Sharpe) and the top open `top_winners` and `top_losers`.
+
+```bash
+curl -s "https://three.ws/api/v1/agents/$AGENT_ID/portfolio/pnl?network=mainnet" \
+  -H "authorization: Bearer $THREE_WS_API_KEY"
+```
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `invalid_network` | `network` is not `mainnet` or `devnet` |
+| `400` | `invalid_parameter` | `days` or `max_points` out of range |
+| `401` | `unauthorized` | No session or bearer token |
+| `403` | `forbidden` | The agent belongs to another account |
+| `403` | `insufficient_scope` | The token lacks `wallet:read` |
+| `404` | `not_found` | No agent with that id, or an unknown sub-path |
+
+---
+
+## Pump alert rules API
+
+Per-user pump.fun alert rules, evaluated server-side against the live launch
+and trade stream, so they fire with no dashboard tab open. Session auth with a
+CSRF token (the pump dashboard), and the same store as the MCP tools
+`alert_rule_create`, `alert_rule_list` and `alert_rule_delete`.
+
+```
+GET    /api/alerts/rules
+POST   /api/alerts/rules         { kind, ...targeting, filters?, deliver_in_app?, webhook_url?, telegram_chat?, cooldown_seconds?, label? }
+PATCH  /api/alerts/rules/:id     { any field above, enabled? }
+DELETE /api/alerts/rules/:id
+```
+
+Kinds: `graduation`, `new_mint`, `price_above`, `price_below`, `whale_buy`,
+`market_price`, and `launch_match`. Up to 50 rules per user.
+
+**`launch_match`** fires once per new launch that coin intel has scored and that
+passes every filter set in `filters` (at least one is required, and the rule
+takes no `target_mint` or `target_agent`):
+
+| Filter | Type | Matches when |
+| ------ | ---- | ------------ |
+| `name_pattern` | string, up to 120 | The name or symbol matches, case-insensitive. `*` is any text, `\|` separates alternatives; nothing else is special. Without a `*`, an alternative matches anywhere. |
+| `min_market_cap_usd`, `max_market_cap_usd` | number | The market cap is inside the band. Min cannot exceed max. |
+| `min_safety_score` | 0 to 100 | The coin intel quality score is at least this. |
+| `min_creator_graduated` | integer | The creator's earlier launches that graduated are at least this. |
+| `max_creator_launches` | integer | The creator's earlier launches are at most this (skips serial launchers). |
+| `exclude_risk_flags` | array of `single_whale`, `low_diversity`, `sniped`, `dev_dumped`, `sell_pressure`, `bundle_launch` | None of these flags is set. |
+| `require_socials` | boolean | The launch lists at least one social link. |
+
+A filter whose data is missing on the launch (no market cap read yet) is a miss,
+never a pass. The alert payload carries the mint, name, symbol, creator, market
+cap, safety score, creator history, risk flags, the `matched` filters and a
+`/coin/:mint` link.
+
+**Delivery.** With `deliver_in_app` (the default) an alert reaches the owner
+through the platform notification fan-out as a `pump_alert`: the bell, Web Push,
+the iOS app, and every Telegram or Discord chat paired for notifications, each
+gated by the `alerts` preference category ([notifications](./notifications.md)).
+A `webhook_url` gets a signed Standard Webhooks POST, and a `telegram_chat` that
+is not already a paired chat gets a direct message. Each attempt is recorded per
+channel and returned as `recent_deliveries` on the rule.
+
+---
+
 ## Trader Passport API
 
 A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a

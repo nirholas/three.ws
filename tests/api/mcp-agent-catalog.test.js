@@ -49,6 +49,24 @@ describe('agent-wallet MCP catalog', () => {
 			'predictions_redeem_preview',
 			'predictions_redeem',
 			'predictions_watch',
+			// Portfolio reads (api/_mcpagent/portfolio-tools.js)
+			'get_portfolio',
+			'get_balance_history',
+			'get_pnl',
+			// Launch sniper, signal subscriptions and alert rules (api/_mcpagent/sniper-alert-tools.js)
+			'sniper_status',
+			'sniper_activate_preview',
+			'sniper_activate',
+			'sniper_deactivate',
+			'sniper_subscribe',
+			'alert_rule_create',
+			'alert_rule_list',
+			'alert_rule_delete',
+			// Agent duels (api/_mcpagent/duels-tools.js)
+			'duel_challenge',
+			'duel_accept',
+			'duel_details',
+			'duel_markets',
 		]);
 	});
 

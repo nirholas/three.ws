@@ -6,6 +6,14 @@
 // returns a per-channel result the runner persists to pump_alert_deliveries so
 // the dashboard can surface "webhook failed" instead of silently dropping it.
 //
+// The in-app channel is the owner's own notification fan-out: it goes through
+// insertNotification (api/_lib/notify.js), so one alert reaches the bell, Web
+// Push, the iOS app and every chat the owner paired, each gated by the
+// preference center's "alerts" category. Its logged detail names what was
+// reached ("bell, push x2, telegram x1"). The rule's explicit telegram_chat is
+// skipped when it is one of those paired chats, so nobody gets the same alert
+// twice in one chat.
+//
 // Webhooks are signed with the rule's per-rule secret using the Standard
 // Webhooks format (matching api/_lib/webhook-dispatch.js) and pinned to a
 // validated public address (SSRF guard). Telegram uses the platform bot and
@@ -15,6 +23,7 @@ import { sql } from './db.js';
 import { hmacSha256, randomToken } from './crypto.js';
 import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from './ssrf.js';
 import { formatAlertSummary } from './pump-alert-eval.js';
+import { insertNotification } from './notify.js';
 
 import { fetchUpstream } from './upstream-fetch.js';
 const WEBHOOK_TIMEOUT_MS = 8_000;
@@ -33,24 +42,65 @@ const skipped = () => /** @type {ChannelResult} */ ({ attempted: false, ok: fals
  * @returns {Promise<{ in_app: ChannelResult, webhook: ChannelResult, telegram: ChannelResult }>}
  */
 export async function deliverAlert(rule, payload) {
-	const [inApp, webhook, telegram] = await Promise.all([
-		rule.deliver_in_app ? deliverInApp(rule, payload) : skipped(),
+	const [owner, webhook] = await Promise.all([
+		rule.deliver_in_app ? deliverToOwner(rule, payload) : null,
 		rule.webhook_url ? deliverWebhook(rule, payload) : skipped(),
-		rule.telegram_chat ? deliverTelegram(rule, payload) : skipped(),
 	]);
-	return { in_app: inApp, webhook, telegram };
+	let telegram = skipped();
+	if (rule.telegram_chat) {
+		telegram = owner?.telegramQueued && (await isPairedNotifyChat(rule.user_id, rule.telegram_chat))
+			? { attempted: true, ok: true, detail: 'sent_via_paired_chat' }
+			: await deliverTelegram(rule, payload);
+	}
+	return { in_app: owner ? owner.result : skipped(), webhook, telegram };
 }
 
-/** Insert the in-app notification row (type 'pump_alert'). */
-async function deliverInApp(rule, payload) {
+/** The in-app link for an alert: the coin page when the alert names a mint. */
+export function alertLink(payload) {
+	if (payload.link) return payload.link;
+	if (payload.mint) return `/coin/${encodeURIComponent(payload.mint)}`;
+	return '/pump-dashboard';
+}
+
+/**
+ * Notify the rule's owner through the platform fan-out (bell, push, APNs,
+ * paired chats). ok when at least one channel was reached; a user who muted
+ * every channel for alerts gets ok=false with detail 'muted_by_preferences'.
+ */
+async function deliverToOwner(rule, payload) {
 	try {
-		await sql`
-			insert into user_notifications (user_id, type, payload)
-			values (${rule.user_id}, 'pump_alert', ${JSON.stringify({ ...payload, summary: formatAlertSummary(payload) })}::jsonb)
-		`;
-		return { attempted: true, ok: true, detail: null };
+		const res = await insertNotification(rule.user_id, 'pump_alert', {
+			...payload,
+			summary: formatAlertSummary(payload),
+			link: alertLink(payload),
+		});
+		const reached = [];
+		if (res?.id) reached.push('bell');
+		for (const [channel, count] of Object.entries(res?.delivered || {})) {
+			if (count > 0) reached.push(`${channel} x${count}`);
+		}
+		const telegramQueued = Number(res?.delivered?.telegram || 0) > 0;
+		const result = reached.length
+			? { attempted: true, ok: true, detail: reached.join(', ') }
+			: { attempted: true, ok: false, detail: res?.in_app === false && res?.id == null && res?.delivered ? 'muted_by_preferences' : 'not_delivered' };
+		return { result: /** @type {ChannelResult} */ (result), telegramQueued };
 	} catch (e) {
-		return { attempted: true, ok: false, detail: errMsg(e) };
+		return { result: { attempted: true, ok: false, detail: errMsg(e) }, telegramQueued: false };
+	}
+}
+
+/** Is this chat one the owner paired with notifications on? */
+async function isPairedNotifyChat(userId, chatId) {
+	try {
+		const [row] = await sql`
+			select 1 as ok from gateway_links
+			where user_id = ${userId} and platform = 'telegram' and chat_id = ${String(chatId)}
+			  and revoked_at is null and notify = true
+			limit 1
+		`;
+		return !!row;
+	} catch {
+		return false;
 	}
 }
 

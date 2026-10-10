@@ -242,6 +242,27 @@ export const POLICY = {
 		predictions_redeem_preview: r('predictions'),
 		predictions_redeem: own('predictions', 'confirm_trade', 'predictions_redeem_preview'),
 		predictions_watch: w('predictions'),
+		// Portfolio (api/_mcpagent/portfolio-tools.js): valued holdings, the
+		// hourly snapshot history and FIFO P&L. Reads only.
+		get_portfolio: r('wallet'),
+		get_balance_history: r('wallet'),
+		get_pnl: r('wallet'),
+		// Launch sniper, signal subscriptions and alert rules
+		// (api/_mcpagent/sniper-alert-tools.js). Arming the sniper commits SOL, so
+		// it binds the previewed agent, network and sizing.
+		sniper_status: r('trading'),
+		sniper_activate_preview: r('trading'),
+		sniper_activate: f('trading', 'confirm_spend', 'sniper_activate_preview', ['agent_id', 'network', 'per_trade_sol', 'daily_budget_sol', 'stop_loss_pct', 'take_profit_pct', 'trigger', 'max_concurrent_positions']),
+		sniper_deactivate: w('trading'),
+		sniper_subscribe: w('trading'),
+		alert_rule_create: w('intelligence'),
+		alert_rule_list: r('intelligence'),
+		alert_rule_delete: f('intelligence', 'confirm_delete', 'alert_rule_list', ['rule_id']),
+		// Trader duels and challenges (api/_mcpagent/duels-tools.js). Free-play.
+		duel_challenge: w('predictions'),
+		duel_accept: w('predictions'),
+		duel_details: r('predictions'),
+		duel_markets: r('predictions'),
 	},
 
 	// /api/mcp-3d
