@@ -302,6 +302,7 @@ async function buildTree(target) {
 	pkg.bugs = { url: `${m.repoUrl}/issues` };
 	pkg.keywords = [...new Set([...(pkg.keywords || []), ...m.topics])];
 	pkg.files = [...new Set([...(pkg.files || []), 'README.md', 'LICENSE'])];
+	standaloneTestScript(pkg, target);
 	writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n');
 	m.pkg = pkg;
 
@@ -335,9 +336,28 @@ async function buildTree(target) {
 	return { m, dest };
 }
 
+// A monorepo test script runs vitest from the repository root (`--root ../..
+// packages/x/tests`). Alone, the package is its own root: the paths become
+// package-relative and vitest becomes a devDependency. A script that tests
+// files outside the package cannot run alone, so it is dropped rather than
+// shipped broken.
+function standaloneTestScript(pkg, target) {
+	const test = pkg.scripts?.test;
+	const match = test && /^vitest run --root \.\.\/\.\.\s+(.+)$/.exec(test);
+	if (!match) return;
+	const prefix = `${target.source}/`;
+	const paths = match[1].split(/\s+/);
+	if (!paths.every((p) => p.startsWith(prefix))) {
+		delete pkg.scripts.test;
+		return;
+	}
+	pkg.scripts.test = `vitest run ${paths.map((p) => p.slice(prefix.length)).join(' ')}`;
+	pkg.devDependencies = { ...pkg.devDependencies, vitest: JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')).devDependencies.vitest };
+}
+
 function verify(target, dest) {
 	const pkg = JSON.parse(readFileSync(join(dest, 'package.json'), 'utf8'));
-	if (Object.keys(pkg.dependencies || {}).length) execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: dest, stdio: 'inherit' });
+	if (Object.keys(pkg.dependencies || {}).length || Object.keys(pkg.devDependencies || {}).length) execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: dest, stdio: 'inherit' });
 	if (pkg.scripts?.test) execFileSync('npm', ['test'], { cwd: dest, stdio: 'inherit' });
 	rmSync(join(dest, 'node_modules'), { recursive: true, force: true });
 	rmSync(join(dest, 'package-lock.json'), { force: true });
