@@ -212,6 +212,37 @@ export function sendForgeCompleteEmail({ to, prompt, creationPath, previewImageU
 	return sendEmail({ to, ...renderForgeComplete({ prompt, creationPath, previewImageUrl }) });
 }
 
+// Approval inbox fallback (api/_lib/approvals.js): sent only when no push device
+// or paired chat reached the owner. Carries the full confirmation table so the
+// owner sees exactly what they would approve, and a signed deep link to it. The
+// email never approves anything itself: the decision happens on the page.
+export function renderApprovalRequest({ agentName, summary, table, riskNotes = [], link, expiresAt }) {
+	const url = `${APP_URL}${link}`;
+	const who = agentName || 'Your agent';
+	const until = new Date(expiresAt).toUTCString();
+	const rows = (table || []).map((r) => `<tr><td style="padding:6px 12px 6px 0;color:#9a9ab0;white-space:nowrap">${esc(r.label)}</td><td style="padding:6px 0;font-family:ui-monospace,Menlo,monospace;word-break:break-all">${esc(r.full && r.full !== r.value ? `${r.value}: ${r.full}` : r.value)}</td></tr>`).join('');
+	const notes = riskNotes.length ? `<ul style="padding-left:18px;margin:0 0 16px">${riskNotes.map((n) => `<li style="margin:4px 0">${esc(n)}</li>`).join('')}</ul>` : '';
+	return {
+		subject: `Approval needed: ${summary.length > 80 ? `${summary.slice(0, 77)}...` : summary}`,
+		html: layout('Approval needed', `
+    <p class="brand">three.ws</p>
+    <h1>${esc(who)} is waiting for your approval</h1>
+    <p>${esc(summary)}</p>
+    <table style="border-collapse:collapse;margin:0 0 16px;font-size:14px">${rows}</table>
+    ${notes}
+    <a class="btn" href="${esc(url)}">Review and decide</a>
+    <p class="muted">Nothing happens unless you approve. This request expires ${esc(until)}; after that it can never execute.</p>
+    <hr>
+    <p class="muted">You're getting this email because no push device or paired chat reached you. Turn on push at <a href="${APP_URL}/approvals" style="color:#6a5cff">three.ws/approvals</a> to approve in one tap.</p>
+  `),
+		text: `${who} is waiting for your approval\n\n${summary}\n\n${(table || []).map((r) => `${r.label}: ${r.full || r.value}`).join('\n')}\n${riskNotes.length ? `\n${riskNotes.map((n) => `- ${n}`).join('\n')}\n` : ''}\nReview and decide: ${url}\n\nNothing happens unless you approve. Expires ${until}.`,
+	};
+}
+
+export function sendApprovalRequestEmail({ to, ...rest }) {
+	return sendEmail({ to, ...renderApprovalRequest(rest) });
+}
+
 // Double opt-in newsletter confirmation. Minimal localization (prompt 38) so a
 // subscriber confirms in their own language; unknown locales fall back to en.
 const NEWSLETTER_I18N = {

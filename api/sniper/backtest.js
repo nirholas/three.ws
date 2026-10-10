@@ -2,6 +2,7 @@
  * Agent Sniper — historical strategy backtester.
  *
  *   POST /api/sniper/backtest  { agent_id, strategy, window_days?, network? }
+ *     strategy.research (optional) applies Strategy Object research gates too.
  *     → honest projected metrics computed from REAL captured history
  *       (pump_coin_intel ⋈ pump_coin_outcomes), using the same entry gate and
  *       exit priority the live worker runs. Cached by strategy hash; the snapshot
@@ -20,7 +21,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
-import { runBacktest, strategyHash, getCachedBacktest, saveBacktest } from '../_lib/strategy-backtest.js';
+import { runBacktest, strategyHash, getCachedBacktest, saveBacktest, sanitizeResearch } from '../_lib/strategy-backtest.js';
 
 const numOrNull = (v) => {
 	if (v == null || v === '') return null;
@@ -65,6 +66,9 @@ function sanitizeStrategy(raw) {
 		allowed_categories: Array.isArray(s.allowed_categories)
 			? s.allowed_categories.map((c) => String(c).toLowerCase()).filter(Boolean)
 			: null,
+		// Strategy Object v2 research gates (min holders, largest-holder cap,
+		// liquidity, dev history, security), judged by the live evaluator.
+		research: sanitizeResearch(s.research),
 	};
 }
 

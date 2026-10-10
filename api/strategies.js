@@ -9,6 +9,8 @@
 //   DELETE /api/strategies/:id              soft-delete (owner)
 //   POST   /api/strategies/:id/fork         fork into the caller's library (lineage, no wallet access)
 //   POST   /api/strategies/:id/publish      toggle published (owner)
+//   POST   /api/strategies/preview          live match preview: how many recent launches a config
+//                                           would have bought, and which check removed the rest
 //
 // Strategies are NOT free text — every config passes validateStrategyConfig before
 // it persists. Performance shown is REAL live performance aggregated from real
@@ -25,6 +27,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { isUuid } from './_lib/validate.js';
 import { logAudit } from './_lib/audit.js';
 import { validateStrategyConfig, slugifyStrategy } from './_lib/strategy-schema.js';
+import { previewStrategyMatches, PREVIEW_WINDOWS } from './_lib/strategy-preview.js';
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -352,6 +355,27 @@ async function handlePublish(req, res, auth, id) {
 	return json(res, 200, { data: publicStrategy(updated, perf.get(id), names.get(auth.userId)) });
 }
 
+// POST /api/strategies/preview { config, hours?, network? } — public and read-only:
+// replays recorded launches through the live entry filter and research gates.
+async function handlePreview(req, res) {
+	const rl = await limits.strategyPreviewIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const body = await readJson(req).catch(() => null);
+	if (!body || typeof body !== 'object') return error(res, 400, 'validation_error', 'a JSON body with a config is required');
+	// The preview normalizes (clamps) rather than validates: a half-edited config
+	// in the Lab still previews, and saving runs the full validator.
+	const config = body.config && typeof body.config === 'object' ? body.config : {};
+	const hours = PREVIEW_WINDOWS.includes(Number(body.hours)) ? Number(body.hours) : 6;
+	const network = body.network === 'devnet' ? 'devnet' : 'mainnet';
+	try {
+		const data = await previewStrategyMatches(config, { hours, network });
+		return json(res, 200, { data }, { 'cache-control': 'no-store' });
+	} catch (err) {
+		console.error('[strategies] preview failed', err?.message || err);
+		return error(res, 502, 'preview_unavailable', 'The launch history could not be read right now. Try again in a moment.');
+	}
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,PATCH,DELETE,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST', 'PATCH', 'DELETE'])) return;
@@ -371,6 +395,10 @@ export default wrap(async (req, res) => {
 		return error(res, 405, 'method_not_allowed', 'unsupported method');
 	}
 	if (seg === 'leaderboard') return handleLeaderboard(req, res);
+	if (seg === 'preview') {
+		if (req.method !== 'POST') return error(res, 405, 'method_not_allowed', 'POST a config to preview');
+		return handlePreview(req, res);
+	}
 
 	if (!isUuid(seg)) return error(res, 404, 'not_found', 'strategy not found');
 	const id = seg;

@@ -256,6 +256,13 @@ Indexable: no (excluded from sitemap)
 
 Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.
 
+### Approvals
+
+URL: https://three.ws/approvals
+Indexable: no (excluded from sitemap)
+
+Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.
+
 ### Skills Marketplace
 
 URL: https://three.ws/skills
@@ -3694,6 +3701,12 @@ Deliver a message in person: the open SDK where a 3D character walks onto your p
 URL: https://three.ws/docs/notifications
 
 Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.
+
+### Docs: Approvals
+
+URL: https://three.ws/docs/approvals
+
+How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.
 
 ### Docs: Checkout companion
 

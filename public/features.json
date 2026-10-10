@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T04:59:19.973Z",
+	"generated_at": "2026-10-10T05:45:10.365Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -482,6 +482,16 @@
 					"title": "Notifications",
 					"description": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.",
 					"added": "2026-07-12",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/approvals",
+					"title": "Approvals",
+					"description": "Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.",
+					"added": "2026-10-10",
 					"auth": null,
 					"indexable": false,
 					"tags": [],
@@ -6143,6 +6153,16 @@
 					"path": "/docs/notifications",
 					"title": "Docs: Notifications",
 					"description": "Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/approvals",
+					"title": "Docs: Approvals",
+					"description": "How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

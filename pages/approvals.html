@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Approvals · three.ws</title>
+		<meta name="description" content="Review, approve, or deny every action your agents need your yes for. Nothing moves until you approve it." />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				--bg: #0d0d0d;
+				--bg-2: #141414;
+				--card: #181818;
+				--line: rgba(255,255,255,0.07);
+				--line-2: rgba(255,255,255,0.12);
+				--line-3: rgba(255,255,255,0.3);
+				--text: #e7e9ee;
+				--muted: rgba(231,233,238,0.6);
+				--dim: rgba(231,233,238,0.4);
+				--blue: #3b82f6;
+				--green: #22c55e;
+				--green-ink: #052e16;
+				--red: #ef4444;
+				--amber: #f59e0b;
+				--radius: 12px;
+				--skeleton-base: rgba(255,255,255,0.04);
+				--skeleton-sheen: rgba(255,255,255,0.08);
+				--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+			[data-theme="light"] {
+				--bg: #f5f5f5;
+				--bg-2: #ffffff;
+				--card: #ffffff;
+				--line: rgba(0,0,0,0.07);
+				--line-2: rgba(0,0,0,0.12);
+				--line-3: rgba(0,0,0,0.3);
+				--text: #111;
+				--muted: rgba(0,0,0,0.6);
+				--dim: rgba(0,0,0,0.42);
+				--green: #15803d;
+				--green-ink: #ffffff;
+				--red: #dc2626;
+				--amber: #b45309;
+				--skeleton-base: rgba(0,0,0,0.04);
+				--skeleton-sheen: rgba(0,0,0,0.08);
+			}
+			*{box-sizing:border-box;margin:0;padding:0;}
+			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
+			a{color:inherit;}
+			.page-shell{max-width:820px;margin:0 auto;padding:0 16px 100px;}
+			.page-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:48px 0 24px;flex-wrap:wrap;}
+			.page-hero h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;}
+			.page-hero p{color:var(--muted);margin-top:8px;font-size:14px;line-height:1.5;max-width:520px;}
+			.page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+			.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;background:var(--card);color:var(--text);border:1px solid var(--line-2);cursor:pointer;transition:border-color .15s,background .15s,transform .08s,opacity .15s;font-family:inherit;text-decoration:none;min-height:36px;}
+			.btn:hover{border-color:var(--line-3);}
+			.btn:active{transform:translateY(1px);}
+			.btn:disabled{opacity:.45;cursor:default;transform:none;}
+			.btn:focus-visible,.ap-tab:focus-visible,select:focus-visible,input:focus-visible,.ap-copy:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+			.btn-approve{background:var(--green);border-color:var(--green);color:var(--green-ink);font-weight:600;}
+			.btn-approve:hover{border-color:var(--green);filter:brightness(1.08);}
+			.btn-approve.is-armed{box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 35%,transparent);}
+			.btn-deny{color:var(--red);}
+			.btn-deny:hover{border-color:var(--red);background:color-mix(in srgb,var(--red) 8%,transparent);}
+			.btn-sm{padding:6px 10px;font-size:12px;min-height:30px;}
+
+			/* Notices */
+			.notice{border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.5;margin-bottom:16px;border:1px solid;}
+			.notice strong{font-weight:600;}
+			.notice-error{background:color-mix(in srgb,var(--red) 8%,transparent);border-color:color-mix(in srgb,var(--red) 30%,transparent);color:var(--red);}
+			.notice-ok{background:color-mix(in srgb,var(--green) 8%,transparent);border-color:color-mix(in srgb,var(--green) 30%,transparent);color:var(--green);}
+			.notice-warn{background:color-mix(in srgb,var(--amber) 9%,transparent);border-color:color-mix(in srgb,var(--amber) 32%,transparent);color:var(--amber);}
+			.notice-info{background:var(--bg-2);border-color:var(--line-2);color:var(--muted);}
+			.notice .btn{margin-top:10px;}
+
+			/* Toolbar */
+			.ap-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line-2);overflow-x:auto;scrollbar-width:none;}
+			.ap-tabs::-webkit-scrollbar{display:none;}
+			.ap-tab{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:0;border-bottom:2px solid transparent;background:none;white-space:nowrap;font-family:inherit;transition:color .15s,border-color .15s;}
+			.ap-tab:hover{color:var(--text);}
+			.ap-tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--blue);}
+			.ap-count{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--line-2);color:var(--muted);font-variant-numeric:tabular-nums;}
+			.ap-tab[data-group="pending"] .ap-count.has{background:var(--amber);color:#111;}
+			.ap-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 0;}
+			.ap-bar-left,.ap-bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+			.ap-check{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;}
+			.ap-check input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;}
+			select,input[type="number"]{font-family:inherit;font-size:13px;color:var(--text);background:var(--card);border:1px solid var(--line-2);border-radius:8px;padding:7px 10px;min-height:36px;}
+			select:hover,input[type="number"]:hover{border-color:var(--line-3);}
+
+			/* Cards */
+			.ap-list{display:flex;flex-direction:column;gap:12px;}
+			.ap-card{background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);padding:16px;transition:border-color .2s,box-shadow .2s,opacity .25s,transform .25s;animation:enter .25s ease both;}
+			.ap-card.is-focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent);}
+			.ap-card.is-leaving{opacity:0;transform:translateY(-4px);}
+			@keyframes enter{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+			.ap-head{display:flex;align-items:flex-start;gap:12px;}
+			.ap-head .ap-check{margin-top:3px;}
+			.ap-title{flex:1;min-width:0;}
+			.ap-summary{font-size:15px;font-weight:600;line-height:1.4;word-break:break-word;}
+			.ap-meta{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--dim);margin-top:4px;}
+			.ap-meta a{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:2px;}
+			.ap-meta a:hover{color:var(--text);}
+			.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid var(--line-2);color:var(--muted);text-transform:capitalize;}
+			.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+			.pill-pending{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,transparent);}
+			.pill-executed,.pill-approved{color:var(--green);border-color:color-mix(in srgb,var(--green) 40%,transparent);}
+			.pill-executing{color:var(--blue);border-color:color-mix(in srgb,var(--blue) 40%,transparent);}
+			.pill-failed,.pill-denied{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent);}
+			.ap-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+			.ap-table th{width:110px;text-align:left;font-weight:500;color:var(--muted);padding:9px 12px;background:var(--bg-2);border-bottom:1px solid var(--line);vertical-align:top;}
+			.ap-table td{padding:9px 12px;border-bottom:1px solid var(--line);word-break:break-all;font-variant-numeric:tabular-nums;}
+			.ap-table tr:last-child th,.ap-table tr:last-child td{border-bottom:0;}
+			.ap-table .mono{font-family:var(--mono);font-size:12px;}
+			.ap-copy{margin-left:8px;font-size:11px;color:var(--muted);background:none;border:1px solid var(--line-2);border-radius:6px;padding:1px 7px;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s;}
+			.ap-copy:hover{color:var(--text);border-color:var(--line-3);}
+			.ap-risks{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+			.ap-risks li{font-size:13px;line-height:1.45;color:var(--amber);padding-left:22px;position:relative;}
+			.ap-risks li::before{content:"!";position:absolute;left:0;top:1px;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+			.ap-gate{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.45;}
+			.ap-outcome{font-size:13px;margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);line-height:1.5;}
+			.ap-outcome a{color:var(--blue);}
+			.ap-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px;}
+			.ap-expiry{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;}
+			.ap-expiry.is-soon{color:var(--amber);font-weight:600;}
+			.ap-actions{display:flex;gap:8px;margin-left:auto;}
+			.ap-hash{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:10px;word-break:break-all;}
+			.ap-card-msg{font-size:13px;margin-top:10px;line-height:1.45;}
+			.ap-card-msg.err{color:var(--red);}
+			.ap-card-msg.ok{color:var(--green);}
+
+			/* Empty / auth / skeleton */
+			.ap-empty{text-align:center;padding:72px 20px;color:var(--muted);border:1px dashed var(--line-2);border-radius:var(--radius);}
+			.ap-empty-icon{font-size:34px;margin-bottom:12px;}
+			.ap-empty h3{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px;}
+			.ap-empty p{font-size:14px;line-height:1.55;max-width:420px;margin:0 auto;}
+			.ap-empty .btn{margin-top:18px;}
+			.ap-auth{text-align:center;padding:110px 20px;}
+			.ap-auth h2{font-size:22px;font-weight:700;margin-bottom:12px;}
+			.ap-auth p{color:var(--muted);font-size:14px;margin:0 auto 24px;max-width:440px;line-height:1.55;}
+			.skeleton{background:var(--skeleton-base);background-image:linear-gradient(90deg,var(--skeleton-base) 0%,var(--skeleton-sheen) 50%,var(--skeleton-base) 100%);background-size:200% 100%;border-radius:6px;animation:shimmer 1.4s ease-in-out infinite;}
+			@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+			.ap-skel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;}
+			.ap-more{display:flex;justify-content:center;padding:18px 0 0;}
+
+			/* Panels */
+			.ap-panel{margin-top:40px;}
+			.ap-panel > h2{font-size:18px;font-weight:700;letter-spacing:-0.01em;}
+			.ap-panel > p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.55;}
+			.ap-policies{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+			.ap-policy{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line-2);border-radius:10px;}
+			.ap-policy.is-off{opacity:.6;}
+			.ap-policy-body{flex:1;min-width:0;}
+			.ap-policy-label{font-size:14px;font-weight:500;word-break:break-word;}
+			.ap-policy-meta{font-size:12px;color:var(--dim);margin-top:3px;}
+			.ap-form{margin-top:14px;padding:16px;background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius);display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+			.ap-form fieldset{border:0;grid-column:1/-1;display:flex;flex-direction:column;gap:8px;}
+			.ap-form legend,.ap-form label.lbl{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;}
+			.ap-field{display:flex;flex-direction:column;}
+			.ap-field select,.ap-field input{width:100%;}
+			.ap-field small{font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4;}
+			.ap-form-foot{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+			.ap-form-msg{font-size:12px;color:var(--muted);}
+			.ap-form-msg.err{color:var(--red);}
+			.ap-audit{margin-top:14px;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;background:var(--card);}
+			.ap-audit-row{display:grid;grid-template-columns:150px 1fr auto;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;align-items:baseline;}
+			.ap-audit-row:last-child{border-bottom:0;}
+			.ap-audit-act{font-weight:600;}
+			.ap-audit-act.ok{color:var(--green);}
+			.ap-audit-act.bad{color:var(--red);}
+			.ap-audit-act.warn{color:var(--amber);}
+			.ap-audit-detail{color:var(--muted);word-break:break-word;min-width:0;}
+			.ap-audit-time{font-size:12px;color:var(--dim);white-space:nowrap;}
+			.ap-audit-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:13px;}
+			.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+			@media(max-width:600px){
+				.page-hero{padding:32px 0 20px;}
+				.page-hero h1{font-size:24px;}
+				.ap-table th{width:88px;padding:8px 10px;}
+				.ap-table td{padding:8px 10px;}
+				.ap-actions{width:100%;margin-left:0;}
+				.ap-actions .btn{flex:1;min-height:42px;}
+				.ap-form{grid-template-columns:1fr;}
+				.ap-audit-row{grid-template-columns:1fr auto;}
+				.ap-audit-detail{grid-column:1/-1;grid-row:2;}
+			}
+			@media(prefers-reduced-motion:reduce){
+				.ap-card,.skeleton{animation:none;}
+				.ap-card{transition:none;}
+			}
+		</style>
+
+		<link rel="canonical" href="https://three.ws/approvals">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:title" content="Approvals · three.ws">
+		<meta property="og:description" content="Review, approve, or deny every action your agents need your yes for. Nothing moves until you approve it.">
+		<meta property="og:url" content="https://three.ws/approvals">
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Approvals&amp;d=Review%2C+approve%2C+or+deny+every+action+your+agents+need+your+yes+for.&amp;p=%2Fapprovals">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="630">
+		<meta property="og:locale" content="en_US">
+		<meta property="og:image:alt" content="Approvals on three.ws">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:site" content="@trythreews">
+		<meta name="twitter:title" content="Approvals · three.ws">
+		<meta name="twitter:description" content="Review, approve, or deny every action your agents need your yes for. Nothing moves until you approve it.">
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Approvals&amp;d=Review%2C+approve%2C+or+deny+every+action+your+agents+need+your+yes+for.&amp;p=%2Fapprovals">
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Approvals","description":"Review, approve, or deny every action your agents need your yes for.","url":"https://three.ws/approvals","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="page-shell">
+			<div class="page-hero">
+				<div>
+					<h1>Approvals</h1>
+					<p>Every action your agents need your yes for. Nothing moves until you approve exactly what is shown here.</p>
+				</div>
+				<div class="page-actions">
+					<button type="button" id="ap-push" class="btn" hidden>Enable push</button>
+					<a href="/dashboard/settings" class="btn" aria-label="Approval notification preferences">Delivery settings</a>
+				</div>
+			</div>
+
+			<div id="ap-auth" class="ap-auth" hidden>
+				<h2>Sign in to review approvals</h2>
+				<p>When an agent's action needs your sign-off, it waits here with the recipient, amount, asset and chain spelled out.</p>
+				<a href="/login?next=/approvals" id="ap-login" class="btn">Sign in</a>
+			</div>
+
+			<div id="ap-error" class="notice notice-error" role="alert" hidden></div>
+			<div id="ap-live" class="sr-only" aria-live="polite"></div>
+
+			<div id="ap-main" hidden>
+				<section id="ap-focus" aria-label="Linked approval request" hidden></section>
+
+				<div class="ap-tabs" id="ap-tabs" role="tablist" aria-label="Filter by status">
+					<button class="ap-tab" role="tab" aria-selected="true" data-group="pending">Pending <span class="ap-count" data-count="pending">0</span></button>
+					<button class="ap-tab" role="tab" aria-selected="false" data-group="done">Approved <span class="ap-count" data-count="done">0</span></button>
+					<button class="ap-tab" role="tab" aria-selected="false" data-group="denied">Denied <span class="ap-count" data-count="denied">0</span></button>
+					<button class="ap-tab" role="tab" aria-selected="false" data-group="expired">Expired <span class="ap-count" data-count="expired">0</span></button>
+					<button class="ap-tab" role="tab" aria-selected="false" data-group="all">All <span class="ap-count" data-count="all">0</span></button>
+				</div>
+
+				<div class="ap-bar">
+					<div class="ap-bar-left">
+						<label class="ap-check" id="ap-select-all-wrap" hidden>
+							<input type="checkbox" id="ap-select-all" />
+							<span>Select all</span>
+						</label>
+						<button type="button" id="ap-bulk-deny" class="btn btn-deny btn-sm" hidden disabled>Deny selected</button>
+					</div>
+					<div class="ap-bar-right">
+						<label class="sr-only" for="ap-agent">Filter by agent</label>
+						<select id="ap-agent" hidden>
+							<option value="">All agents</option>
+						</select>
+					</div>
+				</div>
+
+				<div id="ap-list" class="ap-list" role="tabpanel" aria-labelledby="ap-tabs"></div>
+				<div id="ap-more" class="ap-more" hidden>
+					<button type="button" id="ap-more-btn" class="btn">Load more</button>
+				</div>
+
+				<section class="ap-panel" aria-labelledby="ap-policies-h">
+					<h2 id="ap-policies-h">Auto-approve rules</h2>
+					<p>By default every gated action asks you. A rule lets small, routine actions through on their own, capped by size and venue. A transfer to an address the wallet has never paid always asks. Revoking a rule takes effect on the next request.</p>
+					<div id="ap-policies" class="ap-policies"></div>
+					<form id="ap-policy-form" class="ap-form" novalidate>
+						<fieldset>
+							<legend>Venues</legend>
+							<div id="ap-venues"></div>
+						</fieldset>
+						<div class="ap-field">
+							<label class="lbl" for="ap-max">Max per action (USD)</label>
+							<input type="number" id="ap-max" min="1" step="1" inputmode="decimal" required />
+							<small id="ap-max-hint"></small>
+						</div>
+						<div class="ap-field">
+							<label class="lbl" for="ap-policy-agent">Agent</label>
+							<select id="ap-policy-agent">
+								<option value="">Every agent I own</option>
+							</select>
+						</div>
+						<div class="ap-field">
+							<label class="lbl" for="ap-policy-expiry">Rule expires</label>
+							<select id="ap-policy-expiry">
+								<option value="1">In 24 hours</option>
+								<option value="7" selected>In 7 days</option>
+								<option value="30">In 30 days</option>
+								<option value="">Never (revoke by hand)</option>
+							</select>
+						</div>
+						<div class="ap-form-foot">
+							<span id="ap-form-msg" class="ap-form-msg" role="status"></span>
+							<button type="submit" class="btn" id="ap-policy-submit">Add rule</button>
+						</div>
+					</form>
+				</section>
+
+				<section class="ap-panel" aria-labelledby="ap-audit-h">
+					<h2 id="ap-audit-h">Audit log</h2>
+					<p>Every request, decision, execution and rule change on your account, newest first.</p>
+					<div id="ap-audit" class="ap-audit"></div>
+					<div id="ap-audit-more" class="ap-more" hidden>
+						<button type="button" id="ap-audit-more-btn" class="btn btn-sm">Older events</button>
+					</div>
+				</section>
+			</div>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/approvals-page.js"></script>
+	</body>
+</html>

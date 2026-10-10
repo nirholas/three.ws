@@ -30,6 +30,7 @@ const TYPE_CATEGORY = {
 	asset_payment_mismatch: 'account', skill_payment_mismatch: 'account', security_alert: 'account',
 	wallet_anomaly_frozen: 'account',
 	inference_topup: 'account', inference_budget_exhausted: 'account',
+	approval_requested: 'approvals',
 };
 function categoryOf(type) { return TYPE_CATEGORY[type] || 'account'; }
 

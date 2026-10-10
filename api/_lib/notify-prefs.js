@@ -63,6 +63,15 @@ export const CATEGORIES = [
 		description: 'An email arrived in one of your agents\' inboxes (spam is held back and never notifies).',
 	},
 	{
+		key: 'approvals',
+		label: 'Approvals',
+		description: 'An agent is waiting for your yes before it moves funds. Approve or deny from the notification, chat, or /approvals.',
+		// A pending approval is a decision the owner owes; the bell row is the
+		// one surface that always carries it, so it cannot be muted. Push, email
+		// and chats stay togglable.
+		lockedChannels: ['in_app'],
+	},
+	{
 		key: 'account',
 		label: 'Account & security',
 		description: 'Withdrawals, payment issues, and security-sensitive events.',
@@ -143,6 +152,7 @@ const TYPE_CATEGORY = {
 	skill_payment_mismatch: 'account',
 	security_alert: 'account',
 	wallet_anomaly_frozen: 'account',
+	approval_requested: 'approvals',
 };
 
 export function categoryForType(type) {
@@ -189,6 +199,11 @@ const DEFAULTS = {
 	knock:     { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
 	mail:      { in_app: true,  push: true,  email: false, telegram: false, discord: false, avatar: false },
 	account:   { in_app: true,  push: true,  email: true,  telegram: false, discord: false, avatar: true  },
+	// Approvals reach for every paired surface by default: an unanswered request
+	// expires and the action never runs, so being reached is the feature. Email
+	// is only the fallback (api/_lib/approvals.js sends it when no push device or
+	// paired chat got the request).
+	approvals: { in_app: true,  push: true,  email: true,  telegram: true,  discord: true,  avatar: true  },
 };
 
 /** The full default matrix, used to seed the preference-center UI. */
@@ -312,6 +327,7 @@ const PUSH_COPY = {
 	skill_payment_mismatch:   ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],
 	security_alert:           (p) => ['Security alert 🔒', p.message || 'A security-sensitive change was made to your account'],
 	wallet_anomaly_frozen:    (p) => ['Wallet auto-frozen 🛡️', p.summary || 'Your agent wallet was frozen after an unusual action — tap to approve or keep frozen'],
+	approval_requested:       (p) => ['Approval needed', [p.summary || 'An agent is waiting for your approval', p.confirmation].filter(Boolean).join('\n')],
 };
 
 export function pushPayloadFor(type, payload, notificationId) {
@@ -319,7 +335,7 @@ export function pushPayloadFor(type, payload, notificationId) {
 	const fn = PUSH_COPY[type];
 	const [title, body] = fn ? fn(p) : ['three.ws', String(type).replace(/_/g, ' ')];
 	const url = pushUrlFor(p);
-	return {
+	const out = {
 		title,
 		body,
 		url,
@@ -328,6 +344,15 @@ export function pushPayloadFor(type, payload, notificationId) {
 		// Used by the SW to attribute the 'returned' funnel event.
 		category: categoryForType(type),
 	};
+	// An approval push carries what the service worker needs to answer it in
+	// place (Approve / Deny action buttons, public/push-sw.js): the request id,
+	// the payload hash the owner is approving, and the signed link token. One
+	// tag per request so two pending approvals never replace each other.
+	if (type === 'approval_requested' && p.approval_id) {
+		out.tag = `approval:${p.approval_id}`;
+		out.approval = { id: p.approval_id, hash: p.payload_hash || null, token: p.link_token || null };
+	}
+	return out;
 }
 
 function pushUrlFor(p) {

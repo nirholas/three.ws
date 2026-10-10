@@ -375,6 +375,15 @@
 					"indexable": false
 				},
 				{
+					"path": "/approvals",
+					"title": "Approvals",
+					"description": "Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"added": "2026-10-10",
+					"indexable": false
+				},
+				{
 					"path": "/skills",
 					"title": "Skills Marketplace",
 					"description": "Browse, search, and install agent skills: tool packs, knowledge bases, and capabilities that make AI agents smarter. Now lives inside the Marketplace; this path forwards there.",
@@ -4805,6 +4814,13 @@
 					"path": "/docs/notifications",
 					"title": "Docs: Notifications",
 					"description": "Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/approvals",
+					"title": "Docs: Approvals",
+					"description": "How agents pause for your yes before moving funds: the /approvals inbox, push Approve and Deny, signed deep links, payload-hash checks, auto-approve rules, and the API.",
 					"priority": 0.7,
 					"changefreq": "monthly"
 				},

@@ -533,6 +533,11 @@ export const NAV_GROUPS = [
 						desc: 'Start here: live fleet vitals, the agent scoreboard, and every trading surface in one map',
 					},
 					{
+						title: 'Approvals',
+						href: '/approvals',
+						desc: 'Approve or deny the actions your agents paused to ask you about',
+					},
+					{
 						title: 'Exit Lab',
 						href: '/exit-lab',
 						badge: 'New',

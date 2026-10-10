@@ -38,6 +38,7 @@ import {
 	updateCustodyEvent,
 	validateSolanaAddress,
 	lamportsToUsd,
+	countPriorSpendsTo,
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from './agent-trade-guards.js';
 import { THREE_MINT } from './networth-model.js';
@@ -45,6 +46,7 @@ import { XAI_CHAT_COMPLETIONS_URL, GROK_BUDGET_MODEL, GROK_BUDGET_EXTRA_BODY } f
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
 import { recentPumpLaunches, enrichCreatorStats } from './pump-launch-feed.js';
 import { logAudit } from './audit.js';
+import { createApprovalRequest, runApproved, TTL_MS } from './approvals.js';
 import { getCreditAccount } from './credits.js';
 import { topupFromIntent, normalizeTopupAmount, TopupError } from './inference-topup.js';
 
@@ -844,10 +846,24 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 	// ceiling, anomaly, capability) and gives a fast, specific pause message. Its
 	// daily-cap read is advisory only; the binding daily check is the atomic claim
 	// below, which reserves headroom in the same statement that writes the row.
+	//
+	// A policy step-up ("ask me first") does not dead-end here: it queues the
+	// exact action in the owner's approval inbox (api/_lib/approvals.js), and an
+	// approval re-enters this function with ctx.approval set, which lifts only that
+	// step-up. Every cap in this function still applies on the approved run.
 	try {
-		await enforceSpendLimit({ agentId, meta: ctx.meta, category: 'intent', usdValue: usd, network });
+		await enforceSpendLimit({
+			agentId, meta: ctx.meta, category: 'intent', usdValue: usd, network,
+			destination: rowMeta.destination || undefined,
+			stepUpApproved: Boolean(ctx.approval),
+		});
 	} catch (e) {
-		if (e instanceof SpendLimitError) return { status: 'paused', note: e.message, usd };
+		if (e instanceof SpendLimitError) {
+			if (e.code === 'policy_step_up' && !dryRun && !ctx.approval) {
+				return requestIntentApproval({ ctx, intent, discriminator, category, usd, lamports, rowMeta, gateReason: e.message, doSpend });
+			}
+			return { status: 'paused', note: e.message, usd };
+		}
 		throw e;
 	}
 
@@ -898,7 +914,7 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 			(agent_id, user_id, event_type, category, network, asset, amount_lamports, usd, status, idempotency_key, meta)
 		SELECT ${agentId}, ${userId ?? ownerId ?? null}, 'spend', ${category}, ${network}, 'SOL',
 		       ${lamports != null ? String(lamports) : null}, ${usd ?? null}, 'pending', ${idemKey},
-		       ${JSON.stringify({ ...rowMeta, intent_id: intent.id, intent_title: intent.title, trigger: intent.trigger?.type, action: intent.action?.type })}::jsonb
+		       ${JSON.stringify({ ...rowMeta, intent_id: intent.id, intent_title: intent.title, trigger: intent.trigger?.type, action: intent.action?.type, ...(ctx.approval ? { approval_id: ctx.approval.id } : {}) })}::jsonb
 		FROM wallet_day, rule_day, rule_life, locked
 		WHERE NOT EXISTS (SELECT 1 FROM agent_custody_events WHERE agent_id = ${agentId} AND idempotency_key = ${idemKey})
 		  AND (${dailyUsd}::float8 IS NULL OR wallet_day.s + ${usd}::float8 <= ${dailyUsd}::float8 + 1e-9)
@@ -919,6 +935,111 @@ async function gatedSpend({ ctx, intent, discriminator, category, usd, lamports,
 	}
 }
 
+function shortKey(a) {
+	const s = String(a || '');
+	return s.length > 12 ? `${s.slice(0, 4)}...${s.slice(-4)}` : s;
+}
+
+// Queue a step-up-gated spend in the owner's approval inbox. The payload is
+// everything executeApprovedIntentAction needs to run THIS action and nothing
+// else; its hash is what the owner approves. An auto-approve policy that covers
+// it runs it inline, under the same caps, without asking.
+async function requestIntentApproval({ ctx, intent, discriminator, category, usd, lamports, rowMeta, gateReason, doSpend }) {
+	const isSwap = Boolean(rowMeta.mint);
+	const sol = Number(lamports) / 1e9;
+	const solText = sol.toLocaleString('en-US', { maximumFractionDigits: 6 });
+	const who = ctx.agentName || 'Your agent';
+	const destination = rowMeta.destination || null;
+	const payload = {
+		v: 1,
+		source: 'wallet_intent',
+		agent_id: ctx.agentId,
+		intent_id: intent.id,
+		action_type: intent.action.type,
+		category,
+		network: ctx.network,
+		discriminator,
+		lamports: String(lamports),
+		destination,
+		destination_label: rowMeta.destination_label || null,
+		mint: rowMeta.mint || null,
+		slippage_bps: rowMeta.slippage_bps ?? null,
+	};
+	const riskNotes = [`Rule: "${intent.title}"`];
+	let autoApprovable = true;
+	if (isSwap) {
+		riskNotes.push(`Swaps SOL into token ${rowMeta.mint}. Check the mint before approving.`);
+		if (rowMeta.slippage_bps != null) riskNotes.push(`Max slippage ${(rowMeta.slippage_bps / 100).toFixed(1)}%. The price is re-quoted when you approve.`);
+	} else {
+		const priors = await countPriorSpendsTo(ctx.agentId, destination, ctx.network).catch(() => 0);
+		if (priors === 0) {
+			autoApprovable = false;
+			riskNotes.push('This wallet has never paid this address before. Payments on Solana cannot be reversed.');
+		} else {
+			riskNotes.push(`This wallet has paid this address ${priors} time${priors === 1 ? '' : 's'} before.`);
+		}
+	}
+	if (ctx.network !== 'mainnet') riskNotes.push(`Runs on Solana ${ctx.network}.`);
+
+	const ref = `${intent.id}:${destination || rowMeta.mint || 'self'}`;
+	let created;
+	try {
+		created = await createApprovalRequest({
+			userId: ctx.ownerId,
+			agentId: ctx.agentId,
+			source: 'wallet_intent',
+			sourceRef: ref,
+			actionType: intent.action.type,
+			venue: isSwap ? 'jupiter' : 'wallet_transfer',
+			payload,
+			summary: isSwap
+				? `${who} wants to buy ${shortKey(rowMeta.mint)} with ${solText} SOL`
+				: `${who} wants to send ${solText} SOL to ${rowMeta.destination_label || shortKey(destination)}`,
+			amount: sol,
+			amountUsd: Number.isFinite(usd) ? Math.round(usd * 100) / 100 : null,
+			asset: 'SOL',
+			chain: 'solana',
+			network: ctx.network,
+			recipient: isSwap ? ctx.address : destination,
+			recipientLabel: isSwap ? `${who}'s own wallet (swap)` : (rowMeta.destination_label || null),
+			riskNotes,
+			gateReason,
+			idempotencyKey: `wallet_intent:${intent.id}:${discriminator}`,
+			ttlMs: isSwap ? TTL_MS.swap : TTL_MS.transfer,
+			autoApprovable,
+		});
+	} catch (e) {
+		return { status: 'paused', note: `${gateReason} (could not queue the approval: ${(e?.message || 'error').slice(0, 120)})`, usd };
+	}
+	const req = created.request;
+
+	if (created.autoApproved) {
+		const { outcome } = await runApproved(req, () => gatedSpend({
+			ctx: { ...ctx, approval: { id: req.id, auto: true } },
+			intent, discriminator, category, usd, lamports, rowMeta, doSpend,
+		}));
+		return outcome || { status: 'skipped', note: 'already handled through the approval inbox', usd };
+	}
+
+	switch (req.status) {
+		case 'pending':
+			return {
+				status: 'awaiting_approval',
+				note: created.created
+					? `Waiting for your approval: ${req.summary}. Approve or deny it at /approvals.`
+					: 'Waiting on your answer to an earlier approval request for this rule at /approvals.',
+				usd,
+				approval_id: req.id,
+			};
+		case 'denied':
+			return { status: 'paused', note: 'You denied this action in the approval inbox.', usd, approval_id: req.id };
+		case 'expired':
+			return { status: 'paused', note: 'The approval request for this action expired unanswered, so nothing was sent.', usd, approval_id: req.id };
+		default:
+			return { status: 'skipped', note: 'already handled through the approval inbox', usd, approval_id: req.id };
+	}
+}
+
 // Real SOL transfer from the agent's wallet → destination.
 async function transferSol({ ctx, intent, discriminator, category, lamports, rowMeta }) {
 	if (lamports <= 0n) return { status: 'skipped', note: 'amount rounds to zero' };
@@ -934,16 +1055,17 @@ async function transferSol({ ctx, intent, discriminator, category, lamports, row
 }
 
 // Real SOL → token swap (Jupiter, mainnet) for buy/snipe.
-async function buyToken({ ctx, intent, discriminator, mint, lamports, slippagePct }) {
+async function buyToken({ ctx, intent, discriminator, mint, lamports, slippagePct, slippageBps: fixedBps = null }) {
 	if (ctx.network !== 'mainnet') return { status: 'skipped', note: 'buys/snipes are mainnet-only — this wallet is on devnet' };
 	if (lamports <= 0n) return { status: 'skipped', note: 'amount rounds to zero' };
 	if ((ctx.balanceLamports - SOL_FEE_HEADROOM_LAMPORTS) < lamports) return { status: 'skipped', note: 'not enough SOL after the fee buffer' };
 	const usd = await lamportsToUsd(lamports).catch(() => null);
 	if (usd == null) return { status: 'paused', note: 'SOL/USD price feed unavailable — will retry' };
-	const slippageBps = Math.round(clamp(slippagePct ?? 5, 0, 50) * 100);
+	// An approved request replays the exact slippage the owner was shown.
+	const slippageBps = fixedBps != null ? Math.round(clamp(Number(fixedBps), 0, 5000)) : Math.round(clamp(slippagePct ?? 5, 0, 50) * 100);
 	return gatedSpend({
 		ctx, intent, discriminator, category: intent.action.type === 'snipe' ? 'snipe' : 'trade', usd, lamports,
-		rowMeta: { action: intent.action.type, mint },
+		rowMeta: { action: intent.action.type, mint, slippage_bps: slippageBps },
 		doSpend: async (lams) => {
 			const res = await swapSolToToken({ keypair: ctx.keypair, lamports: lams, outputMint: mint, slippageBps, network: ctx.network, conn: ctx.conn });
 			return { signature: res.signature };
@@ -1151,6 +1273,50 @@ async function stampFire(intent, res, now = new Date()) {
 			updated_at = now()
 		WHERE id = ${intent.id}
 	`;
+}
+
+// ── approval inbox executor ─────────────────────────────────────────────────────
+
+/**
+ * Run the exact action an owner approved in the inbox (api/_lib/approvals.js
+ * registers this as the `wallet_intent` executor). Only the stored payload is
+ * executed: the same amount in lamports, the same recipient or mint, the same
+ * slippage, under the same custody idempotency key the gated fire would have
+ * used, so an approval can never move funds twice for one event. The intent's
+ * own caps and every wallet ceiling still apply; only the step-up the owner
+ * answered is lifted.
+ *
+ * @param {object} row  the approval_requests row, already claimed as executing
+ * @returns {Promise<{ status: string, note?: string, signature?: string, usd?: number }>}
+ */
+export async function executeApprovedIntentAction(row) {
+	const p = row.payload || {};
+	const intent = await getIntent(p.agent_id, p.intent_id);
+	if (!intent) return { status: 'error', note: 'The rule behind this request was deleted, so nothing was executed.' };
+	if (intent.action.type !== p.action_type) return { status: 'error', note: 'The rule changed after this request was made, so nothing was executed.' };
+	let lamports;
+	try { lamports = BigInt(p.lamports); } catch { return { status: 'error', note: 'The approved amount is unreadable, so nothing was executed.' }; }
+
+	const built = await buildExecContext({ agentId: p.agent_id, userId: row.user_id, network: p.network || 'mainnet', dryRun: false, needsKey: true });
+	if (built.error) return { status: 'error', note: `Could not execute: ${built.detail || built.error}` };
+	const ctx = built.ctx;
+	if (String(ctx.ownerId) !== String(row.user_id)) return { status: 'error', note: 'This agent is no longer owned by the account that approved it, so nothing was executed.' };
+	ctx.discriminator = p.discriminator;
+	ctx.approval = { id: row.id };
+
+	let res;
+	try {
+		res = p.mint
+			? await buyToken({ ctx, intent, discriminator: p.discriminator, mint: p.mint, lamports, slippageBps: p.slippage_bps })
+			: await transferSol({
+				ctx, intent, discriminator: p.discriminator, category: p.category, lamports,
+				rowMeta: { action: p.action_type, destination: p.destination, destination_label: p.destination_label || undefined },
+			});
+	} catch (e) {
+		res = { status: 'error', note: (e?.message || 'failed').slice(0, 240) };
+	}
+	await stampFire(intent, res, ctx.now).catch(() => {});
+	return res;
 }
 
 // ── public entrypoints ─────────────────────────────────────────────────────────────

@@ -11,6 +11,11 @@
 //   POST   /api/agents/:id/strategies/kill       toggle the per-owner global kill switch (owner)
 //   POST   /api/agents/:id/strategies/sweep      evaluate this agent's equips now (owner "Run now")
 //   POST   /api/agents/:id/strategies/close      force-close ONE open position now { position_id } (owner "Sell now")
+//   POST   /api/agents/:id/strategies/mode       switch one equip between auto and ask { equip_id, mode } (owner)
+//   GET    /api/agents/:id/strategies/decisions  candidate decision log: which check blocked or bought what (owner)
+//   GET    /api/agents/:id/strategies/approvals  ask-mode approval requests (owner) ?status=pending
+//   POST   /api/agents/:id/strategies/approve    approve one request { approval_id, payload_hash } (owner, executes once)
+//   POST   /api/agents/:id/strategies/deny       deny one request { approval_id } (owner)
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { assertBearerMaySpend } from '../_lib/spend-scope.js';
@@ -22,7 +27,13 @@ import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { isUuid } from '../_lib/validate.js';
 import { logAudit } from '../_lib/audit.js';
 import { normalizeStrategyConfig } from '../_lib/strategy-schema.js';
-import { evaluateEquip, recentPumpLaunchesSafe, closeStrategyPositionNow } from '../_lib/agent-strategy-runtime.js';
+import {
+	evaluateEquip, recentPumpLaunchesSafe, closeStrategyPositionNow, approveStrategyRequest, denyStrategyRequest,
+} from '../_lib/agent-strategy-runtime.js';
+import { listCandidateDecisions, listStrategyApprovals } from '../_lib/strategy-approvals.js';
+
+const DECISIONS = new Set(['blocked', 'approval', 'executed', 'skipped', 'failed']);
+const APPROVAL_STATUSES = new Set(['pending', 'executing', 'executed', 'failed', 'denied', 'expired']);
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const netOf = (v) => (NETWORKS.has(v) ? v : 'mainnet');
@@ -298,6 +309,86 @@ async function handleClose(req, res, id) {
 	return json(res, 200, { data: result.data });
 }
 
+// POST mode — switch one equipped strategy between auto (buy within caps) and ask
+// (file an approval for every buy). Going to auto arms autonomous buying, so it
+// needs the real-funds agreement; going to ask never does.
+async function handleMode(req, res, id) {
+	const owned = await loadOwned(req, res, id);
+	if (!owned) return;
+	const body = await readJson(req).catch(() => ({}));
+	if (!isUuid(body?.equip_id)) return error(res, 400, 'validation_error', 'equip_id required');
+	if (body.mode !== 'auto' && body.mode !== 'ask') return error(res, 400, 'validation_error', 'mode must be "auto" or "ask"');
+	const [target] = await sql`SELECT network, config_snapshot FROM agent_strategy_equips WHERE id = ${body.equip_id} AND agent_id = ${id}`;
+	if (!target) return error(res, 404, 'not_found', 'equip not found');
+	if (body.mode === 'auto') {
+		if (!(await requireRealFundsAgreement(req, res, { userId: owned.auth.userId, network: netOf(target.network), context: 'strategy' }))) return;
+	}
+	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
+	const snapshot = normalizeStrategyConfig({ ...(target.config_snapshot || {}), mode: body.mode });
+	await sql`UPDATE agent_strategy_equips SET config_snapshot = ${JSON.stringify(snapshot)}::jsonb, updated_at = now() WHERE id = ${body.equip_id} AND agent_id = ${id}`;
+	logAudit({ userId: owned.auth.userId, action: 'strategy.mode', resourceId: id, meta: { equip_id: body.equip_id, mode: body.mode } });
+	return json(res, 200, { data: { equip_id: body.equip_id, mode: body.mode } });
+}
+
+async function handleDecisions(req, res, id) {
+	const owned = await loadOwned(req, res, id);
+	if (!owned) return;
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const url = new URL(req.url, 'http://x');
+	const decision = DECISIONS.has(url.searchParams.get('decision')) ? url.searchParams.get('decision') : null;
+	const rows = await listCandidateDecisions({ agentId: id, ownerId: owned.auth.userId, decision, limit: url.searchParams.get('limit') });
+	return json(res, 200, { data: { decisions: rows } });
+}
+
+async function handleApprovals(req, res, id) {
+	const owned = await loadOwned(req, res, id);
+	if (!owned) return;
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const url = new URL(req.url, 'http://x');
+	const status = APPROVAL_STATUSES.has(url.searchParams.get('status')) ? url.searchParams.get('status') : null;
+	const rows = await listStrategyApprovals({ agentId: id, ownerId: owned.auth.userId, status, limit: url.searchParams.get('limit') });
+	return json(res, 200, { data: { approvals: rows } });
+}
+
+// POST approve — the owner's explicit yes for one ask-mode buy. Executes the exact
+// stored payload once, through every spend guard, at the moment of approval.
+async function handleApprove(req, res, id) {
+	const owned = await loadOwned(req, res, id);
+	if (!owned) return;
+	const rl = await limits.tradePerUser(owned.auth.userId);
+	if (!rl.success) return rateLimited(res, rl);
+	const body = await readJson(req).catch(() => ({}));
+	if (!isUuid(body?.approval_id)) return error(res, 400, 'validation_error', 'a valid approval_id is required');
+	const shownHash = typeof body.payload_hash === 'string' ? body.payload_hash : '';
+	if (!/^[0-9a-f]{64}$/.test(shownHash)) return error(res, 400, 'validation_error', 'payload_hash (the hash of the request you reviewed) is required');
+	const [target] = await sql`SELECT network FROM approval_requests WHERE id = ${body.approval_id} AND user_id = ${owned.auth.userId} AND agent_id = ${id}`.catch(() => []);
+	if (!target) return error(res, 404, 'not_found', 'approval request not found');
+	if (!(await requireRealFundsAgreement(req, res, { userId: owned.auth.userId, network: netOf(target.network), context: 'strategy' }))) return;
+	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
+	let result;
+	try {
+		result = await approveStrategyRequest({ id: body.approval_id, ownerId: owned.auth.userId, agentId: id, shownHash, via: 'web' });
+	} catch (err) {
+		console.error('[agents/strategies] approve failed', body.approval_id, err?.message || err);
+		return error(res, 500, 'internal_error', 'unexpected error executing the approved buy');
+	}
+	if (!result.ok && result.http !== 422) return error(res, result.http || 500, result.code || 'error', result.message || 'could not approve');
+	return json(res, result.http || 200, { data: { approval: result.approval, already: !!result.already, executed: result.ok, code: result.code || null, message: result.message || null } });
+}
+
+async function handleDeny(req, res, id) {
+	const owned = await loadOwned(req, res, id);
+	if (!owned) return;
+	if (!(await requireCsrf(req, res, owned.auth.userId))) return;
+	const body = await readJson(req).catch(() => ({}));
+	if (!isUuid(body?.approval_id)) return error(res, 400, 'validation_error', 'a valid approval_id is required');
+	const result = await denyStrategyRequest({ id: body.approval_id, ownerId: owned.auth.userId, agentId: id, via: 'web' });
+	if (!result.ok) return error(res, result.http || 500, result.code || 'error', result.message || 'could not deny');
+	return json(res, 200, { data: { approval: result.approval, already: !!result.already } });
+}
+
 export default async function handler(req, res, id, action) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
@@ -310,5 +401,10 @@ export default async function handler(req, res, id, action) {
 	if (req.method === 'POST' && action === 'kill') return handleKill(req, res, id);
 	if (req.method === 'POST' && action === 'sweep') return handleSweep(req, res, id);
 	if (req.method === 'POST' && action === 'close') return handleClose(req, res, id);
+	if (req.method === 'POST' && action === 'mode') return handleMode(req, res, id);
+	if (req.method === 'GET' && action === 'decisions') return handleDecisions(req, res, id);
+	if (req.method === 'GET' && action === 'approvals') return handleApprovals(req, res, id);
+	if (req.method === 'POST' && action === 'approve') return handleApprove(req, res, id);
+	if (req.method === 'POST' && action === 'deny') return handleDeny(req, res, id);
 	return error(res, 404, 'not_found', `unknown strategies route: ${action || req.method}`);
 }

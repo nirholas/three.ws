@@ -1,5 +1,7 @@
 // GET /api/audit-log              — JSON list of the caller's audit events
 // GET /api/audit-log?format=csv   — CSV download (same data, last 90 days)
+// GET /api/audit-log?action_prefix=approval_  — only actions starting with the
+//     prefix (the /approvals page's audit panel). Lowercase letters and _ only.
 //
 // Backs the "Action log" panel on /dashboard-next/account. Reads from the
 // audit_log table populated by api/_lib/audit.js. JSON form is cursor-
@@ -69,12 +71,16 @@ async function handleList(userId, url, res) {
 		Math.max(1, Number.isFinite(rawLimit) ? rawLimit : DEFAULT_LIMIT),
 	);
 	const cursor = decodeCursor(url.searchParams.get('cursor'));
+	// Strict shape, compared with left() rather than LIKE so `_` is literal.
+	const prefixRaw = (url.searchParams.get('action_prefix') || '').trim();
+	const prefix = /^[a-z_]{1,40}$/.test(prefixRaw) ? prefixRaw : null;
 
 	const rows = cursor
 		? await sql`
 			select id, action, resource_id, meta, ip, user_agent, created_at
 			from audit_log
 			where user_id = ${userId}
+			  and (${prefix}::text is null or left(action, ${prefix ? prefix.length : 0}) = ${prefix}::text)
 			  and (created_at, id) < (${cursor.iso}::timestamptz, ${cursor.id}::uuid)
 			order by created_at desc, id desc
 			limit ${limit + 1}
@@ -83,6 +89,7 @@ async function handleList(userId, url, res) {
 			select id, action, resource_id, meta, ip, user_agent, created_at
 			from audit_log
 			where user_id = ${userId}
+			  and (${prefix}::text is null or left(action, ${prefix ? prefix.length : 0}) = ${prefix}::text)
 			order by created_at desc, id desc
 			limit ${limit + 1}
 		`;

@@ -72,6 +72,7 @@ category; the mapping (`TYPE_CATEGORY`) lives in
 | Market alerts | `alerts` | `pump_alert` |
 | Creations | `creations` | `forge_complete`, `forge_failed` |
 | Companion | `companion` | `companion_delivery` |
+| Approvals | `approvals` | `approval_requested` (see [Approvals](./approvals.md)) |
 | (no tab yet) | `knock` | `knock_received` |
 | (no tab yet) | `mail` | `mail_received` |
 | Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map (the agent-inference `inference_topup` and `inference_budget_exhausted` land here this way) |

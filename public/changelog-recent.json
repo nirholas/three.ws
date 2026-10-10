@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-10-10T05:09:34.226Z",
+	"generated_at": "2026-10-10T05:45:10.412Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3887,
+	"total": 3889,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-10",
+			"type": "launch",
+			"title": "Approvals",
+			"summary": "Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.",
+			"link": "/approvals",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Approve your agents' payments from a notification",
+			"summary": "Set any agent spend rule to Ask me and the agent now waits for your yes instead of failing. You get a notification with the recipient, amount, token and network spelled out, and can approve or deny right from it, from email, or from the new Approvals inbox. Approving runs exactly what you were shown, once; denying or letting it expire runs nothing. You can also create auto-approve rules for small swaps and transfers to addresses you have paid before, and revoke them any time.",
+			"link": "/approvals",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-10-10",
 			"type": "update",
@@ -1517,28 +1537,6 @@
 			"summary": "Walking into /club, some visitors saw a huge metallic shape filling the sky above the alley, and their computer ran hot. It was a crowd member: one avatar model built at centimetre scale was measured wrong before it was sized, so it spawned about 400 times too big, roughly 700 metres tall, and the GPU spent the whole walk-in painting it. Crowd members, your own avatar in the agent switcher, the theater stage and the Agora now size every avatar from its real posed mesh, so that model stands at normal human height like everyone else.",
 			"link": "/club",
 			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-21",
-			"type": "update",
-			"title": "The club no longer runs your computer hot on the way in",
-			"summary": "While you walked the alley and stood at the door, the club was secretly drawing the whole dance floor behind it at full quality, so your graphics card was rendering two complete 3D scenes at once. The hidden stage now pauses its drawing until the alley fades away, roughly halving the graphics work for the entire walk-in. For a cooler machine inside the club too, turn on Power saver in the club controls.",
-			"link": "/club",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-21",
-			"type": "update",
-			"title": "Three SDKs now report the version you actually installed",
-			"summary": "The walk, tour and assistant SDKs each export a VERSION constant, and a release earlier this month bumped all three packages without updating it. Code that read the constant got the previous release's number: 0.3.0 from walk 0.3.1, 0.5.1 from tour 0.5.2, 1.0.0 from assistant 1.0.1. The constants now match the packages, and the tour builder's copy-paste embed snippet points at tour 0.5.2. Only the tour SDK had a test comparing the two, which is how this was found; the other two were caught by checking every package from that release for the same mistake. Copies already installed from npm keep the old number until the next release of each package.",
-			"link": "/tour-builder",
-			"tags": [
-				"sdk",
 				"fix"
 			]
 		}

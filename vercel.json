@@ -1288,6 +1288,14 @@
 			"dest": "/quests.html"
 		},
 		{
+			"src": "/approvals/?",
+			"dest": "/approvals.html"
+		},
+		{
+			"src": "/approvals/([^/.]+)/?",
+			"dest": "/approvals.html"
+		},
+		{
 			"src": "/duels/?",
 			"dest": "/duels.html"
 		},

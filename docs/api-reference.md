@@ -4700,7 +4700,7 @@ GET   /api/notifications/preferences
 PATCH /api/notifications/preferences
 ```
 
-The bell inbox and its per-user preference matrix. Session required. Event types include `remix`, `dm_received`, `pump_launch_filled` (bonding-curve graduation), and `follow`. Preferences are a category × channel matrix: categories `sales`, `purchases`, `social`, `irl`, `market`, `account`; channels `in_app`, `push`, `email`, `telegram`. The `in_app` channel is always on and cannot be disabled.
+The bell inbox and its per-user preference matrix. Session required. Event types include `remix`, `dm_received`, `pump_launch_filled` (bonding-curve graduation), and `follow`. Preferences are a category × channel matrix: categories `sales`, `purchases`, `social`, `irl`, `market`, `approvals`, `account`; channels `in_app`, `push`, `email`, `telegram`. The `in_app` channel is always on and cannot be disabled.
 
 ### Push devices
 
@@ -4715,6 +4715,20 @@ Where a notification's `push` channel is delivered. Session and CSRF token requi
 
 `previous` marks a silent refresh (the app re-sending its token on launch). It succeeds only if `previous` is already registered to the caller, and answers `409 not_owner` otherwise, so a phone never enrols for whichever account happens to be signed in now. `GET /api/config` reports `nativePush.ios: true` once APNs is configured on the server (`APNS_KEY_ID`, `APNS_AUTH_KEY`, and `APNS_TEAM_ID` or `APPLE_TEAM_ID`).
 
+
+### Approvals
+
+```
+GET    /api/approvals?status=pending|done|denied|expired|all&agent=<uuid>&limit=&cursor=
+POST   /api/approvals            { action: "bulk_deny", ids }
+GET    /api/approvals/:id?t=<link token>
+POST   /api/approvals/:id        { decision: "approve"|"deny", payload_hash, token?, via? }
+GET    /api/approvals/policies
+POST   /api/approvals/policies   { venues, max_usd, agent_id?, team_id?, expires_at?, label? }
+DELETE /api/approvals/policies?id=<uuid>
+```
+
+The owner's inbox for actions an agent paused on because a spend rule is set to "Ask me". Reads take a session or bearer; every decision and rule change needs a session plus CSRF, so an agent credential can never approve its own request. Approve must carry the `payload_hash` of the action shown: a mismatch is `409 payload_mismatch`, a deep link that no longer matches is `409 link_mismatch`, a passed deadline is `410 expired`, and nothing runs in any of those cases. A repeat approve returns the current state with `idempotent: true` and never executes twice. Auto-approve rules name venues (`jupiter`, `wallet_transfer`) and a per-action cap of at most $1,000; first transfers to a new address and unpriced actions always ask. Full guide: [approvals.md](approvals.md).
 ---
 
 ## IRL API — presence, pins, money drops, world lines

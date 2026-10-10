@@ -719,6 +719,9 @@ export const limits = {
 	// Strategy backtest (api/sniper/backtest.js) is a read-only replay over captured
 	// history; cached by strategy hash, so this only gates cache-miss origin work.
 	sniperBacktestIp: (ip) => getLimiter('sniper:backtest:ip', { limit: 40, window: '5 m' }).limit(ip),
+	// Strategy Lab live match preview (api/strategies.js preview). Fires on slider
+	// changes (debounced client side) and replays a cached history window in memory.
+	strategyPreviewIp: (ip) => getLimiter('strategy:preview:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
 	// pump.fun coin metadata upload (name/symbol/image → R2 JSON). Cheap and
 	// idempotent, so it gets its own bucket instead of draining the strict
 	// `authIp` budget shared by on-chain buy/sell/launch actions. Iterating in
@@ -1595,6 +1598,10 @@ export const limits = {
 	previewAgent: (agentId) =>
 		getLimiter('preview:agent', { limit: 200, window: '1 h' }).limit(agentId),
 	widgetWrite: (userId) => getLimiter('widget:write', { limit: 60, window: '1 m' }).limit(userId),
+	// Specialist teams: creating/editing a team provisions agents (write), and a
+	// role run fans out to RPC, the intel store and the trade engine (run).
+	teamWrite: (userId) => getLimiter('team:write', { limit: 20, window: '1 h' }).limit(userId),
+	teamRun: (userId) => getLimiter('team:run', { limit: 60, window: '10 m' }).limit(userId),
 	// local: embedded-widget read fetch — flood protection only, no side effects.
 	// Widgets on third-party pages poll continuously, so a Redis command per read
 	// at 600/min is pure burn; a per-instance cap bounds throughput just as well.
@@ -2256,6 +2263,10 @@ export const limits = {
 	// (the June 2026 Upstash quota outage), and a per-instance count can only
 	// ever be more generous than the published number, never stricter.
 	planApi: (planId, key, { limit, windowSeconds }) => planWindowLimit(`${planId}\u0000${key}`, limit, windowSeconds * 1000),
+	// Approval inbox (api/approvals/*): list, read, decide. Generous because an
+	// owner clearing a backlog taps fast; it exists so a stuck client loop cannot
+	// hammer the decide path. Local: a decision is already idempotent in the DB.
+	approvalsUser: (userId) => getLimiter('approvals:user', { limit: 240, window: '5 m', local: true }).limit(userId),
 };
 
 // Fixed-window counters for limits.planApi. One small record per principal, so

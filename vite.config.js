@@ -874,6 +874,7 @@ const appConfig = {
 				syndicates: resolve(__dirname, 'pages/syndicates.html'),
 				syndicate: resolve(__dirname, 'pages/syndicate.html'),
 				quests: resolve(__dirname, 'pages/quests.html'),
+				approvals: resolve(__dirname, 'pages/approvals.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
 				duel: resolve(__dirname, 'pages/duel.html'),
 				fade: resolve(__dirname, 'pages/fade.html'),
@@ -2354,6 +2355,11 @@ const appConfig = {
 					// `/duels/([^/.]+)/?`; the board itself is /duels.
 					else if (!filePath && /^\/duels\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/duel.html');
+					// /approvals/:id → the approval inbox focused on one request (the
+					// signed deep link every approval delivery carries). Mirrors
+					// vercel.json's `/approvals/([^/.]+)/?`.
+					else if (!filePath && /^\/approvals(\/[^/.]+)?\/?$/.test(path))
+						filePath = resolve(root, 'pages/approvals.html');
 					// /trade-rooms/:agentId → one leader's live trade room. Mirrors
 					// vercel.json's `/trade-rooms/([^/.]+)/?`.
 					else if (!filePath && /^\/trade-rooms\/[^/.]+\/?$/.test(path))

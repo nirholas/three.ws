@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Approvals</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-10-10:Approvals</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.</description>
+		</item>
+		<item>
+			<title>Approve your agents' payments from a notification</title>
+			<link>https://three.ws/approvals</link>
+			<guid isPermaLink="false">2026-10-10:Approve your agents' payments from a notification</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Set any agent spend rule to Ask me and the agent now waits for your yes instead of failing. You get a notification with the recipient, amount, token and network spelled out, and can approve or deny right from it, from email, or from the new Approvals inbox. Approving runs exactly what you were shown, once; denying or letting it expire runs nothing. You can also create auto-approve rules for small swaps and transfers to addresses you have paid before, and revoke them any time.</description>
+		</item>
+		<item>
 			<title>Coin logos, agent art and IPFS images load again</title>
 			<link>https://three.ws/launches</link>
 			<guid isPermaLink="false">2026-10-10:Coin logos, agent art and IPFS images load again</guid>

@@ -38,8 +38,16 @@ import {
 	checkPerTradeCap, checkDailyBudgetLamports, checkSolHeadroom, checkPriceImpact,
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from './agent-trade-guards.js';
-import { normalizeStrategyConfig, matchesEntry, shouldExit } from './strategy-schema.js';
+import {
+	normalizeStrategyConfig, matchesEntry, shouldExit,
+	researchGatesActive, evaluateResearchGates,
+} from './strategy-schema.js';
 import { recentPumpLaunches, enrichCreatorStats } from './pump-launch-feed.js';
+import { buildGateReport } from './strategy-research.js';
+import {
+	recordCandidateDecision, createStrategyApproval, pendingApprovalCount, recentDecisions,
+	payloadHash, STRATEGY_APPROVAL_SOURCE,
+} from './strategy-approvals.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const lamToSol = (l) => Number(BigInt(l)) / LAMPORTS_PER_SOL;
@@ -66,6 +74,8 @@ export const STRATEGY_SKIP_LABELS = Object.freeze({
 	already_held: 'agent already holds a position in this mint',
 	wallet_preparing: 'agent wallet still provisioning',
 	no_holding: 'no token balance to exit',
+	research_blocked: 'blocked by the strategy’s research gates',
+	approval_unavailable: 'ask mode could not file an approval request',
 });
 
 // ── agent loader ──────────────────────────────────────────────────────────────
@@ -108,8 +118,16 @@ async function readTokenBalance(conn, ownerPk, mintPk) {
 // mirror executor, composed for a server-initiated strategy action. Returns a
 // structured result — never throws past the boundary. Labels the custody trail
 // with reason 'strategy:<slug>' so every fill is attributable to the strategy.
+//
+// `maxPriceImpactPct` tightens the agent's breaker for this trade (a strategy's
+// own max_price_impact_bps); it can never loosen it. `preAssessment` reuses a
+// firewall verdict the research gates already computed for this exact buy, so
+// the firewall is not run twice. `dryRun` stops after every guard and returns
+// { status: 'ready', quote } without claiming custody or signing: ask mode uses
+// it so an owner is only ever asked about a trade the guards would allow.
 export async function runStrategyTrade({
 	agent, side, mint, network, solAmount, tokenAmountRaw, slippageBps, idempotencyKey, strategyRef,
+	maxPriceImpactPct = null, preAssessment = null, dryRun = false,
 }) {
 	const { id, ownerId, meta, address, encryptedSecret } = agent;
 	if (!address || !encryptedSecret) return { status: 'failed', code: 'wallet_preparing' };
@@ -165,14 +183,18 @@ export async function runStrategyTrade({
 		}
 	}
 
-	if (checkPriceImpact(quote.priceImpactPct, tradeLimits.max_price_impact_pct)) {
-		return { status: 'skipped', code: 'price_impact' };
+	const agentImpactCap = tradeLimits.max_price_impact_pct;
+	const impactCap = side === 'buy' && maxPriceImpactPct != null
+		? (agentImpactCap == null ? maxPriceImpactPct : Math.min(maxPriceImpactPct, agentImpactCap))
+		: agentImpactCap;
+	if (checkPriceImpact(quote.priceImpactPct, impactCap)) {
+		return { status: 'skipped', code: 'price_impact', priceImpact: quote.priceImpactPct, impactCap };
 	}
 
 	// 3. Rug/honeypot firewall — buys only, the unsafe direction. A 'block' verdict
 	//    refuses the entry (degrades to allow when a source is down, never stalls).
 	if (side === 'buy') {
-		const assessment = await assessTradeSafety({
+		const assessment = preAssessment || await assessTradeSafety({
 			network, mint: mintPk, side: 'buy', payer: ownerPk,
 			quoteAmount: BigInt(quote.inAtomics), priceImpactPct: quote.priceImpactPct,
 		}).catch(() => null);
@@ -197,6 +219,8 @@ export async function runStrategyTrade({
 			return { status: 'skipped', code: 'insufficient_sol' };
 		}
 	}
+
+	if (dryRun) return { status: 'ready', quote, usd: usdValue, priceImpact: quote.priceImpactPct, impactCap };
 
 	// 5. Idempotency claim in the custody ledger (also the spend row). A retry with
 	//    the same key replays instead of double-spending.
@@ -294,6 +318,68 @@ export async function runStrategyTrade({
 // Best-effort. Opens at most `maxEntries` real positions this sweep. Records an
 // open position row per confirmed buy; the unique (agent,mint,network) index and
 // the custody idempotency key both prevent a double entry.
+//
+// Order of checks for each launch: entry filter (cheap, pure) → already held →
+// research gates against a cited gate report → mode. In auto mode the buy runs
+// through the full guarded path within the agent's caps; in ask mode the same
+// guards run as a dry run and, if they would allow it, an approval request is
+// filed for the owner instead of buying. Every candidate that clears the entry
+// filter gets a decision row saying what happened and which check decided it.
+
+// Upsert the open position for a confirmed (or unconfirmed-but-sent) entry buy.
+// A fresh open position, OR revive a previously-CLOSED row for the same mint
+// (re-entry after a take-profit/stop). The WHERE guard means an already-open row
+// (another strategy) is never clobbered.
+export async function recordEntryPosition({ equip, agentId, network, mint, symbol = null, name = null, result }) {
+	const entryLamports = result.quote ? result.quote.inAtomics : null;
+	const baseAmount = result.quote ? result.quote.outAtomics : null;
+	await sql`
+		INSERT INTO agent_strategy_positions
+			(equip_id, strategy_id, agent_id, owner_id, network, mint, symbol, name, status,
+			 entry_sig, entry_lamports, base_amount, entry_price_impact_pct,
+			 peak_value_lamports, last_value_lamports, last_quoted_at)
+		VALUES (
+			${equip.id}, ${equip.strategy_id}, ${agentId}, ${equip.owner_id}, ${network},
+			${mint}, ${symbol}, ${name}, 'open',
+			${result.signature || null}, ${entryLamports}, ${baseAmount}, ${result.priceImpact ?? null},
+			${entryLamports}, ${entryLamports}, now()
+		)
+		ON CONFLICT (agent_id, mint, network) DO UPDATE SET
+			equip_id = excluded.equip_id, strategy_id = excluded.strategy_id, owner_id = excluded.owner_id,
+			symbol = excluded.symbol, name = excluded.name, status = 'open', exit_reason = NULL,
+			entry_sig = excluded.entry_sig, entry_lamports = excluded.entry_lamports,
+			base_amount = excluded.base_amount, entry_price_impact_pct = excluded.entry_price_impact_pct,
+			peak_value_lamports = excluded.peak_value_lamports, last_value_lamports = excluded.last_value_lamports,
+			last_quoted_at = now(), exit_sig = NULL, exit_lamports = NULL,
+			realized_pnl_lamports = NULL, realized_pnl_pct = NULL, error = NULL,
+			opened_at = now(), closed_at = NULL
+		WHERE agent_strategy_positions.status = 'closed'
+	`.catch(() => {});
+	await sql`
+		UPDATE agent_strategy_equips
+		SET last_fired_at = now(), fires_count = fires_count + 1, last_eval_at = now(), updated_at = now()
+		WHERE id = ${equip.id}
+	`.catch(() => {});
+}
+
+// Tag the launches an agent launched through three.ws, for entry.sources. One
+// indexed query per sweep, only when the strategy filters on it.
+async function tagThreeWsLaunches(launches, network) {
+	const mints = launches.map((l) => l.mint).filter(Boolean);
+	if (!mints.length) return launches;
+	const rows = await sql`
+		SELECT mint FROM pump_agent_mints WHERE network = ${network} AND mint = ANY(${mints})
+	`.catch(() => []);
+	const ours = new Set(rows.map((r) => r.mint));
+	return launches.map((l) => (ours.has(l.mint) ? { ...l, three_ws_launch: true } : l));
+}
+
+const guardDecision = (result) => {
+	if (result.status === 'executed' || result.status === 'unconfirmed') return 'executed';
+	if (result.status === 'skipped') return 'skipped';
+	return 'failed';
+};
+
 async function evaluateEntries({ equip, agent, launches, nowMs, maxEntries = 3 }) {
 	const config = normalizeStrategyConfig(equip.config_snapshot);
 	const network = netOf(equip.network);
@@ -309,18 +395,31 @@ async function evaluateEntries({ equip, agent, launches, nowMs, maxEntries = 3 }
 		if (sinceMin < config.risk.cooldown_minutes) return results;
 	}
 
-	// Concurrency — never exceed the strategy's max concurrent open positions.
+	// Concurrency — never exceed the strategy's max concurrent open positions. In
+	// ask mode a pending approval holds a slot too, so the owner is never asked for
+	// more buys than the strategy may hold at once.
 	const [openCnt] = await sql`
 		SELECT count(*)::int AS n FROM agent_strategy_positions
 		WHERE equip_id = ${equip.id} AND status IN ('open','closing')
 	`;
-	let room = Math.max(0, (config.risk.max_concurrent_positions || 0) - Number(openCnt?.n || 0));
+	const pending = config.mode === 'ask' ? await pendingApprovalCount(equip.id) : 0;
+	let room = Math.max(0, (config.risk.max_concurrent_positions || 0) - Number(openCnt?.n || 0) - pending);
 	if (room <= 0) return results;
 
+	const candidates = config.entry.sources.includes('three_ws_launch')
+		? await tagThreeWsLaunches(launches, network)
+		: launches;
+	const gated = researchGatesActive(config);
+	// A candidate decided recently is not re-researched every sweep: approvals and
+	// buys are final for that coin, and a block is re-checked after a short pause
+	// (holders and liquidity grow, so a coin can clear a gate later).
+	const decided = await recentDecisions(equip.id, candidates.map((l) => l.mint));
 	const slippageBps = config.sizing.max_slippage_bps;
+	const maxPriceImpactPct = config.sizing.max_price_impact_bps == null ? null : config.sizing.max_price_impact_bps / 100;
 	let opened = 0;
-	for (const launchRaw of launches) {
+	for (const launchRaw of candidates) {
 		if (opened >= maxEntries || room <= 0) break;
+		if (decided.has(launchRaw.mint)) continue;
 		const launch = { ...launchRaw };
 
 		// Enrich creator history only when the strategy actually gates on it (one
@@ -343,22 +442,79 @@ async function evaluateEntries({ equip, agent, launches, nowMs, maxEntries = 3 }
 		`;
 		if (held) continue;
 
-		const idem = `strategy:${equip.id}:entry:${launch.mint}`;
 		const strategyRef = {
 			strategy_id: equip.strategy_id, equip_id: equip.id, slug: equip.slug,
 			strategy_name: equip.strategy_name, action: 'entry',
 		};
+		const decisionBase = { equip, agentId: agent.id, network, mint: launch.mint };
+
+		// Research gates: build the cited report only when a gate is on or the owner
+		// will be asked (the approval card shows its risk notes).
+		let report = null;
+		let assessment = null;
+		if (gated || config.mode === 'ask') {
+			({ report, assessment } = await buildGateReport({
+				config, launch, network, payer: agent.address, forApproval: config.mode === 'ask',
+			}));
+			const evaluation = evaluateResearchGates(config, report);
+			if (!evaluation.pass) {
+				const first = evaluation.blocked_by[0];
+				await recordCandidateDecision({
+					...decisionBase, decision: 'blocked', check: first.check,
+					reason: evaluation.blocked_by.map((b) => b.reason).join(' '),
+					blockedBy: evaluation.blocked_by, report,
+				});
+				results.push({ mint: launch.mint, action: 'entry', status: 'skipped', code: 'research_blocked', check: first.check, blocked_by: evaluation.blocked_by, reasons: verdict.reasons });
+				continue;
+			}
+			report.evaluation = evaluation;
+		}
+
+		const idem = `strategy:${equip.id}:entry:${launch.mint}`;
+		const tradeArgs = {
+			agent, side: 'buy', mint: launch.mint, network,
+			solAmount: config.sizing.amount_sol, tokenAmountRaw: null,
+			slippageBps, idempotencyKey: idem, strategyRef, maxPriceImpactPct, preAssessment: assessment,
+		};
+
 		let result;
 		try {
-			result = await runStrategyTrade({
-				agent, side: 'buy', mint: launch.mint, network,
-				solAmount: config.sizing.amount_sol, tokenAmountRaw: null,
-				slippageBps, idempotencyKey: idem, strategyRef,
-			});
+			result = await runStrategyTrade({ ...tradeArgs, dryRun: config.mode === 'ask' });
 		} catch (e) {
 			result = { status: 'failed', code: (e?.message || 'error').slice(0, 120) };
 		}
 
+		// Ask mode: the guards would allow this buy, so ask the owner instead of buying.
+		if (result.status === 'ready') {
+			const approval = await createStrategyApproval({
+				equip, agent, config, launch, network, quote: result.quote, usd: result.usd,
+				impactCap: result.impactCap, idempotencyKey: idem, report,
+			});
+			if (approval.ok) {
+				await recordCandidateDecision({
+					...decisionBase, decision: 'approval', check: 'mode_ask',
+					reason: approval.created ? 'Ask mode: an approval request is waiting for the owner.' : 'Ask mode: already asked about this coin.',
+					report, approvalId: approval.id,
+				});
+				results.push({ mint: launch.mint, action: 'entry', status: 'approval', approval_id: approval.id, created: approval.created, reasons: verdict.reasons });
+				if (approval.created) room -= 1;
+			} else {
+				await recordCandidateDecision({
+					...decisionBase, decision: 'failed', check: 'approval_unavailable',
+					reason: 'Ask mode could not file an approval request, so nothing was bought.', report,
+				});
+				results.push({ mint: launch.mint, action: 'entry', status: 'failed', code: 'approval_unavailable', reasons: verdict.reasons });
+			}
+			continue;
+		}
+
+		await recordCandidateDecision({
+			...decisionBase, decision: guardDecision(result), check: result.code || (result.status === 'executed' ? 'mode_auto' : null),
+			reason: result.status === 'executed' || result.status === 'unconfirmed'
+				? 'Auto mode: bought within the agent’s caps.'
+				: (STRATEGY_SKIP_LABELS[result.code] || result.message || result.code || 'trade did not complete'),
+			report, signature: result.signature || null,
+		});
 		results.push({ mint: launch.mint, action: 'entry', ...result, reasons: verdict.reasons });
 
 		// Surface a SAFETY refusal (mayhem coin, rug/honeypot firewall) on the
@@ -372,39 +528,7 @@ async function evaluateEntries({ equip, agent, launches, nowMs, maxEntries = 3 }
 		}
 
 		if (result.status === 'executed' || result.status === 'unconfirmed') {
-			const entryLamports = result.quote ? result.quote.inAtomics : null;
-			const baseAmount = result.quote ? result.quote.outAtomics : null;
-			// Upsert: a fresh open position, OR revive a previously-CLOSED row for the
-			// same mint (re-entry after a take-profit/stop). The WHERE guard means an
-			// already-open row (another strategy) is never clobbered — the held-check
-			// above already skipped this buy in that case.
-			await sql`
-				INSERT INTO agent_strategy_positions
-					(equip_id, strategy_id, agent_id, owner_id, network, mint, symbol, name, status,
-					 entry_sig, entry_lamports, base_amount, entry_price_impact_pct,
-					 peak_value_lamports, last_value_lamports, last_quoted_at)
-				VALUES (
-					${equip.id}, ${equip.strategy_id}, ${agent.id}, ${equip.owner_id}, ${network},
-					${launch.mint}, ${launch.symbol || null}, ${launch.name || null}, 'open',
-					${result.signature || null}, ${entryLamports}, ${baseAmount}, ${result.priceImpact ?? null},
-					${entryLamports}, ${entryLamports}, now()
-				)
-				ON CONFLICT (agent_id, mint, network) DO UPDATE SET
-					equip_id = excluded.equip_id, strategy_id = excluded.strategy_id, owner_id = excluded.owner_id,
-					symbol = excluded.symbol, name = excluded.name, status = 'open', exit_reason = NULL,
-					entry_sig = excluded.entry_sig, entry_lamports = excluded.entry_lamports,
-					base_amount = excluded.base_amount, entry_price_impact_pct = excluded.entry_price_impact_pct,
-					peak_value_lamports = excluded.peak_value_lamports, last_value_lamports = excluded.last_value_lamports,
-					last_quoted_at = now(), exit_sig = NULL, exit_lamports = NULL,
-					realized_pnl_lamports = NULL, realized_pnl_pct = NULL, error = NULL,
-					opened_at = now(), closed_at = NULL
-				WHERE agent_strategy_positions.status = 'closed'
-			`.catch(() => {});
-			await sql`
-				UPDATE agent_strategy_equips
-				SET last_fired_at = now(), fires_count = fires_count + 1, last_eval_at = now(), updated_at = now()
-				WHERE id = ${equip.id}
-			`.catch(() => {});
+			await recordEntryPosition({ equip, agentId: agent.id, network, mint: launch.mint, symbol: launch.symbol || null, name: launch.name || null, result });
 			opened += 1;
 			room -= 1;
 		}
@@ -620,6 +744,172 @@ export async function closeStrategyPositionNow({ positionId, ownerId, agentId })
 	return { ok: false, status: 502, code: 'sell_failed', message: `the sell did not complete (${result.code || result.status}) — the position is still open` };
 }
 
+// ── ask mode: run or refuse an approved strategy buy ──────────────────────────
+// The owner approved exactly the buy in `row.payload`. Re-check that the strategy
+// can still trade (equip active, strategy not deleted, owner kill switch off, coin
+// not already held), then run it through the SAME guarded path an auto-mode buy
+// takes, with the same idempotency key, so every cap, the price-impact breaker,
+// and the firewall apply at the moment of execution, not at the moment of asking.
+// Exported so the shared approval inbox can dispatch action_type 'strategy_buy'.
+export async function runApprovedStrategyBuy(row) {
+	const p = row.payload || {};
+	const [equip] = await sql`
+		SELECT e.id, e.strategy_id, e.agent_id, e.owner_id, e.active, e.network, s.slug, s.name AS strategy_name
+		FROM agent_strategy_equips e
+		JOIN agent_strategies s ON s.id = e.strategy_id AND s.deleted_at IS NULL
+		WHERE e.id = ${p.equip_id} AND e.agent_id = ${p.agent_id}
+		LIMIT 1
+	`;
+	if (!equip) return { status: 'failed', code: 'strategy_gone' };
+	if (!equip.active) return { status: 'failed', code: 'equip_inactive' };
+	const killed = await engagedKillOwners();
+	if (killed.has(equip.owner_id)) return { status: 'skipped', code: 'owner_kill' };
+
+	const agent = await loadAgent(p.agent_id);
+	if (!agent || agent.ownerId !== row.user_id) return { status: 'failed', code: 'agent_missing' };
+	const network = netOf(p.network);
+	const [held] = await sql`
+		SELECT 1 FROM agent_strategy_positions
+		WHERE agent_id = ${agent.id} AND mint = ${p.mint} AND network = ${network} AND status IN ('open','closing') LIMIT 1
+	`;
+	if (held) return { status: 'skipped', code: 'already_held' };
+
+	const result = await runStrategyTrade({
+		agent, side: 'buy', mint: p.mint, network,
+		solAmount: Number(p.amount_sol), tokenAmountRaw: null,
+		slippageBps: Number(p.slippage_bps), idempotencyKey: p.idempotency_key,
+		maxPriceImpactPct: p.max_price_impact_pct == null ? null : Number(p.max_price_impact_pct),
+		strategyRef: {
+			strategy_id: equip.strategy_id, equip_id: equip.id, slug: equip.slug,
+			strategy_name: equip.strategy_name, action: 'entry', approval_id: row.id,
+		},
+	});
+	if (result.status === 'executed' || result.status === 'unconfirmed') {
+		await recordEntryPosition({ equip, agentId: agent.id, network, mint: p.mint, result });
+	}
+	await recordCandidateDecision({
+		equip, agentId: agent.id, network, mint: p.mint,
+		decision: guardDecision(result), check: result.code || 'owner_approved',
+		reason: result.status === 'executed' || result.status === 'unconfirmed'
+			? 'Approved by the owner and bought within the agent’s caps.'
+			: `Approved, but ${STRATEGY_SKIP_LABELS[result.code] || result.code || 'the trade did not complete'}.`,
+		approvalId: row.id, signature: result.signature || null,
+	});
+	return result;
+}
+
+/**
+ * The shared approval inbox's executor contract (api/_lib/approvals.js):
+ * executor(row) -> { status: 'ok'|'error'|'skipped', signature?, note?, usd? }.
+ * Approving a strategy buy from /approvals runs the same guarded path as
+ * approving it from the agent's strategy panel.
+ */
+export async function executeApprovedStrategyAction(row) {
+	const r = await runApprovedStrategyBuy(row);
+	const done = r.status === 'executed' || r.status === 'unconfirmed';
+	const label = r.code ? (STRATEGY_SKIP_LABELS[r.code] || r.code) : null;
+	return {
+		status: done ? 'ok' : r.status === 'skipped' ? 'skipped' : 'error',
+		signature: r.signature || null,
+		usd: r.usd ?? null,
+		note: done ? (r.status === 'unconfirmed' ? 'Sent; confirmation is still pending on-chain.' : 'Bought within the agent’s caps.') : `Nothing was bought: ${label || 'the trade did not complete'}.`,
+	};
+}
+
+/**
+ * Approve one strategy approval request and execute it once.
+ * The caller must echo the payload hash it showed the owner.
+ * Returns { ok, status, code?, approval } with an HTTP-ready `http` status.
+ */
+export async function approveStrategyRequest({ id, ownerId, agentId, shownHash, via = 'web' }) {
+	const [row] = await sql`
+		SELECT * FROM approval_requests
+		WHERE id = ${id} AND user_id = ${ownerId} AND agent_id = ${agentId} AND source = ${STRATEGY_APPROVAL_SOURCE}
+		LIMIT 1
+	`;
+	if (!row) return { ok: false, http: 404, code: 'not_found', message: 'approval request not found' };
+	// Already decided: a second tap (push plus web, a double click) is a no-op that
+	// reports the outcome of the first.
+	if (row.status !== 'pending') return { ok: true, http: 200, already: true, approval: publicApproval(row) };
+	if (!shownHash || shownHash !== row.payload_hash) {
+		return { ok: false, http: 409, code: 'payload_mismatch', message: 'This request changed since you opened it. Reload and review it again.' };
+	}
+	if (payloadHash(row.payload) !== row.payload_hash) {
+		await sql`UPDATE approval_requests SET status = 'failed', result = ${JSON.stringify({ code: 'payload_tampered' })}::jsonb, updated_at = now() WHERE id = ${id} AND status = 'pending'`;
+		return { ok: false, http: 409, code: 'payload_tampered', message: 'The stored request does not match its signature, so it was refused.' };
+	}
+	if (new Date(row.expires_at).getTime() <= Date.now()) {
+		await sql`UPDATE approval_requests SET status = 'expired', updated_at = now() WHERE id = ${id} AND status = 'pending'`;
+		return { ok: false, http: 410, code: 'expired', message: 'This request expired before it was approved. Nothing was bought.' };
+	}
+
+	// The single conditional step: exactly one caller moves pending -> approved.
+	const claimed = await sql`
+		UPDATE approval_requests
+		SET status = 'executing', decided_by = ${ownerId}, decided_at = now(), decided_via = ${via}, updated_at = now()
+		WHERE id = ${id} AND status = 'pending' AND expires_at > now()
+		RETURNING *
+	`;
+	if (!claimed.length) {
+		const [now] = await sql`SELECT * FROM approval_requests WHERE id = ${id}`;
+		return { ok: true, http: 200, already: true, approval: publicApproval(now) };
+	}
+
+	let result;
+	try {
+		result = await runApprovedStrategyBuy(claimed[0]);
+	} catch (e) {
+		result = { status: 'failed', code: (e?.message || 'error').slice(0, 120) };
+	}
+	const done = result.status === 'executed' || result.status === 'unconfirmed';
+	const summary = { status: result.status, code: result.code || null, label: result.code ? (STRATEGY_SKIP_LABELS[result.code] || null) : null, price_impact_pct: result.priceImpact ?? null, usd: result.usd ?? null };
+	const [final] = await sql`
+		UPDATE approval_requests
+		SET status = ${done ? 'executed' : 'failed'}, executed_at = ${done ? new Date().toISOString() : null},
+		    signature = ${result.signature || null}, result = ${JSON.stringify(summary)}::jsonb, updated_at = now()
+		WHERE id = ${id}
+		RETURNING *
+	`;
+	logAudit({ userId: ownerId, action: 'strategy.approval_approved', resourceId: agentId, meta: { approval_id: id, mint: row.payload?.mint, status: result.status, code: result.code || null, signature: result.signature || null, via } });
+	return { ok: done, http: done ? 200 : 422, code: done ? null : result.code, message: done ? null : (STRATEGY_SKIP_LABELS[result.code] || 'the buy did not complete'), approval: publicApproval(final) };
+}
+
+/** Deny one pending strategy approval. Nothing is bought; the coin is not asked about again. */
+export async function denyStrategyRequest({ id, ownerId, agentId, via = 'web' }) {
+	const denied = await sql`
+		UPDATE approval_requests
+		SET status = 'denied', decided_by = ${ownerId}, decided_at = now(), decided_via = ${via}, updated_at = now()
+		WHERE id = ${id} AND user_id = ${ownerId} AND agent_id = ${agentId} AND source = ${STRATEGY_APPROVAL_SOURCE} AND status = 'pending'
+		RETURNING *
+	`;
+	if (!denied.length) {
+		const [row] = await sql`SELECT * FROM approval_requests WHERE id = ${id} AND user_id = ${ownerId} AND agent_id = ${agentId} AND source = ${STRATEGY_APPROVAL_SOURCE}`;
+		if (!row) return { ok: false, http: 404, code: 'not_found', message: 'approval request not found' };
+		return { ok: true, http: 200, already: true, approval: publicApproval(row) };
+	}
+	const row = denied[0];
+	const [equip] = await sql`SELECT id, strategy_id, owner_id FROM agent_strategy_equips WHERE id = ${row.payload?.equip_id}`.catch(() => []);
+	if (equip) {
+		await recordCandidateDecision({
+			equip, agentId, network: netOf(row.network), mint: row.payload?.mint,
+			decision: 'skipped', check: 'owner_denied', reason: 'The owner denied this buy.', approvalId: row.id,
+		});
+	}
+	logAudit({ userId: ownerId, action: 'strategy.approval_denied', resourceId: agentId, meta: { approval_id: id, mint: row.payload?.mint, via } });
+	return { ok: true, http: 200, approval: publicApproval(row) };
+}
+
+function publicApproval(row) {
+	if (!row) return null;
+	return {
+		id: row.id, status: row.status, summary: row.summary, payload: row.payload, payload_hash: row.payload_hash,
+		amount: row.amount != null ? Number(row.amount) : null, amount_usd: row.amount_usd != null ? Number(row.amount_usd) : null,
+		asset: row.asset, chain: row.chain, network: row.network, recipient: row.recipient, recipient_label: row.recipient_label,
+		risk_notes: row.risk_notes || [], expires_at: row.expires_at, decided_at: row.decided_at,
+		executed_at: row.executed_at, signature: row.signature, result: row.result, created_at: row.created_at,
+	};
+}
+
 // ── public: evaluate one equip (exits first, then entries) ────────────────────
 export async function evaluateEquip(equip, { launches = null, nowMs = null, killed = false, maxEntries = 3 } = {}) {
 	const now = nowMs ?? Date.now();
@@ -683,7 +973,7 @@ export async function sweepStrategies({ network = 'mainnet', maxEquips = 200, ma
 	const killed = await engagedKillOwners();
 	const launches = net === 'mainnet' ? await recentPumpLaunches({ network: net, limit: 50 }).catch(() => []) : [];
 
-	const stats = { executed: 0, skipped: 0, failed: 0, unconfirmed: 0, closed: 0 };
+	const stats = { executed: 0, skipped: 0, failed: 0, unconfirmed: 0, closed: 0, approval: 0 };
 	let evaluated = 0;
 	for (const equip of equips) {
 		try {

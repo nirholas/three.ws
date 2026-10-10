@@ -11,10 +11,17 @@
 // explicit list of every value we assumed or clamped — so the owner sees the
 // truth before arming, never a silent unsafe config.
 //
+// It also emits the same intent as a Strategy Object v2 config
+// (`strategy_object`, api/_lib/strategy-schema.js): research gates, a price-
+// impact ceiling, the trade size in SOL, source filters, and the run mode, with
+// a per-field `explanations` list saying where each value came from. Mode is
+// 'ask' unless the owner explicitly asked for unattended buying.
+//
 // Prefers the platform LLM (free-first chain in llm.js); falls back to a real
 // deterministic intent parser so the feature always compiles, model or not.
 
 import { llmComplete, llmConfigured } from './llm.js';
+import { normalizeStrategyConfig, STRATEGY_CONFIG_DEFAULTS } from './strategy-schema.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
@@ -46,9 +53,17 @@ Schema (omit a field or use null when the user didn't specify it — do NOT inve
   "max_concentration_top1": number|null,                // 0-100, top holder share cap (intel_confirmed)
   "avoid_dev_dump": boolean|null,                        // skip coins where dev already sold
   "allowed_categories": [string]|null,                  // subset of: ${KNOWN_CATEGORIES.join(', ')}
+  "min_holders": integer|null,                          // research gate: at least N holders before buying
+  "min_liquidity_sol": number|null,                     // research gate: at least N SOL of curve liquidity
+  "security_min_score": number|null,                    // research gate: rug/honeypot firewall score floor, 0-100
+  "require_no_mint_authority": boolean|null,            // research gate: mint authority must be renounced
+  "require_no_freeze_authority": boolean|null,          // research gate: freeze authority must be renounced
+  "sources": ["pump_curve"|"three_ws_launch"]|null,     // launch sources; ["three_ws_launch"] = coins launched through three.ws only
+  "mode": "auto" | "ask" | null,                        // "auto" ONLY when the user explicitly says buy automatically / without asking; otherwise "ask"
   "summary": string,                                     // one plain-language sentence describing what this strategy does
   "assumptions": [string]                                // anything you defaulted or could not parse
 }
+Research: "at least 50 holders" => min_holders 50; "top holder under 20%" / "no whales over 20%" => max_concentration_top1 20; "renounced mint" => require_no_mint_authority true; "no freeze" => require_no_freeze_authority true; "safety score 70+" => security_min_score 70.
 Conversions: "3x"/"triple" => take_profit_pct 200; "2x" => 100. "graduated at least two" => min_creator_graduated 2. "organic" / "no bundles" => trigger intel_confirmed with a low max_bundle_score (~0.3) and decent min_quality_score (~55). "smart money" => trigger intel_confirmed. Percentages stay percentages. Never reference any coin other than $THREE.`;
 
 function num(v) {
@@ -251,17 +266,116 @@ export async function compileStrategyFromText(text, { tradeLimits = null, networ
 	}
 
 	const summary = str(parsed.summary, 400) || describeStrategy(strategy);
+	const { config: strategyObject, explanations } = toStrategyObject(parsed, strategy, { network, perTradeSol, assumptions });
 
 	return {
 		ok: true,
 		via,
 		source_text: source,
 		strategy,
+		strategy_object: strategyObject,
+		explanations,
 		summary,
 		assumptions: [...new Set(assumptions)],
 		clamped: [...new Set(clamped)],
 		warnings,
 	};
+}
+
+const RESEARCH_SOURCES = ['pump_curve', 'three_ws_launch'];
+
+/**
+ * The same compiled intent as a Strategy Object v2 config, plus one explanation
+ * per setting that is not a schema default. `strategy` is the already clamped
+ * sniper row, so every money knob carries the same spend-guard clamp.
+ */
+export function toStrategyObject(parsed, strategy, { network = 'mainnet', perTradeSol = null, assumptions = [] } = {}) {
+	const p = parsed || {};
+	const explanations = [];
+	const explain = (field, value, why) => explanations.push({ field, value, why });
+	const D = STRATEGY_CONFIG_DEFAULTS;
+
+	const explicitAuto = p.mode === 'auto';
+	const mode = explicitAuto ? 'auto' : 'ask';
+	explain('mode', mode, explicitAuto
+		? 'You asked for unattended buying: every buy still passes the research gates and your spend caps.'
+		: 'Ask mode: each buy waits for your approval. Switch to auto once you trust the gates.');
+
+	let sources = Array.isArray(p.sources) ? [...new Set(p.sources.map((x) => String(x).toLowerCase()).filter((x) => RESEARCH_SOURCES.includes(x)))] : [];
+	if (sources.length === RESEARCH_SOURCES.length) sources = [];
+	if (sources.length) explain('entry.sources', sources, sources.includes('three_ws_launch') && sources.length === 1
+		? 'Only coins launched through three.ws are considered.'
+		: 'Only live pump.fun bonding-curve launches are considered.');
+
+	const amountSol = perTradeSol != null && perTradeSol > 0
+		? Number(BigInt(strategy.per_trade_lamports)) / LAMPORTS_PER_SOL
+		: D.sizing.amount_sol;
+	explain('sizing.amount_sol', amountSol, perTradeSol != null && perTradeSol > 0
+		? `${amountSol} SOL per buy, within your trade cap.`
+		: `No trade size given, so the ${D.sizing.amount_sol} SOL default is used.`);
+	const impactBps = Math.max(1, Math.round(strategy.max_price_impact_pct * 100));
+	explain('sizing.max_price_impact_bps', impactBps, `A buy whose quote moves the price more than ${strategy.max_price_impact_pct}% is skipped. It can only tighten your agent's own breaker.`);
+
+	const g = {
+		min_holders: intOrNull(p.min_holders),
+		max_top_holder_pct: strategy.max_concentration_top1,
+		min_liquidity_sol: num(p.min_liquidity_sol),
+		security_min_score: num(p.security_min_score),
+		require_no_mint_authority: p.require_no_mint_authority === true,
+		require_no_freeze_authority: p.require_no_freeze_authority === true,
+		dev_history: {
+			max_launches: strategy.max_creator_launches,
+			min_graduated: strategy.min_creator_graduated,
+			block_dev_sold: strategy.avoid_dev_dump === true,
+		},
+	};
+	if (g.min_holders != null) g.min_holders = clamp(g.min_holders, 0, 10_000_000);
+	if (g.min_liquidity_sol != null) g.min_liquidity_sol = clamp(g.min_liquidity_sol, 0, 1e9);
+	if (g.security_min_score != null) g.security_min_score = clamp(Math.round(g.security_min_score), 0, 100);
+	if (g.min_holders != null) explain('research.min_holders', g.min_holders, `Skip coins with fewer than ${g.min_holders} holders.`);
+	if (g.max_top_holder_pct != null) explain('research.max_top_holder_pct', g.max_top_holder_pct, `Skip coins whose largest holder owns more than ${g.max_top_holder_pct}% (the bonding curve is not counted as a holder).`);
+	if (g.min_liquidity_sol != null) explain('research.min_liquidity_sol', g.min_liquidity_sol, `Skip coins with less than ${g.min_liquidity_sol} SOL of curve liquidity.`);
+	if (g.security_min_score != null) explain('research.security_min_score', g.security_min_score, `Skip coins the rug and honeypot firewall scores below ${g.security_min_score}/100.`);
+	if (g.require_no_mint_authority) explain('research.require_no_mint_authority', true, 'Skip coins whose creator can still mint new supply.');
+	if (g.require_no_freeze_authority) explain('research.require_no_freeze_authority', true, 'Skip coins whose creator can freeze holder accounts.');
+	if (g.dev_history.max_launches != null) explain('research.dev_history.max_launches', g.dev_history.max_launches, `Skip creators with more than ${g.dev_history.max_launches} launches.`);
+	if (g.dev_history.min_graduated != null) explain('research.dev_history.min_graduated', g.dev_history.min_graduated, `Only buy from creators with at least ${g.dev_history.min_graduated} graduated coins.`);
+	if (g.dev_history.block_dev_sold) explain('research.dev_history.block_dev_sold', true, 'Skip coins whose creator has already sold.');
+
+	const raw = {
+		version: 2,
+		mode,
+		network,
+		entry: {
+			trigger: 'new_launch',
+			sources,
+			max_age_minutes: D.entry.max_age_minutes,
+			min_market_cap_usd: strategy.min_market_cap_usd,
+			max_market_cap_usd: strategy.max_market_cap_usd,
+			require_socials: strategy.require_socials,
+			require_sol_quote: strategy.require_sol_quote,
+		},
+		sizing: { amount_sol: amountSol, max_slippage_bps: strategy.slippage_bps, max_price_impact_bps: impactBps },
+		exits: {
+			take_profit_pct: strategy.take_profit_pct,
+			stop_loss_pct: strategy.stop_loss_pct,
+			trailing_stop_pct: strategy.trailing_stop_pct,
+			max_hold_minutes: strategy.max_hold_seconds != null ? Math.max(1, Math.round(strategy.max_hold_seconds / 60)) : null,
+		},
+		risk: { max_concurrent_positions: strategy.max_concurrent_positions, cooldown_minutes: 0 },
+		research: g,
+	};
+	if (strategy.min_market_cap_usd != null || strategy.max_market_cap_usd != null) {
+		explain('entry.market_cap_usd', [strategy.min_market_cap_usd, strategy.max_market_cap_usd], `Market cap band ${strategy.min_market_cap_usd != null ? `$${strategy.min_market_cap_usd}` : 'any'} to ${strategy.max_market_cap_usd != null ? `$${strategy.max_market_cap_usd}` : 'any'}.`);
+	}
+	if (strategy.take_profit_pct == null && strategy.trailing_stop_pct == null && raw.exits.max_hold_minutes == null) {
+		raw.exits.take_profit_pct = D.exits.take_profit_pct;
+		assumptions.push(`No upside exit given for the Strategy Object, so take-profit defaults to +${D.exits.take_profit_pct}%.`);
+	}
+	if ((strategy.min_quality_score != null || strategy.max_bundle_score != null || strategy.allowed_categories) && Array.isArray(assumptions)) {
+		assumptions.push('Quality, bundle, and category filters apply to the sniper rule set only; the Strategy Object enforces the research gates listed in the explanations.');
+	}
+	return { config: normalizeStrategyConfig(raw), explanations };
 }
 
 // Plain-language fallback description, in case the model didn't return a summary.
@@ -336,6 +450,9 @@ function heuristicCompile(text) {
 		out.max_hold_seconds = Math.round(s);
 	}
 
+	const impact = t.match(/(\d+(?:\.\d+)?)\s*%\s*(?:max(?:imum)?\s*)?(?:price\s*)?impact|(?:price\s*)?impact\D{0,12}?(\d+(?:\.\d+)?)\s*%/);
+	if (impact) out.max_price_impact_pct = parseFloat(impact[1] || impact[2]);
+
 	const slip = t.match(/(\d+(?:\.\d+)?)\s*%?\s*slippage|slippage\D{0,8}(\d+(?:\.\d+)?)\s*%/);
 	if (slip) out.slippage_pct = parseFloat(slip[1] || slip[2]);
 
@@ -357,6 +474,19 @@ function heuristicCompile(text) {
 		if (new RegExp(`\\b${cat}\\b`).test(t)) out.allowed_categories = [...(out.allowed_categories || []), cat];
 	}
 	if (out.allowed_categories) out.trigger = 'intel_confirmed';
+
+	// research gates (Strategy Object): these don't need the intel trigger
+	const holders = t.match(/(?:at least|min(?:imum)?|>=?|over|more than)\s*(\d[\d,]*)\s*holders?|(\d[\d,]*)\+\s*holders?/);
+	if (holders) out.min_holders = parseInt((holders[1] || holders[2]).replace(/,/g, ''), 10);
+	const liq = t.match(/(\d+(?:\.\d+)?)\s*sol\s*(?:of\s*)?liquidity|liquidity\D{0,16}?(\d+(?:\.\d+)?)\s*sol/);
+	if (liq) out.min_liquidity_sol = parseFloat(liq[1] || liq[2]);
+	const secScore = t.match(/(?:security|safety|firewall|rug)\s*score\D{0,10}?(\d+)/);
+	if (secScore) out.security_min_score = parseInt(secScore[1], 10);
+	if (/(?:renounced|revoked|no)\s*mint(?:\s*authority)?|mint\s*authority\s*(?:renounced|revoked|disabled)/.test(t)) out.require_no_mint_authority = true;
+	if (/(?:renounced|revoked|no)\s*freeze(?:\s*authority)?|freeze\s*authority\s*(?:renounced|revoked|disabled)/.test(t)) out.require_no_freeze_authority = true;
+	if (/(?:three\.ws|threews|platform)\s*launch/.test(t)) out.sources = ['three_ws_launch'];
+	if (/\bauto(?:matically)?\b|without asking|no approval|don'?t ask/.test(t)) out.mode = 'auto';
+	else if (/\bask (?:me|first)|approval|approve each|confirm each/.test(t)) out.mode = 'ask';
 
 	return out;
 }

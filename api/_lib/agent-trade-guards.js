@@ -749,7 +749,7 @@ export async function getCounterpartySpendUsd(
  *  the `counterparty_seen_before` signal ("only pay services you've used before").
  *  Best-effort: any error reports "not seen", and the rule itself decides what that
  *  means (a `is false` rule then fires — fail-safe-to-block for that intent). */
-async function countPriorSpendsTo(agentId, destination, network = 'mainnet') {
+export async function countPriorSpendsTo(agentId, destination, network = 'mainnet') {
 	if (!destination) return 0;
 	const [row] = await sql`
 		SELECT COUNT(*)::int AS n
@@ -806,7 +806,7 @@ async function freezeWalletFromPolicy(agentId, userId, rule, network) {
  * @param {string} [o.network]
  * @throws {SpendLimitError} when the policy denies the spend
  */
-async function enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits, policyContext = {}, userId, network = 'mainnet' }) {
+async function enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits, policyContext = {}, userId, network = 'mainnet', stepUpApproved = false }) {
 	if (!policy || !Array.isArray(policy.rules) || !policy.rules.length) return;
 	const autonomous = category !== 'withdraw';
 
@@ -847,6 +847,10 @@ async function enforcePolicyRules({ agentId, policy, category, usdValue, asset, 
 
 	const verdict = evaluatePolicy(policy, ctx);
 	if (!isDenied(verdict.decision)) return;
+	// The owner already answered this step-up in the approval inbox
+	// (api/_lib/approvals.js). Only the "ask me" verdict is lifted: a block or a
+	// freeze rule still stops the spend, and every numeric cap below still runs.
+	if (verdict.decision === 'step_up' && stepUpApproved) return;
 
 	// Audit: every block records which rule fired (deliverable). A 'failed' spend
 	// row is excluded from the daily-cap sum and the backtest history, so it never
@@ -1030,6 +1034,7 @@ export async function enforceSpendLimit({
 	ownerInitiated,
 	now,
 	network = 'mainnet',
+	stepUpApproved = false,
 }) {
 	// Fail closed: a caller that named neither the limits nor the meta gets the
 	// agent's REAL policy read from the row, never an empty default policy.
@@ -1067,7 +1072,7 @@ export async function enforceSpendLimit({
 	// must pass `policyRules` to opt the path in; the autonomous trade/snipe/x402/
 	// withdraw paths all do (or pass `meta`).
 	const policy = policyRules || (meta ? getPolicyRules(meta) : null);
-	await enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits: lim, policyContext, userId, network });
+	await enforcePolicyRules({ agentId, policy, category, usdValue, asset, destination, limits: lim, policyContext, userId, network, stepUpApproved });
 
 	const hasUsd = typeof usdValue === 'number' && Number.isFinite(usdValue) && usdValue >= 0;
 
