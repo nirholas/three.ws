@@ -27,6 +27,12 @@ contextBridge.exposeInMainWorld('companion', {
 		};
 	},
 
+	onFace: (handler) => {
+		const listener = (_event, face) => handler(face);
+		ipcRenderer.on('companion:face', listener);
+		return () => ipcRenderer.removeListener('companion:face', listener);
+	},
+
 	// Actions
 	setInteractive: (interactive) => ipcRenderer.send('companion:set-interactive', Boolean(interactive)),
 	sayNative: (text) => ipcRenderer.send('companion:say-native', String(text || '')),

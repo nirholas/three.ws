@@ -58,6 +58,9 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 		if (!cleanName) throw new RuntimeError('invalid_name', 'An agent needs a name.');
 		if (!['paper', 'live'].includes(mode)) throw new RuntimeError('invalid_mode', 'Mode must be paper or live.');
 		if (!['mainnet', 'devnet'].includes(network)) throw new RuntimeError('invalid_network', 'Network must be mainnet or devnet.');
+		if (mode === 'live' && !keystore.encrypted()) {
+			throw new RuntimeError('keychain_unavailable', 'Live agents need the OS keychain to protect their signing key, and it is not available on this machine. Paper mode works without it.', 409);
+		}
 		const v = validateStrategyConfig({ ...strategy, network });
 		if (!v.valid) throw new RuntimeError('invalid_strategy', v.errors.map((e) => `${e.field}: ${e.message}`).join(' '));
 		const id = `ag_${randomUUID().slice(0, 12)}`;
@@ -175,7 +178,7 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	function publicApproval(ap) {
 		return {
 			id: ap.id, agent_id: ap.agent_id, status: effectiveStatus(ap), hash: ap.hash, payload: ap.payload,
-			table: confirmationTable(ap.row), text: confirmationText(ap.row), created_at: ap.created_at, expires_at: ap.expires_at, decided_at: ap.decided_at || null,
+			row: ap.row, table: confirmationTable(ap.row), text: confirmationText(ap.row), created_at: ap.created_at, expires_at: ap.expires_at, decided_at: ap.decided_at || null,
 		};
 	}
 
@@ -259,7 +262,7 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	}
 
 	async function executeBuy(agent, p, approval) {
-		const coin = await feed.coin(p.mint);
+		const coin = await feed.coin(p.mint, { symbol: p.symbol });
 		if (!coin) throw new RuntimeError('quote_unavailable', 'The launch feed has no data for this coin right now.', 502);
 		const q = quoteBuy(coin, p.amount_sol);
 		if (p.max_price_impact_pct != null && q.impact_pct > p.max_price_impact_pct) {
@@ -282,7 +285,7 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	async function executeSell(agent, p, approval) {
 		const pos = state.positions.find((x) => x.id === p.position_id && x.status === 'open');
 		if (!pos) throw new RuntimeError('position_not_found', 'That position is not open.', 404);
-		const coin = await feed.coin(pos.mint);
+		const coin = await feed.coin(pos.mint, { symbol: pos.symbol });
 		if (!coin) throw new RuntimeError('quote_unavailable', 'The launch feed has no data for this coin right now.', 502);
 		const q = quoteSell(coin, pos.tokens);
 		let signature = null;
@@ -310,10 +313,10 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	});
 
 	// ── scheduler ────────────────────────────────────────────────────────────
-	function buyPayload(agent, mint) {
+	function buyPayload(agent, mint, symbol = null) {
 		const c = agent.strategy;
 		return {
-			kind: 'local_strategy_buy', agent_id: agent.id, strategy: c.name || 'local', network: agent.network, mint, side: 'buy',
+			kind: 'local_strategy_buy', agent_id: agent.id, symbol, strategy: c.name || 'local', network: agent.network, mint, side: 'buy',
 			amount_sol: c.sizing.amount_sol, slippage_bps: c.sizing.max_slippage_bps,
 			max_price_impact_pct: effectivePriceImpactPct(c, null), idempotency_key: `${agent.id}:${mint}`,
 		};
@@ -332,15 +335,17 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 			if (seen.has(launch.mint)) continue;
 			if (c.risk.cooldown_minutes > 0 && now() - agent.last_cooldown_at < c.risk.cooldown_minutes * 60000) break;
 			const verdict = matchesEntry(c, launch, now());
-			seen.add(launch.mint);
+			if (!verdict.pass) seen.add(launch.mint);
 			decisions.push({ mint: launch.mint, pass: verdict.pass, reasons: verdict.reasons });
 			if (!verdict.pass) continue;
-			const payload = buyPayload(agent, launch.mint);
+			const payload = buyPayload(agent, launch.mint, launch.symbol);
 			try {
 				await act(agent, payload, buyRow(agent, payload, launch.symbol));
+				seen.add(launch.mint);
 				slots -= 1;
 			} catch (err) {
 				log.warn('entry_failed', { agent: agent.id, mint: launch.mint, err });
+				if (err.code === 'quote_unavailable') break;
 			}
 		}
 		state.seen[agent.id] = [...seen].slice(-500);
@@ -350,7 +355,7 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	async function sweepExits(agent) {
 		const open = state.positions.filter((p) => p.agent_id === agent.id && p.status === 'open');
 		for (const pos of open) {
-			const coin = await feed.coin(pos.mint);
+			const coin = await feed.coin(pos.mint, { symbol: pos.symbol });
 			if (!coin) continue;
 			const q = quoteSell(coin, pos.tokens);
 			pos.peak_value_lamports = Math.max(pos.peak_value_lamports, q.lamports);
@@ -376,7 +381,7 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 			agent.orders = agent.orders.filter((o) => o.id !== order.id);
 			persist();
 			if (order.side === 'buy') {
-				const payload = { ...buyPayload(agent, order.mint), amount_sol: order.amount_sol, kind: 'local_order_buy', idempotency_key: `${agent.id}:${order.id}` };
+				const payload = { ...buyPayload(agent, order.mint, null), amount_sol: order.amount_sol, kind: 'local_order_buy', idempotency_key: `${agent.id}:${order.id}` };
 				await act(agent, payload, buyRow(agent, payload, coin.symbol));
 			} else {
 				const pos = state.positions.find((x) => x.agent_id === agent.id && x.mint === order.mint && x.status === 'open');
@@ -425,18 +430,19 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	}
 
 	let timer = null;
-	let ticking = false;
-	async function tick() {
-		if (ticking) return;
-		ticking = true;
-		try {
+	let inflight = null;
+	/** One pass over every agent. A pass already running is awaited, never doubled. */
+	function tick() {
+		if (inflight) return inflight;
+		inflight = (async () => {
 			for (const agent of Object.values(state.agents)) {
 				if (agent.status === 'error') setStatus(agent, 'idle');
 				await tickAgent(agent);
 			}
-		} finally {
-			ticking = false;
-		}
+		})().finally(() => {
+			inflight = null;
+		});
+		return inflight;
 	}
 
 	function start({ intervalMs = 30_000 } = {}) {

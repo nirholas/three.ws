@@ -42,6 +42,26 @@
 			#stage[data-facing="left"] #body { transform: scaleX(-1); }
 			#stage[data-hidden="1"] { opacity: 0; pointer-events: none; }
 
+			/* The agents' face: a ring under the character shows what the local
+			   runtime is doing. Compositor-only (opacity and transform). */
+			#face {
+				position: absolute;
+				left: 50%;
+				bottom: 4px;
+				width: 120px;
+				height: 14px;
+				margin-left: -60px;
+				border-radius: 50%;
+				opacity: 0;
+				transform: scale(0.8);
+				transition: opacity .4s ease, transform .4s ease, background-color .4s ease;
+				pointer-events: none;
+			}
+			#stage[data-face="working"] #face { opacity: .9; background: radial-gradient(closest-side, rgba(88,166,255,.75), transparent); animation: face-pulse 1.4s ease-in-out infinite; }
+			#stage[data-face="waiting_approval"] #face { opacity: 1; background: radial-gradient(closest-side, rgba(255,193,7,.9), transparent); animation: face-pulse .9s ease-in-out infinite; }
+			#stage[data-face="error"] #face { opacity: 1; background: radial-gradient(closest-side, rgba(255,82,82,.9), transparent); transform: scale(1); }
+			@keyframes face-pulse { 0%, 100% { transform: scale(.8); } 50% { transform: scale(1.15); } }
+
 			#body {
 				width: 100%;
 				height: 260px;
@@ -113,6 +133,7 @@
 
 			@media (prefers-reduced-motion: reduce) {
 				#stage { transition: none; }
+				#face { animation: none !important; transition: none; }
 				#bubble { transition: none; }
 			}
 		</style>
@@ -128,6 +149,7 @@
 			<!-- The body itself: the three.ws walking-avatar embed, transparent,
 			     driven over the documented postMessage contract
 			     (https://three.ws/docs/walk-embed-api). -->
+			<div id="face" aria-hidden="true"></div>
 			<iframe
 				id="body"
 				title="Your companion"

@@ -17,6 +17,7 @@
 	"scripts": {
 		"start": "electron .",
 		"dev": "electron . --dev",
+		"smoke:runtime": "node scripts/smoke-runtime.mjs",
 		"icons": "node scripts/make-icons.mjs",
 		"bump": "node scripts/bump-version.mjs",
 		"dist": "electron-builder --config electron-builder.config.cjs --publish never",
@@ -28,6 +29,7 @@
 		"release:github": "node scripts/github-release.mjs"
 	},
 	"dependencies": {
+		"@solana/web3.js": "^1.99.0",
 		"@three-ws/companion": "file:../../packages/companion-sdk",
 		"dompurify": "^3.4.15",
 		"electron-updater": "^6.8.9",

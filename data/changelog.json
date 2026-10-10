@@ -29445,3 +29445,12 @@
 		}
 	]
 }
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Run your agents on your own desktop",
+			"summary": "The three.ws desktop app can now run agents, strategies, limit orders and automations on your machine. Signing keys stay in your operating system keychain, paper strategies keep working with no account or cloud connection, and every live trade waits for your approval in a native window that shows the exact recipient, amount, asset and chain. A tray menu lists each agent with pause, kill and review, and the mascot shows when an agent is working, waiting for you or in trouble.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/desktop-local-runtime"

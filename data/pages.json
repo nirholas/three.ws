@@ -3505,6 +3505,14 @@
 					"added": "2026-09-02"
 				},
 				{
+					"path": "/docs/desktop-local-runtime",
+					"title": "Docs · Local agent runtime for the desktop app",
+					"description": "Run agents, paper and live strategies, limit orders and automations on your own machine: keys in the OS keychain, native approvals with the same payload hash as the web flow, a tray menu, and a mascot that shows agent state.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/docs/how-forge-works",
 					"title": "Docs · How the Forge works, in plain language",
 					"description": "The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.",

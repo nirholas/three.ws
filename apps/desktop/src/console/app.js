@@ -12,6 +12,7 @@ import { mountRuns } from './views/runs.js';
 import { mountWallet } from './views/wallet.js';
 import { mountNotifications } from './views/notifications.js';
 import { mountEditors } from './views/editors.js';
+import { mountLocal } from './views/local.js';
 import { mountSettings } from './views/settings.js';
 
 const bridge = window.threews;
@@ -22,6 +23,7 @@ const VIEWS = {
 	wallet: mountWallet,
 	notifications: mountNotifications,
 	editors: mountEditors,
+	local: mountLocal,
 	settings: mountSettings,
 };
 const ORDER = Object.keys(VIEWS);
@@ -57,6 +59,7 @@ const ctx = {
 	markdown,
 	toast,
 	navigate,
+	openLocal,
 	session: () => session,
 	// Views that start a flow in another view (chat proposing a send) leave
 	// their hand-off here; the receiving view consumes it once.
@@ -75,9 +78,15 @@ function navigate(view, params = {}) {
 	else location.hash = target;
 }
 
+// Local agents need no account: keys, strategies and paper fills live on this
+// machine. Signed out, the console offers only that view.
+let localOnly = false;
+
 function route() {
-	if (!session?.signedIn) return;
-	const { view, params } = parseHash();
+	if (!session?.signedIn && !localOnly) return;
+	const parsed = parseHash();
+	const { params } = parsed;
+	const view = session?.signedIn ? parsed.view : 'local';
 	current.cleanup?.();
 	for (const a of els.nav.querySelectorAll('.nav-item')) {
 		if (a.dataset.view === view) a.setAttribute('aria-current', 'page');
@@ -124,6 +133,14 @@ function showSignedOut() {
 	signInCleanup = mountSignIn(els.signin, ctx);
 }
 
+function openLocal() {
+	localOnly = true;
+	els.signin.hidden = true;
+	els.app.hidden = false;
+	for (const a of els.nav.querySelectorAll('.nav-item')) a.hidden = a.dataset.view !== 'local';
+	navigate('local');
+}
+
 function applySession(next) {
 	const was = session?.signedIn;
 	session = next;
@@ -131,6 +148,8 @@ function applySession(next) {
 	if (session.signedIn) {
 		signInCleanup?.();
 		signInCleanup = null;
+		for (const a of els.nav.querySelectorAll('.nav-item')) a.hidden = false;
+		localOnly = false;
 		if (!was || els.app.hidden) showSignedIn();
 		else renderAccount();
 	} else if (was !== false) {
@@ -138,11 +157,11 @@ function applySession(next) {
 	}
 }
 
-// Cmd/Ctrl + 1..7 jumps between views, in sidebar order.
+// Cmd/Ctrl + 1..8 jumps between views, in sidebar order.
 document.addEventListener('keydown', (event) => {
-	if (!session?.signedIn) return;
+	if (!session?.signedIn && !localOnly) return;
 	const mod = event.metaKey || event.ctrlKey;
-	if (mod && /^[1-7]$/.test(event.key)) {
+	if (mod && /^[1-8]$/.test(event.key)) {
 		event.preventDefault();
 		navigate(ORDER[Number(event.key) - 1]);
 	}

@@ -61,6 +61,18 @@ once signs in everything on that machine. Get the token from
 [three.ws/companion](https://three.ws/companion); rotating it there disconnects
 every device at once.
 
+### Local agents
+
+The app also runs agents on your machine, with keys in the OS keychain and
+paper strategies that work offline from the account. Open **Local agents** in
+the console (or the tray). Try the runtime headless:
+
+```bash
+npm run smoke:runtime
+```
+
+Full guide: [docs/desktop-local-runtime.md](../../docs/desktop-local-runtime.md).
+
 ### Build an installer
 
 ```bash

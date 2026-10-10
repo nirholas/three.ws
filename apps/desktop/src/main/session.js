@@ -213,5 +213,7 @@ export function createSession({ store, version, openBrowser, fetchImpl = fetch, 
 		return status();
 	}
 
-	return { status, signIn, cancelSignIn, signOut, request, authorizedFetch, refreshUser, apiBase };
+	const accessToken = () => state.accessToken || null;
+
+	return { status, signIn, cancelSignIn, signOut, request, authorizedFetch, refreshUser, apiBase, accessToken };
 }

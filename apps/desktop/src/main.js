@@ -18,7 +18,7 @@
 // Anything that moves money goes through src/main/previews.js: a single-use
 // preview id, then a native confirmation built from the stored request.
 
-import { app, BrowserWindow, Tray, Menu, ipcMain, shell, Notification, nativeImage, dialog, safeStorage } from 'electron';
+import { app, BrowserWindow, Tray, Menu, ipcMain, shell, Notification, nativeImage, dialog, safeStorage, crashReporter } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
@@ -32,6 +32,7 @@ import { createPreviewRegistry, isGuardedPath } from './main/previews.js';
 import { createNotifier } from './main/notifier.js';
 import { createUpdater } from './main/updater.js';
 import { createCompanion } from './main/companion.js';
+import { createLocalRuntimeService } from './main/local-runtime.js';
 import { detectEditors, connectEditor, disconnectEditor, mcpServers } from './main/editors.js';
 
 const SRC = dirname(fileURLToPath(import.meta.url));
@@ -72,6 +73,7 @@ let previews;
 let notifier;
 let updater;
 let companion;
+let localRuntime;
 let store;
 
 function sendToConsole(channel, payload) {
@@ -165,6 +167,9 @@ function refreshTray() {
 		] : [
 			{ label: 'Sign in…', click: () => openConsole() },
 		]),
+		{ type: 'separator' },
+		...(localRuntime ? localRuntime.trayItems() : []),
+		{ label: 'Local agents…', click: () => openConsole('local') },
 		{ type: 'separator' },
 		{ label: 'Companion mode', type: 'checkbox', checked: c.enabled, click: (item) => setCompanionMode(item.checked) },
 		...(c.enabled ? [
@@ -274,6 +279,14 @@ function appInfo() {
 	};
 }
 
+// Copies only the named keys of a renderer-supplied object, so an unexpected
+// field can never reach the runtime.
+function pickObject(value, keys) {
+	const out = {};
+	if (value && typeof value === 'object') for (const k of keys) if (value[k] !== undefined) out[k] = value[k];
+	return out;
+}
+
 function registerIpc() {
 	handle('session:status', () => session.status());
 	handle('session:signIn', (opts) => session.signIn(opts || {}));
@@ -284,6 +297,29 @@ function registerIpc() {
 		return session.signOut();
 	});
 	handle('session:refreshUser', () => session.refreshUser());
+
+	// Local agent runtime. The renderer can read, create, pause, resume, kill and
+	// deny. It has no approve channel: approving goes through runtime:review, which
+	// opens a native dialog built in this process from the stored approval, so what
+	// is approved is what was shown and the hash never comes from the renderer.
+	handle('runtime:list', () => ({ agents: localRuntime.runtime.listAgents(), face: localRuntime.runtime.face(), keychain: localRuntime.keysEncrypted() }));
+	handle('runtime:create', (input) => localRuntime.runtime.createAgent(pickObject(input, ['name', 'mode', 'network', 'strategy'])));
+	handle('runtime:pause', (id) => localRuntime.runtime.pause(String(id)));
+	handle('runtime:resume', (id) => localRuntime.runtime.resume(String(id)));
+	handle('runtime:kill', (id) => localRuntime.runtime.kill(String(id)));
+	handle('runtime:remove', (id) => localRuntime.runtime.remove(String(id)));
+	handle('runtime:addOrder', (id, order) => localRuntime.runtime.addOrder(String(id), pickObject(order, ['mint', 'side', 'amount_sol', 'trigger'])));
+	handle('runtime:removeOrder', (id, orderId) => localRuntime.runtime.removeOrder(String(id), String(orderId)));
+	handle('runtime:addAutomation', (id, auto) => localRuntime.runtime.addAutomation(String(id), pickObject(auto, ['action', 'every_minutes'])));
+	handle('runtime:approvals', (filter) => localRuntime.runtime.listApprovals({ status: filter?.status || null, agentId: filter?.agentId || null }));
+	handle('runtime:review', (approvalId) => localRuntime.decideThroughDialog(String(approvalId)));
+	handle('runtime:deny', (approvalId) => {
+		const ap = localRuntime.runtime.listApprovals().find((a) => a.id === String(approvalId));
+		return localRuntime.runtime.decide(String(approvalId), { decision: 'deny', hash: ap?.hash, via: 'desktop' });
+	});
+	handle('runtime:receipts', (filter) => localRuntime.runtime.receipts({ agentId: filter?.agentId || null, limit: 200 }));
+	handle('runtime:positions', (filter) => localRuntime.runtime.positions({ agentId: filter?.agentId || null }));
+	handle('runtime:tick', () => localRuntime.runtime.tick().then(() => localRuntime.runtime.listAgents()));
 
 	handle('capabilities', () => api.capabilities());
 	handle('agents:list', () => api.listAgents());
@@ -423,6 +459,14 @@ function boot() {
 		},
 	});
 	companion = createCompanion({ srcDir: SRC, onChange: (s) => { sendToConsole('app:companion', s); refreshTray(); } });
+	localRuntime = createLocalRuntimeService({
+		app,
+		safeStorage,
+		session,
+		getConsole: () => state.console,
+		onChange: refreshTray,
+		onFace: (face) => companion.setFace(face),
+	});
 
 	registerIpc();
 
@@ -433,11 +477,18 @@ function boot() {
 	if (readSettings().companionMode) companion.enable();
 	if (session.status().signedIn) notifier.start();
 	updater.start();
+	localRuntime.runtime.start();
+	companion.setFace(localRuntime.runtime.face());
 
 	// Launched at login stays in the tray; launched by hand opens the console.
 	const hidden = app.getLoginItemSettings().wasOpenedAsHidden || process.argv.includes('--hidden');
 	if (!hidden) openConsole();
 }
+
+// Crash dumps stay on this machine. They can hold process memory, and the
+// signing keys are decrypted in memory while the runtime signs, so nothing is
+// ever uploaded and nothing is sent to a collection server.
+crashReporter.start({ uploadToServer: false, compress: true, submitURL: '' });
 
 // One instance only: two consoles would double every notification.
 if (!app.requestSingleInstanceLock()) {
@@ -453,5 +504,6 @@ if (!app.requestSingleInstanceLock()) {
 	app.on('before-quit', () => {
 		companion?.stop();
 		notifier?.stop();
+		localRuntime?.runtime.stop();
 	});
 }

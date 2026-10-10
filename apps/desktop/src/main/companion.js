@@ -184,6 +184,7 @@ export function createCompanion({ srcDir, onChange }) {
 		if (state.enabled) return status();
 		state.enabled = true;
 		state.window = createStageWindow();
+		state.window.webContents.once('did-finish-load', () => send('companion:face', state.face || { state: 'none', agents: 0 }));
 		screen.on('display-metrics-changed', reposition);
 		screen.on('display-added', reposition);
 		screen.on('display-removed', reposition);
@@ -268,5 +269,13 @@ export function createCompanion({ srcDir, onChange }) {
 
 	ipcMain.on('companion:notify-native', (_event, delivery) => notifyNatively(delivery || {}));
 
-	return { enable, disable, status, togglePause, replayLast, openSignIn, stop: () => state.stopStream?.() };
+	// The mascot is the local agents' face: the most urgent agent state across
+	// the runtime (error, waiting for approval, working, idle) is pushed to the
+	// renderer, which shows it as a ring and a gesture.
+	function setFace(face) {
+		state.face = face;
+		send('companion:face', face);
+	}
+
+	return { enable, disable, status, togglePause, replayLast, openSignIn, setFace, stop: () => state.stopStream?.() };
 }
