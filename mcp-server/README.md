@@ -64,7 +64,7 @@ Restart Claude Desktop. All tools appear immediately — no install step require
 
 ## Tools
 
-All 25 tools are listed below. Most quote a fixed USDC price and settle `exact` on Solana mainnet (prices below come straight from each tool's source); **`forge_free`, `vanity_premium`, `crypto_news`, and `crypto_news_digest` are free**, no payment, no wallet, no API key, and `crypto_news_archive` search is free up to a daily quota (stats/trending always free). Every tool also declares MCP tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can scope confirmation prompts correctly, none of these tools are destructive.
+All <!-- mcp-count:three-ws-mcp-server.tools -->25<!-- /mcp-count --> tools are listed below. Most quote a fixed USDC price and settle `exact` on Solana mainnet (prices below come straight from each tool's source); **`forge_free`, `vanity_premium`, `crypto_news`, and `crypto_news_digest` are free**, no payment, no wallet, no API key, and `crypto_news_archive` search is free up to a daily quota (stats/trending always free). Every tool also declares MCP tool annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) so clients can scope confirmation prompts correctly, none of these tools are destructive.
 
 ### 3D generation
 

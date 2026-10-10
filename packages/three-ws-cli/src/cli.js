@@ -20,6 +20,7 @@ ${c.bold('Usage')}
 ${c.bold('Commands')}
   setup                 Sign in, write the three.ws MCP servers into your clients, verify with tools/list
   login                 Sign in or switch accounts (OAuth by default)
+  link <code>           Link this terminal with a code from three.ws/dashboard/account
   logout                Remove stored credentials and revoke the OAuth refresh token
   doctor                Diagnose a broken setup: bad config, expired sign-in, unreachable server
   status                Account, plan, wallet balance, token expiry, and every configured client
@@ -28,6 +29,8 @@ ${c.bold('Commands')}
   agent status [id]     Live state of your agents: wallet balance, page, body
   team [status <id>]    Your specialist teams: roster, findings, last error
   launch                Fill in a coin for one of your agents, then review and sign it on three.ws/launch
+  launch --intent       Quote a launch paid from the agent's wallet in SOL or USDC, open its page, watch the stages
+  launch status <id>    Stages of a funded launch intent (quote, paid, submitted, confirmed, indexed); --watch polls
   tools                 Choose which tool groups each server exposes (financial tools are off by default)
   mcp list              Show three.ws servers configured in each client (--available lists all servers)
   mcp add <server>      Add one server to your clients without prompts
@@ -75,6 +78,11 @@ ${c.bold('Agent options')} (create, launch)
   --symbol <ticker>     Coin ticker, letters and digits (launch)
   --image <https-url>   Coin image; the agent's portrait when omitted (launch)
   --initial-buy <sol>   SOL for the first buy, prefilled for review (launch)
+  --intent              Create a funded launch intent instead of prefilling /launch (launch)
+  --quote <sol|usdc>    Asset the launch and first buy are paid in; /api/pump/pairs lists what is live (launch --intent)
+  --creator-fee <bps>   Creator fee in basis points within the range the program allows (launch --intent)
+  --network <net>       mainnet (default) or devnet, where a dry run never touches mainnet (launch --intent)
+  --watch               Keep polling until the intent settles (launch status)
 
 ${c.bold('Inference options')} (fund, provider, usage)
   --amount <usdc>       USDC to move from the agent wallet into credits (fund)
@@ -122,6 +130,11 @@ const OPTIONS = {
 	symbol: { type: 'string' },
 	image: { type: 'string' },
 	'initial-buy': { type: 'string' },
+	intent: { type: 'boolean' },
+	quote: { type: 'string' },
+	'creator-fee': { type: 'string' },
+	network: { type: 'string' },
+	watch: { type: 'boolean' },
 	claude: { type: 'boolean' },
 	cursor: { type: 'boolean' },
 	codex: { type: 'boolean' },
@@ -152,6 +165,7 @@ export function parse(argv) {
 const COMMANDS = {
 	setup: async (ctx) => (await import('./commands/setup.js')).setup(ctx),
 	login: async (ctx) => (await import('./commands/account.js')).login(ctx),
+	link: async (ctx) => (await import('./commands/account.js')).link(ctx),
 	logout: async (ctx) => (await import('./commands/account.js')).logout(ctx),
 	status: async (ctx) => (await import('./commands/account.js')).status(ctx),
 	whoami: async (ctx) => (await import('./commands/account.js')).whoami(ctx),
@@ -165,7 +179,7 @@ const COMMANDS = {
 		if (sub === 'status') return (await import('./commands/live.js')).agentStatus(next);
 		if (sub === 'create') return (await import('./commands/agent.js')).create(next);
 		if (sub === 'launch') return (await import('./commands/agent.js')).launch(next);
-		throw new Error('usage: three-ws agent <status [id]|create [name]|launch>');
+		throw new Error('usage: three-ws agent <status [id]|create [name]|launch [status <id>]>');
 	},
 	create: async (ctx) => (await import('./commands/agent.js')).create(ctx),
 	launch: async (ctx) => (await import('./commands/agent.js')).launch(ctx),

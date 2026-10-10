@@ -12,7 +12,7 @@ export const def = {
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Apply (or replace) accessories on a spawned avatar session and optionally set a pose. Pass accessoryIds to set the full accessory list (empty array clears them). Pass pose to switch animations. Returns the updated viewer URL.',
+		'Apply (or replace) accessories on a spawned avatar session and optionally set a pose. Pass accessoryIds to set the full accessory list (empty array clears them). Pass pose to switch animations. Returns the updated viewer URL. Use this after spawn_avatar to change what a session wears or how it poses; for a still image of the result, call render_avatar with the same sessionId.',
 	inputSchema: {
 		sessionId: z.string().describe('Session id returned by spawn_avatar.'),
 		accessoryIds: z.array(z.string()).optional()

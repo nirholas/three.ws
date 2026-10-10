@@ -153,6 +153,16 @@
 					"name": "explore-x402",
 					"title": "Explore x402 services",
 					"arguments": ["capability"]
+				},
+				{
+					"name": "perps",
+					"title": "Trade perpetuals",
+					"arguments": ["agentId", "market"]
+				},
+				{
+					"name": "predictions",
+					"title": "Prediction markets",
+					"arguments": ["agentId", "topic"]
 				}
 			]
 		}

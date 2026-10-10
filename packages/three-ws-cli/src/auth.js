@@ -54,6 +54,14 @@ export async function loginDevice({ origin, financial, extraScopes = [], env = s
 	return persist({ origin, auth, env });
 }
 
+/** Link this terminal with a code minted at /dashboard/account; stores the confirmed API key. */
+export async function loginLinkCode({ origin, code, env = systemEnv(), onClaimed }) {
+	const { linkCodeLogin } = await import('./link-code.js');
+	const { auth, device_id } = await linkCodeLogin({ origin, code, onClaimed });
+	const me = await persist({ origin, auth, env });
+	return { ...me, device_id };
+}
+
 export async function loginKey({ origin, key, env = systemEnv() }) {
 	const trimmed = String(key || '').trim();
 	if (!looksLikeKey(trimmed)) throw new ApiError('that does not look like a three.ws API key (they start with sk_live_). Create one at https://three.ws/dashboard/api.');

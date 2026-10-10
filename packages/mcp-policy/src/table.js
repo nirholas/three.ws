@@ -140,6 +140,11 @@ export const POLICY = {
 		skill_publish: w('skills'),
 		trade_receipt: r('trading'),
 		sentiment_scout: r('intelligence'),
+		// Destination whitelist (api/_mcp/tools/whitelist.js). Writes only propose or
+		// remove: activating an address needs the owner's step-up in the app.
+		get_whitelist: r('wallet'),
+		add_to_whitelist: w('wallet'),
+		remove_from_whitelist: w('wallet'),
 		// Agent cards (api/_mcp/tools/cards.js). The service verifies its own
 		// quote and reveal ids, so the policy enforces enablement and the flag.
 		agent_card_search_merchants: r('cards'),
@@ -152,20 +157,6 @@ export const POLICY = {
 		agent_card_balance: r('cards'),
 		agent_card_data: w('cards'),
 		agent_card_reveal: own('cards', 'confirm_reveal', 'agent_card_data'),
-		paired_markets: r('launch'),
-		paired_coins: r('launch'),
-		paired_coin: r('launch'),
-		paired_launch_quote: w('launch'),
-		paired_launch: f('launch', 'confirm_launch', 'paired_launch_quote', [
-			'agent_id', 'markets', 'weights', 'name', 'symbol', 'description', 'image_url', 'socials', 'dev_buy',
-		]),
-		paired_fees: r('launch'),
-		paired_claim_fees: w('launch'),
-		agent_card_cancel: own('cards', 'confirm_cancel', 'agent_card_get'),
-		agent_card_withdraw: own('cards', 'confirm_withdraw', 'agent_card_balance'),
-		agent_card_connect: r('cards'),
-		agent_card_connect_link: w('cards'),
-		// Agent lifecycle, runs and automations (api/_mcp/tools/agent-lifecycle.js).
 		// Web domains (api/_mcp/tools/domains.js). Registration spends credits, so it
 		// is financial: domain_register_quote validates against the registrar and
 		// domain_register needs its quote_id and confirm_spend.
@@ -177,6 +168,26 @@ export const POLICY = {
 		domain_status: r('domains'),
 		domain_connect: w('domains'),
 		domain_connect_status: r('domains'),
+		paired_markets: r('launch'),
+		paired_coins: r('launch'),
+		paired_coin: r('launch'),
+		paired_launch_quote: w('launch'),
+		paired_launch: f('launch', 'confirm_launch', 'paired_launch_quote', [
+			'agent_id', 'markets', 'weights', 'name', 'symbol', 'description', 'image_url', 'socials', 'dev_buy',
+		]),
+		launch_lanes: r('launch'),
+		launch_status: r('launch'),
+		uniswap_launch_quote: w('launch'),
+		uniswap_launch: f('launch', 'confirm_launch', 'uniswap_launch_quote', [
+			'agent_id', 'name', 'symbol', 'description', 'image_url', 'socials', 'fee_tier', 'start_market_cap_eth', 'lock', 'fee_recipient',
+		]),
+		paired_fees: r('launch'),
+		paired_claim_fees: w('launch'),
+		agent_card_cancel: own('cards', 'confirm_cancel', 'agent_card_get'),
+		agent_card_withdraw: own('cards', 'confirm_withdraw', 'agent_card_balance'),
+		agent_card_connect: r('cards'),
+		agent_card_connect_link: w('cards'),
+		// Agent lifecycle, runs and automations (api/_mcp/tools/agent-lifecycle.js).
 		// Deletes are financial-tier because they cannot be undone. Swap and
 		// transfer automations gate themselves: connector keys are refused, the
 		// bearer needs wallet:write, and the call needs confirm_spend after the
@@ -216,13 +227,30 @@ export const POLICY = {
 		...GETTING_STARTED,
 		...READ_RESOURCE,
 		wallet_status: r('wallet'),
+		// Account linking (api/_lib/account-link/external-wallets.js): reading
+		// what is linked is a wallet read; attaching a payout wallet is a wallet
+		// write that moves nothing, and a replacement waits on the owner's
+		// approval server-side.
+		get_linked_accounts: r('wallet'),
+		set_external_wallet: w('wallet'),
 		provision_wallet: w('wallet'),
 		find_services: r('x402'),
 		pay_quote: r('x402'),
 		pay_and_call: f('x402', 'confirm_payment', 'pay_quote', ['resource_url']),
 		monetize_endpoint: w('x402'),
+		// Solana trading (api/_mcpagent/trading-tools.js over the shared registry
+		// api/_lib/trading-tools/registry.js). swap_execute verifies its own signed,
+		// single-use quote_id and re-prices it before signing.
 		swap_quote: r('trading'),
-		swap_execute: f('trading', 'confirm_swap', 'swap_quote'),
+		swap_simulate: r('trading'),
+		swap_execute: own('trading', 'confirm_swap', 'swap_quote'),
+		token_search: r('trading'),
+		get_price: r('trading'),
+		get_indicators: r('trading'),
+		get_market_signals: r('trading'),
+		get_news_feed: r('trading'),
+		arbitrage_prices: r('trading'),
+		arbitrage_quote: r('trading'),
 		browse_marketplace: r('marketplace'),
 		browse_public_agents: r('marketplace'),
 		get_listing: r('marketplace'),
@@ -251,6 +279,75 @@ export const POLICY = {
 		predictions_redeem_preview: r('predictions'),
 		predictions_redeem: own('predictions', 'confirm_trade', 'predictions_redeem_preview'),
 		predictions_watch: w('predictions'),
+		// Perpetual futures (api/_mcpagent/perps-tools.js). The perps service
+		// issues and checks its own preview ids and refuses a moved quote.
+		perps_markets: r('perps'),
+		perps_market_data: r('perps'),
+		perps_account: r('perps'),
+		perps_positions: r('perps'),
+		perps_order_preview: r('perps'),
+		perps_action_preview: r('perps'),
+		perps_order_execute: own('perps', 'confirm_trade', 'perps_order_preview'),
+		perps_collateral_deposit: own('perps', 'confirm_trade', 'perps_action_preview'),
+		perps_collateral_withdraw: own('perps', 'confirm_trade', 'perps_action_preview'),
+		perps_order_cancel: own('perps', 'confirm_trade', 'perps_action_preview'),
+		perps_flatten: own('perps', 'confirm_trade', 'perps_action_preview'),
+		perps_limits: w('perps'),
+		// Resting orders and DCA on any SPL token (api/_mcpagent/orders-tools.js).
+		// The create tools verify their own signed, single-use preview id, bound to
+		// the agent and to the create tool it was issued for.
+		order_preview: r('trading'),
+		limit_order_create: own('trading', 'confirm_order', 'order_preview'),
+		stop_order_create: own('trading', 'confirm_order', 'order_preview'),
+		trailing_order_create: own('trading', 'confirm_order', 'order_preview'),
+		ladder_order_create: own('trading', 'confirm_order', 'order_preview'),
+		oco_order_create: own('trading', 'confirm_order', 'order_preview'),
+		limit_order_list: r('trading'),
+		limit_order_cancel: w('trading'),
+		limit_order_history: r('trading'),
+		order_book: r('trading'),
+		dca_preview: r('trading'),
+		dca_create: own('trading', 'confirm_dca', 'dca_preview'),
+		dca_list: r('trading'),
+		dca_cancel: w('trading'),
+		// Portfolio (api/_mcpagent/portfolio-tools.js): valued holdings, the
+		// hourly snapshot history and FIFO P&L. Reads only.
+		get_portfolio: r('wallet'),
+		get_balance_history: r('wallet'),
+		get_pnl: r('wallet'),
+		// Launch sniper, signal subscriptions and alert rules
+		// (api/_mcpagent/sniper-alert-tools.js). Arming the sniper commits SOL, so
+		// it binds the previewed agent, network and sizing.
+		sniper_status: r('trading'),
+		sniper_activate_preview: r('trading'),
+		sniper_activate: f('trading', 'confirm_spend', 'sniper_activate_preview', ['agent_id', 'network', 'per_trade_sol', 'daily_budget_sol', 'stop_loss_pct', 'take_profit_pct', 'trigger', 'max_concurrent_positions']),
+		sniper_deactivate: w('trading'),
+		sniper_subscribe: w('trading'),
+		alert_rule_create: w('intelligence'),
+		alert_rule_list: r('intelligence'),
+		alert_rule_delete: f('intelligence', 'confirm_delete', 'alert_rule_list', ['rule_id']),
+		// Trader duels and challenges (api/_mcpagent/duels-tools.js). Free-play.
+		duel_challenge: w('predictions'),
+		duel_accept: w('predictions'),
+		duel_details: r('predictions'),
+		duel_markets: r('predictions'),
+		// Agent commerce (api/_mcpagent/commerce-tools.js). The library consumes
+		// each preview id itself (single use, bound to the agent, 10 minutes),
+		// so the policy layer enforces only the confirm flag. spending_setup is a
+		// proposal: the owner approves it on three.ws with a step-up check.
+		invoice_create: w('commerce'),
+		invoice_details: r('commerce'),
+		invoice_list: r('commerce'),
+		invoice_verify: r('commerce'),
+		invoice_cancel: w('commerce'),
+		agent_send_preview: r('commerce'),
+		agent_send: own('commerce', 'confirm_send', 'agent_send_preview'),
+		offer_list: r('commerce'),
+		agent_sell: w('commerce'),
+		agent_buy: r('commerce'),
+		agent_buy_confirm: own('commerce', 'confirm_payment', 'agent_buy'),
+		spending_check: r('commerce'),
+		spending_setup: w('commerce'),
 	},
 
 	// /api/mcp-3d
@@ -273,6 +370,8 @@ export const POLICY = {
 		pose_model: r('assets'),
 		direct_prompt: w('assets'),
 		generate_material: w('assets'),
+		cad_generate: w('assets'),
+		cad_rebuild: w('assets'),
 		save_avatar: w('assets'),
 		export_ar: r('assets'),
 		verify_provenance: r('assets'),

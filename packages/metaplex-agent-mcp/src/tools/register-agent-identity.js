@@ -35,7 +35,8 @@ export const def = {
 		'metaplex.com/agents. The signing wallet must be the asset authority (or the collection authority for ' +
 		'collection-bound assets). Registration is one-time per asset and costs ~0.003 SOL; an already-registered ' +
 		'asset returns already_registered without spending. Without confirm:true it returns a spend-nothing preview. ' +
-		'To mint a NEW agent, use mint_onchain_agent or prepare_agent_mint instead.',
+		'Use this when the Core asset already exists and only needs its identity; to mint a NEW agent, use ' +
+		'mint_onchain_agent or prepare_agent_mint instead.',
 	inputSchema: {
 		asset: z.string().min(32).max(44).describe('The Core asset address to register.'),
 		collection: z.string().min(32).max(44).optional().describe('The collection address, required for collection-bound assets.'),
@@ -77,7 +78,8 @@ export const previewDef = {
 		'Preview register_agent_identity before it runs: the identity PDA, whether the asset is already registered, ' +
 		'the paying wallet, the cost, and the exact registration document that would be written. Broadcasts nothing. ' +
 		'Show it to the user, get a clear yes, then call register_agent_identity with the same arguments, the ' +
-		'returned preview_id and confirm_spend: true.',
+		'returned preview_id and confirm_spend: true. Use this before register_agent_identity every time, so the ' +
+		'person sees the cost and the document before any SOL moves.',
 	inputSchema: previewShape,
 	handler: (args) => runRegister(args, { preview: true }),
 };

@@ -39,9 +39,9 @@ export const def = {
 	name: 'optimize_glb',
 	title: 'Optimize a GLB (dedup, prune, weld, Draco)',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Run a @gltf-transform/functions optimization pipeline on a GLB URL: dedup → prune unused → weld duplicate vertices → optional Draco mesh compression. Returns the optimized bytes as a base64 data URL with before/after sizes. Lossless for geometry except where Draco quantization is requested.',
+		'Run a @gltf-transform/functions optimization pipeline on a GLB URL: dedup → prune unused → weld duplicate vertices → optional Draco mesh compression. Returns the optimized bytes as a base64 data URL with before/after sizes. Lossless for geometry except where Draco quantization is requested. Use this when inspect_glb shows a model is too large to load quickly on the web.',
 	inputSchema: {
 		url: z.string().describe('Source GLB URL (or data: URL).'),
 		dedup: z.boolean().optional().describe('Merge equivalent accessors / materials / textures. Default true.'),

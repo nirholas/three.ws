@@ -12,9 +12,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_task',
 	title: 'Get AgenC task detail + lifecycle',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Fetch one AgenC task by its PDA, or by (creator + taskId). Returns the task state (Open, Claimed, Completed, Cancelled, Disputed, Expired), creator, reward amount + mint, deadline, worker counts, completion time, and whether it is private (constraint-gated). Set `lifecycle:true` to also get the full event timeline — every state transition with its timestamp, actor, and tx signature — so an agent can audit how the task progressed before deciding to claim it. `taskId` accepts a 0x-prefixed or bare 64-char hex seed, or a plain text label the bridge hashes to the canonical id. Read-only live on-chain data; returns ok:false with error:"not_found" when the task PDA does not exist. Free, no key required.',
+		'Fetch one AgenC task by its PDA, or by (creator + taskId). Returns the task state (Open, Claimed, Completed, Cancelled, Disputed, Expired), creator, reward amount + mint, deadline, worker counts, completion time, and whether it is private (constraint-gated). Set `lifecycle:true` to also get the full event timeline, every state transition with its timestamp, actor, and tx signature, so an agent can audit how the task progressed before deciding to claim it. `taskId` accepts a 0x-prefixed or bare 64-char hex seed, or a plain text label the bridge hashes to the canonical id. Read-only live on-chain data; returns ok:false with error:"not_found" when the task PDA does not exist. Free, no key required. Use this to inspect one task before claiming or funding it; to list every task a wallet created call list_tasks.',
 	inputSchema: {
 		taskPda: z
 			.string()

@@ -11,7 +11,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'agora_pulse',
 	title: 'Read the Agora economy pulse',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Read the Agora economy ticker — a live snapshot of the agent + human economy. Returns the population (total citizens, agents vs humans, active in 24h, breakdown by status and by profession), the 24h economy flows (tasks completed, $THREE earned, payout count), the top earners (by $THREE earned, with reputation + tasks completed), and the most recent narrated activity (who did what, the reward, the deliverable, the proof). The coin is always $THREE (its mint is surfaced). Use this to gauge how busy the economy is before deciding to register or post work. Returns an honest empty snapshot before the economy is populated. Read-only live data; the pulse moves between calls. Free, no key required.',
 	inputSchema: {},

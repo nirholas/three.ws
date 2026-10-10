@@ -3,7 +3,7 @@
 import { signIn, authModeFromFlags } from './common.js';
 import { c, line, rows, sym, printJson, tildify, relativeExpiry, shortAddress } from '../ui.js';
 import { readStore, mask } from '../store.js';
-import { currentIdentity, logout as doLogout } from '../auth.js';
+import { currentIdentity, logout as doLogout, loginLinkCode } from '../auth.js';
 import { credentialsPath } from '../paths.js';
 import { CLIENTS, readServers } from '../clients/index.js';
 import { isThreeWsEntry } from '../servers.js';
@@ -31,6 +31,30 @@ export async function login(ctx) {
 	}
 	line(`${c.green(sym.ok)} Signed in as ${c.bold(me.user.email || me.user.id)} ${c.dim(`(${credentialSummary(store).label})`)}`);
 	line(c.dim(`  Stored in ${tildify(credentialsPath(ctx.env))} (owner-only). Run \`three-ws setup\` to wire your clients.`));
+	return 0;
+}
+
+/** `three-ws link <code>`: claim a link code minted on the site and wait for the owner to confirm it. */
+export async function link(ctx) {
+	const [code] = ctx.positionals;
+	if (!code) throw new Error('usage: three-ws link <code>   (mint one at https://three.ws/dashboard/account#linked-devices)');
+	const me = await loginLinkCode({
+		origin: ctx.origin,
+		code,
+		env: ctx.env,
+		onClaimed: (claim) => {
+			if (ctx.flags.json) return;
+			line(`${c.dim(sym.dot || '*')} Code accepted. Confirm this terminal on ${c.bold(`${ctx.origin}/dashboard/account#linked-devices`)} to finish.`);
+			line(c.dim(`  Waiting${claim.expires_at ? ` until ${new Date(claim.expires_at).toLocaleTimeString()}` : ''}; Ctrl-C cancels.`));
+		},
+	});
+	const store = readStore(ctx.env);
+	if (ctx.flags.json) {
+		printJson({ account: me.user, device_id: me.device_id, credential: credentialSummary(store), store: credentialsPath(ctx.env) });
+		return 0;
+	}
+	line(`${c.green(sym.ok)} Linked as ${c.bold(me.user.email || me.user.id)} ${c.dim(`(${credentialSummary(store).label})`)}`);
+	line(c.dim(`  Stored in ${tildify(credentialsPath(ctx.env))} (owner-only). Revoke it any time from /dashboard/account#linked-devices.`));
 	return 0;
 }
 

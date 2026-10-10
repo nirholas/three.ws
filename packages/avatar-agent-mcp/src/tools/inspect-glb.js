@@ -188,9 +188,9 @@ export const def = {
 	name: 'inspect_glb',
 	title: 'Inspect a GLB / glTF 3D model',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Fetch any GLB URL (or data: URL) and return a full structural breakdown: meshes, primitives, materials, textures, animations, skins, vertex + triangle counts, world-space bounding box, and file size. Pure local parse via @gltf-transform/core — no third-party services.',
+		'Fetch any GLB URL (or data: URL) and return a full structural breakdown: meshes, primitives, materials, textures, animations, skins, vertex + triangle counts, world-space bounding box, and file size. Pure local parse via @gltf-transform/core, with no third-party services. Use this to see what a GLB contains and how heavy it is; to check it against the glTF spec, call validate_glb instead.',
 	inputSchema: {
 		url: z.string().describe('Public URL or data: URL of a .glb file.'),
 	},

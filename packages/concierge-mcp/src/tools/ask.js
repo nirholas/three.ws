@@ -19,7 +19,8 @@ const DESCRIPTION =
 	'Ask an AI concierge a question and get a grounded answer. Provide a "url" and it fetches that page and ' +
 	'answers using its real content (title, headings, navigation, main text), the way to ask any website a ' +
 	'question. Or skip the url and pass "knowledge"/"content" to answer grounded in text you already have. ' +
-	'The model is instructed not to invent facts it cannot see. Runs on the free three.ws lane; no key required.';
+	'The model is instructed not to invent facts it cannot see. Runs on the free three.ws lane; no key required. ' +
+	'Use this to answer a question about a specific site or document; to put that same concierge on the site itself, call concierge_embed.';
 
 const tool = defineTool({
 	id: 'concierge-ask',
@@ -32,7 +33,7 @@ const tool = defineTool({
 			name: 'concierge_ask',
 			title: "Ask a website's AI concierge a question",
 			description: DESCRIPTION,
-			annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+			annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 			parameters: z.object({
 				question: z.string().min(1).max(2000).describe('The question to ask, in natural language.'),
 				url: z

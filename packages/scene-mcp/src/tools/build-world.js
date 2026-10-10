@@ -26,7 +26,7 @@ export const def = {
 	title: 'Build a complete 3D world from one sentence (no browser needed)',
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call; it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not.',
+		'One sentence → a fully forged, exported 3D world, entirely server-side: composes the scene plan, forges every object on the free text→3D lane, and merges the result into one GLB with named, selectable nodes plus ground and lighting. Returns the populated diorama, the merged GLB URL, and a ready-to-open Scene Studio link. This is the whole progressive /diorama browser flow collapsed into one call; it can take a couple of minutes for a full object set. Partial forges are not failures: whatever forged is exported, and `skipped` names anything that did not. Use this when you want a finished world from one sentence with no intermediate steps; to inspect or adjust the plan before anything is forged, call compose_scene instead.',
 	inputSchema: {
 		prompt: z
 			.string()

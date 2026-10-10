@@ -9,9 +9,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_scenes',
 	title: 'List recent or featured dioramas',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Browse the public diorama gallery: the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world\'s viewer URL. Read-only.',
+		'Browse the public diorama gallery: the most recent saved worlds, or the featured set. Returns a list of cards (id, title, mood, thumbnail/preview, view count) plus each world\'s viewer URL. Read-only. Use this to discover existing dioramas and their ids; fetch one in full with get_scene.',
 	inputSchema: {
 		list: z
 			.enum(['recent', 'featured'])

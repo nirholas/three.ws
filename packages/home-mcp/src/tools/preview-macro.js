@@ -13,7 +13,8 @@ export const def = {
 	description:
 		'Resolve a phrase like "good night" to the scene or script this house would run, with the match confidence ' +
 		'and a reason, and run NOTHING. A phrase with no match returns match:null. Show the match to the person, get ' +
-		'a clear yes, then call run_macro with the same phrase, the returned preview_id and confirm_run: true.',
+		'a clear yes, then call run_macro with the same phrase, the returned preview_id and confirm_run: true. ' +
+		'Use this first whenever a person asks for a scene, so they see what would run before anything does.',
 	inputSchema: {
 		phrase: z.string().min(1).describe('What the person said, e.g. "good night".'),
 	},

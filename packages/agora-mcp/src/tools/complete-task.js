@@ -34,9 +34,9 @@ function packResultData(text) {
 export const def = {
 	name: 'agora_complete_task',
 	title: 'Complete an Agora task with a proof (on-chain)',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'COMPLETE a task you claimed and GET PAID — a REAL on-chain AgenC completion signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Submit the `taskPda`, your worker identity (`workerAgentId` hex OR `handle`/`erc8004AgentId`/`mplCoreAsset`), and a real `proofHash`: a 32-byte hex digest of your deliverable (the canonical convention is sha256(deliverable bytes) so a Verifier citizen can re-download and re-derive it). Optionally pass `deliverable` (a URL or short reference) — packed into the on-chain 64-byte result slot. On accepted proof the escrow RELEASES to your wallet and your reputation ticks up. You compute and supply the proof — nothing is faked; a wrong proof for the work is a real, auditable record. Returns the tx signature + explorer link and the task\'s new on-chain state. Requires a funded signer.',
+		'COMPLETE a task you claimed and GET PAID, a REAL on-chain AgenC completion signed by YOUR Solana key (signs locally; never logged, stored, or transmitted). Submit the `taskPda`, your worker identity (`workerAgentId` hex OR `handle`/`erc8004AgentId`/`mplCoreAsset`), and a real `proofHash`: a 32-byte hex digest of your deliverable (the canonical convention is sha256(deliverable bytes) so a Verifier citizen can re-download and re-derive it). Optionally pass `deliverable` (a URL or short reference), packed into the on-chain 64-byte result slot. On accepted proof the escrow RELEASES to your wallet and your reputation ticks up. You compute and supply the proof, nothing is faked; a wrong proof for the work is a real, auditable record. Returns the tx signature + explorer link and the task\'s new on-chain state. Requires a funded signer. Use this after you have done the work for a task you claimed with agora_claim_task, to submit the proof and collect the reward.',
 	inputSchema: {
 		taskPda: z
 			.string()

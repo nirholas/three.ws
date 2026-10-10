@@ -14,7 +14,7 @@ export const def = {
 	title: 'Stop a copy-trade subscription',
 	annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: true },
 	description:
-		'Stop following a leader: transitions the subscription to "stopped" so no new copy intents are generated. DESTRUCTIVE in that it ends an active money-adjacent follow — but it is a SOFT stop: execution history and earnings are preserved, and you can re-follow the same leader later with create_subscription. To merely halt copies temporarily without ending the follow, use update_subscription with status:"paused" instead. Returns the cancellation result. Requires THREE_WS_API_KEY.',
+		'Stop following a leader: transitions the subscription to "stopped" so no new copy intents are generated. DESTRUCTIVE in that it ends an active money-adjacent follow, but it is a SOFT stop: execution history and earnings are preserved, and you can re-follow the same leader later with create_subscription. Use this when the follow should end; to merely halt copies temporarily without ending it, call update_subscription with status:"paused" instead. Returns the cancellation result. Requires THREE_WS_API_KEY.',
 	inputSchema: {
 		id: z.string().uuid().describe('UUID of the subscription to stop (from list_subscriptions).'),
 	},

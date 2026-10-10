@@ -45,8 +45,8 @@ test('read tools are read-only, live-data queries (openWorld, non-idempotent, no
 		assert.equal(tool.annotations.readOnlyHint, true, `${name} should be read-only`);
 		assert.equal(tool.annotations.openWorldHint, true, `${name} talks to a live service`);
 		assert.equal(tool.annotations.idempotentHint, false, `${name} reads live data, not idempotent`);
-		// Spec ignores destructiveHint when readOnlyHint is true — keep it omitted.
-		assert.equal(tool.annotations.destructiveHint, undefined, `${name} is read-only — destructiveHint should be omitted`);
+		// A read is never destructive; state it explicitly rather than leaning on the spec default.
+		assert.equal(tool.annotations.destructiveHint, false, `${name} is read-only, so destructiveHint must be an explicit false`);
 	}
 });
 

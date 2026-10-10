@@ -25,7 +25,7 @@ export const def = {
 		'`wallet_transfer` proposal sends REAL SOL on Solana mainnet and is IRREVERSIBLE — you MUST pass ' +
 		'confirm:true for it (unless the owner durably pre-authorized that scope), and it is capped by the ' +
 		'daily SOL budget. It sends native SOL only — never $THREE. `create_alert` and `briefing` are real writes but reversible via undo_action. ' +
-		'Always dryrun_proposal first. Scope, confirmation, and spend caps are enforced SERVER-SIDE; this tool ' +
+		'Use this after dryrun_proposal shows no blocked check and, for a wallet_transfer, after the owner has explicitly confirmed it. Scope, confirmation, and spend caps are enforced SERVER-SIDE; this tool ' +
 		'cannot override them — an out-of-scope, over-budget, or unconfirmed call is denied (no action taken). ' +
 		'Returns the updated proposal, a human receipt, the signed action-log id, and updated trust.',
 	inputSchema: {

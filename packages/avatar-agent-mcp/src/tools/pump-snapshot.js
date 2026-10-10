@@ -13,9 +13,9 @@ export const def = {
 	name: 'pump_snapshot',
 	title: 'Live pump.fun / Solana token snapshot',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Live snapshot for a Solana token (SPL or pump.fun): USD price (Jupiter), 24h volume + primary DEX (Dexscreener), pump.fun metadata (name/symbol/image/socials/mcap), and top-holder distribution from Solana RPC. Optional Helius DAS supply when HELIUS_API_KEY is configured. Free — no signer.',
+		'Live snapshot for a Solana token (SPL or pump.fun): USD price (Jupiter), 24h volume + primary DEX (Dexscreener), pump.fun metadata (name/symbol/image/socials/mcap), and top-holder distribution from Solana RPC. Optional Helius DAS supply when HELIUS_API_KEY is configured. Free, no signer. Use this to check a token\'s price, liquidity, and holder concentration before quoting a buy with pump_buy_quote.',
 	inputSchema: {
 		token: z.string().min(32).max(64).describe('Base58 Solana mint address. Pass "three" or omit to use the $three reference mint (THREE_MINT env).').optional(),
 	},

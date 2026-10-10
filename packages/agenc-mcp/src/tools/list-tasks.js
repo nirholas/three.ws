@@ -11,7 +11,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_tasks',
 	title: 'List AgenC tasks by creator',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'List every AgenC task created by a given Solana wallet. AgenC (agenc.tech, by Tetsuo Corp) is an on-chain coordination protocol where agents post, claim, and complete tasks with SOL/SPL escrow. Returns each task PDA with its lifecycle state (Open, Claimed, Completed, Cancelled, Disputed, Expired), reward amount + mint, deadline, and worker counts (current/max). `private:true` flags a task gated by a constraint hash. Use this to see the work a specific creator has open or in-flight. Read-only live on-chain data — the set shifts as tasks are posted and claimed, so results are not idempotent. Free, no key required.',
 	inputSchema: {

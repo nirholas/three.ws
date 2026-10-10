@@ -10,7 +10,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_feed_events',
 	title: 'Site-wide activity feed',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"The site-wide activity ticker — recent things that just happened across three.ws, newest-first. Each event is { id, type, ts (epoch ms), actor (a short, already-public display label), ...typeSpecific }. Types include coin-buy { mint, sol, network }, agent-deploy { agentId, name }, agent-onchain { agentId, name, chain }, level-up { skill, level, coin }, world-join { coin, coinName }, jackpot { reward, coin }, payment { usdcAtomic, recipientLabel, txSig, explorerUrl }, mission-complete { mission, gold, coop, coin }, and member-join { handle }. Use it for situational awareness — what agents, coins, and players are active right now. Read-only live data; new events arrive constantly.",
 	inputSchema: {

@@ -74,7 +74,7 @@ export const def = {
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Generate a textured GLB from a text prompt or reference image URLs via Replicate (Hunyuan-3D 3.1 by default; configurable). Returns the GLB URL and a new avatar session you can dress + animate. Requires REPLICATE_API_TOKEN and REPLICATE_TEXT_TO_AVATAR_MODEL on the MCP server.',
+		'Generate a textured GLB from a text prompt or reference image URLs via Replicate (Hunyuan-3D 3.1 by default; configurable). Returns the GLB URL and a new avatar session you can dress + animate. Requires REPLICATE_API_TOKEN and REPLICATE_TEXT_TO_AVATAR_MODEL on the MCP server. Use this when no existing GLB fits and you need a new model from a description or photo; to start from a stock body or a GLB you already have, call spawn_avatar instead.',
 	inputSchema: {
 		prompt: z.string().max(1000).optional().describe('Text description of the avatar to generate.'),
 		images: z.array(z.string().url()).max(4).optional().describe('Reference image URLs for image-to-3D.'),

@@ -46,7 +46,7 @@ const HIRE_PRICE_USD = guardrailConfig().hirePriceUsd;
 const HIRE_PRICE_LABEL = formatUsd(HIRE_PRICE_USD);
 
 const TOOL_DESCRIPTION =
-	`Hire a three.ws agent end to end: quote the price up front, settle real USDC via x402, run the remote agent, and return its result PLUS a provenance receipt (agent, ERC-8004 reputation, amount paid, on-chain settlement reference, latency). Enforces hard spend caps (per-call + per-session), a confirmation threshold, and an optional reputation floor — a blocked or failed hire never charges the caller. Renders an inline receipt card. Step two of the commerce loop (after agent_hire_discover). Paid: ${HIRE_PRICE_LABEL} USDC (the platform delegation fee).`;
+	`Hire a three.ws agent end to end: quote the price up front, settle real USDC via x402, run the remote agent, and return its result PLUS a provenance receipt (agent, ERC-8004 reputation, amount paid, on-chain settlement reference, latency). Enforces hard spend caps (per-call + per-session), a confirmation threshold, and an optional reputation floor; a blocked or failed hire never charges the caller. Renders an inline receipt card. Step two of the commerce loop (after agent_hire_discover). Use this after agent_hire_discover, once you have chosen an agent and accept its quoted price. Paid: ${HIRE_PRICE_LABEL} USDC (the platform delegation fee).`;
 
 function payToAddress() {
 	for (const k of ['MCP_SVM_PAYMENT_ADDRESS', 'X402_PAY_TO_SOLANA', 'X402_PAY_TO']) {

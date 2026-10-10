@@ -16,9 +16,9 @@ export const def = {
 	title: 'Rally power for a Coin Clash faction',
 	// Write and NOT idempotent: every call appends power to the round. Not
 	// destructive — no funds move and power can't be removed, it's a contribution.
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Rally for a Coin Clash faction by spending taps as battle power for the current round. Authorize with either a `pass` (war pass from enlist_faction) or a `token` (+ optional `secret`) to auto-enlist first. `taps` (1–50 per call) convert to power, multiplied by the faction\'s live momentum and capped per wallet per round. Returns `{ epoch, mint, added, momentum, walletPower, walletCap, capped, factionPower, msLeft }` — `added` is the power this call contributed, `factionPower` the army\'s new round total, `capped` true once the wallet hits `walletCap`. Each call adds power (not idempotent); call repeatedly to keep rallying while the round clock (`msLeft`) runs.',
+		'Rally for a Coin Clash faction by spending taps as battle power for the current round. Authorize with either a `pass` (war pass from enlist_faction) or a `token` (+ optional `secret`) to auto-enlist first. `taps` (1-50 per call) convert to power, multiplied by the faction\'s live momentum and capped per wallet per round. Returns `{ epoch, mint, added, momentum, walletPower, walletCap, capped, factionPower, msLeft }`, `added` is the power this call contributed, `factionPower` the army\'s new round total, `capped` true once the wallet hits `walletCap`. Each call adds power (not idempotent); call repeatedly to keep rallying while the round clock (`msLeft`) runs. Use this after enlist_faction, or with a token to auto-enlist, to add power to your faction while the round is live; get_clash_state shows the clock.',
 	inputSchema: {
 		taps: z
 			.number()

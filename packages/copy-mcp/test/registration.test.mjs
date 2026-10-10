@@ -51,7 +51,7 @@ test('every tool has a title, description, input schema and complete annotations
 	}
 });
 
-test('read tools are read-only and non-idempotent; they omit destructiveHint', () => {
+test('read tools are read-only and non-idempotent; they set destructiveHint: false explicitly', () => {
 	for (const tool of TOOLS) {
 		if (WRITE_NAMES.has(tool.name)) continue;
 		assert.equal(tool.annotations.readOnlyHint, true, `${tool.name} should be read-only`);
@@ -59,8 +59,8 @@ test('read tools are read-only and non-idempotent; they omit destructiveHint', (
 		assert.equal(tool.annotations.idempotentHint, false, `${tool.name} reads live data, not idempotent`);
 		assert.equal(
 			tool.annotations.destructiveHint,
-			undefined,
-			`${tool.name} is read-only — destructiveHint should be omitted`,
+			false,
+			`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 		);
 	}
 });

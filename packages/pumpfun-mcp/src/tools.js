@@ -159,7 +159,9 @@ export const TOOL_ANNOTATIONS = Object.freeze({
 export const FALLBACK_TOOLS = [
 	{
 		name: 'search_tokens',
-		description: 'Search pump.fun tokens by name, symbol, or mint address.',
+		description:
+			'Search pump.fun tokens by name, symbol, or mint address. ' +
+			'Use this to find a coin\'s mint when you only know its name or ticker, then pass the mint to get_token_details or get_coin_intel.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -171,7 +173,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_token_details',
-		description: 'Full details for a specific pump.fun token by mint address.',
+		description:
+			'Full details for a specific pump.fun token by mint address. ' +
+			'Use this when you already have a mint and need its metadata, market cap, and curve status; for holder concentration call get_token_holders, for recent fills call get_token_trades.',
 		inputSchema: {
 			type: 'object',
 			properties: { mint: { type: 'string' } },
@@ -182,15 +186,16 @@ export const FALLBACK_TOOLS = [
 		name: 'get_bonding_curve',
 		description:
 			'Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain). ' +
-			'Pre-graduation only: the reserves come from the pump program bonding-curve account, not from a ' +
-			'PumpSwap pool. Pump renamed the quote-side fields (real_sol_reserves → real_quote_reserves, ' +
-			'virtual_sol_reserves → virtual_quote_reserves) when a non-SOL quote asset became possible; the ' +
+			'Pre-graduation only: these reserves come from the pump program bonding-curve account, not from a ' +
+			'PumpSwap pool. Pump renamed the quote-side fields on-chain (real_sol_reserves -> real_quote_reserves, ' +
+			'virtual_sol_reserves -> virtual_quote_reserves) once a non-SOL quote asset became possible; the ' +
 			'response keys below keep their original names and are still denominated in SOL, because the curve ' +
 			'quote_mint is the SOL default on every coin created to date. A v3 buy that empties the curve ' +
 			'completes it and buys the rest through a synthetic migration, priced on the reserves the ' +
 			'PumpSwap pool will open with, so a large final buy is not capped at realTokenReserves. Once ' +
 			'complete=true the curve is retired and pricing moves to the PumpSwap pool, so use ' +
-			'pumpfun_quote_swap from that point on.',
+			'pumpfun_quote_swap from that point on. ' +
+			'Use this to read graduation progress or the curve spot price of a coin that has not graduated yet.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -242,7 +247,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_token_trades',
-		description: 'Recent buy/sell history for a token.',
+		description:
+			'Recent buy/sell history for a token. ' +
+			'Use this to read recent buy and sell flow on one coin; to see only large trades as they land, call pumpfun_watch_whales instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -254,7 +261,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_trending_tokens',
-		description: 'Top pump.fun tokens by market cap.',
+		description:
+			'Top pump.fun tokens by market cap. ' +
+			'Use this to scan the largest coins on pump.fun right now; for fresh launches call get_new_tokens, for coins that left the curve call get_graduated_tokens.',
 		inputSchema: {
 			type: 'object',
 			properties: { limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 } },
@@ -262,7 +271,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_new_tokens',
-		description: 'Most recently launched pump.fun tokens.',
+		description:
+			'Most recently launched pump.fun tokens. ' +
+			'Use this to catch launches in their first minutes; for the largest coins by market cap call get_trending_tokens instead.',
 		inputSchema: {
 			type: 'object',
 			properties: { limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 } },
@@ -270,7 +281,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_graduated_tokens',
-		description: 'Tokens that graduated from the bonding curve to their PumpSwap (pump_amm) pool.',
+		description:
+			'Tokens that graduated from the bonding curve to their PumpSwap (pump_amm) pool. ' +
+			'Use this to list coins that now trade on a PumpSwap pool, where pumpfun_quote_swap applies instead of get_bonding_curve.',
 		inputSchema: {
 			type: 'object',
 			properties: { limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 } },
@@ -278,12 +291,16 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_king_of_the_hill',
-		description: 'Highest-market-cap token still on the bonding curve.',
+		description:
+			'Highest-market-cap token still on the bonding curve. ' +
+			'Use this to find the coin closest to graduating among those still on the curve; for the full ranking call get_trending_tokens.',
 		inputSchema: { type: 'object', properties: {} },
 	},
 	{
 		name: 'get_creator_profile',
-		description: 'All tokens by a creator wallet, with rug-pull risk flags.',
+		description:
+			'All tokens by a creator wallet, with rug-pull risk flags. ' +
+			'Use this to vet a dev wallet\'s launch history before buying one of its coins; for its fee cash-outs call pumpfun_list_claims.',
 		inputSchema: {
 			type: 'object',
 			properties: { creator: { type: 'string' } },
@@ -292,7 +309,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'get_token_holders',
-		description: 'Top holders of a token with concentration analysis (on-chain).',
+		description:
+			'Top holders of a token with concentration analysis (on-chain). ' +
+			'Use this to check whether a few wallets control the supply before buying; for price and volume call get_token_details instead.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -306,7 +325,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'pumpfun_vanity_mint',
 		description:
-			'Generate a Solana keypair whose address ends/starts with a vanity pattern. Returns publicKey + secretKey (base58). Caller must save the secret key immediately — it is never stored. Hard timeout: 60 s.',
+			'Generate a Solana keypair whose address ends/starts with a vanity pattern. Returns publicKey + secretKey (base58). Caller must save the secret key immediately; it is never stored. Hard timeout: 60 s. ' +
+			'Use this before launching a coin when its mint address should carry a recognizable prefix or suffix.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -326,7 +346,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'pumpfun_watch_whales',
 		description:
-			'Collect whale trades on a pump.fun token for a short window (max 10 s). Returns all trades whose USD value meets minUsd.',
+			'Collect whale trades on a pump.fun token for a short window (max 10 s). Returns all trades whose USD value meets minUsd. ' +
+			'Use this to see who is moving size on a coin right now; for the full recent tape call get_token_trades.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -349,7 +370,8 @@ export const FALLBACK_TOOLS = [
 			'List recent pump.fun fee-claim events for a creator wallet (on-chain, no indexer needed). Returns signature, mint, lamports, and Unix timestamp for each claim. ' +
 			'Creator fees from the v3 curve and v2 pool trades wait on the curve and pool until a ' +
 			'sweep_creator_fee moves them to the creator vault, so a claim covers only what was swept ' +
-			'(usually in the same transaction) and fees still waiting appear in no claim yet.',
+			'(usually in the same transaction) and fees still waiting appear in no claim yet. ' +
+			'Use this to audit how much a creator has already cashed out; for only the claims inside a recent window call pumpfun_watch_claims.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -363,7 +385,7 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'pumpfun_watch_claims',
 		description:
-			'Return all pump.fun fee-claim events for a creator wallet within a look-back window (durationMs). Useful for batch collection after a delay.',
+			'Return all pump.fun fee-claim events for a creator wallet within a look-back window (durationMs). Use this for batch collection after a delay; for a creator\'s full recent claim history call pumpfun_list_claims.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -380,7 +402,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'pumpfun_first_claims',
 		description:
-			'First-ever pump.fun creator fee claims in a time window — a cash-out signal. Returns creators who have never claimed before, with creator wallet, mint, lamports, and timestamp.',
+			'First-ever pump.fun creator fee claims in a time window: a cash-out signal. Returns creators who have never claimed before, with creator wallet, mint, lamports, and timestamp. ' +
+			'Use this to spot creators cashing out for the first time across all coins; for one creator\'s history call pumpfun_list_claims.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -397,7 +420,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'sns_resolve',
-		description: 'Resolve a .sol Solana Name Service domain to its owner wallet address.',
+		description:
+			'Resolve a .sol Solana Name Service domain to its owner wallet address. ' +
+			'Use this when a wallet is named by its .sol domain and you need the address; for the reverse direction call sns_reverseLookup.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -408,7 +433,9 @@ export const FALLBACK_TOOLS = [
 	},
 	{
 		name: 'sns_reverseLookup',
-		description: 'Reverse-lookup a Solana wallet address to its primary .sol domain name.',
+		description:
+			'Reverse-lookup a Solana wallet address to its primary .sol domain name. ' +
+			'Use this to label a raw wallet address with its human-readable .sol name; to go from name to address call sns_resolve.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -420,7 +447,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'social_cashtag_sentiment',
 		description:
-			'Score social-post sentiment for a cashtag using a deterministic lexicon. Returns score (-1..1), positive/negative/neutral percentages, and example posts.',
+			'Score social-post sentiment for a cashtag using a deterministic lexicon. Returns score (-1..1), positive/negative/neutral percentages, and example posts. ' +
+			'Use this to score posts you have already collected; it fetches nothing itself, so pass the posts in.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -446,7 +474,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'kol_leaderboard',
 		description:
-			'Top KOL traders ranked by P&L for a given time window. Returns wallet, pnlUsd, winRate, trades, rank.',
+			'Top KOL traders ranked by P&L for a given time window. Returns wallet, pnlUsd, winRate, trades, rank. ' +
+			'Use this to find which trader wallets are worth following; to see whether they hold a given coin, call get_coin_intel or get_token_holders.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -465,7 +494,8 @@ export const FALLBACK_TOOLS = [
 			'(a SIGNED i128, commonly negative because PumpSwap v2 trades keep waiting protocol and creator ' +
 			'fees in the vault and subtract them there), while the base side is the raw ' +
 			'pool_base_token_account.amount, unchanged. Coins still on the bonding curve have no pool, so use ' +
-			'get_bonding_curve instead. The quote is a snapshot: honour expiresAtMs and re-quote after it.',
+			'get_bonding_curve instead. The quote is a snapshot: honour expiresAtMs and re-quote after it. ' +
+			'Use this to size a trade on a graduated coin, or to measure its pool depth, before executing anywhere.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -544,7 +574,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'social_x_post_impact',
 		description:
-			'Correlate an X (Twitter) post to a memecoin price impact. Fetches post metadata via oEmbed (no API key) and computes price delta from the pump.fun bonding curve in a ±windowMin window around the post. Bonding-curve pricing (virtual_quote_reserves / virtual_token_reserves), so it applies to coins that have not graduated; a graduated coin has no curve and the call fails rather than returning a zero price.',
+			'Correlate an X (Twitter) post to a memecoin price impact. Fetches post metadata via oEmbed (no API key) and computes price delta from the pump.fun bonding curve in a ±windowMin window around the post. ' +
+			'Use this to measure how one X post moved a coin that is still on its bonding curve (pricing is virtual_quote_reserves / virtual_token_reserves); a graduated coin has no curve, so the call fails rather than returning a zero price.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -566,7 +597,8 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'pumpfun_bot_status',
 		description:
-			'Returns the configuration and health status of the pump.fun indexer backend. Always available — does not require PUMPFUN_BOT_URL.',
+			'Returns the configuration and health status of the pump.fun indexer backend. Always available; does not require PUMPFUN_BOT_URL. ' +
+			'Use this first when search_tokens, get_graduated_tokens, get_king_of_the_hill, or get_creator_profile fail or are missing, to see whether the indexer is configured and healthy.',
 		inputSchema: { type: 'object', properties: {}, required: [] },
 		outputSchema: {
 			type: 'object',

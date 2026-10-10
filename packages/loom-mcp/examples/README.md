@@ -6,7 +6,7 @@ JSON-RPC to it, and read the live public Loom gallery.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Prints all 3 tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:loom-mcp.tools -->3<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
 | [`browse-loom.mjs`](browse-loom.mjs) | A page of the gallery, the next page via its cursor, then one creation with a paste-ready embed. | `node examples/browse-loom.mjs` |
 
 Run them from the package directory:
@@ -19,7 +19,7 @@ node examples/browse-loom.mjs
 
 Nothing to install and nothing to configure: every tool here is keyless. The
 server prints a one-line banner to stderr on connect
-(`[loom-mcp@x.y.z] connected over stdio with 3 tools`), which is normal.
+(`[loom-mcp@x.y.z] connected over stdio with <n> tools`), which is normal.
 
 **Both examples are deliberately read-only.** `submit_creation` posts to a
 world-readable public gallery, so no example here writes on your behalf.

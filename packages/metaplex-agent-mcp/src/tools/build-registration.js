@@ -10,7 +10,7 @@ import { buildRegistrationDoc, chainRegistration, threeWsRegistration, jsonDataU
 export const def = {
 	name: 'build_registration',
 	title: 'Build an EIP-8004 registration document (no chain access)',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 	description:
 		'Build the Genesis-style EIP-8004 registration-v1 JSON document and its self-contained ' +
 		'data:application/json;base64 URI, without touching Solana. Use it to preview exactly what ' +

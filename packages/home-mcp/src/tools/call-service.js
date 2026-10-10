@@ -23,7 +23,8 @@ export const def = {
 		'no person in it. A refusal comes back with `refused: true` and tells you where a human confirms; do ' +
 		'not retry it and do not look for an argument that overrides it, because there is none. Everything ' +
 		'else (lights, climate, switches, fans, media, covers that are not an opening in the building) just ' +
-		'runs.',
+		'runs. Use this for a single device action the household has no scene for; when one of their scenes or ' +
+		'scripts covers it, use `run_macro` instead.',
 	inputSchema: {
 		domain: z.string().min(1).describe('The service domain, e.g. "light", "climate", "lock", "cover".'),
 		service: z

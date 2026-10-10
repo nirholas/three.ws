@@ -9,13 +9,13 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_proposals',
 	title: 'List autopilot proposals',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'List the agent\'s autopilot proposals — candidate actions it generated, each grounded in cited ' +
 		'memories (provenance hydrated). Each proposal carries its id (needed for dryrun/execute/dismiss/' +
 		'undo/adjust), kind (create_alert | briefing | wallet_transfer), title, plain-language rationale ' +
 		'(the receipt), params, confidence, requiresConfirmation, status, result, and the source memories. ' +
-		'Filter by status to find what is actionable. Also returns the current config + trust for context. ' +
+		'Use this to find what is actionable (filter by status) and to get the proposal ids the other autopilot tools need. Also returns the current config + trust for context. ' +
 		'Read-only.',
 	inputSchema: {
 		agentId: z

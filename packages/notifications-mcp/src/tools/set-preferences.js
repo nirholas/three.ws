@@ -19,7 +19,7 @@ const CHANNEL_KEYS = ['in_app', 'push', 'email', 'telegram'];
 export const def = {
 	name: 'set_preferences',
 	title: 'Set notification preferences',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		"Update the account's notification delivery preferences with a sparse patch. `categories` maps a " +
 		`category key (${CATEGORY_KEYS.join(', ')}) to a channel map turning each channel on/off ` +
@@ -30,8 +30,8 @@ export const def = {
 		'Provide at least one of `categories` or `telegram_chat_id`. `account` locks its `in_app` channel on: ' +
 		'security and withdrawal notices always reach the bell inbox, so `false` there is ignored. ' +
 		'WRITE but idempotent, re-applying the ' +
-		'same values is a no-op. Returns the full resolved preference matrix after the update. Read it first ' +
-		'with get_preferences.',
+		'same values is a no-op. Returns the full resolved preference matrix after the update. Use this when ' +
+		'the owner wants a category on or off for a channel, after reading the current matrix with get_preferences.',
 	inputSchema: {
 		categories: z
 			.record(z.string(), z.record(z.string(), z.boolean()))

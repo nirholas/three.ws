@@ -10,7 +10,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_preferences',
 	title: 'Get notification preferences',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"Read the account's notification delivery preferences — the resolved channel matrix the platform " +
 		'uses to decide how each kind of event reaches the owner. Returns `categories` (the catalog of ' +
@@ -19,7 +19,7 @@ export const def = {
 		'channels: in_app, push, email, telegram), `prefs` (the ' +
 		'effective per-category → per-channel on/off matrix with sparse user overrides already merged onto ' +
 		'defaults, plus the linked `telegram_chat_id` if any), and `push` (how many web-push devices are ' +
-		'registered). Read this before calling set_preferences so you patch from the real current state. ' +
+		'registered). Call this before set_preferences so you patch from the real current state. ' +
 		'Read-only.',
 	inputSchema: {},
 	async handler() {

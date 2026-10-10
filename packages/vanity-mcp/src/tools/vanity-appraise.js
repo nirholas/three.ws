@@ -11,9 +11,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'vanity_appraise',
 	title: 'Appraise the rarity of a Solana address',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Appraise how rare a Solana address is: its detected vanity pattern, rarity score, rarity bits, tier, and expected grind attempts. Pure math on the Base58 address — nothing is stored. If the address has been published to the proof-of-grind gallery, the public entry is returned too. Read-only, no payment.',
+		'Appraise how rare a Solana address is: its detected vanity pattern, rarity score, rarity bits, tier, and expected grind attempts. Pure math on the Base58 address; nothing is stored. If the address has been published to the proof-of-grind gallery, the public entry is returned too. Use this to rate an address someone already has; to price grinding a new pattern call vanity_quote. Read-only, no payment.',
 	inputSchema: {
 		address: z.string().min(32).max(44).describe('The Base58 Solana public key to appraise (32–44 chars).'),
 		prefixLen: z.number().int().min(0).optional().describe('Override how many leading characters to treat as the pattern prefix.'),

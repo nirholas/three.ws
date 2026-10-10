@@ -10,9 +10,9 @@ export const def = {
 	name: 'wallet_balance',
 	title: 'Read Solana wallet balances (SOL + SPL tokens)',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Return SOL balance and all SPL token balances (including Token-2022) for a Solana pubkey. Uses the configured SOLANA_RPC_URL. Read-only — no signer required.',
+		'Return SOL balance and all SPL token balances (including Token-2022) for a Solana pubkey. Uses the configured SOLANA_RPC_URL. Read-only, no signer required. Use this to check that a wallet holds enough SOL before previewing a send, buy, or launch.',
 	inputSchema: {
 		pubkey: z.string().min(32).max(64).describe('Base58 Solana pubkey to read.'),
 		includeTokens: z.boolean().optional().describe('Include SPL token accounts (default true).'),

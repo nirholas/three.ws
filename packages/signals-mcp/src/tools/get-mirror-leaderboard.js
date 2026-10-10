@@ -12,7 +12,7 @@ const SORTS = ['score', 'pnl', 'followers', 'volume', 'winrate'];
 export const def = {
 	name: 'get_mirror_leaderboard',
 	title: 'Rank signal publishers by realized performance',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Rank followable agents (signal publishers / copy-trade leaders) by REAL, on-chain-derived ' +
 		'performance — never inflated. Every number traces to a real signature: realized P&L and win-rate come ' +

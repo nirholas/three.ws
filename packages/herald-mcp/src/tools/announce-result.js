@@ -22,12 +22,13 @@ function humanDuration(seconds) {
 export const def = {
 	name: 'announce_result',
 	title: 'Report a finished task in person',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Tell the human how a task went, in person, with the urgency chosen for you from the outcome: ' +
 		'`failed` and `needs_input` are loud enough to cut through quiet hours, `succeeded` is not. Pass ' +
-		'the task name, the outcome, and optionally how long it took and where to look. This is the right ' +
-		'tool at the end of anything long enough that the person walked away from it. Returns the queued ' +
+		'the task name, the outcome, and optionally how long it took and where to look. Use this after ' +
+		'anything long enough that the person walked away from it, instead of announce, so the urgency ' +
+		'matches the outcome. Returns the queued ' +
 		'announcement.',
 	inputSchema: {
 		task: z

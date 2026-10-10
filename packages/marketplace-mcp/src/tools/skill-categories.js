@@ -7,9 +7,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'skill_categories',
 	title: 'List skills catalog categories',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'List the skills catalog categories that have at least one public skill, each with a slug, label, and the count of skills in it. Use the returned slugs to filter browse_skills. Read-only.',
+		'List the skills catalog categories that have at least one public skill, each with a slug, label, and the count of skills in it. Use this before browse_skills to get the category slugs it filters on. Read-only.',
 	inputSchema: {},
 	async handler() {
 		const data = await apiRequest('/api/skills/categories');

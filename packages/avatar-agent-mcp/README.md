@@ -91,7 +91,7 @@ Runs `spawn_avatar` → `dress_avatar` → `wallet_create({ vanityPrefix: "three
 
 ## Tools
 
-All 20 tools are free MCP tools — there is no per-call x402 charge. Tools marked **execution** sign and broadcast real Solana transactions that move real funds; configure your client's tool-approval flow for them.
+All <!-- mcp-count:avatar-agent-mcp.tools -->24<!-- /mcp-count --> tools are free MCP tools: there is no per-call x402 charge. Tools marked **execution** sign and broadcast real Solana transactions that move real funds; configure your client's tool-approval flow for them.
 
 Every tool ships [MCP tool annotations](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool-annotations): reads advertise `readOnlyHint: true`, and the four execution tools (`wallet_send`, `pump_buy`, `pump_launch`, `pump_collect_fees`) are flagged `destructiveHint: true`, so annotation-aware MCP clients prompt for confirmation before running them. The hints are advisory — the server-side `REQUIRE_CONFIRM` gate and spend caps (see [Safety](#safety)) apply regardless of client.
 
@@ -128,6 +128,7 @@ Every tool ships [MCP tool annotations](https://modelcontextprotocol.io/specific
 | ---------------- | ------------------------------------------------------------------------------------------------------- |
 | `wallet_create`  | Generates a Solana keypair. Optional vanity grinder (`vanityPrefix: "three"`). Secret is returned once. |
 | `wallet_balance` | Reads SOL + all SPL token balances (incl. Token-2022).                                                  |
+| `wallet_send_preview` | Previews a `wallet_send`: sender, recipient, amount, network fee, balance before and after, and any rule that would refuse it. Signs nothing. |
 | `wallet_send`    | Sends SOL on mainnet. **Execution.**                                                                    |
 
 ### pump.fun
@@ -135,8 +136,11 @@ Every tool ships [MCP tool annotations](https://modelcontextprotocol.io/specific
 | Tool                | What it does                                                                                                                                                                                             |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pump_snapshot`     | Live market snapshot: USD price (Jupiter), 24h volume + DEX (Dexscreener), pump.fun metadata, top-holder distribution. Pass `target: "three"` for $THREE when `THREE_MINT` is set. Read-only, no signer. |
+| `pump_buy_quote`    | Quotes a `pump_buy` for the exact amount and slippage: SOL spent, expected and minimum tokens, price impact, route and fees. Signs nothing; pass its `quote_id` to `pump_buy`. |
 | `pump_buy`          | Jupiter swap, direct or **Jito-bundled** (funder→buyer transfer + swap atomic). Accepts any runtime mint. **Execution.**                                                                                 |
+| `pump_launch_preview` | Previews a `pump_launch`: funder and creator addresses, rent, dev buy, bundle tip, the funder's total and any rule that would refuse it. Signs, uploads and mints nothing. |
 | `pump_launch`       | **Atomic launch** via Jito bundle: separate funder + creator wallets, both txs in the same block. Uploads metadata to pump.fun IPFS if no URI is supplied. **Execution.**                                |
+| `pump_collect_preview` | Previews `pump_collect_fees`: the live fee vault balance, rent kept behind, the exact SOL that would reach the destination, and any rule that would refuse it. Signs nothing. |
 | `pump_collect_fees` | **Atomic collect**: `collectCoinCreatorFee` + drain to a safe wallet in one tx inside a Jito bundle — resistant to a leaked creator key. **Execution.**                                                  |
 
 ### Identity

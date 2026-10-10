@@ -19,7 +19,7 @@ export const def = {
 	// still surface it rather than silently auto-running inference.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2-8 placed objects, each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference.',
+		'Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an evocative title, a mood (dawn/day/dusk/night), ground + island type, a color palette, and 2-8 placed objects, each with a single-object forge prompt, position, scale and rotation. No meshes are generated yet and nothing is saved; feed the plan to the three.ws diorama page (or /api/forge per object) to build the world. Read-mostly but runs live LLM inference. Use this when you want to review or edit the plan, or forge the objects yourself; to get a finished GLB world in one call, use build_world instead.',
 	inputSchema: {
 		prompt: z
 			.string()

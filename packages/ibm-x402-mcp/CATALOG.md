@@ -17,7 +17,7 @@ Source of truth for the published listing — keep in sync with `server.json`, `
 | Application Name | `three.ws` |
 | Application icon | `public/pwa-icon.svg` (square, <200kb) |
 | Transport | Streamable HTTP (remote) · stdio (`npx @three-ws/ibm-x402-mcp`) |
-| Server end-point URL | `https://three.ws/api/ibm-mcp` (Streamable HTTP, MCP 2025-06-18 — the 5 Granite tools; see note below) |
+| Server end-point URL | `https://three.ws/api/ibm-mcp` (Streamable HTTP, MCP 2025-06-18: <!-- mcp-count:ibm-mcp.tools -->6<!-- /mcp-count --> tools, the five Granite tools plus a free entry point; see note below) |
 
 ## Related links
 

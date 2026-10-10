@@ -138,7 +138,7 @@ export const NATIVE_TOOLS = [
 				openWorldHint: true,
 			},
 			description:
-				'Live 3D snapshot of a pump.fun / Solana token. Composes on-chain token metadata, bonding-curve graduation progress, and top-holder distribution, and returns a shareable three.ws /coin3d viewer deep-link (a spinning coin medallion textured with the token logo, a holder galaxy, and a graduation ring) plus an embeddable iframe and the underlying data. Read-only, free.',
+				'Live 3D snapshot of a pump.fun / Solana token. Composes on-chain token metadata, bonding-curve graduation progress, and top-holder distribution, and returns a shareable three.ws /coin3d viewer deep-link (a spinning coin medallion textured with the token logo, a holder galaxy, and a graduation ring) plus an embeddable iframe and the underlying data. Read-only, free. Use this to hand a user a visual, shareable view of a coin; for the raw numbers alone call get_token_details and get_token_holders.',
 			inputSchema: {
 				type: 'object',
 				properties: {

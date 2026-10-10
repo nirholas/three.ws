@@ -11,7 +11,7 @@ const SORTS = ['edge', 'roi', 'hitrate', 'subscribers', 'newest'];
 export const def = {
 	name: 'list_signal_feeds',
 	title: 'Browse the signal-feed marketplace',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Discover copy-trade signal feeds on three.ws. Returns the public directory of active feeds, each ' +
 		'ranked by its PROVEN realized edge (hit-rate × realized ROI, confidence-regressed toward the ' +
@@ -20,7 +20,8 @@ export const def = {
 		'to subscribe_signal), `slug`, title, the publisher (name, verified badge, track-record score, realized ' +
 		'SOL P&L), pricing (per-signal and per-epoch USDC), and proven stats (closed signals, hit-rate, average ' +
 		'realized %, active subscribers, executed fills, avg emit→fill latency, avg follower ROI). Sort by ' +
-		'`edge` (default), `roi`, `hitrate`, `subscribers`, or `newest`. Public, read-only live data — no key required.',
+		'`edge` (default), `roi`, `hitrate`, `subscribers`, or `newest`. Public, read-only live data; no key required. ' +
+		'Use this to choose a feed before subscribe_signal; to rank the publishers themselves call get_mirror_leaderboard.',
 	inputSchema: {
 		network: z
 			.enum(['mainnet', 'devnet'])

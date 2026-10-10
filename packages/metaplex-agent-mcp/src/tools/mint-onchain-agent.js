@@ -49,7 +49,8 @@ export const def = {
 		'on mainnet that funds $THREE buybacks (holding $THREE halves it, then waives it; devnet is free; see ' +
 		'three_status). The fee rides in the same transaction as the mint, so a failed mint pays nothing. Without ' +
 		'confirm:true it returns a full preview (both JSON documents, the paying wallet, every cost line including ' +
-		'the fee and its recipient) and broadcasts NOTHING. For Phantom/Solflare users, use prepare_agent_mint.',
+		'the fee and its recipient) and broadcasts NOTHING. Use this when the server holds the paying key and the person ' +
+		'approved the preview_agent_mint cost; for Phantom/Solflare users, use prepare_agent_mint instead.',
 	inputSchema: {
 		...mintShape,
 		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Overrides SOLANA_SECRET_KEY.'),
@@ -71,7 +72,8 @@ export const previewDef = {
 		'Preview mint_onchain_agent before it runs: both JSON documents, the paying wallet and its live SOL balance, ' +
 		'every cost line including the deploy fee and its recipient, and whether the balance covers it. Broadcasts ' +
 		'nothing. Show it to the user, get a clear yes, then call mint_onchain_agent with the same arguments, the ' +
-		'returned preview_id and confirm_spend: true.',
+		'returned preview_id and confirm_spend: true. Use this before mint_onchain_agent every time, so the person ' +
+		'sees the full cost before any SOL moves.',
 	inputSchema: {
 		...mintShape,
 		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Only its public key is read.'),

@@ -49,7 +49,7 @@ test('read tools are read-only, live-data queries', () => {
 		assert.equal(tool.annotations.readOnlyHint, true, `${tool.name} should be read-only`);
 		// Live data moves between calls — never idempotent, never destructive.
 		assert.equal(tool.annotations.idempotentHint, false, `${tool.name} reads live data, not idempotent`);
-		assert.equal(tool.annotations.destructiveHint, undefined, `${tool.name} is read-only — omit destructiveHint`);
+		assert.equal(tool.annotations.destructiveHint, false, `${tool.name} is read-only, so destructiveHint must be an explicit false`);
 	}
 });
 

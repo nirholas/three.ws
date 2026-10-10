@@ -10,7 +10,7 @@ export const def = {
 	title: 'Preview a coin launch (no funds move)',
 	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Preview a pump_launch before it runs: the funder and creator addresses, the creator rent transfer, the dev buy, the Jito tip, the total the funder pays, its balance, and any rule that would refuse the launch. Signs nothing, uploads nothing, mints nothing. Show it to the user, get a clear yes, then call pump_launch with the returned preview_id and the same arguments.',
+		'Preview a pump_launch before it runs: the funder and creator addresses, the creator rent transfer, the dev buy, the Jito tip, the total the funder pays, its balance, and any rule that would refuse the launch. Signs nothing, uploads nothing, mints nothing. Call this before every pump_launch: show the preview to the user, get a clear yes, then call pump_launch with the returned preview_id and the same arguments.',
 	inputSchema: {
 		name: z.string().min(1).max(32).describe('Coin name.'),
 		symbol: z.string().min(1).max(10).describe('Coin symbol.'),

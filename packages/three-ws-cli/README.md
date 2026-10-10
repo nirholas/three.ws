@@ -44,6 +44,7 @@ bash packages/three-ws-cli/tests/container/run.sh
 npx three-ws setup --clients cursor,vscode --yes   # specific clients, no prompts
 npx three-ws setup --project                       # project-scoped config in this directory
 npx three-ws login --device                        # sign in over SSH
+npx three-ws link BCDF-GHJK                        # link this terminal with a code from /dashboard/account
 npx three-ws mcp list --available                  # every server and its name
 npx three-ws tools --server three-ws-main --enable financial
 npx three-ws status

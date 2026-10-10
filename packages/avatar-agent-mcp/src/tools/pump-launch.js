@@ -29,7 +29,7 @@ export const def = {
 	// MCP ToolAnnotations — EXECUTION: moves real value on Solana mainnet, irreversible.
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Launch a pump.fun token atomically via a Jito bundle. Funder pays its own fee + tip and rent-funds the creator; creator signs createV2 in tx2 — both txs land in the same block or neither does. Pass devBuySol to launch-and-snipe: the creator first buy is folded into the create tx (createV2AndBuy) so it lands atomically before any sniper sees the curve. If uri is omitted, metadata is uploaded to pump.fun IPFS first from name/symbol/description/socials/imageUrl. Returns the mint address, bundle id, both tx signatures, the dev-buy quote, and the pump.fun URL. EXECUTION ACTION — creates a real mint on mainnet.',
+		'Launch a pump.fun token atomically via a Jito bundle. Funder pays its own fee + tip and rent-funds the creator; creator signs createV2 in tx2, and both txs land in the same block or neither does. Pass devBuySol to launch-and-snipe: the creator first buy is folded into the create tx (createV2AndBuy) so it lands atomically before any sniper sees the curve. If uri is omitted, metadata is uploaded to pump.fun IPFS first from name/symbol/description/socials/imageUrl. Returns the mint address, bundle id, both tx signatures, the dev-buy quote, and the pump.fun URL. EXECUTION ACTION: creates a real mint on mainnet. Call this after pump_launch_preview has been shown to the user and they said yes, and never without that yes.',
 	inputSchema: {
 		name: z.string().min(1).max(32).describe('Token name.'),
 		symbol: z.string().min(1).max(10).describe('Token symbol (ticker).'),

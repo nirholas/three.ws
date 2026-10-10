@@ -14,7 +14,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'query_x402_services',
 	title: 'Query x402 services as AgenC tasks',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Browse the x402 service directory (the bazaar of paid HTTP endpoints and MCP tools) projected into AgenC task shape. Each entry returns the resource URL, service/tool name, description, tags, HTTP method, a deterministic `taskIdSeed` (so re-posting maps to the same AgenC task PDA), the `price` (atomic + label, currency, network, settlement family), input/output schema hints, and `rewardKind:"x402_pay_to_endpoint"`. Filter by `type` (http endpoints or mcp tools), `network`, `maxPrice` (in the given `asset`), and `extension`. Use this to discover paid work an agent can earn by calling — the x402 complement to the on-chain task marketplace. Read-only live directory data; the feed moves between calls. Free, no key required.',
 	inputSchema: {

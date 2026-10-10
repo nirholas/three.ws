@@ -24,7 +24,7 @@ import {
 
 const TOOL_NAME = 'agenc_get_task';
 const TOOL_DESCRIPTION =
-	'Fetch the on-chain state and lifecycle timeline of a single AgenC task. Pass either taskPda (the derived account address) OR the {creator, taskId} pair, where taskId may be a 64-char hex string or any UTF-8 label (hashed to 32 bytes). Returns state, reward, deadline, worker counts, lifecycle events, and reward mint. AgenC = agenc.tech (Tetsuo Corp). Paid: $0.001 USDC.';
+	'Fetch the on-chain state and lifecycle timeline of a single AgenC task. Pass either taskPda (the derived account address) OR the {creator, taskId} pair, where taskId may be a 64-char hex string or any UTF-8 label (hashed to 32 bytes). Returns state, reward, deadline, worker counts, lifecycle events, and reward mint. AgenC = agenc.tech (Tetsuo Corp). Use this when you have one task\'s PDA (or its creator and id) and need its current state and history; to find tasks in the first place, call agenc_list_tasks. Paid: $0.001 USDC.';
 
 function resolveTaskId(input) {
 	const s = String(input).trim();

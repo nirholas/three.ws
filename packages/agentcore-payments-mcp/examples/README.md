@@ -5,7 +5,7 @@ account, so you can run both before deciding whether to fund anything.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Spawns this package's MCP server over stdio and prints all 5 tools with their input schemas and safety annotations. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Spawns this package's MCP server over stdio and prints all <!-- mcp-count:agentcore-payments-mcp.tools -->6<!-- /mcp-count --> tools with their input schemas and safety annotations. | `node examples/list-tools.mjs` |
 | [`plan-a-session.mjs`](plan-a-session.mjs) | Reads what live x402 endpoints actually charge (unpaid `402` probe), then prints the exact `create_payment_session` policy sized for your run. | `node examples/plan-a-session.mjs` |
 
 Run them from the package directory:
@@ -19,8 +19,8 @@ node examples/plan-a-session.mjs
 ## list-tools.mjs
 
 Runs the MCP `initialize` handshake against `node src/index.js`, calls
-`tools/list`, and formats every tool. Registration is env-free, so all five
-tools appear with no `THREE_WS_SESSION` or `PAYMENT_SESSION_TOKEN` set.
+`tools/list`, and formats every tool. Registration is env-free, so every
+tool appears with no `THREE_WS_SESSION` or `PAYMENT_SESSION_TOKEN` set.
 
 Abridged output:
 

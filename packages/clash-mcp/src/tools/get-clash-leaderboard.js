@@ -10,7 +10,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_clash_leaderboard',
 	title: 'Coin Clash leaderboard',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Rank Coin Clash factions by their all-time war record. Returns `board`: factions sorted by wins then power, each with `token`, `symbol`, `image`, `members`, `w`/`l`/`d` (win/loss/draw), `battles`, cumulative `power`, and `winRate` (percent of decided battles won, or null if none decided yet). Pass `faction` (a faction mint) to also get `soldiers`: that faction\'s top rally contributors this round (wallet + power). Live data — records update as rounds settle. Use this to find the strongest armies and the heaviest hitters.',
 	inputSchema: {

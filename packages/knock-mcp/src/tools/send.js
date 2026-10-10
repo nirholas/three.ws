@@ -22,7 +22,8 @@ export const def = {
 		'the token, the chain and the endpoint, so a human can approve the spend and pay from their own ' +
 		'wallet (npx @three-ws/knock, or any x402 client). Pass `request_id` to make retries safe: the same ' +
 		'id never knocks, or charges, twice. Refusals (shut door, daily cap, message too long) happen before ' +
-		'any payment, so a rejected knock is never a paid one.',
+		'any payment, so a rejected knock is never a paid one. Use this when you have one message for a specific ' +
+		'person; call knock_quote first on a priced door so the human approves the live price.',
 	inputSchema: {
 		to: z.string().min(1).max(40).describe('Recipient username, with or without the @.'),
 		from: z.string().min(1).max(64).describe('Who is knocking. Shown to them and spoken out loud.'),

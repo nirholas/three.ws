@@ -10,12 +10,14 @@ export { toolError } from '../payments.js';
 // input; embeddings are deterministic for a given model.
 export const generativeAnnotations = Object.freeze({
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: false,
 });
 
 export const deterministicAnnotations = Object.freeze({
 	readOnlyHint: true,
+	destructiveHint: false,
 	openWorldHint: true,
 	idempotentHint: true,
 });

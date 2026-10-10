@@ -10,9 +10,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'browse_agents',
 	title: 'Browse the agent marketplace',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Search and page the public three.ws agent marketplace. Filter by category and free-text query, choose a sort order, and get back a list of agent cards (id, name, description, category, tags, ratings, view/fork counts, thumbnail and GLB avatar URLs) plus a cursor for the next page. Read-only.',
+		'Search and page the public three.ws agent marketplace. Filter by category and free-text query, choose a sort order, and get back a list of agent cards (id, name, description, category, tags, ratings, view/fork counts, thumbnail and GLB avatar URLs) plus a cursor for the next page. Use this to find agents by topic or popularity; call agent_detail on a result for its full profile. Read-only.',
 	inputSchema: {
 		category: z
 			.string()

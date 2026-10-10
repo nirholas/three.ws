@@ -21,7 +21,7 @@ const tool = defineTool({
 	id: 'naming-mcp-sns-resolve',
 	title: 'Resolve a .sol name to its owner wallet',
 	description:
-		'Resolve a Solana Name Service (.sol) name to the base58 wallet address that owns it. Accepts a bare label, a subdomain, or the full name with or without the trailing ".sol". Returns the owner address, or resolved:false when the name is unregistered. Mainnet only. Read-only.',
+		'Resolve a Solana Name Service (.sol) name to the base58 wallet address that owns it. Accepts a bare label, a subdomain, or the full name with or without the trailing ".sol". Returns the owner address, or resolved:false when the name is unregistered. Mainnet only. Use this before sending to a .sol name so funds reach the wallet that owns it; for wallet to name call sns_reverse. Read-only.',
 	version: '1.0.0',
 	permissions: { network: [new URL(THREE_WS_BASE).hostname] },
 	apis: [
@@ -29,8 +29,8 @@ const tool = defineTool({
 			name: 'sns_resolve',
 			title: 'Resolve a .sol name to its owner wallet',
 			description:
-				'Resolve a Solana Name Service (.sol) name to the base58 wallet address that owns it. Accepts a bare label, a subdomain, or the full name with or without the trailing ".sol". Returns the owner address, or resolved:false when the name is unregistered. Mainnet only. Read-only.',
-			annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+				'Resolve a Solana Name Service (.sol) name to the base58 wallet address that owns it. Accepts a bare label, a subdomain, or the full name with or without the trailing ".sol". Returns the owner address, or resolved:false when the name is unregistered. Mainnet only. Use this before sending to a .sol name so funds reach the wallet that owns it; for wallet to name call sns_reverse. Read-only.',
+			annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 			parameters: z.object({
 				name: z
 					.string()

@@ -65,9 +65,9 @@ export const def = {
 	name: 'validate_glb',
 	title: 'Validate a GLB / glTF against the Khronos spec',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Run the official Khronos gltf-validator against a GLB URL. Returns errors, warnings, infos, and hints with codes + JSON pointers, plus structural counts (animations, materials, etc.) per the validator\'s info report. The same engine that powers gltf.report.',
+		'Run the official Khronos gltf-validator against a GLB URL. Returns errors, warnings, infos, and hints with codes + JSON pointers, plus structural counts (animations, materials, etc.) per the validator\'s info report. The same engine that powers gltf.report. Use this to find out why a GLB fails to load or renders wrong; for counts and file size alone, inspect_glb is lighter.',
 	inputSchema: {
 		url: z.string().describe('Public URL or data: URL of a .glb / .gltf file to validate.'),
 		maxIssues: z.number().int().min(1).max(2000).optional()

@@ -32,6 +32,12 @@ const READ_ONLY_TOOLS = new Set([
 	'pump_snapshot',
 	'wallet_balance',
 	'ens_sns_resolve',
+	// Previews and quotes sign nothing and move nothing: they are what a client
+	// shows the user before the matching execution tool runs.
+	'wallet_send_preview',
+	'pump_buy_quote',
+	'pump_launch_preview',
+	'pump_collect_preview',
 ]);
 
 // Deterministic reads — same inputs, same answer — may advertise idempotency.
@@ -45,9 +51,9 @@ const IDEMPOTENT_TOOLS = new Set([
 	'render_avatar',
 ]);
 
-test('exactly 20 tools are registered', () => {
-	assert.equal(TOOLS.length, 20);
-	assert.equal(new Set(TOOLS.map((t) => t.name)).size, 20, 'tool names must be unique');
+test('exactly 24 tools are registered', () => {
+	assert.equal(TOOLS.length, 24);
+	assert.equal(new Set(TOOLS.map((t) => t.name)).size, 24, 'tool names must be unique');
 });
 
 test('every tool has a human title and a complete annotations object', () => {

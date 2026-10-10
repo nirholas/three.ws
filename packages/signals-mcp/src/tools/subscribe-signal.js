@@ -10,7 +10,7 @@ import { apiRequest, requireApiKey } from '../lib/api.js';
 export const def = {
 	name: 'subscribe_signal',
 	title: 'Subscribe an agent to a signal feed',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Subscribe one of YOUR agents to a signal feed so it copy-trades the publisher. Idempotent: a feed is ' +
 		'keyed by (subscriber agent, feed) — re-calling updates the existing subscription instead of creating a ' +
@@ -21,7 +21,8 @@ export const def = {
 		'per-signal or per-epoch per the feed pricing) AND auto-mirrors real on-chain trades from the subscriber ' +
 		"agent's custodial wallet, within its spend policy. Money moves at delivery time (when the publisher emits " +
 		'a signal), not at the moment you call this tool. Use set_subscription_status with killed:true to halt all ' +
-		'further pay/trade instantly. Requires THREE_WS_API_KEY; the agent must be owned by that account.',
+		'further pay/trade instantly. Requires THREE_WS_API_KEY; the agent must be owned by that account. ' +
+		'Use this after picking a feed with list_signal_feeds; start in simulate mode and switch to live only on the owner\'s explicit say-so.',
 	inputSchema: {
 		agent_id: z
 			.string()

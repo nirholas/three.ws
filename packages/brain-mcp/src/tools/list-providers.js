@@ -9,7 +9,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'list_providers',
 	title: 'List LLM providers and models',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'List every LLM the three.ws router can run a completion through — one entry per provider/model. ' +
 		'Each entry has: `key` (the id you pass to `chat`), `label` (human name), `network` (e.g. Anthropic, ' +

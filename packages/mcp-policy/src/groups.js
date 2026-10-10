@@ -73,6 +73,7 @@ export const GROUPS = Object.freeze([
 	{ id: 'mail', label: 'Mail', summary: 'Outward messages: paid knocks, announcements to a person, and agent mail.' },
 	{ id: 'x402', label: 'x402', summary: 'Discover, price, and pay x402 services; payment sessions; publish your own paid endpoint.' },
 	{ id: 'wallet', label: 'Wallet', summary: 'Agent wallets: balances, portfolio, provisioning, and transfers out.' },
+	{ id: 'commerce', label: 'Commerce', summary: 'Invoices paid on Solana, offers an agent sells and buys, transfers to people, and proposals to change an agent\'s spending limits.' },
 	{ id: 'billing', label: 'Billing', summary: 'Plan, usage, receipts, and platform fees.' },
 	{ id: 'intelligence', label: 'Intelligence', summary: 'Market data and research: token intel, holders, trades, smart money, KOLs, Oracle conviction, alerts.' },
 	{ id: 'integrations', label: 'Integrations', summary: 'Embeds, widgets, and connected systems such as a Home Assistant house.' },

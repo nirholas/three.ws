@@ -15,7 +15,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'motion_capture_clip',
 	title: 'Get a motion-capture clip',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Fetch a single motion-capture clip by id, including its full per-frame animation track. Returns { clip } with metadata plus ' +
 		'`frames`: each frame is { t, shapes, mat? } — t in seconds, shapes a name→weight map (ARKit blendshapes for face clips; joint ' +

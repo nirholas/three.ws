@@ -24,7 +24,8 @@ export const def = {
 		'Governance enforces budget limits, URL allowlists, and per-tx ceilings before any money moves. ' +
 		'Endpoints that respond without a 402 are called for free. ' +
 		'Returns the endpoint\'s response + payment receipt. ' +
-		'Uses PAYMENT_SESSION_TOKEN env var if token is not passed inline.',
+		'Uses PAYMENT_SESSION_TOKEN env var if token is not passed inline. ' +
+		'Use this after quote_session_payment returns a price the user has explicitly approved; it moves real USDC.',
 	inputSchema: {
 		url: z.string().url()
 			.describe('The x402 endpoint URL to pay and call.'),

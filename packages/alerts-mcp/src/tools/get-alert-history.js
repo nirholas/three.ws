@@ -16,12 +16,12 @@ const API_MAX = 50;
 export const def = {
 	name: 'get_alert_history',
 	title: 'Read fired pump.fun alert history',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Read the pump.fun alerts that have actually fired for the authenticated account, newest first. ' +
 		'Each entry carries a one-line `summary`, the originating `rule_id`, the event `kind`, the coin ' +
 		'(mint / name / symbol), whether it has been `read`, when it `fired_at`, and the full `event` ' +
-		'payload (amounts, market cap, tx signature, buyer, …). Pair this with list_alert_rules — whose ' +
+		'payload (amounts, market cap, tx signature, buyer, …). Use this to review what fired; pair it with list_alert_rules, whose ' +
 		'`recent_deliveries` shows per-channel send outcomes — to see both what fired and how it was ' +
 		'delivered. Optionally filter to one rule (rule_id) or one kind. The feed returns at most the 50 ' +
 		'most recent alerts. Requires THREE_WS_SESSION.',

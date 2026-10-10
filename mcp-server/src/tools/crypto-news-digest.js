@@ -17,7 +17,7 @@ const TOOL_DESCRIPTION =
 	'article behind it. The response names the clustering engine honestly — "llm" (semantic grouping via ' +
 	'the platform model chain, with hallucinated citations dropped) or "heuristic" (keyword+ticker ' +
 	'Jaccard clustering) — plus an overall market mood and the most-covered tickers for the window. ' +
-	'Ideal first call for "what happened in crypto today". For raw headlines use crypto_news; for ' +
+	'Call this first for "what happened in crypto today". For raw headlines use crypto_news; for ' +
 	'history use crypto_news_archive. Free — no payment or API key required.';
 
 const inputZodShape = {

@@ -10,9 +10,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'vanity_open',
 	title: 'List claimable open bounties for workers',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'List the open, unexpired bounties a grinding worker can race to claim — the queue worker fleets poll. Each entry carries the pattern to grind and the escrowed USDC reward; the first worker to submit a verified, sealed key wins. Read-only discovery; submitting a claim is a separate write on the HTTP API.',
+		'List the open, unexpired bounties a grinding worker can race to claim: the queue worker fleets poll. Each entry carries the pattern to grind and the escrowed USDC reward; the first worker to submit a verified, sealed key wins. Use this when running a grinding worker that needs its next job; for the full board with settled bounties call vanity_board. Read-only discovery; submitting a claim is a separate write on the HTTP API.',
 	inputSchema: {
 		limit: z.number().int().min(1).max(100).optional().describe('Max claimable bounties to return (1–100, default 30).'),
 	},

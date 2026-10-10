@@ -53,6 +53,7 @@ const TOOL_DESCRIPTION =
 	`SECURITY: the returned \`privateKey64\`/\`mnemonic\` is a REAL, fully-funded-capable secret. It transits the MCP channel in plaintext, ` +
 	`so the MCP host (Claude Desktop, Cursor, any proxy) MAY LOG the entire response. Treat the whole tool result as a secret, ` +
 	`import it into a wallet immediately, and never reuse a secret that may have been logged. ` +
+	`Use this to grind a fresh address with a short pattern (about 3 characters is the practical reach); for longer brandable addresses already in stock, call vanity_premium instead. ` +
 	`Billed via x402 \`exact\` (flat ${PRICE_USD} USDC on Solana).`;
 
 // Single source of truth: Zod shape carries descriptions + bounds; JSON Schema

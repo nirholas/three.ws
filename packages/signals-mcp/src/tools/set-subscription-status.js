@@ -11,7 +11,7 @@ import { apiRequest, requireApiKey } from '../lib/api.js';
 export const def = {
 	name: 'set_subscription_status',
 	title: 'Resume, pause, stop, or kill a subscription',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Control an existing signal subscription owned by the authenticated account.\n' +
 		'  • active  — (re)activate it; this also CLEARS any kill flag so it resumes paying/mirroring.\n' +

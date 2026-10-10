@@ -23,7 +23,7 @@ import { createNoopSigner, publicKey as umiPublicKey, signerIdentity } from '@me
 export const def = {
 	name: 'prepare_agent_mint',
 	title: 'Prepare an agent mint for a Phantom/Solflare wallet to sign',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Build the exact Genesis-style mint+register flow (Metaplex Core asset + Agent Identity) for an EXTERNAL ' +
 		'Solana wallet: Phantom, Solflare, Backpack, Ledger, anything. Needs no secret key. Returns unsigned ' +
@@ -33,7 +33,8 @@ export const def = {
 		'send_signed_transaction. Includes the same mainnet deploy fee as mint_onchain_agent, priced against the ' +
 		"wallet's live $THREE balance and returned as deploy_fee_sol/deploy_fee_to before anything is signed. " +
 		'Broadcasts nothing itself. The blockhash expires after roughly a minute, so sign ' +
-		'promptly and re-prepare if a wallet reports an expired transaction.',
+		'promptly and re-prepare if a wallet reports an expired transaction. Use this instead of mint_onchain_agent ' +
+		'when the person pays from their own browser or hardware wallet.',
 	inputSchema: {
 		...mintShape,
 		wallet: z.string().min(32).max(44).describe('The base58 address of the wallet that will sign, pay, and own the agent.'),

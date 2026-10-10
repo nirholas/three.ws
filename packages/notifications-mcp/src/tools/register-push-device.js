@@ -25,14 +25,15 @@ const subscription = z
 export const def = {
 	name: 'register_push_device',
 	title: 'Register push device',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Register a Web Push device so the account receives push notifications on it. Pass the browser ' +
 		'`subscription` object exactly as `pushManager.subscribe().toJSON()` produces it — ' +
 		'{ endpoint, keys: { p256dh, auth } }. Push endpoints are globally unique: re-registering the same ' +
 		'device upserts (the latest owner wins) and is a no-op, so this is idempotent. Whether a given ' +
 		'notification category actually delivers over push is still governed by set_preferences. Returns ' +
-		'`{ ok: true }` on success. Use unregister_push_device to remove a device.',
+		'`{ ok: true }` on success. Use this when a browser has just granted push permission; use ' +
+		'unregister_push_device to remove a device.',
 	inputSchema: {
 		subscription,
 	},

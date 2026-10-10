@@ -17,12 +17,13 @@ const FORMATS = ['wav', 'pcm', 'flac', 'ogg'];
 export const def = {
 	name: 'speech_to_text',
 	title: 'Speech to text',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Transcribe spoken audio to text using the free NVIDIA NIM Riva recognizer. Pass the audio as base64 (raw or a data: URL). ' +
 		'Accepted encodings: wav, pcm (set sampleRate), flac, ogg/opus — the WebM container from a browser MediaRecorder must be decoded ' +
 		'to WAV or PCM first. Returns { text, confidence, language, model, durationSec } and, when `words` is set, per-word timestamps. ' +
-		'Audio is capped at ~8 MB. Read-only — recognizes speech without changing any platform state.',
+		'Audio is capped at ~8 MB. Read-only: recognizes speech without changing any platform state. ' +
+		'Use this to turn a user\'s recorded voice into text an agent can act on; to go the other way, call text_to_speech.',
 	inputSchema: {
 		audio: z
 			.string()

@@ -6,7 +6,7 @@ JSON-RPC to it, and read the live grind-bounty market.
 
 | File | What it does | Run |
 |---|---|---|
-| [`list-tools.mjs`](list-tools.mjs) | Prints all 8 tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
+| [`list-tools.mjs`](list-tools.mjs) | Prints all <!-- mcp-count:vanity-mcp.tools -->8<!-- /mcp-count --> tools with titles, annotation hints, and full input schemas. | `node examples/list-tools.mjs` |
 | [`quote-and-appraise.mjs`](quote-and-appraise.mjs) | Market config, then a pattern's difficulty and honest bounty price, then one address's rarity, then live market totals. | `node examples/quote-and-appraise.mjs` |
 
 Run them from the package directory:
@@ -21,7 +21,7 @@ Nothing to install and nothing to configure: every tool on this server is
 read-only and keyless. Posting a bounty and claiming one are x402-paid writes on
 the HTTP API, and this server does not expose them, so these examples cannot
 spend anything. The server prints a one-line banner to stderr on connect
-(`[vanity-mcp@x.y.z] connected over stdio with 8 tools`), which is normal.
+(`[vanity-mcp@x.y.z] connected over stdio with <n> tools`), which is normal.
 
 ## list-tools.mjs
 

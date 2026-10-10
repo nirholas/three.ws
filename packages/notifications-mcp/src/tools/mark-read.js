@@ -13,14 +13,15 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'mark_read',
 	title: 'Mark notifications read',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Mark notifications as read in the inbox. Pass `id` to mark a single notification read, or `all: ' +
 		'true` to mark every unread notification read at once (exactly one of the two is required). Marking ' +
 		'read only updates the read timestamp — it does not delete anything, and re-running with the same ' +
 		'arguments has no further effect (idempotent). When `id` is given, returns the notification id and ' +
 		'its `read_at`; when `all` is given, returns `marked_read`, the number of notifications newly marked ' +
-		'read. To remove a notification entirely use delete_notification instead.',
+		'read. Use this for normal triage after list_notifications; to remove a notification entirely use ' +
+		'delete_notification instead.',
 	inputSchema: {
 		id: z
 			.string()

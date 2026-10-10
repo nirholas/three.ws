@@ -18,7 +18,7 @@ export const def = {
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
 	description:
-		'Generate a Solana keypair locally. Optionally grind for a base58 prefix/suffix (e.g. "three") and/or attach it to an avatar session. Returns the base58 pubkey and secret ONCE — store the secret yourself; the MCP does not persist it.',
+		'Generate a Solana keypair locally. Optionally grind for a base58 prefix/suffix (e.g. "three") and/or attach it to an avatar session. Returns the base58 pubkey and secret ONCE: store the secret yourself; the MCP does not persist it. Use this when an avatar needs its own fresh Solana address; it moves no funds and touches no chain.',
 	inputSchema: {
 		sessionId: z.string().optional().describe('If set, the wallet is attached to this avatar session.'),
 		vanityPrefix: z.string().max(8).optional().describe('Base58 prefix to grind for (e.g. "three"). Up to 8 chars.'),

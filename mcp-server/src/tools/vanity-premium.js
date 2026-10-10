@@ -33,8 +33,8 @@ const TOOL_DESCRIPTION =
 	'FREE and read-only: returns the available patterns, each address, its rarity tier, and a difficulty-' +
 	'scaled price ($1–$50), plus a ready-to-pay x402 buyUrl. Pay that URL (USDC on Base or Solana) to ' +
 	'receive the private key exactly once; the ciphertext is destroyed on delivery (delete-after-reveal). ' +
-	'Filter by prefix or rarity tier and sort by rarity/price/newest. For a fresh ≤3-char grind instead of ' +
-	'buying from stock, use the vanity_grinder tool. CUSTODY: keys are platform-generated — use as a token ' +
+	'Filter by prefix or rarity tier and sort by rarity/price/newest. Use this to browse long brandable addresses ' +
+	'already in stock; for a fresh grind of up to 3 characters, use the vanity_grinder tool instead. CUSTODY: keys are platform-generated, so use them as a token ' +
 	'mint or sweep to self-generated custody, not a treasury. Free — no payment required to browse.';
 
 const inputZodShape = {

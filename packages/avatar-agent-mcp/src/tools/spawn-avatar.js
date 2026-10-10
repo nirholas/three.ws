@@ -12,7 +12,7 @@ export const def = {
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Spawn a 3D avatar from a curated default (preset="default" or "cz") or from a custom GLB URL. Returns a sessionId other tools (dress_avatar, viewer_url, speak) reference, plus the avatar GLB URL and a ready-to-open three.ws viewer link.',
+		'Spawn a 3D avatar from a curated default (preset="default" or "cz") or from a custom GLB URL. Returns a sessionId other tools (dress_avatar, viewer_url, speak) reference, plus the avatar GLB URL and a ready-to-open three.ws viewer link. Call this first: dress_avatar, viewer_url, and speak all build on the session it returns.',
 	inputSchema: {
 		preset: z.enum(['default', 'cz']).optional()
 			.describe('Pick a curated default avatar.'),

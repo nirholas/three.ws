@@ -37,6 +37,7 @@ const TOOL_DESCRIPTION =
 	'result to extend the same thread, or `parent_index` to branch off an earlier version instead of the ' +
 	'latest. The source GLB is never modified; each restyle or variant is a new, separately addressable asset ' +
 	'so you can always revert. Returns durable GLB URL(s), the applied PBR factors, and the lineage. ' +
+	'Use this when only the look of the surface should change; to change the shape itself, call refine_model instead. ' +
 	'Paid: $0.05 USDC.';
 
 const PRESET_NAMES = [

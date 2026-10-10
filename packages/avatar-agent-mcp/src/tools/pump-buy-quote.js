@@ -12,7 +12,7 @@ export const def = {
 	title: 'Quote a token buy via Jupiter (no funds move)',
 	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Quote a pump_buy before it runs: the SOL spent, the expected and minimum tokens received, price impact, route, fees, and any rule that would refuse it. Uses the live Jupiter quote for the exact amount and slippage. Signs nothing. Show it to the user, get a clear yes, then call pump_buy with the returned quote_id and the same arguments.',
+		'Quote a pump_buy before it runs: the SOL spent, the expected and minimum tokens received, price impact, route, fees, and any rule that would refuse it. Uses the live Jupiter quote for the exact amount and slippage. Signs nothing. Call this before every pump_buy: show the quote to the user, get a clear yes, then call pump_buy with the returned quote_id and the same arguments.',
 	inputSchema: {
 		target: z.string().describe('Target mint (base58) or "three" to use the THREE_MINT env.'),
 		buySol: z.number().positive().describe('Amount of SOL to spend.'),

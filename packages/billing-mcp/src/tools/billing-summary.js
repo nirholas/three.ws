@@ -12,7 +12,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_billing_summary',
 	title: 'My plan, quotas, and current usage',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Your account\'s plan tier, the quota ceilings for that tier, and live usage measured against them — the ' +
 		'"how much of my plan is left?" call. Returns `plan` (e.g. free | pro), `quotas` (max_avatars, ' +
@@ -20,7 +20,8 @@ export const def = {
 		'and `usage` (avatar_count, total_bytes of avatar storage, agent_count, mcp_calls_24h tool calls in the last ' +
 		'24 hours, llm_calls_month LLM calls since the start of this UTC month). Each tool returns a `remaining` map ' +
 		'computed from quotas − usage so an agent can see headroom at a glance. Resolved from your three.ws session; ' +
-		'requires THREE_WS_SESSION. Read-only.',
+		'requires THREE_WS_SESSION. Read-only. ' +
+		'Use this before a heavy job to check how much of the plan is left; for what you were charged call query_usage.',
 	inputSchema: {},
 	async handler() {
 		const data = await apiRequest('/api/billing/summary', { auth: true });

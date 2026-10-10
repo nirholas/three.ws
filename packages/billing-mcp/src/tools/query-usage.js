@@ -14,7 +14,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'query_usage',
 	title: 'My metered usage / invoice statement for a period',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Your metered usage rolled up into an invoice statement for a billing period — what you were charged for, ' +
 		'broken down by action. Returns `period_label` + `period` ({from,to} ISO), `line_items` (one per billed ' +
@@ -23,7 +23,8 @@ export const def = {
 		'and `reconciliation` (total / reconciled / unreconciled / all_reconciled — whether every charge maps to a ' +
 		'real settlement). Defaults to the current UTC calendar month. Pass `period` (YYYY-MM) for a calendar month, ' +
 		'or `from`/`to` (ISO-8601) for an explicit window — `period` wins if both are given. For a downloadable CSV ' +
-		'of the same line items use export_billing_history. Requires THREE_WS_SESSION. Read-only.',
+		'of the same line items use export_billing_history. Requires THREE_WS_SESSION. Read-only. ' +
+		'Use this to explain what a period\'s charges were for; for one charge\'s itemized receipt call get_receipt.',
 	inputSchema: {
 		period: z
 			.string()

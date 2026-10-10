@@ -9,9 +9,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'signal_feed',
 	title: 'Signal feed track record + recent signals',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"Read one signal feed's public detail: the publisher's verified track record, the feed's proven accuracy (hit-rate, average realized ROI, follower ROI, emit→fill latency), pricing, and the recent emission log — every signal with its realized outcome and the on-chain tx that proves it. Read-only live data.",
+		"Read one signal feed's public detail: the publisher's verified track record, the feed's proven accuracy (hit-rate, average realized ROI, follower ROI, emit→fill latency), pricing, and the recent emission log, every signal with its realized outcome and the on-chain tx that proves it. Read-only live data. Use this to judge a feed's proven accuracy and price before subscribing to it.",
 	inputSchema: {
 		slug: z
 			.string()

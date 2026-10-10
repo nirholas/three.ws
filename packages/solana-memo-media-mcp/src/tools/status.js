@@ -5,8 +5,8 @@ import { getRpcUrls } from '../lib/rpc.js';
 export const def = {
 	name: 'get_solana_memo_media_status',
 	title: 'Solana memo media capability',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-	description: 'Report the local decoding policy, recognized memo programs, and ordered Solana RPC failover hosts. No network call is made and no data is stored.',
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+	description: 'Report the local decoding policy, recognized memo programs, and ordered Solana RPC failover hosts. No network call is made and no data is stored. Use this to check which RPC hosts and memo programs the server will use before a scan.',
 	inputSchema: {},
 	handler: async () => ({
 		accepted_mime_types: [...ALLOWED_MEDIA_TYPES],

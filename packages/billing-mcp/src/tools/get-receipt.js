@@ -15,14 +15,15 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_receipt',
 	title: 'Get one receipt (per-charge or per-purchase)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Fetch a single itemized receipt you own, in one of two forms. Pass `event_id` (numeric, from a usage ' +
 		'line item) for a per-CHARGE receipt: action, label, units, gross_usd / fee_usd / net (with USDC atomics), ' +
 		'discount_bps + discount_percent, and a `settlement` block (kind, ref, tx_signature, network, explorer_url, ' +
 		'token_price_usd) plus issued_at. Pass `purchase_id` (UUID) instead for the cryptographically SIGNED receipt ' +
 		'JSON of a confirmed skill purchase (receipt + signature + issued_at). Supply exactly one. Returns the ' +
-		'`receipt` object and which `kind` ("charge" | "purchase") it is. Requires THREE_WS_SESSION. Read-only.',
+		'`receipt` object and which `kind` ("charge" | "purchase") it is. Requires THREE_WS_SESSION. Read-only. ' +
+		'Use this to prove or itemize one specific charge or purchase; for a whole period\'s charges call query_usage.',
 	inputSchema: {
 		event_id: z
 			.union([z.number().int().nonnegative(), z.string().regex(/^\d+$/, 'event_id must be numeric')])

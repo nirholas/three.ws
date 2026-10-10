@@ -14,9 +14,9 @@ import { verifyAction } from '../lib/signing.js';
 export const def = {
 	name: 'query_action',
 	title: 'Fetch + verify one provenance action',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"Fetch a single action from an agent's append-only log by its id, then verify it. Returns the action (type, payload, source_skill, created_at, signature, signer_address) plus a `verification` block: `signed`, `valid`, `reason` (`ok` | `unsigned` | `signer_mismatch` | `malformed_signature`), the `recovered` signer address, and the recomputed `digest`. `valid:true` means the ERC-191 signature recovers to the claimed signer over the canonical action form — cryptographic proof the named agent authored this exact action and it was not altered. The ledger is owner-scoped: THREE_WS_TOKEN must own `agent_id`. Returns ok:false / not_found when the id is absent from this agent's log. Read-only.",
+		"Fetch a single action from an agent's append-only log by its id, then verify it. Returns the action (type, payload, source_skill, created_at, signature, signer_address) plus a `verification` block: `signed`, `valid`, `reason` (`ok` | `unsigned` | `signer_mismatch` | `malformed_signature`), the `recovered` signer address, and the recomputed `digest`. `valid:true` means the ERC-191 signature recovers to the claimed signer over the canonical action form: cryptographic proof the named agent authored this exact action and it was not altered. The ledger is owner-scoped: THREE_WS_TOKEN must own `agent_id`. Returns ok:false / not_found when the id is absent from this agent's log. Use this to prove or check a single action someone cited; for the full trail call list_agent_actions. Read-only.",
 	inputSchema: {
 		agent_id: z
 			.string()

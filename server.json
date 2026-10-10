@@ -189,12 +189,12 @@
 				{
 					"name": "perps",
 					"title": "Trade perpetuals",
-					"arguments": ["agentId"]
+					"arguments": ["agentId", "market"]
 				},
 				{
 					"name": "predictions",
 					"title": "Prediction markets",
-					"arguments": ["agentId"]
+					"arguments": ["agentId", "topic"]
 				},
 				{
 					"name": "embed-avatar",

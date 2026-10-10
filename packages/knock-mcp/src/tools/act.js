@@ -13,7 +13,8 @@ export const def = {
 		'any other address. Set block to stop hearing from that sender: they are matched on the wallet that ' +
 		'paid when there was one, and they see the same answer a shut door gives, so they cannot tell it was ' +
 		'them. Acting on a knock also settles its companion delivery, so your avatar will not walk on later ' +
-		'to announce something you have already dealt with. Requires THREE_WS_API_KEY.',
+		'to announce something you have already dealt with. Requires THREE_WS_API_KEY. Use this after knock_inbox ' +
+		'to answer, close, or block a knock you have triaged.',
 	inputSchema: {
 		knock_id: z.string().min(1).describe('The knock id from knock_inbox.'),
 		status: z.enum(['read', 'replied', 'dismissed']).optional().describe('The new status. Use replied together with reply.'),

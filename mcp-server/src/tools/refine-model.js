@@ -39,6 +39,8 @@ const TOOL_DESCRIPTION =
 	'revert (a pointer move over the returned lineage). Pass parent_lineage from a previous refine_model ' +
 	'result to extend the same thread; omit it to start a fresh lineage rooted at glb_url. Returns the new ' +
 	'GLB URL, a three.ws viewer link, the composed prompt, the full lineage, and the active version index. ' +
+	'Use this when a generated model is close but its shape needs a specific change; to change only the surface ' +
+	'material without touching the mesh, call restyle_material instead, which costs less. ' +
 	'Paid: $0.25 USDC.';
 
 const inputZodShape = {

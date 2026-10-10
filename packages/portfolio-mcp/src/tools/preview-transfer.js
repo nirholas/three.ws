@@ -16,7 +16,8 @@ export const def = {
 		'the sender holds, whether a recipient token account must be created and the rent that costs, the network fee, ' +
 		'and every rule that would refuse the transfer (spend cap, allowlist, balance). Signs nothing. Show it to the ' +
 		'user, get a clear yes, then call send_transfer with the same arguments, the returned preview_id and ' +
-		'confirm_transfer: true.',
+		'confirm_transfer: true. Use this before every send_transfer, so the person approves the exact recipient, ' +
+		'amount and fees.',
 	inputSchema: {
 		recipient: z.string().min(32).max(44).describe('Destination Solana pubkey (base58).'),
 		amount: z

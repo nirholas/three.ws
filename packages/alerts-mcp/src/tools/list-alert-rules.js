@@ -9,7 +9,7 @@ import { shapeRule } from '../lib/shapes.js';
 export const def = {
 	name: 'list_alert_rules',
 	title: 'List my pump.fun alert rules',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'List every pump.fun alert rule on the authenticated three.ws account. Each rule has a `kind` ' +
 		'(graduation | price_above | price_below | whale_buy | new_mint), its target (target_mint or ' +

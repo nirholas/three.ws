@@ -246,6 +246,11 @@ async function buildAcceptsForTool({
  * @param {Function} handler                 — async (args, { settle? }) → result
  * @returns {Function} MCP tool callback for McpServer.tool()
  */
+// Every tool wrapped by paid() in this process, by name, with the price it
+// quotes. Registration fills it, so the MCP catalog build reads each price from
+// the same call that charges it rather than from the description text.
+export const PAID_TOOL_PRICES = new Map();
+
 export function paid(cfg, handler) {
 	const {
 		toolName,
@@ -267,6 +272,7 @@ export function paid(cfg, handler) {
 	if (scheme !== 'exact') {
 		throw new Error(`paid(): only the 'exact' scheme is supported on Solana (got '${scheme}')`);
 	}
+	PAID_TOOL_PRICES.set(toolName, priceUsd);
 
 	// Lazily build (and memoize) the payment wrapper. This is the ONLY place
 	// that touches payment env (requireSvmPayTo) and the facilitator, so it

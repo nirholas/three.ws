@@ -27,9 +27,9 @@ export const def = {
 	name: 'list_avatars',
 	title: 'List three.ws default avatars + accessories',
 	// MCP ToolAnnotations — safety hints surfaced to MCP clients.
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Return the catalog of default 3D avatars (default, cz) and accessories (hats, glasses, earrings) hosted on the three.ws CDN. Each entry includes a public GLB URL ready to load in any glTF viewer or Three.js scene. Includes the supported pose preset names.',
+		'Return the catalog of default 3D avatars (default, cz) and accessories (hats, glasses, earrings) hosted on the three.ws CDN. Each entry includes a public GLB URL ready to load in any glTF viewer or Three.js scene. Includes the supported pose preset names. Use this first to pick a preset or accessory id for spawn_avatar and dress_avatar.',
 	inputSchema: {},
 	async handler() {
 		return {

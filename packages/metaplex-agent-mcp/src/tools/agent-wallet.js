@@ -12,13 +12,14 @@ import { threeBalance, tierFor, nextTier } from '../lib/three.js';
 export const def = {
 	name: 'agent_wallet',
 	title: "An agent's built-in wallet, or the signer wallet, with balance",
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"Show a wallet address and its live SOL balance. Pass `asset` to derive an on-chain agent's built-in wallet " +
 		'(the Metaplex Core Asset Signer PDA, the wallet shown on metaplex.com/agents). Pass `address` to inspect ' +
 		'any wallet. Pass neither to see the configured signing wallet, e.g. to confirm it is funded before ' +
 		'mint_onchain_agent. On mainnet it also reports the wallet $THREE balance and the deploy-fee tier that ' +
-		'balance earns (see three_status). Read-only; never moves funds.',
+		'balance earns (see three_status). Use this to check a balance before a mint or after funding a wallet. ' +
+		'Read-only; never moves funds.',
 	inputSchema: {
 		asset: z.string().min(32).max(44).optional().describe("A Core asset address: derives that agent's built-in wallet."),
 		address: z.string().min(32).max(44).optional().describe('A wallet address to inspect verbatim.'),

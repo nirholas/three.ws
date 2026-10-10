@@ -1,6 +1,6 @@
 // `three_burn` — the headline. Burn a USD-denominated amount of $THREE on-chain,
 // split between the incinerator and the treasury per the live public config.
-// EXECUTION ACTION: signs and broadcasts a Solana mainnet transaction.
+// EXECUTION ACTION. Signs and broadcasts a Solana mainnet transaction.
 
 import { z } from 'zod';
 
@@ -13,7 +13,7 @@ export const def = {
 	// MCP ToolAnnotations — EXECUTION: moves real value on Solana mainnet, irreversible.
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Burn a USD-denominated amount of the $THREE your wallet holds. Quotes USD→$THREE via Jupiter, then sends ONE Solana transaction that splits it between the incinerator (burn) and the three.ws treasury, per the live public token config. EXECUTION ACTION — signs and broadcasts on Solana mainnet, IRREVERSIBLE: pass confirm:true. Capped by MAX_BURN_USD. The resolved mint is asserted to be canonical $THREE before signing. Requires a signer (SOLANA_SECRET_KEY env or the `secret` arg) holding enough $THREE. Returns the tx signature, the burned/treasury breakdown, and a Solscan link.',
+		'Burn a USD-denominated amount of the $THREE your wallet holds. Quotes USD→$THREE via Jupiter, then sends ONE Solana transaction that splits it between the incinerator (burn) and the three.ws treasury, per the live public token config. EXECUTION ACTION. Signs and broadcasts on Solana mainnet, IRREVERSIBLE: pass confirm:true. Capped by MAX_BURN_USD. The resolved mint is asserted to be canonical $THREE before signing. Requires a signer (SOLANA_SECRET_KEY env or the `secret` arg) holding enough $THREE. Returns the tx signature, the burned/treasury breakdown, and a Solscan link. Use this when the person explicitly asks to burn and has approved the USD amount; check three_balance first.',
 	inputSchema: {
 		usd: z.number().positive().describe('USD value of $THREE to burn (priced live via Jupiter).'),
 		burnBps: z

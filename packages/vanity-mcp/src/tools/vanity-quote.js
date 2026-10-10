@@ -11,7 +11,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'vanity_quote',
 	title: 'Quote the bounty price for a vanity pattern',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		'Quote how hard a Solana vanity address is and what to escrow for it. Give a Base58 prefix and/or suffix and get the expected attempts, rarity tier, and an honest suggested USDC bounty (atomic units) from the difficulty→price oracle. Pure function of the pattern — no wallet, no payment, fully read-only. Use this before posting a grind-bounty so you escrow a fair amount.',
 	inputSchema: {

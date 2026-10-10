@@ -29,7 +29,8 @@ export const def = {
 		'least one is required. Destructive: it tears down the device registration (reverse it by calling ' +
 		'register_push_device again). Idempotent: removing an endpoint that is not registered still returns ' +
 		'`{ ok: true }`. This affects only push delivery to that device; in_app, email, and telegram ' +
-		'preferences are unchanged.',
+		'preferences are unchanged. Use this when a browser or device should stop getting push; to silence a whole ' +
+		'category everywhere use set_preferences instead.',
 	inputSchema: {
 		endpoint: z
 			.string()

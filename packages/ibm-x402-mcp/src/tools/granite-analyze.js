@@ -14,6 +14,7 @@ const TOOL_DESCRIPTION =
 	'Structured document analysis powered by IBM Granite: extract entities, sentiment, risk signals, ' +
 	'a concise summary, and recommended next steps from any text (contracts, reports, emails, code reviews, etc.). ' +
 	'Returns a machine-readable JSON analysis. ' +
+	'Use this when you need machine-readable fields (entities, sentiment, risks) from a document rather than the free-text reply ibm_granite_chat gives. ' +
 	'No IBM Cloud account required — pay $0.04 USDC per call via x402.';
 
 const ANALYSIS_TYPES = ['general', 'contract', 'financial', 'technical', 'medical', 'sentiment'];

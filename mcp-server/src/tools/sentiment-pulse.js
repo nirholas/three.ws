@@ -20,7 +20,7 @@ import { resilientFetch } from '../lib/resilient-fetch.js';
 
 const TOOL_NAME = 'sentiment_pulse';
 const TOOL_DESCRIPTION =
-	'Sentiment pulse for a Solana token: fetches the coin\'s most recent pump.fun callouts (the community commentary the coin page renders) via frontend-api-v3, optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Pairs naturally with pump_snapshot. Paid: $0.003 USDC.';
+	'Sentiment pulse for a Solana token: fetches the coin\'s most recent pump.fun callouts (the community commentary the coin page renders) via frontend-api-v3, optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Use this to weigh community mood against the price and holder data from pump_snapshot. Paid: $0.003 USDC.';
 
 function env(k, def) {
 	const v = process.env[k];

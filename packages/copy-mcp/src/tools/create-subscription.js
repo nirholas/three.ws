@@ -21,9 +21,9 @@ const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 export const def = {
 	name: 'create_subscription',
 	title: 'Follow a leader (create / update subscription)',
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
-		'Follow a copy-trade leader from the authenticated account, defining how their trades are mirrored into your own wallet. MONEY-ADJACENT: this sets how much of YOUR SOL each copy may spend. Non-custodial — three.ws never signs or holds funds; it emits sized, guard-checked copy INTENTS you act on. Idempotent: re-calling with the same leader_agent_id + network updates that subscription (and re-activates it) rather than creating a duplicate. Sizing rule: "fixed" spends fixed_sol per copy; "multiplier" spends multiplier × the leader\'s entry; "pct_balance" spends pct_balance % of your spendable SOL. Every order is clamped to per_trade_cap_sol and the remaining daily_budget_sol. Returns the created/updated subscription. Requires THREE_WS_API_KEY.',
+		'Follow a copy-trade leader from the authenticated account, defining how their trades are mirrored into your own wallet. MONEY-ADJACENT: this sets how much of YOUR SOL each copy may spend. Non-custodial: three.ws never signs or holds funds; it emits sized, guard-checked copy INTENTS you act on. Idempotent: re-calling with the same leader_agent_id + network updates that subscription (and re-activates it) rather than creating a duplicate. Sizing rule: "fixed" spends fixed_sol per copy; "multiplier" spends multiplier × the leader\'s entry; "pct_balance" spends pct_balance % of your spendable SOL. Every order is clamped to per_trade_cap_sol and the remaining daily_budget_sol. Returns the created/updated subscription. Requires THREE_WS_API_KEY. Use this to start copying a leader, or to re-tune that follow by leader; to change a follow you already hold by its subscription id, call update_subscription.',
 	inputSchema: {
 		leader_agent_id: z.string().uuid().describe('UUID of the public leader (agent with a sniper track record) to follow.'),
 		copier_wallet: z

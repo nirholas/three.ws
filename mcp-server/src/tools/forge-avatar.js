@@ -46,7 +46,8 @@ const TOOL_DESCRIPTION =
 	'reconstruction. A humanoid gate runs first: a clearly non-humanoid subject (furniture, vehicle, quadruped) is ' +
 	'rejected WITHOUT charge (use mesh_forge or forge_free for those) unless allow_non_humanoid is set. Returns the rigged ' +
 	'GLB URL, the intermediate mesh URL, a pose-studio link, the directed prompt, and per-stage timing. Paid: $0.45 USDC ' +
-	'(generation + rig bundled; you are not charged if no rigged avatar is produced).';
+	'(generation + rig bundled; you are not charged if no rigged avatar is produced). Use this when you need a ' +
+	'character that can be posed and animated; for props and other static objects, call forge_free or mesh_forge instead.';
 
 const inputZodShape = {
 	prompt: z

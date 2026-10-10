@@ -22,7 +22,7 @@ export const def = {
 	name: 'set_autopilot_config',
 	title: 'Set autopilot config',
 	// Write, but no action is taken and re-applying the same patch is a no-op.
-	annotations: { readOnlyHint: false, idempotentHint: true, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
 	description:
 		"Update the agent's autopilot guardrails. A partial patch — only the fields you pass change; the " +
 		'rest are preserved. Set `enabled` to arm/disarm autopilot, `scopes` to grant/revoke each capability ' +
@@ -31,7 +31,8 @@ export const def = {
 		'`requireConfirm` to force explicit confirmation on irreversible actions. WRITE but idempotent: it ' +
 		'changes only the boundaries, takes no action, and re-applying the same values is a no-op. Returns the ' +
 		'full updated config. Scopes are enforced server-side at execution time — granting one here is what ' +
-		'makes a later execute_proposal possible.',
+		'makes a later execute_proposal possible. ' +
+		'Use this when the owner wants to grant, revoke, or cap what autopilot may do; read the current values first with get_autopilot_config.',
 	inputSchema: {
 		agentId: z
 			.string()

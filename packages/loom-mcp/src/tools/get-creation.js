@@ -10,12 +10,13 @@ import { decorateCreation } from '../lib/viewer.js';
 export const def = {
 	name: 'get_creation',
 	title: 'Fetch one Loom creation by id',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Fetch a single Loom creation by its id. Returns the full record — prompt, glbUrl, previewImageUrl, ' +
 		'author, tier, backend, createdAt — together with a `viewer_url` (the /forge/embed orbit+AR viewer for ' +
 		'the GLB), an `og_image_url`, and a paste-ready `iframe_snippet` so the model can be previewed inline. ' +
-		'Returns a not_found error if no creation has that id. Read-only, no key required.',
+		'Returns a not_found error if no creation has that id. Use this when you already have a creation id (from ' +
+		'get_loom_feed or a submit_creation result) and need its full record or embed snippet. Read-only, no key required.',
 	inputSchema: {
 		id: z
 			.string()

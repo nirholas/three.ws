@@ -11,9 +11,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'load_session',
 	title: 'Load a tutoring session ledger',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Read the running tab for a Pay-As-You-Learn tutoring session by its sessionId. Returns the itemized ledger: one lineItem per answered question (question text, level, output tokens, per-item cost in USDC atomics and a "$x.xxxxxx" string, and the timestamp), plus the session status ("open" | "closed"), questionCount, and the running totalAtomics / totalUsd. If the session was already closed it also returns the finalized, attested invoice. A sessionId with no stored history returns an empty open session (questionCount 0) rather than an error — that is an honest "nothing billed yet", not a failure. Viewing the tab is always free; this never charges the learner. Read-only live data.',
+		'Read the running tab for a Pay-As-You-Learn tutoring session by its sessionId. Returns the itemized ledger: one lineItem per answered question (question text, level, output tokens, per-item cost in USDC atomics and a "$x.xxxxxx" string, and the timestamp), plus the session status ("open" | "closed"), questionCount, and the running totalAtomics / totalUsd. If the session was already closed it also returns the finalized, attested invoice. A sessionId with no stored history returns an empty open session (questionCount 0) rather than an error; that is an honest "nothing billed yet", not a failure. Viewing the tab is always free; this never charges the learner. Use this to show the learner what they owe so far; to seal the invoice call close_session. Read-only live data.',
 	inputSchema: {
 		sessionId: z
 			.string()

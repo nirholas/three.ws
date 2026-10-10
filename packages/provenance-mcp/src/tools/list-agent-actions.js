@@ -14,9 +14,9 @@ import { verifyAction } from '../lib/signing.js';
 export const def = {
 	name: 'list_agent_actions',
 	title: 'List an agent\'s action-provenance trail',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		"Read an agent's append-only action log, newest-first, cursor-paginated. Returns each action's id, type (e.g. launch, buy, post, reflect), payload, source_skill, created_at, and — when the action was signed — its ERC-191 signature + signer_address. Each record is checked against its own signature: `verification.reason` is `ok` (recovered signer matches the claimed address), `unsigned`, `signer_mismatch` (recovered a different address — tampering OR an action signed under a different canonical scheme; treat as unverified, not trusted), or `malformed_signature`. Pass the returned `next_cursor` back as `cursor` to page further. The ledger is owner-scoped: THREE_WS_TOKEN must own `agent_id`. Read-only; the log is immutable so older pages never change.",
+		"Read an agent's append-only action log, newest-first, cursor-paginated. Returns each action's id, type (e.g. launch, buy, post, reflect), payload, source_skill, created_at, and (when the action was signed) its ERC-191 signature + signer_address. Each record is checked against its own signature: `verification.reason` is `ok` (recovered signer matches the claimed address), `unsigned`, `signer_mismatch` (recovered a different address: tampering OR an action signed under a different canonical scheme; treat as unverified, not trusted), or `malformed_signature`. Pass the returned `next_cursor` back as `cursor` to page further. The ledger is owner-scoped: THREE_WS_TOKEN must own `agent_id`. Read-only; the log is immutable so older pages never change. Use this to audit what an agent did over time; to verify one action by id call query_action.",
 	inputSchema: {
 		agent_id: z
 			.string()

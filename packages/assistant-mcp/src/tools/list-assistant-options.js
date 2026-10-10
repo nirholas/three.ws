@@ -74,7 +74,7 @@ const ATTRIBUTES = [
 export const def = {
 	name: 'list_assistant_options',
 	title: 'List every three.ws assistant widget option',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 	description:
 		'List everything you can configure on the three.ws assistant widget: the built-in avatars, background presets and grammar, interaction modes, chat lanes (free vs bring-your-own-key), and the full data-* attribute reference table. Call this before build_assistant_widget to know the vocabulary. Read-only and offline.',
 	inputSchema: {

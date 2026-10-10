@@ -16,7 +16,7 @@ import { resilientFetch } from '../lib/resilient-fetch.js';
 
 const TOOL_NAME = 'aixbt_intel';
 const TOOL_DESCRIPTION =
-	'aixbt narrative intelligence feed: recent intel items detected across crypto — category, description, observation count, official-source flag, and the project/ticker it concerns. Optionally filter by category or chain. Powered by the live aixbt REST API. Paid: $0.01 USDC.';
+	'aixbt narrative intelligence feed: recent intel items detected across crypto: category, description, observation count, official-source flag, and the project/ticker it concerns. Optionally filter by category or chain. Powered by the live aixbt REST API. Use this to see which narratives are forming right now; for a ranked list of projects with market metrics, call aixbt_projects instead. Paid: $0.01 USDC.';
 
 function env(k, def) {
 	const v = process.env[k];

@@ -25,7 +25,7 @@ export const def = {
 	// Pure and deterministic: no reads of external state, no writes, no network.
 	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false, destructiveHint: false },
 	description:
-		'Turn a config into a ready-to-embed three.ws assistant widget, a floating 3D avatar chatbot you can drop onto any website. Returns a paste-ready <script> tag (with only the non-default settings as data-* attributes), a standalone frame URL for <iframe> embedding, an equivalent ThreeAssistant.init({...}) JavaScript-API snippet, the visual builder link, and the fully-normalized config. Pure and offline: every field is validated and clamped locally, so a bad value falls back to a safe default and the generated HTML is always well-formed. Call list_assistant_options first to see every avatar, background, mode and attribute you can set.',
+		'Turn a config into a ready-to-embed three.ws assistant widget, a floating 3D avatar chatbot you can drop onto any website. Returns a paste-ready <script> tag (with only the non-default settings as data-* attributes), a standalone frame URL for <iframe> embedding, an equivalent ThreeAssistant.init({...}) JavaScript-API snippet, the visual builder link, and the fully-normalized config. Pure and offline: every field is validated and clamped locally, so a bad value falls back to a safe default and the generated HTML is always well-formed. Use this after list_assistant_options has shown you every avatar, background, mode and attribute you can set, to get the embed code for a website.',
 	inputSchema: {
 		avatar: z
 			.string()

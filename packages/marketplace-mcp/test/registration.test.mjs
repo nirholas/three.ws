@@ -38,11 +38,11 @@ test('every tool is a public, read-only discovery surface', () => {
 		assert.equal(tool.annotations.readOnlyHint, true, `${tool.name} must be read-only`);
 		assert.equal(tool.annotations.idempotentHint, false, `${tool.name} must set idempotentHint:false`);
 		assert.equal(tool.annotations.openWorldHint, true, `${tool.name} talks to a live service`);
-		// Read-only tools must NOT declare destructiveHint — they mutate nothing.
+		// The spec defaults an omitted destructiveHint to true, so reads say false out loud.
 		assert.equal(
 			tool.annotations.destructiveHint,
-			undefined,
-			`${tool.name} is read-only — destructiveHint must be omitted`,
+			false,
+			`${tool.name} is read-only, so destructiveHint must be an explicit false`,
 		);
 	}
 });

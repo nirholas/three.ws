@@ -12,7 +12,7 @@ import { ALLOW_PYTHON, WORKDIR } from '../config.js';
 export const def = {
 	name: 'blender_info',
 	title: 'Inspect the local Blender install',
-	annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 	description:
 		'Report the local Blender this server drives: executable path, version, bundled Python, available render ' +
 		'engines, and the import/export formats this build actually supports. Call it first when a tool fails, or ' +

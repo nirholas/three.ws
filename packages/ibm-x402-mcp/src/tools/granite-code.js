@@ -12,6 +12,7 @@ const TOOL_NAME = 'ibm_granite_code';
 const TOOL_DESCRIPTION =
 	'Code generation, review, refactoring, and explanation via IBM Granite instruct models. ' +
 	'Provide a task type and code/prompt; receive the generated or reviewed code with explanation. ' +
+	'Use this when the input is source code or a request to write code; for general conversation call ibm_granite_chat instead. ' +
 	'No IBM Cloud account required — pay $0.025 USDC per call via x402.';
 
 const TASK_DESCRIPTIONS = {

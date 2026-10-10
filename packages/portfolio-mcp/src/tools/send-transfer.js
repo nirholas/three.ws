@@ -23,7 +23,8 @@ export const def = {
 		'(base58) or SOLANA_SECRET_KEY on the server; for a token it auto-creates the recipient’s associated token ' +
 		'account when missing. Returns the confirmed signature, the moved amount, and a Solscan link. EXECUTION ' +
 		'ACTION — pass confirm:true to proceed. Native sends are capped by MAX_SOL_PER_TX; the recipient must be ' +
-		'in RECIPIENT_ALLOWLIST when one is configured.',
+		'in RECIPIENT_ALLOWLIST when one is configured. Use this after preview_transfer, and only on the person\'s explicit ' +
+		'yes to that recipient and amount.',
 	inputSchema: {
 		recipient: z.string().min(32).max(44).describe('Destination Solana pubkey (base58).'),
 		amount: z

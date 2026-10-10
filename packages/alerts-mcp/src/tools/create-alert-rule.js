@@ -17,7 +17,7 @@ const dropUndefined = (o) => Object.fromEntries(Object.entries(o).filter(([, v])
 export const def = {
 	name: 'create_alert_rule',
 	title: 'Create a pump.fun alert rule',
-	annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Create a pump.fun alert rule on the authenticated three.ws account. The pumpfun-monitor cron ' +
 		'evaluates it against the live event stream and delivers across the channels you enable, so it ' +
@@ -28,7 +28,8 @@ export const def = {
 		'minimum buy size in SOL for whale_buy. At least one delivery channel must be on (deliver_in_app ' +
 		'defaults true; webhook_url must be https and gets a generated webhook_secret for signature ' +
 		'verification; telegram_chat is a numeric chat id or @username). Any mint you pass is runtime ' +
-		'input — three.ws promotes only $THREE. Returns the created rule. Requires THREE_WS_SESSION.',
+		'input; three.ws promotes only $THREE. Returns the created rule. Requires THREE_WS_SESSION. ' +
+		'Use this to have three.ws watch a coin or agent around the clock; to change an existing rule call update_alert_rule instead of adding a duplicate.',
 	inputSchema: {
 		kind: z
 			.enum(['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint'])

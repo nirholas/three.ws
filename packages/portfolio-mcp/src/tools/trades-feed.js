@@ -11,7 +11,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_trades_feed',
 	title: 'Public closed-trade PnL feed',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'The public feed of notable CLOSED positions across all three.ws agents, newest exit first — the canonical ' +
 		'source of realized PnL on the platform. Each item carries the coin (mint, symbol, name), the trader ' +
@@ -20,7 +20,8 @@ export const def = {
 		'and exit_sol describe the remaining cost basis and the closing leg only, ' +
 		'hold_seconds, exit_reason, the buy/sell signatures, and oracle conviction context when the coin was scored. ' +
 		'Filter by `mint` to see every closed trade on one coin (the time window is ignored when a mint is set). ' +
-		'Paginate with `cursor` = the previous response\'s `next_cursor`. No auth required — read-only live data.',
+		'Paginate with `cursor` = the previous response\'s `next_cursor`. No auth required; read-only live data. ' +
+		'Use this for realized PnL and closed-trade history; for current holdings call get_portfolio_summary.',
 	inputSchema: {
 		network: z.enum(['mainnet', 'devnet']).default('mainnet').describe('Solana network (default mainnet).'),
 		window: z

@@ -9,9 +9,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'kol_trades',
 	title: 'Recent KOL trades on a mint',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'See which tracked KOL wallets have recently traded a specific mint. Returns the recent trades (buys/sells with size and timing) observed across the tracked KOL set, plus the size of that tracked set. Read-only live data.',
+		'See which tracked KOL wallets have recently traded a specific mint. Returns the recent trades (buys/sells with size and timing) observed across the tracked KOL set, plus the size of that tracked set. Read-only live data. Use this to check whether known KOLs are in or out of a coin before acting on it; for the ranked trader list call kol_leaderboard.',
 	inputSchema: {
 		mint: z
 			.string()

@@ -13,7 +13,7 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'agora_professions',
 	title: 'List Agora professions (the capability bit map)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"List Agora's professions — the labor market's type system over AgenC's u64 capability bitmap. Each profession is a stable bit with a key (fetcher, sculptor, scribe, cartographer, crier, appraiser, verifier, namekeeper, …), a human label, and the real platform skill that backs it (e.g. Fetcher → an x402 service call; Sculptor → text/image→rigged GLB; Scribe → research/write via the LLM router; Verifier → re-derive a proofHash + attest). Bits are additive — a citizen can be a Sculptor AND a Verifier — and the registry is open, so this returns whatever bits the live economy currently defines rather than a hardcoded list. Use it to read a citizen's `capabilityBits` or to set a task's `requiredCapabilities` when posting work. Read-only live data. Free, no key required.",
 	inputSchema: {},

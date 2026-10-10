@@ -23,13 +23,14 @@ const FORMATS = ['wav', 'pcm'];
 export const def = {
 	name: 'audio_to_face',
 	title: 'Audio to face (lipsync)',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Generate a per-frame ARKit blendshape lipsync track from speech using free NVIDIA NIM Audio2Face-3D. Provide either `text` ' +
 		'(the server synthesizes it with Magpie TTS, then animates that clip and returns both the audio and the animation) or `audio` ' +
 		'(base64 wav/pcm you already have, so the lips match the exact bytes you will play). Returns { animation: { fps, blendShapeNames, ' +
 		'frames, durationSec } } where each frame is { t, w } — t in seconds, w = weights ordered by blendShapeNames (ARKit-52). On the text ' +
-		'path it also returns { audio: { base64, contentType, format } }. Read-only — produces an animation track without changing platform state.',
+		'path it also returns { audio: { base64, contentType, format } }. Read-only: produces an animation track without changing platform state. ' +
+		'Use this when an avatar has to mouth a spoken line; for plain audio with no face animation, call text_to_speech instead.',
 	inputSchema: {
 		text: z
 			.string()

@@ -16,7 +16,8 @@ export const def = {
 		'Dismiss a pending proposal the agent decided not to act on. Marks it dismissed and records a ' +
 		'feedback memory ("don\'t propose this again") so future generate_proposals steers away from it — ' +
 		'this is how the agent learns the owner\'s boundaries. WRITE. Only a pending proposal can be ' +
-		'dismissed (executed/undone/dismissed ones are rejected). Returns the updated proposal and trust.',
+		'dismissed (executed/undone/dismissed ones are rejected). Returns the updated proposal and trust. ' +
+		'Use this when the owner rejects a proposal, so the agent stops suggesting it; to reverse something already executed call undo_action instead.',
 	inputSchema: {
 		agentId: z
 			.string()

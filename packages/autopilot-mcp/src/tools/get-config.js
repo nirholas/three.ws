@@ -9,14 +9,14 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'get_autopilot_config',
 	title: 'Get autopilot config',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		"Read the agent's autopilot permission model: whether autopilot is enabled, which capability " +
 		'scopes the owner granted (create_alert, briefing, wallet_transfer), which reversible scopes may ' +
 		'auto-execute, the daily SOL spend ceiling (in SOL; 0 = no spending), and whether ' +
 		'irreversible actions require explicit confirmation. Also returns the live trust level (sandbox → ' +
 		'trusted → autonomous) computed from real action history. Nothing the agent can do exists outside ' +
-		'these owner-granted scopes — read this before proposing or executing. Read-only.',
+		'these owner-granted scopes. Call this first, before proposing or executing. Read-only.',
 	inputSchema: {
 		agentId: z
 			.string()

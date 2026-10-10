@@ -15,7 +15,7 @@ const UPSTREAM_MAX = 100;
 export const def = {
 	name: 'get_wallet_trades',
 	title: "A KOL wallet's trades on a mint",
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Get one specific KOL trader\'s recent buys/sells of a given mint. The three.ws trade ' +
 		'feed is scanned for that mint across all tracked wallets and narrowed to the wallet you ' +

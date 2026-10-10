@@ -18,8 +18,8 @@ const TOOL_DESCRIPTION =
 	'trading, research, security, regulation-adjacent geopolitical, and more), by a single source key, ' +
 	'by language, or full-text search the headlines. Each article returns title, publisher link, source, ' +
 	'publish time, detected tickers, and lexicon sentiment. An invalid category/source errors with the ' +
-	'valid list, so retry from that. For the day grouped into stories use crypto_news_digest; for ' +
-	'coverage older than a few days use crypto_news_archive. Free — no payment or API key required.';
+	'valid list, so retry from that. Use this for raw, filterable headlines; for the day grouped into ' +
+	'stories use crypto_news_digest, and for coverage older than a few days use crypto_news_archive. Free: no payment or API key required.';
 
 const inputZodShape = {
 	q: z.string().max(80).describe('Full-text filter over title/description/tickers, e.g. "bitcoin etf" or "SOL".').optional(),

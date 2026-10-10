@@ -21,12 +21,13 @@ const FORMATS = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
 export const def = {
 	name: 'text_to_speech',
 	title: 'Text to speech',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
 		'Synthesize spoken audio from text for a 3D avatar and return it as a base64 audio data URL (data:<mime>;base64,…) plus metadata. ' +
 		'Free NVIDIA NIM Magpie TTS leads; OpenAI is the paid backstop. Because Magpie emits raw PCM, every non-pcm request is served as WAV — ' +
 		'the returned `mime`, `format`, and `voice` describe the bytes you actually get, not the request. Pair the audio with audio_to_face to ' +
-		'drive lipsync. Input text is capped at 4096 characters. Read-only — synthesizes audio without changing any platform state.',
+		'drive lipsync. Input text is capped at 4096 characters. Read-only: synthesizes audio without changing any platform state. ' +
+		'Use this when an avatar needs a voice line you can play; to get the lipsync track for that line in the same call, use audio_to_face with `text` instead.',
 	inputSchema: {
 		text: z
 			.string()

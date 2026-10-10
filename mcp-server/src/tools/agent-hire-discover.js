@@ -20,7 +20,7 @@ import { guardrailConfig, formatUsd } from '../lib/agent-commerce.js';
 
 const TOOL_NAME = 'agent_hire_discover';
 const TOOL_DESCRIPTION =
-	'Discover three.ws agents to hire for a task, ranked by task fit + live ERC-8004 on-chain reputation + real engagement. Returns a shortlist where each candidate carries its reputation evidence, capability/task-match score, and the exact USDC price agent_hire will settle. Optionally gate by a minimum reputation. Step one of the agent-to-agent commerce loop (discover → hire). Paid: $0.01 USDC.';
+	'Discover three.ws agents to hire for a task, ranked by task fit + live ERC-8004 on-chain reputation + real engagement. Returns a shortlist where each candidate carries its reputation evidence, capability/task-match score, and the exact USDC price agent_hire will settle. Optionally gate by a minimum reputation. Step one of the agent-to-agent commerce loop (discover → hire). Use this before agent_hire to pick a candidate and see the exact price it will settle. Paid: $0.01 USDC.';
 
 const inputZodShape = {
 	task: z

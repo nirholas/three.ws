@@ -11,9 +11,9 @@ import { apiRequest } from '../lib/api.js';
 export const def = {
 	name: 'find_services',
 	title: 'Find paid x402 services the agent can call',
-	annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
+	annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Search the live x402 facilitator network (PayAI + Coinbase CDP bazaar) for paid services — HTTP APIs and MCP tools. Returns each match with its price, networks, and resource URL. Pass a resource into pay_and_call to use it. Read-only.',
+		'Search the live x402 facilitator network (PayAI + Coinbase CDP bazaar) for paid services (HTTP APIs and MCP tools). Returns each match with its price, networks, and resource URL. Use this when a task needs a paid API or tool you do not already have; to use a match, check its price with inspect_endpoint, then pass its resource into pay_and_call. Read-only.',
 	inputSchema: {
 		query: z.string().min(1).describe('What you need, e.g. "weather", "image upscale", "token intel".'),
 		type: z.enum(['http', 'mcp']).default('http').describe('Service kind to search.'),
