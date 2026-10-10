@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T06:36:28.445Z",
+	"generated_at": "2026-10-10T20:09:17.485Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -199,6 +199,16 @@
 		{
 			"date": "2026-10-10",
 			"type": "launch",
+			"title": "Link this device",
+			"summary": "Link a phone or desktop app to your three.ws account with a one-time code from Linked devices on your account page. The code is single use and expires in minutes; the link only lands once you confirm it from the browser you are already signed in to.",
+			"link": "/link-device",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "launch",
 			"title": "Specialist Teams: four agents, one board",
 			"summary": "Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.",
 			"link": "/teams",
@@ -385,6 +395,16 @@
 			"link": "/gestures",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Quote any Papertrade position before you open it, from the API or your AI assistant",
+			"summary": "three.ws now reads Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM. Ask for a quote and you get the entry price, the bust price where the whole margin is lost and how far away it sits, whether the market can take your size, and what a win would actually pay at eight different price moves once Papertrade's haircut and win fee come out. Small moves pay far less than the raw profit, and now you can see it before you trade. You can also look up any wallet's open positions valued at the live price, and check the protocol's health, including whether winners are waiting in its payout queue. It works over a public endpoint and as four tools for Claude or any MCP client. It only reads: you still trade on Papertrade from your own wallet.",
+			"link": "/docs/papertrade",
+			"tags": [
+				"feature"
 			]
 		},
 		{

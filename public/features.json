@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T06:36:28.426Z",
+	"generated_at": "2026-10-10T20:09:17.474Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1492,6 +1492,16 @@
 					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/link-device",
+					"title": "Link this device",
+					"description": "Link a phone or desktop app to your three.ws account with a one-time code from Linked devices on your account page. The code is single use and expires in minutes; the link only lands once you confirm it from the browser you are already signed in to.",
+					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
 					"tags": [],
 					"showcase": false
 				},
@@ -6484,6 +6494,16 @@
 					"path": "/docs/perps",
 					"title": "Docs: Agent Perps",
 					"description": "How an agent trades perpetual futures with USDC collateral from its own Solana wallet: paper and live modes, the mandatory leverage and margin caps, the preview and confirmed execute, the kill switch, the live tracker and alerts, and the REST and MCP reference.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/papertrade",
+					"title": "Docs: Papertrade",
+					"description": "Read Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM: live markets, an exact quote before you open (bust price, capacity, and what a win pays after the haircut and win fee), any wallet's positions valued live, and protocol health, over GET /api/papertrade and four MCP tools.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

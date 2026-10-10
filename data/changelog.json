@@ -29586,6 +29586,13 @@
 			"summary": "Sixteen new MCP tools let an AI client do everything the dashboard can with an agent: edit it, start and stop it, give it a new avatar from a GLB or image, delete it, launch and steer autonomous runs, and create, edit, test-fire and remove automations. Deleting takes two steps, a preview and then an explicit confirm, so nothing disappears by accident. Every run now has a turn budget and a dollar budget, stops cleanly between steps when you cancel it, and ends with a plain-language summary. Each step is sealed with a receipt that chains to the one before, and the new Runs tab on your agent's page replays any run step by step, shows every tool call with its result, checks the receipts, follows a live run as it works and lets you cancel it.",
 			"tags": ["feature"],
 			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Quote any Papertrade position before you open it, from the API or your AI assistant",
+			"summary": "three.ws now reads Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM. Ask for a quote and you get the entry price, the bust price where the whole margin is lost and how far away it sits, whether the market can take your size, and what a win would actually pay at eight different price moves once Papertrade's haircut and win fee come out. Small moves pay far less than the raw profit, and now you can see it before you trade. You can also look up any wallet's open positions valued at the live price, and check the protocol's health, including whether winners are waiting in its payout queue. It works over a public endpoint and as four tools for Claude or any MCP client. It only reads: you still trade on Papertrade from your own wallet.",
+			"tags": ["feature"],
+			"link": "/docs/papertrade"
 		}
 	]
 }

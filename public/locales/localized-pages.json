@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 432,
+	"count": 433,
 	"paths": [
 		"/",
 		"/3d",
@@ -185,6 +185,7 @@
 		"/legal/privacy",
 		"/legal/risk",
 		"/legal/tos",
+		"/link-device",
 		"/live",
 		"/login",
 		"/lookup",

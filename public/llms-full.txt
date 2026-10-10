@@ -875,6 +875,13 @@ URL: https://three.ws/materialize
 
 Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.
 
+### Link this device
+
+URL: https://three.ws/link-device
+Indexable: no (excluded from sitemap)
+
+Link a phone or desktop app to your three.ws account with a one-time code from Linked devices on your account page. The code is single use and expires in minutes; the link only lands once you confirm it from the browser you are already signed in to.
+
 ### Authorize the three-ws CLI
 
 URL: https://three.ws/cli/authorize
@@ -3904,6 +3911,12 @@ Copy trading lets one wallet follow another's real trades. Two engines sit behin
 URL: https://three.ws/docs/perps
 
 How an agent trades perpetual futures with USDC collateral from its own Solana wallet: paper and live modes, the mandatory leverage and margin caps, the preview and confirmed execute, the kill switch, the live tracker and alerts, and the REST and MCP reference.
+
+### Docs: Papertrade
+
+URL: https://three.ws/docs/papertrade
+
+Read Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM: live markets, an exact quote before you open (bust price, capacity, and what a win pays after the haircut and win fee), any wallet's positions valued live, and protocol health, over GET /api/papertrade and four MCP tools.
 
 ### Docs: On-chain Deployments
 

@@ -5080,6 +5080,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/papertrade",
+					"title": "Docs: Papertrade",
+					"description": "Read Papertrade, the synthetic BTC and ETH perps exchange on HyperEVM: live markets, an exact quote before you open (bust price, capacity, and what a win pays after the haircut and win fee), any wallet's positions valued live, and protocol health, over GET /api/papertrade and four MCP tools.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/deployments",
 					"title": "Docs: On-chain Deployments",
 					"description": "/deployments is the live, cross-chain feed of agent identities landing on-chain: every ERC-8004 Identity Registry registration on EVM and every Metaplex Core agent mint on Solana, in one chronological stream, as each one lands. It is a read-only public surface.",
