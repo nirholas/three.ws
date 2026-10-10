@@ -15539,7 +15539,7 @@
 			],
 			"posts": [
 				{
-					"text": "Your AI has a brain. Give it a body.\n\nIn the Forge you type a description and get a textured 3D model you can orbit, inspect in AR and download. Then share it in the marketplace, where the community can discover, fork and chat with published agents: three.ws/forge",
+					"text": "Your AI has a brain. Give it a body.\n\nIn the Forge, text or photos become a textured 3D model. Orbit it, view it in AR, download it. Then share it in the marketplace: three.ws/forge",
 					"media": [
 						{
 							"path": "public/x-media/give-your-ai-a-body/clip.mp4",
@@ -15559,32 +15559,22 @@
 			],
 			"claims": [
 				{
-					"says": "type a description and get a textured 3D model",
+					"says": "text or photos become a textured 3D model",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/forge",
-							"contains": "Type a description, get a textured 3D model"
+							"contains": "text or photos → textured 3D model"
 						}
 					]
 				},
 				{
-					"says": "orbit, inspect in AR and download",
+					"says": "Orbit it, view it in AR, download it",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/forge",
-							"contains": "orbit, inspect in AR, and download"
-						}
-					]
-				},
-				{
-					"says": "the community can discover, fork and chat with published agents",
-					"evidence": [
-						{
-							"type": "page",
-							"url": "https://three.ws/marketplace",
-							"contains": "Discover, fork, and chat with community-published AI agents"
+							"contains": "Orbit, AR, download"
 						}
 					]
 				}
