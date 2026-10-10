@@ -1,0 +1,137 @@
+{
+	"id": "galaxy",
+	"scenarioHash": "745813d48ebdd43471514dfec2b8f7a1435c82da5faa0af526efd06e4728d3b3",
+	"ranAt": "2026-10-10T03:50:40.297Z",
+	"target": {
+		"commit": "ce1b779b0",
+		"revision": "three-ws-api-00486-4nx"
+	},
+	"passed": true,
+	"steps": [
+		{
+			"index": 1,
+			"kind": "goto",
+			"target": "https://three.ws/galaxy",
+			"detail": "loaded https://three.ws/galaxy",
+			"ok": true,
+			"ms": 22393,
+			"frames": 0
+		},
+		{
+			"index": 2,
+			"kind": "read",
+			"target": "agents",
+			"detail": "agents = \"600\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 3,
+			"kind": "read",
+			"target": "constellations",
+			"detail": "constellations = \"8\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 4,
+			"kind": "hold",
+			"target": "2500",
+			"detail": "2500 ms",
+			"ok": true,
+			"ms": 21699,
+			"frames": 75
+		},
+		{
+			"index": 5,
+			"kind": "type",
+			"target": "a calm tutor",
+			"detail": "typed 12 characters",
+			"ok": true,
+			"ms": 12257,
+			"frames": 40
+		},
+		{
+			"index": 6,
+			"kind": "click",
+			"target": "Search",
+			"detail": "clicked; POST /api/galaxy answered 200 in 5.7 s",
+			"ok": true,
+			"ms": 9549,
+			"frames": 21
+		},
+		{
+			"index": 7,
+			"kind": "expect",
+			"target": "Closest to",
+			"detail": "appeared after 0.1 s",
+			"ok": true,
+			"ms": 99,
+			"frames": 0
+		},
+		{
+			"index": 8,
+			"kind": "read",
+			"target": "topmatch",
+			"detail": "topmatch = \"Monica\"",
+			"ok": true,
+			"ms": 2,
+			"frames": 0
+		},
+		{
+			"index": 9,
+			"kind": "read",
+			"target": "nextmatch",
+			"detail": "nextmatch = \"Quill\"",
+			"ok": true,
+			"ms": 1,
+			"frames": 0
+		},
+		{
+			"index": 10,
+			"kind": "hold",
+			"target": "5500",
+			"detail": "5500 ms",
+			"ok": true,
+			"ms": 54019,
+			"frames": 165
+		}
+	],
+	"facts": {
+		"agents": "600",
+		"constellations": "8",
+		"topmatch": "Monica",
+		"nextmatch": "Quill"
+	},
+	"saw": [
+		"Closest to"
+	],
+	"responses": [
+		{
+			"method": "POST",
+			"path": "/api/galaxy",
+			"status": 200,
+			"seconds": 5.7
+		}
+	],
+	"cuts": [
+		{
+			"afterStep": 6,
+			"seconds": 3.1
+		}
+	],
+	"video": {
+		"path": "public/x-media/galaxy/reel.mp4",
+		"sha256": "c0c1e046817927e4a8af43c6001d40544b109ab97f3e90835d065b41c1af20a8",
+		"frames": 301,
+		"motion": 1,
+		"durationSec": 10.03,
+		"width": 1080,
+		"height": 1080,
+		"fps": 30,
+		"videoCodec": "h264",
+		"pixFmt": "yuv420p"
+	}
+}
