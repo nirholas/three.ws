@@ -293,7 +293,7 @@ const DEEP_PROBE_IDS = [
 ];
 
 function parseArgs(argv) {
-	const opts = { since: '1h', json: false, limit: 1000, project: PROJECT, deep: false, skip: [] };
+	const opts = { since: '1h', json: false, limit: null, project: PROJECT, deep: false, skip: [] };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		const next = () => argv[++i];
@@ -305,7 +305,7 @@ function parseArgs(argv) {
 			case '-n': case '--limit': opts.limit = Number(next()); break;
 			case '--project': opts.project = next(); break;
 			case '-h': case '--help':
-				console.log('Usage: node scripts/gcp-triage.mjs [--since 1h] [--json] [--deep] [--skip id,id] [--limit 1000] [--project <id>]');
+				console.log('Usage: node scripts/gcp-triage.mjs [--since 1h] [--json] [--deep] [--skip id,id] [--limit 1000 (10000 with --deep)] [--project <id>]');
 				console.log(`Deep probe ids: ${DEEP_PROBE_IDS.join(', ')}`);
 				process.exit(0);
 				break;
@@ -318,6 +318,9 @@ function parseArgs(argv) {
 		console.error(`--since must look like 30m, 2h, 1d (got "${opts.since}")`);
 		process.exit(2);
 	}
+	// A deep sweep answers "is anything wrong?" over its whole window, so it reads
+	// far more entries; the fast pulse check keeps the cheap 1000.
+	if (opts.limit == null) opts.limit = opts.deep ? DEEP_LOG_LIMIT : FAST_LOG_LIMIT;
 	const badSkips = opts.skip.filter((s) => !DEEP_PROBE_IDS.includes(s));
 	if (badSkips.length) {
 		console.error(`Unknown --skip probe id(s): ${badSkips.join(', ')} (valid: ${DEEP_PROBE_IDS.join(', ')})`);
@@ -346,6 +349,37 @@ async function fetchHealthz() {
 	} catch (err) {
 		return { reachable: false, error: err?.message || String(err) };
 	}
+}
+
+const FAST_LOG_LIMIT = 1000;
+const DEEP_LOG_LIMIT = 10000;
+const SINCE_UNIT_MS = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000, w: 604_800_000 };
+
+// gcloud returns entries newest first and stops at --limit, so a noisy fleet can
+// fill the limit in minutes and every count below silently describes a fraction
+// of the requested window. Report how much of the window the read really covered.
+export function logCoverage(entries, { since, limit, now = Date.now() }) {
+	const windowMs = Number(since.slice(0, -1)) * SINCE_UNIT_MS[since.slice(-1)];
+	const truncated = entries.length >= limit;
+	let oldestMs = null;
+	for (const e of entries) {
+		const t = Date.parse(e.timestamp || '');
+		if (Number.isFinite(t) && (oldestMs == null || t < oldestMs)) oldestMs = t;
+	}
+	const coveredMs = truncated && oldestMs != null ? Math.min(windowMs, now - oldestMs) : windowMs;
+	return {
+		truncated,
+		windowMs,
+		coveredMs,
+		coveredFraction: windowMs ? Math.round((coveredMs / windowMs) * 1000) / 1000 : 1,
+		oldest: oldestMs == null ? null : new Date(oldestMs).toISOString(),
+	};
+}
+
+function formatSpan(ms) {
+	if (ms >= 3_600_000) return `${Math.round(ms / 360_000) / 10}h`;
+	if (ms >= 60_000) return `${Math.round(ms / 60_000)}m`;
+	return `${Math.round(ms / 1000)}s`;
 }
 
 async function readLogs(opts) {
@@ -520,7 +554,7 @@ const CLASS_BADGE = {
 
 const PROBE_BADGE = { ok: '✅', findings: '❗', skipped: '⏭️', error: '💥' };
 
-function renderReport({ opts, healthz, findings, scanned, deep }) {
+function renderReport({ opts, healthz, findings, scanned, coverage, deep }) {
 	const lines = [];
 	lines.push(`# gcp-triage: last ${opts.since}, project ${opts.project}${opts.deep ? ' (deep sweep)' : ''}`);
 	lines.push('');
@@ -542,6 +576,9 @@ function renderReport({ opts, healthz, findings, scanned, deep }) {
 	}
 	const actionable = findings.filter((f) => f.class !== 'self-healing');
 	lines.push(`## Log sweep: ${scanned} WARNING+ entries → ${findings.length} distinct signatures (${actionable.length} actionable)`);
+	if (coverage?.truncated) {
+		lines.push(`⚠️  Hit --limit ${opts.limit}: these entries cover only the last ${formatSpan(coverage.coveredMs)} of the ${opts.since} window (back to ${coverage.oldest}). Counts are a floor; re-run with a higher --limit for the full picture.`);
+	}
 	lines.push('');
 	if (!findings.length) lines.push('Nothing above WARNING in the window. Production is quiet.');
 	for (const f of findings) {
@@ -897,6 +934,7 @@ async function main() {
 		fetchHealthz(),
 		readLogs(opts),
 	]);
+	const coverage = logCoverage(entries, opts);
 	const findings = buildFindings(entries);
 	findings.push(...gpuCapacityFindings(findings));
 	const deep = await deepPromise;
@@ -915,6 +953,8 @@ async function main() {
 			window: opts.since,
 			project: opts.project,
 			scannedEntries: entries.length,
+			logLimit: opts.limit,
+			logCoverage: coverage,
 			healthz,
 			deep: deep ? deep.map(({ findings: _f, ...rest }) => rest) : null,
 			findings,
@@ -922,7 +962,7 @@ async function main() {
 			healthy: !unhealthy,
 		}, null, 2) + '\n');
 	} else {
-		console.log(renderReport({ opts, healthz, findings, scanned: entries.length, deep }));
+		console.log(renderReport({ opts, healthz, findings, scanned: entries.length, coverage, deep }));
 	}
 	process.exit(unhealthy ? 1 : 0);
 }

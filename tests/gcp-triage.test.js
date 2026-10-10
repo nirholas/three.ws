@@ -2,7 +2,7 @@
 // added to KNOWN_SIGNATURES should get a case here: the monitor learning a
 // benign pattern must never silently swallow a genuine fault that shares text.
 import { describe, expect, it } from 'vitest';
-import { buildFindings, classify, summarizePageCheckFailure } from '../scripts/gcp-triage.mjs';
+import { buildFindings, classify, logCoverage, summarizePageCheckFailure } from '../scripts/gcp-triage.mjs';
 
 describe('gcp-triage classify', () => {
 	it('classifies the Colyseus stale-seat refusal as self-healing', () => {
@@ -110,5 +110,30 @@ describe('gcp-triage page failure summary', () => {
 		expect(summary.count).toBe(1);
 		expect(summary.sample).toContain('/contributors');
 		expect(summary.sample).not.toContain('50/822');
+	});
+});
+
+describe('logCoverage', () => {
+	const now = Date.parse('2026-10-10T12:00:00Z');
+	const at = (iso) => ({ timestamp: iso });
+
+	it('reports full coverage when the read stopped short of the limit', () => {
+		const cov = logCoverage([at('2026-10-10T11:58:00Z')], { since: '6h', limit: 1000, now });
+		expect(cov.truncated).toBe(false);
+		expect(cov.coveredFraction).toBe(1);
+	});
+
+	it('flags a read that hit the limit and measures how far back it reached', () => {
+		const entries = [at('2026-10-10T11:59:00Z'), at('2026-10-10T11:56:00Z')];
+		const cov = logCoverage(entries, { since: '6h', limit: 2, now });
+		expect(cov.truncated).toBe(true);
+		expect(cov.coveredMs).toBe(4 * 60_000);
+		expect(cov.coveredFraction).toBeCloseTo(4 / 360, 3);
+		expect(cov.oldest).toBe('2026-10-10T11:56:00.000Z');
+	});
+
+	it('never claims more than the requested window', () => {
+		const cov = logCoverage([at('2026-10-09T00:00:00Z')], { since: '1h', limit: 1, now });
+		expect(cov.coveredMs).toBe(3_600_000);
 	});
 });
