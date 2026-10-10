@@ -84,7 +84,7 @@ async function loadBalancerIp() {
 	return a.address;
 }
 
-async function ensureZone(domain) {
+export async function ensureZone(domain) {
 	const name = zoneName(domain);
 	try {
 		return await gcp(`${DNS}/managedZones`, {

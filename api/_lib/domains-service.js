@@ -353,12 +353,18 @@ function googleContact(c) {
 	};
 }
 
-function registrationBody(domain, contact, { autoRenew, privacy }) {
+// Google Domains DNS is deprecated, so a name must register on custom name
+// servers. Validate-only quotes use the standard Cloud DNS set; a real
+// registration creates the domain's Cloud DNS zone first and uses its servers.
+const QUOTE_NAME_SERVERS = ['ns-cloud-a1.googledomains.com.', 'ns-cloud-a2.googledomains.com.', 'ns-cloud-a3.googledomains.com.', 'ns-cloud-a4.googledomains.com.'];
+
+function registrationBody(domain, contact, { autoRenew, privacy, nameServers = QUOTE_NAME_SERVERS }) {
 	const gc = googleContact(contact);
 	return {
 		domainName: domain,
 		labels: { source: 'three-ws' },
 		contactSettings: { privacy, registrantContact: gc, adminContact: gc, technicalContact: gc },
+		dnsSettings: { customDns: { nameServers } },
 		managementSettings: { preferredRenewalMethod: autoRenew ? 'AUTOMATIC_RENEWAL' : 'MANUAL_RENEWAL' },
 	};
 }
@@ -498,6 +504,10 @@ export async function registerWithCredits({ userId, domain: input, contact, auto
 	}
 	const chosenPrivacy = pickPrivacy(s.privacy, privacy);
 
+	const { ensureZone } = await import('./domain-connect.js');
+	const zone = await ensureZone(domain);
+	const nameServers = zone.nameServers?.length ? zone.nameServers : QUOTE_NAME_SERVERS;
+
 	let row;
 	try {
 		[row] = await sql`
@@ -540,7 +550,7 @@ export async function registerWithCredits({ userId, domain: input, contact, auto
 	try {
 		const op = await metered(() =>
 			registerDomain({
-				registration: registrationBody(domain, c, { autoRenew, privacy: chosenPrivacy }),
+				registration: registrationBody(domain, c, { autoRenew, privacy: chosenPrivacy, nameServers }),
 				yearlyPrice: params.yearlyPrice || numberToMoney(priceUsd, s.currency),
 				domainNotices: s.notices,
 			}),
