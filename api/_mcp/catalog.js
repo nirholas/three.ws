@@ -25,6 +25,7 @@ import { toolDefs as cardDefs } from './tools/cards.js';
 import { toolDefs as pairedDefs } from './tools/paired.js';
 import { toolDefs as agentLifecycleDefs } from './tools/agent-lifecycle.js';
 import { toolDefs as customSkillDefs } from './tools/custom-skills.js';
+import { toolDefs as skillImportDefs } from './tools/skill-imports.js';
 import { toolDefs as resourceDefs } from './tools/resources.js';
 import { toolDefs as mailDefs } from './tools/mail.js';
 import { toolDefs as domainDefs } from './tools/domains.js';
@@ -41,6 +42,7 @@ const baseDefs = [
 	...pumpfunDefs,
 	...agentDefs,
 	...customSkillDefs,
+	...skillImportDefs,
 	...memoryDefs,
 	...oracleDefs,
 	...traderDefs,

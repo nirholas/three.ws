@@ -129,6 +129,15 @@ export const POLICY = {
 		create_custom_skill: w('skills'),
 		update_custom_skill: w('skills'),
 		delete_custom_skill: f('skills', 'confirm_delete', 'get_custom_skill', ['agent_id', 'skill_id']),
+		// External skill import (api/_mcp/tools/skill-imports.js). Every write is
+		// undone by refusing, deleting or unpublishing; install and publish also
+		// refuse in the handler without the owner's explicit flag.
+		browse_external_skills: r('skills'),
+		scan_external_skill: w('skills'),
+		install_external_skill: w('skills'),
+		external_skill_update_diff: w('skills'),
+		skill_fork: w('skills'),
+		skill_publish: w('skills'),
 		trade_receipt: r('trading'),
 		sentiment_scout: r('intelligence'),
 		// Agent cards (api/_mcp/tools/cards.js). The service verifies its own
@@ -242,27 +251,6 @@ export const POLICY = {
 		predictions_redeem_preview: r('predictions'),
 		predictions_redeem: own('predictions', 'confirm_trade', 'predictions_redeem_preview'),
 		predictions_watch: w('predictions'),
-		// Portfolio (api/_mcpagent/portfolio-tools.js): valued holdings, the
-		// hourly snapshot history and FIFO P&L. Reads only.
-		get_portfolio: r('wallet'),
-		get_balance_history: r('wallet'),
-		get_pnl: r('wallet'),
-		// Launch sniper, signal subscriptions and alert rules
-		// (api/_mcpagent/sniper-alert-tools.js). Arming the sniper commits SOL, so
-		// it binds the previewed agent, network and sizing.
-		sniper_status: r('trading'),
-		sniper_activate_preview: r('trading'),
-		sniper_activate: f('trading', 'confirm_spend', 'sniper_activate_preview', ['agent_id', 'network', 'per_trade_sol', 'daily_budget_sol', 'stop_loss_pct', 'take_profit_pct', 'trigger', 'max_concurrent_positions']),
-		sniper_deactivate: w('trading'),
-		sniper_subscribe: w('trading'),
-		alert_rule_create: w('intelligence'),
-		alert_rule_list: r('intelligence'),
-		alert_rule_delete: f('intelligence', 'confirm_delete', 'alert_rule_list', ['rule_id']),
-		// Trader duels and challenges (api/_mcpagent/duels-tools.js). Free-play.
-		duel_challenge: w('predictions'),
-		duel_accept: w('predictions'),
-		duel_details: r('predictions'),
-		duel_markets: r('predictions'),
 	},
 
 	// /api/mcp-3d

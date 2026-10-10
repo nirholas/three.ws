@@ -4196,95 +4196,6 @@ trade guards and listed in `clamped`.
 
 ---
 
-## Agent portfolio
-
-An agent's valued Solana portfolio, its net-worth history and its P&L, in the
-versioned v1 envelope. Owner only: a session, or an API key or OAuth token with
-`wallet:read`. The same modules back the MCP tools `get_portfolio`,
-`get_balance_history` and `get_pnl` ([MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels)).
-
-```
-GET /api/v1/agents/:id/portfolio?network=mainnet
-GET /api/v1/agents/:id/portfolio/history?network=mainnet&days=30&max_points=120
-GET /api/v1/agents/:id/portfolio/pnl?network=mainnet
-```
-
-- **`/portfolio`**: SOL and every SPL holding valued in SOL and USD, FIFO cost
-  basis and unrealized P&L per holding, `attribution` (realized and unrealized
-  P&L by source: sniper, discretionary trades, strategies, x402 spend,
-  withdrawals), `metrics` and `risk_flags`. Each call records a net-worth
-  snapshot (at most one per agent and network every 15 minutes); the hourly
-  `/api/cron/agent-portfolio-snapshots` cron records one for every active agent.
-- **`/portfolio/history`**: `points` (recorded valuations over `days`, 1 to 365,
-  thinned to `max_points`, 2 to 500, first and last exact), `summary` (start,
-  end, change, peak, max drawdown) and `realized_curve` (exact cumulative
-  realized P&L per UTC day from closed trades).
-- **`/portfolio/pnl`**: `totals` (realized, unrealized, total, net worth, in SOL
-  and USD), `by_source`, `performance` (win rate, ROI, profit factor, drawdown,
-  Sharpe) and the top open `top_winners` and `top_losers`.
-
-```bash
-curl -s "https://three.ws/api/v1/agents/$AGENT_ID/portfolio/pnl?network=mainnet" \
-  -H "authorization: Bearer $THREE_WS_API_KEY"
-```
-
-| Status | Code | Meaning |
-| ------ | ---- | ------- |
-| `400` | `invalid_network` | `network` is not `mainnet` or `devnet` |
-| `400` | `invalid_parameter` | `days` or `max_points` out of range |
-| `401` | `unauthorized` | No session or bearer token |
-| `403` | `forbidden` | The agent belongs to another account |
-| `403` | `insufficient_scope` | The token lacks `wallet:read` |
-| `404` | `not_found` | No agent with that id, or an unknown sub-path |
-
----
-
-## Pump alert rules API
-
-Per-user pump.fun alert rules, evaluated server-side against the live launch
-and trade stream, so they fire with no dashboard tab open. Session auth with a
-CSRF token (the pump dashboard), and the same store as the MCP tools
-`alert_rule_create`, `alert_rule_list` and `alert_rule_delete`.
-
-```
-GET    /api/alerts/rules
-POST   /api/alerts/rules         { kind, ...targeting, filters?, deliver_in_app?, webhook_url?, telegram_chat?, cooldown_seconds?, label? }
-PATCH  /api/alerts/rules/:id     { any field above, enabled? }
-DELETE /api/alerts/rules/:id
-```
-
-Kinds: `graduation`, `new_mint`, `price_above`, `price_below`, `whale_buy`,
-`market_price`, and `launch_match`. Up to 50 rules per user.
-
-**`launch_match`** fires once per new launch that coin intel has scored and that
-passes every filter set in `filters` (at least one is required, and the rule
-takes no `target_mint` or `target_agent`):
-
-| Filter | Type | Matches when |
-| ------ | ---- | ------------ |
-| `name_pattern` | string, up to 120 | The name or symbol matches, case-insensitive. `*` is any text, `\|` separates alternatives; nothing else is special. Without a `*`, an alternative matches anywhere. |
-| `min_market_cap_usd`, `max_market_cap_usd` | number | The market cap is inside the band. Min cannot exceed max. |
-| `min_safety_score` | 0 to 100 | The coin intel quality score is at least this. |
-| `min_creator_graduated` | integer | The creator's earlier launches that graduated are at least this. |
-| `max_creator_launches` | integer | The creator's earlier launches are at most this (skips serial launchers). |
-| `exclude_risk_flags` | array of `single_whale`, `low_diversity`, `sniped`, `dev_dumped`, `sell_pressure`, `bundle_launch` | None of these flags is set. |
-| `require_socials` | boolean | The launch lists at least one social link. |
-
-A filter whose data is missing on the launch (no market cap read yet) is a miss,
-never a pass. The alert payload carries the mint, name, symbol, creator, market
-cap, safety score, creator history, risk flags, the `matched` filters and a
-`/coin/:mint` link.
-
-**Delivery.** With `deliver_in_app` (the default) an alert reaches the owner
-through the platform notification fan-out as a `pump_alert`: the bell, Web Push,
-the iOS app, and every Telegram or Discord chat paired for notifications, each
-gated by the `alerts` preference category ([notifications](./notifications.md)).
-A `webhook_url` gets a signed Standard Webhooks POST, and a `telegram_chat` that
-is not already a paired chat gets a direct message. Each attempt is recorded per
-channel and returned as `recent_deliveries` on the rule.
-
----
-
 ## Trader Passport API
 
 A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a
@@ -7358,6 +7269,63 @@ curl -s https://three.ws/api/platform/stats | jq 'select(.available) | {agents, 
 
 The sibling `/api/home-stats` uses the same `available` contract for the home
 page strip (on-chain agents, attestations, forge models).
+
+---
+
+## Skill Import API
+
+Install `SKILL.md` skills from public GitHub repositories and registry manifests: browse, scan, approve, update with a diff, fork and publish. The model behind it (pinning, licence policy, scanner rules, the spend gate for gated skills) is in [Skill import](./skill-import.md); the manifest format is [specs/SKILL_REGISTRY_MANIFEST.md](../specs/SKILL_REGISTRY_MANIFEST.md).
+
+Base path `/api/skill-imports`. Owner routes accept a session cookie or `Authorization: Bearer <api key>` (`agents:read` for GET, `agents:write` otherwise); cookie writes also need the CSRF header. Responses wrap results in `{ "data": ... }`; errors are `{ "error": code, "error_description": message }`.
+
+### `GET /api/skill-imports/browse`
+
+Public. Query: `registry` (a registry key), `category` (`defi`, `intelligence`, `social`, `infrastructure`, `security`, `data`, `other`), `q`. Rate limit 120 per 5 minutes per IP.
+
+Returns `registries[]` (`key`, `kind`, `label`, `url`, `commit`, `fetched_at`, `cached`, `skills`, or `error`), `categories` (counts), `skills[]` (`key`, `name`, `description`, `category`, `tags`, `author`, `license {spdx, class, notice}`, `requested_tools`, `pin`, `source_url`, `repo_url`, `installs`) sorted by installs, and `excluded[]` (`key`, `name`, `registry`, `reason`).
+
+### `GET /api/skill-imports/published/manifest.json` and `GET /api/skill-imports/published/<slug>/SKILL.md`
+
+Public. The registry of skills published on three.ws, in `three.ws/skill-registry@1` format, and one published `SKILL.md` (`text/markdown`). Cached 60 seconds.
+
+### Registries
+
+- `GET /registries`: the built-in registries plus the caller's own.
+- `POST /registries` `{ "registry": "owner/repo" | GitHub URL | https manifest URL, "label"?: string }`: adds one (201). Errors: `invalid_registry` (400), `already_added` (409), `limit_reached` (409, 20 per account), `no_skills_found` (422).
+- `DELETE /registries?key=<key>`: removes one of the caller's registries.
+
+### `POST /api/skill-imports/scan`
+
+`{ "agent_id": uuid, "registry": key, "skill": key or slug }`. Fetches the skill at its pin, scans it, and opens an import request (201) holding the exact bytes for 24 hours. Rate limit 40 per 10 minutes per user. A `refused` scan is closed immediately (`status: "refused"`, `decided_by: "scanner"`).
+
+The request: `id`, `status` (`pending`, `approved`, `refused`), `verdict`, `gated`, `agent_id`, `replaces_skill_id`, `skill`, `provenance` (`registry`, `repo_url`, `path`, `commit` or `revision`, `sha256`, `license`, `author`, `source_url`), `scan` (`findings[]`, `capabilities`, `requested_tools`, `tokens`, `guardian`), `content`, `expires_at`, `approve_requires`.
+
+### Requests
+
+- `GET /requests?status=pending|approved|refused`: the caller's last 30.
+- `GET /requests/<id>`: one.
+- `POST /requests/<id>` `{ "decision": "approve" | "refuse", "acknowledge_gated"?: boolean, "enabled"?: boolean }`: decide. Approve returns `{ request, skill, budget }`. Errors: `scan_refused` (422), `expired` (410), `acknowledge_gated` (428, the skill asks to spend, sign or message), `already_decided` (409), `already_installed` (409), `limit_reached` (409, the agent already holds 50 skills).
+
+### `POST /api/skill-imports/updates`
+
+`{ "agent_id": uuid, "skill_id": uuid, "open_request"?: boolean }`. Compares an installed import with the registry's current revision. Returns `{ changed: false }`, `{ changed: false, removed: true }`, or `{ changed: true, installed, latest, locally_modified, stats {added, removed}, diff, request }`.
+
+### `POST /api/skill-imports/fork`
+
+`{ "agent_id": uuid, "skill_id"?: uuid, "published_slug"?: string, "name"?: string }` with exactly one source. Returns `{ skill, budget }` (201); the skill carries `fork` with its origin.
+
+### `POST /api/skill-imports/publish`
+
+`{ "agent_id": uuid, "skill_id": uuid, "license": SPDX id, "category": string, "confirm_publish": true }`. Returns `{ slug, sha256, url, manifest, page, gated }`. Errors: `not_yours` (409), `unchanged_copy` (409), `license_conflict` (422), `scan_refused` (422).
+
+### Publications
+
+- `GET /publications`: the caller's published skills.
+- `DELETE /publications?slug=<slug>`: unpublish. Installed copies elsewhere keep their pin.
+
+```bash
+curl -s "https://three.ws/api/skill-imports/browse?q=release" | jq '.data.skills[0] | {key, license: .license.spdx, installs}'
+```
 
 ---
 

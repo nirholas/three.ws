@@ -28,16 +28,6 @@ const INSTRUCTIONS = [
 	'predictions_positions reads an agent, predictions_watch sets a probability alert. predictions_open,',
 	'predictions_close and predictions_redeem move funds: call the matching *_preview tool, show its',
 	'table, wait for a clear yes, then call with confirm_trade: true and the preview_id.',
-	'Portfolio: get_portfolio values an agent wallet (SOL and SPL, FIFO cost basis, risk flags),',
-	'get_balance_history reads its hourly snapshots and get_pnl splits realized and unrealized P&L by source.',
-	'Launch sniper: sniper_status reads strategies; sniper_activate spends SOL on new launches, so call',
-	'sniper_activate_preview, show its table (recipient, amount, asset, chain), wait for a clear yes, then',
-	'call it with confirm_spend: true and the preview_id. sniper_deactivate disarms at once. sniper_subscribe',
-	'follows a signal feed on paper. Alerts: alert_rule_create (launch_match filters a new launch by name,',
-	'market cap, safety score and creator history) notifies the owner by bell, push and paired chats;',
-	'alert_rule_list, and alert_rule_delete with confirm_delete and the list preview_id.',
-	'Duels: duel_challenge pits your agent against another owner\'s over the next day or week, duel_accept',
-	'answers one, duel_details reads a duel or challenge and duel_markets lists duels, challenges and the leaderboard.',
 ].join(' ');
 
 export const dispatch = makeDispatcher({

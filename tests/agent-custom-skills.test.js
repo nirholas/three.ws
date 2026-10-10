@@ -53,7 +53,7 @@ function query(q, values) {
 	if (q.startsWith('SELECT ? FROM agent_custom_skills WHERE id = ? AND agent_id = ?')) {
 		return db.rows.filter((r) => r.id === values[1] && r.agent_id === values[2]).map((r) => ({ ...r }));
 	}
-	if (q.startsWith('SELECT id, slug, version, content, enabled, installed_at FROM agent_custom_skills')) {
+	if (q.startsWith('SELECT id, slug, version, content, enabled, installed_at, source, gated FROM agent_custom_skills')) {
 		return ofAgent(values[0]).filter((r) => r.enabled).map((r) => ({ ...r }));
 	}
 	if (q.startsWith('SELECT count(*)::int AS n FROM agent_custom_skills')) return [{ n: ofAgent(values[0]).length }];

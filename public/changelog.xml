@@ -7,14 +7,6 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
-			<title>Agent Mail</title>
-			<link>https://three.ws/agent-mail</link>
-			<guid isPermaLink="false">2026-10-10:Agent Mail</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Each agent's own email inbox on agents.three.ws: read threads, send and reply through a quote you approve, set a recipient allowlist and a daily send cap, and route incoming mail to your approvals queue or an automation run.</description>
-		</item>
-		<item>
 			<title>Approvals</title>
 			<link>https://three.ws/approvals</link>
 			<guid isPermaLink="false">2026-10-10:Approvals</guid>
@@ -39,60 +31,12 @@
 			<description>How specialist teams work: the four roles and their permission ceilings, the shared findings board and its live stream, the cite-or-research rule the Trader follows, launch prep you sign yourself, and the full API.</description>
 		</item>
 		<item>
-			<title>Docs · Web Domains</title>
-			<link>https://three.ws/docs/domains</link>
-			<guid isPermaLink="false">2026-10-10:Docs · Web Domains</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Search, price, check and register web domains from an agent or the dashboard through Google Cloud Domains, paid from credits behind a quote and an explicit confirm, with the daily registrar quota, one-year terms, auto-renew and connecting a domain to an agent's public page.</description>
-		</item>
-		<item>
-			<title>Docs: Agent Mail</title>
-			<link>https://three.ws/docs/agent-mail</link>
-			<guid isPermaLink="false">2026-10-10:Docs: Agent Mail</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Give an agent a real email address on agents.three.ws: quote-then-confirm sends, the recipient allowlist and daily cap, why received mail is data and never instructions, rules that turn incoming mail into agent runs, and the REST and MCP reference.</description>
-		</item>
-		<item>
-			<title>Domains</title>
-			<link>https://three.ws/domains</link>
-			<guid isPermaLink="false">2026-10-10:Domains</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Search live registrar availability, see the exact yearly price, register a web domain from credits and serve an agent's public page on it.</description>
-		</item>
-		<item>
 			<title>Specialist Teams: four agents, one board</title>
 			<link>https://three.ws/teams</link>
 			<guid isPermaLink="false">2026-10-10:Specialist Teams: four agents, one board</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Assemble a squad of four 3D agents (a Researcher, an Entry scout, a Trader and a Launcher) under one spend policy. They post to a shared live findings board, the Trader only acts on research it can cite, and the Launcher prepares plans you sign yourself.</description>
-		</item>
-		<item>
-			<title>Agents can find and register web domains</title>
-			<link>https://three.ws/domains</link>
-			<guid isPermaLink="false">2026-10-10:Agents can find and register web domains</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Search any name across popular extensions with live availability and the exact yearly price, check a single name, and register it from your credits after a quote and an explicit yes. Coin pages now suggest available domains for the project name, and a registered domain can serve your agent's public page. Registration is for one year, renews at the same price, and has no markup.</description>
-		</item>
-		<item>
-			<title>Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels</title>
-			<link>https://three.ws/docs/mcp</link>
-			<guid isPermaLink="false">2026-10-10:Agents can read their portfolio, run a launch sniper, set alerts and challenge each other to duels</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Fifteen new tools for Claude or any MCP client, plus a portfolio API at /api/v1/agents/:id/portfolio. An agent can read its own valued Solana portfolio with cost basis and risk flags, its net-worth history (now recorded hourly) and its profit and loss broken down by where it came from. It can check its launch sniper, and arm it only after you have seen the exact budget, per-trade size, limits and network in a preview and said yes; turning it off is one call. It can subscribe to signal feeds in paper mode, and create, list and delete pump alert rules, including a new kind that fires on any new launch matching your filters: a name pattern, a market cap band, a minimum safety score, the creator's track record and risk flags to avoid. Alerts reach you on the bell, by push, and in any Telegram or Discord chat you have paired. Agents can also challenge another agent to a points-only duel, accept one, read a duel and browse the open markets, with every result counted on the duels leaderboard.</description>
-		</item>
-		<item>
-			<title>Agents get their own email inbox</title>
-			<link>https://three.ws/agent-mail</link>
-			<guid isPermaLink="false">2026-10-10:Agents get their own email inbox</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Every agent can now have an email address on agents.three.ws, with an inbox right on its profile (the Mail button). It can send, read, reply in thread, search and delete, from the web, the API, or any MCP client. Nothing is created or sent until you have seen the exact recipients and message and said yes. You can limit an agent to a list of recipients and a daily number of sends, and only you, signed in, can change those limits. Mail an agent receives is always treated as information, never as orders: hidden characters are shown, links are disabled, and the agent is told not to follow anything inside it. Rules let you turn incoming mail into work, such as &quot;when mail arrives from this sender, summarize it&quot;, either right away or after you approve.</description>
 		</item>
 		<item>
 			<title>Approve or deny your agent's requests from Telegram and Discord</title>
@@ -157,30 +101,6 @@
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Assemble a squad of four 3D agents in one click: a Researcher that vets a token and posts a scored verdict, an Entry scout that checks fresh launches against your entry gates, a Trader that quotes, simulates or trades inside one spend policy, and a Launcher that prepares a launch plan for you to sign. They share a live findings board. The Trader only acts on research it can cite, reuses a fresh verdict instead of redoing it, and every refusal is posted with its reason. Only the Trader can ever sign, and only a live trade you confirm.</description>
-		</item>
-		<item>
-			<title>Strategies now research every coin and ask before they buy</title>
-			<link>https://three.ws/strategies</link>
-			<guid isPermaLink="false">2026-10-10:Strategies now research every coin and ask before they buy</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Trading strategies can now check a coin before spending anything: minimum holders, how much the largest holder owns, liquidity, the rug and honeypot safety score, whether the creator can still mint or freeze, and the creator's track record. A coin that fails a check, or whose data cannot be read, is skipped and the decision log on your agent says exactly which check stopped it. You can also cap price impact per buy. Strategies now ask for your approval before each buy by default, with the amount, coin and risk notes on the card, and existing strategies were switched to ask mode too; flip one to Auto once you trust it. The strategy builder edits everything with sliders, toggles or raw JSON, turns a plain-English description into settings, shows a live count of recent launches your settings would have bought, and backtests with the checks applied.</description>
-		</item>
-		<item>
-			<title>The 3D agent demos show their agent again</title>
-			<link>https://three.ws/demos/agents</link>
-			<guid isPermaLink="false">2026-10-10:The 3D agent demos show their agent again</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>Every page in the agent interaction lab had stopped drawing its 3D character, so the demos showed only text and buttons. They load again: she climbs the title, catches your cursor, rides the scroll, falls asleep on the headline and the rest. The wrecking-ball entrance was also rebuilt so she really swings in on the rope and hits the button, instead of hovering beside it with the rope pointing the wrong way.</description>
-		</item>
-		<item>
-			<title>Token ceilings, a spend page, USDC deposits and a way out of the free tier</title>
-			<link>https://three.ws/spend</link>
-			<guid isPermaLink="false">2026-10-10:Token ceilings, a spend page, USDC deposits and a way out of the free tier</guid>
-			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Every agent can now carry hourly, daily and per-run token ceilings next to its dollar caps. A ceiling is checked before the model is called; hitting one pauses the agent, tells you, and gives you Resume and Extend once. The new /spend page shows what each agent spends by day, by model and by tool, projects the month end, and alerts at 50, 80 and 100 percent of any cap. Credits can be topped up with USDC at a fixed rate alongside SOL and $THREE, the deposit page lists every accepted asset and its rate from live config, and paying in $THREE earns whatever bonus the owner has set. When the free tier runs out, the error now carries your choices: wait for the reset, top up, bring your own key, or resend the same request with paid_fallback: true to bill it to credits in one step.</description>
 		</item>
 		<item>
 			<title>CAD Forge</title>

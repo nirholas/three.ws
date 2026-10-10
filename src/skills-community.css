@@ -890,6 +890,12 @@
 	color: var(--warn, #fbbf24);
 }
 
+.sc-status.is-gated {
+	background: color-mix(in srgb, var(--danger, #f87171) 14%, transparent);
+	color: var(--danger, #f87171);
+	cursor: help;
+}
+
 .sc-item-actions {
 	display: flex;
 	flex-wrap: wrap;

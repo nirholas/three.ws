@@ -653,6 +653,33 @@
 			},
 			"schemaHash": "755f21dddd24"
 		},
+		{
+			"name": "recall",
+			"title": "Recall",
+			"descHead": "Retrieve the most relevant memories for a query from one of your agents.",
+			"descHash": "2f63c3847d9b",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "ff6704725285"
+		},
+		{
+			"name": "remember",
+			"title": "Remember",
+			"descHead": "Store a long-term memory for one of your agents. Use for durable facts: ",
+			"descHash": "ae6892ef85bb",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "8033e83ac438"
+		}
+	],
 	"api/_mcp/tools/domains.js": [
 		{
 			"name": "domain_check",
@@ -717,33 +744,6 @@
 			"descHash": "f6cb05ee34ec",
 			"annotations": "ref:READ",
 			"schemaHash": "1f18b648f326"
-		}
-	],
-		{
-			"name": "recall",
-			"title": "Recall",
-			"descHead": "Retrieve the most relevant memories for a query from one of your agents.",
-			"descHash": "2f63c3847d9b",
-			"annotations": {
-				"readOnlyHint": true,
-				"destructiveHint": false,
-				"idempotentHint": false,
-				"openWorldHint": true
-			},
-			"schemaHash": "ff6704725285"
-		},
-		{
-			"name": "remember",
-			"title": "Remember",
-			"descHead": "Store a long-term memory for one of your agents. Use for durable facts: ",
-			"descHash": "ae6892ef85bb",
-			"annotations": {
-				"readOnlyHint": false,
-				"destructiveHint": false,
-				"idempotentHint": false,
-				"openWorldHint": true
-			},
-			"schemaHash": "8033e83ac438"
 		}
 	],
 	"api/_mcp/tools/models.js": [
@@ -975,6 +975,62 @@
 				"openWorldHint": false
 			},
 			"schemaHash": "712b88a354d8"
+		}
+	],
+	"api/_mcp/tools/skill-imports.js": [
+		{
+			"name": "browse_external_skills",
+			"title": "Browse external skill registries",
+			"descHead": "Browse SKILL.md skills from public registries: the three.ws community re",
+			"descHash": "ce009f2f094a",
+			"annotations": "ref:READ",
+			"schemaHash": "b5c3b56bad13"
+		},
+		{
+			"name": "external_skill_update_diff",
+			"title": "Check an imported skill for upstream changes",
+			"descHead": "Compare an installed external skill with its registry's current revision",
+			"descHash": "c59f553162c0",
+			"annotations": "ref:WRITE",
+			"schemaHash": "a57f86e69dfd"
+		},
+		{
+			"name": "install_external_skill",
+			"title": "Install a scanned external skill",
+			"descHead": "Install (or, for an update request, apply) exactly the bytes a scan_exte",
+			"descHash": "f41f900395d3",
+			"annotations": "ref:WRITE",
+			"schemaHash": "ef0fa00ea5cd"
+		},
+		{
+			"name": "scan_external_skill",
+			"title": "Scan an external skill for install",
+			"descHead": "Fetch one external skill at its pinned revision and scan it before insta",
+			"descHash": "9b5257f8e6f4",
+			"annotations": "ref:WRITE",
+			"schemaHash": "6a53b2f2e08e"
+		},
+		{
+			"name": "skill_fork",
+			"title": "Fork a skill",
+			"descHead": "Copy a skill onto one of your agents as your own editable custom skill: ",
+			"descHash": "58885b872189",
+			"annotations": {
+				"…": "dynamic",
+				"openWorldHint": false
+			},
+			"schemaHash": "1b917a2aad48"
+		},
+		{
+			"name": "skill_publish",
+			"title": "Publish a skill to the three.ws registry",
+			"descHead": "Publish one of your own skills (hand-written, or a fork you changed) to ",
+			"descHash": "50ecdd732bbe",
+			"annotations": {
+				"…": "dynamic",
+				"openWorldHint": false
+			},
+			"schemaHash": "e2ea3fd87315"
 		}
 	],
 	"api/_mcp/tools/solana.js": [

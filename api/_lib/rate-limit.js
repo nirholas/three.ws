@@ -2272,6 +2272,11 @@ export const limits = {
 	// owner clearing a backlog taps fast; it exists so a stuck client loop cannot
 	// hammer the decide path. Local: a decision is already idempotent in the DB.
 	approvalsUser: (userId) => getLimiter('approvals:user', { limit: 240, window: '5 m', local: true }).limit(userId),
+	// External skill import (api/skill-imports.js). Browse is served from a
+	// five-minute index cache; a scan or update check fetches upstream bytes and
+	// runs the Guardian pass, so those are capped per owner.
+	skillImportBrowseIp: (ip) => getLimiter('skill-import:browse:ip', { limit: 120, window: '5 m', local: true }).limit(ip),
+	skillImportScanUser: (userId) => getLimiter('skill-import:scan:user', { limit: 40, window: '10 m' }).limit(userId),
 };
 
 // Fixed-window counters for limits.planApi. One small record per principal, so

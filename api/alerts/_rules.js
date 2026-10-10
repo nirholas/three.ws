@@ -4,25 +4,9 @@
 
 import { z } from 'zod';
 import { isValidSolanaAddress, isUuid } from '../_lib/validate.js';
-import { MINT_TARGETED_KINDS, AGENT_TARGETED_KINDS, MARKET_TARGETED_KINDS, THRESHOLD_KINDS, FILTER_KINDS, LAUNCH_FILTER_KEYS, LAUNCH_RISK_FLAGS, deriveRuleLabel } from '../_lib/pump-alert-eval.js';
+import { MINT_TARGETED_KINDS, AGENT_TARGETED_KINDS, MARKET_TARGETED_KINDS, THRESHOLD_KINDS, deriveRuleLabel } from '../_lib/pump-alert-eval.js';
 
-export const RULE_KINDS = ['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_price', 'launch_match'];
-
-// launch_match: a new pump.fun launch scored by coin intel that passes every
-// filter set here (api/_lib/pump-alert-eval.js launchMatchesRule).
-const usdBound = z.coerce.number().min(0).max(1e12);
-export const launchFiltersSchema = z
-	.object({
-		name_pattern: z.string().trim().min(1).max(120).optional(),
-		min_market_cap_usd: usdBound.optional(),
-		max_market_cap_usd: usdBound.optional(),
-		min_safety_score: z.coerce.number().min(0).max(100).optional(),
-		min_creator_graduated: z.coerce.number().int().min(0).max(1000).optional(),
-		max_creator_launches: z.coerce.number().int().min(0).max(100_000).optional(),
-		exclude_risk_flags: z.array(z.enum(LAUNCH_RISK_FLAGS)).max(LAUNCH_RISK_FLAGS.length).optional(),
-		require_socials: z.boolean().optional(),
-	})
-	.strict();
+export const RULE_KINDS = ['graduation', 'price_above', 'price_below', 'whale_buy', 'new_mint', 'market_price'];
 
 const telegramChat = z
 	.string()
@@ -76,7 +60,6 @@ const baseShape = {
 	cooldown_seconds: z.coerce.number().int().min(5).max(86_400).optional(),
 	enabled: z.boolean().optional(),
 	label: z.string().trim().max(80).nullable().optional(),
-	filters: launchFiltersSchema.nullable().optional(),
 };
 
 /** Cross-field rules shared by create (strict) and update (after merge). */
@@ -118,19 +101,6 @@ function refineRule(v, ctx) {
 	}
 	if (v.kind === 'graduation' && v.target_mint && v.target_agent) {
 		ctx.addIssue({ code: 'custom', path: ['target_agent'], message: 'set either target_mint or target_agent, not both' });
-	}
-	if (FILTER_KINDS.includes(v.kind)) {
-		const f = v.filters || {};
-		const set = LAUNCH_FILTER_KEYS.filter((k) => f[k] != null && f[k] !== false && !(Array.isArray(f[k]) && !f[k].length));
-		if (!set.length) {
-			ctx.addIssue({ code: 'custom', path: ['filters'], message: `${v.kind} needs at least one filter (${LAUNCH_FILTER_KEYS.join(', ')})` });
-		}
-		if (f.min_market_cap_usd != null && f.max_market_cap_usd != null && Number(f.min_market_cap_usd) > Number(f.max_market_cap_usd)) {
-			ctx.addIssue({ code: 'custom', path: ['filters', 'min_market_cap_usd'], message: 'min_market_cap_usd cannot exceed max_market_cap_usd' });
-		}
-		if (v.target_mint || v.target_agent) {
-			ctx.addIssue({ code: 'custom', path: ['kind'], message: `${v.kind} matches every new launch; it takes filters, not a target` });
-		}
 	}
 	if (THRESHOLD_KINDS.includes(v.kind) && !(Number(v.threshold) > 0)) {
 		ctx.addIssue({ code: 'custom', path: ['threshold'], message: `${v.kind} requires a positive threshold` });
@@ -183,7 +153,6 @@ export function validateUpdate(current, patch) {
 		cooldown_seconds: 'cooldown_seconds' in patch ? patch.cooldown_seconds : current.cooldown_seconds,
 		enabled: 'enabled' in patch ? patch.enabled : current.enabled,
 		label: 'label' in patch ? patch.label : current.label,
-		filters: 'filters' in patch ? patch.filters : current.filters,
 	};
 	// Normalize first so fields incompatible with the (possibly new) kind are
 	// cleared before validation — e.g. switching to new_mint drops a stale
@@ -219,8 +188,6 @@ export function normalizeForKind(v) {
 		out.target_side = null;
 		out.direction = null;
 	}
-	if (!FILTER_KINDS.includes(out.kind)) out.filters = null;
-	else if (out.filters) out.filters = Object.fromEntries(Object.entries(out.filters).filter(([, val]) => val != null));
 	if (out.deliver_in_app === undefined) out.deliver_in_app = true;
 	if (out.cooldown_seconds === undefined) out.cooldown_seconds = 300;
 	if (out.enabled === undefined) out.enabled = true;
@@ -238,7 +205,6 @@ export function serializeRule(row) {
 		target_side: row.target_side || null,
 		direction: row.direction || null,
 		threshold: row.threshold != null ? Number(row.threshold) : null,
-		filters: row.filters || null,
 		deliver_in_app: row.deliver_in_app,
 		webhook_url: row.webhook_url || null,
 		webhook_secret: row.webhook_secret || null,

@@ -1238,20 +1238,3 @@ code, .pd-mono-inline {
 		filter var(--duration-fast) var(--ease-standard),
 		text-decoration-thickness var(--duration-fast) var(--ease-standard);
 }
-
-/* launch_match filters in the alert rule form */
-.pd-rule-launch { min-width: 0; }
-.pd-rule-launch legend { padding: 0 0.3rem; }
-.pd-rule-launch-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-	gap: 0 0.8rem;
-}
-.pd-rule-launch-flags {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-	gap: 0 0.8rem;
-	margin-bottom: 0.4rem;
-}
-.pd-rule-launch-flags .pd-field-hint { grid-column: 1 / -1; margin: 0 0 0.5rem; }
-.pd-rule-launch code { font-size: 0.7rem; }

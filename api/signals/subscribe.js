@@ -21,18 +21,69 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { sql } from '../_lib/db.js';
 import { deliverSubscription } from '../_lib/signal-engine.js';
-import {
-	SignalSubscriptionError, isLiveRunning, listSignalSubscriptions, loadSignalSubscription as loadSub,
-	loadSubscribableFeed, existingSubscription, subscriptionKnobs, upsertSignalSubscription,
-	setSignalSubscriptionStatus, setSignalSubscriptionKilled,
-} from '../_lib/signal-subscription-control.js';
 import { requireUser, loadOwnedAgent, normNetwork, parseRowId } from './_common.js';
 
 // A live subscription pays x402 USDC and mirrors trades from the subscriber
 // agent's custodial wallet. Turning one on (or delivering it now) needs the
 // signed real-funds agreement; simulate mode, pause, stop and kill never do.
-// The store itself (api/_lib/signal-subscription-control.js) is shared with the
-// threews-agent MCP tool sniper_subscribe.
+function isLiveRunning(row) {
+	return !!row && row.mode === 'live' && row.status === 'active' && row.killed !== true;
+}
+
+async function loadSub(subId, userId) {
+	const [row] = await sql`select * from signal_subscriptions where id = ${subId} and owner_user_id = ${userId} limit 1`;
+	return row || null;
+}
+
+function num(v, fallback) { const n = Number(v); return Number.isFinite(n) ? n : fallback; }
+
+function shapeSub(s) {
+	return {
+		id: Number(s.id),
+		subscriber_agent_id: s.subscriber_agent_id,
+		feed_id: Number(s.feed_id),
+		network: s.network,
+		mode: s.mode,
+		billing: s.billing,
+		base_sol: num(s.base_sol, 0),
+		size_scaling: num(s.size_scaling, 1),
+		max_per_trade_sol: num(s.max_per_trade_sol, 0),
+		slippage_bps: num(s.slippage_bps, 300),
+		firewall_level: s.firewall_level,
+		copy_exits: s.copy_exits,
+		status: s.status,
+		killed: s.killed,
+		epoch_paid_until: s.epoch_paid_until || null,
+		last_emission_id: Number(s.last_emission_id || 0),
+		created_at: s.created_at,
+		updated_at: s.updated_at,
+	};
+}
+
+async function listForUser(userId) {
+	const rows = await sql`
+		select s.*, f.slug as feed_slug, f.title as feed_title,
+		       f.price_per_signal_usdc, f.price_per_epoch_usdc, f.epoch_seconds,
+		       a.name as publisher_name, a.profile_image_url as publisher_image, a.avatar_url as publisher_avatar,
+		       sub.name as subscriber_name,
+		       (select count(*) from signal_deliveries d where d.subscription_id = s.id and d.mirror_status = 'executed') as executed,
+		       (select count(*) from signal_deliveries d where d.subscription_id = s.id and d.payment_status = 'paid') as paid_count,
+		       (select coalesce(sum(d.payment_usdc),0) from signal_deliveries d where d.subscription_id = s.id and d.payment_status = 'paid') as usdc_spent
+		from signal_subscriptions s
+		join signal_feeds f on f.id = s.feed_id
+		join agent_identities a on a.id = f.publisher_agent_id
+		join agent_identities sub on sub.id = s.subscriber_agent_id
+		where s.owner_user_id = ${userId}
+		order by s.created_at desc
+	`;
+	return rows.map((s) => ({
+		...shapeSub(s),
+		feed: { slug: s.feed_slug, title: s.feed_title, publisher_name: s.publisher_name, publisher_image: s.publisher_image || s.publisher_avatar || null,
+			price_per_signal_usdc: num(s.price_per_signal_usdc, 0), price_per_epoch_usdc: num(s.price_per_epoch_usdc, 0), epoch_seconds: num(s.epoch_seconds, 86400) },
+		subscriber_name: s.subscriber_name,
+		stats: { executed: Number(s.executed) || 0, paid_count: Number(s.paid_count) || 0, usdc_spent: Number(s.usdc_spent) || 0 },
+	}));
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', credentials: true })) return;
@@ -46,7 +97,7 @@ export default wrap(async (req, res) => {
 	const { userId } = auth;
 
 	if (req.method === 'GET') {
-		return json(res, 200, { subscriptions: await listSignalSubscriptions(userId) });
+		return json(res, 200, { subscriptions: await listForUser(userId) });
 	}
 
 	if (auth.viaSession && !(await requireCsrf(req, res, userId))) return;
@@ -76,12 +127,15 @@ export default wrap(async (req, res) => {
 				const cur = await loadSub(subId, userId);
 				if (cur?.mode === 'live' && !isLiveRunning(cur) && !(await requireRealFundsAgreement(req, res, { userId, network: normNetwork(cur.network), context: 'signal-subscribe' }))) return;
 			}
-			const row = await setSignalSubscriptionKilled({ userId, subId, killed });
+			const [row] = await sql`
+				update signal_subscriptions set killed = ${killed}, status = ${killed ? 'paused' : 'active'}, updated_at = now()
+				where id = ${subId} and owner_user_id = ${userId} returning *
+			`;
 			if (!row) return error(res, 404, 'not_found', 'subscription not found');
-			return json(res, 200, { subscription: row });
+			return json(res, 200, { subscription: shapeSub(row) });
 		}
 		if (body.action === 'sync') {
-			const row = await loadSub(subId, userId);
+			const [row] = await sql`select * from signal_subscriptions where id = ${subId} and owner_user_id = ${userId} limit 1`;
 			if (!row) return error(res, 404, 'not_found', 'subscription not found');
 			if (row.mode === 'live' && !(await requireRealFundsAgreement(req, res, { userId, network: normNetwork(row.network), context: 'signal-subscribe' }))) return;
 			const result = await deliverSubscription(row, { maxEvents: 10 });
@@ -94,9 +148,15 @@ export default wrap(async (req, res) => {
 				if (cur?.mode === 'live' && !isLiveRunning(cur) && !(await requireRealFundsAgreement(req, res, { userId, network: normNetwork(cur.network), context: 'signal-subscribe' }))) return;
 			}
 			// Resuming clears any kill; pausing/stopping leaves the kill flag untouched.
-			const row = await setSignalSubscriptionStatus({ userId, subId, status });
+			const [row] = status === 'active'
+				? await sql`
+					update signal_subscriptions set status = 'active', killed = false, updated_at = now()
+					where id = ${subId} and owner_user_id = ${userId} returning *`
+				: await sql`
+					update signal_subscriptions set status = ${status}, updated_at = now()
+					where id = ${subId} and owner_user_id = ${userId} returning *`;
 			if (!row) return error(res, 404, 'not_found', 'subscription not found');
-			return json(res, 200, { subscription: row });
+			return json(res, 200, { subscription: shapeSub(row) });
 		}
 		return error(res, 400, 'no_op', 'nothing to update');
 	}
@@ -108,20 +168,42 @@ export default wrap(async (req, res) => {
 	const owned = await loadOwnedAgent(req, res, userId, body.agent_id);
 	if (owned.error) return;
 
-	let feed;
-	try {
-		feed = await loadSubscribableFeed(feedId, body.agent_id);
-	} catch (err) {
-		if (err instanceof SignalSubscriptionError) return error(res, err.status, err.code, err.message);
-		throw err;
+	const [feed] = await sql`select * from signal_feeds where id = ${feedId} limit 1`;
+	if (!feed) return error(res, 404, 'feed_not_found', 'feed not found');
+	if (feed.status !== 'active') return error(res, 409, 'feed_inactive', 'this feed is not active');
+	if (feed.publisher_agent_id === body.agent_id) return error(res, 400, 'self_subscribe', 'an agent cannot subscribe to its own feed');
+
+	const network = normNetwork(feed.network);
+	const mode = body.mode === 'live' ? 'live' : 'simulate';
+	const billing = body.billing === 'per_epoch' ? 'per_epoch' : 'per_signal';
+	const baseSol = Math.max(0.001, Math.min(10, num(body.base_sol, 0.05)));
+	const sizeScaling = Math.max(0.01, Math.min(20, num(body.size_scaling, 1)));
+	const maxPerTrade = Math.max(0.001, Math.min(50, num(body.max_per_trade_sol, 0.25)));
+	const slippageBps = Math.round(Math.max(0, Math.min(5000, num(body.slippage_bps, 300))));
+	const firewallLevel = body.firewall_level === 'warn' ? 'warn' : 'block';
+	const copyExits = body.copy_exits !== false;
+	if (mode === 'live') {
+		const [cur] = await sql`select mode, status, killed from signal_subscriptions where subscriber_agent_id = ${body.agent_id} and feed_id = ${feed.id} limit 1`;
+		if (!isLiveRunning(cur) && !(await requireRealFundsAgreement(req, res, { userId, network, context: 'signal-subscribe' }))) return;
 	}
 
-	const knobs = subscriptionKnobs(body);
-	if (knobs.mode === 'live') {
-		const cur = await existingSubscription(body.agent_id, feed.id);
-		if (!isLiveRunning(cur) && !(await requireRealFundsAgreement(req, res, { userId, network: feed.network, context: 'signal-subscribe' }))) return;
-	}
+	// New subscriptions start at the current emission head: never charged for or
+	// made to mirror a backlog of signals emitted before they subscribed.
+	const [head] = await sql`select coalesce(max(id),0) as head from signal_emissions where feed_id = ${feed.id}`;
+	const startCursor = Number(head?.head || 0);
 
-	const subscription = await upsertSignalSubscription({ userId, agentId: body.agent_id, feed, knobs });
-	return json(res, 200, { subscription });
+	const [sub] = await sql`
+		insert into signal_subscriptions
+			(subscriber_agent_id, owner_user_id, feed_id, network, mode, billing,
+			 base_sol, size_scaling, max_per_trade_sol, slippage_bps, firewall_level, copy_exits, status, killed, last_emission_id)
+		values (${body.agent_id}, ${userId}, ${feed.id}, ${network}, ${mode}, ${billing},
+			${baseSol}, ${sizeScaling}, ${maxPerTrade}, ${slippageBps}, ${firewallLevel}, ${copyExits}, 'active', false, ${startCursor})
+		on conflict (subscriber_agent_id, feed_id) do update set
+			mode = excluded.mode, billing = excluded.billing, base_sol = excluded.base_sol,
+			size_scaling = excluded.size_scaling, max_per_trade_sol = excluded.max_per_trade_sol,
+			slippage_bps = excluded.slippage_bps, firewall_level = excluded.firewall_level,
+			copy_exits = excluded.copy_exits, status = 'active', killed = false, updated_at = now()
+		returning *
+	`;
+	return json(res, 200, { subscription: shapeSub(sub) });
 });

@@ -60,36 +60,6 @@ as the `/api/v1/agents/:id/predictions/*` routes and the `/predictions` pages.
 | `predictions_open`, `predictions_close`, `predictions_redeem` | financial | `wallet:write` | Execute with `agent_id`, the `preview_id`, and `confirm_trade: true`. |
 | `predictions_watch` | write | `wallet:write` | Alert when an outcome's probability crosses a threshold, in-app and optionally to Telegram or a webhook. Moves no funds. |
 
-### Portfolio, launch sniper, alerts and duels
-
-An agent's valued portfolio and P&L, control of its pump.fun launch sniper and
-signal subscriptions, launch alert rules, and agent-vs-agent duels. Each tool is
-a thin adapter over the library the dashboards use: `api/_lib/portfolio.js` and
-`api/_lib/portfolio-history.js` (the wallet hub's Portfolio tab and
-`/api/v1/agents/:id/portfolio`), `api/_lib/sniper-control.js` (the sniper
-dashboard), `api/_lib/signal-subscription-control.js` (`/signals`),
-`api/_lib/pump-alert-rules.js` (`/api/alerts/rules` and the pump dashboard), and
-`api/_lib/duel-challenges.js` with `api/_lib/trader-duels.js` (`/duels`).
-Full reference with examples: [MCP integration](./mcp.md#agent-wallet-portfolio-launch-sniper-alerts-and-duels).
-
-| Tool | Tier (group) | Scope | What it does |
-|------|--------------|-------|--------------|
-| `get_portfolio(agent_id, network?, max_holdings?)` | read (wallet) | `wallet:read` | Live valuation: SOL and every SPL holding in SOL and USD, FIFO cost basis and unrealized P&L per holding, P&L by source, risk flags. Records a net-worth point. |
-| `get_balance_history(agent_id, network?, days?, max_points?)` | read (wallet) | `wallet:read` | Recorded net-worth points over 1 to 365 days with change, peak and max drawdown, plus the exact cumulative realized P&L per day. |
-| `get_pnl(agent_id, network?)` | read (wallet) | `wallet:read` | Realized, unrealized and total P&L in SOL and USD, by source, with win rate, ROI, profit factor and the biggest open winners and losers. |
-| `sniper_status(agent_id?, network?)` | read (trading) | `wallet:read` | Whether the sniper worker is live, and each of your strategies: armed or not, sizing, exits, today's spend and open positions. |
-| `sniper_activate_preview(...)` | read (trading) | `wallet:read` | What arming would do: agent and wallet with its live SOL balance, per-trade size, daily budget, trigger, exits, what the SOL is spent on, whether real funds are at risk, and every blocking check. Returns a `preview_id`. |
-| `sniper_activate(...)` | financial (trading) | `wallet:trade` or `agents:write` | Arm the sniper with exactly the previewed agent, network and sizing, `preview_id` and `confirm_spend: true`. Mainnet needs the signed real-funds agreement. |
-| `sniper_deactivate(agent_id, network?, kill?)` | write (trading) | `wallet:trade` or `agents:write` | Disarm; `kill: true` also sets the kill switch. Open positions stay under their exits. |
-| `sniper_subscribe(action, ...)` | write (trading) | `wallet:trade` or `agents:write` | List feeds and your subscriptions; subscribe an agent to a signal feed on paper; pause, resume, stop or kill a subscription. Live mode is owner-only on `/signals`. |
-| `alert_rule_create(kind, ...)` | write (intelligence) | `wallet:trade` or `agents:write` | Create a pump.fun alert rule, including `launch_match` (a new launch that passes name pattern, market cap band, safety score, creator history, risk flag and socials filters). Always delivers to you. |
-| `alert_rule_list(rule_id?)` | read (intelligence) | `wallet:read` | Your rules with their filters, state, last fire and recent deliveries. With `rule_id`, returns the `preview_id` `alert_rule_delete` needs. |
-| `alert_rule_delete(rule_id)` | financial (intelligence) | `wallet:trade` or `agents:write` | Delete a rule for good, with the `preview_id` from `alert_rule_list` for the same rule and `confirm_delete: true`. |
-| `duel_challenge(agent_id, opponent_agent_id, window?, message?)` | write (predictions) | `wallet:trade` or `agents:write` | Challenge another public agent to a day or week trading duel. The opponent's owner is notified. Free-play points, no funds. |
-| `duel_accept(challenge_id, response?)` | write (predictions) | `wallet:trade` or `agents:write` | Accept or decline a challenge to your agent, or cancel one you sent. Accepting opens the duel. |
-| `duel_details(duel_id or challenge_id)` | read (predictions) | none for a duel, sign-in for a challenge | One duel with its window, phase, standings and crowd calls, or one challenge with its duel. |
-| `duel_markets(view?, ...)` | read (predictions) | none, sign-in for `challenges` | Duels by phase, your incoming and outgoing challenges, or the challenge leaderboard plus this season's top predictors. |
-
 ### Resources and prompts
 
 This server also answers `resources/*` and `prompts/*`: the `three://` resources

@@ -809,6 +809,10 @@
 			"dest": "/api/agents/[id]/custom-skills?id=$1"
 		},
 		{
+			"src": "/api/skill-imports/(.+)",
+			"dest": "/api/skill-imports?route=$1"
+		},
+		{
 			"src": "/api/agents/([^/]+)/bundles/([^/]+)",
 			"dest": "/api/agents/[id]/bundles?id=$1&bundle_id=$2"
 		},
@@ -1099,6 +1103,10 @@
 		{
 			"src": "/skills/community/?$",
 			"dest": "/skills-community.html"
+		},
+		{
+			"src": "/skills/import/?$",
+			"dest": "/skills-import.html"
 		},
 		{
 			"src": "/spotlight/?$",
@@ -7124,10 +7132,6 @@
 		{
 			"path": "/api/cron/duels-tick",
 			"schedule": "*/15 * * * *"
-		},
-		{
-			"path": "/api/cron/agent-portfolio-snapshots",
-			"schedule": "23 * * * *"
 		}
 	]
 }

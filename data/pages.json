@@ -401,6 +401,14 @@
 					"added": "2026-09-22"
 				},
 				{
+					"path": "/skills/import",
+					"title": "Import Skills",
+					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest. Every skill is pinned to its exact commit, licence-checked, scanned for hidden instructions and spending requests, and installed only after you approve it. Check imports for updates as a diff, fork any skill, and publish your own.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-10-10"
+				},
+				{
 					"path": "/community",
 					"title": "Community",
 					"description": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
@@ -4276,6 +4284,12 @@
 					"title": "Docs · Skills",
 					"description": "Write, package, and monetize agent skills.",
 					"added": "2026-04-27"
+				},
+				{
+					"path": "/docs/skill-import",
+					"title": "Docs · Importing skills",
+					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.",
+					"added": "2026-10-10"
 				},
 				{
 					"path": "/docs/skill-royalties",
