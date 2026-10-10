@@ -37,6 +37,21 @@ const THEMES = {
 	light: { bg: '#f5f6f8', grid: '#dfe3ea', gridCenter: '#c9d0db', accent: '#1f6fff', ink: '#0d1220', inkMix: 0.6, fillMix: 0 },
 };
 
+/**
+ * The axis a spec's opening cutaway should use. A cut perpendicular to a
+ * machine's long axis only shows one slice of it, so when the requested axis
+ * is clearly the longest one, the request is read as "open it lengthwise" and
+ * the cut moves to a short axis, preferring a side cut (z, then x) over a top
+ * one. Any other request is honoured as written.
+ */
+export function openingSection(axis, size) {
+	if (!axis || !size) return axis || null;
+	const len = size[axis];
+	const others = ['x', 'y', 'z'].filter((a) => a !== axis);
+	if (!(len > 0) || others.some((a) => !(len >= size[a] * 1.6))) return axis;
+	return ['z', 'x', 'y'].find((a) => a !== axis);
+}
+
 function hashIndex(s, n) {
 	let h = 0;
 	for (const ch of String(s)) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0;
@@ -65,7 +80,13 @@ export class AnatomyViewer {
 		this.themeName = resolveTheme(this.themePref);
 
 		this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+		// Adaptive resolution: the ceiling is the screen's own ratio, and a GPU
+		// that cannot hold the frame rate gets fewer pixels instead of a stutter.
+		this.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+		this.pixelRatio = this.maxPixelRatio;
+		this.frameCost = 1 / 60;
+		this.frameSamples = 0;
+		this.renderer.setPixelRatio(this.pixelRatio);
 		this.renderer.localClippingEnabled = true;
 		this.renderer.toneMapping = THREE.NeutralToneMapping;
 		this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -127,7 +148,7 @@ export class AnatomyViewer {
 		this.bindEvents();
 		this.applyTheme();
 		this.resize();
-		this.clock = new THREE.Clock();
+		this.timer = new THREE.Timer();
 		this.renderer.setAnimationLoop(() => this.tick());
 	}
 
@@ -446,12 +467,12 @@ export class AnatomyViewer {
 		if (!progressive || !this.framed) {
 			this.controls.target.set(0, 0, 0);
 			this.camera.position.copy(ISO_DIR).multiplyScalar(dist);
-			this.camera.zoom = 1;
+			this.camera.zoom = this.fitZoom(ISO_DIR);
 			this.camera.updateProjectionMatrix();
 			this.controls.update();
 			this.framed = true;
 		} else {
-			this.tween = { target: new THREE.Vector3(), zoom: 1 };
+			this.tween = { target: new THREE.Vector3(), zoom: this.fitZoom(ISO_DIR) };
 		}
 		this.camera.updateProjectionMatrix();
 	}
@@ -475,6 +496,44 @@ export class AnatomyViewer {
 		this.scene.add(this.grid);
 	}
 
+	/**
+	 * Zoom that fills the stage with the model as seen from `dir`. The frustum
+	 * fits the bounding sphere so any rotation stays in frame; a long, thin
+	 * machine seen side-on covers a fraction of that sphere, so the opening
+	 * zoom fits its box's projected silhouette instead.
+	 */
+	fitZoom(dir, box = this.fitBox(), max = 3, target = new THREE.Vector3()) {
+		if (!box || box.isEmpty()) return 1;
+		const view = dir.clone().normalize();
+		const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), view);
+		if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
+		right.normalize();
+		const up = new THREE.Vector3().crossVectors(view, right).normalize();
+		let w = 0;
+		let v = 0;
+		const corner = new THREE.Vector3();
+		for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+			corner.set(x, y, z).sub(target);
+			w = Math.max(w, Math.abs(corner.dot(right)));
+			v = Math.max(v, Math.abs(corner.dot(up)));
+		}
+		if (w < 1e-6 && v < 1e-6) return 1;
+		const fit = Math.min(this.camera.right / Math.max(w * 1.1, 1e-6), this.camera.top / Math.max(v * 1.18, 1e-6));
+		return THREE.MathUtils.clamp(fit, 1, max);
+	}
+
+	/** The whole picture for the opening shot: every visible part plus the effects and flows. */
+	fitBox() {
+		const box = this.modelBox();
+		if (box.isEmpty()) return box;
+		const tmp = new THREE.Box3();
+		for (const e of [...this.effects, ...this.flows]) {
+			tmp.setFromObject(e.object);
+			if (!tmp.isEmpty()) box.union(tmp);
+		}
+		return box;
+	}
+
 	updateFrustum() {
 		const aspect = (this.width || 1) / (this.height || 1);
 		const half = this.radius * 1.12;
@@ -490,14 +549,14 @@ export class AnatomyViewer {
 	/** Ease the camera to frame a set of parts, or the whole model when ids is empty. */
 	focusOn(ids) {
 		if (!ids?.length) {
-			this.tween = { target: new THREE.Vector3(), zoom: 1 };
+			this.tween = { target: new THREE.Vector3(), zoom: this.fitZoom(this.camera.position.clone().sub(this.controls.target)) };
 			return;
 		}
 		const box = this.modelBox(ids);
 		if (box.isEmpty()) return;
 		const c = box.getCenter(new THREE.Vector3());
-		const r = Math.max(box.getSize(new THREE.Vector3()).length() / 2, this.radius * 0.12);
-		const zoom = THREE.MathUtils.clamp(this.radius / (r * 1.35), 1, 5);
+		box.expandByVector(new THREE.Vector3().setScalar(this.radius * 0.06));
+		const zoom = this.fitZoom(this.camera.position.clone().sub(this.controls.target), box, 5, c) * 0.8;
 		this.tween = { target: c, zoom };
 	}
 
@@ -506,7 +565,7 @@ export class AnatomyViewer {
 		this.tween = null;
 		this.controls.target.set(0, 0, 0);
 		this.camera.position.copy(ISO_DIR).multiplyScalar(dist);
-		this.camera.zoom = 1;
+		this.camera.zoom = this.fitZoom(ISO_DIR);
 		this.camera.updateProjectionMatrix();
 		this.controls.update();
 		this.dirty = true;
@@ -517,6 +576,7 @@ export class AnatomyViewer {
 		const dirs = { iso: ISO_DIR, front: new THREE.Vector3(0, 0, 1), side: new THREE.Vector3(1, 0, 0), top: new THREE.Vector3(0, 1, 0.0001) };
 		const dir = (dirs[name] || ISO_DIR).clone().normalize();
 		this.camera.position.copy(this.controls.target).addScaledVector(dir, this.radius * 6);
+		this.camera.zoom = this.fitZoom(dir, this.fitBox(), 3, this.controls.target);
 		this.camera.updateProjectionMatrix();
 		this.controls.update();
 		this.dirty = true;
@@ -796,8 +856,13 @@ export class AnatomyViewer {
 	// ----------------------------------------------------------------- loop
 
 	tick() {
-		const dt = Math.min(this.clock.getDelta(), 0.1);
-		if (!this.visible || document.hidden) return;
+		this.timer.update();
+		const raw = this.timer.getDelta();
+		const dt = Math.min(raw, 0.1);
+		if (!this.visible || document.hidden) {
+			this.frameSamples = 0;
+			return;
+		}
 		if (this.pendingPick) {
 			const { x, y, ev } = this.pendingPick;
 			this.pendingPick = null;
@@ -836,7 +901,29 @@ export class AnatomyViewer {
 		this.renderer.render(this.scene, this.camera);
 		if (this.state.labels) this.updateLabels();
 		this.dirty = false;
+		if (animating) this.adaptResolution(raw);
 		this.opts.onFrame?.();
+	}
+
+	/**
+	 * Track the smoothed frame time while the machine animates. Sustained slow
+	 * frames step the pixel ratio down; sustained headroom steps it back up to
+	 * the screen's ratio. Steps are spaced out so the image never flickers.
+	 */
+	adaptResolution(dt) {
+		if (dt <= 0 || dt > 10) return;
+		this.frameCost += (dt - this.frameCost) * 0.1;
+		this.frameSamples++;
+		if (this.frameSamples < 30) return;
+		let next = this.pixelRatio;
+		if (this.frameCost > 1 / 30) next = Math.max(0.5, this.pixelRatio * 0.75);
+		else if (this.frameCost < 1 / 70) next = Math.min(this.maxPixelRatio, this.pixelRatio / 0.75);
+		if (Math.abs(next - this.pixelRatio) < 0.01) return;
+		this.pixelRatio = next;
+		this.frameSamples = 0;
+		this.renderer.setPixelRatio(next);
+		this.renderer.setSize(this.width, this.height, false);
+		this.dirty = true;
 	}
 
 	/** Project label anchors to screen and hide the ones that would overlap. */
@@ -893,7 +980,7 @@ export class AnatomyViewer {
 	/** PNG of the current frame at 2x device resolution. */
 	async screenshot() {
 		const prev = this.renderer.getPixelRatio();
-		this.renderer.setPixelRatio(Math.min(prev * 2, 3));
+		this.renderer.setPixelRatio(Math.min(this.maxPixelRatio * 2, 3));
 		this.renderer.setSize(this.width, this.height, false);
 		const frame = { dark: this.themeName === 'dark', pixelScale: (this.renderer.getPixelRatio() * this.height * this.camera.zoom) / (this.camera.top - this.camera.bottom) };
 		for (const e of this.effects) e.update(this.time, 0, frame);
@@ -908,6 +995,7 @@ export class AnatomyViewer {
 
 	dispose() {
 		this.renderer.setAnimationLoop(null);
+		this.timer.dispose();
 		this.resizeObserver.disconnect();
 		this.visObserver.disconnect();
 		this.themeObserver.disconnect();

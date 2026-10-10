@@ -7,7 +7,7 @@
 // The same runtime powers /anatomy, /anatomy/:id permalinks and the standalone
 // HTML the agent skill writes (via the /anatomy-runtime.js bundle).
 
-import { AnatomyViewer } from './viewer.js';
+import { AnatomyViewer, openingSection } from './viewer.js';
 import { normalizeSpec } from './spec.js';
 
 const ICONS = {
@@ -461,7 +461,7 @@ export function mountAnatomy(el, specIn, opts = {}) {
 		if (!progressive) {
 			if (spec.view.explode > 0 && explodeTarget === 0) animateExplode(spec.view.explode);
 			else viewer.setExplode(explodeValue);
-			if (spec.view.section && !viewer.state.section) applySectionUI(spec.view.section);
+			if (spec.view.section && !viewer.state.section) applySectionUI(openingSection(spec.view.section, viewer.modelSize));
 		} else viewer.setExplode(explodeValue);
 		if (selected && !spec.parts.some((p) => p.id === selected)) selected = null;
 		if (step >= spec.steps.length) step = -1;

@@ -102,8 +102,15 @@ const shot = (page, name) => page.screenshot({ path: join(out, `${name}.png`) })
 	await page.waitForTimeout(800);
 	await shot(page, '08-clicked');
 
-	await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
-	await page.waitForTimeout(1000);
+	// The site's own switcher, the same path the nav toggle takes, so the
+	// light palette is verified exactly as a visitor gets it.
+	const lightOk = await page.evaluate(() => {
+		window.threeTheme?.set('light');
+		return { theme: document.documentElement.getAttribute('data-theme'), supported: window.threeTheme?.supportsLight?.() ?? null };
+	});
+	if (lightOk.theme !== 'light') problems.push(`[theme] light did not apply (supportsLight=${lightOk.supported})`);
+	await page.mouse.move(2, 2);
+	await page.waitForTimeout(1500);
 	await shot(page, '09-light');
 	await page.close();
 }

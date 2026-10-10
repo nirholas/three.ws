@@ -31,7 +31,7 @@ An Anatomy spec is one JSON object that describes a machine as named parts, movi
 \`\`\`
 
 - \`title\` (max 80 chars), \`subtitle\` (max 140), \`summary\` (max 600; blank lines split paragraphs).
-- \`view.speed\` multiplies every motion (0 to 4, default 1). \`view.explode\` (0 to 1) opens with the parts pulled apart. \`view.section\` (\`"x"\`, \`"y"\` or \`"z"\`) opens with a cutaway along that axis, which removes the half nearest the viewer. Use a cutaway for anything whose interesting parts are inside a casing (engines, pumps, reactors, turbines).
+- \`view.speed\` multiplies every motion (0 to 4, default 1). \`view.explode\` (0 to 1) opens with the parts pulled apart. \`view.section\` (\`"x"\`, \`"y"\` or \`"z"\`) opens with a cutaway: a cutting plane perpendicular to that axis through the middle of the machine, removing the half nearest the viewer. To open a machine lengthwise, cut across a short axis: a turbofan lying along x is opened with \`"z"\`, which shows every stage from fan to nozzle. Use a cutaway for anything whose interesting parts are inside a casing (engines, pumps, reactors, turbines).
 
 ## Coordinates and units
 

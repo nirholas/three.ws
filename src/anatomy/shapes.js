@@ -167,6 +167,42 @@ function rotorGeometry(s) {
 	return { merged, hubLen };
 }
 
+/**
+ * The rotor's line drawing: each blade as one twisted outline (leading edge,
+ * tip, trailing edge) and the hub as its two end circles. Tracing every crease
+ * of the solid blade instead quadruples the segment count, and a 60-blade
+ * compressor stage repeated down a spool reaches 100K fat-line segments a
+ * frame, which stalls integrated GPUs while adding nothing a reader can see.
+ */
+function rotorLines(s, hubLen) {
+	const out = [];
+	const span = Math.max(s.radius - s.hubRadius, s.radius * 0.05);
+	const x0 = s.hubRadius - s.radius * 0.01;
+	const steps = s.blades > 24 ? 3 : 5;
+	const point = (t, side, cos, sin) => {
+		const x = x0 + span * t;
+		const ang = THREE.MathUtils.degToRad(s.pitch - s.twist * ((x - s.hubRadius) / span - 0.5));
+		const half = (s.chord / 2) * side * (1 - 0.25 * Math.max(0, (x - s.hubRadius) / span));
+		const y = half * Math.cos(ang);
+		const z = half * Math.sin(ang);
+		return [x * cos + z * sin, y, -x * sin + z * cos];
+	};
+	for (let b = 0; b < s.blades; b++) {
+		const theta = (b / s.blades) * TAU;
+		const cos = Math.cos(theta);
+		const sin = Math.sin(theta);
+		for (const side of [1, -1]) {
+			for (let i = 0; i < steps; i++) out.push(...point(i / steps, side, cos, sin), ...point((i + 1) / steps, side, cos, sin));
+		}
+		out.push(...point(1, 1, cos, sin), ...point(1, -1, cos, sin));
+		// Few, wide blades show their root; on a dense stage the hub hides it.
+		if (s.blades <= 24) out.push(...point(0, 1, cos, sin), ...point(0, -1, cos, sin));
+	}
+	circleSegments(out, s.hubRadius, hubLen / 2, 32);
+	circleSegments(out, s.hubRadius, -hubLen / 2, 32);
+	return new Float32Array(out);
+}
+
 function helixCurve(radius, turns, length) {
 	const pts = [];
 	const n = Math.max(24, Math.ceil(turns * 24));
@@ -309,9 +345,9 @@ export function buildShape(shape) {
 			return { fill, lines };
 		}
 		case 'rotor': {
-			const { merged } = rotorGeometry(shape);
+			const { merged, hubLen } = rotorGeometry(shape);
 			orient(merged, shape.axis);
-			return { fill: merged, lines: edgePositions(merged, 28) };
+			return { fill: merged, lines: orientPositions(rotorLines(shape, hubLen), shape.axis) };
 		}
 		case 'lathe': {
 			const profile = shape.profile;
