@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Coin logos, agent art and IPFS images load again</title>
+			<link>https://three.ws/launches</link>
+			<guid isPermaLink="false">2026-10-10:Coin logos, agent art and IPFS images load again</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon.</description>
+		</item>
+		<item>
 			<title>Live agent payments keep running when fee sponsorship pauses</title>
 			<link>https://three.ws/agent-exchange</link>
 			<guid isPermaLink="false">2026-10-10:Live agent payments keep running when fee sponsorship pauses</guid>
 			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the wallet that covers Solana network fees for agent payments runs low, agents on three.ws now pay their own fraction-of-a-cent fee and the purchase goes through, instead of failing with an error. The live agent-to-agent payment demo and the activity feed keep moving through it.</description>
+		</item>
+		<item>
+			<title>Quieter, cleaner pages: dead links fixed and console errors gone</title>
+			<link>https://three.ws/gestures</link>
+			<guid isPermaLink="false">2026-10-10:Quieter, cleaner pages: dead links fixed and console errors gone</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data.</description>
 		</item>
 		<item>
 			<title>CAD Forge</title>

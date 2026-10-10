@@ -1,20 +1,41 @@
 {
-	"generated_at": "2026-10-10T04:59:20.027Z",
+	"generated_at": "2026-10-10T05:09:34.226Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3885,
+	"total": 3887,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
 		{
 			"date": "2026-10-10",
 			"type": "update",
+			"title": "Coin logos, agent art and IPFS images load again",
+			"summary": "Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon.",
+			"link": "/launches",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
 			"title": "Live agent payments keep running when fee sponsorship pauses",
 			"summary": "When the wallet that covers Solana network fees for agent payments runs low, agents on three.ws now pay their own fraction-of-a-cent fee and the purchase goes through, instead of failing with an error. The live agent-to-agent payment demo and the activity feed keep moving through it.",
 			"link": "/agent-exchange",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Quieter, cleaner pages: dead links fixed and console errors gone",
+			"summary": "We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data.",
+			"link": "/gestures",
 			"tags": [
 				"fix"
 			]
@@ -1519,26 +1540,6 @@
 			"tags": [
 				"sdk",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "launch",
-			"title": "$THREE Launchpad",
-			"summary": "A bonding-curve launchpad priced in $THREE: every coin launched for a 3D agent is bought with $THREE, creators earn their fees in $THREE, and each graduation locks the $THREE it raised in a pool nobody can withdraw. Launch a coin or trade the live curves.",
-			"link": "/three-launchpad",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-20",
-			"type": "launch",
-			"title": "Docs · The prompt library",
-			"summary": "How the three.ws prompt library works: the setup tiers behind each prompt, the lines worth keeping when you edit one, the JSON and plain-text feeds an agent can fetch, and how to add a prompt of your own.",
-			"link": "/docs/prompts",
-			"tags": [
-				"launch"
 			]
 		}
 	]

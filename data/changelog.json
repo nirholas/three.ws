@@ -29404,6 +29404,25 @@
 			"summary": "Every finished model now has mesh tools: repair welds cracks and fixes inside-out faces, smoothing softens blocky surfaces without tearing textures, and decimate cuts the triangle count to a number you choose, with undo and a before and after count. Nothing is uploaded. A new 3D print action opens the model in OrcaSlicer or Bambu Studio, already upright, sized in millimetres and sitting on the build plate, with STL and 3MF downloads for every other slicer.",
 			"tags": ["feature"],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Coin logos, agent art and IPFS images load again",
+			"summary": "Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/launches"
+		},
+		{
+			"date": "2026-10-10",
+			"title": "Quieter, cleaner pages: dead links fixed and console errors gone",
+			"summary": "We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data.",
+			"tags": [
+				"fix"
+			],
+			"link": "/gestures"
 		}
 	]
 }

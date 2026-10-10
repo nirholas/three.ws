@@ -6,7 +6,9 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-10-10
 
+- **Coin logos, agent art and IPFS images load again**: Several public IPFS gateways started refusing image and metadata requests from websites this month, which left coin logos, the 3D coin face, agent cards and on-chain agent art blank or broken across the site. Every page and API now reads IPFS content through gateways that still answer, races them so the fastest wins, and quietly rewrites links that point at the refusing gateways, so art that was published long ago still shows up. Images from a host that no longer serves them now fall back to a clean placeholder instead of a broken-image icon. (`/launches`) `[fix, improvement]`
 - **Live agent payments keep running when fee sponsorship pauses**: When the wallet that covers Solana network fees for agent payments runs low, agents on three.ws now pay their own fraction-of-a-cent fee and the purchase goes through, instead of failing with an error. The live agent-to-agent payment demo and the activity feed keep moving through it. (`/agent-exchange`) `[fix]`
+- **Quieter, cleaner pages: dead links fixed and console errors gone**: We swept every page on three.ws with the browser developer console open and fixed what it found. Links to pages that moved now redirect to where they live today, share buttons always have a destination, 3D viewers decode compressed models on every page, the missing bow animation thumbnail is back on the choreography and gestures pages, and pages full of brand-new coins or agents without a wallet no longer fill the console with errors while they wait for data. (`/gestures`) `[fix]`
 
 ## 2026-10-09
 
