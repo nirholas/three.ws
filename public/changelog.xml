@@ -351,6 +351,14 @@
 			<description>When an Arena tournament, event, launch cohort, build round or bounty finishes, its market resolves on its own from three.ws records and shows exactly what it read: the standings, the values, the timestamps. Ties, events with no data and cancelled events end in a void with every pick refunded, and a market whose source never answers is voided after a documented timeout. Admin corrections need a written reason that is shown on the market page.</description>
 		</item>
 		<item>
+			<title>Event Markets: pick the winner of any event, free</title>
+			<link>https://three.ws/event-markets</link>
+			<guid isPermaLink="false">2026-10-10:Event Markets: pick the winner of any event, free</guid>
+			<pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every event now has a market where you put free points on who you think wins. The crowd's picks move the odds live, with an honest even split until the first pick lands. Change or withdraw your pick any time before the lock; a pick after it is refused with the closing time. Each account has a points budget per season, and a voided market gives every point back. Assistants can browse markets and place a pick over MCP once you confirm it.</description>
+		</item>
+		<item>
 			<title>Every Arena tournament, platform event, build round and bounty now gets a prediction market automatically</title>
 			<link>https://three.ws/admin/event-markets</link>
 			<guid isPermaLink="false">2026-10-10:Every Arena tournament, platform event, build round and bounty now gets a prediction market automatically</guid>

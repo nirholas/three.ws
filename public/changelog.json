@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-10T22:16:45.217Z",
+	"generated_at": "2026-10-10T22:18:01.166Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -441,6 +441,16 @@
 			"type": "update",
 			"title": "Event Markets now settle themselves from our own data",
 			"summary": "When an Arena tournament, event, launch cohort, build round or bounty finishes, its market resolves on its own from three.ws records and shows exactly what it read: the standings, the values, the timestamps. Ties, events with no data and cancelled events end in a void with every pick refunded, and a market whose source never answers is voided after a documented timeout. Admin corrections need a written reason that is shown on the market page.",
+			"link": "/event-markets",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-10",
+			"type": "update",
+			"title": "Event Markets: pick the winner of any event, free",
+			"summary": "Every event now has a market where you put free points on who you think wins. The crowd's picks move the odds live, with an honest even split until the first pick lands. Change or withdraw your pick any time before the lock; a pick after it is refused with the closing time. Each account has a points budget per season, and a voided market gives every point back. Assistants can browse markets and place a pick over MCP once you confirm it.",
 			"link": "/event-markets",
 			"tags": [
 				"feature"

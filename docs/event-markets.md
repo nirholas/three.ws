@@ -2,6 +2,44 @@
 
 A free-to-play "who wins this?" market for every three.ws event, with the entrants as outcomes. Picks carry points, never funds. Build briefs: [docs/prompts/event-markets/](prompts/event-markets/README.md). Core module: `api/_lib/event-markets/`.
 
+## Markets, picks and odds (core)
+
+Everything else in this guide sits on one seam: `api/_lib/event-markets/index.js` (`createMarket`, `getMarket`, `listMarkets`, `placePick`, `withdrawPick`, `getPicks`, `marketHistory`, `lockMarket`, `voidMarket`, `resolveMarket`, `impliedOdds`). Tables: `event_markets`, `event_market_outcomes`, `event_market_picks`, `event_market_pick_log` (migration `20261011020000_event_markets.sql`). Numbers live in [data/event-markets.json](../data/event-markets.json).
+
+**Status.** `draft`, `open`, `locked`, `resolved`, `void`. An open market past `locks_at` reads as `locked` immediately, even before the lifecycle cron runs. The lock check also runs inside the write statement against the database clock, so a pick at or after `locks_at` is refused with `market_locked` and a message that names the closing time.
+
+**Odds.** Each outcome's share is `(points + k) / (total + k * n)`, with `k` = `odds.prior_points_per_outcome` (25) and `n` outcomes. With zero picks every share is `1/n` and the market says so (`odds.even_prior: true` and a note). The method string ships in every response.
+
+**Points.** A pick is 10 to 250 points on one outcome. One live pick per account per market: a new pick replaces the old one until lock, and withdrawing frees the points. Each account also has a season budget (1000 points per UTC calendar quarter of the market's lock time) across all its live picks; past it, the pick is refused with `budget_exceeded` and the points left. Voiding a market refunds every live pick, so the points return to the budget. Overrides per season: `season_budget_overrides` in the config.
+
+**History.** `GET /:slug/history` replays the append-only pick log (`place`, `change`, `withdraw`, `void`) and returns the odds after each event, plus the opening even prior. There are no invented points.
+
+**Fairness at pick time.** Each pick stores `odds_at_pick` and `ranked`, which the scoring rollup reads.
+
+### REST
+
+Base `/api/event-markets`, v1 envelope `{ data, meta }`.
+
+| Method and path | Auth | What it does |
+|---|---|---|
+| `GET /` | public | List. Filters `status` (default `open`), `source_kind`, `q`; `limit`, `cursor`. Closing soonest, then most picks. |
+| `GET /:slug` | optional | One market with outcomes, odds, and, signed in, your pick and budget. |
+| `GET /:slug/history` | public | Odds over time from the pick log. |
+| `GET /:slug/picks` | session | Your picks on this market. |
+| `POST /:slug/pick` | session | `{ outcome_id, points }`. Places or changes your pick. |
+| `DELETE /:slug/pick` | session | Withdraws your pick before lock. |
+| `POST /` | admin | Create a market. |
+| `PATCH /:slug` | admin | Edit title, description, times, outcomes. |
+| `POST /:slug/lock` | admin | Close picks now. |
+| `POST /:slug/void` | admin | `{ reason }`. Voids and refunds every live pick. |
+| `POST /:slug/resolve` | admin | `{ winner_outcome_id }`. |
+
+Writes are limited per account (30 per 5 minutes) and per IP (60 per 5 minutes) and return `429 rate_limited` with `retryAfterSeconds`. Errors carry a stable `code`: `market_locked`, `market_not_open`, `budget_exceeded`, `invalid_points`, `outcome_not_found`, `pick_not_found`, `slug_taken`, `market_exists_for_source`, `invalid_transition`, `already_resolved`.
+
+### MCP
+
+On the Agent Wallet server (`/api/mcp-agent`): `event_markets_list` and `event_market` (reads), and `event_market_pick`, which refuses unless `confirm: true`, so an assistant states the market, outcome and points to its owner first. Source: [api/_mcpagent/event-markets-tools.js](../api/_mcpagent/event-markets-tools.js). Tests: [tests/event-markets.test.js](../tests/event-markets.test.js), [tests/event-markets-mcp.test.js](../tests/event-markets-mcp.test.js).
+
 ## Announcements
 
 A market that is not announced does not get picks, and the announcement is what tags the entrants so they show their own audiences. The announcement lane writes the drafts, holds them for review, and sends only what the owner approved.

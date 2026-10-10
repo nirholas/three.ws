@@ -218,6 +218,7 @@ Want the model in your hands rather than on a screen? [Materialize](./materializ
 
 Deeper references that don't fit a track above but answer real questions:
 
+- [Event Markets](./event-markets.md): the free-to-play "who wins this event?" layer, how picks, points budgets and crowd odds work, the REST and MCP surface, and how markets open, lock and resolve
 - [Atomic Solana V1 inspector](./atomic.md): inspect a confirmed mainnet signature or raw signed transaction, measure its exact 1,232-byte or 4,096-byte envelope, and verify the execution limits a fee sponsor is being asked to accept
 - [Global Intel Globe](./globe.md): the live 3D globe at /globe, its eleven keyless open-data layers, the one call that returns them all, and why a cron keeps its own GDELT window
 - [The ship log](./shipfeed.md): how every release note is joined to the commits that shipped it, the public feed at /api/ship/feed (JSON, Markdown, RSS, and a per-commit "why did you link that" endpoint), and the zero-dependency package that does it for any repository

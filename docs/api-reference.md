@@ -10162,6 +10162,20 @@ const { agents } = await res.json();
 - [Payment sessions](/docs/payment-sessions): the buyer side, letting an agent spend a budget without holding a key
 - [Authentication](/docs/authentication): SIWE, sessions, API keys, and scopes
 
+## Event Markets API
+
+Free-to-play "who wins this event?" markets. Picks carry points, never funds. Base `/api/event-markets`, v1 envelope. Reads are public; picks need a session or API key; create, edit, lock, void and resolve need an admin.
+
+```
+GET    /api/event-markets?status=open&source_kind=&q=&limit=&cursor=
+GET    /api/event-markets/:slug
+GET    /api/event-markets/:slug/history
+POST   /api/event-markets/:slug/pick     { "outcome_id": "<uuid>", "points": 50 }
+DELETE /api/event-markets/:slug/pick
+```
+
+A pick at or after `locks_at` returns `409 market_locked` with the closing time. A market with no picks returns an even prior and `odds.even_prior: true`. Full contract, error codes, limits and MCP tools: [event-markets.md](./event-markets.md).
+
 ## Agents API (v1)
 
 `/api/v1` is the stable, key-friendly face of the agent platform: create and
